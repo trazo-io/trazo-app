@@ -75,7 +75,7 @@ const TrackList = ({ amount }) => {
   const currentHistory = useSelector((state) => state.history.currentHistory);
   const currentCompany = useSelector((state) => state.company.currentCompany);
 
-  const { establishmentId, parcelId } = useParams();
+  const { farmId, parcelId } = useParams();
 
   const { isOpen: isOpen1, onOpen: onOpen1, onClose: onClose1 } = useDisclosure();
   const {
@@ -110,11 +110,11 @@ const TrackList = ({ amount }) => {
   const { data, error, isLoading, isFetching, refetch } = useGetCurrentHistoryQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId,
+      farmId,
       parcelId: parcelId || ''
     },
     {
-      skip: !parcelId || !currentCompany || !establishmentId || currentCompany?.id === undefined,
+      skip: !parcelId || !currentCompany || !farmId || currentCompany?.id === undefined,
       refetchOnMountOrArgChange: true,
       refetchOnFocus: false,
       pollingInterval: eventsPolling ? 3000 : 0
@@ -195,7 +195,7 @@ const TrackList = ({ amount }) => {
       minW={{ base: '100%', md: '400px' }}
       w="100%"
       className="trazo-card">
-      <CardHeader px={{ base: 4, md: 6 }} py={5}>
+      <CardHeader px={{ base: 4, md: 6 }} py={5} data-tour="current-production">
         <Flex direction="column" w="100%">
           {/* Header with consistent height */}
           <Flex justify="space-between" align="center" pb={4}>
@@ -234,7 +234,7 @@ const TrackList = ({ amount }) => {
                     py={3}
                     onClick={() =>
                       navigate(
-                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${currentHistory?.id}/change`
+                        `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/change`
                       )
                     }>
                     <Flex color={textColor} cursor="pointer" align="center" p="4px">
@@ -275,10 +275,11 @@ const TrackList = ({ amount }) => {
           )}
         </Flex>
       </CardHeader>
-      <CardBody ps={{ base: '0px', md: '20px' }} pe="0px" mb="12px" position="relative">
+      <CardBody ps={{ base: '0px', md: '20px' }} pe="0px" mb="12px" position="relative" data-tour="events-timeline">
         <Box
           maxH={{ base: '400px', md: '450px' }}
           overflowY="auto"
+          pt={2}
           pr={{ base: '8px', md: '12px' }}
           sx={{
             '&::-webkit-scrollbar': {
@@ -314,7 +315,7 @@ const TrackList = ({ amount }) => {
                       color={event.certified ? 'green.300' : 'blue.400'}
                       index={index}
                       arrLength={arr.length}
-                      url={`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/event/${event.id}?event_type=${event.event_type}`}
+                      url={`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/${event.id}?event_type=${event.event_type}`}
                       event={event}
                       members={currentHistory?.members || []}
                       isLast={index === arr.length - 1}
@@ -426,13 +427,14 @@ const TrackList = ({ amount }) => {
             transition="all 0.2s"
             onClick={() =>
               navigate(
-                `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
+                `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`
               )
             }>
             {intl.formatMessage({ id: 'app.startProduction' })}
           </Button>
         ) : (
           <Flex
+            data-tour="add-event-actions"
             gap={{ base: 2, md: 3 }}
             justify={{ base: 'stretch', smd: 'flex-end' }}
             align={{ base: 'stretch', smd: 'center' }}
@@ -536,7 +538,7 @@ const TrackList = ({ amount }) => {
                   onClick={() => {
                     onAddEventMenuClose();
                     navigate(
-                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/event/add`
+                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add`
                     );
                   }}>
                   <VStack align="start" spacing={0} flex={1}>
@@ -588,7 +590,7 @@ const TrackList = ({ amount }) => {
                 transition="all 0.2s"
                 onClick={() =>
                   navigate(
-                    `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${currentHistory?.id}/finish`
+                    `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/finish`
                   )
                 }>
                 <Text as="span" display={{ base: 'none', smd: 'inline' }}>{intl.formatMessage({ id: 'app.finishProduction' })}</Text>

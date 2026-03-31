@@ -31,12 +31,12 @@ import {
 } from 'react-icons/fa';
 import { BsStarFill, BsStarHalf, BsStar } from 'react-icons/bs';
 import { CompanyModal } from './CompanyModal';
-import { EstablishmentModal } from './EstablishmentModal';
+import { FarmModal } from './FarmModal';
 import { ParcelMapInfo } from './ParcelMapInfo';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
-interface CompanyEstablishmentInfoProps {
+interface CompanyFarmInfoProps {
   companyData?: {
     name?: string;
     description?: string;
@@ -201,7 +201,7 @@ const formatLabel = (value: string | undefined): string => {
     .join(' ');
 };
 
-export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> = ({
+export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
   companyData,
   establishmentData,
   parcelData
@@ -639,7 +639,7 @@ export const CompanyEstablishmentInfo: React.FC<CompanyEstablishmentInfoProps> =
 
       {/* Establishment Detail Modal */}
       {establishmentData && (
-        <EstablishmentModal
+        <FarmModal
           isOpen={isEstablishmentModalOpen}
           onClose={onEstablishmentModalClose}
           establishmentData={{

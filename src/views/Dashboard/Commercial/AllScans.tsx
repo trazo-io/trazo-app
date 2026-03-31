@@ -37,12 +37,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { FiSearch, FiCalendar, FiArrowLeft, FiChevronLeft, FiChevronRight, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { useSelector } from 'react-redux';
-import { useGetEstablishmentScansPaginatedQuery } from 'store/api/historyApi';
+import { useGetFarmScansPaginatedQuery } from 'store/api/historyApi';
 
 const AllScansView = () => {
   const intl = useIntl();
   const navigate = useNavigate();
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
   const textColor = useColorModeValue('gray.700', 'white');
 
   const { isOpen: isEducationOpen, onToggle: onEducationToggle } = useDisclosure();
@@ -63,16 +63,16 @@ const AllScansView = () => {
     data: scansPaginatedData,
     isLoading,
     error
-  } = useGetEstablishmentScansPaginatedQuery(
+  } = useGetFarmScansPaginatedQuery(
     {
-      establishment_id: establishmentId,
+      establishment_id: farmId,
       company_id: currentCompany?.id,
       page: currentPage,
       page_size: 10,
       ...filters
     },
     {
-      skip: !establishmentId || !currentCompany?.id
+      skip: !farmId || !currentCompany?.id
     }
   );
 
@@ -81,7 +81,7 @@ const AllScansView = () => {
   const totalPages = Math.ceil(totalCount / 10);
 
   const handleBack = () => {
-    navigate(`/admin/dashboard/establishment/${establishmentId}/commercial`);
+    navigate(`/admin/dashboard/farm/${farmId}/commercial`);
   };
 
   // Create unique products with both ID and name for proper filtering

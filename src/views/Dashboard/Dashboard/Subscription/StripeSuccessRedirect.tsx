@@ -55,7 +55,7 @@ const StripeSuccessRedirect: React.FC = () => {
   const redirectPath =
     searchParams.get('redirect') ||
     searchParams.get('return_url') ||
-    (isNewCompany ? '/admin/dashboard/establishment/add' : '/admin/dashboard/subscription');
+    (isNewCompany ? '/admin/dashboard/farm/add' : '/admin/dashboard/subscription');
 
   // Set immediate flags to prevent any redirects during processing
   useEffect(() => {

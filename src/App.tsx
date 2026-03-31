@@ -25,7 +25,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 // import { CacheProvider } from '@emotion/react';
 // import { emotionCache } from './emotion-cache';
 
-import AddEstablishment from 'views/Dashboard/Dashboard/Establishment/AddEstablishment';
+import AddFarm from 'views/Dashboard/Dashboard/Farm/AddFarm';
 import AddParcel from 'views/Dashboard/Dashboard/Parcel/AddParcel';
 // import AdvancedAnalyticsDemo from 'views/AdvancedAnalyticsDemo';
 import AdminLayout from 'layouts/Admin';
@@ -54,7 +54,7 @@ const RedirectToPrivacy = () => { window.location.replace(`${LANDING_URL}/privac
 const RedirectToTerms = () => { window.location.replace(`${LANDING_URL}/terms-conditions`); return null; };
 // Lazy load QR scanning components for mobile performance
 const ProductDetail = lazyWithRetry(() => import('views/Scan/ProductDetail/ProductDetail'));
-import ProfileEstablishment from 'views/Dashboard/Dashboard/Establishment/ProfileEstablishment';
+import ProfileFarm from 'views/Dashboard/Dashboard/Farm/ProfileFarm';
 //@ts-ignore
 import ProfileParcel from 'views/Dashboard/Dashboard/Parcel/ProfileParcel';
 import ProfileProduction from 'views/Dashboard/Dashboard/Production/ProfileProduction';
@@ -91,8 +91,8 @@ import DashboardPricing from 'views/Dashboard/Dashboard/Pricing';
 import StripeSuccessRedirect from 'views/Dashboard/Dashboard/Subscription/StripeSuccessRedirect';
 import UnifiedSubscriptionDashboard from 'views/Dashboard/UnifiedSubscription';
 import NoSubscriptionRedirect from './utils/protections/NoSubscriptionRedirect';
-import ModernCarbonDashboard from 'views/Dashboard/Dashboard/Establishment/ModernCarbonDashboard';
-import PublicEstablishmentProfile from 'views/Scan/PublicEstablishmentProfile/PublicEstablishmentProfile';
+import ModernCarbonDashboard from 'views/Dashboard/Dashboard/Farm/ModernCarbonDashboard';
+import PublicFarmProfile from 'views/Scan/PublicFarmProfile/PublicFarmProfile';
 import { usePointsStore } from './store/pointsStore';
 import ProducerEducationDashboard from 'views/Dashboard/Education';
 import EducationTopicDetail from 'views/Dashboard/Education/EducationTopicDetail';
@@ -269,9 +269,9 @@ const App = () => {
                     }
                   />
                   <Route path="profile" element={<ProfileUser />} />
-                  <Route path="establishment/add" element={<AddEstablishment />} />
+                  <Route path="farm/add" element={<AddFarm />} />
                   <Route
-                    path="establishment/:establishmentId"
+                    path="farm/:farmId"
                     exact
                     element={
                       <NoSubscriptionRedirect>
@@ -282,99 +282,99 @@ const App = () => {
                     }
                   />
                   <Route
-                    path="establishment/:establishmentId/change"
+                    path="farm/:farmId/change"
                     exact
-                    element={<AddEstablishment isEdit={true} />}
+                    element={<AddFarm isEdit={true} />}
                   />
                   <Route
-                    path="establishment/:establishmentId/profile"
+                    path="farm/:farmId/profile"
                     exact
-                    element={<ProfileEstablishment />}
+                    element={<ProfileFarm />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/add"
+                    path="farm/:farmId/parcel/add"
                     exact
                     element={<AddParcel />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId"
+                    path="farm/:farmId/parcel/:parcelId"
                     exact
                     element={<ParcelView />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/change"
+                    path="farm/:farmId/parcel/:parcelId/change"
                     exact
                     element={<AddParcel isEdit={true} />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/profile"
+                    path="farm/:farmId/parcel/:parcelId/profile"
                     exact
                     element={<ProfileParcel />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/event/add"
+                    path="farm/:farmId/parcel/:parcelId/event/add"
                     exact
                     element={<UpdateEvent />}
                   />
                   {/* <Route
-                  path="establishment/:establishmentId/parcel/:parcelId/event/:eventId"
+                  path="farm/:farmId/parcel/:parcelId/event/:eventId"
                   exact
                   element={<DetailEvent />}
                 /> */}
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/event/:eventId/change"
+                    path="farm/:farmId/parcel/:parcelId/event/:eventId/change"
                     exact
                     element={<UpdateEvent isEdit={true} />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/add"
+                    path="farm/:farmId/parcel/:parcelId/production/add"
                     exact
                     element={<QuickStartProduction />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/:productionId"
+                    path="farm/:farmId/parcel/:parcelId/production/:productionId"
                     exact
                     element={<ProfileProduction />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/change"
+                    path="farm/:farmId/parcel/:parcelId/production/:productionId/change"
                     exact
                     element={<QuickStartProduction isEdit={true} />}
                   />
                   <Route
-                    path="establishment/:establishmentId/parcel/:parcelId/production/:productionId/finish"
+                    path="farm/:farmId/parcel/:parcelId/production/:productionId/finish"
                     exact
                     element={<FinishProduction />}
                   />
                   <Route
-                    path="establishment/:establishmentId/certifications/parcels"
+                    path="farm/:farmId/certifications/parcels"
                     exact
                     element={<CertificationsView />}
                   />
                   <Route
-                    path="establishment/:establishmentId/certifications/events"
+                    path="farm/:farmId/certifications/events"
                     exact
                     element={<CertificationsView />}
                   />
                   <Route
-                    path="establishment/:establishmentId/commercial"
+                    path="farm/:farmId/commercial"
                     exact
                     element={<CommercialView />}
                   />
                   <Route
-                    path="establishment/:establishmentId/scans"
+                    path="farm/:farmId/scans"
                     exact
                     element={<AllScansView />}
                   />
                   <Route
-                    path="establishment/:establishmentId/reviews"
+                    path="farm/:farmId/reviews"
                     exact
                     element={<AllReviewsView />}
                   />
                   <Route path="settings" exact element={<AdminGuard><SettingsView /></AdminGuard>} />
                   <Route path="settings/change-password" exact element={<AdminGuard><ChangePassword /></AdminGuard>} />
                   <Route
-                    path="establishment/:establishmentId/transparency"
+                    path="farm/:farmId/transparency"
                     exact
                     element={
                       <NoSubscriptionRedirect>
@@ -405,8 +405,8 @@ const App = () => {
               </Route>
               <Route element={<AuthLayout />}>
                 <Route
-                  path="/establishment/:establishmentId"
-                  element={<PublicEstablishmentProfile />}
+                  path="/farm/:farmId"
+                  element={<PublicFarmProfile />}
                 />
               </Route>
               <Route element={<Authenticated allowedRoles={config.protected.roles} />}>

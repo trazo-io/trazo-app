@@ -27,7 +27,7 @@ const Reviews = () => {
   const intl = useIntl();
   const navigate = useNavigate();
   const textColor = useColorModeValue('gray.700', 'white');
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
   const [showAllReviews, setShowAllReviews] = useState(false);
 
   const currentCompany = useSelector((state) => state.company.currentCompany);
@@ -35,26 +35,26 @@ const Reviews = () => {
   const { data: reviews } = useGetEstablishmentLastReviewsQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId
+      farmId
     },
     {
-      skip: !currentCompany || !establishmentId || currentCompany?.id === undefined
+      skip: !currentCompany || !farmId || currentCompany?.id === undefined
     }
   );
 
   const { data: reviewsPercentage } = useGetEstablishmentProductReputationPercentageQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId
+      farmId
     },
     {
-      skip: !currentCompany || !establishmentId || currentCompany?.id === undefined
+      skip: !currentCompany || !farmId || currentCompany?.id === undefined
     }
   );
 
   const handleViewAllReviews = () => {
     // Navigate to dedicated reviews page or show modal
-    navigate(`/admin/dashboard/establishment/${establishmentId}/reviews`);
+    navigate(`/admin/dashboard/farm/${farmId}/reviews`);
   };
 
   const displayedReviews = showAllReviews ? reviews : reviews?.slice(0, 3);

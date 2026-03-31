@@ -1,6 +1,6 @@
 import {
-  ESTABLISHMENT_CHART_SCANS_VS_SALES_INFO_URL,
-  ESTABLISHMENT_PRODUCTS_URL,
+  FARM_CHART_SCANS_VS_SALES_INFO_URL,
+  FARM_PRODUCTS_URL,
   PARCEL_HISTORY_URL,
   PARCEL_URL,
   PRODUCT_URL
@@ -12,15 +12,15 @@ import baseApi from './baseApi';
 export const productApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getParcel: build.query({
-      query: ({ companyId, establishmentId, parcelId }) => ({
-        url: PARCEL_URL(companyId, establishmentId, parcelId),
+      query: ({ companyId, farmId, parcelId }) => ({
+        url: PARCEL_URL(companyId, farmId, parcelId),
         method: 'GET',
         credentials: 'include'
       }),
       providesTags: (result, error, parcelId) => (result ? [{ type: 'Parcel', parcelId }] : [])
     }),
     createParcel: build.mutation({
-      query: ({ companyId, establishmentId, parcelData }) => {
+      query: ({ companyId, farmId, parcelData }) => {
         const formData = new FormData();
 
         // Handle either uploaded_image_urls or direct file uploads
@@ -43,7 +43,7 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('area', parcelData.area || '0'); // Ensure area is a string number
         formData.append('polygon', JSON.stringify(parcelData.polygon || []));
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
-        formData.append('establishment', establishmentId);
+        formData.append('establishment', farmId);
 
         // ✅ Contact & Identification Fields - Send ALL fields
         if (parcelData.soil_type) {
@@ -95,24 +95,24 @@ export const productApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: PARCEL_URL(companyId, establishmentId),
+          url: PARCEL_URL(companyId, farmId),
           method: 'POST',
           credentials: 'include',
           body: formData,
           formData: true
         };
       },
-      invalidatesTags: (result, error, { establishmentId }) =>
+      invalidatesTags: (result, error, { farmId }) =>
         result
           ? [
               'Parcel',
-              { type: 'Establishment', id: establishmentId },
-              'Company' // ✅ CRITICAL: Invalidate Company to refresh establishments with new parcels
+              { type: 'Farm', id: farmId },
+              'Company' // Invalidate Company to refresh farms with new parcels
             ]
           : []
     }),
     updateParcel: build.mutation({
-      query: ({ companyId, establishmentId, parcelId, parcelData }) => {
+      query: ({ companyId, farmId, parcelId, parcelData }) => {
         const formData = new FormData();
 
         // Handle either uploaded_image_urls or direct file uploads
@@ -190,20 +190,20 @@ export const productApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: PARCEL_URL(companyId, establishmentId, parcelId),
+          url: PARCEL_URL(companyId, farmId, parcelId),
           method: 'PATCH',
           credentials: 'include',
           body: formData,
           formData: true
         };
       },
-      invalidatesTags: (result, error, { parcelId, establishmentId }) => [
+      invalidatesTags: (result, error, { parcelId, farmId }) => [
         { type: 'Parcel', parcelId },
-        { type: 'Establishment', id: establishmentId },
+        { type: 'Farm', id: farmId },
         'Company' // Also refresh company data when updating parcels
       ],
       async onQueryStarted(
-        { companyId, establishmentId, parcelId },
+        { companyId, farmId, parcelId },
         { dispatch, queryFulfilled }
       ) {
         try {
@@ -212,7 +212,7 @@ export const productApi = baseApi.injectEndpoints({
           dispatch(
             productApi.util.updateQueryData(
               'getParcel',
-              { companyId, establishmentId, parcelId },
+              { companyId, farmId, parcelId },
               () => updatedParcel
             )
           );
@@ -228,34 +228,34 @@ export const productApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getEstablishmentProducts: build.query({
-      query: ({ companyId, establishmentId, parcelId }) => ({
+    getFarmProducts: build.query({
+      query: ({ companyId, farmId, parcelId }) => ({
         url:
-          ESTABLISHMENT_PRODUCTS_URL(companyId, establishmentId) +
+          FARM_PRODUCTS_URL(companyId, farmId) +
           (parcelId ? `?parcel=${parcelId}` : ''),
         method: 'GET',
         credentials: 'include'
       })
     }),
-    getEstablishmentHistories: build.query({
-      query: ({ companyId, establishmentId, parcelId, productId, completed }) => {
+    getFarmHistories: build.query({
+      query: ({ companyId, farmId, parcelId, productId, completed }) => {
         const params = new URLSearchParams();
         if (productId) params.append('product', productId);
         if (completed) params.append('completed', 'true');
         const queryString = params.toString();
         return {
           url:
-            PARCEL_HISTORY_URL(companyId, establishmentId, parcelId) +
+            PARCEL_HISTORY_URL(companyId, farmId, parcelId) +
             (queryString ? `?${queryString}` : ''),
           method: 'GET',
           credentials: 'include'
         };
       }
     }),
-    getEstablishmentScansVsSalesChartInfo: build.query({
-      query: ({ companyId, establishmentId, parcelId, productId, periodId, productionId }) => ({
+    getFarmScansVsSalesChartInfo: build.query({
+      query: ({ companyId, farmId, parcelId, productId, periodId, productionId }) => ({
         url:
-          ESTABLISHMENT_CHART_SCANS_VS_SALES_INFO_URL(companyId, establishmentId) +
+          FARM_CHART_SCANS_VS_SALES_INFO_URL(companyId, farmId) +
           (periodId ? `?period=${periodId}` : '') +
           (parcelId ? `&parcel=${parcelId}` : '') +
           (productionId ? `&production=${productionId}` : '') +
@@ -273,7 +273,15 @@ export const {
   useCreateParcelMutation,
   useUpdateParcelMutation,
   useGetProductsQuery,
-  useGetEstablishmentProductsQuery,
-  useGetEstablishmentHistoriesQuery,
-  useGetEstablishmentScansVsSalesChartInfoQuery
+  useGetFarmProductsQuery,
+  useGetFarmHistoriesQuery,
+  useGetFarmScansVsSalesChartInfoQuery
 } = productApi;
+
+// Backward-compat aliases for renamed hooks
+/** @deprecated Use useGetFarmProductsQuery instead */
+export const useGetEstablishmentProductsQuery = useGetFarmProductsQuery;
+/** @deprecated Use useGetFarmHistoriesQuery instead */
+export const useGetEstablishmentHistoriesQuery = useGetFarmHistoriesQuery;
+/** @deprecated Use useGetFarmScansVsSalesChartInfoQuery instead */
+export const useGetEstablishmentScansVsSalesChartInfoQuery = useGetFarmScansVsSalesChartInfoQuery;

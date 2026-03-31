@@ -100,6 +100,9 @@ interface Event {
       created_at?: string;
     }>;
   };
+  // Photo verification fields from backend
+  verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+  photo_content_flag?: 'not_agricultural' | 'ai_generated' | 'stock_photo' | null;
   // Chemical event fields (stored directly on event object)
   commercial_name?: string;
   volume?: string;
@@ -674,8 +677,8 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   const { currentCompany } = useSelector((state: RootState) => state.company);
 
   // Get URL parameters
-  const { establishmentId, parcelId } = useParams<{
-    establishmentId: string;
+  const { farmId, parcelId } = useParams<{
+    farmId: string;
     parcelId: string;
   }>();
 
@@ -755,17 +758,17 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
   const handleEdit = () => {
     navigate(
-      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/event/${event.id}/change?event_type=${event.event_type}`
+      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/${event.id}/change?event_type=${event.event_type}`
     );
     onClose();
   };
 
   const handleDelete = () => {
-    if (!currentCompany || !establishmentId || !event) return;
+    if (!currentCompany || !farmId || !event) return;
 
     deleteEvent({
       companyId: currentCompany.id.toString(),
-      establishmentId: establishmentId,
+      farmId: farmId,
       eventId: event.id.toString(),
       eventType: event.event_type.toString()
     })
@@ -938,6 +941,24 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
                       Event Photos
                     </Text>
+                    {/* Photo content warning for flagged AI/stock photos */}
+                    {event.photo_content_flag && (
+                      <Alert status="warning" borderRadius="lg" mb={4} fontSize="sm">
+                        <AlertIcon boxSize={4} />
+                        <Box>
+                          <Text fontWeight="medium">
+                            {event.photo_content_flag === 'ai_generated'
+                              ? 'This photo appears to be AI-generated.'
+                              : event.photo_content_flag === 'stock_photo'
+                              ? 'This photo appears to be a stock image.'
+                              : 'This photo was not recognized as agricultural content.'}
+                          </Text>
+                          <Text color="gray.600" mt={1}>
+                            Replace it with a real field photo to improve your transparency score.
+                          </Text>
+                        </Box>
+                      </Alert>
+                    )}
                     <Grid
                       templateColumns={{
                         base: 'repeat(2, 1fr)',

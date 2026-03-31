@@ -39,8 +39,8 @@ const authSlice = createSlice({
       // Clear session-scoped flags that could bleed between user sessions
       sessionStorage.removeItem('pendingInvitation');
       sessionStorage.removeItem('just_authenticated');
-      sessionStorage.removeItem('creating_establishment');
-      sessionStorage.removeItem('just_created_establishment_id');
+      sessionStorage.removeItem('creating_farm');
+      sessionStorage.removeItem('just_created_farm_id');
     },
     setData: (state, { payload }) => {
       const newData = state.data ? { ...state.data, ...payload.data } : payload.data;

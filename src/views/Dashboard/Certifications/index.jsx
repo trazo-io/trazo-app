@@ -22,7 +22,7 @@ import MiniStatistics from '../Dashboard/components/MiniStatistics';
 import { useSelector } from 'react-redux';
 
 export default function CertificationsView() {
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
 
   const [currentEstablishmentId, setCurrentEstablishmentId] = useState(null);
   const [establishment, setEstablishment] = useState(null);
@@ -54,12 +54,12 @@ export default function CertificationsView() {
     let establishment;
     if (establishments) {
       establishment = establishments.filter(
-        (establishment) => establishment.id.toString() === establishmentId
+        (establishment) => establishment.id.toString() === farmId
       )[0];
-      setCurrentEstablishmentId(establishmentId);
+      setCurrentEstablishmentId(farmId);
       setEstablishment(establishment);
     }
-  }, [establishmentId, establishments]);
+  }, [farmId, establishments]);
 
   const parcelsMatch = useMatch('certifications/parcels');
   const eventsMatch = useMatch('certifications/events');
@@ -82,7 +82,7 @@ export default function CertificationsView() {
       <SimpleGrid columns={{ sm: 2, md: 3, xl: 4 }} spacing="24px">
         {establishments ? (
           establishments.map((prop, key) => (
-            <NavLink to={`/admin/dashboard/establishment/${prop.id}/certifications/${currentView}`}>
+            <NavLink to={`/admin/dashboard/farm/${prop.id}/certifications/${currentView}`}>
               <MiniStatistics
                 key={key}
                 isSelected={prop.id === establishment?.id}

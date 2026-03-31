@@ -170,7 +170,7 @@ function ProfileProduction() {
   const navigate = useNavigate();
   const toast = useToast();
   const { canWrite } = useUserRole();
-  const { establishmentId, productionId, parcelId } = useParams();
+  const { farmId, productionId, parcelId } = useParams();
   const [establishment, setEstablishment] = useState<any>(null);
   const {
     isOpen: isQuickAddOpen,
@@ -330,10 +330,10 @@ function ProfileProduction() {
 
   useEffect(() => {
     if (establishments) {
-      const found = establishments.filter((est: any) => est.id.toString() === establishmentId)[0];
+      const found = establishments.filter((est: any) => est.id.toString() === farmId)[0];
       setEstablishment(found);
     }
-  }, [establishmentId, establishments]);
+  }, [farmId, establishments]);
 
   // Get transparency score
   const getTransparencyScore = (): number => {
@@ -436,7 +436,7 @@ function ProfileProduction() {
       <StandardPage
         showBackButton
         onBack={() =>
-          navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+          navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
         }
       >
         <StandardPageLoading />
@@ -449,7 +449,7 @@ function ProfileProduction() {
       <StandardPage
         showBackButton
         onBack={() =>
-          navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+          navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
         }
       >
         <Box py={8} textAlign="center">
@@ -466,7 +466,7 @@ function ProfileProduction() {
     <StandardPage
       showBackButton
       onBack={() =>
-        navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
       }
     >
       <VStack spacing={{ base: 4, md: 8 }} w="100%">
@@ -505,7 +505,7 @@ function ProfileProduction() {
                     leftIcon={<Icon as={FaEdit} />}
                     onClick={() =>
                       navigate(
-                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${productionId}/change`
+                        `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}/change`
                       )
                     }
                   >
@@ -652,7 +652,7 @@ function ProfileProduction() {
               size="sm"
               leftIcon={<Icon as={FaChartLine} />}
               onClick={() =>
-                navigate(`/admin/dashboard/establishment/${establishmentId}/transparency`)
+                navigate(`/admin/dashboard/farm/${farmId}/transparency`)
               }
             >
               {intl.formatMessage({ id: 'production.viewTransparencyDetails' })}
@@ -834,14 +834,14 @@ function ProfileProduction() {
               icon={FaBuilding}
               label="Establishment"
               value={historyData?.parcel?.establishment?.name || 'Unknown'}
-              onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
+              onClick={() => navigate(`/admin/dashboard/farm/${farmId}`)}
             />
             <InfoRow
               icon={MdLocationOn}
               label="Parcel"
               value={historyData?.parcel?.name || 'Unknown'}
               onClick={() =>
-                navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+                navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
               }
             />
             {historyData?.parcel?.establishment?.location && (

@@ -1,4 +1,4 @@
-import { COMPANY_URL, ESTABLISHMENT_URL } from 'config';
+import { COMPANY_URL, FARM_URL } from 'config';
 
 import { Company } from 'types/company';
 import baseApi from './baseApi';
@@ -14,7 +14,7 @@ const companyApi = baseApi.injectEndpoints({
       providesTags: (result, error, companyId) => [
         { type: 'Company', id: companyId },
         ...(result?.establishments?.map((est) => ({
-          type: 'Establishment' as const,
+          type: 'Farm' as const,
           id: est.id
         })) || []),
         { type: 'Subscription', id: result?.subscription?.id }
@@ -51,12 +51,12 @@ const companyApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Company']
     }),
-    createEstablishment: build.mutation({
+    createFarm: build.mutation({
       query: ({ companyId, establishment }) => {
         // If we have uploaded image URLs, send them as JSON
         if (establishment.uploaded_image_urls && establishment.uploaded_image_urls.length > 0) {
           return {
-            url: ESTABLISHMENT_URL(companyId),
+            url: FARM_URL(companyId),
             method: 'POST',
             body: establishment,
             credentials: 'include'
@@ -82,14 +82,14 @@ const companyApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: ESTABLISHMENT_URL(companyId),
+          url: FARM_URL(companyId),
           method: 'POST',
           body: formData,
           formData: true,
           credentials: 'include'
         };
       },
-      invalidatesTags: ['Establishment', 'Company'],
+      invalidatesTags: ['Farm', 'Company'],
       // RTK Query optimistic update - prevents redirect race conditions
       async onQueryStarted({ companyId, establishment }, { dispatch, queryFulfilled }) {
         try {
@@ -110,22 +110,22 @@ const companyApi = baseApi.injectEndpoints({
         }
       }
     }),
-    editEstablishment: build.mutation({
-      query: ({ companyId, establishmentId, establishmentData }) => ({
-        url: ESTABLISHMENT_URL(companyId, establishmentId),
+    editFarm: build.mutation({
+      query: ({ companyId, farmId, establishmentData }) => ({
+        url: FARM_URL(companyId, farmId),
         method: 'PATCH',
         credentials: 'include',
         body: establishmentData
       }),
-      invalidatesTags: ['Establishment', 'Company'],
-      async onQueryStarted({ companyId, establishmentId }, { dispatch, queryFulfilled }) {
+      invalidatesTags: ['Farm', 'Company'],
+      async onQueryStarted({ companyId, farmId }, { dispatch, queryFulfilled }) {
         try {
           const { data: updatedEstablishment } = await queryFulfilled;
-          // Update the getEstablishment cache immediately with the response
+          // Update the getFarm cache immediately with the response
           dispatch(
             companyApi.util.updateQueryData(
-              'getEstablishment',
-              { companyId, establishmentId },
+              'getFarm',
+              { companyId, farmId },
               () => updatedEstablishment
             )
           );
@@ -134,13 +134,13 @@ const companyApi = baseApi.injectEndpoints({
         }
       }
     }),
-    getEstablishment: build.query({
-      query: ({ companyId, establishmentId }) => ({
-        url: ESTABLISHMENT_URL(companyId, establishmentId),
+    getFarm: build.query({
+      query: ({ companyId, farmId }) => ({
+        url: FARM_URL(companyId, farmId),
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: ['Establishment', 'Company']
+      providesTags: ['Farm', 'Company']
     }),
     getCompanyMembers: build.query({
       query: ({ companyId }) => ({
@@ -164,18 +164,18 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getEstablishmentCarbonFootprints: build.query<
+    getFarmCarbonFootprints: build.query<
       any[],
-      { establishmentId: number; productionId?: number; year?: number }
+      { farmId: number; productionId?: number; year?: number }
     >({
-      query: ({ establishmentId, productionId, year }) => {
+      query: ({ farmId, productionId, year }) => {
         let url,
           params = '';
         if (productionId) {
           url = `/carbon/productions/${productionId}/summary/`;
           if (year) params = `?year=${year}`;
         } else {
-          url = `/carbon/establishments/${establishmentId}/summary/`;
+          url = `/carbon/establishments/${farmId}/summary/`;
           if (year) params = `?year=${year}`;
         }
         return {
@@ -187,16 +187,16 @@ const companyApi = baseApi.injectEndpoints({
     }),
     getCarbonFootprintSummary: build.query<
       any,
-      { establishmentId?: number; productionId?: number; year?: number }
+      { farmId?: number; productionId?: number; year?: number }
     >({
-      query: ({ establishmentId, productionId, year }) => {
+      query: ({ farmId, productionId, year }) => {
         let url,
           params = '';
         if (productionId) {
           url = `/carbon/productions/${productionId}/summary/`;
           if (year) params = `?year=${year}`;
-        } else if (establishmentId) {
-          url = `/carbon/establishments/${establishmentId}/summary/`;
+        } else if (farmId) {
+          url = `/carbon/establishments/${farmId}/summary/`;
           if (year) params = `?year=${year}`;
         } else {
           url = '/carbon/entries/summary/';
@@ -207,21 +207,21 @@ const companyApi = baseApi.injectEndpoints({
           credentials: 'include'
         };
       },
-      providesTags: (result, error, { establishmentId, productionId }) => [
-        { type: 'CarbonSummary', id: establishmentId || productionId },
+      providesTags: (result, error, { farmId, productionId }) => [
+        { type: 'CarbonSummary', id: farmId || productionId },
         'CarbonSummary'
       ]
     }),
-    addEstablishmentCarbonFootprint: build.mutation({
-      query: ({ establishmentId, footprintData }) => ({
-        url: `carbon/establishments/${establishmentId}/footprint/`,
+    addFarmCarbonFootprint: build.mutation({
+      query: ({ farmId, footprintData }) => ({
+        url: `carbon/establishments/${farmId}/footprint/`,
         method: 'POST',
         body: footprintData,
         credentials: 'include'
       }),
       invalidatesTags: ['CarbonSummary']
     }),
-    updateEstablishmentCarbonFootprint: build.mutation<any, { id: number; data: any }>({
+    updateFarmCarbonFootprint: build.mutation<any, { id: number; data: any }>({
       query: ({ id, data }) => ({
         url: `/carbon/entries/${id}/`,
         method: 'PATCH',
@@ -229,16 +229,16 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    deleteEstablishmentCarbonFootprint: build.mutation<any, { id: number }>({
+    deleteFarmCarbonFootprint: build.mutation<any, { id: number }>({
       query: ({ id }) => ({
         url: `/carbon/entries/${id}/`,
         method: 'DELETE',
         credentials: 'include'
       })
     }),
-    getCarbonCertifications: build.query<any[], { establishmentId: number }>({
-      query: ({ establishmentId }) => ({
-        url: `/carbon/certifications/?establishment=${establishmentId}`,
+    getCarbonCertifications: build.query<any[], { farmId: number }>({
+      query: ({ farmId }) => ({
+        url: `/carbon/certifications/?establishment=${farmId}`,
         method: 'GET',
         credentials: 'include'
       })
@@ -268,10 +268,10 @@ const companyApi = baseApi.injectEndpoints({
     }),
     getCarbonReports: build.query<
       any[],
-      { establishmentId: number; year?: number; reportType?: string }
+      { farmId: number; year?: number; reportType?: string }
     >({
-      query: ({ establishmentId, year, reportType }) => {
-        let url = `/carbon/reports/?establishment=${establishmentId}`;
+      query: ({ farmId, year, reportType }) => {
+        let url = `/carbon/reports/?establishment=${farmId}`;
         if (year) url += `&year=${year}`;
         if (reportType) url += `&report_type=${reportType}`;
         return {
@@ -310,15 +310,15 @@ const companyApi = baseApi.injectEndpoints({
       // Invalidate any queries that might have cached report data
       invalidatesTags: ['CarbonSummary']
     }),
-    getProductionsByEstablishment: build.query({
-      query: ({ establishmentId, _t }) => ({
-        url: `/carbon/productions-flat/?establishment=${establishmentId}${_t ? `&_t=${_t}` : ''}`,
+    getProductionsByFarm: build.query({
+      query: ({ farmId, _t }) => ({
+        url: `/carbon/productions-flat/?establishment=${farmId}${_t ? `&_t=${_t}` : ''}`,
         method: 'GET',
         credentials: 'include'
       }),
       // Add cache tags so this query is invalidated when startProduction runs
-      providesTags: (result, error, { establishmentId }) => [
-        { type: 'History', id: establishmentId },
+      providesTags: (result, error, { farmId }) => [
+        { type: 'History', id: farmId },
         'History',
         'Parcel'
       ]
@@ -326,19 +326,19 @@ const companyApi = baseApi.injectEndpoints({
     getCarbonEntries: build.query<
       any[],
       {
-        establishmentId?: number;
+        farmId?: number;
         productionId?: number;
         year?: number;
       }
     >({
-      query: ({ establishmentId, productionId, year }) => {
+      query: ({ farmId, productionId, year }) => {
         let url;
         if (productionId) {
           url = `/carbon/entries/?production=${productionId}`;
-        } else if (establishmentId) {
-          url = `/carbon/entries/?establishment=${establishmentId}`;
+        } else if (farmId) {
+          url = `/carbon/entries/?establishment=${farmId}`;
         } else {
-          throw new Error('Either establishmentId or productionId must be provided');
+          throw new Error('Either farmId or productionId must be provided');
         }
         if (year) url += `&year=${year}`;
         return {
@@ -347,19 +347,19 @@ const companyApi = baseApi.injectEndpoints({
           credentials: 'include'
         };
       },
-      providesTags: (result, error, { establishmentId, productionId }) => [
-        { type: 'CarbonSummary', id: establishmentId || productionId },
+      providesTags: (result, error, { farmId, productionId }) => [
+        { type: 'CarbonSummary', id: farmId || productionId },
         'CarbonSummary'
       ]
     }),
-    // Public endpoint for consumer-facing establishment view
-    getPublicEstablishment: build.query({
-      query: (establishmentId: string) => ({
-        url: `companies/public/establishments/${establishmentId}/`,
+    // Public endpoint for consumer-facing farm view
+    getPublicFarm: build.query({
+      query: (farmId: string) => ({
+        url: `companies/public/establishments/${farmId}/`,
         method: 'GET'
       }),
-      providesTags: (result, error, establishmentId) => [
-        { type: 'Establishment', id: establishmentId }
+      providesTags: (result, error, farmId) => [
+        { type: 'Farm', id: farmId }
       ]
     }),
     // Enhanced Production Start - Create new production with crop selection and blockchain
@@ -454,29 +454,49 @@ export const {
   useGetCompanyQuery,
   useCreateCompanyMutation,
   useUpdateCompanyMutation,
-  useCreateEstablishmentMutation,
-  useEditEstablishmentMutation,
-  useGetEstablishmentQuery,
+  useCreateFarmMutation,
+  useEditFarmMutation,
+  useGetFarmQuery,
   useGetCompanyMembersQuery,
   useGetCarbonEmissionSourcesQuery,
   useGetCarbonOffsetActionsQuery,
-  useGetEstablishmentCarbonFootprintsQuery,
+  useGetFarmCarbonFootprintsQuery,
   useGetCarbonFootprintSummaryQuery,
-  useAddEstablishmentCarbonFootprintMutation,
-  useUpdateEstablishmentCarbonFootprintMutation,
-  useDeleteEstablishmentCarbonFootprintMutation,
+  useAddFarmCarbonFootprintMutation,
+  useUpdateFarmCarbonFootprintMutation,
+  useDeleteFarmCarbonFootprintMutation,
   useGetCarbonCertificationsQuery,
   useAddCarbonCertificationMutation,
   useUpdateCarbonCertificationMutation,
   useDeleteCarbonCertificationMutation,
   useGetCarbonReportsQuery,
   useGenerateCarbonReportMutation,
-  useGetProductionsByEstablishmentQuery,
+  useGetProductionsByFarmQuery,
   useGetCarbonEntriesQuery,
-  useGetPublicEstablishmentQuery,
+  useGetPublicFarmQuery,
   useStartProductionMutation,
   useGetCropTypesQuery,
   useGetCropTypesDropdownQuery,
   useGetCertifiedProjectsQuery,
   useCreateCarbonOffsetMutation
 } = companyApi;
+
+// Backward-compat aliases for renamed hooks
+/** @deprecated Use useCreateFarmMutation instead */
+export const useCreateEstablishmentMutation = useCreateFarmMutation;
+/** @deprecated Use useEditFarmMutation instead */
+export const useEditEstablishmentMutation = useEditFarmMutation;
+/** @deprecated Use useGetFarmQuery instead */
+export const useGetEstablishmentQuery = useGetFarmQuery;
+/** @deprecated Use useGetFarmCarbonFootprintsQuery instead */
+export const useGetEstablishmentCarbonFootprintsQuery = useGetFarmCarbonFootprintsQuery;
+/** @deprecated Use useAddFarmCarbonFootprintMutation instead */
+export const useAddEstablishmentCarbonFootprintMutation = useAddFarmCarbonFootprintMutation;
+/** @deprecated Use useUpdateFarmCarbonFootprintMutation instead */
+export const useUpdateEstablishmentCarbonFootprintMutation = useUpdateFarmCarbonFootprintMutation;
+/** @deprecated Use useDeleteFarmCarbonFootprintMutation instead */
+export const useDeleteEstablishmentCarbonFootprintMutation = useDeleteFarmCarbonFootprintMutation;
+/** @deprecated Use useGetProductionsByFarmQuery instead */
+export const useGetProductionsByEstablishmentQuery = useGetProductionsByFarmQuery;
+/** @deprecated Use useGetPublicFarmQuery instead */
+export const useGetPublicEstablishmentQuery = useGetPublicFarmQuery;

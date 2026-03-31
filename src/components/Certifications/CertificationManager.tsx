@@ -53,12 +53,12 @@ const CERTIFICATION_TYPE_OPTIONS: { value: CertificationType; label: string }[] 
 
 interface CertificationManagerProps {
   companyId: string;
-  establishmentId: string;
+  farmId: string;
 }
 
 const CertificationManager: React.FC<CertificationManagerProps> = ({
   companyId,
-  establishmentId
+  farmId
 }) => {
   const intl = useIntl();
   const toast = useToast();
@@ -79,7 +79,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
 
   const { data: certifications, isLoading } = useGetCertificationsQuery({
     companyId,
-    establishmentId
+    farmId
   });
 
   const [addCertification, { isLoading: isAdding }] = useAddCertificationMutation();
@@ -95,7 +95,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
 
       await addCertification({
         companyId,
-        establishmentId,
+        farmId,
         data: cleanData
       }).unwrap();
 
@@ -131,7 +131,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
     try {
       await deleteCertification({
         companyId,
-        establishmentId,
+        farmId,
         certificationId: String(deleteTarget.id)
       }).unwrap();
 
@@ -156,7 +156,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
     try {
       await verifyCertification({
         companyId,
-        establishmentId,
+        farmId,
         certificationId: String(cert.id)
       }).unwrap();
 

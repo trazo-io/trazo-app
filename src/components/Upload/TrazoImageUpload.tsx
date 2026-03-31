@@ -48,7 +48,9 @@ import {
   FaRedo
 } from 'react-icons/fa';
 import { IoMdImages } from 'react-icons/io';
+import imageCompression from 'browser-image-compression';
 import { useFileUpload, isStorageQuotaError } from '../../services/uploadService';
+import { offlinePhotoQueue } from '../../services/offlinePhotoQueue';
 import { S3Image } from '../Media/S3Image';
 
 const MotionBox = motion(Box);
@@ -73,7 +75,7 @@ interface UploadingFile {
 export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
   onUploadComplete,
   maxFiles = 5,
-  maxSize = 5 * 1024 * 1024, // 5MB
+  maxSize = 10 * 1024 * 1024, // 10MB - matches backend PhotoEvidenceService.MAX_FILE_SIZE
   existingImages = [],
   isLoading = false,
   onImagesChange
@@ -129,13 +131,25 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       const currentTotal = uploadedUrls.length + uploadingFiles.length;
       const newTotal = currentTotal + files.length;
 
-      // File type validation (since we removed accept prop)
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      const invalidFiles = files.filter((file) => !allowedTypes.includes(file.type));
+      // File type validation - includes HEIC/HEIF for iPhone users
+      const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/heic',
+        'image/heif'
+      ];
+      // Some browsers report HEIC as empty string or application/octet-stream
+      const isHeicByExtension = (file: File) =>
+        /\.(heic|heif)$/i.test(file.name);
+      const invalidFiles = files.filter(
+        (file) => !allowedTypes.includes(file.type) && !isHeicByExtension(file)
+      );
       if (invalidFiles.length > 0) {
         toast({
           title: 'Invalid file type',
-          description: `Only JPG, PNG, GIF, and WEBP images are allowed`,
+          description: `Only JPG, PNG, GIF, WEBP, and HEIC images are allowed`,
           status: 'error',
           duration: 4000,
           isClosable: true
@@ -185,11 +199,37 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         try {
           // Update progress by file name to avoid indexing issues
           setUploadingFiles((prev) =>
+            prev.map((item) => (item.file.name === file.name ? { ...item, progress: 10 } : item))
+          );
+
+          // 📦 Client-side compression before upload (massive mobile UX improvement)
+          // Reduces 5MB iPhone photos to ~500KB-1MB, cutting upload time by 5-10x on poor connections
+          let fileToUpload: File = file;
+          try {
+            const compressionOptions = {
+              maxSizeMB: 2,
+              maxWidthOrHeight: 2048,
+              useWebWorker: true,
+              preserveExif: false, // EXIF extracted server-side, stripped for privacy
+              fileType: 'image/jpeg' as const,
+              initialQuality: 0.8
+            };
+            fileToUpload = await imageCompression(file, compressionOptions);
+            console.log(
+              `[TrazoImageUpload] Compressed ${file.name}: ${(file.size / 1024).toFixed(0)}KB → ${(fileToUpload.size / 1024).toFixed(0)}KB`
+            );
+          } catch (compressionError) {
+            // Compression failed - upload original (server will compress)
+            console.warn('[TrazoImageUpload] Client compression failed, uploading original:', compressionError);
+            fileToUpload = file;
+          }
+
+          setUploadingFiles((prev) =>
             prev.map((item) => (item.file.name === file.name ? { ...item, progress: 25 } : item))
           );
 
-          // Upload the file
-          const uploadedUrl = await uploadFile(file);
+          // Upload the (compressed) file
+          const uploadedUrl = await uploadFile(fileToUpload);
 
           // Mark as successful by file name
           setUploadingFiles((prev) =>
@@ -220,6 +260,24 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
           }
         } catch (error) {
           console.error(`Upload failed for ${file.name}:`, error);
+
+          // If offline, queue the photo for later upload
+          if (!navigator.onLine) {
+            try {
+              await offlinePhotoQueue.enqueue(file);
+              setUploadingFiles((prev) => prev.filter((item) => item.file.name !== file.name));
+              toast({
+                title: 'Photo saved offline',
+                description: `${file.name} will upload automatically when you reconnect.`,
+                status: 'info',
+                duration: 4000,
+                isClosable: true
+              });
+              continue;
+            } catch (queueError) {
+              console.error('Failed to queue photo offline:', queueError);
+            }
+          }
 
           let errorMessage = 'Upload failed. Tap to retry.';
           let toastTitle = 'Upload failed';
@@ -304,7 +362,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
     return () => document.removeEventListener('paste', handlePaste);
   }, [handleFileSelect, toast]);
 
-  // Camera functions (unchanged - already good UX)
+  // Camera functions
   const openCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -316,9 +374,8 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       });
 
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      // Open modal first — the useEffect below will attach the stream
+      // once the <video> element is rendered
       setIsCameraOpen(true);
     } catch (error) {
       toast({
@@ -329,6 +386,13 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       });
     }
   };
+
+  // Attach camera stream to video element after modal renders
+  useEffect(() => {
+    if (isCameraOpen && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [isCameraOpen]);
 
   const capturePhoto = () => {
     if (!videoRef.current) return;
@@ -493,7 +557,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             : {}
         }
       >
-        <input {...getInputProps()} accept="image/jpeg,image/png,image/gif,image/webp" />
+        <input {...getInputProps()} accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.heic,.heif" />
 
         {/* Content based on state */}
         {totalImages === 0 ? (

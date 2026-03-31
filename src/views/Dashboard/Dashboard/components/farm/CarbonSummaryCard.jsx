@@ -24,12 +24,12 @@ import CardHeader from 'components/Card/CardHeader';
 import { FaClipboardList } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
 import { useGetCarbonFootprintSummaryQuery } from 'store/api/companyApi';
-import { useGetEstablishmentComprehensiveDashboardQuery } from 'store/api/dashboardMetricsApi';
+import { useGetFarmComprehensiveDashboardQuery } from 'store/api/dashboardMetricsApi';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 
-const TransparencySummaryCard = ({ establishmentId }) => {
+const TransparencySummaryCard = ({ farmId }) => {
   const intl = useIntl();
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
@@ -46,11 +46,11 @@ const TransparencySummaryCard = ({ establishmentId }) => {
     isLoading: isLoadingComprehensive,
     isFetching: isFetchingComprehensive,
     isError: isErrorComprehensive
-  } = useGetEstablishmentComprehensiveDashboardQuery(
-    { companyId, establishmentId },
+  } = useGetFarmComprehensiveDashboardQuery(
+    { companyId, farmId },
     {
       refetchOnMountOrArgChange: true,
-      skip: !companyId || !establishmentId
+      skip: !companyId || !farmId
     }
   );
 
@@ -61,7 +61,7 @@ const TransparencySummaryCard = ({ establishmentId }) => {
     isFetching: isFetchingCarbon,
     isError: isErrorCarbon
   } = useGetCarbonFootprintSummaryQuery(
-    { establishmentId, year },
+    { farmId, year },
     { refetchOnMountOrArgChange: true }
   );
 

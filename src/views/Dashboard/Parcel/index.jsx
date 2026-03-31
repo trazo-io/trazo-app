@@ -17,10 +17,14 @@ import { setParcel } from 'store/features/productSlice';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { useIntl } from 'react-intl';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTour } from 'hooks/useTour';
 
 export default function ParcelView() {
   const intl = useIntl();
-  const { establishmentId, parcelId } = useParams();
+  const { farmId, parcelId } = useParams();
+
+  // Parcel dashboard tour — auto-starts on first visit
+  useTour('parcel-dashboard');
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -34,14 +38,14 @@ export default function ParcelView() {
   const establishment = useSelector(
     (state) =>
       state.company.currentCompany?.establishments?.filter(
-        (establishment) => establishment.id === Number(establishmentId)
+        (establishment) => establishment.id === Number(farmId)
       )[0]
   );
 
   const { data, error, isLoading, isFetching, refetch } = useGetParcelQuery(
-    { parcelId, establishmentId, companyId: currentCompany?.id },
+    { parcelId, farmId, companyId: currentCompany?.id },
     {
-      skip: !parcelId || !establishmentId || !currentCompany || currentCompany?.id === undefined
+      skip: !parcelId || !farmId || !currentCompany || currentCompany?.id === undefined
     }
   );
 
@@ -93,7 +97,7 @@ export default function ParcelView() {
             state={establishment?.state}
             city={establishment?.city}
             zone={establishment?.zone}
-            readMoreLink={`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/profile`}
+            readMoreLink={`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/profile`}
             image={
               data?.image ? (
                 <Image

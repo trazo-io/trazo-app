@@ -194,14 +194,14 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const getCommercialDashboardPath = (notification: Notification): string | null => {
-    const establishmentId = notification.extra_data?.establishment_id;
-    if (establishmentId) {
+    const farmId = notification.extra_data?.establishment_id;
+    if (farmId) {
       const params = new URLSearchParams();
       if (notification.extra_data?.parcel_id) params.set('parcelId', String(notification.extra_data.parcel_id));
       if (notification.extra_data?.product_id) params.set('productId', String(notification.extra_data.product_id));
       if (notification.extra_data?.production_id) params.set('productionId', String(notification.extra_data.production_id));
       const query = params.toString() ? `?${params.toString()}` : '';
-      return `/admin/dashboard/establishment/${establishmentId}/commercial${query}`;
+      return `/admin/dashboard/farm/${farmId}/commercial${query}`;
     }
     return null;
   };

@@ -36,7 +36,7 @@ import { useSelector } from 'react-redux';
 import { useUserRole } from 'hooks/useUserRole';
 import { useIntl } from 'react-intl';
 import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 'components/Design/StandardComponents';
-import { useGetEstablishmentQuery } from 'store/api/companyApi';
+import { useGetFarmQuery } from 'store/api/companyApi';
 import { StandardImageGallery } from 'components/ImageGallery';
 import CertificationManager from 'components/Certifications/CertificationManager';
 
@@ -112,12 +112,12 @@ const formatDisplayValue = (value: string | undefined | null): string => {
     .join(' ');
 };
 
-function ProfileEstablishment() {
+function ProfileFarm() {
   const intl = useIntl();
   const navigate = useNavigate();
   const toast = useToast();
   const { canWrite } = useUserRole();
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
 
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
 
@@ -126,13 +126,13 @@ function ProfileEstablishment() {
     error,
     isLoading,
     isUninitialized
-  } = useGetEstablishmentQuery(
+  } = useGetFarmQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId
+      farmId
     },
     {
-      skip: !establishmentId || currentCompany?.id === undefined
+      skip: !farmId || currentCompany?.id === undefined
     }
   );
 
@@ -247,7 +247,7 @@ function ProfileEstablishment() {
         ? 'http://localhost:3000'
         : `https://consumer.${import.meta.env.VITE_APP_BASE_DOMAIN}`;
 
-      const publicProfileUrl = `${baseUrl}/establishment/${establishmentId}`;
+      const publicProfileUrl = `${baseUrl}/farm/${farmId}`;
 
       if (navigator.share) {
         await navigator.share({
@@ -311,7 +311,7 @@ function ProfileEstablishment() {
                   variant="outline"
                   size="sm"
                   leftIcon={<Icon as={FaEdit} />}
-                  onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/change`)}
+                  onClick={() => navigate(`/admin/dashboard/farm/${farmId}/change`)}
                 >
                   {intl.formatMessage({ id: 'app.edit' })}
                 </StandardButton>
@@ -585,7 +585,7 @@ function ProfileEstablishment() {
         <StandardCard title={intl.formatMessage({ id: 'certification.manage.title' })} variant="elevated" padding={{ base: 3, md: 4 }}>
           <CertificationManager
             companyId={currentCompany?.id}
-            establishmentId={establishmentId}
+            farmId={farmId}
           />
         </StandardCard>
 
@@ -700,4 +700,4 @@ function ProfileEstablishment() {
   );
 }
 
-export default ProfileEstablishment;
+export default ProfileFarm;

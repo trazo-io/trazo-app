@@ -119,6 +119,9 @@ interface QuickStartProductionProps {
   productionId?: string;
 }
 
+// Product tour
+import { useTour } from 'hooks/useTour';
+
 const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   parcelId: propParcelId,
   parcelName,
@@ -126,7 +129,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   isEdit = false,
   productionId: propProductionId
 }) => {
-  const { parcelId: paramParcelId, establishmentId, productionId: paramProductionId } = useParams();
+  const { parcelId: paramParcelId, farmId, productionId: paramProductionId } = useParams();
   const parcelId = propParcelId || paramParcelId;
   const productionId = propProductionId || paramProductionId;
 
@@ -140,6 +143,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     onClose: onTemplateClose
   } = useDisclosure();
 
+  // Production creation tour
+  useTour('production-first', { enabled: !isEdit });
+
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [customEvents, setCustomEvents] = useState<any[]>([]);
@@ -152,9 +158,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
   // Fetch parcel data directly if not in Redux
   const { data: parcelData } = useGetParcelQuery(
-    { parcelId, establishmentId, companyId: currentCompany?.id },
+    { parcelId, farmId, companyId: currentCompany?.id },
     {
-      skip: !parcelId || !establishmentId || !currentCompany || !!currentParcel
+      skip: !parcelId || !farmId || !currentCompany || !!currentParcel
     }
   );
 
@@ -593,7 +599,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       }
 
       // Navigate to production dashboard
-      navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
+      navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`);
     } catch (error: any) {
       console.error(`Error ${isEdit ? 'updating' : 'creating'} production:`, error);
 
@@ -664,7 +670,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           <Button
             colorScheme="green"
             onClick={() =>
-              navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+              navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
             }
           >
             Go Back
@@ -687,13 +693,14 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       }
       showBackButton
       onBack={() =>
-        navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)
+        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
       }
     >
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={8} align="stretch">
           {/* Template Selection Section - Only show in create mode */}
           {!isEdit && (
+            <Box data-tour="template-events">
             <StandardCard
               title="Smart Setup Templates"
               subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes"
@@ -801,6 +808,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                 )}
               </VStack>
             </StandardCard>
+            </Box>
           )}
 
           {/* Production Details Form */}
@@ -808,7 +816,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             <VStack spacing={6} align="stretch">
               <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
                 {/* Crop Type Selection - First field */}
-                <GridItem colSpan={{ base: 1, md: 2 }}>
+                <GridItem colSpan={{ base: 1, md: 2 }} data-tour="crop-selector">
                   <StandardField
                     label={
                       <>
@@ -866,7 +874,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         >
                           {cropTypesData?.map((cropType) => (
                             <option key={cropType.id} value={cropType.id.toString()}>
-                              {cropType.name} - {cropType.category.replace('_', ' ')}
+                              {cropType.name}
                             </option>
                           ))}
                         </StandardSelect>
@@ -1043,7 +1051,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   variant="outline"
                   onClick={() =>
                     navigate(
-                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
+                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}`
                     )
                   }
                 >
@@ -1063,6 +1071,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
           {/* Pre-configured Events - Only show in create mode */}
           {!isEdit && customEvents.length > 0 && (
+            <Box data-tour="transparency-score-preview">
             <StandardCard
               title="Pre-configured Events"
               subtitle="Review and customize the events from your selected template"
@@ -1158,7 +1167,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   variant="outline"
                   onClick={() =>
                     navigate(
-                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`
+                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}`
                     )
                   }
                 >
@@ -1174,6 +1183,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                 </StandardButton>
               </HStack>
             </StandardCard>
+            </Box>
           )}
         </VStack>
       </form>

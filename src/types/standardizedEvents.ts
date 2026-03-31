@@ -167,6 +167,10 @@ export interface StandardizedChemicalEvent extends StandardizedEventBase {
   application_timing?: string;
   weather_conditions?: string;
 
+  // Organic certification status
+  organic_approved?: string; // omri_listed, usda_nop_approved, organic_equivalent, transitional, not_organic
+  chemical_subtype?: string; // organic_fertilizer, synthetic_pesticide, etc.
+
   // Legacy compatibility fields
   volume?: string;
   area?: string;

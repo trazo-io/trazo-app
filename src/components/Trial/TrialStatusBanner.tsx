@@ -17,7 +17,7 @@ import { RootState } from 'store';
 import { useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { Company } from 'types/company';
-import { useOnboarding } from 'hooks/useOnboarding';
+import { useTourStore } from 'store/tourStore';
 
 interface TrialStatusBannerProps {
   showOnlyWhenTrialExpiringSoon?: boolean;
@@ -28,7 +28,7 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
 }) => {
   const navigate = useNavigate();
   const intl = useIntl();
-  const { openOnboarding, resetOnboarding } = useOnboarding();
+  const resetAllTours = useTourStore((s) => s.resetAllTours);
 
   // Get company data from Redux
   const company = useSelector((state: RootState) => {
@@ -176,8 +176,7 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
             variant="outline"
             colorScheme="blue"
             onClick={() => {
-              resetOnboarding();
-              openOnboarding();
+              resetAllTours();
             }}
           >
             {intl.formatMessage({ id: 'app.setupGuide' })}

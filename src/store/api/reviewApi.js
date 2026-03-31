@@ -18,10 +18,10 @@ export const historyApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (result) => (result ? ['Review'] : [])
     }),
-    getEstablishmentLastReviews: build.query({
-      query: ({ companyId, establishmentId, parcelId, productId, periodId, productionId }) => ({
+    getFarmLastReviews: build.query({
+      query: ({ companyId, farmId, parcelId, productId, periodId, productionId }) => ({
         url:
-          LAST_REVIEWS_URL(companyId, establishmentId) +
+          LAST_REVIEWS_URL(companyId, farmId) +
           (periodId ? `?period=${periodId}` : '') +
           (parcelId ? `&parcel=${parcelId}` : '') +
           (productionId ? `&production=${productionId}` : '') +
@@ -30,10 +30,10 @@ export const historyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getEstablishmentProductReputation: build.query({
-      query: ({ companyId, establishmentId, parcelId, productId, periodId, productionId }) => ({
+    getFarmProductReputation: build.query({
+      query: ({ companyId, farmId, parcelId, productId, periodId, productionId }) => ({
         url:
-          PRODUCT_REPUTATION_URL(companyId, establishmentId) +
+          PRODUCT_REPUTATION_URL(companyId, farmId) +
           (periodId ? `?period=${periodId}` : '') +
           (parcelId ? `&parcel=${parcelId}` : '') +
           (productionId ? `&production=${productionId}` : '') +
@@ -42,10 +42,10 @@ export const historyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getEstablishmentProductReputationPercentage: build.query({
-      query: ({ companyId, establishmentId, parcelId, productId, periodId, productionId }) => ({
+    getFarmProductReputationPercentage: build.query({
+      query: ({ companyId, farmId, parcelId, productId, periodId, productionId }) => ({
         url:
-          PRODUCT_REPUTATION_PERCENTAGE_URL(companyId, establishmentId) +
+          PRODUCT_REPUTATION_PERCENTAGE_URL(companyId, farmId) +
           (periodId ? `?period=${periodId}` : '') +
           (parcelId ? `&parcel=${parcelId}` : '') +
           (productionId ? `&production=${productionId}` : '') +
@@ -54,7 +54,7 @@ export const historyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getEstablishmentReviewsPaginated: build.query({
+    getFarmReviewsPaginated: build.query({
       query: ({ establishment_id, company_id, page = 1, page_size = 20, ...filters }) => {
         const params = new URLSearchParams({
           establishment_id,
@@ -77,8 +77,18 @@ export const historyApi = baseApi.injectEndpoints({
 
 export const {
   useSendReviewMutation,
-  useGetEstablishmentProductReputationQuery,
-  useGetEstablishmentLastReviewsQuery,
-  useGetEstablishmentProductReputationPercentageQuery,
-  useGetEstablishmentReviewsPaginatedQuery
+  useGetFarmProductReputationQuery,
+  useGetFarmLastReviewsQuery,
+  useGetFarmProductReputationPercentageQuery,
+  useGetFarmReviewsPaginatedQuery
 } = historyApi;
+
+// Backward-compat aliases for renamed hooks
+/** @deprecated Use useGetFarmProductReputationQuery instead */
+export const useGetEstablishmentProductReputationQuery = useGetFarmProductReputationQuery;
+/** @deprecated Use useGetFarmLastReviewsQuery instead */
+export const useGetEstablishmentLastReviewsQuery = useGetFarmLastReviewsQuery;
+/** @deprecated Use useGetFarmProductReputationPercentageQuery instead */
+export const useGetEstablishmentProductReputationPercentageQuery = useGetFarmProductReputationPercentageQuery;
+/** @deprecated Use useGetFarmReviewsPaginatedQuery instead */
+export const useGetEstablishmentReviewsPaginatedQuery = useGetFarmReviewsPaginatedQuery;

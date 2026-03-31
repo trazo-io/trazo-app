@@ -563,6 +563,29 @@ export function getReadableFieldValue(field: string, value: string): string {
       suckering: '🌿 Suckering',
       training: '🪴 Training',
       other: '✂️ Other Canopy Work'
+    },
+    // Organic compliance fields (NOP record-keeping)
+    treated_or_untreated: {
+      untreated: 'Untreated',
+      organically_treated: 'Organically Treated'
+    },
+    previous_use: {
+      organic: '🌱 Organic Production Only',
+      conventional: '🏭 Conventional Production',
+      mixed: '🔀 Mixed (Organic & Conventional)',
+      unknown: '❓ Unknown'
+    },
+    cleaning_protocol: {
+      water_rinse: '💧 Water Rinse',
+      detergent: '🧴 Detergent Wash',
+      triple_rinse: '💧💧💧 Triple Rinse',
+      steam: '♨️ Steam Cleaning',
+      other: 'Other Method'
+    },
+    compost_temperature_reached_131f: {
+      yes: '✅ Yes (NOP Compliant)',
+      no: '❌ No',
+      not_measured: '❓ Not Measured'
     }
   };
 
@@ -1788,6 +1811,131 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
   }
 
   // ============================================================
+  // Organic Compliance Fields (from extra_data)
+  // NOP record-keeping support — displays seed sourcing, amendment,
+  // and equipment cleaning details for organic transparency
+  // ============================================================
+
+  // Seed sourcing details (NOP 205.204)
+  const seedSupplier = event.seed_supplier || extraData.seed_supplier;
+  if (isValidValue(seedSupplier)) {
+    secondary.push({
+      label: 'Seed Supplier',
+      value: seedSupplier,
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Seed supplier for organic traceability (NOP 205.204)'
+    });
+  }
+
+  const seedVariety = event.seed_variety || extraData.seed_variety;
+  if (isValidValue(seedVariety)) {
+    secondary.push({
+      label: 'Seed Variety',
+      value: seedVariety,
+      priority: 'secondary',
+      category: 'operational'
+    });
+  }
+
+  const seedLotNumber = event.seed_lot_number || extraData.seed_lot_number;
+  if (isValidValue(seedLotNumber)) {
+    details.push({
+      label: 'Seed Lot Number',
+      value: seedLotNumber,
+      priority: 'details',
+      category: 'verification',
+      tooltip: 'Lot number for seed traceability'
+    });
+  }
+
+  const organicCertNumber = event.organic_certificate_number || extraData.organic_certificate_number;
+  if (isValidValue(organicCertNumber)) {
+    secondary.push({
+      label: 'Supplier Organic Certificate',
+      value: organicCertNumber,
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Organic certificate number from seed supplier'
+    });
+  }
+
+  const seedTreatment = event.treated_or_untreated || extraData.treated_or_untreated;
+  if (isValidValue(seedTreatment)) {
+    secondary.push({
+      label: 'Seed Treatment',
+      value: getReadableFieldValue('treated_or_untreated', seedTreatment),
+      priority: 'secondary',
+      category: 'verification'
+    });
+  }
+
+  // Amendment/compost details (NOP 205.203)
+  const amendmentSupplier = event.amendment_source_supplier || extraData.amendment_source_supplier;
+  if (isValidValue(amendmentSupplier)) {
+    secondary.push({
+      label: 'Amendment Supplier',
+      value: amendmentSupplier,
+      priority: 'secondary',
+      category: 'verification'
+    });
+  }
+
+  const cToNRatio = event.c_to_n_ratio || extraData.c_to_n_ratio;
+  if (isValidValue(cToNRatio)) {
+    secondary.push({
+      label: 'C:N Ratio',
+      value: cToNRatio,
+      priority: 'secondary',
+      category: 'measurement',
+      tooltip: 'Carbon-to-nitrogen ratio of compost (NOP requires documentation)'
+    });
+  }
+
+  const compostTemp = event.compost_temperature_reached_131f || extraData.compost_temperature_reached_131f;
+  if (isValidValue(compostTemp)) {
+    secondary.push({
+      label: 'Compost Reached 131\u00b0F',
+      value: getReadableFieldValue('compost_temperature_reached_131f', compostTemp),
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'NOP requires compost to reach 131\u00b0F for 3+ days (in-vessel) or 15 days (windrow)'
+    });
+  }
+
+  // Equipment cleaning details (NOP 205.272)
+  const previousUse = event.previous_use || extraData.previous_use;
+  if (isValidValue(previousUse)) {
+    secondary.push({
+      label: 'Previous Equipment Use',
+      value: getReadableFieldValue('previous_use', previousUse),
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Equipment use before cleaning — required for organic compliance (NOP 205.272)'
+    });
+  }
+
+  const cleaningProtocol = event.cleaning_protocol || extraData.cleaning_protocol;
+  if (isValidValue(cleaningProtocol)) {
+    secondary.push({
+      label: 'Cleaning Protocol',
+      value: getReadableFieldValue('cleaning_protocol', cleaningProtocol),
+      priority: 'secondary',
+      category: 'verification'
+    });
+  }
+
+  const inspectedBy = event.inspected_by || extraData.inspected_by;
+  if (isValidValue(inspectedBy)) {
+    details.push({
+      label: 'Cleaning Inspected By',
+      value: inspectedBy,
+      priority: 'details',
+      category: 'verification'
+    });
+  }
+
+  // ============================================================
   // PO (Pollination) subtype-specific fields
   // ============================================================
   if (event.production_type === 'PO' || eventType === 'po') {
@@ -2684,6 +2832,39 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
       value: getReadableFieldValue('growth_stage', event.growth_stage),
       priority: 'secondary',
       category: 'operational'
+    });
+  }
+
+  // Organic Compliance Fields for Soil Management (NOP 205.203)
+  const amendmentSupplier = event.amendment_source_supplier || extraData.amendment_source_supplier;
+  if (isValidValue(amendmentSupplier)) {
+    secondary.push({
+      label: 'Amendment Supplier',
+      value: amendmentSupplier,
+      priority: 'secondary',
+      category: 'verification'
+    });
+  }
+
+  const cToNRatio = event.c_to_n_ratio || extraData.c_to_n_ratio;
+  if (isValidValue(cToNRatio)) {
+    secondary.push({
+      label: 'C:N Ratio',
+      value: cToNRatio,
+      priority: 'secondary',
+      category: 'measurement',
+      tooltip: 'Carbon-to-nitrogen ratio of compost (NOP requires documentation)'
+    });
+  }
+
+  const compostTemp = event.compost_temperature_reached_131f || extraData.compost_temperature_reached_131f;
+  if (isValidValue(compostTemp)) {
+    secondary.push({
+      label: 'Compost Reached 131\u00b0F',
+      value: getReadableFieldValue('compost_temperature_reached_131f', compostTemp),
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'NOP requires compost to reach 131\u00b0F for 3+ days (in-vessel) or 15 days (windrow)'
     });
   }
 

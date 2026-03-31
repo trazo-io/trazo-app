@@ -234,9 +234,16 @@ export const APPLICATION_TIMING_OPTIONS: FieldOption[] = [
 ];
 
 // Organic approved options - values must match backend ChemicalEvent.organic_approved choices
+// Updated to show detailed NOP-aligned options first, with legacy values kept for backward compatibility
 export const ORGANIC_APPROVED_OPTIONS: FieldOption[] = [
-  { value: 'yes', labelKey: 'common.yes' },
-  { value: 'no', labelKey: 'common.no' }
+  { value: 'omri_listed', labelKey: 'quickAdd.fields.organicApproved.omriListed' },
+  { value: 'usda_nop_approved', labelKey: 'quickAdd.fields.organicApproved.usdaNopApproved' },
+  { value: 'organic_equivalent', labelKey: 'quickAdd.fields.organicApproved.organicEquivalent' },
+  { value: 'not_organic', labelKey: 'quickAdd.fields.organicApproved.notOrganic' },
+  { value: 'transitional', labelKey: 'quickAdd.fields.organicApproved.transitional' },
+  // Legacy values (backward compatible with existing events)
+  { value: 'yes', labelKey: 'quickAdd.fields.organicApproved.legacyYes' },
+  { value: 'no', labelKey: 'quickAdd.fields.organicApproved.legacyNo' }
 ];
 
 // Restricted Use Pesticide options (EPA compliance)

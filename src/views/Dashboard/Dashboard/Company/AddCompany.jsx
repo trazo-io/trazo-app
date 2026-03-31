@@ -41,7 +41,7 @@ import { setCompany } from 'store/features/companySlice';
 import { setUserCompany } from 'store/features/userSlice';
 // Unused imports removed: Card, CardBody, NewCompany (legacy crop selection components)
 
-// US States - 2-letter codes required for USDA API and RegionalEmissionFactor carbon calculations
+// US States - 2-letter codes for company headquarters location
 const US_STATES = [
   { code: 'AL', name: 'Alabama' },
   { code: 'AK', name: 'Alaska' },
@@ -104,12 +104,12 @@ const companySchema = object({
   name: string().min(1, 'Company name is required'),
   tradename: string().optional(),
   email: string().email('Invalid email address'),
-  phone: string().min(1, 'Phone number is required'), // Required for USDA compliance
-  legalStructure: string().optional(), // Business entity type
-  // Location fields (Step 1) - State required for carbon calculations (USDA API needs 2-letter codes)
+  phone: string().min(1, 'Phone number is required'),
+  legalStructure: string().optional(),
+  // Location fields (Step 1) - Company headquarters address
   address: string().optional(),
   city: string().optional(),
-  state: string().min(1, 'State is required for carbon calculations'), // REQUIRED - USDA API needs this
+  state: string().min(1, 'State is required'),
   zipCode: string().optional(),
   // Sustainability (Step 2)
   sustainabilityGoals: array(string()).optional()
@@ -206,7 +206,7 @@ function AddCompany({ isEdit = false }) {
     resolver: zodResolver(companySchema),
     defaultValues: {
       sustainabilityGoals: [],
-      state: '', // US 2-letter state code - required for USDA API
+      state: '',
       legalStructure: '' // Business entity type
     }
   });
@@ -239,10 +239,10 @@ function AddCompany({ isEdit = false }) {
       contact_email: data.email,
       contact_phone: data.phone,
       legal_structure: data.legalStructure || '',
-      // Location fields - State is REQUIRED (2-letter US code for USDA API)
+      // Location fields
       address: data.address || '',
       city: data.city || '',
-      state: data.state, // Required 2-letter US state code
+      state: data.state,
       country: 'US', // US-only focus for now
       zip_code: data.zipCode || '',
       // Status
@@ -308,7 +308,7 @@ function AddCompany({ isEdit = false }) {
         duration: 5000,
         isClosable: true,
       });
-      navigate(`/admin/dashboard/establishment/add`);
+      navigate(`/admin/dashboard/farm/add`);
     }
   }, [isSuccessCompany, dataCompany, dispatch, navigate]);
 
@@ -328,7 +328,7 @@ function AddCompany({ isEdit = false }) {
     switch (step) {
       case 0: // Company Info - name, email, phone required
         return !!name && !!email && !!phone && !hasErrors;
-      case 1: // Location - state required for carbon calculations (USDA API)
+      case 1: // Location - state required for company address
         return !!state;
       case 2: // Sustainability - optional
         return true;
@@ -490,7 +490,7 @@ function AddCompany({ isEdit = false }) {
                   </StandardField>
                 </SimpleGrid>
 
-                {/* Email & Phone - Both required for USDA compliance */}
+                {/* Email & Phone */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
                     label="Email Address"
@@ -510,7 +510,7 @@ function AddCompany({ isEdit = false }) {
                     label="Phone Number"
                     required
                     error={errors.phone?.message}
-                    helpText="Required for regulatory compliance"
+                    helpText="Primary contact number for your farm"
                   >
                     <StandardInput
                       {...methods.register('phone')}
@@ -521,7 +521,7 @@ function AddCompany({ isEdit = false }) {
                   </StandardField>
                 </SimpleGrid>
 
-                {/* Legal Structure - Important for USDA/FSA registration */}
+                {/* Legal Structure */}
                 <StandardField
                   label="Legal Structure"
                   error={errors.legalStructure?.message}
@@ -567,7 +567,7 @@ function AddCompany({ isEdit = false }) {
             </StandardCard>
           )}
 
-          {/* Step 1: Location Information - US States dropdown for USDA API compatibility */}
+          {/* Step 1: Location Information - Company headquarters */}
           {currentStep === 1 && (
             <StandardCard
               title="Location Details"
@@ -597,7 +597,7 @@ function AddCompany({ isEdit = false }) {
                     label="State"
                     required
                     error={errors.state?.message}
-                    helpText="Required for regional carbon calculations"
+                    helpText="Your company's headquarter state"
                   >
                     <StandardSelect {...methods.register('state')} value={watch('state') || ''}>
                       <option value="">Select your state...</option>
@@ -626,8 +626,8 @@ function AddCompany({ isEdit = false }) {
                 {/* Location Info Alert */}
                 <StandardAlert
                   status="info"
-                  title="Why State Matters"
-                  description="Your state determines regional emission factors for accurate carbon calculations. This helps provide precise sustainability insights for your area."
+                  title="Company Location"
+                  description="This is your company's headquarters address. Your farm location will be set up in the next step when you create your establishment — that's where regional agricultural context is applied."
                 />
 
                 {/* Navigation */}
@@ -682,7 +682,7 @@ function AddCompany({ isEdit = false }) {
                   <StandardAlert
                     status="success"
                     title={`${sustainabilityGoals.length} Goals Selected`}
-                    description="We'll help you track progress and provide actionable insights to achieve these goals."
+                    description="These goals will be displayed on your consumer-facing product page, showing buyers your sustainability commitment."
                   />
                 )}
 

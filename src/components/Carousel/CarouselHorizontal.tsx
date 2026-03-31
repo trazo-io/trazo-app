@@ -42,7 +42,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
   const textColor = useColorModeValue('gray.700', 'white');
   const intl = useIntl();
   const navigate = useNavigate();
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
 
   // State for scroll progress tracking
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -132,7 +132,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
   // Subscription limits check for parcel creation
   const company = useSelector((state) => state.company?.currentCompany);
   const canCreateParcel = useMemo(() => {
-    if (!company || !establishmentId) return false;
+    if (!company || !farmId) return false;
 
     const plan = company.subscription_plan || company.subscription?.plan;
     if (!plan?.features) return false;
@@ -140,7 +140,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
     // For Corporate plans with per-establishment limits
     if (plan.features.max_parcels_per_establishment > 0) {
       const establishment = company.establishments?.find(
-        (e) => e.id === parseInt(String(establishmentId))
+        (e) => e.id === parseInt(String(farmId))
       );
       const establishmentParcels = establishment?.parcels?.length || 0;
       const maxParcelsPerEst = plan.features.max_parcels_per_establishment;
@@ -158,7 +158,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
     }
 
     return false;
-  }, [company, establishmentId]);
+  }, [company, farmId]);
 
   // 2025 Best Practice: Batch load all parcel images at once
   const parcelImageUrls = useMemo(() => {
@@ -226,7 +226,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                 boxShadow: 'lg'
               }}
               onClick={() =>
-                navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/add`)
+                navigate(`/admin/dashboard/farm/${farmId}/parcel/add`)
               }
             >
               <Flex direction="column" align="center" justify="center" gap={0.5}>

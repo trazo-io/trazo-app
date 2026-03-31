@@ -81,18 +81,18 @@ import { PerformanceSummary } from 'components/Performance/PerformanceSummary';
 // Import existing components - FOCUSED ON CARBON TRANSPARENCY
 import CarbonFootprintTab from '../components/forms/CarbonFootprintTab';
 import { useGetCarbonFootprintSummaryQuery, useGetCarbonEntriesQuery } from 'store/api/companyApi';
-import { useGetProductionsByEstablishmentQuery } from 'store/api/historyApi';
+import { useGetProductionsByFarmQuery } from 'store/api/historyApi';
 
 // ✅ ENHANCED: Focus on carbon transparency APIs
 import {
   useGetUSDAEmissionFactorsQuery,
   useGetUSDABenchmarkComparisonQuery,
-  useGetEstablishmentCarbonSummaryQuery,
+  useGetFarmCarbonSummaryQuery,
   useGetPublicCarbonSummaryQuery
 } from 'store/api/carbonApi';
 
 const CarbonDashboard = () => {
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
   const bg = useColorModeValue('gray.50', 'gray.800');
@@ -140,7 +140,7 @@ const CarbonDashboard = () => {
     isLoading: isSummaryLoading,
     error: summaryError
   } = useGetCarbonFootprintSummaryQuery({
-    establishmentId: viewMode === 'establishment' ? establishmentId : undefined,
+    farmId: viewMode === 'establishment' ? farmId : undefined,
     productionId: viewMode === 'production' ? productionId : undefined,
     year: new Date().getFullYear()
   });
@@ -165,7 +165,7 @@ const CarbonDashboard = () => {
     isLoading: isEntriesLoading,
     error: entriesError
   } = useGetCarbonEntriesQuery({
-    establishmentId: parseInt(establishmentId),
+    farmId: parseInt(farmId),
     year: new Date().getFullYear()
   });
 
@@ -209,7 +209,7 @@ const CarbonDashboard = () => {
   );
 
   const { data: productions, isLoading: isProductionsLoading } =
-    useGetProductionsByEstablishmentQuery({ establishmentId });
+    useGetProductionsByFarmQuery({ farmId });
 
   // Timeout mechanism for loading states
   useEffect(() => {
@@ -225,7 +225,7 @@ const CarbonDashboard = () => {
 
   // ✅ ENHANCED: Use Phase 1 carbon API for better data consistency
   const { data: enhancedCarbonData, isLoading: isEnhancedLoading } =
-    useGetEstablishmentCarbonSummaryQuery(establishmentId);
+    useGetFarmCarbonSummaryQuery(farmId);
 
   // Enhanced data processing with USDA verification and dynamic transparency scoring
   let processedData = {
@@ -390,7 +390,7 @@ const CarbonDashboard = () => {
       summaryData,
       summaryError,
       carbonEntries,
-      establishmentId,
+      farmId,
       viewMode,
       productionId,
       isSummaryLoading,
@@ -406,7 +406,7 @@ const CarbonDashboard = () => {
     summaryData,
     summaryError,
     carbonEntries,
-    establishmentId,
+    farmId,
     viewMode,
     productionId,
     isSummaryLoading,
@@ -424,8 +424,8 @@ const CarbonDashboard = () => {
     // Navigate to the event creation page
     navigate('/admin/events/add', {
       state: {
-        establishmentId: establishmentId,
-        returnTo: '/admin/dashboard/establishment',
+        farmId,
+        returnTo: '/admin/dashboard/farm',
         focus: 'carbon-tracking'
       }
     });
@@ -436,7 +436,7 @@ const CarbonDashboard = () => {
     // Navigate to verification setup with Phase 1 USDA integration
     navigate('/admin/verification/setup', {
       state: {
-        establishmentId: establishmentId,
+        farmId,
         step: 'usda-compliance',
         useEnhancedUSDA: true // Use Phase 1 real USDA API
       }
@@ -448,7 +448,7 @@ const CarbonDashboard = () => {
     // Navigate to transparency-focused reporting
     navigate('/admin/reports/transparency', {
       state: {
-        establishmentId: establishmentId,
+        farmId,
         reportType: 'carbon-transparency'
       }
     });
@@ -457,7 +457,7 @@ const CarbonDashboard = () => {
   const handleViewPublicProfile = () => {
     console.log('🎯 View Public Carbon Profile');
     // Navigate to public consumer view
-    window.open(`/consumer/establishment/${establishmentId}`, '_blank');
+    window.open(`/consumer/farm/${farmId}`, '_blank');
   };
 
   const handleViewTrends = () => {
@@ -465,7 +465,7 @@ const CarbonDashboard = () => {
     // Navigate to trends analysis
     navigate('/admin/analytics/trends', {
       state: {
-        establishmentId: establishmentId,
+        farmId,
         focus: 'carbon-transparency'
       }
     });
@@ -476,7 +476,7 @@ const CarbonDashboard = () => {
     // Export transparency-focused data
     if (processedData.hasData) {
       const exportData = {
-        establishment_id: establishmentId,
+        establishment_id: farmId,
         transparency_data: {
           ...processedData,
           usda_verification: realUSDAData?.success || false,
@@ -495,7 +495,7 @@ const CarbonDashboard = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `carbon-transparency-${establishmentId}-${new Date().getFullYear()}.json`;
+      a.download = `carbon-transparency-${farmId}-${new Date().getFullYear()}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -519,8 +519,8 @@ const CarbonDashboard = () => {
     if (summaryData && !isSummaryLoading) {
       registerQueryLoad('carbon-summary', false, summaryData);
     }
-    if (establishmentId) {
-      registerQueryLoad('establishment-data', false, { id: establishmentId });
+    if (farmId) {
+      registerQueryLoad('establishment-data', false, { id: farmId });
     }
     if (productions && !isProductionsLoading) {
       registerQueryLoad('productions', false, productions);
@@ -528,7 +528,7 @@ const CarbonDashboard = () => {
   }, [
     summaryData,
     isSummaryLoading,
-    establishmentId,
+    farmId,
     productions,
     isProductionsLoading,
     resetTimer,

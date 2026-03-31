@@ -34,7 +34,7 @@ interface Employee {
   type: string;
 }
 
-export interface Establishment {
+export interface Farm {
   id: string | number;
   name: string;
   description?: string;
@@ -50,6 +50,9 @@ export interface Establishment {
   latitude?: number;
   longitude?: number;
 }
+
+/** @deprecated Use Farm instead */
+export type Establishment = Farm;
 
 export interface Parcel {
   id: string | number;

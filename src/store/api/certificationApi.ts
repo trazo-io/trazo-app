@@ -4,7 +4,7 @@ import baseApi from './baseApi';
 
 interface CertificationQueryParams {
   companyId: string;
-  establishmentId: string;
+  farmId: string;
 }
 
 interface CertificationMutationParams extends CertificationQueryParams {
@@ -27,8 +27,8 @@ interface CertificationVerifyParams extends CertificationQueryParams {
 const certificationApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getCertifications: build.query<Certification[], CertificationQueryParams>({
-      query: ({ companyId, establishmentId }) => ({
-        url: CERTIFICATION_URL(companyId, establishmentId),
+      query: ({ companyId, farmId }) => ({
+        url: CERTIFICATION_URL(companyId, farmId),
         method: 'GET',
         credentials: 'include'
       }),
@@ -36,37 +36,37 @@ const certificationApi = baseApi.injectEndpoints({
     }),
 
     addCertification: build.mutation<Certification, CertificationMutationParams>({
-      query: ({ companyId, establishmentId, data }) => ({
-        url: CERTIFICATION_URL(companyId, establishmentId),
+      query: ({ companyId, farmId, data }) => ({
+        url: CERTIFICATION_URL(companyId, farmId),
         method: 'POST',
         body: data,
         credentials: 'include'
       }),
-      invalidatesTags: ['Certification', 'Establishment']
+      invalidatesTags: ['Certification', 'Farm']
     }),
 
     updateCertification: build.mutation<Certification, CertificationUpdateParams>({
-      query: ({ companyId, establishmentId, certificationId, data }) => ({
-        url: CERTIFICATION_URL(companyId, establishmentId, certificationId),
+      query: ({ companyId, farmId, certificationId, data }) => ({
+        url: CERTIFICATION_URL(companyId, farmId, certificationId),
         method: 'PATCH',
         body: data,
         credentials: 'include'
       }),
-      invalidatesTags: ['Certification', 'Establishment']
+      invalidatesTags: ['Certification', 'Farm']
     }),
 
     deleteCertification: build.mutation<void, CertificationDeleteParams>({
-      query: ({ companyId, establishmentId, certificationId }) => ({
-        url: CERTIFICATION_URL(companyId, establishmentId, certificationId),
+      query: ({ companyId, farmId, certificationId }) => ({
+        url: CERTIFICATION_URL(companyId, farmId, certificationId),
         method: 'DELETE',
         credentials: 'include'
       }),
-      invalidatesTags: ['Certification', 'Establishment']
+      invalidatesTags: ['Certification', 'Farm']
     }),
 
     verifyCertification: build.mutation<{ status: string; certification_id: number }, CertificationVerifyParams>({
-      query: ({ companyId, establishmentId, certificationId }) => ({
-        url: CERTIFICATION_VERIFY_URL(companyId, establishmentId, certificationId),
+      query: ({ companyId, farmId, certificationId }) => ({
+        url: CERTIFICATION_VERIFY_URL(companyId, farmId, certificationId),
         method: 'POST',
         credentials: 'include'
       }),

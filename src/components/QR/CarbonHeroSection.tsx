@@ -519,7 +519,17 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               mt={1}
               textAlign="center"
             >
-              Based on farmer-reported documentation. Not independently audited.
+              Based on farmer-reported documentation. Not independently audited.{' '}
+              <Text
+                as="a"
+                href="https://www.trazo.io/methodology"
+                target="_blank"
+                rel="noopener noreferrer"
+                color="green.500"
+                _hover={{ textDecoration: 'underline' }}
+              >
+                How we calculate this
+              </Text>
             </Text>
 
             {/* Consumer-friendly message */}

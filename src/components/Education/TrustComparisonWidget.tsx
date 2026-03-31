@@ -78,14 +78,14 @@ interface TrustIndicator {
 }
 
 interface TrustComparisonWidgetProps {
-  establishmentData?: any;
+  farmData?: any;
   contextData?: any;
   compact?: boolean;
   showDetails?: boolean;
 }
 
 const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
-  establishmentData,
+  farmData,
   contextData,
   compact = false,
   showDetails = true
@@ -104,7 +104,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
     error,
     refetch: fetchTrustComparison
   } = useGetTrustComparisonDataQuery({
-    establishmentId: establishmentData?.id,
+    farmId: farmData?.id,
     context: contextData
   });
 

@@ -70,7 +70,7 @@ import { RocketIcon } from 'components/Icons/Icons';
 import Select from 'react-select';
 import { SlChemistry } from 'react-icons/sl';
 import WeatherTab from './WeatherTab';
-import { addCompanyEstablishment } from 'store/features/companySlice';
+import { addCompanyFarm } from 'store/features/companySlice';
 import avatar4 from 'assets/img/avatars/avatar4.png';
 import imageMap from 'assets/img/imageMap.png';
 import {
@@ -177,7 +177,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const toast = useToast();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { parcelId, establishmentId } = useParams();
+  const { parcelId, farmId } = useParams();
   const [searchParams] = useSearchParams();
 
   // Get event type from URL parameters when editing
@@ -247,7 +247,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
   } = useGetEventQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId: parseInt(establishmentId || '0'),
+      farmId: parseInt(farmId || '0'),
       eventId: parseInt(eventId || '0'),
       eventType: eventTypeFromUrl ? parseInt(eventTypeFromUrl) : undefined
     },
@@ -330,7 +330,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
             ...(event_type === 'production' && !formData.type && { type: 'PL' }),
             // Add parcel context for better calculations
             parcel_id: parseInt(parcelId || '0'),
-            establishment_id: parseInt(establishmentId || '0')
+            establishment_id: parseInt(farmId || '0')
           };
 
           const result = await calculateCarbonImpact({
@@ -1367,7 +1367,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // Update existing event
         await updateEvent({
           companyId: currentCompany.id,
-          establishmentId: parseInt(establishmentId || '0'),
+          farmId: parseInt(farmId || '0'),
           eventId: parseInt(eventId || '0'),
           eventType: eventTypeFromUrl ? parseInt(eventTypeFromUrl) : backendEventType,
           ...finalEventData,
@@ -1387,7 +1387,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // Create new event
         await createEvent({
           companyId: currentCompany.id,
-          establishmentId: parseInt(establishmentId || '0'),
+          farmId: parseInt(farmId || '0'),
           ...finalEventData
         }).unwrap();
 
@@ -1403,7 +1403,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       }
 
       // Navigate back to the parcel details
-      navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`, {
+      navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`, {
         replace: true
       });
     } catch (error) {
@@ -1453,9 +1453,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
   useEffect(() => {
     if (isCreateSuccess || isUpdateSuccess) {
       dispatch(clearForm());
-      navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`);
+      navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
     }
-  }, [isCreateSuccess, isUpdateSuccess, dispatch, navigate, establishmentId, parcelId]);
+  }, [isCreateSuccess, isUpdateSuccess, dispatch, navigate, farmId, parcelId]);
 
   // REMOVED: Watch for form data changes and recalculate carbon when on event details step
   // This was causing infinite loops with ChemicalTab's debounced onDataChange
@@ -1467,7 +1467,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // Handler for back navigation
   const handleBack = () => {
-    navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`);
+    navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
   };
 
   return (

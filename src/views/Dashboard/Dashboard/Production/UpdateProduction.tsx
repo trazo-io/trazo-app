@@ -23,7 +23,7 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
   const intl = useIntl();
   const navigate = useNavigate();
   const toast = useToast();
-  const { establishmentId, parcelId, productionId } = useParams();
+  const { farmId, parcelId, productionId } = useParams();
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
   const currentParcel = useSelector((state: RootState) => state.company.currentParcel);
   const [productOptions, setProductOptions] = useState<Array<{ value: string; label: string }>>([]);
@@ -154,7 +154,7 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
         });
 
         // Navigate back
-        navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
+        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`);
         return;
       }
 
@@ -188,7 +188,7 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
       });
 
       // Navigate back
-      navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
+      navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`);
     } catch (error: any) {
       console.error('Error saving production:', error);
       toast({
@@ -203,7 +203,7 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
   };
 
   const handleCancel = () => {
-    navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
+    navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`);
   };
 
   // Debug logging for edit mode

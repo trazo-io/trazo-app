@@ -11,7 +11,7 @@ function FinishProduction() {
   const intl = useIntl();
   const navigate = useNavigate();
   const toast = useToast();
-  const { parcelId, establishmentId, productionId } = useParams();
+  const { parcelId, farmId, productionId } = useParams();
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
 
   const [finishCurrentHistory, { isLoading }] = useFinishCurrentHistoryMutation();
@@ -20,7 +20,7 @@ function FinishProduction() {
     try {
       await finishCurrentHistory({
         companyId: currentCompany?.id,
-        establishmentId,
+        farmId,
         parcelId: parcelId,
         historyData: {
           ...data,
@@ -30,7 +30,7 @@ function FinishProduction() {
         }
       }).unwrap();
 
-      navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`);
+      navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
     } catch (error: any) {
       console.error('Error finishing production:', error);
 
@@ -66,7 +66,7 @@ function FinishProduction() {
   };
 
   const handleCancel = () => {
-    navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`);
+    navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`);
   };
 
   return (

@@ -1072,14 +1072,14 @@ export interface EventTemplatesResponse {
 export const carbonApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Producer endpoints
-    getEstablishmentCarbonSummary: builder.query<CarbonSummary, string>({
-      query: (establishmentId) => ({
-        url: `carbon/establishments/${establishmentId}/summary/`,
+    getFarmCarbonSummary: builder.query<CarbonSummary, string>({
+      query: (farmId) => ({
+        url: `carbon/establishments/${farmId}/summary/`,
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result, error, establishmentId) => [
-        { type: 'CarbonSummary', id: establishmentId },
+      providesTags: (result, error, farmId) => [
+        { type: 'CarbonSummary', id: farmId },
         'CarbonSummary'
       ]
     }),
@@ -1178,8 +1178,8 @@ export const carbonApi = baseApi.injectEndpoints({
 
     // IoT endpoints
     getIoTDeviceStatus: builder.query<IoTDeviceStatus, string>({
-      query: (establishmentId) => ({
-        url: `carbon/iot-devices/device_status/?establishment_id=${establishmentId}`,
+      query: (farmId) => ({
+        url: `carbon/iot-devices/device_status/?establishment_id=${farmId}`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -1188,8 +1188,8 @@ export const carbonApi = baseApi.injectEndpoints({
 
     // IoT Device Management
     listIoTDevices: builder.query<{ devices: IoTDeviceDetails[]; total_count: number }, string>({
-      query: (establishmentId) => ({
-        url: `carbon/iot-devices/?establishment_id=${establishmentId}`,
+      query: (farmId) => ({
+        url: `carbon/iot-devices/?establishment_id=${farmId}`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -1250,8 +1250,8 @@ export const carbonApi = baseApi.injectEndpoints({
 
     // Automation Rules
     listAutomationRules: builder.query<{ rules: AutomationRule[]; total_count: number }, string>({
-      query: (establishmentId) => ({
-        url: `carbon/automation-rules/?establishment_id=${establishmentId}`,
+      query: (farmId) => ({
+        url: `carbon/automation-rules/?establishment_id=${farmId}`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -1273,8 +1273,8 @@ export const carbonApi = baseApi.injectEndpoints({
 
     // Pending Events and Approvals
     getPendingEvents: builder.query<PendingEventsResponse, string>({
-      query: (establishmentId) => ({
-        url: `carbon/automation-rules/pending_events/?establishment_id=${establishmentId}`,
+      query: (farmId) => ({
+        url: `carbon/automation-rules/pending_events/?establishment_id=${farmId}`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -1317,11 +1317,11 @@ export const carbonApi = baseApi.injectEndpoints({
     // Weather API endpoints
     getCurrentWeatherConditions: builder.query<
       WeatherResponse,
-      { establishmentId?: string; lat?: number; lng?: number }
+      { farmId?: string; lat?: number; lng?: number }
     >({
-      query: ({ establishmentId, lat, lng }) => {
+      query: ({ farmId, lat, lng }) => {
         const params = new URLSearchParams();
-        if (establishmentId) params.append('establishment_id', establishmentId);
+        if (farmId) params.append('establishment_id', farmId);
         if (lat !== undefined) params.append('lat', lat.toString());
         if (lng !== undefined) params.append('lng', lng.toString());
 
@@ -1336,11 +1336,11 @@ export const carbonApi = baseApi.injectEndpoints({
 
     getWeatherAlerts: builder.query<
       WeatherResponse,
-      { establishmentId?: string; lat?: number; lng?: number }
+      { farmId?: string; lat?: number; lng?: number }
     >({
-      query: ({ establishmentId, lat, lng }) => {
+      query: ({ farmId, lat, lng }) => {
         const params = new URLSearchParams();
-        if (establishmentId) params.append('establishment_id', establishmentId);
+        if (farmId) params.append('establishment_id', farmId);
         if (lat !== undefined) params.append('lat', lat.toString());
         if (lng !== undefined) params.append('lng', lng.toString());
 
@@ -1355,14 +1355,14 @@ export const carbonApi = baseApi.injectEndpoints({
 
     getWeatherRecommendations: builder.query<
       WeatherResponse,
-      { establishmentId?: string; lat?: number; lng?: number; establishmentType?: string }
+      { farmId?: string; lat?: number; lng?: number; farmType?: string }
     >({
-      query: ({ establishmentId, lat, lng, establishmentType }) => {
+      query: ({ farmId, lat, lng, farmType }) => {
         const params = new URLSearchParams();
-        if (establishmentId) params.append('establishment_id', establishmentId);
+        if (farmId) params.append('establishment_id', farmId);
         if (lat !== undefined) params.append('lat', lat.toString());
         if (lng !== undefined) params.append('lng', lng.toString());
-        if (establishmentType) params.append('establishment_type', establishmentType);
+        if (farmType) params.append('establishment_type', farmType);
 
         return {
           url: `carbon/weather/recommendations/?${params.toString()}`,
@@ -1375,11 +1375,11 @@ export const carbonApi = baseApi.injectEndpoints({
 
     getWeatherForecast: builder.query<
       WeatherResponse,
-      { establishmentId?: string; lat?: number; lng?: number; days?: number }
+      { farmId?: string; lat?: number; lng?: number; days?: number }
     >({
-      query: ({ establishmentId, lat, lng, days = 7 }) => {
+      query: ({ farmId, lat, lng, days = 7 }) => {
         const params = new URLSearchParams();
-        if (establishmentId) params.append('establishment_id', establishmentId);
+        if (farmId) params.append('establishment_id', farmId);
         if (lat !== undefined) params.append('lat', lat.toString());
         if (lng !== undefined) params.append('lng', lng.toString());
         params.append('days', days.toString());
@@ -1485,15 +1485,15 @@ export const carbonApi = baseApi.injectEndpoints({
 
     getRegionalBenchmark: builder.query<
       RegionalBenchmarkData,
-      { establishmentId: number; carbonIntensity?: number; cropType?: string }
+      { farmId: number; carbonIntensity?: number; cropType?: string }
     >({
-      query: ({ establishmentId, carbonIntensity, cropType }) => {
+      query: ({ farmId, carbonIntensity, cropType }) => {
         const params = new URLSearchParams();
         if (carbonIntensity) params.append('carbon_intensity', carbonIntensity.toString());
         if (cropType) params.append('crop_type', cropType);
 
         return {
-          url: `carbon/regional-benchmark/${establishmentId}/?${params.toString()}`,
+          url: `carbon/regional-benchmark/${farmId}/?${params.toString()}`,
           method: 'GET',
           credentials: 'include'
         };
@@ -1502,8 +1502,8 @@ export const carbonApi = baseApi.injectEndpoints({
     }),
 
     getUSDACredibilityInfo: builder.query<USDACredibilityData, number>({
-      query: (establishmentId) => ({
-        url: `carbon/usda-credibility/${establishmentId}/`,
+      query: (farmId) => ({
+        url: `carbon/usda-credibility/${farmId}/`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -1533,11 +1533,11 @@ export const carbonApi = baseApi.injectEndpoints({
 
     getTrustComparisonData: builder.query<
       TrustComparisonData,
-      { establishmentId?: number; context?: any }
+      { farmId?: number; context?: any }
     >({
-      query: ({ establishmentId, context }) => {
+      query: ({ farmId, context }) => {
         const params = new URLSearchParams();
-        if (establishmentId) params.append('establishment_id', establishmentId.toString());
+        if (farmId) params.append('establishment_id', farmId.toString());
         if (context) params.append('context', JSON.stringify(context));
 
         return {
@@ -1836,7 +1836,7 @@ export const carbonApi = baseApi.injectEndpoints({
     }),
 
     // Paginated Carbon Entries - Following Trazo pagination pattern like Scans
-    getEstablishmentCarbonEntriesPaginated: builder.query<
+    getFarmCarbonEntriesPaginated: builder.query<
       {
         results: Array<{
           id: number;
@@ -1858,7 +1858,7 @@ export const carbonApi = baseApi.injectEndpoints({
         previous?: string;
       },
       {
-        establishment_id: string;
+        farm_id: string;
         page?: number;
         page_size?: number;
         type?: string;
@@ -1869,21 +1869,21 @@ export const carbonApi = baseApi.injectEndpoints({
         date_to?: string;
       }
     >({
-      query: ({ establishment_id, page = 1, page_size = 10, ...filters }) => {
+      query: ({ farm_id, page = 1, page_size = 10, ...filters }) => {
         const params = new URLSearchParams({
-          establishment_id,
+          establishment_id: farm_id,
           page: page.toString(),
           page_size: page_size.toString(),
           ...Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== '' && v != null))
         });
         return {
-          url: `carbon/establishments/${establishment_id}/entries/paginated/?${params}`,
+          url: `carbon/establishments/${farm_id}/entries/paginated/?${params}`,
           method: 'GET',
           credentials: 'include'
         };
       },
-      providesTags: (result, error, { establishment_id }) => [
-        { type: 'CarbonSummary', id: establishment_id },
+      providesTags: (result, error, { farm_id }) => [
+        { type: 'CarbonSummary', id: farm_id },
         'CarbonSummary'
       ]
     }),
@@ -2109,16 +2109,16 @@ export const carbonApi = baseApi.injectEndpoints({
         };
         generated_at: string;
       },
-      { companyId: string; establishmentId: string }
+      { companyId: string; farmId: string }
     >({
-      query: ({ companyId, establishmentId }) => ({
-        url: `companies/${companyId}/establishments/${establishmentId}/dashboard_comprehensive/`,
+      query: ({ companyId, farmId }) => ({
+        url: `companies/${companyId}/establishments/${farmId}/dashboard_comprehensive/`,
         method: 'GET',
         credentials: 'include'
       }),
       keepUnusedDataFor: 300, // Cache for 5 minutes
-      providesTags: (result, error, { establishmentId }) => [
-        { type: 'DashboardComprehensive', id: establishmentId },
+      providesTags: (result, error, { farmId }) => [
+        { type: 'DashboardComprehensive', id: farmId },
         'CarbonSummary'
       ]
     }),
@@ -2160,16 +2160,16 @@ export const carbonApi = baseApi.injectEndpoints({
         }>;
         generated_at: string;
       },
-      { companyId: string; establishmentId: string }
+      { companyId: string; farmId: string }
     >({
-      query: ({ companyId, establishmentId }) => ({
-        url: `companies/${companyId}/establishments/${establishmentId}/carbon_scope_breakdown/`,
+      query: ({ companyId, farmId }) => ({
+        url: `companies/${companyId}/establishments/${farmId}/carbon_scope_breakdown/`,
         method: 'GET',
         credentials: 'include'
       }),
       keepUnusedDataFor: 300, // Cache for 5 minutes
-      providesTags: (result, error, { establishmentId }) => [
-        { type: 'CarbonScopeBreakdown', id: establishmentId },
+      providesTags: (result, error, { farmId }) => [
+        { type: 'CarbonScopeBreakdown', id: farmId },
         'CarbonSummary'
       ]
     })
@@ -2177,7 +2177,7 @@ export const carbonApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetEstablishmentCarbonSummaryQuery,
+  useGetFarmCarbonSummaryQuery,
   useGetProductionCarbonSummaryQuery,
   useGetCarbonBenchmarksQuery,
   useGetQRCodeQuickScoreQuery,
@@ -2233,7 +2233,7 @@ export const {
   // AI Smart Suggestions hook
   useGetAIEventSuggestionsQuery,
   // Paginated Carbon Entries hook
-  useGetEstablishmentCarbonEntriesPaginatedQuery,
+  useGetFarmCarbonEntriesPaginatedQuery,
   // Enhanced Security hooks
   useCreateSecureCarbonOffsetMutation,
   useValidateFileUploadSecurityMutation,
@@ -2252,8 +2252,14 @@ export const {
   useGetCarbonScopeBreakdownQuery
 } = carbonApi;
 
+// Backward-compat aliases for renamed hooks
+/** @deprecated Use useGetFarmCarbonSummaryQuery instead */
+export const useGetEstablishmentCarbonSummaryQuery = useGetFarmCarbonSummaryQuery;
+/** @deprecated Use useGetFarmCarbonEntriesPaginatedQuery instead */
+export const useGetEstablishmentCarbonEntriesPaginatedQuery = useGetFarmCarbonEntriesPaginatedQuery;
+
 // Debug logging
-console.log('🎯 carbonApi hooks exported:', {
+console.log('carbonApi hooks exported:', {
   useGetCompanyCropOptionsQuery: !!useGetCompanyCropOptionsQuery,
   carbonApi: !!carbonApi
 });

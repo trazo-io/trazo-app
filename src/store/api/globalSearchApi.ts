@@ -73,7 +73,7 @@ export const globalSearchApi = baseApi.injectEndpoints({
         { type: 'Search', id: 'GLOBAL' },
         // Tag individual results for potential invalidation
         ...(result?.results?.map((item) => ({
-          type: item.type === 'establishment' ? 'Establishment' : ('Parcel' as const),
+          type: item.type === 'establishment' ? 'Farm' : ('Parcel' as const),
           id: item.id
         })) || [])
       ]

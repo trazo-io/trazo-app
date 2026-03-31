@@ -96,7 +96,7 @@ import { CarbonHeroSection } from '../../../components/QR/CarbonHeroSection';
 import {
   ModernSidebar,
   UltraMobileProductionJourney,
-  CompanyEstablishmentInfo
+  CompanyFarmInfo
 } from './components';
 import InstantTrustDisplay from './components/InstantTrustDisplay';
 
@@ -1129,6 +1129,34 @@ function ProductDetail() {
                       />
                     </Box>
                   )}
+
+                  {/* Certification + Continuous Proof messaging — only for verified certifications */}
+                  {(() => {
+                    const certifications = (completeData as any)?.standard_view?.certifications || [];
+                    const hasVerifiedCert = certifications.some(
+                      (c: any) => c.status === 'verified_via_database'
+                    );
+                    if (!hasVerifiedCert) return null;
+                    const eventCount = completeData?.timeline?.length || 0;
+                    return (
+                      <Box
+                        mt={4}
+                        p={3}
+                        bg="green.50"
+                        borderRadius="md"
+                        borderLeft="3px solid"
+                        borderLeftColor="green.500"
+                      >
+                        <Text fontSize="sm" color="green.800">
+                          🏅{' '}
+                          {intl.formatMessage(
+                            { id: 'consumer.certification.verifiedContinuousProof' },
+                            { eventCount }
+                          )}
+                        </Text>
+                      </Box>
+                    );
+                  })()}
                 </Box>
               </Box>
 
@@ -1642,7 +1670,7 @@ function ProductDetail() {
 
           {/* Company Establishment Info - Farm Section */}
           <Box id="farm-section">
-            <CompanyEstablishmentInfo
+            <CompanyFarmInfo
               companyData={{
                 // Use company data from the enhanced API response
                 id: (completeData as any)?.farmer?.company?.id,

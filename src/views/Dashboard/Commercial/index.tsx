@@ -23,9 +23,9 @@ import {
 import { NavLink, useLocation, useMatch, useParams, useSearchParams } from 'react-router-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  useGetEstablishmentHistoriesQuery,
-  useGetEstablishmentProductsQuery,
-  useGetEstablishmentScansVsSalesChartInfoQuery
+  useGetFarmHistoriesQuery,
+  useGetFarmProductsQuery,
+  useGetFarmScansVsSalesChartInfoQuery
 } from 'store/api/productApi';
 
 import {
@@ -46,8 +46,8 @@ import ScansList from './components/ScansList';
 import { historyApi } from 'store/api/historyApi';
 import { productApi } from 'store/api/productApi';
 import { scansData } from 'variables/general';
-import { useGetEstablishmentProductReputationQuery } from 'store/api/reviewApi';
-import { useGetScansByEstablishmentQuery } from 'store/api/historyApi';
+import { useGetFarmProductReputationQuery } from 'store/api/reviewApi';
+import { useGetScansByFarmQuery } from 'store/api/historyApi';
 import { useIntl, FormattedMessage } from 'react-intl';
 import { useSelector } from 'react-redux';
 import {
@@ -349,10 +349,16 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
   );
 };
 
+// Product tour
+import { useTour } from 'hooks/useTour';
+
 export default function CommercialView() {
   const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white');
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
+
+  // Commercial dashboard tour
+  useTour('commercial-dashboard');
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Capture URL filter params (supports both initial mount and in-page navigation)
@@ -367,7 +373,7 @@ export default function CommercialView() {
     production: null,
     period: { id: 'week', name: intl.formatMessage({ id: 'app.thisWeek' }) }
   });
-  const [currentEstablishmentId, setCurrentEstablishmentId] = useState(null);
+  const [currentFarmId, setCurrentEstablishmentId] = useState(null);
   const [establishment, setEstablishment] = useState(null);
   const [currentView, setCurrentView] = useState(null);
 
@@ -397,7 +403,7 @@ export default function CommercialView() {
   const queryParams = React.useMemo(
     () => ({
       companyId: currentCompany?.id,
-      establishmentId: currentEstablishmentId,
+      farmId: currentFarmId,
       periodId: filters.period.id,
       productId: filters.product?.id,
       parcelId: filters.parcel?.id,
@@ -405,7 +411,7 @@ export default function CommercialView() {
     }),
     [
       currentCompany?.id,
-      currentEstablishmentId,
+      currentFarmId,
       filters.period.id,
       filters.product?.id,
       filters.parcel?.id,
@@ -413,10 +419,10 @@ export default function CommercialView() {
     ]
   );
 
-  const { data: dataEstablishmentScans } = useGetScansByEstablishmentQuery(
+  const { data: dataEstablishmentScans } = useGetScansByFarmQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId: currentEstablishmentId,
+      farmId: currentFarmId,
       period: filters.period.id,
       productId: filters.product?.id,
       parcelId: filters.parcel?.id,
@@ -424,7 +430,7 @@ export default function CommercialView() {
     },
     {
       skip:
-        !currentEstablishmentId ||
+        !currentFarmId ||
         !filters?.period ||
         !currentCompany ||
         currentCompany?.id === undefined
@@ -432,8 +438,8 @@ export default function CommercialView() {
   );
 
   const { data: dataEstablishmentScansVsSaleInfo, isFetching } =
-    useGetEstablishmentScansVsSalesChartInfoQuery(queryParams, {
-      skip: !queryParams.companyId || !queryParams.establishmentId || !queryParams.periodId,
+    useGetFarmScansVsSalesChartInfoQuery(queryParams, {
+      skip: !queryParams.companyId || !queryParams.farmId || !queryParams.periodId,
       refetchOnMountOrArgChange: true,
       refetchOnReconnect: true
     });
@@ -441,19 +447,19 @@ export default function CommercialView() {
   const {
     data: dataEstablishmentProductsReputation,
     isFetching: isFetchingEstablishmentProductsReputation
-  } = useGetEstablishmentProductReputationQuery(queryParams, {
-    skip: !queryParams.companyId || !queryParams.establishmentId || !queryParams.periodId,
+  } = useGetFarmProductReputationQuery(queryParams, {
+    skip: !queryParams.companyId || !queryParams.farmId || !queryParams.periodId,
     refetchOnMountOrArgChange: true,
     refetchOnReconnect: true
   });
 
   const [fetchScansByEstablishment, { data: filteredScans, isLoading: isLoadingScans }] =
-    historyApi.endpoints.getScansByEstablishment.useLazyQuery();
+    historyApi.endpoints.getScansByFarm.useLazyQuery();
 
   const [
     getEstablishmentProducts,
     { data: establishmentProducts, isLoading: isLoadingEstablishmentProducts }
-  ] = productApi.endpoints.getEstablishmentProducts.useLazyQuery();
+  ] = productApi.endpoints.getFarmProducts.useLazyQuery();
 
   // to check for active links and opened collapses
   let location = useLocation();
@@ -468,11 +474,11 @@ export default function CommercialView() {
   useEffect(() => {
     const updateEstablishment = async () => {
       if (establishments) {
-        const establishment = establishments.find((est) => est.id.toString() === establishmentId);
+        const establishment = establishments.find((est) => est.id.toString() === farmId);
 
         if (establishment) {
           // First update establishment ID
-          setCurrentEstablishmentId(establishmentId);
+          setCurrentEstablishmentId(farmId);
 
           // Then update establishment
           setEstablishment(establishment);
@@ -497,11 +503,11 @@ export default function CommercialView() {
     };
 
     updateEstablishment();
-  }, [establishmentId, establishments, intl]);
+  }, [farmId, establishments, intl]);
 
-  const { data: dataProducts } = useGetEstablishmentProductsQuery(
-    { companyId: currentCompany?.id, establishmentId: currentEstablishmentId },
-    { skip: !currentEstablishmentId || !currentCompany || currentCompany?.id === undefined }
+  const { data: dataProducts } = useGetFarmProductsQuery(
+    { companyId: currentCompany?.id, farmId: currentFarmId },
+    { skip: !currentFarmId || !currentCompany || currentCompany?.id === undefined }
   );
 
   // Keep a ref to dataProducts so the searchParams effect can access it
@@ -534,7 +540,7 @@ export default function CommercialView() {
     if (matchedParcel) {
       getEstablishmentProducts({
         companyId: currentCompany?.id,
-        establishmentId: currentEstablishmentId,
+        farmId: currentFarmId,
         parcelId: matchedParcel.id
       });
     }
@@ -542,7 +548,7 @@ export default function CommercialView() {
     // Clear refs so this doesn't re-apply
     initialParcelId.current = null;
     initialProductId.current = null;
-  }, [establishment, currentCompany?.id, currentEstablishmentId, getEstablishmentProducts]);
+  }, [establishment, currentCompany?.id, currentFarmId, getEstablishmentProducts]);
 
   // Auto-apply filters from URL search params (e.g. from notification click)
   // Step 1: Set parcel + product filters when establishment & products data are ready
@@ -569,10 +575,10 @@ export default function CommercialView() {
     }
   }, [searchParams, applyUrlFilters, setSearchParams]);
 
-  const { data: dataHistories } = useGetEstablishmentHistoriesQuery(
+  const { data: dataHistories } = useGetFarmHistoriesQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId: currentEstablishmentId,
+      farmId: currentFarmId,
       parcelId: filters.parcel?.id,
       productId: filters.product?.id,
       completed: true
@@ -580,7 +586,7 @@ export default function CommercialView() {
     {
       skip:
         !currentCompany ||
-        !currentEstablishmentId ||
+        !currentFarmId ||
         !filters?.parcel ||
         !filters?.product ||
         currentCompany?.id === undefined
@@ -612,7 +618,7 @@ export default function CommercialView() {
     });
     getEstablishmentProducts({
       companyId: currentCompany?.id,
-      establishmentId: currentEstablishmentId,
+      farmId: currentFarmId,
       parcelId: parcel?.id
     });
   };
@@ -682,8 +688,8 @@ export default function CommercialView() {
 
   // Recharts automatically updates when data changes, no imperative updates needed
   useEffect(() => {
-    console.log('currentEstablishmentId', currentEstablishmentId);
-  }, [currentEstablishmentId]);
+    console.log('currentFarmId', currentFarmId);
+  }, [currentFarmId]);
 
   // Recharts automatically updates when dataEstablishmentProductsReputation changes
   useEffect(() => {
@@ -932,13 +938,15 @@ export default function CommercialView() {
           {/* Main Dashboard Content */}
           <VStack spacing={6} w="100%">
             {/* Customer Quality Analytics Section - NEW */}
+            <Box data-tour="scan-analytics" w="100%">
             <CustomerQualityAnalytics
               scansData={dataEstablishmentScans}
               isLoading={!dataEstablishmentScans}
             />
+            </Box>
 
             {/* Scans Table - Full Width */}
-            <Box w="100%">
+            <Box w="100%" data-tour="scans-table">
               <ScansList
                 title={intl.formatMessage({ id: 'app.scans' })}
                 labels={scansColumnsNames}
@@ -947,7 +955,7 @@ export default function CommercialView() {
             </Box>
 
             {/* Charts Row - Side by Side */}
-            <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6} w="100%">
+            <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6} w="100%" data-tour="trend-charts">
               {/* Scans vs Reviews Chart */}
               <StandardCard
                 title={intl.formatMessage({ id: 'app.numberScansAndReviews' })}
@@ -1033,7 +1041,7 @@ export default function CommercialView() {
             </Grid>
 
             {/* Reviews Section - Full Width */}
-            <Box w="100%">
+            <Box w="100%" data-tour="consumer-reviews">
               <Reviews />
             </Box>
           </VStack>

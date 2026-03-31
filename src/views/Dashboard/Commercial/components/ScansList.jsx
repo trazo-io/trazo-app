@@ -24,7 +24,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 const ScansList = ({ title, labels, scansData }) => {
   const intl = useIntl();
   const navigate = useNavigate();
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
   const [expandedRowId, setExpandedRowId] = useState(null);
   const [showAllScans, setShowAllScans] = useState(false);
   // Chakra Color Mode
@@ -36,7 +36,7 @@ const ScansList = ({ title, labels, scansData }) => {
 
   const handleViewAllScans = () => {
     // Navigate to dedicated scans page
-    navigate(`/admin/dashboard/establishment/${establishmentId}/scans`);
+    navigate(`/admin/dashboard/farm/${farmId}/scans`);
   };
 
   // Show limited scans initially, all when requested

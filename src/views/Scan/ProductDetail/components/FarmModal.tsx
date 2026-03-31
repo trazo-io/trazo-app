@@ -67,7 +67,7 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
-interface EstablishmentModalProps {
+interface FarmModalProps {
   isOpen: boolean;
   onClose: () => void;
   establishmentData: {
@@ -133,7 +133,7 @@ const formatLabel = (value: string | undefined): string => {
     .join(' ');
 };
 
-export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
+export const FarmModal: React.FC<FarmModalProps> = ({
   isOpen,
   onClose,
   establishmentData
@@ -701,4 +701,4 @@ export const EstablishmentModal: React.FC<EstablishmentModalProps> = ({
   );
 };
 
-export default EstablishmentModal;
+export default FarmModal;

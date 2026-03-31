@@ -71,7 +71,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import HTMLRenderer from 'components/Utils/HTMLRenderer';
 import ImageCarousel from 'components/ImageCarousel/ImageCarousel';
 import defaultEstablishmentImage from 'assets/img/basic-auth.png';
-import { useGetPublicEstablishmentQuery } from 'store/api/companyApi';
+import { useGetPublicFarmQuery } from 'store/api/companyApi';
 import { useGetQRCodeSummaryQuery } from 'store/api/carbonApi';
 import { useIntl } from 'react-intl';
 import { CarbonScore } from '../../../components/CarbonScore';
@@ -86,14 +86,14 @@ interface EstablishmentImage {
   url: string;
 }
 
-function PublicEstablishmentProfile() {
+function PublicFarmProfile() {
   const intl = useIntl();
   const titleColor = useColorModeValue('green.500', 'green.400');
   const textColor = useColorModeValue('gray.700', 'white');
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const navigate = useNavigate();
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
   const toast = useToast();
   const pointsStore = usePointsStore();
 
@@ -110,8 +110,8 @@ function PublicEstablishmentProfile() {
     isLoading,
     isFetching,
     refetch
-  } = useGetPublicEstablishmentQuery(establishmentId || '', {
-    skip: establishmentId === undefined
+  } = useGetPublicFarmQuery(farmId || '', {
+    skip: farmId === undefined
   });
 
   // Get carbon data for the establishment
@@ -120,8 +120,8 @@ function PublicEstablishmentProfile() {
     error: carbonError,
     isLoading: isCarbonDataLoading,
     isError: isCarbonDataError
-  } = useGetQRCodeSummaryQuery(establishmentId || '', {
-    skip: establishmentId === undefined
+  } = useGetQRCodeSummaryQuery(farmId || '', {
+    skip: farmId === undefined
   });
 
   // Helper function to get crops grown
@@ -190,10 +190,10 @@ function PublicEstablishmentProfile() {
   };
 
   useEffect(() => {
-    if (establishmentId) {
+    if (farmId) {
       refetch();
     }
-  }, [establishmentId, refetch]);
+  }, [farmId, refetch]);
 
   useEffect(() => {
     if (carbonError) {
@@ -782,4 +782,4 @@ function PublicEstablishmentProfile() {
   );
 }
 
-export default PublicEstablishmentProfile;
+export default PublicFarmProfile;

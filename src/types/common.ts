@@ -5,6 +5,8 @@ interface Route {
   category?: string;
   component?: React.ComponentType<any>;
   collapse?: boolean;
+  farmId?: string;
+  /** @deprecated Use farmId instead */
   establishmentId?: string;
   authIcon?: JSX.Element;
   icon?: JSX.Element;

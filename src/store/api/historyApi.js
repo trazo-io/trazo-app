@@ -8,7 +8,7 @@ import {
   PARCEL_HISTORY_URL,
   PRODUCTION_URL,
   PUBLIC_HISTORY_URL,
-  SCANS_BY_ESTABLISHMENT_URL
+  SCANS_BY_FARM_URL
 } from '../../config';
 
 import baseApi from '../api/baseApi';
@@ -16,8 +16,8 @@ import baseApi from '../api/baseApi';
 export const historyApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getCurrentHistory: build.query({
-      query: ({ companyId, establishmentId, parcelId }) => ({
-        url: CURRENT_HISTORY(companyId, establishmentId, parcelId),
+      query: ({ companyId, farmId, parcelId }) => ({
+        url: CURRENT_HISTORY(companyId, farmId, parcelId),
         method: 'GET',
         credentials: 'include'
       }),
@@ -26,7 +26,7 @@ export const historyApi = baseApi.injectEndpoints({
       providesTags: (result, error, { parcelId }) => [{ type: 'History', id: parcelId }, 'History']
     }),
     finishCurrentHistory: build.mutation({
-      query: ({ companyId, establishmentId, parcelId, historyData }) => {
+      query: ({ companyId, farmId, parcelId, historyData }) => {
         const formData = new FormData();
 
         historyData.album.images.forEach((file) => {
@@ -39,7 +39,7 @@ export const historyApi = baseApi.injectEndpoints({
           }
         }
         return {
-          url: FINISH_HISTORY(companyId, establishmentId, parcelId),
+          url: FINISH_HISTORY(companyId, farmId, parcelId),
           method: 'POST',
           credentials: 'include',
           body: formData,
@@ -50,9 +50,9 @@ export const historyApi = baseApi.injectEndpoints({
         result ? [{ type: 'History', id: parcelId }, 'History'] : ['History']
     }),
     getParcelHistories: build.query({
-      query: ({ companyId, establishmentId, parcelId }) => {
+      query: ({ companyId, farmId, parcelId }) => {
         return {
-          url: PARCEL_HISTORY_URL(companyId, establishmentId, parcelId),
+          url: PARCEL_HISTORY_URL(companyId, farmId, parcelId),
           method: 'GET',
           credentials: 'include'
         };
@@ -75,7 +75,7 @@ export const historyApi = baseApi.injectEndpoints({
       }),
       providesTags: (result) => (result ? ['History'] : [])
     }),
-    getEstablishmentScansPaginated: build.query({
+    getFarmScansPaginated: build.query({
       query: ({ establishment_id, company_id, page = 1, page_size = 20, ...filters }) => {
         const params = new URLSearchParams({
           establishment_id,
@@ -101,20 +101,20 @@ export const historyApi = baseApi.injectEndpoints({
       providesTags: (result, error, historyId) => (result ? [{ type: 'History', historyId }] : [])
     }),
     getEvent: build.query({
-      query: ({ companyId, establishmentId, eventId, eventType }) => ({
-        url: EVENT_URL(companyId, establishmentId, eventId, eventType),
+      query: ({ companyId, farmId, eventId, eventType }) => ({
+        url: EVENT_URL(companyId, farmId, eventId, eventType),
         method: 'GET',
         credentials: 'include'
       }),
       providesTags: (result, error, eventId) => (result ? [{ type: 'Event', eventId }] : [])
     }),
     createEvent: build.mutation({
-      query: ({ companyId, establishmentId, ...eventData }) => {
+      query: ({ companyId, farmId, ...eventData }) => {
         // Filter out album since images are handled via pre-signed URLs
         const { album, ...cleanEventData } = eventData;
 
         return {
-          url: EVENT_CREATE_URL(companyId, establishmentId),
+          url: EVENT_CREATE_URL(companyId, farmId),
           method: 'POST',
           credentials: 'include',
           body: cleanEventData
@@ -123,12 +123,12 @@ export const historyApi = baseApi.injectEndpoints({
       invalidatesTags: (result) => (result ? ['Event', 'History'] : [])
     }),
     updateEvent: build.mutation({
-      query: ({ companyId, establishmentId, eventId, eventType, ...eventData }) => {
+      query: ({ companyId, farmId, eventId, eventType, ...eventData }) => {
         // Filter out album since images are handled via pre-signed URLs
         const { album, ...cleanEventData } = eventData;
 
         return {
-          url: EVENT_URL(companyId, establishmentId, eventId, eventType),
+          url: EVENT_URL(companyId, farmId, eventId, eventType),
           method: 'PUT',
           credentials: 'include',
           body: cleanEventData
@@ -138,8 +138,8 @@ export const historyApi = baseApi.injectEndpoints({
         result ? [{ type: 'Event', eventId }, 'History'] : []
     }),
     deleteEvent: build.mutation({
-      query: ({ companyId, establishmentId, eventId, eventType }) => ({
-        url: EVENT_URL(companyId, establishmentId, eventId, eventType),
+      query: ({ companyId, farmId, eventId, eventType }) => ({
+        url: EVENT_URL(companyId, farmId, eventId, eventType),
         method: 'DELETE',
         credentials: 'include'
       }),
@@ -194,10 +194,10 @@ export const historyApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (result) => (result ? ['History'] : [])
     }),
-    getScansByEstablishment: build.query({
-      query: ({ companyId, establishmentId, parcelId, productId, productionId, period }) => ({
+    getScansByFarm: build.query({
+      query: ({ companyId, farmId, parcelId, productId, productionId, period }) => ({
         url:
-          SCANS_BY_ESTABLISHMENT_URL(companyId, establishmentId) +
+          SCANS_BY_FARM_URL(companyId, farmId) +
           (parcelId || productId || productionId || period ? '?' : '') +
           (parcelId ? `&parcel=${parcelId} ` : ``) +
           (productId ? `&product=${productId} ` : ``) +
@@ -206,17 +206,17 @@ export const historyApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result, error, establishmentId) =>
-        result ? [{ type: 'History', establishmentId }] : []
+      providesTags: (result, error, farmId) =>
+        result ? [{ type: 'History', farmId }] : []
     }),
-    getProductionsByEstablishment: build.query({
-      query: ({ establishmentId }) => ({
-        url: `/history/productions/?establishment=${establishmentId}`,
+    getProductionsByFarm: build.query({
+      query: ({ farmId }) => ({
+        url: `/history/productions/?establishment=${farmId}`,
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result, error, establishmentId) =>
-        result ? [{ type: 'Productions', id: establishmentId }] : []
+      providesTags: (result, error, farmId) =>
+        result ? [{ type: 'Productions', id: farmId }] : []
     }),
     createScan: build.mutation({
       query: ({
@@ -274,11 +274,19 @@ export const {
   useFinishCurrentHistoryMutation,
   useGetPublicHistoryQuery,
   useCommentHistoryMutation,
-  useGetScansByEstablishmentQuery,
+  useGetScansByFarmQuery,
   useGetUserProductionScansQuery,
   useGetUserReviewsQuery,
-  useGetProductionsByEstablishmentQuery,
-  useGetEstablishmentScansPaginatedQuery,
+  useGetProductionsByFarmQuery,
+  useGetFarmScansPaginatedQuery,
   useCreateScanMutation,
   useClaimScansMutation
 } = historyApi;
+
+// Backward-compat aliases for renamed hooks
+/** @deprecated Use useGetScansByFarmQuery instead */
+export const useGetScansByEstablishmentQuery = useGetScansByFarmQuery;
+/** @deprecated Use useGetProductionsByFarmQuery instead */
+export const useGetProductionsByEstablishmentQuery = useGetProductionsByFarmQuery;
+/** @deprecated Use useGetFarmScansPaginatedQuery instead */
+export const useGetEstablishmentScansPaginatedQuery = useGetFarmScansPaginatedQuery;

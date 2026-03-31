@@ -18,7 +18,6 @@ import {
   Badge,
   Button,
   Input,
-  Select,
   Divider
 } from '@chakra-ui/react';
 import {
@@ -54,7 +53,6 @@ const transparencyParcelSchema = object({
   // Step 1: Identity (Required)
   name: string().min(1, 'Parcel name is required').max(100, 'Name too long'),
   area: number().min(0.01, 'Area must be greater than 0'),
-  crop_focus: string().optional(),
 
   // Step 2: Location (polygon validated separately)
 
@@ -130,7 +128,6 @@ interface TransparencyParcelFormData {
   // Core transparency fields
   name: string;
   area: number;
-  crop_focus?: string;
   transparency_description: string;
   sustainability_practices?: string;
   consumer_story?: string;
@@ -182,7 +179,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     defaultValues: {
       name: '',
       area: 0,
-      crop_focus: '',
       transparency_description: '',
       sustainability_practices: '',
       consumer_story: '',
@@ -259,7 +255,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const steps = [
     {
       title: 'Parcel Identity',
-      description: 'Name, area & crop focus',
+      description: 'Name & area',
       icon: FaBuilding,
       required: true
     },
@@ -531,31 +527,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     />
                   </StandardField>
                 </SimpleGrid>
-
-                <StandardField
-                  label="Primary Crop Focus"
-                  error={errors.crop_focus?.message}
-                  helpText="What crop is primarily grown here? This helps consumers understand what this parcel produces."
-                >
-                  <Select
-                    {...methods.register('crop_focus')}
-                    placeholder="Select primary crop"
-                    borderRadius="lg"
-                    borderColor="gray.300"
-                    _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                    size="lg"
-                  >
-                    <option value="avocado">Avocado</option>
-                    <option value="citrus">Citrus</option>
-                    <option value="tomato">Tomato</option>
-                    <option value="lettuce">Lettuce</option>
-                    <option value="strawberry">Strawberry</option>
-                    <option value="grape">Grape</option>
-                    <option value="apple">Apple</option>
-                    <option value="other">Other</option>
-                  </Select>
-                </StandardField>
 
                 <StandardAlert
                   status="info"

@@ -47,20 +47,26 @@ import { config } from 'config/environment';
 import { useSelector } from 'react-redux';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
-import { useGetEstablishmentComprehensiveDashboardQuery } from 'store/api/dashboardMetricsApi';
+import { useGetFarmComprehensiveDashboardQuery } from 'store/api/dashboardMetricsApi';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import transparencyQrApi from 'store/api/transparencyQrApi';
-import { useGetProductionsByEstablishmentQuery } from 'store/api/companyApi';
+import { useGetProductionsByFarmQuery } from 'store/api/companyApi';
 import { useUpdateProductionMutation } from 'store/api/historyApi.js';
 import TransparencyCategoryBreakdown from 'components/ProfileSections/TransparencyCategoryBreakdown';
 import TransparencyImprovementRoadmap from 'components/ProfileSections/TransparencyImprovementRoadmap';
 import PhotoVerificationGap from 'components/ProfileSections/PhotoVerificationGap';
 
+// Product tour
+import { useTour } from 'hooks/useTour';
+
 function TransparencyDashboard() {
   const navigate = useNavigate();
-  const { establishmentId, parcelId, productionId } = useParams();
+  const { farmId, parcelId, productionId } = useParams();
   const intl = useIntl();
   const toast = useToast();
+
+  // Transparency dashboard tour
+  useTour('transparency-dashboard');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
@@ -71,13 +77,13 @@ function TransparencyDashboard() {
     error,
     isLoading,
     refetch
-  } = useGetEstablishmentComprehensiveDashboardQuery(
+  } = useGetFarmComprehensiveDashboardQuery(
     {
       companyId: Number(currentCompany?.id),
-      establishmentId: Number(establishmentId)
+      farmId: Number(farmId)
     },
     {
-      skip: !establishmentId || currentCompany?.id === undefined,
+      skip: !farmId || currentCompany?.id === undefined,
       refetchOnMountOrArgChange: true
     }
   );
@@ -103,10 +109,10 @@ function TransparencyDashboard() {
     isLoading: isProductionsLoading,
     error: productionsError,
     refetch: refetchProductions
-  } = useGetProductionsByEstablishmentQuery(
-    { establishmentId: Number(establishmentId) },
+  } = useGetProductionsByFarmQuery(
+    { farmId: Number(farmId) },
     {
-      skip: !establishmentId,
+      skip: !farmId,
       refetchOnMountOrArgChange: true,
       refetchOnFocus: true,
       refetchOnReconnect: true
@@ -119,10 +125,10 @@ function TransparencyDashboard() {
 
   // Force refetch productions data to ensure we get the latest enhanced data
   useEffect(() => {
-    if (establishmentId && refetchProductions) {
+    if (farmId && refetchProductions) {
       refetchProductions();
     }
-  }, [establishmentId, refetchProductions]);
+  }, [farmId, refetchProductions]);
 
   // Toggle production visibility function
   const handleToggleProduction = async (productionId: number, currentlyPublished: boolean) => {
@@ -437,9 +443,9 @@ function TransparencyDashboard() {
               leftIcon={<FaEdit />}
               onClick={() => {
                 if (prodParcelId) {
-                  navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${prodParcelId}/event/add`);
+                  navigate(`/admin/dashboard/farm/${farmId}/parcel/${prodParcelId}/event/add`);
                 } else {
-                  navigate(`/admin/dashboard/establishment/${establishmentId}/production`);
+                  navigate(`/admin/dashboard/farm/${farmId}/production`);
                 }
               }}
             >
@@ -452,9 +458,9 @@ function TransparencyDashboard() {
               leftIcon={<FaCamera />}
               onClick={() => {
                 if (prodParcelId) {
-                  navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${prodParcelId}`);
+                  navigate(`/admin/dashboard/farm/${farmId}/parcel/${prodParcelId}`);
                 } else {
-                  navigate(`/admin/dashboard/establishment/${establishmentId}/production`);
+                  navigate(`/admin/dashboard/farm/${farmId}/production`);
                 }
               }}
             >
@@ -611,7 +617,7 @@ function TransparencyDashboard() {
           <CardBody>
             <VStack spacing={{ base: 6, md: 8 }} align="stretch">
               {/* Transparency Quick Stats - Matching Environmental Impact pattern */}
-              <Box>
+              <Box data-tour="transparency-stats">
                 <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2, md: 4 }}>
                   <Card bg="green.50" border="1px solid" borderColor="green.100" borderRadius="xl">
                     <CardBody p={{ base: 3, md: 4 }} textAlign="center">
@@ -781,7 +787,7 @@ function TransparencyDashboard() {
               {/* Transparency Category Breakdown - Per-category progress with photo status */}
               {transparencyMetrics?.transparency_breakdown &&
                 Object.keys(transparencyMetrics.transparency_breakdown).length > 0 && (
-                <Box>
+                <Box data-tour="category-breakdown">
                   <Heading size="md" color={titleColor} mb={1} fontSize={{ base: 'lg', md: 'xl' }}>
                     {intl.formatMessage({ id: 'transparency.categoryBreakdownTitle' })}
                   </Heading>
@@ -812,11 +818,11 @@ function TransparencyDashboard() {
 
               {/* Improvement Roadmap - Actionable next steps sorted by priority */}
               {sortedOpportunities.length > 0 && (
-                <Box>
+                <Box data-tour="improvement-roadmap">
                   <TransparencyImprovementRoadmap
                     opportunities={sortedOpportunities}
                     currentScore={Math.round(actualTransparencyScore * 100)}
-                    onAddEvent={() => navigate(`/admin/dashboard/establishment/${establishmentId}`)}
+                    onAddEvent={() => navigate(`/admin/dashboard/farm/${farmId}`)}
                   />
                 </Box>
               )}
@@ -846,7 +852,7 @@ function TransparencyDashboard() {
                     variant="solid"
                     leftIcon={<FaCamera />}
                     flexShrink={0}
-                    onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/production`)}
+                    onClick={() => navigate(`/admin/dashboard/farm/${farmId}/production`)}
                   >
                     {intl.formatMessage({ id: 'transparency.addPhotos' })}
                   </Button>
@@ -918,7 +924,7 @@ function TransparencyDashboard() {
               )}
 
               {/* Your Productions - Expandable Cards with Per-Production Breakdown */}
-              <Box>
+              <Box data-tour="productions-list">
                 <Heading size="md" color={titleColor} mb={2} fontSize={{ base: 'lg', md: 'xl' }}>
                   {intl.formatMessage({ id: 'transparency.yourProductions' })}
                 </Heading>

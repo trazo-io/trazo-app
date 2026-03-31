@@ -34,7 +34,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 
-const CarbonReportTab = ({ establishmentId }) => {
+const CarbonReportTab = ({ farmId }) => {
   const toast = useToast();
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -46,7 +46,7 @@ const CarbonReportTab = ({ establishmentId }) => {
     data: reports = [],
     isLoading: loadingReports,
     refetch
-  } = useGetCarbonReportsQuery({ establishmentId, year: selectedYear });
+  } = useGetCarbonReportsQuery({ farmId, year: selectedYear });
 
   // Mutations
   const [generateReport, { isLoading: generatingReport }] = useGenerateCarbonReportMutation();
@@ -65,7 +65,7 @@ const CarbonReportTab = ({ establishmentId }) => {
     try {
       // Create form data if there's a document file
       const formData = new FormData();
-      formData.append('establishment', establishmentId.toString());
+      formData.append('establishment', farmId.toString());
       formData.append('year', data.year.toString());
       formData.append('reportType', data.reportType);
       formData.append('quarter', data.quarter.toString());
@@ -76,7 +76,7 @@ const CarbonReportTab = ({ establishmentId }) => {
       }
 
       console.log('Sending report data:', {
-        establishment: establishmentId,
+        establishment: farmId,
         year: data.year,
         reportType: data.reportType,
         quarter: data.quarter,

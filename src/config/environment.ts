@@ -130,7 +130,8 @@ function createEnvironmentConfig(): EnvironmentConfig {
     // File Upload
     MAX_FILE_SIZE: parseInt(env.VITE_MAX_FILE_SIZE || '10485760', 10), // 10MB
     ALLOWED_FILE_TYPES: (
-      env.VITE_ALLOWED_FILE_TYPES || 'image/jpeg,image/png,image/webp,application/pdf'
+      env.VITE_ALLOWED_FILE_TYPES ||
+      'image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf'
     ).split(','),
 
     // Pagination

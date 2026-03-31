@@ -31,12 +31,12 @@ import { useIntl } from 'react-intl';
 import { FiSearch, FiStar, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
 import { useSelector } from 'react-redux';
-import { useGetEstablishmentReviewsPaginatedQuery } from 'store/api/reviewApi';
+import { useGetFarmReviewsPaginatedQuery } from 'store/api/reviewApi';
 
 const AllReviewsView = () => {
   const intl = useIntl();
   const navigate = useNavigate();
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
   const textColor = useColorModeValue('gray.700', 'white');
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,16 +65,16 @@ const AllReviewsView = () => {
     data: reviewsPaginatedData,
     isLoading,
     error
-  } = useGetEstablishmentReviewsPaginatedQuery(
+  } = useGetFarmReviewsPaginatedQuery(
     {
-      establishment_id: establishmentId,
+      establishment_id: farmId,
       company_id: currentCompany?.id,
       page: currentPage,
       page_size: 10,
       ...filters
     },
     {
-      skip: !establishmentId || !currentCompany?.id
+      skip: !farmId || !currentCompany?.id
     }
   );
 
@@ -83,7 +83,7 @@ const AllReviewsView = () => {
   const totalPages = Math.ceil(totalCount / 10);
 
   const handleBack = () => {
-    navigate(`/admin/dashboard/establishment/${establishmentId}/commercial`);
+    navigate(`/admin/dashboard/farm/${farmId}/commercial`);
   };
 
   const renderStars = (rating: number) => {

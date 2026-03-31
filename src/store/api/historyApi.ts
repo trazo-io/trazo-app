@@ -116,7 +116,7 @@ export interface CommentHistoryResponse {
 
 export interface DeleteEventRequest {
   companyId: string;
-  establishmentId: string;
+  farmId: string;
   eventId: string;
   eventType: string | number;
 }
@@ -142,8 +142,8 @@ export const historyApi = baseApi.injectEndpoints({
     }),
 
     deleteEvent: builder.mutation<void, DeleteEventRequest>({
-      query: ({ companyId, establishmentId, eventId, eventType }) => ({
-        url: `companies/${companyId}/establishments/${establishmentId}/events/${eventId}/?event_type=${eventType}`,
+      query: ({ companyId, farmId, eventId, eventType }) => ({
+        url: `companies/${companyId}/establishments/${farmId}/events/${eventId}/?event_type=${eventType}`,
         method: 'DELETE',
         credentials: 'include'
       }),

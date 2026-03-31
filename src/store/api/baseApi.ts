@@ -18,6 +18,7 @@ export const baseApi = createApi({
     'Company',
     'Parcel',
     'History',
+    'Farm',
     'Establishment',
     'Event',
     'Subscription',

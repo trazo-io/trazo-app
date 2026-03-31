@@ -142,9 +142,9 @@ const generateResultHref = (item: any): string => {
 
   switch (type) {
     case 'establishment':
-      return `/admin/dashboard/establishment/${id}`;
+      return `/admin/dashboard/farm/${id}`;
     case 'parcel':
-      return `/admin/dashboard/establishment/${establishment_id}/parcel/${id}`;
+      return `/admin/dashboard/farm/${establishment_id}/parcel/${id}`;
     default:
       return '/admin/dashboard';
   }

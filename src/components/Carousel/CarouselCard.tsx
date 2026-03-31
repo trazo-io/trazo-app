@@ -53,7 +53,7 @@ const CarouselCard = ({
   const surfaceBg = useColorModeValue('white', 'gray.800');
   const isMobile = useBreakpointValue({ base: true, md: false });
 
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
   const navigate = useNavigate();
 
   // Check if we should show placeholder - handle localhost URLs that don't need presigning
@@ -97,7 +97,7 @@ const CarouselCard = ({
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
       }}
       transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
-      onClick={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${id}`)}
+      onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${id}`)}
     >
       <Flex direction="column" h="100%">
         {/* Modern 4:3 aspect ratio image section */}
@@ -184,7 +184,7 @@ const CarouselCard = ({
               bg="transparent"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${id}`);
+                navigate(`/admin/dashboard/farm/${farmId}/parcel/${id}`);
               }}
             >
               <Text

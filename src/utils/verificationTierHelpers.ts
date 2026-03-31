@@ -58,7 +58,7 @@ export function getVerificationBadgeConfig(
       icon: FaCamera,
       label: 'Photo Documented',
       tooltip:
-        'Event has at least 1 photo. Agricultural content validated by AI. Increases trust in the provided information.',
+        'Event includes at least 1 photo from the farm. Increases trust in the documented information.',
       trustScore: 65
     },
     photo_verified: {
@@ -67,9 +67,9 @@ export function getVerificationBadgeConfig(
       bgColor: 'blue.50',
       borderColor: 'blue.300',
       icon: FaCamera,
-      label: 'Photo Verified',
+      label: 'Photo Documented',
       tooltip:
-        'Event has 2+ verified photos with GPS and timestamp data. Strong evidence of actual farming activity.',
+        'Event includes 2+ photos with GPS and timestamp metadata. Strong documentation of farming activity.',
       trustScore: 80
     },
     data_verified: {
@@ -78,9 +78,9 @@ export function getVerificationBadgeConfig(
       bgColor: 'green.50',
       borderColor: 'green.300',
       icon: FaCheck,
-      label: 'Data Verified',
+      label: 'Data Documented',
       tooltip:
-        'Event data cross-referenced with an external source (e.g., weather API, lab report, IoT sensor).',
+        'Event documented with multiple photos and metadata. Strong evidence of farming activity.',
       trustScore: 85
     },
     certified: {
@@ -89,8 +89,8 @@ export function getVerificationBadgeConfig(
       bgColor: 'purple.50',
       borderColor: 'purple.300',
       icon: FaStar,
-      label: 'Certified',
-      tooltip: 'Event verified by third-party certification body. Maximum trust and transparency.',
+      label: 'Blockchain-Recorded',
+      tooltip: 'Event is part of a blockchain-recorded production. Data immutability guaranteed.',
       trustScore: 100
     }
   };
@@ -134,9 +134,9 @@ export function getVerificationLabel(level: VerificationLevel | undefined): stri
   const labelMap: Record<VerificationLevel, string> = {
     self_reported: 'Self Reported',
     photo_documented: 'Photo Documented',
-    photo_verified: 'Photo Verified',
-    data_verified: 'Data Verified',
-    certified: 'Certified'
+    photo_verified: 'Photo Documented',
+    data_verified: 'Data Documented',
+    certified: 'Blockchain-Recorded'
   };
   return labelMap[level || 'self_reported'];
 }
@@ -174,7 +174,7 @@ export function getVerificationTooltip(level: VerificationLevel | undefined): st
  * @param hasGpsData - Whether event has GPS coordinates
  * @param hasTimestamp - Whether event has timestamp
  * @param eventType - Event type (0-7) for auto-upgrade logic
- * @param hasValidPhotoContent - Whether photos passed Vision API validation (optional)
+ * @param hasValidPhotoContent - Whether photos contain valid agricultural content (optional)
  *        If false, verification level downgrades to self_reported
  *        If true or undefined, proceeds with normal verification logic
  */

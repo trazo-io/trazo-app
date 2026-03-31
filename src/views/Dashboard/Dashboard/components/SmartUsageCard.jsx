@@ -41,11 +41,11 @@ import { MdTrendingUp } from 'react-icons/md';
 import Card from 'components/Card/Card';
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { useGetEstablishmentDashboardMetricsQuery } from 'store/api/dashboardMetricsApi';
+import { useGetFarmDashboardMetricsQuery } from 'store/api/dashboardMetricsApi';
 
 const SmartUsageCard = ({
   companyId,
-  establishmentId,
+  farmId,
   onViewAnalytics = () => {},
   onUpgradeSubscription = () => {},
   onOptimizeCarbon = () => {},
@@ -57,10 +57,10 @@ const SmartUsageCard = ({
     data: dashboardResponse,
     isLoading,
     error
-  } = useGetEstablishmentDashboardMetricsQuery(
-    { companyId, establishmentId },
+  } = useGetFarmDashboardMetricsQuery(
+    { companyId, farmId },
     {
-      skip: !companyId || !establishmentId,
+      skip: !companyId || !farmId,
       pollingInterval: 10 * 60 * 1000, // 10 minutes
       refetchOnMountOrArgChange: 300 // 5 minutes
     }

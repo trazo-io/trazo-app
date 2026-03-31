@@ -30,7 +30,7 @@ import { useIntl } from 'react-intl';
 interface USDACredibilityBadgeProps {
   compact?: boolean;
   showDetails?: boolean;
-  establishmentId?: number; // Kept for backward compatibility but not used for API
+  farmId?: number; // Kept for backward compatibility but not used for API
 }
 
 const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({

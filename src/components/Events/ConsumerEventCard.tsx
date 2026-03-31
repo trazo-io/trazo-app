@@ -129,6 +129,8 @@ interface ConsumerEventData {
   volume_numeric?: number; // Phase 3: primary numeric volume field
   volume_unit?: string;
   is_fertigation?: boolean | string; // Phase 3: fertigation toggle
+  organic_approved?: string; // Organic certification status (omri_listed, usda_nop_approved, etc.)
+  chemical_subtype?: string; // Chemical subtype (organic_fertilizer, synthetic_pesticide, etc.)
 
   // Production event fields
   area_covered?: string | number;
@@ -327,7 +329,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     network: productionBlockchain?.network || 'polygon'
   };
 
-  // Photo verification processing (MVP Photo Verification: Use Vision API validation)
+  // Photo documentation processing (MVP: photo count + metadata determines documentation tier)
   const photoVerification = {
     hasPhotos:
       Boolean(event.album?.images?.length) ||
@@ -335,44 +337,44 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     photoCount: event.album?.images?.length || 0,
     isPhotoVerified: Boolean(event.album?.images?.length && event.album.images?.length >= 1),
     verificationLevel: (() => {
-      // MVP Photo Verification: Use the Vision API-validated verification_level
+      // MVP Photo Documentation: Use the backend-calculated verification_level
       // Maps tiered verification to visual strength levels
       const verificationLevel = event.verification_level || 'self_reported';
       switch (verificationLevel) {
         case 'certified':
-          return 'strong'; // 100% trust - blockchain certified
+          return 'strong'; // 100% trust - blockchain-recorded production
         case 'data_verified':
-          return 'strong'; // 85% trust - auto-verified (weather, equipment)
+          return 'strong'; // 85% trust - documented with photos + metadata
         case 'photo_verified':
           return 'strong'; // 80% trust - 2+ photos with GPS/timestamp
         case 'photo_documented':
-          return 'moderate'; // 65% trust - 1+ photo verified by Vision API
+          return 'moderate'; // 65% trust - 1+ photo documented
         case 'self_reported':
         default:
           return 'none'; // 50% trust - no photo evidence
       }
     })(),
     trustMessage: (() => {
-      // MVP Photo Verification: Use Vision API validation tier descriptions
+      // MVP Photo Documentation: tier descriptions based on photo count + metadata
       const verificationLevel = event.verification_level || 'self_reported';
       const photoCount = event.album?.images?.length || 0;
 
       switch (verificationLevel) {
         case 'certified':
-          return `Blockchain certified (${photoCount} verified image${
+          return `Blockchain-recorded (${photoCount} photo${
             photoCount !== 1 ? 's' : ''
-          })`;
+          } included)`;
         case 'data_verified':
-          return 'Cross-referenced (Weather/Equipment data)';
+          return 'Documented with photo evidence and metadata';
         case 'photo_verified':
-          return `Photo verified (${photoCount} verified image${photoCount !== 1 ? 's' : ''})`;
+          return `Photo documented (${photoCount} photo${photoCount !== 1 ? 's' : ''} with metadata)`;
         case 'photo_documented':
-          return `Photo documented (${photoCount} verified image${
+          return `Photo documented (${photoCount} photo${
             photoCount !== 1 ? 's' : ''
-          } - AI validated)`;
+          } included)`;
         case 'self_reported':
         default:
-          return 'Text documentation only (no photos)';
+          return 'Farmer-reported documentation';
       }
     })()
   };
@@ -723,6 +725,43 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         <Text>{elecLabels[elecSrc] || elecSrc}</Text>
                       </HStack>
                     </Badge>
+                  </HStack>
+                );
+              })()}
+
+              {/* Organic input certification badge for chemical events */}
+              {(() => {
+                const organicStatus = event.organic_approved ?? (event as any).extra_data?.organic_approved;
+                if (!organicStatus || organicStatus === 'not_organic' || organicStatus === 'no' || organicStatus === 'not_applicable') return null;
+                const organicLabels: Record<string, string> = {
+                  omri_listed: 'OMRI Listed',
+                  usda_nop_approved: 'USDA NOP Approved',
+                  organic_equivalent: 'Organic Approved',
+                  organic_certified: 'Organic Approved',
+                  transitional: 'Transitional',
+                  yes: 'Organic Approved'
+                };
+                return (
+                  <HStack spacing={2}>
+                    <Tooltip
+                      label="This input is approved for organic farming by the listed certification body"
+                      placement="top"
+                    >
+                      <Badge
+                        variant="solid"
+                        colorScheme="green"
+                        fontSize="xs"
+                        px={3}
+                        py={1}
+                        borderRadius="full"
+                        cursor="pointer"
+                      >
+                        <HStack spacing={1}>
+                          <Icon as={FaLeaf} boxSize={3} />
+                          <Text>{organicLabels[organicStatus] || 'Organic'}</Text>
+                        </HStack>
+                      </Badge>
+                    </Tooltip>
                   </HStack>
                 );
               })()}
@@ -1484,7 +1523,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 )}
 
                 {/* Photo Gallery using StandardImageGallery */}
-                {/* MVP Photo Verification: Only show photos if they passed Vision API validation */}
+                {/* MVP Photo Documentation: Show photos attached to this event */}
                 {photoVerification.hasPhotos && event.verification_level !== 'self_reported' && (
                   <Box>
                     <HStack spacing={2} mb={4}>

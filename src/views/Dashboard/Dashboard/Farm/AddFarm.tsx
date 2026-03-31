@@ -2,46 +2,46 @@ import React, { useEffect } from 'react';
 import { Box, CircularProgress, Flex, Text, useColorModeValue, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { StandardEstablishmentForm } from '../../../../components/Forms/StandardEstablishmentForm';
+import { StandardFarmForm } from '../../../../components/Forms/StandardFarmForm';
 import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 import subscriptionToastHelper from '../../../../utils/toast/SubscriptionToastHelper';
 import { useSelector, useDispatch } from 'react-redux';
 import {
-  useCreateEstablishmentMutation,
-  useEditEstablishmentMutation,
-  useGetEstablishmentQuery
+  useCreateFarmMutation,
+  useEditFarmMutation,
+  useGetFarmQuery
 } from 'store/api/companyApi';
-import { addCompanyEstablishment } from 'store/features/companySlice';
+import { addCompanyFarm } from 'store/features/companySlice';
 
 interface Props {
   isEdit?: boolean;
 }
 
-function AddEstablishment({ isEdit = false }: Props) {
+function AddFarm({ isEdit = false }: Props) {
   const intl = useIntl();
   const navigate = useNavigate();
   const toast = useToast();
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
   const isUpgrade = searchParams.get('return') === 'upgrade';
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
 
-  const [createEstablishment, { isLoading: isCreating }] = useCreateEstablishmentMutation();
-  const [editEstablishment, { isLoading: isUpdating }] = useEditEstablishmentMutation();
+  const [createFarm, { isLoading: isCreating }] = useCreateFarmMutation();
+  const [editFarm, { isLoading: isUpdating }] = useEditFarmMutation();
 
   // Fetch establishment data for editing
   const {
     data: establishmentData,
     isLoading: isLoadingEstablishment,
     isSuccess: isEstablishmentLoaded
-  } = useGetEstablishmentQuery(
+  } = useGetFarmQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId: establishmentId!
+      farmId: farmId!
     },
     {
-      skip: !isEdit || !currentCompany?.id || !establishmentId
+      skip: !isEdit || !currentCompany?.id || !farmId
     }
   );
 
@@ -111,15 +111,15 @@ function AddEstablishment({ isEdit = false }: Props) {
 
         console.log('Updating establishment data:', establishmentUpdateData);
 
-        const result = await editEstablishment({
+        const result = await editFarm({
           companyId: currentCompany.id,
-          establishmentId: establishmentId!,
+          farmId: farmId!,
           establishmentData: establishmentUpdateData
         }).unwrap();
 
         // Navigate immediately — RTK Query cache invalidation is synchronous,
         // and the profile page will refetch fresh data on mount
-        navigate(`/admin/dashboard/establishment/${result.id}`);
+        navigate(`/admin/dashboard/farm/${result.id}`);
       } else {
         // Handle create mode
         const establishmentData = {
@@ -176,7 +176,7 @@ function AddEstablishment({ isEdit = false }: Props) {
 
         console.log('Sending establishment data to backend:', establishmentData);
 
-        const result = await createEstablishment({
+        const result = await createFarm({
           companyId: currentCompany.id,
           establishment: establishmentData
         }).unwrap();
@@ -186,12 +186,12 @@ function AddEstablishment({ isEdit = false }: Props) {
 
         // CRITICAL FIX: Dispatch Redux action to set currentEstablishment
         // This ensures the newly created establishment becomes the active one in Redux state
-        dispatch(addCompanyEstablishment(result));
+        dispatch(addCompanyFarm(result));
         console.log('🔄 Redux: Set currentEstablishment to newly created establishment');
 
         // Set sessionStorage flags to prevent Authenticated.jsx from redirecting during cache update
-        sessionStorage.setItem('creating_establishment', 'true');
-        sessionStorage.setItem('just_created_establishment_id', result.id.toString());
+        sessionStorage.setItem('creating_farm', 'true');
+        sessionStorage.setItem('just_created_farm_id', result.id.toString());
 
         // Success toast
         toast({
@@ -203,7 +203,7 @@ function AddEstablishment({ isEdit = false }: Props) {
         });
 
         // Navigate immediately - RTK Query optimistic update + sessionStorage flags prevent race conditions
-        const targetUrl = `/admin/dashboard/establishment/${result.id}`;
+        const targetUrl = `/admin/dashboard/farm/${result.id}`;
         console.log('🔄 Navigating to:', targetUrl);
         navigate(targetUrl);
       }
@@ -245,7 +245,7 @@ function AddEstablishment({ isEdit = false }: Props) {
 
   const handleCancel = () => {
     if (isEdit) {
-      navigate(`/admin/dashboard/establishment/${establishmentId}`);
+      navigate(`/admin/dashboard/farm/${farmId}`);
     } else {
       navigate('/admin/dashboard');
     }
@@ -396,7 +396,7 @@ function AddEstablishment({ isEdit = false }: Props) {
 
   return (
     <WriteAccessGuard>
-      <StandardEstablishmentForm
+      <StandardFarmForm
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         initialData={getInitialData()}
@@ -408,4 +408,4 @@ function AddEstablishment({ isEdit = false }: Props) {
   );
 }
 
-export default AddEstablishment;
+export default AddFarm;

@@ -20,7 +20,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
 
   const currentUser = useSelector((state) => state.userState.user);
 
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
 
   useEffect(() => {
     // Use centralized subdomain detection utility
@@ -86,10 +86,10 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
       (currentUser?.user_type === PRODUCER || currentUser?.user_type === SUPERUSER) &&
       subdomain === 'producer'
     ) {
-      const id = Number(establishmentId);
+      const id = Number(farmId);
 
       if (
-        (establishmentId || pathname == '/admin/dashboard' || pathname == '/admin/dashboard/') &&
+        (farmId || pathname == '/admin/dashboard' || pathname == '/admin/dashboard/') &&
         currentUser?.companies.length > 0
       ) {
         if (
@@ -97,41 +97,41 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
           currentCompany.establishments &&
           !currentCompany.establishments.map((e) => e.id).includes(id)
         ) {
-          // Check if we're navigating from establishment creation (prevent redirect race condition)
-          const isFromEstablishmentCreation =
-            sessionStorage.getItem('creating_establishment') === 'true';
-          const justCreatedId = sessionStorage.getItem('just_created_establishment_id');
+          // Check if we're navigating from farm creation (prevent redirect race condition)
+          const isFromFarmCreation =
+            sessionStorage.getItem('creating_farm') === 'true';
+          const justCreatedId = sessionStorage.getItem('just_created_farm_id');
 
-          // If we just created this establishment, wait for cache to update instead of redirecting
-          if (isFromEstablishmentCreation && justCreatedId == id) {
+          // If we just created this farm, wait for cache to update instead of redirecting
+          if (isFromFarmCreation && justCreatedId == id) {
             // Clear the flag after a delay to prevent infinite waiting
             setTimeout(() => {
-              sessionStorage.removeItem('creating_establishment');
-              sessionStorage.removeItem('just_created_establishment_id');
+              sessionStorage.removeItem('creating_farm');
+              sessionStorage.removeItem('just_created_farm_id');
             }, 3000);
             return;
           }
 
           if (currentCompany.establishments?.length > 0) {
             const establishment = currentCompany.establishments[0].id;
-            navigate(`/admin/dashboard/establishment/${establishment}`);
+            navigate(`/admin/dashboard/farm/${establishment}`);
           } else {
             navigate(`/admin/dashboard/`);
           }
         }
       }
 
-      // Auto-select first establishment when visiting root dashboard without establishmentId
+      // Auto-select first farm when visiting root dashboard without farmId
       if (
         (pathname === '/admin/dashboard' || pathname === '/admin/dashboard/') &&
-        !establishmentId &&
+        !farmId &&
         currentCompany?.establishments?.length > 0
       ) {
         const firstEstablishment = currentCompany.establishments[0].id;
-        navigate(`/admin/dashboard/establishment/${firstEstablishment}`);
+        navigate(`/admin/dashboard/farm/${firstEstablishment}`);
       }
     }
-  }, [currentCompany, establishmentId, navigate, currentUser, subdomain, pathname]);
+  }, [currentCompany, farmId, navigate, currentUser, subdomain, pathname]);
 
   useEffect(() => {
     if (
@@ -149,7 +149,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
           currentCompany.subscription ||
           (currentCompany.subscription_plan && currentCompany.subscription_plan.id)
         ) {
-          navigate(`/admin/dashboard/establishment/add`);
+          navigate(`/admin/dashboard/farm/add`);
         } else {
           if (!currentCompany.has_subscription) {
             navigate(`/admin/dashboard/pricing`);

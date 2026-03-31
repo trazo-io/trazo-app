@@ -9,8 +9,8 @@ import {
   useUpdateParcelMutation,
   useGetParcelQuery
 } from 'store/api/productApi';
-import { useGetEstablishmentQuery } from 'store/api/companyApi';
-import { setEstablishmentParcel } from 'store/features/companySlice';
+import { useGetFarmQuery } from 'store/api/companyApi';
+import { setFarmParcel } from 'store/features/companySlice';
 import { useToast } from '@chakra-ui/react';
 
 interface AddParcelProps {
@@ -37,7 +37,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const toast = useToast();
-  const { establishmentId, parcelId } = useParams();
+  const { farmId, parcelId } = useParams();
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
   const currentEstablishment = useSelector(
     (state: RootState) => state.company.currentEstablishment
@@ -46,14 +46,14 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   const [createParcel, { isLoading: isCreating }] = useCreateParcelMutation();
   const [updateParcel, { isLoading: isUpdating }] = useUpdateParcelMutation();
 
-  // Fetch establishment data to get coordinates for map centering
-  const { data: establishmentData } = useGetEstablishmentQuery(
+  // Fetch farm data to get coordinates for map centering
+  const { data: establishmentData } = useGetFarmQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId
+      farmId
     },
     {
-      skip: !establishmentId || !currentCompany?.id
+      skip: !farmId || !currentCompany?.id
     }
   );
 
@@ -65,11 +65,11 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   } = useGetParcelQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId,
+      farmId,
       parcelId
     },
     {
-      skip: !isEdit || !parcelId || !establishmentId || !currentCompany?.id
+      skip: !isEdit || !parcelId || !farmId || !currentCompany?.id
     }
   );
 
@@ -91,7 +91,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       // Core transparency fields (map directly to new schema)
       name: parcelData.name || '',
       area: parcelData.area || 0,
-      crop_focus: parcelData.crop_type || '', // Map crop_type → crop_focus
+      // crop_type is set at production level, not parcel
 
       // Transparency story fields (map description → transparency_description)
       transparency_description: parcelData.description || '',
@@ -130,8 +130,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       console.log('🎯 Transparency fields:', {
         transparency_description: data.transparency_description,
         sustainability_practices: data.sustainability_practices,
-        consumer_story: data.consumer_story,
-        crop_focus: data.crop_focus
+        consumer_story: data.consumer_story
       });
 
       // 🌱 Store transparency narrative in agricultural_details for carbon context
@@ -165,7 +164,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         contact_phone: data.contact_phone || '',
         address: data.address || '',
         certified: data.certified || false,
-        crop_focus: data.crop_focus || '', // Use crop_focus for backend transparency mapping
         unique_code: data.unique_code || '',
         certification_type: data.certification_type || '',
         contact_person: data.contact_person || '',
@@ -175,7 +173,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           center: { lat: 40.7128, lng: -74.006 },
           zoom: 13
         },
-        establishment: parseInt(establishmentId!),
+        establishment: parseInt(farmId!),
 
         // ✅ Store transparency context for carbon calculations
         agricultural_details: agriculturalDetails,
@@ -210,25 +208,25 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         // Update existing parcel
         await updateParcel({
           companyId: currentCompany?.id,
-          establishmentId,
+          farmId,
           parcelId,
           parcelData: finalData
         }).unwrap();
 
         // ✅ Redirect to parcel profile after update
-        navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`);
+        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`);
       } else {
         // Create new parcel
         const result = await createParcel({
           companyId: currentCompany?.id,
-          establishmentId,
+          farmId,
           parcelData: finalData
         }).unwrap();
 
         // ✅ CRITICAL FIX: Update Redux state to include new parcel
         dispatch(
-          setEstablishmentParcel({
-            establishmentId: establishmentId!,
+          setFarmParcel({
+            farmId: farmId!,
             parcel: result
           })
         );
@@ -243,7 +241,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         });
 
         // ✅ Redirect to new parcel profile after creation
-        navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${result.id}`);
+        navigate(`/admin/dashboard/farm/${farmId}/parcel/${result.id}`);
       }
     } catch (error: any) {
       console.error('Failed to save parcel:', error);
@@ -261,7 +259,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   };
 
   const handleCancel = () => {
-    navigate(`/admin/dashboard/establishment/${establishmentId}`);
+    navigate(`/admin/dashboard/farm/${farmId}`);
   };
 
   // Show loading state while fetching parcel data in edit mode
@@ -288,7 +286,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       isClosable: true,
       position: 'top-right'
     });
-    navigate(`/admin/dashboard/establishment/${establishmentId}`);
+    navigate(`/admin/dashboard/farm/${farmId}`);
     return null;
   }
 

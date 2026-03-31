@@ -1,7 +1,7 @@
 import baseApi from './baseApi';
 
 // TypeScript interfaces for comprehensive transparency dashboard
-export interface EstablishmentInfo {
+export interface FarmInfo {
   id: number;
   name: string;
   total_area_hectares: number;
@@ -68,7 +68,7 @@ export interface CarbonSummary {
   carbon_intensity_trend: number;
 }
 
-export interface EstablishmentDashboardMetrics {
+export interface FarmDashboardMetrics {
   // Consumer engagement
   consumer_reach: number;
   monthly_scans: number;
@@ -89,13 +89,13 @@ export interface DashboardMetricsResponse {
   success: boolean;
   establishment_id: number;
   establishment_name: string;
-  metrics: EstablishmentDashboardMetrics;
+  metrics: FarmDashboardMetrics;
   calculated_at: string;
 }
 
 // Actual nested response structure (matches API response)
 export interface ComprehensiveDashboardResponse {
-  establishment: EstablishmentInfo;
+  establishment: FarmInfo;
   transparency_metrics: TransparencyMetrics;
   comprehensive_data: ComprehensiveData;
   carbon_summary?: CarbonSummary;
@@ -110,31 +110,31 @@ export interface ComprehensiveDashboardResponse {
 
 const dashboardMetricsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getEstablishmentDashboardMetrics: build.query<
+    getFarmDashboardMetrics: build.query<
       DashboardMetricsResponse,
-      { companyId: number; establishmentId: number }
+      { companyId: number; farmId: number }
     >({
-      query: ({ companyId, establishmentId }) => ({
-        url: `/companies/${companyId}/establishments/${establishmentId}/dashboard_metrics/`,
+      query: ({ companyId, farmId }) => ({
+        url: `/companies/${companyId}/establishments/${farmId}/dashboard_metrics/`,
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result, error, { establishmentId }) => [
-        { type: 'Establishment', id: establishmentId }
+      providesTags: (result, error, { farmId }) => [
+        { type: 'Farm', id: farmId }
       ]
     }),
-    getEstablishmentComprehensiveDashboard: build.query<
+    getFarmComprehensiveDashboard: build.query<
       ComprehensiveDashboardResponse,
-      { companyId: number; establishmentId: number }
+      { companyId: number; farmId: number }
     >({
-      query: ({ companyId, establishmentId }) => ({
-        url: `/companies/${companyId}/establishments/${establishmentId}/dashboard_comprehensive/`,
+      query: ({ companyId, farmId }) => ({
+        url: `/companies/${companyId}/establishments/${farmId}/dashboard_comprehensive/`,
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result, error, { establishmentId }) => [
-        { type: 'Establishment', id: establishmentId },
-        { type: 'TransparencyData', id: establishmentId }
+      providesTags: (result, error, { farmId }) => [
+        { type: 'Farm', id: farmId },
+        { type: 'TransparencyData', id: farmId }
       ]
     })
   }),
@@ -142,8 +142,20 @@ const dashboardMetricsApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetEstablishmentDashboardMetricsQuery,
-  useGetEstablishmentComprehensiveDashboardQuery
+  useGetFarmDashboardMetricsQuery,
+  useGetFarmComprehensiveDashboardQuery
 } = dashboardMetricsApi;
+
+// Backward-compat aliases for renamed hooks
+/** @deprecated Use useGetFarmDashboardMetricsQuery instead */
+export const useGetEstablishmentDashboardMetricsQuery = useGetFarmDashboardMetricsQuery;
+/** @deprecated Use useGetFarmComprehensiveDashboardQuery instead */
+export const useGetEstablishmentComprehensiveDashboardQuery = useGetFarmComprehensiveDashboardQuery;
+
+// Backward-compat type aliases
+/** @deprecated Use FarmInfo instead */
+export type EstablishmentInfo = FarmInfo;
+/** @deprecated Use FarmDashboardMetrics instead */
+export type EstablishmentDashboardMetrics = FarmDashboardMetrics;
 
 export default dashboardMetricsApi;

@@ -65,7 +65,7 @@ function DashboardPage() {
   return (
     <EnhancedTransparencyDashboard
       companyId="123"
-      establishmentId="456"
+      farmId="456"
       title="Farm Transparency Overview"
       description="Monitor your transparency metrics and consumer engagement"
     />
@@ -84,8 +84,8 @@ function AdvancedDashboard() {
     <ErrorBoundary>
       <EnhancedTransparencyDashboard
         companyId={company?.id}
-        establishmentId={selectedEstablishment?.id}
-        title={`${establishment?.name} Transparency`}
+        farmId={selectedFarm?.id}
+        title={`${farm?.name} Transparency`}
         description="Real-time transparency and carbon performance metrics"
       />
     </ErrorBoundary>
@@ -176,7 +176,7 @@ padding="17px"
 
 ```tsx
 export const EnhancedTransparencyDashboard = React.memo(
-  ({ companyId, establishmentId, title, description }) => {
+  ({ companyId, farmId, title, description }) => {
     // Component logic...
   }
 );
@@ -207,10 +207,10 @@ const {
   isLoading,
   error
 } = useGetDashboardComprehensiveQuery(
-  { companyId, establishmentId },
+  { companyId, farmId },
   {
     pollingInterval: 5 * 60 * 1000, // 5-minute polling
-    skip: !companyId || !establishmentId // Skip invalid requests
+    skip: !companyId || !farmId // Skip invalid requests
   }
 );
 ```
@@ -278,7 +278,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { EnhancedTransparencyDashboard } from './EnhancedTransparencyDashboard';
 
 test('displays transparency score prominently', async () => {
-  render(<EnhancedTransparencyDashboard companyId="123" establishmentId="456" />);
+  render(<EnhancedTransparencyDashboard companyId="123" farmId="456" />);
 
   await waitFor(() => {
     expect(screen.getByText(/transparency/i)).toBeInTheDocument();

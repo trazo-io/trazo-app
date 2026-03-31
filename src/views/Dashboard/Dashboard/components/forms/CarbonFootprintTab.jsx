@@ -53,7 +53,7 @@ import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import CarbonReportTab from './CarbonReportTab';
 
-const CarbonFootprintTab = ({ establishmentId, productionId }) => {
+const CarbonFootprintTab = ({ farmId, productionId }) => {
   const toast = useToast();
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -71,7 +71,7 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
     isLoading: loadingFootprints,
     refetch: refetchFootprints
   } = useGetEstablishmentCarbonFootprintsQuery({
-    establishmentId: establishmentId,
+    farmId: farmId,
     productionId: productionId || undefined,
     year: selectedYear
   });
@@ -83,11 +83,11 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
     refetch: refetchEntries
   } = useGetCarbonEntriesQuery(
     {
-      establishmentId: establishmentId,
+      farmId: farmId,
       year: selectedYear
     },
     {
-      skip: !establishmentId
+      skip: !farmId
     }
   );
 
@@ -156,7 +156,7 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
     data: certifications = [],
     isLoading: loadingCertifications,
     refetch: refetchCertifications
-  } = useGetCarbonCertificationsQuery({ establishmentId });
+  } = useGetCarbonCertificationsQuery({ farmId });
 
   // Mutations
   const [addFootprint, { isLoading: addingFootprint }] =
@@ -197,7 +197,7 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
     try {
       // Prepare API data
       const apiData = {
-        establishment: establishmentId,
+        establishment: farmId,
         production: productionId,
         year: data.year || new Date().getFullYear(),
         type: data.type,
@@ -545,7 +545,7 @@ const CarbonFootprintTab = ({ establishmentId, productionId }) => {
           </Flex>
         </CardHeader>
         <CardBody>
-          <CarbonReportTab establishmentId={establishmentId} />
+          <CarbonReportTab farmId={farmId} />
         </CardBody>
       </Card>
     </>

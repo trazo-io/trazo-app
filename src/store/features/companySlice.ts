@@ -1,15 +1,15 @@
-import { Company, Establishment } from 'types/company';
+import { Company, Farm } from 'types/company';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 type CompanyState = {
   currentCompany: Company | null;
-  currentEstablishment: Establishment | null;
+  currentFarm: Farm | null;
   isLoading: boolean;
 };
 
 const initialState: CompanyState = {
   currentCompany: null,
-  currentEstablishment: null,
+  currentFarm: null,
   isLoading: false
 };
 
@@ -21,20 +21,20 @@ export const companySlice = createSlice({
       state.currentCompany = action.payload;
       state.isLoading = false;
     },
-    setEstablishment: (state, action: PayloadAction<Establishment | null>) => {
-      state.currentEstablishment = action.payload;
+    setFarm: (state, action: PayloadAction<Farm | null>) => {
+      state.currentFarm = action.payload;
     },
     clearCurrentCompany: (state) => {
       state.currentCompany = null;
-      state.currentEstablishment = null;
+      state.currentFarm = null;
       state.isLoading = false;
     },
-    setCompanyEstablishment: (state: CompanyState, action: PayloadAction<Establishment>) => {
+    setCompanyFarm: (state: CompanyState, action: PayloadAction<Farm>) => {
       if (state.currentCompany && 'establishments' in state.currentCompany) {
         state.currentCompany.establishments = [action.payload];
       }
     },
-    addCompanyEstablishment: (state, action: PayloadAction<Establishment>) => {
+    addCompanyFarm: (state, action: PayloadAction<Farm>) => {
       if (state.currentCompany && 'establishments' in state.currentCompany) {
         if (!state.currentCompany.establishments) {
           state.currentCompany.establishments = [];
@@ -43,34 +43,34 @@ export const companySlice = createSlice({
           ...state.currentCompany.establishments,
           action.payload
         ];
-        state.currentEstablishment = action.payload;
+        state.currentFarm = action.payload;
       }
     },
-    editCompanyEstablishment: (state, action: PayloadAction<Establishment>) => {
+    editCompanyFarm: (state, action: PayloadAction<Farm>) => {
       if (
         state.currentCompany &&
         'establishments' in state.currentCompany &&
         state.currentCompany.establishments
       ) {
         state.currentCompany.establishments = [
-          ...state.currentCompany.establishments.map((establishment: Establishment) => {
-            if (establishment.id === action.payload.id) {
+          ...state.currentCompany.establishments.map((farm: Farm) => {
+            if (farm.id === action.payload.id) {
               return action.payload;
             }
-            return establishment;
+            return farm;
           })
         ];
       }
     },
-    setEstablishmentParcel: (
+    setFarmParcel: (
       state,
-      action: PayloadAction<{ establishmentId: string; parcel: any }>
+      action: PayloadAction<{ farmId: string; parcel: any }>
     ) => {
-      const { establishmentId, parcel } = action.payload;
-      console.log('🔄 Redux setEstablishmentParcel: Adding parcel', {
-        establishmentId,
+      const { farmId, parcel } = action.payload;
+      console.log('🔄 Redux setFarmParcel: Adding parcel', {
+        farmId,
         parcelName: parcel?.name,
-        existingEstablishments: state.currentCompany?.establishments?.length
+        existingFarms: state.currentCompany?.establishments?.length
       });
 
       if (
@@ -78,44 +78,44 @@ export const companySlice = createSlice({
         'establishments' in state.currentCompany &&
         state.currentCompany.establishments
       ) {
-        const oldEstablishment = state.currentCompany.establishments.find(
-          (e) => e.id.toString() === establishmentId.toString()
+        const oldFarm = state.currentCompany.establishments.find(
+          (e) => e.id.toString() === farmId.toString()
         );
-        console.log('🔄 Redux setEstablishmentParcel: Found establishment', {
-          name: oldEstablishment?.name,
-          currentParcelCount: oldEstablishment?.parcels?.length || 0
+        console.log('🔄 Redux setFarmParcel: Found farm', {
+          name: oldFarm?.name,
+          currentParcelCount: oldFarm?.parcels?.length || 0
         });
 
-        // ✅ CRITICAL FIX: Create new establishments array to trigger React re-renders
+        // Create new establishments array to trigger React re-renders
         state.currentCompany.establishments = state.currentCompany.establishments.map(
-          (establishment: Establishment) => {
-            if (establishment.id.toString() === establishmentId.toString()) {
-              const newEstablishment = {
-                ...establishment,
-                parcels: [...(establishment.parcels || []), parcel]
+          (farm: Farm) => {
+            if (farm.id.toString() === farmId.toString()) {
+              const newFarm = {
+                ...farm,
+                parcels: [...(farm.parcels || []), parcel]
               };
-              console.log('🔄 Redux setEstablishmentParcel: New establishment created', {
-                newParcelCount: newEstablishment.parcels.length
+              console.log('🔄 Redux setFarmParcel: New farm created', {
+                newParcelCount: newFarm.parcels.length
               });
-              return newEstablishment;
+              return newFarm;
             }
-            return establishment;
+            return farm;
           }
         );
       }
     },
-    setEstablishmentParcelHasProduction: (state, action) => {
-      const { establishmentId, parcelId, hasProduction } = action.payload;
+    setFarmParcelHasProduction: (state, action) => {
+      const { farmId, parcelId, hasProduction } = action.payload;
       if (
         state.currentCompany &&
         'establishments' in state.currentCompany &&
         state.currentCompany.establishments
       ) {
-        const establishment = state.currentCompany.establishments.find(
-          (establishment: Establishment) => establishment.id === establishmentId
+        const farm = state.currentCompany.establishments.find(
+          (farm: Farm) => farm.id === farmId
         );
-        if (establishment && establishment.parcels) {
-          const parcel = establishment.parcels.find((parcel) => parcel.id === parcelId);
+        if (farm && farm.parcels) {
+          const parcel = farm.parcels.find((parcel) => parcel.id === parcelId);
           if (parcel) {
             parcel.has_current_production = hasProduction;
           }
@@ -132,12 +132,26 @@ export default companySlice.reducer;
 
 export const {
   setCompany,
-  setEstablishment,
+  setFarm,
   clearCurrentCompany,
-  setCompanyEstablishment,
-  addCompanyEstablishment,
-  editCompanyEstablishment,
-  setEstablishmentParcel,
-  setEstablishmentParcelHasProduction,
+  setCompanyFarm,
+  addCompanyFarm,
+  editCompanyFarm,
+  setFarmParcel,
+  setFarmParcelHasProduction,
   setLoading
 } = companySlice.actions;
+
+// Backward-compatible aliases
+/** @deprecated Use setFarm instead */
+export const setEstablishment = setFarm;
+/** @deprecated Use setCompanyFarm instead */
+export const setCompanyEstablishment = setCompanyFarm;
+/** @deprecated Use addCompanyFarm instead */
+export const addCompanyEstablishment = addCompanyFarm;
+/** @deprecated Use editCompanyFarm instead */
+export const editCompanyEstablishment = editCompanyFarm;
+/** @deprecated Use setFarmParcel instead */
+export const setEstablishmentParcel = setFarmParcel;
+/** @deprecated Use setFarmParcelHasProduction instead */
+export const setEstablishmentParcelHasProduction = setFarmParcelHasProduction;

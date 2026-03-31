@@ -36,7 +36,7 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
       // Only show on consumer pages or QR scanning pages
       const isConsumerPage =
         path.includes('/production/') ||
-        path.includes('/establishment/') ||
+        path.includes('/farm/') ||
         host.includes('consumer');
 
       // Don't show on producer auth pages
@@ -133,7 +133,7 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
 
     const isConsumerPage =
       path.includes('/production/') ||
-      path.includes('/establishment/') ||
+      path.includes('/farm/') ||
       host.includes('consumer');
 
     const isProducerAuth =

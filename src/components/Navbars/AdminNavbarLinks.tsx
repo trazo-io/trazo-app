@@ -76,10 +76,10 @@ export default function HeaderLinks(props: HeaderLinksProps) {
   const location = useLocation();
 
   useEffect(() => {
-    // Use regex to match /admin/dashboard/establishments/NUMBER pattern
-    const establishmentPattern = /^\/admin\/dashboard\/establishment\/\d+$/;
+    // Use regex to match /admin/dashboard/farm/NUMBER pattern
+    const farmPattern = /^\/admin\/dashboard\/farm\/\d+$/;
 
-    setIsHome(establishmentPattern.test(location.pathname));
+    setIsHome(farmPattern.test(location.pathname));
   }, [location.pathname]);
 
   useEffect(() => {

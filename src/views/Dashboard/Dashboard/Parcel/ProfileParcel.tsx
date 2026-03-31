@@ -213,7 +213,7 @@ function ProfileParcel(): React.ReactElement {
   const intl = useIntl();
   const navigate = useNavigate();
   const { canWrite } = useUserRole();
-  const { establishmentId, parcelId } = useParams<{ establishmentId: string; parcelId: string }>();
+  const { farmId, parcelId } = useParams<{ farmId: string; parcelId: string }>();
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
 
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
@@ -223,7 +223,7 @@ function ProfileParcel(): React.ReactElement {
   const { data: parcelData, isLoading: isParcelLoading } = useGetParcelQuery(
     {
       companyId: currentCompany?.id || '',
-      establishmentId: establishmentId || '',
+      farmId: farmId || '',
       parcelId: parcelId || ''
     },
     {
@@ -231,20 +231,20 @@ function ProfileParcel(): React.ReactElement {
         parcelId === undefined ||
         currentParcel?.id === parcelId ||
         currentCompany?.id === undefined ||
-        !establishmentId
+        !farmId
     }
   );
 
   useEffect(() => {
-    if (establishments && establishments.length > 0 && establishmentId) {
+    if (establishments && establishments.length > 0 && farmId) {
       const foundEstablishment = establishments.find(
-        (est: Establishment) => est.id.toString() === establishmentId
+        (est: Establishment) => est.id.toString() === farmId
       );
       if (foundEstablishment) {
         setEstablishment(foundEstablishment);
       }
     }
-  }, [establishmentId, establishments]);
+  }, [farmId, establishments]);
 
   const handleShare = async (): Promise<void> => {
     try {
@@ -264,7 +264,7 @@ function ProfileParcel(): React.ReactElement {
     return (
       <StandardPage
         showBackButton
-        onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
       >
         <StandardPageLoading />
       </StandardPage>
@@ -316,7 +316,7 @@ function ProfileParcel(): React.ReactElement {
   return (
     <StandardPage
       showBackButton
-      onBack={() => navigate(`/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}`)}
+      onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
     >
       <VStack spacing={{ base: 4, md: 8 }} w="100%">
         {/* Identity Section */}
@@ -341,7 +341,7 @@ function ProfileParcel(): React.ReactElement {
                   leftIcon={<Icon as={FaEdit} />}
                   onClick={() =>
                     navigate(
-                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/change`
+                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`
                     )
                   }
                 >
@@ -536,7 +536,7 @@ function ProfileParcel(): React.ReactElement {
               size="sm"
               leftIcon={<Icon as={FaChartLine} />}
               onClick={() =>
-                navigate(`/admin/dashboard/establishment/${establishmentId}/transparency`)
+                navigate(`/admin/dashboard/farm/${farmId}/transparency`)
               }
             >
               {intl.formatMessage({ id: 'parcel.viewTransparencyDetails' })}

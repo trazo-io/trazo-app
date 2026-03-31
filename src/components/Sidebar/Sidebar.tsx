@@ -102,24 +102,24 @@ function Sidebar(props: SidebarProps) {
       establishments.map((e: EstablishmentType) => {
         return {
           name: e.name,
-          path: `/dashboard/establishment/${e.id}`,
+          path: `/dashboard/farm/${e.id}`,
           collapse: true,
-          establishmentId: e.id,
+          farmId: e.id,
           authIcon: <HomeIcon color="inherit" />,
           layout: '/admin',
           isDashboard: true,
           regex: new RegExp(
-            `^\\/admin\\/dashboard\\/establishment\\/${e.id}(\\/.*)?$`
+            `^\\/admin\\/dashboard\\/farm\\/${e.id}(\\/.*)?$`
           ),
           items: e?.parcels?.map((p: ParcelType) => {
             return {
               name: p.name,
-              path: `/dashboard/establishment/${e.id}/parcel/${p.id}`,
+              path: `/dashboard/farm/${e.id}/parcel/${p.id}`,
               component: Overview,
               layout: '/admin',
               isDashboard: true,
               regex: new RegExp(
-                `^\\/admin\\/dashboard\\/establishment\\/${e.id}\\/parcel\\/${p.id}(\\/.*)?$`
+                `^\\/admin\\/dashboard\\/farm\\/${e.id}\\/parcel\\/${p.id}(\\/.*)?$`
               )
             };
           })
@@ -130,20 +130,20 @@ function Sidebar(props: SidebarProps) {
       establishments.length > 0 && [
         {
           name: 'Parcels',
-          path: `/dashboard/establishment/${establishments[0].id}/certifications/parcels`,
+          path: `/dashboard/farm/${establishments[0].id}/certifications/parcels`,
           secondaryNavbar: true,
           layout: '/admin',
           regex: new RegExp(
-            `^\\/admin\\/dashboard\\/establishment\\/${establishments[0].id}\\/certifications\\/parcels$`
+            `^\\/admin\\/dashboard\\/farm\\/${establishments[0].id}\\/certifications\\/parcels$`
           )
         },
         {
           name: 'Events',
-          path: `/dashboard/establishment/${establishments[0].id}/certifications/events`,
+          path: `/dashboard/farm/${establishments[0].id}/certifications/events`,
           secondaryNavbar: true,
           layout: '/admin',
           regex: new RegExp(
-            `^\\/admin\\/dashboard\\/establishment\\/${establishments[0].id}\\/certifications\\/events$`
+            `^\\/admin\\/dashboard\\/farm\\/${establishments[0].id}\\/certifications\\/events$`
           )
         }
       ];
@@ -153,10 +153,10 @@ function Sidebar(props: SidebarProps) {
       establishments.map((e: EstablishmentType) => {
         return {
           name: e.name,
-          path: `/dashboard/establishment/${e.id}/commercial`,
-          establishmentId: e.id,
+          path: `/dashboard/farm/${e.id}/commercial`,
+          farmId: e.id,
           authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/establishment\\/${e.id}\\/commercial$`),
+          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/commercial$`),
           layout: '/admin',
           items: []
         };
@@ -167,10 +167,10 @@ function Sidebar(props: SidebarProps) {
       establishments.map((e: EstablishmentType) => {
         return {
           name: e.name,
-          path: `/dashboard/establishment/${e.id}/transparency`,
-          establishmentId: e.id,
+          path: `/dashboard/farm/${e.id}/transparency`,
+          farmId: e.id,
           authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/establishment\\/${e.id}\\/transparency$`),
+          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/transparency$`),
           layout: '/admin',
           items: []
         };
@@ -181,10 +181,10 @@ function Sidebar(props: SidebarProps) {
       establishments.map((e: EstablishmentType) => {
         return {
           name: e.name,
-          path: `/dashboard/establishment/${e.id}/iot`,
-          establishmentId: e.id,
+          path: `/dashboard/farm/${e.id}/iot`,
+          farmId: e.id,
           authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/establishment\\/${e.id}\\/iot$`),
+          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/iot$`),
           layout: '/admin',
           items: []
         };
@@ -317,7 +317,7 @@ function Sidebar(props: SidebarProps) {
                         color="green.500"
                         display={sidebarWidth === 275 ? 'block' : 'none'}
                       />
-                      {prop.establishmentId ? (
+                      {prop.farmId ? (
                         <NavLink to={prop.layout + prop.path}>
                           <Text
                             color={activeColor}
@@ -411,7 +411,7 @@ function Sidebar(props: SidebarProps) {
                         color="green.500"
                         display={sidebarWidth === 275 ? 'block' : 'none'}
                       />
-                      {prop.establishmentId ? (
+                      {prop.farmId ? (
                         <NavLink color="red" to={prop.layout + prop.path}>
                           <Text
                             color={inactiveColor}
@@ -652,7 +652,7 @@ function Sidebar(props: SidebarProps) {
   let sidebarContent = (
     <Box>
       <Box mb="20px">{brand}</Box>
-      <Stack direction="column" mb="40px" as="nav" aria-label="Main navigation">
+      <Stack direction="column" mb="40px" as="nav" aria-label="Main navigation" data-tour="sidebar-nav">
         <Box>{links}</Box>
       </Stack>
       <SidebarHelp sidebarWidth={sidebarWidth} />

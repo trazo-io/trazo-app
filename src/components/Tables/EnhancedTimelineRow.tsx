@@ -725,7 +725,6 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
           cursor="pointer"
           transition="all 0.2s ease"
           position="relative"
-          overflow="hidden"
           _hover={{
             borderColor: eventConfig.color,
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',

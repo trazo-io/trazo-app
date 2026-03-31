@@ -594,6 +594,16 @@ const SoilManagementTab = forwardRef(
                   </StandardSelect>
                 </StandardField>
 
+                {/* NOP 205.203(c): Manure timing compliance helper for organic farms */}
+                {(watch('type') === 'CO' || watch('type') === 'OM') && (
+                  <StandardAlert status="info" mt={2}>
+                    <Text fontSize="sm">
+                      <strong>{intl.formatMessage({ id: 'app.manureTimingTitle' })}</strong>
+                      {' '}{intl.formatMessage({ id: 'app.manureTimingDescription' })}
+                    </Text>
+                  </StandardAlert>
+                )}
+
                 <StandardField
                   label="Event Name"
                   helpText="Descriptive name for this soil management operation"

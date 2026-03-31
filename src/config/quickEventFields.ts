@@ -928,7 +928,47 @@ export const equipmentMaintenanceFields: QuickEventTypeConfig = {
       default: 'ha',
       options: AREA_UNIT_OPTIONS,
       advanced: true
-    }
+    },
+    // --- Organic Compliance Fields (shown only when operation_type is "cleaning") ---
+    // NOP 205.272: Equipment cleaning to prevent organic/conventional commingling
+    {
+      name: 'previous_use',
+      type: 'select',
+      labelKey: 'app.previousUse',
+      helpKey: 'app.previousUseHelp',
+      default: 'organic',
+      options: [
+        { value: 'organic', labelKey: 'app.previousUse.organic' },
+        { value: 'conventional', labelKey: 'app.previousUse.conventional' },
+        { value: 'mixed', labelKey: 'app.previousUse.mixed' },
+        { value: 'unknown', labelKey: 'app.previousUse.unknown' }
+      ],
+      showIf: (values: Record<string, unknown>) => values.equipment_operation_type === 'cleaning'
+    },
+    {
+      name: 'cleaning_protocol',
+      type: 'select',
+      labelKey: 'app.cleaningProtocol',
+      helpKey: 'app.cleaningProtocolHelp',
+      default: 'water_rinse',
+      options: [
+        { value: 'water_rinse', labelKey: 'app.cleaningProtocol.waterRinse' },
+        { value: 'detergent', labelKey: 'app.cleaningProtocol.detergent' },
+        { value: 'triple_rinse', labelKey: 'app.cleaningProtocol.tripleRinse' },
+        { value: 'steam', labelKey: 'app.cleaningProtocol.steam' },
+        { value: 'other', labelKey: 'app.cleaningProtocol.other' }
+      ],
+      showIf: (values: Record<string, unknown>) => values.equipment_operation_type === 'cleaning'
+    },
+    {
+      name: 'inspected_by',
+      type: 'text',
+      labelKey: 'app.inspectedBy',
+      helpKey: 'app.inspectedByHelp',
+      placeholderKey: 'app.inspectedByPlaceholder',
+      showIf: (values: Record<string, unknown>) => values.equipment_operation_type === 'cleaning',
+      advanced: true
+    },
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
 };
@@ -1869,6 +1909,195 @@ export const generalDocumentationFields: QuickEventTypeConfig = {
 // ============================================================================
 
 // Map of all event type configurations
+// ============================================================================
+// ORGANIC COMPLIANCE TEMPLATES (NOP-aligned workflows)
+// ============================================================================
+
+// Organic Seed/Transplant Sourcing (NOP 205.204)
+export const organicSeedSourcingFields: QuickEventTypeConfig = {
+  templateId: 'organic_seed_sourcing',
+  eventType: 'PL', // Planting subtype
+  quickFields: [
+    {
+      name: 'seeds_source',
+      type: 'select',
+      labelKey: 'app.organicSeedSource',
+      helpKey: 'app.organicSeedSourceHelp',
+      default: 'certified_organic',
+      required: true,
+      options: [
+        { value: 'certified_organic', labelKey: 'app.seedSource.certifiedOrganic' },
+        { value: 'untreated_conventional', labelKey: 'app.seedSource.untreatedConventional' },
+        { value: 'farm_saved', labelKey: 'app.seedSource.farmSaved' }
+      ]
+    },
+    {
+      name: 'seed_supplier',
+      type: 'text',
+      labelKey: 'app.seedSupplier',
+      helpKey: 'app.seedSupplierHelp',
+      placeholderKey: 'app.seedSupplierPlaceholder',
+      required: true
+    },
+    {
+      name: 'seed_variety',
+      type: 'text',
+      labelKey: 'app.seedVariety',
+      helpKey: 'app.seedVarietyHelp',
+      placeholderKey: 'app.seedVarietyPlaceholder'
+    },
+    {
+      name: 'seed_lot_number',
+      type: 'text',
+      labelKey: 'app.seedLotNumber',
+      helpKey: 'app.seedLotNumberHelp',
+      placeholderKey: 'app.seedLotNumberPlaceholder'
+    },
+    {
+      name: 'organic_certificate_number',
+      type: 'text',
+      labelKey: 'app.organicCertificateNumber',
+      helpKey: 'app.organicCertificateNumberHelp',
+      placeholderKey: 'app.organicCertificateNumberPlaceholder',
+      showIf: (values: Record<string, unknown>) => values.seeds_source === 'certified_organic'
+    },
+    {
+      name: 'treated_or_untreated',
+      type: 'select',
+      labelKey: 'app.seedTreatment',
+      helpKey: 'app.seedTreatmentHelp',
+      default: 'untreated',
+      options: [
+        { value: 'untreated', labelKey: 'app.seedTreatment.untreated' },
+        { value: 'organically_treated', labelKey: 'app.seedTreatment.organicallyTreated' }
+      ]
+    },
+    // Area covered for carbon calculation
+    {
+      name: 'area_covered',
+      type: 'number',
+      labelKey: 'app.areaCovered',
+      helpKey: 'app.areaCoveredHelp',
+      default: 1,
+      min: 0,
+      step: 0.1,
+      hasUnitDropdown: true,
+      unitFieldName: 'area_unit',
+      unitOptions: AREA_UNIT_OPTIONS
+    },
+    {
+      name: 'area_unit',
+      type: 'select',
+      labelKey: 'app.areaUnit',
+      default: 'ha',
+      options: AREA_UNIT_OPTIONS
+    }
+  ]
+};
+
+// Organic Amendment Application (NOP 205.203)
+export const organicAmendmentFields: QuickEventTypeConfig = {
+  templateId: 'organic_amendment',
+  eventType: 'OM', // Organic Matter Addition (SoilManagement)
+  quickFields: [
+    {
+      name: 'amendment_type',
+      type: 'select',
+      labelKey: 'app.organicAmendmentType',
+      helpKey: 'app.organicAmendmentTypeHelp',
+      default: 'compost',
+      required: true,
+      options: [
+        { value: 'compost', labelKey: 'app.amendmentType.compost' },
+        { value: 'manure', labelKey: 'app.amendmentType.manure' },
+        { value: 'bone_meal', labelKey: 'app.amendmentType.boneMeal' },
+        { value: 'fish_emulsion', labelKey: 'app.amendmentType.fishEmulsion' },
+        { value: 'kelp_meal', labelKey: 'app.amendmentType.kelpMeal' },
+        { value: 'blood_meal', labelKey: 'app.amendmentType.bloodMeal' },
+        { value: 'other', labelKey: 'app.amendmentType.other' }
+      ]
+    },
+    {
+      name: 'amendment_amount_numeric',
+      type: 'number',
+      labelKey: 'app.amendmentAmount',
+      helpKey: 'app.amendmentAmountHelp',
+      default: 500,
+      min: 0,
+      step: 1,
+      hasUnitDropdown: true,
+      unitFieldName: 'amendment_amount_unit',
+      unitOptions: [
+        { value: 'kg', labelKey: 'app.unit.kg' },
+        { value: 'lbs', labelKey: 'app.unit.lbs' },
+        { value: 'tons', labelKey: 'app.unit.tons' }
+      ]
+    },
+    {
+      name: 'amendment_amount_unit',
+      type: 'select',
+      labelKey: 'app.amendmentUnit',
+      default: 'kg',
+      options: [
+        { value: 'kg', labelKey: 'app.unit.kg' },
+        { value: 'lbs', labelKey: 'app.unit.lbs' },
+        { value: 'tons', labelKey: 'app.unit.tons' }
+      ]
+    },
+    {
+      name: 'amendment_source_supplier',
+      type: 'text',
+      labelKey: 'app.amendmentSupplier',
+      helpKey: 'app.amendmentSupplierHelp',
+      placeholderKey: 'app.amendmentSupplierPlaceholder'
+    },
+    // Composting-specific fields (NOP requires C:N ratio and temperature records)
+    {
+      name: 'c_to_n_ratio',
+      type: 'text',
+      labelKey: 'app.cToNRatio',
+      helpKey: 'app.cToNRatioHelp',
+      placeholderKey: 'app.cToNRatioPlaceholder',
+      showIf: (values: Record<string, unknown>) => values.amendment_type === 'compost',
+      advanced: true
+    },
+    {
+      name: 'compost_temperature_reached_131f',
+      type: 'select',
+      labelKey: 'app.compostTempReached',
+      helpKey: 'app.compostTempReachedHelp',
+      default: 'yes',
+      options: [
+        { value: 'yes', labelKey: 'common.yes' },
+        { value: 'no', labelKey: 'common.no' },
+        { value: 'not_measured', labelKey: 'app.notMeasured' }
+      ],
+      showIf: (values: Record<string, unknown>) => values.amendment_type === 'compost',
+      advanced: true
+    },
+    // Area covered
+    {
+      name: 'area_covered',
+      type: 'number',
+      labelKey: 'app.areaCovered',
+      helpKey: 'app.areaCoveredHelp',
+      default: 2,
+      min: 0,
+      step: 0.1,
+      hasUnitDropdown: true,
+      unitFieldName: 'area_unit',
+      unitOptions: AREA_UNIT_OPTIONS
+    },
+    {
+      name: 'area_unit',
+      type: 'select',
+      labelKey: 'app.areaUnit',
+      default: 'ha',
+      options: AREA_UNIT_OPTIONS
+    }
+  ]
+};
+
 export const quickEventFieldsMap: Record<string, QuickEventTypeConfig> = {
   // Production event types (8 total)
   irrigation: irrigationFields,
@@ -1886,6 +2115,9 @@ export const quickEventFieldsMap: Record<string, QuickEventTypeConfig> = {
   fungicide: fungicideFields,
   // General event type
   general_documentation: generalDocumentationFields,
+  // Organic compliance templates (NOP-aligned)
+  organic_seed_sourcing: organicSeedSourcingFields,
+  organic_amendment: organicAmendmentFields,
   // Alias for bloom nutrition (same as fertilization)
   bloom_nutrition: {
     ...fertilizationFields,

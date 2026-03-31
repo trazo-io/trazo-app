@@ -11,36 +11,36 @@ const dashRoutes: Route[] = [
   {
     id: 'home',
     name: 'Home',
-    path: '/dashboard/establishment',
+    path: '/dashboard/farm',
     icon: <HomeIcon color="inherit" />,
     authIcon: <HomeIcon color="inherit" />,
     layout: '/admin',
     collapse: true,
     isHome: true,
     isDashboard: true,
-    regex: /^\/admin\/dashboard\/establishment\/[0-9]+(\/parcel\/[0-9]+)?$/
+    regex: /^\/admin\/dashboard\/farm\/[0-9]+(\/parcel\/[0-9]+)?$/
   },
   {
     id: 'transparencyDashboard',
     name: 'Transparency',
-    path: '/dashboard/establishment/:establishmentId/transparency',
+    path: '/dashboard/farm/:farmId/transparency',
     icon: <FaLeaf color="inherit" />,
     authIcon: <FaLeaf color="inherit" />,
     layout: '/admin',
     collapse: true,
     isTransparencyDashboard: true,
-    regex: /^\/admin\/dashboard\/establishment\/[0-9]+\/transparency$/
+    regex: /^\/admin\/dashboard\/farm\/[0-9]+\/transparency$/
   },
   {
     id: 'commercialInfo',
     name: 'Commercial Info',
-    path: '/dashboard/establishment',
+    path: '/dashboard/farm',
     icon: <BsFillClipboardCheckFill color="inherit" />,
     authIcon: <BsFillClipboardCheckFill color="inherit" />,
     layout: '/admin',
     collapse: true,
     isCommercial: true,
-    regex: /^\/admin\/dashboard\/establishment\/[0-9]+\/commercial$/
+    regex: /^\/admin\/dashboard\/farm\/[0-9]+\/commercial$/
   },
   {
     id: 'subscription',

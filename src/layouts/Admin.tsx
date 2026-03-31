@@ -35,6 +35,11 @@ import { set } from 'date-fns';
 import theme from 'theme';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
+import TourProvider from 'components/Tour/TourProvider';
+import OnboardingChecklist from 'components/Tour/OnboardingChecklist';
+import { MilestoneCelebrationModal, useMilestoneToast } from 'components/Tour/MilestoneCelebration';
+import { useMilestones } from 'hooks/useMilestones';
+import { OfflineQueueIndicator } from 'components/Upload/OfflineQueueIndicator';
 
 // Define Company interface
 interface Company {
@@ -54,6 +59,18 @@ export default function Dashboard(props: any) {
   const [fixed, setFixed] = useState(false);
   const [toggleSidebar, setToggleSidebar] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(275);
+
+  // Milestone celebrations
+  const { activeMilestone, daysSinceSignup, dismissMilestone } = useMilestones();
+  const { showToast: showMilestoneToast } = useMilestoneToast();
+
+  // Show toast for toast-pattern milestones, auto-dismiss them
+  useEffect(() => {
+    if (activeMilestone && activeMilestone.pattern === 'toast') {
+      showMilestoneToast(activeMilestone, daysSinceSignup);
+      dismissMilestone();
+    }
+  }, [activeMilestone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [dynamicRoutes, setDynamicRoutes] = useState([]);
   const establishments = useSelector(
@@ -109,19 +126,19 @@ export default function Dashboard(props: any) {
       establishments.map((e) => {
         return {
           name: e.name,
-          path: `/dashboard/establishment/${e.id}`,
+          path: `/dashboard/farm/${e.id}`,
           collapse: true,
-          establishmentId: e.id,
+          farmId: e.id,
           authIcon: <HomeIcon color="inherit" />,
-          regex: /^\/admin\/dashboard\/establishment\/[0-9]+(\/parcel\/[0-9]+)?$/,
+          regex: /^\/admin\/dashboard\/farm\/[0-9]+(\/parcel\/[0-9]+)?$/,
           layout: '/admin',
           items: e?.parcels?.map((p) => {
             return {
               name: p.name,
-              path: `/dashboard/establishment/${e.id}/parcel/${p.id}`,
+              path: `/dashboard/farm/${e.id}/parcel/${p.id}`,
               component: Overview,
               layout: '/admin',
-              regex: /^\/admin\/dashboard\/establishment\/[0-9]+\/parcel\/[0-9]+$/
+              regex: /^\/admin\/dashboard\/farm\/[0-9]+\/parcel\/[0-9]+$/
             };
           })
         };
@@ -282,6 +299,7 @@ export default function Dashboard(props: any) {
 
   // Chakra Color Mode
   return (
+    <TourProvider>
     <SidebarContext.Provider
       value={{
         sidebarWidth,
@@ -318,6 +336,8 @@ export default function Dashboard(props: any) {
           />
         </Portal>
 
+        <OfflineQueueIndicator />
+
         {getRoute() ? (
           <PanelContent
             paddingInlineStart={{ base: '4px', md: '15px' }}
@@ -329,6 +349,7 @@ export default function Dashboard(props: any) {
           </PanelContent>
         ) : null}
         <Footer />
+        <OnboardingChecklist />
         <Portal>
           <FixedPlugin fixed={fixed} onOpen={onOpen} />
         </Portal>
@@ -344,6 +365,15 @@ export default function Dashboard(props: any) {
           onTransparent={() => setSidebarVariant('transparent')}
         />
       </MainPanel>
+      {activeMilestone && activeMilestone.pattern === 'modal' && (
+        <MilestoneCelebrationModal
+          milestone={activeMilestone}
+          isOpen={true}
+          onClose={dismissMilestone}
+          daysSinceSignup={daysSinceSignup}
+        />
+      )}
     </SidebarContext.Provider>
+    </TourProvider>
   );
 }

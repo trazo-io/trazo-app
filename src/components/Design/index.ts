@@ -33,7 +33,9 @@ export { S3Image, type S3ImageProps } from '../Media/S3Image';
 
 // Standardized Form Components
 export { default as StandardChemicalForm } from '../Forms/StandardChemicalForm';
-export { default as StandardEstablishmentForm } from '../Forms/StandardEstablishmentForm';
+export { default as StandardFarmForm } from '../Forms/StandardFarmForm';
+/** @deprecated Use StandardFarmForm instead */
+export { default as StandardEstablishmentForm } from '../Forms/StandardFarmForm';
 export { default as StandardParcelForm } from '../Forms/StandardParcelForm';
 export { default as StandardProductionForm } from '../Forms/StandardProductionForm';
 export { default as StandardizedCompanyForm } from '../../views/Dashboard/Dashboard/components/forms/NewCompanyStandardized';

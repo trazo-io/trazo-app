@@ -46,9 +46,9 @@ import { object, string, boolean, number, date } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import { clearForm } from 'store/features/formSlice';
-import { setEstablishmentParcelHasProduction } from 'store/features/companySlice';
+import { setFarmParcelHasProduction } from 'store/features/companySlice';
 import { useCreateProductionMutation } from 'store/api/historyApi';
-import { useGetEstablishmentProductsQuery } from 'store/api/productApi';
+import { useGetFarmProductsQuery } from 'store/api/productApi';
 import { useIntl } from 'react-intl';
 import CreatableSelect from 'react-select/creatable';
 import {
@@ -244,7 +244,7 @@ export const NewProduction: React.FC = () => {
   const dispatch = useDispatch();
 
   const navigate = useNavigate();
-  const { parcelId, establishmentId } = useParams();
+  const { parcelId, farmId } = useParams();
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
 
   const [createProduction, { data, isSuccess: isSuccessProduction, isLoading }] =
@@ -343,25 +343,25 @@ export const NewProduction: React.FC = () => {
     if (isSuccessProduction) {
       dispatch(clearForm());
       dispatch(
-        setEstablishmentParcelHasProduction({
-          establishmentId,
+        setFarmParcelHasProduction({
+          farmId,
           parcelId
         })
       );
       // Navigate based on user choice or default to parcel view
-      const defaultPath = `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`;
+      const defaultPath = `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`;
       navigate(navigateTo || defaultPath);
       setNavigateTo(null);
     }
-  }, [isSuccessProduction, dispatch, establishmentId, parcelId, navigate, navigateTo]);
+  }, [isSuccessProduction, dispatch, farmId, parcelId, navigate, navigateTo]);
 
-  const { data: dataProducts, isSuccess: isSuccessProducts } = useGetEstablishmentProductsQuery(
+  const { data: dataProducts, isSuccess: isSuccessProducts } = useGetFarmProductsQuery(
     {
       companyId: currentCompany?.id,
-      establishmentId
+      farmId
     },
     {
-      skip: !establishmentId || !currentCompany || currentCompany?.id === undefined
+      skip: !farmId || !currentCompany || currentCompany?.id === undefined
     }
   );
 
@@ -450,7 +450,7 @@ export const NewProduction: React.FC = () => {
                     variant="outline"
                     onClick={() =>
                       navigate(
-                        `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`
+                        `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`
                       )
                     }
                   >
@@ -701,7 +701,7 @@ export const NewProduction: React.FC = () => {
                       variant="outline"
                       onClick={() =>
                         navigate(
-                          `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`
+                          `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`
                         )
                       }
                     >
@@ -847,7 +847,7 @@ export const NewProduction: React.FC = () => {
                       variant="outline"
                       onClick={() =>
                         navigate(
-                          `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`
+                          `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`
                         )
                       }
                     >
@@ -996,7 +996,7 @@ export const NewProduction: React.FC = () => {
                       variant="outline"
                       onClick={() =>
                         navigate(
-                          `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/`
+                          `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`
                         )
                       }
                     >

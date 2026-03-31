@@ -61,7 +61,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
   const [currentEstablishment, setCurrentEstablishment] = useState<any>(null);
   const [currentParcel, setCurrentParcel] = useState<any>(null);
 
-  const { establishmentId, parcelId } = useParams<{ establishmentId: string; parcelId: string }>();
+  const { farmId, parcelId } = useParams<{ farmId: string; parcelId: string }>();
 
   const establishments = useSelector(
     (state: RootState) => state.company.currentCompany?.establishments
@@ -70,8 +70,8 @@ export default function AdminNavbar(props: AdminNavbarProps) {
   const subscription = useSelector((state) => state.company.currentCompany?.subscription);
 
   useEffect(() => {
-    if (establishmentId) {
-      const establishment = establishments?.find((e) => e.id.toString() === establishmentId);
+    if (farmId) {
+      const establishment = establishments?.find((e) => e.id.toString() === farmId);
       if (establishment) {
         setCurrentEstablishment(establishment);
         if (parcelId) {
@@ -88,15 +88,15 @@ export default function AdminNavbar(props: AdminNavbarProps) {
       setCurrentEstablishment(null);
       setCurrentParcel(null);
     }
-  }, [establishmentId, parcelId, establishments]);
+  }, [farmId, parcelId, establishments]);
 
-  // 🚀 2025 Best Practice: Programmatic Navigation with State Preservation
+  // Programmatic Navigation with State Preservation
   const handleEstablishmentClick = (e: React.MouseEvent) => {
     e.preventDefault();
 
     // Optimized navigation: No page refresh, preserves state, instant transition
-    if (establishmentId) {
-      navigate(`/admin/dashboard/establishment/${establishmentId}`, {
+    if (farmId) {
+      navigate(`/admin/dashboard/farm/${farmId}`, {
         // Replace current entry to maintain clean history stack
         replace: false,
         // Preserve scroll position for better UX

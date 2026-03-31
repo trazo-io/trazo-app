@@ -49,7 +49,7 @@ import ProfileBgImage from 'assets/img/ProfileBackground.png';
 import avatar4 from 'assets/img/avatars/avatar4.png';
 import imageMap from 'assets/img/imageMap.png';
 import { setCompany } from 'store/features/companySlice';
-import { setEstablishmentParcel } from 'store/features/companySlice';
+import { setFarmParcel } from 'store/features/companySlice';
 import { setUserCompany } from 'store/features/userSlice';
 import { useCreateCompanyMutation } from 'store/api/companyApi';
 import { zodResolver } from '@hookform/resolvers/zod';

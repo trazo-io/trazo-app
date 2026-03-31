@@ -60,16 +60,16 @@ import SalesOverview from './components/SalesOverview';
 import bgImage from 'assets/img/backgroundImage.png';
 // assets
 import imageFarm from 'assets/img/imageFarm.png';
-import TransparencySummaryCard from './components/establishment/CarbonSummaryCard';
-import CarbonDashboard from './Establishment/CarbonDashboard';
+import TransparencySummaryCard from './components/farm/CarbonSummaryCard';
+import CarbonDashboard from './Farm/CarbonDashboard';
 import TrialStatusBanner from 'components/Trial/TrialStatusBanner';
-import GuidedOnboarding from 'components/Onboarding/GuidedOnboarding';
-import { useOnboarding } from 'hooks/useOnboarding';
+import { useTour } from 'hooks/useTour';
+import { useTourScenario } from 'hooks/useTourScenario';
 // // import BatchTestComponent from 'components/Debug/BatchTestComponent'; // DEBUG: Remove for production
 
 export default function DashboardView() {
   const intl = useIntl();
-  const { establishmentId } = useParams();
+  const { farmId } = useParams();
   const navigate = useNavigate();
   const { canWrite } = useUserRole();
   const currentLocation = useLocation();
@@ -93,6 +93,10 @@ export default function DashboardView() {
       return () => clearTimeout(timer);
     }
   }, [showWelcome]);
+
+  // Product tour — auto-starts the right welcome tour based on user scenario
+  const { welcomeTourId } = useTourScenario();
+  useTour(welcomeTourId, { enabled: !!establishment });
 
   // Force horizontal scroll for ALL screen sizes - no Grid layout wrapping
   const isMobile = true; // Always use horizontal scroll layout
@@ -206,14 +210,6 @@ export default function DashboardView() {
   const activeCompany = useSelector((state) => state.company.currentCompany);
 
   // Onboarding hook
-  const {
-    isOnboardingOpen,
-    closeOnboarding,
-    shouldShowOnboarding,
-    openOnboarding,
-    resetOnboarding
-  } = useOnboarding();
-
   // Check subscription from the company
   const subscription = activeCompany?.subscription;
   const isLoadingCompany = useSelector((state) => state.company.isLoading);
@@ -326,17 +322,17 @@ export default function DashboardView() {
     let establishment;
     if (establishments) {
       establishment = establishments.filter(
-        (establishment) => establishment.id.toString() === establishmentId
+        (establishment) => establishment.id.toString() === farmId
       )[0];
       console.log('🏗️ Dashboard useEffect: Setting establishment data', {
-        establishmentId,
+        farmId,
         establishment: establishment?.name,
         parcelCount: establishment?.parcels?.length,
         parcels: establishment?.parcels?.map((p) => p.name || p.id)
       });
       setEstablishment(establishment);
     }
-  }, [establishmentId, establishments]);
+  }, [farmId, establishments]);
 
   // 2025 Best Practice: Batch load S3 images for establishment
   const s3Urls = useMemo(() => {
@@ -355,18 +351,18 @@ export default function DashboardView() {
   // Redirect to first establishment when accessing root dashboard
   useEffect(() => {
     // Only redirect if we're on the exact dashboard root (not any establishment page)
-    // and we have establishments but no establishmentId in the URL
+    // and we have establishments but no farmId in the URL
     const isExactDashboardRoot = location.pathname === '/admin/dashboard';
     const hasEstablishments = establishments && establishments.length > 0;
-    const noEstablishmentInUrl = !establishmentId;
+    const noEstablishmentInUrl = !farmId;
 
     // RTK Query optimistic updates handle cache consistency, so we can redirect normally
     if (isExactDashboardRoot && hasEstablishments && noEstablishmentInUrl) {
       const firstEstablishment = establishments[0].id;
       console.log('DashboardView: Redirecting to first establishment:', firstEstablishment);
-      navigate(`/admin/dashboard/establishment/${firstEstablishment}`, { replace: true });
+      navigate(`/admin/dashboard/farm/${firstEstablishment}`, { replace: true });
     }
-  }, [location.pathname, establishmentId, navigate]); // Removed establishments dependency to reduce triggers
+  }, [location.pathname, farmId, navigate]); // Removed establishments dependency to reduce triggers
 
   // Check establishment scrollability on mount and when data changes
   useEffect(() => {
@@ -386,7 +382,7 @@ export default function DashboardView() {
   }, [establishments]);
 
   const toggleAddEstablishment = () => {
-    navigate('/admin/dashboard/establishment/add');
+    navigate('/admin/dashboard/farm/add');
   };
 
   // Step 5: Show skeleton loading for primary content until loaded - TEMPORARILY DISABLED
@@ -450,14 +446,6 @@ export default function DashboardView() {
         </Box>
       )}
 
-      {/* Guided Onboarding Modal */}
-      {/* <GuidedOnboarding
-        isOpen={isOnboardingOpen}
-        onClose={closeOnboarding}
-        companyName={activeCompany?.name}
-        currentEstablishmentId={establishmentId}
-      /> */}
-
       <Box>
         <Flex
           direction={{ base: 'column', xl: 'row' }}
@@ -470,6 +458,7 @@ export default function DashboardView() {
               {isMobile ? (
                 <VStack spacing={6} align="stretch" w="100%">
                   <Box
+                    data-tour="farm-carousel"
                     ref={establishmentScrollRef}
                     overflowX="auto"
                     overflowY="hidden"
@@ -490,7 +479,7 @@ export default function DashboardView() {
                           {establishments.map((prop) => (
                             <NavLink
                               key={prop.id}
-                              to={`/admin/dashboard/establishment/${prop.id}`}
+                              to={`/admin/dashboard/farm/${prop.id}`}
                               style={{ textDecoration: 'none' }}
                             >
                               <Card
@@ -613,7 +602,7 @@ export default function DashboardView() {
                       {establishments.map((prop) => (
                         <NavLink
                           key={prop.id}
-                          to={`/admin/dashboard/establishment/${prop.id}`}
+                          to={`/admin/dashboard/farm/${prop.id}`}
                           style={{ textDecoration: 'none' }}
                         >
                           <Card
@@ -722,7 +711,7 @@ export default function DashboardView() {
             state={establishment?.state}
             city={establishment?.city}
             zone={establishment?.zone}
-            readMoreLink={`/admin/dashboard/establishment/${establishment?.id}/profile`}
+            readMoreLink={`/admin/dashboard/farm/${establishment?.id}/profile`}
             bgGradient={bgGradient}
             borderLeft="4px solid"
             borderColor="green.500"
@@ -753,22 +742,24 @@ export default function DashboardView() {
         )}
 
         {establishment ? (
+          <Box data-tour="smart-usage-card">
           <SmartUsageCard
             // Required props for backend API call
             companyId={activeCompany?.id}
-            establishmentId={establishment.id}
+            farmId={establishment.id}
             // Smart action handlers
             onViewAnalytics={() =>
-              navigate(`/admin/dashboard/establishment/${establishment.id}/commercial`)
+              navigate(`/admin/dashboard/farm/${establishment.id}/commercial`)
             }
             onUpgradeSubscription={() => navigate('/admin/dashboard/pricing')}
             onOptimizeCarbon={() =>
-              navigate(`/admin/dashboard/establishment/${establishment.id}/productions`)
+              navigate(`/admin/dashboard/farm/${establishment.id}/productions`)
             }
             onShareTransparency={() =>
-              navigate(`/admin/dashboard/establishment/${establishment.id}/commercial`)
+              navigate(`/admin/dashboard/farm/${establishment.id}/commercial`)
             }
           />
+          </Box>
         ) : (
           <Card minH="290px" bg={cardBg}>
             <Shimmer height="290px" borderRadius="15px" />
@@ -778,16 +769,18 @@ export default function DashboardView() {
 
       {/* Single Transparency Overview Card for selected establishment */}
       {establishment?.id && (
-        <Box width="100%" mb={{ base: 4, md: 6 }}>
-          <TransparencySummaryCard establishmentId={establishment.id} />
+        <Box width="100%" mb={{ base: 4, md: 6 }} data-tour="transparency-summary">
+          <TransparencySummaryCard farmId={establishment.id} />
         </Box>
       )}
 
-      <CarouselHorizontal
-        title={intl.formatMessage({ id: 'app.parcels' })}
-        description={intl.formatMessage({ id: 'app.establishmentParcels' })}
-        data={establishment?.parcels}
-      />
+      <Box data-tour="parcels-carousel">
+        <CarouselHorizontal
+          title={intl.formatMessage({ id: 'app.parcels' })}
+          description={intl.formatMessage({ id: 'app.establishmentParcels' })}
+          data={establishment?.parcels}
+        />
+      </Box>
     </Flex>
   );
 }

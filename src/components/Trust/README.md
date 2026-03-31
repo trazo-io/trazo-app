@@ -34,7 +34,7 @@ const trustData: TrustData = {
   certifications: ['USDA Organic', 'Carbon Neutral'],
   transparencyScore: 94,
   industryPercentile: 85,
-  sustainabilityBadges: ['USDA Verified', 'Carbon Tracked'],
+  sustainabilityBadges: ['EPA/USDA-Sourced', 'Carbon Tracked'],
   publicViews: 1247
 };
 

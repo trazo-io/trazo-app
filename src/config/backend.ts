@@ -11,66 +11,77 @@ export const PASSWORD_RESET_REQUEST_URL = `${ROOT_URL}users/request_password_res
 export const PASSWORD_RESET_CONFIRM_URL = `${ROOT_URL}users/confirm_password_reset/`;
 export const USER_DATA_URL = `${ROOT_URL}users/me/`;
 
-// Company and Establishment URLs
+// Company and Farm URLs
 export const COMPANY_URL = (companyId?: string | undefined) =>
   companyId ? `${ROOT_URL}companies/${companyId}/` : `${ROOT_URL}companies/`;
-export const ESTABLISHMENT_URL = (companyId: string, establishmentId?: string) =>
-  establishmentId
-    ? `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/`
+export const FARM_URL = (companyId: string, farmId?: string) =>
+  farmId
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/`;
 export const PARCEL_URL = (
   companyId: string,
-  establishmentId: string,
+  farmId: string,
   parcelId: string | null = null
 ) =>
   parcelId
-    ? `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/parcels/${parcelId}/`
-    : `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/parcels/`;
-export const PARCEL_UPDATE_URL = (companyId: string, establishmentId: string, parcelId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/parcels/${parcelId}/update_parcel/`;
-export const ESTABLISHMENT_PRODUCTS_URL = (companyId: string, establishmentId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/products/`;
-export const ESTABLISHMENT_HISTORIES_URL = (companyId: string, establishmentId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/histories/`;
-export const ESTABLISHMENT_CHART_SCANS_VS_SALES_INFO_URL = (
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/`;
+export const PARCEL_UPDATE_URL = (companyId: string, farmId: string, parcelId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/update_parcel/`;
+export const FARM_PRODUCTS_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/products/`;
+export const FARM_HISTORIES_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/histories/`;
+export const FARM_CHART_SCANS_VS_SALES_INFO_URL = (
   companyId: string,
-  establishmentId: string
-) => `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/get_charts_data/`;
-export const SCANS_BY_ESTABLISHMENT_URL = (companyId: string, establishmentId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/scans/list_scans_by_establishment/`;
+  farmId: string
+) => `${ROOT_URL}companies/${companyId}/establishments/${farmId}/get_charts_data/`;
+export const SCANS_BY_FARM_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/scans/list_scans_by_establishment/`;
+
+/** @deprecated Use FARM_URL instead */
+export const ESTABLISHMENT_URL = FARM_URL;
+/** @deprecated Use FARM_PRODUCTS_URL instead */
+export const ESTABLISHMENT_PRODUCTS_URL = FARM_PRODUCTS_URL;
+/** @deprecated Use FARM_HISTORIES_URL instead */
+export const ESTABLISHMENT_HISTORIES_URL = FARM_HISTORIES_URL;
+/** @deprecated Use FARM_CHART_SCANS_VS_SALES_INFO_URL instead */
+export const ESTABLISHMENT_CHART_SCANS_VS_SALES_INFO_URL = FARM_CHART_SCANS_VS_SALES_INFO_URL;
+/** @deprecated Use SCANS_BY_FARM_URL instead */
+export const SCANS_BY_ESTABLISHMENT_URL = SCANS_BY_FARM_URL;
 export const PRODUCT_URL = `${ROOT_URL}products/`;
 
 // Review and History URLs
-export const LAST_REVIEWS_URL = (companyId: string, establishmentId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/last_reviews/`;
-export const PRODUCT_REPUTATION_URL = (companyId: string, establishmentId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/products_reputation/`;
-export const PRODUCT_REPUTATION_PERCENTAGE_URL = (companyId: string, establishmentId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/rating_reviews_percentage/`;
+export const LAST_REVIEWS_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/last_reviews/`;
+export const PRODUCT_REPUTATION_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/products_reputation/`;
+export const PRODUCT_REPUTATION_PERCENTAGE_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/rating_reviews_percentage/`;
 export const REVIEW_URL = (reviewId: string) =>
   reviewId ? `${ROOT_URL}reviews/${reviewId}/` : `${ROOT_URL}reviews/`;
 export const HISTORY_URL = (historyId: string) =>
   historyId ? `${ROOT_URL}histories/${historyId}/` : `${ROOT_URL}histories/`;
-export const PARCEL_HISTORY_URL = (companyId: string, establishmentId: string, parcelId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/parcels/${parcelId}/histories/`;
-export const CURRENT_HISTORY = (companyId: string, establishmentId: string, parcelId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/parcels/${parcelId}/current_history/`;
-export const FINISH_HISTORY = (companyId: string, establishmentId: string, parcelId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/parcels/${parcelId}/finish_history/`;
+export const PARCEL_HISTORY_URL = (companyId: string, farmId: string, parcelId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/histories/`;
+export const CURRENT_HISTORY = (companyId: string, farmId: string, parcelId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/current_history/`;
+export const FINISH_HISTORY = (companyId: string, farmId: string, parcelId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/finish_history/`;
 export const EVENT_URL = (
   companyId: string,
-  establishmentId: string,
+  farmId: string,
   eventId: string,
   eventType: string | number
 ) =>
   eventId && eventType !== undefined && eventType !== null && eventType !== ''
-    ? `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/events/${eventId}/?event_type=${eventType}`
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/events/${eventId}/?event_type=${eventType}`
     : eventId
-    ? `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/events/${eventId}/`
-    : `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/events/`;
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/events/${eventId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/events/`;
 
-export const EVENT_CREATE_URL = (companyId: string, establishmentId: string) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/events/`;
+export const EVENT_CREATE_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/events/`;
 export const PRODUCTION_URL = (productionId: string) =>
   productionId ? `${ROOT_URL}histories/${productionId}/` : `${ROOT_URL}histories/`;
 export const PUBLIC_HISTORY_URL = (historyId: string) =>
@@ -81,18 +92,18 @@ export const UPLOAD_URLS_URL = `${ROOT_URL}upload-urls/`;
 // Certification URLs
 export const CERTIFICATION_URL = (
   companyId: string,
-  establishmentId: string,
+  farmId: string,
   certificationId?: string
 ) =>
   certificationId
-    ? `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/certifications/${certificationId}/`
-    : `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/certifications/`;
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifications/${certificationId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifications/`;
 export const CERTIFICATION_VERIFY_URL = (
   companyId: string,
-  establishmentId: string,
+  farmId: string,
   certificationId: string
 ) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${establishmentId}/certifications/${certificationId}/verify/`;
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifications/${certificationId}/verify/`;
 
 // User URLs
 export const USER_URL = (userId: string) =>

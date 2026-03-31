@@ -863,6 +863,36 @@ const ChemicalTab = forwardRef(
                   </StandardField>
                 )}
 
+                {/* Organic Certification Status — shown early for organic farm workflows */}
+                {chemicalType && (
+                  <StandardField
+                    label="Organic Approved"
+                    helpText="Is this chemical approved for organic farming?"
+                  >
+                    <Controller
+                      name="organic_approved"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardSelect {...field} placeholder="Select organic status...">
+                          <option value="omri_listed">✅ OMRI Listed - Organic certified</option>
+                          <option value="usda_nop_approved">
+                            🌱 USDA NOP Approved - National Organic Program
+                          </option>
+                          <option value="organic_equivalent">
+                            🌿 Organic Equivalent - Meets organic standards
+                          </option>
+                          <option value="not_organic">
+                            ❌ Not Organic Approved - Conventional use only
+                          </option>
+                          <option value="transitional">
+                            🔄 Transitional - In certification process
+                          </option>
+                        </StandardSelect>
+                      )}
+                    />
+                  </StandardField>
+                )}
+
                 {/* Sprint 5: Aggregate Chemical Support - Summary Mode Toggle (Fertilizer, Fungicide & Pesticide) */}
                 {(chemicalType === 'FE' || chemicalType === 'FU' || chemicalType === 'PE') && (
                   <Box
@@ -2129,33 +2159,6 @@ const ChemicalTab = forwardRef(
 
                 {/* Sprint 3 Epic 3.2: Consumer Trust Fields */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Organic Approved"
-                    helpText="Is this chemical approved for organic farming?"
-                  >
-                    <Controller
-                      name="organic_approved"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardSelect {...field} placeholder="Select organic status...">
-                          <option value="omri_listed">✅ OMRI Listed - Organic certified</option>
-                          <option value="usda_nop_approved">
-                            🌱 USDA NOP Approved - National Organic Program
-                          </option>
-                          <option value="organic_equivalent">
-                            🌿 Organic Equivalent - Meets organic standards
-                          </option>
-                          <option value="not_organic">
-                            ❌ Not Organic Approved - Conventional use only
-                          </option>
-                          <option value="transitional">
-                            🔄 Transitional - In certification process
-                          </option>
-                        </StandardSelect>
-                      )}
-                    />
-                  </StandardField>
-
                   <StandardField
                     label="Buffer Zone (meters)"
                     error={errors.buffer_zone_meters?.message}

@@ -62,12 +62,12 @@ const HistoryCard = ({ amount }) => {
   const currentCompany = useSelector((state) => state.company.currentCompany);
   const currentHistory = useSelector((state) => state.history?.currentHistory);
 
-  const { parcelId, establishmentId } = useParams();
+  const { parcelId, farmId } = useParams();
 
   const { data, isLoading, isFetching } = useGetParcelHistoriesQuery(
-    { companyId: currentCompany?.id, establishmentId, parcelId },
+    { companyId: currentCompany?.id, farmId, parcelId },
     {
-      skip: !parcelId || !establishmentId || !currentCompany || currentCompany?.id === undefined,
+      skip: !parcelId || !farmId || !currentCompany || currentCompany?.id === undefined,
       refetchOnMountOrArgChange: true
     }
   );
@@ -191,6 +191,7 @@ const HistoryCard = ({ amount }) => {
       transition="all 0.3s ease"
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
       className="trazo-card"
+      data-tour="productions-history"
     >
       <CardHeader px={{ base: 4, md: 6 }} py={5}>
         <Flex direction="column" w="100%">
@@ -290,7 +291,7 @@ const HistoryCard = ({ amount }) => {
                   }
                   onClick={() =>
                     navigate(
-                      `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/add`
+                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`
                     )
                   }
                 >
@@ -619,7 +620,7 @@ const HistoryCard = ({ amount }) => {
                                 // Only navigate if production is completed
                                 if (isCompleted) {
                                   navigate(
-                                    `/admin/dashboard/establishment/${establishmentId}/parcel/${parcelId}/production/${production.public_id}`
+                                    `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${production.public_id}`
                                   );
                                 }
                               }}

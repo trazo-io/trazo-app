@@ -56,7 +56,7 @@ import {
 import { MdCheck, MdLocationOn, MdDescription, MdSettings, MdImage } from 'react-icons/md';
 import { TrazoImageUpload } from '../Upload';
 
-// US States - 2-letter codes required for USDA API and carbon calculations
+// US States - 2-letter codes used for regional agricultural context
 // Must match EditCompanyModal.tsx for consistency
 const US_STATES = [
   { code: 'AL', name: 'Alabama' },
@@ -122,7 +122,7 @@ const establishmentSchema = object({
   phone: string().optional(),
   address: string().optional(),
   country: string().optional(),
-  state: string().optional(),
+  state: string().min(1, 'State is required for regional agricultural context'),
   city: string().optional(),
   zone: string().optional(),
   zipCode: string().optional(),
@@ -204,7 +204,7 @@ interface EstablishmentFormData {
   irrigationMethods?: string[];
 }
 
-interface StandardEstablishmentFormProps {
+interface StandardFarmFormProps {
   onSubmit: (data: EstablishmentFormData) => void;
   onCancel: () => void;
   initialData?: Partial<EstablishmentFormData>;
@@ -213,7 +213,7 @@ interface StandardEstablishmentFormProps {
   companyName?: string;
 }
 
-export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps> = ({
+export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
   onSubmit,
   onCancel,
   initialData,
@@ -356,7 +356,8 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
         const nameError = errors.name;
         return hasName && !nameError;
       case 1:
-        return true; // Location step has no required fields
+        // Location step: state is required (used in regional carbon calculations)
+        return !!formData.state;
       case 2:
         return true; // Operations step has no required fields
       case 3:
@@ -726,8 +727,9 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
 
                   <StandardField
                     label="State"
+                    required
                     error={errors.state?.message}
-                    helpText="Required for accurate carbon calculations"
+                    helpText="Used for regional irrigation and emission factor adjustments in carbon calculations"
                   >
                     <Controller
                       name="state"
@@ -1027,7 +1029,7 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   <StandardField
                     label="Total Area (Hectares)"
                     error={errors.totalAcreage?.message}
-                    helpText="Total land area in hectares - used for agricultural reporting and carbon calculations"
+                    helpText="Total land area in hectares - displayed on your farm profile"
                   >
                     <Controller
                       name="totalAcreage"
@@ -1204,72 +1206,25 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
                   />
                 </StandardField>
 
-                {/* Certifications */}
+                {/* Certifications — managed via CertificationManager in Establishment Profile */}
                 <StandardField
-                  label="Certifications"
-                  helpText="Agricultural certifications and standards"
+                  label={intl.formatMessage({ id: 'certification.manage.title' })}
+                  helpText={intl.formatMessage({ id: 'certification.form.helpText' })}
                 >
-                  <Controller
-                    name="certifications"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <VStack align="stretch" spacing={3}>
-                        <HStack>
-                          <Input
-                            value={newCertification}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              setNewCertification(e.target.value);
-                            }}
-                            placeholder="e.g., USDA Organic, Fair Trade, GAP"
-                            onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                if (newCertification.trim()) {
-                                  field.onChange([...(field.value || []), newCertification.trim()]);
-                                  setNewCertification('');
-                                }
-                              }
-                            }}
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                            size="lg"
-                          />
-                          <StandardButton
-                            onClick={() => {
-                              if (newCertification.trim()) {
-                                field.onChange([...(field.value || []), newCertification.trim()]);
-                                setNewCertification('');
-                              }
-                            }}
-                            leftIcon={<FaPlus />}
-                            size="sm"
-                          >
-                            Add
-                          </StandardButton>
-                        </HStack>
-                        {field.value?.length ? (
-                          <HStack spacing={2} flexWrap="wrap">
-                            {field.value.map((cert: string, index: number) => (
-                              <Tag key={index} size="md" variant="solid" colorScheme="blue">
-                                <TagLabel>{cert}</TagLabel>
-                                <TagCloseButton
-                                  onClick={() => {
-                                    field.onChange(
-                                      (field.value || []).filter(
-                                        (_: string, i: number) => i !== index
-                                      )
-                                    );
-                                  }}
-                                />
-                              </Tag>
-                            ))}
-                          </HStack>
-                        ) : null}
-                      </VStack>
-                    )}
-                  />
+                  <Box
+                    p={4}
+                    bg="blue.50"
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="blue.200"
+                  >
+                    <HStack spacing={2}>
+                      <Icon as={FaCertificate} color="blue.500" boxSize={4} flexShrink={0} />
+                      <Text fontSize="sm" color="blue.700">
+                        {intl.formatMessage({ id: 'certification.form.guidance' })}
+                      </Text>
+                    </HStack>
+                  </Box>
                 </StandardField>
 
                 {/* Sustainability & Resources */}
@@ -1603,4 +1558,4 @@ export const StandardEstablishmentForm: React.FC<StandardEstablishmentFormProps>
   );
 };
 
-export default StandardEstablishmentForm;
+export default StandardFarmForm;

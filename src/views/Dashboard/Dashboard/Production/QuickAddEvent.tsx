@@ -227,6 +227,13 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     const name = template.name?.toLowerCase() || '';
 
     // Map based on template ID, type, and name patterns
+    // IMPORTANT: Organic-specific templates must be checked BEFORE generic matches.
+    // "Organic Seed Sourcing" must match before generic "seed" → planting.
+    // "Organic Amendment" must match before generic "soil" → cultivation.
+    if (name.includes('organic seed') || name.includes('organic transplant'))
+      return 'organic_seed_sourcing';
+    if (name.includes('organic amendment') || name.includes('organic matter addition'))
+      return 'organic_amendment';
     // IMPORTANT: Specific chemical types (fungicide, herbicide) must be checked BEFORE
     // generic pest_control, because AI backend sends all chemical pest events as
     // category 'pest_control' — the specific type is only in the suggestion name.
@@ -494,7 +501,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const [createEvent, { isLoading: isCreatingEvent }] = useCreateEventMutation();
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
   const currentUser = useSelector((state: any) => state.userState.user);
-  const { establishmentId, parcelId, productionId } = useParams();
+  const { farmId, parcelId, productionId } = useParams();
 
   // Get crop types and find the crop type ID for the current production
   const { data: cropTypesData } = useGetCropTypesDropdownQuery();
@@ -603,7 +610,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         season: getCurrentSeason(new Date().getMonth() + 1),
         // recent_events removed - backend fetches directly from database
         farm_context: {
-          establishment_id: establishmentId,
+          establishment_id: farmId,
           parcel_id: parcelId,
           current_month: new Date().getMonth() + 1
         }
@@ -990,7 +997,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     try {
       const backendEventData = {
         companyId: currentCompany.id,
-        establishmentId: parseInt(establishmentId || '0'),
+        farmId: parseInt(farmId || '0'),
         parcelId: parseInt(parcelId || '0'),
         parcels: [parseInt(parcelId || '0')],
         history: productionId ? parseInt(productionId) : undefined,
@@ -1191,7 +1198,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
 
       const backendEventData = {
         companyId: currentCompany.id,
-        establishmentId: parseInt(establishmentId || '0'),
+        farmId: parseInt(farmId || '0'),
         parcelId: parseInt(parcelId || '0'),
         parcels: [parseInt(parcelId || '0')],
         history: productionId ? parseInt(productionId) : undefined,
