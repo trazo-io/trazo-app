@@ -285,7 +285,7 @@ const HistoryCard = ({ amount }) => {
               w={{ base: '100%', md: 'auto' }}
             >
               {/* Filter & Sort Controls */}
-              {data && data.length > 1 && !isMobile && (
+              {data && data.length > 1 && (
                 <HStack spacing={1}>
                   {/* Filter Menu */}
                   <Menu>
