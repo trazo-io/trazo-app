@@ -1037,11 +1037,11 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                       </Text>
                     </HStack>
                     {(carbonData.usda_factors_based || carbonData.usda_factors_used) && (
-                      <Tooltip label="Calculated using USDA published emission factors">
-                        <Badge colorScheme="green" fontSize="xs">
+                      <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
+                        <Badge colorScheme="blue" fontSize="xs">
                           <HStack spacing={1}>
                             <Icon as={FaCertificate} boxSize={3} />
-                            <Text>Science-Based</Text>
+                            <Text>{intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}</Text>
                           </HStack>
                         </Badge>
                       </Tooltip>

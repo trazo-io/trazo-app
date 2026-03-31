@@ -329,11 +329,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
               </Heading>
             </HStack>
             {calculation.usda_factors_used && (
-              <Tooltip label="Calculated using USDA published emission factors">
-                <Badge colorScheme="green" size="sm">
+              <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
+                <Badge colorScheme="blue" size="sm">
                   <HStack spacing={1}>
                     <Icon as={FaCheckCircle} boxSize={3} />
-                    <Text fontSize="xs">Science-Based</Text>
+                    <Text fontSize="xs">{intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}</Text>
                   </HStack>
                 </Badge>
               </Tooltip>
@@ -1354,11 +1354,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                             <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
                             <VStack spacing={0} align="start" flex={1}>
                               <Text fontSize="xs" fontWeight="semibold" color="gray.700">
-                                Science-Based Calculation
+                                {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                               </Text>
                               <Text fontSize="xs" color="gray.600">
-                                This calculation follows published USDA agricultural emission
-                                standards
+                                {intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                               </Text>
                             </VStack>
                           </HStack>

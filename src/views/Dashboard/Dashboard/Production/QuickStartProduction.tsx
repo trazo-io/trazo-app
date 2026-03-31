@@ -733,11 +733,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         <Text fontSize="sm" color="green.600">
                           ⏱️ Setup time reduced by 37 minutes • 📅{' '}
                           {selectedTemplate.events_count || customEvents.length} events configured •
-                          💰 USDA-based carbon calculation will be applied
+                          💰 EPA/USDA-sourced carbon calculation will be applied
                         </Text>
                         <HStack spacing={2} mt={1}>
                           <Badge colorScheme="blue" variant="subtle" fontSize="xs">
-                            Science-Based
+                            {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                           </Badge>
                           <Badge colorScheme="purple" variant="subtle" fontSize="xs">
                             Transparency Ready
@@ -1128,7 +1128,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                           <Text fontSize="sm" fontWeight="bold" color="green.600">
                             {formatCarbonValue(carbonPreviews[event.id].estimated_carbon)} kg CO2e
                             <Text fontSize="xs" color="gray.500">
-                              EPA/USDA estimate
+                              {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                             </Text>
                           </Text>
                         ) : (

@@ -47,6 +47,7 @@ import {
   SkeletonCircle
 } from '@chakra-ui/react';
 import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useIntl } from 'react-intl';
 import { InfoOutlineIcon, ChevronDownIcon, WarningIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import { useToast } from '@chakra-ui/react';
 import { IoIosArrowDown } from 'react-icons/io';
@@ -95,6 +96,7 @@ const CarbonDashboard = () => {
   const { farmId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const intl = useIntl();
   const bg = useColorModeValue('gray.50', 'gray.800');
   const cardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('green.200', 'green.700');
@@ -704,7 +706,7 @@ const CarbonDashboard = () => {
               >
                 <HStack spacing={2}>
                   <Icon as={FaShieldAlt} />
-                  <Text>🏛️ SCIENCE-BASED</Text>
+                  <Text>🏛️ {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' }).toUpperCase()}</Text>
                 </HStack>
               </Badge>
 
@@ -860,12 +862,12 @@ const CarbonDashboard = () => {
                       kg CO₂e
                     </Text>
 
-                    {/* Science-Based Calculation Indicator */}
+                    {/* EPA/USDA-Sourced Calculation Indicator */}
                     {realUSDAData?.success && (
                       <HStack justify="center" spacing={1}>
                         <Icon as={CheckCircleIcon} color="green.500" boxSize={3} />
                         <Text fontSize="xs" color="green.600" fontWeight="medium">
-                          Science-Based
+                          {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                         </Text>
                       </HStack>
                     )}
@@ -1261,10 +1263,10 @@ const CarbonDashboard = () => {
                     <Icon as={FaAward} color="blue.500" boxSize={5} />
                     <VStack align="start" spacing={0}>
                       <Text fontSize="sm" fontWeight="bold" color="blue.800">
-                        {realUSDAData?.success ? 'Science-Based' : 'Documentation Ready'}
+                        {realUSDAData?.success ? intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' }) : 'Documentation Ready'}
                       </Text>
                       <Text fontSize="xs" color="blue.600">
-                        Research-based transparency
+                        {intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                       </Text>
                     </VStack>
                   </HStack>
@@ -1342,7 +1344,7 @@ const CarbonDashboard = () => {
                         <HStack spacing={2}>
                           {processedData.usda_factors_used && (
                             <Badge colorScheme="blue" variant="solid" px={3} py={1}>
-                              Science-Based
+                              {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                             </Badge>
                           )}
                           {processedData.hasData && (
@@ -1546,10 +1548,10 @@ const CarbonDashboard = () => {
                                     </Text>
                                     <HStack justify="center" spacing={1} mb={1}>
                                       <Text fontSize="sm" color="green.800" fontWeight="bold">
-                                        Science-Based
+                                        {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                                       </Text>
                                       <Tooltip
-                                        label="Your carbon data has been calculated using USDA Agricultural Research Service published standards. This provides research-based credibility for consumer transparency."
+                                        label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                                         hasArrow
                                         placement="top"
                                         bg="gray.800"
@@ -1693,10 +1695,10 @@ const CarbonDashboard = () => {
                               <Icon as={FaAward} color="green.500" boxSize={6} />
                               <VStack align="start" spacing={0}>
                                 <Text fontSize="md" fontWeight="bold" color="green.800">
-                                  Science-Based Documentation
+                                  {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })} Documentation
                                 </Text>
                                 <Text fontSize="sm" color="green.600">
-                                  Build trust with published research data
+                                  {intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                                 </Text>
                               </VStack>
                             </HStack>
@@ -1956,7 +1958,7 @@ const CarbonDashboard = () => {
                                 <VStack align="start" spacing={2} w="100%">
                                   <HStack justify="space-between" w="100%">
                                     <Text fontSize="sm" color="blue.700">
-                                      EPA/USDA Factors
+                                      {intl.formatMessage({ id: 'carbon.badge.epaUsdaEmissionFactors' })}
                                     </Text>
                                     {processedData.usda_factors_used ? (
                                       <Badge colorScheme="green" size="sm">
@@ -2061,8 +2063,8 @@ const CarbonDashboard = () => {
                         Carbon Transparency Reports
                       </Heading>
                       {realUSDAData?.success && (
-                        <Badge colorScheme="green" variant="solid" px={3} py={1}>
-                          Science-Based
+                        <Badge colorScheme="blue" variant="solid" px={3} py={1}>
+                          {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                         </Badge>
                       )}
                     </HStack>
@@ -2110,11 +2112,11 @@ const CarbonDashboard = () => {
                             <HStack>
                               <Icon as={FaAward} color="blue.500" boxSize={5} />
                               <Text fontSize="md" fontWeight="bold">
-                                Science-Based Documentation Certificate
+                                {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })} Documentation Certificate
                               </Text>
                             </HStack>
                             <Text fontSize="sm" color="gray.600">
-                              Research-based transparency certification for stakeholders
+                              {intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                             </Text>
                             <Button
                               size="sm"

@@ -184,7 +184,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
                 <HStack spacing={2}>
                   <Icon as={FaCertificate} color="blue.500" boxSize={4} />
                   <Text fontSize="sm" color="blue.600">
-                    EPA/USDA-Sourced
+                    {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                   </Text>
                 </HStack>
               )}

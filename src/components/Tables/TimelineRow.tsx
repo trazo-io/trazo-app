@@ -462,7 +462,7 @@ function TimelineRow(props: TimelineRowProps) {
                           px={2}
                           py={1}
                         >
-                          {intl.formatMessage({ id: 'carbon.badge.epaUsda' })}
+                          {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                         </Badge>
                       )}
                     </HStack>

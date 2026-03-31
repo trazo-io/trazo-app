@@ -45,6 +45,7 @@ import {
 } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
 import { format, parseISO } from 'date-fns';
+import { useIntl } from 'react-intl';
 import { getReadableFieldValue } from '../../utils/fieldDisplayUtils';
 import { formatCO2e } from '../../utils/carbonDisplayUtils';
 import {
@@ -112,6 +113,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
   onClose,
   event
 }) => {
+  const intl = useIntl();
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
@@ -323,11 +325,11 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                       Carbon Impact Analysis
                     </Heading>
                     {event.carbon_data.usda_factors_used && (
-                      <Tooltip label="Calculated using published EPA/USDA emission factors">
+                      <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
                         <Badge colorScheme="blue" size="sm">
                           <HStack spacing={1}>
                             <Icon as={FaCertificate} boxSize={3} />
-                            <Text>EPA/USDA Factors</Text>
+                            <Text>{intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}</Text>
                           </HStack>
                         </Badge>
                       </Tooltip>

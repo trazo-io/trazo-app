@@ -18,7 +18,12 @@ import {
   AvatarGroup,
   IconButton,
   Divider,
-  useBreakpointValue
+  useBreakpointValue,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider
 } from '@chakra-ui/react';
 import {
   FaSeedling,
@@ -26,7 +31,7 @@ import {
   FaLeaf,
   FaPlus,
   FaFilter,
-  FaSort,
+  FaSortAmountDown,
   FaCalendarAlt,
   FaAward,
   FaExclamationTriangle,
@@ -40,7 +45,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useGetParcelHistoriesQuery } from 'store/api/historyApi';
 import Card from 'components/Card/Card';
@@ -59,6 +64,10 @@ const HistoryCard = ({ amount }) => {
   // Mobile responsiveness
   const isMobile = useBreakpointValue({ base: true, md: false });
 
+  // Filter and sort state
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('default');
+
   const currentCompany = useSelector((state) => state.company.currentCompany);
   const currentHistory = useSelector((state) => state.history?.currentHistory);
 
@@ -71,8 +80,6 @@ const HistoryCard = ({ amount }) => {
       refetchOnMountOrArgChange: true
     }
   );
-
-  // Note: Filter and sort functionality can be added in future iterations
 
   // Calculate production statistics with enhanced status logic
   const productionStats = useMemo(() => {
@@ -180,6 +187,51 @@ const HistoryCard = ({ amount }) => {
     };
   }, [data]);
 
+  // Filter and sort productions based on user selection
+  const filteredAndSortedProductions = useMemo(() => {
+    if (!data || data.length === 0) return [];
+
+    // Step 1: Filter by status
+    let filtered = [...data];
+    if (statusFilter === 'ongoing') {
+      filtered = filtered.filter((p) => !p.finish_date);
+    } else if (statusFilter === 'completed') {
+      filtered = filtered.filter((p) => !!p.finish_date);
+    }
+
+    // Step 2: Sort
+    if (sortBy === 'default') {
+      filtered.sort((a, b) => {
+        const aIsOngoing = !a.finish_date;
+        const bIsOngoing = !b.finish_date;
+        if (aIsOngoing && !bIsOngoing) return -1;
+        if (!aIsOngoing && bIsOngoing) return 1;
+        if (!aIsOngoing && !bIsOngoing) {
+          return new Date(b.finish_date) - new Date(a.finish_date);
+        }
+        return new Date(b.start_date) - new Date(a.start_date);
+      });
+    } else if (sortBy === 'newest') {
+      filtered.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+    } else if (sortBy === 'oldest') {
+      filtered.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+    } else if (sortBy === 'scoreHigh') {
+      filtered.sort((a, b) => {
+        const scoreA = a.transparency_score ?? a.extra_data?.transparency_score ?? a.extra_data?.carbon_score ?? -1;
+        const scoreB = b.transparency_score ?? b.extra_data?.transparency_score ?? b.extra_data?.carbon_score ?? -1;
+        return scoreB - scoreA;
+      });
+    } else if (sortBy === 'scoreLow') {
+      filtered.sort((a, b) => {
+        const scoreA = a.transparency_score ?? a.extra_data?.transparency_score ?? a.extra_data?.carbon_score ?? Infinity;
+        const scoreB = b.transparency_score ?? b.extra_data?.transparency_score ?? b.extra_data?.carbon_score ?? Infinity;
+        return scoreA - scoreB;
+      });
+    }
+
+    return filtered;
+  }, [data, statusFilter, sortBy]);
+
   return (
     <Card
       bg={cardBgColor}
@@ -232,29 +284,142 @@ const HistoryCard = ({ amount }) => {
               gap={{ base: 2, sm: 3 }}
               w={{ base: '100%', md: 'auto' }}
             >
-              {/* Simple Controls - Hide on very small screens */}
+              {/* Filter & Sort Controls */}
               {data && data.length > 1 && !isMobile && (
                 <HStack spacing={1}>
-                  <Tooltip label={intl.formatMessage({ id: 'parcel.filterProductions' })} placement="top">
-                    <IconButton
-                      size="sm"
-                      variant="ghost"
-                      icon={<Icon as={FaFilter} />}
-                      aria-label={intl.formatMessage({ id: 'parcel.filterProductions' })}
-                      color="gray.500"
-                      _hover={{ color: 'gray.700', bg: 'gray.100' }}
-                    />
-                  </Tooltip>
-                  <Tooltip label={intl.formatMessage({ id: 'parcel.sortProductions' })} placement="top">
-                    <IconButton
-                      size="sm"
-                      variant="ghost"
-                      icon={<Icon as={FaSort} />}
-                      aria-label={intl.formatMessage({ id: 'parcel.sortProductions' })}
-                      color="gray.500"
-                      _hover={{ color: 'gray.700', bg: 'gray.100' }}
-                    />
-                  </Tooltip>
+                  {/* Filter Menu */}
+                  <Menu>
+                    <Tooltip label={intl.formatMessage({ id: 'parcel.filterProductions' })} placement="top">
+                      <Box position="relative" display="inline-block">
+                        <MenuButton
+                          as={IconButton}
+                          size="sm"
+                          variant="ghost"
+                          icon={<Icon as={FaFilter} />}
+                          aria-label={intl.formatMessage({ id: 'parcel.filterProductions' })}
+                          color={statusFilter !== 'all' ? 'green.500' : 'gray.500'}
+                          _hover={{ color: statusFilter !== 'all' ? 'green.600' : 'gray.700', bg: 'gray.100' }}
+                        />
+                        {statusFilter !== 'all' && (
+                          <Box
+                            position="absolute"
+                            top="1"
+                            right="1"
+                            w="6px"
+                            h="6px"
+                            bg="green.500"
+                            borderRadius="full"
+                            pointerEvents="none"
+                          />
+                        )}
+                      </Box>
+                    </Tooltip>
+                    <MenuList minW="150px" zIndex={10}>
+                      <Text px={3} py={1} fontSize="xs" fontWeight="600" color="gray.500" textTransform="uppercase">
+                        {intl.formatMessage({ id: 'parcel.filterStatus' })}
+                      </Text>
+                      <MenuDivider />
+                      <MenuItem
+                        fontSize="sm"
+                        onClick={() => setStatusFilter('all')}
+                        fontWeight={statusFilter === 'all' ? '600' : '400'}
+                        color={statusFilter === 'all' ? 'green.500' : 'gray.600'}
+                      >
+                        {intl.formatMessage({ id: 'parcel.filterAll' })}
+                      </MenuItem>
+                      <MenuItem
+                        fontSize="sm"
+                        onClick={() => setStatusFilter('ongoing')}
+                        fontWeight={statusFilter === 'ongoing' ? '600' : '400'}
+                        color={statusFilter === 'ongoing' ? 'green.500' : 'gray.600'}
+                      >
+                        {intl.formatMessage({ id: 'parcel.filterOngoing' })}
+                      </MenuItem>
+                      <MenuItem
+                        fontSize="sm"
+                        onClick={() => setStatusFilter('completed')}
+                        fontWeight={statusFilter === 'completed' ? '600' : '400'}
+                        color={statusFilter === 'completed' ? 'green.500' : 'gray.600'}
+                      >
+                        {intl.formatMessage({ id: 'parcel.filterCompleted' })}
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
+
+                  {/* Sort Menu */}
+                  <Menu>
+                    <Tooltip label={intl.formatMessage({ id: 'parcel.sortProductions' })} placement="top">
+                      <Box position="relative" display="inline-block">
+                        <MenuButton
+                          as={IconButton}
+                          size="sm"
+                          variant="ghost"
+                          icon={<Icon as={FaSortAmountDown} />}
+                          aria-label={intl.formatMessage({ id: 'parcel.sortProductions' })}
+                          color={sortBy !== 'default' ? 'green.500' : 'gray.500'}
+                          _hover={{ color: sortBy !== 'default' ? 'green.600' : 'gray.700', bg: 'gray.100' }}
+                        />
+                        {sortBy !== 'default' && (
+                          <Box
+                            position="absolute"
+                            top="1"
+                            right="1"
+                            w="6px"
+                            h="6px"
+                            bg="green.500"
+                            borderRadius="full"
+                            pointerEvents="none"
+                          />
+                        )}
+                      </Box>
+                    </Tooltip>
+                    <MenuList minW="180px" zIndex={10}>
+                      <Text px={3} py={1} fontSize="xs" fontWeight="600" color="gray.500" textTransform="uppercase">
+                        {intl.formatMessage({ id: 'parcel.sortBy' })}
+                      </Text>
+                      <MenuDivider />
+                      <MenuItem
+                        fontSize="sm"
+                        onClick={() => setSortBy('default')}
+                        fontWeight={sortBy === 'default' ? '600' : '400'}
+                        color={sortBy === 'default' ? 'green.500' : 'gray.600'}
+                      >
+                        {intl.formatMessage({ id: 'parcel.sortDefault' })}
+                      </MenuItem>
+                      <MenuItem
+                        fontSize="sm"
+                        onClick={() => setSortBy('newest')}
+                        fontWeight={sortBy === 'newest' ? '600' : '400'}
+                        color={sortBy === 'newest' ? 'green.500' : 'gray.600'}
+                      >
+                        {intl.formatMessage({ id: 'parcel.sortNewest' })}
+                      </MenuItem>
+                      <MenuItem
+                        fontSize="sm"
+                        onClick={() => setSortBy('oldest')}
+                        fontWeight={sortBy === 'oldest' ? '600' : '400'}
+                        color={sortBy === 'oldest' ? 'green.500' : 'gray.600'}
+                      >
+                        {intl.formatMessage({ id: 'parcel.sortOldest' })}
+                      </MenuItem>
+                      <MenuItem
+                        fontSize="sm"
+                        onClick={() => setSortBy('scoreHigh')}
+                        fontWeight={sortBy === 'scoreHigh' ? '600' : '400'}
+                        color={sortBy === 'scoreHigh' ? 'green.500' : 'gray.600'}
+                      >
+                        {intl.formatMessage({ id: 'parcel.sortScoreHigh' })}
+                      </MenuItem>
+                      <MenuItem
+                        fontSize="sm"
+                        onClick={() => setSortBy('scoreLow')}
+                        fontWeight={sortBy === 'scoreLow' ? '600' : '400'}
+                        color={sortBy === 'scoreLow' ? 'green.500' : 'gray.600'}
+                      >
+                        {intl.formatMessage({ id: 'parcel.sortScoreLow' })}
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
                 </HStack>
               )}
 
@@ -359,6 +524,7 @@ const HistoryCard = ({ amount }) => {
       ) : (
         <CardBody p="0px" pb={4}>
           {data && data.length > 0 ? (
+            filteredAndSortedProductions.length > 0 ? (
             <Box
               maxH={{ base: '400px', md: '450px' }}
               overflowY="auto"
@@ -382,34 +548,11 @@ const HistoryCard = ({ amount }) => {
             >
               <VStack spacing={4} align="stretch" w="100%" py={3} pb={6}>
                 {(() => {
-                  // Sort productions: ongoing first, then completed by most recent
-                  const sortedProductions = [...data].sort((a, b) => {
-                    // Determine status for production a
-                    const aFinishDate = a.finish_date ? new Date(a.finish_date) : null;
-                    const aIsOngoing = !aFinishDate;
-
-                    // Determine status for production b
-                    const bFinishDate = b.finish_date ? new Date(b.finish_date) : null;
-                    const bIsOngoing = !bFinishDate;
-
-                    // If one is ongoing and the other is completed, ongoing comes first
-                    if (aIsOngoing && !bIsOngoing) return -1;
-                    if (!aIsOngoing && bIsOngoing) return 1;
-
-                    // If both are completed, sort by finish date (most recent first)
-                    if (!aIsOngoing && !bIsOngoing) {
-                      return new Date(b.finish_date) - new Date(a.finish_date);
-                    }
-
-                    // If both are ongoing, sort by start date (most recent first)
-                    return new Date(b.start_date) - new Date(a.start_date);
-                  });
-
                   // Group productions by status for separator logic
-                  const ongoingProductions = sortedProductions.filter((p) => !p.finish_date);
-                  const completedProductions = sortedProductions.filter((p) => p.finish_date);
+                  const ongoingProductions = filteredAndSortedProductions.filter((p) => !p.finish_date);
+                  const completedProductions = filteredAndSortedProductions.filter((p) => p.finish_date);
 
-                  return sortedProductions.map((production, index) => {
+                  return filteredAndSortedProductions.map((production, index) => {
                     // Check if this is the first completed production (for separator)
                     const isFirstCompleted =
                       completedProductions.length > 0 &&
@@ -1054,6 +1197,22 @@ const HistoryCard = ({ amount }) => {
                 })()}
               </VStack>
             </Box>
+            ) : (
+              <VStack spacing={4} py={12} align="center" px={6}>
+                <Icon as={FaFilter} color="gray.300" boxSize={8} />
+                <Text fontSize="sm" color="gray.500" textAlign="center">
+                  {intl.formatMessage({ id: 'parcel.noMatchingProductions' })}
+                </Text>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  colorScheme="green"
+                  onClick={() => { setStatusFilter('all'); setSortBy('default'); }}
+                >
+                  {intl.formatMessage({ id: 'parcel.clearFilters' })}
+                </Button>
+              </VStack>
+            )
           ) : (
             <VStack spacing={6} py={16} align="center" px={6}>
               <VStack spacing={4} textAlign="center">

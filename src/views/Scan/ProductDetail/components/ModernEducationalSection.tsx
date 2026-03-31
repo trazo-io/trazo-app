@@ -1,4 +1,5 @@
 import React from 'react';
+import { useIntl } from 'react-intl';
 import {
   HStack,
   VStack,
@@ -23,6 +24,7 @@ interface ModernEducationalSectionProps {
 export const ModernEducationalSection: React.FC<ModernEducationalSectionProps> = ({
   onEducationOpen
 }) => {
+  const intl = useIntl();
   const cardBg = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
@@ -83,7 +85,7 @@ export const ModernEducationalSection: React.FC<ModernEducationalSectionProps> =
             <VStack align="start" spacing={2} w="full">
               <HStack>
                 <Icon as={FaCertificate} color="blue.500" />
-                <Text fontWeight="semibold">EPA/USDA-Sourced Factors</Text>
+                <Text fontWeight="semibold">{intl.formatMessage({ id: 'carbon.badge.epaUsdaEmissionFactors' })}</Text>
               </HStack>
               <Text fontSize="sm" color={mutedColor} textAlign="left">
                 Government-published emission data

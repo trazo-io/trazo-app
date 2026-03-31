@@ -855,7 +855,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             letterSpacing="0.05em"
                             cursor="help"
                           >
-                            {intl.formatMessage({ id: 'carbon.badge.epaUsda' })}
+                            {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                           </Badge>
                         </Tooltip>
                       )}
