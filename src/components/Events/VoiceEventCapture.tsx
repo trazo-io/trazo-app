@@ -262,10 +262,10 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     const lowerText = text.toLowerCase();
 
     const patterns: Record<string, string[]> = {
-      fertilization: ['fertilizer', 'fertilize', 'applied', 'spread', 'npk', 'nitrogen', 'urea'],
+      fertilization: ['fertilizer', 'fertilize', 'npk', 'nitrogen', 'phosphorus', 'potassium', 'urea', 'compost', 'manure'],
       irrigation: ['irrigate', 'irrigation', 'water', 'watered', 'sprinkler', 'drip', 'flood'],
       herbicide: ['herbicide', 'weed', 'weeds'],
-      fungicide: ['fungicide', 'fungus', 'mildew', 'blight', 'rot'],
+      fungicide: ['fungicide', 'fungus', 'mildew', 'blight', 'rot', 'copper', 'anthracnose', 'kocide', 'mancozeb', 'phytophthora'],
       pesticide: ['spray', 'sprayed', 'pesticide', 'insecticide', 'pest'],
       pruning: ['prune', 'pruning', 'trim', 'trimming', 'cut branches'],
       equipment: ['tractor', 'equipment', 'machine', 'fuel', 'diesel', 'mowed', 'plowed'],

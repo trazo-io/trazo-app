@@ -350,8 +350,8 @@ export function mapVoiceDataToFieldValues(
       overrides.commercial_name = parsedData.detected_products[0];
     }
 
-    // Concentration / NPK ratio
-    if (parsedData.npk_ratio) {
+    // Concentration / NPK ratio — only apply NPK for fertilization events
+    if (parsedData.npk_ratio && templateId === 'fertilization') {
       overrides.concentration = parsedData.npk_ratio;
     } else if (parsedData.concentration) {
       overrides.concentration = parsedData.concentration;
