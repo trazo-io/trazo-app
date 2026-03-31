@@ -345,9 +345,21 @@ export function mapVoiceDataToFieldValues(
   if (['fertilization', 'pest_control', 'herbicide', 'fungicide'].includes(templateId)) {
     // Commercial name
     if (parsedData.commercial_name) {
-      overrides.commercial_name = parsedData.commercial_name;
+      let cleanName = parsedData.commercial_name;
+      // Clean raw transcript artifacts: "NPK with values fifteen nine twelve" → "NPK 15-9-12 Fertilizer"
+      if (parsedData.npk_ratio && /^NPK\b/i.test(cleanName) && !cleanName.includes(parsedData.npk_ratio)) {
+        cleanName = `NPK ${parsedData.npk_ratio} Fertilizer`;
+      }
+      overrides.commercial_name = cleanName;
+    } else if (parsedData.npk_ratio && templateId === 'fertilization') {
+      overrides.commercial_name = `NPK ${parsedData.npk_ratio} Fertilizer`;
     } else if (parsedData.detected_products.length > 0) {
-      overrides.commercial_name = parsedData.detected_products[0];
+      let product = parsedData.detected_products[0];
+      // Clean NPK-only product entries for fertilization: "NPK 15-9-12" → "NPK 15-9-12 Fertilizer"
+      if (parsedData.npk_ratio && templateId === 'fertilization' && /^NPK\s*\d+-\d+-\d+$/i.test(product)) {
+        product = `NPK ${parsedData.npk_ratio} Fertilizer`;
+      }
+      overrides.commercial_name = product;
     }
 
     // Concentration / NPK ratio — only apply NPK for fertilization events

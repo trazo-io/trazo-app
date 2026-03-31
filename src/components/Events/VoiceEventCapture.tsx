@@ -505,11 +505,16 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                   )}
                   {parsedData.detected_products?.length > 0 && (
                     <Flex flexWrap="wrap" gap={2} mb={2}>
-                      {parsedData.detected_products.map((product: string, index: number) => (
-                        <Badge key={index} colorScheme="blue" variant="subtle" px={2} py={1}>
-                          {product}
-                        </Badge>
-                      ))}
+                      {parsedData.detected_products
+                        .filter((product: string) =>
+                          // Hide NPK-related entries when npk_ratio is already shown separately
+                          !(parsedData.npk_ratio && /^NPK[\s\d\-]+$/i.test(product.replace(/with values|values|fertilizer/gi, '').trim()))
+                        )
+                        .map((product: string, index: number) => (
+                          <Badge key={index} colorScheme="blue" variant="subtle" px={2} py={1}>
+                            {product}
+                          </Badge>
+                        ))}
                     </Flex>
                   )}
                   {parsedData.npk_ratio && (

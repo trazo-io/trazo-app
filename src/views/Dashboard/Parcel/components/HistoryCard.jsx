@@ -249,45 +249,41 @@ const HistoryCard = ({ amount }) => {
         <Flex direction="column" w="100%">
           {/* Header with divider */}
           <Flex
-            direction={{ base: 'column', md: 'row' }}
-            justify="space-between"
-            align={{ base: 'stretch', md: 'center' }}
+            direction="column"
             pb={4}
-            gap={{ base: 3, md: 0 }}
-            flexWrap="wrap"
+            gap={3}
           >
-            <Flex wrap="wrap" gap={2} align="center" flexShrink={0}>
-              <Text fontSize={{ base: 'md', md: 'lg' }} color={textColor} fontWeight="600" whiteSpace="nowrap">
-                {intl.formatMessage({ id: 'app.productions' })}
-              </Text>
-              <Badge
-                bg="green.50"
-                color="green.700"
-                borderRadius="md"
-                px={2}
-                py={1}
-                fontSize="xs"
-                fontWeight="500"
-                textTransform="none"
-                w="fit-content"
-                border="1px solid"
-                borderColor="green.200"
-                flexShrink={0}
-              >
-                {intl.formatMessage({ id: 'parcel.transparencyTracked' })}
-              </Badge>
-            </Flex>
-
+            {/* Title row - always horizontal */}
             <Flex
-              direction={{ base: 'column', sm: 'row' }}
+              direction="row"
+              justify="space-between"
               align="center"
-              gap={{ base: 2, sm: 3 }}
-              w={{ base: '100%', md: 'auto' }}
+              w="100%"
             >
-              {/* Filter & Sort Controls */}
+              <Flex wrap="wrap" gap={2} align="center" flexShrink={0}>
+                <Text fontSize={{ base: 'md', md: 'lg' }} color={textColor} fontWeight="600" whiteSpace="nowrap">
+                  {intl.formatMessage({ id: 'app.productions' })}
+                </Text>
+                <Badge
+                  bg="green.50"
+                  color="green.700"
+                  borderRadius="md"
+                  px={2}
+                  py={1}
+                  fontSize="xs"
+                  fontWeight="500"
+                  textTransform="none"
+                  w="fit-content"
+                  border="1px solid"
+                  borderColor="green.200"
+                  flexShrink={0}
+                >
+                  {intl.formatMessage({ id: 'parcel.transparencyTracked' })}
+                </Badge>
+              </Flex>
+
               {data && data.length > 1 && (
-                <HStack spacing={1}>
-                  {/* Filter Menu */}
+                <HStack spacing={1} flexShrink={0}>
                   <Menu>
                     <Tooltip label={intl.formatMessage({ id: 'parcel.filterProductions' })} placement="top">
                       <Box position="relative" display="inline-block">
@@ -422,48 +418,49 @@ const HistoryCard = ({ amount }) => {
                   </Menu>
                 </HStack>
               )}
-
-              {/* Only show New Production button when there are existing productions AND no current production */}
-              {canWrite && data && data.length > 0 && !currentHistory?.product && (
-                <Button
-                  size="sm"
-                  bg="green.500"
-                  color="white"
-                  leftIcon={<Icon as={FaPlus} boxSize={3} />}
-                  borderRadius="lg"
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  px={4}
-                  py={2}
-                  h="32px"
-                  w={{ base: '100%', sm: 'auto' }}
-                  minW={{ base: '120px', sm: 'auto' }}
-                  _hover={{
-                    bg: 'green.600',
-                    transform: 'translateY(-1px)'
-                  }}
-                  _active={{
-                    bg: 'green.700',
-                    transform: 'translateY(0)'
-                  }}
-                  transition="all 0.2s"
-                  isDisabled={
-                    data &&
-                    data.some(
-                      (production) =>
-                        !production.finish_date || new Date(production.finish_date) > new Date()
-                    )
-                  }
-                  onClick={() =>
-                    navigate(
-                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`
-                    )
-                  }
-                >
-                  {isMobile ? intl.formatMessage({ id: 'app.new' }) : intl.formatMessage({ id: 'parcel.newProduction' })}
-                </Button>
-              )}
             </Flex>
+
+            {/* New Production button - separate row on mobile */}
+            {canWrite && data && data.length > 0 && !currentHistory?.product && (
+              <Button
+                size="sm"
+                bg="green.500"
+                color="white"
+                leftIcon={<Icon as={FaPlus} boxSize={3} />}
+                borderRadius="lg"
+                fontSize="xs"
+                fontWeight="semibold"
+                px={4}
+                py={2}
+                h="32px"
+                w={{ base: '100%', sm: 'auto' }}
+                alignSelf={{ base: 'stretch', sm: 'flex-end' }}
+                minW={{ base: '120px', sm: 'auto' }}
+                _hover={{
+                  bg: 'green.600',
+                  transform: 'translateY(-1px)'
+                }}
+                _active={{
+                  bg: 'green.700',
+                  transform: 'translateY(0)'
+                }}
+                transition="all 0.2s"
+                isDisabled={
+                  data &&
+                  data.some(
+                    (production) =>
+                      !production.finish_date || new Date(production.finish_date) > new Date()
+                  )
+                }
+                onClick={() =>
+                  navigate(
+                    `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`
+                  )
+                }
+              >
+                {isMobile ? intl.formatMessage({ id: 'app.new' }) : intl.formatMessage({ id: 'parcel.newProduction' })}
+              </Button>
+            )}
           </Flex>
 
           <Divider borderColor={borderColor} />
