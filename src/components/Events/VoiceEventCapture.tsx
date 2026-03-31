@@ -212,14 +212,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         processing_time: processingTimeMs,
         original_transcript: processedText
       });
-
-      toast({
-        title: 'Voice Processed',
-        description: `Detected ${mapVoiceTypeToTemplate(result.type).displayName} event. Review the details below.`,
-        status: 'info',
-        duration: 4000,
-        isClosable: true
-      });
     } catch (error) {
       console.error('AI voice processing error:', error);
 
@@ -231,14 +223,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       fallbackEvent.processing_time = endTime - startTime;
 
       setParsedData(fallbackEvent);
-
-      toast({
-        title: 'Voice Processed (Offline Mode)',
-        description: `AI unavailable - used pattern matching. Please review the detected event.`,
-        status: 'warning',
-        duration: 4000,
-        isClosable: true
-      });
     } finally {
       setIsProcessing(false);
       setProcessingStage('');

@@ -1148,14 +1148,6 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
 
     // Clear observation - user can add their own notes
     setEventObservations('');
-
-    toast({
-      title: intl.formatMessage({ id: 'quickAdd.voiceDetected' }, { type: templateMapping.displayName }),
-      description: intl.formatMessage({ id: 'quickAdd.voiceReviewPrompt' }),
-      status: 'info',
-      duration: 4000,
-      isClosable: true
-    });
   };
 
   const handleDetailedCreate = async () => {
