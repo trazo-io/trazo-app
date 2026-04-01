@@ -365,30 +365,16 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             </Text>
           </VStack>
 
-          <HStack>
-            <Icon as={FaGlobe} color="green.500" boxSize={4} />
-            <Select
-              size="sm"
-              value={selectedLanguage}
-              onChange={(e) => setSelectedLanguage(e.target.value as 'en-US' | 'es-ES' | 'pt-BR')}
-              width="120px"
-            >
-              {languageOptions.map((lang) => (
-                <option key={lang.value} value={lang.value}>
-                  {lang.flag} {lang.label}
-                </option>
-              ))}
-            </Select>
-          </HStack>
+          {/* Language selector hidden for MVP — English only */}
         </HStack>
       </CardHeader>
 
       <CardBody>
-        <VStack spacing={4} align="stretch">
+        <VStack spacing={4} align="stretch" pt={4}>
           {/* Provider indicator */}
           {useDeepgram && (
-            <Badge colorScheme="purple" alignSelf="center" px={2} py={1} fontSize="xs">
-              Deepgram Nova-3 — enhanced agricultural vocabulary
+            <Badge colorScheme="purple" alignSelf="center" px={2} py={1} fontSize="xs" mt={2}>
+              Deepgram Nova-3 — Enhanced Agricultural Vocabulary
             </Badge>
           )}
 
@@ -413,10 +399,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 {listening ? 'Stop Recording' : 'Start Voice Input'}
               </Button>
             </Tooltip>
-
-            {(isProcessing || isProcessingVoice) && (
-              <Spinner size="md" color="green.500" thickness="3px" />
-            )}
           </HStack>
 
           {/* Processing indicator */}
@@ -485,39 +467,34 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                   "{parsedData.original_transcript || parsedData.description}"
                 </Text>
 
-                {/* Detected values - clean list */}
-                <Box>
-                  {formatAmountsForDisplay(parsedData.detected_amounts).length > 0 && (
-                    <Flex flexWrap="wrap" gap={2} mb={2}>
-                      {formatAmountsForDisplay(parsedData.detected_amounts).map(
-                        (amount: string, index: number) => (
-                          <Badge key={index} colorScheme="green" variant="subtle" px={2} py={1}>
-                            {amount}
-                          </Badge>
-                        )
-                      )}
-                    </Flex>
-                  )}
-                  {parsedData.detected_products?.length > 0 && (
-                    <Flex flexWrap="wrap" gap={2} mb={2}>
-                      {parsedData.detected_products
-                        .filter((product: string) =>
-                          // Hide NPK-related entries when npk_ratio is already shown separately
-                          !(parsedData.npk_ratio && /^NPK[\s\d\-]*$/i.test(product.replace(/with values|values|fertilizer/gi, '').trim()))
-                        )
-                        .map((product: string, index: number) => (
-                          <Badge key={index} colorScheme="blue" variant="subtle" px={2} py={1}>
-                            {product}
-                          </Badge>
-                        ))}
-                    </Flex>
-                  )}
-                  {parsedData.npk_ratio && (
-                    <Badge colorScheme="purple" variant="subtle" px={2} py={1}>
-                      NPK {parsedData.npk_ratio}
-                    </Badge>
-                  )}
-                </Box>
+                {/* Detected values - inline badges */}
+                {(formatAmountsForDisplay(parsedData.detected_amounts).length > 0 ||
+                  parsedData.detected_products?.length > 0 ||
+                  parsedData.npk_ratio) && (
+                  <Flex flexWrap="wrap" gap={2}>
+                    {formatAmountsForDisplay(parsedData.detected_amounts).map(
+                      (amount: string, index: number) => (
+                        <Badge key={`amt-${index}`} colorScheme="green" px={3} py={1} borderRadius="full" fontSize="sm">
+                          {amount}
+                        </Badge>
+                      )
+                    )}
+                    {parsedData.detected_products
+                      ?.filter((product: string) =>
+                        !(parsedData.npk_ratio && /^NPK[\s\d\-]*$/i.test(product.replace(/with values|values|fertilizer/gi, '').trim()))
+                      )
+                      .map((product: string, index: number) => (
+                        <Badge key={`prod-${index}`} colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="sm">
+                          {product}
+                        </Badge>
+                      ))}
+                    {parsedData.npk_ratio && (
+                      <Badge colorScheme="purple" px={3} py={1} borderRadius="full" fontSize="sm">
+                        NPK {parsedData.npk_ratio}
+                      </Badge>
+                    )}
+                  </Flex>
+                )}
 
                 {/* Confidence banner */}
                 {parsedData.confidence >= 70 ? (
@@ -563,57 +540,21 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
           {/* Voice command examples */}
           <Box p={3} bg="gray.50" borderRadius="md">
             <Text fontSize="sm" fontWeight="semibold" color="gray.700" mb={2}>
-              Example voice commands ({selectedLanguage}):
+              Example voice commands:
             </Text>
             <List spacing={1} fontSize="xs" color="gray.600">
-              {selectedLanguage === 'en-US' && (
-                <>
-                  <ListItem>
-                    <ListIcon as={FaExclamationTriangle} color="green.500" />
-                    "Applied fertilizer today, 200 pounds per acre, NPK 10-10-10"
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaExclamationTriangle} color="green.500" />
-                    "Irrigated field for 6 hours with drip system"
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaExclamationTriangle} color="green.500" />
-                    "Used tractor for 3 hours, consumed 15 gallons of diesel"
-                  </ListItem>
-                </>
-              )}
-              {selectedLanguage === 'es-ES' && (
-                <>
-                  <ListItem>
-                    <ListIcon as={FaExclamationTriangle} color="green.500" />
-                    "Aplique fertilizante hoy, 200 libras por acre, NPK 10-10-10"
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaExclamationTriangle} color="green.500" />
-                    "Regue el campo por 6 horas con sistema de goteo"
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaExclamationTriangle} color="green.500" />
-                    "Use el tractor por 3 horas, consumi 15 galones de diesel"
-                  </ListItem>
-                </>
-              )}
-              {selectedLanguage === 'pt-BR' && (
-                <>
-                  <ListItem>
-                    <ListIcon as={FaExclamationTriangle} color="green.500" />
-                    "Apliquei fertilizante hoje, 200 libras por acre, NPK 10-10-10"
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaExclamationTriangle} color="green.500" />
-                    "Irrigei o campo por 6 horas com sistema de gotejamento"
-                  </ListItem>
-                  <ListItem>
-                    <ListIcon as={FaExclamationTriangle} color="green.500" />
-                    "Usei o trator por 3 horas, consumi 15 galoes de diesel"
-                  </ListItem>
-                </>
-              )}
+              <ListItem>
+                <ListIcon as={FaExclamationTriangle} color="green.500" />
+                "Applied fertilizer today, 200 pounds per acre, NPK 10-10-10"
+              </ListItem>
+              <ListItem>
+                <ListIcon as={FaExclamationTriangle} color="green.500" />
+                "Irrigated field for 6 hours with drip system"
+              </ListItem>
+              <ListItem>
+                <ListIcon as={FaExclamationTriangle} color="green.500" />
+                "Used tractor for 3 hours, consumed 15 gallons of diesel"
+              </ListItem>
             </List>
           </Box>
         </VStack>
