@@ -511,10 +511,15 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                       </Badge>
                     )}
                     {parsedData.detected_systems
-                      ?.filter((system: string) =>
-                        !parsedData.application_method ||
-                        system.toLowerCase() !== parsedData.application_method.toLowerCase()
-                      )
+                      ?.filter((system: string) => {
+                        const sysLower = system.toLowerCase();
+                        const methodLower = (parsedData.application_method || '').toLowerCase();
+                        // Skip if it overlaps with application_method (e.g., "drip irrigation" vs "drip")
+                        if (methodLower && (sysLower.includes(methodLower) || methodLower.includes(sysLower))) return false;
+                        // Skip generic low-value systems
+                        if (['pump', 'engine', 'motor', 'hose'].includes(sysLower)) return false;
+                        return true;
+                      })
                       .map((system: string, index: number) => (
                         <Badge key={`sys-${index}`} colorScheme="teal" px={3} py={1} borderRadius="full" fontSize="sm">
                           {system}

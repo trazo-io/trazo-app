@@ -443,6 +443,13 @@ export function mapVoiceDataToFieldValues(
         else if (system.includes('flood')) overrides.irrigation_method = 'flood';
         else if (system.includes('furrow')) overrides.irrigation_method = 'furrow';
       }
+      // Irrigation depth (e.g., "2 inches of water")
+      const depthAmount = amounts.find((a) => a.category === 'depth');
+      if (depthAmount) {
+        overrides.irrigation_depth = depthAmount.value;
+        if (depthAmount.unit === 'cm') overrides.irrigation_depth_unit = 'cm';
+        else overrides.irrigation_depth_unit = 'inches';
+      }
     }
 
     // Harvest-specific: yield
