@@ -493,6 +493,33 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                         NPK {parsedData.npk_ratio}
                       </Badge>
                     )}
+                    {parsedData.application_method && (
+                      <Badge colorScheme="teal" px={3} py={1} borderRadius="full" fontSize="sm">
+                        {parsedData.application_method}
+                      </Badge>
+                    )}
+                    {parsedData.water_source && (
+                      <Badge colorScheme="cyan" px={3} py={1} borderRadius="full" fontSize="sm">
+                        {parsedData.water_source}
+                      </Badge>
+                    )}
+                    {parsedData.commercial_name && !parsedData.detected_products?.some(
+                      (p: string) => p.toLowerCase() === parsedData.commercial_name?.toLowerCase()
+                    ) && (
+                      <Badge colorScheme="orange" px={3} py={1} borderRadius="full" fontSize="sm">
+                        {parsedData.commercial_name}
+                      </Badge>
+                    )}
+                    {parsedData.detected_systems
+                      ?.filter((system: string) =>
+                        !parsedData.application_method ||
+                        system.toLowerCase() !== parsedData.application_method.toLowerCase()
+                      )
+                      .map((system: string, index: number) => (
+                        <Badge key={`sys-${index}`} colorScheme="teal" px={3} py={1} borderRadius="full" fontSize="sm">
+                          {system}
+                        </Badge>
+                      ))}
                   </Flex>
                 )}
 

@@ -414,11 +414,14 @@ export function mapVoiceDataToFieldValues(
       overrides.equipment_hours = parsedData.duration.value;
     }
 
-    // Fuel
+    // Fuel — prefer explicit fuel_amount from AI (semantically correct)
+    // Only fall back to guessing from generic volume for equipment-heavy events
+    // where gallons/liters most likely means diesel/gasoline, not water or chemicals
+    const fuelGuessAllowed = ['cultivation', 'equipment_maintenance'].includes(templateId);
     if (parsedData.fuel_amount && typeof parsedData.fuel_amount === 'object') {
       overrides.fuel_consumed = parsedData.fuel_amount.value;
       overrides.fuel_unit = UNIT_NORMALIZE[parsedData.fuel_amount.unit] || parsedData.fuel_amount.unit;
-    } else {
+    } else if (fuelGuessAllowed) {
       const fuelAmount = amounts.find(
         (a) => a.category === 'volume' && ['gal', 'L'].includes(a.unit)
       );
