@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Button,
@@ -8,7 +8,6 @@ import {
   Icon,
   Alert,
   AlertIcon,
-  Spinner,
   Badge,
   Progress,
   List,
@@ -16,10 +15,10 @@ import {
   ListIcon,
   useToast,
   Tooltip,
-  Select,
   Flex,
   useColorModeValue
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
@@ -27,8 +26,6 @@ import {
   FaMicrophone,
   FaMicrophoneSlash,
   FaCheckCircle,
-  FaExclamationTriangle,
-  FaGlobe,
   FaArrowRight,
   FaBolt,
   FaRedo
@@ -42,10 +39,23 @@ import {
 import { postProcessTranscript, mapVoiceTypeToTemplate } from 'utils/voiceDataMapper';
 import { useDeepgramTranscription } from 'hooks/useDeepgramTranscription';
 
+// Pulse animation for recording state
+const pulseRing = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+  70% { box-shadow: 0 0 0 12px rgba(76, 175, 80, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+`;
+
+const pulseDot = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+`;
+
 interface VoiceEventCaptureProps {
   onEventDetected: (eventData: any) => void;
   isActive: boolean;
   cropType: string;
+  autoStart?: boolean;
   onClose?: () => void;
 }
 
@@ -53,6 +63,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   onEventDetected,
   isActive,
   cropType,
+  autoStart = false,
   onClose
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -61,10 +72,11 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const [processingStage, setProcessingStage] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState<'en-US' | 'es-ES' | 'pt-BR'>('en-US');
   const [processingTime, setProcessingTime] = useState(0);
+  const hasAutoStarted = useRef(false);
   const toast = useToast();
 
   // Determine which voice provider to use (deepgram vs web speech API)
-  const { data: voiceConfig } = useGetVoiceConfigQuery();
+  const { data: voiceConfig, isLoading: isLoadingConfig } = useGetVoiceConfigQuery();
   const useDeepgram = voiceConfig?.provider === 'deepgram';
 
   // RTK Query mutation hooks
@@ -122,12 +134,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     ? deepgramInterim || deepgramTranscript
     : webSpeechTranscript;
 
-  const languageOptions = [
-    { value: 'en-US', label: 'English', flag: 'US' },
-    { value: 'es-ES', label: 'Espanol', flag: 'ES' },
-    { value: 'pt-BR', label: 'Portugues', flag: 'BR' }
-  ];
-
   // Web Speech API: auto-process when speech stops
   useEffect(() => {
     if (useDeepgram) return; // Deepgram handles this via onTranscriptComplete
@@ -154,6 +160,19 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       });
     }
   }, [deepgramError, toast]);
+
+  // Auto-start recording when component mounts with autoStart=true
+  // Waits for voiceConfig to load so the correct provider (Deepgram vs Web Speech) is used
+  useEffect(() => {
+    if (autoStart && isActive && !isLoadingConfig && !hasAutoStarted.current && !listening && !isProcessing) {
+      hasAutoStarted.current = true;
+      // Small delay to ensure component is fully mounted and mic permissions are ready
+      const timer = setTimeout(() => {
+        startListening();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [autoStart, isActive, isLoadingConfig]);
 
   const startListening = async () => {
     setParsedData(null);
@@ -371,25 +390,19 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
       <CardBody>
         <VStack spacing={4} align="stretch" pt={4}>
-          {/* Provider indicator */}
-          {useDeepgram && (
-            <Badge colorScheme="purple" alignSelf="center" px={2} py={1} fontSize="xs" mt={2}>
-              Deepgram Nova-3 — Enhanced Agricultural Vocabulary
-            </Badge>
-          )}
-
           {/* Recording Button */}
           <HStack justify="center" spacing={4}>
             <Tooltip
-              label={listening ? 'Stop recording' : `Start voice input in ${selectedLanguage}`}
+              label={listening ? 'Stop recording' : 'Start voice input'}
             >
               <Button
                 leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
-                colorScheme={listening ? 'red' : 'green'}
+                colorScheme="green"
                 onClick={listening ? stopListening : startListening}
                 isDisabled={!isActive || isProcessing || isProcessingVoice}
                 size="lg"
                 variant={listening ? 'solid' : 'outline'}
+                animation={listening ? `${pulseRing} 1.5s ease-out infinite` : undefined}
                 _hover={{
                   transform: 'scale(1.05)',
                   boxShadow: 'lg'
@@ -416,22 +429,28 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
           {/* Listening indicator */}
           {listening && (
-            <Box p={3} bg="red.50" borderRadius="md" borderWidth="2px" borderColor="red.200">
+            <Box p={3} bg="green.50" borderRadius="md" borderWidth="2px" borderColor="green.200">
               <VStack spacing={2}>
-                <Badge colorScheme="red" p={2} borderRadius="md">
-                  Listening in {languageOptions.find((l) => l.value === selectedLanguage)?.flag}{' '}
-                  {selectedLanguage}...
-                </Badge>
+                <HStack spacing={2}>
+                  <Box
+                    w="10px"
+                    h="10px"
+                    borderRadius="full"
+                    bg="green.500"
+                    animation={`${pulseDot} 1.2s ease-in-out infinite`}
+                  />
+                  <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                    Listening...
+                  </Text>
+                </HStack>
                 {displayTranscript && (
                   <Text fontSize="sm" fontStyle="italic" color="gray.700">
                     "{displayTranscript}"
                   </Text>
                 )}
-                {useDeepgram && (
-                  <Text fontSize="xs" color="gray.500">
-                    Auto-stops after 1.5s pause
-                  </Text>
-                )}
+                <Text fontSize="xs" color="gray.500">
+                  Speak naturally — auto-stops when you pause
+                </Text>
               </VStack>
             </Box>
           )}
@@ -569,26 +588,28 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             </Box>
           )}
 
-          {/* Voice command examples */}
-          <Box p={3} bg="gray.50" borderRadius="md">
-            <Text fontSize="sm" fontWeight="semibold" color="gray.700" mb={2}>
-              Example voice commands:
-            </Text>
-            <List spacing={1} fontSize="xs" color="gray.600">
-              <ListItem>
-                <ListIcon as={FaExclamationTriangle} color="green.500" />
-                "Applied fertilizer today, 200 pounds per acre, NPK 10-10-10"
-              </ListItem>
-              <ListItem>
-                <ListIcon as={FaExclamationTriangle} color="green.500" />
-                "Irrigated field for 6 hours with drip system"
-              </ListItem>
-              <ListItem>
-                <ListIcon as={FaExclamationTriangle} color="green.500" />
-                "Used tractor for 3 hours, consumed 15 gallons of diesel"
-              </ListItem>
-            </List>
-          </Box>
+          {/* Voice command examples — hide when actively recording */}
+          {!listening && !isProcessing && !isProcessingVoice && !parsedData && (
+            <Box p={3} bg="gray.50" borderRadius="md">
+              <Text fontSize="sm" fontWeight="semibold" color="gray.700" mb={2}>
+                Try saying:
+              </Text>
+              <List spacing={1} fontSize="xs" color="gray.600">
+                <ListItem>
+                  <ListIcon as={FaMicrophone} color="green.400" />
+                  "Applied fertilizer today, 200 pounds per acre, NPK 10-10-10"
+                </ListItem>
+                <ListItem>
+                  <ListIcon as={FaMicrophone} color="green.400" />
+                  "Irrigated field for 6 hours with drip system"
+                </ListItem>
+                <ListItem>
+                  <ListIcon as={FaMicrophone} color="green.400" />
+                  "Used tractor for 3 hours, consumed 15 gallons of diesel"
+                </ListItem>
+              </List>
+            </Box>
+          )}
         </VStack>
       </CardBody>
     </Card>

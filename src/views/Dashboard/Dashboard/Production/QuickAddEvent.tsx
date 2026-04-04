@@ -1684,18 +1684,18 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                 }
 
                 return !showVoiceCapture ? (
-                  <SectionBox variant="default" borderColor="blue.200" bg="blue.50">
-                    <VStack spacing={4}>
+                  <SectionBox variant="default" borderColor="green.200" bg="green.50">
+                    <VStack spacing={3}>
                       <SectionHeader
                         icon={FaMicrophone}
-                        iconColor="blue.500"
+                        iconColor="green.500"
                         title={intl.formatMessage({ id: 'quickAdd.voiceInputTitle' })}
                         badge={intl.formatMessage({ id: 'quickAdd.fastestMethod' })}
-                        badgeColorScheme="blue"
+                        badgeColorScheme="green"
                       />
 
                       <Text fontSize="sm" color="gray.600" textAlign="center">
-                        Say: "Applied fertilizer today, 200 pounds per acre"
+                        Tap to describe your farming activity by voice
                       </Text>
 
                       <StandardButton
@@ -1716,6 +1716,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                     onEventDetected={handleVoiceEventDetected}
                     isActive={true}
                     cropType={cropType}
+                    autoStart={true}
                     onClose={() => setShowVoiceCapture(false)}
                   />
                 );
