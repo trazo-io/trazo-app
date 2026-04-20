@@ -5,6 +5,7 @@ import { dashboardTableData, timelineData } from 'variables/general';
 import { useDispatch, useSelector } from 'react-redux';
 
 import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody.tsx';
 import CardWithImage from 'components/Card/CardWithImage';
 import CardWithMap from 'components/Map/CardWithMap';
 import Shimmer from 'components/Shimmer/Shimmer';
@@ -113,8 +114,10 @@ export default function ParcelView() {
             }
           />
         ) : (
-          <Card minH="290px" bg={cardColor}>
-            <Shimmer height="290px" borderRadius="15px" />
+          <Card maxH="290.5px" p="0px" bg={cardColor}>
+            <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
+              <Shimmer height="100%" borderRadius="15px" />
+            </CardBody>
           </Card>
         )}
 

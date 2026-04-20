@@ -58,7 +58,9 @@ import {
 
 // Week 2 Voice & Mobile Components
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
+import { SalesDeliverySection } from 'views/Dashboard/Dashboard/Production/SalesDeliverySection';
 import AuditExportModal from 'components/AuditExport/AuditExportModal';
+import DriftFindingsBanner from 'components/Compliance/DriftFindingsBanner';
 
 // Type definitions
 interface RootState {
@@ -915,6 +917,9 @@ function ProfileProduction() {
           </VStack>
         </StandardCard>
 
+        {/* Sprint 5.1 — OSP ↔ events drift summary (only renders if findings present) */}
+        <DriftFindingsBanner events={timelineEvents as any[]} />
+
         {/* Production Timeline Section */}
 
           {timelineEvents.length > 0 ? (
@@ -1042,11 +1047,23 @@ function ProfileProduction() {
         </StandardCard>
       </VStack>
 
+      {/* Sales & Delivery Section (post-finish only) */}
+      {historyData?.finish_date && (
+        <Box mt={{ base: 4, md: 6 }}>
+          <SalesDeliverySection
+            historyId={productionId || ''}
+            historyData={historyData}
+            canWrite={canWrite}
+          />
+        </Box>
+      )}
+
       {/* Quick Add Event Modal */}
       <QuickAddEvent
         isOpen={isQuickAddOpen}
         onClose={onQuickAddClose}
         cropType={historyData?.product?.name || 'citrus'}
+        productionMethod={historyData?.production_method}
         onEventAdded={(eventData) => {
           console.log('New event added:', eventData);
           window.location.reload();

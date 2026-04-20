@@ -3,7 +3,16 @@ import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 // NOTE: Crop selection removed - belongs at Establishment/Parcel level, not Company level
-import { Box, VStack, HStack, Text, Icon, SimpleGrid, useToast, useBreakpointValue } from '@chakra-ui/react';
+import {
+  Box,
+  VStack,
+  HStack,
+  Text,
+  Icon,
+  SimpleGrid,
+  useToast,
+  useBreakpointValue
+} from '@chakra-ui/react';
 import {
   FaRocket,
   FaCheckCircle,
@@ -197,7 +206,12 @@ function AddCompany({ isEdit = false }) {
 
   // Define steps for stepper (Crop selection removed - belongs at Establishment/Parcel level)
   const steps = [
-    { title: 'Company Info', shortTitle: 'Company', description: 'Basic company details', icon: FaBuilding },
+    {
+      title: 'Company Info',
+      shortTitle: 'Company',
+      description: 'Basic company details',
+      icon: FaBuilding
+    },
     { title: 'Location', description: 'Address & contact', icon: FaMapMarkerAlt },
     { title: 'Sustainability', shortTitle: 'Goals', description: 'Goals & practices', icon: FaLeaf }
   ];
@@ -302,15 +316,19 @@ function AddCompany({ isEdit = false }) {
       dispatch(setUserCompany({ id, name, role: 'Company Admin' }));
       // Trial auto-started on backend — go straight to establishment creation
       toast({
-        title: intl.formatMessage({ id: "app.companyCreatedSuccessTitle" }),
-        description: intl.formatMessage({ id: "app.trialStartedDescription" }),
-        status: "success",
+        title: intl.formatMessage({ id: 'app.companyCreatedSuccessTitle' }),
+        description: intl.formatMessage({ id: 'app.trialStartedDescription' }),
+        status: 'success',
         duration: 5000,
-        isClosable: true,
+        isClosable: true
       });
       navigate(`/admin/dashboard/farm/add`);
     }
   }, [isSuccessCompany, dataCompany, dispatch, navigate]);
+
+  // Only show cancel if user already has a company (not first-time onboarding)
+  const userCompanies = useSelector((state) => state.userState.user?.companies || []);
+  const hasExistingCompany = userCompanies.length > 0;
 
   const handleCancel = () => {
     console.log('🏢 AddCompany: handleCancel called');
@@ -550,7 +568,7 @@ function AddCompany({ isEdit = false }) {
 
                 {/* Navigation */}
                 <HStack spacing={3} justify="flex-end" pt={4}>
-                  {!isMobile && (
+                  {!isMobile && hasExistingCompany && (
                     <StandardButton variant="outline" onClick={handleCancel}>
                       Cancel
                     </StandardButton>

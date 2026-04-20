@@ -1,6 +1,13 @@
 // Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { Icon, Text, useColorModeValue, HStack, Box, SimpleGrid, Flex } from '@chakra-ui/react';
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  forwardRef,
+  useImperativeHandle
+} from 'react';
+import { Text, useColorModeValue, HStack, Box, SimpleGrid, Flex } from '@chakra-ui/react';
 import {
   StandardButton,
   StandardField,
@@ -12,18 +19,19 @@ import {
   SectionBox
 } from 'components/Design/StandardComponents';
 // Sprint 3 Epic 3.1: Cleaned unused icon imports
-import {
-  FaChevronLeft,
-  FaChevronRight,
-  FaSeedling,
-  FaThermometerHalf,
-  FaBolt
-} from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaSeedling, FaThermometerHalf } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { useIntl } from 'react-intl';
+// Event Field Registry (Phase 5G — form integration)
+import { useFormFields } from 'src/hooks/useFormFields';
+import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
+import { RegistryFormSections } from 'src/components/Forms/RegistryFormSections';
+
+// Forms keep their rich hand-crafted rendering. Registry drives display surfaces only.
+const USE_FIELD_REGISTRY = false;
 
 // Phase 3: Fuel types with EPA-verified emission factors (matching ProductionTab pattern)
 // UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
@@ -76,6 +84,15 @@ const formSchemaSoilManagement = object({
   grazing_purpose: string().optional(),
   amendment_amount_numeric: string().optional(),
   amendment_amount_unit: string().optional(),
+  // NOP Compliance fields (7 CFR 205.203)
+  amendment_organic_approved: string().optional(),
+  compost_peak_temp_f: string().optional(),
+  compost_duration_days_at_temp: string().optional(),
+  compost_turning_count: string().optional(),
+  compost_method: string().optional(),
+  compost_initial_cn_ratio: string().optional(),
+  manure_harvest_interval: string().optional(),
+  manure_application_date: string().optional(),
   observation: string().optional(),
   // Phase 2: Universal CommonEvent fields (variety, block_id, growth_stage)
   variety: string().optional(),
@@ -192,7 +209,10 @@ const SoilManagementTab = forwardRef(
     // phantom defaults from being applied when editing existing events
     const [selectedSoilType, setSelectedSoilType] = useState(formType || '');
 
-    const intelligentDefaults = getSoilManagementDefaults(formType || 'ST');
+    const intelligentDefaults = useMemo(
+      () => getSoilManagementDefaults(formType || 'ST'),
+      [formType]
+    );
 
     const methods = useForm({
       resolver: zodResolver(formSchemaSoilManagement),
@@ -235,6 +255,15 @@ const SoilManagementTab = forwardRef(
         grazing_purpose: initialValues.grazing_purpose || '',
         amendment_amount_numeric: initialValues.amendment_amount_numeric || '',
         amendment_amount_unit: initialValues.amendment_amount_unit || 'kg',
+        // NOP Compliance fields (7 CFR 205.203)
+        amendment_organic_approved: initialValues.amendment_organic_approved || '',
+        compost_peak_temp_f: initialValues.compost_peak_temp_f || '',
+        compost_duration_days_at_temp: initialValues.compost_duration_days_at_temp || '',
+        compost_turning_count: initialValues.compost_turning_count || '',
+        compost_method: initialValues.compost_method || '',
+        compost_initial_cn_ratio: initialValues.compost_initial_cn_ratio || '',
+        manure_harvest_interval: initialValues.manure_harvest_interval || '',
+        manure_application_date: initialValues.manure_application_date || '',
         observation: initialValues.observation || '',
         // Phase 2: Universal CommonEvent fields
         variety: initialValues.variety || '',
@@ -260,12 +289,18 @@ const SoilManagementTab = forwardRef(
         submitForm: () =>
           new Promise((resolve, reject) => {
             methods.handleSubmit(
-              (data) => { submitHandlerRef.current(data); resolve(); },
-              (errors) => { reject(errors); }
+              (data) => {
+                submitHandlerRef.current(data);
+                resolve();
+              },
+              (errors) => {
+                reject(errors);
+              }
             )();
           })
       }),
-      [onDataChange, methods]
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [onDataChange]
     );
 
     // Custom fields state for Phase 2.3
@@ -307,13 +342,24 @@ const SoilManagementTab = forwardRef(
     const watchedFuelType = watch('fuel_type'); // For preview display
     const watchedCustomFields = watch('custom_fields'); // For preview display
 
+    // NOP Compliance fields — watch to propagate to preview data
+    const watchedAmendmentOrganicApproved = watch('amendment_organic_approved');
+    const watchedCompostPeakTemp = watch('compost_peak_temp_f');
+    const watchedCompostDurationDays = watch('compost_duration_days_at_temp');
+    const watchedCompostTurningCount = watch('compost_turning_count');
+    const watchedCompostMethod = watch('compost_method');
+    const watchedCompostInitialCnRatio = watch('compost_initial_cn_ratio');
+    const watchedManureHarvestInterval = watch('manure_harvest_interval');
+    const watchedManureApplicationDate = watch('manure_application_date');
+
     // Note: These fields are watched to ensure form data updates
     // but are NOT included in the carbon calculation useEffect dependencies
 
     // Sync custom fields with form
     useEffect(() => {
       methods.setValue('custom_fields', customFields);
-    }, [customFields, methods]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [customFields]);
 
     // Carbon calculation trigger - ONLY for calculation-relevant fields
     useEffect(() => {
@@ -397,6 +443,14 @@ const SoilManagementTab = forwardRef(
       watchedEquipmentUsed, // Ensures equipment_used appears in preview
       watchedFuelType, // Ensures fuel type appears in preview
       watchedCustomFields, // Ensures custom fields appear in preview
+      watchedAmendmentOrganicApproved, // NOP: organic approval status
+      watchedCompostPeakTemp, // NOP: compost peak temperature
+      watchedCompostDurationDays, // NOP: compost duration at temp
+      watchedCompostTurningCount, // NOP: compost turning count
+      watchedCompostMethod, // NOP: compost method (§ 205.203(c)(2))
+      watchedCompostInitialCnRatio, // NOP: compost initial C:N ratio (§ 205.203(c)(2))
+      watchedManureHarvestInterval, // NOP: manure harvest interval
+      watchedManureApplicationDate, // NOP: manure application date
       onDataChange
     ]); // ENSURES: All form data including non-calculation fields gets sent to backend
 
@@ -418,7 +472,8 @@ const SoilManagementTab = forwardRef(
           }
         });
       }
-    }, [watchedType, selectedSoilType, setValue, watch, intelligentDefaults]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [watchedType, selectedSoilType, intelligentDefaults]);
 
     const handleEnhancedSubmit = (data) => {
       // 🔍 Debug: Check if observation field is being captured
@@ -506,6 +561,8 @@ const SoilManagementTab = forwardRef(
         ...cleanedCoreData,
         // ENHANCED: Include depth data with proper field naming for backend
         ...tillageDepthData,
+        // NOP DateField: backend rejects empty strings — convert to null
+        manure_application_date: cleanedCoreData.manure_application_date || null,
         // Map observation field to description (required by backend CommonEvent model)
         // Backend requires non-empty description, so provide fallback if observation is empty
         description:
@@ -555,7 +612,7 @@ const SoilManagementTab = forwardRef(
 
     return (
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(handleEnhancedSubmit)} style={{ width: '100%' }}>
+        <form onSubmit={handleSubmit(handleEnhancedSubmit)} noValidate style={{ width: '100%' }}>
           <Flex direction="column" w="100%">
             <StandardAlert status="info" title="Soil Management & Transparency Documentation">
               <Text fontSize="sm">
@@ -565,590 +622,791 @@ const SoilManagementTab = forwardRef(
               </Text>
             </StandardAlert>
 
-            {/* Sprint 3 Epic 3.1: Consolidated Section 1 - Soil Management Details (merged Info + Area) */}
-            <SectionBox variant="highlighted" mt={4}>
-              <SectionHeader
-                icon={FaSeedling}
-                iconColor="green.600"
-                title="Soil Management Details"
-                badge="Carbon Calculation Required"
-                badgeColorScheme="green"
+            {USE_FIELD_REGISTRY ? (
+              <RegistryFormSections
+                eventType="soil_management"
+                subtype={selectedSoilType}
+                control={methods.control}
+                eventData={methods.getValues()}
+                errors={errors}
               />
-
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <StandardField
-                  label={`${
-                    intl.formatMessage({ id: 'app.soilManagementType' }) || 'Soil Management Type'
-                  }`}
-                  required
-                  error={errors.type?.message}
-                >
-                  <StandardSelect placeholder="Select soil management type" {...register('type')}>
-                    <option value="ST">Soil Testing</option>
-                    <option value="PA">Soil Amendment</option>
-                    <option value="CC">Cover Crop Management</option>
-                    <option value="OM">Organic Matter Addition</option>
-                    <option value="TI">Tillage</option>
-                    <option value="CO">Composting Operation</option>
-                    <option value="GR">Grazing Management</option>
-                  </StandardSelect>
-                </StandardField>
-
-                {/* NOP 205.203(c): Manure timing compliance helper for organic farms */}
-                {(watch('type') === 'CO' || watch('type') === 'OM') && (
-                  <StandardAlert status="info" mt={2}>
-                    <Text fontSize="sm">
-                      <strong>{intl.formatMessage({ id: 'app.manureTimingTitle' })}</strong>
-                      {' '}{intl.formatMessage({ id: 'app.manureTimingDescription' })}
-                    </Text>
-                  </StandardAlert>
-                )}
-
-                <StandardField
-                  label="Event Name"
-                  helpText="Descriptive name for this soil management operation"
-                >
-                  <StandardInput
-                    type="text"
-                    placeholder="e.g., Spring Tillage - North Field"
-                    {...register('name')}
+            ) : (
+              <>
+                {/* Sprint 3 Epic 3.1: Consolidated Section 1 - Soil Management Details (merged Info + Area) */}
+                <SectionBox variant="highlighted" mt={4}>
+                  <SectionHeader
+                    icon={FaSeedling}
+                    iconColor="green.600"
+                    title="Soil Management Details"
+                    badge="Carbon Calculation Required"
+                    badgeColorScheme="green"
                   />
-                </StandardField>
 
-                <StandardField label="Area Covered" required error={errors.area_covered?.message}>
-                  <HStack spacing={2}>
-                    <StandardInput
-                      flex={2}
-                      type="number"
-                      step="0.1"
-                      placeholder="2.0"
-                      bg="white"
-                      {...register('area_covered')}
-                    />
-                    <StandardSelect flex={1} bg="white" {...register('area_unit')}>
-                      <option value="ha">Hectares</option>
-                      <option value="acres">Acres</option>
-                    </StandardSelect>
-                  </HStack>
-                </StandardField>
-
-                <StandardField label="Working Depth">
-                  <HStack spacing={2}>
-                    <StandardInput
-                      flex={2}
-                      type="number"
-                      step="1"
-                      placeholder="30"
-                      bg="white"
-                      {...register('depth')}
-                    />
-                    <StandardSelect flex={1} bg="white" {...register('depth_unit')}>
-                      <option value="cm">Centimeters</option>
-                      <option value="inches">Inches</option>
-                    </StandardSelect>
-                  </HStack>
-                </StandardField>
-              </SimpleGrid>
-            </SectionBox>
-
-            {/* Sprint 3 Epic 3.1: Consolidated Section 2 - Fuel & Equipment Operations (merged Fuel + Environmental) */}
-            <SectionBox variant="highlighted">
-              <SectionHeader
-                icon={FaSeedling}
-                iconColor="green.600"
-                title="Fuel & Equipment Operations"
-                badge="Enhanced Carbon Accuracy"
-                badgeColorScheme="green"
-                description="Document your equipment usage, fuel consumption, and operational details to build consumer trust through transparent farming practices."
-              />
-
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                {/* Phase 3: Fuel Type Selector */}
-                <StandardField
-                  label="Fuel Type"
-                  helpText="Select fuel type for accurate EPA emission factor calculation"
-                >
-                  <StandardSelect placeholder="Select fuel type..." {...register('fuel_type')}>
-                    {FUEL_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label} ({type.factor})
-                      </option>
-                    ))}
-                  </StandardSelect>
-                </StandardField>
-
-                <StandardField
-                  label={
-                    watch('fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'
-                  }
-                  helpText={
-                    watch('fuel_type') === 'electric'
-                      ? 'Energy consumption for carbon emission calculation'
-                      : 'Total fuel used for soil management equipment'
-                  }
-                >
-                  <HStack spacing={2}>
-                    <StandardInput
-                      flex={2}
-                      type="number"
-                      step="0.1"
-                      placeholder={watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : '15.5'}
-                      {...register('fuel_consumed')}
-                    />
-                    <StandardSelect flex={1} {...register('fuel_unit')}>
-                      <option value="L">Liters</option>
-                      <option value="gal">Gallons</option>
-                      <option value="kg">Kilograms</option>
-                      <option value="kWh">Kilowatt-hours</option>
-                    </StandardSelect>
-                  </HStack>
-                </StandardField>
-
-                <StandardField label="Equipment Hours" helpText="Total equipment operating time">
-                  <StandardInput
-                    type="number"
-                    step="0.1"
-                    placeholder="3.5"
-                    {...register('equipment_hours')}
-                  />
-                </StandardField>
-
-                <StandardField
-                  label="Production Efficiency"
-                  helpText="Equipment efficiency rating for carbon scoring"
-                >
-                  <StandardSelect {...register('production_efficiency')}>
-                    <option value="">Select efficiency level</option>
-                    <option value="high">High Efficiency</option>
-                    <option value="normal">Normal Efficiency</option>
-                    <option value="low">Low Efficiency</option>
-                  </StandardSelect>
-                </StandardField>
-
-                <StandardField label="Equipment Used" helpText="Equipment used for this operation">
-                  <StandardInput
-                    type="text"
-                    placeholder="e.g., tractor with disc harrow, soil auger"
-                    {...register('equipment_used')}
-                  />
-                </StandardField>
-              </SimpleGrid>
-
-              {/* Phase 3: Electric Equipment Info Box */}
-              {watch('fuel_type') === 'electric' && (
-                <Box
-                  p={3}
-                  bg="blue.50"
-                  borderRadius="md"
-                  border="1px solid"
-                  borderColor="blue.200"
-                  mt={4}
-                >
-                  <Text fontSize="sm" color="blue.700">
-                    <Icon as={FaBolt} mr={2} color="blue.600" />
-                    <Text as="span" fontWeight="semibold">
-                      Electric Equipment:
-                    </Text>{' '}
-                    Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg
-                    CO₂/kWh. Solar/wind powered equipment has zero emissions.
-                  </Text>
-                </Box>
-              )}
-
-              <Box
-                bg="blue.50"
-                p={3}
-                borderRadius="md"
-                borderLeft="4px"
-                borderLeftColor="blue.400"
-                mt={4}
-              >
-                <HStack spacing={2} mb={1}>
-                  <Icon as={FaSeedling} color="blue.500" fontSize="sm" />
-                  <Text fontSize="sm" fontWeight="semibold" color="blue.700">
-                    Building Consumer Trust
-                  </Text>
-                </HStack>
-                <Text fontSize="xs" color="blue.600">
-                  Documenting actual fuel consumption and equipment usage provides consumers with
-                  complete transparency into your farming operations.
-                </Text>
-              </Box>
-            </SectionBox>
-
-            {/* ENHANCED: Soil Amendment (PA) specific fields for IPCC 2006 lime dissolution */}
-            {watch('type') === 'PA' && (
-              <SectionBox variant="highlighted" borderColor="green.200">
-                <SectionHeader
-                  icon={FaSeedling}
-                  iconColor="green.600"
-                  title="Soil Amendment Details"
-                  badge="IPCC 2006 Carbon Calculation"
-                  badgeColorScheme="green"
-                  description="Document lime or soil amendment application for accurate carbon emissions calculation using IPCC 2006 methodology."
-                />
-
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                  <StandardField label="Amendment Type" helpText="Type of soil amendment applied">
-                    <StandardSelect
-                      placeholder="Select amendment type"
-                      {...register('amendment_type')}
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label={`${
+                        intl.formatMessage({ id: 'app.soilManagementType' }) ||
+                        'Soil Management Type'
+                      }`}
+                      required
+                      error={errors.type?.message}
                     >
-                      <option value="limestone">Limestone (CaCO3) - 0.44 kg CO2/kg</option>
-                      <option value="dolomite">Dolomite (CaMg(CO3)2) - 0.477 kg CO2/kg</option>
-                      <option value="calcium_oxide">Quick Lime (CaO) - High reactivity</option>
-                      <option value="calcium_hydroxide">Hydrated Lime (Ca(OH)2)</option>
-                      <option value="gypsum">Gypsum (CaSO4) - No CO2 emissions</option>
-                      <option value="compost">Compost - Organic amendment</option>
-                      <option value="manure">Manure - Organic fertilizer</option>
-                      <option value="other">Other Amendment</option>
-                    </StandardSelect>
-                  </StandardField>
+                      <StandardSelect
+                        placeholder="Select soil management type"
+                        {...register('type')}
+                      >
+                        <option value="ST">Soil Testing</option>
+                        <option value="PA">Soil Amendment</option>
+                        <option value="CC">Cover Crop Management</option>
+                        <option value="OM">Organic Matter Addition</option>
+                        <option value="TI">Tillage</option>
+                        <option value="CO">Composting Operation</option>
+                        <option value="GR">Grazing Management</option>
+                      </StandardSelect>
+                    </StandardField>
 
-                  <StandardField
-                    label="Amendment Amount"
-                    helpText="Total quantity of amendment applied"
-                  >
-                    <HStack spacing={2}>
+                    <StandardField
+                      label="Event Name"
+                      helpText="Descriptive name for this soil management operation"
+                    >
                       <StandardInput
-                        flex={2}
+                        type="text"
+                        placeholder="e.g., Spring Tillage - North Field"
+                        {...register('name')}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label="Area Covered"
+                      required
+                      error={errors.area_covered?.message}
+                    >
+                      <HStack spacing={2}>
+                        <StandardInput
+                          flex={2}
+                          type="number"
+                          step="0.1"
+                          placeholder="2.0"
+                          bg="white"
+                          {...register('area_covered')}
+                        />
+                        <StandardSelect flex={1} bg="white" {...register('area_unit')}>
+                          <option value="ha">Hectares</option>
+                          <option value="acres">Acres</option>
+                        </StandardSelect>
+                      </HStack>
+                    </StandardField>
+
+                    <StandardField label="Working Depth">
+                      <HStack spacing={2}>
+                        <StandardInput
+                          flex={2}
+                          type="number"
+                          step="1"
+                          placeholder="30"
+                          bg="white"
+                          {...register('depth')}
+                        />
+                        <StandardSelect flex={1} bg="white" {...register('depth_unit')}>
+                          <option value="cm">Centimeters</option>
+                          <option value="inches">Inches</option>
+                        </StandardSelect>
+                      </HStack>
+                    </StandardField>
+                  </SimpleGrid>
+
+                  {/* NOP 205.203(c): Manure timing compliance helper — shown full-width below the grid */}
+                  {(watch('type') === 'CO' || watch('type') === 'OM') && (
+                    <Box mt={4}>
+                      <StandardAlert
+                        status="info"
+                        title={intl.formatMessage({ id: 'app.manureTimingTitle' })}
+                        description={intl.formatMessage({ id: 'app.manureTimingDescription' })}
+                      />
+                    </Box>
+                  )}
+                </SectionBox>
+
+                {/* Sprint 3 Epic 3.1: Consolidated Section 2 - Fuel & Equipment Operations (merged Fuel + Environmental) */}
+                <SectionBox variant="highlighted">
+                  <SectionHeader
+                    icon={FaSeedling}
+                    iconColor="green.600"
+                    title="Fuel & Equipment Operations"
+                    badge="Enhanced Carbon Accuracy"
+                    badgeColorScheme="green"
+                    description="Document your equipment usage, fuel consumption, and operational details to build consumer trust through transparent farming practices."
+                  />
+
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    {/* Phase 3: Fuel Type Selector */}
+                    <StandardField
+                      label="Fuel Type"
+                      helpText="Select a fuel type only if powered equipment was used. Leave blank for hand/manual operations."
+                    >
+                      <StandardSelect placeholder="Select fuel type..." {...register('fuel_type')}>
+                        {FUEL_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label} ({type.factor})
+                          </option>
+                        ))}
+                      </StandardSelect>
+                    </StandardField>
+
+                    <StandardField
+                      label={
+                        watch('fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'
+                      }
+                      helpText={
+                        watch('fuel_type') === 'electric'
+                          ? 'Energy consumption for carbon emission calculation'
+                          : 'Total fuel used for soil management equipment'
+                      }
+                    >
+                      <HStack spacing={2}>
+                        <StandardInput
+                          flex={2}
+                          type="number"
+                          step="0.1"
+                          placeholder={watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : '15.5'}
+                          {...register('fuel_consumed')}
+                        />
+                        <StandardSelect flex={1} {...register('fuel_unit')}>
+                          <option value="L">Liters</option>
+                          <option value="gal">Gallons</option>
+                          <option value="kg">Kilograms</option>
+                          <option value="kWh">Kilowatt-hours</option>
+                        </StandardSelect>
+                      </HStack>
+                    </StandardField>
+
+                    <StandardField
+                      label="Equipment Hours"
+                      helpText="Total equipment operating time"
+                    >
+                      <StandardInput
                         type="number"
                         step="0.1"
-                        placeholder="500"
-                        {...register('amendment_amount')}
+                        placeholder="3.5"
+                        {...register('equipment_hours')}
                       />
-                      <StandardSelect flex={1} {...register('amendment_unit')}>
-                        <option value="kg">kg</option>
-                        <option value="tons">Metric Tons</option>
-                        <option value="lbs">Pounds</option>
-                        <option value="short_tons">Short Tons (US)</option>
-                      </StandardSelect>
-                    </HStack>
-                  </StandardField>
+                    </StandardField>
 
-                  <StandardField
-                    label="Application Depth"
-                    helpText="Depth of amendment incorporation"
-                  >
-                    <HStack spacing={2}>
+                    <StandardField
+                      label="Production Efficiency"
+                      helpText="Equipment efficiency rating for carbon scoring"
+                    >
+                      <StandardSelect {...register('production_efficiency')}>
+                        <option value="">Select efficiency level</option>
+                        <option value="high">High Efficiency</option>
+                        <option value="normal">Normal Efficiency</option>
+                        <option value="low">Low Efficiency</option>
+                      </StandardSelect>
+                    </StandardField>
+
+                    <StandardField
+                      label="Equipment Used"
+                      helpText="Equipment used for this operation"
+                    >
                       <StandardInput
-                        flex={2}
-                        type="number"
-                        step="1"
-                        placeholder="15"
-                        {...register('depth')}
+                        type="text"
+                        placeholder="e.g., tractor with disc harrow, soil auger"
+                        {...register('equipment_used')}
                       />
-                      <StandardSelect flex={1} {...register('depth_unit')}>
-                        <option value="cm">cm</option>
-                        <option value="inches">inches</option>
-                      </StandardSelect>
-                    </HStack>
-                  </StandardField>
-                </SimpleGrid>
+                    </StandardField>
+                  </SimpleGrid>
 
-                <Box
-                  bg="green.50"
-                  p={3}
-                  borderRadius="md"
-                  borderLeft="4px"
-                  borderLeftColor="green.400"
-                  mt={4}
-                >
-                  <HStack spacing={2} mb={1}>
-                    <Icon as={FaSeedling} color="green.500" fontSize="sm" />
-                    <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                      IPCC 2006 Lime Dissolution Methodology
-                    </Text>
-                  </HStack>
-                  <Text fontSize="xs" color="green.600">
-                    Carbon emissions from lime application are calculated using IPCC 2006
-                    guidelines. Limestone (CaCO₃) releases 0.44 kg CO₂ per kg applied, while
-                    dolomite releases 0.477 kg CO₂ per kg. Gypsum and organic amendments do not
-                    directly release CO₂.
-                  </Text>
-                </Box>
-              </SectionBox>
-            )}
+                  {/* Phase 3: Electric Equipment Info Box */}
+                  {watch('fuel_type') === 'electric' && (
+                    <Box mt={3}>
+                      <StandardAlert
+                        status="info"
+                        title="Electric Equipment"
+                        description="Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions."
+                      />
+                    </Box>
+                  )}
 
-            {watch('type') && (
-              <SectionBox variant="default">
-                <SectionHeader
-                  icon={FaThermometerHalf}
-                  iconColor="orange.600"
-                  title="Soil Properties"
-                  badge="Improves Carbon Accuracy"
-                  badgeColorScheme="orange"
-                />
+                  <Box mt={3}>
+                    <StandardAlert
+                      status="info"
+                      title="Building Consumer Trust"
+                      description="Documenting actual fuel consumption and equipment usage provides consumers with complete transparency into your farming operations."
+                    />
+                  </Box>
+                </SectionBox>
 
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                {/* Soil Amendment fields — PA (pH Adjustment), OM (Organic Matter), CC (Cover Crop), CO (Composting) */}
+                {['PA', 'OM', 'CC', 'CO'].includes(watch('type')) && (
+                  <SectionBox variant="highlighted" borderColor="green.200">
+                    <SectionHeader
+                      icon={FaSeedling}
+                      iconColor="green.600"
+                      title="Soil Amendment Details"
+                      badge="IPCC 2006 Carbon Calculation"
+                      badgeColorScheme="green"
+                      description="Document lime or soil amendment application for accurate carbon emissions calculation using IPCC 2006 methodology."
+                    />
+
+                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                      <StandardField
+                        label="Amendment Type"
+                        helpText="Type of soil amendment applied"
+                      >
+                        <StandardSelect
+                          placeholder="Select amendment type"
+                          {...register('amendment_type')}
+                        >
+                          <option value="limestone">Limestone (CaCO3) - 0.44 kg CO2/kg</option>
+                          <option value="dolomite">Dolomite (CaMg(CO3)2) - 0.477 kg CO2/kg</option>
+                          <option value="calcium_oxide">Quick Lime (CaO) - High reactivity</option>
+                          <option value="calcium_hydroxide">Hydrated Lime (Ca(OH)2)</option>
+                          <option value="gypsum">Gypsum (CaSO4) - No CO2 emissions</option>
+                          <option value="compost">Compost - Organic amendment</option>
+                          <option value="manure">Manure - Organic fertilizer</option>
+                          <option value="other">Other Amendment</option>
+                        </StandardSelect>
+                      </StandardField>
+
+                      <StandardField
+                        label="Amendment Amount"
+                        helpText="Total quantity of amendment applied"
+                      >
+                        <HStack spacing={2}>
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="0.1"
+                            placeholder="500"
+                            {...register('amendment_amount')}
+                          />
+                          <StandardSelect flex={1} {...register('amendment_unit')}>
+                            <option value="kg">kg</option>
+                            <option value="tons">Metric Tons</option>
+                            <option value="lbs">Pounds</option>
+                            <option value="short_tons">Short Tons (US)</option>
+                          </StandardSelect>
+                        </HStack>
+                      </StandardField>
+
+                      <StandardField
+                        label="Application Depth"
+                        helpText="Depth of amendment incorporation"
+                      >
+                        <HStack spacing={2}>
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="1"
+                            placeholder="15"
+                            {...register('depth')}
+                          />
+                          <StandardSelect flex={1} {...register('depth_unit')}>
+                            <option value="cm">cm</option>
+                            <option value="inches">inches</option>
+                          </StandardSelect>
+                        </HStack>
+                      </StandardField>
+                    </SimpleGrid>
+
+                    <Box mt={3}>
+                      <StandardAlert
+                        status="info"
+                        title="IPCC 2006 Lime Dissolution Methodology"
+                        description="Carbon emissions from lime application are calculated using IPCC 2006 guidelines. Limestone (CaCO₃) releases 0.44 kg CO₂ per kg applied, while dolomite releases 0.477 kg CO₂ per kg. Gypsum and organic amendments do not directly release CO₂."
+                      />
+                    </Box>
+                  </SectionBox>
+                )}
+
+                {/* NOP Compliance: Amendment Organic Approval — applies to PA, OM, CC, CO */}
+                {['PA', 'OM', 'CC', 'CO'].includes(watch('type')) && (
+                  <SectionBox variant="highlighted" borderColor="teal.200">
+                    <SectionHeader
+                      icon={FaSeedling}
+                      iconColor="teal.600"
+                      title="NOP Organic Compliance"
+                      badge="7 CFR 205.203"
+                      badgeColorScheme="teal"
+                      description="Documentation required for USDA organic certification. Track amendment approval status and, for composting, temperature/duration/turning records."
+                    />
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField
+                        label="Amendment Organic Approval"
+                        helpText="Organic certification status of this amendment (7 CFR 205.203(b))"
+                      >
+                        <StandardSelect
+                          placeholder="Select organic approval status"
+                          {...register('amendment_organic_approved')}
+                        >
+                          <option value="omri_listed">OMRI Listed - Organic certified</option>
+                          <option value="usda_nop_approved">
+                            USDA NOP Approved - National Organic Program
+                          </option>
+                          <option value="organic_equivalent">
+                            Organic Equivalent - Meets organic standards
+                          </option>
+                          <option value="transitional">
+                            Transitional - In certification process
+                          </option>
+                          <option value="not_organic">
+                            Not Organic Approved - Conventional use only
+                          </option>
+                          <option value="not_applicable">Not Applicable</option>
+                        </StandardSelect>
+                      </StandardField>
+                    </SimpleGrid>
+
+                    {/* Compost-specific fields (CO only) — 7 CFR 205.203(c)(2) */}
+                    {watch('type') === 'CO' && (
+                      <>
+                        <StandardAlert
+                          status="info"
+                          title="Compost Process Requirements (7 CFR 205.203(c)(2))"
+                          description="Initial C:N must be 25:1–40:1. Temp must reach 131–170°F. Windrow requires 15+ days at temp with 5+ turnings; static aerated / in-vessel require 3+ days at temp. C:N outside range disqualifies the pile as NOP compost — it reverts to raw manure under (c)(1)."
+                        />
+                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
+                          <StandardField
+                            label="Compost Method"
+                            helpText="Determines required duration/turnings (7 CFR 205.203(c)(2))"
+                          >
+                            <StandardSelect
+                              placeholder="Select method..."
+                              {...register('compost_method')}
+                            >
+                              <option value="windrow">Windrow (turned, open air)</option>
+                              <option value="static_aerated">Static Aerated Pile</option>
+                              <option value="in_vessel">In-Vessel</option>
+                            </StandardSelect>
+                          </StandardField>
+                          <StandardField
+                            label="Initial C:N Ratio"
+                            helpText="Carbon-to-nitrogen ratio at start — NOP requires 25:1–40:1"
+                          >
+                            <StandardInput
+                              type="number"
+                              min="0"
+                              max="999"
+                              step="0.1"
+                              placeholder="e.g., 30"
+                              {...register('compost_initial_cn_ratio')}
+                            />
+                          </StandardField>
+                        </SimpleGrid>
+                        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mt={4}>
+                          <StandardField
+                            label="Peak Temperature (°F)"
+                            helpText="Highest temperature reached (131–170°F required)"
+                          >
+                            <StandardInput
+                              type="number"
+                              min="0"
+                              max="250"
+                              step="1"
+                              placeholder="e.g., 158"
+                              {...register('compost_peak_temp_f')}
+                            />
+                          </StandardField>
+                          <StandardField
+                            label="Days at Temperature"
+                            helpText="Windrow: 15+ · Static/in-vessel: 3+"
+                          >
+                            <StandardInput
+                              type="number"
+                              min="0"
+                              max="365"
+                              step="1"
+                              placeholder="e.g., 21"
+                              {...register('compost_duration_days_at_temp')}
+                            />
+                          </StandardField>
+                          <StandardField
+                            label="Number of Turnings"
+                            helpText="Windrow only: 5+ turnings"
+                          >
+                            <StandardInput
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="1"
+                              placeholder="e.g., 7"
+                              {...register('compost_turning_count')}
+                            />
+                          </StandardField>
+                        </SimpleGrid>
+                      </>
+                    )}
+
+                    {/* Manure-specific fields (OM only) — 7 CFR 205.203(c)(1). */}
+                    {/* (c)(1) governs raw manure intervals; composted materials live under (c)(2). */}
+                    {watch('type') === 'OM' && (
+                      <>
+                        <StandardAlert
+                          status="warning"
+                          title="Raw Manure Harvest Interval (7 CFR 205.203(c)(1))"
+                          description="Raw manure: 120 days pre-harvest if edible portion contacts soil, 90 days otherwise. N/A if manure is composted."
+                        />
+                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
+                          <StandardField
+                            label="Manure Harvest Interval"
+                            helpText="Required wait period before harvest"
+                          >
+                            <StandardSelect
+                              placeholder="Select harvest interval"
+                              {...register('manure_harvest_interval')}
+                            >
+                              <option value="120">
+                                120 days — edible portion contacts soil (root crops, leafy greens)
+                              </option>
+                              <option value="90">
+                                90 days — edible portion does NOT contact soil (tree fruit,
+                                trellised)
+                              </option>
+                              <option value="na">
+                                N/A — composted manure or no manure applied
+                              </option>
+                            </StandardSelect>
+                          </StandardField>
+                          <StandardField
+                            label="Manure Application Date"
+                            helpText="Used to calculate earliest safe harvest date"
+                          >
+                            <StandardInput type="date" {...register('manure_application_date')} />
+                          </StandardField>
+                        </SimpleGrid>
+                      </>
+                    )}
+                  </SectionBox>
+                )}
+
+                {watch('type') && (
+                  <SectionBox variant="default">
+                    <SectionHeader
+                      icon={FaThermometerHalf}
+                      iconColor="orange.600"
+                      title="Soil Properties"
+                      badge="Improves Carbon Accuracy"
+                      badgeColorScheme="orange"
+                    />
+
+                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                      <StandardField
+                        label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
+                        helpText="pH affects nutrient availability"
+                      >
+                        <StandardInput
+                          type="number"
+                          min="0"
+                          max="14"
+                          step="0.1"
+                          placeholder="6.5"
+                          {...register('soil_ph')}
+                        />
+                      </StandardField>
+
+                      <StandardField
+                        label={
+                          intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
+                          'Organic Matter (%)'
+                        }
+                        helpText="Higher organic matter improves soil carbon"
+                      >
+                        <StandardInput
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          placeholder="3.5"
+                          {...register('organic_matter_percentage')}
+                        />
+                      </StandardField>
+
+                      <StandardField
+                        label="Soil Texture"
+                        helpText="Soil type affects carbon retention"
+                      >
+                        <StandardSelect
+                          placeholder="Select soil texture"
+                          {...register('soil_texture')}
+                        >
+                          <option value="clay">Clay</option>
+                          <option value="clay_loam">Clay Loam</option>
+                          <option value="loam">Loam</option>
+                          <option value="sandy_loam">Sandy Loam</option>
+                          <option value="sand">Sand</option>
+                          <option value="silt">Silt</option>
+                          <option value="silt_loam">Silt Loam</option>
+                        </StandardSelect>
+                      </StandardField>
+                    </SimpleGrid>
+                  </SectionBox>
+                )}
+
+                {/* Tillage-Specific Fields - Only for Tillage Operations */}
+                {watch('type') === 'TI' && (
+                  <SectionBox variant="highlighted" borderColor="orange.200">
+                    <SectionHeader
+                      icon={FaSeedling}
+                      iconColor="orange.600"
+                      title="Tillage Operation Details"
+                      badge="Carbon Impact Calculation"
+                      badgeColorScheme="orange"
+                      description="Provide specific tillage details for accurate carbon impact assessment. Tillage practices significantly affect soil carbon sequestration and emissions."
+                    />
+
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField
+                        label="Tillage Type"
+                        helpText="Primary tillage operation performed"
+                      >
+                        <StandardSelect
+                          placeholder="Select tillage type"
+                          {...register('tillage_type')}
+                        >
+                          <option value="conventional_plow">
+                            🚜 Conventional Plow - Deep inversion
+                          </option>
+                          <option value="chisel_plow">⚡ Chisel Plow - Reduced tillage</option>
+                          <option value="disk_harrow">💿 Disk Harrow - Surface cultivation</option>
+                          <option value="no_till">🌱 No-Till - Direct seeding</option>
+                          <option value="strip_till">📏 Strip Till - Zonal tillage</option>
+                          <option value="minimum_till">🔄 Minimum Till - Conservation</option>
+                          <option value="subsoiling">🔧 Subsoiling - Deep loosening</option>
+                          <option value="cultivator">🌾 Cultivator - Shallow cultivation</option>
+                        </StandardSelect>
+                      </StandardField>
+
+                      <StandardField
+                        label="Tillage Intensity"
+                        helpText="Intensity affects carbon emissions"
+                      >
+                        <StandardSelect
+                          placeholder="Select intensity"
+                          {...register('tillage_intensity')}
+                        >
+                          <option value="high">High - Heavy disturbance</option>
+                          <option value="medium">Medium - Moderate disturbance</option>
+                          <option value="low">Low - Minimal disturbance</option>
+                          <option value="conservation">Conservation - Protective tillage</option>
+                        </StandardSelect>
+                      </StandardField>
+
+                      <StandardField
+                        label="Tillage Direction"
+                        helpText="Direction affects soil erosion and carbon retention"
+                      >
+                        <StandardSelect
+                          placeholder="Select direction"
+                          {...register('tillage_direction')}
+                        >
+                          <option value="across_slope">🏔️ Across Slope - Erosion control</option>
+                          <option value="up_down_slope">⬇️ Up/Down Slope - Standard</option>
+                          <option value="contour">🌀 Contour - Following natural lines</option>
+                          <option value="random">🔀 Random - Variable direction</option>
+                        </StandardSelect>
+                      </StandardField>
+
+                      <StandardField
+                        label="Residue Management"
+                        helpText="Crop residue handling affects carbon sequestration"
+                      >
+                        <StandardSelect
+                          placeholder="Select residue management"
+                          {...register('residue_management')}
+                        >
+                          <option value="incorporated">♻️ Incorporated - Mixed into soil</option>
+                          <option value="surface_left">🌾 Surface Left - Protective cover</option>
+                          <option value="removed">🚛 Removed - Harvested/burned</option>
+                          <option value="mulched">🍂 Mulched - Chopped in place</option>
+                          <option value="partial_removal">
+                            📏 Partial Removal - Mixed approach
+                          </option>
+                        </StandardSelect>
+                      </StandardField>
+                    </SimpleGrid>
+
+                    <Box mt={3}>
+                      <StandardAlert
+                        status="success"
+                        title="Carbon Impact Tip"
+                        description="No-till and conservation tillage practices typically sequester more carbon and reduce emissions compared to conventional tillage. Leaving crop residues incorporated or on the surface also improves carbon retention."
+                      />
+                    </Box>
+                  </SectionBox>
+                )}
+
+                {/* Grazing Management Fields - Only for Grazing Management Operations */}
+                {watch('type') === 'GR' && (
+                  <SectionBox variant="highlighted" borderColor="green.200">
+                    <SectionHeader
+                      icon={FaSeedling}
+                      iconColor="green.600"
+                      title="Grazing Details"
+                      badge="Soil Health Practice"
+                      badgeColorScheme="green"
+                      description="Document grazing activities for cover crop management, weed control, and soil health."
+                    />
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField label="Animal Type" helpText="Type of animal used for grazing">
+                        <StandardSelect
+                          placeholder="Select animal type..."
+                          {...register('animal_type')}
+                        >
+                          <option value="sheep">Sheep</option>
+                          <option value="goats">Goats</option>
+                          <option value="cattle">Cattle</option>
+                          <option value="poultry">Poultry</option>
+                          <option value="other">Other</option>
+                        </StandardSelect>
+                      </StandardField>
+                      <StandardField
+                        label="Number of Animals"
+                        helpText="How many animals were used"
+                      >
+                        <StandardInput
+                          type="number"
+                          placeholder="e.g., 50"
+                          {...register('animal_count')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label="Grazing Duration (Days)"
+                        helpText="How many days animals grazed"
+                      >
+                        <StandardInput
+                          type="number"
+                          placeholder="e.g., 14"
+                          {...register('grazing_duration_days')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label="Grazing Purpose"
+                        helpText="Primary purpose of the grazing activity"
+                      >
+                        <StandardSelect
+                          placeholder="Select purpose..."
+                          {...register('grazing_purpose')}
+                        >
+                          <option value="weed_control">Weed Control</option>
+                          <option value="cover_crop">Cover Crop Termination</option>
+                          <option value="soil_health">Soil Health</option>
+                          <option value="vegetation_management">Vegetation Management</option>
+                        </StandardSelect>
+                      </StandardField>
+                    </SimpleGrid>
+                  </SectionBox>
+                )}
+
+                {/* Sprint 3 Epic 3.1: Removed "Environmental Conditions & Equipment" section - merged into "Fuel & Equipment Operations" above */}
+
+                {/* Phase 2: Universal Field Details - variety, block_id, growth_stage */}
+                <SectionBox variant="default">
+                  <SectionHeader
+                    icon={FaSeedling}
+                    iconColor="teal.500"
+                    title={intl.formatMessage({ id: 'fieldDetails.title' })}
+                    badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
+                    badgeColorScheme="teal"
+                    description={intl.formatMessage({ id: 'fieldDetails.description' })}
+                  />
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                    <StandardField
+                      label={intl.formatMessage({ id: 'fieldDetails.variety' })}
+                      helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}
+                    >
+                      <Controller
+                        name="variety"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'fieldDetails.varietyPlaceholder'
+                            })}
+                          />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
+                      helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
+                    >
+                      <Controller
+                        name="block_id"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'fieldDetails.blockIdPlaceholder'
+                            })}
+                          />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}
+                      helpText={intl.formatMessage({ id: 'fieldDetails.growthStageHelp' })}
+                    >
+                      <Controller
+                        name="growth_stage"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field} placeholder="Select growth stage...">
+                            <option value="dormant">
+                              {intl.formatMessage({ id: 'fieldDetails.growthStage.dormant' })}
+                            </option>
+                            <option value="budbreak">
+                              {intl.formatMessage({ id: 'fieldDetails.growthStage.budbreak' })}
+                            </option>
+                            <option value="bloom">
+                              {intl.formatMessage({ id: 'fieldDetails.growthStage.bloom' })}
+                            </option>
+                            <option value="fruit_set">
+                              {intl.formatMessage({ id: 'fieldDetails.growthStage.fruit_set' })}
+                            </option>
+                            <option value="vegetative">
+                              {intl.formatMessage({ id: 'fieldDetails.growthStage.vegetative' })}
+                            </option>
+                            <option value="maturation">
+                              {intl.formatMessage({ id: 'fieldDetails.growthStage.maturation' })}
+                            </option>
+                            <option value="harvest_ready">
+                              {intl.formatMessage({ id: 'fieldDetails.growthStage.harvest_ready' })}
+                            </option>
+                            <option value="post_harvest">
+                              {intl.formatMessage({ id: 'fieldDetails.growthStage.post_harvest' })}
+                            </option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                </SectionBox>
+
+                <SectionBox variant="default">
+                  <SectionHeader
+                    icon={FaSeedling}
+                    iconColor="green.500"
+                    title="Farmer's Field Notes & Consumer Transparency"
+                    badge="Consumer Transparency"
+                    badgeColorScheme="green"
+                  />
                   <StandardField
-                    label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
-                    helpText="pH affects nutrient availability"
+                    label="Observations & Notes"
+                    helpText="Share details about your soil management approach that help consumers understand your sustainable farming practices"
                   >
-                    <StandardInput
-                      type="number"
-                      min="0"
-                      max="14"
-                      step="0.1"
-                      placeholder="6.5"
-                      {...register('soil_ph')}
+                    <StandardTextarea
+                      placeholder="Optional: Describe your soil management approach, goals for soil health, organic practices used, sustainability goals, etc. These details help consumers understand your farming methods."
+                      rows={4}
+                      {...register('observation')}
                     />
                   </StandardField>
-
-                  <StandardField
-                    label={
-                      intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
-                      'Organic Matter (%)'
-                    }
-                    helpText="Higher organic matter improves soil carbon"
-                  >
-                    <StandardInput
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      placeholder="3.5"
-                      {...register('organic_matter_percentage')}
-                    />
-                  </StandardField>
-
-                  <StandardField label="Soil Texture" helpText="Soil type affects carbon retention">
-                    <StandardSelect placeholder="Select soil texture" {...register('soil_texture')}>
-                      <option value="clay">Clay</option>
-                      <option value="clay_loam">Clay Loam</option>
-                      <option value="loam">Loam</option>
-                      <option value="sandy_loam">Sandy Loam</option>
-                      <option value="sand">Sand</option>
-                      <option value="silt">Silt</option>
-                      <option value="silt_loam">Silt Loam</option>
-                    </StandardSelect>
-                  </StandardField>
-                </SimpleGrid>
-              </SectionBox>
+                </SectionBox>
+              </>
             )}
-
-            {/* Tillage-Specific Fields - Only for Tillage Operations */}
-            {watch('type') === 'TI' && (
-              <SectionBox variant="highlighted" borderColor="orange.200">
-                <SectionHeader
-                  icon={FaSeedling}
-                  iconColor="orange.600"
-                  title="Tillage Operation Details"
-                  badge="Carbon Impact Calculation"
-                  badgeColorScheme="orange"
-                  description="Provide specific tillage details for accurate carbon impact assessment. Tillage practices significantly affect soil carbon sequestration and emissions."
-                />
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField
-                    label="Tillage Type"
-                    helpText="Primary tillage operation performed"
-                  >
-                    <StandardSelect placeholder="Select tillage type" {...register('tillage_type')}>
-                      <option value="conventional_plow">
-                        🚜 Conventional Plow - Deep inversion
-                      </option>
-                      <option value="chisel_plow">⚡ Chisel Plow - Reduced tillage</option>
-                      <option value="disk_harrow">💿 Disk Harrow - Surface cultivation</option>
-                      <option value="no_till">🌱 No-Till - Direct seeding</option>
-                      <option value="strip_till">📏 Strip Till - Zonal tillage</option>
-                      <option value="minimum_till">🔄 Minimum Till - Conservation</option>
-                      <option value="subsoiling">🔧 Subsoiling - Deep loosening</option>
-                      <option value="cultivator">🌾 Cultivator - Shallow cultivation</option>
-                    </StandardSelect>
-                  </StandardField>
-
-                  <StandardField
-                    label="Tillage Intensity"
-                    helpText="Intensity affects carbon emissions"
-                  >
-                    <StandardSelect
-                      placeholder="Select intensity"
-                      {...register('tillage_intensity')}
-                    >
-                      <option value="high">High - Heavy disturbance</option>
-                      <option value="medium">Medium - Moderate disturbance</option>
-                      <option value="low">Low - Minimal disturbance</option>
-                      <option value="conservation">Conservation - Protective tillage</option>
-                    </StandardSelect>
-                  </StandardField>
-
-                  <StandardField
-                    label="Tillage Direction"
-                    helpText="Direction affects soil erosion and carbon retention"
-                  >
-                    <StandardSelect
-                      placeholder="Select direction"
-                      {...register('tillage_direction')}
-                    >
-                      <option value="across_slope">🏔️ Across Slope - Erosion control</option>
-                      <option value="up_down_slope">⬇️ Up/Down Slope - Standard</option>
-                      <option value="contour">🌀 Contour - Following natural lines</option>
-                      <option value="random">🔀 Random - Variable direction</option>
-                    </StandardSelect>
-                  </StandardField>
-
-                  <StandardField
-                    label="Residue Management"
-                    helpText="Crop residue handling affects carbon sequestration"
-                  >
-                    <StandardSelect
-                      placeholder="Select residue management"
-                      {...register('residue_management')}
-                    >
-                      <option value="incorporated">♻️ Incorporated - Mixed into soil</option>
-                      <option value="surface_left">🌾 Surface Left - Protective cover</option>
-                      <option value="removed">🚛 Removed - Harvested/burned</option>
-                      <option value="mulched">🍂 Mulched - Chopped in place</option>
-                      <option value="partial_removal">📏 Partial Removal - Mixed approach</option>
-                    </StandardSelect>
-                  </StandardField>
-                </SimpleGrid>
-
-                <Box
-                  bg="green.50"
-                  p={3}
-                  borderRadius="md"
-                  borderLeft="4px"
-                  borderLeftColor="green.400"
-                  mt={4}
-                >
-                  <HStack spacing={2} mb={1}>
-                    <Icon as={FaSeedling} color="green.500" fontSize="sm" />
-                    <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                      Carbon Impact Tip
-                    </Text>
-                  </HStack>
-                  <Text fontSize="xs" color="green.600">
-                    No-till and conservation tillage practices typically sequester more carbon and
-                    reduce emissions compared to conventional tillage. Leaving crop residues
-                    incorporated or on the surface also improves carbon retention.
-                  </Text>
-                </Box>
-              </SectionBox>
-            )}
-
-            {/* Grazing Management Fields - Only for Grazing Management Operations */}
-            {watch('type') === 'GR' && (
-              <SectionBox variant="highlighted" borderColor="green.200">
-                <SectionHeader
-                  icon={FaSeedling}
-                  iconColor="green.600"
-                  title="Grazing Details"
-                  badge="Soil Health Practice"
-                  badgeColorScheme="green"
-                  description="Document grazing activities for cover crop management, weed control, and soil health."
-                />
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  <StandardField label="Animal Type" helpText="Type of animal used for grazing">
-                    <StandardSelect placeholder="Select animal type..." {...register('animal_type')}>
-                      <option value="sheep">Sheep</option>
-                      <option value="goats">Goats</option>
-                      <option value="cattle">Cattle</option>
-                      <option value="poultry">Poultry</option>
-                      <option value="other">Other</option>
-                    </StandardSelect>
-                  </StandardField>
-                  <StandardField label="Number of Animals" helpText="How many animals were used">
-                    <StandardInput type="number" placeholder="e.g., 50" {...register('animal_count')} />
-                  </StandardField>
-                  <StandardField label="Grazing Duration (Days)" helpText="How many days animals grazed">
-                    <StandardInput type="number" placeholder="e.g., 14" {...register('grazing_duration_days')} />
-                  </StandardField>
-                  <StandardField label="Grazing Purpose" helpText="Primary purpose of the grazing activity">
-                    <StandardSelect placeholder="Select purpose..." {...register('grazing_purpose')}>
-                      <option value="weed_control">Weed Control</option>
-                      <option value="cover_crop">Cover Crop Termination</option>
-                      <option value="soil_health">Soil Health</option>
-                      <option value="vegetation_management">Vegetation Management</option>
-                    </StandardSelect>
-                  </StandardField>
-                </SimpleGrid>
-              </SectionBox>
-            )}
-
-            {/* Sprint 3 Epic 3.1: Removed "Environmental Conditions & Equipment" section - merged into "Fuel & Equipment Operations" above */}
-
-            {/* Phase 2: Universal Field Details - variety, block_id, growth_stage */}
-            <SectionBox variant="default">
-              <SectionHeader
-                icon={FaSeedling}
-                iconColor="teal.500"
-                title={intl.formatMessage({ id: 'fieldDetails.title' })}
-                badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
-                badgeColorScheme="teal"
-                description={intl.formatMessage({ id: 'fieldDetails.description' })}
-              />
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-                <StandardField
-                  label={intl.formatMessage({ id: 'fieldDetails.variety' })}
-                  helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}
-                >
-                  <Controller
-                    name="variety"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.varietyPlaceholder' })} />
-                    )}
-                  />
-                </StandardField>
-
-                <StandardField
-                  label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
-                  helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
-                >
-                  <Controller
-                    name="block_id"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })} />
-                    )}
-                  />
-                </StandardField>
-
-                <StandardField
-                  label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}
-                  helpText={intl.formatMessage({ id: 'fieldDetails.growthStageHelp' })}
-                >
-                  <Controller
-                    name="growth_stage"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardSelect {...field} placeholder="Select growth stage...">
-                        <option value="dormant">{intl.formatMessage({ id: 'fieldDetails.growthStage.dormant' })}</option>
-                        <option value="budbreak">{intl.formatMessage({ id: 'fieldDetails.growthStage.budbreak' })}</option>
-                        <option value="bloom">{intl.formatMessage({ id: 'fieldDetails.growthStage.bloom' })}</option>
-                        <option value="fruit_set">{intl.formatMessage({ id: 'fieldDetails.growthStage.fruit_set' })}</option>
-                        <option value="vegetative">{intl.formatMessage({ id: 'fieldDetails.growthStage.vegetative' })}</option>
-                        <option value="maturation">{intl.formatMessage({ id: 'fieldDetails.growthStage.maturation' })}</option>
-                        <option value="harvest_ready">{intl.formatMessage({ id: 'fieldDetails.growthStage.harvest_ready' })}</option>
-                        <option value="post_harvest">{intl.formatMessage({ id: 'fieldDetails.growthStage.post_harvest' })}</option>
-                      </StandardSelect>
-                    )}
-                  />
-                </StandardField>
-              </SimpleGrid>
-            </SectionBox>
-
-            <SectionBox variant="default">
-              <SectionHeader
-                icon={FaSeedling}
-                iconColor="green.500"
-                title="Farmer's Field Notes & Consumer Transparency"
-                badge="Consumer Transparency"
-                badgeColorScheme="green"
-              />
-              <StandardField
-                label="Observations & Notes"
-                helpText="Share details about your soil management approach that help consumers understand your sustainable farming practices"
-              >
-                <StandardTextarea
-                  placeholder="Optional: Describe your soil management approach, goals for soil health, organic practices used, sustainability goals, etc. These details help consumers understand your farming methods."
-                  rows={4}
-                  {...register('observation')}
-                />
-              </StandardField>
-            </SectionBox>
 
             {/* Phase 2.3: Custom Fields Section */}
             <CustomFieldsForm

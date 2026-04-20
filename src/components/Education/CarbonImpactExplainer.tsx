@@ -20,7 +20,6 @@ import {
   FaChevronUp,
   FaGlobeAmericas,
   FaRecycle,
-  FaChartLine,
   FaMobileAlt
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
@@ -350,39 +349,6 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
 
             {/* EPA/USDA Credibility Badge (clickable for detailed modal) */}
             <USDACredibilityBadge />
-
-            {/* Why Transparency Matters */}
-            <Box
-              bg={useColorModeValue('blue.50', 'blue.900')}
-              p={4}
-              borderRadius="lg"
-              border="1px solid"
-              borderColor={useColorModeValue('blue.200', 'blue.700')}
-            >
-              <HStack mb={2}>
-                <Icon as={FaChartLine} color="blue.500" boxSize={5} />
-                <Text fontSize="md" fontWeight="bold" color="blue.600">
-                  {intl.formatMessage({ id: 'app.carbonExplainer.whyTransparencyTitle' })}
-                </Text>
-              </HStack>
-              <Text fontSize="sm" color="blue.700" mb={2}>
-                {intl.formatMessage({ id: 'app.carbonExplainer.whyTransparencyDesc' })}
-              </Text>
-              <VStack align="start" spacing={1} pl={4}>
-                <Text fontSize="sm" color="blue.700">
-                  {'\u2022'} {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint1' })}
-                </Text>
-                <Text fontSize="sm" color="blue.700">
-                  {'\u2022'} {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint2' })}
-                </Text>
-                <Text fontSize="sm" color="blue.700">
-                  {'\u2022'} {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint3' })}
-                </Text>
-                <Text fontSize="sm" color="blue.700">
-                  {'\u2022'} {intl.formatMessage({ id: 'app.carbonExplainer.whyPoint4' })}
-                </Text>
-              </VStack>
-            </Box>
 
             {/* Methodology Scope Disclaimer (FTC compliance) */}
             <Box p={3} bg={useColorModeValue('gray.100', 'gray.600')} borderRadius="md">

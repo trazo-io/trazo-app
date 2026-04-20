@@ -105,6 +105,43 @@ export const CERTIFICATION_VERIFY_URL = (
 ) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifications/${certificationId}/verify/`;
 
+// OSP URLs — Sprint 5A (7 CFR 205.201)
+export const OSP_URL = (
+  companyId: string,
+  farmId: string,
+  ospId?: string | number
+) =>
+  ospId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/`;
+
+export const OSP_SUBMIT_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/submit/`;
+
+export const OSP_ACTIVATE_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/activate/`;
+
+export const OSP_NEW_VERSION_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/new-version/`;
+
+export const OSP_ADD_APPROVED_INPUT_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/add-approved-input/`;
+
+export const OSP_REMOVE_APPROVED_INPUT_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/remove-approved-input/`;
+
+// NOP input verifier — reused by the OSP Approved Inputs typeahead. Resolves a
+// free-text product name to NationalListSubstance and/or OMRIProduct PKs.
+export const INPUT_VERIFY_URL = `${ROOT_URL}certifications/verify-input/`;
+
 // User URLs
 export const USER_URL = (userId: string) =>
   userId ? `${ROOT_URL}users/${userId}/` : `${ROOT_URL}users/`;

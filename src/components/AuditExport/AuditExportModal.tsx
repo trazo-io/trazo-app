@@ -19,7 +19,17 @@ import {
   useColorModeValue,
   useToast
 } from '@chakra-ui/react';
-import { FiDownload, FiFileText, FiGrid } from 'react-icons/fi';
+import {
+  FiDownload,
+  FiFileText,
+  FiGrid,
+  FiLayers,
+  FiCheckCircle,
+  FiShield,
+  FiRefreshCw,
+  FiHash,
+  FiDroplet
+} from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 
 import { StandardButton } from 'components/Design/StandardComponents';
@@ -35,13 +45,71 @@ interface AuditExportModalProps {
 type CertificationKey = 'all' | 'organic' | 'globalgap' | 'roc' | 'fsma204' | 'scs';
 type FormatKey = 'pdf' | 'csv';
 
-const CERTIFICATION_OPTIONS: Array<{ value: CertificationKey; labelKey: string }> = [
-  { value: 'all', labelKey: 'app.exportAllCertifications' },
-  { value: 'organic', labelKey: 'app.exportOrganic' },
-  { value: 'globalgap', labelKey: 'app.exportGlobalgap' },
-  { value: 'roc', labelKey: 'app.exportRoc' },
-  { value: 'fsma204', labelKey: 'app.exportFsma204' },
-  { value: 'scs', labelKey: 'app.exportScs' }
+interface CertOption {
+  value: CertificationKey;
+  labelKey: string;
+  subtitleKey: string;
+  icon: React.ElementType;
+}
+
+interface CertGroup {
+  titleKey: string;
+  options: CertOption[];
+}
+
+const COMBINED_OPTION: CertOption = {
+  value: 'all',
+  labelKey: 'app.exportAllCertifications',
+  subtitleKey: 'app.exportAllCertificationsSubtitle',
+  icon: FiLayers
+};
+
+const CERT_GROUPS: CertGroup[] = [
+  {
+    titleKey: 'app.exportGroupOrganic',
+    options: [
+      {
+        value: 'organic',
+        labelKey: 'app.exportOrganic',
+        subtitleKey: 'app.exportOrganicSubtitle',
+        icon: FiCheckCircle
+      },
+      {
+        value: 'roc',
+        labelKey: 'app.exportRoc',
+        subtitleKey: 'app.exportRocSubtitle',
+        icon: FiRefreshCw
+      }
+    ]
+  },
+  {
+    titleKey: 'app.exportGroupFoodSafety',
+    options: [
+      {
+        value: 'globalgap',
+        labelKey: 'app.exportGlobalgap',
+        subtitleKey: 'app.exportGlobalgapSubtitle',
+        icon: FiShield
+      },
+      {
+        value: 'fsma204',
+        labelKey: 'app.exportFsma204',
+        subtitleKey: 'app.exportFsma204Subtitle',
+        icon: FiHash
+      }
+    ]
+  },
+  {
+    titleKey: 'app.exportGroupSustainability',
+    options: [
+      {
+        value: 'scs',
+        labelKey: 'app.exportScs',
+        subtitleKey: 'app.exportScsSubtitle',
+        icon: FiDroplet
+      }
+    ]
+  }
 ];
 
 const FORMAT_OPTIONS: Array<{ value: FormatKey; labelKey: string; icon: React.ElementType }> = [
@@ -58,6 +126,61 @@ const CERT_INFO_KEYS: Record<CertificationKey, string> = {
   scs: 'app.exportInfoScs'
 };
 
+interface CertRadioCardProps {
+  option: CertOption;
+  isSelected: boolean;
+}
+
+const CertRadioCard: React.FC<CertRadioCardProps> = ({ option, isSelected }) => {
+  const intl = useIntl();
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const cardBorder = useColorModeValue('gray.200', 'gray.600');
+  const subtitleColor = useColorModeValue('gray.500', 'gray.400');
+  const titleColor = useColorModeValue('gray.800', 'gray.100');
+
+  return (
+    <Box
+      as="label"
+      cursor="pointer"
+      px={3}
+      py={3}
+      borderRadius="lg"
+      border="2px solid"
+      borderColor={isSelected ? 'green.400' : cardBorder}
+      bg={isSelected ? 'green.50' : cardBg}
+      transition="all 0.15s"
+      _hover={{ borderColor: isSelected ? 'green.500' : 'green.300' }}
+      minH="44px"
+      display="block"
+    >
+      <Radio value={option.value} colorScheme="green" size="md" w="full" alignItems="flex-start">
+        <HStack spacing={3} align="flex-start" ml={1}>
+          <Icon
+            as={option.icon}
+            boxSize={5}
+            mt="2px"
+            color={isSelected ? 'green.600' : 'gray.500'}
+            flexShrink={0}
+          />
+          <VStack align="flex-start" spacing={0} flex={1}>
+            <Text
+              fontSize="sm"
+              fontWeight={isSelected ? 'semibold' : 'medium'}
+              color={isSelected ? 'green.700' : titleColor}
+              lineHeight="1.3"
+            >
+              {intl.formatMessage({ id: option.labelKey })}
+            </Text>
+            <Text fontSize="xs" color={subtitleColor} lineHeight="1.4">
+              {intl.formatMessage({ id: option.subtitleKey })}
+            </Text>
+          </VStack>
+        </HStack>
+      </Radio>
+    </Box>
+  );
+};
+
 const AuditExportModal: React.FC<AuditExportModalProps> = ({
   isOpen,
   onClose,
@@ -71,12 +194,13 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
   const [format, setFormat] = useState<FormatKey>('pdf');
   const [isLoading, setIsLoading] = useState(false);
 
-  const sectionBg = useColorModeValue('gray.50', 'gray.700');
   const sectionBorder = useColorModeValue('gray.200', 'gray.600');
+  const sectionBg = useColorModeValue('gray.50', 'gray.700');
   const infoBg = useColorModeValue('blue.50', 'blue.900');
   const infoBorder = useColorModeValue('blue.100', 'blue.700');
   const infoText = useColorModeValue('blue.700', 'blue.200');
   const labelColor = useColorModeValue('gray.700', 'gray.200');
+  const groupLabelColor = useColorModeValue('gray.500', 'gray.400');
   const radioLabelColor = useColorModeValue('gray.800', 'gray.100');
 
   const handleDownload = async () => {
@@ -193,7 +317,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
 
         <ModalBody py={5}>
           <VStack spacing={5} align="stretch">
-            {/* Certification selector */}
+            {/* Certification selector — grouped, card-style */}
             <Box>
               <Text
                 fontSize="xs"
@@ -205,39 +329,43 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
               >
                 {intl.formatMessage({ id: 'app.exportCertificationType' })}
               </Text>
-              <Box
-                bg={sectionBg}
-                border="1px solid"
-                borderColor={sectionBorder}
-                borderRadius="xl"
-                p={3}
+              <RadioGroup
+                value={certification}
+                onChange={(val) => setCertification(val as CertificationKey)}
               >
-                <RadioGroup
-                  value={certification}
-                  onChange={(val) => setCertification(val as CertificationKey)}
-                >
-                  <Stack spacing={3}>
-                    {CERTIFICATION_OPTIONS.map((opt) => (
-                      <Radio
-                        key={opt.value}
-                        value={opt.value}
-                        colorScheme="green"
-                        size="md"
-                        minH="44px"
-                        alignItems="center"
+                <VStack spacing={4} align="stretch">
+                  {/* Combined report — stands alone on top */}
+                  <CertRadioCard
+                    option={COMBINED_OPTION}
+                    isSelected={certification === COMBINED_OPTION.value}
+                  />
+
+                  {/* Grouped cert options */}
+                  {CERT_GROUPS.map((group) => (
+                    <Box key={group.titleKey}>
+                      <Text
+                        fontSize="xs"
+                        fontWeight="semibold"
+                        textTransform="uppercase"
+                        color={groupLabelColor}
+                        mb={2}
+                        letterSpacing="0.06em"
                       >
-                        <Text
-                          fontSize={{ base: 'sm', md: 'sm' }}
-                          color={radioLabelColor}
-                          fontWeight={certification === opt.value ? 'semibold' : 'normal'}
-                        >
-                          {intl.formatMessage({ id: opt.labelKey })}
-                        </Text>
-                      </Radio>
-                    ))}
-                  </Stack>
-                </RadioGroup>
-              </Box>
+                        {intl.formatMessage({ id: group.titleKey })}
+                      </Text>
+                      <VStack spacing={2} align="stretch">
+                        {group.options.map((opt) => (
+                          <CertRadioCard
+                            key={opt.value}
+                            option={opt}
+                            isSelected={certification === opt.value}
+                          />
+                        ))}
+                      </VStack>
+                    </Box>
+                  ))}
+                </VStack>
+              </RadioGroup>
             </Box>
 
             <Divider />
@@ -254,10 +382,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
               >
                 {intl.formatMessage({ id: 'app.exportFormat' })}
               </Text>
-              <RadioGroup
-                value={format}
-                onChange={(val) => setFormat(val as FormatKey)}
-              >
+              <RadioGroup value={format} onChange={(val) => setFormat(val as FormatKey)}>
                 <Stack direction={{ base: 'column', smd: 'row' }} spacing={3}>
                   {FORMAT_OPTIONS.map((opt) => (
                     <Box
@@ -298,14 +423,8 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
               </RadioGroup>
             </Box>
 
-            {/* Info text */}
-            <Box
-              bg={infoBg}
-              border="1px solid"
-              borderColor={infoBorder}
-              borderRadius="lg"
-              p={3}
-            >
+            {/* Info text — describes what the selected cert export contains */}
+            <Box bg={infoBg} border="1px solid" borderColor={infoBorder} borderRadius="lg" p={3}>
               <Text fontSize="xs" color={infoText} lineHeight="1.6">
                 {intl.formatMessage({ id: CERT_INFO_KEYS[certification] })}
               </Text>

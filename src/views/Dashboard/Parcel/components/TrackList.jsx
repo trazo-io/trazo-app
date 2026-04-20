@@ -408,7 +408,7 @@ const TrackList = ({ amount }) => {
         </Box>
       </CardBody>
       {/* Modern Action Buttons - Single Add Event Dropdown */}
-      <Flex justify={{ base: 'stretch', smd: 'flex-end' }} gap={3} p={{ base: '16px', md: '20px' }}>
+      {!isLoading && !isFetching && <Flex justify={{ base: 'stretch', smd: 'flex-end' }} gap={3} p={{ base: '16px', md: '20px' }}>
         {!currentHistory?.product ? (
           <Button
             bg={bgButton}
@@ -599,13 +599,14 @@ const TrackList = ({ amount }) => {
             )}
           </Flex>
         )}
-      </Flex>
+      </Flex>}
 
       {/* Week 2 Task 2.1: Voice-to-Event System Integration */}
       <QuickAddEvent
         isOpen={isQuickAddOpen}
         onClose={onQuickAddClose}
         cropType={currentHistory?.product || 'citrus'}
+        productionMethod={currentHistory?.production_method || data?.production_method}
         onEventAdded={(eventData) => {
           console.log('New event added from parcel dashboard:', eventData);
           handleEventCreated();

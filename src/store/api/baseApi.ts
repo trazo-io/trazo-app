@@ -27,9 +27,6 @@ export const baseApi = createApi({
     'Invoice',
     'CarbonSummary',
     'CarbonRecommendations',
-    'IoTDevice',
-    'IoTData',
-    'AutomationRule',
     'PendingEvent',
     'Weather',
     'Education',
@@ -56,7 +53,9 @@ export const baseApi = createApi({
     'CarbonScopeBreakdown',
     'CarbonAnalytics',
     'VoiceConfig',
-    'Certification'
+    'Certification',
+    'ParcelCropHistory',
+    'OSP'
   ]
 });
 

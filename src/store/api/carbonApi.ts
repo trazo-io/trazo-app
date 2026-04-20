@@ -67,123 +67,6 @@ export interface CarbonEvent {
   photos?: string[];
 }
 
-// IoT-related interfaces
-export interface IoTDevice {
-  device_id: string;
-  equipment: string;
-  device_type: 'fuel_sensor' | 'weather_station' | 'soil_moisture' | 'equipment_monitor';
-  status: 'online' | 'offline' | 'maintenance' | 'error';
-  battery_level?: number;
-  signal_strength?: 'excellent' | 'strong' | 'weak' | 'poor';
-  data_points_today: number;
-  last_update: string;
-}
-
-export interface IoTDeviceDetails {
-  id: number;
-  device_id: string;
-  device_type:
-    | 'fuel_sensor'
-    | 'weather_station'
-    | 'soil_moisture'
-    | 'irrigation'
-    | 'equipment_monitor'
-    | 'gps_tracker';
-  name: string;
-  manufacturer: string;
-  model: string;
-  status: 'online' | 'offline' | 'maintenance' | 'error';
-  battery_level?: number;
-  location: {
-    lat?: number;
-    lng?: number;
-  };
-  installed_date: string;
-  last_seen?: string;
-  last_maintenance?: string;
-  configuration: Record<string, any>;
-  notes: string;
-  needs_maintenance: boolean;
-  total_data_points: number;
-  recent_data?: Array<{
-    timestamp: string;
-    data: Record<string, any>;
-    quality_score: number;
-    processed: boolean;
-  }>;
-}
-
-export interface IoTDeviceRegistration {
-  device_id: string;
-  device_type:
-    | 'fuel_sensor'
-    | 'weather_station'
-    | 'soil_moisture'
-    | 'irrigation'
-    | 'equipment_monitor'
-    | 'gps_tracker';
-  establishment_id: string;
-  name: string;
-  manufacturer?: string;
-  model?: string;
-  latitude?: number;
-  longitude?: number;
-  configuration?: Record<string, any>;
-  notes?: string;
-}
-
-export interface IoTDeviceType {
-  value: string;
-  label: string;
-}
-
-export interface IoTDeviceStatus {
-  devices: IoTDevice[];
-  summary: {
-    total_devices: number;
-    online_devices: number;
-    offline_devices: number;
-    low_battery_devices: number;
-  };
-}
-
-export interface AutomationRule {
-  id: number;
-  name: string;
-  device_type: string;
-  trigger_type: 'threshold' | 'pattern' | 'schedule' | 'weather' | 'combination';
-  trigger_config: Record<string, any>;
-  action_type:
-    | 'create_event'
-    | 'send_alert'
-    | 'update_status'
-    | 'trigger_webhook'
-    | 'generate_report';
-  action_config: Record<string, any>;
-  is_active: boolean;
-  last_triggered?: string;
-  trigger_count: number;
-  description: string;
-  created_at: string;
-}
-
-export interface AutomationRuleCreate {
-  name: string;
-  establishment_id: string;
-  device_type?: string;
-  trigger_type: 'threshold' | 'pattern' | 'schedule' | 'weather' | 'combination';
-  trigger_config: Record<string, any>;
-  action_type:
-    | 'create_event'
-    | 'send_alert'
-    | 'update_status'
-    | 'trigger_webhook'
-    | 'generate_report';
-  action_config: Record<string, any>;
-  description?: string;
-  is_active?: boolean;
-}
-
 export interface PendingEvent {
   id: string;
   data_point_id: number;
@@ -228,18 +111,6 @@ export interface EventApproval {
 export interface EventRejection {
   data_point_id: number;
   reason?: string;
-}
-
-export interface IoTDataSimulation {
-  establishment_id: string;
-  device_type: 'fuel_sensor' | 'weather_station' | 'soil_moisture' | 'equipment_monitor';
-}
-
-export interface IoTSimulationResponse {
-  success: boolean;
-  message: string;
-  data_points_created?: number;
-  carbon_entries_created?: number;
 }
 
 export interface CarbonCalculationResult {
@@ -1176,143 +1047,6 @@ export const carbonApi = baseApi.injectEndpoints({
       })
     }),
 
-    // IoT endpoints
-    getIoTDeviceStatus: builder.query<IoTDeviceStatus, string>({
-      query: (farmId) => ({
-        url: `carbon/iot-devices/device_status/?establishment_id=${farmId}`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['IoTDevice', 'IoTData']
-    }),
-
-    // IoT Device Management
-    listIoTDevices: builder.query<{ devices: IoTDeviceDetails[]; total_count: number }, string>({
-      query: (farmId) => ({
-        url: `carbon/iot-devices/?establishment_id=${farmId}`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['IoTDevice']
-    }),
-
-    getIoTDevice: builder.query<IoTDeviceDetails, number>({
-      query: (deviceId) => ({
-        url: `carbon/iot-devices/${deviceId}/`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['IoTDevice']
-    }),
-
-    registerIoTDevice: builder.mutation<
-      { id: number; device_id: string; message: string },
-      IoTDeviceRegistration
-    >({
-      query: (data) => ({
-        url: 'carbon/iot-devices/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['IoTDevice']
-    }),
-
-    updateIoTDevice: builder.mutation<
-      { id: number; device_id: string; message: string },
-      { id: number; data: Partial<IoTDeviceRegistration> }
-    >({
-      query: ({ id, data }) => ({
-        url: `carbon/iot-devices/${id}/`,
-        method: 'PUT',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['IoTDevice']
-    }),
-
-    deleteIoTDevice: builder.mutation<{ message: string }, number>({
-      query: (deviceId) => ({
-        url: `carbon/iot-devices/${deviceId}/`,
-        method: 'DELETE',
-        credentials: 'include'
-      }),
-      invalidatesTags: ['IoTDevice']
-    }),
-
-    getIoTDeviceTypes: builder.query<{ device_types: IoTDeviceType[] }, void>({
-      query: () => ({
-        url: 'carbon/iot-devices/device_types/',
-        method: 'GET',
-        credentials: 'include'
-      })
-    }),
-
-    // Automation Rules
-    listAutomationRules: builder.query<{ rules: AutomationRule[]; total_count: number }, string>({
-      query: (farmId) => ({
-        url: `carbon/automation-rules/?establishment_id=${farmId}`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['AutomationRule']
-    }),
-
-    createAutomationRule: builder.mutation<
-      { id: number; name: string; message: string },
-      AutomationRuleCreate
-    >({
-      query: (data) => ({
-        url: 'carbon/automation-rules/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['AutomationRule']
-    }),
-
-    // Pending Events and Approvals
-    getPendingEvents: builder.query<PendingEventsResponse, string>({
-      query: (farmId) => ({
-        url: `carbon/automation-rules/pending_events/?establishment_id=${farmId}`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['PendingEvent', 'IoTData']
-    }),
-
-    approveEvent: builder.mutation<
-      { carbon_entry_id: number; message: string; co2e_amount: number },
-      EventApproval
-    >({
-      query: (data) => ({
-        url: 'carbon/automation-rules/approve_event/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['PendingEvent', 'IoTData', 'CarbonSummary']
-    }),
-
-    rejectEvent: builder.mutation<{ message: string; reason: string }, EventRejection>({
-      query: (data) => ({
-        url: 'carbon/automation-rules/reject_event/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['PendingEvent', 'IoTData']
-    }),
-
-    simulateIoTData: builder.mutation<IoTSimulationResponse, IoTDataSimulation>({
-      query: (data) => ({
-        url: 'carbon/iot-devices/simulate_data/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['IoTDevice', 'IoTData', 'CarbonSummary']
-    }),
 
     // Weather API endpoints
     getCurrentWeatherConditions: builder.query<
@@ -1400,7 +1134,7 @@ export const carbonApi = baseApi.injectEndpoints({
         body: data,
         credentials: 'include'
       }),
-      invalidatesTags: ['Weather', 'IoTData', 'PendingEvent']
+      invalidatesTags: ['Weather', 'PendingEvent']
     }),
 
     // Phase 2 Optimization: Unified Complete Summary Endpoint
@@ -1455,10 +1189,16 @@ export const carbonApi = baseApi.injectEndpoints({
     }),
 
     // NEW: Get event templates by crop type
-    getEventTemplatesByCropType: builder.query<EventTemplatesResponse, { cropTypeId: number }>({
-      query: ({ cropTypeId }) => ({
+    getEventTemplatesByCropType: builder.query<
+      EventTemplatesResponse,
+      { cropTypeId: number; farmingApproach?: string }
+    >({
+      query: ({ cropTypeId, farmingApproach }) => ({
         url: `/carbon/event-templates/by_crop_type/`,
-        params: { crop_type_id: cropTypeId },
+        params: {
+          crop_type_id: cropTypeId,
+          ...(farmingApproach && { farming_approach: farmingApproach })
+        },
         credentials: 'include'
       }),
       providesTags: ['EventTemplate']
@@ -2186,19 +1926,6 @@ export const {
   useGetProductionTimelineQuery,
   useCreateOffsetMutation,
   useCalculateEventCarbonImpactMutation,
-  useGetIoTDeviceStatusQuery,
-  useSimulateIoTDataMutation,
-  useListIoTDevicesQuery,
-  useGetIoTDeviceQuery,
-  useRegisterIoTDeviceMutation,
-  useUpdateIoTDeviceMutation,
-  useDeleteIoTDeviceMutation,
-  useGetIoTDeviceTypesQuery,
-  useListAutomationRulesQuery,
-  useCreateAutomationRuleMutation,
-  useGetPendingEventsQuery,
-  useApproveEventMutation,
-  useRejectEventMutation,
   // Weather API hooks
   useGetCurrentWeatherConditionsQuery,
   useGetWeatherAlertsQuery,

@@ -9,6 +9,7 @@ import './welcomeTourInvited';
 import './welcomeTourViewer';
 
 // Feature discovery tours
+import './farmProfileTour';
 import './parcelTour';
 import './productionTour';
 import './commercialTour';

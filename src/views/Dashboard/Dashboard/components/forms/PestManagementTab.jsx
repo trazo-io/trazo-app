@@ -40,6 +40,13 @@ import {
   FaLeaf
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
+// Event Field Registry (Phase 5G — form integration)
+import { useFormFields } from 'src/hooks/useFormFields';
+import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
+import { RegistryFormSections } from 'src/components/Forms/RegistryFormSections';
+
+// Forms keep their rich hand-crafted rendering. Registry drives display surfaces only.
+const USE_FIELD_REGISTRY = false;
 
 // Sprint 3 Epic 3.1: Fuel types with EPA-verified emission factors (aligned with Production/Soil forms)
 // UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
@@ -95,6 +102,10 @@ const pestSchema = object({
   // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
   beneficial_insects_used: string().optional(), // Whether beneficial insects are being used
   chemical_free_period_days: string().optional(), // Days since last chemical application
+  // NOP Compliance: Pest ID verification + Threshold rationale (7 CFR 205.206)
+  threshold_rationale: string().optional(), // Why action threshold was/wasn't met
+  identified_by: string().optional(), // Who identified the pest species
+  identification_method: string().optional(), // How the pest was identified
   // Phase 2: Universal CommonEvent fields (variety, block_id, growth_stage)
   variety: string().optional(),
   block_id: string().optional(),
@@ -128,7 +139,10 @@ const PestManagementTab = forwardRef(
         type: initialValues.type || 'SC',
         name: initialValues.name || '',
         // Sprint 5: Aggregate Pest Scouting Support
-        is_summary: initialValues.is_summary === 'true' || initialValues.is_summary === true ? 'true' : 'false',
+        is_summary:
+          initialValues.is_summary === 'true' || initialValues.is_summary === true
+            ? 'true'
+            : 'false',
         date_start: initialValues.date_start || '',
         date_end: initialValues.date_end || '',
         event_count: initialValues.event_count?.toString() || '',
@@ -165,6 +179,10 @@ const PestManagementTab = forwardRef(
         // Sprint 3 Epic 3.2: Consumer Trust Fields
         beneficial_insects_used: initialValues.beneficial_insects_used || '',
         chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || '',
+        // NOP Compliance: Pest ID verification + Threshold rationale (7 CFR 205.206)
+        threshold_rationale: initialValues.threshold_rationale || '',
+        identified_by: initialValues.identified_by || '',
+        identification_method: initialValues.identification_method || '',
         // Phase 2: Universal CommonEvent fields
         variety: initialValues.variety || '',
         block_id: initialValues.block_id || '',
@@ -189,12 +207,18 @@ const PestManagementTab = forwardRef(
         submitForm: () =>
           new Promise((resolve, reject) => {
             methods.handleSubmit(
-              (data) => { submitHandlerRef.current(data); resolve(); },
-              (errors) => { reject(errors); }
+              (data) => {
+                submitHandlerRef.current(data);
+                resolve();
+              },
+              (errors) => {
+                reject(errors);
+              }
             )();
           })
       }),
-      [onDataChange, methods]
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [onDataChange]
     );
 
     // Custom fields state for Phase 2.3
@@ -207,7 +231,10 @@ const PestManagementTab = forwardRef(
           type: initialValues.type || 'SC',
           name: initialValues.name || '',
           // Sprint 5: Aggregate Pest Scouting Support
-          is_summary: initialValues.is_summary === 'true' || initialValues.is_summary === true ? 'true' : 'false',
+          is_summary:
+            initialValues.is_summary === 'true' || initialValues.is_summary === true
+              ? 'true'
+              : 'false',
           date_start: initialValues.date_start || '',
           date_end: initialValues.date_end || '',
           event_count: initialValues.event_count?.toString() || '',
@@ -244,6 +271,10 @@ const PestManagementTab = forwardRef(
           // Sprint 3 Epic 3.2: Consumer Trust Fields
           beneficial_insects_used: initialValues.beneficial_insects_used || '',
           chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || '',
+          // NOP Compliance: Pest ID verification + Threshold rationale (7 CFR 205.206)
+          threshold_rationale: initialValues.threshold_rationale || '',
+          identified_by: initialValues.identified_by || '',
+          identification_method: initialValues.identification_method || '',
           // Phase 2: Universal CommonEvent fields
           variety: initialValues.variety || '',
           block_id: initialValues.block_id || '',
@@ -256,7 +287,8 @@ const PestManagementTab = forwardRef(
     // Sync custom fields with form
     useEffect(() => {
       methods.setValue('custom_fields', customFields);
-    }, [customFields, methods]);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [customFields]);
 
     const {
       watch,
@@ -296,6 +328,9 @@ const PestManagementTab = forwardRef(
       'imp_strategy',
       'beneficial_insects_used',
       'chemical_free_period_days',
+      'threshold_rationale',
+      'identified_by',
+      'identification_method',
       'date_start',
       'date_end',
       'custom_fields'
@@ -346,6 +381,10 @@ const PestManagementTab = forwardRef(
         // REMOVED: observation → description mapping now handled universally in cleanEventData
         trap_count: data.trap_count ? parseInt(data.trap_count) : null,
         damage_percentage: data.damage_percentage ? parseFloat(data.damage_percentage) : null,
+        // NOP Compliance: Model fields — empty string → null for backend CharField/TextField
+        threshold_rationale: data.threshold_rationale || null,
+        identified_by: data.identified_by || null,
+        identification_method: data.identification_method || null,
         // Sprint 5: Aggregate Pest Scouting Support
         extra_data: {
           // Existing extra_data fields (if any)
@@ -354,7 +393,9 @@ const PestManagementTab = forwardRef(
           ...(data.name && { name: data.name }),
           // Agricultural context fields (no model columns - persist in extra_data)
           ...(data.crop_growth_stage && { crop_growth_stage: data.crop_growth_stage }),
-          ...(data.economic_threshold_met && { economic_threshold_met: data.economic_threshold_met }),
+          ...(data.economic_threshold_met && {
+            economic_threshold_met: data.economic_threshold_met
+          }),
           ...(data.action_recommended && { action_recommended: data.action_recommended }),
           // Sprint 5: Aggregate Pest Scouting Support
           ...(isSummaryEvent && {
@@ -396,7 +437,7 @@ const PestManagementTab = forwardRef(
 
     return (
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <VStack spacing={6} align="stretch">
             {/* Transparency Focus Alert */}
             <StandardAlert status="info" title="Pest Management & Transparency Documentation">
@@ -413,747 +454,882 @@ const PestManagementTab = forwardRef(
               </Text>
             </StandardAlert>
 
-            {/* Basic Event Information */}
-            <SectionBox variant="default">
-              <SectionHeader
-                icon={FaBug}
-                iconColor="green.600"
-                title="Pest Management Event Information"
-                badge="Transparency Tracking"
-                badgeColorScheme="green"
+            {USE_FIELD_REGISTRY ? (
+              <RegistryFormSections
+                eventType="pest_management"
+                subtype={watch('type')}
+                control={methods.control}
+                eventData={methods.getValues()}
+                errors={errors}
               />
-
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                {/* FIRST: Event Type (standardized order - matches other forms) */}
-                <StandardField
-                  label={
-                    intl.formatMessage({ id: 'app.pestManagementEventType' }) ||
-                    'Pest Management Event Type'
-                  }
-                  required
-                  error={errors.type?.message}>
-                  <StandardSelect {...methods.register('type')}>
-                    <option value="SC">
-                      {intl.formatMessage({ id: 'app.scouting' }) || 'Scouting'}
-                    </option>
-                    <option value="BR">
-                      {intl.formatMessage({ id: 'app.beneficialRelease' }) || 'Beneficial Release'}
-                    </option>
-                    <option value="TM">
-                      {intl.formatMessage({ id: 'app.trapMonitoring' }) || 'Trap Monitoring'}
-                    </option>
-                    <option value="PI">
-                      {intl.formatMessage({ id: 'app.pestIdentification' }) ||
-                        'Pest Identification'}
-                    </option>
-                    <option value="TA">
-                      {intl.formatMessage({ id: 'app.thresholdAssessment' }) ||
-                        'Threshold Assessment'}
-                    </option>
-                    <option value="IP">
-                      {intl.formatMessage({ id: 'app.impImplementation' }) || 'IPM Implementation'}
-                    </option>
-                  </StandardSelect>
-                </StandardField>
-
-                {/* SECOND: Event Name (standardized order - matches other forms) */}
-                <StandardField
-                  label={intl.formatMessage({ id: 'app.eventName' }) || 'Event Name'}
-                  required
-                  error={errors.name?.message}>
-                  <StandardInput
-                    {...methods.register('name')}
-                    placeholder="e.g., Pest Scouting, Beneficial Release"
+            ) : (
+              <>
+                {/* Basic Event Information */}
+                <SectionBox variant="default">
+                  <SectionHeader
+                    icon={FaBug}
+                    iconColor="green.600"
+                    title="Pest Management Event Information"
+                    badge="Transparency Tracking"
+                    badgeColorScheme="green"
                   />
-                </StandardField>
-              </SimpleGrid>
-            </SectionBox>
 
-            {/* Sprint 5: Aggregate Pest Scouting Support - Summary Mode Toggle */}
-            {/* Standardized: blue color scheme for toggle (matches Production/Chemical summary mode pattern) */}
-            {pestType === 'SC' && (
-              <Box
-                p={4}
-                bg={isSummaryMode ? 'blue.50' : 'gray.50'}
-                borderRadius="md"
-                border="1px solid"
-                borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
-                mb={4}>
-                <HStack justify="space-between" align="center">
-                  <VStack align="start" spacing={0}>
-                    <HStack>
-                      <Text fontWeight="semibold" fontSize="sm">
-                        📊 Scouting Summary Mode
-                      </Text>
-                      {isSummaryMode && (
-                        <Badge colorScheme="blue" size="sm">
-                          Active
-                        </Badge>
-                      )}
-                    </HStack>
-                    <Text fontSize="xs" color="gray.600">
-                      {isSummaryMode
-                        ? 'Log multiple scouting trips as one summary (e.g., "24 weekly scouting trips")'
-                        : 'Enable to log multiple scouting trips at once'}
-                    </Text>
-                  </VStack>
-                  <Controller
-                    name="is_summary"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <Switch
-                        colorScheme="blue"
-                        size="lg"
-                        isChecked={field.value === 'true'}
-                        onChange={(e) =>
-                          field.onChange(e.target.checked ? 'true' : 'false')
-                        }
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    {/* FIRST: Event Type (standardized order - matches other forms) */}
+                    <StandardField
+                      label={
+                        intl.formatMessage({ id: 'app.pestManagementEventType' }) ||
+                        'Pest Management Event Type'
+                      }
+                      required
+                      error={errors.type?.message}
+                    >
+                      <StandardSelect {...methods.register('type')}>
+                        <option value="SC">
+                          {intl.formatMessage({ id: 'app.scouting' }) || 'Scouting'}
+                        </option>
+                        <option value="BR">
+                          {intl.formatMessage({ id: 'app.beneficialRelease' }) ||
+                            'Beneficial Release'}
+                        </option>
+                        <option value="TM">
+                          {intl.formatMessage({ id: 'app.trapMonitoring' }) || 'Trap Monitoring'}
+                        </option>
+                        <option value="PI">
+                          {intl.formatMessage({ id: 'app.pestIdentification' }) ||
+                            'Pest Identification'}
+                        </option>
+                        <option value="TA">
+                          {intl.formatMessage({ id: 'app.thresholdAssessment' }) ||
+                            'Threshold Assessment'}
+                        </option>
+                        <option value="IP">
+                          {intl.formatMessage({ id: 'app.impImplementation' }) ||
+                            'IPM Implementation'}
+                        </option>
+                      </StandardSelect>
+                    </StandardField>
+
+                    {/* SECOND: Event Name (standardized order - matches other forms) */}
+                    <StandardField
+                      label={intl.formatMessage({ id: 'app.eventName' }) || 'Event Name'}
+                      required
+                      error={errors.name?.message}
+                    >
+                      <StandardInput
+                        {...methods.register('name')}
+                        placeholder="e.g., Pest Scouting, Beneficial Release"
                       />
-                    )}
-                  />
-                </HStack>
+                    </StandardField>
+                  </SimpleGrid>
+                </SectionBox>
 
-                {/* Benefits of Summary Mode - Standardized: blue color scheme (matches Chemical pattern) */}
-                {isSummaryMode && (
-                  <Box mt={3} p={2} bg="blue.100" borderRadius="md">
-                    <Text fontSize="xs" color="blue.700">
-                      <Icon as={FaCheckCircle} mr={1} />
-                      <strong>93% time savings:</strong> Log multiple scouting trips with one entry.
-                    </Text>
-                    <Text fontSize="xs" color="blue.600" mt={1}>
-                      <Icon as={FaLeaf} mr={1} />
-                      Zero Carbon Impact - Scouting is observational
-                    </Text>
-                  </Box>
-                )}
-              </Box>
-            )}
-
-            {/* Sprint 5: Aggregate Pest Scouting Fields (shown when summary mode is active for SC) */}
-            {isSummaryMode && pestType === 'SC' && (
-              <Box
-                p={4}
-                bg="green.50"
-                borderRadius="md"
-                border="1px solid"
-                borderColor="green.200"
-                mb={4}>
-                <Text fontWeight="semibold" color="green.700" mb={4}>
-                  <Icon as={FaCalendarAlt} mr={2} />
-                  Aggregate Scouting Period
-                </Text>
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
-                  <StandardField
-                    label="Period Start Date"
-                    helpText="When did this scouting period begin?"
-                    required>
-                    <StandardInput type="date" {...methods.register('date_start')} />
-                  </StandardField>
-
-                  <StandardField
-                    label="Period End Date"
-                    helpText="When did this scouting period end?"
-                    required>
-                    <StandardInput type="date" {...methods.register('date_end')} />
-                  </StandardField>
-                </SimpleGrid>
-
-                <StandardField
-                  label="Number of Scouting Trips"
-                  helpText="Total scouting trips during this period"
-                  required>
-                  <Controller
-                    name="event_count"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardInput {...field} type="number" placeholder="e.g., 24" min="1" />
-                    )}
-                  />
-                </StandardField>
-
-                <Divider my={4} />
-
-                <Text fontWeight="semibold" color="green.700" mb={3}>
-                  <Icon as={FaRulerHorizontal} mr={2} />
-                  Aggregate Area & Distance
-                </Text>
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
-                  <StandardField
-                    label="Total Field Area Covered"
-                    helpText="Combined area scouted across all trips">
-                    <HStack spacing={2}>
+                {/* Sprint 5: Aggregate Pest Scouting Support - Summary Mode Toggle */}
+                {/* Standardized: blue color scheme for toggle (matches Production/Chemical summary mode pattern) */}
+                {pestType === 'SC' && (
+                  <Box
+                    p={4}
+                    bg={isSummaryMode ? 'blue.50' : 'gray.50'}
+                    borderRadius="md"
+                    border="1px solid"
+                    borderColor={isSummaryMode ? 'blue.200' : 'gray.200'}
+                    mb={4}
+                  >
+                    <HStack justify="space-between" align="center">
+                      <VStack align="start" spacing={0}>
+                        <HStack>
+                          <Text fontWeight="semibold" fontSize="sm">
+                            📊 Scouting Summary Mode
+                          </Text>
+                          {isSummaryMode && (
+                            <Badge colorScheme="blue" size="sm">
+                              Active
+                            </Badge>
+                          )}
+                        </HStack>
+                        <Text fontSize="xs" color="gray.600">
+                          {isSummaryMode
+                            ? 'Log multiple scouting trips as one summary (e.g., "24 weekly scouting trips")'
+                            : 'Enable to log multiple scouting trips at once'}
+                        </Text>
+                      </VStack>
                       <Controller
-                        name="area_covered_total"
+                        name="is_summary"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardInput
-                            {...field}
-                            flex={2}
-                            type="number"
-                            step="0.01"
-                            placeholder="e.g., 120"
+                          <Switch
+                            colorScheme="blue"
+                            size="lg"
+                            isChecked={field.value === 'true'}
+                            onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
                           />
                         )}
                       />
+                    </HStack>
+
+                    {/* Benefits of Summary Mode - Standardized: blue color scheme (matches Chemical pattern) */}
+                    {isSummaryMode && (
+                      <Box mt={3} p={2} bg="blue.100" borderRadius="md">
+                        <Text fontSize="xs" color="blue.700">
+                          <Icon as={FaCheckCircle} mr={1} />
+                          <strong>93% time savings:</strong> Log multiple scouting trips with one
+                          entry.
+                        </Text>
+                        <Text fontSize="xs" color="blue.600" mt={1}>
+                          <Icon as={FaLeaf} mr={1} />
+                          Zero Carbon Impact - Scouting is observational
+                        </Text>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {/* Sprint 5: Aggregate Pest Scouting Fields (shown when summary mode is active for SC) */}
+                {isSummaryMode && pestType === 'SC' && (
+                  <Box
+                    p={4}
+                    bg="green.50"
+                    borderRadius="md"
+                    border="1px solid"
+                    borderColor="green.200"
+                    mb={4}
+                  >
+                    <Text fontWeight="semibold" color="green.700" mb={4}>
+                      <Icon as={FaCalendarAlt} mr={2} />
+                      Aggregate Scouting Period
+                    </Text>
+
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
+                      <StandardField
+                        label="Period Start Date"
+                        helpText="When did this scouting period begin?"
+                        required
+                      >
+                        <StandardInput type="date" {...methods.register('date_start')} />
+                      </StandardField>
+
+                      <StandardField
+                        label="Period End Date"
+                        helpText="When did this scouting period end?"
+                        required
+                      >
+                        <StandardInput type="date" {...methods.register('date_end')} />
+                      </StandardField>
+                    </SimpleGrid>
+
+                    <StandardField
+                      label="Number of Scouting Trips"
+                      helpText="Total scouting trips during this period"
+                      required
+                    >
                       <Controller
-                        name="area_unit"
+                        name="event_count"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardSelect {...field} flex={1}>
-                            <option value="ha">Hectares</option>
-                            <option value="acres">Acres</option>
-                          </StandardSelect>
+                          <StandardInput {...field} type="number" placeholder="e.g., 24" min="1" />
                         )}
                       />
-                    </HStack>
-                  </StandardField>
+                    </StandardField>
 
-                  {/* Standardized: Using fuel_consumed_total like other forms */}
-                  <StandardField
-                    label="Total Fuel Consumed"
-                    helpText="Combined fuel consumed across all trips">
-                    <HStack spacing={2}>
+                    <Divider my={4} />
+
+                    <Text fontWeight="semibold" color="green.700" mb={3}>
+                      <Icon as={FaRulerHorizontal} mr={2} />
+                      Aggregate Area & Distance
+                    </Text>
+
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
+                      <StandardField
+                        label="Total Field Area Covered"
+                        helpText="Combined area scouted across all trips"
+                      >
+                        <HStack spacing={2}>
+                          <Controller
+                            name="area_covered_total"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardInput
+                                {...field}
+                                flex={2}
+                                type="number"
+                                step="0.01"
+                                placeholder="e.g., 120"
+                              />
+                            )}
+                          />
+                          <Controller
+                            name="area_unit"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardSelect {...field} flex={1}>
+                                <option value="ha">Hectares</option>
+                                <option value="acres">Acres</option>
+                              </StandardSelect>
+                            )}
+                          />
+                        </HStack>
+                      </StandardField>
+
+                      {/* Standardized: Using fuel_consumed_total like other forms */}
+                      <StandardField
+                        label="Total Fuel Consumed"
+                        helpText="Combined fuel consumed across all trips"
+                      >
+                        <HStack spacing={2}>
+                          <Controller
+                            name="fuel_consumed_total"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardInput
+                                {...field}
+                                flex={2}
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                placeholder="e.g., 5.5"
+                              />
+                            )}
+                          />
+                          <Controller
+                            name="fuel_unit"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardSelect {...field} flex={1}>
+                                <option value="L">Liters</option>
+                                <option value="gal">Gallons</option>
+                                <option value="kg">Kilograms</option>
+                                <option value="kWh">Kilowatt-hours</option>
+                              </StandardSelect>
+                            )}
+                          />
+                        </HStack>
+                      </StandardField>
+                    </SimpleGrid>
+
+                    <Divider my={4} />
+
+                    <Text fontWeight="semibold" color="green.700" mb={3}>
+                      <Icon as={FaBug} mr={2} />
+                      Pest Observations Summary
+                    </Text>
+
+                    <StandardField
+                      label="Pest Species Observed"
+                      helpText="List all pest species observed during the scouting period (comma-separated)"
+                    >
                       <Controller
-                        name="fuel_consumed_total"
+                        name="pest_species_observed"
                         control={methods.control}
                         render={({ field }) => (
                           <StandardInput
                             {...field}
+                            placeholder="e.g., aphids, whitefly, thrips, spider mites"
+                          />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label="Average Pest Pressure Level"
+                      helpText="Overall pest pressure during the scouting period"
+                    >
+                      <Controller
+                        name="average_pest_pressure"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field}>
+                            <option value="">Select pressure level</option>
+                            <option value="none">None - No pests observed</option>
+                            <option value="low">Low - Below treatment threshold</option>
+                            <option value="moderate">Moderate - At treatment threshold</option>
+                            <option value="high">High - Above treatment threshold</option>
+                            <option value="severe">Severe - Immediate action required</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+
+                    {/* Removed: observations_summary textarea - redundant with "Farmer's Field Notes" section
+                   which is now always visible (matching ChemicalTab pattern where aggregate sections
+                   only contain quantitative fields). The observation field maps to description and
+                   is auto-copied to observations_summary in onSubmit for ConsumerEventCard display. */}
+
+                    {/* Zero Carbon Note */}
+                    <Box
+                      mt={4}
+                      p={3}
+                      bg="teal.50"
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor="teal.200"
+                    >
+                      <HStack spacing={2} mb={1}>
+                        <Icon as={FaLeaf} color="teal.500" fontSize="sm" />
+                        <Text fontSize="sm" fontWeight="semibold" color="teal.700">
+                          Zero Carbon Impact
+                        </Text>
+                      </HStack>
+                      <Text fontSize="xs" color="teal.600">
+                        Pest scouting is observational and does not produce direct emissions.
+                        <br />
+                        <strong>Transparency Score Bonus:</strong> Comprehensive scouting
+                        documentation rewards up to +30 points for IPM best practices.
+                        <br />
+                        <strong>Source: FAO Integrated Pest Management Guidelines</strong>
+                      </Text>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Agricultural Context Section - Critical for Carbon Calculations */}
+                {/* Sprint 5: Hide individual fields when in Summary Mode for Scouting - aggregate fields replace them */}
+                {!(isSummaryMode && pestType === 'SC') && (
+                  <SectionBox variant="highlighted" borderColor="green.200">
+                    <SectionHeader
+                      icon={FaRulerHorizontal}
+                      iconColor="green.600"
+                      title="Field Area & Context"
+                      badge="Carbon Calculation Required"
+                      badgeColorScheme="green"
+                    />
+
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      {/* Sprint 2 Epic 2.2: Flexible units - user can select hectares or acres */}
+                      <StandardField
+                        label="Area Covered"
+                        required
+                        helpText="Area needed for carbon calculation (select your preferred unit)"
+                      >
+                        <HStack spacing={2}>
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="2.5"
+                            {...methods.register('area_covered')}
+                          />
+                          <StandardSelect flex={1} {...methods.register('area_unit')}>
+                            <option value="ha">Hectares</option>
+                            <option value="acres">Acres</option>
+                          </StandardSelect>
+                        </HStack>
+                      </StandardField>
+                    </SimpleGrid>
+                  </SectionBox>
+                )}
+
+                {/* Sprint 3 Epic 3.1: Fuel & Equipment Operations Section (aligned with Production/Soil forms) */}
+                {!(isSummaryMode && pestType === 'SC') && (
+                  <SectionBox variant="highlighted">
+                    <SectionHeader
+                      icon={FaSeedling}
+                      iconColor="green.600"
+                      title="Fuel Consumption & Equipment Data"
+                      badge="Enhanced Carbon Accuracy"
+                      badgeColorScheme="green"
+                      description="Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. These details help consumers understand the real operational impact of your production operations."
+                    />
+
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      {/* Fuel Type Selector - for accurate EPA emission factor calculation */}
+                      <StandardField
+                        label="Fuel Type"
+                        helpText="Select a fuel type only if powered equipment was used. Leave blank for hand/manual operations."
+                      >
+                        <StandardSelect
+                          placeholder="Select fuel type..."
+                          {...methods.register('fuel_type')}
+                        >
+                          {FUEL_TYPES.map((type) => (
+                            <option key={type.value} value={type.value}>
+                              {type.label} ({type.factor})
+                            </option>
+                          ))}
+                        </StandardSelect>
+                      </StandardField>
+
+                      {/* Dynamic Fuel Consumed label based on fuel type */}
+                      <StandardField
+                        label={
+                          watch('fuel_type') === 'electric'
+                            ? 'Energy Amount (kWh)'
+                            : 'Fuel Consumed'
+                        }
+                        helpText={
+                          watch('fuel_type') === 'electric'
+                            ? 'Energy consumption for carbon emission calculation'
+                            : 'Fuel consumption for carbon emission calculation'
+                        }
+                      >
+                        <HStack spacing={2}>
+                          <StandardInput
                             flex={2}
                             type="number"
                             step="0.1"
                             min="0"
-                            placeholder="e.g., 5.5"
+                            placeholder={
+                              watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : 'e.g., 15.5'
+                            }
+                            {...methods.register('fuel_consumed')}
                           />
-                        )}
-                      />
-                      <Controller
-                        name="fuel_unit"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardSelect {...field} flex={1}>
+                          <StandardSelect flex={1} {...methods.register('fuel_unit')}>
                             <option value="L">Liters</option>
                             <option value="gal">Gallons</option>
                             <option value="kg">Kilograms</option>
                             <option value="kWh">Kilowatt-hours</option>
                           </StandardSelect>
-                        )}
-                      />
-                    </HStack>
-                  </StandardField>
-                </SimpleGrid>
+                        </HStack>
+                      </StandardField>
 
-                <Divider my={4} />
+                      {/* Equipment Operating Hours */}
+                      <StandardField
+                        label="Equipment Operating Hours"
+                        helpText="Used for calculating fuel efficiency and carbon per hour"
+                      >
+                        <StandardInput
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          placeholder="e.g., 3.5"
+                          {...methods.register('equipment_hours')}
+                        />
+                      </StandardField>
 
-                <Text fontWeight="semibold" color="green.700" mb={3}>
-                  <Icon as={FaBug} mr={2} />
-                  Pest Observations Summary
-                </Text>
+                      {/* Production Efficiency */}
+                      <StandardField
+                        label="Production Efficiency"
+                        helpText="Equipment efficiency rating for carbon scoring"
+                      >
+                        <StandardSelect {...methods.register('production_efficiency')}>
+                          <option value="">Select efficiency level</option>
+                          <option value="high">High Efficiency</option>
+                          <option value="normal">Normal Efficiency</option>
+                          <option value="low">Low Efficiency</option>
+                        </StandardSelect>
+                      </StandardField>
+                    </SimpleGrid>
+                  </SectionBox>
+                )}
 
-                <StandardField
-                  label="Pest Species Observed"
-                  helpText="List all pest species observed during the scouting period (comma-separated)">
-                  <Controller
-                    name="pest_species_observed"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardInput
-                        {...field}
-                        placeholder="e.g., aphids, whitefly, thrips, spider mites"
-                      />
-                    )}
+                {/* Agricultural Decision Context */}
+                <SectionBox variant="default">
+                  <SectionHeader
+                    icon={FaCloudSun}
+                    iconColor="green.600"
+                    title="Agricultural Context & Conditions"
+                    badge="IPM Decision Support"
+                    badgeColorScheme="green"
                   />
-                </StandardField>
 
-                <StandardField
-                  label="Average Pest Pressure Level"
-                  helpText="Overall pest pressure during the scouting period">
-                  <Controller
-                    name="average_pest_pressure"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardSelect {...field}>
-                        <option value="">Select pressure level</option>
-                        <option value="none">None - No pests observed</option>
-                        <option value="low">Low - Below treatment threshold</option>
-                        <option value="moderate">Moderate - At treatment threshold</option>
-                        <option value="high">High - Above treatment threshold</option>
-                        <option value="severe">Severe - Immediate action required</option>
-                      </StandardSelect>
-                    )}
-                  />
-                </StandardField>
-
-                {/* Removed: observations_summary textarea - redundant with "Farmer's Field Notes" section
-                   which is now always visible (matching ChemicalTab pattern where aggregate sections
-                   only contain quantitative fields). The observation field maps to description and
-                   is auto-copied to observations_summary in onSubmit for ConsumerEventCard display. */}
-
-                {/* Zero Carbon Note */}
-                <Box
-                  mt={4}
-                  p={3}
-                  bg="teal.50"
-                  borderRadius="md"
-                  border="1px solid"
-                  borderColor="teal.200">
-                  <HStack spacing={2} mb={1}>
-                    <Icon as={FaLeaf} color="teal.500" fontSize="sm" />
-                    <Text fontSize="sm" fontWeight="semibold" color="teal.700">
-                      Zero Carbon Impact
-                    </Text>
-                  </HStack>
-                  <Text fontSize="xs" color="teal.600">
-                    Pest scouting is observational and does not produce direct emissions.
-                    <br />
-                    <strong>Transparency Score Bonus:</strong> Comprehensive scouting documentation
-                    rewards up to +30 points for IPM best practices.
-                    <br />
-                    <strong>Source: FAO Integrated Pest Management Guidelines</strong>
-                  </Text>
-                </Box>
-              </Box>
-            )}
-
-            {/* Agricultural Context Section - Critical for Carbon Calculations */}
-            {/* Sprint 5: Hide individual fields when in Summary Mode for Scouting - aggregate fields replace them */}
-            {!(isSummaryMode && pestType === 'SC') && (
-              <SectionBox variant="highlighted" borderColor="green.200">
-                <SectionHeader
-                  icon={FaRulerHorizontal}
-                  iconColor="green.600"
-                  title="Field Area & Context"
-                  badge="Carbon Calculation Required"
-                  badgeColorScheme="green"
-                />
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  {/* Sprint 2 Epic 2.2: Flexible units - user can select hectares or acres */}
-                  <StandardField
-                    label="Area Covered"
-                    required
-                    helpText="Area needed for carbon calculation (select your preferred unit)">
-                    <HStack spacing={2}>
-                      <StandardInput
-                        flex={2}
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="2.5"
-                        {...methods.register('area_covered')}
-                      />
-                      <StandardSelect flex={1} {...methods.register('area_unit')}>
-                        <option value="ha">Hectares</option>
-                        <option value="acres">Acres</option>
-                      </StandardSelect>
-                    </HStack>
-                  </StandardField>
-                </SimpleGrid>
-              </SectionBox>
-            )}
-
-            {/* Sprint 3 Epic 3.1: Fuel & Equipment Operations Section (aligned with Production/Soil forms) */}
-            {!(isSummaryMode && pestType === 'SC') && (
-              <SectionBox variant="highlighted">
-                <SectionHeader
-                  icon={FaSeedling}
-                  iconColor="green.600"
-                  title="Fuel Consumption & Equipment Data"
-                  badge="Enhanced Carbon Accuracy"
-                  badgeColorScheme="green"
-                  description="Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. These details help consumers understand the real operational impact of your production operations."
-                />
-
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                  {/* Fuel Type Selector - for accurate EPA emission factor calculation */}
-                  <StandardField
-                    label="Fuel Type"
-                    helpText="Select fuel type for accurate EPA emission factor calculation">
-                    <StandardSelect
-                      placeholder="Select fuel type..."
-                      {...methods.register('fuel_type')}>
-                      {FUEL_TYPES.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label} ({type.factor})
-                        </option>
-                      ))}
-                    </StandardSelect>
-                  </StandardField>
-
-                  {/* Dynamic Fuel Consumed label based on fuel type */}
-                  <StandardField
-                    label={
-                      watch('fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'
-                    }
-                    helpText={
-                      watch('fuel_type') === 'electric'
-                        ? 'Energy consumption for carbon emission calculation'
-                        : 'Fuel consumption for carbon emission calculation'
-                    }>
-                    <HStack spacing={2}>
-                      <StandardInput
-                        flex={2}
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        placeholder={
-                          watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : 'e.g., 15.5'
-                        }
-                        {...methods.register('fuel_consumed')}
-                      />
-                      <StandardSelect flex={1} {...methods.register('fuel_unit')}>
-                        <option value="L">Liters</option>
-                        <option value="gal">Gallons</option>
-                        <option value="kg">Kilograms</option>
-                        <option value="kWh">Kilowatt-hours</option>
-                      </StandardSelect>
-                    </HStack>
-                  </StandardField>
-
-                  {/* Equipment Operating Hours */}
-                  <StandardField
-                    label="Equipment Operating Hours"
-                    helpText="Used for calculating fuel efficiency and carbon per hour">
-                    <StandardInput
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      placeholder="e.g., 3.5"
-                      {...methods.register('equipment_hours')}
-                    />
-                  </StandardField>
-
-                  {/* Production Efficiency */}
-                  <StandardField
-                    label="Production Efficiency"
-                    helpText="Equipment efficiency rating for carbon scoring">
-                    <StandardSelect {...methods.register('production_efficiency')}>
-                      <option value="">Select efficiency level</option>
-                      <option value="high">High Efficiency</option>
-                      <option value="normal">Normal Efficiency</option>
-                      <option value="low">Low Efficiency</option>
-                    </StandardSelect>
-                  </StandardField>
-                </SimpleGrid>
-              </SectionBox>
-            )}
-
-            {/* Agricultural Decision Context */}
-            <SectionBox variant="default">
-              <SectionHeader
-                icon={FaCloudSun}
-                iconColor="green.600"
-                title="Agricultural Context & Conditions"
-                badge="IPM Decision Support"
-                badgeColorScheme="green"
-              />
-
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <StandardField label="Crop Growth Stage" helpText="Current crop development stage">
-                  <StandardSelect {...methods.register('crop_growth_stage')}>
-                    <option value="">Select growth stage</option>
-                    <option value="seedling">Seedling</option>
-                    <option value="vegetative">Vegetative Growth</option>
-                    <option value="flowering">Flowering</option>
-                    <option value="fruit_development">Fruit Development</option>
-                    <option value="maturity">Maturity</option>
-                    <option value="harvest">Harvest</option>
-                  </StandardSelect>
-                </StandardField>
-
-                {/* Sprint 2 Epic 2.2: Removed weather_conditions field - duplicates Weather event
-                  Pest pressure is tracked via pest_pressure_level dropdown in the assessment section */}
-
-                <StandardField
-                  label="Economic Threshold Status"
-                  helpText="Has economic threshold been reached?">
-                  <StandardSelect {...methods.register('economic_threshold_met')}>
-                    <option value="">Select status</option>
-                    <option value="true">Yes - Economic threshold met, action recommended</option>
-                    <option value="false">No - Below economic threshold</option>
-                  </StandardSelect>
-                </StandardField>
-
-                <StandardField
-                  label="Action Recommended"
-                  helpText="Next steps from this IPM activity">
-                  <StandardInput
-                    {...methods.register('action_recommended')}
-                    placeholder="e.g., continue monitoring, apply treatment"
-                  />
-                </StandardField>
-              </SimpleGrid>
-            </SectionBox>
-
-            {/* Pest-Specific Details Section */}
-            {/* In summary mode for Scouting, pest species and pressure are already captured
-                in the Pest Observations Summary section above - hide to avoid redundancy */}
-            {!(isSummaryMode && pestType === 'SC') && (
-            <SectionBox variant="default">
-              <SectionHeader
-                icon={FaEye}
-                iconColor="green.600"
-                title="Pest Management Details"
-                badge="IPM Documentation"
-                badgeColorScheme="green"
-              />
-
-              {/* Universal Pest Context Fields - All Types */}
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
-                <StandardField
-                  label={intl.formatMessage({ id: 'app.pestSpecies' }) || 'Pest Species'}
-                  helpText="Help consumers understand what pests you're managing">
-                  <StandardInput
-                    {...methods.register('pest_species')}
-                    placeholder="e.g., Aphids, Spider mites, Thrips"
-                  />
-                </StandardField>
-
-                <StandardField
-                  label={
-                    intl.formatMessage({ id: 'app.damagePercentage' }) || 'Crop Impact Level (%)'
-                  }
-                  helpText="Percentage of crop damage observed (for transparency)">
-                  <StandardInput
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    {...methods.register('damage_percentage')}
-                    placeholder="0.0"
-                  />
-                </StandardField>
-              </SimpleGrid>
-
-              {/* Pest Pressure Assessment - Most Types */}
-              {(pestType === 'SC' ||
-                pestType === 'PI' ||
-                pestType === 'TA' ||
-                pestType === 'TM' ||
-                pestType === 'BR' ||
-                pestType === 'IP') && (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
-                  <StandardField
-                    label={
-                      intl.formatMessage({ id: 'app.pestPressureLevel' }) || 'Pest Pressure Level'
-                    }
-                    helpText={
-                      pestType === 'TM'
-                        ? 'Pressure level detected through monitoring'
-                        : pestType === 'BR'
-                        ? 'Pressure level that prompted beneficial release'
-                        : pestType === 'IP'
-                        ? 'Pressure level that triggered IPM implementation'
-                        : 'Current pest population assessment'
-                    }>
-                    <StandardSelect {...methods.register('pest_pressure_level')}>
-                      <option value="">Select pressure level</option>
-                      <option value="Low">{intl.formatMessage({ id: 'app.low' }) || 'Low'}</option>
-                      <option value="Medium">
-                        {intl.formatMessage({ id: 'app.medium' }) || 'Medium'}
-                      </option>
-                      <option value="High">
-                        {intl.formatMessage({ id: 'app.high' }) || 'High'}
-                      </option>
-                      <option value="Critical">
-                        {intl.formatMessage({ id: 'app.critical' }) || 'Critical'}
-                      </option>
-                    </StandardSelect>
-                  </StandardField>
-
-                  {/* Economic Threshold Assessment - Relevant for Assessment and IPM Types */}
-                  {(pestType === 'TA' || pestType === 'IP') && (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField
-                      label="Action Threshold Status"
-                      helpText={
-                        pestType === 'TA'
-                          ? 'Main threshold assessment decision'
-                          : 'Was IPM triggered by reaching economic threshold?'
-                      }>
-                      <StandardSelect {...methods.register('action_threshold_met')}>
-                        <option value="">Select status</option>
-                        <option value="true">
-                          {intl.formatMessage({ id: 'app.actionThresholdMet' }) ||
-                            'Yes - Economic threshold met, action required'}
-                        </option>
-                        <option value="false">No - Below action threshold</option>
+                      label="Crop Growth Stage"
+                      helpText="Current crop development stage"
+                    >
+                      <StandardSelect {...methods.register('crop_growth_stage')}>
+                        <option value="">Select growth stage</option>
+                        <option value="seedling">Seedling</option>
+                        <option value="vegetative">Vegetative Growth</option>
+                        <option value="flowering">Flowering</option>
+                        <option value="fruit_development">Fruit Development</option>
+                        <option value="maturity">Maturity</option>
+                        <option value="harvest">Harvest</option>
                       </StandardSelect>
                     </StandardField>
-                  )}
-                </SimpleGrid>
-              )}
 
-              {/* Type-Specific Implementation Details */}
+                    {/* Sprint 2 Epic 2.2: Removed weather_conditions field - duplicates Weather event
+                  Pest pressure is tracked via pest_pressure_level dropdown in the assessment section */}
 
-              {/* Beneficial Release Details */}
-              {(pestType === 'BR' || pestType === 'IP') && (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
-                  <StandardField
-                    label={
-                      intl.formatMessage({ id: 'app.beneficialSpecies' }) || 'Beneficial Species'
-                    }
-                    helpText={
-                      pestType === 'BR'
-                        ? 'Natural pest control organisms released'
-                        : 'Beneficial species used in IPM strategy (if applicable)'
-                    }>
-                    <StandardInput
-                      {...methods.register('beneficial_species')}
-                      placeholder="e.g., Ladybugs, Lacewings, Predatory mites"
+                    <StandardField
+                      label="Economic Threshold Status"
+                      helpText="Has economic threshold been reached?"
+                    >
+                      <StandardSelect {...methods.register('economic_threshold_met')}>
+                        <option value="">Select status</option>
+                        <option value="true">
+                          Yes - Economic threshold met, action recommended
+                        </option>
+                        <option value="false">No - Below economic threshold</option>
+                      </StandardSelect>
+                    </StandardField>
+
+                    <StandardField
+                      label="Action Recommended"
+                      helpText="Next steps from this IPM activity"
+                    >
+                      <StandardInput
+                        {...methods.register('action_recommended')}
+                        placeholder="e.g., continue monitoring, apply treatment"
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                </SectionBox>
+
+                {/* Pest-Specific Details Section */}
+                {/* In summary mode for Scouting, pest species and pressure are already captured
+                in the Pest Observations Summary section above - hide to avoid redundancy */}
+                {!(isSummaryMode && pestType === 'SC') && (
+                  <SectionBox variant="default">
+                    <SectionHeader
+                      icon={FaEye}
+                      iconColor="green.600"
+                      title="Pest Management Details"
+                      badge="IPM Documentation"
+                      badgeColorScheme="green"
                     />
-                  </StandardField>
 
-                  <StandardField
-                    label={intl.formatMessage({ id: 'app.releaseQuantity' }) || 'Release Quantity'}
-                    helpText={
-                      pestType === 'BR'
-                        ? 'Number and density of beneficials released'
-                        : 'Quantity of beneficial organisms used (if applicable)'
-                    }>
-                    <StandardInput
-                      {...methods.register('release_quantity')}
-                      placeholder="e.g., 1000 individuals per hectare"
-                    />
-                  </StandardField>
-                </SimpleGrid>
-              )}
+                    {/* Universal Pest Context Fields - All Types */}
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
+                      <StandardField
+                        label={intl.formatMessage({ id: 'app.pestSpecies' }) || 'Pest Species'}
+                        helpText="Help consumers understand what pests you're managing"
+                      >
+                        <StandardInput
+                          {...methods.register('pest_species')}
+                          placeholder="e.g., Aphids, Spider mites, Thrips"
+                        />
+                      </StandardField>
 
-              {/* Trap Monitoring Details */}
-              {pestType === 'TM' && (
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
-                  <StandardField
-                    label={intl.formatMessage({ id: 'app.trapCount' }) || 'Number of Traps'}
-                    helpText="Monitoring traps deployed for pest detection">
-                    <StandardInput
-                      type="number"
-                      min="0"
-                      {...methods.register('trap_count')}
-                      placeholder="0"
-                    />
-                  </StandardField>
-                </SimpleGrid>
-              )}
+                      <StandardField
+                        label={
+                          intl.formatMessage({ id: 'app.damagePercentage' }) ||
+                          'Crop Impact Level (%)'
+                        }
+                        helpText="Percentage of crop damage observed (for transparency)"
+                      >
+                        <StandardInput
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          {...methods.register('damage_percentage')}
+                          placeholder="0.0"
+                        />
+                      </StandardField>
+                    </SimpleGrid>
 
-              {/* IPM Strategy Implementation */}
-              {pestType === 'IP' && (
-                <StandardField
-                  label={
-                    intl.formatMessage({ id: 'app.impStrategy' }) || 'IPM Strategy Description'
-                  }
-                  helpText="Describe the comprehensive integrated pest management approach implemented">
-                  <StandardTextarea
-                    {...methods.register('imp_strategy')}
-                    placeholder={
-                      intl.formatMessage({ id: 'app.enterImpStrategy' }) ||
-                      'Describe your integrated pest management strategy: cultural practices, biological controls, targeted treatments, monitoring methods, prevention measures...'
-                    }
-                    rows={4}
+                    {/* Pest Pressure Assessment - Most Types */}
+                    {(pestType === 'SC' ||
+                      pestType === 'PI' ||
+                      pestType === 'TA' ||
+                      pestType === 'TM' ||
+                      pestType === 'BR' ||
+                      pestType === 'IP') && (
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'app.pestPressureLevel' }) ||
+                            'Pest Pressure Level'
+                          }
+                          helpText={
+                            pestType === 'TM'
+                              ? 'Pressure level detected through monitoring'
+                              : pestType === 'BR'
+                              ? 'Pressure level that prompted beneficial release'
+                              : pestType === 'IP'
+                              ? 'Pressure level that triggered IPM implementation'
+                              : 'Current pest population assessment'
+                          }
+                        >
+                          <StandardSelect {...methods.register('pest_pressure_level')}>
+                            <option value="">Select pressure level</option>
+                            <option value="Low">
+                              {intl.formatMessage({ id: 'app.low' }) || 'Low'}
+                            </option>
+                            <option value="Medium">
+                              {intl.formatMessage({ id: 'app.medium' }) || 'Medium'}
+                            </option>
+                            <option value="High">
+                              {intl.formatMessage({ id: 'app.high' }) || 'High'}
+                            </option>
+                            <option value="Critical">
+                              {intl.formatMessage({ id: 'app.critical' }) || 'Critical'}
+                            </option>
+                          </StandardSelect>
+                        </StandardField>
+
+                        {/* Economic Threshold Assessment - SC, TA, IP Types (NOP 7 CFR 205.206(e)) */}
+                        {(pestType === 'SC' || pestType === 'TA' || pestType === 'IP') && (
+                          <StandardField
+                            label="Action Threshold Met"
+                            helpText={
+                              pestType === 'SC'
+                                ? 'Was the economic action threshold met during scouting?'
+                                : pestType === 'TA'
+                                ? 'Main threshold assessment decision'
+                                : 'Was IPM triggered by reaching economic threshold?'
+                            }
+                          >
+                            <StandardSelect {...methods.register('action_threshold_met')}>
+                              <option value="">Select status</option>
+                              <option value="true">
+                                {intl.formatMessage({ id: 'app.actionThresholdMet' }) ||
+                                  'Yes - Economic threshold met, action required'}
+                              </option>
+                              <option value="false">No - Below action threshold</option>
+                            </StandardSelect>
+                          </StandardField>
+                        )}
+                      </SimpleGrid>
+                    )}
+
+                    {/* Type-Specific Implementation Details */}
+
+                    {/* Beneficial Release Details */}
+                    {(pestType === 'BR' || pestType === 'IP') && (
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'app.beneficialSpecies' }) ||
+                            'Beneficial Species'
+                          }
+                          helpText={
+                            pestType === 'BR'
+                              ? 'Natural pest control organisms released'
+                              : 'Beneficial species used in IPM strategy (if applicable)'
+                          }
+                        >
+                          <StandardInput
+                            {...methods.register('beneficial_species')}
+                            placeholder="e.g., Ladybugs, Lacewings, Predatory mites"
+                          />
+                        </StandardField>
+
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'app.releaseQuantity' }) || 'Release Quantity'
+                          }
+                          helpText={
+                            pestType === 'BR'
+                              ? 'Number and density of beneficials released'
+                              : 'Quantity of beneficial organisms used (if applicable)'
+                          }
+                        >
+                          <StandardInput
+                            {...methods.register('release_quantity')}
+                            placeholder="e.g., 1000 individuals per hectare"
+                          />
+                        </StandardField>
+                      </SimpleGrid>
+                    )}
+
+                    {/* Trap Monitoring Details */}
+                    {pestType === 'TM' && (
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'app.trapCount' }) || 'Number of Traps'}
+                          helpText="Monitoring traps deployed for pest detection"
+                        >
+                          <StandardInput
+                            type="number"
+                            min="0"
+                            {...methods.register('trap_count')}
+                            placeholder="0"
+                          />
+                        </StandardField>
+                      </SimpleGrid>
+                    )}
+
+                    {/* IPM Strategy Implementation */}
+                    {pestType === 'IP' && (
+                      <StandardField
+                        label={
+                          intl.formatMessage({ id: 'app.impStrategy' }) ||
+                          'IPM Strategy Description'
+                        }
+                        helpText="Describe the comprehensive integrated pest management approach implemented"
+                      >
+                        <StandardTextarea
+                          {...methods.register('imp_strategy')}
+                          placeholder={
+                            intl.formatMessage({ id: 'app.enterImpStrategy' }) ||
+                            'Describe your integrated pest management strategy: cultural practices, biological controls, targeted treatments, monitoring methods, prevention measures...'
+                          }
+                          rows={4}
+                        />
+                      </StandardField>
+                    )}
+                  </SectionBox>
+                )}
+
+                {/* Sprint 3 Epic 3.2: Consumer Trust & Transparency Fields */}
+                <SectionBox variant="highlighted">
+                  <SectionHeader
+                    icon={FaSeedling}
+                    iconColor="green.500"
+                    title="Consumer Trust & Transparency"
+                    badge="Builds Consumer Trust"
+                    badgeColorScheme="green"
+                    description="Document your sustainable pest management practices to help consumers understand your commitment to environmentally responsible farming."
                   />
-                </StandardField>
-              )}
-            </SectionBox>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label="Beneficial Insects Used"
+                      helpText="Are you using beneficial insects as part of your IPM strategy?"
+                    >
+                      <StandardSelect {...methods.register('beneficial_insects_used')}>
+                        <option value="">Select status</option>
+                        <option value="yes">Yes - Using beneficial insects</option>
+                        <option value="no">No - Not currently using</option>
+                        <option value="planning">Planning to introduce</option>
+                      </StandardSelect>
+                    </StandardField>
+
+                    <StandardField
+                      label="Chemical-Free Period (Days)"
+                      helpText="Days since last synthetic chemical application (builds consumer trust)"
+                    >
+                      <StandardInput
+                        type="number"
+                        min="0"
+                        step="1"
+                        {...methods.register('chemical_free_period_days')}
+                        placeholder="e.g., 30"
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                </SectionBox>
+
+                {/* NOP Compliance: Pest ID & Threshold Documentation (7 CFR 205.206) */}
+                {(pestType === 'SC' ||
+                  pestType === 'PI' ||
+                  pestType === 'TA' ||
+                  pestType === 'IP') && (
+                  <SectionBox variant="highlighted" borderColor="green.200">
+                    <SectionHeader
+                      icon={FaCheckCircle}
+                      iconColor="green.600"
+                      title="NOP Pest Identification & Threshold Traceability"
+                      badge="Organic Compliance"
+                      badgeColorScheme="green"
+                      description="Required documentation for NOP organic certification: pest identification verification and action threshold rationale (7 CFR 205.206)."
+                    />
+
+                    {/* Identified By — PI, SC, TA subtypes */}
+                    {(pestType === 'PI' || pestType === 'SC' || pestType === 'TA') && (
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
+                        <StandardField
+                          label="Pest Identified By"
+                          helpText="Who identified the pest species (NOP 7 CFR 205.206)"
+                        >
+                          <StandardSelect {...methods.register('identified_by')}>
+                            <option value="">Select identifier</option>
+                            <option value="farmer">Farmer</option>
+                            <option value="agronomist">Agronomist</option>
+                            <option value="entomologist">Entomologist</option>
+                            <option value="extension_service">Extension Service</option>
+                            <option value="crop_consultant">Crop Consultant</option>
+                            <option value="lab">Laboratory Analysis</option>
+                          </StandardSelect>
+                        </StandardField>
+
+                        {/* Identification Method — PI, SC subtypes */}
+                        {(pestType === 'PI' || pestType === 'SC') && (
+                          <StandardField
+                            label="Identification Method"
+                            helpText="How the pest was identified (NOP documentation)"
+                          >
+                            <StandardInput
+                              {...methods.register('identification_method')}
+                              placeholder="e.g., Visual inspection using 10x hand lens, UC Davis IPM field guide"
+                            />
+                          </StandardField>
+                        )}
+                      </SimpleGrid>
+                    )}
+
+                    {/* Threshold Rationale — SC, TA, IP subtypes */}
+                    {(pestType === 'SC' || pestType === 'TA' || pestType === 'IP') && (
+                      <StandardField
+                        label="Threshold Rationale"
+                        helpText="Explain why the action threshold was or was not met (NOP 7 CFR 205.206(e))"
+                      >
+                        <StandardTextarea
+                          {...methods.register('threshold_rationale')}
+                          placeholder="e.g., Avg 2.3 thrips/leaf on 20 sample trees, below 5/leaf economic threshold per UC Davis IPM guidelines..."
+                          rows={3}
+                        />
+                      </StandardField>
+                    )}
+                  </SectionBox>
+                )}
+
+                {/* Phase 2: Universal Field Details - variety, block_id for traceability */}
+                {/* NOTE: growth_stage omitted here — PestManagement already has crop_growth_stage */}
+                {/* in "Agricultural Context & Conditions" with IPM-specific stage choices */}
+                <SectionBox variant="default">
+                  <SectionHeader
+                    icon={FaSeedling}
+                    iconColor="teal.500"
+                    title={intl.formatMessage({ id: 'fieldDetails.title' })}
+                    badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
+                    badgeColorScheme="teal"
+                    description={intl.formatMessage({ id: 'fieldDetails.description' })}
+                  />
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label={intl.formatMessage({ id: 'fieldDetails.variety' })}
+                      helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}
+                    >
+                      <Controller
+                        name="variety"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'fieldDetails.varietyPlaceholder'
+                            })}
+                          />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
+                      helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
+                    >
+                      <Controller
+                        name="block_id"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'fieldDetails.blockIdPlaceholder'
+                            })}
+                          />
+                        )}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+                </SectionBox>
+
+                {/* Transparency Notes & Observations */}
+                {/* Standardized: Always visible (matches ChemicalTab pattern - observations section stays visible in summary mode) */}
+                <SectionBox variant="default">
+                  <SectionHeader
+                    icon={FaSeedling}
+                    iconColor="green.500"
+                    title="Farmer's Field Notes & Consumer Transparency"
+                    badge="Consumer Transparency"
+                    badgeColorScheme="green"
+                  />
+
+                  <StandardField
+                    label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
+                    helpText="Share details about your pest management approach that help consumers understand your sustainable farming practices"
+                  >
+                    <StandardTextarea
+                      {...methods.register('observation')}
+                      placeholder="Optional: Describe your IPM approach, beneficial insect populations observed, organic methods used, sustainability goals, etc. These details help consumers understand your natural pest management methods."
+                      rows={4}
+                    />
+                  </StandardField>
+                </SectionBox>
+              </>
             )}
-
-            {/* Sprint 3 Epic 3.2: Consumer Trust & Transparency Fields */}
-            <SectionBox variant="highlighted">
-              <SectionHeader
-                icon={FaSeedling}
-                iconColor="green.500"
-                title="Consumer Trust & Transparency"
-                badge="Builds Consumer Trust"
-                badgeColorScheme="green"
-                description="Document your sustainable pest management practices to help consumers understand your commitment to environmentally responsible farming."
-              />
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <StandardField
-                  label="Beneficial Insects Used"
-                  helpText="Are you using beneficial insects as part of your IPM strategy?">
-                  <StandardSelect {...methods.register('beneficial_insects_used')}>
-                    <option value="">Select status</option>
-                    <option value="yes">Yes - Using beneficial insects</option>
-                    <option value="no">No - Not currently using</option>
-                    <option value="planning">Planning to introduce</option>
-                  </StandardSelect>
-                </StandardField>
-
-                <StandardField
-                  label="Chemical-Free Period (Days)"
-                  helpText="Days since last synthetic chemical application (builds consumer trust)">
-                  <StandardInput
-                    type="number"
-                    min="0"
-                    step="1"
-                    {...methods.register('chemical_free_period_days')}
-                    placeholder="e.g., 30"
-                  />
-                </StandardField>
-              </SimpleGrid>
-            </SectionBox>
-
-            {/* Phase 2: Universal Field Details - variety, block_id for traceability */}
-            {/* NOTE: growth_stage omitted here — PestManagement already has crop_growth_stage */}
-            {/* in "Agricultural Context & Conditions" with IPM-specific stage choices */}
-            <SectionBox variant="default">
-              <SectionHeader
-                icon={FaSeedling}
-                iconColor="teal.500"
-                title={intl.formatMessage({ id: 'fieldDetails.title' })}
-                badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
-                badgeColorScheme="teal"
-                description={intl.formatMessage({ id: 'fieldDetails.description' })}
-              />
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                <StandardField
-                  label={intl.formatMessage({ id: 'fieldDetails.variety' })}
-                  helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}
-                >
-                  <Controller
-                    name="variety"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.varietyPlaceholder' })} />
-                    )}
-                  />
-                </StandardField>
-
-                <StandardField
-                  label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
-                  helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
-                >
-                  <Controller
-                    name="block_id"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <StandardInput {...field} placeholder={intl.formatMessage({ id: 'fieldDetails.blockIdPlaceholder' })} />
-                    )}
-                  />
-                </StandardField>
-              </SimpleGrid>
-            </SectionBox>
-
-            {/* Transparency Notes & Observations */}
-            {/* Standardized: Always visible (matches ChemicalTab pattern - observations section stays visible in summary mode) */}
-            <SectionBox variant="default">
-              <SectionHeader
-                icon={FaSeedling}
-                iconColor="green.500"
-                title="Farmer's Field Notes & Consumer Transparency"
-                badge="Consumer Transparency"
-                badgeColorScheme="green"
-              />
-
-              <StandardField
-                label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
-                helpText="Share details about your pest management approach that help consumers understand your sustainable farming practices">
-                <StandardTextarea
-                  {...methods.register('observation')}
-                  placeholder="Optional: Describe your IPM approach, beneficial insect populations observed, organic methods used, sustainability goals, etc. These details help consumers understand your natural pest management methods."
-                  rows={4}
-                />
-              </StandardField>
-            </SectionBox>
 
             {/* Phase 2.3: Custom Fields Section */}
             <CustomFieldsForm
@@ -1170,19 +1346,22 @@ const PestManagementTab = forwardRef(
                 pt={6}
                 mt={4}
                 borderTop="1px"
-                borderColor={borderColor}>
+                borderColor={borderColor}
+              >
                 <StandardButton
                   variant="outline"
                   onClick={onPrev}
                   leftIcon={<FaChevronLeft />}
-                  size="lg">
+                  size="lg"
+                >
                   {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
                 </StandardButton>
                 <StandardButton
                   variant="primary"
                   type="submit"
                   rightIcon={<FaChevronRight />}
-                  size="lg">
+                  size="lg"
+                >
                   {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                 </StandardButton>
               </HStack>

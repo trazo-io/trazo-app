@@ -199,14 +199,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // Preview modal state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewFormData, setPreviewFormData] = useState(null);
+
+  // Ref to access latest eventFormData in callbacks without stale closures
+  const eventFormDataRef = useRef(eventFormData);
+  eventFormDataRef.current = eventFormData;
 
   // File upload state - declare early to avoid initialization issues
   const [acceptedFiles, setAcceptedFiles] = useState([]);
   // Track deleted image IDs for edit mode - send to backend for deletion
   const [deletedImageIds, setDeletedImageIds] = useState([]);
 
-  // Redux state
-  const currentEvent = useSelector((state) => state.form.currentForm?.event);
+  // Redux state — NOTE: removed currentEvent selector to prevent render loops.
+  // eventFormData (local state) is the source of truth for form data.
   const currentCompany = useSelector((state) => state.company.currentCompany);
 
   // Step management
@@ -529,10 +534,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // Name field: use existing name or extra_data name only.
         // Do NOT fallback to description — description can be very long (observation text)
         // and name has a 150-char DB limit. Pest Management derives name separately in its tab.
-        name:
-          existingEvent.name ||
-          existingEvent.extra_data?.name ||
-          '',
+        name: existingEvent.name || existingEvent.extra_data?.name || '',
         // Chemical event specific overrides
         commercial_name: existingEvent.commercial_name || existingEvent.name || '',
         active_ingredient:
@@ -633,11 +635,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
         }),
         // Fuel fields: summary mode stores as fuel_type/fuel_unit,
         // non-summary mode stores as application_fuel_type/application_fuel_unit
-        ...((existingEvent.extra_data?.fuel_type || existingEvent.extra_data?.application_fuel_type) && {
-          application_fuel_type: existingEvent.extra_data.fuel_type || existingEvent.extra_data.application_fuel_type
+        ...((existingEvent.extra_data?.fuel_type ||
+          existingEvent.extra_data?.application_fuel_type) && {
+          application_fuel_type:
+            existingEvent.extra_data.fuel_type || existingEvent.extra_data.application_fuel_type
         }),
-        ...((existingEvent.extra_data?.fuel_unit || existingEvent.extra_data?.application_fuel_unit) && {
-          application_fuel_unit: existingEvent.extra_data.fuel_unit || existingEvent.extra_data.application_fuel_unit
+        ...((existingEvent.extra_data?.fuel_unit ||
+          existingEvent.extra_data?.application_fuel_unit) && {
+          application_fuel_unit:
+            existingEvent.extra_data.fuel_unit || existingEvent.extra_data.application_fuel_unit
         }),
         ...(existingEvent.extra_data?.application_fuel_consumed != null && {
           application_fuel_consumed: existingEvent.extra_data.application_fuel_consumed
@@ -699,8 +705,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           'inches',
         // IRRIGATION: pump_depth_ft and electricity_source are model fields
         // but well_depth_ft may exist in extra_data from older events
-        pump_depth_ft:
-          existingEvent.pump_depth_ft || existingEvent.extra_data?.well_depth_ft || '',
+        pump_depth_ft: existingEvent.pump_depth_ft || existingEvent.extra_data?.well_depth_ft || '',
         electricity_source:
           existingEvent.electricity_source || existingEvent.extra_data?.electricity_source || '',
 
@@ -721,10 +726,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
         // GENERAL EVENT FIELD MAPPING: Backend model uses different field names
         // duration → duration_hours, people_involved → participants
-        duration_hours:
-          existingEvent.duration_hours || existingEvent.duration?.toString() || '',
-        participants:
-          existingEvent.participants || existingEvent.people_involved?.toString() || '',
+        duration_hours: existingEvent.duration_hours || existingEvent.duration?.toString() || '',
+        participants: existingEvent.participants || existingEvent.people_involved?.toString() || '',
 
         // SOIL MANAGEMENT: amendment_unit stored in extra_data (no model column)
         ...(existingEvent.extra_data?.amendment_unit && {
@@ -804,16 +807,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
     const updatedData = { ...eventFormData, ...data, event_type: activeEventType };
     setEventFormData(updatedData);
 
-    // Store in Redux
-    dispatch(
-      setForm({
-        event: {
-          ...currentEvent,
-          ...updatedData
-        }
-      })
-    );
-
     // Calculate carbon impact
     calculateCarbonWithDebounce(updatedData, activeEventType);
 
@@ -822,17 +815,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   const onSubmitMainInfo = (data) => {
     const updatedData = { ...eventFormData, ...data };
-
     setEventFormData(updatedData);
-
-    dispatch(
-      setForm({
-        event: {
-          ...currentEvent,
-          ...updatedData
-        }
-      })
-    );
 
     // Recalculate carbon with new data
     calculateCarbonWithDebounce(updatedData, activeEventType);
@@ -843,34 +826,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Note: Tab form submission is handled by onSubmitMainInfo (used directly in JSX render)
 
   // Handle real-time data changes from event tabs (for carbon preview updates)
+  // NOTE: Do NOT dispatch to Redux here — useSelector(currentEvent) creates a
+  // render loop because each dispatch produces a new object reference, triggering
+  // a re-render that fires onDataChange again. Local state is the source of truth.
   const onDataChange = useCallback(
     (data) => {
-      // Use functional update to avoid stale closure
-      setEventFormData((prevData) => {
-        const updatedData = { ...prevData, ...data };
+      setEventFormData((prevData) => ({ ...prevData, ...data }));
 
-        // Update Redux store for consistency - use current state snapshot
-        dispatch(
-          setForm({
-            event: {
-              ...prevData, // Use the previous data snapshot instead of currentEvent
-              ...updatedData
-            }
-          })
-        );
-
-        // FIXED: Weather events (activeEventType === 0) do NOT trigger carbon calculations
-        // Weather data is environmental context, not a source of carbon emissions
-        // Only trigger carbon calculation for event types that actually produce emissions
-        if (activeEventType !== 0) {
-          // Recalculate carbon with new data (debounced)
-          calculateCarbonWithDebounce(updatedData, activeEventType);
-        }
-
-        return updatedData;
-      });
+      // Carbon calculation outside of setState updater (no side effects in updaters)
+      // Merge with latest form data via ref so carbon API gets full context
+      if (activeEventType !== 0) {
+        calculateCarbonWithDebounce({ ...eventFormDataRef.current, ...data }, activeEventType);
+      }
     },
-    [activeEventType, dispatch] // FIXED: Removed calculateCarbonWithDebounce to prevent circular dependency
+    [activeEventType] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // Removed debug logging to reduce console noise
@@ -929,28 +898,46 @@ function NewEvent({ isEdit = false, eventId = null }) {
   };
 
   // Preview modal handlers
+  // NOTE: All data computation happens here (event handler), NOT during render.
+  // getCompleteFormDataForPreview was removed because calling flushData() during
+  // render triggered onDataChange → setEventFormData → infinite re-render loop.
   const handleOpenPreview = () => {
-    // Sync fresh form values before opening preview to avoid stale data
-    const freshValues = mainInfoMethods.getValues();
-    if (freshValues && Object.keys(freshValues).length > 0) {
-      setEventFormData((prev) => ({ ...prev, ...freshValues }));
-    }
-    setIsPreviewModalOpen(true);
-  };
-
-  // Create complete form data including photos and carbon data for preview
-  const getCompleteFormDataForPreview = () => {
-    // Merge fresh main info form values to ensure preview has latest data
-    const freshValues = mainInfoMethods.getValues();
-    return {
-      ...eventFormData,
-      ...freshValues,
-      acceptedFiles: acceptedFiles
+    // Flush active tab's form data before capturing snapshot
+    const tabRefs = {
+      0: weatherTabRef,
+      1: productionTabRef,
+      2: chemicalTabRef,
+      3: generalTabRef,
+      5: soilManagementTabRef,
+      6: pestManagementTabRef,
+      7: businessTabRef
     };
+    const currentTabRef = tabRefs[activeEventType];
+    if (currentTabRef?.current?.flushData) {
+      currentTabRef.current.flushData();
+    }
+
+    // Snapshot form data for preview (read AFTER flushData updated eventFormData)
+    // Use setTimeout(0) to let React process the flushData setState before reading
+    setTimeout(() => {
+      // Propagate calculated carbon impact so the ConsumerEventCard badge reflects
+      // the actual activity level (Major Activity, Core Practice, etc.) instead of
+      // the generic "Supplementary" fallback. Only override when we have a fresh
+      // calculation — otherwise preserve any backend-supplied value from edit mode.
+      const rawCo2e = carbonCalculation?.co2e;
+      const hasCalculatedCo2e = typeof rawCo2e === 'number' && Number.isFinite(rawCo2e);
+      setPreviewFormData({
+        ...eventFormDataRef.current,
+        acceptedFiles: acceptedFiles,
+        ...(hasCalculatedCo2e && { carbon_impact: rawCo2e })
+      });
+      setIsPreviewModalOpen(true);
+    }, 0);
   };
 
   const handleClosePreview = () => {
     setIsPreviewModalOpen(false);
+    setPreviewFormData(null);
   };
 
   // File upload (now step 2 instead of step 3)
@@ -1242,9 +1229,36 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // GENERAL EVENT MAPPING (activeEventType === 3)
         // Frontend form uses different field names than the backend model:
         //   type → activity_type, duration_hours → duration, participants → people_involved
+        // NOP contamination booleans come in as 'true'/'false' strings from the
+        // Switch controllers — coerce to real booleans, and let empty date/decimal
+        // fields fall through as null (backend nullable_fields also strips them).
         if (activeEventType === 3) {
+          const generalBooleanKeys = new Set(['is_contamination_incident', 'certifier_notified']);
+          const generalNullableKeys = new Set([
+            'contamination_source',
+            'contamination_affected_area',
+            'corrective_action_taken',
+            'corrective_action_date',
+            'certifier_notification_date'
+          ]);
+
           Object.keys(data).forEach((key) => {
-            const value = data[key];
+            let value = data[key];
+
+            // Coerce NOP booleans first so shouldIncludeField sees the real type
+            if (generalBooleanKeys.has(key)) {
+              value = value === true || value === 'true';
+              cleaned[key] = value;
+              return;
+            }
+
+            // Empty strings on nullable date/decimal/text fields must become null,
+            // otherwise DateField/DecimalField reject them with 400.
+            if (generalNullableKeys.has(key) && (value === '' || value == null)) {
+              cleaned[key] = null;
+              return;
+            }
+
             if (shouldIncludeField(key, value)) {
               let finalKey = key;
 
@@ -1409,8 +1423,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     } catch (error) {
       // Surface the actual error message so users know what to fix
       const isValidationError = error?.message?.includes('required fields');
-      const apiErrorMessage =
-        error?.data?.detail || error?.data?.message || error?.data?.error;
+      const apiErrorMessage = error?.data?.detail || error?.data?.message || error?.data?.error;
 
       // Parse DRF field validation errors: {"field": ["error message"]}
       let fieldErrors = '';
@@ -1425,7 +1438,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
       const errorDescription = isValidationError
         ? error.message
-        : apiErrorMessage || fieldErrors ||
+        : apiErrorMessage ||
+          fieldErrors ||
           (isEdit
             ? intl.formatMessage({ id: 'app.errorUpdatingEvent' }) ||
               'Failed to update event. Please try again.'
@@ -1631,13 +1645,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       {activeEventType === 1 && eventFormData?.type === 'PO' && (
                         <>
                           <Text fontSize="xs" color="gray.600">
-                            • Pollination is a zero-emission biological service — no fuel or equipment needed
+                            • Pollination is a zero-emission biological service — no fuel or
+                            equipment needed
                           </Text>
                           <Text fontSize="xs" color="gray.600">
                             • Document hive count and placement dates for full transparency
                           </Text>
                           <Text fontSize="xs" color="gray.600">
-                            • Pollination events build your transparency score by showing natural processes
+                            • Pollination events build your transparency score by showing natural
+                            processes
                           </Text>
                         </>
                       )}
@@ -1762,7 +1778,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                   </CardHeader>
                   <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
                     <FormProvider {...basicMethods}>
-                      <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)}>
+                      <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)} noValidate>
                         <VStack spacing={{ base: 5, md: 6 }} align="stretch">
                           {/* Event Type Selection Section */}
                           <SectionBox>
@@ -2229,13 +2245,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
         </VStack>
       )}
 
-      {/* Event Preview Modal */}
-      <EventPreviewModal
-        isOpen={isPreviewModalOpen}
-        onClose={handleClosePreview}
-        activeEventType={activeEventType}
-        formData={getCompleteFormDataForPreview()}
-      />
+      {/* Event Preview Modal — data is pre-computed in handleOpenPreview (event handler) */}
+      {isPreviewModalOpen && previewFormData && (
+        <EventPreviewModal
+          isOpen={isPreviewModalOpen}
+          onClose={handleClosePreview}
+          activeEventType={activeEventType}
+          formData={previewFormData}
+        />
+      )}
     </StandardPage>
   );
 }

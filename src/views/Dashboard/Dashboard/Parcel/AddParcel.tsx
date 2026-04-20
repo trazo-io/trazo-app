@@ -237,7 +237,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           status: 'success',
           duration: 5000,
           isClosable: true,
-          position: 'top-right'
         });
 
         // ✅ Redirect to new parcel profile after creation

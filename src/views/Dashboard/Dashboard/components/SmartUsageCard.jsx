@@ -84,7 +84,7 @@ const SmartUsageCard = ({
     if (!metrics) return getDefaultInsight();
 
     const isHighEngagement = metrics.monthly_scans > 1000;
-    const isTopPerformer = metrics.transparency_percentile > 75;
+    const isTopPerformer = metrics.transparency_score >= 80;
     const isGrowingFast = metrics.scan_growth_percentage > 25;
 
     if (isHighEngagement && isTopPerformer && isGrowingFast) {
@@ -163,7 +163,10 @@ const SmartUsageCard = ({
   const qrScanGrowth = metrics ? metrics.scan_growth_percentage : 0;
   const documentedEvents = metrics ? metrics.total_documented_events : 0;
   const totalProductions = metrics ? metrics.total_productions : 0;
-  const transparencyPercentile = metrics ? metrics.transparency_percentile : 50;
+  const transparencyTier = metrics ? metrics.transparency_tier : 'developing';
+  // Show tier badge only for farms at or above the "solid" threshold (score >= 60).
+  // Below that, the farm is still building documentation and no badge is shown.
+  const showTierBadge = ['excellent', 'strong', 'good', 'solid'].includes(transparencyTier);
 
   const getLetterGrade = (score) => {
     if (score >= 90) return 'A+';
@@ -249,11 +252,9 @@ const SmartUsageCard = ({
               >
                 {smartInsight.status}
               </Text>
-              {transparencyPercentile > 50 && (
+              {showTierBadge && (
                 <Tooltip
-                  label={intl.formatMessage({ id: 'dashboard.tooltipTransparencyPercentile' }, {
-                    percentile: 100 - transparencyPercentile
-                  })}
+                  label={intl.formatMessage({ id: `dashboard.tooltipTier.${transparencyTier}` })}
                   fontSize="xs"
                   bg="gray.800"
                   color="white"
@@ -272,7 +273,7 @@ const SmartUsageCard = ({
                     cursor="pointer"
                   >
                     <Icon as={FaMedal} w={2} h={2} mr={1} />
-                    {intl.formatMessage({ id: 'dashboard.topPercentile' }, { percentile: 100 - transparencyPercentile })}
+                    {intl.formatMessage({ id: `dashboard.tier.${transparencyTier}` })}
                   </Badge>
                 </Tooltip>
               )}

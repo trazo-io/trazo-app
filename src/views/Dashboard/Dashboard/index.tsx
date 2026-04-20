@@ -61,7 +61,6 @@ import bgImage from 'assets/img/backgroundImage.png';
 // assets
 import imageFarm from 'assets/img/imageFarm.png';
 import TransparencySummaryCard from './components/farm/CarbonSummaryCard';
-import CarbonDashboard from './Farm/CarbonDashboard';
 import TrialStatusBanner from 'components/Trial/TrialStatusBanner';
 import { useTour } from 'hooks/useTour';
 import { useTourScenario } from 'hooks/useTourScenario';

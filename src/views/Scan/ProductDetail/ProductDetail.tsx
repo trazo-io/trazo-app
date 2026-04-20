@@ -81,7 +81,10 @@ import CardBody from 'components/Card/CardBody';
 // API imports - Using single transparency API (consolidated from dual requests)
 import { TransparencyCelebration } from '../../../components/Notifications/TransparencyCelebration';
 import { useTransparencyCelebration } from '../../../hooks/useTransparencyCelebration';
-import { useGetTransparencyDetailsQuery, useVerifyBlockchainIntegrityQuery } from '../../../store/api/transparencyQrApi';
+import {
+  useGetTransparencyDetailsQuery,
+  useVerifyBlockchainIntegrityQuery
+} from '../../../store/api/transparencyQrApi';
 import { useCreateScanMutation } from '../../../store/api/historyApi';
 import { addPendingScanToken } from '../../../utils/pendingScanStorage';
 import { hasAnalyticsConsent } from '../../../components/Privacy/ConsentBanner';
@@ -93,15 +96,12 @@ import { StandardizedEvent } from '../../../types/standardizedEvents';
 
 // Modern components (keeping the ones you like)
 import { CarbonHeroSection } from '../../../components/QR/CarbonHeroSection';
-import {
-  ModernSidebar,
-  UltraMobileProductionJourney,
-  CompanyFarmInfo
-} from './components';
+import { ModernSidebar, UltraMobileProductionJourney, CompanyFarmInfo } from './components';
 import InstantTrustDisplay from './components/InstantTrustDisplay';
 
 // Certification badge
 import CertificationBadge from '../../../components/Certifications/CertificationBadge';
+import OrganicClaimBadge from '../../../components/Certifications/OrganicClaimBadge';
 
 // Other components
 import { ModernTrazoLoader } from './components/ModernTrazoLoader';
@@ -163,10 +163,7 @@ const CarbonExplainerLoader = () => (
     </VStack>
   </Card>
 );
-import {
-  EducationalTooltip,
-  CO2eTooltip
-} from '../../../components/Education/EducationalTooltip';
+import { EducationalTooltip, CO2eTooltip } from '../../../components/Education/EducationalTooltip';
 
 // Navigation Components
 import { NavigationBottomBar } from '../../../components/Navigation/NavigationBottomBar';
@@ -208,8 +205,7 @@ const EducationModal = ({
                     <Box>
                       <Text fontWeight="semibold">Farm Operations (40%)</Text>
                       <Text fontSize="sm" color="gray.600">
-                        Fuel use, equipment operation, soil management, and fertilizer
-                        application
+                        Fuel use, equipment operation, soil management, and fertilizer application
                       </Text>
                     </Box>
                   </HStack>
@@ -343,21 +339,18 @@ const EducationModal = ({
 
       case 'transparency_impact':
         return {
-          title: 'Transparency Impact',
+          title: intl.formatMessage({ id: 'consumer.learnMore.transparencyImpact.title' }),
           content: (
             <VStack align="start" spacing={4}>
               <Text fontSize="lg" color="gray.700">
-                <strong>Transparency</strong> creates accountability throughout the food supply
-                chain, leading to better practices and more sustainable agriculture.
+                {intl.formatMessage({ id: 'consumer.learnMore.transparencyImpact.body1' })}
               </Text>
               <Text fontSize="md" color="gray.600">
-                When farmers know their data is publicly visible, they're incentivized to adopt more
-                sustainable practices and maintain higher standards.
+                {intl.formatMessage({ id: 'consumer.learnMore.transparencyImpact.body2' })}
               </Text>
-              <Box bg="blue.50" p={4} borderRadius="md">
-                <Text fontSize="sm" fontWeight="medium" color="blue.700">
-                  💡 <strong>Impact:</strong> Transparency drives positive change across the entire
-                  supply chain.
+              <Box bg="green.50" p={4} borderRadius="md">
+                <Text fontSize="sm" fontWeight="medium" color="green.700">
+                  {intl.formatMessage({ id: 'consumer.learnMore.transparencyImpact.callout' })}
                 </Text>
               </Box>
             </VStack>
@@ -374,8 +367,8 @@ const EducationModal = ({
                 documented by the farmer, creating a complete record of how your food was grown.
               </Text>
               <Text fontSize="md" color="gray.600">
-                More documented events means more transparency. You can see exactly what happened
-                at every step, from planting to harvest.
+                More documented events means more transparency. You can see exactly what happened at
+                every step, from planting to harvest.
               </Text>
               <Box bg="green.50" p={4} borderRadius="md">
                 <Text fontSize="sm" fontWeight="medium" color="green.700">
@@ -598,13 +591,15 @@ function ProductDetail() {
   // OR has blockchain data (tx_hash). This closes the gap between finalization and
   // monthly batch submission: Layer 1 (event hash check) works immediately at finalization.
   const blockchainVerification = (completeData as any)?.blockchain_verification;
-  const canVerifyIntegrity = !!(blockchainVerification?.tx_hash || blockchainVerification?.is_finalized);
-  const {
-    data: integrityData,
-    isLoading: isIntegrityLoading
-  } = useVerifyBlockchainIntegrityQuery(productionId || '', {
-    skip: !productionId || !canVerifyIntegrity
-  });
+  const canVerifyIntegrity = !!(
+    blockchainVerification?.tx_hash || blockchainVerification?.is_finalized
+  );
+  const { data: integrityData, isLoading: isIntegrityLoading } = useVerifyBlockchainIntegrityQuery(
+    productionId || '',
+    {
+      skip: !productionId || !canVerifyIntegrity
+    }
+  );
 
   // === PAGE-VIEW SCAN TRACKING ===
   // Records a scan when the user accepts analytics consent (GDPR-compliant).
@@ -686,7 +681,13 @@ function ProductDetail() {
 
     // If integrity check detected tampering, override everything — even during pending window
     if (integrityData?.data_integrity === 'tampered') {
-      return { score: 0, isVerified: false, txHash: blockchainData?.tx_hash, isTampered: true, isIntegrityChecked: true };
+      return {
+        score: 0,
+        isVerified: false,
+        txHash: blockchainData?.tx_hash,
+        isTampered: true,
+        isIntegrityChecked: true
+      };
     }
 
     // Production is on-chain and verified
@@ -927,7 +928,7 @@ function ProductDetail() {
       </Box>
       {/* Main Content Section */}
       <Container maxW="container.xl" py={8} centerContent>
-        <Box w="100%" maxW="container.lg" >
+        <Box w="100%" maxW="container.lg">
           {/* Main Content Column */}
           <Box>
             <VStack spacing={8} align="stretch">
@@ -985,7 +986,7 @@ function ProductDetail() {
                 </Box>
               </Box>
 
-              {/* Transparency Achievement Badges - NEW Transparency-First Approach */}
+              {/* ── Card 1: Transparency Achievement ── */}
               <Box
                 bg="white"
                 borderRadius="xl"
@@ -993,172 +994,240 @@ function ProductDetail() {
                 borderColor="gray.200"
                 overflow="hidden"
               >
-                <Box bg="linear-gradient(135deg, green.50, blue.50)" p={6}>
+                <HStack spacing={2} px={6} pt={5} pb={1}>
+                  <Icon as={FaAward} color="green.500" boxSize={5} />
+                  <Heading size="md" color="gray.800">
+                    Transparency Achievement
+                  </Heading>
+                </HStack>
+
+                <Box px={6} pb={6}>
                   <VStack spacing={4}>
-                    <HStack spacing={3} justify="center">
-                      <Icon as={FaAward} color="green.500" boxSize={6} />
-                      <Heading size="md" color="gray.800">
-                        Transparency Achievement
-                      </Heading>
+                    {/* Stats row — score + events with divider */}
+                    <HStack spacing={0} justify="center" w="full" pt={3}>
+                      <VStack spacing={0} flex={1} align="center">
+                        <Text fontSize="3xl" fontWeight="bold" color="green.600">
+                          {getDisplayTransparencyScore()}%
+                        </Text>
+                        <Text fontSize="xs" color="gray.500" textAlign="center">
+                          {intl.formatMessage({ id: 'consumer.stats.transparencyScore' })}
+                        </Text>
+                      </VStack>
+                      <Box h="40px" w="1px" bg="gray.200" />
+                      <VStack spacing={0} flex={1} align="center">
+                        <Text fontSize="3xl" fontWeight="bold" color="gray.700">
+                          {completeData?.timeline?.length || 0}
+                        </Text>
+                        <Text fontSize="xs" color="gray.500" textAlign="center">
+                          {intl.formatMessage({ id: 'consumer.stats.farmingEvents' })}
+                        </Text>
+                      </VStack>
                     </HStack>
 
+                    {/* Tier badge + description */}
                     {(() => {
                       const timelineCount = completeData?.timeline?.length || 0;
-                      // ✅ FIX: Use API transparency score (single source of truth), not local calculation
                       const transparencyPercentage = getDisplayTransparencyScore();
 
-                      if (transparencyPercentage >= 90) {
-                        return (
-                          <VStack spacing={2}>
-                            <Badge
-                              colorScheme="green"
-                              variant="solid"
-                              fontSize="md"
-                              p={2}
-                              borderRadius="lg"
-                            >
-                              🏆 Complete Transparency Champion
-                            </Badge>
-                            <Text color="gray.700" fontSize="sm" textAlign="center">
-                              Outstanding documentation with {timelineCount} documented events
-                            </Text>
-                          </VStack>
-                        );
-                      } else if (transparencyPercentage >= 70) {
-                        return (
-                          <VStack spacing={2}>
-                            <Badge
-                              colorScheme="green"
-                              variant="outline"
-                              fontSize="md"
-                              p={2}
-                              borderRadius="lg"
-                            >
-                              ⭐ Transparency Leader
-                            </Badge>
-                            <Text color="gray.700" fontSize="sm" textAlign="center">
-                              Excellent documentation with {timelineCount} documented events
-                            </Text>
-                          </VStack>
-                        );
-                      } else if (transparencyPercentage >= 50) {
-                        return (
-                          <VStack spacing={2}>
-                            <Badge
-                              colorScheme="yellow"
-                              variant="solid"
-                              fontSize="md"
-                              p={2}
-                              borderRadius="lg"
-                            >
-                              📋 Good Documentation
-                            </Badge>
-                            <Text color="gray.700" fontSize="sm" textAlign="center">
-                              Solid tracking with {timelineCount} documented events
-                            </Text>
-                          </VStack>
-                        );
-                      } else {
-                        return (
-                          <VStack spacing={2}>
-                            <Badge
-                              colorScheme="gray"
-                              variant="solid"
-                              fontSize="md"
-                              p={2}
-                              borderRadius="lg"
-                            >
-                              🌱 Building Transparency
-                            </Badge>
-                            <Text color="gray.700" fontSize="sm" textAlign="center">
-                              Growing documentation with {timelineCount} events recorded
-                            </Text>
-                          </VStack>
-                        );
-                      }
+                      const tiers = [
+                        {
+                          min: 90,
+                          label: 'Complete Transparency Champion',
+                          scheme: 'green',
+                          desc: `Outstanding documentation with ${timelineCount} documented events`
+                        },
+                        {
+                          min: 70,
+                          label: 'Transparency Leader',
+                          scheme: 'green',
+                          desc: `Excellent documentation with ${timelineCount} documented events`
+                        },
+                        {
+                          min: 50,
+                          label: 'Good Documentation',
+                          scheme: 'yellow',
+                          desc: `Solid tracking with ${timelineCount} documented events`
+                        },
+                        {
+                          min: 0,
+                          label: 'Building Transparency',
+                          scheme: 'gray',
+                          desc: `Growing documentation with ${timelineCount} events recorded`
+                        }
+                      ];
+                      const tier =
+                        tiers.find((t) => transparencyPercentage >= t.min) ||
+                        tiers[tiers.length - 1];
+
+                      return (
+                        <VStack spacing={2}>
+                          <Badge
+                            colorScheme={tier.scheme}
+                            variant="subtle"
+                            fontSize="xs"
+                            px={3}
+                            py={1}
+                            borderRadius="full"
+                            fontWeight="semibold"
+                            letterSpacing="wide"
+                            textTransform="uppercase"
+                          >
+                            {tier.label}
+                          </Badge>
+                          <Text color="gray.500" fontSize="sm" textAlign="center">
+                            {tier.desc}
+                          </Text>
+                        </VStack>
+                      );
                     })()}
                   </VStack>
                 </Box>
-
-                <Box p={6}>
-                  <HStack spacing={4} justify="center" flexWrap="wrap">
-                    <VStack spacing={1}>
-                      <Text fontSize="2xl" fontWeight="bold" color="green.600">
-                        {getDisplayTransparencyScore()}%
-                      </Text>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Documentation
-                      </Text>
-                    </VStack>
-                    <VStack spacing={1}>
-                      <Text fontSize="2xl" fontWeight="bold" color="blue.600">
-                        {completeData?.timeline?.length || 0}
-                      </Text>
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Events Tracked
-                      </Text>
-                    </VStack>
-                    <VStack spacing={1}>
-                      <Icon as={FaClipboardList} boxSize={7} color="green.600" />
-                      <Text fontSize="xs" color="gray.600" textAlign="center">
-                        Farm Documented
-                      </Text>
-                    </VStack>
-                  </HStack>
-
-                  <Box
-                    mt={4}
-                    p={3}
-                    bg="green.50"
-                    borderRadius="md"
-                    borderLeft="3px solid"
-                    borderLeftColor="green.500"
-                  >
-                    <Text fontSize="sm" color="green.800">
-                      💡 <strong>Why transparency matters:</strong> Complete documentation helps
-                      consumers trust authentic farming practices and supports farmers who share
-                      their full story.
-                    </Text>
-                  </Box>
-
-                  {/* Certification Badges — inside Transparency Achievement section */}
-                  {(completeData as any)?.standard_view?.certifications?.length > 0 && (
-                    <Box mt={4}>
-                      <CertificationBadge
-                        certifications={(completeData as any).standard_view.certifications}
-                      />
-                    </Box>
-                  )}
-
-                  {/* Certification + Continuous Proof messaging — only for verified certifications */}
-                  {(() => {
-                    const certifications = (completeData as any)?.standard_view?.certifications || [];
-                    const hasVerifiedCert = certifications.some(
-                      (c: any) => c.status === 'verified_via_database'
-                    );
-                    if (!hasVerifiedCert) return null;
-                    const eventCount = completeData?.timeline?.length || 0;
-                    return (
-                      <Box
-                        mt={4}
-                        p={3}
-                        bg="green.50"
-                        borderRadius="md"
-                        borderLeft="3px solid"
-                        borderLeftColor="green.500"
-                      >
-                        <Text fontSize="sm" color="green.800">
-                          🏅{' '}
-                          {intl.formatMessage(
-                            { id: 'consumer.certification.verifiedContinuousProof' },
-                            { eventCount }
-                          )}
-                        </Text>
-                      </Box>
-                    );
-                  })()}
-                </Box>
               </Box>
+
+              {/* ── Card 2: Certification & Practices (conditional) ── */}
+              {(() => {
+                const organicClaim = (completeData as any)?.standard_view?.organic_claim;
+                const allCertifications =
+                  (completeData as any)?.standard_view?.certifications || [];
+                const organicSummary = (completeData as any)?.standard_view?.organic_summary;
+
+                // When OrganicClaimBadge is active for certified organic, the USDA Organic
+                // certification is already represented there — filter it out of the list
+                // to avoid redundant display. Show its certifier as an attribution line instead.
+                const showingOrganicClaim =
+                  organicClaim &&
+                  organicClaim.status !== 'conventional' &&
+                  organicClaim.status !== 'self_reported';
+                const usdaOrganicCert = showingOrganicClaim
+                  ? allCertifications.find(
+                      (c: any) =>
+                        c.display_name === 'USDA Organic' ||
+                        /usda.*organic/i.test(c.display_name || '')
+                    )
+                  : null;
+                const otherCertifications = showingOrganicClaim
+                  ? allCertifications.filter((c: any) => c !== usdaOrganicCert)
+                  : allCertifications;
+
+                const hasContent =
+                  showingOrganicClaim ||
+                  allCertifications.length > 0 ||
+                  organicSummary;
+
+                if (!hasContent) return null;
+
+                return (
+                  <Box
+                    bg="white"
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor="gray.200"
+                    overflow="hidden"
+                    p={6}
+                  >
+                    <VStack spacing={4} align="stretch">
+                      <HStack spacing={2}>
+                        <Icon as={FaCertificate} color="green.500" boxSize={5} />
+                        <Heading size="md" color="gray.800">
+                          {intl.formatMessage({ id: 'certification.manage.title' })}
+                        </Heading>
+                      </HStack>
+
+                      {/* Organic claim — regulatory gate per 7 CFR 205.300 / 16 CFR 260.6(d).
+                          Server-side ConsumerClaimValidator decides what may be shown. */}
+                      <OrganicClaimBadge claim={organicClaim} />
+
+                      {/* USDA Organic attribution — compact source + certifier line */}
+                      {usdaOrganicCert && (
+                        <VStack align="start" spacing={0.5} pl={1}>
+                          <Text fontSize="xs" color="gray.500">
+                            {intl.formatMessage({ id: 'certification.badge.verified' })}
+                          </Text>
+                          {usdaOrganicCert.certifier_name && (
+                            <Text fontSize="xs" color="gray.500">
+                              {intl.formatMessage({ id: 'certification.manage.certifier' })}:{' '}
+                              <Text as="span" color="gray.700" fontWeight="medium">
+                                {usdaOrganicCert.certifier_name}
+                              </Text>
+                            </Text>
+                          )}
+                        </VStack>
+                      )}
+
+                      {/* Other (non-organic) certification details — inline, no nested card */}
+                      {otherCertifications.length > 0 && (
+                        <>
+                          <Divider />
+                          <CertificationBadge
+                            certifications={otherCertifications}
+                            variant="inline"
+                          />
+                        </>
+                      )}
+
+                      {/* Organic practices narrative */}
+                      {organicSummary &&
+                        (() => {
+                          const isVerified = organicSummary.certification_verified;
+                          return (
+                            <>
+                              <Divider />
+                              <VStack align="start" spacing={1.5}>
+                                {organicSummary.has_input_data && (
+                                  <HStack spacing={2}>
+                                    <Icon as={FaLeaf} color="green.600" boxSize={3.5} mt="2px" />
+                                    <Text fontSize="sm" color="gray.700">
+                                      {organicSummary.all_inputs_organic
+                                        ? intl.formatMessage(
+                                            { id: 'consumer.organic.story.allInputsApproved' },
+                                            { count: organicSummary.total_chemical_inputs }
+                                          )
+                                        : intl.formatMessage(
+                                            { id: 'consumer.organic.story.someInputsApproved' },
+                                            {
+                                              approved: organicSummary.organic_approved_inputs,
+                                              total: organicSummary.total_chemical_inputs
+                                            }
+                                          )}
+                                    </Text>
+                                  </HStack>
+                                )}
+                                <Text fontSize="sm" color="gray.600">
+                                  {intl.formatMessage({
+                                    id: isVerified
+                                      ? 'consumer.organic.story.verifiedNarrative'
+                                      : 'consumer.organic.story.selfReportedNarrative'
+                                  })}
+                                </Text>
+                              </VStack>
+                            </>
+                          );
+                        })()}
+
+                      {/* Continuous proof messaging — only for non-organic verified certs */}
+                      {!organicSummary &&
+                        (() => {
+                          const hasVerifiedCert = certifications.some(
+                            (c: any) => c.status === 'verified_via_database'
+                          );
+                          if (!hasVerifiedCert) return null;
+                          const eventCount = completeData?.timeline?.length || 0;
+                          return (
+                            <>
+                              <Divider />
+                              <Text fontSize="sm" color="gray.600">
+                                {intl.formatMessage(
+                                  { id: 'consumer.certification.verifiedContinuousProof' },
+                                  { eventCount }
+                                )}
+                              </Text>
+                            </>
+                          );
+                        })()}
+                    </VStack>
+                  </Box>
+                );
+              })()}
 
               {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
               <Suspense fallback={<CarbonExplainerLoader />}>
@@ -1183,50 +1252,23 @@ function ProductDetail() {
                 mb={6}
               >
                 <VStack align="start" spacing={4}>
-                  <Flex align="center" justify="space-between" w="full">
-                    <Heading size="md" color="gray.800">
-                      🌱 How This Food Was Grown
-                    </Heading>
-                    <Badge
-                      colorScheme="green"
-                      px={3}
-                      py={1}
-                      borderRadius="full"
-                      fontSize="sm"
-                      fontWeight="semibold"
-                    >
-                      {getDisplayTransparencyScore()}% Transparent
-                    </Badge>
-                  </Flex>
+                  <Heading size="md" color="gray.800">
+                    {intl.formatMessage({ id: 'consumer.howGrown.title' })}
+                  </Heading>
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} w="full">
-                    {/* Farming Practices */}
+                    {/* Farming Events */}
                     <HStack align="start" spacing={3}>
                       <Icon as={FaSeedling} color="green.500" size="20px" mt={1} />
                       <Box>
                         <Text fontWeight="semibold" color="gray.800">
-                          {completeData?.timeline?.length || 0} Farming Events Documented
+                          {intl.formatMessage(
+                            { id: 'consumer.howGrown.eventsDocumented' },
+                            { count: completeData?.timeline?.length || 0 }
+                          )}
                         </Text>
                         <Text fontSize="sm" color="gray.600">
-                          From planting to harvest, every step tracked
-                        </Text>
-                      </Box>
-                    </HStack>
-
-                    {/* Verification Status */}
-                    <HStack align="start" spacing={3}>
-                      <Icon
-                        as={FaCertificate}
-                        color="green.500"
-                        size="20px"
-                        mt={1}
-                      />
-                      <Box>
-                        <Text fontWeight="semibold" color="gray.800">
-                          Documented Farm Journey
-                        </Text>
-                        <Text fontSize="sm" color="gray.600">
-                          Farmer-documented practices from planting to harvest
+                          {intl.formatMessage({ id: 'consumer.howGrown.eventsSubtitle' })}
                         </Text>
                       </Box>
                     </HStack>
@@ -1236,18 +1278,19 @@ function ProductDetail() {
                       <Icon as={FaCheckCircle} color="green.500" size="20px" mt={1} />
                       <Box>
                         <Text fontWeight="semibold" color="gray.800">
-                          {(() => {
-                            // Count actual photos from events with albums
-                            const events = completeData?.timeline || [];
-                            const eventsWithPhotos = events.filter(
-                              (event: any) => event.album || event.hasAlbum
-                            );
-                            return eventsWithPhotos.length;
-                          })()}{' '}
-                          Photos Included
+                          {intl.formatMessage(
+                            { id: 'consumer.howGrown.photosIncluded' },
+                            {
+                              count: (() => {
+                                const events = completeData?.timeline || [];
+                                return events.filter((event: any) => event.album || event.hasAlbum)
+                                  .length;
+                              })()
+                            }
+                          )}
                         </Text>
                         <Text fontSize="sm" color="gray.600">
-                          Visual proof of sustainable practices
+                          {intl.formatMessage({ id: 'consumer.howGrown.photosSubtitle' })}
                         </Text>
                       </Box>
                     </HStack>
@@ -1283,7 +1326,10 @@ function ProductDetail() {
                                 </Text>
                                 {blockchain.txHash && (
                                   <Link
-                                    href={`${import.meta.env.VITE_POLYGON_EXPLORER_URL || 'https://polygonscan.com'}/tx/${blockchain.txHash}`}
+                                    href={`${
+                                      import.meta.env.VITE_POLYGON_EXPLORER_URL ||
+                                      'https://polygonscan.com'
+                                    }/tx/${blockchain.txHash}`}
                                     isExternal
                                     fontSize="xs"
                                     color="red.500"
@@ -1315,7 +1361,10 @@ function ProductDetail() {
                               </Text>
                               {blockchain.txHash && (
                                 <Link
-                                  href={`${import.meta.env.VITE_POLYGON_EXPLORER_URL || 'https://polygonscan.com'}/tx/${blockchain.txHash}`}
+                                  href={`${
+                                    import.meta.env.VITE_POLYGON_EXPLORER_URL ||
+                                    'https://polygonscan.com'
+                                  }/tx/${blockchain.txHash}`}
                                   isExternal
                                   fontSize="xs"
                                   color="purple.500"
@@ -1808,10 +1857,7 @@ function ProductDetail() {
           {/* Consumer Feedback Section */}
           <Box id="reviews-section">
             <VStack spacing={8}>
-              <QuickFeedback
-                productionId={productionId || ''}
-                onFeedbackSubmitted={() => {}}
-              />
+              <QuickFeedback productionId={productionId || ''} onFeedbackSubmitted={() => {}} />
             </VStack>
           </Box>
         </VStack>

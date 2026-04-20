@@ -133,7 +133,7 @@ export const FUEL_TYPE_OPTIONS: FieldOption[] = [
   { value: 'propane', labelKey: 'quickAdd.fields.fuelType.propane' },
   { value: 'electric', labelKey: 'quickAdd.fields.fuelType.electric' },
   { value: 'biodiesel', labelKey: 'quickAdd.fields.fuelType.biodiesel' },
-  { value: 'none', labelKey: 'quickAdd.fields.fuelType.none' },
+  { value: 'none', labelKey: 'quickAdd.fields.fuelType.none' }
 ];
 
 // Generic application methods (fallback)
@@ -189,7 +189,7 @@ export const IRRIGATION_METHOD_OPTIONS: FieldOption[] = [
   { value: 'sub_irrigation', labelKey: 'quickAdd.fields.irrigationMethod.subsurface' },
   { value: 'micro_sprinkler', labelKey: 'quickAdd.fields.irrigationMethod.microSprinkler' },
   { value: 'hand_watering', labelKey: 'quickAdd.fields.irrigationMethod.handWatering' },
-  { value: 'rain_fed', labelKey: 'quickAdd.fields.irrigationMethod.rainFed' },
+  { value: 'rain_fed', labelKey: 'quickAdd.fields.irrigationMethod.rainFed' }
 ];
 
 // Complete water source options (combined from Quick Event and Manual Event)
@@ -302,6 +302,10 @@ export const CHEMICAL_SUBTYPE_OPTIONS = {
     {
       value: 'synthetic_fungicide',
       labelKey: 'quickAdd.fields.chemicalSubtype.syntheticFungicide'
+    },
+    {
+      value: 'organic_fungicide',
+      labelKey: 'quickAdd.fields.chemicalSubtype.organicFungicide'
     },
     { value: 'copper_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.copperFungicide' },
     { value: 'sulfur_fungicide', labelKey: 'quickAdd.fields.chemicalSubtype.sulfurFungicide' },

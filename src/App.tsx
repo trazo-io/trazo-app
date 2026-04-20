@@ -35,6 +35,7 @@ import ConsumerProductLayout from 'components/Layout/ConsumerProductLayout';
 import Authenticated from './utils/protections/Authenticated';
 //@ts-ignore
 import CertificationsView from 'views/Dashboard/Certifications';
+import OSPView from 'views/Dashboard/OSP/OSPView';
 //@ts-ignore
 import CheckAuth from './utils/protections/CheckAuth';
 import CommercialView from 'views/Dashboard/Commercial';
@@ -345,6 +346,11 @@ const App = () => {
                     path="farm/:farmId/parcel/:parcelId/production/:productionId/finish"
                     exact
                     element={<FinishProduction />}
+                  />
+                  <Route
+                    path="farm/:farmId/osp"
+                    exact
+                    element={<OSPView />}
                   />
                   <Route
                     path="farm/:farmId/certifications/parcels"

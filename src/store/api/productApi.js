@@ -202,10 +202,7 @@ export const productApi = baseApi.injectEndpoints({
         { type: 'Farm', id: farmId },
         'Company' // Also refresh company data when updating parcels
       ],
-      async onQueryStarted(
-        { companyId, farmId, parcelId },
-        { dispatch, queryFulfilled }
-      ) {
+      async onQueryStarted({ companyId, farmId, parcelId }, { dispatch, queryFulfilled }) {
         try {
           const { data: updatedParcel } = await queryFulfilled;
           // Update the getParcel cache immediately with the response
@@ -230,9 +227,7 @@ export const productApi = baseApi.injectEndpoints({
     }),
     getFarmProducts: build.query({
       query: ({ companyId, farmId, parcelId }) => ({
-        url:
-          FARM_PRODUCTS_URL(companyId, farmId) +
-          (parcelId ? `?parcel=${parcelId}` : ''),
+        url: FARM_PRODUCTS_URL(companyId, farmId) + (parcelId ? `?parcel=${parcelId}` : ''),
         method: 'GET',
         credentials: 'include'
       })
@@ -263,6 +258,40 @@ export const productApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       })
+    }),
+    getParcelCropHistory: build.query({
+      query: (parcelId) => ({
+        url: `/parcel-crop-history/?parcel=${parcelId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: ['ParcelCropHistory']
+    }),
+    createParcelCropHistory: build.mutation({
+      query: (data) => ({
+        url: '/parcel-crop-history/',
+        method: 'POST',
+        credentials: 'include',
+        body: data
+      }),
+      invalidatesTags: ['ParcelCropHistory']
+    }),
+    deleteParcelCropHistory: build.mutation({
+      query: (id) => ({
+        url: `/parcel-crop-history/${id}/`,
+        method: 'DELETE',
+        credentials: 'include'
+      }),
+      invalidatesTags: ['ParcelCropHistory']
+    }),
+    updateParcelCropHistory: build.mutation({
+      query: ({ id, ...data }) => ({
+        url: `/parcel-crop-history/${id}/`,
+        method: 'PATCH',
+        credentials: 'include',
+        body: data
+      }),
+      invalidatesTags: ['ParcelCropHistory']
     })
   }),
   overrideExisting: false
@@ -275,7 +304,11 @@ export const {
   useGetProductsQuery,
   useGetFarmProductsQuery,
   useGetFarmHistoriesQuery,
-  useGetFarmScansVsSalesChartInfoQuery
+  useGetFarmScansVsSalesChartInfoQuery,
+  useGetParcelCropHistoryQuery,
+  useCreateParcelCropHistoryMutation,
+  useDeleteParcelCropHistoryMutation,
+  useUpdateParcelCropHistoryMutation
 } = productApi;
 
 // Backward-compat aliases for renamed hooks

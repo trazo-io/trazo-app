@@ -1,5 +1,9 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useIntl } from 'react-intl';
+// Event Field Registry (Phase 5 — feature-flagged)
+import { getFieldsForSurface } from 'src/config/events';
+
+const USE_FIELD_REGISTRY = import.meta.env.VITE_USE_FIELD_REGISTRY === 'true';
 import {
   Box,
   Button,
@@ -217,56 +221,136 @@ const extractEventFields = (event: Event) => {
   const subtype = event.type || '';
 
   switch (event.event_type) {
-    case 0: { // Weather Event — subtype-aware priority
+    case 0: {
+      // Weather Event — subtype-aware priority
       const ed = event.extra_data || {};
       const wType = event.weather_type || subtype;
+      // Temperature unit lives alongside the value; defaults to "C" for
+      // historical rows created before the °C/°F toggle existed.
+      const tempUnitRaw = (event as any).temperature_unit || ed.temperature_unit || 'C';
+      const tempUnit =
+        typeof tempUnitRaw === 'string' && tempUnitRaw.toUpperCase() === 'F' ? '°F' : '°C';
 
       // Frost (FR): low temp → protection → duration
       if (wType === 'FR' || subtype.includes('frost')) {
         if (event.lower_temperature || ed.lower_temperature)
-          fields.push({ label: 'Low Temp', value: `${event.lower_temperature || ed.lower_temperature}°C`, icon: FaThermometerHalf, color: 'blue.500' });
+          fields.push({
+            label: 'Low Temp',
+            value: `${event.lower_temperature || ed.lower_temperature}${tempUnit}`,
+            icon: FaThermometerHalf,
+            color: 'blue.500'
+          });
         const prot = event.way_of_protection || ed.way_of_protection;
-        if (prot) fields.push({ label: 'Protection', value: prot, icon: FaCheckCircle, color: 'green.500' });
+        if (prot)
+          fields.push({
+            label: 'Protection',
+            value: prot,
+            icon: FaCheckCircle,
+            color: 'green.500'
+          });
       }
       // Drought (DR): water deficit → duration
       else if (wType === 'DR' || subtype.includes('drought')) {
         const wd = event.water_deficit || ed.water_deficit;
-        if (wd) fields.push({ label: 'Water Deficit', value: `${wd}mm`, icon: FaTint, color: 'blue.600' });
+        if (wd)
+          fields.push({
+            label: 'Water Deficit',
+            value: `${wd}mm`,
+            icon: FaTint,
+            color: 'blue.600'
+          });
       }
       // Hailstorm (HL): diameter → damage → duration
       else if (wType === 'HL' || subtype.includes('hailstorm')) {
         const dia = event.diameter || ed.diameter || ed.average_hailstone_diameter;
-        if (dia) fields.push({ label: 'Hail Size', value: `${dia} ${dia.toString().includes('cm') ? '' : 'mm'}`, icon: FaCircle, color: 'gray.600' });
+        if (dia)
+          fields.push({
+            label: 'Hail Size',
+            value: `${dia} ${dia.toString().includes('cm') ? '' : 'mm'}`,
+            icon: FaCircle,
+            color: 'gray.600'
+          });
         const dmg = event.damage_assessment || ed.damage_assessment;
-        if (dmg) fields.push({ label: 'Damage', value: dmg, icon: FaExclamationTriangle, color: 'red.500' });
+        if (dmg)
+          fields.push({
+            label: 'Damage',
+            value: dmg,
+            icon: FaExclamationTriangle,
+            color: 'red.500'
+          });
       }
       // High Temperature (HT): high temp → duration
       else if (wType === 'HT' || subtype.includes('high_temperature')) {
         if (event.highest_temperature || ed.highest_temperature)
-          fields.push({ label: 'High Temp', value: `${event.highest_temperature || ed.highest_temperature}°C`, icon: FaThermometerHalf, color: 'red.500' });
+          fields.push({
+            label: 'High Temp',
+            value: `${event.highest_temperature || ed.highest_temperature}${tempUnit}`,
+            icon: FaThermometerHalf,
+            color: 'red.500'
+          });
       }
       // Tropical Storm (TS) / High Winds (HW): wind speed → precipitation → damage
-      else if (wType === 'TS' || wType === 'HW' || subtype.includes('storm') || subtype.includes('wind')) {
+      else if (
+        wType === 'TS' ||
+        wType === 'HW' ||
+        subtype.includes('storm') ||
+        subtype.includes('wind')
+      ) {
         const ws = event.wind_speed || ed.wind_speed;
-        if (ws) fields.push({ label: 'Wind Speed', value: `${ws} km/h`, icon: FaLeaf, color: 'gray.500' });
+        if (ws)
+          fields.push({
+            label: 'Wind Speed',
+            value: `${ws} km/h`,
+            icon: FaLeaf,
+            color: 'gray.500'
+          });
         const precip = event.precipitation_amount || ed.precipitation_amount;
-        if (precip) fields.push({ label: 'Precipitation', value: `${precip}mm`, icon: FaCloudRain, color: 'blue.400' });
+        if (precip)
+          fields.push({
+            label: 'Precipitation',
+            value: `${precip}mm`,
+            icon: FaCloudRain,
+            color: 'blue.400'
+          });
         const dmg = event.damage_assessment || ed.damage_assessment;
-        if (dmg) fields.push({ label: 'Damage', value: dmg, icon: FaExclamationTriangle, color: 'red.500' });
+        if (dmg)
+          fields.push({
+            label: 'Damage',
+            value: dmg,
+            icon: FaExclamationTriangle,
+            color: 'red.500'
+          });
       }
       // Humidity (HH/LH): humidity level → crop impact → duration
       else if (wType === 'HH' || wType === 'LH' || subtype.includes('humidity')) {
         const hum = event.humidity_level || ed.humidity_level;
-        if (hum) fields.push({ label: 'Humidity', value: `${hum}%`, icon: FaTint, color: 'cyan.500' });
+        if (hum)
+          fields.push({ label: 'Humidity', value: `${hum}%`, icon: FaTint, color: 'cyan.500' });
         const impact = event.crop_impact || ed.crop_impact;
-        if (impact) fields.push({ label: 'Crop Impact', value: impact, icon: FaExclamationTriangle, color: 'orange.500' });
+        if (impact)
+          fields.push({
+            label: 'Crop Impact',
+            value: impact,
+            icon: FaExclamationTriangle,
+            color: 'orange.500'
+          });
       }
       // Generic fallback: push whatever temperature/weather data exists
       else {
         if (event.highest_temperature || ed.highest_temperature)
-          fields.push({ label: 'High Temp', value: `${event.highest_temperature || ed.highest_temperature}°C`, icon: FaThermometerHalf, color: 'red.500' });
+          fields.push({
+            label: 'High Temp',
+            value: `${event.highest_temperature || ed.highest_temperature}${tempUnit}`,
+            icon: FaThermometerHalf,
+            color: 'red.500'
+          });
         if (event.lower_temperature || ed.lower_temperature)
-          fields.push({ label: 'Low Temp', value: `${event.lower_temperature || ed.lower_temperature}°C`, icon: FaThermometerHalf, color: 'blue.500' });
+          fields.push({
+            label: 'Low Temp',
+            value: `${event.lower_temperature || ed.lower_temperature}${tempUnit}`,
+            icon: FaThermometerHalf,
+            color: 'blue.500'
+          });
       }
 
       // Common weather fields: duration (useful across all subtypes)
@@ -275,132 +359,315 @@ const extractEventFields = (event: Event) => {
         const isHailstorm = wType === 'HL';
         const durStr = dur.toString().toLowerCase();
         const hasUnit = durStr.includes('hour') || durStr.includes('hr') || durStr.includes('min');
-        fields.push({ label: 'Duration', value: `${dur}${hasUnit ? '' : isHailstorm ? ' minutes' : ' hours'}`, icon: FaClock, color: 'purple.500' });
+        fields.push({
+          label: 'Duration',
+          value: `${dur}${hasUnit ? '' : isHailstorm ? ' minutes' : ' hours'}`,
+          icon: FaClock,
+          color: 'purple.500'
+        });
       }
 
       if (fields.length === 0) {
-        fields.push({ label: 'Weather Data', value: 'Details not available', icon: FaInfoCircle, color: 'gray.500' });
+        fields.push({
+          label: 'Weather Data',
+          value: 'Details not available',
+          icon: FaInfoCircle,
+          color: 'gray.500'
+        });
       }
       break;
     }
 
-    case 1: { // Production Event — subtype-aware priority
+    case 1: {
+      // Production Event — subtype-aware priority
       const prodType = event.production_type || subtype;
 
       // Harvest (HA): yield first, then quality grade, then area
       if (prodType === 'HA') {
         if (event.yield_quantity && event.yield_quantity > 0)
-          fields.push({ label: 'Yield', value: `${event.yield_quantity} ${event.yield_unit || 'units'}`, icon: FaWeightHanging, color: 'green.600' });
+          fields.push({
+            label: 'Yield',
+            value: `${event.yield_quantity} ${event.yield_unit || 'units'}`,
+            icon: FaWeightHanging,
+            color: 'green.600'
+          });
         if (event.harvest_quality_grade)
-          fields.push({ label: 'Quality', value: event.harvest_quality_grade.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaStar, color: 'yellow.500' });
+          fields.push({
+            label: 'Quality',
+            value: event.harvest_quality_grade
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            icon: FaStar,
+            color: 'yellow.500'
+          });
         if (event.area_covered && event.area_covered > 0)
-          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
+          fields.push({
+            label: 'Area',
+            value: `${event.area_covered} ${event.area_unit || 'ha'}`,
+            icon: FaRulerCombined,
+            color: 'green.500'
+          });
       }
       // Irrigation (IR): method first, then area, then electricity_source (Phase 3) or water source
       else if (prodType === 'IR') {
         if (event.irrigation_method)
-          fields.push({ label: 'Method', value: event.irrigation_method.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaWater, color: 'blue.500' });
+          fields.push({
+            label: 'Method',
+            value: event.irrigation_method
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            icon: FaWater,
+            color: 'blue.500'
+          });
         if (event.area_covered && event.area_covered > 0)
-          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
+          fields.push({
+            label: 'Area',
+            value: `${event.area_covered} ${event.area_unit || 'ha'}`,
+            icon: FaRulerCombined,
+            color: 'green.500'
+          });
         // Phase 3: Prefer electricity_source over water_source as third field when present
         const elecSrc = event.electricity_source ?? event.extra_data?.electricity_source;
         if (elecSrc) {
-          const elecSrcLabels: Record<string, string> = { grid: 'Grid', solar: 'Solar', wind: 'Wind', diesel_generator: 'Diesel Gen.', mixed: 'Mixed' };
+          const elecSrcLabels: Record<string, string> = {
+            grid: 'Grid',
+            solar: 'Solar',
+            wind: 'Wind',
+            diesel_generator: 'Diesel Gen.',
+            mixed: 'Mixed'
+          };
           const isSustainable = elecSrc === 'solar' || elecSrc === 'wind';
-          fields.push({ label: 'Power Source', value: elecSrcLabels[elecSrc] || elecSrc, icon: FaBolt, color: isSustainable ? 'green.500' : 'orange.500' });
+          fields.push({
+            label: 'Power Source',
+            value: elecSrcLabels[elecSrc] || elecSrc,
+            icon: FaBolt,
+            color: isSustainable ? 'green.500' : 'orange.500'
+          });
         } else if (event.water_source) {
-          fields.push({ label: 'Water Source', value: event.water_source.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaTint, color: 'blue.400' });
+          fields.push({
+            label: 'Water Source',
+            value: event.water_source
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            icon: FaTint,
+            color: 'blue.400'
+          });
         }
       }
       // Planting (PL): quantity (seeds), area, seeds source
       else if (prodType === 'PL') {
         if (event.yield_quantity && event.yield_quantity > 0)
-          fields.push({ label: 'Seeds/Plants', value: `${event.yield_quantity} ${event.yield_unit || 'units'}`, icon: FaSeedling, color: 'green.600' });
+          fields.push({
+            label: 'Seeds/Plants',
+            value: `${event.yield_quantity} ${event.yield_unit || 'units'}`,
+            icon: FaSeedling,
+            color: 'green.600'
+          });
         if (event.area_covered && event.area_covered > 0)
-          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
+          fields.push({
+            label: 'Area',
+            value: `${event.area_covered} ${event.area_unit || 'ha'}`,
+            icon: FaRulerCombined,
+            color: 'green.500'
+          });
         if (event.seeds_source)
-          fields.push({ label: 'Seed Source', value: event.seeds_source.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaLeaf, color: 'green.400' });
+          fields.push({
+            label: 'Seed Source',
+            value: event.seeds_source
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            icon: FaLeaf,
+            color: 'green.400'
+          });
       }
       // Equipment Maintenance (EM): equipment type, fuel, hours
       else if (prodType === 'EM') {
         if (event.equipment_type)
-          fields.push({ label: 'Equipment', value: event.equipment_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaTractor, color: 'blue.500' });
+          fields.push({
+            label: 'Equipment',
+            value: event.equipment_type
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            icon: FaTractor,
+            color: 'blue.500'
+          });
         if (event.fuel_consumed && event.fuel_consumed > 0)
-          fields.push({ label: 'Fuel Used', value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`, icon: FaGasPump, color: 'orange.500' });
+          fields.push({
+            label: 'Fuel Used',
+            value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`,
+            icon: FaGasPump,
+            color: 'orange.500'
+          });
         if (event.equipment_hours && event.equipment_hours > 0)
-          fields.push({ label: 'Hours', value: `${event.equipment_hours} hours`, icon: FaClock, color: 'blue.500' });
+          fields.push({
+            label: 'Hours',
+            value: `${event.equipment_hours} hours`,
+            icon: FaClock,
+            color: 'blue.500'
+          });
       }
       // Pollination (PO): pollinator type and hive count
       else if (prodType === 'PO') {
         const ed = event.extra_data || {};
         const pollinatorType = event.pollinator_type || ed.pollinator_type;
         if (pollinatorType)
-          fields.push({ label: 'Pollinator', value: pollinatorType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaLeaf, color: 'yellow.500' });
+          fields.push({
+            label: 'Pollinator',
+            value: pollinatorType
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            icon: FaLeaf,
+            color: 'yellow.500'
+          });
         const hiveCount = event.hive_count !== undefined ? event.hive_count : ed.hive_count;
         if (hiveCount !== undefined && hiveCount !== null)
-          fields.push({ label: 'Hives', value: `${hiveCount} hives`, icon: FaSeedling, color: 'yellow.600' });
+          fields.push({
+            label: 'Hives',
+            value: `${hiveCount} hives`,
+            icon: FaSeedling,
+            color: 'yellow.600'
+          });
       }
       // Post-Harvest Processing (PH): processing type and duration
       else if (prodType === 'PH') {
         const ed = event.extra_data || {};
         const processingType = event.processing_type || ed.processing_type;
         if (processingType)
-          fields.push({ label: 'Processing', value: processingType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaCog, color: 'teal.500' });
-        const processingDuration = event.processing_duration_hours !== undefined ? event.processing_duration_hours : ed.processing_duration_hours;
+          fields.push({
+            label: 'Processing',
+            value: processingType
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            icon: FaCog,
+            color: 'teal.500'
+          });
+        const processingDuration =
+          event.processing_duration_hours !== undefined
+            ? event.processing_duration_hours
+            : ed.processing_duration_hours;
         if (processingDuration !== undefined && processingDuration !== null)
-          fields.push({ label: 'Duration', value: `${processingDuration} hours`, icon: FaClock, color: 'teal.600' });
+          fields.push({
+            label: 'Duration',
+            value: `${processingDuration} hours`,
+            icon: FaClock,
+            color: 'teal.600'
+          });
       }
       // Canopy Management (CM): canopy operation and pass number
       else if (prodType === 'CM') {
         const ed = event.extra_data || {};
         const canopyOp = event.canopy_operation || ed.canopy_operation;
         if (canopyOp)
-          fields.push({ label: 'Operation', value: canopyOp.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaLeaf, color: 'green.600' });
+          fields.push({
+            label: 'Operation',
+            value: canopyOp.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            icon: FaLeaf,
+            color: 'green.600'
+          });
         const passNum = event.pass_number !== undefined ? event.pass_number : ed.pass_number;
         if (passNum !== undefined && passNum !== null)
-          fields.push({ label: 'Pass', value: `${passNum}`, icon: FaLayerGroup, color: 'green.500' });
+          fields.push({
+            label: 'Pass',
+            value: `${passNum}`,
+            icon: FaLayerGroup,
+            color: 'green.500'
+          });
       }
       // Pruning (PR): area, pruning passes (summary), hours
       else if (prodType === 'PR') {
         if (event.area_covered && event.area_covered > 0)
-          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
-        const pruningPasses = event.pruning_passes !== undefined ? event.pruning_passes : (event.extra_data || {}).pruning_passes;
+          fields.push({
+            label: 'Area',
+            value: `${event.area_covered} ${event.area_unit || 'ha'}`,
+            icon: FaRulerCombined,
+            color: 'green.500'
+          });
+        const pruningPasses =
+          event.pruning_passes !== undefined
+            ? event.pruning_passes
+            : (event.extra_data || {}).pruning_passes;
         if (pruningPasses !== undefined && pruningPasses !== null && fields.length < 3)
-          fields.push({ label: 'Pruning Passes', value: `${pruningPasses} pruning passes`, icon: FaLayerGroup, color: 'green.500' });
+          fields.push({
+            label: 'Pruning Passes',
+            value: `${pruningPasses} pruning passes`,
+            icon: FaLayerGroup,
+            color: 'green.500'
+          });
         if (event.equipment_hours && event.equipment_hours > 0 && fields.length < 3)
-          fields.push({ label: 'Hours', value: `${event.equipment_hours} hours`, icon: FaClock, color: 'blue.500' });
+          fields.push({
+            label: 'Hours',
+            value: `${event.equipment_hours} hours`,
+            icon: FaClock,
+            color: 'blue.500'
+          });
       }
       // Default production (TR, CU, TH): area, fuel, hours
       else {
         if (event.area_covered && event.area_covered > 0)
-          fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
+          fields.push({
+            label: 'Area',
+            value: `${event.area_covered} ${event.area_unit || 'ha'}`,
+            icon: FaRulerCombined,
+            color: 'green.500'
+          });
         if (event.fuel_consumed && event.fuel_consumed > 0)
-          fields.push({ label: 'Fuel Used', value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`, icon: FaGasPump, color: 'orange.500' });
+          fields.push({
+            label: 'Fuel Used',
+            value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`,
+            icon: FaGasPump,
+            color: 'orange.500'
+          });
         if (event.equipment_hours && event.equipment_hours > 0)
-          fields.push({ label: 'Hours', value: `${event.equipment_hours} hours`, icon: FaClock, color: 'blue.500' });
+          fields.push({
+            label: 'Hours',
+            value: `${event.equipment_hours} hours`,
+            icon: FaClock,
+            color: 'blue.500'
+          });
       }
 
       // Secondary display: variety when present across all production subtypes
       if (fields.length < 3 && event.variety)
-        fields.push({ label: 'Variety', value: event.variety, icon: FaSeedling, color: 'green.400' });
+        fields.push({
+          label: 'Variety',
+          value: event.variety,
+          icon: FaSeedling,
+          color: 'green.400'
+        });
 
       break;
     }
 
-    case 2: { // Chemical Event — commercial_name is already the card title, don't repeat it
+    case 2: {
+      // Chemical Event — commercial_name is already the card title, don't repeat it
       const chemType = event.chemical_type || subtype;
 
       // Area treated — Phase 3: prefer area_numeric over legacy area_treated
       const areaNum = event.area_numeric ?? event.area_treated;
       if (areaNum && areaNum > 0)
-        fields.push({ label: 'Area Treated', value: `${areaNum} ${event.area_unit || 'acres'}`, icon: FaRulerCombined, color: 'orange.600' });
+        fields.push({
+          label: 'Area Treated',
+          value: `${areaNum} ${event.area_unit || 'acres'}`,
+          icon: FaRulerCombined,
+          color: 'orange.600'
+        });
       else if (event.area && event.area !== '0')
-        fields.push({ label: 'Area Treated', value: event.area, icon: FaRulerCombined, color: 'orange.600' });
+        fields.push({
+          label: 'Area Treated',
+          value: event.area,
+          icon: FaRulerCombined,
+          color: 'orange.600'
+        });
 
       // Volume/application rate — Phase 3: prefer volume_numeric over legacy volume_applied
       const volNum = event.volume_numeric ?? event.volume_applied;
       if (volNum && volNum > 0)
-        fields.push({ label: 'Volume', value: `${volNum} ${event.volume_unit || 'gal'}`, icon: FaTint, color: 'blue.500' });
+        fields.push({
+          label: 'Volume',
+          value: `${volNum} ${event.volume_unit || 'gal'}`,
+          icon: FaTint,
+          color: 'blue.500'
+        });
       else if (event.volume && event.volume !== '0')
         fields.push({ label: 'Rate', value: event.volume, icon: FaTint, color: 'blue.500' });
 
@@ -409,109 +676,258 @@ const extractEventFields = (event: Event) => {
         // Fertilizer: NPK ratio or concentration
         const npk = event.npk_ratio || event.concentration;
         if (npk) fields.push({ label: 'NPK', value: npk, icon: FaLeaf, color: 'green.500' });
-      } else if (chemType === 'PE' || chemType === 'FU' || chemType === 'HE' || subtype.includes('pesticide') || subtype.includes('fungicide') || subtype.includes('herbicide')) {
+      } else if (
+        chemType === 'PE' ||
+        chemType === 'FU' ||
+        chemType === 'HE' ||
+        subtype.includes('pesticide') ||
+        subtype.includes('fungicide') ||
+        subtype.includes('herbicide')
+      ) {
         // Pest/Fungi/Herb: target pest/disease or application method
         if (event.target_pest_disease)
-          fields.push({ label: 'Target', value: event.target_pest_disease, icon: FaLeaf, color: 'red.500' });
+          fields.push({
+            label: 'Target',
+            value: event.target_pest_disease,
+            icon: FaLeaf,
+            color: 'red.500'
+          });
         else if (event.way_of_application || event.application_method_structured) {
           const method = event.application_method_structured || event.way_of_application;
-          fields.push({ label: 'Method', value: method.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaCog, color: 'gray.600' });
+          fields.push({
+            label: 'Method',
+            value: method.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+            icon: FaCog,
+            color: 'gray.600'
+          });
         }
       }
 
       // Organic status as third field if we have room
-      if (fields.length < 3 && event.organic_approved && event.organic_approved !== 'not_applicable') {
-        const isOrganic = ['yes', 'omri_listed', 'usda_nop_approved', 'organic_equivalent'].includes(event.organic_approved);
-        fields.push({ label: 'Organic', value: isOrganic ? 'Yes' : 'Conventional', icon: FaLeaf, color: isOrganic ? 'green.500' : 'gray.500' });
+      if (
+        fields.length < 3 &&
+        event.organic_approved &&
+        event.organic_approved !== 'not_applicable'
+      ) {
+        const isOrganic = [
+          'yes',
+          'omri_listed',
+          'usda_nop_approved',
+          'organic_equivalent'
+        ].includes(event.organic_approved);
+        fields.push({
+          label: 'Organic',
+          value: isOrganic ? 'Yes' : 'Conventional',
+          icon: FaLeaf,
+          color: isOrganic ? 'green.500' : 'gray.500'
+        });
       }
       break;
     }
 
     case 3: // General Event — OK as-is
       if (event.duration)
-        fields.push({ label: 'Duration', value: `${event.duration} hours`, icon: FaClock, color: 'gray.500' });
+        fields.push({
+          label: 'Duration',
+          value: `${event.duration} hours`,
+          icon: FaClock,
+          color: 'gray.500'
+        });
       if (event.people_involved)
-        fields.push({ label: 'Participants', value: `${event.people_involved} people`, icon: FaUser, color: 'blue.500' });
+        fields.push({
+          label: 'Participants',
+          value: `${event.people_involved} people`,
+          icon: FaUser,
+          color: 'blue.500'
+        });
       break;
 
     case 4: // Equipment Event — add equipment identity first
       if (event.equipment_name || event.equipment_type_structured) {
-        const eqName = event.equipment_name || event.equipment_type_structured.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+        const eqName =
+          event.equipment_name ||
+          event.equipment_type_structured
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (c: string) => c.toUpperCase());
         fields.push({ label: 'Equipment', value: eqName, icon: FaTractor, color: 'blue.500' });
       }
       if (event.fuel_consumed)
-        fields.push({ label: 'Fuel Used', value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`, icon: FaGasPump, color: 'orange.500' });
+        fields.push({
+          label: 'Fuel Used',
+          value: `${event.fuel_consumed} ${event.fuel_unit || 'L'}`,
+          icon: FaGasPump,
+          color: 'orange.500'
+        });
       if (event.hours_operated)
-        fields.push({ label: 'Hours', value: `${event.hours_operated} hours`, icon: FaClock, color: 'blue.500' });
+        fields.push({
+          label: 'Hours',
+          value: `${event.hours_operated} hours`,
+          icon: FaClock,
+          color: 'blue.500'
+        });
       if (fields.length < 3 && event.maintenance_cost)
-        fields.push({ label: 'Cost', value: `$${event.maintenance_cost}`, icon: FaDollarSign, color: 'green.600' });
+        fields.push({
+          label: 'Cost',
+          value: `$${event.maintenance_cost}`,
+          icon: FaDollarSign,
+          color: 'green.600'
+        });
       if (fields.length < 3 && event.area_worked)
-        fields.push({ label: 'Area', value: `${event.area_worked} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'green.500' });
+        fields.push({
+          label: 'Area',
+          value: `${event.area_worked} ${event.area_unit || 'ha'}`,
+          icon: FaRulerCombined,
+          color: 'green.500'
+        });
       break;
 
-    case 5: { // Soil Management — soil science fields first, operational fields last
+    case 5: {
+      // Soil Management — soil science fields first, operational fields last
       const soilType = event.soil_management_type || subtype;
 
       // Soil pH — critical for ST, PA events
       if (event.soil_ph)
-        fields.push({ label: 'Soil pH', value: `${event.soil_ph}`, icon: FaFlask, color: 'purple.500' });
+        fields.push({
+          label: 'Soil pH',
+          value: `${event.soil_ph}`,
+          icon: FaFlask,
+          color: 'purple.500'
+        });
 
       // Organic matter — critical for ST, OM events
       if (event.organic_matter_percentage)
-        fields.push({ label: 'Organic Matter', value: `${event.organic_matter_percentage}%`, icon: FaLeaf, color: 'green.600' });
+        fields.push({
+          label: 'Organic Matter',
+          value: `${event.organic_matter_percentage}%`,
+          icon: FaLeaf,
+          color: 'green.600'
+        });
 
       // Amendment type/amount — critical for PA, OM, SA events
       if (event.amendment_type)
-        fields.push({ label: 'Amendment', value: event.amendment_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()), icon: FaSeedling, color: 'green.500' });
+        fields.push({
+          label: 'Amendment',
+          value: event.amendment_type
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+          icon: FaSeedling,
+          color: 'green.500'
+        });
 
       // Working depth — critical for TI events
       if (event.working_depth)
-        fields.push({ label: 'Depth', value: `${event.working_depth} ${event.depth_unit || 'cm'}`, icon: FaMapMarkerAlt, color: 'yellow.700' });
+        fields.push({
+          label: 'Depth',
+          value: `${event.working_depth} ${event.depth_unit || 'cm'}`,
+          icon: FaMapMarkerAlt,
+          color: 'yellow.700'
+        });
 
       // Area covered — universal fallback
       if (fields.length < 3 && event.area_covered)
-        fields.push({ label: 'Area', value: `${event.area_covered} ${event.area_unit || 'ha'}`, icon: FaRulerCombined, color: 'yellow.600' });
+        fields.push({
+          label: 'Area',
+          value: `${event.area_covered} ${event.area_unit || 'ha'}`,
+          icon: FaRulerCombined,
+          color: 'yellow.600'
+        });
 
       // Equipment used
       if (fields.length < 3 && event.equipment_used)
-        fields.push({ label: 'Equipment', value: event.equipment_used, icon: FaTractor, color: 'blue.500' });
+        fields.push({
+          label: 'Equipment',
+          value: event.equipment_used,
+          icon: FaTractor,
+          color: 'blue.500'
+        });
       break;
     }
 
-    case 6: { // Pest Management — subtype-aware
+    case 6: {
+      // Pest Management — subtype-aware
       const pestType = event.pest_management_type || event.pest_type || subtype;
 
       // Beneficial Release (BR): species + quantity are the defining fields
       if (pestType === 'BR' || pestType === 'beneficial_release') {
         if (event.beneficial_species)
-          fields.push({ label: 'Species', value: event.beneficial_species, icon: FaLeaf, color: 'green.500' });
+          fields.push({
+            label: 'Species',
+            value: event.beneficial_species,
+            icon: FaLeaf,
+            color: 'green.500'
+          });
         if (event.release_quantity)
-          fields.push({ label: 'Quantity', value: `${event.release_quantity}`, icon: FaWeightHanging, color: 'green.600' });
+          fields.push({
+            label: 'Quantity',
+            value: `${event.release_quantity}`,
+            icon: FaWeightHanging,
+            color: 'green.600'
+          });
         if (event.field_area_hectares)
-          fields.push({ label: 'Area', value: `${event.field_area_hectares} ha`, icon: FaRulerCombined, color: 'red.600' });
+          fields.push({
+            label: 'Area',
+            value: `${event.field_area_hectares} ha`,
+            icon: FaRulerCombined,
+            color: 'red.600'
+          });
       }
       // Trap Monitoring (TM): trap count + pest species + findings
       else if (pestType === 'TM' || pestType === 'trap_monitoring') {
         if (event.trap_count)
-          fields.push({ label: 'Traps Checked', value: `${event.trap_count}`, icon: FaCog, color: 'orange.500' });
+          fields.push({
+            label: 'Traps Checked',
+            value: `${event.trap_count}`,
+            icon: FaCog,
+            color: 'orange.500'
+          });
         if (event.pest_species)
-          fields.push({ label: 'Target Pest', value: event.pest_species, icon: FaLeaf, color: 'red.500' });
+          fields.push({
+            label: 'Target Pest',
+            value: event.pest_species,
+            icon: FaLeaf,
+            color: 'red.500'
+          });
         if (event.field_area_hectares)
-          fields.push({ label: 'Area', value: `${event.field_area_hectares} ha`, icon: FaRulerCombined, color: 'red.600' });
+          fields.push({
+            label: 'Area',
+            value: `${event.field_area_hectares} ha`,
+            icon: FaRulerCombined,
+            color: 'red.600'
+          });
       }
       // Scouting (SC), Identification (PI), Threshold (TA), IPM (IP): pest + damage + area
       else {
         if (event.pest_species)
-          fields.push({ label: 'Target Pest', value: event.pest_species, icon: FaLeaf, color: 'red.500' });
+          fields.push({
+            label: 'Target Pest',
+            value: event.pest_species,
+            icon: FaLeaf,
+            color: 'red.500'
+          });
         if (event.damage_percentage)
-          fields.push({ label: 'Damage', value: `${event.damage_percentage}%`, icon: FaExclamationTriangle, color: 'orange.500' });
+          fields.push({
+            label: 'Damage',
+            value: `${event.damage_percentage}%`,
+            icon: FaExclamationTriangle,
+            color: 'orange.500'
+          });
         if (event.field_area_hectares)
-          fields.push({ label: 'Area', value: `${event.field_area_hectares} ha`, icon: FaRulerCombined, color: 'red.600' });
+          fields.push({
+            label: 'Area',
+            value: `${event.field_area_hectares} ha`,
+            icon: FaRulerCombined,
+            color: 'red.600'
+          });
       }
 
       // Chemical-free period — great trust indicator across all pest subtypes
       if (fields.length < 3 && event.chemical_free_period_days)
-        fields.push({ label: 'Chemical-Free', value: `${event.chemical_free_period_days} days`, icon: FaCheckCircle, color: 'green.500' });
+        fields.push({
+          label: 'Chemical-Free',
+          value: `${event.chemical_free_period_days} days`,
+          icon: FaCheckCircle,
+          color: 'green.500'
+        });
       break;
     }
 
@@ -519,24 +935,42 @@ const extractEventFields = (event: Event) => {
       if (event.certification_type)
         fields.push({
           label: 'Certification',
-          value: event.certification_type_display || event.certification_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
-          icon: FaCertificate, color: 'blue.500'
+          value:
+            event.certification_type_display ||
+            event.certification_type
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+          icon: FaCertificate,
+          color: 'blue.500'
         });
       if (event.verification_status)
         fields.push({
           label: 'Status',
-          value: event.verification_status_display || event.verification_status.replace(/\b\w/g, (c: string) => c.toUpperCase()),
-          icon: FaCheckCircle, color: 'cyan.500'
+          value:
+            event.verification_status_display ||
+            event.verification_status.replace(/\b\w/g, (c: string) => c.toUpperCase()),
+          icon: FaCheckCircle,
+          color: 'cyan.500'
         });
       // Sustainability practice or certifier name — more useful than trust_impact
       if (event.sustainability_practice)
         fields.push({
           label: 'Practice',
-          value: event.sustainability_practice_display || event.sustainability_practice.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
-          icon: FaLeaf, color: 'green.500'
+          value:
+            event.sustainability_practice_display ||
+            event.sustainability_practice
+              .replace(/_/g, ' ')
+              .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+          icon: FaLeaf,
+          color: 'green.500'
         });
       else if (event.verified_certifier_name)
-        fields.push({ label: 'Certifier', value: event.verified_certifier_name, icon: FaStar, color: 'yellow.500' });
+        fields.push({
+          label: 'Certifier',
+          value: event.verified_certifier_name,
+          icon: FaStar,
+          color: 'yellow.500'
+        });
       break;
   }
 
@@ -551,13 +985,17 @@ const getOperatorName = (event: Event, members: Member[]) => {
 
 // Enhanced description generation
 const getEnhancedDescription = (event: Event) => {
-  // Use the observation field if it contains meaningful content
-  if (
-    event.observation &&
-    event.observation.trim() &&
-    !event.observation.toLowerCase().includes('no additional details')
-  ) {
-    return event.observation;
+  // Prefer the observation field, then fall back to description. The frontend
+  // save path (NewEvent.jsx) renames observation → description before POSTing
+  // because CommonEvent.description is a NOT NULL column — so list/detail
+  // serializers may return the farmer notes under either key depending on the
+  // response path. Check both before falling back to the generic template.
+  const notes =
+    (event.observation && event.observation.trim()) ||
+    ((event as any).description && String((event as any).description).trim()) ||
+    '';
+  if (notes && !notes.toLowerCase().includes('no additional details')) {
+    return notes;
   }
 
   // Generate smart description based on event type and data
@@ -625,7 +1063,11 @@ const getEnhancedDescription = (event: Event) => {
     case 7: // Business
       // Carbon credits tooltip removed - transparency-first approach
       if (event.certification_type) {
-        const certDisplay = event.certification_type_display || event.certification_type.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+        const certDisplay =
+          event.certification_type_display ||
+          event.certification_type
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (c: string) => c.toUpperCase());
         return `${certDisplay} activities`;
       }
       return 'Business sustainability activities completed';
@@ -652,17 +1094,53 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Use embedded carbon data — weather (0), general (3), and business (7) events always have 0 emissions
-  const isZeroEmissionType = event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
+  const isZeroEmissionType =
+    event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
   const zeroEmissionLabels: Record<number, string> = { 0: 'weather', 3: 'general', 7: 'business' };
   const carbonData = isZeroEmissionType
-    ? { co2e: 0, efficiency_score: 100, calculation_method: `${zeroEmissionLabels[event.event_type]}_transparency` }
-    : (event.carbon_data || null);
+    ? {
+        co2e: 0,
+        efficiency_score: 100,
+        calculation_method: `${zeroEmissionLabels[event.event_type]}_transparency`
+      }
+    : event.carbon_data || null;
 
   // Get enhanced event configuration
   const eventConfig = getEventConfig(event.event_type, event.type, event.description);
 
   // Extract event-specific fields
-  const eventFields = extractEventFields(event);
+  // When VITE_USE_FIELD_REGISTRY=true, use centralized registry instead of hardcoded switch.
+  // The registry's timeline surface has maxFields=3 with automatic tier-based truncation.
+  const registryTimelineFields = useMemo(() => {
+    if (!USE_FIELD_REGISTRY) return null;
+    const subtype =
+      (event as any).weather_type ||
+      (event as any).production_type ||
+      (event as any).chemical_type ||
+      (event as any).soil_management_type ||
+      (event as any).pest_management_type ||
+      (event as any).business_event_type ||
+      event.type;
+    const result = getFieldsForSurface(event.event_type, subtype, 'timeline', event as any);
+    return [
+      ...result.hero.filter((f) => f.name !== 'name' && f.name !== 'commercial_name'),
+      ...result.immediate
+    ]
+      .slice(0, 3)
+      .map((f) => ({
+        label:
+          f.labelKey
+            .split('.')
+            .pop()
+            ?.replace(/([A-Z])/g, ' $1')
+            .replace(/^./, (s) => s.toUpperCase())
+            .trim() || f.name,
+        value: f.formattedValue || '',
+        icon: undefined,
+        color: undefined
+      }));
+  }, [event]);
+  const eventFields = registryTimelineFields || extractEventFields(event);
   const operatorName = getOperatorName(event, members);
   const enhancedDescription = getEnhancedDescription(event);
 
@@ -777,7 +1255,15 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                         <Tooltip
                           label={`Aggregate of ${
                             event.event_count || event.extra_data?.event_count || 'multiple'
-                          } ${event.type === 'HA' ? 'harvests' : event.type === 'IR' ? 'irrigations' : event.type === 'PR' ? 'pruning passes' : 'events'}`}
+                          } ${
+                            event.type === 'HA'
+                              ? 'harvests'
+                              : event.type === 'IR'
+                              ? 'irrigations'
+                              : event.type === 'PR'
+                              ? 'pruning passes'
+                              : 'events'
+                          }`}
                           hasArrow
                           placement="top"
                         >
@@ -902,7 +1388,12 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
               </Flex>
 
               {/* Clean Description */}
-              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" lineHeight="relaxed" noOfLines={2}>
+              <Text
+                fontSize={{ base: 'xs', md: 'sm' }}
+                color="gray.600"
+                lineHeight="relaxed"
+                noOfLines={2}
+              >
                 {enhancedDescription}
               </Text>
 
@@ -916,7 +1407,12 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       </Text>
                       <HStack spacing={1}>
                         {field.icon && <Icon as={field.icon} color={field.color} boxSize={3} />}
-                        <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="600" color="gray.700" noOfLines={1}>
+                        <Text
+                          fontSize={{ base: 'xs', md: 'sm' }}
+                          fontWeight="600"
+                          color="gray.700"
+                          noOfLines={1}
+                        >
                           {field.value}
                         </Text>
                       </HStack>
@@ -947,17 +1443,32 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     py={2}
                   >
                     <HStack spacing={2} cursor="help" flexShrink={0}>
-                      <Circle size="24px" bg={carbonData.co2e === 0 ? 'gray.100' : `${getImpactLevel(carbonData.co2e).color}.100`}>
+                      <Circle
+                        size="24px"
+                        bg={
+                          carbonData.co2e === 0
+                            ? 'gray.100'
+                            : `${getImpactLevel(carbonData.co2e).color}.100`
+                        }
+                      >
                         <Icon
                           as={MdEco}
-                          color={carbonData.co2e === 0 ? 'gray.500' : `${getImpactLevel(carbonData.co2e).color}.600`}
+                          color={
+                            carbonData.co2e === 0
+                              ? 'gray.500'
+                              : `${getImpactLevel(carbonData.co2e).color}.600`
+                          }
                           boxSize={3}
                         />
                       </Circle>
                       <Text
                         fontSize="sm"
                         fontWeight="600"
-                        color={carbonData.co2e === 0 ? 'gray.500' : `${getImpactLevel(carbonData.co2e).color}.700`}
+                        color={
+                          carbonData.co2e === 0
+                            ? 'gray.500'
+                            : `${getImpactLevel(carbonData.co2e).color}.700`
+                        }
                         whiteSpace="nowrap"
                       >
                         {formatCO2e(carbonData.co2e)} kg CO₂e

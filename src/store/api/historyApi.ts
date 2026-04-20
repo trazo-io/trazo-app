@@ -100,6 +100,7 @@ export interface PublicHistory {
     };
     photos?: string[];
   }>;
+  production_method?: string;
 }
 
 export interface CommentHistoryRequest {

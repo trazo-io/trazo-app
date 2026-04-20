@@ -43,6 +43,7 @@ import { useIntl } from 'react-intl';
 import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 'components/Design/StandardComponents';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
+import FieldHistorySection from './FieldHistorySection';
 import { formatAreaWithBothUnits } from '../../../../utils/areaUnits';
 
 // Type definitions
@@ -868,6 +869,11 @@ function ProfileParcel(): React.ReactElement {
               )}
             </VStack>
           </StandardCard>
+        )}
+
+        {/* Field History Section */}
+        {parcelId && (
+          <FieldHistorySection parcelId={parcelId} canWrite={canWrite} />
         )}
 
         {/* Company & Establishment Section */}

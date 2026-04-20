@@ -18,6 +18,8 @@ interface Route {
   isCarbonDashboard?: boolean;
   isIoTDashboard?: boolean;
   isCompanySettings?: boolean;
+  isTransparencyDashboard?: boolean;
+  isOrganicSystemPlan?: boolean;
   items?: Route[];
   secondaryNavbar?: boolean | undefined;
   isHome?: boolean;

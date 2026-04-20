@@ -35,7 +35,6 @@ function formatNumber(val: any): string {
 function normalizeEventData(event: any): any {
   const normalized = { ...event };
 
-
   // === COMPREHENSIVE FIELD NORMALIZATION FOR CHEMICAL EVENTS ===
 
   // Application Method Mapping
@@ -413,17 +412,24 @@ export function getReadableFieldValue(field: string, value: string): string {
       not_applicable: 'N/A'
     },
     seeds_source: {
-      // Production event seed source for transparency
-      // Form values from ProductionTab.jsx
-      certified_organic: '🌱 Certified Organic Seeds',
+      // Production event seed SOURCE for transparency — where the seed came from
+      // (For regulatory classification, use seed_certification_status)
       farm_saved: '♻️ Farm-Saved Seeds',
       local: '🏡 Local Nursery/Supplier',
       cooperative: '🤝 Farmer Cooperative',
       commercial: '🏭 Commercial Supplier',
       other: '📝 Other Source',
-      // Legacy backend values
+      // Legacy backend values (migrated in 0152)
+      certified_organic: '🌱 Certified Organic Seeds',
       imported: '✈️ Imported',
       certified: '✅ Certified Organic Seeds'
+    },
+    seed_certification_status: {
+      // NOP 7 CFR 205.204 regulatory classification
+      certified_organic: '🌱 Certified Organic',
+      transitional: '🔄 Transitional',
+      non_organic_untreated: '⚪ Non-organic (Untreated)',
+      non_organic_treated: '⚠️ Non-organic (Treated)'
     },
     water_source: {
       // Production event water source for transparency
@@ -467,6 +473,7 @@ export function getReadableFieldValue(field: string, value: string): string {
       organic_herbicide: '🌿 Organic/Natural Herbicide',
       // Fungicide subtypes (biological = 56% lower carbon than synthetic)
       synthetic_fungicide: '🏭 Synthetic Fungicide',
+      organic_fungicide: '🌿 Organic/Natural Fungicide',
       copper_fungicide: '🔶 Copper-Based Fungicide',
       sulfur_fungicide: '🟡 Sulfur-Based Fungicide',
       biological_fungicide: '🌱 Biological Fungicide',
@@ -637,7 +644,7 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
     'event.weather.tropical_storm': 'TS',
     'event.weather.high_winds': 'HW',
     'event.weather.high_humidity': 'HH',
-    'event.weather.low_humidity': 'LH',
+    'event.weather.low_humidity': 'LH'
   };
   const weatherType = serializedTypeMap[rawWeatherType] || rawWeatherType;
 
@@ -646,8 +653,9 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
   // Frost Events (FR) - also check for type field
   if (description.includes('frost') || description.includes('freeze') || weatherType === 'FR') {
     // Check normalized event first, then fallback to extra_data
-    const temperatureValue =
-      isValidValue(event.lower_temperature) ? event.lower_temperature : extraData.lower_temperature;
+    const temperatureValue = isValidValue(event.lower_temperature)
+      ? event.lower_temperature
+      : extraData.lower_temperature;
     if (isValidValue(temperatureValue)) {
       // Handle both string (e.g., "-2°C") and number (e.g., -2) formats
       let tempDisplay = '';
@@ -798,8 +806,9 @@ export function getWeatherEventFields(event: any): EventFieldDisplay {
     weatherType === 'DR'
   ) {
     // Check normalized event first, then fallback to extra_data
-    const waterDeficitValue =
-      isValidValue(event.water_deficit) ? event.water_deficit : extraData.water_deficit;
+    const waterDeficitValue = isValidValue(event.water_deficit)
+      ? event.water_deficit
+      : extraData.water_deficit;
     if (isValidValue(waterDeficitValue)) {
       immediate.push({
         label: 'Water Deficit',
@@ -1125,7 +1134,8 @@ export function getChemicalEventFields(event: any): EventFieldDisplay {
   ) {
     const npkParts = [];
     if (isValidValue(event.nitrogen_total_kg)) npkParts.push(`N: ${event.nitrogen_total_kg} kg`);
-    if (isValidValue(event.phosphorus_total_kg)) npkParts.push(`P: ${event.phosphorus_total_kg} kg`);
+    if (isValidValue(event.phosphorus_total_kg))
+      npkParts.push(`P: ${event.phosphorus_total_kg} kg`);
     if (isValidValue(event.potassium_total_kg)) npkParts.push(`K: ${event.potassium_total_kg} kg`);
 
     if (npkParts.length > 0) {
@@ -1213,7 +1223,8 @@ export function getChemicalEventFields(event: any): EventFieldDisplay {
   }
 
   // Applicator Certification - DETAILS for verification transparency
-  const applicatorCert = event.applicator_certification || event.extra_data?.applicator_certification;
+  const applicatorCert =
+    event.applicator_certification || event.extra_data?.applicator_certification;
   if (isValidValue(applicatorCert)) {
     details.push({
       label: 'Applicator Certification',
@@ -1524,10 +1535,16 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
 
     // Operation Efficiency (SECONDARY - efficiency level) — skip "normal"
     // Case-insensitive check: normalizer may capitalize "normal" → "Normal"
-    if (isValidValue(event.operation_efficiency) && event.operation_efficiency.toLowerCase() !== 'normal') {
+    if (
+      isValidValue(event.operation_efficiency) &&
+      event.operation_efficiency.toLowerCase() !== 'normal'
+    ) {
       secondary.push({
         label: 'Operation Efficiency',
-        value: getReadableFieldValue('operation_efficiency', event.operation_efficiency.toLowerCase()),
+        value: getReadableFieldValue(
+          'operation_efficiency',
+          event.operation_efficiency.toLowerCase()
+        ),
         priority: 'secondary',
         category: 'operational'
       });
@@ -1694,11 +1711,29 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     });
   }
 
-  if (extraData.method) {
-    secondary.push({
-      label: 'Pruning Method',
+  // Operation method (Hand thinning, Pruning shears, Mechanical harvester, etc.)
+  // Farmer-documented method enables Trazo's Direct Operational Emissions routing
+  // (manual keyword → 0.1 kg CO2e/acre instead of USDA mechanical averages).
+  // Elevated to immediate priority — hand labor is a key transparency signal for
+  // organic/specialty farming (thinning, pruning, cultivation, transplanting, canopy mgmt).
+  //
+  // HA (Harvesting) is intentionally EXCLUDED — it already has a dedicated
+  // harvest_method render below (line ~1750) which handles the structured choice
+  // field. Including HA here would produce a duplicate "Harvest Method" row.
+  // HA's production_method still flows to the backend carbon calc via event_data.
+  if (extraData.method && event.production_type !== 'HA') {
+    const subtypeMethodLabels: Record<string, string> = {
+      TH: 'Thinning Method',
+      PR: 'Pruning Method',
+      CU: 'Cultivation Method',
+      TR: 'Transplanting Method',
+      CM: 'Canopy Management Method'
+    };
+    const methodLabel = subtypeMethodLabels[event.production_type as string] || 'Operation Method';
+    immediate.push({
+      label: methodLabel,
       value: extraData.method,
-      priority: 'secondary',
+      priority: 'immediate',
       category: 'operational'
     });
   }
@@ -1745,7 +1780,7 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     const brixLevelModel = event.brix_level;
     const brixLevels = isValidValue(brixLevelModel)
       ? brixLevelModel
-      : (event.brix_levels || extraData.brix_levels || extraData.brix_level);
+      : event.brix_levels || extraData.brix_levels || extraData.brix_level;
     if (isValidValue(brixLevels)) {
       immediate.push({
         label: 'Brix Level',
@@ -1799,6 +1834,64 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     });
   }
 
+  // NOP 7 CFR 205.204 — Seed Certification Status (planting subtype)
+  if (event.seed_certification_status) {
+    secondary.push({
+      label: 'Seed Certification Status',
+      value: getReadableFieldValue(
+        'seed_certification_status',
+        event.seed_certification_status
+      ),
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Regulatory classification of seed used (NOP 7 CFR 205.204)'
+    });
+  }
+
+  // NOP 7 CFR 205.204 — Seed Supplier (top-level model field, migration 0152)
+  if (event.seed_supplier_name) {
+    secondary.push({
+      label: 'Seed Supplier',
+      value: event.seed_supplier_name,
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Who supplied the seed/planting stock (NOP traceability)'
+    });
+  }
+
+  // NOP 7 CFR 205.204 — Seed Purchase Date
+  if (event.seed_purchase_date) {
+    details.push({
+      label: 'Seed Purchase Date',
+      value: event.seed_purchase_date,
+      priority: 'details',
+      category: 'verification',
+      tooltip: 'Date the seed/planting stock was purchased'
+    });
+  }
+
+  // NOP 7 CFR 205.204 — Seed Purchase Invoice
+  if (event.seed_purchase_invoice) {
+    details.push({
+      label: 'Seed Invoice #',
+      value: event.seed_purchase_invoice,
+      priority: 'details',
+      category: 'verification',
+      tooltip: 'Supplier invoice number for the seed purchase'
+    });
+  }
+
+  // NOP 7 CFR 205.204 — Seed Treatment (top-level model field, distinct from legacy treated_or_untreated)
+  if (event.seed_treatment) {
+    secondary.push({
+      label: 'Seed Treatment',
+      value: event.seed_treatment,
+      priority: 'secondary',
+      category: 'verification',
+      tooltip: 'Coatings, inoculants, or pelleting applied to the seed'
+    });
+  }
+
   // Water Source - SECONDARY priority for transparency about water usage (Irrigation)
   if (event.water_source) {
     secondary.push({
@@ -1849,7 +1942,8 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     });
   }
 
-  const organicCertNumber = event.organic_certificate_number || extraData.organic_certificate_number;
+  const organicCertNumber =
+    event.organic_certificate_number || extraData.organic_certificate_number;
   if (isValidValue(organicCertNumber)) {
     secondary.push({
       label: 'Supplier Organic Certificate',
@@ -1892,14 +1986,16 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     });
   }
 
-  const compostTemp = event.compost_temperature_reached_131f || extraData.compost_temperature_reached_131f;
+  const compostTemp =
+    event.compost_temperature_reached_131f || extraData.compost_temperature_reached_131f;
   if (isValidValue(compostTemp)) {
     secondary.push({
       label: 'Compost Reached 131\u00b0F',
       value: getReadableFieldValue('compost_temperature_reached_131f', compostTemp),
       priority: 'secondary',
       category: 'verification',
-      tooltip: 'NOP requires compost to reach 131\u00b0F for 3+ days (in-vessel) or 15 days (windrow)'
+      tooltip:
+        'NOP requires compost to reach 131\u00b0F for 3+ days (in-vessel) or 15 days (windrow)'
     });
   }
 
@@ -1963,7 +2059,11 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     if (isValidValue(placementDate)) {
       secondary.push({
         label: 'Hive Placement Date',
-        value: new Date(placementDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        value: new Date(placementDate + 'T12:00:00').toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        }),
         priority: 'secondary',
         category: 'operational'
       });
@@ -1973,7 +2073,11 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     if (isValidValue(removalDate)) {
       secondary.push({
         label: 'Hive Removal Date',
-        value: new Date(removalDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        value: new Date(removalDate + 'T12:00:00').toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        }),
         priority: 'secondary',
         category: 'operational'
       });
@@ -1994,9 +2098,10 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
       });
     }
 
-    const processingDuration = event.processing_duration_hours !== undefined
-      ? event.processing_duration_hours
-      : extraData.processing_duration_hours;
+    const processingDuration =
+      event.processing_duration_hours !== undefined
+        ? event.processing_duration_hours
+        : extraData.processing_duration_hours;
     if (isValidValue(processingDuration)) {
       immediate.push({
         label: 'Processing Duration',
@@ -2010,7 +2115,10 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
     if (isValidValue(temperatureControl)) {
       secondary.push({
         label: 'Temperature Control',
-        value: temperatureControl === true || temperatureControl === 'true' ? 'Yes — Temperature Controlled' : 'No',
+        value:
+          temperatureControl === true || temperatureControl === 'true'
+            ? 'Yes — Temperature Controlled'
+            : 'No',
         priority: 'secondary',
         category: 'operational'
       });
@@ -2478,7 +2586,10 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
 
   // Soil Management Type (using actual database field 'type')
   if (event.soil_management_type) {
-    const displayValue = operationTypes[event.soil_management_type] || operationTypes[event.type] || event.soil_management_type;
+    const displayValue =
+      operationTypes[event.soil_management_type] ||
+      operationTypes[event.type] ||
+      event.soil_management_type;
 
     immediate.push({
       label: 'Soil Management Type',
@@ -2545,7 +2656,12 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
   // Event Name already handled above as 'Operation Name' - no need to duplicate
 
   // Soil pH (from database field) - Move to immediate for better visibility
-  if (event.soil_ph !== undefined && event.soil_ph !== null && event.soil_ph !== '' && !isNaN(Number(event.soil_ph))) {
+  if (
+    event.soil_ph !== undefined &&
+    event.soil_ph !== null &&
+    event.soil_ph !== '' &&
+    !isNaN(Number(event.soil_ph))
+  ) {
     immediate.push({
       label: 'Soil pH',
       value: event.soil_ph.toString(),
@@ -2590,15 +2706,130 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
 
   // Amendment Amount with unit (IPCC 2006 compliance)
   // P1 FIX: Check if value already contains unit text to avoid double-appending
-  if (event.amendment_amount) {
-    const unit = event.amendment_unit || 'kg';
-    const amountStr = String(event.amendment_amount);
+  // Accept both legacy string field (amendment_amount) and registry/backend numeric field (amendment_amount_numeric)
+  const amendmentAmountValue = event.amendment_amount ?? (event as any).amendment_amount_numeric;
+  if (
+    amendmentAmountValue !== undefined &&
+    amendmentAmountValue !== null &&
+    amendmentAmountValue !== ''
+  ) {
+    const unit = event.amendment_unit || (event as any).amendment_amount_unit || 'kg';
+    const amountStr = String(amendmentAmountValue);
     const alreadyHasUnit = /[a-zA-Z]/.test(amountStr);
     immediate.push({
       label: 'Amendment Amount',
       value: alreadyHasUnit ? amountStr : `${amountStr} ${unit}`,
       priority: 'immediate',
       category: 'measurement'
+    });
+  }
+
+  // NOP Compliance: Amendment Organic Approval (7 CFR 205.203(b))
+  if (event.amendment_organic_approved) {
+    const organicApprovalMap: Record<string, string> = {
+      omri_listed: 'OMRI Listed',
+      usda_nop_approved: 'USDA NOP Approved',
+      organic_equivalent: 'Organic Equivalent',
+      transitional: 'Transitional',
+      not_organic: 'Not Organic Approved',
+      not_applicable: 'Not Applicable',
+      yes: 'Yes — Organic Approved',
+      no: 'No — Not Organic'
+    };
+    immediate.push({
+      label: 'Organic Approval',
+      value:
+        organicApprovalMap[event.amendment_organic_approved] || event.amendment_organic_approved,
+      priority: 'immediate',
+      category: 'certification'
+    });
+  }
+
+  // NOP Compliance: Compost Tracking (CO subtype, 7 CFR 205.203(c)(1))
+  if (
+    event.compost_peak_temp_f !== undefined &&
+    event.compost_peak_temp_f !== null &&
+    event.compost_peak_temp_f !== ''
+  ) {
+    immediate.push({
+      label: 'Compost Peak Temperature',
+      value: `${event.compost_peak_temp_f} °F`,
+      priority: 'immediate',
+      category: 'measurement'
+    });
+  }
+  if (
+    event.compost_duration_days_at_temp !== undefined &&
+    event.compost_duration_days_at_temp !== null &&
+    event.compost_duration_days_at_temp !== ''
+  ) {
+    immediate.push({
+      label: 'Days at Temperature',
+      value: `${event.compost_duration_days_at_temp} days`,
+      priority: 'immediate',
+      category: 'measurement'
+    });
+  }
+  if (
+    event.compost_turning_count !== undefined &&
+    event.compost_turning_count !== null &&
+    event.compost_turning_count !== ''
+  ) {
+    immediate.push({
+      label: 'Compost Turnings',
+      value: String(event.compost_turning_count),
+      priority: 'immediate',
+      category: 'measurement'
+    });
+  }
+  if (event.compost_method) {
+    const methodMap: Record<string, string> = {
+      windrow: 'Windrow (turned, open air)',
+      static_aerated: 'Static Aerated Pile',
+      in_vessel: 'In-Vessel'
+    };
+    immediate.push({
+      label: 'Compost Method',
+      value: methodMap[String(event.compost_method)] || String(event.compost_method),
+      priority: 'immediate',
+      category: 'certification'
+    });
+  }
+  if (
+    event.compost_initial_cn_ratio !== undefined &&
+    event.compost_initial_cn_ratio !== null &&
+    event.compost_initial_cn_ratio !== ''
+  ) {
+    immediate.push({
+      label: 'Initial C:N Ratio',
+      value: `${event.compost_initial_cn_ratio}:1`,
+      priority: 'immediate',
+      category: 'measurement'
+    });
+  }
+
+  // NOP Compliance: Raw Manure Timing (OM subtype, 7 CFR 205.203(c)(1))
+  if (event.manure_harvest_interval) {
+    const manureIntervalMap: Record<string, string> = {
+      '120': '120 days (edible portion contacts soil)',
+      '90': '90 days (edible portion does not contact soil)',
+      na: 'N/A — composted or no manure applied'
+    };
+    immediate.push({
+      label: 'Manure Harvest Interval',
+      value:
+        manureIntervalMap[String(event.manure_harvest_interval)] ||
+        String(event.manure_harvest_interval),
+      priority: 'immediate',
+      category: 'certification'
+    });
+  }
+  if (event.manure_application_date) {
+    details.push({
+      label: 'Manure Application Date',
+      value: String(event.manure_application_date),
+      priority: 'details',
+      category: 'traceability'
     });
   }
 
@@ -2663,6 +2894,72 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
       value: getReadableFieldValue('soil_texture', event.soil_texture),
       priority: 'details',
       category: 'environmental'
+    });
+  }
+
+  // NOP Audit Fields — important for organic inspection traceability
+  // Check both direct fields and extra_data (form data often stored there)
+  const soilPh = event.soil_ph ?? extraData.soil_ph;
+  if (soilPh !== undefined && soilPh !== null && soilPh !== '' && !isNaN(Number(soilPh))) {
+    details.push({
+      label: 'Soil pH',
+      value: String(soilPh),
+      priority: 'details',
+      category: 'environmental'
+    });
+  }
+
+  const organicMatterDetail =
+    event.organic_matter_percentage ??
+    event.organic_matter ??
+    extraData.organic_matter_percentage ??
+    extraData.organic_matter;
+  if (
+    organicMatterDetail !== undefined &&
+    organicMatterDetail !== null &&
+    organicMatterDetail !== ''
+  ) {
+    details.push({
+      label: 'Organic Matter',
+      value: `${organicMatterDetail}%`,
+      priority: 'details',
+      category: 'environmental'
+    });
+  }
+
+  const workingDepth =
+    event.working_depth ??
+    event.depth ??
+    event.tillage_depth ??
+    extraData.working_depth ??
+    extraData.depth;
+  const depthUnit = event.depth_unit ?? extraData.depth_unit ?? 'cm';
+  if (workingDepth !== undefined && workingDepth !== null && workingDepth !== '') {
+    details.push({
+      label: 'Working Depth',
+      value: `${workingDepth} ${depthUnit}`,
+      priority: 'details',
+      category: 'operational'
+    });
+  }
+
+  const blockId = event.block_id ?? extraData.block_id;
+  if (blockId && String(blockId).trim()) {
+    details.push({
+      label: 'Block / Section',
+      value: String(blockId),
+      priority: 'details',
+      category: 'traceability'
+    });
+  }
+
+  const cropVariety = event.variety ?? extraData.variety;
+  if (cropVariety && String(cropVariety).trim()) {
+    details.push({
+      label: 'Crop Variety',
+      value: String(cropVariety),
+      priority: 'details',
+      category: 'traceability'
     });
   }
 
@@ -2767,7 +3064,9 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
     if (normalizedEvent.animal_type) {
       details.push({
         label: 'Animal Type',
-        value: normalizedEvent.animal_type.charAt(0).toUpperCase() + normalizedEvent.animal_type.slice(1),
+        value:
+          normalizedEvent.animal_type.charAt(0).toUpperCase() +
+          normalizedEvent.animal_type.slice(1),
         priority: 'details',
         category: 'grazing'
       });
@@ -2857,14 +3156,16 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
     });
   }
 
-  const compostTemp = event.compost_temperature_reached_131f || extraData.compost_temperature_reached_131f;
+  const compostTemp =
+    event.compost_temperature_reached_131f || extraData.compost_temperature_reached_131f;
   if (isValidValue(compostTemp)) {
     secondary.push({
       label: 'Compost Reached 131\u00b0F',
       value: getReadableFieldValue('compost_temperature_reached_131f', compostTemp),
       priority: 'secondary',
       category: 'verification',
-      tooltip: 'NOP requires compost to reach 131\u00b0F for 3+ days (in-vessel) or 15 days (windrow)'
+      tooltip:
+        'NOP requires compost to reach 131\u00b0F for 3+ days (in-vessel) or 15 days (windrow)'
     });
   }
 
@@ -2910,10 +3211,14 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
 
   // Universal pest context fields (IMMEDIATE display) - All event types
   // Check both individual field (pest_species) and summary field (pest_species_observed)
-  const pestSpeciesValue = event.pest_species || event.pest_species_observed || extraData.pest_species_observed;
+  const pestSpeciesValue =
+    event.pest_species || event.pest_species_observed || extraData.pest_species_observed;
   if (pestSpeciesValue) {
-    const isSummaryEvent = event.is_summary === true || event.is_summary === 'true' ||
-      extraData.is_summary === true || extraData.is_summary === 'true';
+    const isSummaryEvent =
+      event.is_summary === true ||
+      event.is_summary === 'true' ||
+      extraData.is_summary === true ||
+      extraData.is_summary === 'true';
 
     immediate.push({
       label: isSummaryEvent ? 'Pest Species Observed' : 'Target Pest Species',
@@ -2934,7 +3239,8 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
 
   // Pest pressure level (IMMEDIATE for applicable types)
   // Check both individual field (pest_pressure_level) and summary field (average_pest_pressure)
-  const pressureLevel = event.pest_pressure_level || event.average_pest_pressure || extraData.average_pest_pressure;
+  const pressureLevel =
+    event.pest_pressure_level || event.average_pest_pressure || extraData.average_pest_pressure;
   if (pressureLevel && ['SC', 'TM', 'BR', 'PI', 'TA', 'IP'].includes(pestType)) {
     const pressureMap: Record<string, string> = {
       none: 'None - No pests observed',
@@ -2946,8 +3252,11 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
       critical: 'Critical pressure - immediate action'
     };
 
-    const isSummaryEvent = event.is_summary === true || event.is_summary === 'true' ||
-      extraData.is_summary === true || extraData.is_summary === 'true';
+    const isSummaryEvent =
+      event.is_summary === true ||
+      event.is_summary === 'true' ||
+      extraData.is_summary === true ||
+      extraData.is_summary === 'true';
 
     immediate.push({
       label: isSummaryEvent ? 'Average Pest Pressure' : 'Pest Pressure Level',
@@ -2961,16 +3270,21 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
 
   // SC (Scouting) - Monitoring and assessment fields
   if (pestType === 'SC') {
-    const isSummary = event.is_summary === true || event.is_summary === 'true' ||
-      extraData.is_summary === true || extraData.is_summary === 'true';
+    const isSummary =
+      event.is_summary === true ||
+      event.is_summary === 'true' ||
+      extraData.is_summary === true ||
+      extraData.is_summary === 'true';
 
     if (isSummary) {
       // Summary/Aggregate scouting fields
 
-
       // Total area scouted (form sends area_covered_total, normalizer maps to field_area_total)
-      const totalArea = event.field_area_total || event.area_covered_total ||
-        extraData.field_area_total || extraData.area_covered_total;
+      const totalArea =
+        event.field_area_total ||
+        event.area_covered_total ||
+        extraData.field_area_total ||
+        extraData.area_covered_total;
       if (totalArea) {
         const areaUnit = event.area_unit || extraData.area_unit || 'ha';
         secondary.push({
@@ -3037,8 +3351,7 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
     if (event.release_quantity) {
       const qty = event.release_quantity;
       const numQty = typeof qty === 'number' ? qty : Number(qty);
-      const formattedQty =
-        !isNaN(numQty) ? numQty.toLocaleString() : String(qty);
+      const formattedQty = !isNaN(numQty) ? numQty.toLocaleString() : String(qty);
       secondary.push({
         label: 'Release Quantity',
         value: formattedQty,
@@ -3055,9 +3368,10 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
     if (event.economic_threshold_met != null && event.economic_threshold_met !== '') {
       secondary.push({
         label: 'Economic Threshold Status',
-        value: event.economic_threshold_met === true || event.economic_threshold_met === 'true'
-          ? 'Threshold exceeded - action required'
-          : 'Below threshold - continue monitoring',
+        value:
+          event.economic_threshold_met === true || event.economic_threshold_met === 'true'
+            ? 'Threshold exceeded - action required'
+            : 'Below threshold - continue monitoring',
         priority: 'secondary',
         category: 'measurement'
       });
@@ -3080,8 +3394,7 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
     if (event.release_quantity) {
       const qty = event.release_quantity;
       const numQty = typeof qty === 'number' ? qty : Number(qty);
-      const formattedQty =
-        !isNaN(numQty) ? numQty.toLocaleString() : String(qty);
+      const formattedQty = !isNaN(numQty) ? numQty.toLocaleString() : String(qty);
       secondary.push({
         label: 'Beneficial Release Quantity',
         value: formattedQty,
@@ -3093,9 +3406,10 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
     if (event.economic_threshold_met != null && event.economic_threshold_met !== '') {
       secondary.push({
         label: 'Economic Threshold',
-        value: event.economic_threshold_met === true || event.economic_threshold_met === 'true'
-          ? 'Threshold-driven implementation'
-          : 'Preventive implementation',
+        value:
+          event.economic_threshold_met === true || event.economic_threshold_met === 'true'
+            ? 'Threshold-driven implementation'
+            : 'Preventive implementation',
         priority: 'secondary',
         category: 'measurement'
       });
@@ -3227,8 +3541,8 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
       rawInsects === true || String(rawInsects).toLowerCase() === 'true'
         ? 'yes'
         : rawInsects === false || String(rawInsects).toLowerCase() === 'false'
-          ? 'no'
-          : rawInsects;
+        ? 'no'
+        : rawInsects;
     secondary.push({
       label: 'Beneficial Insects',
       value: getReadableFieldValue('beneficial_insects_used', insectsValue),

@@ -60,6 +60,10 @@ import {
   type EventFieldDisplay,
   type FieldDisplayItem
 } from 'utils/fieldDisplayUtils';
+// Event Field Registry (Phase 5 — feature-flagged)
+import { getFieldsForSurface, type ResolvedFieldSet } from 'src/config/events';
+
+const USE_FIELD_REGISTRY = import.meta.env.VITE_USE_FIELD_REGISTRY === 'true';
 import {
   getVerificationBadgeConfig,
   getVerificationColor,
@@ -267,9 +271,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const sustainabilityLevel = getSustainabilityImpact(event.description, event);
   // Use shared getImpactLevel for consistent terminology when carbon data is available
   // FIX: Include carbon_impact === 0 so zero-emission events show "None" instead of "LOW IMPACT"
-  const carbonImpactLevel = typeof event.carbon_impact === 'number'
-    ? getImpactLevel(event.carbon_impact)
-    : null;
+  const carbonImpactLevel =
+    typeof event.carbon_impact === 'number' ? getImpactLevel(event.carbon_impact) : null;
   const trustIndicators = getEventTrustIndicators(event);
   const formattedDate = formatEventDate(event.date);
 
@@ -312,8 +315,74 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
       ? formatDateRange(event.date_start, event.date_end)
       : formattedDate;
 
-  // Get comprehensive field display data based on field display matrix
-  const fieldDisplay = getEventFieldDisplay(event);
+  // Get comprehensive field display data based on field display matrix.
+  // When VITE_USE_FIELD_REGISTRY=true, the registry's consumer_card surface
+  // drives field selection (which fields appear) while keeping the existing
+  // rendering style. Registry ResolvedField format is bridged to legacy
+  // FieldDisplayItem format so existing JSX works unchanged.
+  const legacyFieldDisplay = getEventFieldDisplay(event);
+
+  const fieldDisplay: EventFieldDisplay = (() => {
+    if (!USE_FIELD_REGISTRY) return legacyFieldDisplay;
+
+    const resolved = getFieldsForSurface(
+      (event.event_type as number) ?? 3,
+      ((event as any).weather_type ||
+        (event as any).production_type ||
+        (event as any).chemical_type ||
+        (event as any).soil_management_type ||
+        (event as any).pest_management_type ||
+        (event as any).business_event_type ||
+        (event as any).type) as any,
+      'consumer_card',
+      event as Record<string, unknown>
+    );
+
+    // Bridge: convert ResolvedField[] → FieldDisplayItem[] for existing JSX
+    const resolveLabel = (labelKey: string, fieldName: string): string => {
+      // Try i18n first for accurate labels
+      const i18nLabel = intl.formatMessage({ id: labelKey, defaultMessage: '' });
+      if (i18nLabel && i18nLabel !== labelKey) return i18nLabel;
+      // Fallback: convert camelCase key segment to readable label
+      return (
+        labelKey
+          .split('.')
+          .pop()
+          ?.replace(/([A-Z])/g, ' $1')
+          .replace(/^./, (s: string) => s.toUpperCase())
+          .trim() || fieldName
+      );
+    };
+    const toDisplayItems = (fields: typeof resolved.hero): FieldDisplayItem[] =>
+      fields.map(
+        (f) =>
+          ({
+            label: resolveLabel(f.labelKey, f.name),
+            value: f.formattedValue || '',
+            category: f.isCarbonRelevant ? 'carbon' : undefined
+          } as FieldDisplayItem)
+      );
+
+    const registryDisplay: EventFieldDisplay = {
+      // Exclude title fields from hero→immediate merge — they already render as the card title.
+      // 'name' is the primary title; 'commercial_name' is the chemical event fallback title.
+      // Other hero fields (pest_type, business_event_type, etc.) are kept in Key Details.
+      immediate: toDisplayItems([
+        ...resolved.hero.filter((f) => f.name !== 'name' && f.name !== 'commercial_name'),
+        ...resolved.immediate
+      ]),
+      secondary: toDisplayItems(resolved.secondary),
+      details: toDisplayItems(resolved.details)
+    };
+
+    // Use registry fields if they have content; fall back to legacy otherwise
+    const hasRegistryFields =
+      registryDisplay.immediate.length +
+        registryDisplay.secondary.length +
+        registryDisplay.details.length >
+      0;
+    return hasRegistryFields ? registryDisplay : legacyFieldDisplay;
+  })();
 
   // Blockchain verification is always production-level (one tx covers all events).
   // Individual events don't have their own blockchain transactions.
@@ -325,7 +394,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     confidence: event.verification_confidence || event.extra_data?.verification_confidence || 0,
     timestamp: event.verification_timestamp || event.extra_data?.verification_timestamp || '',
     integrityScore: event.data_integrity_score || event.extra_data?.data_integrity_score || 0,
-    explorerUrl: productionBlockchain?.tx_hash ? `${explorerBase}/tx/${productionBlockchain.tx_hash}` : '',
+    explorerUrl: productionBlockchain?.tx_hash
+      ? `${explorerBase}/tx/${productionBlockchain.tx_hash}`
+      : '',
     network: productionBlockchain?.network || 'polygon'
   };
 
@@ -361,17 +432,15 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
       switch (verificationLevel) {
         case 'certified':
-          return `Blockchain-recorded (${photoCount} photo${
-            photoCount !== 1 ? 's' : ''
-          } included)`;
+          return `Blockchain-recorded (${photoCount} photo${photoCount !== 1 ? 's' : ''} included)`;
         case 'data_verified':
           return 'Documented with photo evidence and metadata';
         case 'photo_verified':
-          return `Photo documented (${photoCount} photo${photoCount !== 1 ? 's' : ''} with metadata)`;
-        case 'photo_documented':
           return `Photo documented (${photoCount} photo${
             photoCount !== 1 ? 's' : ''
-          } included)`;
+          } with metadata)`;
+        case 'photo_documented':
+          return `Photo documented (${photoCount} photo${photoCount !== 1 ? 's' : ''} included)`;
         case 'self_reported':
         default:
           return 'Farmer-reported documentation';
@@ -401,15 +470,24 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   // Unified event type icon/color (matches EnhancedTimelineRow, NewEvent, UltraMobileProductionJourney)
   const getEventTypeIcon = (eventType?: number) => {
     switch (eventType) {
-      case 0: return { icon: FaCloudRain, color: 'blue.500' };
-      case 1: return { icon: FaSeedling, color: 'green.500' };
-      case 2: return { icon: FaFlask, color: 'orange.500' };
-      case 3: return { icon: FaClipboardList, color: 'gray.500' };
-      case 4: return { icon: FaTractor, color: 'blue.700' };
-      case 5: return { icon: FaLayerGroup, color: 'yellow.700' };
-      case 6: return { icon: FaBug, color: 'red.500' };
-      case 7: return { icon: FaCertificate, color: 'teal.500' };
-      default: return { icon: FaSeedling, color: 'green.500' };
+      case 0:
+        return { icon: FaCloudRain, color: 'blue.500' };
+      case 1:
+        return { icon: FaSeedling, color: 'green.500' };
+      case 2:
+        return { icon: FaFlask, color: 'orange.500' };
+      case 3:
+        return { icon: FaClipboardList, color: 'gray.500' };
+      case 4:
+        return { icon: FaTractor, color: 'blue.700' };
+      case 5:
+        return { icon: FaLayerGroup, color: 'yellow.700' };
+      case 6:
+        return { icon: FaBug, color: 'red.500' };
+      case 7:
+        return { icon: FaCertificate, color: 'teal.500' };
+      default:
+        return { icon: FaSeedling, color: 'green.500' };
     }
   };
 
@@ -480,9 +558,19 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
         />
       )}
 
-      <HStack align="flex-start" spacing={{ base: 0, md: isGrouped ? 0 : 4 }} position="relative" zIndex={1}>
+      <HStack
+        align="flex-start"
+        spacing={{ base: 0, md: isGrouped ? 0 : 4 }}
+        position="relative"
+        zIndex={1}
+      >
         {/* Timeline dot - DESKTOP ONLY, hidden when inside a group */}
-        <Flex direction="column" align="center" minW="40px" display={{ base: 'none', md: isGrouped ? 'none' : 'flex' }}>
+        <Flex
+          direction="column"
+          align="center"
+          minW="40px"
+          display={{ base: 'none', md: isGrouped ? 'none' : 'flex' }}
+        >
           <Circle
             size={{ base: '40px', md: '48px' }}
             bg={isFirst ? accentColor : bgColor}
@@ -503,7 +591,11 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               as={verificationLevel === 'ultimate' ? MdSecurity : eventTypeConfig.icon}
               boxSize={{ base: 4, md: 5 }}
               color={
-                isFirst ? 'white' : verificationLevel === 'ultimate' ? 'green.500' : eventTypeConfig.color
+                isFirst
+                  ? 'white'
+                  : verificationLevel === 'ultimate'
+                  ? 'green.500'
+                  : eventTypeConfig.color
               }
             />
 
@@ -631,7 +723,11 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
               {/* Sustainability badge - uses shared getImpactLevel when carbon data available */}
               <Badge
-                colorScheme={carbonImpactLevel ? carbonImpactLevel.color : sustainabilityColors[sustainabilityLevel]}
+                colorScheme={
+                  carbonImpactLevel
+                    ? carbonImpactLevel.color
+                    : sustainabilityColors[sustainabilityLevel]
+                }
                 fontSize="xs"
                 px={2}
                 py={1}
@@ -639,7 +735,15 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               >
                 <HStack spacing={1}>
                   <Icon as={MdEco} boxSize={3} />
-                  <Text>{carbonImpactLevel ? intl.formatMessage({ id: carbonImpactLevel.level }) : sustainabilityLevel === 'high' ? intl.formatMessage({ id: 'carbon.activityLevel.corePractice' }) : sustainabilityLevel === 'medium' ? intl.formatMessage({ id: 'carbon.activityLevel.standardActivity' }) : intl.formatMessage({ id: 'transparency.supplementary' })}</Text>
+                  <Text>
+                    {carbonImpactLevel
+                      ? intl.formatMessage({ id: carbonImpactLevel.level })
+                      : sustainabilityLevel === 'high'
+                      ? intl.formatMessage({ id: 'carbon.activityLevel.corePractice' })
+                      : sustainabilityLevel === 'medium'
+                      ? intl.formatMessage({ id: 'carbon.activityLevel.standardActivity' })
+                      : intl.formatMessage({ id: 'transparency.supplementary' })}
+                  </Text>
                 </HStack>
               </Badge>
             </HStack>
@@ -707,10 +811,17 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               )}
               {/* Phase 3: Electricity source trust badge for IR events — solar/wind shown as green trust indicator */}
               {(() => {
-                const elecSrc = event.electricity_source ?? (event as any).extra_data?.electricity_source;
+                const elecSrc =
+                  event.electricity_source ?? (event as any).extra_data?.electricity_source;
                 if (!elecSrc) return null;
                 const isSustainable = elecSrc === 'solar' || elecSrc === 'wind';
-                const elecLabels: Record<string, string> = { solar: 'Solar-Powered Pump', wind: 'Wind-Powered Pump', grid: 'Grid-Powered Pump', diesel_generator: 'Generator-Powered Pump', mixed: 'Mixed Power Sources' };
+                const elecLabels: Record<string, string> = {
+                  solar: 'Solar-Powered Pump',
+                  wind: 'Wind-Powered Pump',
+                  grid: 'Grid-Powered Pump',
+                  diesel_generator: 'Generator-Powered Pump',
+                  mixed: 'Mixed Power Sources'
+                };
                 return (
                   <HStack spacing={2}>
                     <Badge
@@ -731,8 +842,15 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
               {/* Organic input certification badge for chemical events */}
               {(() => {
-                const organicStatus = event.organic_approved ?? (event as any).extra_data?.organic_approved;
-                if (!organicStatus || organicStatus === 'not_organic' || organicStatus === 'no' || organicStatus === 'not_applicable') return null;
+                const organicStatus =
+                  event.organic_approved ?? (event as any).extra_data?.organic_approved;
+                if (
+                  !organicStatus ||
+                  organicStatus === 'not_organic' ||
+                  organicStatus === 'no' ||
+                  organicStatus === 'not_applicable'
+                )
+                  return null;
                 const organicLabels: Record<string, string> = {
                   omri_listed: 'OMRI Listed',
                   usda_nop_approved: 'USDA NOP Approved',
@@ -1074,8 +1192,12 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                                 Total Yield
                               </Text>
                               <Text fontSize="sm" fontWeight="medium">
-                                {Number(event.yield_total || event.extra_data?.yield_total).toLocaleString()}{' '}
-                                {event.yield_total_unit || event.extra_data?.yield_total_unit || 'lbs'}
+                                {Number(
+                                  event.yield_total || event.extra_data?.yield_total
+                                ).toLocaleString()}{' '}
+                                {event.yield_total_unit ||
+                                  event.extra_data?.yield_total_unit ||
+                                  'lbs'}
                               </Text>
                             </Box>
                           )}
@@ -1088,7 +1210,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           {(event.volume_total || event.extra_data?.volume_total) && (
                             <Box>
                               <Text fontSize="xs" color="gray.500">
-                                {['kg', 'lbs', 'oz'].includes(event.volume_total_unit || event.extra_data?.volume_total_unit || '') ? 'Total Amount Applied' : 'Total Volume Applied'}
+                                {['kg', 'lbs', 'oz'].includes(
+                                  event.volume_total_unit ||
+                                    event.extra_data?.volume_total_unit ||
+                                    ''
+                                )
+                                  ? 'Total Amount Applied'
+                                  : 'Total Volume Applied'}
                               </Text>
                               <Text fontSize="sm" fontWeight="medium">
                                 {event.volume_total || event.extra_data?.volume_total}{' '}
@@ -1102,7 +1230,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           {!event.is_summary && (event.volume_numeric ?? event.volume_applied) && (
                             <Box>
                               <Text fontSize="xs" color="gray.500">
-                                {['kg', 'lbs', 'oz'].includes(event.volume_unit) ? 'Amount Applied' : 'Volume Applied'}
+                                {['kg', 'lbs', 'oz'].includes(event.volume_unit)
+                                  ? 'Amount Applied'
+                                  : 'Volume Applied'}
                               </Text>
                               <Text fontSize="sm" fontWeight="medium">
                                 {event.volume_numeric ?? event.volume_applied}{' '}
@@ -1142,13 +1272,19 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       {/* Pest Scouting aggregate fields */}
                       {event.type === 'SC' && (
                         <>
-                          {(event.field_area_total || event.area_covered_total || event.extra_data?.field_area_total || event.extra_data?.area_covered_total) && (
+                          {(event.field_area_total ||
+                            event.area_covered_total ||
+                            event.extra_data?.field_area_total ||
+                            event.extra_data?.area_covered_total) && (
                             <Box>
                               <Text fontSize="xs" color="gray.500">
                                 Total Area Scouted
                               </Text>
                               <Text fontSize="sm" fontWeight="medium">
-                                {event.field_area_total || event.area_covered_total || event.extra_data?.field_area_total || event.extra_data?.area_covered_total}{' '}
+                                {event.field_area_total ||
+                                  event.area_covered_total ||
+                                  event.extra_data?.field_area_total ||
+                                  event.extra_data?.area_covered_total}{' '}
                                 {event.area_unit || event.extra_data?.area_unit || 'ha'}
                               </Text>
                             </Box>
@@ -1269,44 +1405,77 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 )}
 
                 {/* Comprehensive Field Display - SECONDARY Priority Fields */}
-                {fieldDisplay.secondary.length > 0 && (
-                  <Box>
-                    <HStack mb={3}>
-                      <Icon as={FaInfoCircle} color="blue.500" boxSize={4} />
-                      <Text fontWeight="semibold" fontSize="sm" color="blue.500">
-                        Additional Information
-                      </Text>
-                    </HStack>
-                    <VStack align="stretch" spacing={2} pl={6}>
-                      {fieldDisplay.secondary.map((field, idx) => {
-                        const fuelIcon = getFuelIcon(field.label, event.fuel_type);
-                        return (
-                          <HStack key={idx} justify="space-between" flexWrap="wrap">
-                            <HStack spacing={2} minW="120px">
-                              {fuelIcon ? (
-                                <Text fontSize="sm" color="blue.600">
-                                  {fuelIcon}
+                {fieldDisplay.secondary.length > 0 &&
+                  (() => {
+                    // Filter out observation — already shown in Farmer's Field Notes above
+                    const filteredSecondary = fieldDisplay.secondary.filter(
+                      (f) =>
+                        f.label.toLowerCase() !== 'observation' &&
+                        f.label.toLowerCase() !== 'observations'
+                    );
+                    if (filteredSecondary.length === 0) return null;
+                    return (
+                      <Box>
+                        <HStack mb={3}>
+                          <Icon as={FaInfoCircle} color="blue.500" boxSize={4} />
+                          <Text fontWeight="semibold" fontSize="sm" color="blue.500">
+                            Additional Information
+                          </Text>
+                        </HStack>
+                        <VStack align="stretch" spacing={2} pl={6}>
+                          {filteredSecondary.map((field, idx) => {
+                            const fuelIcon = getFuelIcon(field.label, event.fuel_type);
+                            const isLongText = String(field.value).length > 40;
+                            return isLongText ? (
+                              <Box key={idx}>
+                                <HStack spacing={2} mb={1}>
+                                  {fuelIcon ? (
+                                    <Text fontSize="sm" color="blue.600">
+                                      {fuelIcon}
+                                    </Text>
+                                  ) : (
+                                    <Icon
+                                      as={getCategoryIcon(field.category)}
+                                      color="blue.600"
+                                      boxSize={3}
+                                    />
+                                  )}
+                                  <Text fontSize="sm" fontWeight="medium" color="blue.700">
+                                    {field.label}:
+                                  </Text>
+                                </HStack>
+                                <Text fontSize="sm" color={mutedColor} pl={5}>
+                                  {field.value}
                                 </Text>
-                              ) : (
-                                <Icon
-                                  as={getCategoryIcon(field.category)}
-                                  color="blue.600"
-                                  boxSize={3}
-                                />
-                              )}
-                              <Text fontSize="sm" fontWeight="medium" color="blue.700">
-                                {field.label}:
-                              </Text>
-                            </HStack>
-                            <Text fontSize="sm" color={mutedColor} flex="1" textAlign="right">
-                              {field.value}
-                            </Text>
-                          </HStack>
-                        );
-                      })}
-                    </VStack>
-                  </Box>
-                )}
+                              </Box>
+                            ) : (
+                              <HStack key={idx} justify="space-between" flexWrap="wrap">
+                                <HStack spacing={2} minW="120px">
+                                  {fuelIcon ? (
+                                    <Text fontSize="sm" color="blue.600">
+                                      {fuelIcon}
+                                    </Text>
+                                  ) : (
+                                    <Icon
+                                      as={getCategoryIcon(field.category)}
+                                      color="blue.600"
+                                      boxSize={3}
+                                    />
+                                  )}
+                                  <Text fontSize="sm" fontWeight="medium" color="blue.700">
+                                    {field.label}:
+                                  </Text>
+                                </HStack>
+                                <Text fontSize="sm" color={mutedColor}>
+                                  {field.value}
+                                </Text>
+                              </HStack>
+                            );
+                          })}
+                        </VStack>
+                      </Box>
+                    );
+                  })()}
 
                 {/* Technical details if available (legacy fallback) */}
                 {(event.volume ||
@@ -1394,34 +1563,34 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         Technical Details
                       </Text>
                     </HStack>
-                    <VStack align="stretch" spacing={1} pl={6}>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2} pl={6}>
                       {fieldDisplay.details.map((field, idx) => {
                         const fuelIcon = getFuelIcon(field.label, event.fuel_type);
                         return (
-                          <HStack key={idx} justify="space-between" flexWrap="wrap">
-                            <HStack spacing={2} minW="120px">
-                              {fuelIcon ? (
-                                <Text fontSize="xs" color="gray.500">
-                                  {fuelIcon}
-                                </Text>
-                              ) : (
-                                <Icon
-                                  as={getCategoryIcon(field.category)}
-                                  color="gray.500"
-                                  boxSize={3}
-                                />
-                              )}
-                              <Text fontSize="xs" color="gray.600">
-                                {field.label}:
+                          <HStack key={idx} spacing={2} align="baseline">
+                            {fuelIcon ? (
+                              <Text fontSize="xs" color="gray.500" flexShrink={0}>
+                                {fuelIcon}
                               </Text>
-                            </HStack>
-                            <Text fontSize="xs" color={mutedColor} flex="1" textAlign="right">
+                            ) : (
+                              <Icon
+                                as={getCategoryIcon(field.category)}
+                                color="gray.400"
+                                boxSize={3}
+                                flexShrink={0}
+                                mt={0.5}
+                              />
+                            )}
+                            <Text fontSize="xs" color="gray.500" flexShrink={0}>
+                              {field.label}:
+                            </Text>
+                            <Text fontSize="xs" color="gray.700" fontWeight="medium">
                               {field.value}
                             </Text>
                           </HStack>
                         );
                       })}
-                    </VStack>
+                    </SimpleGrid>
                   </Box>
                 )}
 
@@ -1511,7 +1680,14 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       <HStack spacing={3} fontSize="xs" color={mutedColor}>
                         <HStack>
                           <Icon as={FaInfoCircle} boxSize={3} />
-                          <Text>Network: {blockchainData.network === 'polygon' ? 'Polygon' : blockchainData.network === 'polygon_amoy' ? 'Polygon Testnet' : 'Polygon'}</Text>
+                          <Text>
+                            Network:{' '}
+                            {blockchainData.network === 'polygon'
+                              ? 'Polygon'
+                              : blockchainData.network === 'polygon_amoy'
+                              ? 'Polygon Testnet'
+                              : 'Polygon'}
+                          </Text>
                         </HStack>
                         <HStack>
                           <Icon as={FaShieldAlt} boxSize={3} />

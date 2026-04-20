@@ -874,11 +874,21 @@ export function transformFormDataToEvent(
 
     case 7: // Business
       // Map all Business event form fields to event data for proper field display
+      // NOTE: This function is currently only exercised by unit tests —
+      // EventPreviewModal uses normalizeFormEventData() from eventDataNormalizer.ts.
+      // Keep this code path aligned with the normalizer's business subtype
+      // derivation so the tests stay meaningful.
 
       // Basic Information (immediate display fields)
       if (formData.type) {
         event.business_event_type = formData.type; // Maps to business event type (CE, CM, IN)
         event.type = formData.type; // Keep original for routing
+      } else if (formData.business_type) {
+        // Mirror normalizeBusinessEventData: backend defaults BusinessEvent.type = CE
+        // when the form omits it, so every saved business event currently lands as CE.
+        // Only set the subtype code — leave event.type as the string 'business'
+        // (already assigned at line 302) so downstream type-name lookups keep working.
+        event.business_event_type = 'CE';
       }
 
       if (formData.name) {
@@ -933,6 +943,11 @@ export function transformFormDataToEvent(
       }
       if (formData.certificate_number) {
         event.certificate_number = formData.certificate_number;
+      }
+
+      // NOP audit trail: inspector / auditor name
+      if (formData.performed_by) {
+        event.performed_by = formData.performed_by;
       }
 
       // Observations & Notes (details display fields)
@@ -1115,8 +1130,7 @@ export function transformFormDataToEvent(
   }
 
   // Map is_summary flag — explicitly set to false for Individual events
-  event.is_summary =
-    formData.is_summary === 'true' || formData.is_summary === true ? true : false;
+  event.is_summary = formData.is_summary === 'true' || formData.is_summary === true ? true : false;
 
   return event;
 }

@@ -31,11 +31,14 @@ import { ConsumerCertification } from 'types/certification';
 interface CertificationBadgeProps {
   certifications: ConsumerCertification[];
   compact?: boolean;
+  /** "card" = full bordered card (default), "inline" = flat row for embedding */
+  variant?: 'card' | 'inline';
 }
 
 const CertificationBadge: React.FC<CertificationBadgeProps> = ({
   certifications,
-  compact = false
+  compact = false,
+  variant = 'card'
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const intl = useIntl();
@@ -48,8 +51,8 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
 
   if (!certifications || certifications.length === 0) return null;
 
-  const verifiedCerts = certifications.filter(c => c.status === 'verified_via_database');
-  const selfReportedCerts = certifications.filter(c => c.status === 'self_reported');
+  const verifiedCerts = certifications.filter((c) => c.status === 'verified_via_database');
+  const selfReportedCerts = certifications.filter((c) => c.status === 'self_reported');
   const hasVerified = verifiedCerts.length > 0;
 
   // Primary cert to display on the card — pick the most meaningful one:
@@ -57,8 +60,12 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
   // 2. Among same status, skip "Other" (not meaningful to consumers)
   // 3. Fall back to first cert
   const pickPrimary = () => {
-    const pool = hasVerified ? verifiedCerts : selfReportedCerts.length > 0 ? selfReportedCerts : certifications;
-    const meaningful = pool.filter(c => c.display_name !== 'Other');
+    const pool = hasVerified
+      ? verifiedCerts
+      : selfReportedCerts.length > 0
+      ? selfReportedCerts
+      : certifications;
+    const meaningful = pool.filter((c) => c.display_name !== 'Other');
     return meaningful[0] || pool[0];
   };
   const primaryCert = pickPrimary();
@@ -142,7 +149,8 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
     <VStack spacing={3} align="stretch">
       {verifiedCerts.length > 0 && verifiedCerts.map((cert, i) => renderCertDetail(cert, i))}
       {verifiedCerts.length > 0 && selfReportedCerts.length > 0 && <Divider />}
-      {selfReportedCerts.length > 0 && selfReportedCerts.map((cert, i) => renderCertDetail(cert, verifiedCerts.length + i))}
+      {selfReportedCerts.length > 0 &&
+        selfReportedCerts.map((cert, i) => renderCertDetail(cert, verifiedCerts.length + i))}
     </VStack>
   );
 
@@ -151,13 +159,13 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
       <HStack spacing={2}>
         <Icon as={FaShieldAlt} color={hasVerified ? 'green.500' : 'gray.500'} boxSize={5} />
         <VStack align="start" spacing={0}>
-          <Text fontWeight="bold">
-            {intl.formatMessage({ id: 'certification.manage.title' })}
-          </Text>
+          <Text fontWeight="bold">{intl.formatMessage({ id: 'certification.manage.title' })}</Text>
           <Text fontSize="xs" color={subtextColor} fontWeight="normal">
             {hasVerified
               ? `${verifiedCerts.length} verified, ${selfReportedCerts.length} self-reported`
-              : `${certifications.length} ${intl.formatMessage({ id: 'certification.manage.title' }).toLowerCase()}`}
+              : `${certifications.length} ${intl
+                  .formatMessage({ id: 'certification.manage.title' })
+                  .toLowerCase()}`}
           </Text>
         </VStack>
       </HStack>
@@ -196,9 +204,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
           <ModalHeader fontSize="md" pb={2}>
             {headerContent}
           </ModalHeader>
-          <ModalBody pb={6}>
-            {renderDetailContent()}
-          </ModalBody>
+          <ModalBody pb={6}>{renderDetailContent()}</ModalBody>
         </ModalContent>
       </Modal>
     );
@@ -227,6 +233,61 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
     );
   }
 
+  // Inline mode — flat row for embedding inside other sections (no nested card)
+  if (variant === 'inline') {
+    return (
+      <>
+        <HStack
+          spacing={3}
+          cursor="pointer"
+          onClick={onOpen}
+          py={2}
+          px={3}
+          _hover={{ bg: 'gray.50' }}
+          borderRadius="lg"
+          transition="all 0.2s"
+        >
+          <Icon
+            as={hasVerified ? FaCheckCircle : FaShieldAlt}
+            color={hasVerified ? 'green.500' : 'gray.400'}
+            boxSize={5}
+          />
+          <VStack align="start" spacing={0} flex={1}>
+            <HStack spacing={2}>
+              <Text fontWeight="semibold" fontSize="sm" color={textColor}>
+                {primaryCert.display_name}
+              </Text>
+              <Badge
+                colorScheme={hasVerified ? 'green' : 'gray'}
+                variant="subtle"
+                fontSize="xs"
+                borderRadius="full"
+                px={2}
+              >
+                {hasVerified
+                  ? intl.formatMessage({ id: 'certification.badge.verifiedShort' })
+                  : intl.formatMessage({ id: 'certification.badge.selfReportedShort' })}
+              </Badge>
+            </HStack>
+            {hasVerified && (
+              <Text fontSize="xs" color={subtextColor}>
+                {intl.formatMessage({ id: 'certification.badge.verified' })}
+              </Text>
+            )}
+            {primaryCert.certifier_name && (
+              <Text fontSize="xs" color={subtextColor}>
+                {intl.formatMessage({ id: 'certification.manage.certifier' })}:{' '}
+                {primaryCert.certifier_name}
+              </Text>
+            )}
+          </VStack>
+          <Icon as={FaInfoCircle} color="gray.400" boxSize={4} />
+        </HStack>
+        {renderDrawerOrModal()}
+      </>
+    );
+  }
+
   // Full card mode — matches ProductDetail page design system
   return (
     <>
@@ -246,9 +307,11 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
       >
         {/* Header with gradient — matches page pattern */}
         <Box
-          bg={hasVerified
-            ? 'linear-gradient(135deg, #f0fff4, #ebf8ff)'
-            : 'linear-gradient(135deg, #f7fafc, #edf2f7)'}
+          bg={
+            hasVerified
+              ? 'linear-gradient(135deg, #f0fff4, #ebf8ff)'
+              : 'linear-gradient(135deg, #f7fafc, #edf2f7)'
+          }
           px={6}
           py={4}
         >
@@ -269,8 +332,10 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
                   {hasVerified
                     ? intl.formatMessage({ id: 'certification.badge.verified' })
                     : certifications.length === 1
-                      ? intl.formatMessage({ id: 'certification.badge.selfReported' })
-                      : `${certifications.length} ${intl.formatMessage({ id: 'certification.manage.title' }).toLowerCase()}`}
+                    ? intl.formatMessage({ id: 'certification.badge.selfReported' })
+                    : `${certifications.length} ${intl
+                        .formatMessage({ id: 'certification.manage.title' })
+                        .toLowerCase()}`}
                 </Text>
               </VStack>
             </HStack>
@@ -281,29 +346,32 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
         {/* Content */}
         <Box px={6} py={4}>
           <HStack spacing={2} flexWrap="wrap">
-            {certifications.filter(c => c.display_name !== 'Other').map((cert, i) => (
-              <Badge
-                key={i}
-                colorScheme={cert.status === 'verified_via_database' ? 'green' : 'gray'}
-                variant="subtle"
-                fontSize="xs"
-                px={2}
-                py={1}
-                borderRadius="full"
-              >
-                <HStack spacing={1}>
-                  {cert.status === 'verified_via_database' && (
-                    <Icon as={FaCheckCircle} boxSize={2.5} />
-                  )}
-                  <Text>{cert.display_name}</Text>
-                </HStack>
-              </Badge>
-            ))}
+            {certifications
+              .filter((c) => c.display_name !== 'Other')
+              .map((cert, i) => (
+                <Badge
+                  key={i}
+                  colorScheme={cert.status === 'verified_via_database' ? 'green' : 'gray'}
+                  variant="subtle"
+                  fontSize="xs"
+                  px={2}
+                  py={1}
+                  borderRadius="full"
+                >
+                  <HStack spacing={1}>
+                    {cert.status === 'verified_via_database' && (
+                      <Icon as={FaCheckCircle} boxSize={2.5} />
+                    )}
+                    <Text>{cert.display_name}</Text>
+                  </HStack>
+                </Badge>
+              ))}
           </HStack>
 
           {primaryCert.certifier_name && (
             <Text fontSize="xs" color={subtextColor} mt={2}>
-              {intl.formatMessage({ id: 'certification.manage.certifier' })}: {primaryCert.certifier_name}
+              {intl.formatMessage({ id: 'certification.manage.certifier' })}:{' '}
+              {primaryCert.certifier_name}
             </Text>
           )}
         </Box>

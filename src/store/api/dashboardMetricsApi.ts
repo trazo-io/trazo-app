@@ -79,8 +79,8 @@ export interface FarmDashboardMetrics {
   // Production counts
   total_productions: number;
   blockchain_verified_count: number;
-  // Transparency-based ranking
-  transparency_percentile: number;
+  // Score-tier label (non-comparative, derived from farm's own score)
+  transparency_tier: 'excellent' | 'strong' | 'good' | 'solid' | 'developing';
   // Subscription
   subscription_usage_percentage: number;
 }

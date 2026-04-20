@@ -8,6 +8,8 @@ export type CertificationType =
   | 'global_gap'
   | 'fair_trade'
   | 'rainforest_alliance'
+  | 'sqf'
+  | 'kosher'
   | 'other';
 
 export type VerificationStatus =
@@ -62,4 +64,27 @@ export interface CreateCertificationData {
   effective_date?: string;
   expiry_date?: string;
   notes?: string;
+}
+
+// Sprint 5A — Consumer QR organic claim gate (7 CFR 205.100(c)(1), 205.300,
+// 205.202(b); 16 CFR 260.6(c)-(d)). Returned under
+// `standard_view.organic_claim` from the public transparency endpoint.
+export type OrganicClaimStatus =
+  | 'certified_organic'
+  | 'transitioning'
+  | 'self_reported'
+  | 'conventional';
+
+export type OrganicClaimColor = 'green' | 'yellow' | 'gray';
+
+export interface OrganicClaim {
+  can_display_organic: boolean;
+  can_display_transitioning: boolean;
+  display_label: string;
+  disclaimer: string;
+  status: OrganicClaimStatus;
+  status_color: OrganicClaimColor;
+  reason: string;
+  transition_complete_date: string | null;
+  days_remaining: number | null;
 }

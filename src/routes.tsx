@@ -3,7 +3,7 @@ import { HomeIcon } from 'components/Icons/Icons';
 import { Route } from 'types/common';
 import { useIntl } from 'react-intl';
 import { FaChartBar, FaCreditCard, FaGraduationCap } from 'react-icons/fa';
-import { FaLeaf } from 'react-icons/fa';
+import { FaLeaf, FaFileAlt } from 'react-icons/fa';
 
 // const intl = useIntl();
 
@@ -41,6 +41,17 @@ const dashRoutes: Route[] = [
     collapse: true,
     isCommercial: true,
     regex: /^\/admin\/dashboard\/farm\/[0-9]+\/commercial$/
+  },
+  {
+    id: 'organicSystemPlan',
+    name: 'Organic System Plan',
+    path: '/dashboard/farm/:farmId/osp',
+    icon: <FaFileAlt color="inherit" />,
+    authIcon: <FaFileAlt color="inherit" />,
+    layout: '/admin',
+    collapse: true,
+    isOrganicSystemPlan: true,
+    regex: /^\/admin\/dashboard\/farm\/[0-9]+\/osp$/
   },
   {
     id: 'subscription',

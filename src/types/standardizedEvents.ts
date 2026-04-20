@@ -62,6 +62,67 @@ export interface StandardizedEventBase {
   extra_data?: {
     [key: string]: any;
   };
+
+  // Sprint 5.1 — OSP ↔ events drift detector finding. Null / undefined when
+  // the input used on this event matches the establishment's active OSP
+  // approved_inputs. Populated by a post_save signal on the backend —
+  // never mutated by the frontend.
+  drift_warning?: DriftWarning | null;
+}
+
+/**
+ * Drift detector finding — 7 CFR 205.400(f)(1).
+ * Shape must match backend certifications.services.drift_detector.build_drift_warning.
+ */
+export interface DriftWarning {
+  detected_at: string;
+  osp_id: number;
+  osp_version: number;
+  input_label: string;
+  reason: string;
+  resolved_via:
+    | 'omri'
+    | 'national_list'
+    | 'wsda'
+    | 'unresolved'
+    // Phase 2 — seed source findings (§ 205.204 / NOP 5029).
+    | 'seed_certification_missing'
+    | 'seed_search_incomplete'
+    | 'seed_treated_prohibited';
+  resolved_id?: number | null;
+  resolved_name?: string | null;
+  cfr_reference: string;
+  // Phase 1 additive fields — optional for backward compatibility with events
+  // stamped by older drift detector builds.
+  cdfa_oim_status?: DriftCDFAStatus | null;
+  // P0-3 — CA-only DPR restricted-materials permit status. Populated on
+  // events whose input matches a CA-restricted keyword list (copper, sulfur,
+  // pyrethrin, spinosad, rotenone) for California establishments.
+  ca_dpr_permit_status?: DriftCADPRPermitStatus | null;
+  omri_search_url?: string | null;
+}
+
+/**
+ * CA-only CDFA OIM (Organic Input Material) registration status.
+ * Independent of OSP approval — a product can be OSP-approved but CDFA-
+ * unregistered, which is itself a California state-law violation for CA farms.
+ */
+export interface DriftCDFAStatus {
+  status: 'registered' | 'missing';
+  cdfa_oim_reg_number?: string | null;
+}
+
+/**
+ * CA-only DPR (Department of Pesticide Regulation) Restricted Materials
+ * Permit status. Required for county-restricted materials (copper hydroxide,
+ * sulfur, pyrethrin, spinosad, rotenone) under 3 CCR 6400 et seq. — issued
+ * by the county Ag Commissioner, orthogonal to NOP § 205.601 approval.
+ */
+export interface DriftCADPRPermitStatus {
+  status: 'present' | 'missing' | 'expired';
+  permit_number?: string | null;
+  county?: string | null;
+  expires?: string | null;
 }
 
 /**
@@ -131,6 +192,21 @@ export interface StandardizedProductionEvent extends StandardizedEventBase {
   // Legacy compatibility fields
   volume?: string;
   area?: string;
+
+  // NOP 7 CFR 205.204 — Seed Traceability (PL subtype only)
+  seeds_source?: string;
+  seed_supplier_name?: string;
+  seed_purchase_date?: string;
+  seed_purchase_invoice?: string;
+  seed_lot_number?: string;
+  seed_certification_status?: string;
+  seed_treatment?: string;
+  seed_search_attempts?: Array<{
+    supplier_name: string;
+    date_contacted: string;
+    result: string;
+    notes?: string;
+  }>;
 }
 
 /**
@@ -292,6 +368,18 @@ export interface StandardizedSoilManagementEvent extends StandardizedEventBase {
   amendment_type?: string;
   amendment_amount?: number | string;
   amendment_unit?: string;
+  amendment_amount_numeric?: number | string;
+  amendment_amount_unit?: string;
+
+  // NOP Compliance (7 CFR 205.203) — Amendment approval + Compost tracking + Manure timing
+  amendment_organic_approved?: string;
+  compost_peak_temp_f?: number | string;
+  compost_duration_days_at_temp?: number | string;
+  compost_turning_count?: number | string;
+  compost_method?: 'windrow' | 'static_aerated' | 'in_vessel' | '';
+  compost_initial_cn_ratio?: number | string;
+  manure_harvest_interval?: string;
+  manure_application_date?: string;
 
   // Documentation (details priority)
   soil_management_notes?: string;

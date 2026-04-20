@@ -48,6 +48,8 @@ const CERTIFICATION_TYPE_OPTIONS: { value: CertificationType; label: string }[] 
   { value: 'global_gap', label: 'GlobalG.A.P.' },
   { value: 'fair_trade', label: 'Fair Trade Certified' },
   { value: 'rainforest_alliance', label: 'Rainforest Alliance' },
+  { value: 'sqf', label: 'SQF Certified' },
+  { value: 'kosher', label: 'Kosher Certified' },
   { value: 'other', label: 'Other' }
 ];
 
@@ -56,10 +58,7 @@ interface CertificationManagerProps {
   farmId: string;
 }
 
-const CertificationManager: React.FC<CertificationManagerProps> = ({
-  companyId,
-  farmId
-}) => {
+const CertificationManager: React.FC<CertificationManagerProps> = ({ companyId, farmId }) => {
   const intl = useIntl();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -185,12 +184,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
             {intl.formatMessage({ id: 'certification.manage.title' })}
           </Text>
         </HStack>
-        <Button
-          size="sm"
-          colorScheme="green"
-          leftIcon={<FaPlus />}
-          onClick={onOpen}
-        >
+        <Button size="sm" colorScheme="green" leftIcon={<FaPlus />} onClick={onOpen}>
           {intl.formatMessage({ id: 'certification.manage.add' })}
         </Button>
       </HStack>
@@ -206,13 +200,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
       ) : (
         <VStack spacing={3} align="stretch">
           {certifications.map((cert) => (
-            <Box
-              key={cert.id}
-              p={3}
-              border="1px solid"
-              borderColor="gray.200"
-              borderRadius="md"
-            >
+            <Box key={cert.id} p={3} border="1px solid" borderColor="gray.200" borderRadius="md">
               <HStack justify="space-between" align="start">
                 <VStack align="start" spacing={1} flex={1}>
                   <HStack>
@@ -284,7 +272,10 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                 <Select
                   value={formData.certification_type}
                   onChange={(e) =>
-                    setFormData({ ...formData, certification_type: e.target.value as CertificationType })
+                    setFormData({
+                      ...formData,
+                      certification_type: e.target.value as CertificationType
+                    })
                   }
                   size="sm"
                 >
@@ -297,7 +288,14 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
               </Box>
 
               {formData.certification_type === 'usda_organic' && (
-                <Box w="100%" p={3} bg="blue.50" borderRadius="md" borderLeft="3px solid" borderLeftColor="blue.400">
+                <Box
+                  w="100%"
+                  p={3}
+                  bg="blue.50"
+                  borderRadius="md"
+                  borderLeft="3px solid"
+                  borderLeftColor="blue.400"
+                >
                   <Text fontSize="xs" color="blue.700">
                     {intl.formatMessage({ id: 'certification.manage.usdaHelpText' })}
                   </Text>
@@ -311,7 +309,9 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                   </Text>
                   <Input
                     size="sm"
-                    placeholder={intl.formatMessage({ id: 'certification.manage.usdaNamePlaceholder' })}
+                    placeholder={intl.formatMessage({
+                      id: 'certification.manage.usdaNamePlaceholder'
+                    })}
                     value={formData.usda_operation_name}
                     onChange={(e) =>
                       setFormData({ ...formData, usda_operation_name: e.target.value })
@@ -345,9 +345,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                   size="sm"
                   placeholder="e.g., Oregon Tilth, CCOF"
                   value={formData.certifier_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, certifier_name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, certifier_name: e.target.value })}
                 />
               </Box>
 
@@ -360,9 +358,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                     size="sm"
                     type="date"
                     value={formData.effective_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, effective_date: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
                   />
                 </Box>
                 <Box flex={1}>
@@ -373,9 +369,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                     size="sm"
                     type="date"
                     value={formData.expiry_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, expiry_date: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                   />
                 </Box>
               </HStack>
@@ -385,12 +379,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
             <Button variant="ghost" mr={3} onClick={onClose} size="sm">
               Cancel
             </Button>
-            <Button
-              colorScheme="green"
-              onClick={handleAdd}
-              isLoading={isAdding}
-              size="sm"
-            >
+            <Button colorScheme="green" onClick={handleAdd} isLoading={isAdding} size="sm">
               {intl.formatMessage({ id: 'certification.manage.add' })}
             </Button>
           </ModalFooter>

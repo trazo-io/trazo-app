@@ -93,12 +93,7 @@ export const StandardPage = ({
           pb="24px"
           px={{ base: 3, md: 6 }}
         >
-          <Button
-            variant="outline"
-            leftIcon={<FaChevronLeft />}
-            onClick={onBack}
-            size="sm"
-          >
+          <Button variant="outline" leftIcon={<FaChevronLeft />} onClick={onBack} size="sm">
             Back
           </Button>
         </Box>
@@ -106,7 +101,12 @@ export const StandardPage = ({
 
       {/* Full Hero Header Section - With title */}
       {hasHeroContent && (
-        <Box bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)" pt={{ base: '120px', md: '120px' }} pb={{ base: '64px', md: '80px' }} px={{ base: 3, md: 4 }}>
+        <Box
+          bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
+          pt={{ base: '120px', md: '120px' }}
+          pb={{ base: '64px', md: '80px' }}
+          px={{ base: 3, md: 4 }}
+        >
           <Container maxW="6xl" mx="auto">
             <VStack spacing={4} textAlign={{ base: 'left', md: 'center' }}>
               {isMobile ? (
@@ -137,12 +137,7 @@ export const StandardPage = ({
                     </Heading>
                   )}
                   {description && (
-                    <Text
-                      fontSize="sm"
-                      color="gray.600"
-                      fontWeight="normal"
-                      lineHeight="1.6"
-                    >
+                    <Text fontSize="sm" color="gray.600" fontWeight="normal" lineHeight="1.6">
                       {description}
                     </Text>
                   )}
@@ -343,9 +338,9 @@ export const StandardStepper = ({
                 align="center"
                 flex={manySteps ? '0 0 auto' : '1'}
                 minW={manySteps ? '80px' : 'auto'}
-                cursor={allowStepClick ? 'pointer' : 'default'}
-                onClick={() => allowStepClick && onStepClick?.(index)}
-                _hover={allowStepClick ? { opacity: 0.8 } : {}}
+                cursor={allowStepClick && index <= currentStep ? 'pointer' : 'default'}
+                onClick={() => allowStepClick && index <= currentStep && onStepClick?.(index)}
+                _hover={allowStepClick && index <= currentStep ? { opacity: 0.8 } : {}}
                 transition="all 0.3s ease"
               >
                 <Circle
@@ -867,7 +862,12 @@ export const SectionHeader = ({
       mb={description ? 2 : 0}
     >
       {badge && (
-        <Badge colorScheme={badgeColorScheme} fontSize="xs" flexShrink={0} display={{ base: 'inline-flex', smd: 'none' }}>
+        <Badge
+          colorScheme={badgeColorScheme}
+          fontSize="xs"
+          flexShrink={0}
+          display={{ base: 'inline-flex', smd: 'none' }}
+        >
           {badge}
         </Badge>
       )}
@@ -878,7 +878,12 @@ export const SectionHeader = ({
         </Text>
       </HStack>
       {badge && (
-        <Badge colorScheme={badgeColorScheme} fontSize="xs" flexShrink={0} display={{ base: 'none', smd: 'inline-flex' }}>
+        <Badge
+          colorScheme={badgeColorScheme}
+          fontSize="xs"
+          flexShrink={0}
+          display={{ base: 'none', smd: 'inline-flex' }}
+        >
           {badge}
         </Badge>
       )}

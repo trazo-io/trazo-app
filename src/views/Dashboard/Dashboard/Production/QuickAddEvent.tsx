@@ -18,7 +18,8 @@ import {
   useToast,
   Skeleton,
   Tooltip,
-  Link
+  Link,
+  Collapse
 } from '@chakra-ui/react';
 import {
   FaSeedling,
@@ -40,7 +41,9 @@ import {
   FaLightbulb,
   FaCheckCircle,
   FaQuestionCircle,
-  FaBook
+  FaBook,
+  FaChevronDown,
+  FaChevronUp
 } from 'react-icons/fa';
 import {
   StandardButton,
@@ -81,6 +84,13 @@ import {
   useGetUSDABenchmarkComparisonQuery
 } from 'store/api/carbonApi';
 import USDASmartSuggestions from 'components/Events/USDASmartSuggestions';
+
+// Photo documentation integration — transparency-first MVP requirement
+// Backend penalizes missing photos by 25-50% per tier (see transparency_calculator.py)
+import { TrazoImageUpload } from 'components/Upload';
+import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
+import TierPhotoBanner from 'components/Events/TierPhotoBanner';
+import { getPhotoTier, type PhotoTier } from 'utils/photoTierHelpers';
 
 interface EventTemplate {
   id: string;
@@ -184,6 +194,7 @@ interface QuickAddEventProps {
   isOpen: boolean;
   onClose: () => void;
   cropType: string;
+  productionMethod?: string;
   onEventAdded?: (event: any) => void;
 }
 
@@ -191,6 +202,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   isOpen,
   onClose,
   cropType,
+  productionMethod,
   onEventAdded
 }) => {
   const [selectedTemplate, setSelectedTemplate] = useState<EventTemplate | null>(null);
@@ -206,6 +218,11 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   const [templateSuggestions, setTemplateSuggestions] = useState<EventTemplate[]>([]);
   const [showTemplateSuggestions, setShowTemplateSuggestions] = useState(false);
   const [typeAwareFieldValues, setTypeAwareFieldValues] = useState<Record<string, unknown>>({});
+  // Photo URLs (S3) collected via TrazoImageUpload. Flows into backend `album_images`.
+  const [acceptedFiles, setAcceptedFiles] = useState<string[]>([]);
+  // Photo guidance disclosure — expanded for Tier 1 (essential), collapsed otherwise.
+  // User can toggle manually; resets on template change (see effect below).
+  const [isGuidanceOpen, setIsGuidanceOpen] = useState(true);
   const [voiceBanner, setVoiceBanner] = useState<{
     transcript: string;
     confidence: number;
@@ -338,6 +355,40 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     () => !!getQuickEventFields(typeAwareTemplateId),
     [typeAwareTemplateId]
   );
+
+  // Resolve the subtype code for photo tier lookup.
+  // Type-aware fields (e.g., fungicide 'FU' chosen in form) take precedence over
+  // template defaults (e.g., 'PE' pest_control) when both exist.
+  const templateSubtype = React.useMemo<string | undefined>(() => {
+    if (!selectedTemplate) return undefined;
+    const typeAwareType = typeAwareFieldValues?.type as string | undefined;
+    const templateType = selectedTemplate.backend_event_fields?.type as string | undefined;
+    return typeAwareType || templateType;
+  }, [selectedTemplate, typeAwareFieldValues]);
+
+  // Determine tier from subtype. Drives banner color + warning text + expansion default.
+  const photoTier: PhotoTier = React.useMemo(
+    () => getPhotoTier(templateSubtype),
+    [templateSubtype]
+  );
+
+  // Safely resolve event type number for PhotoRecommendationsBox
+  // (getTemplateEventType throws if backend_event_type is missing).
+  const templateEventType = React.useMemo<number>(() => {
+    if (!selectedTemplate) return 1;
+    try {
+      return selectedTemplate.backend_event_type ?? 1;
+    } catch {
+      return 1;
+    }
+  }, [selectedTemplate]);
+
+  // Reset guidance disclosure based on tier when template/tier changes.
+  // Essential (Tier 1) events expand guidance by default (farmer must know what to capture);
+  // Recommended/Optional collapse by default to save mobile space. User can still toggle.
+  React.useEffect(() => {
+    setIsGuidanceOpen(photoTier === 'essential');
+  }, [selectedTemplate?.id, photoTier]);
 
   // Handle type-aware field changes
   const handleTypeAwareFieldChange = React.useCallback((fieldName: string, value: unknown) => {
@@ -561,9 +612,20 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     return getCropTypeMapping(cropType);
   }, [cropType]);
 
+  // Map production_method to farming_approach for template filtering.
+  // Only filter explicitly for 'organic' and 'regenerative' — everything else
+  // (conventional, undefined, etc.) shows all templates for backward compatibility
+  // since most crop types only have conventional templates today.
+  const farmingApproach = React.useMemo(() => {
+    if (productionMethod === 'organic' || productionMethod === 'regenerative') {
+      return productionMethod;
+    }
+    return undefined;
+  }, [productionMethod]);
+
   // Get event templates from database for the current crop type
   const { data: dbEventTemplatesData } = useGetEventTemplatesByCropTypeQuery(
-    { cropTypeId: currentCropTypeId || 0 },
+    { cropTypeId: currentCropTypeId || 0, farmingApproach },
     { skip: !currentCropTypeId }
   );
 
@@ -821,7 +883,17 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
 
   // Track template usage when selected
   const handleTemplateSelect = (template: EventTemplate) => {
+    // Reset photos when template changes — photos are event-specific
+    if (selectedTemplate && selectedTemplate.id !== template.id) {
+      setAcceptedFiles([]);
+    }
+
     setSelectedTemplate(template);
+
+    // Scroll to top so user sees the photo documentation section first
+    setTimeout(() => {
+      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 0);
 
     // Track template usage analytics
     if (template.id.startsWith('db-') || template.id.startsWith('suggested-')) {
@@ -900,6 +972,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     setApplicationRate('');
     setDuration('');
     setVoiceBanner(null);
+    setAcceptedFiles([]);
   };
 
   // Reset when modal opens/closes
@@ -1003,7 +1076,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         history: productionId ? parseInt(productionId) : undefined,
         event_type: getTemplateEventType(selectedTemplate),
         date: new Date().toISOString(),
-        album: { images: [] },
+        // Photos attached via TrazoImageUpload (S3 URLs). Backend serializer
+        // handles `album_images` at history/serializers.py:1172.
+        album_images: acceptedFiles,
         template_used: selectedTemplate.id,
         template_name: selectedTemplate.name,
         exclude_from_carbon_calculation: selectedTemplate.excludeFromCarbonCalculation || false,
@@ -1198,7 +1273,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
         date: eventDate,
         description: eventDescription,
         performed_by: performedBy || null,
-        album: { images: [] },
+        // Photos attached via TrazoImageUpload (S3 URLs). Backend serializer
+        // handles `album_images` at history/serializers.py:1172.
+        album_images: acceptedFiles,
         // Merge template fields with type-aware fields (type-aware takes precedence)
         ...eventTypeFields,
         ...typeAwareBackendFields,
@@ -1238,6 +1315,100 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     } finally {
       setIsCreating(false);
     }
+  };
+
+  // Photo documentation section — shared between grid view (after template selection)
+  // and detailed form view. Enforces Trazo's transparency-first photo requirement.
+  // Backend applies 50% penalty for Tier 1 events, 25% for Tier 2.
+  const renderPhotoSection = () => {
+    if (!selectedTemplate) return null;
+
+    const borderColor =
+      photoTier === 'essential'
+        ? 'red.200'
+        : photoTier === 'recommended'
+          ? 'orange.200'
+          : 'gray.200';
+
+    return (
+      <Box
+        bg="white"
+        p={4}
+        borderRadius="xl"
+        border="2px solid"
+        borderColor={borderColor}
+        boxShadow="sm"
+      >
+        <VStack spacing={4} align="stretch">
+          {/* Section Header */}
+          <HStack spacing={2}>
+            <Icon as={FaCamera} color="green.600" boxSize={5} />
+            <Text fontSize="md" fontWeight="semibold" color="gray.800">
+              {intl.formatMessage({ id: 'quickAdd.photos.sectionTitle' })}
+            </Text>
+            {acceptedFiles.length > 0 && (
+              <Badge colorScheme="green" size="sm" ml="auto">
+                {intl.formatMessage(
+                  { id: 'quickAdd.photos.countBadge' },
+                  { current: acceptedFiles.length, max: 5 }
+                )}
+              </Badge>
+            )}
+          </HStack>
+
+          {/* Tier-aware warning banner with score-impact message */}
+          <TierPhotoBanner
+            tier={photoTier}
+            subtype={templateSubtype}
+            photoCount={acceptedFiles.length}
+          />
+
+          {/* Subtype-specific photo guidance (what to photograph).
+              Tier 1 (essential): always visible. Tier 2/3: collapsible to save space. */}
+          {photoTier === 'essential' ? (
+            <PhotoRecommendationsBox
+              activeEventType={templateEventType}
+              photoCount={acceptedFiles.length}
+              subtype={templateSubtype}
+            />
+          ) : (
+            <VStack spacing={2} align="stretch">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsGuidanceOpen(!isGuidanceOpen)}
+                justifyContent="space-between"
+                color="gray.600"
+                fontWeight="medium"
+                rightIcon={
+                  <Icon as={isGuidanceOpen ? FaChevronUp : FaChevronDown} boxSize={3} />
+                }
+                _hover={{ bg: 'gray.50' }}
+              >
+                {intl.formatMessage({
+                  id: isGuidanceOpen ? 'quickAdd.photos.hideTips' : 'quickAdd.photos.showTips'
+                })}
+              </Button>
+              <Collapse in={isGuidanceOpen} animateOpacity>
+                <PhotoRecommendationsBox
+                  activeEventType={templateEventType}
+                  photoCount={acceptedFiles.length}
+                  subtype={templateSubtype}
+                />
+              </Collapse>
+            </VStack>
+          )}
+
+          {/* Upload component — matches Full Add Event gold standard */}
+          <TrazoImageUpload
+            maxFiles={5}
+            maxSize={10 * 1024 * 1024}
+            existingImages={acceptedFiles}
+            onImagesChange={setAcceptedFiles}
+          />
+        </VStack>
+      </Box>
+    );
   };
 
   return (
@@ -1313,7 +1484,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
           flex="1"
           overflowY="auto"
           overflowX="hidden"
-          pb={selectedTemplate ? '120px' : '4'}
+          // Footer is 2-row (text + buttons) ~140-150px tall on mobile. Reserve enough
+          // bottom padding so the last bit of content isn't hidden behind the fixed footer.
+          pb={selectedTemplate ? { base: '170px', md: '150px' } : '4'}
           px={4}
         >
           {showDetailedForm ? (
@@ -1360,8 +1533,22 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                           : `${selectedTemplate.sustainabilityScore}/10`}
                       </Badge>
                     </HStack>
-                    {/* Learn More Link */}
-                    <HStack justify="flex-end">
+                    {/* Photo confirmation + Learn More Link */}
+                    <HStack justify="space-between" align="center">
+                      {/* Photo count confirmation — shows user their photos persist */}
+                      {acceptedFiles.length > 0 ? (
+                        <HStack spacing={1.5} color="green.700">
+                          <Icon as={FaCamera} boxSize={3} />
+                          <Text fontSize="xs" fontWeight="medium">
+                            {intl.formatMessage(
+                              { id: 'quickAdd.photos.attachedCount' },
+                              { count: acceptedFiles.length }
+                            )}
+                          </Text>
+                        </HStack>
+                      ) : (
+                        <Box />
+                      )}
                       <Link
                         color="green.600"
                         fontSize="xs"
@@ -1490,6 +1677,54 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                   />
                 </StandardField>
               </VStack>
+            </VStack>
+          ) : selectedTemplate ? (
+            // COMMIT VIEW — focused "Review & Document" screen after template selection.
+            // Replaces the template grid to give the user a single-focus commit screen
+            // (pattern used by Notion, Linear, Slack Workflow Builder).
+            <VStack spacing={4} align="stretch">
+              {/* Selected Template Summary with "Change" affordance */}
+              <Box
+                p={4}
+                bg="green.50"
+                borderRadius="xl"
+                border="1px solid"
+                borderColor="green.200"
+              >
+                <HStack justify="space-between" align="start" spacing={3}>
+                  <HStack spacing={3} flex={1} minW={0}>
+                    <Box p={2} bg="green.100" borderRadius="lg" flexShrink={0}>
+                      <Icon as={selectedTemplate.icon} color="green.600" boxSize={5} />
+                    </Box>
+                    <VStack align="start" spacing={0} flex={1} minW={0}>
+                      <Text
+                        fontWeight="semibold"
+                        color="gray.800"
+                        fontSize="sm"
+                        noOfLines={2}
+                      >
+                        {selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '')}
+                      </Text>
+                      <Text fontSize="xs" color="gray.600" noOfLines={2}>
+                        {selectedTemplate.description}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    colorScheme="green"
+                    onClick={() => {
+                      setSelectedTemplate(null);
+                      setAcceptedFiles([]);
+                    }}
+                    flexShrink={0}
+                    leftIcon={<Icon as={FaArrowLeft} boxSize={3} />}
+                  >
+                    {intl.formatMessage({ id: 'quickAdd.changeTemplate' })}
+                  </Button>
+                </HStack>
+              </Box>
             </VStack>
           ) : (
             // MAIN TEMPLATE SELECTION VIEW
@@ -1947,6 +2182,16 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                 )}
               </Box>
             </VStack>
+          )}
+
+          {/* Photo Documentation — rendered in STABLE position to prevent
+              unmount/remount when switching between commit and detailed form views.
+              Without this, TrazoImageUpload's S3Image children lose their load state
+              and render broken thumbnails on the second view. */}
+          {selectedTemplate && (
+            <Box pt={showDetailedForm ? 6 : 4}>
+              {renderPhotoSection()}
+            </Box>
           )}
         </ModalBody>
 

@@ -82,6 +82,7 @@ function Sidebar(props: SidebarProps) {
   const [certificationsRoutes, setCertificationsRoutes] = useState([]);
   const [commercialDynamicRoutes, setCommercialDynamicRoutes] = useState([]);
   const [transparencyDynamicRoutes, setTransparencyDynamicRoutes] = useState([]);
+  const [ospDynamicRoutes, setOspDynamicRoutes] = useState([]);
   const [iotDynamicRoutes, setIotDynamicRoutes] = useState([]);
 
   const establishments = useSelector(
@@ -190,11 +191,27 @@ function Sidebar(props: SidebarProps) {
         };
       });
 
+    // Sprint 5A — Organic System Plan per establishment.
+    const ospDynamicRoutes =
+      establishments &&
+      establishments.map((e: EstablishmentType) => {
+        return {
+          name: e.name,
+          path: `/dashboard/farm/${e.id}/osp`,
+          farmId: e.id,
+          authIcon: <HomeIcon color="inherit" />,
+          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/osp$`),
+          layout: '/admin',
+          items: []
+        };
+      });
+
     if (establishments) {
       setDynamicRoutes(dynamicRoutes);
       setCertificationsRoutes(certificationsRoutes);
       setCommercialDynamicRoutes(commercialDynamicRoutes);
       setTransparencyDynamicRoutes(transparencyDynamicRoutes);
+      setOspDynamicRoutes(ospDynamicRoutes);
       setIotDynamicRoutes(iotDynamicRoutes);
     }
   }, [establishments]);
@@ -491,6 +508,8 @@ function Sidebar(props: SidebarProps) {
                               ? commercialDynamicRoutes
                               : prop.isTransparencyDashboard
                               ? transparencyDynamicRoutes
+                              : prop.isOrganicSystemPlan
+                              ? ospDynamicRoutes
                               : prop.isIoTDashboard
                               ? iotDynamicRoutes
                               : prop.items;

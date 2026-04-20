@@ -425,6 +425,19 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         } pre-configured events for optimal carbon tracking.`
       );
 
+      // Auto-set production method from template farming approach
+      if (templateDetail.system_type) {
+        const methodMap: Record<string, string> = {
+          'organic': 'organic',
+          'conventional': 'conventional',
+          'regenerative': 'regenerative',
+          'integrated': 'integrated',
+          'no_till': 'no_till',
+          'precision': 'conventional',
+        };
+        setValue('production_method', methodMap[templateDetail.system_type] || 'conventional');
+      }
+
       // Set custom events from template
       if (templateDetail.events) {
         setCustomEvents(
@@ -669,9 +682,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           <Text color="gray.600">Production ID: {productionId}</Text>
           <Button
             colorScheme="green"
-            onClick={() =>
-              navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
-            }
+            onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
           >
             Go Back
           </Button>
@@ -682,653 +693,691 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
   return (
     <WriteAccessGuard>
-    <StandardPage
-      title={isEdit ? 'Edit Production' : 'Quick Start Production'}
-      description={
-        isEdit
-          ? `Update production details${productionData?.name ? ` for ${productionData.name}` : ''}`
-          : `Start a new production cycle${
-              parcelName ? ` for ${parcelName}` : ''
-            } with smart templates`
-      }
-      showBackButton
-      onBack={() =>
-        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
-      }
-    >
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <VStack spacing={8} align="stretch">
-          {/* Template Selection Section - Only show in create mode */}
-          {!isEdit && (
-            <Box data-tour="template-events">
-            <StandardCard
-              title="Smart Setup Templates"
-              subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes"
-            >
-              <VStack spacing={6} align="stretch">
-                {/* Current Template Display */}
-                {selectedTemplate ? (
-                  <Box
-                    p={4}
-                    bg="green.50"
-                    borderRadius="lg"
-                    borderWidth="2px"
-                    borderColor="green.200"
-                  >
-                    <HStack spacing={3}>
-                      <Icon
-                        as={getCropIcon(selectedTemplate.crop_type)}
-                        color="green.500"
-                        boxSize={6}
-                      />
-                      <VStack align="start" spacing={1} flex={1}>
-                        <HStack>
-                          <Text fontSize="lg" fontWeight="bold" color="green.700">
-                            {selectedTemplate.name} Template Selected
-                          </Text>
-                          <Badge colorScheme="green" variant="solid">
-                            Smart Setup
-                          </Badge>
-                        </HStack>
-                        <Text fontSize="sm" color="green.600">
-                          ⏱️ Setup time reduced by 37 minutes • 📅{' '}
-                          {selectedTemplate.events_count || customEvents.length} events configured •
-                          💰 EPA/USDA-sourced carbon calculation will be applied
-                        </Text>
-                        <HStack spacing={2} mt={1}>
-                          <Badge colorScheme="blue" variant="subtle" fontSize="xs">
-                            {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
-                          </Badge>
-                          <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                            Transparency Ready
-                          </Badge>
-                        </HStack>
-                      </VStack>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        colorScheme="green"
-                        onClick={onTemplateOpen}
+      <StandardPage
+        title={isEdit ? 'Edit Production' : 'Quick Start Production'}
+        description={
+          isEdit
+            ? `Update production details${
+                productionData?.name ? ` for ${productionData.name}` : ''
+              }`
+            : `Start a new production cycle${
+                parcelName ? ` for ${parcelName}` : ''
+              } with smart templates`
+        }
+        showBackButton
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
+      >
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <VStack spacing={8} align="stretch">
+            {/* Template Selection Section - Only show in create mode */}
+            {!isEdit && (
+              <Box data-tour="template-events">
+                <StandardCard
+                  title="Smart Setup Templates"
+                  subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes"
+                >
+                  <VStack spacing={6} align="stretch">
+                    {/* Current Template Display */}
+                    {selectedTemplate ? (
+                      <Box
+                        p={4}
+                        bg="green.50"
+                        borderRadius="lg"
+                        borderWidth="2px"
+                        borderColor="green.200"
                       >
-                        Change Template
-                      </Button>
-                    </HStack>
-                  </Box>
-                ) : (
-                  <Box
-                    p={4}
-                    bg="blue.50"
-                    borderRadius="lg"
-                    borderWidth="2px"
-                    borderColor="blue.200"
-                    cursor="pointer"
-                    transition="all 0.2s"
-                    _hover={{ bg: 'blue.100', borderColor: 'blue.300' }}
-                    onClick={selectedCropTypeId ? onTemplateOpen : undefined}
-                    opacity={selectedCropTypeId ? 1 : 0.6}
-                  >
-                    <HStack spacing={3}>
-                      <Icon as={FaRocket} color="blue.500" boxSize={6} />
-                      <VStack align="start" spacing={1} flex={1}>
-                        <Text fontSize="lg" fontWeight="bold" color="blue.700">
-                          {selectedCropTypeId
-                            ? 'Select a Smart Template'
-                            : 'Select Crop Type First'}
-                        </Text>
-                        <Text fontSize="sm" color="blue.600">
-                          {selectedCropTypeId
-                            ? `🚀 ${filteredTemplates.length} template${
-                                filteredTemplates.length !== 1 ? 's' : ''
-                              } available for your crop type`
-                            : '🌱 Choose your crop type above to see available templates'}
-                        </Text>
-                        <HStack spacing={2} mt={1}>
-                          {selectedCropTypeId ? (
-                            <>
-                              <Badge colorScheme="green" variant="subtle" fontSize="xs">
-                                {filteredTemplates.length} Templates
+                        <HStack spacing={3}>
+                          <Icon
+                            as={getCropIcon(selectedTemplate.crop_type)}
+                            color="green.500"
+                            boxSize={6}
+                          />
+                          <VStack align="start" spacing={1} flex={1}>
+                            <HStack>
+                              <Text fontSize="lg" fontWeight="bold" color="green.700">
+                                {selectedTemplate.name} Template Selected
+                              </Text>
+                              <Badge colorScheme="green" variant="solid">
+                                Smart Setup
                               </Badge>
-                              <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                                Farm Documented
-                              </Badge>
-                              <Badge colorScheme="orange" variant="subtle" fontSize="xs">
-                                QR Ready
-                              </Badge>
-                            </>
-                          ) : (
-                            <Badge colorScheme="gray" variant="subtle" fontSize="xs">
-                              Select crop type to continue
+                            </HStack>
+                            <Text fontSize="sm" color="green.600">
+                              ⏱️ Setup time reduced by 37 minutes • 📅{' '}
+                              {selectedTemplate.events_count || customEvents.length} events
+                              configured • 💰 EPA/USDA-sourced carbon calculation will be applied
+                            </Text>
+                            <HStack spacing={2} mt={1}>
+                              {selectedTemplate?.system_type === 'organic' ? (
+                                <>
+                                  <Badge colorScheme="green" variant="subtle" fontSize="xs">
+                                    {intl.formatMessage({ id: 'template.badge.auditReady' })}
+                                  </Badge>
+                                  <Badge colorScheme="orange" variant="subtle" fontSize="xs">
+                                    {intl.formatMessage({ id: 'template.badge.nopReady' })}
+                                  </Badge>
+                                </>
+                              ) : (
+                                <>
+                                  <Badge colorScheme="blue" variant="subtle" fontSize="xs">
+                                    {intl.formatMessage({ id: 'template.badge.epaSourced' })}
+                                  </Badge>
+                                  <Badge colorScheme="purple" variant="subtle" fontSize="xs">
+                                    {intl.formatMessage({ id: 'template.badge.transparencyReady' })}
+                                  </Badge>
+                                </>
+                              )}
+                            </HStack>
+                          </VStack>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            colorScheme="green"
+                            onClick={onTemplateOpen}
+                          >
+                            Change Template
+                          </Button>
+                        </HStack>
+                      </Box>
+                    ) : (
+                      <Box
+                        p={4}
+                        bg="blue.50"
+                        borderRadius="lg"
+                        borderWidth="2px"
+                        borderColor="blue.200"
+                        cursor="pointer"
+                        transition="all 0.2s"
+                        _hover={{ bg: 'blue.100', borderColor: 'blue.300' }}
+                        onClick={selectedCropTypeId ? onTemplateOpen : undefined}
+                        opacity={selectedCropTypeId ? 1 : 0.6}
+                      >
+                        <HStack spacing={3}>
+                          <Icon as={FaRocket} color="blue.500" boxSize={6} />
+                          <VStack align="start" spacing={1} flex={1}>
+                            <Text fontSize="lg" fontWeight="bold" color="blue.700">
+                              {selectedCropTypeId
+                                ? 'Select a Smart Template'
+                                : 'Select Crop Type First'}
+                            </Text>
+                            <Text fontSize="sm" color="blue.600">
+                              {selectedCropTypeId
+                                ? `🚀 ${filteredTemplates.length} template${
+                                    filteredTemplates.length !== 1 ? 's' : ''
+                                  } available for your crop type`
+                                : '🌱 Choose your crop type above to see available templates'}
+                            </Text>
+                            <HStack spacing={2} mt={1}>
+                              {selectedCropTypeId ? (
+                                <>
+                                  <Badge colorScheme="green" variant="subtle" fontSize="xs">
+                                    {filteredTemplates.length} Templates
+                                  </Badge>
+                                  <Badge colorScheme="purple" variant="subtle" fontSize="xs">
+                                    Farm Documented
+                                  </Badge>
+                                  <Badge colorScheme="orange" variant="subtle" fontSize="xs">
+                                    QR Ready
+                                  </Badge>
+                                </>
+                              ) : (
+                                <Badge colorScheme="gray" variant="subtle" fontSize="xs">
+                                  Select crop type to continue
+                                </Badge>
+                              )}
+                            </HStack>
+                          </VStack>
+                          {selectedCropTypeId && <Icon as={FaArrowRight} color="blue.400" />}
+                        </HStack>
+                      </Box>
+                    )}
+                  </VStack>
+                </StandardCard>
+              </Box>
+            )}
+
+            {/* Production Details Form */}
+            <StandardCard title="Production Details" subtitle="Configure your production cycle">
+              <VStack spacing={6} align="stretch">
+                <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
+                  {/* Crop Type Selection - First field */}
+                  <GridItem colSpan={{ base: 1, md: 2 }} data-tour="crop-selector">
+                    <StandardField
+                      label={
+                        <>
+                          Crop Type
+                          {isEdit && (
+                            <Badge ml={2} colorScheme="gray" variant="subtle">
+                              Read-Only
                             </Badge>
                           )}
-                        </HStack>
-                      </VStack>
-                      {selectedCropTypeId && <Icon as={FaArrowRight} color="blue.400" />}
-                    </HStack>
-                  </Box>
+                        </>
+                      }
+                      required={!isEdit}
+                      error={errors.crop_type_id?.message}
+                      helpText={
+                        isEdit
+                          ? 'Crop type cannot be changed after production is created. To change crop type, create a new production.'
+                          : undefined
+                      }
+                    >
+                      {/* Debug Info - only in create mode */}
+                      {!isEdit && isLoadingCropTypes && (
+                        <Text fontSize="sm" color="blue.500" mb={2}>
+                          Loading crop types...
+                        </Text>
+                      )}
+                      {!isEdit && cropTypesError && (
+                        <Text fontSize="sm" color="red.500" mb={2}>
+                          Error loading crop types: {JSON.stringify(cropTypesError)}
+                        </Text>
+                      )}
+                      {!isEdit &&
+                        !isLoadingCropTypes &&
+                        !cropTypesError &&
+                        (!cropTypesData || cropTypesData.length === 0) && (
+                          <Text fontSize="sm" color="orange.500" mb={2}>
+                            No crop types available. Expected 6 crop types from database.
+                          </Text>
+                        )}
+                      <Controller
+                        name="crop_type_id"
+                        control={control}
+                        render={({ field }) => (
+                          <StandardSelect
+                            {...field}
+                            placeholder="Select your crop type..."
+                            isDisabled={isEdit}
+                            bg={isEdit ? 'gray.100' : 'white'}
+                            cursor={isEdit ? 'not-allowed' : 'pointer'}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                              if (!isEdit) {
+                                field.onChange(e);
+                                setSelectedCropTypeId(e.target.value);
+                              }
+                            }}
+                          >
+                            {cropTypesData?.map((cropType) => (
+                              <option key={cropType.id} value={cropType.id.toString()}>
+                                {cropType.name}
+                              </option>
+                            ))}
+                          </StandardSelect>
+                        )}
+                      />
+                      {selectedCropTypeId && cropTypesData && (
+                        <Box mt={2} p={3} bg="green.50" borderRadius="md">
+                          {(() => {
+                            const selectedCropType = cropTypesData.find(
+                              (ct) => ct.id.toString() === selectedCropTypeId
+                            );
+                            return selectedCropType ? (
+                              <VStack align="start" spacing={1}>
+                                <Text fontSize="sm" fontWeight="medium" color="green.700">
+                                  {selectedCropType.description}
+                                </Text>
+                                <HStack spacing={4} fontSize="xs" color="green.600">
+                                  <Text>
+                                    <Text as="span" fontWeight="medium">
+                                      Emissions:
+                                    </Text>{' '}
+                                    {selectedCropType.emissions_per_hectare} kg CO2e/ha
+                                  </Text>
+                                </HStack>
+                              </VStack>
+                            ) : null;
+                          })()}
+                        </Box>
+                      )}
+                    </StandardField>
+                  </GridItem>
+
+                  <GridItem>
+                    <StandardField label="Production Name" required error={errors.name?.message}>
+                      <Controller
+                        name="name"
+                        control={control}
+                        render={({ field }) => (
+                          <StandardInput
+                            {...field}
+                            placeholder="e.g., Spring 2024 Orange Harvest"
+                          />
+                        )}
+                      />
+                    </StandardField>
+                  </GridItem>
+
+                  <GridItem>
+                    <StandardField label="Start Date" required error={errors.start_date?.message}>
+                      <Controller
+                        name="start_date"
+                        control={control}
+                        render={({ field }) => <StandardInput {...field} type="date" />}
+                      />
+                    </StandardField>
+                  </GridItem>
+
+                  <GridItem>
+                    <StandardField label="Expected Harvest Date">
+                      <Controller
+                        name="expected_harvest"
+                        control={control}
+                        render={({ field }) => <StandardInput {...field} type="date" />}
+                      />
+                    </StandardField>
+                  </GridItem>
+
+                  <GridItem>
+                    <StandardField label="Production Type" required>
+                      <Controller
+                        name="type"
+                        control={control}
+                        render={({ field }) => (
+                          <StandardSelect {...field}>
+                            <option value="OR">Orchard (Perennial Crops)</option>
+                            <option value="GA">Garden (Annual Crops)</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+                  </GridItem>
+
+                  <GridItem>
+                    <StandardField label="Production Method">
+                      <Controller
+                        name="production_method"
+                        control={control}
+                        render={({ field }) => (
+                          <StandardSelect {...field}>
+                            <option value="conventional">Conventional</option>
+                            <option value="organic">Organic</option>
+                            <option value="regenerative">Regenerative</option>
+                            <option value="sustainable">Sustainable</option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+                  </GridItem>
+
+                  <GridItem>
+                    <StandardField
+                      label={
+                        <>
+                          Parcel Area (hectares)
+                          {currentParcel?.area && (
+                            <Badge ml={2} colorScheme="green" variant="subtle">
+                              Auto-Loaded
+                            </Badge>
+                          )}
+                        </>
+                      }
+                      helpText={
+                        currentParcel?.area
+                          ? 'Area from parcel data (read-only). To change, edit the parcel settings.'
+                          : 'Used for carbon footprint calculations. Default: 10 hectares'
+                      }
+                    >
+                      {currentParcel?.area ? (
+                        <StandardInput
+                          value={`${areaInput} hectares`}
+                          isReadOnly
+                          bg="gray.50"
+                          cursor="not-allowed"
+                        />
+                      ) : (
+                        <NumberInput
+                          value={areaInput}
+                          onChange={(valueString) => setAreaInput(Number(valueString) || 10)}
+                          min={0.1}
+                          max={10000}
+                          step={0.1}
+                          size="lg"
+                        >
+                          <NumberInputField
+                            borderRadius="lg"
+                            placeholder="Enter parcel area in hectares"
+                          />
+                          <NumberInputStepper>
+                            <NumberIncrementStepper />
+                            <NumberDecrementStepper />
+                          </NumberInputStepper>
+                        </NumberInput>
+                      )}
+                    </StandardField>
+                  </GridItem>
+
+                  {/* NOTE: Irrigation Method removed - already captured at establishment level */}
+
+                  <GridItem colSpan={{ base: 1, md: 2 }}>
+                    <StandardField label="Description">
+                      <Controller
+                        name="description"
+                        control={control}
+                        render={({ field }) => (
+                          <StandardTextarea
+                            {...field}
+                            placeholder="Describe this production cycle, goals, and special considerations..."
+                            rows={3}
+                          />
+                        )}
+                      />
+                    </StandardField>
+                  </GridItem>
+                </Grid>
+
+                {/* Action Buttons - only show here in edit mode (no events section below) */}
+                {isEdit && (
+                  <HStack spacing={3} justify="flex-end" pt={4}>
+                    <StandardButton
+                      variant="outline"
+                      onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
+                    >
+                      Cancel
+                    </StandardButton>
+                    <StandardButton
+                      type="submit"
+                      isLoading={isUpdating}
+                      loadingText="Updating Production..."
+                      leftIcon={<FaCheckCircle />}
+                    >
+                      Update Production
+                    </StandardButton>
+                  </HStack>
                 )}
               </VStack>
             </StandardCard>
-            </Box>
-          )}
 
-          {/* Production Details Form */}
-          <StandardCard title="Production Details" subtitle="Configure your production cycle">
-            <VStack spacing={6} align="stretch">
-              <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
-                {/* Crop Type Selection - First field */}
-                <GridItem colSpan={{ base: 1, md: 2 }} data-tour="crop-selector">
-                  <StandardField
-                    label={
-                      <>
-                        Crop Type
-                        {isEdit && (
-                          <Badge ml={2} colorScheme="gray" variant="subtle">
-                            Read-Only
-                          </Badge>
-                        )}
-                      </>
-                    }
-                    required={!isEdit}
-                    error={errors.crop_type_id?.message}
-                    helpText={
-                      isEdit
-                        ? 'Crop type cannot be changed after production is created. To change crop type, create a new production.'
-                        : undefined
-                    }
-                  >
-                    {/* Debug Info - only in create mode */}
-                    {!isEdit && isLoadingCropTypes && (
-                      <Text fontSize="sm" color="blue.500" mb={2}>
-                        Loading crop types...
-                      </Text>
-                    )}
-                    {!isEdit && cropTypesError && (
-                      <Text fontSize="sm" color="red.500" mb={2}>
-                        Error loading crop types: {JSON.stringify(cropTypesError)}
-                      </Text>
-                    )}
-                    {!isEdit &&
-                      !isLoadingCropTypes &&
-                      !cropTypesError &&
-                      (!cropTypesData || cropTypesData.length === 0) && (
-                        <Text fontSize="sm" color="orange.500" mb={2}>
-                          No crop types available. Expected 6 crop types from database.
-                        </Text>
-                      )}
-                    <Controller
-                      name="crop_type_id"
-                      control={control}
-                      render={({ field }) => (
-                        <StandardSelect
-                          {...field}
-                          placeholder="Select your crop type..."
-                          isDisabled={isEdit}
-                          bg={isEdit ? 'gray.100' : 'white'}
-                          cursor={isEdit ? 'not-allowed' : 'pointer'}
-                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                            if (!isEdit) {
-                              field.onChange(e);
-                              setSelectedCropTypeId(e.target.value);
-                            }
-                          }}
-                        >
-                          {cropTypesData?.map((cropType) => (
-                            <option key={cropType.id} value={cropType.id.toString()}>
-                              {cropType.name}
-                            </option>
-                          ))}
-                        </StandardSelect>
-                      )}
-                    />
-                    {selectedCropTypeId && cropTypesData && (
-                      <Box mt={2} p={3} bg="green.50" borderRadius="md">
-                        {(() => {
-                          const selectedCropType = cropTypesData.find(
-                            (ct) => ct.id.toString() === selectedCropTypeId
-                          );
-                          return selectedCropType ? (
-                            <VStack align="start" spacing={1}>
-                              <Text fontSize="sm" fontWeight="medium" color="green.700">
-                                {selectedCropType.description}
-                              </Text>
-                              <HStack spacing={4} fontSize="xs" color="green.600">
-                                <Text>
-                                  <Text as="span" fontWeight="medium">
-                                    Emissions:
-                                  </Text>{' '}
-                                  {selectedCropType.emissions_per_hectare} kg CO2e/ha
-                                </Text>
-                              </HStack>
-                            </VStack>
-                          ) : null;
-                        })()}
-                      </Box>
-                    )}
-                  </StandardField>
-                </GridItem>
-
-                <GridItem>
-                  <StandardField
-                    label="Production Name"
-                    required
-                    error={errors.name?.message}
-                  >
-                    <Controller
-                      name="name"
-                      control={control}
-                      render={({ field }) => (
-                        <StandardInput {...field} placeholder="e.g., Spring 2024 Orange Harvest" />
-                      )}
-                    />
-                  </StandardField>
-                </GridItem>
-
-                <GridItem>
-                  <StandardField
-                    label="Start Date"
-                    required
-                    error={errors.start_date?.message}
-                  >
-                    <Controller
-                      name="start_date"
-                      control={control}
-                      render={({ field }) => <StandardInput {...field} type="date" />}
-                    />
-                  </StandardField>
-                </GridItem>
-
-                <GridItem>
-                  <StandardField label="Expected Harvest Date">
-                    <Controller
-                      name="expected_harvest"
-                      control={control}
-                      render={({ field }) => <StandardInput {...field} type="date" />}
-                    />
-                  </StandardField>
-                </GridItem>
-
-                <GridItem>
-                  <StandardField label="Production Type" required>
-                    <Controller
-                      name="type"
-                      control={control}
-                      render={({ field }) => (
-                        <StandardSelect {...field}>
-                          <option value="OR">Orchard (Perennial Crops)</option>
-                          <option value="GA">Garden (Annual Crops)</option>
-                        </StandardSelect>
-                      )}
-                    />
-                  </StandardField>
-                </GridItem>
-
-                <GridItem>
-                  <StandardField label="Production Method">
-                    <Controller
-                      name="production_method"
-                      control={control}
-                      render={({ field }) => (
-                        <StandardSelect {...field}>
-                          <option value="conventional">Conventional</option>
-                          <option value="organic">Organic</option>
-                          <option value="regenerative">Regenerative</option>
-                          <option value="sustainable">Sustainable</option>
-                        </StandardSelect>
-                      )}
-                    />
-                  </StandardField>
-                </GridItem>
-
-                <GridItem>
-                  <StandardField
-                    label={
-                      <>
-                        Parcel Area (hectares)
-                        {currentParcel?.area && (
-                          <Badge ml={2} colorScheme="green" variant="subtle">
-                            Auto-Loaded
-                          </Badge>
-                        )}
-                      </>
-                    }
-                    helpText={
-                      currentParcel?.area
-                        ? 'Area from parcel data (read-only). To change, edit the parcel settings.'
-                        : 'Used for carbon footprint calculations. Default: 10 hectares'
-                    }
-                  >
-                    {currentParcel?.area ? (
-                      <StandardInput
-                        value={`${areaInput} hectares`}
-                        isReadOnly
-                        bg="gray.50"
-                        cursor="not-allowed"
-                      />
-                    ) : (
-                      <NumberInput
-                        value={areaInput}
-                        onChange={(valueString) => setAreaInput(Number(valueString) || 10)}
-                        min={0.1}
-                        max={10000}
-                        step={0.1}
-                        size="lg"
-                      >
-                        <NumberInputField
-                          borderRadius="lg"
-                          placeholder="Enter parcel area in hectares"
-                        />
-                        <NumberInputStepper>
-                          <NumberIncrementStepper />
-                          <NumberDecrementStepper />
-                        </NumberInputStepper>
-                      </NumberInput>
-                    )}
-                  </StandardField>
-                </GridItem>
-
-                {/* NOTE: Irrigation Method removed - already captured at establishment level */}
-
-                <GridItem colSpan={{ base: 1, md: 2 }}>
-                  <StandardField label="Description">
-                    <Controller
-                      name="description"
-                      control={control}
-                      render={({ field }) => (
-                        <StandardTextarea
-                          {...field}
-                          placeholder="Describe this production cycle, goals, and special considerations..."
-                          rows={3}
-                        />
-                      )}
-                    />
-                  </StandardField>
-                </GridItem>
-              </Grid>
-
-              {/* Action Buttons - inside card, matching project pattern */}
+            {/* Fallback action buttons when no template events in create mode */}
+            {!isEdit && customEvents.length === 0 && (
               <HStack spacing={3} justify="flex-end" pt={4}>
                 <StandardButton
                   variant="outline"
-                  onClick={() =>
-                    navigate(
-                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}`
-                    )
-                  }
+                  onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
                 >
                   Cancel
                 </StandardButton>
                 <StandardButton
                   type="submit"
-                  isLoading={isCreating || isUpdating}
-                  loadingText={isEdit ? 'Updating Production...' : 'Creating Production...'}
-                  leftIcon={isEdit ? <FaCheckCircle /> : <FaRocket />}
-                >
-                  {isEdit ? 'Update Production' : 'Start Production'}
-                </StandardButton>
-              </HStack>
-            </VStack>
-          </StandardCard>
-
-          {/* Pre-configured Events - Only show in create mode */}
-          {!isEdit && customEvents.length > 0 && (
-            <Box data-tour="transparency-score-preview">
-            <StandardCard
-              title="Pre-configured Events"
-              subtitle="Review and customize the events from your selected template"
-            >
-              {/* Master Switch Controls */}
-              <HStack justify="space-between" mb={4} p={3} bg="gray.50" borderRadius="md">
-                <Text fontSize="sm" color="gray.600">
-                  {customEvents.filter((event) => event.enabled).length} of {customEvents.length}{' '}
-                  events selected
-                </Text>
-                <HStack spacing={3}>
-                  <Switch
-                    isChecked={customEvents.every((event) => event.enabled)}
-                    onChange={handleToggleAll}
-                    colorScheme="green"
-                    size="md"
-                  />
-                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                    {customEvents.every((event) => event.enabled) ? 'Unselect All' : 'Select All'}
-                  </Text>
-                </HStack>
-              </HStack>
-              <VStack spacing={4} align="stretch">
-                {customEvents.map((event) => (
-                  <Box
-                    key={event.id}
-                    p={4}
-                    bg={event.enabled ? 'gray.50' : 'gray.100'}
-                    borderRadius="md"
-                    borderWidth="1px"
-                    borderColor={event.enabled ? 'gray.200' : 'gray.300'}
-                    opacity={event.enabled ? 1 : 0.6}
-                  >
-                    <HStack justify="space-between" mb={2}>
-                      <HStack>
-                        <Switch
-                          isChecked={event.enabled}
-                          onChange={() => handleEventToggle(event.id)}
-                          colorScheme="green"
-                        />
-                        <VStack align="start" spacing={0}>
-                          <Text fontWeight="bold">{event.name}</Text>
-                          <Text fontSize="sm" color="gray.600">
-                            {event.timing} • {event.frequency}
-                          </Text>
-                        </VStack>
-                      </HStack>
-                      <VStack align="end" spacing={0}>
-                        {event.excludeFromCarbonCalculation ? (
-                          <Text fontSize="sm" fontWeight="bold" color="gray.500">
-                            No Carbon Calc
-                          </Text>
-                        ) : carbonPreviews[event.id] ? (
-                          <Text fontSize="sm" fontWeight="bold" color="green.600">
-                            {formatCarbonValue(carbonPreviews[event.id].estimated_carbon)} kg CO2e
-                            <Text fontSize="xs" color="gray.500">
-                              {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
-                            </Text>
-                          </Text>
-                        ) : (
-                          <Text fontSize="sm" fontWeight="bold" color="gray.400">
-                            N/A
-                          </Text>
-                        )}
-                        <Input
-                          type="date"
-                          size="sm"
-                          value={event.scheduled_date}
-                          onChange={(e) => handleEventDateChange(event.id, e.target.value)}
-                          isDisabled={!event.enabled}
-                          width="150px"
-                        />
-                      </VStack>
-                    </HStack>
-                    {event.efficiency_tips && (
-                      <Box mt={2} p={2} bg="blue.50" borderRadius="sm">
-                        <Text fontSize="xs" fontWeight="medium" color="blue.600" mb={1}>
-                          Efficiency Tips:
-                        </Text>
-                        <Text fontSize="xs" color="gray.600">
-                          <Icon as={FaCheckCircle} color="green.400" mr={1} />
-                          {event.efficiency_tips}
-                        </Text>
-                      </Box>
-                    )}
-                  </Box>
-                ))}
-              </VStack>
-
-              {/* Action Buttons - inside last card for create mode */}
-              <HStack spacing={3} justify="flex-end" pt={4}>
-                <StandardButton
-                  variant="outline"
-                  onClick={() =>
-                    navigate(
-                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}`
-                    )
-                  }
-                >
-                  Cancel
-                </StandardButton>
-                <StandardButton
-                  type="submit"
-                  isLoading={isCreating || isUpdating}
+                  isLoading={isCreating}
                   loadingText="Creating Production..."
                   leftIcon={<FaRocket />}
                 >
                   Start Production
                 </StandardButton>
               </HStack>
-            </StandardCard>
-            </Box>
-          )}
-        </VStack>
-      </form>
+            )}
 
-      {/* Template Selection Modal */}
-      <Modal isOpen={isTemplateOpen} onClose={onTemplateClose} size="6xl">
-        <ModalOverlay />
-        <ModalContent maxH="90vh" overflowY="auto">
-          <ModalHeader>
-            <VStack align="start" spacing={2}>
-              <HStack>
-                <Icon as={FaRocket} color="blue.500" />
-                <Heading size="lg">Select Production Template</Heading>
-              </HStack>
-              <Text fontSize="sm" color="gray.600" fontWeight="normal">
-                {selectedCropTypeId && cropTypesData ? (
-                  <>
-                    Templates for{' '}
-                    <Text as="span" fontWeight="semibold" color="green.600">
-                      {cropTypesData.find((ct) => ct.id.toString() === selectedCropTypeId)?.name}
-                    </Text>{' '}
-                    • {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''}{' '}
-                    available
-                  </>
-                ) : (
-                  'Choose a pre-configured template to accelerate your production setup'
-                )}
-              </Text>
-            </VStack>
-          </ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            {filteredTemplates.length > 0 ? (
-              <Grid templateColumns="repeat(auto-fit, minmax(350px, 1fr))" gap={6}>
-                {filteredTemplates.map((template) => {
-                  const CropIcon = getCropIcon(template.crop_type);
-                  return (
-                    <Box
-                      cursor="pointer"
-                      transition="all 0.2s"
-                      _hover={{
-                        transform: 'translateY(-2px)',
-                        shadow: 'lg'
-                      }}
-                      onClick={() => handleTemplateSelect(template)}
-                    >
-                      <Card
-                        key={template.template_id}
+            {/* Pre-configured Events - Only show in create mode */}
+            {!isEdit && customEvents.length > 0 && (
+              <Box data-tour="transparency-score-preview">
+                <StandardCard
+                  title="Pre-configured Events"
+                  subtitle={intl.formatMessage({ id: 'production.template.eventsSubtitle' })}
+                >
+                  {/* Helper note */}
+                  <Box p={3} mb={4} bg="green.50" borderRadius="md" border="1px solid" borderColor="green.100">
+                    <Text fontSize="xs" color="green.700">
+                      {intl.formatMessage({ id: 'production.template.eventsHelperNote' })}
+                    </Text>
+                  </Box>
+
+                  {/* Master Switch Controls */}
+                  <HStack justify="space-between" mb={4} p={3} bg="gray.50" borderRadius="md">
+                    <Text fontSize="sm" color="gray.600">
+                      {customEvents.filter((event) => event.enabled).length} of{' '}
+                      {customEvents.length} events selected
+                    </Text>
+                    <HStack spacing={3}>
+                      <Switch
+                        isChecked={customEvents.every((event) => event.enabled)}
+                        onChange={handleToggleAll}
+                        colorScheme="green"
+                        size="md"
+                      />
+                      <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                        {customEvents.every((event) => event.enabled)
+                          ? 'Unselect All'
+                          : 'Select All'}
+                      </Text>
+                    </HStack>
+                  </HStack>
+                  <VStack spacing={4} align="stretch">
+                    {customEvents.map((event) => (
+                      <Box
+                        key={event.id}
+                        p={4}
+                        bg={event.enabled ? 'gray.50' : 'gray.100'}
+                        borderRadius="md"
                         borderWidth="1px"
-                        borderColor={
-                          selectedTemplate?.template_id === template.template_id
-                            ? 'blue.300'
-                            : 'gray.200'
-                        }
-                        bg={
-                          selectedTemplate?.template_id === template.template_id
-                            ? 'blue.50'
-                            : 'white'
-                        }
+                        borderColor={event.enabled ? 'gray.200' : 'gray.300'}
+                        opacity={event.enabled ? 1 : 0.6}
                       >
-                        <CardHeader pb={2}>
-                          <HStack justify="space-between">
-                            <HStack>
-                              <Icon as={CropIcon} color="green.500" boxSize={5} />
-                              <VStack align="start" spacing={0}>
-                                <Heading size="md">{template.name}</Heading>
-                                <Text fontSize="sm" color="gray.600">
-                                  {template.crop_type.charAt(0).toUpperCase() +
-                                    template.crop_type.slice(1)}
+                        <HStack justify="space-between" mb={2}>
+                          <HStack>
+                            <Switch
+                              isChecked={event.enabled}
+                              onChange={() => handleEventToggle(event.id)}
+                              colorScheme="green"
+                            />
+                            <VStack align="start" spacing={0}>
+                              <Text fontWeight="bold">{event.name}</Text>
+                              <Text fontSize="sm" color="gray.600">
+                                {event.timing} • {event.frequency}
+                              </Text>
+                            </VStack>
+                          </HStack>
+                          <VStack align="end" spacing={0}>
+                            {event.excludeFromCarbonCalculation ? (
+                              <Text fontSize="sm" fontWeight="bold" color="gray.500">
+                                No Carbon Calc
+                              </Text>
+                            ) : carbonPreviews[event.id] ? (
+                              <Text fontSize="sm" fontWeight="bold" color="green.600">
+                                {formatCarbonValue(carbonPreviews[event.id].estimated_carbon)} kg
+                                CO2e
+                                <Text fontSize="xs" color="gray.500">
+                                  {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
+                                </Text>
+                              </Text>
+                            ) : (
+                              <Text fontSize="sm" fontWeight="bold" color="gray.400">
+                                N/A
+                              </Text>
+                            )}
+                            <Input
+                              type="date"
+                              size="sm"
+                              value={event.scheduled_date}
+                              onChange={(e) => handleEventDateChange(event.id, e.target.value)}
+                              isDisabled={!event.enabled}
+                              width="150px"
+                            />
+                          </VStack>
+                        </HStack>
+                        {event.efficiency_tips && (
+                          <Box mt={2} p={2} bg="blue.50" borderRadius="sm">
+                            <Text fontSize="xs" fontWeight="medium" color="blue.600" mb={1}>
+                              Efficiency Tips:
+                            </Text>
+                            <Text fontSize="xs" color="gray.600">
+                              <Icon as={FaCheckCircle} color="green.400" mr={1} />
+                              {event.efficiency_tips}
+                            </Text>
+                          </Box>
+                        )}
+                      </Box>
+                    ))}
+                  </VStack>
+
+                  {/* Action Buttons - inside last card for create mode */}
+                  <HStack spacing={3} justify="flex-end" pt={4}>
+                    <StandardButton
+                      variant="outline"
+                      onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
+                    >
+                      Cancel
+                    </StandardButton>
+                    <StandardButton
+                      type="submit"
+                      isLoading={isCreating || isUpdating}
+                      loadingText="Creating Production..."
+                      leftIcon={<FaRocket />}
+                    >
+                      Start Production
+                    </StandardButton>
+                  </HStack>
+                </StandardCard>
+              </Box>
+            )}
+          </VStack>
+        </form>
+
+        {/* Template Selection Modal */}
+        <Modal isOpen={isTemplateOpen} onClose={onTemplateClose} size="6xl">
+          <ModalOverlay />
+          <ModalContent maxH="90vh" overflowY="auto">
+            <ModalHeader>
+              <VStack align="start" spacing={2}>
+                <HStack>
+                  <Icon as={FaRocket} color="blue.500" />
+                  <Heading size="lg">Select Production Template</Heading>
+                </HStack>
+                <Text fontSize="sm" color="gray.600" fontWeight="normal">
+                  {selectedCropTypeId && cropTypesData ? (
+                    <>
+                      Templates for{' '}
+                      <Text as="span" fontWeight="semibold" color="green.600">
+                        {cropTypesData.find((ct) => ct.id.toString() === selectedCropTypeId)?.name}
+                      </Text>{' '}
+                      • {filteredTemplates.length} template
+                      {filteredTemplates.length !== 1 ? 's' : ''} available
+                    </>
+                  ) : (
+                    'Choose a pre-configured template to accelerate your production setup'
+                  )}
+                </Text>
+              </VStack>
+            </ModalHeader>
+            <ModalCloseButton />
+            <ModalBody pb={6}>
+              {filteredTemplates.length > 0 ? (
+                <Grid templateColumns="repeat(auto-fit, minmax(350px, 1fr))" gap={6}>
+                  {filteredTemplates.map((template) => {
+                    const CropIcon = getCropIcon(template.crop_type);
+                    return (
+                      <Box
+                        cursor="pointer"
+                        transition="all 0.2s"
+                        _hover={{
+                          transform: 'translateY(-2px)',
+                          shadow: 'lg'
+                        }}
+                        onClick={() => handleTemplateSelect(template)}
+                      >
+                        <Card
+                          key={template.template_id}
+                          borderWidth="1px"
+                          borderColor={
+                            selectedTemplate?.template_id === template.template_id
+                              ? 'blue.300'
+                              : 'gray.200'
+                          }
+                          bg={
+                            selectedTemplate?.template_id === template.template_id
+                              ? 'blue.50'
+                              : 'white'
+                          }
+                        >
+                          <CardHeader pb={2}>
+                            <HStack justify="space-between">
+                              <HStack>
+                                <Icon as={CropIcon} color="green.500" boxSize={5} />
+                                <VStack align="start" spacing={0}>
+                                  <Heading size="md">{template.name}</Heading>
+                                  <Text fontSize="sm" color="gray.600">
+                                    {template.crop_type
+                                      .replace(/_/g, ' ')
+                                      .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                                  </Text>
+                                </VStack>
+                              </HStack>
+                              <Badge colorScheme="blue" variant="subtle">
+                                {template.events_count} events
+                              </Badge>
+                            </HStack>
+                          </CardHeader>
+                          <CardBody pt={0}>
+                            <Text fontSize="sm" color="gray.700" mb={4} noOfLines={2}>
+                              {template.description}
+                            </Text>
+                            <Grid templateColumns="repeat(2, 1fr)" gap={3}>
+                              <VStack align="start" spacing={1}>
+                                <HStack>
+                                  <Icon as={FaClock} color="blue.500" boxSize={3} />
+                                  <Text fontSize="xs" fontWeight="medium">
+                                    Setup Time
+                                  </Text>
+                                </HStack>
+                                <Text fontSize="sm" fontWeight="bold">
+                                  {template.setup_time_minutes} minutes
                                 </Text>
                               </VStack>
-                            </HStack>
-                            <Badge colorScheme="blue" variant="subtle">
-                              {template.events_count} events
-                            </Badge>
-                          </HStack>
-                        </CardHeader>
-                        <CardBody pt={0}>
-                          <Text fontSize="sm" color="gray.700" mb={4} noOfLines={2}>
-                            {template.description}
-                          </Text>
-                          <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-                            <VStack align="start" spacing={1}>
-                              <HStack>
-                                <Icon as={FaClock} color="blue.500" boxSize={3} />
-                                <Text fontSize="xs" fontWeight="medium">
-                                  Setup Time
+                              <VStack align="start" spacing={1}>
+                                <HStack>
+                                  <Icon as={FaChartLine} color="green.500" boxSize={3} />
+                                  <Text fontSize="xs" fontWeight="medium">
+                                    {template.system_type === 'organic'
+                                      ? intl.formatMessage({ id: 'template.badge.auditReady' })
+                                      : intl.formatMessage({ id: 'template.badge.transparency' })}
+                                  </Text>
+                                </HStack>
+                                <Text fontSize="sm" fontWeight="bold">
+                                  {template.system_type === 'organic'
+                                    ? intl.formatMessage({ id: 'template.badge.nopReady' })
+                                    : intl.formatMessage({ id: 'template.badge.qrReady' })}
                                 </Text>
-                              </HStack>
-                              <Text fontSize="sm" fontWeight="bold">
-                                {template.setup_time_minutes} minutes
-                              </Text>
-                            </VStack>
-                            <VStack align="start" spacing={1}>
-                              <HStack>
-                                <Icon as={FaChartLine} color="green.500" boxSize={3} />
-                                <Text fontSize="xs" fontWeight="medium">
-                                  Transparency
-                                </Text>
-                              </HStack>
-                              <Text fontSize="sm" fontWeight="bold">
-                                QR Ready
-                              </Text>
-                            </VStack>
-                          </Grid>
-                        </CardBody>
-                      </Card>
-                    </Box>
-                  );
-                })}
-              </Grid>
-            ) : (
-              <VStack spacing={4} py={8} textAlign="center">
-                <Icon as={FaSeedling} boxSize={12} color="gray.400" />
-                <VStack spacing={2}>
-                  <Heading size="md" color="gray.600">
-                    No Templates Available
-                  </Heading>
-                  <Text color="gray.500" maxW="400px">
-                    {selectedCropTypeId
-                      ? `We don't have pre-configured templates for ${
-                          cropTypesData?.find((ct) => ct.id.toString() === selectedCropTypeId)?.name
-                        } yet. You can still create a production manually.`
-                      : 'Select a crop type to see available templates.'}
-                  </Text>
+                              </VStack>
+                            </Grid>
+                          </CardBody>
+                        </Card>
+                      </Box>
+                    );
+                  })}
+                </Grid>
+              ) : (
+                <VStack spacing={4} py={8} textAlign="center">
+                  <Icon as={FaSeedling} boxSize={12} color="gray.400" />
+                  <VStack spacing={2}>
+                    <Heading size="md" color="gray.600">
+                      No Templates Available
+                    </Heading>
+                    <Text color="gray.500" maxW="400px">
+                      {selectedCropTypeId
+                        ? `We don't have pre-configured templates for ${
+                            cropTypesData?.find((ct) => ct.id.toString() === selectedCropTypeId)
+                              ?.name
+                          } yet. You can still create a production manually.`
+                        : 'Select a crop type to see available templates.'}
+                    </Text>
+                  </VStack>
+                  <Button
+                    variant="outline"
+                    colorScheme="blue"
+                    onClick={onTemplateClose}
+                    leftIcon={<FaEdit />}
+                  >
+                    Continue Without Template
+                  </Button>
                 </VStack>
-                <Button
-                  variant="outline"
-                  colorScheme="blue"
-                  onClick={onTemplateClose}
-                  leftIcon={<FaEdit />}
-                >
-                  Continue Without Template
-                </Button>
-              </VStack>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onTemplateClose}>
-              Cancel
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </StandardPage>
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="ghost" mr={3} onClick={onTemplateClose}>
+                Cancel
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </StandardPage>
     </WriteAccessGuard>
   );
 };

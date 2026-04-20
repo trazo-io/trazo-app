@@ -64,6 +64,11 @@ import { useDeleteEventMutation } from 'store/api/historyApi';
 import { getEventFieldDisplay } from '../../utils/fieldDisplayUtils';
 import { formatCO2e, getImpactLevel, getCarbonScoreColor } from '../../utils/carbonDisplayUtils';
 import { useIntl } from 'react-intl';
+// Event Field Registry (Phase 5 — feature-flagged)
+import { useEventFields } from 'src/hooks/useEventFields';
+import { RegistryFieldRenderer } from 'src/components/Events/RegistryFieldRenderer';
+
+const USE_FIELD_REGISTRY = import.meta.env.VITE_USE_FIELD_REGISTRY === 'true';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useUserRole } from 'hooks/useUserRole';
 import { useSelector } from 'react-redux';
@@ -101,7 +106,12 @@ interface Event {
     }>;
   };
   // Photo verification fields from backend
-  verification_level?: 'self_reported' | 'photo_documented' | 'photo_verified' | 'data_verified' | 'certified';
+  verification_level?:
+    | 'self_reported'
+    | 'photo_documented'
+    | 'photo_verified'
+    | 'data_verified'
+    | 'certified';
   photo_content_flag?: 'not_agricultural' | 'ai_generated' | 'stock_photo' | null;
   // Chemical event fields (stored directly on event object)
   commercial_name?: string;
@@ -573,9 +583,19 @@ const extractEventData = (event: Event) => {
       eventData.volume_applied ?? eventData.volume ?? extraData.volume_applied ?? null;
     amount = rawAmount !== null && rawAmount !== '' ? parseFloat(rawAmount) : null;
     unit = eventData.volume_unit || extraData.volume_unit || 'L';
+  } else if (event.event_type === 0 || event.event_type === 3 || event.event_type === 7) {
+    // Weather (0), General (3), and Business (7) events never carry a volume
+    // concept. Skip regex parsing from free-text observation — it produced
+    // nonsense like "200 lbs" when the farmer's notes mentioned "11,200 lbs"
+    // as a yield estimate (the \d+ pattern matched the tail of a comma-
+    // separated number). Leave amount/unit null so the Volume Applied card
+    // doesn't render.
   } else {
-    // For other event types, fall back to regex parsing from observation
-    const amountMatch = observation.match(/(\d+)\s*(kg|lbs?|liters?|l)/i);
+    // For remaining event types, fall back to regex parsing from observation.
+    // Require a word boundary before the digits so "11,200 lbs" is NOT
+    // misread as "200 lbs" — the number must start fresh, not after a
+    // digit/comma.
+    const amountMatch = observation.match(/(?:^|[^\d,])(\d+)\s*(kg|lbs?|liters?|l)\b/i);
     amount = amountMatch ? parseInt(amountMatch[1]) : null;
     unit = amountMatch ? amountMatch[2] : null;
   }
@@ -589,10 +609,24 @@ const extractEventData = (event: Event) => {
 };
 
 /**
- * Render event-specific fields using the shared getEventFieldDisplay() utility.
- * This ensures the modal shows exactly the same fields as ConsumerEventCard.
+ * Render event-specific fields.
+ *
+ * When VITE_USE_FIELD_REGISTRY=true:
+ *   Uses the centralized Event Field Registry (src/config/events/) for field
+ *   selection, formatting, and FTC compliance enforcement. The registry is
+ *   the single source of truth for which fields appear on which surface.
+ *
+ * When flag is off (default):
+ *   Falls back to legacy getEventFieldDisplay() from fieldDisplayUtils.ts.
+ *   This path will be removed once registry rendering is validated.
  */
 const renderSharedEventFields = (event: Event, cardBg: string, textColor: string) => {
+  if (USE_FIELD_REGISTRY) {
+    // Registry-powered rendering (Phase 5)
+    return <RegistryFieldRendererBridge event={event} cardBg={cardBg} textColor={textColor} />;
+  }
+
+  // Legacy rendering (unchanged — will be removed after registry validation)
   const { immediate, secondary, details } = getEventFieldDisplay(event as any);
 
   const allFields = [...immediate, ...secondary, ...details];
@@ -661,6 +695,39 @@ const renderSharedEventFields = (event: Event, cardBg: string, textColor: string
   );
 };
 
+/**
+ * Bridge component: wraps useEventFields hook (hooks can't be called conditionally).
+ * This component only renders when VITE_USE_FIELD_REGISTRY=true.
+ */
+const RegistryFieldRendererBridge: React.FC<{
+  event: Event;
+  cardBg: string;
+  textColor: string;
+}> = ({ event, cardBg, textColor }) => {
+  const eventData = event as Record<string, unknown>;
+  const eventType = (eventData.event_type as number) ?? 3; // default to general
+  const subtype = (eventData.weather_type ||
+    eventData.production_type ||
+    eventData.chemical_type ||
+    eventData.soil_management_type ||
+    eventData.pest_management_type ||
+    eventData.business_event_type ||
+    eventData.type) as string | undefined;
+
+  const { fields, hasFields } = useEventFields({
+    eventType: eventType as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7,
+    subtype: subtype as any,
+    surface: 'modal',
+    event: eventData
+  });
+
+  if (!hasFields) return null;
+
+  return (
+    <RegistryFieldRenderer fields={fields} variant="modal" cardBg={cardBg} textColor={textColor} />
+  );
+};
+
 export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   isOpen,
   onClose,
@@ -707,7 +774,8 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     if (isOpen && event) {
       // Zero-emission event types: Weather (0), General/Other Farm Activity (3), Business (7)
       // These are observational/administrative events that produce no direct emissions
-      const isZeroEmissionType = event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
+      const isZeroEmissionType =
+        event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
       if (isZeroEmissionType) {
         const typeLabels: Record<number, string> = { 0: 'weather', 3: 'general', 7: 'business' };
         setCarbonData({
@@ -718,7 +786,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           data_source: `${typeLabels[event.event_type]}_transparency`,
           calculation_method: `${typeLabels[event.event_type]}_transparency`,
           event_type: typeLabels[event.event_type] || 'general',
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString()
         });
         setDataLoaded(true);
       } else if (event.carbon_data) {
@@ -900,37 +968,24 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               {/* Event Details Section */}
               <Box>
                 <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
-                  Event Details
+                  {intl.formatMessage({ id: 'app.eventDetails' }) || 'Event Details'}
                 </Text>
 
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                {/* Field Notes always renders full width — farmer observations
+                    are usually long paragraphs and look cramped in a 50% cell. */}
+                <VStack spacing={4} align="stretch">
                   <Box p={4} bg={cardBg} borderRadius="lg">
                     <Text fontSize="sm" color="gray.500" mb={1}>
-                      Description
+                      {intl.formatMessage({ id: 'app.fieldNotes' }) || 'Field Notes'}
                     </Text>
-                    <Text fontWeight="medium">{event.description}</Text>
+                    <Text fontWeight="medium" whiteSpace="pre-wrap">
+                      {event.description}
+                    </Text>
                   </Box>
 
-                  {eventData.duration && (
-                    <Box p={4} bg={cardBg} borderRadius="lg">
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Duration
-                      </Text>
-                      <Text fontWeight="medium">{eventData.duration} hours</Text>
-                    </Box>
-                  )}
-
-                  {eventData.amount != null && (
-                    <Box p={4} bg={cardBg} borderRadius="lg">
-                      <Text fontSize="sm" color="gray.500" mb={1}>
-                        Volume Applied
-                      </Text>
-                      <Text fontWeight="medium">
-                        {eventData.amount} {eventData.unit}
-                      </Text>
-                    </Box>
-                  )}
-                </SimpleGrid>
+                  {/* Duration and volume_applied are both handled by the
+                      registry in "Detailed Information" below (Bug Pattern #5). */}
+                </VStack>
               </Box>
 
               {/* Album Images Section */}
@@ -1049,23 +1104,37 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   </HStack>
 
                   {/* Weather/zero-emission events: transparency message */}
-                  {(carbonData.co2e === 0 || carbonData.calculation_method?.includes('weather')) ? (
+                  {carbonData.co2e === 0 || carbonData.calculation_method?.includes('weather') ? (
                     <VStack spacing={3} align="stretch">
                       <HStack justify="space-between" align="center">
                         <VStack spacing={0} align="start">
                           <HStack spacing={2}>
-                            <Text fontSize="2xl" fontWeight="bold" color={textColor}>0</Text>
-                            <Text fontSize="sm" color="gray.500">kg CO₂e</Text>
-                            <Badge colorScheme="gray" size="sm">None</Badge>
+                            <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                              0
+                            </Text>
+                            <Text fontSize="sm" color="gray.500">
+                              kg CO₂e
+                            </Text>
+                            <Badge colorScheme="gray" size="sm">
+                              None
+                            </Badge>
                           </HStack>
-                          <Text fontSize="xs" color="gray.500">No direct emissions</Text>
+                          <Text fontSize="xs" color="gray.500">
+                            No direct emissions
+                          </Text>
                         </VStack>
                         <VStack spacing={0} align="end">
                           <HStack spacing={1}>
-                            <Text fontSize="lg" fontWeight="bold" color="green.500">100</Text>
-                            <Text fontSize="sm" color="gray.500">/100</Text>
+                            <Text fontSize="lg" fontWeight="bold" color="green.500">
+                              100
+                            </Text>
+                            <Text fontSize="sm" color="gray.500">
+                              /100
+                            </Text>
                           </HStack>
-                          <Text fontSize="xs" color="gray.500">Efficiency Score</Text>
+                          <Text fontSize="xs" color="gray.500">
+                            Efficiency Score
+                          </Text>
                         </VStack>
                       </HStack>
                       <Alert status="info" size="sm" borderRadius="md">
@@ -1076,65 +1145,65 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                             {event.event_type === 7
                               ? 'Business activities like certifications and audits build consumer trust. They generate no direct emissions but strengthen your transparency score.'
                               : event.event_type === 3
-                                ? 'General farm activities document agricultural practices. They generate no direct emissions but build your transparency score and enrich the consumer story.'
-                                : 'This event generates no direct emissions but builds your transparency score and enriches the consumer story.'}
+                              ? 'General farm activities document agricultural practices. They generate no direct emissions but build your transparency score and enrich the consumer story.'
+                              : 'This event generates no direct emissions but builds your transparency score and enriches the consumer story.'}
                           </AlertDescription>
                         </Box>
                       </Alert>
                     </VStack>
                   ) : (
-                  <>
-                  <HStack justify="space-between" align="center">
-                    <VStack spacing={0} align="start">
-                      <HStack spacing={2}>
-                        <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                          {formatCO2e(carbonData.co2e)}
-                        </Text>
-                        <Text fontSize="sm" color="gray.500">
-                          kg CO₂e
-                        </Text>
-                        <Badge colorScheme={getImpactLevel(carbonData.co2e).color} size="sm">
-                          {intl.formatMessage({ id: getImpactLevel(carbonData.co2e).level })}
-                        </Badge>
+                    <>
+                      <HStack justify="space-between" align="center">
+                        <VStack spacing={0} align="start">
+                          <HStack spacing={2}>
+                            <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                              {formatCO2e(carbonData.co2e)}
+                            </Text>
+                            <Text fontSize="sm" color="gray.500">
+                              kg CO₂e
+                            </Text>
+                            <Badge colorScheme={getImpactLevel(carbonData.co2e).color} size="sm">
+                              {intl.formatMessage({ id: getImpactLevel(carbonData.co2e).level })}
+                            </Badge>
+                          </HStack>
+                          <Text fontSize="xs" color="gray.500">
+                            Carbon footprint estimate
+                          </Text>
+                        </VStack>
+
+                        {carbonData.efficiency_score > 0 && (
+                          <VStack spacing={0} align="end">
+                            <HStack spacing={1}>
+                              <Text
+                                fontSize="lg"
+                                fontWeight="bold"
+                                color={`${getCarbonScoreColor(carbonData.efficiency_score)}.500`}
+                              >
+                                {Math.round(carbonData.efficiency_score)}
+                              </Text>
+                              <Text fontSize="sm" color="gray.500">
+                                /100
+                              </Text>
+                            </HStack>
+                            <Text fontSize="xs" color="gray.500">
+                              Efficiency Score
+                            </Text>
+                          </VStack>
+                        )}
                       </HStack>
-                      <Text fontSize="xs" color="gray.500">
-                        Carbon footprint estimate
-                      </Text>
-                    </VStack>
 
-                    {carbonData.efficiency_score > 0 && (
-                      <VStack spacing={0} align="end">
-                        <HStack spacing={1}>
-                          <Text
-                            fontSize="lg"
-                            fontWeight="bold"
-                            color={`${getCarbonScoreColor(carbonData.efficiency_score)}.500`}
-                          >
-                            {Math.round(carbonData.efficiency_score)}
-                          </Text>
-                          <Text fontSize="sm" color="gray.500">
-                            /100
-                          </Text>
-                        </HStack>
-                        <Text fontSize="xs" color="gray.500">
-                          Efficiency Score
-                        </Text>
-                      </VStack>
-                    )}
-                  </HStack>
-
-                  {/* Efficiency Progress Bar */}
-                  {carbonData.efficiency_score > 0 && (
-                    <Box mt={3}>
-                      <Progress
-                        value={carbonData.efficiency_score}
-                        colorScheme={getCarbonScoreColor(carbonData.efficiency_score)}
-                        size="sm"
-                        borderRadius="md"
-                      />
-                    </Box>
-                  )}
-                  </>
+                      {/* Efficiency Progress Bar */}
+                      {carbonData.efficiency_score > 0 && (
+                        <Box mt={3}>
+                          <Progress
+                            value={carbonData.efficiency_score}
+                            colorScheme={getCarbonScoreColor(carbonData.efficiency_score)}
+                            size="sm"
+                            borderRadius="md"
+                          />
+                        </Box>
+                      )}
+                    </>
                   )}
                 </Box>
               )}
