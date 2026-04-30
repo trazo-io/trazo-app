@@ -220,7 +220,8 @@ export function getReadableFieldValue(field: string, value: string): string {
       RE: 'Repair',
       CA: 'Calibration',
       BD: 'Breakdown',
-      EI: 'Inspection'
+      EI: 'Inspection',
+      CL: 'Cleaning'
     },
     operation_efficiency: {
       // 🔧 Added emojis for consumer-friendly display
@@ -3266,6 +3267,39 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
     });
   }
 
+  // NOP Compliance — 7 CFR 205.206 monitoring documentation.
+  // identified_by: who confirmed the pest ID (farmer-self, agronomist, lab, etc.)
+  // threshold_rationale: why action threshold was/wasn't met — required for IPM
+  // justification. PDF mass-balance reconciliation uses get_identified_by_display();
+  // we must mirror those labels here so consumer card matches certifier-facing PDF.
+  const identifiedBy = event.identified_by || extraData.identified_by;
+  if (identifiedBy) {
+    const identifiedByLabels: Record<string, string> = {
+      farmer: 'Farmer / Farm Staff',
+      agronomist: 'Licensed Agronomist',
+      entomologist: 'Entomologist',
+      extension_service: 'Extension Service Agent',
+      crop_consultant: 'Crop Consultant',
+      lab: 'Laboratory Analysis'
+    };
+    details.push({
+      label: 'Pest Identified By',
+      value: identifiedByLabels[identifiedBy] || identifiedBy,
+      priority: 'details',
+      category: 'verification'
+    });
+  }
+
+  const thresholdRationale = event.threshold_rationale || extraData.threshold_rationale;
+  if (thresholdRationale) {
+    secondary.push({
+      label: 'Action Threshold Rationale',
+      value: thresholdRationale,
+      priority: 'secondary',
+      category: 'documentation'
+    });
+  }
+
   // Event type-specific fields (SECONDARY display)
 
   // SC (Scouting) - Monitoring and assessment fields
@@ -3516,10 +3550,10 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
   }
 
   // IPM Strategy (details display) - show for all types, not just IP
-  if (event.imp_strategy) {
+  if (event.ipm_strategy) {
     details.push({
       label: 'IPM Strategy',
-      value: event.imp_strategy,
+      value: event.ipm_strategy,
       priority: 'details',
       category: 'documentation'
     });

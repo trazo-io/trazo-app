@@ -38,6 +38,25 @@ const formatPestPressure = (v: unknown): string | null => {
   return PEST_PRESSURE_LABELS[v.toLowerCase()] ?? v;
 };
 
+// NOP Compliance — Pest Identification (7 CFR 205.206). Labels mirror Django
+// IDENTIFIED_BY_CHOICES so consumer card matches the certifier-facing PDF
+// (which uses get_identified_by_display()). Bug Pattern #16 — without this map
+// the resolver default split-capitalize would render "Extension Service" instead
+// of "Extension Service Agent" and "Lab" instead of "Laboratory Analysis".
+const IDENTIFIED_BY_LABELS: Record<string, string> = {
+  farmer: 'Farmer / Farm Staff',
+  agronomist: 'Licensed Agronomist',
+  entomologist: 'Entomologist',
+  extension_service: 'Extension Service Agent',
+  crop_consultant: 'Crop Consultant',
+  lab: 'Laboratory Analysis'
+};
+
+const formatIdentifiedBy = (v: unknown): string | null => {
+  if (typeof v !== 'string' || v === '') return null;
+  return IDENTIFIED_BY_LABELS[v] ?? v;
+};
+
 // Beneficial insects usage labels — match PestManagementTab.jsx dropdown
 const BENEFICIAL_INSECTS_LABELS: Record<string, string> = {
   yes: 'Using Beneficial Insects',
@@ -93,9 +112,15 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     }
   },
   {
+    // Bug Pattern #6 — BooleanField(default=False). Gate by subtype to the IPM
+    // monitoring/threshold-assessment subtypes per NOP § 205.206(a). For SC/TA/IP
+    // both ✓ (action triggered) AND ✗ (below threshold) are meaningful documentation
+    // when paired with threshold_rationale text — so we keep the truthy-or-falsy
+    // semantics, but suppress the field entirely on BR/TM/PI where it's just noise.
     name: 'action_threshold_met',
     labelKey: 'events.pest.fields.thresholdMet',
     valueType: 'boolean',
+    visibleForSubtypes: ['SC', 'TA', 'IP'],
     formatter: formatBoolean,
     surfaces: {
       modal: 'immediate',
@@ -125,6 +150,7 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     valueType: 'enum',
     enumSource: 'identified_by',
     visibleForSubtypes: ['PI', 'SC', 'TA'],
+    formatter: formatIdentifiedBy,
     surfaces: {
       modal: 'secondary',
       form: 'immediate',

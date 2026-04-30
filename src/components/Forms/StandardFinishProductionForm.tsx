@@ -28,6 +28,7 @@ import {
   SectionHeader
 } from '../Design/StandardComponents';
 import { TrazoImageUpload } from '../Upload';
+import { HeroPreviewCard } from '../QR/HeroPreviewCard';
 import { FaLeaf, FaCamera, FaBoxes, FaClipboardCheck, FaLock, FaExclamationTriangle } from 'react-icons/fa';
 import { MdDescription, MdInventory } from 'react-icons/md';
 import { useForm, FormProvider, Controller } from 'react-hook-form';
@@ -101,6 +102,16 @@ interface StandardFinishProductionFormProps {
   isEdit?: boolean;
   productName?: string;
   parcelName?: string;
+  farmName?: string;
+  /** Real transparency score (0-100) for the live consumer preview. */
+  previewScore?: number;
+  /** Harvest date ISO string for the live consumer preview. */
+  harvestDate?: string;
+  /** First event-timeline photo. When the farmer uploads no production
+      photos, the consumer page falls back to this image. We pass it
+      through so the preview can show the same fallback the shopper
+      will see. */
+  fallbackImageUrl?: string;
 }
 
 export const StandardFinishProductionForm: React.FC<StandardFinishProductionFormProps> = ({
@@ -110,7 +121,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   isLoading = false,
   isEdit = false,
   productName = '',
-  parcelName = ''
+  parcelName = '',
+  farmName = '',
+  previewScore,
+  harvestDate,
+  fallbackImageUrl
 }) => {
   // DEBUG log on component mount
   console.log('📦 StandardFinishProductionForm v2.0 rendered');
@@ -610,28 +625,60 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                 <SectionHeader
                   icon={FaCamera}
                   iconColor="orange.500"
-                  title="Production Images"
+                  title="Production photos"
                   badge="Optional"
                   badgeColorScheme="orange"
                 />
-                <Text fontSize="sm" color="gray.600" mb={4}>
-                  Upload photos documenting the completed production
+                <Text fontSize="sm" color="gray.600" mb={1}>
+                  Upload up to 5 photos. The first is shown as the cover on the public consumer QR page.
+                </Text>
+                <Text fontSize="xs" color="gray.500" mb={5}>
+                  No upload? We&apos;ll auto-pick the first photo from your timeline events. Upload here for full control.
                 </Text>
                 <VStack spacing={6} align="stretch">
-                  <StandardField
-                    label={
-                      intl.formatMessage({ id: 'app.productionImages' }) || 'Production Images'
-                    }
-                    helpText="Upload up to 5 high-quality images (JPG, PNG, GIF - max 5MB each)"
+                  <Box
+                    display="grid"
+                    gap={8}
+                    alignItems="start"
+                    gridTemplateColumns={{ base: '1fr', lg: '1fr 320px' }}
                   >
-                    <TrazoImageUpload
-                      maxFiles={5}
-                      maxSize={5 * 1024 * 1024}
-                      existingImages={uploadedImageUrls}
-                      onImagesChange={setUploadedImageUrls}
-                      isLoading={false}
-                    />
-                  </StandardField>
+                    {/* Upload column — gets the wider track since this is
+                        the active task surface. */}
+                    <StandardField
+                      label={
+                        intl.formatMessage({ id: 'app.productionImages' }) || 'Production photos'
+                      }
+                    >
+                      <TrazoImageUpload
+                        maxFiles={5}
+                        maxSize={5 * 1024 * 1024}
+                        existingImages={uploadedImageUrls}
+                        onImagesChange={setUploadedImageUrls}
+                        isLoading={false}
+                      />
+                    </StandardField>
+
+                    {/* Preview column — fixed 320px on desktop, stacks
+                        below on mobile. `position: sticky` keeps the
+                        preview visible while the farmer scrolls inside
+                        the upload list. Top offset clears the page hero
+                        so the card never collides with the stepper. */}
+                    <Box
+                      position={{ base: 'static', lg: 'sticky' }}
+                      top={{ lg: 6 }}
+                      alignSelf="start"
+                    >
+                      <HeroPreviewCard
+                        imageUrl={uploadedImageUrls[0]}
+                        imageCount={uploadedImageUrls.length}
+                        farmName={farmName}
+                        productName={productName}
+                        score={previewScore}
+                        harvestDate={harvestDate}
+                        fallbackImageUrl={fallbackImageUrl}
+                      />
+                    </Box>
+                  </Box>
 
                   {uploadedImageUrls.length >= 5 && (
                     <StandardAlert

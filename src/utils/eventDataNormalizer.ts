@@ -1967,7 +1967,7 @@ function normalizePestManagementEventData(
     'crop_growth_stage',
     'action_recommended',
     'action_threshold_met',
-    'imp_strategy',
+    'ipm_strategy',
     'pest_management_notes',
     // Sprint 3 Epic 3.2: Consumer Trust Fields
     'beneficial_insects_used',

@@ -74,6 +74,19 @@ const EQUIPMENT_OPERATION_TYPE_LABELS: Record<string, string> = {
   CL: 'Cleaning'
 };
 
+// Equipment type labels — match ProductionTab.jsx EQUIPMENT_TYPES (sans emoji).
+// Default split-capitalize loses preferred labels: "harvester" → "Harvester" OK,
+// but "other" → "Other" alone is uninformative; map to "Other Equipment".
+const EQUIPMENT_TYPE_LABELS: Record<string, string> = {
+  tractor: 'Tractor',
+  harvester: 'Harvester / Combine',
+  sprayer: 'Sprayer',
+  truck: 'Truck / Transport',
+  generator: 'Generator',
+  pump: 'Irrigation Pump',
+  other: 'Other Equipment'
+};
+
 const GROWTH_STAGE_LABELS: Record<string, string> = {
   dormant: 'Dormant',
   budbreak: 'Bud Break',
@@ -128,6 +141,8 @@ const formatElectricitySource = (v: unknown): string | null =>
   lookupLabel(ELECTRICITY_SOURCE_LABELS, v);
 const formatEquipmentOperationType = (v: unknown): string | null =>
   lookupLabel(EQUIPMENT_OPERATION_TYPE_LABELS, v);
+const formatEquipmentType = (v: unknown): string | null =>
+  lookupLabel(EQUIPMENT_TYPE_LABELS, v);
 const formatGrowthStage = (v: unknown): string | null => lookupLabel(GROWTH_STAGE_LABELS, v);
 const formatHarvestMethod = (v: unknown): string | null => lookupLabel(HARVEST_METHOD_LABELS, v);
 const formatProcessingType = (v: unknown): string | null => lookupLabel(PROCESSING_TYPE_LABELS, v);
@@ -437,6 +452,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.equipmentType',
     valueType: 'enum',
     enumSource: 'equipment_types',
+    formatter: formatEquipmentType,
     visibleForSubtypes: ['EM'],
     surfaces: {
       timeline: 'immediate',
@@ -461,13 +477,24 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   },
 
   // ---- NOP Compliance: Equipment Cleaning Logs (7 CFR 205.272) ----
-  // FIX (2026-04-12): Added consumer_card surface so these appear in EventPreviewModal
-  // (which renders ConsumerEventCard using 'consumer_card' surface, not 'preview').
+  // Two-tier subtype gating: EM is the model-level subtype; equipment_operation_type
+  // is a second-tier discriminator. Cleaning fields apply ONLY when the EM event is
+  // a Cleaning operation (CL), not Fuel Consumption (FC) / Maintenance (MN) / Repair
+  // (RE) / Calibration (CA) / Breakdown (BD) / Equipment Inspection (EI). Without
+  // visibleWhen, every EM event would render empty cleaning rows on the consumer card
+  // and modal — Bug Pattern #6 territory for the boolean default=False shared field.
+  // Form keeps the cleaning section gated by ProductionTab.jsx on the same predicate.
   {
     name: 'cleaning_date',
     labelKey: 'events.production.fields.cleaningDate',
     valueType: 'date',
     visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      // The normalizer converts equipment_operation_type from raw "CL" to display
+      // "Cleaning" before the resolver runs, so accept both forms.
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
+    },
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -480,6 +507,12 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     placeholderKey: 'events.production.fields.cleaningMethodPlaceholder',
     valueType: 'string',
     visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      // The normalizer converts equipment_operation_type from raw "CL" to display
+      // "Cleaning" before the resolver runs, so accept both forms.
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
+    },
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -492,6 +525,12 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     placeholderKey: 'events.production.fields.cleaningMaterialsPlaceholder',
     valueType: 'string',
     visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      // The normalizer converts equipment_operation_type from raw "CL" to display
+      // "Cleaning" before the resolver runs, so accept both forms.
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
+    },
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -503,6 +542,12 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.cleanedBy',
     valueType: 'string',
     visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      // The normalizer converts equipment_operation_type from raw "CL" to display
+      // "Cleaning" before the resolver runs, so accept both forms.
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
+    },
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -510,10 +555,20 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
+    // Bug Pattern #6 — BooleanField(default=False) renders ✗ on every EM event
+    // without visibleWhen. Surface only when the event IS a cleaning op AND the
+    // value is truthy (positive transparency signal: "this equipment was shared
+    // with a conventional operation, here's our cleaning evidence"). The OR-clause
+    // covers legacy data that may have flagged shared without yet setting CL.
     name: 'shared_with_conventional',
     labelKey: 'events.production.fields.sharedWithConventional',
     valueType: 'boolean',
     visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      // shared_with_conventional is a BooleanField(default=False) — only render
+      // when truthy. Bug Pattern #6.
+      return e.shared_with_conventional === true || e.shared_with_conventional === 'true';
+    },
     formatter: formatBoolean,
     requiresVerificationBadge: true,
     surfaces: {
@@ -527,6 +582,12 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.cleaningProtocolReference',
     valueType: 'string',
     visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      // The normalizer converts equipment_operation_type from raw "CL" to display
+      // "Cleaning" before the resolver runs, so accept both forms.
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
+    },
     placeholderKey: 'events.production.fields.cleaningProtocolReferencePlaceholder',
     surfaces: {
       modal: 'secondary',
@@ -563,6 +624,15 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.rinseStepDocumented',
     valueType: 'boolean',
     visibleForSubtypes: ['EM'],
+    // Bug Pattern #6 — BooleanField(default=False); gate on truthy + cleaning op.
+    // Two-tier predicate (CL operation AND rinse_step_documented=true) so non-cleaning
+    // EM events don't pollute, and Cleaning events without the rinse step don't ✗-spam.
+    visibleWhen: (e) => {
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      const isCleaning = op === 'cl' || op === 'cleaning';
+      const truthy = e.rinse_step_documented === true || e.rinse_step_documented === 'true';
+      return isCleaning && truthy;
+    },
     formatter: formatBoolean,
     requiresVerificationBadge: true,
     surfaces: {
@@ -624,6 +694,11 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
+    // Bug Pattern #6 — BooleanField(default=False). PH events that don't use
+    // temperature control (sorting, grading, drying) shouldn't render "Temperature
+    // Control: ✗" as noise. Only surface when truthy (positive transparency:
+    // "cold-chain maintained at 40°F"). Predicate handles top-level + extra_data
+    // fallback to mirror the formatter.
     name: 'temperature_control',
     labelKey: 'events.production.fields.temperatureControl',
     valueType: 'boolean',
@@ -633,6 +708,12 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       return formatBoolean(raw as boolean | string);
     },
     visibleForSubtypes: ['PH'],
+    visibleWhen: (e) => {
+      const top = e.temperature_control;
+      const ed = (e.extra_data as Record<string, unknown> | undefined)?.temperature_control;
+      const truthy = (v: unknown) => v === true || v === 'true';
+      return truthy(top) || truthy(ed);
+    },
     surfaces: {
       modal: 'secondary',
       form: 'secondary',

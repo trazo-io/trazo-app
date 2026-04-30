@@ -97,7 +97,7 @@ const pestSchema = object({
   trap_count: string().optional(),
   damage_percentage: string().optional(),
   action_threshold_met: string().optional(), // Changed to string for StandardSelect
-  imp_strategy: string().optional(),
+  ipm_strategy: string().optional(),
   observation: string().optional(),
   // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
   beneficial_insects_used: string().optional(), // Whether beneficial insects are being used
@@ -174,7 +174,7 @@ const PestManagementTab = forwardRef(
         trap_count: initialValues.trap_count?.toString() || '',
         damage_percentage: initialValues.damage_percentage?.toString() || '',
         action_threshold_met: initialValues.action_threshold_met?.toString() || '',
-        imp_strategy: initialValues.imp_strategy || '',
+        ipm_strategy: initialValues.ipm_strategy || '',
         observation: initialValues.observation || '',
         // Sprint 3 Epic 3.2: Consumer Trust Fields
         beneficial_insects_used: initialValues.beneficial_insects_used || '',
@@ -266,7 +266,7 @@ const PestManagementTab = forwardRef(
           trap_count: initialValues.trap_count?.toString() || '',
           damage_percentage: initialValues.damage_percentage?.toString() || '',
           action_threshold_met: initialValues.action_threshold_met?.toString() || '',
-          imp_strategy: initialValues.imp_strategy || '',
+          ipm_strategy: initialValues.ipm_strategy || '',
           observation: initialValues.observation || '',
           // Sprint 3 Epic 3.2: Consumer Trust Fields
           beneficial_insects_used: initialValues.beneficial_insects_used || '',
@@ -325,7 +325,7 @@ const PestManagementTab = forwardRef(
       'action_recommended',
       'action_threshold_met',
       'beneficial_species',
-      'imp_strategy',
+      'ipm_strategy',
       'beneficial_insects_used',
       'chemical_free_period_days',
       'threshold_rationale',
@@ -1141,7 +1141,7 @@ const PestManagementTab = forwardRef(
                         helpText="Describe the comprehensive integrated pest management approach implemented"
                       >
                         <StandardTextarea
-                          {...methods.register('imp_strategy')}
+                          {...methods.register('ipm_strategy')}
                           placeholder={
                             intl.formatMessage({ id: 'app.enterImpStrategy' }) ||
                             'Describe your integrated pest management strategy: cultural practices, biological controls, targeted treatments, monitoring methods, prevention measures...'

@@ -82,6 +82,28 @@ const formatApplicationTiming = (v: unknown): string | null => {
   return APPLICATION_TIMING_LABELS[v] ?? v;
 };
 
+// Application method labels — covers FE/PE/FU/HE dropdown values from ChemicalTab-ENHANCED.jsx
+// (sans emoji/description). Most codes (ground_spray, soil_incorporation) render correctly
+// via the resolver's default split-capitalize, but `subsurface` needs the "Injection"
+// qualifier from the dropdown, and the explicit map hardens against future dropdown drift
+// per Standard Fix #1.
+const APPLICATION_METHOD_LABELS: Record<string, string> = {
+  broadcast: 'Broadcast',
+  banded: 'Banded',
+  subsurface: 'Subsurface Injection',
+  fertigation: 'Fertigation',
+  foliar: 'Foliar',
+  ground_spray: 'Ground Spray',
+  chemigation: 'Chemigation',
+  seed_treatment: 'Seed Treatment',
+  soil_incorporation: 'Soil Incorporation'
+};
+
+const formatApplicationMethod = (v: unknown): string | null => {
+  if (typeof v !== 'string' || v === '') return null;
+  return APPLICATION_METHOD_LABELS[v] ?? v;
+};
+
 // ============================================================================
 // Subtypes
 // ============================================================================
@@ -188,6 +210,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     labelKey: 'events.chemical.fields.applicationMethod',
     valueType: 'enum',
     enumSource: 'application_methods',
+    formatter: formatApplicationMethod,
     surfaces: {
       card: 'immediate',
       modal: 'immediate',
@@ -245,11 +268,22 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     formatter: formatPercentage
   },
   {
+    // Bug Pattern #6 — BooleanField(default=False) on backend never returns null,
+    // so without visibleWhen this would render "Is Fertigation: ✗" on every
+    // non-fertigation FE event, polluting the consumer card with negative noise.
+    // Gate so it only surfaces when fertigation is actually true (positive
+    // signal: "fertilizer was injected through irrigation"). Form keeps the
+    // field unconditionally so farmers can toggle it.
     name: 'is_fertigation',
     labelKey: 'events.chemical.fields.isFertigation',
     helpKey: 'events.chemical.fields.isFertigationHelp',
     valueType: 'boolean',
     visibleForSubtypes: ['FE'],
+    visibleWhen: (e) =>
+      e.is_fertigation === true ||
+      e.is_fertigation === 'true' ||
+      (e.extra_data as Record<string, unknown> | undefined)?.is_fertigation === true ||
+      (e.extra_data as Record<string, unknown> | undefined)?.is_fertigation === 'true',
     formatter: formatBoolean,
     surfaces: {
       modal: 'secondary',
@@ -290,11 +324,21 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
   },
 
   // ---- EPA Worker Protection Standard (PE, FU, HE) ----
+  // Bug Pattern #6 — BooleanField(default=False) on backend never returns null.
+  // Without visibleWhen, every organic/non-restricted chemical event would render
+  // "Restricted Use Pesticide: ✗" on consumer card, polluting the display. Mirror
+  // the legacy fieldDisplayUtils gating (only shown when truthy) — for organic
+  // farmers, "RUP applied" is the warning signal worth surfacing; the unset case
+  // is the silent norm. Form keeps the field unconditionally so farmers can toggle.
   {
     name: 'restricted_use_pesticide',
     labelKey: 'events.chemical.fields.restrictedUsePesticide',
     valueType: 'boolean',
     visibleForSubtypes: ['PE', 'FU', 'HE'],
+    visibleWhen: (e) =>
+      e.restricted_use_pesticide === true ||
+      e.restricted_use_pesticide === 'true' ||
+      e.restricted_use_pesticide === 'yes',
     formatter: formatBoolean,
     requiresVerificationBadge: true,
     surfaces: {
@@ -444,19 +488,20 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
   },
 
   // ---- NOP Compliance: Supplier & Purchase Tracking (7 CFR 205.103) ----
-  // NOP requires traceability of all chemical inputs (supplier, purchase date, invoice #)
-  // Surfacing these on consumer_card gives auditors and transparency-focused buyers
-  // direct evidence of input sourcing without opening the farmer-only modal.
+  // Commercially sensitive — vendor identity, invoice numbers, and purchase timing
+  // are NOT exposed to consumers. Surfaces limited to farmer modal + form. The
+  // certifier-facing NOP PDF (mass-balance section) is driven directly from the
+  // model, not from these surfaces. requiresVerificationBadge is omitted because
+  // these fields are farmer-self-reported (no third-party verification mechanism)
+  // — claiming "verified" on self-reported data is FTC Green Guides risk.
   {
     name: 'supplier_name',
     labelKey: 'events.chemical.fields.supplierName',
     placeholderKey: 'events.chemical.fields.supplierNamePlaceholder',
     valueType: 'string',
-    requiresVerificationBadge: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
   {
@@ -464,11 +509,9 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     labelKey: 'events.chemical.fields.purchaseDate',
     valueType: 'date',
     formatter: formatDate,
-    requiresVerificationBadge: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
   {
@@ -476,11 +519,9 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     labelKey: 'events.chemical.fields.purchaseInvoice',
     placeholderKey: 'events.chemical.fields.purchaseInvoicePlaceholder',
     valueType: 'string',
-    requiresVerificationBadge: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
 

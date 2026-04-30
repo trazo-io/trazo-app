@@ -1,0 +1,553 @@
+/**
+ * TrustSummaryHeader — 4-pillar trust strip for the consumer QR scan page.
+ *
+ * Answers the four shopper questions above-the-fold (Origin / Practices /
+ * Documentation / Records) so consumers don't have to scroll the timeline
+ * before forming a trust judgment. Each pillar degrades gracefully when its
+ * primary data is missing — no fake green badges, no fabricated claims.
+ *
+ * FTC compliance:
+ *  - 16 CFR 260.6(d): every certification claim has documented basis.
+ *  - 7 CFR 205.311: USDA Organic seal rendered unmodified, only when the
+ *    cert has an OID-database match.
+ *  - The `self_reported` organic_claim status maps to "Conventional,
+ *    Documented" — we do not invent a fourth state that implies organic
+ *    without third-party evidence (a farmer-picked dropdown is not a basis
+ *    for a sustainability seal claim).
+ *
+ * USDA Organic seal usage rests on nominative fair use:
+ *   1. Product not identifiable without the mark.
+ *   2. Use only as much as reasonably necessary (small, unmodified).
+ *   3. Does not suggest sponsorship — explicit disclaimer reachable via the
+ *      info icon next to the seal.
+ *
+ * See `/Users/oscarmunoz/.claude/plans/i-had-this-feedback-parsed-wirth.md`
+ * for the full rationale.
+ */
+
+import React from 'react';
+import {
+  Box,
+  Container,
+  HStack,
+  Icon,
+  Image,
+  Link,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  SimpleGrid,
+  Skeleton,
+  Text,
+  VStack
+} from '@chakra-ui/react';
+import {
+  FaCertificate,
+  FaClipboardCheck,
+  FaLeaf,
+  FaMapMarkerAlt,
+  FaSeedling,
+  FaShieldAlt
+} from 'react-icons/fa';
+import type { IconType } from 'react-icons';
+import { ConsumerTooltip } from 'components/Design/StandardComponents';
+import type { ConsumerCertification, OrganicClaim } from 'types/certification';
+
+export interface TrustSummaryHeaderProps {
+  productName?: string;
+  farmName?: string;
+  location?: string;
+  harvestDate?: string;
+  organicClaim?: OrganicClaim | null;
+  certifications?: ConsumerCertification[];
+  transparencyScore?: number | null;
+  documentedEventsCount?: number;
+  expectedEventsCount?: number;
+  blockchainStatus?: 'verified' | 'submitted' | 'pending' | 'tampered' | null;
+  totalPhotoEvidenceCount?: number;
+  onMethodologyClick?: () => void;
+  isLoading?: boolean;
+}
+
+type PillarTone = 'verified' | 'progress' | 'documented' | 'limited' | 'records';
+
+interface PillarData {
+  pillarName: string;
+  pillarIcon: IconType;
+  badgeLabel: string;
+  badgeSublabel?: string;
+  tooltipExplainer: string;
+  tone: PillarTone;
+  showUsdaSeal?: boolean;
+  usdaSealCertifierName?: string;
+}
+
+const TONE_STYLES: Record<
+  PillarTone,
+  { bg: string; border: string; badgeColor: string; iconColor: string }
+> = {
+  verified: { bg: 'green.50', border: 'green.200', badgeColor: 'green', iconColor: 'green.600' },
+  progress: {
+    bg: 'yellow.50',
+    border: 'yellow.200',
+    badgeColor: 'yellow',
+    iconColor: 'yellow.600'
+  },
+  documented: { bg: 'gray.50', border: 'gray.200', badgeColor: 'gray', iconColor: 'gray.600' },
+  limited: { bg: 'gray.50', border: 'gray.300', badgeColor: 'gray', iconColor: 'gray.500' },
+  records: { bg: 'purple.50', border: 'purple.200', badgeColor: 'purple', iconColor: 'purple.600' }
+};
+
+/**
+ * ORIGIN pillar — answers "Where did this come from?"
+ * Hide when no farm name available (anything else is misleading).
+ */
+function buildOriginPillar(props: TrustSummaryHeaderProps): PillarData | null {
+  const { farmName, location, harvestDate } = props;
+  if (!farmName) return null;
+
+  const baseTooltip =
+    'This product is traceable to a specific farm and harvest period. Every event below is tied to this production batch.';
+
+  if (harvestDate && location) {
+    return {
+      pillarName: 'ORIGIN',
+      pillarIcon: FaMapMarkerAlt,
+      badgeLabel: 'Lot tracked',
+      badgeSublabel: location,
+      tooltipExplainer: baseTooltip,
+      tone: 'verified'
+    };
+  }
+  if (location) {
+    return {
+      pillarName: 'ORIGIN',
+      pillarIcon: FaMapMarkerAlt,
+      badgeLabel: 'Farm tracked',
+      badgeSublabel: location,
+      tooltipExplainer: baseTooltip,
+      tone: 'verified'
+    };
+  }
+  return {
+    pillarName: 'ORIGIN',
+    pillarIcon: FaMapMarkerAlt,
+    badgeLabel: 'Origin disclosed',
+    badgeSublabel: farmName,
+    tooltipExplainer: baseTooltip,
+    tone: 'documented'
+  };
+}
+
+/**
+ * PRACTICES pillar — answers "How was this grown?"
+ *
+ * Crucially: `self_reported` and `conventional` BOTH map to
+ * "Conventional, Documented." We do not surface a self-reported organic
+ * claim as a trust signal — the `self_reported` state is derived purely
+ * from the farmer's dropdown choice with no validation gate. Per FTC 16
+ * CFR 260.6(d), surfacing it would imply third-party verification that
+ * does not exist.
+ *
+ * Hide when no events have been documented (nothing meaningful to say).
+ */
+function buildPracticesPillar(props: TrustSummaryHeaderProps): PillarData | null {
+  const { organicClaim, certifications, documentedEventsCount } = props;
+  if (!documentedEventsCount || documentedEventsCount === 0) return null;
+
+  const tooltipExplainer =
+    "We label this based on what's verified, not what's claimed. 'Certified Organic' requires a USDA Organic Integrity Database match; 'Transitioning' requires documented transition records; otherwise we report this as 'Conventional, Documented' regardless of farmer-picked labels.";
+
+  if (organicClaim?.status === 'certified_organic') {
+    const oidMatchedCert = (certifications ?? []).find((c) => c.status === 'verified_via_database');
+    const certifierName = oidMatchedCert?.certifier_name;
+    const showUsdaSeal = Boolean(oidMatchedCert);
+
+    return {
+      pillarName: 'PRACTICES',
+      pillarIcon: FaLeaf,
+      badgeLabel: 'Certified Organic',
+      badgeSublabel: certifierName ? `via ${certifierName}` : 'via USDA-accredited certifier',
+      tooltipExplainer,
+      tone: 'verified',
+      showUsdaSeal,
+      usdaSealCertifierName: certifierName
+    };
+  }
+
+  if (organicClaim?.status === 'transitioning') {
+    return {
+      pillarName: 'PRACTICES',
+      pillarIcon: FaSeedling,
+      badgeLabel: 'Transitioning to Organic',
+      badgeSublabel: '3-year transition in progress',
+      tooltipExplainer,
+      tone: 'progress'
+    };
+  }
+
+  // self_reported and conventional both fall through here — we do not invent
+  // a fourth state that implies organic without third-party evidence.
+  return {
+    pillarName: 'PRACTICES',
+    pillarIcon: FaCertificate,
+    badgeLabel: 'Conventional, Documented',
+    badgeSublabel: 'Practice records on file',
+    tooltipExplainer,
+    tone: 'documented'
+  };
+}
+
+/**
+ * EVENTS pillar — answers "How thoroughly was this documented?"
+ *
+ * Renamed from DOCUMENTATION to EVENTS in the 2026 hero redesign: the
+ * percentage score now lives in the hero badge (CarbonHeroSection). This
+ * pillar surfaces the underlying *fraction* (e.g. "13 of 13") which gives
+ * different, complementary information — fractions communicate
+ * completeness/transparency; the hero score communicates verdict.
+ *
+ * Always renders — falls back to "Limited Data" when no events on file.
+ */
+function buildEventsPillar(props: TrustSummaryHeaderProps): PillarData | null {
+  const { transparencyScore, documentedEventsCount = 0, expectedEventsCount, productName } = props;
+
+  if (transparencyScore == null && documentedEventsCount === 0) {
+    return {
+      pillarName: 'EVENTS',
+      pillarIcon: FaClipboardCheck,
+      badgeLabel: 'Limited Data',
+      tooltipExplainer: 'Documentation data is being collected for this production.',
+      tone: 'limited'
+    };
+  }
+
+  const score = transparencyScore != null ? Math.round(transparencyScore) : null;
+  let tone: PillarTone = 'documented';
+  if (score != null) {
+    if (score >= 70) tone = 'verified';
+    else if (score >= 50) tone = 'progress';
+  } else if (documentedEventsCount > 0) {
+    tone = 'documented';
+  }
+
+  // Display rules:
+  // - When actual < expected: "12 of 13" (transparency about completeness)
+  // - When actual >= expected: just "13 events" (fraction reads odd as "23 of 9")
+  // - When no expected count: plain count
+  const showFraction = expectedEventsCount != null && documentedEventsCount < expectedEventsCount;
+  const badgeLabel = showFraction
+    ? `${documentedEventsCount} of ${expectedEventsCount}`
+    : `${documentedEventsCount} event${documentedEventsCount === 1 ? '' : 's'}`;
+
+  const productPhrase = productName ? `this ${productName} production` : 'this production';
+  const tooltipExplainer = showFraction
+    ? `${documentedEventsCount} of ${expectedEventsCount} expected farming practices documented for ${productPhrase}${
+        score != null ? ` (${score}% complete)` : ''
+      }.`
+    : expectedEventsCount != null
+      ? `${documentedEventsCount} farming event${
+          documentedEventsCount === 1 ? '' : 's'
+        } documented for ${productPhrase} — exceeds the ${expectedEventsCount}-event baseline for this crop.`
+      : `${documentedEventsCount} farming event${documentedEventsCount === 1 ? '' : 's'} documented.`;
+
+  return {
+    pillarName: 'EVENTS',
+    pillarIcon: FaClipboardCheck,
+    badgeLabel,
+    badgeSublabel: 'farming practices',
+    tooltipExplainer,
+    tone
+  };
+}
+
+/**
+ * RECORDS pillar — answers "Can we trust the records themselves?"
+ * Hide when blockchain check failed (tampered) — we will not surface a fake
+ * positive trust signal in that case; the existing integrity-warning UI
+ * elsewhere on the page is the correct place to alert consumers. Also hide
+ * when there's no blockchain, no photos, AND no events.
+ */
+function buildRecordsPillar(props: TrustSummaryHeaderProps): PillarData | null {
+  const { blockchainStatus, totalPhotoEvidenceCount = 0, documentedEventsCount = 0 } = props;
+  const hasEvents = documentedEventsCount > 0;
+
+  // Tampered: do not render any positive trust signal. The integrity-failure
+  // state is communicated by the existing blockchain integrity UI further
+  // down the page; surfacing "Photo-evidenced" green here would contradict it.
+  if (blockchainStatus === 'tampered') return null;
+
+  if (blockchainStatus === 'verified') {
+    return {
+      pillarName: 'RECORDS',
+      pillarIcon: FaShieldAlt,
+      badgeLabel: 'Blockchain-recorded',
+      badgeSublabel: 'Tamper-evident on Polygon',
+      tooltipExplainer:
+        "Records are 'Blockchain-recorded' when the production data is hashed onto Polygon, making post-hoc tampering detectable. 'Photo-evidenced' means 5+ photos are attached across documented events.",
+      tone: 'records'
+    };
+  }
+  if (totalPhotoEvidenceCount >= 5) {
+    return {
+      pillarName: 'RECORDS',
+      pillarIcon: FaShieldAlt,
+      badgeLabel: 'Photo-evidenced',
+      badgeSublabel: `${totalPhotoEvidenceCount} photos across events`,
+      tooltipExplainer:
+        '5+ photos are attached across documented events, providing visual evidence alongside the written records.',
+      tone: 'verified'
+    };
+  }
+  if (hasEvents) {
+    return {
+      pillarName: 'RECORDS',
+      pillarIcon: FaShieldAlt,
+      badgeLabel: 'Records on file',
+      badgeSublabel: 'Farmer-logged records',
+      tooltipExplainer:
+        'Farmer-logged records are on file. Stronger trust signals (photo evidence, blockchain) appear once additional documentation is added.',
+      tone: 'documented'
+    };
+  }
+  return null;
+}
+
+/**
+ * USDA seal — the seal image itself is the popover trigger (one tap target,
+ * no separate info icon). Tapping reveals the nominative-fair-use disclaimer
+ * required by USPTO/INTA prong 3.
+ */
+const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }) => (
+  <Popover trigger="click" placement="bottom-start">
+    <PopoverTrigger>
+      <Box
+        as="button"
+        type="button"
+        aria-label="About the USDA Organic seal"
+        cursor="pointer"
+        display="inline-flex"
+        alignItems="center"
+        justifyContent="center"
+        bg="transparent"
+        border="none"
+        p={0}
+        borderRadius="full"
+        transition="transform 0.15s ease"
+        _hover={{ transform: 'scale(1.05)' }}
+        _focusVisible={{
+          outline: '2px solid',
+          outlineColor: 'green.500',
+          outlineOffset: '2px'
+        }}
+      >
+        <Image
+          src="/certifications/usda-organic-seal.svg"
+          alt="USDA Organic certified"
+          boxSize="36px"
+          objectFit="contain"
+          fallback={<Icon as={FaCertificate} color="green.600" boxSize={5} />}
+        />
+      </Box>
+    </PopoverTrigger>
+    <PopoverContent fontSize="xs" maxW="280px">
+      <PopoverArrow />
+      <PopoverBody>
+        <Text fontSize="xs" color="gray.700" lineHeight="1.5">
+          USDA Organic seal is a registered mark of the U.S. Department of Agriculture.
+          {certifierName
+            ? ` Displayed because this farm is certified by ${certifierName}.`
+            : ' Displayed because this farm is certified to the USDA NOP standard.'}
+        </Text>
+        <Link
+          mt={2}
+          href="https://www.ams.usda.gov/rules-regulations/organic/organic-seal"
+          isExternal
+          fontSize="xs"
+          color="green.600"
+        >
+          Learn more at USDA AMS
+        </Link>
+      </PopoverBody>
+    </PopoverContent>
+  </Popover>
+);
+
+/**
+ * A single pillar card — compact, modern, with subtle elevation and a
+ * single dominant icon/seal in the header. Pillar label sits inline next
+ * to the icon (not stacked) for tighter rhythm.
+ */
+const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
+  const tone = TONE_STYLES[pillar.tone];
+
+  return (
+    <ConsumerTooltip label={pillar.badgeLabel} explanation={pillar.tooltipExplainer}>
+      <Box
+        bg="white"
+        borderWidth="1px"
+        borderColor="gray.200"
+        borderRadius="xl"
+        px={3.5}
+        py={3}
+        minH="92px"
+        display="flex"
+        flexDirection="column"
+        justifyContent="space-between"
+        cursor="default"
+        role="group"
+        boxShadow="0 1px 2px rgba(0, 0, 0, 0.04)"
+        transition="box-shadow 0.15s ease, border-color 0.15s ease"
+        _hover={{
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)',
+          borderColor: `${tone.badgeColor}.200`
+        }}
+      >
+        <HStack spacing={2} align="center" minH="36px">
+          {pillar.showUsdaSeal ? (
+            <UsdaOrganicSeal certifierName={pillar.usdaSealCertifierName} />
+          ) : (
+            <Box
+              bg={tone.bg}
+              borderRadius="md"
+              w="28px"
+              h="28px"
+              display="inline-flex"
+              alignItems="center"
+              justifyContent="center"
+              flexShrink={0}
+            >
+              <Icon as={pillar.pillarIcon} color={tone.iconColor} boxSize={3.5} />
+            </Box>
+          )}
+          <Text
+            fontSize="11px"
+            fontWeight="semibold"
+            color="gray.500"
+            letterSpacing="0.08em"
+            textTransform="uppercase"
+            noOfLines={1}
+          >
+            {pillar.pillarName}
+          </Text>
+        </HStack>
+
+        <VStack align="stretch" spacing={0.5} mt={2}>
+          <Text
+            fontSize="sm"
+            fontWeight="bold"
+            color={`${tone.badgeColor}.700`}
+            lineHeight="1.3"
+            noOfLines={2}
+          >
+            {pillar.badgeLabel}
+          </Text>
+          {pillar.badgeSublabel && (
+            <Text fontSize="xs" color="gray.600" noOfLines={1}>
+              {pillar.badgeSublabel}
+            </Text>
+          )}
+        </VStack>
+      </Box>
+    </ConsumerTooltip>
+  );
+};
+
+/**
+ * Pillar skeleton — fixed-height placeholder during data load to prevent
+ * cumulative layout shift (CLS).
+ */
+const PillarSkeleton: React.FC = () => (
+  <Box
+    bg="gray.50"
+    borderWidth="1px"
+    borderColor="gray.200"
+    borderRadius="lg"
+    px={3}
+    py={3}
+    minH="88px"
+  >
+    <Skeleton height="14px" width="60px" mb={3} />
+    <Skeleton height="16px" width="80%" mb={2} />
+    <Skeleton height="12px" width="60%" />
+  </Box>
+);
+
+const TrustSummaryHeader: React.FC<TrustSummaryHeaderProps> = (props) => {
+  const { onMethodologyClick, isLoading } = props;
+
+  if (isLoading) {
+    return (
+      <Box bg="white" pt={5} pb={5}>
+        <Container maxW="container.lg">
+          <SimpleGrid columns={{ base: 2, smd: 4 }} spacing={{ base: 2.5, smd: 3 }}>
+            <PillarSkeleton />
+            <PillarSkeleton />
+            <PillarSkeleton />
+            <PillarSkeleton />
+          </SimpleGrid>
+        </Container>
+      </Box>
+    );
+  }
+
+  const pillars = [
+    buildOriginPillar(props),
+    buildPracticesPillar(props),
+    buildEventsPillar(props),
+    buildRecordsPillar(props)
+  ].filter((p): p is PillarData => p !== null);
+
+  // Don't render if we have nothing meaningful to say. Hero will still render.
+  if (pillars.length === 0) return null;
+
+  return (
+    <Box bg="white" pt={5} pb={5}>
+      <Container maxW="container.lg">
+        <SimpleGrid
+          columns={{ base: 2, smd: pillars.length === 4 ? 4 : pillars.length }}
+          spacing={{ base: 2.5, smd: 3 }}
+        >
+          {pillars.map((pillar) => (
+            <PillarCard key={pillar.pillarName} pillar={pillar} />
+          ))}
+        </SimpleGrid>
+
+        {/* FTC compliance line — score sentence dropped (hero owns the
+            verdict). Disclaimer + methodology link only. */}
+        <HStack spacing={2} pt={4} flexWrap="wrap" justify="center" align="baseline">
+          <Text fontSize="xs" color="gray.500" textAlign="center">
+            Based on farmer-reported documentation. Not independently audited.
+          </Text>
+          {onMethodologyClick && (
+            <Box
+              as="button"
+              type="button"
+              onClick={onMethodologyClick}
+              fontSize="xs"
+              color="green.600"
+              fontWeight="medium"
+              textDecoration="underline"
+              cursor="pointer"
+              bg="transparent"
+              border="none"
+              p={0}
+              _hover={{ color: 'green.700' }}
+              _focusVisible={{
+                outline: '2px solid',
+                outlineColor: 'green.500',
+                outlineOffset: '2px'
+              }}
+            >
+              How is this calculated?
+            </Box>
+          )}
+        </HStack>
+      </Container>
+    </Box>
+  );
+};
+
+export default TrustSummaryHeader;

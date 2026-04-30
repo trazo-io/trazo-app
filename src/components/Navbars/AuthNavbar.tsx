@@ -167,6 +167,24 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     navbarPosition = 'absolute';
   }
 
+  // 2026 frosted-glass navbar over hero photos on consumer-subdomain pages.
+  // Apple/Linear/Stripe pattern: backdrop-blur + low-opacity bg makes the
+  // navbar feel like a glass overlay on the underlying photo, instead of a
+  // floating white card with empty space around it. Scoped to consumer so
+  // producer/admin layouts keep their existing dense navbar.
+  if (isConsumer && !props.secondary) {
+    navbarBg = useColorModeValue(
+      'rgba(255, 255, 255, 0.45)',
+      'rgba(20, 24, 33, 0.45)'
+    );
+    navbarBackdrop = 'saturate(180%) blur(20px)';
+    navbarBorder = useColorModeValue(
+      '1px solid rgba(255, 255, 255, 0.6)',
+      '1px solid rgba(255, 255, 255, 0.12)'
+    );
+    navbarShadow = '0 4px 16px rgba(0, 0, 0, 0.08)';
+  }
+
   const createPagesLinks = (routes) => {
     return routes.map((link) => {
       if (

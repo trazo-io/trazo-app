@@ -118,7 +118,7 @@ export interface PreviewEventData {
   trap_count?: number | string;
   damage_percentage?: number | string;
   action_threshold_met?: boolean | string;
-  imp_strategy?: string;
+  ipm_strategy?: string;
   // General event fields
   activity_type?: string;
   activity_name?: string;
@@ -1060,8 +1060,8 @@ export function transformFormDataToEvent(
         event.action_threshold_met = formData.action_threshold_met;
       }
 
-      if (formData.imp_strategy) {
-        event.imp_strategy = formData.imp_strategy;
+      if (formData.ipm_strategy) {
+        event.ipm_strategy = formData.ipm_strategy;
       }
 
       break;

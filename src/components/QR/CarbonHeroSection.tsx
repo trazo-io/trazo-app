@@ -10,6 +10,7 @@ import {
   Circle,
   Progress,
   Flex,
+  Image,
   useColorModeValue,
   useDisclosure,
   Container,
@@ -101,6 +102,9 @@ interface CarbonHeroSectionProps {
   productData?: ProductBasicData;
   isLoading?: boolean;
   onLearnMore?: () => void;
+  // 2026 hero redesign — optional photo + harvest context
+  heroPhotoUrl?: string;
+  harvestDate?: string;
 }
 
 export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
@@ -108,7 +112,9 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   trustData,
   productData,
   isLoading = false,
-  onLearnMore
+  onLearnMore,
+  heroPhotoUrl,
+  harvestDate
 }) => {
   const [visibleElements, setVisibleElements] = useState(0);
   const [showDetailedComparison, setShowDetailedComparison] = useState(false);
@@ -383,278 +389,210 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   }
 
   const score = carbonData.score || 0;
-  const footprint = carbonData.footprint || 0;
   const grade = getScoreGrade(score);
-  const impact = getImpactLevel(footprint);
-  const comparison = getRelatableComparison(footprint);
-  const message = getConsumerMessage(score, footprint);
+  const message = getConsumerMessage(score, carbonData.footprint || 0);
+
+  // Format harvest date for hero overlay (e.g. "Harvested Mar 18, 2026").
+  // Falls back to nothing when missing — never renders "Recently harvested"
+  // placeholder which feels like a stand-in.
+  const formattedHarvest = (() => {
+    if (!harvestDate) return null;
+    try {
+      const d = new Date(harvestDate);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return null;
+    }
+  })();
+
   return (
-    <Box
-      minH={heroHeight}
-      bg={`linear-gradient(135deg, ${getScoreColor(score)}15 0%, ${getScoreColor(score)}05 100%)`}
-      position="relative"
-      pt="145px"
-      overflow="hidden"
-    >
-      {/* Background pattern */}
-      <Box
-        position="absolute"
-        top={0}
-        left={0}
-        right={0}
-        bottom={0}
-        opacity={0.03}
-        bgImage="radial-gradient(circle at 50% 50%, currentColor 1px, transparent 1px)"
-        bgSize="20px 20px"
-        color={getScoreColor(score)}
-      />
+    <Box position="relative" overflow="hidden" bg="white">
+      {/* Hero photo + glassmorphism score badge.
+          Photo extends to top:0 (behind the floating navbar) for a
+          magazine-style edge-to-edge cover. Photo height is generous so
+          the bottom-anchored overlays (farm name, score badge) sit well
+          clear of the navbar pill. Falls back to score-tinted gradient
+          when no photo exists for this production. */}
+      <MotionBox
+        position="relative"
+        h={{ base: '60vh', md: '68vh' }}
+        maxH={{ base: '560px', md: '680px' }}
+        minH={{ base: '440px', md: '500px' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: visibleElements >= 1 ? 1 : 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
+        {heroPhotoUrl ? (
+          <>
+            <Image
+              src={heroPhotoUrl}
+              alt={`${productData?.company.name ?? 'Farm'} growing ${
+                productData?.name ?? 'this product'
+              }`}
+              objectFit="cover"
+              objectPosition="center"
+              position="absolute"
+              inset={0}
+              w="100%"
+              h="100%"
+              loading="eager"
+              draggable={false}
+            />
+            {/* Bottom-up gradient for text legibility on the photo. */}
+            <Box
+              position="absolute"
+              inset={0}
+              bgGradient="linear(to-t, blackAlpha.800 0%, blackAlpha.500 30%, blackAlpha.100 60%, transparent 80%)"
+              pointerEvents="none"
+            />
+          </>
+        ) : (
+          <Box
+            position="absolute"
+            inset={0}
+            bgGradient={`linear(135deg, ${getScoreColor(score)}30 0%, ${getScoreColor(
+              score
+            )}10 100%)`}
+          />
+        )}
 
-      <Container maxW="container.md" py={spacing} position="relative" zIndex={1}>
-        <AnimatePresence>
-          <MotionVStack
-            spacing={spacing}
-            align="center"
-            textAlign="center"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
+        {/* Overlay container — constrains farm name + score badge to the
+            same maxW as the pillars below. Photo stays full-bleed, but the
+            overlays align with the rest of the page content on desktop. */}
+        <Container
+          maxW="container.lg"
+          position="absolute"
+          inset={0}
+          px={{ base: 4, md: 6, lg: 8 }}
+          pointerEvents="none"
+        >
+          {/* Bottom-left text overlay — farm name + product/harvest line.
+              Right-padded to leave room for the score badge. */}
+          <VStack
+            position="absolute"
+            bottom={{ base: 5, md: 8 }}
+            left={{ base: 4, md: 6, lg: 8 }}
+            right={{ base: '120px', md: '180px' }}
+            align="flex-start"
+            spacing={1}
+            color={heroPhotoUrl ? 'white' : 'gray.800'}
+            pointerEvents="auto"
           >
-            {/* Product name and company */}
-            {productData && (
-              <MotionVStack
-                spacing={2}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: visibleElements >= 1 ? 1 : 0, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.6 }}
-              >
-                <Text fontSize={fontSize} fontWeight="bold" color={textColor}>
-                  {productData.name}
-                </Text>
-                <Text fontSize="md" color={mutedColor} fontWeight="medium">
-                  by {productData.company.name}
-                </Text>
-                {/* Production reputation stars */}
-                {productData.reputation !== undefined && productData.reputation > 0 && (
-                  <HStack spacing={1} justify="center">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Icon
-                        key={star}
-                        as={FaStar}
-                        boxSize={4}
-                        color={
-                          star <= Math.round(productData.reputation!) ? 'yellow.400' : 'gray.300'
-                        }
-                      />
-                    ))}
-                    <Text fontSize="sm" color={mutedColor} ml={1}>
-                      ({productData.reputation!.toFixed(1)})
-                    </Text>
-                  </HStack>
-                )}
-              </MotionVStack>
-            )}
-
-            {/* Main Carbon Score Display */}
-            <MotionBox
-              pt="20px"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{
-                opacity: visibleElements >= 2 ? 1 : 0,
-                scale: visibleElements >= 2 ? 1 : 0.8
-              }}
-              transition={{ delay: 0.2, duration: 0.8, type: 'spring', bounce: 0.3 }}
-              position="relative"
-            >
-              <Circle
-                size={scoreSize}
-                bg={bgColor}
-                borderWidth="8px"
-                borderColor={getScoreColor(score)}
-                boxShadow="xl"
-                animation={`${scoreGlow} 3s ease-in-out infinite`}
-                position="relative"
-              >
-                <VStack spacing={0}>
-                  <Text
-                    fontSize={{ base: '3xl', md: '4xl' }}
-                    fontWeight="black"
-                    color={getScoreColor(score)}
-                    lineHeight="1"
-                  >
-                    {Math.round(score)}
-                  </Text>
-                  <Text
-                    fontSize={{ base: 'sm', md: 'md' }}
-                    fontWeight="bold"
-                    color={textColor}
-                    lineHeight="1"
-                  >
-                    Transparency Score
-                  </Text>
-                </VStack>
-
-                {/* Grade badge */}
-                <Badge
-                  position="absolute"
-                  top="-3"
-                  right="-3"
-                  colorScheme={grade.color}
-                  variant="solid"
-                  px={3}
-                  py={1}
-                  borderRadius="full"
-                  fontSize="sm"
-                  fontWeight="bold"
-                  boxShadow="md"
-                >
-                  {grade.grade}
-                </Badge>
-              </Circle>
-            </MotionBox>
-
-            {/* Transparency score disclaimer */}
             <Text
-              fontSize="xs"
-              color="gray.500"
-              mt={1}
-              textAlign="center"
+              fontSize={{ base: '2xl', md: '4xl' }}
+              fontWeight="bold"
+              lineHeight="1.1"
+              letterSpacing="-0.02em"
+              noOfLines={2}
+              textShadow={heroPhotoUrl ? '0 2px 12px rgba(0,0,0,0.4)' : 'none'}
             >
-              Based on farmer-reported documentation. Not independently audited.{' '}
-              <Text
-                as="a"
-                href="https://www.trazo.io/methodology"
-                target="_blank"
-                rel="noopener noreferrer"
-                color="green.500"
-                _hover={{ textDecoration: 'underline' }}
-              >
-                How we calculate this
-              </Text>
+              {productData?.company.name ?? 'Farm'}
             </Text>
-
-            {/* Consumer-friendly message */}
-            <MotionVStack
-              spacing={3}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: visibleElements >= 3 ? 1 : 0, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              maxW="md"
+            <Text
+              fontSize={{ base: 'sm', md: 'md' }}
+              fontWeight="medium"
+              opacity={heroPhotoUrl ? 0.95 : 0.8}
+              noOfLines={2}
+              textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.4)' : 'none'}
             >
-              <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color={successColor}>
-                {message.primary}
-              </Text>
-              <Text fontSize={{ base: 'md', md: 'lg' }} color={textColor} fontWeight="medium">
-                {message.secondary}
-              </Text>
-              <Text fontSize="sm" color={mutedColor} fontStyle="italic">
-                {message.action}
-              </Text>
-            </MotionVStack>
+              {productData?.name ?? 'Product'}
+              {formattedHarvest ? ` · Harvested ${formattedHarvest}` : ''}
+            </Text>
+          </VStack>
 
-            {/* Impact comparison */}
-            <MotionBox
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{
-                opacity: visibleElements >= 4 ? 1 : 0,
-                scale: visibleElements >= 4 ? 1 : 0.9
-              }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              bg={cardBg}
-              p={4}
-              borderRadius="xl"
-              borderWidth="1px"
-              borderColor={borderColor}
-              maxW="sm"
-              w="full"
+          {/* Glassmorphism score badge — bottom-right corner.
+              One verdict element. Frosted glass = 2024-2026 premium aesthetic.
+              On gradient fallback: solid white card for legibility. */}
+          <MotionBox
+            position="absolute"
+            bottom={{ base: 5, md: 8 }}
+            right={{ base: 4, md: 6, lg: 8 }}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{
+              opacity: visibleElements >= 2 ? 1 : 0,
+              scale: visibleElements >= 2 ? 1 : 0.85
+            }}
+            transition={{ delay: 0.2, duration: 0.6, type: 'spring', bounce: 0.3 }}
+            style={{ pointerEvents: 'auto' }}
+          >
+          <VStack
+            spacing={0.5}
+            bg={heroPhotoUrl ? 'whiteAlpha.300' : 'white'}
+            backdropFilter={heroPhotoUrl ? 'blur(20px)' : 'none'}
+            borderWidth="1px"
+            borderColor={heroPhotoUrl ? 'whiteAlpha.500' : 'gray.200'}
+            borderRadius="2xl"
+            px={{ base: 3.5, md: 4 }}
+            py={{ base: 2.5, md: 3 }}
+            minW={{ base: '92px', md: '108px' }}
+            align="center"
+            justify="center"
+            boxShadow={
+              heroPhotoUrl
+                ? '0 8px 32px rgba(0, 0, 0, 0.18)'
+                : '0 4px 16px rgba(0, 0, 0, 0.08)'
+            }
+          >
+            <Text
+              fontSize={{ base: '4xl', md: '5xl' }}
+              fontWeight="black"
+              color={heroPhotoUrl ? 'white' : getScoreColor(score)}
+              lineHeight="1"
+              letterSpacing="-0.04em"
+              textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}
             >
-              <HStack justify="center" spacing={3}>
-                <Circle size="40px" bg={`${comparison.color}20`}>
-                  <Icon as={comparison.icon} color={comparison.color} boxSize={5} />
-                </Circle>
-                <VStack align="start" spacing={0} flex={1}>
-                  <Text fontSize="sm" fontWeight="bold" color={textColor}>
-                    {comparison.text}
-                  </Text>
-                  <Text fontSize="xs" color={mutedColor}>
-                    {comparison.emphasis}
-                  </Text>
-                </VStack>
-              </HStack>
-            </MotionBox>
-
-            {/* Trust indicators */}
-            {trustData && (
-              <MotionHStack
-                spacing={4}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: visibleElements >= 5 ? 1 : 0, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                wrap="wrap"
-                justify="center"
-              >
-                {trustData.isBlockchainVerified && (
-                  <Badge
-                    colorScheme="blue"
-                    variant="subtle"
-                    px={3}
-                    py={2}
-                    borderRadius="full"
-                    fontSize="xs"
-                    animation={`${trustPulse} 2.5s ease-in-out infinite`}
-                  >
-                    <HStack spacing={1}>
-                      <Icon as={BsShieldCheck} boxSize={3} />
-                      <Text>Blockchain-Recorded</Text>
-                    </HStack>
-                  </Badge>
-                )}
-
-                {trustData.scansCount > 0 && (
-                  <Badge
-                    colorScheme="purple"
-                    variant="subtle"
-                    px={3}
-                    py={2}
-                    borderRadius="full"
-                    fontSize="xs"
-                  >
-                    <HStack spacing={1}>
-                      <Icon as={FaUsers} boxSize={3} />
-                      <Text>{trustData.scansCount}+ scans</Text>
-                    </HStack>
-                  </Badge>
-                )}
-              </MotionHStack>
-            )}
-
-            {/* Action buttons */}
-            <MotionHStack
-              spacing={4}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: visibleElements >= 5 ? 1 : 0, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-              pt={2}
+              {Math.round(score)}
+            </Text>
+            <Badge
+              bg={heroPhotoUrl ? 'whiteAlpha.900' : `${grade.color}.50`}
+              color={`${grade.color}.700`}
+              fontSize="xs"
+              fontWeight="bold"
+              px={2}
+              py={0.5}
+              borderRadius="md"
+              mt={1}
             >
-              <Button
-                colorScheme="green"
-                size="md"
-                minH="44px"
-                leftIcon={<Icon as={FaInfoCircle} />}
-                onClick={onLearnMore}
-                borderRadius="full"
-                px={6}
-                _hover={{
-                  transform: 'translateY(-2px)',
-                  boxShadow: 'lg'
-                }}
-                transition="all 0.2s"
-              >
-                Learn More
-              </Button>
-            </MotionHStack>
-          </MotionVStack>
-        </AnimatePresence>
-      </Container>
+              {grade.grade}
+            </Badge>
+          </VStack>
+        </MotionBox>
+        </Container>
+      </MotionBox>
+
+      {/* Tier message strip — narrative voice carrying the verdict moment
+          into a warm, plain-English sentence. Single line; expanded copy
+          lives in `message.secondary` only when not redundant with the
+          score badge above. */}
+      <MotionVStack
+        spacing={1}
+        align="center"
+        textAlign="center"
+        bg="white"
+        px={4}
+        py={{ base: 4, md: 5 }}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: visibleElements >= 3 ? 1 : 0, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+      >
+        <Text
+          fontSize={{ base: 'lg', md: 'xl' }}
+          fontWeight="bold"
+          color={successColor}
+          letterSpacing="-0.01em"
+        >
+          {message.primary}
+        </Text>
+        <Text
+          fontSize={{ base: 'sm', md: 'md' }}
+          color={mutedColor}
+          maxW="2xl"
+          lineHeight="1.5"
+        >
+          {message.secondary}
+        </Text>
+      </MotionVStack>
     </Box>
   );
 };

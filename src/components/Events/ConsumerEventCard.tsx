@@ -758,6 +758,37 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {eventInfo.shortDescription}
               </Text>
 
+              {/* Inline consumer-impact subhead — surfaces the existing
+                  eventDescriptions.ts consumerImpact string above-the-fold so
+                  most consumers don't have to expand the collapse to see what
+                  this event means for them. The same string is also rendered
+                  inside the "What This Means For You" section in the collapse
+                  for users who want the labeled version + sustainability
+                  benefit. Source: getConsumerEventDescription() in
+                  utils/eventDescriptions.ts. Hidden when the canonical source
+                  has nothing useful to say. */}
+              {eventInfo.consumerImpact && eventInfo.consumerImpact.trim() && (
+                <HStack
+                  spacing={2}
+                  align="flex-start"
+                  bg={useColorModeValue('green.50', 'green.900')}
+                  border="1px solid"
+                  borderColor={useColorModeValue('green.100', 'green.800')}
+                  borderRadius="md"
+                  p={3}
+                >
+                  <Icon as={FaShieldAlt} color="green.500" boxSize={3} mt="3px" flexShrink={0} />
+                  <Text
+                    fontSize="sm"
+                    color={useColorModeValue('green.800', 'green.100')}
+                    lineHeight="1.5"
+                    noOfLines={{ base: 3, md: 2 }}
+                  >
+                    {eventInfo.consumerImpact}
+                  </Text>
+                </HStack>
+              )}
+
               {/* 🌱 TRANSPARENCY-FIRST: Show farmer's actual field notes from observation field only.
                   description contains system-generated text (template names, etc.) and must NOT
                   be shown as "Farmer's Field Notes" — that would be dishonest to consumers. */}

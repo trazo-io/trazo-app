@@ -833,7 +833,7 @@ describe('Field Display Utils', () => {
         trap_count: 10,
         damage_percentage: 15,
         action_threshold_met: true,
-        imp_strategy: 'Integrated pest management with biological controls',
+        ipm_strategy: 'Integrated pest management with biological controls',
         observation: 'Successful beneficial release with good weather conditions'
       };
 

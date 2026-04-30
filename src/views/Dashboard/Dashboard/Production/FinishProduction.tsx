@@ -4,7 +4,11 @@ import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { useToast } from '@chakra-ui/react';
 import { StandardFinishProductionForm } from '../../../../components/Forms';
-import { useFinishCurrentHistoryMutation } from 'store/api/historyApi.js';
+import {
+  useFinishCurrentHistoryMutation,
+  useGetCurrentHistoryQuery
+} from 'store/api/historyApi.js';
+import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 
 function FinishProduction() {
@@ -13,6 +17,60 @@ function FinishProduction() {
   const toast = useToast();
   const { parcelId, farmId, productionId } = useParams();
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
+
+  // Pull current production so the preview frame can show real product/farm
+  // names while the farmer is still on the upload step. HistorySerializer
+  // returns `product` and `parcel` as plain name strings, so use them
+  // directly (no `.name` traversal).
+  const { data: currentHistory } = useGetCurrentHistoryQuery(
+    { companyId: currentCompany?.id, farmId, parcelId },
+    { skip: !currentCompany?.id || !farmId || !parcelId }
+  );
+
+  // Same transparency endpoint the consumer page calls. Owners can fetch
+  // unpublished histories (see `production_transparency_detail` perms),
+  // so the preview can show the real score / farm name / harvest date
+  // that consumers will see.
+  const productionPublicId: string | undefined =
+    typeof currentHistory?.public_id === 'string' ? currentHistory.public_id : undefined;
+
+  const { data: transparency } = useGetTransparencyDetailsQuery(productionPublicId as string, {
+    skip: !productionPublicId
+  });
+
+  // Mirror the consumer page's data extraction path so the preview can show
+  // the same farm/product/harvest values shoppers will see. `farmer` and
+  // `product` live at the response root (alongside `standard_view`), per
+  // ProductDetail.tsx's existing logic.
+  const productName: string =
+    (transparency as any)?.product?.name ||
+    (typeof currentHistory?.product === 'string' ? currentHistory.product : '');
+  const parcelName: string =
+    typeof currentHistory?.parcel === 'string' ? currentHistory.parcel : '';
+  const farmName: string =
+    (transparency as any)?.farmer?.name || currentCompany?.name || '';
+  // ProductDetail.tsx passes `completeData.finish_date` to the live hero;
+  // for unfinished productions this is null, so the preview omits the
+  // "Harvested ..." suffix. After finish, the same field drives the
+  // consumer hero exactly.
+  const harvestDate: string | undefined =
+    (transparency as any)?.finish_date ||
+    (currentHistory as any)?.finish_date ||
+    undefined;
+  const previewScore: number | undefined =
+    transparency?.quick_view?.transparency_score?.percentage;
+
+  // Fallback cover used by ProductDetail when farmer uploads no photos:
+  // first event-timeline photo. Surface it here so the preview shows the
+  // farmer what consumers will actually see if they skip the upload.
+  const fallbackImageUrl: string | undefined = (() => {
+    const tl = (transparency as any)?.timeline as
+      | Array<{ album?: { images?: Array<{ image?: string }> } }>
+      | undefined;
+    if (!tl) return undefined;
+    const firstWithPhoto = tl.find((ev) => ev?.album?.images?.[0]?.image);
+    return firstWithPhoto?.album?.images?.[0]?.image;
+  })();
 
   const [finishCurrentHistory, { isLoading }] = useFinishCurrentHistoryMutation();
 
@@ -75,6 +133,12 @@ function FinishProduction() {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isLoading={isLoading}
+        productName={productName}
+        parcelName={parcelName}
+        farmName={farmName}
+        previewScore={previewScore}
+        harvestDate={harvestDate}
+        fallbackImageUrl={fallbackImageUrl}
       />
     </WriteAccessGuard>
   );

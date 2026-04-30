@@ -1156,8 +1156,11 @@ const ProductionTab = forwardRef(
                   </SectionBox>
                 )}
 
-                {/* NOP Compliance: Equipment Cleaning Logs (7 CFR 205.272) — EM subtype only */}
-                {productionType === 'EM' && (
+                {/* NOP Compliance: Equipment Cleaning Logs (7 CFR 205.272) — EM/CL only.
+                    Two-tier gate: EM subtype + equipment_operation_type === 'CL'. Without
+                    the second tier the cleaning section renders for Fuel Consumption /
+                    Repair / Maintenance EM events too, leaking irrelevant fields. */}
+                {productionType === 'EM' && watch('equipment_operation_type') === 'CL' && (
                   <SectionBox variant="highlighted">
                     <SectionHeader
                       icon={FaShieldAlt}

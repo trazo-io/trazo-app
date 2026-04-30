@@ -415,7 +415,7 @@ export interface StandardizedPestManagementEvent extends StandardizedEventBase {
   action_recommended?: string;
 
   // IPM strategy and documentation (details priority)
-  imp_strategy?: string;
+  ipm_strategy?: string;
   pest_management_notes?: string;
 }
 

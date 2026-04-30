@@ -34,6 +34,14 @@ export interface TransparencyStandardView {
       };
     };
   };
+  // Sprint 5A — populated by the public transparency endpoint when the
+  // production has an organic claim and/or certification records. Optional
+  // to keep this interface non-breaking for older fixtures. Consumers should
+  // tolerate either being absent. See `types/certification.ts` for the
+  // shared shape — re-imported as a type-only import to avoid coupling.
+  organic_claim?: import('../../types/certification').OrganicClaim | null;
+  certifications?: import('../../types/certification').ConsumerCertification[];
+  organic_summary?: string;
 }
 
 // DETAILED LOAD (30+ seconds) - Deep insights for engaged consumers

@@ -2084,7 +2084,7 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'Economic threshold-based decisions prevent overtreatment, reducing environmental impact while maintaining profitable farming.';
     } else if (eventPestType === 'IP' || eventPestType === 'ipm_implementation') {
-      const strategyInfo = event.imp_strategy ? 'comprehensive strategy' : 'integrated approach';
+      const strategyInfo = event.ipm_strategy ? 'comprehensive strategy' : 'integrated approach';
 
       consumerImpact = `Implemented ${strategyInfo} combining multiple sustainable methods to manage pests while protecting crop health and quality.`;
       sustainabilityBenefit =

@@ -96,6 +96,7 @@ import { StandardizedEvent } from '../../../types/standardizedEvents';
 
 // Modern components (keeping the ones you like)
 import { CarbonHeroSection } from '../../../components/QR/CarbonHeroSection';
+import TrustSummaryHeader from '../../../components/QR/TrustSummaryHeader';
 import { ModernSidebar, UltraMobileProductionJourney, CompanyFarmInfo } from './components';
 import InstantTrustDisplay from './components/InstantTrustDisplay';
 
@@ -181,6 +182,7 @@ const EducationModal = ({
   const isMobile = useBreakpointValue({ base: true, md: false });
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const intl = useIntl();
 
   const getModalContent = () => {
     switch (topic) {
@@ -894,37 +896,89 @@ function ProductDetail() {
 
   return (
     <Flex direction="column" alignSelf="center" justifySelf="center" w="100%">
-      {/* Transparency Hero Section - Primary Navigation Target */}
+      {/* Transparency Hero Section - Primary Navigation Target.
+          ORDER: CarbonHeroSection (photo + glassmorphism score badge) FIRST
+          for verdict-moment impact, then TrustSummaryHeader (4 pillars +
+          FTC disclaimer) below. This is the 2026 grocery-aisle pattern:
+          face/place + verdict above the fold; analytical detail follows. */}
       <Box id="transparency-section">
-        <CarbonHeroSection
-          carbonData={{
-            // PRIMARY: Use backend TransparencyCalculator score (crop-specific expected events)
-            score: getDisplayTransparencyScore(),
-            footprint: getAccurateCarbonFootprint(),
-            relatableFootprint: completeData?.relatableFootprint,
-            grade: undefined,
-            level: 'transparency' // Signal this is transparency, not carbon
-          }}
-          trustData={{
-            confidenceScore: getDisplayTransparencyScore(),
-            isUSDAVerified: completeData?.isUsdaVerified || false,
-            isBlockchainVerified: getBlockchainScore().isVerified,
-            reviewsCount: 0,
-            // ⚠️ TRANSPARENCY FIX: Pass undefined instead of fake 4.2 rating
-            averageRating: safeReputation,
-            scansCount: 0,
-            transparencyScore: getDisplayTransparencyScore()
-          }}
-          productData={{
-            name: (completeData as any)?.product?.name || 'Product',
-            company: {
-              name: (completeData as any)?.farmer?.name || 'Farm'
-            },
-            reputation: (completeData as any)?.reputation || 0
-          }}
-          isLoading={isCompleteLoading}
-          onLearnMore={() => handleEducationOpen('transparency_impact')}
-        />
+        {(() => {
+          const farmerData = (completeData as any)?.farmer;
+          const productData = (completeData as any)?.product;
+          const farmName = farmerData?.name;
+          const location =
+            farmerData?.location ||
+            (farmerData?.city && farmerData?.state
+              ? `${farmerData.city}, ${farmerData.state}`
+              : undefined);
+          const harvestDate = (completeData as any)?.finish_date;
+          // First production photo (S3 URL) — hero background. Falls back
+          // to score-tinted gradient inside CarbonHeroSection when absent.
+          const heroPhotoUrl =
+            (completeData as any)?.images?.[0]?.image ||
+            (completeData as any)?.timeline?.find((ev: any) => ev?.album?.images?.[0]?.image)
+              ?.album?.images?.[0]?.image;
+          const blockchainScore = getBlockchainScore();
+          const blockchainStatus = blockchainScore.isTampered
+            ? 'tampered'
+            : blockchainScore.isVerified
+            ? 'verified'
+            : blockchainScore.isPending
+            ? 'pending'
+            : null;
+          const totalPhotoEvidenceCount = (completeData?.timeline || []).reduce(
+            (acc: number, ev: any) => acc + (ev?.album?.images?.length ?? 0),
+            0
+          );
+          const transparencyDetails = (completeData as any)?.standard_view?.transparency_details;
+
+          return (
+            <>
+              <CarbonHeroSection
+                carbonData={{
+                  score: getDisplayTransparencyScore(),
+                  footprint: getAccurateCarbonFootprint(),
+                  relatableFootprint: completeData?.relatableFootprint,
+                  grade: undefined,
+                  level: 'transparency'
+                }}
+                trustData={{
+                  confidenceScore: getDisplayTransparencyScore(),
+                  isUSDAVerified: completeData?.isUsdaVerified || false,
+                  isBlockchainVerified: getBlockchainScore().isVerified,
+                  reviewsCount: 0,
+                  averageRating: safeReputation,
+                  scansCount: 0,
+                  transparencyScore: getDisplayTransparencyScore()
+                }}
+                productData={{
+                  name: productData?.name || 'Product',
+                  company: { name: farmName || 'Farm' },
+                  reputation: (completeData as any)?.reputation || 0
+                }}
+                heroPhotoUrl={heroPhotoUrl}
+                harvestDate={harvestDate}
+                isLoading={isCompleteLoading}
+                onLearnMore={() => handleEducationOpen('transparency_impact')}
+              />
+              <TrustSummaryHeader
+                productName={productData?.name}
+                farmName={farmName}
+                location={location}
+                harvestDate={harvestDate}
+                organicClaim={(completeData as any)?.standard_view?.organic_claim}
+                certifications={(completeData as any)?.standard_view?.certifications}
+                transparencyScore={getDisplayTransparencyScore()}
+                documentedEventsCount={completeData?.timeline?.length ?? 0}
+                expectedEventsCount={transparencyDetails?.expected_events}
+                blockchainStatus={blockchainStatus}
+                totalPhotoEvidenceCount={totalPhotoEvidenceCount}
+                onMethodologyClick={() => handleEducationOpen('transparency_impact')}
+                isLoading={isCompleteLoading}
+              />
+            </>
+          );
+        })()}
       </Box>
       {/* Main Content Section */}
       <Container maxW="container.xl" py={8} centerContent>
@@ -1110,9 +1164,7 @@ function ProductDetail() {
                   : allCertifications;
 
                 const hasContent =
-                  showingOrganicClaim ||
-                  allCertifications.length > 0 ||
-                  organicSummary;
+                  showingOrganicClaim || allCertifications.length > 0 || organicSummary;
 
                 if (!hasContent) return null;
 

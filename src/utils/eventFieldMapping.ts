@@ -385,7 +385,7 @@ export const PEST_MANAGEMENT_FIELD_MAPPING: DataSourceMapping = {
     trap_count: 'trap_count',
     damage_percentage: 'damage_percentage',
     action_threshold_met: 'action_threshold_met',
-    imp_strategy: 'imp_strategy',
+    ipm_strategy: 'ipm_strategy',
     observation: 'pest_management_notes'
   },
   backend: {
@@ -417,7 +417,7 @@ export const PEST_MANAGEMENT_FIELD_MAPPING: DataSourceMapping = {
     trap_count: 'trap_count',
     damage_percentage: 'damage_percentage',
     action_threshold_met: 'action_threshold_met',
-    imp_strategy: 'imp_strategy',
+    ipm_strategy: 'ipm_strategy',
     pest_management_notes: 'pest_management_notes',
     observation: 'observation',
     description: 'description'
