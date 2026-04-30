@@ -51,8 +51,14 @@ import ParcelView from 'views/Dashboard/Parcel';
 import Pricing from 'views/Pages/Pricing/index';
 // Legal pages redirect to landing page (canonical source)
 const LANDING_URL = 'https://trazo.io';
-const RedirectToPrivacy = () => { window.location.replace(`${LANDING_URL}/privacy-policy`); return null; };
-const RedirectToTerms = () => { window.location.replace(`${LANDING_URL}/terms-conditions`); return null; };
+const RedirectToPrivacy = () => {
+  window.location.replace(`${LANDING_URL}/privacy-policy`);
+  return null;
+};
+const RedirectToTerms = () => {
+  window.location.replace(`${LANDING_URL}/terms-conditions`);
+  return null;
+};
 // Lazy load QR scanning components for mobile performance
 const ProductDetail = lazyWithRetry(() => import('views/Scan/ProductDetail/ProductDetail'));
 import ProfileFarm from 'views/Dashboard/Dashboard/Farm/ProfileFarm';
@@ -105,54 +111,118 @@ import GoogleAuthCallback from 'views/Authentication/GoogleAuthCallback';
 import AcceptInvitation from 'views/Authentication/Invitation/AcceptInvitation';
 import SetupPassword from 'views/Authentication/Invitation/SetupPassword';
 import { ErrorBoundary } from 'react-error-boundary';
+import * as Sentry from '@sentry/react';
 import ChangePassword from 'views/Settings/ChangePassword';
 import { AdminGuard } from 'components/Guards/AdminGuard';
 import ConsumerChangePassword from 'views/Consumer/Settings/ConsumerChangePassword';
 import RedirectGuard from './utils/RedirectGuard';
 
-// Error fallback component
+// Short, human-readable correlation ID for support lookups (e.g. "K3F9-2A7B").
+const generateErrorId = (): string => {
+  const raw = (
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID().replace(/-/g, '').slice(0, 8)
+      : Math.random().toString(36).slice(2, 10)
+  ).padEnd(8, '0');
+  return `${raw.slice(0, 4)}-${raw.slice(4, 8)}`.toUpperCase();
+};
+
+// Error fallback — consumer-safe. Never leaks raw error.message in production.
+// Reports to Sentry with errorId tag so support can correlate user reports to traces.
 const ErrorFallback = ({
   error,
   resetErrorBoundary
 }: {
   error: Error;
   resetErrorBoundary: () => void;
-}) => (
-  <div
-    style={{
-      padding: '20px',
-      textAlign: 'center',
-      backgroundColor: '#f7fafc',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center'
-    }}
-  >
-    <h2 style={{ color: '#2d3748', marginBottom: '16px' }}>Something went wrong</h2>
-    <p style={{ color: '#718096', marginBottom: '24px' }}>
-      We apologize for the inconvenience. Please try refreshing the page.
-    </p>
-    <button
-      onClick={resetErrorBoundary}
+}) => {
+  const [errorId] = useState(generateErrorId);
+  const isDev = import.meta.env.DEV;
+
+  useEffect(() => {
+    Sentry.captureException(error, {
+      tags: { errorId, surface: 'app_error_boundary' }
+    });
+  }, [error, errorId]);
+
+  return (
+    <div
+      role="alert"
       style={{
-        padding: '12px 24px',
-        backgroundColor: '#059669',
-        color: 'white',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer'
+        padding: '24px',
+        textAlign: 'center',
+        backgroundColor: '#f7fafc',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center'
       }}
     >
-      Try again
-    </button>
-    <details style={{ marginTop: '24px', color: '#a0aec0', fontSize: '14px' }}>
-      <summary>Error details</summary>
-      <pre style={{ marginTop: '8px', textAlign: 'left' }}>{error.message}</pre>
-    </details>
-  </div>
-);
+      <div
+        aria-hidden="true"
+        style={{
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          backgroundColor: '#e6f4ea',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '20px'
+        }}
+      >
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#2E7D32"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      </div>
+      <h2 style={{ color: '#2d3748', marginBottom: '12px', fontSize: '20px', fontWeight: 600 }}>
+        We hit a snag loading this page
+      </h2>
+      <p style={{ color: '#718096', marginBottom: '24px', maxWidth: '420px', lineHeight: 1.5 }}>
+        Our team has been notified automatically. Try again in a moment, or refresh the page.
+      </p>
+      <button
+        onClick={resetErrorBoundary}
+        style={{
+          padding: '12px 28px',
+          backgroundColor: '#388E3C',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontWeight: 600,
+          fontSize: '15px'
+        }}
+      >
+        Try again
+      </button>
+      <p style={{ marginTop: '24px', color: '#a0aec0', fontSize: '12px' }}>
+        Reference ID: <code style={{ fontFamily: 'monospace' }}>{errorId}</code>
+      </p>
+      {isDev && (
+        <details style={{ marginTop: '16px', color: '#a0aec0', fontSize: '12px', maxWidth: '90%' }}>
+          <summary style={{ cursor: 'pointer' }}>Developer details (dev only)</summary>
+          <pre style={{ marginTop: '8px', textAlign: 'left', whiteSpace: 'pre-wrap' }}>
+            {error.message}
+            {error.stack ? `\n\n${error.stack}` : ''}
+          </pre>
+        </details>
+      )}
+    </div>
+  );
+};
 
 const App = () => {
   const location = useLocation();
@@ -253,9 +323,30 @@ const App = () => {
               <Route path={config.protected.path} element={<AdminLayout />}>
                 {/* Routes accessible without subscription */}
                 <Route path="select-company" element={<SelectCompanyView />} />
-                <Route path="pricing" element={<AdminGuard><DashboardPricing /></AdminGuard>} />
-                <Route path="subscription" element={<AdminGuard><UnifiedSubscriptionDashboard /></AdminGuard>} />
-                <Route path="stripe-success" element={<AdminGuard><StripeSuccessRedirect /></AdminGuard>} />
+                <Route
+                  path="pricing"
+                  element={
+                    <AdminGuard>
+                      <DashboardPricing />
+                    </AdminGuard>
+                  }
+                />
+                <Route
+                  path="subscription"
+                  element={
+                    <AdminGuard>
+                      <UnifiedSubscriptionDashboard />
+                    </AdminGuard>
+                  }
+                />
+                <Route
+                  path="stripe-success"
+                  element={
+                    <AdminGuard>
+                      <StripeSuccessRedirect />
+                    </AdminGuard>
+                  }
+                />
 
                 {/* Routes requiring subscription */}
                 <Route element={<SubscriptionRequired />}>
@@ -282,26 +373,10 @@ const App = () => {
                       </NoSubscriptionRedirect>
                     }
                   />
-                  <Route
-                    path="farm/:farmId/change"
-                    exact
-                    element={<AddFarm isEdit={true} />}
-                  />
-                  <Route
-                    path="farm/:farmId/profile"
-                    exact
-                    element={<ProfileFarm />}
-                  />
-                  <Route
-                    path="farm/:farmId/parcel/add"
-                    exact
-                    element={<AddParcel />}
-                  />
-                  <Route
-                    path="farm/:farmId/parcel/:parcelId"
-                    exact
-                    element={<ParcelView />}
-                  />
+                  <Route path="farm/:farmId/change" exact element={<AddFarm isEdit={true} />} />
+                  <Route path="farm/:farmId/profile" exact element={<ProfileFarm />} />
+                  <Route path="farm/:farmId/parcel/add" exact element={<AddParcel />} />
+                  <Route path="farm/:farmId/parcel/:parcelId" exact element={<ParcelView />} />
                   <Route
                     path="farm/:farmId/parcel/:parcelId/change"
                     exact
@@ -347,11 +422,7 @@ const App = () => {
                     exact
                     element={<FinishProduction />}
                   />
-                  <Route
-                    path="farm/:farmId/osp"
-                    exact
-                    element={<OSPView />}
-                  />
+                  <Route path="farm/:farmId/osp" exact element={<OSPView />} />
                   <Route
                     path="farm/:farmId/certifications/parcels"
                     exact
@@ -362,23 +433,27 @@ const App = () => {
                     exact
                     element={<CertificationsView />}
                   />
+                  <Route path="farm/:farmId/commercial" exact element={<CommercialView />} />
+                  <Route path="farm/:farmId/scans" exact element={<AllScansView />} />
+                  <Route path="farm/:farmId/reviews" exact element={<AllReviewsView />} />
                   <Route
-                    path="farm/:farmId/commercial"
+                    path="settings"
                     exact
-                    element={<CommercialView />}
+                    element={
+                      <AdminGuard>
+                        <SettingsView />
+                      </AdminGuard>
+                    }
                   />
                   <Route
-                    path="farm/:farmId/scans"
+                    path="settings/change-password"
                     exact
-                    element={<AllScansView />}
+                    element={
+                      <AdminGuard>
+                        <ChangePassword />
+                      </AdminGuard>
+                    }
                   />
-                  <Route
-                    path="farm/:farmId/reviews"
-                    exact
-                    element={<AllReviewsView />}
-                  />
-                  <Route path="settings" exact element={<AdminGuard><SettingsView /></AdminGuard>} />
-                  <Route path="settings/change-password" exact element={<AdminGuard><ChangePassword /></AdminGuard>} />
                   <Route
                     path="farm/:farmId/transparency"
                     exact
@@ -410,10 +485,7 @@ const App = () => {
                 />
               </Route>
               <Route element={<AuthLayout />}>
-                <Route
-                  path="/farm/:farmId"
-                  element={<PublicFarmProfile />}
-                />
+                <Route path="/farm/:farmId" element={<PublicFarmProfile />} />
               </Route>
               <Route element={<Authenticated allowedRoles={config.protected.roles} />}>
                 <Route

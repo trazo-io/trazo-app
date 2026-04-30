@@ -916,8 +916,8 @@ function ProductDetail() {
           // to score-tinted gradient inside CarbonHeroSection when absent.
           const heroPhotoUrl =
             (completeData as any)?.images?.[0]?.image ||
-            (completeData as any)?.timeline?.find((ev: any) => ev?.album?.images?.[0]?.image)
-              ?.album?.images?.[0]?.image;
+            (completeData as any)?.timeline?.find((ev: any) => ev?.album?.images?.[0]?.image)?.album
+              ?.images?.[0]?.image;
           const blockchainScore = getBlockchainScore();
           const blockchainStatus = blockchainScore.isTampered
             ? 'tampered'
@@ -1259,7 +1259,7 @@ function ProductDetail() {
                       {/* Continuous proof messaging — only for non-organic verified certs */}
                       {!organicSummary &&
                         (() => {
-                          const hasVerifiedCert = certifications.some(
+                          const hasVerifiedCert = allCertifications.some(
                             (c: any) => c.status === 'verified_via_database'
                           );
                           if (!hasVerifiedCert) return null;
