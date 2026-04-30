@@ -758,16 +758,14 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {eventInfo.shortDescription}
               </Text>
 
-              {/* Inline consumer-impact subhead — surfaces the existing
-                  eventDescriptions.ts consumerImpact string above-the-fold so
-                  most consumers don't have to expand the collapse to see what
-                  this event means for them. The same string is also rendered
-                  inside the "What This Means For You" section in the collapse
-                  for users who want the labeled version + sustainability
-                  benefit. Source: getConsumerEventDescription() in
-                  utils/eventDescriptions.ts. Hidden when the canonical source
-                  has nothing useful to say. */}
-              {eventInfo.consumerImpact && eventInfo.consumerImpact.trim() && (
+              {/* Inline consumer-impact subhead — TEMPORARILY DISABLED 2026-04-30.
+                  Duplicated the "What This Means For You" block in the expanded
+                  Collapse and the title/description already conveyed the same
+                  consumer framing. Farmer's Field Notes (observation) carries
+                  the authentic signal when present. Re-enable if we drop the
+                  expanded duplicate or want a fallback when observation is empty.
+                  Source: getConsumerEventDescription() in utils/eventDescriptions.ts. */}
+              {/* {eventInfo.consumerImpact && eventInfo.consumerImpact.trim() && (
                 <HStack
                   spacing={2}
                   align="flex-start"
@@ -787,7 +785,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     {eventInfo.consumerImpact}
                   </Text>
                 </HStack>
-              )}
+              )} */}
 
               {/* 🌱 TRANSPARENCY-FIRST: Show farmer's actual field notes from observation field only.
                   description contains system-generated text (template names, etc.) and must NOT
