@@ -39,7 +39,7 @@ interface ConsumerContext {
 }
 
 interface CarbonImpactExplainerProps {
-  carbonScore: number;
+  documentationScore: number;
   totalCO2e: number;
   productName?: string;
   isCompact?: boolean;
@@ -49,7 +49,7 @@ interface CarbonImpactExplainerProps {
 }
 
 export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
-  carbonScore,
+  documentationScore,
   totalCO2e,
   productName = 'this product',
   isCompact = false,
@@ -66,6 +66,16 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
 
   // Score interpretation — TRANSPARENCY score (documentation completeness)
   const getScoreInterpretation = (score: number) => {
+    if (score >= 100)
+      return {
+        label: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumented' }),
+        color: 'green',
+        description: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumentedDesc' }),
+        advice: intl.formatMessage({
+          id: 'app.carbonExplainer.scoreAllDocumentedAdvice',
+          defaultMessage: 'This farm documents all agricultural practices.'
+        })
+      };
     if (score >= 90)
       return {
         label: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumented' }),
@@ -97,7 +107,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
     };
   };
 
-  const scoreInfo = getScoreInterpretation(carbonScore);
+  const scoreInfo = getScoreInterpretation(documentationScore);
   const isNegativeEmissions = totalCO2e < 0;
   const hasPerKgData = consumerContext?.has_per_kg_data && consumerContext.kg_per_kg > 0;
 
@@ -133,7 +143,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
         <HStack spacing={4} align="center">
           <Circle size="50px" bg={`${scoreInfo.color}.500`} color="white">
             <Text fontSize="lg" fontWeight="bold">
-              {carbonScore}
+              {documentationScore}
             </Text>
           </Circle>
 
@@ -167,7 +177,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           <VStack align="start" spacing={2}>
             <HStack>
               <Icon as={FaGlobeAmericas} color={accentColor} boxSize={5} />
-              <Text fontSize="lg" fontWeight="bold" color={textColor}>
+              <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="bold" color={textColor}>
                 {intl.formatMessage({ id: 'app.carbonExplainer.title' })}
               </Text>
             </HStack>
@@ -177,8 +187,12 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           </VStack>
 
           <VStack align="end" spacing={1}>
-            <Text fontSize="2xl" fontWeight="bold" color={`${scoreInfo.color}.600`}>
-              {Math.round(carbonScore)}%
+            <Text
+              fontSize={{ base: 'xl', smd: '2xl' }}
+              fontWeight="bold"
+              color={`${scoreInfo.color}.600`}
+            >
+              {Math.round(documentationScore)}%
             </Text>
             <Badge colorScheme={scoreInfo.color} variant="solid">
               {scoreInfo.label}
@@ -186,23 +200,15 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           </VStack>
         </HStack>
 
-        {/* Transparency Documentation Bar */}
-        <Box mt={4}>
+        {/* Transparency Documentation Bar — slim minimalist */}
+        <Box mt={3}>
           <Progress
-            value={carbonScore}
+            value={documentationScore}
             colorScheme={scoreInfo.color}
-            size="lg"
+            size="xs"
             borderRadius="full"
-            bg={useColorModeValue('gray.200', 'gray.600')}
+            bg={useColorModeValue('gray.100', 'gray.700')}
           />
-          <HStack justify="space-between" mt={1}>
-            <Text fontSize="xs" color={mutedColor}>
-              {intl.formatMessage({ id: 'app.carbonExplainer.lessDocumented' })}
-            </Text>
-            <Text fontSize="xs" color={mutedColor}>
-              {intl.formatMessage({ id: 'app.carbonExplainer.fullyDocumented' })}
-            </Text>
-          </HStack>
         </Box>
       </Box>
 
@@ -244,10 +250,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                 {intl.formatMessage({ id: 'app.carbonExplainer.yourImpact' })}
               </Text>
               <Text fontSize="sm" color={mutedColor} mb={1}>
-                {intl.formatMessage(
-                  { id: 'app.carbonExplainer.perKgNarrative' },
-                  { productName }
-                )}
+                {intl.formatMessage({ id: 'app.carbonExplainer.perKgNarrative' }, { productName })}
               </Text>
               <HStack spacing={2} align="baseline" mb={3}>
                 <Text fontSize="2xl" fontWeight="bold" color={textColor}>

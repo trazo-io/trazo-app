@@ -129,7 +129,7 @@ const CarbonImpactExplainer = React.lazy(
 
 // Lightweight loading components for progressive loading
 const TransparencyScoreLoader = () => (
-  <Card bg="white" shadow="lg" borderRadius="xl" p={6}>
+  <Card bg="white" shadow="lg" borderRadius="xl" p={{ base: 4, smd: 6 }}>
     <VStack spacing={4}>
       <HStack spacing={3} justify="center">
         <Spinner size="md" color="green.500" />
@@ -148,7 +148,7 @@ const TransparencyScoreLoader = () => (
 );
 
 const CarbonExplainerLoader = () => (
-  <Card bg="white" shadow="lg" borderRadius="xl" p={6}>
+  <Card bg="white" shadow="lg" borderRadius="xl" p={{ base: 4, smd: 6 }}>
     <VStack spacing={4}>
       <HStack spacing={3} justify="center">
         <Spinner size="md" color="green.500" thickness="3px" />
@@ -994,47 +994,59 @@ function ProductDetail() {
                 borderColor="gray.200"
                 overflow="hidden"
               >
-                <Box bg="linear-gradient(135deg, green.50, blue.50)" p={6} textAlign="center">
-                  <VStack spacing={4}>
+                <Box
+                  bgGradient="linear(135deg, green.50, blue.50)"
+                  p={{ base: 4, smd: 6 }}
+                  textAlign="center"
+                >
+                  <VStack spacing={3}>
                     <Circle size="60px" bg="green.100">
                       <Icon as={FaLeaf} color="green.500" boxSize={8} />
                     </Circle>
                     <VStack spacing={2}>
-                      <Heading size="lg" color="gray.800">
+                      <Heading size={{ base: 'md', smd: 'lg' }} color="gray.800">
                         Complete Farm Transparency
                       </Heading>
-                      <Text color="gray.600" fontSize="lg" maxW="md">
-                        You've scanned a product with comprehensive farm documentation and verified
-                        transparency.
+                      <Text color="gray.600" fontSize={{ base: 'sm', smd: 'md' }} maxW="md">
+                        You've scanned a product with comprehensive farm documentation based on
+                        farmer-reported events.
                       </Text>
                     </VStack>
                   </VStack>
                 </Box>
-                <Box p={6}>
+                <Box p={{ base: 4, smd: 6 }}>
                   <VStack spacing={4} textAlign="center">
                     <Text color="gray.700" fontSize="md">
-                      <strong>Complete transparency you can trust:</strong>
+                      <strong>What this farm documented:</strong>
                     </Text>
                     <SimpleGrid columns={2} spacing={4} w="full" maxW="md">
                       <HStack spacing={2}>
                         <Icon as={FaClipboardCheck} color="green.500" boxSize={4} />
-                        <Text fontSize="sm">Complete records</Text>
+                        <Text fontSize="sm" noOfLines={1}>
+                          Complete records
+                        </Text>
                       </HStack>
                       <HStack spacing={2}>
-                        <Icon as={FaCalendarAlt} color="blue.500" boxSize={4} />
-                        <Text fontSize="sm">Timestamped events</Text>
+                        <Icon as={FaCalendarAlt} color="green.500" boxSize={4} />
+                        <Text fontSize="sm" noOfLines={1}>
+                          Timestamped events
+                        </Text>
                       </HStack>
                       <HStack spacing={2}>
-                        <Icon as={FaShieldAlt} color="purple.500" boxSize={4} />
-                        <Text fontSize="sm">Authentic tracking</Text>
+                        <Icon as={FaShieldAlt} color="green.500" boxSize={4} />
+                        <Text fontSize="sm" noOfLines={1}>
+                          Documented practices
+                        </Text>
                       </HStack>
                       <HStack spacing={2}>
                         <Icon as={FaLeaf} color="green.500" boxSize={4} />
-                        <Text fontSize="sm">Environmental impact</Text>
+                        <Text fontSize="sm" noOfLines={1}>
+                          Practice details
+                        </Text>
                       </HStack>
                     </SimpleGrid>
                     <Text color="gray.600" fontSize="sm" fontStyle="italic">
-                      Honest farm documentation rewarded with transparency certification.
+                      More events documented means a higher transparency score.
                     </Text>
                   </VStack>
                 </Box>
@@ -1048,19 +1060,23 @@ function ProductDetail() {
                 borderColor="gray.200"
                 overflow="hidden"
               >
-                <HStack spacing={2} px={6} pt={5} pb={1}>
-                  <Icon as={FaAward} color="green.500" boxSize={5} />
-                  <Heading size="md" color="gray.800">
+                <HStack spacing={2} px={{ base: 4, smd: 6 }} pt={5} pb={1}>
+                  <Icon as={FaAward} color="green.500" boxSize={{ base: 5, smd: 6 }} />
+                  <Heading size={{ base: 'md', smd: 'lg' }} color="gray.800">
                     Transparency Achievement
                   </Heading>
                 </HStack>
 
-                <Box px={6} pb={6}>
+                <Box px={{ base: 4, smd: 6 }} pb={{ base: 4, smd: 6 }}>
                   <VStack spacing={4}>
                     {/* Stats row — score + events with divider */}
                     <HStack spacing={0} justify="center" w="full" pt={3}>
                       <VStack spacing={0} flex={1} align="center">
-                        <Text fontSize="3xl" fontWeight="bold" color="green.600">
+                        <Text
+                          fontSize={{ base: '2xl', smd: '3xl' }}
+                          fontWeight="bold"
+                          color="green.600"
+                        >
                           {getDisplayTransparencyScore()}%
                         </Text>
                         <Text fontSize="xs" color="gray.500" textAlign="center">
@@ -1069,7 +1085,11 @@ function ProductDetail() {
                       </VStack>
                       <Box h="40px" w="1px" bg="gray.200" />
                       <VStack spacing={0} flex={1} align="center">
-                        <Text fontSize="3xl" fontWeight="bold" color="gray.700">
+                        <Text
+                          fontSize={{ base: '2xl', smd: '3xl' }}
+                          fontWeight="bold"
+                          color="gray.700"
+                        >
                           {completeData?.timeline?.length || 0}
                         </Text>
                         <Text fontSize="xs" color="gray.500" textAlign="center">
@@ -1175,14 +1195,35 @@ function ProductDetail() {
                     border="1px solid"
                     borderColor="gray.200"
                     overflow="hidden"
-                    p={6}
+                    p={{ base: 4, smd: 6 }}
                   >
                     <VStack spacing={4} align="stretch">
-                      <HStack spacing={2}>
-                        <Icon as={FaCertificate} color="green.500" boxSize={5} />
-                        <Heading size="md" color="gray.800">
-                          {intl.formatMessage({ id: 'certification.manage.title' })}
-                        </Heading>
+                      <HStack spacing={3}>
+                        <Flex
+                          w={10}
+                          h={10}
+                          borderRadius="lg"
+                          bg="green.50"
+                          align="center"
+                          justify="center"
+                        >
+                          <Icon as={FaCertificate} color="green.500" boxSize={5} />
+                        </Flex>
+                        <VStack align="start" spacing={0}>
+                          <Text
+                            fontWeight="bold"
+                            fontSize={{ base: 'md', smd: 'lg' }}
+                            color="gray.800"
+                          >
+                            {intl.formatMessage({ id: 'certification.manage.title' })}
+                          </Text>
+                          <Text fontSize="xs" color="gray.500">
+                            {intl.formatMessage({
+                              id: 'certification.manage.subtitle',
+                              defaultMessage: 'Standards and claims for this product'
+                            })}
+                          </Text>
+                        </VStack>
                       </HStack>
 
                       {/* Organic claim — regulatory gate per 7 CFR 205.300 / 16 CFR 260.6(d).
@@ -1281,32 +1322,40 @@ function ProductDetail() {
                 );
               })()}
 
-              {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
-              <Suspense fallback={<CarbonExplainerLoader />}>
-                <CarbonImpactExplainer
-                  carbonScore={getDisplayTransparencyScore()}
-                  totalCO2e={getAccurateCarbonFootprint()}
-                  productName={completeData?.product?.name || completeData?.farmer?.name}
-                  relatableFootprint={completeData?.relatableFootprint}
-                  backendComparisons={completeData?.carbon_impact?.comparisons}
-                  consumerContext={completeData?.carbon_impact?.consumer_context}
-                />
-              </Suspense>
-
               {/* Farm Story Highlights - Consumer-Friendly */}
               <Box
                 bg="white"
                 borderRadius="xl"
                 border="1px solid"
                 borderColor="gray.200"
-                p={6}
+                p={{ base: 4, smd: 6 }}
                 shadow="sm"
                 mb={6}
               >
                 <VStack align="start" spacing={4}>
-                  <Heading size="md" color="gray.800">
-                    {intl.formatMessage({ id: 'consumer.howGrown.title' })}
-                  </Heading>
+                  <HStack spacing={3}>
+                    <Flex
+                      w={10}
+                      h={10}
+                      borderRadius="lg"
+                      bg="green.50"
+                      align="center"
+                      justify="center"
+                    >
+                      <Icon as={FaTractor} color="green.500" boxSize={5} />
+                    </Flex>
+                    <VStack align="start" spacing={0}>
+                      <Text fontWeight="bold" fontSize={{ base: 'md', smd: 'lg' }} color="gray.800">
+                        {intl.formatMessage({ id: 'consumer.howGrown.title' })}
+                      </Text>
+                      <Text fontSize="xs" color="gray.500">
+                        {intl.formatMessage({
+                          id: 'consumer.howGrown.subtitle',
+                          defaultMessage: 'Practices and proof from the field'
+                        })}
+                      </Text>
+                    </VStack>
+                  </HStack>
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} w="full">
                     {/* Farming Events */}
@@ -1347,7 +1396,7 @@ function ProductDetail() {
                       </Box>
                     </HStack>
 
-                    {/* Blockchain Security — four states: tampered, verified, pending (sealed), not finalized */}
+                    {/* Blockchain Security — five states: tampered, verified, sealed, finished/not-recorded, in-progress */}
                     {(() => {
                       const blockchain = getBlockchainScore();
 
@@ -1397,19 +1446,19 @@ function ProductDetail() {
                         );
                       }
 
-                      // STATE 2: Fully verified on-chain — purple shield
+                      // STATE 2: Recorded on-chain — green shield (Trazo brand)
                       if (blockchain.isVerified) {
                         return (
                           <HStack align="start" spacing={3}>
-                            <Icon as={FaShieldAlt} color="purple.500" boxSize="20px" mt={1} />
+                            <Icon as={FaShieldAlt} color="green.500" boxSize="20px" mt={1} />
                             <Box>
                               <Text fontWeight="semibold" color="gray.800">
-                                Blockchain Protected
+                                Blockchain Recorded
                               </Text>
                               <Text fontSize="sm" color="gray.600">
                                 {blockchain.isIntegrityChecked
-                                  ? 'Data integrity verified on blockchain'
-                                  : 'Data permanently secured on blockchain'}
+                                  ? 'Tamper-proof: data integrity confirmed on blockchain'
+                                  : 'Data permanently recorded on blockchain'}
                               </Text>
                               {blockchain.txHash && (
                                 <Link
@@ -1419,7 +1468,7 @@ function ProductDetail() {
                                   }/tx/${blockchain.txHash}`}
                                   isExternal
                                   fontSize="xs"
-                                  color="purple.500"
+                                  color="green.600"
                                   mt={1}
                                   display="inline-block"
                                 >
@@ -1431,11 +1480,11 @@ function ProductDetail() {
                         );
                       }
 
-                      // STATE 3: Sealed (finalized) but not yet on blockchain — blue lock
+                      // STATE 3: Sealed (finalized) but not yet on blockchain — gray lock
                       if (blockchain.isPending) {
                         return (
                           <HStack align="start" spacing={3}>
-                            <Icon as={FaShieldAlt} color="blue.500" boxSize="20px" mt={1} />
+                            <Icon as={FaShieldAlt} color="gray.500" boxSize="20px" mt={1} />
                             <Box>
                               <Text fontWeight="semibold" color="gray.800">
                                 Data Sealed
@@ -1450,16 +1499,37 @@ function ProductDetail() {
                         );
                       }
 
-                      // STATE 4: Not finalized yet — gray
+                      // STATE 4: Production finished but not blockchain-recorded
+                      // (blockchain is an optional $15/mo add-on per Trazo pricing)
+                      const finishDate = (completeData as any)?.finish_date;
+                      if (finishDate) {
+                        return (
+                          <HStack align="start" spacing={3}>
+                            <Icon as={FaShieldAlt} color="gray.400" boxSize="20px" mt={1} />
+                            <Box>
+                              <Text fontWeight="semibold" color="gray.800">
+                                Not Blockchain-Recorded
+                              </Text>
+                              <Text fontSize="sm" color="gray.600">
+                                Production documented through farmer-reported events. Blockchain
+                                recording is an optional add-on.
+                              </Text>
+                            </Box>
+                          </HStack>
+                        );
+                      }
+
+                      // STATE 5: Truly in-progress (no finish_date) — gray
                       return (
                         <HStack align="start" spacing={3}>
                           <Icon as={FaShieldAlt} color="gray.400" boxSize="20px" mt={1} />
                           <Box>
                             <Text fontWeight="semibold" color="gray.800">
-                              Not Yet Verified
+                              Not Yet Recorded
                             </Text>
                             <Text fontSize="sm" color="gray.600">
-                              Production in progress — verification available after completion
+                              Production in progress — blockchain recording available after
+                              completion (optional add-on).
                             </Text>
                           </Box>
                         </HStack>
@@ -1499,7 +1569,7 @@ function ProductDetail() {
                   borderRadius="xl"
                   border="1px solid"
                   borderColor="gray.200"
-                  p={6}
+                  p={{ base: 4, smd: 6 }}
                   mb={6}
                 >
                   <StandardImageGallery
@@ -1516,9 +1586,21 @@ function ProductDetail() {
 
               <Divider borderColor="gray.200" />
 
-              {/* Production Journey - Carbon Impact Section */}
+              {/* Environmental Impact + Production Journey */}
               <Box id="carbon-section">
                 <VStack spacing={4} align="stretch">
+                  {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
+                  <Suspense fallback={<CarbonExplainerLoader />}>
+                    <CarbonImpactExplainer
+                      documentationScore={getDisplayTransparencyScore()}
+                      totalCO2e={getAccurateCarbonFootprint()}
+                      productName={completeData?.product?.name || completeData?.farmer?.name}
+                      relatableFootprint={completeData?.relatableFootprint}
+                      backendComparisons={completeData?.carbon_impact?.comparisons}
+                      consumerContext={completeData?.carbon_impact?.consumer_context}
+                    />
+                  </Suspense>
+
                   {(() => {
                     // PRIORITY 1: Use complete API timeline (includes transparency fields) if it has events
                     // Get timeline events from consolidated transparency API response
@@ -1722,186 +1804,190 @@ function ProductDetail() {
         <VStack spacing={8} mt={8} w="100%" maxW="container.lg">
           <Divider borderColor="gray.200" />
 
-          {/* Producer Information Transition Section */}
-          <Box
-            bg="white"
-            borderRadius="xl"
-            border="1px solid"
-            borderColor="gray.200"
-            p={6}
-            textAlign="center"
-          >
-            <VStack spacing={4}>
-              <HStack spacing={3} justify="center">
-                <Icon as={FaTractor} color="green.500" boxSize={6} />
-                <Icon as={FaUsers} color="blue.500" boxSize={6} />
-                <Icon as={FaMapMarkerAlt} color="orange.500" boxSize={6} />
-              </HStack>
-
-              <VStack spacing={2}>
-                <Heading size="md" color="gray.800">
-                  Meet Your Transparent Farmers
-                </Heading>
-                <Text color="gray.600" maxW="md" fontSize="sm">
-                  Now discover the people, places, and practices behind your product. Every detail
-                  is documented with complete transparency from farm to your table.
-                </Text>
-              </VStack>
-
-              <HStack spacing={6} fontSize="xs" color="gray.500" flexWrap="wrap" justify="center">
-                <HStack spacing={1}>
-                  <Icon as={FaUsers} boxSize={3} />
-                  <Text>Transparent Producer</Text>
-                </HStack>
-                <HStack spacing={1}>
-                  <Icon as={FaUniversity} boxSize={3} />
-                  <Text>Verified Farm</Text>
-                </HStack>
-                <HStack spacing={1}>
-                  <Icon as={FaMapMarkerAlt} boxSize={3} />
-                  <Text>Location</Text>
-                </HStack>
-                <HStack spacing={1}>
-                  <Icon as={FaCertificate} boxSize={3} />
-                  <Text>Documented Practices</Text>
-                </HStack>
-              </HStack>
-            </VStack>
-          </Box>
-
-          {/* Company Establishment Info - Farm Section */}
+          {/* Farm Section — intro + company info */}
           <Box id="farm-section">
-            <CompanyFarmInfo
-              companyData={{
-                // Use company data from the enhanced API response
-                id: (completeData as any)?.farmer?.company?.id,
-                name: (completeData as any)?.farmer?.company?.name || 'Company Information',
-                description: (completeData as any)?.farmer?.company?.description,
-                address: (completeData as any)?.farmer?.company?.address,
-                city: (completeData as any)?.farmer?.company?.city,
-                state: (completeData as any)?.farmer?.company?.state,
-                country: (completeData as any)?.farmer?.company?.country,
-                phone: (completeData as any)?.farmer?.company?.phone,
-                email: (completeData as any)?.farmer?.company?.email,
-                website: (completeData as any)?.farmer?.company?.website,
-                facebook: (completeData as any)?.farmer?.company?.facebook,
-                instagram: (completeData as any)?.farmer?.company?.instagram,
-                logo: (completeData as any)?.farmer?.company?.logo,
-                fiscal_id: (completeData as any)?.farmer?.company?.fiscal_id,
-                contact_email: (completeData as any)?.farmer?.company?.contact_email,
-                // Company overview stats for consumer transparency
-                total_establishments: (completeData as any)?.farmer?.company?.total_establishments,
-                total_parcels: (completeData as any)?.farmer?.company?.total_parcels,
-                // Sustainability data from company onboarding (transparency-first)
-                // Maps from farm_context.company_sustainability in the transparency API response
-                sustainability_goals:
-                  (completeData as any)?.farm_context?.company_sustainability?.goals ||
-                  (completeData as any)?.farmer?.company?.sustainability_goals,
-                crop_focus:
-                  (completeData as any)?.farm_context?.company_sustainability?.crop_focus ||
-                  (completeData as any)?.farmer?.company?.crop_focus,
-                sustainability_commitment:
-                  (completeData as any)?.farm_context?.company_sustainability?.commitment ||
-                  (completeData as any)?.farmer?.company?.sustainability_commitment
-              }}
-              establishmentData={{
-                // Use complete farmer/establishment data from enhanced API response
-                id: (completeData as any)?.farmer?.id,
-                name: (completeData as any)?.farmer?.name,
-                description: (completeData as any)?.farmer?.description,
-                address: (completeData as any)?.farmer?.address,
-                city: (completeData as any)?.farmer?.city,
-                state: (completeData as any)?.farmer?.state,
-                country: (completeData as any)?.farmer?.country,
-                zone: (completeData as any)?.farmer?.zone,
-                latitude: (completeData as any)?.farmer?.latitude,
-                longitude: (completeData as any)?.farmer?.longitude,
-                contact_person: (completeData as any)?.farmer?.contact_person,
-                contact_phone: (completeData as any)?.farmer?.contact_phone,
-                contact_email: (completeData as any)?.farmer?.contact_email,
-                email: (completeData as any)?.farmer?.email,
-                phone: (completeData as any)?.farmer?.phone,
-                zip_code: (completeData as any)?.farmer?.zip_code,
-                facebook: (completeData as any)?.farmer?.facebook,
-                instagram: (completeData as any)?.farmer?.instagram,
-                about: (completeData as any)?.farmer?.about,
-                main_activities: (completeData as any)?.farmer?.main_activities,
-                location_highlights: (completeData as any)?.farmer?.location_highlights,
-                custom_message: (completeData as any)?.farmer?.custom_message,
-                is_active: (completeData as any)?.farmer?.is_active,
-                crops_grown: (completeData as any)?.farmer?.crops_grown,
-                sustainability_practices: (completeData as any)?.farmer?.sustainability_practices,
-                employee_count: (completeData as any)?.farmer?.employee_count,
-                total_acreage: (completeData as any)?.farmer?.total_acreage,
-                year_established: (completeData as any)?.farmer?.year_established,
-                establishment_type: (completeData as any)?.farmer?.establishment_type,
-                farming_method: (completeData as any)?.farmer?.farming_method,
-                location: (completeData as any)?.farmer?.location,
-                rating: safeReputation,
-                certifications: (completeData as any)?.farmer?.certifications || [],
-                // Operational fields
-                climate_zone: (completeData as any)?.farmer?.climate_zone,
-                water_sources: (completeData as any)?.farmer?.water_sources,
-                soil_types: (completeData as any)?.farmer?.soil_types,
-                conservation_practices: (completeData as any)?.farmer?.conservation_practices,
-                irrigation_methods: (completeData as any)?.farmer?.irrigation_methods
-              }}
-              parcelData={{
-                id: (completeData as any)?.parcel?.id?.toString(),
-                name: (completeData as any)?.parcel?.name,
-                location: (completeData as any)?.farmer?.location,
-                coordinates:
-                  (completeData as any)?.farmer?.latitude &&
-                  (completeData as any)?.farmer?.longitude
-                    ? {
-                        latitude: (completeData as any)?.farmer?.latitude,
-                        longitude: (completeData as any)?.farmer?.longitude
-                      }
-                    : undefined,
-                area: (completeData as any)?.parcel?.area,
-                areaUnit: 'hectares',
-                soilType: (completeData as any)?.parcel?.soilType,
-                cropType: (completeData as any)?.product?.name,
-                plantingDate: (completeData as any)?.start_date,
-                harvestDate: (completeData as any)?.finish_date,
-                elevation: (completeData as any)?.parcel?.elevation,
-                slope: (completeData as any)?.parcel?.slope,
-                irrigationType: (completeData as any)?.parcel?.irrigationType,
-                polygon: (completeData as any)?.parcel?.polygon,
-                map_metadata: (completeData as any)?.parcel?.map_metadata,
-                // Additional fields for modal
-                description: (completeData as any)?.parcel?.description,
-                unique_code: (completeData as any)?.parcel?.unique_code,
-                contact_person:
-                  (completeData as any)?.parcel?.contact_person ||
-                  (completeData as any)?.farmer?.contact_person,
-                contact_phone:
-                  (completeData as any)?.parcel?.contact_phone ||
-                  (completeData as any)?.farmer?.contact_phone,
-                contact_email:
-                  (completeData as any)?.parcel?.contact_email ||
-                  (completeData as any)?.farmer?.contact_email,
-                current_history: (completeData as any)?.parcel?.current_history,
-                // Transparency fields from Add Parcel form
-                transparency_description: (completeData as any)?.parcel?.transparency_description,
-                sustainability_practices: (completeData as any)?.parcel?.sustainability_practices,
-                consumer_story: (completeData as any)?.parcel?.consumer_story,
-                primary_crop: (completeData as any)?.parcel?.primary_crop,
-                transparency_score: (completeData as any)?.parcel?.transparency_score,
-                transparency_ready: (completeData as any)?.parcel?.transparency_ready,
-                // Parcel images from album
-                images: (completeData as any)?.parcel?.images,
-                // Address for location details
-                address: (completeData as any)?.parcel?.address,
-                establishment: {
+            <VStack spacing={6} align="stretch">
+              {/* Producer Information Transition Section */}
+              <Box
+                bg="white"
+                borderRadius="xl"
+                border="1px solid"
+                borderColor="gray.200"
+                p={{ base: 4, smd: 6 }}
+                textAlign="center"
+              >
+                <VStack spacing={4}>
+                  <HStack spacing={3} justify="center">
+                    <Icon as={FaTractor} color="green.500" boxSize={6} />
+                    <Icon as={FaUsers} color="green.500" boxSize={6} />
+                    <Icon as={FaMapMarkerAlt} color="green.500" boxSize={6} />
+                  </HStack>
+
+                  <VStack spacing={2}>
+                    <Heading size={{ base: 'sm', smd: 'md' }} color="gray.800">
+                      Meet Your Transparent Farmers
+                    </Heading>
+                    <Text color="gray.600" maxW="md" fontSize="sm">
+                      The people, places, and practices behind your product.
+                    </Text>
+                  </VStack>
+
+                  <HStack
+                    spacing={5}
+                    fontSize="xs"
+                    color="gray.500"
+                    flexWrap="wrap"
+                    justify="center"
+                  >
+                    <HStack spacing={1}>
+                      <Icon as={FaUsers} boxSize={3} />
+                      <Text>Producer</Text>
+                    </HStack>
+                    <HStack spacing={1}>
+                      <Icon as={FaUniversity} boxSize={3} />
+                      <Text>Documented Farm</Text>
+                    </HStack>
+                    <HStack spacing={1}>
+                      <Icon as={FaMapMarkerAlt} boxSize={3} />
+                      <Text>Location</Text>
+                    </HStack>
+                  </HStack>
+                </VStack>
+              </Box>
+
+              <CompanyFarmInfo
+                companyData={{
+                  // Use company data from the enhanced API response
+                  id: (completeData as any)?.farmer?.company?.id,
+                  name: (completeData as any)?.farmer?.company?.name || 'Company Information',
+                  description: (completeData as any)?.farmer?.company?.description,
+                  address: (completeData as any)?.farmer?.company?.address,
+                  city: (completeData as any)?.farmer?.company?.city,
+                  state: (completeData as any)?.farmer?.company?.state,
+                  country: (completeData as any)?.farmer?.company?.country,
+                  phone: (completeData as any)?.farmer?.company?.phone,
+                  email: (completeData as any)?.farmer?.company?.email,
+                  website: (completeData as any)?.farmer?.company?.website,
+                  facebook: (completeData as any)?.farmer?.company?.facebook,
+                  instagram: (completeData as any)?.farmer?.company?.instagram,
+                  logo: (completeData as any)?.farmer?.company?.logo,
+                  fiscal_id: (completeData as any)?.farmer?.company?.fiscal_id,
+                  contact_email: (completeData as any)?.farmer?.company?.contact_email,
+                  // Company overview stats for consumer transparency
+                  total_establishments: (completeData as any)?.farmer?.company
+                    ?.total_establishments,
+                  total_parcels: (completeData as any)?.farmer?.company?.total_parcels,
+                  // Sustainability data from company onboarding (transparency-first)
+                  // Maps from farm_context.company_sustainability in the transparency API response
+                  sustainability_goals:
+                    (completeData as any)?.farm_context?.company_sustainability?.goals ||
+                    (completeData as any)?.farmer?.company?.sustainability_goals,
+                  crop_focus:
+                    (completeData as any)?.farm_context?.company_sustainability?.crop_focus ||
+                    (completeData as any)?.farmer?.company?.crop_focus,
+                  sustainability_commitment:
+                    (completeData as any)?.farm_context?.company_sustainability?.commitment ||
+                    (completeData as any)?.farmer?.company?.sustainability_commitment
+                }}
+                establishmentData={{
+                  // Use complete farmer/establishment data from enhanced API response
                   id: (completeData as any)?.farmer?.id,
-                  name: (completeData as any)?.farmer?.name || 'Farm',
+                  name: (completeData as any)?.farmer?.name,
                   description: (completeData as any)?.farmer?.description,
-                  location: (completeData as any)?.farmer?.location || 'Location not specified',
-                  photo: (completeData as any)?.farmer?.photo
-                }
-              }}
-            />
+                  address: (completeData as any)?.farmer?.address,
+                  city: (completeData as any)?.farmer?.city,
+                  state: (completeData as any)?.farmer?.state,
+                  country: (completeData as any)?.farmer?.country,
+                  zone: (completeData as any)?.farmer?.zone,
+                  latitude: (completeData as any)?.farmer?.latitude,
+                  longitude: (completeData as any)?.farmer?.longitude,
+                  contact_person: (completeData as any)?.farmer?.contact_person,
+                  contact_phone: (completeData as any)?.farmer?.contact_phone,
+                  contact_email: (completeData as any)?.farmer?.contact_email,
+                  email: (completeData as any)?.farmer?.email,
+                  phone: (completeData as any)?.farmer?.phone,
+                  zip_code: (completeData as any)?.farmer?.zip_code,
+                  facebook: (completeData as any)?.farmer?.facebook,
+                  instagram: (completeData as any)?.farmer?.instagram,
+                  about: (completeData as any)?.farmer?.about,
+                  main_activities: (completeData as any)?.farmer?.main_activities,
+                  location_highlights: (completeData as any)?.farmer?.location_highlights,
+                  custom_message: (completeData as any)?.farmer?.custom_message,
+                  is_active: (completeData as any)?.farmer?.is_active,
+                  crops_grown: (completeData as any)?.farmer?.crops_grown,
+                  sustainability_practices: (completeData as any)?.farmer?.sustainability_practices,
+                  employee_count: (completeData as any)?.farmer?.employee_count,
+                  total_acreage: (completeData as any)?.farmer?.total_acreage,
+                  year_established: (completeData as any)?.farmer?.year_established,
+                  establishment_type: (completeData as any)?.farmer?.establishment_type,
+                  farming_method: (completeData as any)?.farmer?.farming_method,
+                  location: (completeData as any)?.farmer?.location,
+                  rating: safeReputation,
+                  certifications: (completeData as any)?.farmer?.certifications || [],
+                  // Operational fields
+                  climate_zone: (completeData as any)?.farmer?.climate_zone,
+                  water_sources: (completeData as any)?.farmer?.water_sources,
+                  soil_types: (completeData as any)?.farmer?.soil_types,
+                  conservation_practices: (completeData as any)?.farmer?.conservation_practices,
+                  irrigation_methods: (completeData as any)?.farmer?.irrigation_methods
+                }}
+                parcelData={{
+                  id: (completeData as any)?.parcel?.id?.toString(),
+                  name: (completeData as any)?.parcel?.name,
+                  location: (completeData as any)?.farmer?.location,
+                  coordinates:
+                    (completeData as any)?.farmer?.latitude &&
+                    (completeData as any)?.farmer?.longitude
+                      ? {
+                          latitude: (completeData as any)?.farmer?.latitude,
+                          longitude: (completeData as any)?.farmer?.longitude
+                        }
+                      : undefined,
+                  area: (completeData as any)?.parcel?.area,
+                  areaUnit: 'hectares',
+                  soilType: (completeData as any)?.parcel?.soilType,
+                  cropType: (completeData as any)?.product?.name,
+                  plantingDate: (completeData as any)?.start_date,
+                  harvestDate: (completeData as any)?.finish_date,
+                  elevation: (completeData as any)?.parcel?.elevation,
+                  slope: (completeData as any)?.parcel?.slope,
+                  irrigationType: (completeData as any)?.parcel?.irrigationType,
+                  polygon: (completeData as any)?.parcel?.polygon,
+                  map_metadata: (completeData as any)?.parcel?.map_metadata,
+                  // Additional fields for modal
+                  description: (completeData as any)?.parcel?.description,
+                  unique_code: (completeData as any)?.parcel?.unique_code,
+                  contact_person:
+                    (completeData as any)?.parcel?.contact_person ||
+                    (completeData as any)?.farmer?.contact_person,
+                  contact_phone:
+                    (completeData as any)?.parcel?.contact_phone ||
+                    (completeData as any)?.farmer?.contact_phone,
+                  contact_email:
+                    (completeData as any)?.parcel?.contact_email ||
+                    (completeData as any)?.farmer?.contact_email,
+                  current_history: (completeData as any)?.parcel?.current_history,
+                  // Transparency fields from Add Parcel form
+                  transparency_description: (completeData as any)?.parcel?.transparency_description,
+                  sustainability_practices: (completeData as any)?.parcel?.sustainability_practices,
+                  consumer_story: (completeData as any)?.parcel?.consumer_story,
+                  primary_crop: (completeData as any)?.parcel?.primary_crop,
+                  transparency_score: (completeData as any)?.parcel?.transparency_score,
+                  transparency_ready: (completeData as any)?.parcel?.transparency_ready,
+                  // Parcel images from album
+                  images: (completeData as any)?.parcel?.images,
+                  // Address for location details
+                  address: (completeData as any)?.parcel?.address,
+                  establishment: {
+                    id: (completeData as any)?.farmer?.id,
+                    name: (completeData as any)?.farmer?.name || 'Farm',
+                    description: (completeData as any)?.farmer?.description,
+                    location: (completeData as any)?.farmer?.location || 'Location not specified',
+                    photo: (completeData as any)?.farmer?.photo
+                  }
+                }}
+              />
+            </VStack>
           </Box>
 
           <Divider borderColor="gray.200" />

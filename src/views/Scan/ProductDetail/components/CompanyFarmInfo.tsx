@@ -245,355 +245,409 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
     <VStack spacing={6} align="stretch">
       {/* Company Information */}
       {companyData && (
-        <Card bg={bgColor} shadow="md" borderRadius="xl">
-          <CardBody p={6}>
-            <VStack spacing={4} align="stretch">
-              <HStack spacing={3}>
-                <Icon as={FaBuilding} color="blue.500" boxSize={6} />
-                <VStack align="start" spacing={1} flex="1">
-                  <Heading size="md" color={textColor}>
+        <Box
+          bg={bgColor}
+          borderRadius="xl"
+          border="1px solid"
+          borderColor={useColorModeValue('gray.200', 'gray.600')}
+          p={{ base: 4, smd: 6 }}
+        >
+          <VStack spacing={4} align="stretch">
+            <Flex
+              direction={{ base: 'column', smd: 'row' }}
+              align={{ base: 'flex-start', smd: 'center' }}
+              gap={3}
+            >
+              <HStack spacing={3} flex="1" minW={0} align="start">
+                <Flex
+                  w={10}
+                  h={10}
+                  borderRadius="lg"
+                  bg="green.50"
+                  align="center"
+                  justify="center"
+                  flexShrink={0}
+                >
+                  <Icon as={FaBuilding} color="green.500" boxSize={5} />
+                </Flex>
+                <VStack align="start" spacing={0} flex={1} minW={0}>
+                  <Text
+                    fontWeight="bold"
+                    fontSize={{ base: 'md', smd: 'lg' }}
+                    color={textColor}
+                    noOfLines={2}
+                  >
                     {companyData.name || 'Company Name'}
-                  </Heading>
-                  <Text fontSize="sm" color={mutedColor}>
+                  </Text>
+                  <Text fontSize="xs" color={mutedColor}>
                     Agricultural Producer
                   </Text>
                 </VStack>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  colorScheme="blue"
-                  leftIcon={<FaInfoCircle />}
-                  onClick={onCompanyModalOpen}
-                  borderRadius="full"
-                  fontSize="xs"
-                >
-                  More Info
-                </Button>
               </HStack>
+              <Button
+                size="sm"
+                variant="outline"
+                colorScheme="green"
+                leftIcon={<FaInfoCircle />}
+                onClick={onCompanyModalOpen}
+                borderRadius="full"
+                fontSize="xs"
+                flexShrink={0}
+                alignSelf={{ base: 'flex-start', smd: 'center' }}
+              >
+                More Info
+              </Button>
+            </Flex>
 
-              {companyData.description && (
-                <Text fontSize="sm" color={textColor} lineHeight="1.6">
-                  {companyData.description}
-                </Text>
+            {companyData.description && (
+              <Text fontSize="sm" color={textColor} lineHeight="1.6">
+                {companyData.description}
+              </Text>
+            )}
+
+            {/* Sustainability Goals - From company onboarding (transparency-first) */}
+            {companyData.sustainability_goals && companyData.sustainability_goals.length > 0 && (
+              <VStack align="start" spacing={2}>
+                <HStack spacing={2}>
+                  <Icon as={FaLeaf} color="green.500" boxSize={4} />
+                  <Text fontSize="sm" fontWeight="semibold" color={textColor}>
+                    Sustainability Commitment
+                  </Text>
+                </HStack>
+                <HStack spacing={2} flexWrap="wrap">
+                  {companyData.sustainability_goals.map((goal, index) => (
+                    <Badge
+                      key={index}
+                      colorScheme="green"
+                      borderRadius="full"
+                      px={3}
+                      py={1}
+                      fontSize="xs"
+                    >
+                      {goal}
+                    </Badge>
+                  ))}
+                </HStack>
+              </VStack>
+            )}
+
+            <Divider />
+
+            <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
+              {companyData.location && (
+                <HStack spacing={2}>
+                  <Icon as={FaMapMarkerAlt} color="green.500" boxSize={4} />
+                  <Text fontSize="sm" color={textColor}>
+                    {companyData.location}
+                  </Text>
+                </HStack>
               )}
 
-              {/* Sustainability Goals - From company onboarding (transparency-first) */}
-              {companyData.sustainability_goals && companyData.sustainability_goals.length > 0 && (
-                <VStack align="start" spacing={2}>
+              {companyData.website && (
+                <Link href={companyData.website} isExternal _hover={{ textDecoration: 'none' }}>
                   <HStack spacing={2}>
-                    <Icon as={FaLeaf} color="green.500" boxSize={4} />
-                    <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                      Sustainability Commitment
+                    <Icon as={FaGlobe} color="green.500" boxSize={4} />
+                    <Text fontSize="sm" color="green.500" _hover={{ color: 'green.600' }}>
+                      Visit Website
                     </Text>
                   </HStack>
-                  <HStack spacing={2} flexWrap="wrap">
-                    {companyData.sustainability_goals.map((goal, index) => (
-                      <Badge
-                        key={index}
-                        colorScheme="green"
-                        borderRadius="full"
-                        px={3}
-                        py={1}
-                        fontSize="xs"
-                      >
-                        {goal}
-                      </Badge>
-                    ))}
-                  </HStack>
-                </VStack>
+                </Link>
               )}
 
-              <Divider />
-
-              <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
-                {companyData.location && (
+              {companyData.phone && (
+                <Link href={`tel:${companyData.phone}`} _hover={{ textDecoration: 'none' }}>
                   <HStack spacing={2}>
-                    <Icon as={FaMapMarkerAlt} color="green.500" boxSize={4} />
-                    <Text fontSize="sm" color={textColor}>
-                      {companyData.location}
-                    </Text>
-                  </HStack>
-                )}
-
-                {companyData.website && (
-                  <Link href={companyData.website} isExternal _hover={{ textDecoration: 'none' }}>
-                    <HStack spacing={2}>
-                      <Icon as={FaGlobe} color="blue.500" boxSize={4} />
-                      <Text fontSize="sm" color="blue.500" _hover={{ color: 'blue.600' }}>
-                        Visit Website
-                      </Text>
-                    </HStack>
-                  </Link>
-                )}
-
-                {companyData.phone && (
-                  <HStack spacing={2}>
-                    <Icon as={FaPhone} color="gray.500" boxSize={4} />
+                    <Icon as={FaPhone} color="green.500" boxSize={4} />
                     <Text fontSize="sm" color={textColor}>
                       {companyData.phone}
                     </Text>
                   </HStack>
-                )}
+                </Link>
+              )}
 
-                {/* Social Media Links - Trust Builders */}
-                {(companyData.facebook || companyData.instagram) && (
-                  <HStack spacing={3}>
-                    {companyData.facebook && (
-                      <Link href={companyData.facebook} isExternal>
-                        <HStack spacing={1}>
-                          <Icon
-                            as={FaFacebook}
-                            color="blue.600"
-                            boxSize={5}
-                            _hover={{ color: 'blue.700' }}
-                          />
-                          <Text
-                            fontSize="xs"
-                            color="blue.600"
-                            display={{ base: 'none', md: 'block' }}
-                          >
-                            Facebook
-                          </Text>
-                        </HStack>
-                      </Link>
-                    )}
-                    {companyData.instagram && (
-                      <Link href={companyData.instagram} isExternal>
-                        <HStack spacing={1}>
-                          <Icon
-                            as={FaInstagram}
-                            color="pink.500"
-                            boxSize={5}
-                            _hover={{ color: 'pink.600' }}
-                          />
-                          <Text
-                            fontSize="xs"
-                            color="pink.500"
-                            display={{ base: 'none', md: 'block' }}
-                          >
-                            Instagram
-                          </Text>
-                        </HStack>
-                      </Link>
-                    )}
+              {companyData.email && (
+                <Link href={`mailto:${companyData.email}`} _hover={{ textDecoration: 'none' }}>
+                  <HStack spacing={2}>
+                    <Icon as={FaEnvelope} color="green.500" boxSize={4} />
+                    <Text fontSize="sm" color={textColor}>
+                      {companyData.email}
+                    </Text>
                   </HStack>
-                )}
-              </Stack>
-            </VStack>
-          </CardBody>
-        </Card>
+                </Link>
+              )}
+
+              {/* Social Media Links - Trust Builders */}
+              {(companyData.facebook || companyData.instagram) && (
+                <HStack spacing={3}>
+                  {companyData.facebook && (
+                    <Link href={companyData.facebook} isExternal>
+                      <HStack spacing={1}>
+                        <Icon
+                          as={FaFacebook}
+                          color="green.500"
+                          boxSize={5}
+                          _hover={{ color: 'green.600' }}
+                        />
+                        <Text
+                          fontSize="xs"
+                          color="green.500"
+                          display={{ base: 'none', md: 'block' }}
+                        >
+                          Facebook
+                        </Text>
+                      </HStack>
+                    </Link>
+                  )}
+                  {companyData.instagram && (
+                    <Link href={companyData.instagram} isExternal>
+                      <HStack spacing={1}>
+                        <Icon
+                          as={FaInstagram}
+                          color="pink.500"
+                          boxSize={5}
+                          _hover={{ color: 'pink.600' }}
+                        />
+                        <Text
+                          fontSize="xs"
+                          color="pink.500"
+                          display={{ base: 'none', md: 'block' }}
+                        >
+                          Instagram
+                        </Text>
+                      </HStack>
+                    </Link>
+                  )}
+                </HStack>
+              )}
+            </Stack>
+          </VStack>
+        </Box>
       )}
 
       {/* Establishment Information */}
       {establishmentData && (
-        <Card bg={bgColor} shadow="md" borderRadius="xl">
-          <CardBody p={6}>
-            <VStack spacing={4} align="stretch">
-              <Flex justify="space-between" align="flex-start" gap={4}>
-                <VStack align="start" spacing={1} flex="1" minW={0}>
-                  <Heading size="md" color={textColor} noOfLines={2}>
+        <Box
+          bg={bgColor}
+          borderRadius="xl"
+          border="1px solid"
+          borderColor={useColorModeValue('gray.200', 'gray.600')}
+          p={{ base: 4, smd: 6 }}
+        >
+          <VStack spacing={4} align="stretch">
+            <Flex justify="space-between" align="flex-start" gap={3}>
+              <HStack spacing={3} flex="1" minW={0} align="start">
+                <Flex
+                  w={10}
+                  h={10}
+                  borderRadius="lg"
+                  bg="green.50"
+                  align="center"
+                  justify="center"
+                  flexShrink={0}
+                >
+                  <Icon as={FaMapMarkerAlt} color="green.500" boxSize={5} />
+                </Flex>
+                <VStack align="start" spacing={0} flex={1} minW={0}>
+                  <Text
+                    fontWeight="bold"
+                    fontSize={{ base: 'md', smd: 'lg' }}
+                    color={textColor}
+                    noOfLines={2}
+                  >
                     {establishmentData.name || 'Farm Name'}
-                  </Heading>
+                  </Text>
+                  <Text fontSize="xs" color={mutedColor} noOfLines={1}>
+                    {establishmentData.location || 'Farm Location'}
+                  </Text>
+                </VStack>
+              </HStack>
+
+              <Button
+                size="sm"
+                variant="outline"
+                colorScheme="green"
+                leftIcon={<FaInfoCircle />}
+                onClick={onEstablishmentModalOpen}
+                borderRadius="full"
+                fontSize="xs"
+                flexShrink={0}
+              >
+                More Info
+              </Button>
+            </Flex>
+
+            <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
+              {establishmentData.type && (
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                    TYPE
+                  </Text>
+                  <Badge colorScheme="green" borderRadius="full" px={3}>
+                    {establishmentData.type}
+                  </Badge>
+                </VStack>
+              )}
+
+              {establishmentData.size && (
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                    SIZE
+                  </Text>
+                  <Text fontSize="sm" color={textColor}>
+                    {establishmentData.size}
+                  </Text>
+                </VStack>
+              )}
+
+              {establishmentData.establishedYear && (
+                <VStack align="start" spacing={1}>
+                  <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                    ESTABLISHED
+                  </Text>
+                  <Text fontSize="sm" color={textColor}>
+                    {establishmentData.establishedYear}
+                  </Text>
+                </VStack>
+              )}
+            </Stack>
+
+            {/* Certifications displayed in Transparency Achievement section via CertificationBadge */}
+
+            {/* Operational Details Summary - Updated: removed climate_zone, soil_types → soil_health_practices */}
+            {((establishmentData.water_sources && establishmentData.water_sources.length > 0) ||
+              (establishmentData.soil_health_practices &&
+                establishmentData.soil_health_practices.length > 0) ||
+              (establishmentData.soil_types && establishmentData.soil_types.length > 0) ||
+              (establishmentData.irrigation_methods &&
+                establishmentData.irrigation_methods.length > 0)) && (
+              <>
+                <Divider />
+                <VStack align="start" spacing={3}>
                   <HStack spacing={2}>
-                    <Icon as={FaMapMarkerAlt} color="green.500" boxSize={3} />
-                    <Text fontSize="sm" color={mutedColor} noOfLines={1}>
-                      {establishmentData.location || 'Farm Location'}
+                    <Icon as={FaTractor} color="green.500" boxSize={4} />
+                    <Text fontSize="sm" fontWeight="semibold" color={textColor}>
+                      Operations & Practices
                     </Text>
                   </HStack>
-                </VStack>
+                  <Stack direction={{ base: 'column', md: 'row' }} spacing={4} flexWrap="wrap">
+                    {(() => {
+                      // Parse water sources
+                      const waterSources = Array.isArray(establishmentData.water_sources)
+                        ? establishmentData.water_sources
+                        : typeof establishmentData.water_sources === 'string'
+                        ? (() => {
+                            try {
+                              return JSON.parse(establishmentData.water_sources);
+                            } catch {
+                              return [];
+                            }
+                          })()
+                        : [];
 
-                <VStack spacing={2} align="end">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    colorScheme="green"
-                    leftIcon={<FaInfoCircle />}
-                    onClick={onEstablishmentModalOpen}
-                    borderRadius="full"
-                    fontSize="xs"
-                  >
-                    More Info
-                  </Button>
-                </VStack>
-              </Flex>
+                      if (waterSources.length > 0) {
+                        return (
+                          <VStack align="start" spacing={1}>
+                            <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                              WATER ({waterSources.length})
+                            </Text>
+                            <Text fontSize="xs" color={textColor} noOfLines={1}>
+                              {waterSources.slice(0, 2).join(', ')}
+                              {waterSources.length > 2 && '...'}
+                            </Text>
+                          </VStack>
+                        );
+                      }
+                      return null;
+                    })()}
 
-              <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
-                {establishmentData.type && (
-                  <VStack align="start" spacing={1}>
-                    <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                      TYPE
-                    </Text>
-                    <Badge colorScheme="green" borderRadius="full" px={3}>
-                      {establishmentData.type}
-                    </Badge>
-                  </VStack>
-                )}
+                    {(() => {
+                      // Parse soil health practices - try new field first, fall back to old soil_types
+                      let soilHealthPractices: string[] = [];
 
-                {establishmentData.size && (
-                  <VStack align="start" spacing={1}>
-                    <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                      SIZE
-                    </Text>
-                    <Text fontSize="sm" color={textColor}>
-                      {establishmentData.size}
-                    </Text>
-                  </VStack>
-                )}
-
-                {establishmentData.establishedYear && (
-                  <VStack align="start" spacing={1}>
-                    <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                      ESTABLISHED
-                    </Text>
-                    <Text fontSize="sm" color={textColor}>
-                      {establishmentData.establishedYear}
-                    </Text>
-                  </VStack>
-                )}
-              </Stack>
-
-              {/* Certifications displayed in Transparency Achievement section via CertificationBadge */}
-
-              {/* Operational Details Summary - Updated: removed climate_zone, soil_types → soil_health_practices */}
-              {((establishmentData.water_sources && establishmentData.water_sources.length > 0) ||
-                (establishmentData.soil_health_practices &&
-                  establishmentData.soil_health_practices.length > 0) ||
-                (establishmentData.soil_types && establishmentData.soil_types.length > 0) ||
-                (establishmentData.irrigation_methods &&
-                  establishmentData.irrigation_methods.length > 0)) && (
-                <>
-                  <Divider />
-                  <VStack align="start" spacing={3}>
-                    <HStack spacing={2}>
-                      <Icon as={FaTractor} color="green.500" boxSize={4} />
-                      <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                        Operations & Practices
-                      </Text>
-                    </HStack>
-                    <Stack direction={{ base: 'column', md: 'row' }} spacing={4} flexWrap="wrap">
-                      {(() => {
-                        // Parse water sources
-                        const waterSources = Array.isArray(establishmentData.water_sources)
-                          ? establishmentData.water_sources
-                          : typeof establishmentData.water_sources === 'string'
+                      // Try new soil_health_practices field first
+                      if (establishmentData.soil_health_practices) {
+                        soilHealthPractices = Array.isArray(establishmentData.soil_health_practices)
+                          ? establishmentData.soil_health_practices
+                          : typeof establishmentData.soil_health_practices === 'string'
                           ? (() => {
                               try {
-                                return JSON.parse(establishmentData.water_sources);
+                                const parsed = JSON.parse(
+                                  establishmentData.soil_health_practices as string
+                                );
+                                return parsed.length > 0 ? parsed : [];
                               } catch {
                                 return [];
                               }
                             })()
                           : [];
+                      }
 
-                        if (waterSources.length > 0) {
-                          return (
-                            <VStack align="start" spacing={1}>
-                              <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                                WATER ({waterSources.length})
-                              </Text>
-                              <Text fontSize="xs" color={textColor} noOfLines={1}>
-                                {waterSources.slice(0, 2).join(', ')}
-                                {waterSources.length > 2 && '...'}
-                              </Text>
-                            </VStack>
-                          );
-                        }
-                        return null;
-                      })()}
-
-                      {(() => {
-                        // Parse soil health practices - try new field first, fall back to old soil_types
-                        let soilHealthPractices: string[] = [];
-
-                        // Try new soil_health_practices field first
-                        if (establishmentData.soil_health_practices) {
-                          soilHealthPractices = Array.isArray(
-                            establishmentData.soil_health_practices
-                          )
-                            ? establishmentData.soil_health_practices
-                            : typeof establishmentData.soil_health_practices === 'string'
-                            ? (() => {
-                                try {
-                                  const parsed = JSON.parse(
-                                    establishmentData.soil_health_practices as string
-                                  );
-                                  return parsed.length > 0 ? parsed : [];
-                                } catch {
-                                  return [];
-                                }
-                              })()
-                            : [];
-                        }
-
-                        // Fall back to old soil_types field for backward compatibility
-                        if (soilHealthPractices.length === 0 && establishmentData.soil_types) {
-                          soilHealthPractices = Array.isArray(establishmentData.soil_types)
-                            ? establishmentData.soil_types
-                            : typeof establishmentData.soil_types === 'string'
-                            ? (() => {
-                                try {
-                                  return JSON.parse(establishmentData.soil_types as string);
-                                } catch {
-                                  return [];
-                                }
-                              })()
-                            : [];
-                        }
-
-                        if (soilHealthPractices.length > 0) {
-                          return (
-                            <VStack align="start" spacing={1}>
-                              <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                                SOIL HEALTH ({soilHealthPractices.length})
-                              </Text>
-                              <Text fontSize="xs" color={textColor} noOfLines={1}>
-                                {soilHealthPractices.slice(0, 2).join(', ')}
-                                {soilHealthPractices.length > 2 && '...'}
-                              </Text>
-                            </VStack>
-                          );
-                        }
-                        return null;
-                      })()}
-
-                      {(() => {
-                        // Parse irrigation methods
-                        const irrigationMethods = Array.isArray(
-                          establishmentData.irrigation_methods
-                        )
-                          ? establishmentData.irrigation_methods
-                          : typeof establishmentData.irrigation_methods === 'string'
+                      // Fall back to old soil_types field for backward compatibility
+                      if (soilHealthPractices.length === 0 && establishmentData.soil_types) {
+                        soilHealthPractices = Array.isArray(establishmentData.soil_types)
+                          ? establishmentData.soil_types
+                          : typeof establishmentData.soil_types === 'string'
                           ? (() => {
                               try {
-                                return JSON.parse(establishmentData.irrigation_methods);
+                                return JSON.parse(establishmentData.soil_types as string);
                               } catch {
                                 return [];
                               }
                             })()
                           : [];
+                      }
 
-                        if (irrigationMethods.length > 0) {
-                          return (
-                            <VStack align="start" spacing={1}>
-                              <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                                IRRIGATION ({irrigationMethods.length})
-                              </Text>
-                              <Text fontSize="xs" color={textColor} noOfLines={1}>
-                                {irrigationMethods.slice(0, 2).join(', ')}
-                                {irrigationMethods.length > 2 && '...'}
-                              </Text>
-                            </VStack>
-                          );
-                        }
-                        return null;
-                      })()}
-                    </Stack>
-                  </VStack>
-                </>
-              )}
-            </VStack>
-          </CardBody>
-        </Card>
+                      if (soilHealthPractices.length > 0) {
+                        return (
+                          <VStack align="start" spacing={1}>
+                            <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                              SOIL HEALTH ({soilHealthPractices.length})
+                            </Text>
+                            <Text fontSize="xs" color={textColor} noOfLines={1}>
+                              {soilHealthPractices.slice(0, 2).join(', ')}
+                              {soilHealthPractices.length > 2 && '...'}
+                            </Text>
+                          </VStack>
+                        );
+                      }
+                      return null;
+                    })()}
+
+                    {(() => {
+                      // Parse irrigation methods
+                      const irrigationMethods = Array.isArray(establishmentData.irrigation_methods)
+                        ? establishmentData.irrigation_methods
+                        : typeof establishmentData.irrigation_methods === 'string'
+                        ? (() => {
+                            try {
+                              return JSON.parse(establishmentData.irrigation_methods);
+                            } catch {
+                              return [];
+                            }
+                          })()
+                        : [];
+
+                      if (irrigationMethods.length > 0) {
+                        return (
+                          <VStack align="start" spacing={1}>
+                            <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
+                              IRRIGATION ({irrigationMethods.length})
+                            </Text>
+                            <Text fontSize="xs" color={textColor} noOfLines={1}>
+                              {irrigationMethods.slice(0, 2).join(', ')}
+                              {irrigationMethods.length > 2 && '...'}
+                            </Text>
+                          </VStack>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </Stack>
+                </VStack>
+              </>
+            )}
+          </VStack>
+        </Box>
       )}
 
       {/* Company Detail Modal */}
@@ -624,7 +678,9 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
             total_parcels: companyData.total_parcels,
             certifications: Array.isArray(companyData.certifications)
               ? companyData.certifications.map((cert: any) =>
-                  typeof cert === 'object' && cert !== null ? cert.display_name || cert.name || 'Certification' : cert
+                  typeof cert === 'object' && cert !== null
+                    ? cert.display_name || cert.name || 'Certification'
+                    : cert
                 )
               : typeof companyData.certifications === 'string'
               ? companyData.certifications
@@ -667,7 +723,9 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                 : Array.isArray(establishmentData.certifications)
                 ? establishmentData.certifications
                     .map((cert: any) =>
-                      typeof cert === 'object' && cert !== null ? cert.display_name || cert.name || 'Certification' : cert
+                      typeof cert === 'object' && cert !== null
+                        ? cert.display_name || cert.name || 'Certification'
+                        : cert
                     )
                     .join(', ')
                 : undefined,

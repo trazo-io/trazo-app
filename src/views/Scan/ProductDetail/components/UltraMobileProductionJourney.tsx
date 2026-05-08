@@ -62,10 +62,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { ConsumerEventCard } from 'components/Events/ConsumerEventCard';
-import {
-  getSustainabilityImpact,
-  getConsumerEventDescription
-} from 'utils/eventDescriptions';
+import { getSustainabilityImpact, getConsumerEventDescription } from 'utils/eventDescriptions';
 import {
   EducationalTooltip,
   CO2eTooltip,
@@ -491,16 +488,18 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
   // Group same-subtype events for cleaner consumer display
   // Events with 3+ of the same type get grouped into a summary card
-  type EventGroup = {
-    kind: 'single';
-    event: TimelineEvent;
-  } | {
-    kind: 'group';
-    type: string;
-    category: string;
-    events: TimelineEvent[];
-    dateRange: string;
-  };
+  type EventGroup =
+    | {
+        kind: 'single';
+        event: TimelineEvent;
+      }
+    | {
+        kind: 'group';
+        type: string;
+        category: string;
+        events: TimelineEvent[];
+        dateRange: string;
+      };
 
   const groupEvents = (evts: TimelineEvent[]): EventGroup[] => {
     if (evts.length === 0) return [];
@@ -534,9 +533,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         const config = getEventConfig(event);
 
         // Format date range
-        const dates = allOfType.map((e) => new Date(e.date)).sort((a, b) => a.getTime() - b.getTime());
+        const dates = allOfType
+          .map((e) => new Date(e.date))
+          .sort((a, b) => a.getTime() - b.getTime());
         const startMonth = dates[0].toLocaleDateString('en-US', { month: 'short' });
-        const endMonth = dates[dates.length - 1].toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        const endMonth = dates[dates.length - 1].toLocaleDateString('en-US', {
+          month: 'short',
+          year: 'numeric'
+        });
         const dateRange = startMonth === endMonth ? endMonth : `${startMonth} - ${endMonth}`;
 
         // Only add group once (skip individual events of this type)
@@ -671,9 +675,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 id: albumImage.id ? albumImage.id.toString() : `album_${index}`,
                 image: albumImage.image_url || albumImage.image,
                 caption:
-                  albumImage.title ||
-                  albumImage.caption ||
-                  `Image ${albumImage.id || index + 1}`,
+                  albumImage.title || albumImage.caption || `Image ${albumImage.id || index + 1}`,
                 created_at: albumImage.created_at || new Date().toISOString()
               }))
           };
@@ -699,533 +701,544 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
   return (
     <Box ref={sectionRef} overflow="hidden" w="100%">
-    <Card
-      bg={bgColor}
-      shadow="sm"
-      borderRadius="xl"
-      overflow="hidden"
-      border="1px solid"
-      borderColor={useColorModeValue('gray.100', 'gray.700')}
-    >
-      <CardBody p={{ base: 4, md: 6 }} minW={0}>
-        {/* Next-Level Mobile Header */}
-        <VStack spacing={5} mb={6} minW={0}>
-          <VStack spacing={3} w="full" minW={0}>
-            <HStack w="full" justify="space-between" align="start">
-              <CardHeader pb={6}>
-                <HStack spacing={3}>
-                  <Circle size="40px" bg="blue.500" color="white">
-                    <Icon as={MdTimeline} boxSize={5} />
-                  </Circle>
-                  <VStack spacing={0} align="start">
-                    <Heading size="sm" color={textColor}>
-                      Production Journey
-                    </Heading>
-                    <Text fontSize="sm" color={mutedColor}>
-                      Transparent farming timeline
-                    </Text>
-                  </VStack>
-                </HStack>
-              </CardHeader>
+      <Card
+        bg={bgColor}
+        shadow="sm"
+        borderRadius="xl"
+        overflow="hidden"
+        border="1px solid"
+        borderColor={useColorModeValue('gray.100', 'gray.700')}
+      >
+        <CardBody p={{ base: 4, md: 6 }} minW={0}>
+          {/* Next-Level Mobile Header */}
+          <VStack spacing={5} mb={6} minW={0}>
+            <VStack spacing={3} w="full" minW={0}>
+              <HStack w="full" justify="space-between" align="start">
+                <CardHeader pb={6}>
+                  <HStack spacing={3}>
+                    <Circle size="40px" bg="green.500" color="white">
+                      <Icon as={MdTimeline} boxSize={5} />
+                    </Circle>
+                    <VStack spacing={0} align="start">
+                      <Heading size={{ base: 'sm', smd: 'md' }} color={textColor}>
+                        Production Journey
+                      </Heading>
+                      <Text fontSize="sm" color={mutedColor}>
+                        Transparent farming timeline
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </CardHeader>
 
-              <Badge
-                colorScheme="green"
-                variant="subtle"
-                fontSize="xs"
+                <Badge
+                  colorScheme="green"
+                  variant="subtle"
+                  fontSize="xs"
+                  px={3}
+                  py={1}
+                  borderRadius="full"
+                  fontWeight="600"
+                >
+                  <HStack spacing={1}>
+                    <Icon as={MdVerified} boxSize={3} />
+                    <Text>
+                      {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
+                    </Text>
+                  </HStack>
+                </Badge>
+              </HStack>
+
+              {/* Production Stats Row — minimalist horizontal layout with dividers */}
+              <HStack
+                spacing={0}
+                w={{ base: 'calc(100% + 16px)', md: 'calc(100% + 32px)' }}
+                mx={{ base: -2, md: -4 }}
+                bg={useColorModeValue('gray.50', 'gray.800')}
+                borderRadius="lg"
+                py={3}
                 px={3}
-                py={1}
-                borderRadius="full"
-                fontWeight="600"
-              >
-                <HStack spacing={1}>
-                  <Icon as={MdVerified} boxSize={3} />
-                  <Text>
-                    {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
-                  </Text>
-                </HStack>
-              </Badge>
-            </HStack>
-
-            {/* Enhanced Carbon Stats Dashboard */}
-            <SimpleGrid columns={4} spacing={1} w="full">
-              <VStack
-                spacing={0.5}
-                bg={useColorModeValue('blue.50', 'blue.900')}
-                borderRadius="lg"
-                py={2}
-                px={1}
-                border="1px solid"
-                borderColor={useColorModeValue('blue.200', 'blue.700')}
-                minW="0"
-                overflow="hidden"
-              >
-                <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="blue.600">
-                  {filteredEvents.length}
-                </Text>
-                <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
-                  Events
-                </Text>
-              </VStack>
-
-              <VStack
-                spacing={0.5}
-                bg={useColorModeValue('green.50', 'green.900')}
-                borderRadius="lg"
-                py={2}
-                px={1}
-                border="1px solid"
-                borderColor={useColorModeValue('green.200', 'green.700')}
-                minW="0"
-                overflow="hidden"
-              >
-                <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="green.600" noOfLines={1}>
-                  {(() => {
-                    const totalCO2 = filteredEvents.reduce(
-                      (sum, e) => sum + (e.carbon_data?.co2e || 0),
-                      0
-                    );
-
-                    return formatCO2e(totalCO2).replace(/[+-]/, '');
-                  })()}
-                </Text>
-                <CO2eTooltip>
-                  <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
-                    CO₂e
-                  </Text>
-                </CO2eTooltip>
-              </VStack>
-
-              <VStack
-                spacing={0.5}
-                bg={useColorModeValue('purple.50', 'purple.900')}
-                borderRadius="lg"
-                py={2}
-                px={1}
-                border="1px solid"
-                borderColor={useColorModeValue('purple.200', 'purple.700')}
-                minW="0"
-                overflow="hidden"
-              >
-                <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="purple.600">
-                  {(() => {
-                    const documentedEvents = filteredEvents.filter(
-                      (e) =>
-                        (e.album && e.album.images?.length > 0) ||
-                        (e.albums && e.albums.length > 0) ||
-                        e.extra_data?.photo_count > 0
-                    );
-                    return filteredEvents.length > 0
-                      ? Math.round((documentedEvents.length / filteredEvents.length) * 100)
-                      : 0;
-                  })()}
-                  %
-                </Text>
-                <PhotoDocumentationTooltip>
-                  <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
-                    {intl.formatMessage({ id: 'transparency.withPhotos' })}
-                  </Text>
-                </PhotoDocumentationTooltip>
-              </VStack>
-
-              <VStack
-                spacing={0.5}
-                bg={useColorModeValue('orange.50', 'orange.900')}
-                borderRadius="lg"
-                py={2}
-                px={1}
-                border="1px solid"
-                borderColor={useColorModeValue('orange.200', 'orange.700')}
-                minW="0"
-                overflow="hidden"
-              >
-                <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="bold" color="orange.600">
-                  {transparencyScore || 0}
-                </Text>
-                <TransparencyScoreTooltip>
-                  <Text fontSize="xs" color={mutedColor} textAlign="center" fontWeight="500" lineHeight="1.2">
-                    Score
-                  </Text>
-                </TransparencyScoreTooltip>
-              </VStack>
-            </SimpleGrid>
-
-            {/* Transparency Section */}
-            {productionId && (
-              <Box
-                bg={useColorModeValue('green.50', 'green.900')}
-                borderRadius="lg"
-                p={4}
-                border="1px solid"
-                borderColor={useColorModeValue('green.200', 'green.700')}
-                w="full"
-              >
-                <VStack spacing={3} align="stretch">
-                  <Flex justify="space-between" align="center">
-                    <Text fontSize="sm" fontWeight="semibold" color="green.800">
-                      Documentation Transparency
-                    </Text>
-                    <Badge colorScheme="green" fontSize="xs" borderRadius="full">
-                      {filteredEvents.length} Documented Events
-                    </Badge>
-                  </Flex>
-
-                  <TransparencyIndicator
-                    percentage={Math.min((filteredEvents.length / 15) * 100, 100)} // Assume 15 expected events
-                    message={
-                      filteredEvents.length >= 15
-                        ? 'Complete transparency'
-                        : filteredEvents.length >= 10
-                        ? 'Good transparency'
-                        : 'Basic transparency'
-                    }
-                    status={
-                      filteredEvents.length >= 15
-                        ? 'excellent'
-                        : filteredEvents.length >= 10
-                        ? 'good'
-                        : 'minimum'
-                    }
-                    variant="compact"
-                    size="sm"
-                    showDetails={false}
+                divider={
+                  <Box
+                    w="1px"
+                    h="32px"
+                    bg={useColorModeValue('gray.200', 'gray.600')}
+                    alignSelf="center"
                   />
-
-                  <Text fontSize="xs" color="green.700">
-                    Shows how completely this farm has documented their growing practices and
-                    activities
+                }
+              >
+                <VStack spacing={0.5} flex={1} align="center" minW={0}>
+                  <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="bold" color={textColor}>
+                    {filteredEvents.length}
+                  </Text>
+                  <Text fontSize="xs" color={mutedColor} fontWeight="500" lineHeight="1.2">
+                    Events
                   </Text>
                 </VStack>
+
+                <VStack spacing={0.5} flex={1} align="center" minW={0}>
+                  <Text
+                    fontSize={{ base: 'md', smd: 'lg' }}
+                    fontWeight="bold"
+                    color={textColor}
+                    noOfLines={1}
+                  >
+                    {(() => {
+                      const totalCO2 = filteredEvents.reduce(
+                        (sum, e) => sum + (e.carbon_data?.co2e || 0),
+                        0
+                      );
+
+                      return formatCO2e(totalCO2).replace(/[+-]/, '');
+                    })()}
+                  </Text>
+                  <CO2eTooltip>
+                    <Text
+                      fontSize="xs"
+                      color={mutedColor}
+                      textAlign="center"
+                      fontWeight="500"
+                      lineHeight="1.2"
+                    >
+                      Carbon
+                    </Text>
+                  </CO2eTooltip>
+                </VStack>
+
+                <VStack spacing={0.5} flex={1} align="center" minW={0}>
+                  <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="bold" color={textColor}>
+                    {(() => {
+                      const documentedEvents = filteredEvents.filter(
+                        (e) =>
+                          (e.album && e.album.images?.length > 0) ||
+                          (e.albums && e.albums.length > 0) ||
+                          e.extra_data?.photo_count > 0
+                      );
+                      return filteredEvents.length > 0
+                        ? Math.round((documentedEvents.length / filteredEvents.length) * 100)
+                        : 0;
+                    })()}
+                    %
+                  </Text>
+                  <PhotoDocumentationTooltip>
+                    <Text
+                      fontSize="xs"
+                      color={mutedColor}
+                      textAlign="center"
+                      fontWeight="500"
+                      lineHeight="1.2"
+                    >
+                      {intl.formatMessage({ id: 'transparency.withPhotos' })}
+                    </Text>
+                  </PhotoDocumentationTooltip>
+                </VStack>
+
+                <VStack spacing={0.5} flex={1} align="center" minW={0}>
+                  <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="bold" color="green.600">
+                    {transparencyScore || 0}
+                  </Text>
+                  <TransparencyScoreTooltip>
+                    <Text
+                      fontSize="xs"
+                      color={mutedColor}
+                      textAlign="center"
+                      fontWeight="500"
+                      lineHeight="1.2"
+                    >
+                      Score
+                    </Text>
+                  </TransparencyScoreTooltip>
+                </VStack>
+              </HStack>
+
+              {/* Transparency Section */}
+              {productionId && (
+                <Box
+                  bg={useColorModeValue('green.50', 'green.900')}
+                  borderRadius="lg"
+                  p={4}
+                  border="1px solid"
+                  borderColor={useColorModeValue('green.200', 'green.700')}
+                  w="full"
+                >
+                  <VStack spacing={3} align="stretch">
+                    <Flex justify="space-between" align="center">
+                      <Text fontSize="sm" fontWeight="semibold" color="green.800">
+                        Documentation Transparency
+                      </Text>
+                      <Badge colorScheme="green" fontSize="xs" borderRadius="full">
+                        {filteredEvents.length} Documented Events
+                      </Badge>
+                    </Flex>
+
+                    <TransparencyIndicator
+                      percentage={Math.min((filteredEvents.length / 15) * 100, 100)} // Assume 15 expected events
+                      message={
+                        filteredEvents.length >= 15
+                          ? 'Complete transparency'
+                          : filteredEvents.length >= 10
+                          ? 'Good transparency'
+                          : 'Basic transparency'
+                      }
+                      status={
+                        filteredEvents.length >= 15
+                          ? 'excellent'
+                          : filteredEvents.length >= 10
+                          ? 'good'
+                          : 'minimum'
+                      }
+                      variant="compact"
+                      size="sm"
+                      showDetails={false}
+                    />
+
+                    <Text fontSize="xs" color="green.700">
+                      Shows how completely this farm has documented their growing practices and
+                      activities
+                    </Text>
+                  </VStack>
+                </Box>
+              )}
+            </VStack>
+
+            {/* Minimalist Horizontal Event Type Filters */}
+            {categories.length > 1 && (
+              <Box w="full" overflowX="auto" pb={2}>
+                <HStack spacing={2} minW="max-content" px={1}>
+                  {categories.map((category) => {
+                    const getEventConfig = (cat: string) => {
+                      if (!cat || typeof cat !== 'string') {
+                        return { icon: MdTimeline, color: 'green.500' };
+                      }
+                      switch (cat.toLowerCase()) {
+                        case 'all':
+                          return { icon: MdTimeline, color: 'green.500' };
+                        case 'weather':
+                          return { icon: FaCloudRain, color: 'blue.500' };
+                        case 'chemical':
+                          return { icon: FaFlask, color: 'orange.500' };
+                        case 'production':
+                          return { icon: FaSeedling, color: 'green.500' };
+                        case 'equipment':
+                          return { icon: FaTractor, color: 'blue.700' };
+                        case 'soil management':
+                          return { icon: FaLayerGroup, color: 'yellow.700' };
+                        case 'pest management':
+                          return { icon: FaBug, color: 'red.500' };
+                        case 'business':
+                          return { icon: FaCertificate, color: 'teal.500' };
+                        case 'other farm activity':
+                        case 'other farm activities':
+                        case 'general':
+                          return { icon: FaClipboardList, color: 'gray.500' };
+                        default:
+                          return { icon: FaClipboardList, color: 'gray.500' };
+                      }
+                    };
+
+                    const config = getEventConfig(category);
+                    const isSelected =
+                      selectedCategory === category ||
+                      (category === 'all' && selectedCategory === 'all');
+
+                    const categoryEvents =
+                      category === 'all'
+                        ? filteredEvents
+                        : sortedEvents.filter((event) => {
+                            const eventConfig = getEventConfig(event);
+                            return (
+                              eventConfig.category &&
+                              typeof eventConfig.category === 'string' &&
+                              category &&
+                              typeof category === 'string' &&
+                              eventConfig.category.toLowerCase() === category.toLowerCase()
+                            );
+                          });
+
+                    const displayName = category === 'all' ? 'All' : category;
+                    const eventCount = categoryEvents.length;
+
+                    return (
+                      <Button
+                        key={category}
+                        size="sm"
+                        variant={isSelected ? 'solid' : 'outline'}
+                        colorScheme={isSelected ? config.color.split('.')[0] : 'gray'}
+                        bg={isSelected ? config.color : 'transparent'}
+                        color={isSelected ? 'white' : useColorModeValue('gray.700', 'gray.300')}
+                        borderColor={
+                          isSelected ? config.color : useColorModeValue('gray.200', 'gray.600')
+                        }
+                        onClick={() => setSelectedCategory(category)}
+                        transition="all 0.2s"
+                        _hover={{
+                          transform: 'translateY(-1px)',
+                          shadow: 'sm',
+                          bg: isSelected ? config.color : useColorModeValue('gray.50', 'gray.700')
+                        }}
+                        leftIcon={<Icon as={config.icon} boxSize={3} />}
+                        minW="max-content"
+                        fontSize="xs"
+                        fontWeight="medium"
+                        px={3}
+                        py={2}
+                        h="32px"
+                      >
+                        {displayName} {eventCount > 0 && `(${eventCount})`}
+                      </Button>
+                    );
+                  })}
+                </HStack>
               </Box>
             )}
           </VStack>
+        </CardBody>
 
-          {/* Minimalist Horizontal Event Type Filters */}
-          {categories.length > 1 && (
-            <Box w="full" overflowX="auto" pb={2}>
-              <HStack spacing={2} minW="max-content" px={1}>
-                {categories.map((category) => {
-                  const getEventConfig = (cat: string) => {
-                    if (!cat || typeof cat !== 'string') {
-                      return { icon: MdTimeline, color: 'green.500' };
-                    }
-                    switch (cat.toLowerCase()) {
-                      case 'all':
-                        return { icon: MdTimeline, color: 'green.500' };
-                      case 'weather':
-                        return { icon: FaCloudRain, color: 'blue.500' };
-                      case 'chemical':
-                        return { icon: FaFlask, color: 'orange.500' };
-                      case 'production':
-                        return { icon: FaSeedling, color: 'green.500' };
-                      case 'equipment':
-                        return { icon: FaTractor, color: 'blue.700' };
-                      case 'soil management':
-                        return { icon: FaLayerGroup, color: 'yellow.700' };
-                      case 'pest management':
-                        return { icon: FaBug, color: 'red.500' };
-                      case 'business':
-                        return { icon: FaCertificate, color: 'teal.500' };
-                      case 'other farm activity':
-                      case 'other farm activities':
-                      case 'general':
-                        return { icon: FaClipboardList, color: 'gray.500' };
-                      default:
-                        return { icon: FaClipboardList, color: 'gray.500' };
-                    }
-                  };
+        <CardBody pt={0} px={{ base: 0, md: 6 }} pb={{ base: 2, md: 6 }} minW={0}>
+          {/* Consumer-Friendly Event Cards - with grouping for repeated events */}
+          <VStack spacing={{ base: 2, md: 4 }} align="stretch" minW={0}>
+            {groupedDisplayEvents.map((item, groupIndex) => {
+              if (item.kind === 'group') {
+                const config = getEventConfig(item.events[0]);
+                const isExpanded = expandedGroup === item.type;
+                const totalEvents = item.events.length;
 
-                  const config = getEventConfig(category);
-                  const isSelected =
-                    selectedCategory === category ||
-                    (category === 'all' && selectedCategory === 'all');
+                // Compute summary metrics for the grouped events
+                const subtypeNames = item.events.map((evt) => {
+                  const info = getConsumerEventDescription(evt.description, evt);
+                  return info.title;
+                });
+                // Deduplicate while preserving order
+                const uniqueSubtypes = [...new Set(subtypeNames)];
 
-                  const categoryEvents =
-                    category === 'all'
-                      ? filteredEvents
-                      : sortedEvents.filter((event) => {
-                          const eventConfig = getEventConfig(event);
-                          return (
-                            eventConfig.category &&
-                            typeof eventConfig.category === 'string' &&
-                            category &&
-                            typeof category === 'string' &&
-                            eventConfig.category.toLowerCase() === category.toLowerCase()
-                          );
-                        });
+                const blockchainCount = item.events.filter(
+                  (evt) => evt.blockchain_verified || evt.extra_data?.blockchain_verified
+                ).length;
 
-                  const displayName = category === 'all' ? 'All' : category;
-                  const eventCount = categoryEvents.length;
+                const impactCounts = { high: 0, medium: 0, low: 0 };
+                item.events.forEach((evt) => {
+                  const level = getSustainabilityImpact(evt.description, evt);
+                  impactCounts[level]++;
+                });
 
-                  return (
-                    <Button
-                      key={category}
-                      size="sm"
-                      variant={isSelected ? 'solid' : 'outline'}
-                      colorScheme={isSelected ? config.color.split('.')[0] : 'gray'}
-                      bg={isSelected ? config.color : 'transparent'}
-                      color={isSelected ? 'white' : useColorModeValue('gray.700', 'gray.300')}
-                      borderColor={
-                        isSelected ? config.color : useColorModeValue('gray.200', 'gray.600')
-                      }
-                      onClick={() => setSelectedCategory(category)}
+                return (
+                  <Box key={`group-${item.type}`}>
+                    <Box
+                      bg={bgColor}
+                      borderRadius="xl"
+                      border="1px solid"
+                      borderColor={isExpanded ? config.color : 'gray.200'}
+                      overflow="hidden"
+                      cursor="pointer"
+                      onClick={() => toggleGroup(item.type)}
+                      _hover={{ borderColor: config.color, shadow: 'md' }}
                       transition="all 0.2s"
-                      _hover={{
-                        transform: 'translateY(-1px)',
-                        shadow: 'sm',
-                        bg: isSelected ? config.color : useColorModeValue('gray.50', 'gray.700')
-                      }}
-                      leftIcon={<Icon as={config.icon} boxSize={3} />}
-                      minW="max-content"
-                      fontSize="xs"
-                      fontWeight="medium"
-                      px={3}
-                      py={2}
-                      h="32px"
+                      shadow={isExpanded ? 'sm' : 'none'}
                     >
-                      {displayName} {eventCount > 0 && `(${eventCount})`}
-                    </Button>
-                  );
-                })}
-              </HStack>
-            </Box>
-          )}
-        </VStack>
-      </CardBody>
+                      <Box p={4}>
+                        {/* Row 1: Icon + Title + Date Range + Chevron */}
+                        <HStack spacing={3}>
+                          <Circle size="40px" bg={config.bgColor} flexShrink={0}>
+                            <Icon as={config.icon} color={config.color} boxSize={4} />
+                          </Circle>
+                          <VStack align="start" spacing={0} flex={1}>
+                            <HStack>
+                              <Text fontWeight="bold" fontSize="sm" color={textColor}>
+                                {totalEvents} {item.category}{' '}
+                                {totalEvents === 1 ? 'Event' : 'Events'}
+                              </Text>
+                              <Badge
+                                colorScheme={config.categoryColor}
+                                fontSize="xs"
+                                borderRadius="full"
+                              >
+                                {item.dateRange}
+                              </Badge>
+                            </HStack>
+                          </VStack>
+                          <Icon
+                            as={isExpanded ? FaChevronUp : FaChevronDown}
+                            color={mutedColor}
+                            boxSize={3}
+                            flexShrink={0}
+                          />
+                        </HStack>
 
-      <CardBody pt={0} px={{ base: 0, md: 6 }} pb={{ base: 2, md: 6 }} minW={0}>
-        {/* Consumer-Friendly Event Cards - with grouping for repeated events */}
-        <VStack spacing={{ base: 2, md: 4 }} align="stretch" minW={0}>
-          {groupedDisplayEvents.map((item, groupIndex) => {
-            if (item.kind === 'group') {
-              const config = getEventConfig(item.events[0]);
-              const isExpanded = expandedGroup === item.type;
-              const totalEvents = item.events.length;
+                        {/* Row 2: Sub-event journey breadcrumb */}
+                        <HStack mt={2} ml="52px" spacing={1} flexWrap="wrap">
+                          {uniqueSubtypes.map((name, idx) => (
+                            <React.Fragment key={name}>
+                              <Text fontSize="xs" color={mutedColor} fontWeight="medium">
+                                {name}
+                              </Text>
+                              {idx < uniqueSubtypes.length - 1 && (
+                                <Text fontSize="xs" color="gray.400">
+                                  ›
+                                </Text>
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </HStack>
 
-              // Compute summary metrics for the grouped events
-              const subtypeNames = item.events.map((evt) => {
-                const info = getConsumerEventDescription(evt.description, evt);
-                return info.title;
-              });
-              // Deduplicate while preserving order
-              const uniqueSubtypes = [...new Set(subtypeNames)];
-
-              const blockchainCount = item.events.filter(
-                (evt) =>
-                  evt.blockchain_verified ||
-                  evt.extra_data?.blockchain_verified
-              ).length;
-
-              const impactCounts = { high: 0, medium: 0, low: 0 };
-              item.events.forEach((evt) => {
-                const level = getSustainabilityImpact(evt.description, evt);
-                impactCounts[level]++;
-              });
-
-              return (
-                <Box key={`group-${item.type}`}>
-                  <Box
-                    bg={bgColor}
-                    borderRadius="xl"
-                    border="1px solid"
-                    borderColor={isExpanded ? config.color : 'gray.200'}
-                    overflow="hidden"
-                    cursor="pointer"
-                    onClick={() => toggleGroup(item.type)}
-                    _hover={{ borderColor: config.color, shadow: 'md' }}
-                    transition="all 0.2s"
-                    shadow={isExpanded ? 'sm' : 'none'}
-                  >
-                    <Box p={4}>
-                      {/* Row 1: Icon + Title + Date Range + Chevron */}
-                      <HStack spacing={3}>
-                        <Circle size="40px" bg={config.bgColor} flexShrink={0}>
-                          <Icon as={config.icon} color={config.color} boxSize={4} />
-                        </Circle>
-                        <VStack align="start" spacing={0} flex={1}>
-                          <HStack>
-                            <Text fontWeight="bold" fontSize="sm" color={textColor}>
-                              {totalEvents} {item.category} {totalEvents === 1 ? 'Event' : 'Events'}
-                            </Text>
+                        {/* Row 3: Trust & Impact badges */}
+                        <HStack mt={2} ml="52px" spacing={2} flexWrap="wrap">
+                          {blockchainCount > 0 && (
                             <Badge
-                              colorScheme={config.categoryColor}
+                              colorScheme="green"
                               fontSize="xs"
                               borderRadius="full"
+                              px={2}
+                              py={0.5}
                             >
-                              {item.dateRange}
+                              <HStack spacing={1}>
+                                <Icon as={MdVerified} boxSize={2.5} />
+                                <Text>
+                                  {blockchainCount === totalEvents
+                                    ? 'ALL VERIFIED'
+                                    : `${blockchainCount}/${totalEvents} VERIFIED`}
+                                </Text>
+                              </HStack>
                             </Badge>
-                          </HStack>
-                        </VStack>
-                        <Icon
-                          as={isExpanded ? FaChevronUp : FaChevronDown}
-                          color={mutedColor}
-                          boxSize={3}
-                          flexShrink={0}
-                        />
-                      </HStack>
-
-                      {/* Row 2: Sub-event journey breadcrumb */}
-                      <HStack mt={2} ml="52px" spacing={1} flexWrap="wrap">
-                        {uniqueSubtypes.map((name, idx) => (
-                          <React.Fragment key={name}>
-                            <Text fontSize="xs" color={mutedColor} fontWeight="medium">
-                              {name}
-                            </Text>
-                            {idx < uniqueSubtypes.length - 1 && (
-                              <Text fontSize="xs" color="gray.400">›</Text>
+                          )}
+                          {impactCounts.high > 0 && (
+                            <Badge
+                              colorScheme="orange"
+                              variant="subtle"
+                              fontSize="xs"
+                              borderRadius="full"
+                              px={2}
+                              py={0.5}
+                            >
+                              {impactCounts.high}{' '}
+                              {intl.formatMessage({ id: 'transparency.corePractices' })}
+                            </Badge>
+                          )}
+                          {impactCounts.medium > 0 && (
+                            <Badge
+                              colorScheme="blue"
+                              variant="subtle"
+                              fontSize="xs"
+                              borderRadius="full"
+                              px={2}
+                              py={0.5}
+                            >
+                              {impactCounts.medium}{' '}
+                              {intl.formatMessage({ id: 'transparency.standard' })}
+                            </Badge>
+                          )}
+                          {impactCounts.low > 0 &&
+                            impactCounts.high === 0 &&
+                            impactCounts.medium === 0 && (
+                              <Badge
+                                colorScheme="green"
+                                variant="subtle"
+                                fontSize="xs"
+                                borderRadius="full"
+                                px={2}
+                                py={0.5}
+                              >
+                                {impactCounts.low}{' '}
+                                {intl.formatMessage({ id: 'transparency.supplementary' })}
+                              </Badge>
                             )}
-                          </React.Fragment>
-                        ))}
-                      </HStack>
+                        </HStack>
 
-                      {/* Row 3: Trust & Impact badges */}
-                      <HStack mt={2} ml="52px" spacing={2} flexWrap="wrap">
-                        {blockchainCount > 0 && (
-                          <Badge
-                            colorScheme="green"
-                            fontSize="xs"
-                            borderRadius="full"
-                            px={2}
-                            py={0.5}
-                          >
-                            <HStack spacing={1}>
-                              <Icon as={MdVerified} boxSize={2.5} />
-                              <Text>
-                                {blockchainCount === totalEvents
-                                  ? 'ALL VERIFIED'
-                                  : `${blockchainCount}/${totalEvents} VERIFIED`}
-                              </Text>
-                            </HStack>
-                          </Badge>
-                        )}
-                        {impactCounts.high > 0 && (
-                          <Badge
-                            colorScheme="orange"
-                            variant="subtle"
-                            fontSize="xs"
-                            borderRadius="full"
-                            px={2}
-                            py={0.5}
-                          >
-                            {impactCounts.high} {intl.formatMessage({ id: 'transparency.corePractices' })}
-                          </Badge>
-                        )}
-                        {impactCounts.medium > 0 && (
-                          <Badge
-                            colorScheme="blue"
-                            variant="subtle"
-                            fontSize="xs"
-                            borderRadius="full"
-                            px={2}
-                            py={0.5}
-                          >
-                            {impactCounts.medium} {intl.formatMessage({ id: 'transparency.standard' })}
-                          </Badge>
-                        )}
-                        {impactCounts.low > 0 && impactCounts.high === 0 && impactCounts.medium === 0 && (
-                          <Badge
-                            colorScheme="green"
-                            variant="subtle"
-                            fontSize="xs"
-                            borderRadius="full"
-                            px={2}
-                            py={0.5}
-                          >
-                            {impactCounts.low} {intl.formatMessage({ id: 'transparency.supplementary' })}
-                          </Badge>
-                        )}
-                      </HStack>
-
-                      {/* Row 4: Expand hint */}
-                      <Text fontSize="xs" color={mutedColor} mt={1.5} ml="52px">
-                        {isExpanded ? 'Click to collapse' : `Click to see all ${totalEvents} events`}
-                      </Text>
+                        {/* Row 4: Expand hint */}
+                        <Text fontSize="xs" color={mutedColor} mt={1.5} ml="52px">
+                          {isExpanded
+                            ? 'Click to collapse'
+                            : `Click to see all ${totalEvents} events`}
+                        </Text>
+                      </Box>
                     </Box>
+
+                    <Collapse in={isExpanded} animateOpacity>
+                      <VStack
+                        spacing={2}
+                        mt={2}
+                        ml={{ base: 0, md: 4 }}
+                        pl={{ base: 2, md: 3 }}
+                        borderLeft="3px solid"
+                        borderColor={config.color}
+                        align="stretch"
+                      >
+                        {item.events.map((event, eventIndex) => {
+                          const enhancedEvent = buildEnhancedEvent(event);
+                          return (
+                            <ConsumerEventCard
+                              key={event.id}
+                              event={enhancedEvent}
+                              isFirst={eventIndex === 0}
+                              isLast={eventIndex === item.events.length - 1}
+                              isGrouped
+                              isExpanded={expandedEventId === event.id}
+                              onToggleExpand={() => toggleEventExpand(event.id)}
+                              productionBlockchain={productionBlockchain}
+                            />
+                          );
+                        })}
+                      </VStack>
+                    </Collapse>
                   </Box>
+                );
+              }
 
-                  <Collapse in={isExpanded} animateOpacity>
-                    <VStack
-                      spacing={2}
-                      mt={2}
-                      ml={{ base: 0, md: 4 }}
-                      pl={{ base: 2, md: 3 }}
-                      borderLeft="3px solid"
-                      borderColor={config.color}
-                      align="stretch"
-                    >
-                      {item.events.map((event, eventIndex) => {
-                        const enhancedEvent = buildEnhancedEvent(event);
-                        return (
-                          <ConsumerEventCard
-                            key={event.id}
-                            event={enhancedEvent}
-                            isFirst={eventIndex === 0}
-                            isLast={eventIndex === item.events.length - 1}
-                            isGrouped
-                            isExpanded={expandedEventId === event.id}
-                            onToggleExpand={() => toggleEventExpand(event.id)}
-                            productionBlockchain={productionBlockchain}
-                          />
-                        );
-                      })}
-                    </VStack>
-                  </Collapse>
-                </Box>
+              // Single event rendering
+              const event = item.event;
+              const enhancedEvent = buildEnhancedEvent(event);
+              return (
+                <ConsumerEventCard
+                  key={event.id}
+                  event={enhancedEvent}
+                  isFirst={groupIndex === 0}
+                  isLast={groupIndex === groupedDisplayEvents.length - 1}
+                  isExpanded={expandedEventId === event.id}
+                  onToggleExpand={() => toggleEventExpand(event.id)}
+                  productionBlockchain={productionBlockchain}
+                />
               );
-            }
+            })}
+          </VStack>
 
-            // Single event rendering
-            const event = item.event;
-            const enhancedEvent = buildEnhancedEvent(event);
-            return (
-              <ConsumerEventCard
-                key={event.id}
-                event={enhancedEvent}
-                isFirst={groupIndex === 0}
-                isLast={groupIndex === groupedDisplayEvents.length - 1}
-                isExpanded={expandedEventId === event.id}
-                onToggleExpand={() => toggleEventExpand(event.id)}
-                productionBlockchain={productionBlockchain}
-              />
-            );
-          })}
-        </VStack>
+          {/* Show More Button */}
+          {filteredEvents.length > 3 && (
+            <Box mt={4} textAlign="center">
+              <Button
+                size="sm"
+                variant="ghost"
+                colorScheme="green"
+                onClick={handleToggleShowAll}
+                rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}
+              >
+                {showAll
+                  ? 'Show Less'
+                  : `Show All ${filteredEvents.length} ${
+                      filteredEvents.length === 1 ? 'Event' : 'Events'
+                    }`}
+              </Button>
+            </Box>
+          )}
 
-        {/* Show More Button */}
-        {filteredEvents.length > 3 && (
-          <Box mt={4} textAlign="center">
-            <Button
-              size="sm"
-              variant="ghost"
-              colorScheme="green"
-              onClick={handleToggleShowAll}
-              rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}
-            >
-              {showAll ? 'Show Less' : `Show All ${filteredEvents.length} ${filteredEvents.length === 1 ? 'Event' : 'Events'}`}
-            </Button>
-          </Box>
-        )}
-
-        {/* Keep the original modal */}
-        {selectedEvent && (
-          <EnhancedEventDetailModal
-            isOpen={isModalOpen}
-            onClose={handleCloseModal}
-            event={{
-              ...selectedEvent,
-              carbon_data: selectedEvent.carbon_data
-                ? {
-                    ...selectedEvent.carbon_data,
-                    calculation_method:
-                      selectedEvent.carbon_data.calculation_method || 'USDA Standard Method',
-                    verification_confidence:
-                      selectedEvent.carbon_data.verification_confidence || 'medium'
-                  }
-                : undefined
-            }}
-          />
-        )}
-      </CardBody>
-    </Card>
+          {/* Keep the original modal */}
+          {selectedEvent && (
+            <EnhancedEventDetailModal
+              isOpen={isModalOpen}
+              onClose={handleCloseModal}
+              event={{
+                ...selectedEvent,
+                carbon_data: selectedEvent.carbon_data
+                  ? {
+                      ...selectedEvent.carbon_data,
+                      calculation_method:
+                        selectedEvent.carbon_data.calculation_method || 'USDA Standard Method',
+                      verification_confidence:
+                        selectedEvent.carbon_data.verification_confidence || 'medium'
+                    }
+                  : undefined
+              }}
+            />
+          )}
+        </CardBody>
+      </Card>
     </Box>
   );
 };

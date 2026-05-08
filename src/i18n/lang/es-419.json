@@ -1337,7 +1337,7 @@
   "app.usdaBadge.scopeIncludes": "Incluye: Combustión directa de combustible, fabricación y aplicación de fertilizantes, fabricación de químicos, bombeo de riego y uso de electricidad en la finca.",
   "app.usdaBadge.scopeExcludes": "No incluye: Transporte de cadena de suministro, empaque, distribución minorista ni emisiones de fin de vida.",
   "app.usdaBadge.disclaimer": "Trazo no está afiliado, respaldado ni certificado por el USDA o la EPA. Los cálculos usan factores de emisión gubernamentales de acceso público.",
-  "app.carbonExplainer.title": "Detalles de Impacto Ambiental",
+  "app.carbonExplainer.title": "Impacto Ambiental",
   "app.carbonExplainer.subtitle": "Datos de carbono de {productName} — basados en prácticas agrícolas documentadas",
   "app.carbonExplainer.totalFootprint": "Huella de Carbono Total",
   "app.carbonExplainer.carbonStored": "Carbono Almacenado",

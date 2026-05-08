@@ -1,7 +1,8 @@
 // Chakra imports
-import { Box, Button, Flex, Icon, Portal, Spacer, Text } from '@chakra-ui/react';
+import { Box, Button, Flex, Icon, Portal, Spacer, Text, VStack } from '@chakra-ui/react';
 import { GoogleMap, Polygon, useLoadScript } from '@react-google-maps/api';
 import React, { useEffect, useState } from 'react';
+import { FaMapMarkedAlt } from 'react-icons/fa';
 
 // Custom components
 import Card from 'components/Card/Card';
@@ -128,12 +129,47 @@ const CardWithMap = ({ polygon, zoom, center }) => {
 
   if (loadError) return intl.formatMessage({ id: 'parcel.errorLoadingMaps' });
 
-  // Show shimmer until both the Google Maps script and polygon data are ready
-  if (!isLoaded || (!polygon || polygon.length === 0)) {
+  // Loading: Google Maps script not yet ready
+  if (!isLoaded) {
     return (
       <Card maxHeight="290.5px" p="0px">
         <CardBody p="0px" w="100%" h={{ base: '200px', lg: '290px' }} borderRadius="15px">
           <Shimmer height="100%" borderRadius="10px" />
+        </CardBody>
+      </Card>
+    );
+  }
+
+  // Empty state: no polygon data available
+  if (!polygon || polygon.length === 0) {
+    return (
+      <Card maxHeight="290.5px" p="0px">
+        <CardBody
+          p="0px"
+          w="100%"
+          h={{ base: '200px', lg: '290px' }}
+          borderRadius="15px"
+          bg="gray.50"
+          border="1px dashed"
+          borderColor="gray.200"
+        >
+          <Flex direction="column" align="center" justify="center" h="100%" px={4}>
+            <VStack spacing={2}>
+              <Icon as={FaMapMarkedAlt} boxSize={10} color="gray.400" />
+              <Text fontSize="sm" color="gray.600" fontWeight="500" textAlign="center">
+                {intl.formatMessage({
+                  id: 'parcel.mapUnavailable',
+                  defaultMessage: 'Field map not available yet'
+                })}
+              </Text>
+              <Text fontSize="xs" color="gray.500" textAlign="center">
+                {intl.formatMessage({
+                  id: 'parcel.coordinatesShownBelow',
+                  defaultMessage: 'Coordinates shown below'
+                })}
+              </Text>
+            </VStack>
+          </Flex>
         </CardBody>
       </Card>
     );
@@ -155,9 +191,9 @@ const CardWithMap = ({ polygon, zoom, center }) => {
           <Polygon
             path={polygon}
             options={{
-              fillColor: '#ff0000',
+              fillColor: '#4CAF50',
               fillOpacity: 0.35,
-              strokeColor: '#ff0000',
+              strokeColor: '#2E7D32',
               strokeOpacity: 1,
               strokeWeight: 2
             }}

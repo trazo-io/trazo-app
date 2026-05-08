@@ -1416,7 +1416,7 @@
   "app.usdaBadge.scopeIncludes": "Includes: Direct fuel combustion, fertilizer manufacturing and application, chemical manufacturing, irrigation pumping, and electricity usage on the farm.",
   "app.usdaBadge.scopeExcludes": "Does not include: Supply chain transportation, packaging, retail distribution, or end-of-life emissions.",
   "app.usdaBadge.disclaimer": "Trazo is not affiliated with, endorsed by, or certified by the USDA or EPA. Calculations use publicly available government emission factors.",
-  "app.carbonExplainer.title": "Environmental Impact Details",
+  "app.carbonExplainer.title": "Environmental Impact",
   "app.carbonExplainer.subtitle": "Carbon data for {productName} — based on documented farming practices",
   "app.carbonExplainer.totalFootprint": "Total Carbon Footprint",
   "app.carbonExplainer.carbonStored": "Carbon Stored",

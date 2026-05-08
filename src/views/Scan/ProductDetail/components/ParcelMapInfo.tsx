@@ -122,20 +122,32 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
   } = useDisclosure();
 
   return (
-    <Card bg={bgColor} shadow="lg" borderRadius="xl" w="full">
-      <CardHeader>
-        <HStack spacing={3} pb="20px">
-          <Icon as={FaMapMarkerAlt} color="green.500" boxSize={6} />
-          <Heading size="md" color={textColor}>
-            Parcel Information
-          </Heading>
-          <Badge colorScheme="green" borderRadius="full">
+    <Box
+      bg={bgColor}
+      borderRadius="xl"
+      border="1px solid"
+      borderColor={useColorModeValue('gray.200', 'gray.600')}
+      p={{ base: 4, smd: 6 }}
+      w="full"
+    >
+      <VStack spacing={4} align="stretch">
+        <HStack spacing={3}>
+          <Flex w={10} h={10} borderRadius="lg" bg="green.50" align="center" justify="center">
+            <Icon as={FaMapMarkerAlt} color="green.500" boxSize={5} />
+          </Flex>
+          <VStack align="start" spacing={0} flex={1}>
+            <Text fontWeight="bold" fontSize={{ base: 'md', smd: 'lg' }} color={textColor}>
+              Parcel Information
+            </Text>
+            <Text fontSize="xs" color={mutedColor}>
+              Field map and cultivation details
+            </Text>
+          </VStack>
+          <Badge colorScheme="green" borderRadius="full" fontSize="xs">
             Field Map
           </Badge>
         </HStack>
-      </CardHeader>
 
-      <CardBody pt={0}>
         <VStack spacing={6} align="stretch">
           {/* Interactive Map */}
           <Box position="relative">
@@ -153,7 +165,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                 <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
                   PARCEL NAME
                 </Text>
-                <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+                <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="semibold" color={textColor}>
                   {parcelData?.name || 'Field'}
                 </Text>
               </Box>
@@ -189,7 +201,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                   <StatLabel fontSize="xs" color={mutedColor}>
                     AREA
                   </StatLabel>
-                  <StatNumber fontSize="lg" color={textColor}>
+                  <StatNumber fontSize={{ base: 'md', smd: 'lg' }} color={textColor}>
                     {parcelData.area} {parcelData.areaUnit || 'hectares'}
                   </StatNumber>
                   <StatHelpText fontSize="xs">Total cultivation area</StatHelpText>
@@ -202,7 +214,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                     SOIL TYPE
                   </Text>
                   <HStack spacing={2}>
-                    <Icon as={MdTerrain} color="orange.700" />
+                    <Icon as={MdTerrain} color="green.500" />
                     <Text fontSize="md" color={textColor}>
                       {formatDisplayValue(parcelData.soilType)}
                     </Text>
@@ -249,7 +261,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               {parcelData?.irrigationType && (
                 <VStack align="start" spacing={1}>
                   <HStack spacing={2}>
-                    <Icon as={FaLeaf} color="blue.500" boxSize={4} />
+                    <Icon as={FaLeaf} color="green.500" boxSize={4} />
                     <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
                       IRRIGATION
                     </Text>
@@ -263,7 +275,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               {parcelData?.slope && (
                 <VStack align="start" spacing={1}>
                   <HStack spacing={2}>
-                    <Icon as={FaRuler} color="orange.500" boxSize={4} />
+                    <Icon as={FaRuler} color="green.500" boxSize={4} />
                     <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
                       SLOPE
                     </Text>
@@ -304,11 +316,11 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {/* Key sustainability practices */}
                     {parcelData?.sustainability_practices && (
-                      <Box p={4} bg="blue.50" borderRadius="lg" border="1px" borderColor="blue.200">
+                      <Box p={4} bg="gray.50" borderRadius="lg" border="1px" borderColor="gray.200">
                         <VStack spacing={2} align="stretch">
                           <HStack>
-                            <Icon as={FaSeedling} color="blue.600" boxSize={4} />
-                            <Text fontWeight="bold" color="blue.700" fontSize="xs">
+                            <Icon as={FaSeedling} color="green.500" boxSize={4} />
+                            <Text fontWeight="bold" color="gray.700" fontSize="xs">
                               SUSTAINABILITY PRACTICES
                             </Text>
                           </HStack>
@@ -321,17 +333,11 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
 
                     {/* Why consumers should care */}
                     {parcelData?.consumer_story && (
-                      <Box
-                        p={4}
-                        bg="purple.50"
-                        borderRadius="lg"
-                        border="1px"
-                        borderColor="purple.200"
-                      >
+                      <Box p={4} bg="gray.50" borderRadius="lg" border="1px" borderColor="gray.200">
                         <VStack spacing={2} align="stretch">
                           <HStack>
-                            <Icon as={FaUsers} color="purple.600" boxSize={4} />
-                            <Text fontWeight="bold" color="purple.700" fontSize="xs">
+                            <Icon as={FaUsers} color="green.500" boxSize={4} />
+                            <Text fontWeight="bold" color="gray.700" fontSize="xs">
                               WHY CONSUMERS SHOULD CARE
                             </Text>
                           </HStack>
@@ -377,7 +383,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
             </>
           )}
         </VStack>
-      </CardBody>
+      </VStack>
 
       {/* Parcel Detail Modal */}
       {parcelData && (
@@ -419,6 +425,6 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
           }}
         />
       )}
-    </Card>
+    </Box>
   );
 };
