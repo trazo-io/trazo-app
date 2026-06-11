@@ -94,7 +94,12 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
 
   // Defensive fallback: if the backend ever ships an unknown status value,
   // render nothing rather than crash. Silence beats a broken badge.
-  const style = STATUS_STYLE[claim.status];
+  // Phase 3 lot gate: a certified FARM whose LOT is ineligible (prohibited
+  // input, cert not valid at harvest, crop not in scope) must not wear the
+  // green seal. Server flips can_display_organic + rewrites display_label/
+  // disclaimer; here we swap the presentation to the neutral gray tier.
+  const lotSuppressed = claim.status === 'certified_organic' && claim.can_display_organic === false;
+  const style = lotSuppressed ? STATUS_STYLE.self_reported : STATUS_STYLE[claim.status];
   if (!style) return null;
 
   // Transition progress: "X of 36 months documented."
@@ -135,7 +140,9 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
               borderRadius="full"
               px={2}
             >
-              {intl.formatMessage({ id: style.labelId })}
+              {intl.formatMessage({
+                id: lotSuppressed ? 'osp.claim.lotNotOrganic' : style.labelId
+              })}
             </Badge>
           </HStack>
 
@@ -172,7 +179,7 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
               <Text fontSize="xs" color={subtextColor} lineHeight="1.5">
                 {claim.disclaimer}
               </Text>
-              {claim.status === 'certified_organic' && (
+              {claim.status === 'certified_organic' && !lotSuppressed && (
                 <Link
                   href="https://www.ams.usda.gov/rules-regulations/organic"
                   isExternal

@@ -30,6 +30,7 @@ import {
   FaUsers,
   FaCertificate
 } from 'react-icons/fa';
+import { formatHarvestDate } from 'utils/consumerDisplay';
 import { MdLocationOn, MdTerrain } from 'react-icons/md';
 import { ParcelModal } from './ParcelModal';
 // @ts-ignore - CardWithMap is a JSX component without TypeScript declarations
@@ -75,7 +76,11 @@ interface ParcelMapInfoProps {
         lng: number;
       };
       zoom?: number;
+      // Phase 3 privacy: true when the backend rounded the center (~1 km)
+      // because the farmer chose "approximate" location disclosure.
+      approximate?: boolean;
     };
+    location_disclosure_level?: 'exact' | 'approximate' | 'hidden';
     // Additional fields for modal
     description?: string;
     unique_code?: string;
@@ -121,6 +126,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
     onClose: onParcelModalClose
   } = useDisclosure();
 
+  // Phase 3 privacy: geo may be absent (disclosure level "hidden", or the
+  // parcel was never mapped) — the header copy must not promise a map.
+  const hasGeo = Boolean(parcelData?.polygon?.length || parcelData?.map_metadata?.center);
+
   return (
     <Box
       bg={bgColor}
@@ -136,27 +145,42 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
             <Icon as={FaMapMarkerAlt} color="green.500" boxSize={5} />
           </Flex>
           <VStack align="start" spacing={0} flex={1}>
-            <Text fontWeight="bold" fontSize={{ base: 'md', smd: 'lg' }} color={textColor}>
+            <Text
+              fontWeight="bold"
+              fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
+              color={textColor}
+            >
               Parcel Information
             </Text>
             <Text fontSize="xs" color={mutedColor}>
-              Field map and cultivation details
+              {hasGeo ? 'Field map and cultivation details' : 'Cultivation details'}
             </Text>
           </VStack>
-          <Badge colorScheme="green" borderRadius="full" fontSize="xs">
-            Field Map
-          </Badge>
+          {hasGeo && (
+            <Badge colorScheme="green" borderRadius="full" fontSize="xs">
+              Field Map
+            </Badge>
+          )}
         </HStack>
 
         <VStack spacing={6} align="stretch">
-          {/* Interactive Map */}
-          <Box position="relative">
-            <CardWithMap
-              polygon={parcelData?.polygon}
-              center={parcelData?.map_metadata?.center}
-              zoom={parcelData?.map_metadata?.zoom}
-            />
-          </Box>
+          {/* Interactive Map — gated by the farmer's location disclosure
+              level (Phase 3 privacy). "hidden" ships no geodata at all;
+              "approximate" ships a ~1 km rounded center and no boundary. */}
+          {hasGeo && (
+            <Box position="relative">
+              <CardWithMap
+                polygon={parcelData?.polygon}
+                center={parcelData?.map_metadata?.center}
+                zoom={parcelData?.map_metadata?.zoom}
+              />
+              {parcelData?.map_metadata?.approximate && (
+                <Text fontSize="xs" color={mutedColor} mt={2}>
+                  Approximate area — the farmer chose not to share the exact field location.
+                </Text>
+              )}
+            </Box>
+          )}
 
           {/* Parcel Details */}
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
@@ -165,7 +189,11 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                 <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
                   PARCEL NAME
                 </Text>
-                <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="semibold" color={textColor}>
+                <Text
+                  fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
+                  fontWeight="semibold"
+                  color={textColor}
+                >
                   {parcelData?.name || 'Field'}
                 </Text>
               </Box>
@@ -182,17 +210,12 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                 </HStack>
               </Box>
 
-              {parcelData?.coordinates && (
-                <Box>
-                  <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
-                    COORDINATES
-                  </Text>
-                  <Text fontSize="sm" color={textColor} fontFamily="mono">
-                    {parcelData.coordinates.latitude.toFixed(6)},{' '}
-                    {parcelData.coordinates.longitude.toFixed(6)}
-                  </Text>
-                </Box>
-              )}
+              {/* Printed GPS coordinates removed (2026-06): exact coordinates
+                  in text + farm name on a public page is a security/privacy
+                  exposure (scouting, theft targeting). The satellite map
+                  remains — it communicates place without handing out a
+                  6-decimal waypoint. Farmer-controlled disclosure levels
+                  arrive with `parcel_location_disclosure_level` (Phase 3). */}
             </VStack>
 
             <VStack align="start" spacing={4}>
@@ -201,7 +224,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                   <StatLabel fontSize="xs" color={mutedColor}>
                     AREA
                   </StatLabel>
-                  <StatNumber fontSize={{ base: 'md', smd: 'lg' }} color={textColor}>
+                  <StatNumber fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }} color={textColor}>
                     {parcelData.area} {parcelData.areaUnit || 'hectares'}
                   </StatNumber>
                   <StatHelpText fontSize="xs">Total cultivation area</StatHelpText>
@@ -375,7 +398,8 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                       HARVEST DATE
                     </Text>
                     <Text fontSize="md" color={textColor}>
-                      {new Date(parcelData.harvestDate).toLocaleDateString()}
+                      {formatHarvestDate(parcelData.harvestDate) ||
+                        new Date(parcelData.harvestDate).toLocaleDateString()}
                     </Text>
                   </Box>
                 )}

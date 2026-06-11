@@ -32,6 +32,7 @@ import {
   DrawerCloseButton,
   useDisclosure,
   useBreakpointValue,
+  useToast,
   Progress,
   Spinner,
   Skeleton,
@@ -89,6 +90,7 @@ import { useCreateScanMutation } from '../../../store/api/historyApi';
 import { addPendingScanToken } from '../../../utils/pendingScanStorage';
 import { hasAnalyticsConsent } from '../../../components/Privacy/ConsentBanner';
 import { HarvestInfoCard } from './components/HarvestInfoCard';
+import { formatHarvestDate } from '../../../utils/consumerDisplay';
 
 // Data normalization imports
 import { normalizeBackendEventData } from '../../../utils/eventDataNormalizer';
@@ -97,8 +99,7 @@ import { StandardizedEvent } from '../../../types/standardizedEvents';
 // Modern components (keeping the ones you like)
 import { CarbonHeroSection } from '../../../components/QR/CarbonHeroSection';
 import TrustSummaryHeader from '../../../components/QR/TrustSummaryHeader';
-import { ModernSidebar, UltraMobileProductionJourney, CompanyFarmInfo } from './components';
-import InstantTrustDisplay from './components/InstantTrustDisplay';
+import { UltraMobileProductionJourney, CompanyFarmInfo } from './components';
 
 // Certification badge
 import CertificationBadge from '../../../components/Certifications/CertificationBadge';
@@ -107,44 +108,12 @@ import OrganicClaimBadge from '../../../components/Certifications/OrganicClaimBa
 // Other components
 import { ModernTrazoLoader } from './components/ModernTrazoLoader';
 import { ModernErrorState } from './components/ModernErrorState';
-import {
-  HeroShimmer,
-  JourneyShimmer,
-  TransparencyShimmer,
-  SidebarShimmer
-} from './components/TrazoShimmers';
-import { usePointsStore } from '../../../store/pointsStore';
-import { CarbonScore } from '../../../components/CarbonScore';
+import { HeroShimmer, JourneyShimmer, TransparencyShimmer } from './components/TrazoShimmers';
 import { StandardImageGallery } from '../../../components/ImageGallery';
 import QuickFeedback from '../../../components/ConsumerFeedback/QuickFeedback';
 // Progressive loading for mobile performance - load heavy components only when needed
-const EnhancedTransparencyScoreDisplay = React.lazy(() =>
-  import('../../../components/Transparency').then((module) => ({
-    default: module.EnhancedTransparencyScoreDisplay
-  }))
-);
 const CarbonImpactExplainer = React.lazy(
   () => import('../../../components/Education/CarbonImpactExplainer')
-);
-
-// Lightweight loading components for progressive loading
-const TransparencyScoreLoader = () => (
-  <Card bg="white" shadow="lg" borderRadius="xl" p={{ base: 4, smd: 6 }}>
-    <VStack spacing={4}>
-      <HStack spacing={3} justify="center">
-        <Spinner size="md" color="green.500" />
-        <Text fontSize="sm" color="gray.600">
-          Loading transparency details...
-        </Text>
-      </HStack>
-      <Skeleton height="100px" borderRadius="md" />
-      <HStack spacing={4} w="full">
-        <Skeleton height="60px" flex={1} borderRadius="md" />
-        <Skeleton height="60px" flex={1} borderRadius="md" />
-        <Skeleton height="60px" flex={1} borderRadius="md" />
-      </HStack>
-    </VStack>
-  </Card>
 );
 
 const CarbonExplainerLoader = () => (
@@ -164,8 +133,6 @@ const CarbonExplainerLoader = () => (
     </VStack>
   </Card>
 );
-import { EducationalTooltip, CO2eTooltip } from '../../../components/Education/EducationalTooltip';
-
 // Navigation Components
 import { NavigationBottomBar } from '../../../components/Navigation/NavigationBottomBar';
 
@@ -286,12 +253,16 @@ const EducationModal = ({
 
       case 'blockchain_verification':
         return {
-          title: 'Blockchain Verification',
+          title: 'Blockchain Recording',
           content: (
             <VStack align="start" spacing={6}>
+              {/* Honest framing: blockchain proves the record is unchanged
+                  since sealing — it cannot prove the farmer's entry was
+                  accurate when submitted. */}
               <Text fontSize="lg" color="gray.700">
-                <strong>Blockchain verification</strong> provides immutable, transparent proof that
-                the data you see is authentic and hasn't been tampered with.
+                <strong>Blockchain recording</strong> seals this production's records after
+                submission, so any later change is detectable. It shows the records are unchanged —
+                the practices themselves are reported by the farmer.
               </Text>
 
               <Box>
@@ -311,18 +282,20 @@ const EducationModal = ({
                   <HStack align="start" spacing={3}>
                     <Circle size="8px" bg="purple.500" mt={2} />
                     <Box>
-                      <Text fontWeight="semibold">Transparent Verification</Text>
+                      <Text fontWeight="semibold">Publicly Checkable</Text>
                       <Text fontSize="sm" color="gray.600">
-                        Anyone can verify the authenticity of the data using blockchain explorers
+                        Anyone can confirm on a blockchain explorer that the record hasn't changed
+                        since it was sealed
                       </Text>
                     </Box>
                   </HStack>
                   <HStack align="start" spacing={3}>
                     <Circle size="8px" bg="green.500" mt={2} />
                     <Box>
-                      <Text fontWeight="semibold">Decentralized Trust</Text>
+                      <Text fontWeight="semibold">What It Doesn't Do</Text>
                       <Text fontSize="sm" color="gray.600">
-                        No single entity controls the data - it's verified by the entire network
+                        Blockchain can't confirm a practice happened as described — the records
+                        themselves come from the farmer
                       </Text>
                     </Box>
                   </HStack>
@@ -478,7 +451,7 @@ function ProductDetail() {
   const { productionId: urlProductionId } = useParams();
   const navigate = useNavigate();
   const intl = useIntl();
-  // const pointsStore = usePointsStore(); // Unused for now
+  const toast = useToast();
 
   // QR Security: Extract and verify production ID from URL
   const [verifiedProductionId, setVerifiedProductionId] = useState<string | null>(null);
@@ -525,23 +498,6 @@ function ProductDetail() {
     verifyQRAccess();
   }, [urlProductionId]);
 
-  // State for instant trust display (must be declared before useEffect)
-  const [showInstantTrust, setShowInstantTrust] = useState(false);
-  const [instantTrustShown, setInstantTrustShown] = useState(false);
-
-  // Show instant trust display as soon as QR is verified, before full data loads
-  useEffect(() => {
-    if (verifiedProductionId && !qrVerificationError && !instantTrustShown) {
-      // Small delay to allow QR verification UI to complete
-      const timer = setTimeout(() => {
-        setShowInstantTrust(true);
-        setInstantTrustShown(true);
-      }, 300);
-
-      return () => clearTimeout(timer);
-    }
-  }, [verifiedProductionId, qrVerificationError, instantTrustShown]);
-
   // Use the verified production ID for API calls
   const productionId = verifiedProductionId;
 
@@ -582,7 +538,8 @@ function ProductDetail() {
   const {
     data: completeData,
     error: completeError,
-    isLoading: isCompleteLoading
+    isLoading: isCompleteLoading,
+    refetch: refetchTransparency
   } = useGetTransparencyDetailsQuery(productionId || '', {
     skip: !productionId,
     refetchOnMountOrArgChange: false,
@@ -650,6 +607,89 @@ function ProductDetail() {
     window.addEventListener('trazo-consent-changed', handleConsentChanged);
     return () => window.removeEventListener('trazo-consent-changed', handleConsentChanged);
   }, [productionId, pageViewRecorded, createScan, pageLoadTime, isAuthenticated]);
+
+  // === JSON-LD STRUCTURED DATA (schema.org Product) ===
+  // Injects a single <script type="application/ld+json"> into <head> when
+  // the transparency payload loads; removed on unmount/data change.
+  // Claim-safe by design: certifications are emitted ONLY when OID-verified
+  // (status === 'verified_via_database') — never for self-reported certs.
+  // No price/offers and no invented GTIN/SKU (see
+  // documentation/reference/gs1-digital-link-readiness.md).
+  useEffect(() => {
+    if (!completeData) return;
+
+    const data = completeData as any;
+    const productName: string | undefined = data?.product?.name;
+    if (!productName) return;
+
+    const farmName: string | undefined = data?.farmer?.name;
+    const practicesCount: number = data?.timeline?.length ?? 0;
+    // Same hero-photo resolution as the CarbonHeroSection render below.
+    const heroImage: string | undefined =
+      data?.images?.[0]?.image ||
+      data?.timeline?.find((ev: any) => ev?.album?.images?.[0]?.image)?.album?.images?.[0]?.image;
+    const lot: string | undefined = data?.harvestDetails?.lot_number;
+    const reviews = data?.reviews;
+    // Phase 3 lot gate applies to machine-readable claims too: a certified
+    // FARM whose LOT is ineligible (organic_claim.can_display_organic ===
+    // false) must not carry an organic Certification on this Product node —
+    // JSON-LD describes THIS lot's product page, not the operation.
+    const claim = data?.standard_view?.organic_claim;
+    const lotSuppressed = claim?.status === 'certified_organic' && claim?.can_display_organic === false;
+    const verifiedCerts = (data?.standard_view?.certifications || []).filter(
+      (c: any) =>
+        c?.status === 'verified_via_database' &&
+        c?.display_name &&
+        !(lotSuppressed && /usda.*organic/i.test(c.display_name))
+    );
+
+    const jsonLd: Record<string, any> = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: productName,
+      description: farmName
+        ? `${productName} grown by ${farmName}, with ${practicesCount} documented farming practices`
+        : `${productName}, with ${practicesCount} documented farming practices`
+    };
+    if (farmName) {
+      jsonLd.brand = { '@type': 'Organization', name: farmName };
+    }
+    if (heroImage) {
+      jsonLd.image = heroImage;
+    }
+    if (verifiedCerts.length > 0) {
+      jsonLd.hasCertification = verifiedCerts.map((c: any) => {
+        const cert: Record<string, any> = { '@type': 'Certification', name: c.display_name };
+        if (c.certifier_name) {
+          cert.issuedBy = { '@type': 'Organization', name: c.certifier_name };
+        }
+        return cert;
+      });
+    }
+    if (reviews?.count > 0 && Number.isFinite(Number(reviews?.average))) {
+      jsonLd.aggregateRating = {
+        '@type': 'AggregateRating',
+        ratingValue: Number(reviews.average),
+        reviewCount: reviews.count
+      };
+    }
+    if (lot) {
+      jsonLd.additionalProperty = [{ '@type': 'PropertyValue', name: 'Lot', value: lot }];
+    }
+
+    // Replace any stale instance, then inject the single canonical script.
+    document.getElementById('trazo-product-jsonld')?.remove();
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'trazo-product-jsonld';
+    // Escape "<" so a "</script>" sequence inside data can't break out.
+    script.textContent = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
+    document.head.appendChild(script);
+
+    return () => {
+      script.remove();
+    };
+  }, [completeData]);
 
   // Helper function to get proper transparency score from backend TransparencyCalculator
   const getTransparencyScore = (): number => {
@@ -911,7 +951,13 @@ function ProductDetail() {
             (farmerData?.city && farmerData?.state
               ? `${farmerData.city}, ${farmerData.state}`
               : undefined);
-          const harvestDate = (completeData as any)?.finish_date;
+          // The transparency payload exposes harvest completion as
+          // farm_context.production_period.end (transparency_response_formatter.py:198).
+          // Neither top-level finish_date nor product.end_date exist on this
+          // endpoint — which is why the hero never showed a harvest date.
+          const harvestDate =
+            (completeData as any)?.farm_context?.production_period?.end ||
+            (completeData as any)?.finish_date;
           // First production photo (S3 URL) — hero background. Falls back
           // to score-tinted gradient inside CarbonHeroSection when absent.
           const heroPhotoUrl =
@@ -932,6 +978,30 @@ function ProductDetail() {
           );
           const transparencyDetails = (completeData as any)?.standard_view?.transparency_details;
 
+          // Claim-safe hero badge inputs: lead with the OID-verified
+          // certification (third-party), never the self-created score.
+          const organicClaim = (completeData as any)?.standard_view?.organic_claim;
+          const heroCertifications = (completeData as any)?.standard_view?.certifications || [];
+          const oidVerifiedCert = heroCertifications.find(
+            (c: any) => c.status === 'verified_via_database'
+          );
+          // Phase 3: can_display_organic is the server's final verdict — it
+          // goes false when the LOT is ineligible (prohibited input, cert not
+          // valid at harvest, crop not in scope) even on a certified farm.
+          const certifiedLabel =
+            organicClaim?.status === 'certified_organic' &&
+            organicClaim?.can_display_organic !== false &&
+            oidVerifiedCert
+              ? 'Certified Organic'
+              : null;
+          // The transparency payload exposes the lot as
+          // harvestDetails.lot_number (transparency_views.py:451) — there is
+          // no top-level lot_id on this endpoint.
+          const lotId = (completeData as any)?.harvestDetails?.lot_number;
+          // Real consumer reviews (top-level "reviews" on the transparency
+          // payload — distinct from the legacy "reputation" field).
+          const consumerReviews = (completeData as any)?.reviews;
+
           return (
             <>
               <CarbonHeroSection
@@ -946,8 +1016,8 @@ function ProductDetail() {
                   confidenceScore: getDisplayTransparencyScore(),
                   isUSDAVerified: completeData?.isUsdaVerified || false,
                   isBlockchainVerified: getBlockchainScore().isVerified,
-                  reviewsCount: 0,
-                  averageRating: safeReputation,
+                  reviewsCount: consumerReviews?.count ?? 0,
+                  averageRating: consumerReviews?.average ?? safeReputation,
                   scansCount: 0,
                   transparencyScore: getDisplayTransparencyScore()
                 }}
@@ -958,6 +1028,10 @@ function ProductDetail() {
                 }}
                 heroPhotoUrl={heroPhotoUrl}
                 harvestDate={harvestDate}
+                certifiedLabel={certifiedLabel}
+                certifierName={oidVerifiedCert?.certifier_name}
+                practicesCount={completeData?.timeline?.length ?? 0}
+                lotId={lotId}
                 isLoading={isCompleteLoading}
                 onLearnMore={() => handleEducationOpen('transparency_impact')}
               />
@@ -966,8 +1040,9 @@ function ProductDetail() {
                 farmName={farmName}
                 location={location}
                 harvestDate={harvestDate}
-                organicClaim={(completeData as any)?.standard_view?.organic_claim}
-                certifications={(completeData as any)?.standard_view?.certifications}
+                lotId={lotId}
+                organicClaim={organicClaim}
+                certifications={heroCertifications}
                 transparencyScore={getDisplayTransparencyScore()}
                 documentedEventsCount={completeData?.timeline?.length ?? 0}
                 expectedEventsCount={transparencyDetails?.expected_events}
@@ -980,8 +1055,10 @@ function ProductDetail() {
           );
         })()}
       </Box>
-      {/* Main Content Section */}
-      <Container maxW="container.xl" py={8} centerContent>
+      {/* Main Content Section — bottom padding clears the fixed mobile
+          NavigationBottomBar (~64px) so the last card is never hidden
+          behind it. */}
+      <Container maxW="container.xl" pt={8} pb={{ base: 24, xl: 8 }} centerContent>
         <Box w="100%" maxW="container.lg">
           {/* Main Content Column */}
           <Box>
@@ -1004,12 +1081,12 @@ function ProductDetail() {
                       <Icon as={FaLeaf} color="green.500" boxSize={8} />
                     </Circle>
                     <VStack spacing={2}>
-                      <Heading size={{ base: 'md', smd: 'lg' }} color="gray.800">
-                        Complete Farm Transparency
+                      <Heading size={{ base: 'md', smd: 'lg', lg: 'xl' }} color="gray.800">
+                        What This Farmer Shares
                       </Heading>
                       <Text color="gray.600" fontSize={{ base: 'sm', smd: 'md' }} maxW="md">
-                        You've scanned a product with comprehensive farm documentation based on
-                        farmer-reported events.
+                        You've scanned a product with farm documentation based on farmer-reported
+                        events.
                       </Text>
                     </VStack>
                   </VStack>
@@ -1023,7 +1100,7 @@ function ProductDetail() {
                       <HStack spacing={2}>
                         <Icon as={FaClipboardCheck} color="green.500" boxSize={4} />
                         <Text fontSize="sm" noOfLines={1}>
-                          Complete records
+                          Practice records
                         </Text>
                       </HStack>
                       <HStack spacing={2}>
@@ -1046,117 +1123,17 @@ function ProductDetail() {
                       </HStack>
                     </SimpleGrid>
                     <Text color="gray.600" fontSize="sm" fontStyle="italic">
-                      More events documented means a higher transparency score.
+                      Every practice below was logged by the farmer during the season.
                     </Text>
                   </VStack>
                 </Box>
               </Box>
 
-              {/* ── Card 1: Transparency Achievement ── */}
-              <Box
-                bg="white"
-                borderRadius="xl"
-                border="1px solid"
-                borderColor="gray.200"
-                overflow="hidden"
-              >
-                <HStack spacing={2} px={{ base: 4, smd: 6 }} pt={5} pb={1}>
-                  <Icon as={FaAward} color="green.500" boxSize={{ base: 5, smd: 6 }} />
-                  <Heading size={{ base: 'md', smd: 'lg' }} color="gray.800">
-                    Transparency Achievement
-                  </Heading>
-                </HStack>
-
-                <Box px={{ base: 4, smd: 6 }} pb={{ base: 4, smd: 6 }}>
-                  <VStack spacing={4}>
-                    {/* Stats row — score + events with divider */}
-                    <HStack spacing={0} justify="center" w="full" pt={3}>
-                      <VStack spacing={0} flex={1} align="center">
-                        <Text
-                          fontSize={{ base: '2xl', smd: '3xl' }}
-                          fontWeight="bold"
-                          color="green.600"
-                        >
-                          {getDisplayTransparencyScore()}%
-                        </Text>
-                        <Text fontSize="xs" color="gray.500" textAlign="center">
-                          {intl.formatMessage({ id: 'consumer.stats.transparencyScore' })}
-                        </Text>
-                      </VStack>
-                      <Box h="40px" w="1px" bg="gray.200" />
-                      <VStack spacing={0} flex={1} align="center">
-                        <Text
-                          fontSize={{ base: '2xl', smd: '3xl' }}
-                          fontWeight="bold"
-                          color="gray.700"
-                        >
-                          {completeData?.timeline?.length || 0}
-                        </Text>
-                        <Text fontSize="xs" color="gray.500" textAlign="center">
-                          {intl.formatMessage({ id: 'consumer.stats.farmingEvents' })}
-                        </Text>
-                      </VStack>
-                    </HStack>
-
-                    {/* Tier badge + description */}
-                    {(() => {
-                      const timelineCount = completeData?.timeline?.length || 0;
-                      const transparencyPercentage = getDisplayTransparencyScore();
-
-                      const tiers = [
-                        {
-                          min: 90,
-                          label: 'Complete Transparency Champion',
-                          scheme: 'green',
-                          desc: `Outstanding documentation with ${timelineCount} documented events`
-                        },
-                        {
-                          min: 70,
-                          label: 'Transparency Leader',
-                          scheme: 'green',
-                          desc: `Excellent documentation with ${timelineCount} documented events`
-                        },
-                        {
-                          min: 50,
-                          label: 'Good Documentation',
-                          scheme: 'yellow',
-                          desc: `Solid tracking with ${timelineCount} documented events`
-                        },
-                        {
-                          min: 0,
-                          label: 'Building Transparency',
-                          scheme: 'gray',
-                          desc: `Growing documentation with ${timelineCount} events recorded`
-                        }
-                      ];
-                      const tier =
-                        tiers.find((t) => transparencyPercentage >= t.min) ||
-                        tiers[tiers.length - 1];
-
-                      return (
-                        <VStack spacing={2}>
-                          <Badge
-                            colorScheme={tier.scheme}
-                            variant="subtle"
-                            fontSize="xs"
-                            px={3}
-                            py={1}
-                            borderRadius="full"
-                            fontWeight="semibold"
-                            letterSpacing="wide"
-                            textTransform="uppercase"
-                          >
-                            {tier.label}
-                          </Badge>
-                          <Text color="gray.500" fontSize="sm" textAlign="center">
-                            {tier.desc}
-                          </Text>
-                        </VStack>
-                      );
-                    })()}
-                  </VStack>
-                </Box>
-              </Box>
+              {/* Transparency Achievement card removed (2026-06): it duplicated
+                  the hero badge and its tier names ("Complete Transparency
+                  Champion", "Transparency Leader") were implied comparative
+                  rankings with no baseline — FTC 16 CFR 260.6(d) exposure.
+                  The factual events count lives in the hero badge. */}
 
               {/* ── Card 2: Certification & Practices (conditional) ── */}
               {(() => {
@@ -1212,7 +1189,7 @@ function ProductDetail() {
                         <VStack align="start" spacing={0}>
                           <Text
                             fontWeight="bold"
-                            fontSize={{ base: 'md', smd: 'lg' }}
+                            fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                             color="gray.800"
                           >
                             {intl.formatMessage({ id: 'certification.manage.title' })}
@@ -1262,6 +1239,18 @@ function ProductDetail() {
                       {organicSummary &&
                         (() => {
                           const isVerified = organicSummary.certification_verified;
+                          // Phase 3 lot gate: a certified farm with an
+                          // ineligible lot must not get the "grown on a
+                          // USDA-certified organic farm" narrative — it
+                          // contradicts the suppressed seal two lines up.
+                          const lotSuppressed =
+                            organicClaim?.status === 'certified_organic' &&
+                            organicClaim?.can_display_organic === false;
+                          const narrativeId = lotSuppressed
+                            ? 'consumer.organic.story.lotSuppressedNarrative'
+                            : isVerified
+                            ? 'consumer.organic.story.verifiedNarrative'
+                            : 'consumer.organic.story.selfReportedNarrative';
                           return (
                             <>
                               <Divider />
@@ -1286,11 +1275,7 @@ function ProductDetail() {
                                   </HStack>
                                 )}
                                 <Text fontSize="sm" color="gray.600">
-                                  {intl.formatMessage({
-                                    id: isVerified
-                                      ? 'consumer.organic.story.verifiedNarrative'
-                                      : 'consumer.organic.story.selfReportedNarrative'
-                                  })}
+                                  {intl.formatMessage({ id: narrativeId })}
                                 </Text>
                               </VStack>
                             </>
@@ -1345,7 +1330,11 @@ function ProductDetail() {
                       <Icon as={FaTractor} color="green.500" boxSize={5} />
                     </Flex>
                     <VStack align="start" spacing={0}>
-                      <Text fontWeight="bold" fontSize={{ base: 'md', smd: 'lg' }} color="gray.800">
+                      <Text
+                        fontWeight="bold"
+                        fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
+                        color="gray.800"
+                      >
                         {intl.formatMessage({ id: 'consumer.howGrown.title' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
@@ -1374,27 +1363,31 @@ function ProductDetail() {
                       </Box>
                     </HStack>
 
-                    {/* Photos & Evidence */}
-                    <HStack align="start" spacing={3}>
-                      <Icon as={FaCheckCircle} color="green.500" size="20px" mt={1} />
-                      <Box>
-                        <Text fontWeight="semibold" color="gray.800">
-                          {intl.formatMessage(
-                            { id: 'consumer.howGrown.photosIncluded' },
-                            {
-                              count: (() => {
-                                const events = completeData?.timeline || [];
-                                return events.filter((event: any) => event.album || event.hasAlbum)
-                                  .length;
-                              })()
-                            }
-                          )}
-                        </Text>
-                        <Text fontSize="sm" color="gray.600">
-                          {intl.formatMessage({ id: 'consumer.howGrown.photosSubtitle' })}
-                        </Text>
-                      </Box>
-                    </HStack>
+                    {/* Photos & Evidence — hidden when zero. "0 Photos …
+                        Visual evidence from the field" read like a broken
+                        empty state and advertised the absence of evidence. */}
+                    {(() => {
+                      const photoEventCount = (completeData?.timeline || []).filter(
+                        (event: any) => event.album || event.hasAlbum
+                      ).length;
+                      if (photoEventCount === 0) return null;
+                      return (
+                        <HStack align="start" spacing={3}>
+                          <Icon as={FaCheckCircle} color="green.500" size="20px" mt={1} />
+                          <Box>
+                            <Text fontWeight="semibold" color="gray.800">
+                              {intl.formatMessage(
+                                { id: 'consumer.howGrown.photosIncluded' },
+                                { count: photoEventCount }
+                              )}
+                            </Text>
+                            <Text fontSize="sm" color="gray.600">
+                              {intl.formatMessage({ id: 'consumer.howGrown.photosSubtitle' })}
+                            </Text>
+                          </Box>
+                        </HStack>
+                      );
+                    })()}
 
                     {/* Blockchain Security — five states: tampered, verified, sealed, finished/not-recorded, in-progress */}
                     {(() => {
@@ -1455,10 +1448,13 @@ function ProductDetail() {
                               <Text fontWeight="semibold" color="gray.800">
                                 Blockchain Recorded
                               </Text>
+                              {/* "Tamper-proof" overclaims — blockchain proves the
+                                  record is unchanged since sealing, not that it was
+                                  accurate when submitted. */}
                               <Text fontSize="sm" color="gray.600">
                                 {blockchain.isIntegrityChecked
-                                  ? 'Tamper-proof: data integrity confirmed on blockchain'
-                                  : 'Data permanently recorded on blockchain'}
+                                  ? 'Record unchanged since sealing — integrity check passed'
+                                  : 'Record sealed on the Polygon blockchain after submission'}
                               </Text>
                               {blockchain.txHash && (
                                 <Link
@@ -1492,7 +1488,7 @@ function ProductDetail() {
                               <Text fontSize="sm" color="gray.600">
                                 {blockchain.isIntegrityChecked
                                   ? 'All events cryptographically sealed — blockchain submission in progress'
-                                  : 'Production finalized — preparing for blockchain verification'}
+                                  : 'Production finalized — preparing for blockchain recording'}
                               </Text>
                             </Box>
                           </HStack>
@@ -1546,12 +1542,27 @@ function ProductDetail() {
                     borderColor="green.200"
                     w="full"
                   >
+                    {/* Harvest date = product.end_date (the actual harvest
+                        completion in the transparency payload), not
+                        created_at (record creation). No "Recently harvested"
+                        placeholder — vague freshness claims read as filler.
+                        formatHarvestDate parses date-only strings as local
+                        to avoid the UTC-midnight previous-day bug. */}
                     <Text fontSize="sm" color="green.800" fontWeight="medium">
-                      🏡 <strong>Farm:</strong> {completeData?.farmer?.name || 'Sustainable Farm'} •
-                      📅 <strong>Harvest:</strong>{' '}
-                      {completeData?.created_at
-                        ? new Date(completeData.created_at).toLocaleDateString()
-                        : 'Recently harvested'}
+                      🏡 <strong>Farm:</strong> {completeData?.farmer?.name || 'Sustainable Farm'}
+                      {formatHarvestDate(
+                        (completeData as any)?.farm_context?.production_period?.end ||
+                          (completeData as any)?.finish_date
+                      ) && (
+                        <>
+                          {' '}
+                          • 📅 <strong>Harvest:</strong>{' '}
+                          {formatHarvestDate(
+                            (completeData as any)?.farm_context?.production_period?.end ||
+                              (completeData as any)?.finish_date
+                          )}
+                        </>
+                      )}
                     </Text>
                   </Box>
                 </VStack>
@@ -1756,6 +1767,9 @@ function ProductDetail() {
                           albums: event.albums || (event.album ? [event.album] : undefined),
                           // Preserve verification_level so ConsumerEventCard can show photo gallery
                           verification_level: (event as any).verification_level,
+                          // Phase 2: backend-computed curated-journey flag — the
+                          // normalizer drops unknown keys (preserveOriginal: false)
+                          is_highlight: (event as any).is_highlight,
                           // Add carbon data that UltraMobileProductionJourney expects
                           carbon_data: {
                             co2e: averageCO2ePerEvent,
@@ -1776,6 +1790,7 @@ function ProductDetail() {
                           events={timelineEvents}
                           transparencyScore={getDisplayTransparencyScore()}
                           productionBlockchain={(completeData as any)?.blockchain_verification}
+                          productionId={productionId || undefined}
                         />
                       );
                     } else {
@@ -1824,7 +1839,7 @@ function ProductDetail() {
                   </HStack>
 
                   <VStack spacing={2}>
-                    <Heading size={{ base: 'sm', smd: 'md' }} color="gray.800">
+                    <Heading size={{ base: 'sm', smd: 'md', lg: 'lg' }} color="gray.800">
                       Meet Your Transparent Farmers
                     </Heading>
                     <Text color="gray.600" maxW="md" fontSize="sm">
@@ -1995,7 +2010,20 @@ function ProductDetail() {
           {/* Consumer Feedback Section */}
           <Box id="reviews-section">
             <VStack spacing={8}>
-              <QuickFeedback productionId={productionId || ''} onFeedbackSubmitted={() => {}} />
+              <QuickFeedback
+                productionId={productionId || ''}
+                onFeedbackSubmitted={() => {
+                  toast({
+                    title: 'Thanks for your feedback!',
+                    description: 'Your scan helps this farm show real engagement.',
+                    status: 'success',
+                    duration: 4000,
+                    isClosable: true
+                  });
+                  // Refresh transparency payload so the new review/rating shows
+                  refetchTransparency();
+                }}
+              />
             </VStack>
           </Box>
         </VStack>

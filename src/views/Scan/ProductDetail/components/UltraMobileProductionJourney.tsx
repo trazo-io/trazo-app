@@ -55,20 +55,44 @@ import {
   FaLayerGroup
 } from 'react-icons/fa';
 import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
-import { TransparencyIndicator } from 'components/Design';
 import { useIntl } from 'react-intl';
+import { useParams, useSearchParams } from 'react-router-dom';
+
+// Anchor the viewport at the journey section. Two-stage on purpose: the view
+// switch suspends/reloads content ABOVE the journey (carbon explainer chunk,
+// photo gallery images), so a single immediate scroll lands correctly and is
+// then pushed ~1700px off as that content settles. The second pass re-anchors
+// after the layout has stabilized.
+const anchorJourneySection = () => {
+  const anchor = () =>
+    document
+      .querySelector('[data-journey-root]')
+      ?.scrollIntoView({ behavior: 'auto', block: 'start' });
+  anchor();
+  setTimeout(anchor, 350);
+  setTimeout(() => {
+    document
+      .querySelector('[data-journey-root]')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 700);
+};
 import { format, parseISO } from 'date-fns';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { ConsumerEventCard } from 'components/Events/ConsumerEventCard';
 import { getSustainabilityImpact, getConsumerEventDescription } from 'utils/eventDescriptions';
-import {
-  EducationalTooltip,
-  CO2eTooltip,
-  PhotoDocumentationTooltip,
-  TransparencyScoreTooltip
-} from 'components/Education/EducationalTooltip';
+import { PhotoDocumentationTooltip } from 'components/Education/EducationalTooltip';
+
+// Buyer documentation CTA — proof view only, lazy so the story view (the
+// default consumer landing) doesn't pay for the form chunk.
+const BuyerDocRequestCTA = React.lazy(() => import('components/BuyerDocRequest/BuyerDocRequestCTA'));
+
+// The consumer route (/production/:productionId) carries the production
+// PUBLIC UUID; the farmer dashboard route reuses the same param name for the
+// internal numeric id. The buyer-docs endpoint only accepts the public UUID,
+// so gate rendering on UUID shape.
+const PUBLIC_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface AlbumImage {
   id: number;
@@ -149,7 +173,8 @@ interface UltraMobileProductionJourneyProps {
 export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourneyProps> = ({
   events,
   productionId,
-  transparencyScore,
+  // transparencyScore prop retained in the interface (parent still passes it)
+  // but no longer rendered — the numeric score left the stats strip 2026-06.
   productionBlockchain
 }) => {
   const intl = useIntl();
@@ -160,6 +185,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const bgColor = useColorModeValue('white', 'gray.800');
+  const proofShellBorderColor = useColorModeValue('gray.100', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -185,24 +211,6 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedEvent(null);
-  };
-
-  // Helper function to format CO2e values
-  const formatCO2e = (co2e: number) => {
-    const abs = Math.abs(co2e);
-    const sign = co2e >= 0 ? '+' : '';
-
-    if (abs >= 1000) {
-      return `${sign}${(co2e / 1000).toFixed(1)}t`;
-    }
-    return `${sign}${co2e.toFixed(1)}kg`;
-  };
-
-  // Helper function to get carbon impact color
-  const getCarbonImpactColor = (co2e: number) => {
-    if (co2e < 0) return 'green'; // Negative emissions (good)
-    if (co2e < 10) return 'yellow'; // Low emissions
-    return 'red'; // High emissions
   };
 
   // Helper function to get efficiency color
@@ -262,7 +270,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             icon: FaFlask,
             color: 'orange.500',
             bgColor: 'orange.50',
-            category: 'Chemical',
+            category: 'Crop Inputs',
             categoryColor: 'orange'
           };
         case 3: // General
@@ -342,7 +350,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         icon: FaFlask,
         color: 'orange.500',
         bgColor: 'orange.50',
-        category: 'Chemical',
+        category: 'Crop Inputs',
         categoryColor: 'orange'
       };
     }
@@ -575,7 +583,19 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   };
 
   const displayedEvents = showAll ? filteredEvents : filteredEvents.slice(0, 3);
-  const groupedDisplayEvents = groupEvents(showAll ? filteredEvents : displayedEvents);
+  // Proof view is a FLAT chronological log — always. The old "5 Chemical
+  // Events → Click to see all 5" summary groups required a second tap and
+  // read as the audit UI the chapter redesign eliminated. groupEvents() is
+  // retained only for potential producer-side reuse; the kind==='group'
+  // render branch below is intentionally unreachable on this page.
+  void groupEvents;
+  const groupedDisplayEvents = (selectedCategory !== 'all'
+    ? filteredEvents
+    : showAll
+    ? filteredEvents
+    : displayedEvents
+  ).map((event) => ({ kind: 'single' as const, event }));
+
 
   const categories = [
     'all',
@@ -585,6 +605,211 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         .filter((cat) => cat && typeof cat === 'string')
     )
   ];
+
+  // ── Phase 2: consumer story chapters ─────────────────────────────────────
+  // Default view groups the season into five shopper-meaningful chapters and
+  // shows only highlight events; the complete chronological log (including
+  // equipment/business/general events) lives in the proof view (?view=proof).
+  // No market-leading consumer experience shows a raw 20-event audit log.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isProofView = searchParams.get('view') === 'proof';
+
+  // Production public UUID for the buyer-docs CTA: prefer the prop, fall back
+  // to the route param (the parent consumer page doesn't pass the prop).
+  const { productionId: routeProductionId } = useParams();
+  const resolvedProductionId = productionId || routeProductionId;
+  const buyerDocProductionId =
+    resolvedProductionId && PUBLIC_UUID_RE.test(resolvedProductionId)
+      ? resolvedProductionId
+      : undefined;
+  const openProofView = useCallback(
+    (chapterKey?: string) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('view', 'proof');
+          if (chapterKey) {
+            next.set('cat', chapterKey);
+          } else {
+            next.delete('cat');
+          }
+          return next;
+        },
+        { replace: false }
+      );
+      setSelectedCategory('all');
+      setShowAll(true); // "view the full record" means the full record — no second "Show All" tap
+    },
+    [setSearchParams]
+  );
+  const closeProofView = useCallback(() => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete('view');
+        next.delete('cat');
+        return next;
+      },
+      { replace: false }
+    );
+    setSelectedCategory('all');
+    setShowAll(false);
+    setTimeout(anchorJourneySection, 50);
+  }, [setSearchParams]);
+
+  // Keep filter state in sync with the URL (deep links, browser back/forward)
+  // and anchor the viewport at the journey when entering the proof view. The
+  // search-param navigation remounts this component, so the scroll must be
+  // driven by the URL value here — a click-time scroll or prev-value ref dies
+  // with the old instance and the browser keeps a meaningless absolute offset.
+  const catParam = searchParams.get('cat');
+  React.useEffect(() => {
+    if (isProofView) {
+      setSelectedCategory('all');
+      setShowAll(true);
+      anchorJourneySection();
+    }
+  }, [isProofView, catParam]);
+
+  type ChapterKey = 'soil' | 'care' | 'inputs' | 'pest' | 'harvest';
+  const CHAPTER_DEFS: Array<{
+    key: ChapterKey;
+    icon: any;
+    title: string;
+    subtitle: string;
+    colorScheme: string;
+  }> = [
+    {
+      key: 'soil',
+      icon: FaLayerGroup,
+      title: 'Soil & Planting',
+      subtitle: 'How the ground was prepared and planted',
+      colorScheme: 'yellow'
+    },
+    {
+      key: 'care',
+      icon: FaCloudRain,
+      title: 'Water & Care',
+      subtitle: 'Irrigation and crop care through the season',
+      colorScheme: 'blue'
+    },
+    {
+      key: 'inputs',
+      icon: FaFlask,
+      title: 'Crop Inputs',
+      subtitle: 'Every input applied to this crop',
+      colorScheme: 'orange'
+    },
+    {
+      key: 'pest',
+      icon: FaBug,
+      title: 'Pest & Disease',
+      subtitle: 'Monitoring and pest management',
+      colorScheme: 'red'
+    },
+    {
+      key: 'harvest',
+      icon: FaSeedling,
+      title: 'Harvest & Handling',
+      subtitle: 'Picking, quality, and handling',
+      colorScheme: 'green'
+    }
+  ];
+
+  const PRODUCTION_SOIL_CODES = new Set(['PL', 'TR']);
+  const CARE_CODES = new Set(['IR', 'PR', 'CU', 'TH']);
+  const HARVEST_CODES = new Set(['HA', 'PO', 'PH', 'CM']);
+  const WEATHER_CODES = new Set(['FR', 'DR', 'HL', 'TS', 'HW', 'HT', 'HH', 'LH']);
+  // Mirrors the backend rule in PublicHistorySerializer._annotate_consumer_highlights;
+  // used only as a fallback when the payload predates the is_highlight flag.
+  const HIGHLIGHT_ALWAYS = new Set([
+    'PL', 'HA', 'FE', 'PE', 'FU', 'HE', 'CC', 'OM', 'PA', 'TM', 'BR', 'PI'
+  ]);
+
+  const getChapterKey = (event: TimelineEvent): ChapterKey | null => {
+    const t = (event as any).type as string;
+    if (t === 'chemical') return 'inputs';
+    if (t === 'soil_management') return 'soil';
+    if (t === 'pest_management') return 'pest';
+    if (t === 'equipment' || t === 'business' || t === 'general') return null;
+    // Weather events are season context — they live with crop care.
+    if (t === 'weather' || WEATHER_CODES.has(t)) return 'care';
+    // The normalizer rewrites production events to type='production' and
+    // keeps the subtype code (PL/HA/IR/…) in production_type; raw payloads
+    // carry the code directly in type. Accept both.
+    const code = t === 'production' ? ((event as any).production_type as string) : t;
+    if (PRODUCTION_SOIL_CODES.has(code)) return 'soil';
+    if (CARE_CODES.has(code)) return 'care';
+    if (HARVEST_CODES.has(code)) return 'harvest';
+    return null;
+  };
+
+  const isHighlightEvent = (event: TimelineEvent): boolean => {
+    const flag = (event as any).is_highlight;
+    if (typeof flag === 'boolean') return flag;
+    const t = (event as any).type as string;
+    if (t === 'chemical' || t === 'soil_management' || t === 'pest_management') return true;
+    const code = t === 'production' ? ((event as any).production_type as string) : t;
+    return HIGHLIGHT_ALWAYS.has(code);
+  };
+
+  const countEventPhotos = (event: TimelineEvent): number =>
+    event.album?.images?.length ??
+    ((event as any).albums?.[0]?.images?.length || 0);
+
+  const chapterData = CHAPTER_DEFS.map((def) => {
+    const chapterEvents = sortedEvents.filter((e) => getChapterKey(e) === def.key);
+    const highlights = chapterEvents.filter(isHighlightEvent);
+    const photoCount = chapterEvents.reduce((acc, e) => acc + countEventPhotos(e), 0);
+    const allInputsOrganic =
+      def.key === 'inputs' &&
+      chapterEvents.length > 0 &&
+      chapterEvents.every((e) => Boolean((e as any).organic_approved));
+    return { ...def, events: chapterEvents, highlights, photoCount, allInputsOrganic };
+  }).filter((ch) => ch.events.length > 0);
+
+  const chapterEventTotal = chapterData.reduce((acc, ch) => acc + ch.events.length, 0);
+  const proofOnlyCount = sortedEvents.length - chapterEventTotal;
+
+  // Card budget (plan acceptance: ≤9 highlight cards by default on a
+  // 20-event production). Every chapter shows at least one card; the
+  // remaining budget goes to the chapters shoppers weigh most.
+  const CARD_BUDGET = 9;
+  const CHAPTER_PRIORITY: ChapterKey[] = ['inputs', 'harvest', 'soil', 'pest', 'care'];
+  const visibleCountByChapter: Record<string, number> = {};
+  let budgetLeft = CARD_BUDGET;
+  chapterData.forEach((ch) => {
+    const pool = ch.highlights.length > 0 ? ch.highlights.length : Math.min(ch.events.length, 1);
+    visibleCountByChapter[ch.key] = Math.min(1, pool);
+    budgetLeft -= visibleCountByChapter[ch.key];
+  });
+  let added = true;
+  while (budgetLeft > 0 && added) {
+    added = false;
+    for (const key of CHAPTER_PRIORITY) {
+      if (budgetLeft <= 0) break;
+      const ch = chapterData.find((c) => c.key === key);
+      if (!ch) continue;
+      const pool = ch.highlights.length > 0 ? ch.highlights.length : Math.min(ch.events.length, 1);
+      const current = visibleCountByChapter[key] ?? 0;
+      if (current < Math.min(pool, 3)) {
+        visibleCountByChapter[key] = current + 1;
+        budgetLeft -= 1;
+        added = true;
+      }
+    }
+  }
+
+  // "+N more" deep-links carry the CHAPTER key — "+2 more" on Water & Care
+  // must show exactly that chapter's events, not dump the user into the
+  // unfiltered grouped log (the bug this replaces). Chapter-filtered proof
+  // view renders flat cards and hides the family filter chips.
+  const proofChapter = isProofView
+    ? chapterData.find((c) => c.key === (catParam as ChapterKey)) ?? null
+    : null;
+  const proofDisplayGroups = proofChapter
+    ? proofChapter.events.map((event) => ({ kind: 'single' as const, event }))
+    : groupedDisplayEvents;
 
   // Build enhanced event with blockchain verification, photo data, and transparency fields
   const buildEnhancedEvent = (event: TimelineEvent) => {
@@ -699,28 +924,54 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     }
   };
 
+  // Story view must NOT render the custom <Card>: the production CSS
+  // fallback (trazo-dashboard-styles.css, protected file) forces
+  // `.trazo-card { background: white; padding: 14/22px } !important` on every
+  // Card, so emotion props can never make it transparent. A plain Box carries
+  // no .trazo-card class — the chapters become true top-level cards, two
+  // nesting levels (chapter > event), no father card.
+  const JourneyShell: React.ElementType = isProofView ? Card : Box;
+  const proofShellProps = isProofView
+    ? {
+        bg: bgColor,
+        shadow: 'sm',
+        borderRadius: 'xl',
+        overflow: 'hidden',
+        border: '1px solid',
+        borderColor: proofShellBorderColor
+      }
+    : {};
+
   return (
-    <Box ref={sectionRef} overflow="hidden" w="100%">
-      <Card
-        bg={bgColor}
-        shadow="sm"
-        borderRadius="xl"
-        overflow="hidden"
-        border="1px solid"
-        borderColor={useColorModeValue('gray.100', 'gray.700')}
-      >
-        <CardBody p={{ base: 4, md: 6 }} minW={0}>
-          {/* Next-Level Mobile Header */}
-          <VStack spacing={5} mb={6} minW={0}>
+    <Box ref={sectionRef} data-journey-root scrollMarginTop="120px" overflow="hidden" w="100%">
+      <JourneyShell {...proofShellProps}>
+        <CardBody
+          p={isProofView ? { base: 4, md: 6 } : 0}
+          pb={isProofView ? undefined : 0}
+          bg="transparent"
+          minW={0}
+        >
+          {/* Header — its own compact card in story view (the chapters are
+              siblings, not children, so the page background shows between). */}
+          <VStack
+            spacing={5}
+            mb={isProofView ? 6 : 4}
+            minW={0}
+            bg={isProofView ? undefined : bgColor}
+            borderRadius={isProofView ? undefined : 'xl'}
+            borderWidth={isProofView ? undefined : '1px'}
+            borderColor={isProofView ? undefined : 'gray.200'}
+            p={isProofView ? undefined : { base: 4, md: 5 }}
+          >
             <VStack spacing={3} w="full" minW={0}>
               <HStack w="full" justify="space-between" align="start">
                 <CardHeader pb={6}>
                   <HStack spacing={3}>
                     <Circle size="40px" bg="green.500" color="white">
-                      <Icon as={MdTimeline} boxSize={5} />
+                      <Icon as={MdTimeline} aria-hidden="true" boxSize={5} />
                     </Circle>
                     <VStack spacing={0} align="start">
-                      <Heading size={{ base: 'sm', smd: 'md' }} color={textColor}>
+                      <Heading size={{ base: 'sm', smd: 'md', lg: 'lg' }} color={textColor}>
                         Production Journey
                       </Heading>
                       <Text fontSize="sm" color={mutedColor}>
@@ -740,7 +991,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   fontWeight="600"
                 >
                   <HStack spacing={1}>
-                    <Icon as={MdVerified} boxSize={3} />
+                    <Icon as={MdVerified} aria-hidden="true" boxSize={3} />
                     <Text>
                       {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
                     </Text>
@@ -751,8 +1002,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               {/* Production Stats Row — minimalist horizontal layout with dividers */}
               <HStack
                 spacing={0}
-                w={{ base: 'calc(100% + 16px)', md: 'calc(100% + 32px)' }}
-                mx={{ base: -2, md: -4 }}
+                w={isProofView ? { base: 'calc(100% + 16px)', md: 'calc(100% + 32px)' } : '100%'}
+                mx={isProofView ? { base: -2, md: -4 } : 0}
                 bg={useColorModeValue('gray.50', 'gray.800')}
                 borderRadius="lg"
                 py={3}
@@ -766,8 +1017,21 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   />
                 }
               >
-                <VStack spacing={0.5} flex={1} align="center" minW={0}>
-                  <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="bold" color={textColor}>
+                <VStack
+                  spacing={0.5}
+                  flex={1}
+                  align="center"
+                  minW={0}
+                  role="group"
+                  aria-label={`${filteredEvents.length} event${
+                    filteredEvents.length === 1 ? '' : 's'
+                  } documented`}
+                >
+                  <Text
+                    fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
+                    fontWeight="bold"
+                    color={textColor}
+                  >
                     {filteredEvents.length}
                   </Text>
                   <Text fontSize="xs" color={mutedColor} fontWeight="500" lineHeight="1.2">
@@ -775,133 +1039,73 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   </Text>
                 </VStack>
 
-                <VStack spacing={0.5} flex={1} align="center" minW={0}>
-                  <Text
-                    fontSize={{ base: 'md', smd: 'lg' }}
-                    fontWeight="bold"
-                    color={textColor}
-                    noOfLines={1}
-                  >
-                    {(() => {
-                      const totalCO2 = filteredEvents.reduce(
-                        (sum, e) => sum + (e.carbon_data?.co2e || 0),
-                        0
-                      );
+                {/* Carbon tonnage cell removed (2026-06): a raw "21.5t Carbon"
+                    figure with no boundary context is an environmental claim
+                    without methodology (FTC 260.7) and violated our own
+                    progressive-disclosure rule. Carbon lives in the
+                    Environmental Impact explainer with per-kg framing. */}
 
-                      return formatCO2e(totalCO2).replace(/[+-]/, '');
-                    })()}
-                  </Text>
-                  <CO2eTooltip>
-                    <Text
-                      fontSize="xs"
-                      color={mutedColor}
-                      textAlign="center"
-                      fontWeight="500"
-                      lineHeight="1.2"
+                {/* Photo-coverage cell — hidden at 0%: "0% With Photos"
+                    advertises the absence of evidence and reads broken. */}
+                {(() => {
+                  const documentedEvents = filteredEvents.filter(
+                    (e) =>
+                      (e.album && e.album.images?.length > 0) ||
+                      (e.albums && e.albums.length > 0) ||
+                      e.extra_data?.photo_count > 0
+                  );
+                  const photoPercent =
+                    filteredEvents.length > 0
+                      ? Math.round((documentedEvents.length / filteredEvents.length) * 100)
+                      : 0;
+                  if (photoPercent === 0) return null;
+                  return (
+                    <VStack
+                      spacing={0.5}
+                      flex={1}
+                      align="center"
+                      minW={0}
+                      role="group"
+                      aria-label={`${photoPercent}% of events with photos`}
                     >
-                      Carbon
-                    </Text>
-                  </CO2eTooltip>
-                </VStack>
+                      <Text
+                        fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
+                        fontWeight="bold"
+                        color={textColor}
+                      >
+                        {photoPercent}%
+                      </Text>
+                      <PhotoDocumentationTooltip>
+                        <Text
+                          fontSize="xs"
+                          color={mutedColor}
+                          textAlign="center"
+                          fontWeight="500"
+                          lineHeight="1.2"
+                        >
+                          {intl.formatMessage({ id: 'transparency.withPhotos' })}
+                        </Text>
+                      </PhotoDocumentationTooltip>
+                    </VStack>
+                  );
+                })()}
 
-                <VStack spacing={0.5} flex={1} align="center" minW={0}>
-                  <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="bold" color={textColor}>
-                    {(() => {
-                      const documentedEvents = filteredEvents.filter(
-                        (e) =>
-                          (e.album && e.album.images?.length > 0) ||
-                          (e.albums && e.albums.length > 0) ||
-                          e.extra_data?.photo_count > 0
-                      );
-                      return filteredEvents.length > 0
-                        ? Math.round((documentedEvents.length / filteredEvents.length) * 100)
-                        : 0;
-                    })()}
-                    %
-                  </Text>
-                  <PhotoDocumentationTooltip>
-                    <Text
-                      fontSize="xs"
-                      color={mutedColor}
-                      textAlign="center"
-                      fontWeight="500"
-                      lineHeight="1.2"
-                    >
-                      {intl.formatMessage({ id: 'transparency.withPhotos' })}
-                    </Text>
-                  </PhotoDocumentationTooltip>
-                </VStack>
-
-                <VStack spacing={0.5} flex={1} align="center" minW={0}>
-                  <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="bold" color="green.600">
-                    {transparencyScore || 0}
-                  </Text>
-                  <TransparencyScoreTooltip>
-                    <Text
-                      fontSize="xs"
-                      color={mutedColor}
-                      textAlign="center"
-                      fontWeight="500"
-                      lineHeight="1.2"
-                    >
-                      Score
-                    </Text>
-                  </TransparencyScoreTooltip>
-                </VStack>
+                {/* Numeric score cell removed (2026-06): self-created score
+                    de-emphasized page-wide per claim-safety plan. */}
               </HStack>
 
-              {/* Transparency Section */}
-              {productionId && (
-                <Box
-                  bg={useColorModeValue('green.50', 'green.900')}
-                  borderRadius="lg"
-                  p={4}
-                  border="1px solid"
-                  borderColor={useColorModeValue('green.200', 'green.700')}
-                  w="full"
-                >
-                  <VStack spacing={3} align="stretch">
-                    <Flex justify="space-between" align="center">
-                      <Text fontSize="sm" fontWeight="semibold" color="green.800">
-                        Documentation Transparency
-                      </Text>
-                      <Badge colorScheme="green" fontSize="xs" borderRadius="full">
-                        {filteredEvents.length} Documented Events
-                      </Badge>
-                    </Flex>
-
-                    <TransparencyIndicator
-                      percentage={Math.min((filteredEvents.length / 15) * 100, 100)} // Assume 15 expected events
-                      message={
-                        filteredEvents.length >= 15
-                          ? 'Complete transparency'
-                          : filteredEvents.length >= 10
-                          ? 'Good transparency'
-                          : 'Basic transparency'
-                      }
-                      status={
-                        filteredEvents.length >= 15
-                          ? 'excellent'
-                          : filteredEvents.length >= 10
-                          ? 'good'
-                          : 'minimum'
-                      }
-                      variant="compact"
-                      size="sm"
-                      showDetails={false}
-                    />
-
-                    <Text fontSize="xs" color="green.700">
-                      Shows how completely this farm has documented their growing practices and
-                      activities
-                    </Text>
-                  </VStack>
-                </Box>
-              )}
+              {/* "Documentation Transparency" block removed (2026-06): legacy
+                  section gated on the productionId prop (dormant until Phase 4
+                  passed it for the buyer CTA). It re-introduced a numeric
+                  "100% Transparency" score and a "Trazo Certified" badge —
+                  both killed by the claim-safety plan (16 CFR 260.6(d); a
+                  self-issued "certified" label is explicitly unsafe). The
+                  stats strip above already carries events + photos. */}
             </VStack>
 
-            {/* Minimalist Horizontal Event Type Filters */}
-            {categories.length > 1 && (
+            {/* Minimalist Horizontal Event Type Filters — proof view only,
+                hidden while a chapter deep-link filter is active */}
+            {isProofView && !proofChapter && categories.length > 1 && (
               <Box w="full" overflowX="auto" pb={2}>
                 <HStack spacing={2} minW="max-content" px={1}>
                   {categories.map((category) => {
@@ -914,6 +1118,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           return { icon: MdTimeline, color: 'green.500' };
                         case 'weather':
                           return { icon: FaCloudRain, color: 'blue.500' };
+                        case 'crop inputs':
                         case 'chemical':
                           return { icon: FaFlask, color: 'orange.500' };
                         case 'production':
@@ -993,10 +1198,170 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
           </VStack>
         </CardBody>
 
-        <CardBody pt={0} px={{ base: 0, md: 6 }} pb={{ base: 2, md: 6 }} minW={0}>
-          {/* Consumer-Friendly Event Cards - with grouping for repeated events */}
+        <CardBody
+          pt={0}
+          px={isProofView ? { base: 0, md: 6 } : 0}
+          pb={isProofView ? { base: 2, md: 6 } : 0}
+          minW={0}
+        >
+          {/* ── Consumer story view (default): five chapters, highlights only ── */}
+          {!isProofView && (
+            <VStack spacing={6} align="stretch" minW={0}>
+              {chapterData.map((ch) => {
+                const visibleCards = (ch.highlights.length > 0
+                  ? ch.highlights
+                  : ch.events.slice(0, 1)
+                ).slice(0, visibleCountByChapter[ch.key] ?? 1);
+                const hiddenCount = ch.events.length - visibleCards.length;
+                return (
+                  <Box key={ch.key}>
+                    {/* Chapter header card — small card of its own (like the
+                        journey header above), with the event cards as
+                        SIBLINGS below it. No father container wrapping the
+                        events; a bare floating heading between carded
+                        neighbors read unfinished. */}
+                    <Box
+                      bg={bgColor}
+                      borderWidth="1px"
+                      borderColor="gray.200"
+                      borderRadius="xl"
+                      px={{ base: 3, md: 4 }}
+                      py={3}
+                      mb={2}
+                    >
+                      <HStack justify="space-between" align="start">
+                        <HStack spacing={3} align="center">
+                          <Circle size="36px" bg={`${ch.colorScheme}.50`} flexShrink={0}>
+                            <Icon
+                              as={ch.icon}
+                              aria-hidden="true"
+                              color={`${ch.colorScheme}.600`}
+                              boxSize={4}
+                            />
+                          </Circle>
+                          <VStack align="start" spacing={0}>
+                            <Text fontWeight="bold" fontSize="sm" color={textColor}>
+                              {ch.title}{' '}
+                              <Text as="span" fontWeight="medium" color={mutedColor}>
+                                — {ch.events.length} event{ch.events.length === 1 ? '' : 's'}
+                              </Text>
+                            </Text>
+                            <Text fontSize="xs" color={mutedColor}>
+                              {ch.subtitle}
+                            </Text>
+                          </VStack>
+                        </HStack>
+                      </HStack>
+
+                      {/* Evidence chips */}
+                      {(ch.photoCount > 0 || ch.allInputsOrganic) && (
+                        <HStack spacing={2} mt={2} flexWrap="wrap">
+                          {ch.photoCount > 0 && (
+                            <Badge
+                              variant="subtle"
+                              colorScheme="green"
+                              fontSize="xs"
+                              borderRadius="full"
+                              px={2}
+                            >
+                              📷 {ch.photoCount} photo{ch.photoCount === 1 ? '' : 's'}
+                            </Badge>
+                          )}
+                          {ch.allInputsOrganic && (
+                            <Badge
+                              variant="subtle"
+                              colorScheme="green"
+                              fontSize="xs"
+                              borderRadius="full"
+                              px={2}
+                            >
+                              All inputs organic-approved
+                            </Badge>
+                          )}
+                        </HStack>
+                      )}
+                    </Box>
+
+                    {/* Highlight cards — top-level, flat */}
+                    <VStack spacing={2} align="stretch">
+                      {visibleCards.map((event) => {
+                        const enhancedEvent = buildEnhancedEvent(event);
+                        return (
+                          <ConsumerEventCard
+                            key={event.id}
+                            event={enhancedEvent}
+                            isGrouped
+                            slim
+                            isExpanded={expandedEventId === event.id}
+                            onToggleExpand={() => toggleEventExpand(event.id)}
+                            productionBlockchain={productionBlockchain}
+                          />
+                        );
+                      })}
+                    </VStack>
+
+                    {hiddenCount > 0 && (
+                      <Button
+                        mt={2}
+                        px={1}
+                        size="xs"
+                        variant="link"
+                        colorScheme="green"
+                        onClick={() => openProofView(ch.key)}
+                      >
+                        +{hiddenCount} more in the full record →
+                      </Button>
+                    )}
+                  </Box>
+                );
+              })}
+
+              {/* Full-record CTA — proof view carries every event, including
+                  equipment/business/general records kept out of the story. */}
+              <Button
+                variant="outline"
+                colorScheme="green"
+                size="sm"
+                onClick={() => openProofView()}
+              >
+                View the full record — all {sortedEvents.length} events
+                {proofOnlyCount > 0 ? ` (incl. ${proofOnlyCount} operational)` : ''}
+              </Button>
+            </VStack>
+          )}
+
+          {/* ── Proof view: complete chronological log ── */}
+          {isProofView && (
+            <Box mb={3}>
+              <HStack justify="space-between" flexWrap="wrap" spacing={2}>
+                <Button size="xs" variant="link" colorScheme="green" onClick={closeProofView}>
+                  ← Back to story view
+                </Button>
+                {proofChapter && (
+                  <Button size="xs" variant="link" colorScheme="gray" onClick={() => openProofView()}>
+                    View all {sortedEvents.length} events →
+                  </Button>
+                )}
+              </HStack>
+              {proofChapter && (
+                <HStack spacing={2} mt={2}>
+                  <Icon
+                    as={proofChapter.icon}
+                    aria-hidden="true"
+                    color={`${proofChapter.colorScheme}.600`}
+                    boxSize={4}
+                  />
+                  <Text fontSize="sm" fontWeight="semibold" color={textColor}>
+                    {proofChapter.title} — {proofChapter.events.length} event
+                    {proofChapter.events.length === 1 ? '' : 's'}
+                  </Text>
+                </HStack>
+              )}
+            </Box>
+          )}
+          {isProofView && (
           <VStack spacing={{ base: 2, md: 4 }} align="stretch" minW={0}>
-            {groupedDisplayEvents.map((item, groupIndex) => {
+            {proofDisplayGroups.map((item, groupIndex) => {
               if (item.kind === 'group') {
                 const config = getEventConfig(item.events[0]);
                 const isExpanded = expandedGroup === item.type;
@@ -1081,6 +1446,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
                         {/* Row 3: Trust & Impact badges */}
                         <HStack mt={2} ml="52px" spacing={2} flexWrap="wrap">
+                          {/* Blockchain wording: "recorded" never "verified"
+                              (compliance rule). Impact-level badges ("Core
+                              Practices" / "Standard" / "Supplementary")
+                              removed 2026-06 — internal scoring jargon with
+                              no consumer meaning. */}
                           {blockchainCount > 0 && (
                             <Badge
                               colorScheme="green"
@@ -1093,53 +1463,12 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                 <Icon as={MdVerified} boxSize={2.5} />
                                 <Text>
                                   {blockchainCount === totalEvents
-                                    ? 'ALL VERIFIED'
-                                    : `${blockchainCount}/${totalEvents} VERIFIED`}
+                                    ? 'ALL RECORDED'
+                                    : `${blockchainCount}/${totalEvents} RECORDED`}
                                 </Text>
                               </HStack>
                             </Badge>
                           )}
-                          {impactCounts.high > 0 && (
-                            <Badge
-                              colorScheme="orange"
-                              variant="subtle"
-                              fontSize="xs"
-                              borderRadius="full"
-                              px={2}
-                              py={0.5}
-                            >
-                              {impactCounts.high}{' '}
-                              {intl.formatMessage({ id: 'transparency.corePractices' })}
-                            </Badge>
-                          )}
-                          {impactCounts.medium > 0 && (
-                            <Badge
-                              colorScheme="blue"
-                              variant="subtle"
-                              fontSize="xs"
-                              borderRadius="full"
-                              px={2}
-                              py={0.5}
-                            >
-                              {impactCounts.medium}{' '}
-                              {intl.formatMessage({ id: 'transparency.standard' })}
-                            </Badge>
-                          )}
-                          {impactCounts.low > 0 &&
-                            impactCounts.high === 0 &&
-                            impactCounts.medium === 0 && (
-                              <Badge
-                                colorScheme="green"
-                                variant="subtle"
-                                fontSize="xs"
-                                borderRadius="full"
-                                px={2}
-                                py={0.5}
-                              >
-                                {impactCounts.low}{' '}
-                                {intl.formatMessage({ id: 'transparency.supplementary' })}
-                              </Badge>
-                            )}
                         </HStack>
 
                         {/* Row 4: Expand hint */}
@@ -1190,7 +1519,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   key={event.id}
                   event={enhancedEvent}
                   isFirst={groupIndex === 0}
-                  isLast={groupIndex === groupedDisplayEvents.length - 1}
+                  isLast={groupIndex === proofDisplayGroups.length - 1}
                   isExpanded={expandedEventId === event.id}
                   onToggleExpand={() => toggleEventExpand(event.id)}
                   productionBlockchain={productionBlockchain}
@@ -1198,9 +1527,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               );
             })}
           </VStack>
+          )}
 
           {/* Show More Button */}
-          {filteredEvents.length > 3 && (
+          {isProofView && !proofChapter && filteredEvents.length > 3 && (
             <Box mt={4} textAlign="center">
               <Button
                 size="sm"
@@ -1208,6 +1538,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 colorScheme="green"
                 onClick={handleToggleShowAll}
                 rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}
+                aria-expanded={showAll}
               >
                 {showAll
                   ? 'Show Less'
@@ -1216,6 +1547,16 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     }`}
               </Button>
             </Box>
+          )}
+
+          {/* Buyer documentation CTA — bottom of the proof view only (the
+              story view stays consumer-focused). */}
+          {isProofView && buyerDocProductionId && (
+            <React.Suspense fallback={null}>
+              <Box mt={4}>
+                <BuyerDocRequestCTA productionId={buyerDocProductionId} />
+              </Box>
+            </React.Suspense>
           )}
 
           {/* Keep the original modal */}
@@ -1238,7 +1579,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             />
           )}
         </CardBody>
-      </Card>
+      </JourneyShell>
     </Box>
   );
 };

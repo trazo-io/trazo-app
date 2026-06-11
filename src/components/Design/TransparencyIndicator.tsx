@@ -121,7 +121,7 @@ export const TransparencyIndicator: React.FC<TransparencyIndicatorProps> = ({
           </Text>
           {isCertified && (
             <Badge colorScheme="green" size="xs" borderRadius="full">
-              Trazo Certified
+              Fully Documented
             </Badge>
           )}
         </VStack>
@@ -172,7 +172,7 @@ export const TransparencyIndicator: React.FC<TransparencyIndicatorProps> = ({
             <Badge colorScheme="green" size={badgeSize} borderRadius="full" px={3} py={1}>
               <HStack spacing={1}>
                 <Icon as={FaShieldAlt} boxSize={3} />
-                <Text>Trazo Transparency Certified</Text>
+                <Text>Fully Documented</Text>
               </HStack>
             </Badge>
           )}
@@ -239,7 +239,7 @@ export const TransparencyIndicator: React.FC<TransparencyIndicatorProps> = ({
 
           {isCertified && (
             <Tooltip
-              label="This farm meets Trazo's transparency certification standards"
+              label="This farm has documented all expected practices for this production"
               placement="top"
             >
               <Badge colorScheme="green" size={badgeSize} borderRadius="full" cursor="help">

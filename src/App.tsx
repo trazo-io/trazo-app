@@ -61,6 +61,8 @@ const RedirectToTerms = () => {
 };
 // Lazy load QR scanning components for mobile performance
 const ProductDetail = lazyWithRetry(() => import('views/Scan/ProductDetail/ProductDetail'));
+// Consumer data-methodology disclosure page (ECGT/FTC substantiation)
+const MethodologyPage = lazyWithRetry(() => import('views/Scan/Methodology'));
 import ProfileFarm from 'views/Dashboard/Dashboard/Farm/ProfileFarm';
 //@ts-ignore
 import ProfileParcel from 'views/Dashboard/Dashboard/Parcel/ProfileParcel';
@@ -483,6 +485,14 @@ const App = () => {
                     </Suspense>
                   }
                 />
+                <Route
+                  path="/methodology"
+                  element={
+                    <Suspense fallback={<div />}>
+                      <MethodologyPage />
+                    </Suspense>
+                  }
+                />
               </Route>
               <Route element={<AuthLayout />}>
                 <Route path="/farm/:farmId" element={<PublicFarmProfile />} />
@@ -515,10 +525,16 @@ const App = () => {
             </>
           )}
 
-          {/* Default redirect based on subdomain */}
+          {/* Default redirect based on subdomain. Render nothing until the
+              subdomain is detected — on first render `subdomain` is '' and
+              the per-subdomain route blocks above don't exist yet, so this
+              wildcard would otherwise hijack ANY deep link (e.g.
+              /methodology) and bounce it to the default redirect. */}
           <Route
             path="*"
-            element={<Navigate to={config?.defaultRedirect || '/pricing'} replace />}
+            element={
+              subdomain ? <Navigate to={config?.defaultRedirect || '/pricing'} replace /> : null
+            }
           />
         </Route>
       </Routes>

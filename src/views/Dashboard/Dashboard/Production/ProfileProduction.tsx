@@ -32,7 +32,8 @@ import {
   FaBuilding,
   FaMapMarkerAlt,
   FaChartLine,
-  FaEye
+  FaEye,
+  FaLink
 } from 'react-icons/fa';
 import { BsStar, BsStarFill } from 'react-icons/bs';
 import { MdTimeline, MdLocationOn } from 'react-icons/md';
@@ -430,6 +431,28 @@ function ProfileProduction() {
     window.open(`${config.CONSUMER_BASE_URL}/production/${publicId}`, '_blank');
   };
 
+  // Copy buyer link - proof view of the same public page for buyers/retailers
+  const handleCopyBuyerLink = async () => {
+    const publicId = historyData?.public_id || productionId;
+    const url = `${config.CONSUMER_BASE_URL}/production/${publicId}?view=proof`;
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard API unavailable');
+      }
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: intl.formatMessage({ id: 'production.copyBuyerLink.toastTitle' }),
+        description: intl.formatMessage({ id: 'production.copyBuyerLink.toastDescription' }),
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+    } catch (error) {
+      // Insecure context or denied permission - let the user copy manually
+      window.prompt('Copy this link', url);
+    }
+  };
+
   // Helper for reputation
   const safeReputation = historyData?.reputation || 0;
 
@@ -497,6 +520,16 @@ function ProfileProduction() {
                   onClick={handleShare}
                 >
                   {intl.formatMessage({ id: 'app.share' })}
+                </StandardButton>
+              </WrapItem>
+              <WrapItem>
+                <StandardButton
+                  variant="outline"
+                  size="xs"
+                  leftIcon={<Icon as={FaLink} />}
+                  onClick={handleCopyBuyerLink}
+                >
+                  {intl.formatMessage({ id: 'production.copyBuyerLink.button' })}
                 </StandardButton>
               </WrapItem>
               {canWrite && !historyData?.finish_date && (

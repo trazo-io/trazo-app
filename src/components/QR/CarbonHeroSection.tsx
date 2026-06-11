@@ -41,6 +41,7 @@ import {
   FaEye
 } from 'react-icons/fa';
 import { BsShieldCheck } from 'react-icons/bs';
+import { formatHarvestDate } from 'utils/consumerDisplay';
 
 const MotionBox = motion(Box);
 const MotionVStack = motion(VStack);
@@ -83,7 +84,7 @@ interface TrustIndicatorData {
   isUSDAVerified: boolean;
   isBlockchainVerified: boolean;
   reviewsCount: number;
-  averageRating: number;
+  averageRating?: number | null;
   scansCount: number;
   transparencyScore: number;
 }
@@ -105,6 +106,15 @@ interface CarbonHeroSectionProps {
   // 2026 hero redesign — optional photo + harvest context
   heroPhotoUrl?: string;
   harvestDate?: string;
+  // Claim-safe hero badge inputs. The numeric score + letter grade were
+  // removed from the consumer hero (self-created sustainability label —
+  // FTC 16 CFR 260.6(d) / EU ECGT exposure). The badge now leads with the
+  // third-party certification when one is OID-verified, otherwise with the
+  // factual practices count.
+  certifiedLabel?: string | null;
+  certifierName?: string;
+  practicesCount?: number;
+  lotId?: string;
 }
 
 export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
@@ -114,7 +124,11 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   isLoading = false,
   onLearnMore,
   heroPhotoUrl,
-  harvestDate
+  harvestDate,
+  certifiedLabel,
+  certifierName,
+  practicesCount,
+  lotId
 }) => {
   const [visibleElements, setVisibleElements] = useState(0);
   const [showDetailedComparison, setShowDetailedComparison] = useState(false);
@@ -204,40 +218,16 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     };
   };
 
-  const getTransparencyMessage = (score: number) => {
-    if (score >= 95) {
-      return {
-        primary: '🌟 Open Book Farm',
-        secondary:
-          'This farmer shares their complete growing story - from seed to harvest, you can see it all',
-        action: 'Discover every step of how your food was grown'
-      };
-    }
-    if (score >= 85) {
-      return {
-        primary: '👨‍🌾 Farm Storyteller',
-        secondary: 'This farmer takes pride in sharing their growing practices and field stories',
-        action: 'See the farming journey behind your food'
-      };
-    }
-    if (score >= 70) {
-      return {
-        primary: '🚜 Working Farm',
-        secondary: 'This farmer shares key details about how they care for their crops and land',
-        action: 'Learn about real farming practices'
-      };
-    }
-    if (score >= 50) {
-      return {
-        primary: '🌾 Growing Story',
-        secondary: 'This farmer is building their story, sharing the essentials of how they farm',
-        action: 'Supporting farmers who share their work'
-      };
-    }
+  // Claim-safe narrative line. The old score-tiered ladder ("Open Book
+  // Farm — complete growing story… you can see it all") made unsubstantiated
+  // completeness claims and implied a ranking. One neutral, factual message
+  // regardless of score.
+  const getTransparencyMessage = (_score: number) => {
     return {
-      primary: '🌱 Farm Beginnings',
-      secondary: 'This farmer is starting to share their growing practices with you',
-      action: 'Encouraging farming transparency, one story at a time'
+      primary: '🌱 Documented growing story',
+      secondary:
+        'This farmer records their growing practices on Trazo — from soil preparation to harvest. Explore the timeline below.',
+      action: ''
     };
   };
 
@@ -389,22 +379,20 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   }
 
   const score = carbonData.score || 0;
-  const grade = getScoreGrade(score);
   const message = getConsumerMessage(score, carbonData.footprint || 0);
 
   // Format harvest date for hero overlay (e.g. "Harvested Mar 18, 2026").
   // Falls back to nothing when missing — never renders "Recently harvested"
-  // placeholder which feels like a stand-in.
-  const formattedHarvest = (() => {
-    if (!harvestDate) return null;
-    try {
-      const d = new Date(harvestDate);
-      if (Number.isNaN(d.getTime())) return null;
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {
-      return null;
-    }
-  })();
+  // placeholder which feels like a stand-in. Uses formatHarvestDate so
+  // date-only strings ("2026-03-18") parse as local, not UTC midnight
+  // (which renders as the previous day west of UTC).
+  const formattedHarvest = formatHarvestDate(harvestDate);
+
+  // Consumer review rating — renders only when real reviews exist. Zero
+  // reviews shows nothing (no "No ratings yet" placeholder on the hero).
+  const reviewsCount = trustData?.reviewsCount ?? 0;
+  const avgRating = Number(trustData?.averageRating);
+  const showRating = reviewsCount > 0 && Number.isFinite(avgRating);
 
   return (
     <Box position="relative" overflow="hidden" bg="white">
@@ -437,6 +425,11 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               w="100%"
               h="100%"
               loading="eager"
+              // LCP: this photo is the largest above-the-fold element — ask
+              // the browser to fetch it first. Lowercase DOM attribute form
+              // because React 18 doesn't recognize camelCase fetchPriority
+              // (added in React 19); emotion's prop filter forwards it.
+              {...({ fetchpriority: 'high' } as any)}
               draggable={false}
             />
             {/* Bottom-up gradient for text legibility on the photo. */}
@@ -473,7 +466,10 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
             position="absolute"
             bottom={{ base: 5, md: 8 }}
             left={{ base: 4, md: 6, lg: 8 }}
-            right={{ base: '120px', md: '180px' }}
+            // Clears the trust badge (maxW 150px base / 190px md + right
+            // offset). The old 120px assumed the slimmer score badge and let
+            // the product line wrap behind the new badge mid-word.
+            right={{ base: '190px', md: '240px' }}
             align="flex-start"
             spacing={1}
             color={heroPhotoUrl ? 'white' : 'gray.800'}
@@ -497,67 +493,137 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.4)' : 'none'}
             >
               {productData?.name ?? 'Product'}
+              {lotId ? ` · Lot ${lotId}` : ''}
               {formattedHarvest ? ` · Harvested ${formattedHarvest}` : ''}
             </Text>
           </VStack>
 
-          {/* Glassmorphism score badge — bottom-right corner.
-              One verdict element. Frosted glass = 2024-2026 premium aesthetic.
-              On gradient fallback: solid white card for legibility. */}
-          <MotionBox
-            position="absolute"
-            bottom={{ base: 5, md: 8 }}
-            right={{ base: 4, md: 6, lg: 8 }}
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{
-              opacity: visibleElements >= 2 ? 1 : 0,
-              scale: visibleElements >= 2 ? 1 : 0.85
-            }}
-            transition={{ delay: 0.2, duration: 0.6, type: 'spring', bounce: 0.3 }}
-            style={{ pointerEvents: 'auto' }}
-          >
-          <VStack
-            spacing={0.5}
-            bg={heroPhotoUrl ? 'whiteAlpha.300' : 'white'}
-            backdropFilter={heroPhotoUrl ? 'blur(20px)' : 'none'}
-            borderWidth="1px"
-            borderColor={heroPhotoUrl ? 'whiteAlpha.500' : 'gray.200'}
-            borderRadius="2xl"
-            px={{ base: 3.5, md: 4 }}
-            py={{ base: 2.5, md: 3 }}
-            minW={{ base: '92px', md: '108px' }}
-            align="center"
-            justify="center"
-            boxShadow={
-              heroPhotoUrl
-                ? '0 8px 32px rgba(0, 0, 0, 0.18)'
-                : '0 4px 16px rgba(0, 0, 0, 0.08)'
-            }
-          >
-            <Text
-              fontSize={{ base: '4xl', md: '5xl' }}
-              fontWeight="black"
-              color={heroPhotoUrl ? 'white' : getScoreColor(score)}
-              lineHeight="1"
-              letterSpacing="-0.04em"
-              textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}
+          {/* Glassmorphism trust badge — bottom-right corner.
+              Leads with the third-party certification when OID-verified
+              (the strongest true signal on the page), otherwise the factual
+              practices count. Replaces the former numeric score + letter
+              grade, which read as a quality/safety grade and was a
+              self-created label (FTC/ECGT exposure). */}
+          {(certifiedLabel || (practicesCount ?? 0) > 0) && (
+            <MotionBox
+              position="absolute"
+              bottom={{ base: 5, md: 8 }}
+              right={{ base: 4, md: 6, lg: 8 }}
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{
+                opacity: visibleElements >= 2 ? 1 : 0,
+                scale: visibleElements >= 2 ? 1 : 0.85
+              }}
+              transition={{ delay: 0.2, duration: 0.6, type: 'spring', bounce: 0.3 }}
+              style={{ pointerEvents: 'auto' }}
             >
-              {Math.round(score)}
-            </Text>
-            <Badge
-              bg={heroPhotoUrl ? 'whiteAlpha.900' : `${grade.color}.50`}
-              color={`${grade.color}.700`}
-              fontSize="xs"
-              fontWeight="bold"
-              px={2}
-              py={0.5}
-              borderRadius="md"
-              mt={1}
-            >
-              {grade.grade}
-            </Badge>
-          </VStack>
-        </MotionBox>
+              <VStack
+                spacing={0.5}
+                bg={heroPhotoUrl ? 'whiteAlpha.400' : 'white'}
+                backdropFilter={heroPhotoUrl ? 'blur(20px)' : 'none'}
+                borderWidth="1px"
+                borderColor={heroPhotoUrl ? 'whiteAlpha.600' : 'gray.200'}
+                borderRadius="2xl"
+                px={{ base: 3.5, md: 4 }}
+                py={{ base: 2.5, md: 3 }}
+                maxW={{ base: '172px', md: '210px' }}
+                align="center"
+                justify="center"
+                boxShadow={
+                  heroPhotoUrl
+                    ? '0 8px 32px rgba(0, 0, 0, 0.18)'
+                    : '0 4px 16px rgba(0, 0, 0, 0.08)'
+                }
+              >
+                {certifiedLabel ? (
+                  <>
+                    {/* Compact: short certifier name on one line (the full
+                        legal name lives in the Certifications card below) and
+                        plain-text practices line — the old nested white pill
+                        plus 3-line certifier name read as a cramped
+                        badge-in-badge. */}
+                    <HStack spacing={1.5}>
+                      <Icon
+                        as={FaCheckCircle}
+                        color={heroPhotoUrl ? 'white' : 'green.600'}
+                        boxSize={4}
+                      />
+                      <Text
+                        fontSize={{ base: 'sm', md: 'md' }}
+                        fontWeight="bold"
+                        color={heroPhotoUrl ? 'white' : 'green.700'}
+                        textAlign="center"
+                        lineHeight="1.2"
+                        whiteSpace="nowrap"
+                        textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}
+                      >
+                        {certifiedLabel}
+                      </Text>
+                    </HStack>
+                    {certifierName && (
+                      <Text
+                        fontSize="xs"
+                        fontWeight="medium"
+                        color={heroPhotoUrl ? 'whiteAlpha.900' : 'gray.600'}
+                        textAlign="center"
+                        noOfLines={1}
+                      >
+                        by {certifierName.split(' (')[0]}
+                      </Text>
+                    )}
+                    {(practicesCount ?? 0) > 0 && (
+                      <Text
+                        fontSize="xs"
+                        color={heroPhotoUrl ? 'whiteAlpha.800' : 'gray.500'}
+                        textAlign="center"
+                        noOfLines={1}
+                        mt={0.5}
+                      >
+                        {practicesCount} practices documented
+                      </Text>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Text
+                      fontSize={{ base: '3xl', md: '4xl' }}
+                      fontWeight="black"
+                      color={heroPhotoUrl ? 'white' : 'green.600'}
+                      lineHeight="1"
+                      letterSpacing="-0.04em"
+                      textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}
+                    >
+                      {practicesCount}
+                    </Text>
+                    <Text
+                      fontSize="xs"
+                      fontWeight="semibold"
+                      color={heroPhotoUrl ? 'whiteAlpha.900' : 'gray.600'}
+                      textAlign="center"
+                      lineHeight="1.2"
+                    >
+                      practices documented
+                    </Text>
+                  </>
+                )}
+                {/* Compact consumer-review line — plain count + average
+                    only (claim-safe: no "verified buyers" language). */}
+                {showRating && (
+                  <HStack spacing={1} mt={0.5}>
+                    <Icon as={FaStar} color="yellow.400" boxSize={3} />
+                    <Text
+                      fontSize="xs"
+                      fontWeight="medium"
+                      color={heroPhotoUrl ? 'white' : 'gray.600'}
+                      textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}
+                    >
+                      {avgRating.toFixed(1)} ({reviewsCount})
+                    </Text>
+                  </HStack>
+                )}
+              </VStack>
+            </MotionBox>
+          )}
         </Container>
       </MotionBox>
 

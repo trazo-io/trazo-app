@@ -163,6 +163,22 @@ export interface TransparencyExplanation {
   };
 }
 
+// Buyer/retailer documentation request (public endpoint, no auth)
+export interface BuyerDocRequestPayload {
+  production_id: string; // production public UUID
+  requester_name: string;
+  requester_email: string;
+  organization?: string;
+  message?: string;
+}
+
+export interface BuyerDocRequestResponse {
+  id: number;
+  // true (HTTP 200) when the same email already requested docs for this
+  // production within 24h — treated as success by the UI (idempotent UX)
+  duplicate: boolean;
+}
+
 // Blockchain integrity verification response
 export interface BlockchainIntegrityResponse {
   status: 'verified' | 'submitted' | 'tampered' | 'pending';
@@ -231,6 +247,15 @@ const transparencyQrApi = baseApi.injectEndpoints({
         { type: 'TransparencySummary', id: production_id },
         { type: 'TransparencyDetails', id: production_id }
       ]
+    }),
+
+    // Buyer/retailer supplier documentation request (public, no auth)
+    createBuyerDocRequest: build.mutation<BuyerDocRequestResponse, BuyerDocRequestPayload>({
+      query: (requestData) => ({
+        url: `/buyer_doc_requests/`,
+        method: 'POST',
+        body: requestData
+      })
     })
   })
 });
@@ -241,7 +266,8 @@ export const {
   useGetTransparencyDetailsQuery,
   useGetTransparencyExplanationQuery,
   useVerifyBlockchainIntegrityQuery,
-  useRecordTransparencyScanMutation
+  useRecordTransparencyScanMutation,
+  useCreateBuyerDocRequestMutation
 } = transparencyQrApi;
 
 export default transparencyQrApi;

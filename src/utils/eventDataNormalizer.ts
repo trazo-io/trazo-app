@@ -1254,6 +1254,10 @@ function normalizeChemicalEventData(
     // Ghost field cleanup: Removed signal_word, ppe_required, environmental_hazards (never in form schema)
     // Sprint 3 Epic 3.2: Consumer Trust Fields
     'organic_approved',
+    // Phase 3: server-resolved input status ({status, label}) — the chip
+    // vocabulary's single source of truth; without this whitelist entry the
+    // normalizer strips it and the card falls back to client derivation.
+    'input_status',
     'buffer_zone_meters',
     // 🔧 Sprint 6 Fix: Application Equipment & Fuel Usage fields for carbon calculation transparency
     // These fields enable display of fuel consumption in Event Preview and ProductDetail cards

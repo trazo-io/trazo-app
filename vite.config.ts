@@ -175,9 +175,11 @@ export default defineConfig({
   // Enhanced mobile performance settings
   define: {
     __PERFORMANCE_METRICS__: true,
-    __MOBILE_OPTIMIZATIONS__: true,
-    // Define build-time constants for better tree-shaking
-    __DEV__: process.env.NODE_ENV === 'development'
+    __MOBILE_OPTIMIZATIONS__: true
+    // __DEV__ define removed (2026-06): nothing in src/ referenced it, and
+    // the token replacement corrupted @chakra-ui/utils' ESM source —
+    // `import { __DEV__ } from ...` became `import { false }`, a rollup
+    // parse error that broke `npm run build`.
   },
   // Mobile-specific esbuild optimizations
   esbuild: {

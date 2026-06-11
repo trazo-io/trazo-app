@@ -22,7 +22,7 @@ interface NavigationBottomBarProps {
 const navigationItems: NavigationItem[] = [
   {
     id: 'transparency',
-    label: 'Transparency',
+    label: 'Story',
     icon: FaShieldAlt,
     targetSection: 'transparency-section'
   },
@@ -135,7 +135,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      <HStack spacing={0} justify="space-around" w="full">
+      <HStack as="nav" aria-label="Page sections" spacing={0} justify="space-around" w="full">
         {navigationItems.map((item) => {
           // Show as active if clicked (immediate feedback) OR if it's the current active section
           const isActive = clickedSection === item.id || currentActiveSection === item.id;
@@ -144,6 +144,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
             <Center
               key={item.id}
               as="button"
+              aria-current={isActive ? 'true' : undefined}
               onClick={() => handleSectionClick(item)}
               position="relative"
               minW="60px"
@@ -170,6 +171,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
                 >
                   <Icon
                     as={item.icon}
+                    aria-hidden="true"
                     boxSize={isActive ? 6 : 5}
                     color={isActive ? activeColor : inactiveColor}
                     transition="all 0.2s ease"

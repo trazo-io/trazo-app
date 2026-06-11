@@ -1,4 +1,5 @@
 import { Flex, Link, Text } from '@chakra-ui/react';
+import { Link as RouterLink } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { resetConsent } from '../Privacy/ConsentBanner';
 
@@ -6,6 +7,10 @@ const LANDING_URL = 'https://trazo.io';
 
 export default function Footer() {
   const intl = useIntl();
+  // The /methodology route is registered on the consumer subdomain only —
+  // this footer is shared with the producer app, where the link would 404.
+  const isConsumerHost =
+    typeof window !== 'undefined' && window.location.hostname.includes('consumer');
 
   return (
     <Flex
@@ -26,6 +31,17 @@ export default function Footer() {
         Platform.
       </Text>
       <Flex gap={{ base: '16px', md: '32px' }} flexWrap="wrap" justifyContent="center">
+        {isConsumerHost && (
+          <Link
+            as={RouterLink}
+            to="/methodology"
+            color="gray.400"
+            fontSize="sm"
+            _hover={{ color: 'green.500' }}
+          >
+            How our data works
+          </Link>
+        )}
         <Link
           href={`${LANDING_URL}/privacy-policy`}
           color="gray.400"

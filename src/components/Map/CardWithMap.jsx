@@ -140,8 +140,11 @@ const CardWithMap = ({ polygon, zoom, center }) => {
     );
   }
 
-  // Empty state: no polygon data available
-  if (!polygon || polygon.length === 0) {
+  // Empty state: no geodata at all. A center without a polygon still renders
+  // a map (Phase 3 "approximate" disclosure ships a ~1 km rounded center and
+  // deliberately no field boundary) — the placeholder is only for parcels
+  // that were never mapped.
+  if ((!polygon || polygon.length === 0) && !center) {
     return (
       <Card maxHeight="290.5px" p="0px">
         <CardBody
@@ -188,16 +191,18 @@ const CardWithMap = ({ polygon, zoom, center }) => {
           center={mapCenter}
           mapTypeId="satellite"
         >
-          <Polygon
-            path={polygon}
-            options={{
-              fillColor: '#4CAF50',
-              fillOpacity: 0.35,
-              strokeColor: '#2E7D32',
-              strokeOpacity: 1,
-              strokeWeight: 2
-            }}
-          />
+          {polygon && polygon.length > 0 && (
+            <Polygon
+              path={polygon}
+              options={{
+                fillColor: '#4CAF50',
+                fillOpacity: 0.35,
+                strokeColor: '#2E7D32',
+                strokeOpacity: 1,
+                strokeWeight: 2
+              }}
+            />
+          )}
         </GoogleMap>
       </CardBody>
     </Card>

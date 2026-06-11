@@ -273,7 +273,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                 <VStack align="start" spacing={0} flex={1} minW={0}>
                   <Text
                     fontWeight="bold"
-                    fontSize={{ base: 'md', smd: 'lg' }}
+                    fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                     color={textColor}
                     noOfLines={2}
                   >
@@ -450,7 +450,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                 <VStack align="start" spacing={0} flex={1} minW={0}>
                   <Text
                     fontWeight="bold"
-                    fontSize={{ base: 'md', smd: 'lg' }}
+                    fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                     color={textColor}
                     noOfLines={2}
                   >

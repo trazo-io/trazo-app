@@ -16,9 +16,11 @@ const CheckAuth = () => {
   const isAuthPage = location?.pathname?.startsWith('/auth/') || false;
   const isPublicProductRoute = location?.pathname?.match(/^\/production\/[^\/]+\/?$/) || false;
   const isPricingPage = location?.pathname === '/pricing' || false;
+  // Public methodology disclosure page (Phase 5) — anonymous consumers read it.
+  const isMethodologyPage = location?.pathname === '/methodology' || false;
 
   // Skip authentication for public routes
-  const skipAuth = isAuthPage || isPublicProductRoute || isPricingPage;
+  const skipAuth = isAuthPage || isPublicProductRoute || isPricingPage || isMethodologyPage;
 
   const { data, isLoading, isError, isSuccess } = useUserDataQuery(undefined, {
     skip: skipAuth // Skip the query on auth pages and public routes

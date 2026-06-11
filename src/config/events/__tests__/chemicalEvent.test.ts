@@ -147,11 +147,13 @@ describe('Chemical: Pest/disease fields (Pattern 2: multi-subtype gate)', () => 
     expect(feNames).not.toContain('target_pest_disease');
   });
 
-  it('shows application_timing for PE, FU, HE', () => {
+  it('shows application_timing for all chemical subtypes', () => {
+    // FE included intentionally (chemicalEvent.ts): pre_plant / at_plant /
+    // side_dress are valid fertilizer timings captured by the form.
     const peNames = getFieldNamesForSurface('chemical', 'PE', 'modal');
     const feNames = getFieldNamesForSurface('chemical', 'FE', 'modal');
     expect(peNames).toContain('application_timing');
-    expect(feNames).not.toContain('application_timing');
+    expect(feNames).toContain('application_timing');
   });
 
   it('shows restricted_use_pesticide for PE, FU, HE', () => {

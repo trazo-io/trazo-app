@@ -44,15 +44,6 @@ const getScoreColor = (score: number) => {
   return 'red.500';
 };
 
-const getScoreGrade = (score: number) => {
-  if (score >= 90) return { grade: 'A+', color: 'green' };
-  if (score >= 80) return { grade: 'A', color: 'green' };
-  if (score >= 70) return { grade: 'B', color: 'green' };
-  if (score >= 60) return { grade: 'C', color: 'yellow' };
-  if (score >= 40) return { grade: 'D', color: 'orange' };
-  return { grade: 'F', color: 'red' };
-};
-
 export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
   imageUrl,
   imageCount = 0,
@@ -66,8 +57,6 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
   const hasFallback = !hasUpload && Boolean(fallbackImageUrl);
   const renderedImage = imageUrl || fallbackImageUrl;
   const hasImage = Boolean(renderedImage);
-  const hasScore = typeof score === 'number' && !Number.isNaN(score);
-  const grade = hasScore ? getScoreGrade(score!) : null;
 
   // One-line status under the card. Tells the farmer the source of the
   // current cover image without duplicating the on-photo overlay badge.
@@ -160,8 +149,8 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
             position="absolute"
             inset={0}
             bgGradient={
-              hasScore
-                ? `linear(135deg, ${getScoreColor(score!)}30 0%, ${getScoreColor(score!)}10 100%)`
+              typeof score === 'number' && !Number.isNaN(score)
+                ? `linear(135deg, ${getScoreColor(score)}30 0%, ${getScoreColor(score)}10 100%)`
                 : 'linear(135deg, gray.50 0%, gray.100 100%)'
             }
             display="flex"
@@ -182,7 +171,7 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
           position="absolute"
           bottom="14px"
           left="14px"
-          right={hasScore ? '78px' : '14px'}
+          right="14px"
           align="flex-start"
           spacing={0.5}
           color={hasImage ? 'white' : 'gray.800'}
@@ -209,53 +198,9 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
           </Text>
         </VStack>
 
-        {/* Glass score badge — bottom-right, mirrors CarbonHeroSection. */}
-        {hasScore && (
-          <VStack
-            position="absolute"
-            bottom="14px"
-            right="14px"
-            spacing={0.5}
-            bg={hasImage ? 'whiteAlpha.300' : 'white'}
-            backdropFilter={hasImage ? 'blur(20px)' : 'none'}
-            borderWidth="1px"
-            borderColor={hasImage ? 'whiteAlpha.500' : 'gray.200'}
-            borderRadius="xl"
-            px={2.5}
-            py={1.5}
-            minW="56px"
-            align="center"
-            justify="center"
-            boxShadow={
-              hasImage
-                ? '0 8px 24px rgba(0, 0, 0, 0.18)'
-                : '0 4px 12px rgba(0, 0, 0, 0.08)'
-            }
-          >
-            <Text
-              fontSize="2xl"
-              fontWeight="black"
-              color={hasImage ? 'white' : getScoreColor(score!)}
-              lineHeight="1"
-              letterSpacing="-0.04em"
-              textShadow={hasImage ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}
-            >
-              {Math.round(score!)}
-            </Text>
-            <Badge
-              bg={hasImage ? 'whiteAlpha.900' : `${grade!.color}.50`}
-              color={`${grade!.color}.700`}
-              fontSize="11px"
-              fontWeight="bold"
-              px={1.5}
-              py={0}
-              borderRadius="md"
-              mt={0.5}
-            >
-              {grade!.grade}
-            </Badge>
-          </VStack>
-        )}
+        {/* Score/grade badge removed (2026-06): the live consumer hero no
+            longer shows a numeric score or letter grade (claim-safety
+            redesign), so the producer-side preview must not promise one. */}
       </Box>
 
       {/* Status line — single source of truth for cover-image source. */}

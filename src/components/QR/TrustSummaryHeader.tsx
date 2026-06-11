@@ -53,6 +53,7 @@ import {
 } from 'react-icons/fa';
 import type { IconType } from 'react-icons';
 import { ConsumerTooltip } from 'components/Design/StandardComponents';
+import { formatHarvestDate } from 'utils/consumerDisplay';
 import type { ConsumerCertification, OrganicClaim } from 'types/certification';
 
 export interface TrustSummaryHeaderProps {
@@ -60,6 +61,7 @@ export interface TrustSummaryHeaderProps {
   farmName?: string;
   location?: string;
   harvestDate?: string;
+  lotId?: string;
   organicClaim?: OrganicClaim | null;
   certifications?: ConsumerCertification[];
   transparencyScore?: number | null;
@@ -105,22 +107,14 @@ const TONE_STYLES: Record<
  * Hide when no farm name available (anything else is misleading).
  */
 function buildOriginPillar(props: TrustSummaryHeaderProps): PillarData | null {
-  const { farmName, location, harvestDate } = props;
+  const { farmName, location } = props;
   if (!farmName) return null;
 
   const baseTooltip =
     'This product is traceable to a specific farm and harvest period. Every event below is tied to this production batch.';
 
-  if (harvestDate && location) {
-    return {
-      pillarName: 'ORIGIN',
-      pillarIcon: FaMapMarkerAlt,
-      badgeLabel: 'Lot tracked',
-      badgeSublabel: location,
-      tooltipExplainer: baseTooltip,
-      tone: 'verified'
-    };
-  }
+  // Batch identity (lot/harvest) is owned by the HARVEST pillar — the old
+  // harvestDate-dependent "Lot tracked" variant duplicated it here.
   if (location) {
     return {
       pillarName: 'ORIGIN',
@@ -160,7 +154,12 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps): PillarData | null
   const tooltipExplainer =
     "We label this based on what's verified, not what's claimed. 'Certified Organic' requires a USDA Organic Integrity Database match; 'Transitioning' requires documented transition records; otherwise we report this as 'Conventional, Documented' regardless of farmer-picked labels.";
 
-  if (organicClaim?.status === 'certified_organic') {
+  // Phase 3 lot gate: can_display_organic goes false when THIS lot is
+  // ineligible (prohibited input, cert window, crop scope) even on a
+  // certified farm. The pillar then falls through to the documented state;
+  // the nuanced "farm certified, this lot…" message lives in the
+  // Certifications card (OrganicClaimBadge), not in a 3-word pillar.
+  if (organicClaim?.status === 'certified_organic' && organicClaim?.can_display_organic !== false) {
     const oidMatchedCert = (certifications ?? []).find((c) => c.status === 'verified_via_database');
     const certifierName = oidMatchedCert?.certifier_name;
     const showUsdaSeal = Boolean(oidMatchedCert);
@@ -169,7 +168,12 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps): PillarData | null
       pillarName: 'PRACTICES',
       pillarIcon: FaLeaf,
       badgeLabel: 'Certified Organic',
-      badgeSublabel: certifierName ? `via ${certifierName}` : 'via USDA-accredited certifier',
+      // Short certifier name — "via CCOF (California Certified Organic
+      // Farm…" truncated mid-word in the pillar. Full legal name lives in
+      // the Certifications card.
+      badgeSublabel: certifierName
+        ? `via ${certifierName.split(' (')[0]}`
+        : 'via USDA-accredited certifier',
       tooltipExplainer,
       tone: 'verified',
       showUsdaSeal,
@@ -248,10 +252,10 @@ function buildEventsPillar(props: TrustSummaryHeaderProps): PillarData | null {
         score != null ? ` (${score}% complete)` : ''
       }.`
     : expectedEventsCount != null
-      ? `${documentedEventsCount} farming event${
-          documentedEventsCount === 1 ? '' : 's'
-        } documented for ${productPhrase} — exceeds the ${expectedEventsCount}-event baseline for this crop.`
-      : `${documentedEventsCount} farming event${documentedEventsCount === 1 ? '' : 's'} documented.`;
+    ? `${documentedEventsCount} farming event${
+        documentedEventsCount === 1 ? '' : 's'
+      } documented for ${productPhrase} — exceeds the ${expectedEventsCount}-event baseline for this crop.`
+    : `${documentedEventsCount} farming event${documentedEventsCount === 1 ? '' : 's'} documented.`;
 
   return {
     pillarName: 'EVENTS',
@@ -264,11 +268,43 @@ function buildEventsPillar(props: TrustSummaryHeaderProps): PillarData | null {
 }
 
 /**
+ * HARVEST pillar — answers "How fresh is this, and which batch is it?"
+ * Surfaces the harvest date + lot number: the two facts a shopper (and a
+ * produce buyer) can actually act on. Farmer-reported, so tone stays
+ * 'documented'. Hidden when neither fact exists; the EVENTS pillar takes
+ * the slot instead.
+ */
+function buildHarvestPillar(props: TrustSummaryHeaderProps): PillarData | null {
+  const { harvestDate, lotId } = props;
+  if (!harvestDate && !lotId) return null;
+
+  const formattedHarvest = formatHarvestDate(harvestDate);
+  if (!formattedHarvest && !lotId) return null;
+
+  return {
+    pillarName: 'HARVEST',
+    pillarIcon: FaSeedling,
+    badgeLabel: formattedHarvest ? `Harvested ${formattedHarvest}` : `Lot ${lotId}`,
+    badgeSublabel: formattedHarvest && lotId ? `Lot ${lotId}` : undefined,
+    tooltipExplainer:
+      'Harvest date and lot number tie this product to one specific production batch — the basis of traceability. Reported by the farmer.',
+    tone: 'documented'
+  };
+}
+
+/**
  * RECORDS pillar — answers "Can we trust the records themselves?"
+ *
+ * Blockchain status intentionally does NOT render here anymore: blockchain
+ * language ("Polygon", "tamper-evident") in the above-the-fold trust strip
+ * read as a crypto signal to mainstream shoppers and crowded out stronger
+ * signals. Record-integrity status now renders once, at the Production
+ * Journey footer. This pillar surfaces photo evidence / records-on-file.
+ *
  * Hide when blockchain check failed (tampered) — we will not surface a fake
  * positive trust signal in that case; the existing integrity-warning UI
  * elsewhere on the page is the correct place to alert consumers. Also hide
- * when there's no blockchain, no photos, AND no events.
+ * when there are no photos AND no events.
  */
 function buildRecordsPillar(props: TrustSummaryHeaderProps): PillarData | null {
   const { blockchainStatus, totalPhotoEvidenceCount = 0, documentedEventsCount = 0 } = props;
@@ -279,17 +315,6 @@ function buildRecordsPillar(props: TrustSummaryHeaderProps): PillarData | null {
   // down the page; surfacing "Photo-evidenced" green here would contradict it.
   if (blockchainStatus === 'tampered') return null;
 
-  if (blockchainStatus === 'verified') {
-    return {
-      pillarName: 'RECORDS',
-      pillarIcon: FaShieldAlt,
-      badgeLabel: 'Blockchain-recorded',
-      badgeSublabel: 'Tamper-evident on Polygon',
-      tooltipExplainer:
-        "Records are 'Blockchain-recorded' when the production data is hashed onto Polygon, making post-hoc tampering detectable. 'Photo-evidenced' means 5+ photos are attached across documented events.",
-      tone: 'records'
-    };
-  }
   if (totalPhotoEvidenceCount >= 5) {
     return {
       pillarName: 'RECORDS',
@@ -308,7 +333,7 @@ function buildRecordsPillar(props: TrustSummaryHeaderProps): PillarData | null {
       badgeLabel: 'Records on file',
       badgeSublabel: 'Farmer-logged records',
       tooltipExplainer:
-        'Farmer-logged records are on file. Stronger trust signals (photo evidence, blockchain) appear once additional documentation is added.',
+        'Farmer-logged records are on file. Photo evidence appears here once events include photos.',
       tone: 'documented'
     };
   }
@@ -345,10 +370,14 @@ const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }
       >
         <Image
           src="/certifications/usda-organic-seal.svg"
-          alt="USDA Organic certified"
+          alt={
+            certifierName
+              ? `USDA Organic seal — farm certified by ${certifierName}`
+              : 'USDA Organic seal — farm certified by a USDA-accredited certifier'
+          }
           boxSize="36px"
           objectFit="contain"
-          fallback={<Icon as={FaCertificate} color="green.600" boxSize={5} />}
+          fallback={<Icon as={FaCertificate} aria-hidden="true" color="green.600" boxSize={5} />}
         />
       </Box>
     </PopoverTrigger>
@@ -419,11 +448,11 @@ const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
               justifyContent="center"
               flexShrink={0}
             >
-              <Icon as={pillar.pillarIcon} color={tone.iconColor} boxSize={3.5} />
+              <Icon as={pillar.pillarIcon} aria-hidden="true" color={tone.iconColor} boxSize={3.5} />
             </Box>
           )}
           <Text
-            fontSize="11px"
+            fontSize={{ base: '11px', lg: 'xs' }}
             fontWeight="semibold"
             color="gray.500"
             letterSpacing="0.08em"
@@ -436,7 +465,7 @@ const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
 
         <VStack align="stretch" spacing={0.5} mt={2}>
           <Text
-            fontSize="sm"
+            fontSize={{ base: 'sm', lg: 'md' }}
             fontWeight="bold"
             color={`${tone.badgeColor}.700`}
             lineHeight="1.3"
@@ -445,7 +474,7 @@ const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
             {pillar.badgeLabel}
           </Text>
           {pillar.badgeSublabel && (
-            <Text fontSize="xs" color="gray.600" noOfLines={1}>
+            <Text fontSize={{ base: 'xs', lg: 'sm' }} color="gray.600" noOfLines={1}>
               {pillar.badgeSublabel}
             </Text>
           )}
@@ -493,10 +522,14 @@ const TrustSummaryHeader: React.FC<TrustSummaryHeaderProps> = (props) => {
     );
   }
 
+  // Order: certification first (strongest third-party signal), then origin,
+  // then harvest/lot (falls back to events count when no harvest data),
+  // then records evidence. Blockchain moved to the Production Journey footer.
+  const harvestPillar = buildHarvestPillar(props);
   const pillars = [
-    buildOriginPillar(props),
     buildPracticesPillar(props),
-    buildEventsPillar(props),
+    buildOriginPillar(props),
+    harvestPillar ?? buildEventsPillar(props),
     buildRecordsPillar(props)
   ].filter((p): p is PillarData => p !== null);
 
@@ -515,11 +548,15 @@ const TrustSummaryHeader: React.FC<TrustSummaryHeaderProps> = (props) => {
           ))}
         </SimpleGrid>
 
-        {/* FTC compliance line — score sentence dropped (hero owns the
-            verdict). Disclaimer + methodology link only. */}
+        {/* FTC compliance line — split by claim type. The old blanket
+            "Not independently audited" read as negating the certification
+            directly above it (which IS independently verified). Attribute
+            the disclaimer to practice records only; state how certifications
+            are labeled. */}
         <HStack spacing={2} pt={4} flexWrap="wrap" justify="center" align="baseline">
           <Text fontSize="xs" color="gray.500" textAlign="center">
-            Based on farmer-reported documentation. Not independently audited.
+            Practice records are farmer-reported, not independently audited. Certifications are
+            labeled separately as Verified or Self-Reported.
           </Text>
           {onMethodologyClick && (
             <Box

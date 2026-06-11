@@ -52,6 +52,7 @@ import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import transparencyQrApi from 'store/api/transparencyQrApi';
 import { useGetProductionsByFarmQuery } from 'store/api/companyApi';
 import { useUpdateProductionMutation } from 'store/api/historyApi.js';
+import ConsumerEngagementRoiCard from './components/ConsumerEngagementRoiCard';
 import TransparencyCategoryBreakdown from 'components/ProfileSections/TransparencyCategoryBreakdown';
 import TransparencyImprovementRoadmap from 'components/ProfileSections/TransparencyImprovementRoadmap';
 import PhotoVerificationGap from 'components/ProfileSections/PhotoVerificationGap';
@@ -698,6 +699,11 @@ function TransparencyDashboard() {
                   </Card>
                 </SimpleGrid>
               </Box>
+
+              {/* Phase 4 — Consumer engagement ROI: scans trend, engagement,
+                  reviews, certification views + buyer doc-request leads.
+                  Shows transparency ENGAGEMENT, not revenue (project rule). */}
+              {farmId && <ConsumerEngagementRoiCard farmId={Number(farmId)} />}
 
               {/* Score Insight Banner - Next Milestone */}
               {(() => {

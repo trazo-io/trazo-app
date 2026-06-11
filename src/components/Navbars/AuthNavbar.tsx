@@ -80,6 +80,32 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     setIsConsumer(isConsumerSubdomain());
   }, []);
 
+  // Auto-hide on scroll (consumer pages only, 2026 mobile pattern): the
+  // floating pill otherwise sits on top of flat story content mid-scroll,
+  // cutting sentences in half. Hide scrolling down, reveal scrolling up or
+  // near the top.
+  const [hiddenOnScroll, setHiddenOnScroll] = useState(false);
+  useEffect(() => {
+    if (!isConsumer) return undefined;
+    let lastY = window.scrollY;
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        const delta = y - lastY;
+        if (y < 80) setHiddenOnScroll(false);
+        else if (delta > 6) setHiddenOnScroll(true);
+        else if (delta < -6) setHiddenOnScroll(false);
+        lastY = y;
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isConsumer]);
+
   const handleLogout = async () => {
     try {
       await logout().unwrap();
@@ -172,10 +198,19 @@ export default function AuthNavbar(props: AuthNavbarProps) {
   // navbar feel like a glass overlay on the underlying photo, instead of a
   // floating white card with empty space around it. Scoped to consumer so
   // producer/admin layouts keep their existing dense navbar.
+  // Navbar sizing kept at the standard height per product preference
+  // (2026-06: a slimmer 32px-logo variant was tried and reverted).
+  const navbarTop = '30px';
+  const navbarPy = '22px';
+  const logoHeight = '45px';
   if (isConsumer && !props.secondary) {
+    // 0.85 (was 0.45): with the journey's father card removed, story content
+    // scrolls beneath the pill over the gray page — at 0.45 the glass blended
+    // card fragments and text into unreadable mush mid-scroll. Higher opacity
+    // keeps the frosted look while giving the pill a legible surface.
     navbarBg = useColorModeValue(
-      'rgba(255, 255, 255, 0.45)',
-      'rgba(20, 24, 33, 0.45)'
+      'rgba(255, 255, 255, 0.85)',
+      'rgba(20, 24, 33, 0.85)'
     );
     navbarBackdrop = 'saturate(180%) blur(20px)';
     navbarBorder = useColorModeValue(
@@ -370,16 +405,25 @@ export default function AuthNavbar(props: AuthNavbarProps) {
       alignItems="center"
       color={mainText}
     >
-      <Image src={isConsumer && !forceDefaultLogo ? logoTrazoConsumer : logoTrazo} alt="trazo logo" height="45px" paddingRight="10px" href="" />
+      <Image
+        src={isConsumer && !forceDefaultLogo ? logoTrazoConsumer : logoTrazo}
+        alt="trazo logo"
+        height={logoHeight}
+        paddingRight="10px"
+        href=""
+      />
     </Link>
   );
 
   return (
     <Flex
       position={navbarPosition}
-      top="30px"
+      top={navbarTop}
       left="50%"
-      transform="translate(-50%, 0px)"
+      transform={
+        isConsumer && hiddenOnScroll ? 'translate(-50%, -150px)' : 'translate(-50%, 0px)'
+      }
+      transition="transform 0.25s ease"
       background={navbarBg}
       border={navbarBorder}
       boxShadow={navbarShadow}
@@ -387,7 +431,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
       backdropFilter={navbarBackdrop}
       borderRadius="15px"
       px="16px"
-      py="22px"
+      py={navbarPy}
       mx="auto"
       width="1044px"
       maxW="90%"

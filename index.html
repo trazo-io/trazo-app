@@ -9,22 +9,11 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon.png" />
-    <link rel="stylesheet" href="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.css" />
-    <script src="//cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/jvectormap/2.0.4/jquery-jvectormap.css"
-      type="text/css"
-      media="screen"
-    />
-    <link
-      rel="stylesheet"
-      href="//cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css"
-      type="text/css"
-      media="screen"
-    />
+    <!-- Legacy template CDN includes (chartist, jvectormap, dataTables,
+         fontawesome v5) removed 2026-06: all four were CSP-blocked in
+         production (console errors on every page load) and nothing in src/
+         references them — the app uses react-icons and recharts. -->
     <!--     Fonts and icons     -->
-    <link href="https://use.fontawesome.com/releases/v5.0.7/css/all.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <!-- <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY_HERE"></script> -->
     <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico" />

@@ -1628,34 +1628,19 @@ export function getConsumerEventDescription(
       }
     }
 
-    // Enhance title with NPK ratio or active ingredient if available
-    let enhancedTitle = productName;
-
-    // *** CRITICAL FIX: Prioritize NPK ratio from concentration field (matches preview behavior) ***
-    if (
-      event.concentration &&
-      String(event.concentration).trim() &&
-      String(event.concentration).trim() !== 'null' &&
-      String(event.concentration).includes('-') // NPK ratio format like "10-10-10"
-    ) {
-      enhancedTitle = `${productName} (NPK ${event.concentration})`;
-    }
-    // Fallback to active ingredient if no NPK ratio
-    else if (
-      event.active_ingredient &&
-      String(event.active_ingredient).trim() &&
-      String(event.active_ingredient).trim() !== 'null' &&
-      String(event.active_ingredient).trim() !== productName
-    ) {
-      // Check if the commercial name already contains the active ingredient(s)
-      // e.g. "Chateau WDG (flumioxazin) + Alion (indaziflam)" already has "Flumioxazin + Indaziflam"
-      const aiParts = String(event.active_ingredient).split(/[+,&]/).map(s => s.trim().toLowerCase());
-      const nameLower = productName.toLowerCase();
-      const alreadyContained = aiParts.every(part => part && nameLower.includes(part));
-      if (!alreadyContained) {
-        enhancedTitle = `${productName} (${event.active_ingredient})`;
-      }
-    }
+    // Consumer title: "{product} — {purpose}" (Phase 2, Section G). The old
+    // "(NPK 13-0-46)" / "(active ingredient)" suffixes were agronomist
+    // shorthand — a shopper reads "Haifa Multi-K 13-0-46 (NPK 13-0-46)" as
+    // noise. Purpose tells them WHY it was applied; NPK and active
+    // ingredients still render in Key/Technical Details.
+    const CHEMICAL_PURPOSE: Record<string, string> = {
+      'fertilizer application': 'soil nutrition',
+      'pesticide application': 'pest control',
+      'fungicide application': 'disease prevention',
+      'herbicide application': 'weed control'
+    };
+    const purpose = CHEMICAL_PURPOSE[chemicalType];
+    const enhancedTitle = purpose ? `${productName} — ${purpose}` : productName;
 
     return {
       title: enhancedTitle,

@@ -136,14 +136,75 @@ const dashboardMetricsApi = baseApi.injectEndpoints({
         { type: 'Farm', id: farmId },
         { type: 'TransparencyData', id: farmId }
       ]
+    }),
+    // Phase 4 — farmer ROI card: scans trend, engagement, reviews, cert views.
+    getFarmRoiSummary: build.query<RoiSummary, { farmId: number }>({
+      query: ({ farmId }) => ({
+        url: `/public_scans/roi_summary/?establishment_id=${farmId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (result, error, { farmId }) => [{ type: 'Farm', id: farmId }]
+    }),
+    // Phase 4 — buyer documentation requests (leads) for the dashboard.
+    getBuyerDocRequests: build.query<BuyerDocRequestLead[], { farmId: number }>({
+      query: ({ farmId }) => ({
+        url: `/buyer_doc_requests/?establishment_id=${farmId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (result, error, { farmId }) => [{ type: 'Farm', id: `leads-${farmId}` }]
+    }),
+    updateBuyerDocRequestStatus: build.mutation<
+      BuyerDocRequestLead,
+      { leadId: number; status: 'new' | 'contacted' | 'closed'; farmId: number }
+    >({
+      query: ({ leadId, status }) => ({
+        url: `/buyer_doc_requests/${leadId}/`,
+        method: 'PATCH',
+        credentials: 'include',
+        body: { status }
+      }),
+      invalidatesTags: (result, error, { farmId }) => [{ type: 'Farm', id: `leads-${farmId}` }]
     })
   }),
   overrideExisting: false
 });
 
+export interface RoiSummary {
+  scans_30d: number;
+  scans_prev_30d: number;
+  mom_change_pct: number | null;
+  engaged_rate_pct: number;
+  reviews_count: number;
+  reviews_30d: number;
+  average_rating: number | null;
+  has_verified_certification: boolean;
+  certification_views_30d: number;
+  total_scans_all_time: number;
+  generated_at: string;
+}
+
+export interface BuyerDocRequestLead {
+  id: number;
+  production_public_id: string;
+  production_name: string;
+  product_name: string | null;
+  lot_id: string | null;
+  requester_name: string;
+  requester_email: string;
+  organization: string;
+  message: string;
+  status: 'new' | 'contacted' | 'closed';
+  created_at: string;
+}
+
 export const {
   useGetFarmDashboardMetricsQuery,
-  useGetFarmComprehensiveDashboardQuery
+  useGetFarmComprehensiveDashboardQuery,
+  useGetFarmRoiSummaryQuery,
+  useGetBuyerDocRequestsQuery,
+  useUpdateBuyerDocRequestStatusMutation
 } = dashboardMetricsApi;
 
 // Backward-compat aliases for renamed hooks

@@ -11,8 +11,10 @@ import {
   Progress,
   Divider,
   useColorModeValue,
-  Circle
+  Circle,
+  Link
 } from '@chakra-ui/react';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   FaLeaf,
   FaCar,
@@ -177,7 +179,11 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           <VStack align="start" spacing={2}>
             <HStack>
               <Icon as={FaGlobeAmericas} color={accentColor} boxSize={5} />
-              <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="bold" color={textColor}>
+              <Text
+                fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
+                fontWeight="bold"
+                color={textColor}
+              >
                 {intl.formatMessage({ id: 'app.carbonExplainer.title' })}
               </Text>
             </HStack>
@@ -188,7 +194,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
 
           <VStack align="end" spacing={1}>
             <Text
-              fontSize={{ base: 'xl', smd: '2xl' }}
+              fontSize={{ base: 'xl', smd: '2xl', lg: '3xl' }}
               fontWeight="bold"
               color={`${scoreInfo.color}.600`}
             >
@@ -286,6 +292,17 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                   </HStack>
                 )}
               </VStack>
+
+              {/* Methodology boundary — FTC Green Guides 260.7 requires the
+                  calculation boundary to accompany the environmental claim,
+                  in the same section, not behind the expander. */}
+              <Text fontSize="xs" color={mutedColor} mt={3}>
+                {intl.formatMessage({
+                  id: 'app.carbonExplainer.scopeBoundary',
+                  defaultMessage:
+                    'Counts direct on-farm emissions only — fuel, fertilizer, and equipment use, based on EPA/USDA factors. Not a full life-cycle footprint: transport, packaging, and retail are not included.'
+                })}
+              </Text>
             </Box>
           ) : null}
 
@@ -359,6 +376,22 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                 {intl.formatMessage({ id: 'app.carbonExplainer.disclaimer' })}
               </Text>
             </Box>
+
+            {/* Full methodology disclosure page (ECGT/FTC substantiation) */}
+            <Link
+              as={RouterLink}
+              to="/methodology#carbon"
+              fontSize="sm"
+              fontWeight="medium"
+              color="green.600"
+              _hover={{ color: 'green.500' }}
+              display="inline-flex"
+              alignItems="center"
+              minH="44px"
+              alignSelf="flex-start"
+            >
+              Read the full methodology →
+            </Link>
           </VStack>
         </Box>
       </Collapse>

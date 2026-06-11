@@ -67,13 +67,17 @@ function handleAuthRedirect(currentPath: string): void {
   }
 
   const safePath = validateRedirectUrl(currentPath) || '/admin/dashboard';
+
+  // Hard-redirect to signin ONLY from protected routes. A 401 on a PUBLIC
+  // page (consumer product page, /methodology, /pricing) just means the
+  // visitor is anonymous — bouncing them to signin hijacks pages that are
+  // meant to be readable without an account.
+  if (!isProtectedRoute(safePath)) {
+    return;
+  }
+
   const fullCurrentPath = safePath + window.location.search;
-
-  const redirectUrl = isProtectedRoute(safePath)
-    ? createSafeRedirectUrl('/auth/signin', fullCurrentPath)
-    : '/auth/signin';
-
-  window.location.replace(redirectUrl);
+  window.location.replace(createSafeRedirectUrl('/auth/signin', fullCurrentPath));
 }
 
 function handleRateLimit(errorData: ApiErrorData): void {

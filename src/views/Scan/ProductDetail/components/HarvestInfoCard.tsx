@@ -21,6 +21,8 @@ import {
 import { useIntl } from 'react-intl';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
+// Consumer-readable batch quantity — see utils/consumerDisplay.ts
+import { formatHarvestQuantity } from 'utils/consumerDisplay';
 
 interface HarvestDetails {
   amount?: number;
@@ -136,12 +138,22 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               textAlign="center"
             >
               <Icon as={FaLeaf} color="green.500" boxSize={4} mb={1} />
-              <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                {harvestDetails.amount?.toLocaleString()}
-              </Text>
-              <Text fontSize="xs" color={mutedColor} textTransform="uppercase">
-                {harvestDetails.unit || 'kg'}
-              </Text>
+              {(() => {
+                const formatted = formatHarvestQuantity(
+                  harvestDetails.amount as number,
+                  harvestDetails.unit
+                );
+                return (
+                  <>
+                    <Text fontSize="lg" fontWeight="bold" color={textColor}>
+                      {formatted.value}
+                    </Text>
+                    <Text fontSize="xs" color={mutedColor} textTransform="uppercase">
+                      {formatted.unit}
+                    </Text>
+                  </>
+                );
+              })()}
             </Box>
           )}
 

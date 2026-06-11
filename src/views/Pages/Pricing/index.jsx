@@ -52,7 +52,11 @@ import {
   FaMagic
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
-import { loadStripe } from '@stripe/stripe-js';
+// '/pure' entry: plain '@stripe/stripe-js' injects js.stripe.com as a module
+// side effect — meaning every page (including the consumer QR page) loaded
+// Stripe just because App.tsx statically imports this file. The pure entry
+// only injects when loadStripe() is actually called (checkout start).
+import { loadStripe } from '@stripe/stripe-js/pure';
 import config from 'config/environment';
 import { useGetPlansQuery } from 'store/api/subscriptionApi';
 import { useCreateCheckoutSessionMutation, useSubscribeBlockchainMutation, useGetAddonsQuery, useChangePlanMutation, useStartTrialMutation } from 'store/api/billingApi';
@@ -71,8 +75,20 @@ import {
   StandardSection
 } from 'components/Design';
 
-// Load Stripe outside of component to avoid recreating it on every render
-const stripePromise = loadStripe(import.meta.env.VITE_APP_STRIPE_PUBLIC_KEY);
+// Lazy Stripe loader. The previous module-level loadStripe() executed on
+// EVERY app load — including the consumer QR page, where the key is empty —
+// throwing an uncaught IntegrationError in the shopper's console and pulling
+// Stripe.js for users who can never pay. Now Stripe loads only when checkout
+// actually starts, and only if a key is configured.
+let _stripePromise = null;
+const getStripe = () => {
+  const key = import.meta.env.VITE_APP_STRIPE_PUBLIC_KEY;
+  if (!key) return Promise.resolve(null);
+  if (!_stripePromise) {
+    _stripePromise = loadStripe(key);
+  }
+  return _stripePromise;
+};
 
 function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
   // Theme colors for dark mode support
@@ -378,7 +394,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
         window.location.href = checkoutUrl;
       } else if (sessionId) {
         // Use Stripe's redirectToCheckout
-        const stripe = await stripePromise;
+        const stripe = await getStripe();
+        if (!stripe) {
+          throw new Error('Payments are not configured in this environment');
+        }
         const { error } = await stripe.redirectToCheckout({
           sessionId: sessionId
         });
@@ -514,13 +533,16 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
         checkoutUrl = result.url;
       }
 
-      const stripe = await stripePromise;
+      const stripe = await getStripe();
 
       if (checkoutUrl) {
         // Direct redirect to URL
         window.location.href = checkoutUrl;
       } else if (sessionId) {
         // Use Stripe's redirectToCheckout
+        if (!stripe) {
+          throw new Error('Payments are not configured in this environment');
+        }
         const { error } = await stripe.redirectToCheckout({
           sessionId: sessionId
         });

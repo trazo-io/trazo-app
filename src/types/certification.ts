@@ -77,6 +77,38 @@ export type OrganicClaimStatus =
 
 export type OrganicClaimColor = 'green' | 'yellow' | 'gray';
 
+// Phase 3 — lot-level gate (history/services/claim_resolver.py). The farm
+// claim answers "may this OPERATION be called organic"; this answers whether
+// THIS lot may carry it (7 CFR 205.105/205.300). eligible === false means the
+// seal must be suppressed for this production even on a certified farm.
+export type LotEligibilityStatus =
+  | 'eligible'
+  | 'prohibited_input'
+  | 'cert_not_valid_at_harvest'
+  | 'crop_not_in_scope'
+  | 'not_applicable';
+
+export interface LotOrganicEligibility {
+  eligible: boolean | null;
+  status: LotEligibilityStatus;
+  display_label: string;
+  detail: string;
+  prohibited_inputs: string[];
+  unclassified_input_count: number;
+  checked_at: string | null;
+}
+
+// Evidence-status object every consumer claim carries — the trust tier the
+// UI renders (certified = third party … self_reported = farmer only).
+export type ClaimEvidenceTier = 'certified' | 'verified' | 'documented' | 'self_reported';
+
+export interface ClaimEvidence {
+  tier: ClaimEvidenceTier;
+  source: string;
+  scope: 'production_lot' | 'farm';
+  as_of: string;
+}
+
 export interface OrganicClaim {
   can_display_organic: boolean;
   can_display_transitioning: boolean;
@@ -87,4 +119,6 @@ export interface OrganicClaim {
   reason: string;
   transition_complete_date: string | null;
   days_remaining: number | null;
+  lot_eligibility?: LotOrganicEligibility;
+  evidence?: ClaimEvidence;
 }

@@ -16,7 +16,6 @@ import {
   Divider,
   Stack,
   useBreakpointValue,
-  Link,
   Progress,
   SimpleGrid
 } from '@chakra-ui/react';
@@ -29,10 +28,8 @@ import {
   FaSeedling,
   FaShieldAlt,
   FaGlobeAmericas,
-  FaExternalLinkAlt,
   FaCertificate,
   FaEye,
-  FaClock,
   FaCamera,
   FaThermometerHalf,
   FaTint,
@@ -48,11 +45,10 @@ import {
   FaCloudRain,
   FaClipboardList
 } from 'react-icons/fa';
-import { MdEco, MdSecurity, MdOpenInNew } from 'react-icons/md';
+import { MdEco, MdSecurity } from 'react-icons/md';
 import {
   getConsumerEventDescription,
   formatEventDate,
-  getSustainabilityImpact,
   getEventTrustIndicators
 } from 'utils/eventDescriptions';
 import {
@@ -62,6 +58,8 @@ import {
 } from 'utils/fieldDisplayUtils';
 // Event Field Registry (Phase 5 — feature-flagged)
 import { getFieldsForSurface, type ResolvedFieldSet } from 'src/config/events';
+// Worker privacy mask for the public QR page — see utils/consumerDisplay.ts
+import { maskPerformerName, withUSUnits, formatHarvestDate } from 'utils/consumerDisplay';
 
 const USE_FIELD_REGISTRY = import.meta.env.VITE_USE_FIELD_REGISTRY === 'true';
 import {
@@ -69,7 +67,6 @@ import {
   getVerificationColor,
   type VerificationLevel
 } from 'utils/verificationTierHelpers';
-import { getImpactLevel } from 'utils/carbonDisplayUtils';
 import { StandardImageGallery } from 'components/ImageGallery';
 
 // Comprehensive event interface that includes all possible fields across all event types
@@ -214,6 +211,10 @@ interface ConsumerEventCardProps {
   isFirst?: boolean;
   isLast?: boolean;
   isGrouped?: boolean;
+  /** Phase 2 consumer-chapter variant: collapsed card shows only
+      title + date + a clamped meaning line + evidence chips. Performer
+      and full field notes live in the expanded state. */
+  slim?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   /** Production-level blockchain data to use when individual events lack their own */
@@ -230,12 +231,16 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   isFirst = false,
   isLast = false,
   isGrouped = false,
+  slim = false,
   isExpanded: controlledExpanded,
   onToggleExpand,
   productionBlockchain
 }) => {
   const intl = useIntl();
   const [internalExpanded, setInternalExpanded] = useState(false);
+  // Technical Details collapsed by default (Section G item 4) — compliance
+  // and metric source values stay one tap away, not in the default read.
+  const [showTechnical, setShowTechnical] = useState(false);
   const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -268,11 +273,6 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   // Get consumer-friendly description with real event data
   const eventInfo = getConsumerEventDescription(event.description, event);
 
-  const sustainabilityLevel = getSustainabilityImpact(event.description, event);
-  // Use shared getImpactLevel for consistent terminology when carbon data is available
-  // FIX: Include carbon_impact === 0 so zero-emission events show "None" instead of "LOW IMPACT"
-  const carbonImpactLevel =
-    typeof event.carbon_impact === 'number' ? getImpactLevel(event.carbon_impact) : null;
   const trustIndicators = getEventTrustIndicators(event);
   const formattedDate = formatEventDate(event.date);
 
@@ -310,10 +310,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
   // Sprint 4: Check if this is a summary event
   const isSummaryEvent = event.is_summary === true;
+  // Consumer cards spell the date out ("Oct 5, 2024") — "10/5/2024" is
+  // ambiguous outside the US and reads machine-y. This component only
+  // renders on the consumer page, so it applies in both story and proof.
   const displayDate =
     isSummaryEvent && event.date_start && event.date_end
       ? formatDateRange(event.date_start, event.date_end)
-      : formattedDate;
+      : formatHarvestDate(event.date) || formattedDate;
 
   // Get comprehensive field display data based on field display matrix.
   // When VITE_USE_FIELD_REGISTRY=true, the registry's consumer_card surface
@@ -535,13 +538,6 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const highlightBg = useColorModeValue('green.50', 'gray.700');
 
-  // Sustainability colors: high CO₂e = concern (orange), low = good (green)
-  const sustainabilityColors = {
-    high: 'orange',
-    medium: 'yellow',
-    low: 'green'
-  };
-
   return (
     <Box ref={cardRef} position="relative">
       {/* Timeline connector - DESKTOP ONLY, hidden when inside a group */}
@@ -632,15 +628,18 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             )}
           </Circle>
 
-          {/* Verification confidence indicator */}
-          {blockchainData.confidence > 0 && (
-            <Text fontSize="xs" color="gray.500" mt={1} textAlign="center">
-              {blockchainData.confidence}% verified
-            </Text>
-          )}
+          {/* "% verified" confidence indicator removed (2026-06): numeric
+              self-created trust percentage on a consumer card, and "verified"
+              violates the blockchain wording rule (recorded, never verified). */}
         </Flex>
 
-        {/* Event card - Full width on mobile */}
+        {/* Event card - Full width on mobile.
+            overflow="clip" (not "hidden"): with the fixed backdrop-filter
+            navbar, Chromium skips painting an overflow:hidden ancestor's
+            background in the band above the blurred element — the card body
+            rendered gray while its text floated on the page background. The
+            father journey Card's white used to mask the bug; "clip" keeps the
+            same radius clipping on a paint path that doesn't trigger it. */}
         <Box
           flex="1"
           w={{ base: 'full', md: 'auto' }}
@@ -648,7 +647,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
           borderRadius="xl"
           borderWidth="1px"
           borderColor={borderColor}
-          overflow="hidden"
+          overflow="clip"
           transition="all 0.2s"
           _hover={{ shadow: 'md', transform: 'translateY(-1px)' }}
           mb={{ base: 4, md: 0 }}
@@ -656,6 +655,24 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
           {/* Mobile-Optimized Card Header */}
           <Box p={{ base: 4, md: 4 }}>
             <HStack justify="space-between" align="flex-start" mb={2}>
+              {slim && !isExpanded && event.album?.images?.[0]?.image && (
+                <Box
+                  flexShrink={0}
+                  w="56px"
+                  h="56px"
+                  borderRadius="lg"
+                  overflow="clip"
+                  borderWidth="1px"
+                  borderColor={borderColor}
+                >
+                  <img
+                    src={event.album.images[0].image}
+                    alt={event.album.images[0].caption || `Photo from ${eventInfo.title}`}
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </Box>
+              )}
               <VStack align="start" spacing={1} flex="1">
                 <HStack spacing={2} flexWrap="wrap">
                   <Text
@@ -687,7 +704,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       alignItems="center"
                       gap={1}
                     >
-                      <Icon as={FaLayerGroup} boxSize={2.5} />
+                      <Icon as={FaLayerGroup} aria-hidden="true" boxSize={2.5} />
                       <Text>
                         {event.event_count || 'Multiple'}{' '}
                         {event.type === 'FE'
@@ -705,55 +722,42 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 </HStack>
                 {/* Sprint 4: Show date range for summaries, single date for regular events */}
                 <HStack spacing={1}>
-                  {isSummaryEvent && <Icon as={FaCalendarAlt} boxSize={3} color={mutedColor} />}
+                  {isSummaryEvent && (
+                    <Icon as={FaCalendarAlt} aria-hidden="true" boxSize={3} color={mutedColor} />
+                  )}
                   <Text fontSize={{ base: 'xs', md: 'sm' }} color={mutedColor}>
                     {displayDate}
                   </Text>
                 </HStack>
-                {/* Sprint 1 Epic 1.4: USDA GAP Traceability - Show who performed the activity */}
-                {event.performed_by && (
+                {/* Worker privacy (2026-06): full names were published on the
+                    public QR page ("Performed by: Ana Torres") — a doxing
+                    vector when combined with the farm location. Display-layer
+                    mask to "Farm team (A.T.)" until a consent-gated
+                    `performer_display` field exists (Phase 3). */}
+                {event.performed_by && !slim && (
                   <HStack spacing={1}>
-                    <Icon as={FaCheckCircle} boxSize={3} color="green.500" />
+                    <Icon as={FaCheckCircle} aria-hidden="true" boxSize={3} color="green.500" />
                     <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.600" fontWeight="medium">
-                      Performed by: {event.performed_by}
+                      Performed by: {maskPerformerName(event.performed_by)}
                     </Text>
                   </HStack>
                 )}
               </VStack>
 
-              {/* Sustainability badge - uses shared getImpactLevel when carbon data available */}
-              <Badge
-                colorScheme={
-                  carbonImpactLevel
-                    ? carbonImpactLevel.color
-                    : sustainabilityColors[sustainabilityLevel]
-                }
-                fontSize="xs"
-                px={2}
-                py={1}
-                borderRadius="full"
-              >
-                <HStack spacing={1}>
-                  <Icon as={MdEco} boxSize={3} />
-                  <Text>
-                    {carbonImpactLevel
-                      ? intl.formatMessage({ id: carbonImpactLevel.level })
-                      : sustainabilityLevel === 'high'
-                      ? intl.formatMessage({ id: 'carbon.activityLevel.corePractice' })
-                      : sustainabilityLevel === 'medium'
-                      ? intl.formatMessage({ id: 'carbon.activityLevel.standardActivity' })
-                      : intl.formatMessage({ id: 'transparency.supplementary' })}
-                  </Text>
-                </HStack>
-              </Badge>
+              {/* Sustainability/"Supplementary" badge removed (2026-06):
+                  "Supplementary" / "Standard Activity" / "Core Practice"
+                  labels were internal scoring jargon with no consumer
+                  meaning, and green coloring implied a quality judgment. */}
             </HStack>
 
-            {/* Mobile-Optimized Short Description */}
+            {/* Mobile-Optimized Short Description — clamped in the slim
+                chapter cards so collapsed cards stay one glance tall. */}
             <VStack spacing={3} align="stretch" mb={{ base: 4, md: 3 }}>
               <Text
                 fontSize={{ base: 'md', md: 'md' }}
                 color={useColorModeValue('gray.700', 'gray.300')}
                 lineHeight={{ base: '1.6', md: '1.5' }}
+                noOfLines={slim && !isExpanded ? 2 : undefined}
               >
                 {eventInfo.shortDescription}
               </Text>
@@ -790,7 +794,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               {/* 🌱 TRANSPARENCY-FIRST: Show farmer's actual field notes from observation field only.
                   description contains system-generated text (template names, etc.) and must NOT
                   be shown as "Farmer's Field Notes" — that would be dishonest to consumers. */}
-              {event.observation && event.observation.trim() && (
+              {event.observation && event.observation.trim() && (!slim || isExpanded) && (
                 <Box
                   bg={useColorModeValue('green.50', 'green.900')}
                   border="1px solid"
@@ -799,7 +803,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   p={3}
                 >
                   <HStack spacing={2} mb={2}>
-                    <Icon as={FaEye} boxSize={3} color="green.500" />
+                    <Icon as={FaEye} aria-hidden="true" boxSize={3} color="green.500" />
                     <Text fontSize="xs" fontWeight="semibold" color="green.600">
                       Farmer's Field Notes
                     </Text>
@@ -831,7 +835,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       py={1}
                     >
                       <HStack spacing={1}>
-                        <Icon as={FaCheckCircle} boxSize={3} />
+                        <Icon as={FaCheckCircle} aria-hidden="true" boxSize={3} />
                         <Text>{indicator}</Text>
                       </HStack>
                     </Badge>
@@ -861,7 +865,11 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       py={1}
                     >
                       <HStack spacing={1}>
-                        <Icon as={isSustainable ? FaWind : FaCheckCircle} boxSize={3} />
+                        <Icon
+                          as={isSustainable ? FaWind : FaCheckCircle}
+                          aria-hidden="true"
+                          boxSize={3}
+                        />
                         <Text>{elecLabels[elecSrc] || elecSrc}</Text>
                       </HStack>
                     </Badge>
@@ -869,17 +877,30 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 );
               })()}
 
-              {/* Organic input certification badge for chemical events */}
+              {/* Crop-input status chips (Phase 2): every input gets an honest
+                  status — OMRI/organic-approved (green), restricted-use
+                  (amber, framed as professional compliance), or conventional-
+                  documented (neutral). Data already public in the payload. */}
               {(() => {
+                const isChemicalEvent =
+                  event.event_type === 2 ||
+                  event.type === 'chemical' ||
+                  ['FE', 'PE', 'FU', 'HE'].includes(event.type);
+                // Phase 3: the backend now resolves input status server-side
+                // (history/services/claim_resolver.resolve_input_status) so
+                // the chip vocabulary has one source of truth. The client
+                // derivation below stays as fallback for older payloads.
+                const serverInput = (event as any).input_status as
+                  | { status?: string; label?: string }
+                  | undefined;
                 const organicStatus =
                   event.organic_approved ?? (event as any).extra_data?.organic_approved;
-                if (
-                  !organicStatus ||
-                  organicStatus === 'not_organic' ||
-                  organicStatus === 'no' ||
-                  organicStatus === 'not_applicable'
-                )
-                  return null;
+                const isRestrictedUse = serverInput?.status
+                  ? serverInput.status === 'restricted_use'
+                  : Boolean(
+                      (event as any).restricted_use_pesticide ??
+                        (event as any).extra_data?.restricted_use_pesticide
+                    );
                 const organicLabels: Record<string, string> = {
                   omri_listed: 'OMRI Listed',
                   usda_nop_approved: 'USDA NOP Approved',
@@ -888,64 +909,129 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   transitional: 'Transitional',
                   yes: 'Organic Approved'
                 };
+                const hasOrganicStatus = serverInput?.status
+                  ? serverInput.status === 'omri_listed' || serverInput.status === 'organic_approved'
+                  : organicStatus &&
+                    organicStatus !== 'not_organic' &&
+                    organicStatus !== 'no' &&
+                    organicStatus !== 'not_applicable';
+                const organicChipText = serverInput?.label
+                  ? serverInput.label
+                  : organicLabels[organicStatus] || 'Organic';
+                // Server distinguishes "explicitly conventional" from
+                // "farmer didn't classify" — only the former may carry the
+                // conventional label (claim-safety: absence of classification
+                // is not evidence the input was conventional).
+                const isUnclassified = serverInput?.status === 'unclassified';
+
+                if (!hasOrganicStatus && !isRestrictedUse && !isChemicalEvent) return null;
+
                 return (
-                  <HStack spacing={2}>
-                    <Tooltip
-                      label="This input is approved for organic farming by the listed certification body"
-                      placement="top"
-                    >
-                      <Badge
-                        variant="solid"
-                        colorScheme="green"
-                        fontSize="xs"
-                        px={3}
-                        py={1}
-                        borderRadius="full"
-                        cursor="pointer"
+                  <HStack spacing={2} flexWrap="wrap">
+                    {hasOrganicStatus && (
+                      <Tooltip
+                        label="This input is approved for organic farming by the listed certification body"
+                        placement="top"
                       >
-                        <HStack spacing={1}>
-                          <Icon as={FaLeaf} boxSize={3} />
-                          <Text>{organicLabels[organicStatus] || 'Organic'}</Text>
-                        </HStack>
-                      </Badge>
-                    </Tooltip>
+                        <Badge
+                          variant="solid"
+                          colorScheme="green"
+                          fontSize="xs"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          cursor="pointer"
+                        >
+                          <HStack spacing={1}>
+                            <Icon as={FaLeaf} aria-hidden="true" boxSize={3} />
+                            <Text>{organicChipText}</Text>
+                          </HStack>
+                        </Badge>
+                      </Tooltip>
+                    )}
+                    {isRestrictedUse && (
+                      <Tooltip
+                        label="EPA restricted-use product, applied by a licensed applicator under state regulation"
+                        placement="top"
+                      >
+                        <Badge
+                          variant="subtle"
+                          colorScheme="orange"
+                          fontSize="xs"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          cursor="pointer"
+                        >
+                          Restricted use — licensed applicator
+                        </Badge>
+                      </Tooltip>
+                    )}
+                    {isChemicalEvent && !hasOrganicStatus && !isRestrictedUse && (
+                      <Tooltip
+                        label={
+                          isUnclassified
+                            ? 'A crop input documented by the farmer'
+                            : 'A conventional crop input, fully documented by the farmer'
+                        }
+                        placement="top"
+                      >
+                        <Badge
+                          variant="subtle"
+                          colorScheme="gray"
+                          fontSize="xs"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          cursor="pointer"
+                        >
+                          {isUnclassified ? 'Input documented' : 'Conventional input · documented'}
+                        </Badge>
+                      </Tooltip>
+                    )}
                   </HStack>
                 );
               })()}
 
               {/* Removed redundant photo verification badge - photos are already mentioned in description and shown in gallery */}
 
-              {/* Enhanced verification badges row */}
+              {/* Enhanced verification badges row.
+                  Per-event BLOCKCHAIN-RECORDED badge removed (2026-06): the
+                  blockchain record is production-level — repeating the same
+                  tx as a badge on every one of 20 cards was noise and read
+                  as a crypto signal. Record integrity renders once at the
+                  Production Journey footer. */}
               <HStack spacing={2} flexWrap="wrap">
-                {/* Blockchain secured badge — production-level verification covers this event */}
-                {blockchainData.verified && (
-                  <Tooltip
-                    label="This event is part of a blockchain-secured production record"
-                    placement="top"
-                  >
-                    <Badge
-                      colorScheme="blue"
-                      variant="solid"
-                      fontSize="xs"
-                      px={3}
-                      py={1}
-                      borderRadius="full"
-                      cursor="pointer"
-                    >
-                      <HStack spacing={1}>
-                        <Icon as={FaShieldAlt} boxSize={3} />
-                        <Text>BLOCKCHAIN-RECORDED</Text>
-                      </HStack>
-                    </Badge>
-                  </Tooltip>
-                )}
-
-                {/* USDA verification badge - REMOVED to avoid duplication with EnhancedTrustIndicators */}
-                {/* USDA verification is already shown in the product header via EnhancedTrustIndicators */}
-
-                {/* MVP Photo Verification: Tiered verification badge */}
+                {/* MVP Photo Verification: Tiered verification badge.
+                    Slim chapter cards de-wallpaper this: every card carrying
+                    the same "Data Documented" chip says nothing. There, the
+                    chip renders only when it differentiates — a photo count
+                    when photos exist, otherwise nothing (the proof view and
+                    expanded state keep the full tier badge). */}
                 {event.verification_level &&
                   (() => {
+                    const photoCount = event.album?.images?.length ?? 0;
+                    if (slim && !isExpanded) {
+                      if (photoCount === 0) return null;
+                      return (
+                        <Badge
+                          colorScheme="green"
+                          variant="subtle"
+                          fontSize="xs"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                        >
+                          <Icon as={FaCamera} aria-hidden="true" boxSize={3} />
+                          <Text>
+                            {photoCount} photo{photoCount === 1 ? '' : 's'}
+                          </Text>
+                        </Badge>
+                      );
+                    }
                     const config = getVerificationBadgeConfig(
                       event.verification_level as VerificationLevel
                     );
@@ -965,7 +1051,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           alignItems="center"
                           gap={1}
                         >
-                          <Icon as={config.icon} boxSize={3} />
+                          <Icon as={config.icon} aria-hidden="true" boxSize={3} />
                           <Text>{config.label}</Text>
                           {event.photo_verified_count !== undefined &&
                             event.photo_verified_count > 0 && (
@@ -978,46 +1064,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     );
                   })()}
 
-                {/* High integrity score badge */}
-                {blockchainData.integrityScore >= 95 && (
-                  <Tooltip
-                    label={`Data integrity score: ${blockchainData.integrityScore}%. This indicates extremely high data quality and trustworthiness.`}
-                    placement="top"
-                  >
-                    <Badge
-                      colorScheme="purple"
-                      variant="solid"
-                      fontSize="xs"
-                      px={3}
-                      py={1}
-                      borderRadius="full"
-                    >
-                      <HStack spacing={1}>
-                        <Icon as={FaShieldAlt} boxSize={3} />
-                        <Text>HIGH INTEGRITY ({blockchainData.integrityScore}%)</Text>
-                      </HStack>
-                    </Badge>
-                  </Tooltip>
-                )}
-
-                {/* Ultimate verification indicator */}
-                {verificationLevel === 'ultimate' && (
-                  <Badge
-                    colorScheme="gold"
-                    variant="solid"
-                    fontSize="xs"
-                    px={3}
-                    py={1}
-                    borderRadius="full"
-                    bg="linear-gradient(45deg, #FFD700, #FFA500)"
-                    color="white"
-                  >
-                    <HStack spacing={1}>
-                      <Icon as={MdSecurity} boxSize={3} />
-                      <Text fontWeight="bold">ULTIMATE TRUST</Text>
-                    </HStack>
-                  </Badge>
-                )}
+                {/* "HIGH INTEGRITY (98%)" and "ULTIMATE TRUST" badges removed
+                    (2026-06): self-created superlative trust labels with no
+                    third-party basis — exactly the claim class FTC 16 CFR
+                    260.6(d) requires substantiation for. */}
               </HStack>
             </VStack>
 
@@ -1028,6 +1078,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               colorScheme="green"
               onClick={toggleExpand}
               rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+              aria-expanded={isExpanded}
               _hover={{ bg: highlightBg }}
               w={{ base: 'full', md: 'auto' }}
               justifyContent={{ base: 'space-between', md: 'flex-start' }}
@@ -1044,6 +1095,17 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             <Divider />
             <Box p={{ base: 3, md: 4 }} bg={cardBg}>
               <VStack align="start" spacing={3}>
+                {/* Performer — slim cards surface it here instead of the
+                    collapsed header (Section G: collapsed = title + date +
+                    meaning line + evidence chips only). */}
+                {slim && event.performed_by && (
+                  <HStack spacing={1}>
+                    <Icon as={FaCheckCircle} aria-hidden="true" boxSize={3} color="green.500" />
+                    <Text fontSize="sm" color="green.600" fontWeight="medium">
+                      Performed by: {maskPerformerName(event.performed_by)}
+                    </Text>
+                  </HStack>
+                )}
                 {/* Consumer impact */}
                 <Box>
                   <HStack mb={1}>
@@ -1424,7 +1486,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                               </Text>
                             </HStack>
                             <Text fontSize="sm" color="green.800" fontWeight="medium">
-                              {field.value}
+                              {withUSUnits(field.value)}
                             </Text>
                           </Box>
                         );
@@ -1583,17 +1645,41 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     </Box>
                   )}
 
-                {/* Comprehensive Field Display - DETAILS Priority Fields */}
-                {fieldDisplay.details.length > 0 && (
+                {/* Comprehensive Field Display - DETAILS Priority Fields.
+                    Deduped against Key Details/Additional Information (the
+                    live card showed pH/OM/depth twice) and collapsed behind a
+                    toggle by default — auditor-grade values on demand. */}
+                {(() => {
+                  const shownLabels = new Set(
+                    [...fieldDisplay.immediate, ...fieldDisplay.secondary].map((f) =>
+                      f.label.toLowerCase()
+                    )
+                  );
+                  const dedupedDetails = fieldDisplay.details.filter(
+                    (f) => !shownLabels.has(f.label.toLowerCase())
+                  );
+                  if (dedupedDetails.length === 0) return null;
+                  return (
                   <Box>
-                    <HStack mb={3}>
-                      <Icon as={FaEye} color="gray.500" boxSize={4} />
-                      <Text fontWeight="semibold" fontSize="sm" color="gray.600">
-                        Technical Details
-                      </Text>
-                    </HStack>
-                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2} pl={6}>
-                      {fieldDisplay.details.map((field, idx) => {
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorScheme="gray"
+                      px={0}
+                      onClick={() => setShowTechnical((v) => !v)}
+                      rightIcon={showTechnical ? <FaChevronUp /> : <FaChevronDown />}
+                      aria-expanded={showTechnical}
+                    >
+                      <HStack spacing={2}>
+                        <Icon as={FaEye} color="gray.500" boxSize={4} />
+                        <Text fontWeight="semibold" fontSize="sm" color="gray.600">
+                          Technical Details ({dedupedDetails.length})
+                        </Text>
+                      </HStack>
+                    </Button>
+                    <Collapse in={showTechnical} animateOpacity>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2} pl={6} pt={2}>
+                      {dedupedDetails.map((field, idx) => {
                         const fuelIcon = getFuelIcon(field.label, event.fuel_type);
                         return (
                           <HStack key={idx} spacing={2} align="baseline">
@@ -1620,112 +1706,19 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         );
                       })}
                     </SimpleGrid>
+                    </Collapse>
                   </Box>
-                )}
+                  );
+                })()}
 
-                {/* Blockchain Security Section — production-level record */}
-                {blockchainData.verified && (
-                  <Box>
-                    <HStack mb={3}>
-                      <Icon as={MdSecurity} color="blue.500" boxSize={5} />
-                      <Text fontWeight="bold" fontSize="sm" color="blue.500">
-                        Blockchain Security
-                      </Text>
-                    </HStack>
-
-                    <VStack align="stretch" spacing={3} pl={6}>
-                      {/* Transaction details */}
-                      {blockchainData.transaction && (
-                        <Box>
-                          <HStack justify="space-between" mb={2}>
-                            <Text fontSize="sm" fontWeight="semibold">
-                              Production Record
-                            </Text>
-                            <Link
-                              href={blockchainData.explorerUrl}
-                              isExternal
-                              color="blue.500"
-                              fontSize="sm"
-                              fontWeight="medium"
-                              _hover={{ color: 'blue.600' }}
-                            >
-                              <HStack spacing={1}>
-                                <Icon as={FaEye} boxSize={3} />
-                                <Text>View on Explorer</Text>
-                                <Icon as={MdOpenInNew} boxSize={3} />
-                              </HStack>
-                            </Link>
-                          </HStack>
-
-                          <VStack align="start" spacing={1}>
-                            <Text fontSize="xs" color={mutedColor}>
-                              Transaction ID: {blockchainData.transaction.slice(0, 20)}...
-                            </Text>
-                            {blockchainData.blockNumber > 0 && (
-                              <Text fontSize="xs" color={mutedColor}>
-                                Block Number: #{blockchainData.blockNumber.toLocaleString()}
-                              </Text>
-                            )}
-                            {blockchainData.timestamp && (
-                              <HStack>
-                                <Icon as={FaClock} boxSize={3} color="gray.500" />
-                                <Text fontSize="xs" color={mutedColor}>
-                                  Verified:{' '}
-                                  {new Date(blockchainData.timestamp).toLocaleDateString()}
-                                </Text>
-                              </HStack>
-                            )}
-                          </VStack>
-                        </Box>
-                      )}
-
-                      {/* Data integrity score */}
-                      {blockchainData.integrityScore > 0 && (
-                        <Box
-                          p={2}
-                          bg={useColorModeValue('green.50', 'green.900')}
-                          borderRadius="md"
-                          border="1px solid"
-                          borderColor={useColorModeValue('green.200', 'green.700')}
-                        >
-                          <HStack justify="space-between">
-                            <HStack>
-                              <Icon as={FaShieldAlt} color="green.500" boxSize={4} />
-                              <Text fontSize="sm" fontWeight="medium" color="green.600">
-                                Documentation Completeness
-                              </Text>
-                            </HStack>
-                            <Badge colorScheme="green" variant="solid">
-                              {blockchainData.integrityScore}%
-                            </Badge>
-                          </HStack>
-                          <Text fontSize="xs" color="green.600" mt={1}>
-                            Measures data completeness of documented practices
-                          </Text>
-                        </Box>
-                      )}
-
-                      {/* Network information */}
-                      <HStack spacing={3} fontSize="xs" color={mutedColor}>
-                        <HStack>
-                          <Icon as={FaInfoCircle} boxSize={3} />
-                          <Text>
-                            Network:{' '}
-                            {blockchainData.network === 'polygon'
-                              ? 'Polygon'
-                              : blockchainData.network === 'polygon_amoy'
-                              ? 'Polygon Testnet'
-                              : 'Polygon'}
-                          </Text>
-                        </HStack>
-                        <HStack>
-                          <Icon as={FaShieldAlt} boxSize={3} />
-                          <Text>Tamper-Proof Record</Text>
-                        </HStack>
-                      </HStack>
-                    </VStack>
-                  </Box>
-                )}
+                {/* Per-event "Blockchain Security" section removed (2026-06):
+                    it repeated the SAME production-level transaction inside
+                    every expanded card (tx hash, block number, "Tamper-Proof
+                    Record") — crypto jargon for shoppers, and "tamper-proof"
+                    overclaims (blockchain proves the record is unchanged
+                    after sealing, not that it was accurate when submitted).
+                    The single production-level record-integrity row lives at
+                    the Production Journey footer. */}
 
                 {/* Photo Gallery using StandardImageGallery */}
                 {/* MVP Photo Documentation: Show photos attached to this event */}
@@ -1745,7 +1738,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           event.album?.images?.map((image) => ({
                             id: image.id,
                             image: image.image,
-                            name: image.caption || `Farm photo`,
+                            name: image.caption || `Photo from ${eventInfo.title}`,
                             description: image.created_at
                               ? `Taken on ${new Date(image.created_at).toLocaleDateString()}`
                               : undefined
@@ -1774,19 +1767,20 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         <HStack spacing={{ base: 3, md: 2 }}>
                           <Icon as={FaShieldAlt} boxSize={{ base: 5, md: 4 }} color="green.500" />
                           <VStack align="start" spacing={0} flex={1}>
+                            {/* Claim-safe wording (2026-06): "Photo Verification:
+                                Excellent" implied independent practice verification;
+                                it's an automated content check. Binary, no grades. */}
                             <Text
                               fontSize={{ base: 'sm', md: 'xs' }}
                               fontWeight="semibold"
                               color="gray.700"
                             >
-                              Photo Verification:{' '}
-                              {photoVerification.verificationLevel === 'strong'
-                                ? 'Excellent'
-                                : 'Good'}
+                              Farmer-provided photos
                             </Text>
                             <Text fontSize="xs" color="gray.600">
-                              {photoVerification.photoCount} verified photo
-                              {photoVerification.photoCount > 1 ? 's' : ''} from the farm
+                              {photoVerification.photoCount} photo
+                              {photoVerification.photoCount > 1 ? 's' : ''}, AI-checked for
+                              authenticity
                             </Text>
                           </VStack>
                         </HStack>
