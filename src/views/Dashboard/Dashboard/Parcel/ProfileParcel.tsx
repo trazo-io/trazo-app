@@ -10,7 +10,9 @@ import {
   Badge,
   Link,
   Wrap,
-  WrapItem
+  WrapItem,
+  Flex,
+  CloseButton
 } from '@chakra-ui/react';
 import {
   FaMapMarkedAlt,
@@ -102,6 +104,7 @@ interface ParcelData {
   elevation?: number;
   description?: string;
   agricultural_details?: AgriculturalDetails;
+  polygon?: Array<{ lat: number; lng: number }>;
 }
 
 interface RootState {
@@ -217,6 +220,25 @@ function ProfileParcel(): React.ReactElement {
   const { farmId, parcelId } = useParams<{ farmId: string; parcelId: string }>();
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
 
+  // Boundary nudge: shown when the parcel was saved without a drawn field boundary.
+  // Dismissal persists per parcel via localStorage.
+  const boundaryNudgeStorageKey = `trazo_boundary_nudge_dismissed_${parcelId}`;
+  const [boundaryNudgeDismissed, setBoundaryNudgeDismissed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(boundaryNudgeStorageKey) === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const dismissBoundaryNudge = (): void => {
+    setBoundaryNudgeDismissed(true);
+    try {
+      localStorage.setItem(boundaryNudgeStorageKey, 'true');
+    } catch {
+      // localStorage unavailable (private mode) — dismissal lasts for the session only
+    }
+  };
+
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
   const establishments = currentCompany?.establishments || [];
   const currentParcel = useSelector((state: RootState) => state.product.currentParcel);
@@ -314,12 +336,60 @@ function ProfileParcel(): React.ReactElement {
       parcelData.agricultural_details.pest_management_strategy ||
       parcelData.agricultural_details.fertilization_program);
 
+  // Show the boundary nudge when the parcel has no drawn field boundary
+  const showBoundaryNudge =
+    canWrite &&
+    !boundaryNudgeDismissed &&
+    !!parcelData &&
+    (!parcelData.polygon || parcelData.polygon.length < 3);
+
   return (
     <StandardPage
       showBackButton
       onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
     >
       <VStack spacing={{ base: 4, md: 8 }} w="100%">
+        {/* Boundary nudge - parcel saved without a field boundary */}
+        {showBoundaryNudge && (
+          <Box
+            w="100%"
+            p={{ base: 3, md: 4 }}
+            bg="blue.50"
+            border="1px solid"
+            borderColor="blue.200"
+            borderRadius="xl"
+          >
+            <Flex
+              direction={{ base: 'column', md: 'row' }}
+              align={{ base: 'stretch', md: 'center' }}
+              gap={3}
+            >
+              <HStack spacing={2} flex="1" align="flex-start">
+                <Icon as={FaMapMarkedAlt} color="blue.500" boxSize={4} mt={0.5} flexShrink={0} />
+                <Text fontSize="sm" color="blue.800">
+                  {intl.formatMessage({ id: 'parcel.skipBoundary.nudgeMessage' })}
+                </Text>
+              </HStack>
+              <HStack spacing={1} justify={{ base: 'flex-end', md: 'initial' }} flexShrink={0}>
+                <StandardButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`)
+                  }
+                >
+                  {intl.formatMessage({ id: 'parcel.skipBoundary.nudgeAction' })}
+                </StandardButton>
+                <CloseButton
+                  aria-label={intl.formatMessage({ id: 'parcel.skipBoundary.nudgeDismiss' })}
+                  color="blue.600"
+                  onClick={dismissBoundaryNudge}
+                />
+              </HStack>
+            </Flex>
+          </Box>
+        )}
+
         {/* Identity Section */}
         <StandardCard
           title={intl.formatMessage({ id: 'app.parcel' })}

@@ -12,6 +12,7 @@ import {
 import { useGetFarmQuery } from 'store/api/companyApi';
 import { setFarmParcel } from 'store/features/companySlice';
 import { useToast } from '@chakra-ui/react';
+import { PlanLimitAlert } from 'components/Subscription/PlanLimitAlert';
 
 interface AddParcelProps {
   isEdit?: boolean;
@@ -22,6 +23,15 @@ interface RootState {
     currentCompany: {
       id: string;
       name: string;
+      establishments?: Array<{
+        id: string | number;
+        parcels?: Array<{ id: string | number }>;
+      }>;
+      subscription?: {
+        used_productions?: number;
+        effective_limits?: { [key: string]: any };
+        plan?: { features?: { [key: string]: any } };
+      };
     };
     currentEstablishment: {
       id: string;
@@ -80,6 +90,24 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       : currentEstablishment?.latitude && currentEstablishment?.longitude
       ? { lat: currentEstablishment.latitude, lng: currentEstablishment.longitude }
       : undefined;
+
+  // Pre-flight subscription limit check (informational only — backend enforces).
+  // Parcel count comes from the Redux company state (same source UnifiedSubscription
+  // uses), with the freshly-fetched farm data as a fallback.
+  const subscription = currentCompany?.subscription;
+  const subscriptionLimits: Record<string, any> =
+    subscription?.effective_limits || subscription?.plan?.features || {};
+  const maxParcelsPerFarm = subscriptionLimits?.max_parcels_per_establishment;
+  const farmFromStore = currentCompany?.establishments?.find(
+    (est) => est?.id?.toString() === farmId?.toString()
+  );
+  const currentParcelCount =
+    farmFromStore?.parcels?.length ?? establishmentData?.parcels?.length ?? 0;
+  const isAtParcelLimit =
+    !isEdit &&
+    typeof maxParcelsPerFarm === 'number' &&
+    maxParcelsPerFarm !== -1 &&
+    currentParcelCount >= maxParcelsPerFarm;
 
   // 🎯 Transparency-focused initial data mapping
   const getInitialData = () => {
@@ -236,7 +264,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
           description: 'The parcel has been successfully created.',
           status: 'success',
           duration: 5000,
-          isClosable: true,
+          isClosable: true
         });
 
         // ✅ Redirect to new parcel profile after creation
@@ -299,6 +327,11 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         isEdit={isEdit}
         establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
         establishmentCoordinates={establishmentCoordinates}
+        preFormAlert={
+          isAtParcelLimit ? (
+            <PlanLimitAlert limit={maxParcelsPerFarm} descriptionId="limits.parcelsReached" />
+          ) : undefined
+        }
       />
     </WriteAccessGuard>
   );

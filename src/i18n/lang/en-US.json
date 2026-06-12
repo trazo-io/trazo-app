@@ -4298,5 +4298,19 @@
   "roi.statusClosed": "Closed",
   "production.copyBuyerLink.button": "Copy buyer link",
   "production.copyBuyerLink.toastTitle": "Buyer link copied",
-  "production.copyBuyerLink.toastDescription": "Full record view for buyers and retailers."
+  "production.copyBuyerLink.toastDescription": "Full record view for buyers and retailers.",
+  "parcel.skipBoundary.action": "Save without boundary — draw it later",
+  "parcel.skipBoundary.caption": "A field boundary improves the map on your consumer page, but it isn't required to start logging events.",
+  "parcel.skipBoundary.nudgeMessage": "Add your field boundary to show the satellite map on your consumer page.",
+  "parcel.skipBoundary.nudgeAction": "Add boundary",
+  "parcel.skipBoundary.nudgeDismiss": "Dismiss",
+  "limits.planLimitReachedTitle": "Plan limit reached",
+  "limits.parcelsReached": "You've reached your plan's limit ({limit, plural, one {# parcel} other {# parcels}} per farm). Upgrade to add more.",
+  "limits.productionsReached": "You've reached your plan's limit ({limit, plural, one {# production} other {# productions}} per year). Upgrade to add more.",
+  "production.cropSearch.placeholder": "Search crop types...",
+  "production.cropSearch.recent": "Recent",
+  "production.cropSearch.allCrops": "All crops",
+  "production.cropSearch.noResults": "No crops found for \"{search}\"",
+  "voice.unavailableInBrowser": "Voice input isn't available in this browser — use the form or a template instead.",
+  "voice.microphoneBlocked": "Microphone access is blocked — enable it in your browser settings to use voice input."
 }

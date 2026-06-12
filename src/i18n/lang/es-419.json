@@ -4298,5 +4298,19 @@
   "roi.statusClosed": "Cerrada",
   "production.copyBuyerLink.button": "Copiar enlace para compradores",
   "production.copyBuyerLink.toastTitle": "Enlace para compradores copiado",
-  "production.copyBuyerLink.toastDescription": "Vista del registro completo para compradores y minoristas."
+  "production.copyBuyerLink.toastDescription": "Vista del registro completo para compradores y minoristas.",
+  "parcel.skipBoundary.action": "Guardar sin límite — dibújalo más tarde",
+  "parcel.skipBoundary.caption": "El límite del campo mejora el mapa de tu página para consumidores, pero no es necesario para empezar a registrar eventos.",
+  "parcel.skipBoundary.nudgeMessage": "Agrega el límite de tu campo para mostrar el mapa satelital en tu página para consumidores.",
+  "parcel.skipBoundary.nudgeAction": "Agregar límite",
+  "parcel.skipBoundary.nudgeDismiss": "Descartar",
+  "limits.planLimitReachedTitle": "Límite del plan alcanzado",
+  "limits.parcelsReached": "Alcanzaste el límite de tu plan ({limit, plural, one {# parcela} other {# parcelas}} por finca). Actualiza tu plan para agregar más.",
+  "limits.productionsReached": "Alcanzaste el límite de tu plan ({limit, plural, one {# producción} other {# producciones}} por año). Actualiza tu plan para agregar más.",
+  "production.cropSearch.placeholder": "Buscar tipos de cultivo...",
+  "production.cropSearch.recent": "Recientes",
+  "production.cropSearch.allCrops": "Todos los cultivos",
+  "production.cropSearch.noResults": "No se encontraron cultivos para \"{search}\"",
+  "voice.unavailableInBrowser": "La entrada de voz no está disponible en este navegador. Usa el formulario o una plantilla en su lugar.",
+  "voice.microphoneBlocked": "El acceso al micrófono está bloqueado. Actívalo en la configuración de tu navegador para usar la entrada de voz."
 }

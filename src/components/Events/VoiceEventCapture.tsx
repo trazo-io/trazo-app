@@ -30,6 +30,7 @@ import {
   FaBolt,
   FaRedo
 } from 'react-icons/fa';
+import { useIntl } from 'react-intl';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import {
   useProcessVoiceEventWithAIMutation,
@@ -74,6 +75,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const [processingTime, setProcessingTime] = useState(0);
   const hasAutoStarted = useRef(false);
   const toast = useToast();
+  const intl = useIntl();
 
   // Determine which voice provider to use (deepgram vs web speech API)
   const { data: voiceConfig, isLoading: isLoadingConfig } = useGetVoiceConfigQuery();
@@ -92,7 +94,8 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     transcript: webSpeechTranscript,
     listening: webSpeechListening,
     resetTranscript: webSpeechResetTranscript,
-    browserSupportsSpeechRecognition
+    browserSupportsSpeechRecognition,
+    isMicrophoneAvailable
   } = useSpeechRecognition();
 
   // ── Deepgram Nova-3 ──
@@ -134,6 +137,15 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     ? deepgramInterim || deepgramTranscript
     : webSpeechTranscript;
 
+  // Graceful degradation: neither Deepgram configured nor Web Speech API supported
+  // (e.g. Safari/iOS without Deepgram config) — show an info Alert instead of the recorder.
+  const voiceUnavailable = !isLoadingConfig && !useDeepgram && !browserSupportsSpeechRecognition;
+  // Microphone permission blocked: Web Speech exposes isMicrophoneAvailable;
+  // Deepgram surfaces a getUserMedia denial through its error string.
+  const micBlocked = useDeepgram
+    ? Boolean(deepgramError && deepgramError.toLowerCase().includes('microphone'))
+    : !isMicrophoneAvailable;
+
   // Web Speech API: auto-process when speech stops
   useEffect(() => {
     if (useDeepgram) return; // Deepgram handles this via onTranscriptComplete
@@ -148,9 +160,9 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     }
   }, [webSpeechTranscript, webSpeechListening, useDeepgram]);
 
-  // Show Deepgram errors as toast
+  // Show Deepgram errors as toast (mic-permission errors get a persistent Alert instead)
   useEffect(() => {
-    if (deepgramError) {
+    if (deepgramError && !deepgramError.toLowerCase().includes('microphone')) {
       toast({
         title: 'Voice Connection Error',
         description: deepgramError,
@@ -164,7 +176,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // Auto-start recording when component mounts with autoStart=true
   // Waits for voiceConfig to load so the correct provider (Deepgram vs Web Speech) is used
   useEffect(() => {
-    if (autoStart && isActive && !isLoadingConfig && !hasAutoStarted.current && !listening && !isProcessing) {
+    if (autoStart && isActive && !isLoadingConfig && !voiceUnavailable && !hasAutoStarted.current && !listening && !isProcessing) {
       hasAutoStarted.current = true;
       // Small delay to ensure component is fully mounted and mic permissions are ready
       const timer = setTimeout(() => {
@@ -354,17 +366,12 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     });
   };
 
-  // Show unsupported message only when Web Speech API is the provider AND browser doesn't support it
-  if (!useDeepgram && !browserSupportsSpeechRecognition) {
+  // Graceful degradation: replace the recorder with an info Alert when voice can't work here
+  if (voiceUnavailable) {
     return (
-      <Alert status="warning" borderRadius="md">
+      <Alert status="info" borderRadius="md">
         <AlertIcon />
-        <VStack align="start" spacing={2}>
-          <Text fontWeight="bold">Voice input not supported</Text>
-          <Text fontSize="sm">
-            Your browser doesn't support speech recognition. Please use Chrome, Edge, or Safari.
-          </Text>
-        </VStack>
+        <Text fontSize="sm">{intl.formatMessage({ id: 'voice.unavailableInBrowser' })}</Text>
       </Alert>
     );
   }
@@ -390,6 +397,14 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
       <CardBody>
         <VStack spacing={4} align="stretch" pt={4}>
+          {/* Microphone permission blocked */}
+          {micBlocked && (
+            <Alert status="warning" borderRadius="md">
+              <AlertIcon />
+              <Text fontSize="sm">{intl.formatMessage({ id: 'voice.microphoneBlocked' })}</Text>
+            </Alert>
+          )}
+
           {/* Recording Button */}
           <HStack justify="center" spacing={4}>
             <Tooltip
@@ -399,7 +414,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
                 colorScheme="green"
                 onClick={listening ? stopListening : startListening}
-                isDisabled={!isActive || isProcessing || isProcessingVoice}
+                isDisabled={!isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked}
                 size="lg"
                 variant={listening ? 'solid' : 'outline'}
                 animation={listening ? `${pulseRing} 1.5s ease-out infinite` : undefined}

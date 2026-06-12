@@ -161,6 +161,8 @@ interface StandardParcelFormTransparencyProps {
   establishmentName?: string;
   // GPS coordinates from parent establishment to center map when creating new parcel
   establishmentCoordinates?: { lat: number; lng: number };
+  // Optional informational content (e.g., plan-limit warning) rendered above the stepper
+  preFormAlert?: React.ReactNode;
 }
 
 const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
@@ -172,7 +174,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   isLoading = false,
   isEdit = false,
   establishmentName = '',
-  establishmentCoordinates
+  establishmentCoordinates,
+  preFormAlert
 }) => {
   const methods = useForm<TransparencyParcelFormData>({
     resolver: zodResolver(transparencyParcelSchema),
@@ -201,6 +204,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const [polygon, setPolygon] = useState<Array<{ lat: number; lng: number }>>(
     initialData?.polygon || []
   );
+  // Escape hatch: farmer chose to save without drawing a boundary (can draw it later)
+  const [boundarySkipped, setBoundarySkipped] = useState(false);
 
   const getPolygonLength = () => (polygon && Array.isArray(polygon) ? polygon.length : 0);
   const isValidPolygon = () => getPolygonLength() >= 3;
@@ -285,7 +290,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       case 0:
         return !!(formData.name && formData.name.trim() && formData.area > 0);
       case 1:
-        return isValidPolygon();
+        return isValidPolygon() || boundarySkipped;
       case 2:
         const transparencyDesc = formData.transparency_description || '';
         const isValid = transparencyDesc.trim().length >= 3;
@@ -349,6 +354,21 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const previousStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Skip boundary drawing: mark map step satisfied with an empty polygon and advance.
+  // The boundary improves the consumer page map but is not required to start logging events.
+  const handleSkipBoundary = () => {
+    setBoundarySkipped(true);
+    setPolygon([]);
+    setValue('polygon', []);
+    setValue('map_metadata', {
+      center: mapCenter,
+      zoom: mapZoom
+    });
+    if (currentStep === 1) {
+      setCurrentStep(2);
     }
   };
 
@@ -432,9 +452,14 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     try {
       const imageUrls = data.images && data.images.length > 0 ? data.images : uploadedImageUrls;
 
+      // Guard: only submit a complete boundary. Partial (1-2 point) or skipped
+      // boundaries are sent as an empty array so the backend never receives an
+      // invalid polygon. mapCenter/mapZoom always have safe defaults.
+      const safePolygon = isValidPolygon() ? polygon : [];
+
       const finalData = {
         ...data,
-        polygon,
+        polygon: safePolygon,
         map_metadata: {
           center: mapCenter,
           zoom: mapZoom
@@ -467,6 +492,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       showBackButton
       onBack={onCancel}
     >
+      {/* Optional pre-flight alert (e.g., subscription limit warning) */}
+      {preFormAlert}
+
       {/* Modern Progress Stepper - 4 Steps */}
       <StandardStepper
         steps={steps}
@@ -674,6 +702,18 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       )}
                     </HStack>
                   </Box>
+                )}
+
+                {/* Escape hatch: boundary drawing is the primary flow, but farmers can skip it */}
+                {!isValidPolygon() && (
+                  <VStack spacing={1} align="center" pt={2}>
+                    <StandardButton variant="ghost" size="sm" onClick={handleSkipBoundary}>
+                      {intl.formatMessage({ id: 'parcel.skipBoundary.action' })}
+                    </StandardButton>
+                    <Text fontSize="xs" color="gray.500" textAlign="center" maxW="420px">
+                      {intl.formatMessage({ id: 'parcel.skipBoundary.caption' })}
+                    </Text>
+                  </VStack>
                 )}
 
                 <HStack spacing={3} justify="space-between" pt={4}>

@@ -13,7 +13,6 @@ interface Route {
   layout: string;
   isDashboard?: boolean;
   regex: RegExp;
-  isCertifications?: boolean;
   isCommercial?: boolean;
   isCarbonDashboard?: boolean;
   isIoTDashboard?: boolean;

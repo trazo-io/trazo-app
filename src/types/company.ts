@@ -60,6 +60,8 @@ export interface Parcel {
   description?: string;
   image?: string;
   has_current_production?: boolean;
+  /** Name of the crop in the current production (from ParcelBasicSerializer) */
+  product?: string | null;
   // Add other properties as needed
 }
 
@@ -72,6 +74,8 @@ export interface Subscription {
   used_productions?: number;
   scan_count?: number;
   used_storage_gb?: number;
+  /** Base plan features plus purchased add-ons (preferred over plan.features) */
+  effective_limits?: { [key: string]: any };
 }
 
 export interface Plan {

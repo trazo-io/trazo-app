@@ -33,8 +33,6 @@ import AuthLayout from 'layouts/Auth';
 import ConsumerProductLayout from 'components/Layout/ConsumerProductLayout';
 //@ts-ignore
 import Authenticated from './utils/protections/Authenticated';
-//@ts-ignore
-import CertificationsView from 'views/Dashboard/Certifications';
 import OSPView from 'views/Dashboard/OSP/OSPView';
 //@ts-ignore
 import CheckAuth from './utils/protections/CheckAuth';
@@ -425,16 +423,6 @@ const App = () => {
                     element={<FinishProduction />}
                   />
                   <Route path="farm/:farmId/osp" exact element={<OSPView />} />
-                  <Route
-                    path="farm/:farmId/certifications/parcels"
-                    exact
-                    element={<CertificationsView />}
-                  />
-                  <Route
-                    path="farm/:farmId/certifications/events"
-                    exact
-                    element={<CertificationsView />}
-                  />
                   <Route path="farm/:farmId/commercial" exact element={<CommercialView />} />
                   <Route path="farm/:farmId/scans" exact element={<AllScansView />} />
                   <Route path="farm/:farmId/reviews" exact element={<AllReviewsView />} />

@@ -24,6 +24,8 @@ import {
   StatNumber,
   StatHelpText,
   Input,
+  InputGroup,
+  InputLeftElement,
   Select,
   NumberInput,
   NumberInputField,
@@ -52,7 +54,8 @@ import {
   FaEdit,
   FaPlus,
   FaMinus,
-  FaArrowRight
+  FaArrowRight,
+  FaSearch
 } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
@@ -77,6 +80,7 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+import { PlanLimitAlert } from 'components/Subscription/PlanLimitAlert';
 import { getEventTypeMapping, getEventDataForType } from 'utils/eventTypeMapping';
 import { useIntl } from 'react-intl';
 
@@ -121,6 +125,220 @@ interface QuickStartProductionProps {
 
 // Product tour
 import { useTour } from 'hooks/useTour';
+
+interface CropTypeOption {
+  id: number;
+  name: string;
+  category: string;
+  slug: string;
+}
+
+interface CropTypeSearchPickerProps {
+  value: string;
+  onSelect: (cropTypeId: string) => void;
+  cropTypes: CropTypeOption[];
+  recentIds: string[];
+  isDisabled?: boolean;
+}
+
+// Searchable crop picker: type-to-filter over ~328 crop types with the farm's
+// previously-used crops surfaced first under a "Recent" label.
+const CropTypeSearchPicker: React.FC<CropTypeSearchPickerProps> = ({
+  value,
+  onSelect,
+  cropTypes,
+  recentIds,
+  isDisabled = false
+}) => {
+  const intl = useIntl();
+  const listId = React.useId();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [highlightIndex, setHighlightIndex] = useState(0);
+
+  const selectedCrop = useMemo(
+    () => cropTypes.find((ct) => ct.id.toString() === value) || null,
+    [cropTypes, value]
+  );
+
+  const { recentOptions, otherOptions, flatOptions } = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    const matches = cropTypes.filter((ct) => !term || ct.name.toLowerCase().includes(term));
+    const sorted = [...matches].sort((a, b) => a.name.localeCompare(b.name));
+    const recent = sorted.filter((ct) => recentIds.includes(ct.id.toString()));
+    const rest = sorted.filter((ct) => !recentIds.includes(ct.id.toString()));
+    return { recentOptions: recent, otherOptions: rest, flatOptions: [...recent, ...rest] };
+  }, [cropTypes, recentIds, searchTerm]);
+
+  // Reset highlight when the filtered list changes
+  useEffect(() => {
+    setHighlightIndex(0);
+  }, [searchTerm, isOpen]);
+
+  // Keep the highlighted option visible while navigating with arrow keys
+  useEffect(() => {
+    if (!isOpen) return;
+    document
+      .getElementById(`${listId}-option-${highlightIndex}`)
+      ?.scrollIntoView({ block: 'nearest' });
+  }, [highlightIndex, isOpen, listId]);
+
+  const handleSelect = (cropType: CropTypeOption) => {
+    onSelect(cropType.id.toString());
+    setSearchTerm('');
+    setIsOpen(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!isOpen) {
+        setIsOpen(true);
+        return;
+      }
+      setHighlightIndex((i) => Math.min(i + 1, Math.max(flatOptions.length - 1, 0)));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      // Select instead of submitting the surrounding form
+      e.preventDefault();
+      if (!isOpen) {
+        setIsOpen(true);
+        return;
+      }
+      const option = flatOptions[highlightIndex] || flatOptions[0];
+      if (option) handleSelect(option);
+    } else if (e.key === 'Escape') {
+      setIsOpen(false);
+      setSearchTerm('');
+    }
+  };
+
+  if (isDisabled) {
+    return (
+      <StandardInput
+        value={selectedCrop?.name || ''}
+        isReadOnly
+        isDisabled
+        bg="gray.100"
+        cursor="not-allowed"
+      />
+    );
+  }
+
+  const renderOption = (cropType: CropTypeOption, index: number) => {
+    const isSelected = cropType.id.toString() === value;
+    return (
+      <Box
+        key={cropType.id}
+        id={`${listId}-option-${index}`}
+        role="option"
+        aria-selected={isSelected}
+        px={4}
+        minH="44px"
+        display="flex"
+        alignItems="center"
+        cursor="pointer"
+        bg={index === highlightIndex ? 'green.50' : 'transparent'}
+        _hover={{ bg: 'green.50' }}
+        onMouseDown={(e) => {
+          // Select before the input blur closes the list
+          e.preventDefault();
+          handleSelect(cropType);
+        }}
+        onMouseEnter={() => setHighlightIndex(index)}
+      >
+        <Text fontSize="md" color="gray.700">
+          {cropType.name}
+        </Text>
+        {isSelected && <Icon as={FaCheckCircle} color="green.500" ml="auto" boxSize={4} />}
+      </Box>
+    );
+  };
+
+  const groupLabel = (messageId: string) => (
+    <Text
+      px={4}
+      pt={2}
+      pb={1}
+      fontSize="xs"
+      fontWeight="semibold"
+      color="gray.500"
+      textTransform="uppercase"
+      letterSpacing="wide"
+    >
+      {intl.formatMessage({ id: messageId })}
+    </Text>
+  );
+
+  return (
+    <Box position="relative">
+      <InputGroup size="lg">
+        <InputLeftElement pointerEvents="none" h="full">
+          <Icon as={FaSearch} color="gray.400" boxSize={4} />
+        </InputLeftElement>
+        <StandardInput
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-autocomplete="list"
+          pl={10}
+          value={isOpen ? searchTerm : selectedCrop?.name || ''}
+          placeholder={intl.formatMessage({ id: 'production.cropSearch.placeholder' })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setSearchTerm(e.target.value);
+            if (!isOpen) setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          onBlur={() => {
+            setIsOpen(false);
+            setSearchTerm('');
+          }}
+          onKeyDown={handleKeyDown}
+        />
+      </InputGroup>
+      {isOpen && (
+        <Box
+          role="listbox"
+          position="absolute"
+          top="100%"
+          left={0}
+          right={0}
+          mt={1}
+          maxH="240px"
+          overflowY="auto"
+          bg="white"
+          borderWidth="1px"
+          borderColor="gray.200"
+          borderRadius="lg"
+          boxShadow="lg"
+          zIndex={20}
+          py={1}
+        >
+          {flatOptions.length === 0 ? (
+            <Text px={4} py={3} fontSize="sm" color="gray.500">
+              {intl.formatMessage(
+                { id: 'production.cropSearch.noResults' },
+                { search: searchTerm }
+              )}
+            </Text>
+          ) : (
+            <>
+              {recentOptions.length > 0 && groupLabel('production.cropSearch.recent')}
+              {recentOptions.map((cropType, index) => renderOption(cropType, index))}
+              {recentOptions.length > 0 &&
+                otherOptions.length > 0 &&
+                groupLabel('production.cropSearch.allCrops')}
+              {otherOptions.map((cropType, index) =>
+                renderOption(cropType, recentOptions.length + index)
+              )}
+            </>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   parcelId: propParcelId,
@@ -233,6 +451,35 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       isLoading: isLoadingCropTypes
     });
   }, [cropTypesData, cropTypesError, isLoadingCropTypes]);
+
+  // Previously-used crops for this farm (derived from parcels' current production
+  // crop names already in the Redux company state — no extra fetch needed)
+  const recentCropTypeIds = useMemo(() => {
+    if (!cropTypesData?.length) return [] as string[];
+    const farm = currentCompany?.establishments?.find(
+      (est) => est?.id?.toString() === farmId?.toString()
+    );
+    const usedNames = new Set<string>();
+    (farm?.parcels || []).forEach((parcel) => {
+      if (parcel?.product) usedNames.add(parcel.product.toLowerCase());
+    });
+    if (usedNames.size === 0) return [] as string[];
+    return cropTypesData
+      .filter((ct) => usedNames.has(ct.name.toLowerCase()))
+      .map((ct) => ct.id.toString());
+  }, [cropTypesData, currentCompany, farmId]);
+
+  // Pre-flight subscription limit check (informational only — backend enforces)
+  const subscription = currentCompany?.subscription;
+  const subscriptionLimits: Record<string, any> =
+    subscription?.effective_limits || subscription?.plan?.features || {};
+  const maxProductionsPerYear = subscriptionLimits?.max_productions_per_year;
+  const usedProductions = subscription?.used_productions ?? 0;
+  const isAtProductionLimit =
+    !isEdit &&
+    typeof maxProductionsPerYear === 'number' &&
+    maxProductionsPerYear !== -1 &&
+    usedProductions >= maxProductionsPerYear;
 
   // Form setup
   const {
@@ -428,12 +675,12 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       // Auto-set production method from template farming approach
       if (templateDetail.system_type) {
         const methodMap: Record<string, string> = {
-          'organic': 'organic',
-          'conventional': 'conventional',
-          'regenerative': 'regenerative',
-          'integrated': 'integrated',
-          'no_till': 'no_till',
-          'precision': 'conventional',
+          organic: 'organic',
+          conventional: 'conventional',
+          regenerative: 'regenerative',
+          integrated: 'integrated',
+          no_till: 'no_till',
+          precision: 'conventional'
         };
         setValue('production_method', methodMap[templateDetail.system_type] || 'conventional');
       }
@@ -709,6 +956,14 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       >
         <form onSubmit={handleSubmit(onSubmit)}>
           <VStack spacing={8} align="stretch">
+            {/* Pre-flight plan limit warning (form stays usable; backend enforces) */}
+            {isAtProductionLimit && (
+              <PlanLimitAlert
+                limit={maxProductionsPerYear}
+                descriptionId="limits.productionsReached"
+              />
+            )}
+
             {/* Template Selection Section - Only show in create mode */}
             {!isEdit && (
               <Box data-tour="template-events">
@@ -883,25 +1138,18 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         name="crop_type_id"
                         control={control}
                         render={({ field }) => (
-                          <StandardSelect
-                            {...field}
-                            placeholder="Select your crop type..."
-                            isDisabled={isEdit}
-                            bg={isEdit ? 'gray.100' : 'white'}
-                            cursor={isEdit ? 'not-allowed' : 'pointer'}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                          <CropTypeSearchPicker
+                            value={field.value}
+                            onSelect={(cropTypeId) => {
                               if (!isEdit) {
-                                field.onChange(e);
-                                setSelectedCropTypeId(e.target.value);
+                                field.onChange(cropTypeId);
+                                setSelectedCropTypeId(cropTypeId);
                               }
                             }}
-                          >
-                            {cropTypesData?.map((cropType) => (
-                              <option key={cropType.id} value={cropType.id.toString()}>
-                                {cropType.name}
-                              </option>
-                            ))}
-                          </StandardSelect>
+                            cropTypes={cropTypesData || []}
+                            recentIds={recentCropTypeIds}
+                            isDisabled={isEdit}
+                          />
                         )}
                       />
                       {selectedCropTypeId && cropTypesData && (
@@ -1114,7 +1362,14 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   subtitle={intl.formatMessage({ id: 'production.template.eventsSubtitle' })}
                 >
                   {/* Helper note */}
-                  <Box p={3} mb={4} bg="green.50" borderRadius="md" border="1px solid" borderColor="green.100">
+                  <Box
+                    p={3}
+                    mb={4}
+                    bg="green.50"
+                    borderRadius="md"
+                    border="1px solid"
+                    borderColor="green.100"
+                  >
                     <Text fontSize="xs" color="green.700">
                       {intl.formatMessage({ id: 'production.template.eventsHelperNote' })}
                     </Text>

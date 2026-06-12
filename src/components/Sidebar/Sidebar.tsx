@@ -79,7 +79,6 @@ function Sidebar(props: SidebarProps) {
   // this is for the rest of the collapses
 
   const [dynamicRoutes, setDynamicRoutes] = useState<Route[]>([]);
-  const [certificationsRoutes, setCertificationsRoutes] = useState([]);
   const [commercialDynamicRoutes, setCommercialDynamicRoutes] = useState([]);
   const [transparencyDynamicRoutes, setTransparencyDynamicRoutes] = useState([]);
   const [ospDynamicRoutes, setOspDynamicRoutes] = useState([]);
@@ -126,28 +125,6 @@ function Sidebar(props: SidebarProps) {
           })
         };
       });
-
-    const certificationsRoutes = establishments &&
-      establishments.length > 0 && [
-        {
-          name: 'Parcels',
-          path: `/dashboard/farm/${establishments[0].id}/certifications/parcels`,
-          secondaryNavbar: true,
-          layout: '/admin',
-          regex: new RegExp(
-            `^\\/admin\\/dashboard\\/farm\\/${establishments[0].id}\\/certifications\\/parcels$`
-          )
-        },
-        {
-          name: 'Events',
-          path: `/dashboard/farm/${establishments[0].id}/certifications/events`,
-          secondaryNavbar: true,
-          layout: '/admin',
-          regex: new RegExp(
-            `^\\/admin\\/dashboard\\/farm\\/${establishments[0].id}\\/certifications\\/events$`
-          )
-        }
-      ];
 
     const commercialDynamicRoutes =
       establishments &&
@@ -208,7 +185,6 @@ function Sidebar(props: SidebarProps) {
 
     if (establishments) {
       setDynamicRoutes(dynamicRoutes);
-      setCertificationsRoutes(certificationsRoutes);
       setCommercialDynamicRoutes(commercialDynamicRoutes);
       setTransparencyDynamicRoutes(transparencyDynamicRoutes);
       setOspDynamicRoutes(ospDynamicRoutes);
@@ -489,7 +465,6 @@ function Sidebar(props: SidebarProps) {
               ps={prop.icon && !prop.isCompanySettings ? null : sidebarWidth === 275 ? null : '8px'}
             >
               {(dynamicRoutes ||
-                certificationsRoutes ||
                 commercialDynamicRoutes ||
                 transparencyDynamicRoutes ||
                 iotDynamicRoutes) && (
@@ -502,8 +477,6 @@ function Sidebar(props: SidebarProps) {
                           const routes =
                             prop.isDashboard && !prop.items
                               ? dynamicRoutes
-                              : prop.isCertifications
-                              ? certificationsRoutes
                               : prop.isCommercial
                               ? commercialDynamicRoutes
                               : prop.isTransparencyDashboard
@@ -520,8 +493,6 @@ function Sidebar(props: SidebarProps) {
                       createAccordionLinks(
                         prop.isDashboard && !prop.items
                           ? dynamicRoutes
-                          : prop.isCertifications
-                          ? certificationsRoutes
                           : prop.isCommercial
                           ? commercialDynamicRoutes
                           : prop.isTransparencyDashboard
