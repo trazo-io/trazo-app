@@ -307,6 +307,23 @@ const GeneralTab = forwardRef(
     }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
     const onSubmit = (data) => {
+      // F39 fix (2026-06): guard the contamination-incident toggle.
+      const isIncident = data.is_contamination_incident === 'true';
+      if (isIncident && !data.contamination_source) {
+        // The "required" marker on contamination_source was cosmetic — enforce it.
+        mainInfoMethods.setError('contamination_source', {
+          type: 'manual',
+          message: 'Contamination source is required when logging an incident'
+        });
+        return;
+      }
+      if (!isIncident) {
+        // Don't persist orphaned contamination columns when the toggle is OFF
+        // (e.g. fields filled, then toggled off) — they'd save with the incident
+        // flag false but populated source/area.
+        data.contamination_source = '';
+        data.contamination_affected_area = '';
+      }
       onSubmitHandler(data);
     };
 
@@ -612,9 +629,7 @@ const GeneralTab = forwardRef(
                         render={({ field }) => (
                           <Switch
                             isChecked={field.value === 'true'}
-                            onChange={(e) =>
-                              field.onChange(e.target.checked ? 'true' : 'false')
-                            }
+                            onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
                             colorScheme="orange"
                             size="lg"
                           />
@@ -694,9 +709,7 @@ const GeneralTab = forwardRef(
                             <Controller
                               name="corrective_action_date"
                               control={mainInfoMethods.control}
-                              render={({ field }) => (
-                                <StandardInput {...field} type="date" />
-                              )}
+                              render={({ field }) => <StandardInput {...field} type="date" />}
                             />
                           </StandardField>
                         </SimpleGrid>
@@ -743,9 +756,7 @@ const GeneralTab = forwardRef(
                               <Controller
                                 name="certifier_notification_date"
                                 control={mainInfoMethods.control}
-                                render={({ field }) => (
-                                  <StandardInput {...field} type="date" />
-                                )}
+                                render={({ field }) => <StandardInput {...field} type="date" />}
                               />
                             </StandardField>
                           </SimpleGrid>

@@ -141,11 +141,29 @@ const formatElectricitySource = (v: unknown): string | null =>
   lookupLabel(ELECTRICITY_SOURCE_LABELS, v);
 const formatEquipmentOperationType = (v: unknown): string | null =>
   lookupLabel(EQUIPMENT_OPERATION_TYPE_LABELS, v);
-const formatEquipmentType = (v: unknown): string | null =>
-  lookupLabel(EQUIPMENT_TYPE_LABELS, v);
+const formatEquipmentType = (v: unknown): string | null => lookupLabel(EQUIPMENT_TYPE_LABELS, v);
 const formatGrowthStage = (v: unknown): string | null => lookupLabel(GROWTH_STAGE_LABELS, v);
 const formatHarvestMethod = (v: unknown): string | null => lookupLabel(HARVEST_METHOD_LABELS, v);
 const formatProcessingType = (v: unknown): string | null => lookupLabel(PROCESSING_TYPE_LABELS, v);
+
+// Batch 3 (2026-06): Frost Protection (FP) method + Mowing (MO) floor-management
+// type dropdowns. Mirror ProductionTab.jsx option values.
+const PROTECTION_METHOD_LABELS: Record<string, string> = {
+  wind_machine: 'Wind machine',
+  orchard_heater: 'Orchard heater(s)',
+  under_tree_sprinkler: 'Under-tree sprinklers',
+  other: 'Other'
+};
+const FLOOR_MANAGEMENT_LABELS: Record<string, string> = {
+  mow: 'Mow',
+  mulch: 'Mulch',
+  cover_crop_mgmt: 'Cover-crop management',
+  herbicide_strip: 'Herbicide strip'
+};
+const formatProtectionMethod = (v: unknown): string | null =>
+  lookupLabel(PROTECTION_METHOD_LABELS, v);
+const formatFloorManagementType = (v: unknown): string | null =>
+  lookupLabel(FLOOR_MANAGEMENT_LABELS, v);
 
 const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   // ---- Core identity (ALL subtypes) ----
@@ -294,10 +312,12 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedSearchAttempts',
     valueType: 'text',
     visibleForSubtypes: ['PL'],
+    // NOP 5029 commercial-availability search log embeds contacted-supplier identities —
+    // commercially sensitive, producer/certifier-only. NO consumer_card surface (P0 leak fix,
+    // mirrors chemical supplier_name; backend also strips it from the public payload).
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
 
@@ -320,10 +340,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedSupplierName',
     valueType: 'text',
     visibleForSubtypes: ['PL'],
+    // Seed vendor identity — producer/certifier-only. NO consumer_card surface (P0 leak fix).
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
   {
@@ -331,10 +351,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedPurchaseDate',
     valueType: 'date',
     visibleForSubtypes: ['PL'],
+    // Seed purchase record — producer/certifier-only. NO consumer_card surface (P0 leak fix).
     surfaces: {
       modal: 'details',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -342,10 +362,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedPurchaseInvoice',
     valueType: 'text',
     visibleForSubtypes: ['PL'],
+    // Seed invoice number — producer/certifier-only. NO consumer_card surface (P0 leak fix).
     surfaces: {
       modal: 'details',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -721,6 +741,64 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
 
+  // ---- Frost Protection (FP) + Mowing/Orchard-Floor (MO) — Batch 3 (2026-06) ----
+  // Backend stores these in extra_data; formatters fall back there so the Event
+  // Details Modal (raw API data, no normalizer) also renders them. These are
+  // consumer-relevant practice signals (transparency-first), so they surface on
+  // the consumer card too.
+  {
+    name: 'protection_method',
+    labelKey: 'events.production.fields.protectionMethod',
+    valueType: 'enum',
+    formatter: (v, event) => {
+      const raw =
+        (typeof v === 'string' && v) || ((event as any)?.extra_data?.protection_method ?? null);
+      return formatProtectionMethod(raw);
+    },
+    visibleForSubtypes: ['FP'],
+    surfaces: {
+      timeline: 'immediate',
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate',
+      consumer_timeline: 'immediate'
+    }
+  },
+  {
+    name: 'low_temperature',
+    labelKey: 'events.production.fields.lowTemperature',
+    valueType: 'number',
+    formatter: (v, event) => {
+      const raw = v ?? (event as any)?.extra_data?.low_temperature ?? null;
+      if (raw === null || raw === '' || isNaN(Number(raw))) return null;
+      return `${Number(raw)} °C`;
+    },
+    visibleForSubtypes: ['FP'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary',
+      consumer_card: 'details'
+    }
+  },
+  {
+    name: 'floor_management_type',
+    labelKey: 'events.production.fields.floorManagementType',
+    valueType: 'enum',
+    formatter: (v, event) => {
+      const raw =
+        (typeof v === 'string' && v) || ((event as any)?.extra_data?.floor_management_type ?? null);
+      return formatFloorManagementType(raw);
+    },
+    visibleForSubtypes: ['MO'],
+    surfaces: {
+      timeline: 'immediate',
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate',
+      consumer_timeline: 'immediate'
+    }
+  },
+
   // ---- Fuel & carbon (ALL subtypes, carbon-relevant) ----
   {
     name: 'fuel_consumed',
@@ -888,7 +966,10 @@ export const productionEventRegistry: EventRegistryEntry<ProductionSubtype, Prod
     { code: 'TH', labelKey: 'events.production.subtypes.thinning', photoTier: 'optional' },
     { code: 'PO', labelKey: 'events.production.subtypes.pollination', photoTier: 'optional' },
     { code: 'PH', labelKey: 'events.production.subtypes.postHarvest', photoTier: 'optional' },
-    { code: 'CM', labelKey: 'events.production.subtypes.canopyManagement', photoTier: 'optional' }
+    { code: 'CM', labelKey: 'events.production.subtypes.canopyManagement', photoTier: 'optional' },
+    // Batch 3 (2026-06): Scope-1 fuel ops
+    { code: 'FP', labelKey: 'events.production.subtypes.frostProtection', photoTier: 'optional' },
+    { code: 'MO', labelKey: 'events.production.subtypes.mowing', photoTier: 'optional' }
   ],
   defaultPhotoTier: 'recommended',
   fields: PRODUCTION_FIELDS

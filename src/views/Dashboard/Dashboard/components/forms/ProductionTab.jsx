@@ -103,7 +103,10 @@ const PRODUCTION_TYPE_NAMES = {
   EM: 'Equipment Maintenance', // ✅ FIXED: Was EQ, now EM (Production subtype)
   PO: 'Pollination',
   PH: 'Post-Harvest Processing',
-  CM: 'Canopy Management'
+  CM: 'Canopy Management',
+  // Batch 3 (2026-06): Scope-1 fuel ops that had no structured home before.
+  FP: 'Frost Protection',
+  MO: 'Mowing / Orchard-Floor'
 };
 
 // ENHANCED SCHEMA - Carbon calculation focused with Phase 1.3 validation
@@ -289,6 +292,15 @@ const formSchemaMainInfo = object({
       const num = parseInt(val, 10);
       return !isNaN(num) && num >= 1;
     }, 'Pass number must be at least 1'),
+  // Batch 3 (2026-06): Frost Protection (FP) + Mowing (MO) specific extra_data fields
+  protection_method: string().optional(), // FP: wind_machine / orchard_heater / under_tree_sprinkler
+  low_temperature: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      return !isNaN(parseFloat(val));
+    }, 'Low temperature must be a number'),
+  floor_management_type: string().optional(), // MO: mow / mulch / cover_crop_mgmt / herbicide_strip
   // Phase 2: Pruning Summary Mode (mirrors IR and HA summary pattern)
   pruning_passes: string()
     .optional()
@@ -406,6 +418,17 @@ const ProductionTab = forwardRef(
           initialValues.canopy_operation || initialValues.extra_data?.canopy_operation || '',
         pass_number:
           (initialValues.pass_number ?? initialValues.extra_data?.pass_number)?.toString() || '',
+        // Batch 3 (2026-06): Frost Protection (FP) + Mowing (MO) fields
+        protection_method:
+          initialValues.protection_method || initialValues.extra_data?.protection_method || '',
+        low_temperature:
+          (
+            initialValues.low_temperature ?? initialValues.extra_data?.low_temperature
+          )?.toString() || '',
+        floor_management_type:
+          initialValues.floor_management_type ||
+          initialValues.extra_data?.floor_management_type ||
+          '',
         // Phase 2: Pruning Summary Mode
         pruning_passes: initialValues.pruning_passes?.toString() || '',
         // NOP Compliance: Equipment Cleaning Logs (7 CFR 205.272)
@@ -538,6 +561,17 @@ const ProductionTab = forwardRef(
             initialValues.canopy_operation || initialValues.extra_data?.canopy_operation || '',
           pass_number:
             (initialValues.pass_number ?? initialValues.extra_data?.pass_number)?.toString() || '',
+          // Batch 3 (2026-06): Frost Protection (FP) + Mowing (MO) fields
+          protection_method:
+            initialValues.protection_method || initialValues.extra_data?.protection_method || '',
+          low_temperature:
+            (
+              initialValues.low_temperature ?? initialValues.extra_data?.low_temperature
+            )?.toString() || '',
+          floor_management_type:
+            initialValues.floor_management_type ||
+            initialValues.extra_data?.floor_management_type ||
+            '',
           // Phase 2: Pruning Summary Mode
           pruning_passes: initialValues.pruning_passes?.toString() || '',
           // NOP Compliance: Equipment Cleaning Logs (7 CFR 205.272)
@@ -674,6 +708,10 @@ const ProductionTab = forwardRef(
       'pollinator_type',
       'processing_type',
       'canopy_operation',
+      // Batch 3 (2026-06): Frost Protection (FP) + Mowing (MO) subtype fields
+      'protection_method',
+      'low_temperature',
+      'floor_management_type',
       // NOP Compliance: Equipment Cleaning Logs (7 CFR 205.272)
       'cleaning_date',
       'cleaning_method',
@@ -835,6 +873,11 @@ const ProductionTab = forwardRef(
         growth_stage: data.growth_stage || undefined,
         // Phase 2: Brix level for HA events (top-level ProductionEvent field)
         brix_level: data.brix_level ? parseFloat(data.brix_level) : undefined,
+        // F28 fix (2026-06): the Production Efficiency field renders ONLY for HA
+        // (productionType === 'HA' gate), but its 'normal' default was spread via
+        // ...data and submitted for every other subtype — a phantom value the
+        // farmer never set. Only send it for HA.
+        production_efficiency: data.type === 'HA' ? data.production_efficiency : undefined,
         // Empty date strings from default form state would fail backend DateField
         // validation ("Date has wrong format"). cleaning_date is a top-level
         // ProductionEvent DateField — coerce "" → null across every subtype, not
@@ -914,6 +957,18 @@ const ProductionTab = forwardRef(
           ...(data.type === 'CM' && {
             canopy_operation: data.canopy_operation || undefined,
             pass_number: data.pass_number ? parseInt(data.pass_number, 10) : undefined
+          }),
+          // Batch 3 (2026-06): Frost Protection (FP) extra_data fields
+          ...(data.type === 'FP' && {
+            protection_method: data.protection_method || undefined,
+            low_temperature:
+              data.low_temperature !== '' && data.low_temperature != null
+                ? parseFloat(data.low_temperature)
+                : undefined
+          }),
+          // Batch 3 (2026-06): Mowing / Orchard-Floor (MO) extra_data fields
+          ...(data.type === 'MO' && {
+            floor_management_type: data.floor_management_type || undefined
           }),
           // Production method (manual-operation detection): stored in extra_data.method
           // for consistency with demo data format. Backend reads both top-level and extra_data.
@@ -1001,6 +1056,13 @@ const ProductionTab = forwardRef(
                             </option>
                             <option value="CM">
                               🌿 Canopy Management - Pruning, hedging, leaf pulling, thinning
+                            </option>
+                            {/* Batch 3 (2026-06): Scope-1 fuel ops previously carbon-invisible */}
+                            <option value="FP">
+                              ❄️ Frost Protection - Wind machines / heaters
+                            </option>
+                            <option value="MO">
+                              🌱 Mowing / Orchard-Floor - Mow, mulch, floor management
                             </option>
                           </StandardSelect>
                         )}
@@ -1269,10 +1331,7 @@ const ProductionTab = forwardRef(
                               name="sanitizer_name"
                               control={methods.control}
                               render={({ field }) => (
-                                <StandardInput
-                                  {...field}
-                                  placeholder="e.g., Sodium hypochlorite"
-                                />
+                                <StandardInput {...field} placeholder="e.g., Sodium hypochlorite" />
                               )}
                             />
                           </StandardField>
@@ -2261,6 +2320,95 @@ const ProductionTab = forwardRef(
                   </SectionBox>
                 )}
 
+                {/* Batch 3 (2026-06): Frost Protection (FP) — wind machines / heaters.
+                    Fuel type, fuel consumed, equipment hours and area are captured by the
+                    shared fuel/area sections below and feed the carbon calculation. */}
+                {productionType === 'FP' && (
+                  <SectionBox variant="highlighted">
+                    <SectionHeader
+                      icon={FaShieldAlt}
+                      iconColor="blue.600"
+                      title="Frost Protection Details"
+                      badge="Scope-1 Fuel"
+                      badgeColorScheme="blue"
+                      description="Document the frost-protection method and conditions. Record the equipment fuel and run hours in the Fuel & Equipment section below so the carbon impact is captured."
+                    />
+                    <VStack spacing={4} align="stretch">
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        <StandardField label="Protection Method" helpText="How frost was mitigated">
+                          <Controller
+                            name="protection_method"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardSelect {...field} placeholder="Select method...">
+                                <option value="wind_machine">Wind machine</option>
+                                <option value="orchard_heater">Orchard heater(s)</option>
+                                <option value="under_tree_sprinkler">Under-tree sprinklers</option>
+                                <option value="other">Other (describe in notes)</option>
+                              </StandardSelect>
+                            )}
+                          />
+                        </StandardField>
+
+                        <StandardField
+                          label="Low Temperature (°C)"
+                          error={errors.low_temperature?.message}
+                          helpText="Lowest temperature that triggered protection"
+                        >
+                          <Controller
+                            name="low_temperature"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardInput
+                                {...field}
+                                type="number"
+                                step="0.1"
+                                placeholder="e.g., -2.0"
+                              />
+                            )}
+                          />
+                        </StandardField>
+                      </SimpleGrid>
+                    </VStack>
+                  </SectionBox>
+                )}
+
+                {/* Batch 3 (2026-06): Mowing / Orchard-Floor (MO). Fuel/area/hours captured
+                    by the shared sections below; distinct from CU (tillage) carbon profile. */}
+                {productionType === 'MO' && (
+                  <SectionBox variant="highlighted">
+                    <SectionHeader
+                      icon={FaSeedling}
+                      iconColor="green.600"
+                      title="Orchard-Floor Management"
+                      badge="Scope-1 Fuel"
+                      badgeColorScheme="green"
+                      description="Document the floor-management operation. Record equipment fuel and run hours in the Fuel & Equipment section below so the carbon impact is captured."
+                    />
+                    <VStack spacing={4} align="stretch">
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        <StandardField
+                          label="Floor Management Type"
+                          helpText="The operation performed on the orchard floor / row middles"
+                        >
+                          <Controller
+                            name="floor_management_type"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardSelect {...field} placeholder="Select operation...">
+                                <option value="mow">Mow</option>
+                                <option value="mulch">Mulch</option>
+                                <option value="cover_crop_mgmt">Cover-crop management</option>
+                                <option value="herbicide_strip">Herbicide strip</option>
+                              </StandardSelect>
+                            )}
+                          />
+                        </StandardField>
+                      </SimpleGrid>
+                    </VStack>
+                  </SectionBox>
+                )}
+
                 {/* Phase 2: Pruning Summary Mode (mirrors IR and HA summary pattern) */}
                 {productionType === 'PR' && (
                   <SectionBox variant="highlighted">
@@ -2407,9 +2555,20 @@ const ProductionTab = forwardRef(
                       {/* CRITICAL FIX (2025-01-21): Removed EQ (standalone Equipment type 4), kept EM (Production subtype) */}
                       {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Added IR for electric irrigation pumps, PR/TH for powered pruning/thinning */}
                       {/* Phase 2: Added PH (Post-Harvest Processing) for processing equipment fuel */}
-                      {['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM', 'PH', 'CM'].includes(
-                        productionType
-                      ) && (
+                      {[
+                        'PL',
+                        'HA',
+                        'IR',
+                        'PR',
+                        'TR',
+                        'CU',
+                        'TH',
+                        'EM',
+                        'PH',
+                        'CM',
+                        'FP',
+                        'MO'
+                      ].includes(productionType) && (
                         <StandardField
                           label="Fuel Type"
                           error={errors.fuel_type?.message}
@@ -2436,9 +2595,20 @@ const ProductionTab = forwardRef(
                       {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Added IR for electric irrigation pumps, PR/TH for powered pruning/thinning */}
                       {/* IRRIGATION PUMP FIX (2026-02-19): Hide Energy Amount for electric IR — energy auto-calculated from water volume × pump factor */}
                       {/* Phase 2: Added PH (Post-Harvest Processing) and CM (Canopy Management) */}
-                      {['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM', 'PH', 'CM'].includes(
-                        productionType
-                      ) && (
+                      {[
+                        'PL',
+                        'HA',
+                        'IR',
+                        'PR',
+                        'TR',
+                        'CU',
+                        'TH',
+                        'EM',
+                        'PH',
+                        'CM',
+                        'FP',
+                        'MO'
+                      ].includes(productionType) && (
                         <>
                           {/* For electric irrigation, energy is auto-calculated from water volume + water source */}
                           {productionType === 'IR' && watch('fuel_type') !== 'diesel' ? (
@@ -2713,9 +2883,7 @@ const ProductionTab = forwardRef(
                                   {...field}
                                   placeholder="Select certification status..."
                                 >
-                                  <option value="certified_organic">
-                                    🌱 Certified Organic
-                                  </option>
+                                  <option value="certified_organic">🌱 Certified Organic</option>
                                   <option value="transitional">🔄 Transitional</option>
                                   <option value="non_organic_untreated">
                                     ⚪ Non-organic (Untreated)
@@ -2749,9 +2917,7 @@ const ProductionTab = forwardRef(
                             <Controller
                               name="seed_purchase_date"
                               control={methods.control}
-                              render={({ field }) => (
-                                <StandardInput {...field} type="date" />
-                              )}
+                              render={({ field }) => <StandardInput {...field} type="date" />}
                             />
                           </StandardField>
                           <StandardField

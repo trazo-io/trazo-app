@@ -460,11 +460,24 @@ const SoilManagementTab = forwardRef(
 
         const newDefaults = getSoilManagementDefaults(watchedType);
 
-        // Only apply defaults for non-critical carbon calculation fields
-        // Area must be user-provided to ensure meaningful carbon calculations
+        // F04 fix (2026-06): NEVER auto-fill MEASUREMENT fields on subtype switch.
+        // soil_ph / organic_matter_percentage / soil_texture are lab or field
+        // measurements — injecting a default (e.g. switching to ST pre-filled
+        // pH 6.5 / OM 3.5%) submits a reading the farmer never took and previously
+        // earned a +5 carbon-confidence credit for invented data. Leave them blank
+        // so the farmer enters real values, consistent with the no-phantom policy
+        // used for fertilizer NPK and irrigation. Area is already excluded.
+        const MEASUREMENT_FIELDS = [
+          'area_covered',
+          'soil_ph',
+          'organic_matter_percentage',
+          'soil_texture'
+        ];
+
+        // Only apply defaults for non-measurement, non-critical fields
         Object.keys(newDefaults).forEach((field) => {
-          // Skip area field - user must provide this for valid carbon calculation
-          if (field === 'area_covered') return;
+          // Skip measurement fields - farmer must provide real readings
+          if (MEASUREMENT_FIELDS.includes(field)) return;
 
           const currentValue = watch(field);
           if (!currentValue || currentValue === '' || currentValue === intelligentDefaults[field]) {
@@ -656,7 +669,11 @@ const SoilManagementTab = forwardRef(
                         {...register('type')}
                       >
                         <option value="ST">Soil Testing</option>
-                        <option value="PA">Soil Amendment</option>
+                        {/* F35 fix (2026-06): backend display for PA is "pH Adjustment"
+                            (history/models.py:2181). The form said "Soil Amendment", so
+                            consumer/export surfaces showed a different label than the
+                            farmer picked. Aligned to the backend display. */}
+                        <option value="PA">pH Adjustment</option>
                         <option value="CC">Cover Crop Management</option>
                         <option value="OM">Organic Matter Addition</option>
                         <option value="TI">Tillage</option>
@@ -697,22 +714,29 @@ const SoilManagementTab = forwardRef(
                       </HStack>
                     </StandardField>
 
-                    <StandardField label="Working Depth">
-                      <HStack spacing={2}>
-                        <StandardInput
-                          flex={2}
-                          type="number"
-                          step="1"
-                          placeholder="30"
-                          bg="white"
-                          {...register('depth')}
-                        />
-                        <StandardSelect flex={1} bg="white" {...register('depth_unit')}>
-                          <option value="cm">Centimeters</option>
-                          <option value="inches">Inches</option>
-                        </StandardSelect>
-                      </HStack>
-                    </StandardField>
+                    {/* F34 fix (2026-06): hide this common "Working Depth" for the
+                        amendment subtypes (PA/OM/CC/CO) — they render their own
+                        "Application Depth" field below, also bound to register('depth').
+                        Showing both put two inputs on one value (desync/confusion).
+                        Each subtype now shows the depth input exactly once. */}
+                    {!['PA', 'OM', 'CC', 'CO'].includes(watch('type')) && (
+                      <StandardField label="Working Depth">
+                        <HStack spacing={2}>
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="1"
+                            placeholder="30"
+                            bg="white"
+                            {...register('depth')}
+                          />
+                          <StandardSelect flex={1} bg="white" {...register('depth_unit')}>
+                            <option value="cm">Centimeters</option>
+                            <option value="inches">Inches</option>
+                          </StandardSelect>
+                        </HStack>
+                      </StandardField>
+                    )}
                   </SimpleGrid>
 
                   {/* NOP 205.203(c): Manure timing compliance helper — shown full-width below the grid */}
@@ -880,11 +904,13 @@ const SoilManagementTab = forwardRef(
                             placeholder="500"
                             {...register('amendment_amount')}
                           />
+                          {/* F11 fix (2026-06): removed "short_tons" — it bridges to the
+                              model amendment_amount_unit ChoiceField (kg/lbs/tons/gal),
+                              which rejects "short_tons" with a DRF 400 on submit. */}
                           <StandardSelect flex={1} {...register('amendment_unit')}>
                             <option value="kg">kg</option>
                             <option value="tons">Metric Tons</option>
                             <option value="lbs">Pounds</option>
-                            <option value="short_tons">Short Tons (US)</option>
                           </StandardSelect>
                         </HStack>
                       </StandardField>
@@ -1037,9 +1063,12 @@ const SoilManagementTab = forwardRef(
                       </>
                     )}
 
-                    {/* Manure-specific fields (OM only) — 7 CFR 205.203(c)(1). */}
+                    {/* Manure-specific fields — 7 CFR 205.203(c)(1). */}
                     {/* (c)(1) governs raw manure intervals; composted materials live under (c)(2). */}
-                    {watch('type') === 'OM' && (
+                    {/* F35 fix (2026-06): show whenever manure is the amendment, not only
+                        for OM. amendment_type="manure" is selectable under PA/CC/CO too, and
+                        those farmers must still see the 90/120-day pre-harvest interval. */}
+                    {(watch('type') === 'OM' || watch('amendment_type') === 'manure') && (
                       <>
                         <StandardAlert
                           status="warning"

@@ -525,6 +525,90 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     }
   },
 
+  // ---- F20 (2026-06): Legal spray-record fields (GLOBALG.A.P. / CA PUR) ----
+  // Farmer-facing review only (modal + form). Deliberately NO consumer surface:
+  // these are legal/operational identifiers, excluded from PublicHistorySerializer.
+  // The MTRS quartet + ffm_code stay form-only/PUR-export-bound (not in the modal
+  // summary) to avoid clutter; they still save and round-trip.
+  {
+    name: 'manufacturer',
+    labelKey: 'events.chemical.fields.manufacturer',
+    valueType: 'string',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'application_start',
+    labelKey: 'events.chemical.fields.applicationStart',
+    valueType: 'date',
+    formatter: formatDate,
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'application_end',
+    labelKey: 'events.chemical.fields.applicationEnd',
+    valueType: 'date',
+    formatter: formatDate,
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'planted_area',
+    labelKey: 'events.chemical.fields.plantedArea',
+    valueType: 'string',
+    unitField: 'planted_area_unit',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'operator_id',
+    labelKey: 'events.chemical.fields.operatorId',
+    valueType: 'string',
+    surfaces: { modal: 'details', form: 'secondary' }
+  },
+  {
+    name: 'site_id',
+    labelKey: 'events.chemical.fields.siteId',
+    valueType: 'string',
+    surfaces: { modal: 'details', form: 'secondary' }
+  },
+  {
+    name: 'application_county',
+    labelKey: 'events.chemical.fields.applicationCounty',
+    valueType: 'string',
+    surfaces: { modal: 'details', form: 'secondary' }
+  },
+
+  // ---- F21: GG authorizer (FV-GFS 32.02.01 #10) + FSMA supervisor review (112.161(b)) ----
+  // Farmer/audit-facing only (modal + form). No consumer surface — sign-off is an
+  // operational/compliance record, not consumer-facing.
+  {
+    name: 'authorizer_name',
+    labelKey: 'events.chemical.fields.authorizerName',
+    valueType: 'string',
+    visibleForSubtypes: ['PE', 'FU', 'HE'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'reviewer_name',
+    labelKey: 'events.chemical.fields.reviewerName',
+    valueType: 'string',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'review_date',
+    labelKey: 'events.chemical.fields.reviewDate',
+    valueType: 'date',
+    formatter: formatDate,
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'reviewed',
+    labelKey: 'events.chemical.fields.reviewed',
+    valueType: 'boolean',
+    formatter: formatBoolean,
+    // Only surface when true (a positive sign-off signal); avoids "Reviewed: ✗" noise.
+    visibleWhen: (e) => e.reviewed === true || e.reviewed === 'true',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+
   // ---- Additional details (ALL subtypes) ----
   {
     name: 'application_details',

@@ -145,14 +145,22 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
     </Box>
   );
 
-  const renderDetailContent = () => (
-    <VStack spacing={3} align="stretch">
-      {verifiedCerts.length > 0 && verifiedCerts.map((cert, i) => renderCertDetail(cert, i))}
-      {verifiedCerts.length > 0 && selfReportedCerts.length > 0 && <Divider />}
-      {selfReportedCerts.length > 0 &&
-        selfReportedCerts.map((cert, i) => renderCertDetail(cert, verifiedCerts.length + i))}
-    </VStack>
-  );
+  const renderDetailContent = () => {
+    // Skip "Other" — not meaningful to consumers (consistent with pickPrimary +
+    // the compact badge list). Use filtered lengths so the divider/guards match.
+    const visibleVerified = verifiedCerts.filter((c) => c.display_name !== 'Other');
+    const visibleSelfReported = selfReportedCerts.filter((c) => c.display_name !== 'Other');
+    return (
+      <VStack spacing={3} align="stretch">
+        {visibleVerified.length > 0 && visibleVerified.map((cert, i) => renderCertDetail(cert, i))}
+        {visibleVerified.length > 0 && visibleSelfReported.length > 0 && <Divider />}
+        {visibleSelfReported.length > 0 &&
+          visibleSelfReported.map((cert, i) =>
+            renderCertDetail(cert, visibleVerified.length + i)
+          )}
+      </VStack>
+    );
+  };
 
   const renderDrawerOrModal = () => {
     const headerContent = (

@@ -32,8 +32,8 @@ import {
   FaChevronRight,
   FaStar
 } from 'react-icons/fa';
-import { MdVerified } from 'react-icons/md';
 import { format } from 'date-fns';
+import { useIntl } from 'react-intl';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   StandardPage,
@@ -53,6 +53,7 @@ const INITIAL_DISPLAY_COUNT = 5;
 export default function CarbonJourney() {
   const isMobile = useBreakpointValue({ base: true, md: false });
   const navigate = useNavigate();
+  const intl = useIntl();
   const [activeTab, setActiveTab] = useState(0);
 
   // API queries for data
@@ -63,7 +64,7 @@ export default function CarbonJourney() {
   const [shopStats, setShopStats] = useState({
     totalScans: 0,
     totalReviews: 0,
-    avgTransparencyScore: 0,
+    totalEventsViewed: 0,
     sustainableFarmsFound: 0
   });
 
@@ -73,21 +74,18 @@ export default function CarbonJourney() {
       const totalScans = productions.length || 0;
       const totalReviews = reviews.length || 0;
 
-      // Calculate transparency score based on documented events (not certificate_percentage)
-      // More events = higher transparency
-      const totalEvents = productions.reduce((acc, prod) => {
+      // Honest metric: total documented farm events across everything the
+      // user has scanned. A raw count — the old (events / scans*10)
+      // percentage implied a "% of products with data" the payload cannot
+      // support.
+      const totalEventsViewed = productions.reduce((acc, prod) => {
         return acc + (prod.events_count || prod.total_events || 0);
       }, 0);
-
-      // Calculate average transparency: if we have events documented, that's transparency
-      // This rewards farms for logging MORE events, not fewer
-      const avgTransparency =
-        totalScans > 0 ? Math.min(100, Math.round((totalEvents / (totalScans * 10)) * 100)) : 0;
 
       setShopStats({
         totalScans,
         totalReviews,
-        avgTransparencyScore: avgTransparency,
+        totalEventsViewed,
         sustainableFarmsFound: new Set(productions?.map((p) => p.establishment_name)).size || 0
       });
     }
@@ -136,15 +134,14 @@ export default function CarbonJourney() {
             />
 
             <StandardMetricCard
-              icon={MdVerified}
+              icon={FaEye}
               iconColor="blue.600"
               iconBg="blue.100"
-              value={`${shopStats.avgTransparencyScore || 0}%`}
-              label="Products with Data"
+              value={shopStats.totalEventsViewed}
+              label={intl.formatMessage({ id: 'consumer.journey.eventsViewed' })}
               tooltip={{
-                label: 'Products with Data',
-                explanation:
-                  "This shows what percentage of products you've scanned have complete environmental information available. Higher percentages mean more transparency about farming practices and carbon impact. Some products may be pending analysis."
+                label: intl.formatMessage({ id: 'consumer.journey.eventsViewed' }),
+                explanation: intl.formatMessage({ id: 'consumer.journey.eventsViewedTooltip' })
               }}
             />
 

@@ -48,11 +48,13 @@ import {
 import { MdEco, MdSecurity } from 'react-icons/md';
 import {
   getConsumerEventDescription,
+  localizeConsumerDescription,
   formatEventDate,
   getEventTrustIndicators
 } from 'utils/eventDescriptions';
 import {
   getEventFieldDisplay,
+  localizeFieldValue,
   type EventFieldDisplay,
   type FieldDisplayItem
 } from 'utils/fieldDisplayUtils';
@@ -271,7 +273,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const toggleExpand = handleToggleExpand;
   const isMobile = useBreakpointValue({ base: true, md: false });
   // Get consumer-friendly description with real event data
-  const eventInfo = getConsumerEventDescription(event.description, event);
+  const eventInfo = localizeConsumerDescription(
+    getConsumerEventDescription(event.description, event),
+    intl.locale
+  );
 
   const trustIndicators = getEventTrustIndicators(event);
   const formattedDate = formatEventDate(event.date);
@@ -316,7 +321,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const displayDate =
     isSummaryEvent && event.date_start && event.date_end
       ? formatDateRange(event.date_start, event.date_end)
-      : formatHarvestDate(event.date) || formattedDate;
+      : formatHarvestDate(event.date, intl.locale) || formattedDate;
 
   // Get comprehensive field display data based on field display matrix.
   // When VITE_USE_FIELD_REGISTRY=true, the registry's consumer_card surface
@@ -325,7 +330,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   // FieldDisplayItem format so existing JSX works unchanged.
   const legacyFieldDisplay = getEventFieldDisplay(event);
 
-  const fieldDisplay: EventFieldDisplay = (() => {
+  const fieldDisplayBase: EventFieldDisplay = (() => {
     if (!USE_FIELD_REGISTRY) return legacyFieldDisplay;
 
     const resolved = getFieldsForSurface(
@@ -374,7 +379,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
         ...resolved.hero.filter((f) => f.name !== 'name' && f.name !== 'commercial_name'),
         ...resolved.immediate
       ]),
-      secondary: toDisplayItems(resolved.secondary),
+      // Exclude observation/observations from secondary — they render verbatim
+      // as "Farmer's Field Notes" above. Filter by the registry field NAME
+      // (locale-independent); the display label is localized ("Observación" in
+      // es-419), so a label-string filter downstream silently misses it.
+      secondary: toDisplayItems(
+        resolved.secondary.filter((f) => f.name !== 'observation' && f.name !== 'observations')
+      ),
       details: toDisplayItems(resolved.details)
     };
 
@@ -386,6 +397,21 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
       0;
     return hasRegistryFields ? registryDisplay : legacyFieldDisplay;
   })();
+
+  // R2 (2026-06-14): localize enum field VALUES to es-419 in one pass so every
+  // render spot (Key Details, Additional Information, Technical Details) gets it.
+  // Labels already localize via the registry labelKey; numbers/units/free-text and
+  // cert program names pass through unchanged.
+  const localizeItems = (items: FieldDisplayItem[]): FieldDisplayItem[] =>
+    intl.locale.toLowerCase().startsWith('es')
+      ? items.map((f) => ({ ...f, value: localizeFieldValue(f.value, intl.locale) }))
+      : items;
+  const fieldDisplay: EventFieldDisplay = {
+    ...fieldDisplayBase,
+    immediate: localizeItems(fieldDisplayBase.immediate),
+    secondary: localizeItems(fieldDisplayBase.secondary),
+    details: localizeItems(fieldDisplayBase.details)
+  };
 
   // Blockchain verification is always production-level (one tx covers all events).
   // Individual events don't have their own blockchain transactions.
@@ -706,16 +732,26 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     >
                       <Icon as={FaLayerGroup} aria-hidden="true" boxSize={2.5} />
                       <Text>
-                        {event.event_count || 'Multiple'}{' '}
-                        {event.type === 'FE'
-                          ? 'Fertilizer Apps'
-                          : event.type === 'FU'
-                          ? 'Fungicide Apps'
-                          : event.type === 'PE'
-                          ? 'Pesticide Apps'
-                          : event.type === 'SC'
-                          ? 'Scouting Trips'
-                          : 'Events'}
+                        {event.event_count ||
+                          intl.formatMessage({
+                            id: 'consumer.eventCard.multiple',
+                            defaultMessage: 'Multiple'
+                          })}{' '}
+                        {intl.formatMessage({
+                          id: ['FE', 'FU', 'PE', 'SC'].includes(event.type as string)
+                            ? `consumer.eventCard.summaryNoun.${event.type}`
+                            : 'consumer.eventCard.summaryNoun.default',
+                          defaultMessage:
+                            event.type === 'FE'
+                              ? 'Fertilizer Apps'
+                              : event.type === 'FU'
+                              ? 'Fungicide Apps'
+                              : event.type === 'PE'
+                              ? 'Pesticide Apps'
+                              : event.type === 'SC'
+                              ? 'Scouting Trips'
+                              : 'Events'
+                        })}
                       </Text>
                     </Badge>
                   )}
@@ -738,7 +774,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   <HStack spacing={1}>
                     <Icon as={FaCheckCircle} aria-hidden="true" boxSize={3} color="green.500" />
                     <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.600" fontWeight="medium">
-                      Performed by: {maskPerformerName(event.performed_by)}
+                      {intl.formatMessage(
+                        { id: 'consumer.eventCard.performedBy', defaultMessage: 'Performed by: {name}' },
+                        { name: maskPerformerName(event.performed_by) }
+                      )}
                     </Text>
                   </HStack>
                 )}
@@ -805,7 +844,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   <HStack spacing={2} mb={2}>
                     <Icon as={FaEye} aria-hidden="true" boxSize={3} color="green.500" />
                     <Text fontSize="xs" fontWeight="semibold" color="green.600">
-                      Farmer's Field Notes
+                      {intl.formatMessage({
+                        id: 'consumer.eventCard.farmerNotes',
+                        defaultMessage: "Farmer's Field Notes"
+                      })}
                     </Text>
                   </HStack>
                   <Text
@@ -1027,7 +1069,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         >
                           <Icon as={FaCamera} aria-hidden="true" boxSize={3} />
                           <Text>
-                            {photoCount} photo{photoCount === 1 ? '' : 's'}
+                            {intl.formatMessage(
+                              {
+                                id: 'consumer.eventCard.photoCount',
+                                defaultMessage: '{count, plural, one {# photo} other {# photos}}'
+                              },
+                              { count: photoCount }
+                            )}
                           </Text>
                         </Badge>
                       );
@@ -1052,7 +1100,12 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           gap={1}
                         >
                           <Icon as={config.icon} aria-hidden="true" boxSize={3} />
-                          <Text>{config.label}</Text>
+                          <Text>
+                            {intl.formatMessage({
+                              id: `consumer.eventCard.tier.${config.level}`,
+                              defaultMessage: config.label
+                            })}
+                          </Text>
                           {event.photo_verified_count !== undefined &&
                             event.photo_verified_count > 0 && (
                               <Text fontSize="xs" ml={1}>
@@ -1086,7 +1139,15 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               fontSize={{ base: 'md', md: 'sm' }}
               fontWeight="semibold"
             >
-              {isExpanded ? 'Show Less Details' : 'See More Details'}
+              {isExpanded
+                ? intl.formatMessage({
+                    id: 'consumer.eventCard.showLess',
+                    defaultMessage: 'Show Less Details'
+                  })
+                : intl.formatMessage({
+                    id: 'consumer.eventCard.seeMore',
+                    defaultMessage: 'See More Details'
+                  })}
             </Button>
           </Box>
 
@@ -1102,7 +1163,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   <HStack spacing={1}>
                     <Icon as={FaCheckCircle} aria-hidden="true" boxSize={3} color="green.500" />
                     <Text fontSize="sm" color="green.600" fontWeight="medium">
-                      Performed by: {maskPerformerName(event.performed_by)}
+                      {intl.formatMessage(
+                        { id: 'consumer.eventCard.performedBy', defaultMessage: 'Performed by: {name}' },
+                        { name: maskPerformerName(event.performed_by) }
+                      )}
                     </Text>
                   </HStack>
                 )}
@@ -1111,7 +1175,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   <HStack mb={1}>
                     <Icon as={FaShieldAlt} color={accentColor} boxSize={4} />
                     <Text fontWeight="semibold" fontSize="sm">
-                      What This Means For You
+                      {intl.formatMessage({
+                        id: 'consumer.eventCard.whatThisMeans',
+                        defaultMessage: 'What This Means For You'
+                      })}
                     </Text>
                   </HStack>
                   <Text fontSize="sm" color={mutedColor} pl={6}>
@@ -1124,7 +1191,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   <HStack mb={1}>
                     <Icon as={FaGlobeAmericas} color="blue.500" boxSize={4} />
                     <Text fontWeight="semibold" fontSize="sm">
-                      Environmental Benefit
+                      {intl.formatMessage({
+                        id: 'consumer.eventCard.envBenefit',
+                        defaultMessage: 'Environmental Benefit'
+                      })}
                     </Text>
                   </HStack>
                   <Text fontSize="sm" color={mutedColor} pl={6}>
@@ -1454,7 +1524,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     <HStack mb={3}>
                       <Icon as={FaRulerCombined} color="green.500" boxSize={4} />
                       <Text fontWeight="bold" fontSize="sm" color="green.500">
-                        Key Details
+                        {intl.formatMessage({
+                          id: 'consumer.eventCard.keyDetails',
+                          defaultMessage: 'Key Details'
+                        })}
                       </Text>
                     </HStack>
                     <SimpleGrid columns={2} spacing={3} pl={6}>
@@ -1498,19 +1571,29 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {/* Comprehensive Field Display - SECONDARY Priority Fields */}
                 {fieldDisplay.secondary.length > 0 &&
                   (() => {
-                    // Filter out observation — already shown in Farmer's Field Notes above
-                    const filteredSecondary = fieldDisplay.secondary.filter(
-                      (f) =>
-                        f.label.toLowerCase() !== 'observation' &&
-                        f.label.toLowerCase() !== 'observations'
-                    );
+                    // Filter out observation — already shown verbatim as
+                    // "Farmer's Field Notes" above. The registry filter (by field
+                    // name) is primary; here we also drop any secondary field whose
+                    // VALUE equals the shown observation. Value-matching is
+                    // locale-proof and catches the legacy field path too — the old
+                    // label-only check missed the localized "Observación" label.
+                    const shownObservation = event.observation?.trim();
+                    const filteredSecondary = fieldDisplay.secondary.filter((f) => {
+                      const lbl = f.label.toLowerCase();
+                      if (lbl === 'observation' || lbl === 'observations') return false;
+                      if (shownObservation && String(f.value).trim() === shownObservation) return false;
+                      return true;
+                    });
                     if (filteredSecondary.length === 0) return null;
                     return (
                       <Box>
                         <HStack mb={3}>
                           <Icon as={FaInfoCircle} color="blue.500" boxSize={4} />
                           <Text fontWeight="semibold" fontSize="sm" color="blue.500">
-                            Additional Information
+                            {intl.formatMessage({
+                              id: 'consumer.eventCard.additionalInfo',
+                              defaultMessage: 'Additional Information'
+                            })}
                           </Text>
                         </HStack>
                         <VStack align="stretch" spacing={2} pl={6}>
@@ -1608,7 +1691,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                                 {field.label}
                               </Text>
                               <Text fontSize="sm" fontWeight="600" color="gray.700">
-                                {field.value}
+                                {localizeFieldValue(field.value, intl.locale)}
                               </Text>
                             </Box>
                           ));

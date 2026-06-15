@@ -420,6 +420,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
       'event.production.equipment_maintenance': 'EM',
       'event.production.cultivation': 'CU',
       'event.production.thinning': 'TH',
+      // F42 fix (2026-06): PO/PH/CM were missing — a verbose backend type string
+      // for these leaked unmapped into the type select on edit.
+      'event.production.pollination': 'PO',
+      'event.production.post_harvest': 'PH',
+      'event.production.post_harvest_processing': 'PH',
+      'event.production.canopy_management': 'CM',
+      // Batch 3 (2026-06): frost protection + mowing/orchard-floor
+      'event.production.frost_protection': 'FP',
+      'event.production.mowing': 'MO',
 
       // ================== CHEMICAL EVENT TYPES (Type 2) ==================
       // 4 chemical subtypes
@@ -462,7 +471,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       'HW',
       'HH',
       'LH',
-      // Production (8)
+      // Production (11)
       'PL',
       'TR',
       'HA',
@@ -471,6 +480,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
       'EM',
       'CU',
       'TH',
+      // F42 fix (2026-06): PO/PH/CM were absent from validCodes, so editing these
+      // subtypes only round-tripped via the mappedType||existingEvent.type fallback.
+      'PO',
+      'PH',
+      'CM',
+      // Batch 3 (2026-06): Frost Protection + Mowing/Orchard-Floor
+      'FP',
+      'MO',
       // Chemical (4)
       'FE',
       'PE',

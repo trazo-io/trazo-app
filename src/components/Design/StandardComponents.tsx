@@ -1037,6 +1037,13 @@ export const ConsumerTooltip = ({
   children,
   placement = 'top'
 }: ConsumerTooltipProps) => {
+  // NOTE (2026-06 audit P1-4): pillar explanations are hover/focus only. A tap-to-open
+  // variant was tried but caused two regressions on the PRACTICES pillar — (1) wrapping
+  // children broke the grid card sizing, and (2) tapping the card opened this tooltip AND
+  // the nested USDA-seal popover at once ("double message"). Reverted to hover-only. The
+  // supplementary nature is acceptable: the FTC disclaimer is static text beneath the
+  // pillars and the USDA seal carries its own tap-accessible popover. A proper mobile
+  // affordance needs a Popover-based pillar redesign that coordinates with the seal popover.
   return (
     <Tooltip
       label={

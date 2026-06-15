@@ -77,7 +77,9 @@ export type ProductionSubtype =
   | 'TH' // Thinning
   | 'PO' // Pollination
   | 'PH' // Post-Harvest
-  | 'CM'; // Canopy Management
+  | 'CM' // Canopy Management
+  | 'FP' // Frost Protection (Batch 3, 2026-06)
+  | 'MO'; // Mowing / Orchard-Floor (Batch 3, 2026-06)
 
 export type ChemicalSubtype = 'FE' | 'PE' | 'FU' | 'HE';
 
@@ -162,7 +164,10 @@ export type VisibilityPredicate<T extends Record<string, unknown> = Record<strin
  * Receives the full event so it can reference related fields
  * (e.g., rendering volume+volume_unit as "400 gal").
  */
-export type FieldFormatter<TValue = unknown, TEvent extends Record<string, unknown> = Record<string, unknown>> = (
+export type FieldFormatter<
+  TValue = unknown,
+  TEvent extends Record<string, unknown> = Record<string, unknown>
+> = (
   value: TValue,
   event: TEvent,
   intl?: {
@@ -174,13 +179,23 @@ export type FieldFormatter<TValue = unknown, TEvent extends Record<string, unkno
 /**
  * Narrow value type — maps to form input widget and TypeScript runtime shape.
  */
-export type FieldValueType = 'string' | 'number' | 'boolean' | 'enum' | 'date' | 'date-time' | 'text';
+export type FieldValueType =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'enum'
+  | 'date'
+  | 'date-time'
+  | 'text';
 
 /**
  * Single field configuration — one entry per field per event type.
  * All display, formatting, validation, and compliance metadata lives here.
  */
-export interface FieldConfig<TValue = unknown, TEvent extends Record<string, unknown> = Record<string, unknown>> {
+export interface FieldConfig<
+  TValue = unknown,
+  TEvent extends Record<string, unknown> = Record<string, unknown>
+> {
   /** Backend field name (snake_case, matches serializer output). SSOT link. */
   name: string;
 
@@ -271,8 +286,9 @@ export interface FieldConfig<TValue = unknown, TEvent extends Record<string, unk
  * calculated from other event data rather than stored.
  * Example: yield_per_hectare = yield_quantity / area_covered.
  */
-export interface ComputedFieldConfig<TEvent extends Record<string, unknown> = Record<string, unknown>>
-  extends Omit<FieldConfig, 'name' | 'valueType' | 'validation' | 'required' | 'formatter'> {
+export interface ComputedFieldConfig<
+  TEvent extends Record<string, unknown> = Record<string, unknown>
+> extends Omit<FieldConfig, 'name' | 'valueType' | 'validation' | 'required' | 'formatter'> {
   name: string;
   valueType: 'string' | 'number';
   compute: (event: TEvent) => number | string | null;

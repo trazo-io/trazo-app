@@ -179,6 +179,17 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     'linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)',
     'gray.800'
   );
+  // Frosted-glass consumer-navbar colors. These useColorModeValue calls MUST be
+  // unconditional — calling them inside the `if (isConsumer && !props.secondary)`
+  // block below changed the hook count when isConsumer toggled (false on first
+  // render → true after the subdomain effect), producing a React "change in order
+  // of Hooks" error on re-render. Hoisted here; the values are only *used* when the
+  // condition holds. 2026-06 audit.
+  const consumerNavbarBg = useColorModeValue('rgba(255, 255, 255, 0.85)', 'rgba(20, 24, 33, 0.85)');
+  const consumerNavbarBorder = useColorModeValue(
+    '1px solid rgba(255, 255, 255, 0.6)',
+    '1px solid rgba(255, 255, 255, 0.12)'
+  );
   let navbarPosition = 'fixed';
   let colorButton = 'white';
   if (props.secondary === true) {
@@ -208,15 +219,9 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     // scrolls beneath the pill over the gray page — at 0.45 the glass blended
     // card fragments and text into unreadable mush mid-scroll. Higher opacity
     // keeps the frosted look while giving the pill a legible surface.
-    navbarBg = useColorModeValue(
-      'rgba(255, 255, 255, 0.85)',
-      'rgba(20, 24, 33, 0.85)'
-    );
+    navbarBg = consumerNavbarBg;
     navbarBackdrop = 'saturate(180%) blur(20px)';
-    navbarBorder = useColorModeValue(
-      '1px solid rgba(255, 255, 255, 0.6)',
-      '1px solid rgba(255, 255, 255, 0.12)'
-    );
+    navbarBorder = consumerNavbarBorder;
     navbarShadow = '0 4px 16px rgba(0, 0, 0, 0.08)';
   }
 

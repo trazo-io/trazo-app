@@ -1,4 +1,5 @@
 import React from 'react';
+import { useIntl } from 'react-intl';
 import { useSwipeToDismiss } from 'hooks/useSwipeToDismiss';
 import {
   Modal,
@@ -91,6 +92,7 @@ interface CompanyModalProps {
 }
 
 export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, companyData }) => {
+  const intl = useIntl();
   const swipeHandlers = useSwipeToDismiss({ onClose });
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -162,22 +164,37 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
       <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
         <CardBody p={6}>
           <Heading size="md" color={textColor} mb={4}>
-            Company Overview
+            {intl.formatMessage({
+              id: 'consumer.modal.companyOverview',
+              defaultMessage: 'Company Overview'
+            })}
           </Heading>
           <StatGroup>
             <Stat>
-              <StatLabel color="gray.500">Establishments</StatLabel>
+              <StatLabel color="gray.500">
+                {intl.formatMessage({
+                  id: 'consumer.modal.establishments',
+                  defaultMessage: 'Establishments'
+                })}
+              </StatLabel>
               <StatNumber color={accentColor}>
                 {companyData.total_establishments || 0}
               </StatNumber>
             </Stat>
             <Stat>
-              <StatLabel color="gray.500">Total Parcels</StatLabel>
+              <StatLabel color="gray.500">
+                {intl.formatMessage({
+                  id: 'consumer.modal.totalParcels',
+                  defaultMessage: 'Total Parcels'
+                })}
+              </StatLabel>
               <StatNumber color={accentColor}>{companyData.total_parcels || 0}</StatNumber>
             </Stat>
             {companyData.employee_count && (
               <Stat>
-                <StatLabel color="gray.500">Employees</StatLabel>
+                <StatLabel color="gray.500">
+                  {intl.formatMessage({ id: 'consumer.modal.employees', defaultMessage: 'Employees' })}
+                </StatLabel>
                 <StatNumber color={accentColor}>{companyData.employee_count}</StatNumber>
               </Stat>
             )}
@@ -189,7 +206,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
       <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
         <CardBody p={6}>
           <Heading size="md" color={textColor} mb={4}>
-            Contact Information
+            {intl.formatMessage({
+              id: 'consumer.modal.contactInformation',
+              defaultMessage: 'Contact Information'
+            })}
           </Heading>
           <VStack spacing={4} align="stretch">
             {companyData.address && (
@@ -223,7 +243,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
               <HStack spacing={3}>
                 <Icon as={FaEnvelope} color={accentColor} flexShrink={0} />
                 <Text color="gray.500" fontSize="sm">
-                  Contact:
+                  {intl.formatMessage({ id: 'consumer.modal.contactColon', defaultMessage: 'Contact:' })}
                 </Text>
                 <Link href={`mailto:${companyData.contact_email}`} color={textColor}>
                   {companyData.contact_email}
@@ -253,7 +273,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
         <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
           <CardBody p={6}>
             <Heading size="md" color={textColor} mb={4}>
-              Social Media
+              {intl.formatMessage({ id: 'consumer.modal.socialMedia', defaultMessage: 'Social Media' })}
             </Heading>
             <HStack spacing={4}>
               {companyData.facebook && (
@@ -294,23 +314,39 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
             <Heading size="md" color={textColor} mb={4}>
               <HStack>
                 <Icon as={FaCertificate} color={accentColor} />
-                <Text>Certifications</Text>
+                <Text>
+                  {intl.formatMessage({
+                    id: 'consumer.modal.certifications',
+                    defaultMessage: 'Certifications'
+                  })}
+                </Text>
               </HStack>
             </Heading>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
-              {companyData.certifications.map((cert, index) => (
-                <Badge
-                  key={index}
-                  colorScheme="green"
-                  variant="subtle"
-                  px={3}
-                  py={2}
-                  borderRadius="md"
-                  fontSize="sm"
-                >
-                  {typeof cert === 'object' && cert !== null ? (cert as any).display_name || (cert as any).name || 'Certification' : cert}
-                </Badge>
-              ))}
+              {companyData.certifications
+                .filter((cert) => {
+                  // "Other" is a non-meaningful cert category — don't show to consumers.
+                  const name =
+                    typeof cert === 'object' && cert !== null
+                      ? (cert as any).display_name || (cert as any).name
+                      : cert;
+                  return name !== 'Other';
+                })
+                .map((cert, index) => (
+                  <Badge
+                    key={index}
+                    colorScheme="green"
+                    variant="subtle"
+                    px={3}
+                    py={2}
+                    borderRadius="md"
+                    fontSize="sm"
+                  >
+                    {typeof cert === 'object' && cert !== null
+                      ? (cert as any).display_name || (cert as any).name || 'Certification'
+                      : cert}
+                  </Badge>
+                ))}
             </SimpleGrid>
           </CardBody>
         </Card>
@@ -325,14 +361,22 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
             <Heading size="md" color={textColor} mb={4}>
               <HStack>
                 <Icon as={FaLeaf} color={accentColor} />
-                <Text>Agricultural Information</Text>
+                <Text>
+                  {intl.formatMessage({
+                    id: 'consumer.modal.agriculturalInformation',
+                    defaultMessage: 'Agricultural Information'
+                  })}
+                </Text>
               </HStack>
             </Heading>
             <VStack spacing={4} align="stretch">
               {companyData.legal_structure && (
                 <Box>
                   <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={1}>
-                    Legal Structure
+                    {intl.formatMessage({
+                      id: 'consumer.modal.legalStructure',
+                      defaultMessage: 'Legal Structure'
+                    })}
                   </Text>
                   <Badge colorScheme="blue" p={2} borderRadius="md">
                     {companyData.legal_structure}
@@ -343,7 +387,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
               {companyData.primary_commodities && (
                 <Box>
                   <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={1}>
-                    Primary Agricultural Focus
+                    {intl.formatMessage({
+                      id: 'consumer.modal.primaryAgriculturalFocus',
+                      defaultMessage: 'Primary Agricultural Focus'
+                    })}
                   </Text>
                   <Badge colorScheme="green" p={2} borderRadius="md">
                     {companyData.primary_commodities}
@@ -354,7 +401,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
               {companyData.sustainability_commitment && (
                 <Box>
                   <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={1}>
-                    Sustainability Commitment
+                    {intl.formatMessage({
+                      id: 'consumer.modal.sustainabilityCommitment',
+                      defaultMessage: 'Sustainability Commitment'
+                    })}
                   </Text>
                   <Badge colorScheme="orange" p={2} borderRadius="md">
                     {companyData.sustainability_commitment}
@@ -371,12 +421,15 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
         <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
           <CardBody p={6}>
             <Heading size="md" color={textColor} mb={4}>
-              Legal Information
+              {intl.formatMessage({
+                id: 'consumer.modal.legalInformation',
+                defaultMessage: 'Legal Information'
+              })}
             </Heading>
             <VStack spacing={3} align="stretch">
               <HStack justify="space-between">
                 <Text color="gray.500" fontSize="sm">
-                  Tax ID:
+                  {intl.formatMessage({ id: 'consumer.modal.taxId', defaultMessage: 'Tax ID:' })}
                 </Text>
                 <Text color={textColor} fontSize="sm" fontFamily="mono">
                   {companyData.fiscal_id}
@@ -385,7 +438,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
               {companyData.established_year && (
                 <HStack justify="space-between">
                   <Text color="gray.500" fontSize="sm">
-                    Established:
+                    {intl.formatMessage({
+                      id: 'consumer.modal.establishedColon',
+                      defaultMessage: 'Established:'
+                    })}
                   </Text>
                   <Text color={textColor} fontSize="sm">
                     {companyData.established_year}

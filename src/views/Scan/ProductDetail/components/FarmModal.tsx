@@ -1,4 +1,6 @@
 import React from 'react';
+import { useIntl } from 'react-intl';
+import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 import { useSwipeToDismiss } from 'hooks/useSwipeToDismiss';
 import {
   Modal,
@@ -138,6 +140,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({
   onClose,
   establishmentData
 }) => {
+  const intl = useIntl();
   const swipeHandlers = useSwipeToDismiss({ onClose });
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -199,7 +202,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({
               borderRadius="full"
               textTransform="none"
             >
-              {formatLabel(establishmentData.establishment_type)}
+              {localizeFieldValue(formatLabel(establishmentData.establishment_type), intl.locale)}
             </Badge>
           )}
           {establishmentData.farming_method && (
@@ -212,7 +215,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({
               borderRadius="full"
               textTransform="none"
             >
-              {formatLabel(establishmentData.farming_method)}
+              {localizeFieldValue(formatLabel(establishmentData.farming_method), intl.locale)}
             </Badge>
           )}
           {/* is_active badge removed: consumer API filters by is_active=True,
@@ -267,12 +270,14 @@ export const FarmModal: React.FC<FarmModalProps> = ({
       <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
         <CardBody p={6}>
           <Heading size="md" color={textColor} mb={4}>
-            Farm Overview
+            {intl.formatMessage({ id: 'consumer.modal.farmOverview', defaultMessage: 'Farm Overview' })}
           </Heading>
           <StatGroup>
             {establishmentData.total_acreage && (
               <Stat>
-                <StatLabel color="gray.500">Total Area</StatLabel>
+                <StatLabel color="gray.500">
+                  {intl.formatMessage({ id: 'consumer.modal.totalArea', defaultMessage: 'Total Area' })}
+                </StatLabel>
                 <StatNumber color={accentColor}>
                   {establishmentData.total_acreage} acres
                 </StatNumber>
@@ -280,7 +285,9 @@ export const FarmModal: React.FC<FarmModalProps> = ({
             )}
             {establishmentData.parcels && (
               <Stat>
-                <StatLabel color="gray.500">Parcels</StatLabel>
+                <StatLabel color="gray.500">
+                  {intl.formatMessage({ id: 'consumer.modal.parcels', defaultMessage: 'Parcels' })}
+                </StatLabel>
                 <StatNumber color={accentColor}>
                   {establishmentData.parcels.length}
                 </StatNumber>
@@ -288,7 +295,9 @@ export const FarmModal: React.FC<FarmModalProps> = ({
             )}
             {establishmentData.year_established && (
               <Stat>
-                <StatLabel color="gray.500">Established</StatLabel>
+                <StatLabel color="gray.500">
+                  {intl.formatMessage({ id: 'consumer.modal.established', defaultMessage: 'Established' })}
+                </StatLabel>
                 <StatNumber color={accentColor}>
                   {establishmentData.year_established}
                 </StatNumber>
@@ -302,7 +311,10 @@ export const FarmModal: React.FC<FarmModalProps> = ({
       <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
         <CardBody p={6}>
           <Heading size="md" color={textColor} mb={4}>
-            Location & Contact
+            {intl.formatMessage({
+              id: 'consumer.modal.locationContact',
+              defaultMessage: 'Location & Contact'
+            })}
           </Heading>
           <VStack spacing={4} align="stretch">
             {establishmentData.address && (
@@ -338,7 +350,12 @@ export const FarmModal: React.FC<FarmModalProps> = ({
             {establishmentData.contact_person && (
               <HStack spacing={3}>
                 <Icon as={FaUsers} color={accentColor} flexShrink={0} />
-                <Text color={textColor}>Contact: {establishmentData.contact_person}</Text>
+                <Text color={textColor}>
+                  {intl.formatMessage(
+                    { id: 'consumer.modal.contactPerson', defaultMessage: 'Contact: {name}' },
+                    { name: establishmentData.contact_person }
+                  )}
+                </Text>
               </HStack>
             )}
             {(establishmentData.phone || establishmentData.contact_phone) && (
@@ -375,7 +392,10 @@ export const FarmModal: React.FC<FarmModalProps> = ({
         <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
           <CardBody p={6}>
             <Heading size="md" color={textColor} mb={4}>
-              Agricultural Practices
+              {intl.formatMessage({
+                id: 'consumer.modal.agriculturalPractices',
+                defaultMessage: 'Agricultural Practices'
+              })}
             </Heading>
             <VStack spacing={4} align="stretch">
               {establishmentData.crops_grown && (
@@ -383,7 +403,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({
                   <HStack mb={3}>
                     <Icon as={FaSeedling} color={accentColor} />
                     <Text fontWeight="semibold" color={textColor}>
-                      Crops Grown
+                      {intl.formatMessage({ id: 'consumer.modal.cropsGrown', defaultMessage: 'Crops Grown' })}
                     </Text>
                   </HStack>
                   <Wrap spacing={2}>
@@ -426,7 +446,10 @@ export const FarmModal: React.FC<FarmModalProps> = ({
                   <HStack mb={3}>
                     <Icon as={FaLeaf} color={accentColor} />
                     <Text fontWeight="semibold" color={textColor}>
-                      Sustainability Practices
+                      {intl.formatMessage({
+                        id: 'consumer.modal.sustainabilityPractices',
+                        defaultMessage: 'Sustainability Practices'
+                      })}
                     </Text>
                   </HStack>
                   <Wrap spacing={2}>
@@ -475,7 +498,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({
         <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
           <CardBody p={6}>
             <Heading size="md" color={textColor} mb={4}>
-              Farm Details
+              {intl.formatMessage({ id: 'consumer.modal.farmDetails', defaultMessage: 'Farm Details' })}
             </Heading>
             <VStack spacing={4} align="stretch">
               {establishmentData.main_activities && (
@@ -483,7 +506,10 @@ export const FarmModal: React.FC<FarmModalProps> = ({
                   <HStack mb={2}>
                     <Icon as={FaTractor} color={accentColor} />
                     <Text fontWeight="semibold" color={textColor}>
-                      Main Activities
+                      {intl.formatMessage({
+                        id: 'consumer.modal.mainActivities',
+                        defaultMessage: 'Main Activities'
+                      })}
                     </Text>
                   </HStack>
                   <Text color={textColor} fontSize="sm" lineHeight="tall">
@@ -497,7 +523,10 @@ export const FarmModal: React.FC<FarmModalProps> = ({
                   <HStack mb={2}>
                     <Icon as={FaMapMarkerAlt} color={accentColor} />
                     <Text fontWeight="semibold" color={textColor}>
-                      Location Highlights
+                      {intl.formatMessage({
+                        id: 'consumer.modal.locationHighlights',
+                        defaultMessage: 'Location Highlights'
+                      })}
                     </Text>
                   </HStack>
                   <Text color={textColor} fontSize="sm" lineHeight="tall">
@@ -522,7 +551,10 @@ export const FarmModal: React.FC<FarmModalProps> = ({
             <HStack mb={3}>
               <Icon as={FaCheckCircle} color="blue.500" />
               <Heading size="md" color="blue.700">
-                Message to Consumers
+                {intl.formatMessage({
+                  id: 'consumer.modal.messageToConsumers',
+                  defaultMessage: 'Message to Consumers'
+                })}
               </Heading>
             </HStack>
             <Text color="blue.600" lineHeight="tall" fontStyle="italic">
@@ -541,19 +573,27 @@ export const FarmModal: React.FC<FarmModalProps> = ({
             <Heading size="md" color={textColor} mb={4}>
               <HStack>
                 <Icon as={FaTractor} color={accentColor} />
-                <Text>Operational Details</Text>
+                <Text>
+                  {intl.formatMessage({
+                    id: 'consumer.modal.operationalDetails',
+                    defaultMessage: 'Operational Details'
+                  })}
+                </Text>
               </HStack>
             </Heading>
             <VStack spacing={4} align="stretch">
               {establishmentData.water_sources?.length > 0 && (
                 <Box>
                   <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
-                    Water Sources
+                    {intl.formatMessage({
+                      id: 'consumer.modal.waterSources',
+                      defaultMessage: 'Water Sources'
+                    })}
                   </Text>
                   <Wrap spacing={2}>
                     {establishmentData.water_sources.map((source, index) => (
                       <Badge key={index} colorScheme="green" p={2} borderRadius="md">
-                        {source}
+                        {localizeFieldValue(source, intl.locale)}
                       </Badge>
                     ))}
                   </Wrap>
@@ -563,12 +603,15 @@ export const FarmModal: React.FC<FarmModalProps> = ({
               {establishmentData.soil_health_practices?.length > 0 && (
                 <Box>
                   <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
-                    Soil Health Practices
+                    {intl.formatMessage({
+                      id: 'consumer.modal.soilHealthPractices',
+                      defaultMessage: 'Soil Health Practices'
+                    })}
                   </Text>
                   <Wrap spacing={2}>
                     {establishmentData.soil_health_practices.map((practice, index) => (
                       <Badge key={index} colorScheme="orange" p={2} borderRadius="md">
-                        {practice}
+                        {localizeFieldValue(practice, intl.locale)}
                       </Badge>
                     ))}
                   </Wrap>
@@ -578,12 +621,15 @@ export const FarmModal: React.FC<FarmModalProps> = ({
               {establishmentData.irrigation_methods?.length > 0 && (
                 <Box>
                   <Text fontWeight="semibold" color={textColor} fontSize="sm" mb={2}>
-                    Irrigation Methods
+                    {intl.formatMessage({
+                      id: 'consumer.modal.irrigationMethods',
+                      defaultMessage: 'Irrigation Methods'
+                    })}
                   </Text>
                   <Wrap spacing={2}>
                     {establishmentData.irrigation_methods.map((method, index) => (
                       <Badge key={index} colorScheme="blue" p={2} borderRadius="md">
-                        {method}
+                        {localizeFieldValue(method, intl.locale)}
                       </Badge>
                     ))}
                   </Wrap>
@@ -601,15 +647,29 @@ export const FarmModal: React.FC<FarmModalProps> = ({
             <Heading size="md" color={textColor} mb={4}>
               <HStack>
                 <Icon as={FaCertificate} color={accentColor} />
-                <Text>Certifications & Standards</Text>
+                <Text>
+                  {intl.formatMessage({
+                    id: 'consumer.modal.certificationsStandards',
+                    defaultMessage: 'Certifications & Standards'
+                  })}
+                </Text>
               </HStack>
             </Heading>
             <Text color={textColor} lineHeight="tall">
-              {typeof establishmentData.certifications === 'object' && establishmentData.certifications !== null
-                ? Array.isArray(establishmentData.certifications)
-                  ? (establishmentData.certifications as any[]).map((c: any) => typeof c === 'object' ? c.display_name || c.name : c).join(', ')
-                  : (establishmentData.certifications as any).display_name || String(establishmentData.certifications)
-                : establishmentData.certifications}
+              {(() => {
+                // Normalize cert data (array | object | comma-string) → names, then
+                // drop "Other" (non-meaningful cert category) regardless of shape.
+                const certs: any = establishmentData.certifications;
+                let names: string[] = [];
+                if (Array.isArray(certs)) {
+                  names = certs.map((c: any) => (typeof c === 'object' ? c.display_name || c.name : c));
+                } else if (typeof certs === 'object' && certs !== null) {
+                  names = [certs.display_name || String(certs)];
+                } else if (typeof certs === 'string') {
+                  names = certs.split(',').map((s: string) => s.trim());
+                }
+                return names.filter((n) => n && n !== 'Other').join(', ');
+              })()}
             </Text>
           </CardBody>
         </Card>
@@ -622,7 +682,12 @@ export const FarmModal: React.FC<FarmModalProps> = ({
             <Heading size="md" color={textColor} mb={4}>
               <HStack>
                 <Icon as={FaRuler} color={accentColor} />
-                <Text>Parcels ({establishmentData.parcels.length})</Text>
+                <Text>
+                  {intl.formatMessage(
+                    { id: 'consumer.modal.parcelsCount', defaultMessage: 'Parcels ({count})' },
+                    { count: establishmentData.parcels.length }
+                  )}
+                </Text>
               </HStack>
             </Heading>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>

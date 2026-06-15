@@ -23,7 +23,6 @@ import {
   FaChevronRight,
   FaLock
 } from 'react-icons/fa';
-import { MdVerified } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 import { useGetMeQuery } from '../../../store/api/userApi';
 import { useGetImpactDashboardQuery } from '../../../store/api/consumerApi';
@@ -144,14 +143,11 @@ export default function ConsumerProfile() {
               color="white"
             />
             <VStack spacing={1}>
-              <HStack>
-                <Text fontSize="xl" fontWeight="bold">
-                  {user?.first_name} {user?.last_name}
-                </Text>
-                {impactMetrics?.total_scans > 10 && (
-                  <Icon as={MdVerified} color="green.500" boxSize={5} />
-                )}
-              </HStack>
+              {/* Scan-count "verified" icon removed (2026-06): scanning
+                  products does not verify anything — claim-safety. */}
+              <Text fontSize="xl" fontWeight="bold">
+                {user?.first_name} {user?.last_name}
+              </Text>
               <HStack spacing={2} color={mutedColor}>
                 <Icon as={FaEnvelope} boxSize={3} />
                 <Text fontSize="sm">{user?.email}</Text>
@@ -265,28 +261,8 @@ export default function ConsumerProfile() {
           </VStack>
         </StandardCard>
 
-        {/* Transparency Badge */}
-        {impactMetrics?.total_scans >= 10 && (
-          <StandardCard variant="elevated">
-            <HStack
-              spacing={4}
-              p={4}
-              bg={useColorModeValue('green.50', 'green.900')}
-              borderRadius="xl"
-            >
-              <Icon as={MdVerified} boxSize={10} color="green.500" />
-              <VStack align="start" spacing={1}>
-                <Text fontWeight="bold" color="green.700">
-                  Transparency Advocate
-                </Text>
-                <Text fontSize="sm" color={mutedColor}>
-                  You've scanned {impactMetrics.total_scans}+ products! Thank you for supporting
-                  agricultural transparency.
-                </Text>
-              </VStack>
-            </HStack>
-          </StandardCard>
-        )}
+        {/* "Transparency Advocate" badge card removed (2026-06): gamified
+            achievement badges are out per claim-safety rules. */}
       </VStack>
     </StandardPage>
   );

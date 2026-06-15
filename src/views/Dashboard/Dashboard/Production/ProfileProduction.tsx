@@ -15,7 +15,8 @@ import {
   useDisclosure,
   useToast,
   Progress,
-  Button
+  Button,
+  Tooltip
 } from '@chakra-ui/react';
 import {
   FaSeedling,
@@ -33,7 +34,8 @@ import {
   FaMapMarkerAlt,
   FaChartLine,
   FaEye,
-  FaLink
+  FaLink,
+  FaTag
 } from 'react-icons/fa';
 import { BsStar, BsStarFill } from 'react-icons/bs';
 import { MdTimeline, MdLocationOn } from 'react-icons/md';
@@ -60,6 +62,7 @@ import {
 // Week 2 Voice & Mobile Components
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
 import { SalesDeliverySection } from 'views/Dashboard/Dashboard/Production/SalesDeliverySection';
+import { SalesRecordsSection } from 'views/Dashboard/Dashboard/Production/SalesRecordsSection';
 import AuditExportModal from 'components/AuditExport/AuditExportModal';
 import DriftFindingsBanner from 'components/Compliance/DriftFindingsBanner';
 
@@ -412,6 +415,69 @@ function ProfileProduction() {
     }
   };
 
+  // Download printable lot tags PDF (SOE § 205.307 nonretail container labels).
+  // Same authenticated-fetch pattern as downloadQRCode, but the endpoint streams
+  // the PDF directly (Content-Disposition: attachment), so we save it as a blob.
+  const handleDownloadLotTag = async () => {
+    try {
+      const downloadId = historyData?.public_id || productionId;
+      if (!downloadId) {
+        toast({
+          title: 'Error',
+          description: 'Production ID not found.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true
+        });
+        return;
+      }
+
+      const response = await fetch(`${config.API_BASE_URL}/histories/${downloadId}/lot-tag/`, {
+        credentials: 'include',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+
+      if (!response.ok) {
+        let message = 'Failed to generate lot tag PDF';
+        try {
+          const errorData = await response.json();
+          message = errorData.error || message;
+        } catch {
+          // Non-JSON error body — keep the default message
+        }
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `lot-tags-${historyData?.lot_id || downloadId}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: intl.formatMessage({ id: 'production.lotTag.toastSuccessTitle' }),
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+    } catch (error) {
+      console.error('Error downloading lot tag:', error);
+      toast({
+        title: intl.formatMessage({ id: 'production.lotTag.toastErrorTitle' }),
+        description: error instanceof Error ? error.message : undefined,
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+    }
+  };
+
   // Share production
   const handleShare = async () => {
     try {
@@ -531,6 +597,24 @@ function ProfileProduction() {
                 >
                   {intl.formatMessage({ id: 'production.copyBuyerLink.button' })}
                 </StandardButton>
+              </WrapItem>
+              <WrapItem>
+                <Tooltip
+                  hasArrow
+                  shouldWrapChildren
+                  isDisabled={Boolean(historyData?.lot_id)}
+                  label={intl.formatMessage({ id: 'production.lotTag.disabledTooltip' })}
+                >
+                  <StandardButton
+                    variant="outline"
+                    size="xs"
+                    leftIcon={<Icon as={FaTag} />}
+                    onClick={handleDownloadLotTag}
+                    isDisabled={!historyData?.lot_id}
+                  >
+                    {intl.formatMessage({ id: 'production.lotTag.button' })}
+                  </StandardButton>
+                </Tooltip>
               </WrapItem>
               {canWrite && !historyData?.finish_date && (
                 <WrapItem>
@@ -1086,6 +1170,16 @@ function ProfileProduction() {
           <SalesDeliverySection
             historyId={productionId || ''}
             historyData={historyData}
+            canWrite={canWrite}
+          />
+        </Box>
+      )}
+
+      {/* Sales Records (per-buyer SOE traceback, post-finish only) */}
+      {historyData?.finish_date && (
+        <Box mt={{ base: 4, md: 6 }}>
+          <SalesRecordsSection
+            productionId={historyData?.public_id || productionId || ''}
             canWrite={canWrite}
           />
         </Box>

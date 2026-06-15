@@ -31,7 +31,10 @@ export const maskPerformerName = (name: string): string => {
  * Returns null for missing/invalid input (callers hide the date rather
  * than show a placeholder).
  */
-export const formatHarvestDate = (dateStr?: string | null): string | null => {
+export const formatHarvestDate = (
+  dateStr?: string | null,
+  locale: string = 'en-US'
+): string | null => {
   if (!dateStr) return null;
   let d: Date;
   const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr.trim());
@@ -41,7 +44,12 @@ export const formatHarvestDate = (dateStr?: string | null): string | null => {
     d = new Date(dateStr);
   }
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  // Locale-aware so a Spanish shopper sees "14 abr 2026", not "Apr 14, 2026".
+  return d.toLocaleDateString(locale || 'en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
 };
 
 /**

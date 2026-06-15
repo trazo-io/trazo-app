@@ -168,7 +168,7 @@ const PestManagementTab = forwardRef(
         action_recommended: initialValues.action_recommended || '',
         // Existing pest management fields
         pest_species: initialValues.pest_species || '',
-        pest_pressure_level: initialValues.pest_pressure_level || '',
+        pest_pressure_level: (initialValues.pest_pressure_level || '').toLowerCase(), // F37: lowercased so legacy Capitalized values match the now-lowercase options on edit
         beneficial_species: initialValues.beneficial_species || '',
         release_quantity: initialValues.release_quantity || '',
         trap_count: initialValues.trap_count?.toString() || '',
@@ -260,7 +260,7 @@ const PestManagementTab = forwardRef(
           action_recommended: initialValues.action_recommended || '',
           // Existing pest management fields
           pest_species: initialValues.pest_species || '',
-          pest_pressure_level: initialValues.pest_pressure_level || '',
+          pest_pressure_level: (initialValues.pest_pressure_level || '').toLowerCase(), // F37: lowercased so legacy Capitalized values match the now-lowercase options on edit
           beneficial_species: initialValues.beneficial_species || '',
           release_quantity: initialValues.release_quantity || '',
           trap_count: initialValues.trap_count?.toString() || '',
@@ -572,8 +572,8 @@ const PestManagementTab = forwardRef(
                       <Box mt={3} p={2} bg="blue.100" borderRadius="md">
                         <Text fontSize="xs" color="blue.700">
                           <Icon as={FaCheckCircle} mr={1} />
-                          <strong>93% time savings:</strong> Log multiple scouting trips with one
-                          entry.
+                          {/* F38 fix (2026-06): removed unsourced "93% time savings" stat (compliance: no fabricated statistics). */}
+                          <strong>Save time:</strong> Log multiple scouting trips with one entry.
                         </Text>
                         <Text fontSize="xs" color="blue.600" mt={1}>
                           <Icon as={FaLeaf} mr={1} />
@@ -772,10 +772,12 @@ const PestManagementTab = forwardRef(
                       <Text fontSize="xs" color="teal.600">
                         Pest scouting is observational and does not produce direct emissions.
                         <br />
+                        {/* F38 fix (2026-06): removed unsourced "+30 points" figure and the
+                            FAO attribution that did not substantiate it (compliance: no
+                            fabricated statistics or unsourced claims). */}
                         <strong>Transparency Score Bonus:</strong> Comprehensive scouting
-                        documentation rewards up to +30 points for IPM best practices.
-                        <br />
-                        <strong>Source: FAO Integrated Pest Management Guidelines</strong>
+                        documentation improves your transparency score by demonstrating IPM best
+                        practices.
                       </Text>
                     </Box>
                   </Box>
@@ -1032,18 +1034,25 @@ const PestManagementTab = forwardRef(
                               : 'Current pest population assessment'
                           }
                         >
+                          {/* F37 fix (2026-06): lowercase values to match the scouting
+                              `average_pest_pressure` field and the registry/tests
+                              (pestEvent.ts, pestEvent.test.ts use 'low'/'moderate').
+                              Previously Capitalized ("Low"/"Critical"), giving two
+                              casings for one concept and risking visibleWhen/normalizer
+                              mismatches. Labels (i18n) unchanged; formatPestPressure
+                              already lowercases on lookup so display is unaffected. */}
                           <StandardSelect {...methods.register('pest_pressure_level')}>
                             <option value="">Select pressure level</option>
-                            <option value="Low">
+                            <option value="low">
                               {intl.formatMessage({ id: 'app.low' }) || 'Low'}
                             </option>
-                            <option value="Medium">
+                            <option value="medium">
                               {intl.formatMessage({ id: 'app.medium' }) || 'Medium'}
                             </option>
-                            <option value="High">
+                            <option value="high">
                               {intl.formatMessage({ id: 'app.high' }) || 'High'}
                             </option>
-                            <option value="Critical">
+                            <option value="critical">
                               {intl.formatMessage({ id: 'app.critical' }) || 'Critical'}
                             </option>
                           </StandardSelect>

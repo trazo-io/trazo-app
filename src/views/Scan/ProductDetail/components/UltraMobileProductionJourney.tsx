@@ -81,7 +81,11 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { ConsumerEventCard } from 'components/Events/ConsumerEventCard';
-import { getSustainabilityImpact, getConsumerEventDescription } from 'utils/eventDescriptions';
+import {
+  getSustainabilityImpact,
+  getConsumerEventDescription,
+  localizeConsumerDescription
+} from 'utils/eventDescriptions';
 import { PhotoDocumentationTooltip } from 'components/Education/EducationalTooltip';
 
 // Buyer documentation CTA — proof view only, lazy so the story view (the
@@ -682,48 +686,84 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     {
       key: 'soil',
       icon: FaLayerGroup,
-      title: 'Soil & Planting',
-      subtitle: 'How the ground was prepared and planted',
+      title: intl.formatMessage({
+        id: 'consumer.journey.chapterSoilTitle',
+        defaultMessage: 'Soil & Planting'
+      }),
+      subtitle: intl.formatMessage({
+        id: 'consumer.journey.chapterSoilSubtitle',
+        defaultMessage: 'How the ground was prepared and planted'
+      }),
       colorScheme: 'yellow'
     },
     {
       key: 'care',
       icon: FaCloudRain,
-      title: 'Water & Care',
-      subtitle: 'Irrigation and crop care through the season',
+      title: intl.formatMessage({
+        id: 'consumer.journey.chapterCareTitle',
+        defaultMessage: 'Water & Care'
+      }),
+      subtitle: intl.formatMessage({
+        id: 'consumer.journey.chapterCareSubtitle',
+        defaultMessage: 'Irrigation and crop care through the season'
+      }),
       colorScheme: 'blue'
     },
     {
       key: 'inputs',
       icon: FaFlask,
-      title: 'Crop Inputs',
-      subtitle: 'Every input applied to this crop',
+      title: intl.formatMessage({
+        id: 'consumer.journey.chapterInputsTitle',
+        defaultMessage: 'Crop Inputs'
+      }),
+      subtitle: intl.formatMessage({
+        id: 'consumer.journey.chapterInputsSubtitle',
+        defaultMessage: 'Every input applied to this crop'
+      }),
       colorScheme: 'orange'
     },
     {
       key: 'pest',
       icon: FaBug,
-      title: 'Pest & Disease',
-      subtitle: 'Monitoring and pest management',
+      title: intl.formatMessage({
+        id: 'consumer.journey.chapterPestTitle',
+        defaultMessage: 'Pest & Disease'
+      }),
+      subtitle: intl.formatMessage({
+        id: 'consumer.journey.chapterPestSubtitle',
+        defaultMessage: 'Monitoring and pest management'
+      }),
       colorScheme: 'red'
     },
     {
       key: 'harvest',
       icon: FaSeedling,
-      title: 'Harvest & Handling',
-      subtitle: 'Picking, quality, and handling',
+      title: intl.formatMessage({
+        id: 'consumer.journey.chapterHarvestTitle',
+        defaultMessage: 'Harvest & Handling'
+      }),
+      subtitle: intl.formatMessage({
+        id: 'consumer.journey.chapterHarvestSubtitle',
+        defaultMessage: 'Picking, quality, and handling'
+      }),
       colorScheme: 'green'
     }
   ];
 
   const PRODUCTION_SOIL_CODES = new Set(['PL', 'TR']);
-  const CARE_CODES = new Set(['IR', 'PR', 'CU', 'TH']);
+  // FP (frost protection) and MO (mowing / orchard-floor) are in-season crop
+  // care — without this they fall through getChapterKey to null and get
+  // buried in the proof-only/operational bucket, invisible on the curated
+  // consumer timeline (Batch 3, 2026-06).
+  const CARE_CODES = new Set(['IR', 'PR', 'CU', 'TH', 'FP', 'MO']);
   const HARVEST_CODES = new Set(['HA', 'PO', 'PH', 'CM']);
   const WEATHER_CODES = new Set(['FR', 'DR', 'HL', 'TS', 'HW', 'HT', 'HH', 'LH']);
   // Mirrors the backend rule in PublicHistorySerializer._annotate_consumer_highlights;
   // used only as a fallback when the payload predates the is_highlight flag.
+  // FP is always a highlight (frost events are infrequent and notable); MO is
+  // first-occurrence only on the backend (mowing recurs) so it is not listed here.
   const HIGHLIGHT_ALWAYS = new Set([
-    'PL', 'HA', 'FE', 'PE', 'FU', 'HE', 'CC', 'OM', 'PA', 'TM', 'BR', 'PI'
+    'PL', 'HA', 'FE', 'PE', 'FU', 'HE', 'CC', 'OM', 'PA', 'TM', 'BR', 'PI', 'FP'
   ]);
 
   const getChapterKey = (event: TimelineEvent): ChapterKey | null => {
@@ -972,10 +1012,16 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     </Circle>
                     <VStack spacing={0} align="start">
                       <Heading size={{ base: 'sm', smd: 'md', lg: 'lg' }} color={textColor}>
-                        Production Journey
+                        {intl.formatMessage({
+                          id: 'consumer.journey.productionJourney',
+                          defaultMessage: 'Production Journey'
+                        })}
                       </Heading>
                       <Text fontSize="sm" color={mutedColor}>
-                        Transparent farming timeline
+                        {intl.formatMessage({
+                          id: 'consumer.journey.transparentTimeline',
+                          defaultMessage: 'Transparent farming timeline'
+                        })}
                       </Text>
                     </VStack>
                   </HStack>
@@ -993,7 +1039,13 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   <HStack spacing={1}>
                     <Icon as={MdVerified} aria-hidden="true" boxSize={3} />
                     <Text>
-                      {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'}
+                      {intl.formatMessage(
+                        {
+                          id: 'consumer.journey.eventCount',
+                          defaultMessage: '{count, plural, one {# Event} other {# Events}}'
+                        },
+                        { count: filteredEvents.length }
+                      )}
                     </Text>
                   </HStack>
                 </Badge>
@@ -1023,9 +1075,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   align="center"
                   minW={0}
                   role="group"
-                  aria-label={`${filteredEvents.length} event${
-                    filteredEvents.length === 1 ? '' : 's'
-                  } documented`}
+                  aria-label={intl.formatMessage(
+                    {
+                      id: 'consumer.journey.eventsDocumentedAria',
+                      defaultMessage:
+                        '{count, plural, one {# event documented} other {# events documented}}'
+                    },
+                    { count: filteredEvents.length }
+                  )}
                 >
                   <Text
                     fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
@@ -1035,7 +1092,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     {filteredEvents.length}
                   </Text>
                   <Text fontSize="xs" color={mutedColor} fontWeight="500" lineHeight="1.2">
-                    Events
+                    {intl.formatMessage({
+                      id: 'consumer.journey.eventsLabel',
+                      defaultMessage: 'Events'
+                    })}
                   </Text>
                 </VStack>
 
@@ -1066,7 +1126,13 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       align="center"
                       minW={0}
                       role="group"
-                      aria-label={`${photoPercent}% of events with photos`}
+                      aria-label={intl.formatMessage(
+                        {
+                          id: 'consumer.journey.photoCoverageAria',
+                          defaultMessage: '{percent}% of events with photos'
+                        },
+                        { percent: photoPercent }
+                      )}
                     >
                       <Text
                         fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
@@ -1083,7 +1149,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           fontWeight="500"
                           lineHeight="1.2"
                         >
-                          {intl.formatMessage({ id: 'transparency.withPhotos' })}
+                          {intl.formatMessage({
+                            id: 'transparency.withPhotos',
+                            defaultMessage: 'With Photos'
+                          })}
                         </Text>
                       </PhotoDocumentationTooltip>
                     </VStack>
@@ -1159,7 +1228,13 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                             );
                           });
 
-                    const displayName = category === 'all' ? 'All' : category;
+                    const displayName =
+                      category === 'all'
+                        ? intl.formatMessage({
+                            id: 'consumer.journey.filterAll',
+                            defaultMessage: 'All'
+                          })
+                        : category;
                     const eventCount = categoryEvents.length;
 
                     return (
@@ -1243,7 +1318,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                             <Text fontWeight="bold" fontSize="sm" color={textColor}>
                               {ch.title}{' '}
                               <Text as="span" fontWeight="medium" color={mutedColor}>
-                                — {ch.events.length} event{ch.events.length === 1 ? '' : 's'}
+                                {intl.formatMessage(
+                                  {
+                                    id: 'consumer.journey.chapterEventCount',
+                                    defaultMessage:
+                                      '— {count, plural, one {# event} other {# events}}'
+                                  },
+                                  { count: ch.events.length }
+                                )}
                               </Text>
                             </Text>
                             <Text fontSize="xs" color={mutedColor}>
@@ -1264,7 +1346,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                               borderRadius="full"
                               px={2}
                             >
-                              📷 {ch.photoCount} photo{ch.photoCount === 1 ? '' : 's'}
+                              {intl.formatMessage(
+                                {
+                                  id: 'consumer.journey.photoBadge',
+                                  defaultMessage:
+                                    '📷 {count, plural, one {# photo} other {# photos}}'
+                                },
+                                { count: ch.photoCount }
+                              )}
                             </Badge>
                           )}
                           {ch.allInputsOrganic && (
@@ -1275,7 +1364,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                               borderRadius="full"
                               px={2}
                             >
-                              All inputs organic-approved
+                              {intl.formatMessage({
+                                id: 'consumer.journey.allInputsOrganic',
+                                defaultMessage: 'All inputs organic-approved'
+                              })}
                             </Badge>
                           )}
                         </HStack>
@@ -1309,7 +1401,13 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         colorScheme="green"
                         onClick={() => openProofView(ch.key)}
                       >
-                        +{hiddenCount} more in the full record →
+                        {intl.formatMessage(
+                          {
+                            id: 'consumer.journey.moreInFullRecord',
+                            defaultMessage: '+{count} more in the full record →'
+                          },
+                          { count: hiddenCount }
+                        )}
                       </Button>
                     )}
                   </Box>
@@ -1324,8 +1422,30 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 size="sm"
                 onClick={() => openProofView()}
               >
-                View the full record — all {sortedEvents.length} events
-                {proofOnlyCount > 0 ? ` (incl. ${proofOnlyCount} operational)` : ''}
+                {intl.formatMessage(
+                  {
+                    id: 'consumer.journey.viewFullRecord',
+                    defaultMessage:
+                      'View the full record — all {count} events{operational, plural, =0 {} other { (incl. # operational)}}'
+                  },
+                  { count: sortedEvents.length, operational: proofOnlyCount }
+                )}
+              </Button>
+
+              {/* Buyer-framed entry — the BuyerDocRequest CTA lives in the proof view, so a
+                  wholesale buyer landing on the story view needs an explicit door to it
+                  (2026-06 audit P2-8). Same openProofView() switch, different framing. */}
+              <Button
+                variant="link"
+                size="xs"
+                colorScheme="gray"
+                fontWeight="normal"
+                onClick={() => openProofView()}
+              >
+                {intl.formatMessage({
+                  id: 'consumer.journey.buyerEntry',
+                  defaultMessage: 'Buyer or retailer? See the full sourcing record & request documents →'
+                })}
               </Button>
             </VStack>
           )}
@@ -1335,11 +1455,20 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             <Box mb={3}>
               <HStack justify="space-between" flexWrap="wrap" spacing={2}>
                 <Button size="xs" variant="link" colorScheme="green" onClick={closeProofView}>
-                  ← Back to story view
+                  {intl.formatMessage({
+                    id: 'consumer.journey.backToStory',
+                    defaultMessage: '← Back to story view'
+                  })}
                 </Button>
                 {proofChapter && (
                   <Button size="xs" variant="link" colorScheme="gray" onClick={() => openProofView()}>
-                    View all {sortedEvents.length} events →
+                    {intl.formatMessage(
+                      {
+                        id: 'consumer.journey.viewAllEvents',
+                        defaultMessage: 'View all {count} events →'
+                      },
+                      { count: sortedEvents.length }
+                    )}
                   </Button>
                 )}
               </HStack>
@@ -1352,8 +1481,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     boxSize={4}
                   />
                   <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                    {proofChapter.title} — {proofChapter.events.length} event
-                    {proofChapter.events.length === 1 ? '' : 's'}
+                    {intl.formatMessage(
+                      {
+                        id: 'consumer.journey.proofChapterHeader',
+                        defaultMessage:
+                          '{title} — {count, plural, one {# event} other {# events}}'
+                      },
+                      { title: proofChapter.title, count: proofChapter.events.length }
+                    )}
                   </Text>
                 </HStack>
               )}
@@ -1369,7 +1504,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
                 // Compute summary metrics for the grouped events
                 const subtypeNames = item.events.map((evt) => {
-                  const info = getConsumerEventDescription(evt.description, evt);
+                  const info = localizeConsumerDescription(
+                    getConsumerEventDescription(evt.description, evt),
+                    intl.locale
+                  );
                   return info.title;
                 });
                 // Deduplicate while preserving order
@@ -1408,8 +1546,14 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           <VStack align="start" spacing={0} flex={1}>
                             <HStack>
                               <Text fontWeight="bold" fontSize="sm" color={textColor}>
-                                {totalEvents} {item.category}{' '}
-                                {totalEvents === 1 ? 'Event' : 'Events'}
+                                {intl.formatMessage(
+                                  {
+                                    id: 'consumer.journey.groupEventCount',
+                                    defaultMessage:
+                                      '{count, plural, one {# {category} Event} other {# {category} Events}}'
+                                  },
+                                  { count: totalEvents, category: item.category }
+                                )}
                               </Text>
                               <Badge
                                 colorScheme={config.categoryColor}
@@ -1463,8 +1607,17 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                 <Icon as={MdVerified} boxSize={2.5} />
                                 <Text>
                                   {blockchainCount === totalEvents
-                                    ? 'ALL RECORDED'
-                                    : `${blockchainCount}/${totalEvents} RECORDED`}
+                                    ? intl.formatMessage({
+                                        id: 'consumer.journey.allRecorded',
+                                        defaultMessage: 'ALL RECORDED'
+                                      })
+                                    : intl.formatMessage(
+                                        {
+                                          id: 'consumer.journey.partialRecorded',
+                                          defaultMessage: '{count}/{total} RECORDED'
+                                        },
+                                        { count: blockchainCount, total: totalEvents }
+                                      )}
                                 </Text>
                               </HStack>
                             </Badge>
@@ -1474,8 +1627,17 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         {/* Row 4: Expand hint */}
                         <Text fontSize="xs" color={mutedColor} mt={1.5} ml="52px">
                           {isExpanded
-                            ? 'Click to collapse'
-                            : `Click to see all ${totalEvents} events`}
+                            ? intl.formatMessage({
+                                id: 'consumer.journey.clickToCollapse',
+                                defaultMessage: 'Click to collapse'
+                              })
+                            : intl.formatMessage(
+                                {
+                                  id: 'consumer.journey.clickToSeeAll',
+                                  defaultMessage: 'Click to see all {count} events'
+                                },
+                                { count: totalEvents }
+                              )}
                         </Text>
                       </Box>
                     </Box>
@@ -1541,10 +1703,18 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 aria-expanded={showAll}
               >
                 {showAll
-                  ? 'Show Less'
-                  : `Show All ${filteredEvents.length} ${
-                      filteredEvents.length === 1 ? 'Event' : 'Events'
-                    }`}
+                  ? intl.formatMessage({
+                      id: 'consumer.journey.showLess',
+                      defaultMessage: 'Show Less'
+                    })
+                  : intl.formatMessage(
+                      {
+                        id: 'consumer.journey.showAllEvents',
+                        defaultMessage:
+                          'Show All {count, plural, one {# Event} other {# Events}}'
+                      },
+                      { count: filteredEvents.length }
+                    )}
               </Button>
             </Box>
           )}
@@ -1570,7 +1740,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   ? {
                       ...selectedEvent.carbon_data,
                       calculation_method:
-                        selectedEvent.carbon_data.calculation_method || 'USDA Standard Method',
+                        selectedEvent.carbon_data.calculation_method ||
+                        intl.formatMessage({
+                          id: 'consumer.journey.usdaStandardMethod',
+                          defaultMessage: 'USDA Standard Method'
+                        }),
                       verification_confidence:
                         selectedEvent.carbon_data.verification_confidence || 'medium'
                     }

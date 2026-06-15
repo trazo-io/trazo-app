@@ -1,5 +1,7 @@
 // Event descriptions and transparency details for consumer-facing displays
 
+import { CONSUMER_DESCRIPTION_ES } from './eventDescriptions.es';
+
 export interface EventDescriptionData {
   title: string;
   description: string;
@@ -842,22 +844,26 @@ export function getConsumerEventDescription(
       PO: {
         title: 'Pollination',
         icon: '🐝',
-        description: 'Managed pollinators placed to support crop growth — a natural, zero-emission process'
+        description:
+          'Managed pollinators placed to support crop growth — a natural, zero-emission process'
       },
       'production.PO': {
         title: 'Pollination',
         icon: '🐝',
-        description: 'Managed pollinators placed to support crop growth — a natural, zero-emission process'
+        description:
+          'Managed pollinators placed to support crop growth — a natural, zero-emission process'
       },
       'event.production.pollination': {
         title: 'Pollination',
         icon: '🐝',
-        description: 'Managed pollinators placed to support crop growth — a natural, zero-emission process'
+        description:
+          'Managed pollinators placed to support crop growth — a natural, zero-emission process'
       },
       pollination: {
         title: 'Pollination',
         icon: '🐝',
-        description: 'Managed pollinators placed to support crop growth — a natural, zero-emission process'
+        description:
+          'Managed pollinators placed to support crop growth — a natural, zero-emission process'
       },
       // PH (Post-Harvest Processing)
       PH: {
@@ -900,6 +906,56 @@ export function getConsumerEventDescription(
         title: 'Canopy Management',
         icon: '✂️',
         description: 'Vine or tree canopy shaped for optimal fruit development and quality'
+      },
+      // FP (Frost Protection) — Batch 3 (2026-06)
+      FP: {
+        title: 'Frost Protection',
+        icon: '❄️',
+        description:
+          'Crop protected from frost damage on cold nights (wind machines, heaters or sprinklers)'
+      },
+      'production.FP': {
+        title: 'Frost Protection',
+        icon: '❄️',
+        description:
+          'Crop protected from frost damage on cold nights (wind machines, heaters or sprinklers)'
+      },
+      'event.production.frost_protection': {
+        title: 'Frost Protection',
+        icon: '❄️',
+        description:
+          'Crop protected from frost damage on cold nights (wind machines, heaters or sprinklers)'
+      },
+      frost_protection: {
+        title: 'Frost Protection',
+        icon: '❄️',
+        description:
+          'Crop protected from frost damage on cold nights (wind machines, heaters or sprinklers)'
+      },
+      // MO (Mowing / Orchard-Floor) — Batch 3 (2026-06)
+      MO: {
+        title: 'Orchard-Floor Management',
+        icon: '🌱',
+        description:
+          'Orchard floor mowed or managed to support soil health and clean harvest conditions'
+      },
+      'production.MO': {
+        title: 'Orchard-Floor Management',
+        icon: '🌱',
+        description:
+          'Orchard floor mowed or managed to support soil health and clean harvest conditions'
+      },
+      'event.production.mowing': {
+        title: 'Orchard-Floor Management',
+        icon: '🌱',
+        description:
+          'Orchard floor mowed or managed to support soil health and clean harvest conditions'
+      },
+      mowing: {
+        title: 'Orchard-Floor Management',
+        icon: '🌱',
+        description:
+          'Orchard floor mowed or managed to support soil health and clean harvest conditions'
       }
     };
 
@@ -962,7 +1018,8 @@ export function getConsumerEventDescription(
           description += ` over ${event.equipment_hours} hours`;
         }
         // Phase 3: Add electricity source detail for IR events
-        const electricitySrcValue = event.electricity_source ?? event.extra_data?.electricity_source;
+        const electricitySrcValue =
+          event.electricity_source ?? event.extra_data?.electricity_source;
         if (electricitySrcValue === 'solar' || electricitySrcValue === 'wind') {
           description += ` using ${electricitySrcValue}-powered pump (near-zero pump emissions)`;
         } else if (electricitySrcValue) {
@@ -1016,147 +1073,30 @@ export function getConsumerEventDescription(
       'Part of responsible farming practices that support environmental stewardship and long-term agricultural sustainability.';
 
     if (eventType.includes('planting') || eventType === 'PL') {
-      // Personalize based on actual data
-      // 🔧 FIX: Use raw values when available to avoid unit duplication
-      // event.yield_quantity may already be formatted as "500 seeds" from preview
-      const yieldRaw = (event as any).yield_quantity_raw || event.yield_quantity;
-      const yieldIsFormatted =
-        typeof event.yield_quantity === 'string' && /\d+\s+\w+/.test(event.yield_quantity);
-      const seedInfo = yieldIsFormatted
-        ? event.yield_quantity // Already formatted like "500 seeds"
-        : yieldRaw
-        ? `${
-            Number(yieldRaw) >= 1000
-              ? `${(Number(yieldRaw) / 1000).toFixed(1)} million`
-              : Number(yieldRaw).toLocaleString()
-          } ${event.yield_unit || 'seeds'}`
-        : 'seeds';
-
-      // 🔧 FIX: Use raw values when available to avoid unit duplication
-      const areaRaw = (event as any).area_covered_raw || event.area_covered;
-      const areaIsFormatted =
-        typeof event.area_covered === 'string' && /\d+\s+\w+/.test(event.area_covered);
-      const areaInfo = areaIsFormatted
-        ? `across ${event.area_covered}` // Already formatted like "2.5 hectares"
-        : areaRaw
-        ? `across ${areaRaw} ${event.area_unit || 'hectares'}`
-        : '';
-
-      consumerImpact = `${seedInfo} planted ${areaInfo} ensures optimal plant spacing for healthy growth and maximum yield quality.`;
+      // Stage 2 (2026-06-14): static sentence so it localizes via the dict —
+      // quantitative detail (seed rate, area) already renders in Key Details.
+      consumerImpact =
+        'Seeds planted with precision to ensure optimal plant spacing for healthy growth and maximum yield quality.';
       sustainabilityBenefit = `Precision planting with documented seed rates optimizes resource use while providing transparency into farming practices.`;
     } else if (eventType.includes('harvest') || eventType === 'HA') {
-      // Personalize based on harvest data
-      // 🔧 FIX: Check if value is already formatted to avoid unit duplication
-      const yieldIsFormatted =
-        typeof event.yield_quantity === 'string' && /\d+\s+\w+/.test(event.yield_quantity);
-      const yieldInfo = yieldIsFormatted
-        ? event.yield_quantity // Already formatted like "500 tons"
-        : event.yield_quantity
-        ? `${event.yield_quantity} ${event.yield_unit || 'tons'}`
-        : 'crops';
-
-      const areaIsFormatted =
-        typeof event.area_covered === 'string' && /\d+\s+\w+/.test(event.area_covered);
-      const areaInfo = areaIsFormatted
-        ? ` from ${event.area_covered}` // Already formatted
-        : event.area_covered
-        ? ` from ${event.area_covered} ${event.area_unit || 'hectares'}`
-        : '';
-
-      // Enhanced with harvest quality grade transparency
-      const qualityInfo = event.harvest_quality_grade
-        ? ` Graded as ${event.harvest_quality_grade.replace(/_/g, ' ')} for export and quality standards.`
-        : '';
-
-      consumerImpact = `${yieldInfo} harvested${areaInfo} at peak ripeness ensures maximum nutritional value and freshness.${qualityInfo}`;
+      consumerImpact =
+        'Crops harvested at peak ripeness to ensure maximum nutritional value and freshness.';
       sustainabilityBenefit = `Documented harvest timing, yield tracking, and quality grading demonstrates responsible farming and rigorous quality control practices.`;
     } else if (eventType.includes('irrigation') || eventType === 'IR') {
-      // Personalize based on irrigation data
-      // 🔧 FIX: Check if value is already formatted to avoid unit duplication
-      const areaIsFormatted =
-        typeof event.area_covered === 'string' && /\d+\s+\w+/.test(event.area_covered);
-      const areaInfo = areaIsFormatted
-        ? event.area_covered // Already formatted
-        : event.area_covered
-        ? `${event.area_covered} ${event.area_unit || 'hectares'}`
-        : 'crops';
-
-      const fuelIsFormatted =
-        typeof event.fuel_consumed === 'string' && /\d+\s+\w+/.test(event.fuel_consumed);
-      const fuelInfo = fuelIsFormatted
-        ? ` using ${event.fuel_consumed} of fuel` // Already formatted
-        : event.fuel_consumed
-        ? ` using ${event.fuel_consumed} ${event.fuel_unit || 'L'} of fuel`
-        : '';
-
-      consumerImpact = `Targeted irrigation across ${areaInfo} provides optimal water levels for healthy plant growth${
-        fuelInfo ? ' with documented resource usage' : ''
-      }.`;
+      consumerImpact =
+        'Targeted irrigation provides optimal water levels for healthy plant growth.';
       sustainabilityBenefit = `Precision irrigation with complete documentation conserves water resources while maintaining optimal growing conditions.`;
     } else if (eventType.includes('pruning') || eventType === 'PR') {
-      // Personalize based on pruning data
-      // 🔧 FIX: Check if value is already formatted to avoid unit duplication
-      const areaIsFormatted =
-        typeof event.area_covered === 'string' && /\d+\s+\w+/.test(event.area_covered);
-      const areaInfo = areaIsFormatted
-        ? `across ${event.area_covered}` // Already formatted
-        : event.area_covered
-        ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
-        : '';
-
-      const hoursIsFormatted =
-        typeof event.equipment_hours === 'string' && /\d+\s+\w+/.test(event.equipment_hours);
-      const hoursInfo = hoursIsFormatted
-        ? ` over ${event.equipment_hours}` // Already formatted
-        : event.equipment_hours
-        ? ` over ${event.equipment_hours} hours`
-        : '';
-
-      consumerImpact = `Strategic pruning ${areaInfo}${hoursInfo} improves plant health, air circulation, and fruit quality for better produce.`;
+      consumerImpact =
+        'Strategic pruning improves plant health, air circulation, and fruit quality for better produce.';
       sustainabilityBenefit = `Documented pruning practices reduce disease pressure and optimize plant productivity through transparency.`;
     } else if (eventType.includes('cultivation') || eventType === 'CU') {
-      // CRITICAL FIX (2025-12-11): Added cultivation consumer impact
-      // 🔧 FIX: Check if value is already formatted to avoid unit duplication
-      const areaIsFormatted =
-        typeof event.area_covered === 'string' && /\d+\s+\w+/.test(event.area_covered);
-      const areaInfo = areaIsFormatted
-        ? `across ${event.area_covered}` // Already formatted
-        : event.area_covered
-        ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
-        : '';
-
-      const fuelIsFormatted =
-        typeof event.fuel_consumed === 'string' && /\d+\s+\w+/.test(event.fuel_consumed);
-      const fuelInfo = fuelIsFormatted
-        ? ` using ${event.fuel_consumed} of fuel` // Already formatted
-        : event.fuel_consumed
-        ? ` using ${event.fuel_consumed} ${event.fuel_unit || 'L'} of fuel`
-        : '';
-
-      consumerImpact = `Mechanical cultivation ${areaInfo} controls weeds naturally and improves soil aeration for healthier plant roots${
-        fuelInfo ? ' with documented resource usage' : ''
-      }.`;
+      consumerImpact =
+        'Mechanical cultivation controls weeds naturally and improves soil aeration for healthier plant roots.';
       sustainabilityBenefit = `Documented cultivation practices demonstrate sustainable weed management and soil health maintenance.`;
     } else if (eventType.includes('thinning') || eventType === 'TH') {
-      // CRITICAL FIX (2025-12-11): Added thinning consumer impact
-      // 🔧 FIX: Check if value is already formatted to avoid unit duplication
-      const areaIsFormatted =
-        typeof event.area_covered === 'string' && /\d+\s+\w+/.test(event.area_covered);
-      const areaInfo = areaIsFormatted
-        ? `across ${event.area_covered}` // Already formatted
-        : event.area_covered
-        ? `across ${event.area_covered} ${event.area_unit || 'hectares'}`
-        : '';
-
-      const hoursIsFormatted =
-        typeof event.equipment_hours === 'string' && /\d+\s+\w+/.test(event.equipment_hours);
-      const hoursInfo = hoursIsFormatted
-        ? ` over ${event.equipment_hours}` // Already formatted
-        : event.equipment_hours
-        ? ` over ${event.equipment_hours} hours`
-        : '';
-
-      consumerImpact = `Fruit thinning ${areaInfo}${hoursInfo} improves individual fruit size, quality, and sugar content by reducing competition for nutrients.`;
+      consumerImpact =
+        'Fruit thinning improves individual fruit size, quality, and sugar content by reducing competition for nutrients.';
       sustainabilityBenefit = `Documented thinning practices optimize resource allocation and demonstrate commitment to premium quality produce.`;
     }
 
@@ -1197,7 +1137,8 @@ export function getConsumerEventDescription(
             return gradeLabels[event.harvest_quality_grade] || 'Harvest Operation';
           }
           if (desc.includes('export')) return 'Harvest - Export Quality';
-          if (desc.includes('processing') || desc.includes('juice')) return 'Harvest - Processing Grade';
+          if (desc.includes('processing') || desc.includes('juice'))
+            return 'Harvest - Processing Grade';
           if (desc.includes('first') || desc.includes('main') || desc.includes('premium'))
             return 'Main Harvest';
           if (desc.includes('second')) return 'Second Harvest';
@@ -1238,7 +1179,9 @@ export function getConsumerEventDescription(
           EQ: 'Equipment Operations (Legacy)',
           SO: 'Soil Operation',
           FE: 'Fertilizer Operation',
-          WE: 'Weather Monitoring'
+          WE: 'Weather Monitoring',
+          FP: 'Frost Protection',
+          MO: 'Mowing / Orchard-Floor'
         };
         if (codeToTitle[prodType]) {
           return codeToTitle[prodType];
@@ -1437,7 +1380,7 @@ export function getConsumerEventDescription(
 
     // Use farmer's event name as title when available (consistent with all other event types),
     // falling back to the standardized weatherTypeMap title
-    const weatherTitle = (event.name && event.name.trim()) ? event.name : weatherInfo.title;
+    const weatherTitle = event.name && event.name.trim() ? event.name : weatherInfo.title;
 
     return {
       title: weatherTitle,
@@ -1585,13 +1528,15 @@ export function getConsumerEventDescription(
         isOrganicBySubtype || (!isSyntheticBySubtype && productName.toLowerCase().includes('neem'));
 
       if (isOrganic) {
-        baseDescription = 'Applied organic pest control to naturally protect plants from harmful insects';
+        baseDescription =
+          'Applied organic pest control to naturally protect plants from harmful insects';
         consumerImpact =
           'Organic pest control provides natural protection without synthetic chemicals, supporting healthier food production.';
         sustainabilityBenefit =
           'Natural pest control reduces reliance on synthetic pesticides, promoting biodiversity and soil health.';
       } else {
-        baseDescription = 'Applied professional pest control to protect plants from harmful insects';
+        baseDescription =
+          'Applied professional pest control to protect plants from harmful insects';
         consumerImpact =
           'Professional pesticide application protects crops from harmful pests while following strict safety protocols.';
         sustainabilityBenefit =
@@ -1775,57 +1720,33 @@ export function getConsumerEventDescription(
 
     // Specific messages for each soil management type
     if (soilType === 'ST' || soilType.includes('Testing')) {
-      const areaInfo = event.area_managed
-        ? ` across ${event.area_managed} ${event.area_unit || 'hectares'}`
-        : '';
-      const phInfo = event.soil_ph ? ` (pH: ${event.soil_ph})` : '';
-
-      consumerImpact = `Soil testing and analysis${areaInfo}${phInfo} ensures optimal growing conditions and informed farming decisions.`;
+      consumerImpact =
+        'Soil testing and analysis ensures optimal growing conditions and informed farming decisions.';
       sustainabilityBenefit =
         'Scientific soil analysis enables precision agriculture and reduces unnecessary inputs through data-driven decisions.';
     } else if (soilType === 'PA' || soilType.includes('pH')) {
-      const areaInfo = event.area_managed
-        ? ` across ${event.area_managed} ${event.area_unit || 'hectares'}`
-        : '';
-      const phInfo = event.soil_ph ? ` to achieve optimal pH of ${event.soil_ph}` : '';
-
-      consumerImpact = `Soil pH adjustment${areaInfo}${phInfo} optimizes nutrient availability for healthy crop development.`;
+      consumerImpact =
+        'Soil pH adjustment optimizes nutrient availability for healthy crop development.';
       sustainabilityBenefit =
         'pH optimization improves nutrient uptake efficiency, reducing fertilizer requirements and environmental impact.';
     } else if (soilType === 'OM' || soilType.includes('Organic')) {
-      const areaInfo = event.area_managed
-        ? ` across ${event.area_managed} ${event.area_unit || 'hectares'}`
-        : '';
-      const omInfo = event.organic_matter ? ` (${event.organic_matter}% organic matter)` : '';
-
-      consumerImpact = `Organic matter enhancement${areaInfo}${omInfo} builds soil fertility and supports beneficial microbial activity.`;
+      consumerImpact =
+        'Organic matter enhancement builds soil fertility and supports beneficial microbial activity.';
       sustainabilityBenefit =
         'Organic matter addition improves soil structure, water retention, and long-term soil health naturally.';
     } else if (soilType === 'CC' || soilType.includes('Cover')) {
-      const areaInfo = event.area_managed
-        ? ` across ${event.area_managed} ${event.area_unit || 'hectares'}`
-        : '';
-
-      consumerImpact = `Cover crop management${areaInfo} protects soil from erosion and enhances soil organic matter naturally.`;
+      consumerImpact =
+        'Cover crop management protects soil from erosion and enhances soil organic matter naturally.';
       sustainabilityBenefit =
         'Cover crops prevent soil erosion, suppress weeds, and improve soil structure while reducing input requirements.';
     } else if (soilType === 'TI' || soilType.includes('Tillage')) {
-      const areaInfo = event.area_managed
-        ? ` across ${event.area_managed} ${event.area_unit || 'hectares'}`
-        : '';
-      const depthInfo = event.working_depth
-        ? ` at ${event.working_depth} ${event.depth_unit || 'cm'} depth`
-        : '';
-
-      consumerImpact = `Strategic tillage implementation${areaInfo}${depthInfo} prepares optimal seedbed conditions for healthy crop establishment.`;
+      consumerImpact =
+        'Strategic tillage implementation prepares optimal seedbed conditions for healthy crop establishment.';
       sustainabilityBenefit =
         'Precision tillage minimizes soil disturbance while ensuring proper seedbed preparation and crop establishment.';
     } else if (soilType === 'CO' || soilType.includes('Compost')) {
-      const areaInfo = event.area_managed
-        ? ` across ${event.area_managed} ${event.area_unit || 'hectares'}`
-        : '';
-
-      consumerImpact = `Compost application${areaInfo} enriches soil naturally and promotes beneficial microbial diversity.`;
+      consumerImpact =
+        'Compost application enriches soil naturally and promotes beneficial microbial diversity.';
       sustainabilityBenefit =
         'Composting recycles organic materials, reduces waste, and builds soil fertility through sustainable practices.';
     }
@@ -2046,32 +1967,23 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'Trap monitoring reduces pesticide applications by providing precise timing for control measures only when needed.';
     } else if (eventPestType === 'BR' || eventPestType === 'beneficial_release') {
-      const beneficialInfo = event.beneficial_species
-        ? event.beneficial_species
-        : 'beneficial insects';
-      const releaseInfo = event.release_quantity ? `${event.release_quantity} ` : '';
-
-      consumerImpact = `Released ${releaseInfo}${beneficialInfo} to naturally control pests, creating a healthy ecosystem that protects crops without chemicals.`;
+      consumerImpact =
+        'Released beneficial organisms to naturally control pests, creating a healthy ecosystem that protects crops without chemicals.';
       sustainabilityBenefit =
         'Biological pest control builds sustainable farming systems that work with nature to maintain crop health and biodiversity.';
     } else if (eventPestType === 'PI' || eventPestType === 'pest_identification') {
-      const pestInfo = event.pest_species ? event.pest_species : 'pest species';
-
-      consumerImpact = `Accurate identification of ${pestInfo} enables precise, targeted management that protects crops while minimizing environmental impact.`;
+      consumerImpact =
+        'Accurate pest identification enables precise, targeted management that protects crops while minimizing environmental impact.';
       sustainabilityBenefit =
         'Species-specific pest management reduces unnecessary treatments and supports integrated approaches that preserve beneficial organisms.';
     } else if (eventPestType === 'TA' || eventPestType === 'threshold_assessment') {
-      const damageInfo = event.damage_percentage
-        ? `${event.damage_percentage}% crop damage`
-        : 'pest pressure levels';
-
-      consumerImpact = `Scientific assessment of ${damageInfo} ensures treatments are only applied when economically necessary, protecting crop quality.`;
+      consumerImpact =
+        'Scientific assessment of pest damage ensures treatments are only applied when economically necessary, protecting crop quality.';
       sustainabilityBenefit =
         'Economic threshold-based decisions prevent overtreatment, reducing environmental impact while maintaining profitable farming.';
     } else if (eventPestType === 'IP' || eventPestType === 'ipm_implementation') {
-      const strategyInfo = event.ipm_strategy ? 'comprehensive strategy' : 'integrated approach';
-
-      consumerImpact = `Implemented ${strategyInfo} combining multiple sustainable methods to manage pests while protecting crop health and quality.`;
+      consumerImpact =
+        'Implemented an integrated strategy combining multiple sustainable methods to manage pests while protecting crop health and quality.';
       sustainabilityBenefit =
         'Integrated pest management reduces chemical dependency through biological controls, monitoring, and targeted interventions.';
     }
@@ -2220,10 +2132,8 @@ export function getConsumerEventDescription(
       'Part of comprehensive farm management that ensures operational efficiency and environmental responsibility.';
 
     if (eventActivityType === 'maintenance') {
-      const durationInfo = event.duration ? ` over ${event.duration} hours` : '';
-      const peopleInfo = event.people_involved ? ` with ${event.people_involved} team members` : '';
-
-      consumerImpact = `Regular farm maintenance${durationInfo}${peopleInfo} ensures equipment operates efficiently and safely for quality food production.`;
+      consumerImpact =
+        'Regular farm maintenance ensures equipment operates efficiently and safely for quality food production.';
       sustainabilityBenefit =
         'Preventive maintenance reduces equipment breakdowns, extends machinery life, and minimizes environmental impact from repairs.';
     } else if (eventActivityType === 'planning') {
@@ -2232,9 +2142,8 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'Comprehensive planning reduces waste, optimizes inputs, and supports sustainable farming decision-making.';
     } else if (eventActivityType === 'training') {
-      const peopleInfo = event.people_involved ? ` for ${event.people_involved} team members` : '';
-
-      consumerImpact = `Professional training${peopleInfo} ensures best practices are followed for safe, high-quality food production.`;
+      consumerImpact =
+        'Professional training ensures best practices are followed for safe, high-quality food production.';
       sustainabilityBenefit =
         'Ongoing education promotes adoption of sustainable techniques and improves overall farming practices.';
     } else if (eventActivityType === 'documentation') {
@@ -2248,9 +2157,8 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'Safety protocols protect workers and the environment while maintaining sustainable operational standards.';
     } else if (eventActivityType === 'emergency') {
-      const peopleInfo = event.people_involved ? ` with ${event.people_involved} team members` : '';
-
-      consumerImpact = `Rapid emergency response${peopleInfo} protects crops and farm infrastructure, ensuring continued quality production.`;
+      consumerImpact =
+        'Rapid emergency response protects crops and farm infrastructure, ensuring continued quality production.';
       sustainabilityBenefit =
         'Prompt damage repair minimizes crop loss and maintains farm resilience against weather events.';
     } else if (eventActivityType === 'precision_ag') {
@@ -2310,20 +2218,22 @@ export function getConsumerEventDescription(
     // Since Equipment-specific fields are not being serialized from backend,
     // provide fallback messages based on available event data
     const equipmentName = event.name || 'Equipment Operation';
-    const operationDescription = eventDescription || 'equipment operation';
 
     // Check if we have Equipment-specific data fields
     if (!event.operation_type && !event.equipment_type && !event.fuel_consumed) {
       // Fallback Equipment handling when specific fields are undefined
       return {
         title: equipmentName,
-        description: `This ${operationDescription.toLowerCase()} demonstrates efficient farm equipment management, showing how modern agricultural practices optimize resource use while maintaining food quality.`,
+        description:
+          'This equipment operation demonstrates efficient farm equipment management, showing how modern agricultural practices optimize resource use while maintaining food quality.',
         shortDescription: 'Equipment operation completed as part of farm activities',
         icon: '🚜',
         impact: 'MEDIUM' as 'HIGH' | 'MEDIUM' | 'LOW',
         consumerMessage: 'Farm equipment operation following best practices',
-        consumerImpact: `This ${operationDescription.toLowerCase()} demonstrates efficient farm equipment management, showing how modern agricultural practices optimize resource use while maintaining food quality.`,
-        sustainabilityBenefit: `Documented equipment operations like this ${operationDescription.toLowerCase()} help build consumer trust through operational transparency and support sustainable farming through efficient resource management.`
+        consumerImpact:
+          'This equipment operation demonstrates efficient farm equipment management, showing how modern agricultural practices optimize resource use while maintaining food quality.',
+        sustainabilityBenefit:
+          'Documented equipment operations help build consumer trust through operational transparency and support sustainable farming through efficient resource management.'
       };
     }
 
@@ -2462,47 +2372,33 @@ export function getConsumerEventDescription(
 
     // FIXED: Specific messages for each operation type code matching EquipmentTab.jsx
     if (operationType === 'FC' || operationType.includes('Fuel Consumption')) {
-      const fuelInfo = event.fuel_consumed ? ` consuming ${event.fuel_consumed}L of fuel` : '';
-      const hoursInfo = event.hours_operated ? ` over ${event.hours_operated} hours` : '';
-      const areaInfo = event.area_worked ? ` across ${event.area_worked} hectares` : '';
-      const equipmentInfo = event.equipment_type ? ` using ${event.equipment_type}` : '';
-
-      consumerImpact = `Field equipment operation${equipmentInfo}${fuelInfo}${hoursInfo}${areaInfo} with complete fuel consumption documentation for transparency.`;
+      consumerImpact =
+        'Field equipment operation with complete fuel consumption documentation for transparency.';
       sustainabilityBenefit =
         'Precise fuel consumption tracking enables equipment efficiency optimization and environmental impact reduction.';
     } else if (operationType === 'MN' || operationType.includes('Maintenance')) {
-      const equipmentInfo = event.equipment_type ? ` for ${event.equipment_type}` : '';
-      const hoursInfo = event.hours_operated ? ` over ${event.hours_operated} hours` : '';
-
-      consumerImpact = `Equipment maintenance${equipmentInfo}${hoursInfo} ensures optimal performance and reduces environmental impact from inefficient operations.`;
+      consumerImpact =
+        'Equipment maintenance ensures optimal performance and reduces environmental impact from inefficient operations.';
       sustainabilityBenefit =
         'Preventive maintenance extends equipment life, reduces fuel consumption, and minimizes operational carbon footprint.';
     } else if (operationType === 'RE' || operationType.includes('Repair')) {
-      const equipmentInfo = event.equipment_type ? ` for ${event.equipment_type}` : '';
-      const hoursInfo = event.hours_operated ? ` over ${event.hours_operated} hours` : '';
-
-      consumerImpact = `Equipment repair${equipmentInfo}${hoursInfo} restores functionality and maintains operational efficiency for sustainable farming.`;
+      consumerImpact =
+        'Equipment repair restores functionality and maintains operational efficiency for sustainable farming.';
       sustainabilityBenefit =
         'Timely equipment repairs prevent breakdowns, reduce waste from damaged equipment, and maintain operational efficiency.';
     } else if (operationType === 'CA' || operationType.includes('Calibration')) {
-      const equipmentInfo = event.equipment_type ? ` for ${event.equipment_type}` : '';
-      const hoursInfo = event.hours_operated ? ` over ${event.hours_operated} hours` : '';
-
-      consumerImpact = `Equipment calibration${equipmentInfo}${hoursInfo} ensures precise operations and optimal resource usage for quality production.`;
+      consumerImpact =
+        'Equipment calibration ensures precise operations and optimal resource usage for quality production.';
       sustainabilityBenefit =
         'Regular calibration improves precision, reduces resource waste, and optimizes equipment efficiency for environmental benefits.';
     } else if (operationType === 'BD' || operationType.includes('Breakdown')) {
-      const equipmentInfo = event.equipment_type ? ` for ${event.equipment_type}` : '';
-      const hoursInfo = event.hours_operated ? ` over ${event.hours_operated} hours` : '';
-
-      consumerImpact = `Equipment breakdown response${equipmentInfo}${hoursInfo} ensures quick restoration of operations and minimal impact on production.`;
+      consumerImpact =
+        'Equipment breakdown response ensures quick restoration of operations and minimal impact on production.';
       sustainabilityBenefit =
         'Rapid breakdown response minimizes operational delays and prevents resource waste from extended equipment downtime.';
     } else if (operationType === 'EI' || operationType.includes('Inspection')) {
-      const equipmentInfo = event.equipment_type ? ` for ${event.equipment_type}` : '';
-      const hoursInfo = event.hours_operated ? ` over ${event.hours_operated} hours` : '';
-
-      consumerImpact = `Equipment inspection${equipmentInfo}${hoursInfo} ensures safety standards and optimal performance for reliable farming operations.`;
+      consumerImpact =
+        'Equipment inspection ensures safety standards and optimal performance for reliable farming operations.';
       sustainabilityBenefit =
         'Regular inspections prevent equipment failures, extend machinery life, and maintain optimal efficiency for sustainability.';
     }
@@ -2635,8 +2531,7 @@ export function getConsumerEventDescription(
           'Fair Trade certification ensuring ethical labor practices and fair wages for farmers',
         regenerative:
           'Regenerative Organic certification promoting soil health and ecosystem restoration',
-        cng:
-          'Certified Naturally Grown certification for farms using natural growing practices',
+        cng: 'Certified Naturally Grown certification for farms using natural growing practices',
         non_gmo:
           'Non-GMO Project Verified certification ensuring products are free from genetic modification',
         sustainable_agriculture:
@@ -2700,19 +2595,16 @@ export function getConsumerEventDescription(
       fullDescription += `. ${practiceDesc}`;
     }
 
-    // Consumer impact messaging - Enhanced with certificate transparency
-    const certificateRef = event.certificate_number
-      ? ` with verifiable certificate ${event.certificate_number}`
-      : '';
-    let consumerImpact = `Supporting agricultural transparency and sustainability${certificateRef}`;
+    // Consumer impact messaging (static so it localizes via the dict)
+    let consumerImpact = 'Supporting agricultural transparency and sustainability';
     if (businessType === 'certification') {
-      consumerImpact = `Certified products ensuring quality and environmental standards${certificateRef}`;
+      consumerImpact = 'Certified products ensuring quality and environmental standards';
     } else if (businessType === 'carbon_credits') {
-      consumerImpact = `Contributing to carbon offset programs and climate action${certificateRef}`;
+      consumerImpact = 'Contributing to carbon offset programs and climate action';
     } else if (businessType === 'verification') {
-      consumerImpact = `Documented practices providing trust and transparency${certificateRef}`;
+      consumerImpact = 'Documented practices providing trust and transparency';
     } else if (businessType === 'transparency') {
-      consumerImpact = `Enhanced visibility into how your food is grown${certificateRef}`;
+      consumerImpact = 'Enhanced visibility into how your food is grown';
     }
 
     // Sustainability benefit - Enhanced with certificate transparency
@@ -3096,7 +2988,8 @@ export function getSustainabilityImpact(
   // Soil management: generally beneficial/low-impact practices
   if (event && event.type === 'soil_management') {
     const soilType = event.soil_management_type || '';
-    if (soilType === 'CC' || soilType === 'TI' || soilType === 'ST' || soilType === 'CO') return 'low';
+    if (soilType === 'CC' || soilType === 'TI' || soilType === 'ST' || soilType === 'CO')
+      return 'low';
     return 'low';
   }
 
@@ -3336,10 +3229,35 @@ export function getTimelineEventTitle(event: any, intl?: any): string {
   return event.name || categoryDefaults[event.event_type] || 'Farm Activity';
 }
 
+/**
+ * Post-process a getConsumerEventDescription() result into es-419 by exact
+ * string match (CONSUMER_DESCRIPTION_ES). shortDescription is always static and
+ * gets localized; most consumerImpact / sustainabilityBenefit are static too.
+ * The ~36 DYNAMIC consumerImpact templates (area/pH/yield interpolated) have no
+ * dict entry and pass through unchanged (English) until Stage 2 converts them to
+ * ICU. Pass intl.locale; any non-"es" locale returns the input untouched.
+ */
+export function localizeConsumerDescription(
+  data: EventDescriptionData,
+  locale?: string
+): EventDescriptionData {
+  if (!locale || !locale.toLowerCase().startsWith('es')) return data;
+  const tr = (s: string | undefined): string => (s && CONSUMER_DESCRIPTION_ES[s]) || s || '';
+  return {
+    ...data,
+    description: tr(data.description),
+    shortDescription: tr(data.shortDescription),
+    consumerMessage: tr(data.consumerMessage),
+    consumerImpact: tr(data.consumerImpact),
+    sustainabilityBenefit: tr(data.sustainabilityBenefit)
+  };
+}
+
 export default {
   eventDescriptions,
   getRealTransparencyDetails,
   getConsumerEventDescription,
+  localizeConsumerDescription,
   getTimelineEventTitle,
   getEventCategory,
   getImpactLevel,

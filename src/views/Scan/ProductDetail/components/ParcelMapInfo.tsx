@@ -31,8 +31,10 @@ import {
   FaCertificate
 } from 'react-icons/fa';
 import { formatHarvestDate } from 'utils/consumerDisplay';
+import { useIntl } from 'react-intl';
 import { MdLocationOn, MdTerrain } from 'react-icons/md';
 import { ParcelModal } from './ParcelModal';
+import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 // @ts-ignore - CardWithMap is a JSX component without TypeScript declarations
 import CardWithMap from 'components/Map/CardWithMap';
 import Card from 'components/Card/Card';
@@ -49,6 +51,8 @@ const formatDisplayValue = (value: string | undefined | null): string => {
 };
 
 interface ParcelMapInfoProps {
+  /** Buyer-only (proof view): gate the parcel contact details. Default false. P2-6. */
+  showContactInfo?: boolean;
   parcelData?: {
     id?: string;
     name?: string;
@@ -114,7 +118,11 @@ interface ParcelMapInfoProps {
   };
 }
 
-export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
+export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
+  parcelData,
+  showContactInfo = false
+}) => {
+  const intl = useIntl();
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
@@ -150,15 +158,29 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
               color={textColor}
             >
-              Parcel Information
+              {intl.formatMessage({
+                id: 'consumer.farm.parcelInformation',
+                defaultMessage: 'Parcel Information'
+              })}
             </Text>
             <Text fontSize="xs" color={mutedColor}>
-              {hasGeo ? 'Field map and cultivation details' : 'Cultivation details'}
+              {hasGeo
+                ? intl.formatMessage({
+                    id: 'consumer.farm.fieldMapAndDetails',
+                    defaultMessage: 'Field map and cultivation details'
+                  })
+                : intl.formatMessage({
+                    id: 'consumer.farm.cultivationDetailsSubtitle',
+                    defaultMessage: 'Cultivation details'
+                  })}
             </Text>
           </VStack>
           {hasGeo && (
             <Badge colorScheme="green" borderRadius="full" fontSize="xs">
-              Field Map
+              {intl.formatMessage({
+                id: 'consumer.farm.fieldMap',
+                defaultMessage: 'Field Map'
+              })}
             </Badge>
           )}
         </HStack>
@@ -176,7 +198,11 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               />
               {parcelData?.map_metadata?.approximate && (
                 <Text fontSize="xs" color={mutedColor} mt={2}>
-                  Approximate area — the farmer chose not to share the exact field location.
+                  {intl.formatMessage({
+                    id: 'consumer.farm.approximateAreaNote',
+                    defaultMessage:
+                      'Approximate area — the farmer chose not to share the exact field location.'
+                  })}
                 </Text>
               )}
             </Box>
@@ -187,25 +213,39 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
             <VStack align="start" spacing={4}>
               <Box>
                 <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
-                  PARCEL NAME
+                  {intl.formatMessage({
+                    id: 'consumer.farm.parcelName',
+                    defaultMessage: 'PARCEL NAME'
+                  })}
                 </Text>
                 <Text
                   fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                   fontWeight="semibold"
                   color={textColor}
                 >
-                  {parcelData?.name || 'Field'}
+                  {parcelData?.name ||
+                    intl.formatMessage({
+                      id: 'consumer.farm.fieldFallback',
+                      defaultMessage: 'Field'
+                    })}
                 </Text>
               </Box>
 
               <Box>
                 <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
-                  LOCATION
+                  {intl.formatMessage({
+                    id: 'consumer.farm.location',
+                    defaultMessage: 'LOCATION'
+                  })}
                 </Text>
                 <HStack spacing={2}>
                   <Icon as={MdLocationOn} color="green.500" />
                   <Text fontSize="md" color={textColor}>
-                    {parcelData?.location || 'Location not specified'}
+                    {parcelData?.location ||
+                      intl.formatMessage({
+                        id: 'consumer.farm.locationNotSpecified',
+                        defaultMessage: 'Location not specified'
+                      })}
                   </Text>
                 </HStack>
               </Box>
@@ -222,24 +262,43 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               {parcelData?.area && (
                 <Stat>
                   <StatLabel fontSize="xs" color={mutedColor}>
-                    AREA
+                    {intl.formatMessage({
+                      id: 'consumer.farm.area',
+                      defaultMessage: 'AREA'
+                    })}
                   </StatLabel>
                   <StatNumber fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }} color={textColor}>
-                    {parcelData.area} {parcelData.areaUnit || 'hectares'}
+                    {parcelData.area}{' '}
+                    {parcelData.areaUnit ||
+                      intl.formatMessage({
+                        id: 'consumer.farm.hectares',
+                        defaultMessage: 'hectares'
+                      })}
                   </StatNumber>
-                  <StatHelpText fontSize="xs">Total cultivation area</StatHelpText>
+                  <StatHelpText fontSize="xs">
+                    {intl.formatMessage({
+                      id: 'consumer.farm.totalCultivationArea',
+                      defaultMessage: 'Total cultivation area'
+                    })}
+                  </StatHelpText>
                 </Stat>
               )}
 
               {parcelData?.soilType && (
                 <Box>
                   <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
-                    SOIL TYPE
+                    {intl.formatMessage({
+                      id: 'consumer.farm.soilType',
+                      defaultMessage: 'SOIL TYPE'
+                    })}
                   </Text>
                   <HStack spacing={2}>
                     <Icon as={MdTerrain} color="green.500" />
                     <Text fontSize="md" color={textColor}>
-                      {formatDisplayValue(parcelData.soilType)}
+                      {formatDisplayValue(parcelData.soilType)
+                        .split(',')
+                        .map((s) => localizeFieldValue(s.trim(), intl.locale))
+                        .join(', ')}
                     </Text>
                   </HStack>
                 </Box>
@@ -248,10 +307,19 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               {parcelData?.elevation && (
                 <Box>
                   <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
-                    ELEVATION
+                    {intl.formatMessage({
+                      id: 'consumer.farm.elevation',
+                      defaultMessage: 'ELEVATION'
+                    })}
                   </Text>
                   <Text fontSize="md" color={textColor}>
-                    {parcelData.elevation}m above sea level
+                    {intl.formatMessage(
+                      {
+                        id: 'consumer.farm.metersAboveSeaLevel',
+                        defaultMessage: '{value}m above sea level'
+                      },
+                      { value: parcelData.elevation }
+                    )}
                   </Text>
                 </Box>
               )}
@@ -263,7 +331,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
           {/* Cultivation Details */}
           <Box>
             <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={3}>
-              Cultivation Details
+              {intl.formatMessage({
+                id: 'consumer.farm.cultivationDetails',
+                defaultMessage: 'Cultivation Details'
+              })}
             </Text>
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
               {/* Display primary_crop if available, otherwise fall back to cropType */}
@@ -272,7 +343,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                   <HStack spacing={2}>
                     <Icon as={FaSeedling} color="green.500" boxSize={4} />
                     <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                      PRIMARY CROP
+                      {intl.formatMessage({
+                        id: 'consumer.farm.primaryCrop',
+                        defaultMessage: 'PRIMARY CROP'
+                      })}
                     </Text>
                   </HStack>
                   <Text fontSize="sm" color={textColor}>
@@ -286,7 +360,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                   <HStack spacing={2}>
                     <Icon as={FaLeaf} color="green.500" boxSize={4} />
                     <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                      IRRIGATION
+                      {intl.formatMessage({
+                        id: 'consumer.farm.irrigation',
+                        defaultMessage: 'IRRIGATION'
+                      })}
                     </Text>
                   </HStack>
                   <Text fontSize="sm" color={textColor}>
@@ -300,7 +377,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                   <HStack spacing={2}>
                     <Icon as={FaRuler} color="green.500" boxSize={4} />
                     <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                      SLOPE
+                      {intl.formatMessage({
+                        id: 'consumer.farm.slope',
+                        defaultMessage: 'SLOPE'
+                      })}
                     </Text>
                   </HStack>
                   <Text fontSize="sm" color={textColor}>
@@ -326,7 +406,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                         <HStack>
                           <Icon as={FaLeaf} color="green.600" boxSize={4} />
                           <Text fontWeight="bold" color="green.700" fontSize="xs">
-                            WHAT MAKES THIS PARCEL SPECIAL
+                            {intl.formatMessage({
+                              id: 'consumer.farm.whatMakesParcelSpecial',
+                              defaultMessage: 'WHAT MAKES THIS PARCEL SPECIAL'
+                            })}
                           </Text>
                         </HStack>
                         <Text color="gray.700" fontSize="sm" lineHeight="tall">
@@ -344,7 +427,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                           <HStack>
                             <Icon as={FaSeedling} color="green.500" boxSize={4} />
                             <Text fontWeight="bold" color="gray.700" fontSize="xs">
-                              SUSTAINABILITY PRACTICES
+                              {intl.formatMessage({
+                                id: 'consumer.farm.sustainabilityPractices',
+                                defaultMessage: 'SUSTAINABILITY PRACTICES'
+                              })}
                             </Text>
                           </HStack>
                           <Text color="gray.700" fontSize="sm" lineHeight="tall">
@@ -361,7 +447,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                           <HStack>
                             <Icon as={FaUsers} color="green.500" boxSize={4} />
                             <Text fontWeight="bold" color="gray.700" fontSize="xs">
-                              WHY CONSUMERS SHOULD CARE
+                              {intl.formatMessage({
+                                id: 'consumer.farm.whyConsumersShouldCare',
+                                defaultMessage: 'WHY CONSUMERS SHOULD CARE'
+                              })}
                             </Text>
                           </HStack>
                           <Text color="gray.700" fontSize="sm" lineHeight="tall">
@@ -384,7 +473,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                 {parcelData?.plantingDate && (
                   <Box>
                     <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
-                      PLANTING DATE
+                      {intl.formatMessage({
+                        id: 'consumer.farm.plantingDate',
+                        defaultMessage: 'PLANTING DATE'
+                      })}
                     </Text>
                     <Text fontSize="md" color={textColor}>
                       {new Date(parcelData.plantingDate).toLocaleDateString()}
@@ -395,10 +487,13 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
                 {parcelData?.harvestDate && (
                   <Box>
                     <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
-                      HARVEST DATE
+                      {intl.formatMessage({
+                        id: 'consumer.farm.harvestDate',
+                        defaultMessage: 'HARVEST DATE'
+                      })}
                     </Text>
                     <Text fontSize="md" color={textColor}>
-                      {formatHarvestDate(parcelData.harvestDate) ||
+                      {formatHarvestDate(parcelData.harvestDate, intl.locale) ||
                         new Date(parcelData.harvestDate).toLocaleDateString()}
                     </Text>
                   </Box>
@@ -433,9 +528,10 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({ parcelData }) => {
               : undefined,
             soil_type: parcelData.soilType,
             unique_code: parcelData.unique_code,
-            contact_person: parcelData.contact_person,
-            contact_phone: parcelData.contact_phone,
-            contact_email: parcelData.contact_email,
+            // Contact details are buyer-only (proof view) — P2-6 defense-in-depth.
+            contact_person: showContactInfo ? parcelData.contact_person : undefined,
+            contact_phone: showContactInfo ? parcelData.contact_phone : undefined,
+            contact_email: showContactInfo ? parcelData.contact_email : undefined,
             establishment: parcelData.establishment,
             current_history: parcelData.current_history
               ? {

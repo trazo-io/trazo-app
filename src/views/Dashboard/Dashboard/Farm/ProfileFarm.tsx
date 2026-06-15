@@ -52,6 +52,7 @@ import {
 import { useGetFarmQuery, useEditFarmMutation } from 'store/api/companyApi';
 import { StandardImageGallery } from 'components/ImageGallery';
 import CertificationManager from 'components/Certifications/CertificationManager';
+import PURExportModal from 'components/PURExport/PURExportModal';
 
 // Type definitions
 interface RootState {
@@ -163,6 +164,7 @@ function ProfileFarm() {
   const [isSavingSplit, setIsSavingSplit] = useState(false);
   const [splitPlanText, setSplitPlanText] = useState('');
   const [splitPlanEditMode, setSplitPlanEditMode] = useState(false);
+  const [purModalOpen, setPurModalOpen] = useState(false);
   const infoBg = useColorModeValue('blue.50', 'blue.900');
   const infoColor = useColorModeValue('blue.700', 'blue.200');
 
@@ -595,6 +597,40 @@ function ProfileFarm() {
             </VStack>
           </HStack>
         </StandardCard>
+
+        {/* Compliance & Reports — establishment-level regulatory exports */}
+        {canWrite && (
+          <StandardCard
+            title={intl.formatMessage({ id: 'app.pur.complianceReports' })}
+            variant="elevated"
+            padding={{ base: 3, md: 4 }}
+          >
+            <HStack
+              justify="space-between"
+              align={{ base: 'flex-start', smd: 'center' }}
+              flexDirection={{ base: 'column', smd: 'row' }}
+              spacing={3}
+            >
+              <VStack align="flex-start" spacing={0.5}>
+                <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                  {intl.formatMessage({ id: 'app.pur.title' })}
+                </Text>
+                <Text fontSize="xs" color="gray.500">
+                  {intl.formatMessage({ id: 'app.pur.cardSubtitle' })}
+                </Text>
+              </VStack>
+              <StandardButton
+                variant="outline"
+                size="sm"
+                leftIcon={<Icon as={FaFileAlt} />}
+                onClick={() => setPurModalOpen(true)}
+                w={{ base: 'full', smd: 'auto' }}
+              >
+                {intl.formatMessage({ id: 'app.pur.generate' })}
+              </StandardButton>
+            </HStack>
+          </StandardCard>
+        )}
 
         {/* Photo Gallery */}
         {establishmentData.images && establishmentData.images.length > 0 && (
@@ -1316,6 +1352,15 @@ function ProfileFarm() {
           </VStack>
         </StandardCard>
       </VStack>
+
+      {farmId && (
+        <PURExportModal
+          isOpen={purModalOpen}
+          onClose={() => setPurModalOpen(false)}
+          establishmentId={farmId}
+          establishmentName={establishmentData?.name}
+        />
+      )}
     </StandardPage>
   );
 }

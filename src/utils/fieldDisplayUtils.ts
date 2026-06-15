@@ -7,6 +7,8 @@
  * All dual field checking patterns have been removed as data is now consistently normalized.
  */
 
+import { FIELD_VALUE_ES } from './fieldValues.es';
+
 /**
  * Checks if a value is present and valid for display.
  * Handles: undefined, null, empty string, and the string literal "null"
@@ -572,6 +574,19 @@ export function getReadableFieldValue(field: string, value: string): string {
       training: '🪴 Training',
       other: '✂️ Other Canopy Work'
     },
+    // Frost Protection (FP) + Mowing/Orchard-Floor (MO) — Batch 3 (2026-06)
+    protection_method: {
+      wind_machine: '🌀 Wind Machine',
+      orchard_heater: '🔥 Orchard Heater(s)',
+      under_tree_sprinkler: '💧 Under-Tree Sprinklers',
+      other: '❄️ Other Frost Protection'
+    },
+    floor_management_type: {
+      mow: '🌱 Mow',
+      mulch: '🍂 Mulch',
+      cover_crop_mgmt: '🌿 Cover-Crop Management',
+      herbicide_strip: '🚿 Herbicide Strip'
+    },
     // Organic compliance fields (NOP record-keeping)
     treated_or_untreated: {
       untreated: 'Untreated',
@@ -598,6 +613,32 @@ export function getReadableFieldValue(field: string, value: string): string {
   };
 
   return fieldMappings[field]?.[value] || value;
+}
+
+/**
+ * R2 (2026-06-14): localize a consumer-facing enum field VALUE to es-419.
+ * Field labels localize via the registry labelKey→i18n; the values are raw enum
+ * display strings (e.g. "Soil Testing", "Diesel"). Maps by exact string via
+ * FIELD_VALUE_ES when locale is es-*. Strips a leading emoji/symbol run before
+ * lookup so legacy formatter outputs ("⛽ Diesel") resolve to the same key, then
+ * re-prepends it. Unknown values (numbers, units, farmer free-text, cert program
+ * names) pass through unchanged.
+ */
+export function localizeFieldValue(
+  value: string | number | null | undefined,
+  locale?: string
+): string {
+  const str = value == null ? '' : String(value);
+  if (!str || !locale || !locale.toLowerCase().startsWith('es')) return str;
+  const exact = FIELD_VALUE_ES[str];
+  if (exact) return exact;
+  // Leading emoji/symbol prefix (e.g. "⛽ Diesel") → translate the text remainder.
+  const m = str.match(/^([^\p{L}\p{N}(]+\s*)(.+)$/u);
+  if (m) {
+    const tr = FIELD_VALUE_ES[m[2]];
+    if (tr) return m[1] + tr;
+  }
+  return str;
 }
 
 export interface FieldDisplayItem {
@@ -1839,48 +1880,25 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
   if (event.seed_certification_status) {
     secondary.push({
       label: 'Seed Certification Status',
-      value: getReadableFieldValue(
-        'seed_certification_status',
-        event.seed_certification_status
-      ),
+      value: getReadableFieldValue('seed_certification_status', event.seed_certification_status),
       priority: 'secondary',
       category: 'verification',
       tooltip: 'Regulatory classification of seed used (NOP 7 CFR 205.204)'
     });
   }
 
-  // NOP 7 CFR 205.204 — Seed Supplier (top-level model field, migration 0152)
-  if (event.seed_supplier_name) {
-    secondary.push({
-      label: 'Seed Supplier',
-      value: event.seed_supplier_name,
-      priority: 'secondary',
-      category: 'verification',
-      tooltip: 'Who supplied the seed/planting stock (NOP traceability)'
-    });
-  }
-
-  // NOP 7 CFR 205.204 — Seed Purchase Date
-  if (event.seed_purchase_date) {
-    details.push({
-      label: 'Seed Purchase Date',
-      value: event.seed_purchase_date,
-      priority: 'details',
-      category: 'verification',
-      tooltip: 'Date the seed/planting stock was purchased'
-    });
-  }
-
-  // NOP 7 CFR 205.204 — Seed Purchase Invoice
-  if (event.seed_purchase_invoice) {
-    details.push({
-      label: 'Seed Invoice #',
-      value: event.seed_purchase_invoice,
-      priority: 'details',
-      category: 'verification',
-      tooltip: 'Supplier invoice number for the seed purchase'
-    });
-  }
+  // NOP 7 CFR 205.204 — Seed vendor/purchase chain (seed_supplier_name,
+  // seed_purchase_date, seed_purchase_invoice) is commercially sensitive
+  // producer/certifier-only data and is INTENTIONALLY NOT rendered here.
+  // getEventFieldDisplay() feeds the consumer ConsumerEventCard (legacy +
+  // registry-fallback path), so surfacing these would leak the farm's nursery
+  // identity and seed invoice on the public QR page. Same policy and class as
+  // the chemical supplier_name/purchase_* fields removed from
+  // getChemicalEventFields() (P0 leak fix, Standard Fix #5 / Bug Pattern #17).
+  // The backend PublicHistorySerializer also strips them from the public
+  // payload; this is the matching frontend defense-in-depth. seed_certification_status,
+  // seed_treatment, seed_variety, and seed_lot_number below are legitimate
+  // consumer transparency (what was planted, not who sold it) and remain.
 
   // NOP 7 CFR 205.204 — Seed Treatment (top-level model field, distinct from legacy treated_or_untreated)
   if (event.seed_treatment) {
@@ -1910,18 +1928,11 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
   // and equipment cleaning details for organic transparency
   // ============================================================
 
-  // Seed sourcing details (NOP 205.204)
-  const seedSupplier = event.seed_supplier || extraData.seed_supplier;
-  if (isValidValue(seedSupplier)) {
-    secondary.push({
-      label: 'Seed Supplier',
-      value: seedSupplier,
-      priority: 'secondary',
-      category: 'verification',
-      tooltip: 'Seed supplier for organic traceability (NOP 205.204)'
-    });
-  }
-
+  // Seed sourcing details (NOP 205.204). Seed supplier identity (event.seed_supplier /
+  // extra_data.seed_supplier) is commercially sensitive and INTENTIONALLY NOT rendered
+  // on the consumer card — same P0 leak fix as the top-level seed_supplier_name block
+  // above and the chemical supplier_name removal (Standard Fix #5 / Bug Pattern #17).
+  // Seed variety + lot number are legitimate consumer transparency and remain.
   const seedVariety = event.seed_variety || extraData.seed_variety;
   if (isValidValue(seedVariety)) {
     secondary.push({
@@ -2147,6 +2158,43 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
         value: `${passNumber}`,
         priority: 'immediate',
         category: 'measurement'
+      });
+    }
+  }
+
+  // FP (Frost Protection) — Batch 3 (2026-06). Legacy fallback for when the field
+  // registry is disabled; mirrors the registry FieldConfigs in productionEvent.ts.
+  if (event.production_type === 'FP' || eventType === 'fp') {
+    const protectionMethod = event.protection_method || extraData.protection_method;
+    if (isValidValue(protectionMethod)) {
+      immediate.push({
+        label: 'Protection Method',
+        value: getReadableFieldValue('protection_method', protectionMethod),
+        priority: 'immediate',
+        category: 'operational'
+      });
+    }
+    const lowTemp =
+      event.low_temperature !== undefined ? event.low_temperature : extraData.low_temperature;
+    if (isValidValue(lowTemp)) {
+      secondary.push({
+        label: 'Low Temperature',
+        value: `${lowTemp} °C`,
+        priority: 'secondary',
+        category: 'measurement'
+      });
+    }
+  }
+
+  // MO (Mowing / Orchard-Floor) — Batch 3 (2026-06)
+  if (event.production_type === 'MO' || eventType === 'mo') {
+    const floorType = event.floor_management_type || extraData.floor_management_type;
+    if (isValidValue(floorType)) {
+      immediate.push({
+        label: 'Floor Management',
+        value: getReadableFieldValue('floor_management_type', floorType),
+        priority: 'immediate',
+        category: 'operational'
       });
     }
   }

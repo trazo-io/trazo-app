@@ -1,5 +1,6 @@
 import React, { useEffect, useState, Suspense } from 'react';
 import {
+  Avatar,
   Box,
   Container,
   SimpleGrid,
@@ -39,13 +40,12 @@ import {
   Link,
   Divider
 } from '@chakra-ui/react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   extractProductionIdFromCurrentURL,
   verifySecureQR,
   getQRAccessMetadata
 } from 'utils/qrParser';
-import PhotoVerificationGallery from './components/PhotoVerificationGallery';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { setAuthRedirectAction } from '../../../utils/authRedirect';
@@ -69,10 +69,8 @@ import {
   FaTractor,
   FaRocket,
   FaUniversity,
-  FaClipboardCheck,
   FaAward,
   FaClipboardList,
-  FaCalendarAlt,
   FaExclamationTriangle
 } from 'react-icons/fa';
 import { BsStarFill, BsStarHalf, BsStar, BsShieldCheck } from 'react-icons/bs';
@@ -80,7 +78,6 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
 // API imports - Using single transparency API (consolidated from dual requests)
-import { TransparencyCelebration } from '../../../components/Notifications/TransparencyCelebration';
 import { useTransparencyCelebration } from '../../../hooks/useTransparencyCelebration';
 import {
   useGetTransparencyDetailsQuery,
@@ -90,7 +87,6 @@ import { useCreateScanMutation } from '../../../store/api/historyApi';
 import { addPendingScanToken } from '../../../utils/pendingScanStorage';
 import { hasAnalyticsConsent } from '../../../components/Privacy/ConsentBanner';
 import { HarvestInfoCard } from './components/HarvestInfoCard';
-import { formatHarvestDate } from '../../../utils/consumerDisplay';
 
 // Data normalization imports
 import { normalizeBackendEventData } from '../../../utils/eventDataNormalizer';
@@ -153,165 +149,6 @@ const EducationModal = ({
 
   const getModalContent = () => {
     switch (topic) {
-      case 'carbon_footprint':
-        return {
-          title: 'Environmental Impact Scoring',
-          content: (
-            <VStack align="start" spacing={6}>
-              <Text fontSize="lg" color="gray.700">
-                <strong>Environmental impact scoring</strong> measures direct operational emissions
-                from farming activities that farmers control — fuel, fertilizer, equipment, and
-                irrigation.
-              </Text>
-
-              <Box>
-                <Heading size="sm" mb={3} color="green.600">
-                  How We Calculate Impact Scores
-                </Heading>
-                <VStack align="start" spacing={3}>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="green.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">Farm Operations (40%)</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Fuel use, equipment operation, soil management, and fertilizer application
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="blue.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">Fertilizer Application (30%)</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        NPK manufacturing emissions and application fuel usage
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="purple.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">Irrigation & Energy (15%)</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Pump electricity, grid consumption for on-farm operations
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="orange.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">Chemical Applications (15%)</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Pesticide and herbicide manufacturing emissions plus application fuel
-                      </Text>
-                    </Box>
-                  </HStack>
-                </VStack>
-              </Box>
-
-              <Box>
-                <Heading size="sm" mb={3} color="green.600">
-                  Score Interpretation
-                </Heading>
-                <SimpleGrid columns={1} spacing={2}>
-                  <HStack>
-                    <Badge colorScheme="green" variant="solid">
-                      90-100
-                    </Badge>
-                    <Text fontSize="sm">Exceptional - Leading sustainability practices</Text>
-                  </HStack>
-                  <HStack>
-                    <Badge colorScheme="green" variant="outline">
-                      70-89
-                    </Badge>
-                    <Text fontSize="sm">Good - Above average environmental performance</Text>
-                  </HStack>
-                  <HStack>
-                    <Badge colorScheme="yellow" variant="solid">
-                      50-69
-                    </Badge>
-                    <Text fontSize="sm">Fair - Meeting basic sustainability standards</Text>
-                  </HStack>
-                  <HStack>
-                    <Badge colorScheme="orange" variant="solid">
-                      30-49
-                    </Badge>
-                    <Text fontSize="sm">Needs Improvement - Below average performance</Text>
-                  </HStack>
-                </SimpleGrid>
-              </Box>
-
-              <Box bg="green.50" p={4} borderRadius="md" border="1px solid" borderColor="green.200">
-                <Text fontSize="sm" fontWeight="medium">
-                  🌱 <strong>Why It Matters:</strong> Lower carbon scores indicate more sustainable
-                  farming practices that help combat climate change and preserve our environment for
-                  future generations.
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
-
-      case 'blockchain_verification':
-        return {
-          title: 'Blockchain Recording',
-          content: (
-            <VStack align="start" spacing={6}>
-              {/* Honest framing: blockchain proves the record is unchanged
-                  since sealing — it cannot prove the farmer's entry was
-                  accurate when submitted. */}
-              <Text fontSize="lg" color="gray.700">
-                <strong>Blockchain recording</strong> seals this production's records after
-                submission, so any later change is detectable. It shows the records are unchanged —
-                the practices themselves are reported by the farmer.
-              </Text>
-
-              <Box>
-                <Heading size="sm" mb={3} color="blue.600">
-                  How Blockchain Protects Your Data
-                </Heading>
-                <VStack align="start" spacing={3}>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="blue.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">Immutable Records</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Once data is recorded on the blockchain, it cannot be changed or deleted
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="purple.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">Publicly Checkable</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Anyone can confirm on a blockchain explorer that the record hasn't changed
-                        since it was sealed
-                      </Text>
-                    </Box>
-                  </HStack>
-                  <HStack align="start" spacing={3}>
-                    <Circle size="8px" bg="green.500" mt={2} />
-                    <Box>
-                      <Text fontWeight="semibold">What It Doesn't Do</Text>
-                      <Text fontSize="sm" color="gray.600">
-                        Blockchain can't confirm a practice happened as described — the records
-                        themselves come from the farmer
-                      </Text>
-                    </Box>
-                  </HStack>
-                </VStack>
-              </Box>
-
-              <Box bg="blue.50" p={4} borderRadius="md" border="1px solid" borderColor="blue.200">
-                <Text fontSize="sm" fontWeight="medium">
-                  🔒 <strong>Your Confidence:</strong> Higher verification scores mean more reliable
-                  data you can trust for your purchasing decisions.
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
-
       case 'transparency_impact':
         return {
           title: intl.formatMessage({ id: 'consumer.learnMore.transparencyImpact.title' }),
@@ -326,75 +163,6 @@ const EducationModal = ({
               <Box bg="green.50" p={4} borderRadius="md">
                 <Text fontSize="sm" fontWeight="medium" color="green.700">
                   {intl.formatMessage({ id: 'consumer.learnMore.transparencyImpact.callout' })}
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
-
-      case 'trust_indicators':
-        return {
-          title: 'Why You Can Trust This Farm',
-          content: (
-            <VStack align="start" spacing={4}>
-              <Text fontSize="lg" color="gray.700">
-                <strong>Transparency builds trust.</strong> Every farming event on this page was
-                documented by the farmer, creating a complete record of how your food was grown.
-              </Text>
-              <Text fontSize="md" color="gray.600">
-                More documented events means more transparency. You can see exactly what happened at
-                every step, from planting to harvest.
-              </Text>
-              <Box bg="green.50" p={4} borderRadius="md">
-                <Text fontSize="sm" fontWeight="medium" color="green.700">
-                  ✓ <strong>Documented journey:</strong> Look for farms with high transparency
-                  scores and detailed event documentation.
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
-
-      case 'usda-methodology':
-        return {
-          title: 'Our Calculation Methodology',
-          content: (
-            <VStack align="start" spacing={4}>
-              <Text fontSize="lg" color="gray.700">
-                We use <strong>science-based methodologies</strong> for calculating environmental
-                impact and sustainability metrics.
-              </Text>
-              <Text fontSize="md" color="gray.600">
-                Our calculations use publicly available emission factors from EPA and agricultural
-                research data to estimate the environmental impact of farming activities.
-              </Text>
-              <Box bg="blue.50" p={4} borderRadius="md">
-                <Text fontSize="sm" fontWeight="medium" color="blue.700">
-                  📊 <strong>Methodology:</strong> All calculations use peer-reviewed emission
-                  factors from published government data sources.
-                </Text>
-              </Box>
-            </VStack>
-          )
-        };
-
-      case 'regional-benchmarks':
-        return {
-          title: 'Regional Benchmarks',
-          content: (
-            <VStack align="start" spacing={4}>
-              <Text fontSize="lg" color="gray.700">
-                <strong>Regional benchmarks</strong> help you understand how this farm compares to
-                others in the same geographic area.
-              </Text>
-              <Text fontSize="md" color="gray.600">
-                Climate, soil conditions, and local practices vary by region, so we compare farms
-                against others with similar growing conditions.
-              </Text>
-              <Box bg="green.50" p={4} borderRadius="md">
-                <Text fontSize="sm" fontWeight="medium" color="green.700">
-                  📍 <strong>Context:</strong> Regional comparisons provide meaningful insights into
-                  farm performance.
                 </Text>
               </Box>
             </VStack>
@@ -452,6 +220,11 @@ function ProductDetail() {
   const navigate = useNavigate();
   const intl = useIntl();
   const toast = useToast();
+  // Proof view (?view=proof) is the link a farmer shares with a wholesale buyer. The farm's
+  // direct phone/email is gated to it — a random shopper on the story view should not get the
+  // producer's personal contact details (privacy / spam vector). 2026-06 audit P2-6.
+  const [proofSearchParams] = useSearchParams();
+  const isProofView = proofSearchParams.get('view') === 'proof';
 
   // QR Security: Extract and verify production ID from URL
   const [verifiedProductionId, setVerifiedProductionId] = useState<string | null>(null);
@@ -635,11 +408,13 @@ function ProductDetail() {
     // false) must not carry an organic Certification on this Product node —
     // JSON-LD describes THIS lot's product page, not the operation.
     const claim = data?.standard_view?.organic_claim;
-    const lotSuppressed = claim?.status === 'certified_organic' && claim?.can_display_organic === false;
+    const lotSuppressed =
+      claim?.status === 'certified_organic' && claim?.can_display_organic === false;
     const verifiedCerts = (data?.standard_view?.certifications || []).filter(
       (c: any) =>
         c?.status === 'verified_via_database' &&
         c?.display_name &&
+        c.display_name !== 'Other' &&
         !(lotSuppressed && /usda.*organic/i.test(c.display_name))
     );
 
@@ -911,11 +686,29 @@ function ProductDetail() {
     return (
       <ModernErrorState
         type={errorType}
-        title={errorType === 'not_found' ? 'Product Not Found' : 'Unable to Load Product'}
+        title={
+          errorType === 'not_found'
+            ? intl.formatMessage({
+                id: 'consumer.detail.errorNotFoundTitle',
+                defaultMessage: 'Product Not Found'
+              })
+            : intl.formatMessage({
+                id: 'consumer.detail.errorLoadTitle',
+                defaultMessage: 'Unable to Load Product'
+              })
+        }
         message={
           errorType === 'not_found'
-            ? 'This product information is not available. Please verify the QR code and try again.'
-            : 'Please check your connection and try again, or scan a different product.'
+            ? intl.formatMessage({
+                id: 'consumer.detail.errorNotFoundMsg',
+                defaultMessage:
+                  'This product information is not available. Please verify the QR code and try again.'
+              })
+            : intl.formatMessage({
+                id: 'consumer.detail.errorLoadMsg',
+                defaultMessage:
+                  'Please check your connection and try again, or scan a different product.'
+              })
         }
         onRetry={() => window.location.reload()}
       />
@@ -927,8 +720,14 @@ function ProductDetail() {
     return (
       <ModernErrorState
         type="not_found"
-        title="No Product Data Available"
-        message="Please scan a valid QR code to view product information."
+        title={intl.formatMessage({
+          id: 'consumer.detail.noDataTitle',
+          defaultMessage: 'No Product Data Available'
+        })}
+        message={intl.formatMessage({
+          id: 'consumer.detail.noDataMsg',
+          defaultMessage: 'Please scan a valid QR code to view product information.'
+        })}
         onRetry={() => window.location.reload()}
       />
     );
@@ -972,10 +771,11 @@ function ProductDetail() {
             : blockchainScore.isPending
             ? 'pending'
             : null;
-          const totalPhotoEvidenceCount = (completeData?.timeline || []).reduce(
-            (acc: number, ev: any) => acc + (ev?.album?.images?.length ?? 0),
-            0
-          );
+          // Single source of truth for the photo count: the canonical images array the
+          // gallery actually renders (completeData.images). Summing per-event album images
+          // double-counted vs the gallery (pillar showed 24 while the gallery showed 20) —
+          // 2026-06 audit P1-6. All photo counts now agree with what the consumer can see.
+          const totalPhotoEvidenceCount = (completeData as any)?.images?.length ?? 0;
           const transparencyDetails = (completeData as any)?.standard_view?.transparency_details;
 
           // Claim-safe hero badge inputs: lead with the OID-verified
@@ -992,7 +792,10 @@ function ProductDetail() {
             organicClaim?.status === 'certified_organic' &&
             organicClaim?.can_display_organic !== false &&
             oidVerifiedCert
-              ? 'Certified Organic'
+              ? intl.formatMessage({
+                  id: 'consumer.trust.certifiedOrganic',
+                  defaultMessage: 'Certified Organic'
+                })
               : null;
           // The transparency payload exposes the lot as
           // harvestDetails.lot_number (transparency_views.py:451) — there is
@@ -1063,71 +866,124 @@ function ProductDetail() {
           {/* Main Content Column */}
           <Box>
             <VStack spacing={8} align="stretch">
-              {/* Consumer Welcome & Introduction Section */}
-              <Box
-                bg="white"
-                borderRadius="xl"
-                border="1px solid"
-                borderColor="gray.200"
-                overflow="hidden"
-              >
-                <Box
-                  bgGradient="linear(135deg, green.50, blue.50)"
-                  p={{ base: 4, smd: 6 }}
-                  textAlign="center"
-                >
-                  <VStack spacing={3}>
-                    <Circle size="60px" bg="green.100">
-                      <Icon as={FaLeaf} color="green.500" boxSize={8} />
-                    </Circle>
-                    <VStack spacing={2}>
-                      <Heading size={{ base: 'md', smd: 'lg', lg: 'xl' }} color="gray.800">
-                        What This Farmer Shares
-                      </Heading>
-                      <Text color="gray.600" fontSize={{ base: 'sm', smd: 'md' }} maxW="md">
-                        You've scanned a product with farm documentation based on farmer-reported
-                        events.
-                      </Text>
-                    </VStack>
-                  </VStack>
-                </Box>
-                <Box p={{ base: 4, smd: 6 }}>
-                  <VStack spacing={4} textAlign="center">
-                    <Text color="gray.700" fontSize="md">
-                      <strong>What this farm documented:</strong>
-                    </Text>
-                    <SimpleGrid columns={2} spacing={4} w="full" maxW="md">
-                      <HStack spacing={2}>
-                        <Icon as={FaClipboardCheck} color="green.500" boxSize={4} />
-                        <Text fontSize="sm" noOfLines={1}>
-                          Practice records
+              {/* Farm Identity block — company-first hierarchy (replaced the
+                  generic "What This Farmer Shares" welcome card, 2026-06).
+                  Tier 1: the farmer's own stored "about" text.
+                  Tier 2: parcel consumer story or company sustainability text.
+                  Tier 3: compact factual one-liner (no icon grid).
+                  Quoted lines are REAL stored text only, truncated at a word
+                  boundary — never invented copy. */}
+              {(() => {
+                const farmerData = (completeData as any)?.farmer;
+                const identityFarmName: string = farmerData?.name || 'This farm';
+                const identityLocation =
+                  farmerData?.location ||
+                  (farmerData?.city && farmerData?.state
+                    ? `${farmerData.city}, ${farmerData.state}`
+                    : undefined);
+
+                const cleanText = (value: unknown): string =>
+                  typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+
+                const truncateAtWord = (text: string, max = 140): string => {
+                  if (text.length <= max) return text;
+                  const cut = text.slice(0, max);
+                  const lastSpace = cut.lastIndexOf(' ');
+                  return `${cut.slice(0, lastSpace > 0 ? lastSpace : max)}…`;
+                };
+
+                // Tier 1 source: person-like story written by the farmer.
+                const aboutText = cleanText(farmerData?.about);
+                // Tier 2 sources: parcel consumer story, then company
+                // sustainability text (farm_context.company_sustainability).
+                const parcelStory = cleanText((completeData as any)?.parcel?.consumer_story);
+                const sustainabilityText =
+                  cleanText(
+                    (completeData as any)?.farm_context?.company_sustainability?.commitment
+                  ) ||
+                  cleanText((completeData as any)?.farm_context?.company_sustainability?.goals);
+
+                // Photo: establishment photo, then company logo, then first
+                // parcel album image (parcel.images is string[]).
+                const farmPhotoUrl: string | undefined =
+                  farmerData?.photo ||
+                  farmerData?.company?.logo ||
+                  (completeData as any)?.parcel?.images?.[0];
+
+                const storyText = aboutText || parcelStory || sustainabilityText;
+
+                if (!storyText) {
+                  // Tier 3 — compact fallback, single factual line.
+                  return (
+                    <Box
+                      bg="white"
+                      borderRadius="xl"
+                      border="1px solid"
+                      borderColor="gray.200"
+                      p={{ base: 4, smd: 6 }}
+                    >
+                      <HStack spacing={3} align="flex-start">
+                        <Circle size="36px" bg="green.50" flexShrink={0}>
+                          <Icon as={FaLeaf} color="green.500" boxSize={4} />
+                        </Circle>
+                        <Text color="gray.700" fontSize={{ base: 'sm', smd: 'md' }}>
+                          {intl.formatMessage(
+                            {
+                              id: 'consumer.detail.farmIdentityFallback',
+                              defaultMessage:
+                                '{farm} records its growing practices on Trazo. The documented timeline appears below.'
+                            },
+                            { farm: identityFarmName }
+                          )}
                         </Text>
                       </HStack>
-                      <HStack spacing={2}>
-                        <Icon as={FaCalendarAlt} color="green.500" boxSize={4} />
-                        <Text fontSize="sm" noOfLines={1}>
-                          Timestamped events
+                    </Box>
+                  );
+                }
+
+                // Tier 1 / Tier 2 — photo + farm name + one quoted story line.
+                return (
+                  <Box
+                    bg="white"
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor="gray.200"
+                    p={{ base: 4, smd: 6 }}
+                  >
+                    <HStack spacing={{ base: 3, smd: 4 }} align="flex-start">
+                      <Avatar
+                        src={farmPhotoUrl}
+                        name={identityFarmName}
+                        size="lg"
+                        bg="green.100"
+                        color="green.700"
+                        flexShrink={0}
+                      />
+                      <VStack align="start" spacing={1} flex={1} minW={0}>
+                        <Heading size={{ base: 'sm', smd: 'md' }} color="gray.800" noOfLines={2}>
+                          {identityFarmName}
+                        </Heading>
+                        {identityLocation && (
+                          <HStack spacing={1} color="gray.500">
+                            <Icon as={FaMapMarkerAlt} boxSize={3} />
+                            <Text fontSize="xs" noOfLines={1}>
+                              {identityLocation}
+                            </Text>
+                          </HStack>
+                        )}
+                        <Text
+                          color="gray.600"
+                          fontSize={{ base: 'sm', smd: 'md' }}
+                          fontStyle="italic"
+                          pt={1}
+                        >
+                          “{truncateAtWord(storyText)}”
                         </Text>
-                      </HStack>
-                      <HStack spacing={2}>
-                        <Icon as={FaShieldAlt} color="green.500" boxSize={4} />
-                        <Text fontSize="sm" noOfLines={1}>
-                          Documented practices
-                        </Text>
-                      </HStack>
-                      <HStack spacing={2}>
-                        <Icon as={FaLeaf} color="green.500" boxSize={4} />
-                        <Text fontSize="sm" noOfLines={1}>
-                          Practice details
-                        </Text>
-                      </HStack>
-                    </SimpleGrid>
-                    <Text color="gray.600" fontSize="sm" fontStyle="italic">
-                      Every practice below was logged by the farmer during the season.
-                    </Text>
-                  </VStack>
-                </Box>
-              </Box>
+                      </VStack>
+                    </HStack>
+                  </Box>
+                );
+              })()}
 
               {/* Transparency Achievement card removed (2026-06): it duplicated
                   the hero badge and its tier names ("Complete Transparency
@@ -1156,9 +1012,15 @@ function ProductDetail() {
                         /usda.*organic/i.test(c.display_name || '')
                     )
                   : null;
-                const otherCertifications = showingOrganicClaim
-                  ? allCertifications.filter((c: any) => c !== usdaOrganicCert)
-                  : allCertifications;
+                const otherCertifications = (
+                  showingOrganicClaim
+                    ? allCertifications.filter((c: any) => c !== usdaOrganicCert)
+                    : allCertifications
+                )
+                  // "Other" is a non-meaningful cert category — never show it to consumers
+                  // (CertificationBadge already skips it for primary/badge list; strip at
+                  // source so it can't leak via any render branch or the JSON-LD).
+                  .filter((c: any) => c.display_name !== 'Other');
 
                 const hasContent =
                   showingOrganicClaim || allCertifications.length > 0 || organicSummary;
@@ -1188,6 +1050,7 @@ function ProductDetail() {
                         </Flex>
                         <VStack align="start" spacing={0}>
                           <Text
+                            as="h2"
                             fontWeight="bold"
                             fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                             color="gray.800"
@@ -1331,6 +1194,7 @@ function ProductDetail() {
                     </Flex>
                     <VStack align="start" spacing={0}>
                       <Text
+                        as="h2"
                         fontWeight="bold"
                         fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                         color="gray.800"
@@ -1367,9 +1231,9 @@ function ProductDetail() {
                         Visual evidence from the field" read like a broken
                         empty state and advertised the absence of evidence. */}
                     {(() => {
-                      const photoEventCount = (completeData?.timeline || []).filter(
-                        (event: any) => event.album || event.hasAlbum
-                      ).length;
+                      // Same source as the RECORDS pillar + gallery (P1-6): count the photos
+                      // the consumer can actually see, not events-with-photos.
+                      const photoEventCount = (completeData as any)?.images?.length ?? 0;
                       if (photoEventCount === 0) return null;
                       return (
                         <HStack align="start" spacing={3}>
@@ -1412,11 +1276,18 @@ function ProductDetail() {
                               />
                               <Box>
                                 <Text fontWeight="bold" color="red.700">
-                                  Data Integrity Warning
+                                  {intl.formatMessage({
+                                    id: 'consumer.blockchain.dataIntegrityWarning',
+                                    defaultMessage: 'Data Integrity Warning'
+                                  })}
                                 </Text>
                                 <Text fontSize="sm" color="red.600">
                                   {integrityData?.data_integrity_detail ||
-                                    'Production data may have been modified after finalization'}
+                                    intl.formatMessage({
+                                      id: 'consumer.blockchain.dataIntegrityWarningDetail',
+                                      defaultMessage:
+                                        'Production data may have been modified after finalization'
+                                    })}
                                 </Text>
                                 {blockchain.txHash && (
                                   <Link
@@ -1430,7 +1301,10 @@ function ProductDetail() {
                                     mt={1}
                                     display="inline-block"
                                   >
-                                    Verify on Explorer ↗
+                                    {intl.formatMessage({
+                                      id: 'consumer.blockchain.checkPublicRecord',
+                                      defaultMessage: 'Check the public record ↗'
+                                    })}
                                   </Link>
                                 )}
                               </Box>
@@ -1446,15 +1320,26 @@ function ProductDetail() {
                             <Icon as={FaShieldAlt} color="green.500" boxSize="20px" mt={1} />
                             <Box>
                               <Text fontWeight="semibold" color="gray.800">
-                                Blockchain Recorded
+                                {intl.formatMessage({
+                                  id: 'consumer.blockchain.blockchainRecorded',
+                                  defaultMessage: 'Blockchain Recorded'
+                                })}
                               </Text>
                               {/* "Tamper-proof" overclaims — blockchain proves the
                                   record is unchanged since sealing, not that it was
                                   accurate when submitted. */}
                               <Text fontSize="sm" color="gray.600">
                                 {blockchain.isIntegrityChecked
-                                  ? 'Record unchanged since sealing — integrity check passed'
-                                  : 'Record sealed on the Polygon blockchain after submission'}
+                                  ? intl.formatMessage({
+                                      id: 'consumer.blockchain.recordUnchanged',
+                                      defaultMessage:
+                                        'Record unchanged since sealing — integrity check passed'
+                                    })
+                                  : intl.formatMessage({
+                                      id: 'consumer.blockchain.recordSealed',
+                                      defaultMessage:
+                                        'Record sealed on the Polygon blockchain after submission'
+                                    })}
                               </Text>
                               {blockchain.txHash && (
                                 <Link
@@ -1468,7 +1353,10 @@ function ProductDetail() {
                                   mt={1}
                                   display="inline-block"
                                 >
-                                  View on Explorer ↗
+                                  {intl.formatMessage({
+                                    id: 'consumer.blockchain.checkPublicRecord',
+                                    defaultMessage: 'Check the public record ↗'
+                                  })}
                                 </Link>
                               )}
                             </Box>
@@ -1483,12 +1371,23 @@ function ProductDetail() {
                             <Icon as={FaShieldAlt} color="gray.500" boxSize="20px" mt={1} />
                             <Box>
                               <Text fontWeight="semibold" color="gray.800">
-                                Data Sealed
+                                {intl.formatMessage({
+                                  id: 'consumer.blockchain.dataSealed',
+                                  defaultMessage: 'Data Sealed'
+                                })}
                               </Text>
                               <Text fontSize="sm" color="gray.600">
                                 {blockchain.isIntegrityChecked
-                                  ? 'All events cryptographically sealed — blockchain submission in progress'
-                                  : 'Production finalized — preparing for blockchain recording'}
+                                  ? intl.formatMessage({
+                                      id: 'consumer.blockchain.allEventsSealed',
+                                      defaultMessage:
+                                        'All events cryptographically sealed — blockchain submission in progress'
+                                    })
+                                  : intl.formatMessage({
+                                      id: 'consumer.blockchain.productionFinalized',
+                                      defaultMessage:
+                                        'Production finalized — preparing for blockchain recording'
+                                    })}
                               </Text>
                             </Box>
                           </HStack>
@@ -1504,11 +1403,17 @@ function ProductDetail() {
                             <Icon as={FaShieldAlt} color="gray.400" boxSize="20px" mt={1} />
                             <Box>
                               <Text fontWeight="semibold" color="gray.800">
-                                Not Blockchain-Recorded
+                                {intl.formatMessage({
+                                  id: 'consumer.blockchain.notBlockchainRecorded',
+                                  defaultMessage: 'Not Blockchain-Recorded'
+                                })}
                               </Text>
                               <Text fontSize="sm" color="gray.600">
-                                Production documented through farmer-reported events. Blockchain
-                                recording is an optional add-on.
+                                {intl.formatMessage({
+                                  id: 'consumer.blockchain.notBlockchainRecordedDetail',
+                                  defaultMessage:
+                                    'Production documented through farmer-reported events. Blockchain recording is an optional add-on.'
+                                })}
                               </Text>
                             </Box>
                           </HStack>
@@ -1521,11 +1426,17 @@ function ProductDetail() {
                           <Icon as={FaShieldAlt} color="gray.400" boxSize="20px" mt={1} />
                           <Box>
                             <Text fontWeight="semibold" color="gray.800">
-                              Not Yet Recorded
+                              {intl.formatMessage({
+                                id: 'consumer.blockchain.notYetRecorded',
+                                defaultMessage: 'Not Yet Recorded'
+                              })}
                             </Text>
                             <Text fontSize="sm" color="gray.600">
-                              Production in progress — blockchain recording available after
-                              completion (optional add-on).
+                              {intl.formatMessage({
+                                id: 'consumer.blockchain.notYetRecordedDetail',
+                                defaultMessage:
+                                  'Production in progress — blockchain recording available after completion (optional add-on).'
+                              })}
                             </Text>
                           </Box>
                         </HStack>
@@ -1533,38 +1444,11 @@ function ProductDetail() {
                     })()}
                   </SimpleGrid>
 
-                  {/* Farm Information */}
-                  <Box
-                    bg="green.50"
-                    p={4}
-                    borderRadius="lg"
-                    border="1px solid"
-                    borderColor="green.200"
-                    w="full"
-                  >
-                    {/* Harvest date = product.end_date (the actual harvest
-                        completion in the transparency payload), not
-                        created_at (record creation). No "Recently harvested"
-                        placeholder — vague freshness claims read as filler.
-                        formatHarvestDate parses date-only strings as local
-                        to avoid the UTC-midnight previous-day bug. */}
-                    <Text fontSize="sm" color="green.800" fontWeight="medium">
-                      🏡 <strong>Farm:</strong> {completeData?.farmer?.name || 'Sustainable Farm'}
-                      {formatHarvestDate(
-                        (completeData as any)?.farm_context?.production_period?.end ||
-                          (completeData as any)?.finish_date
-                      ) && (
-                        <>
-                          {' '}
-                          • 📅 <strong>Harvest:</strong>{' '}
-                          {formatHarvestDate(
-                            (completeData as any)?.farm_context?.production_period?.end ||
-                              (completeData as any)?.finish_date
-                          )}
-                        </>
-                      )}
-                    </Text>
-                  </Box>
+                  {/* P2-5: removed redundant green "Farm: / Harvest:" box — farm
+                      name already renders as the hero h1 and harvest date already
+                      appears in the hero overlay + HARVEST trust pillar. Lot/harvest
+                      now surfaces exactly 3 places: hero (glance), pillar (trust
+                      strip), Batch Details card (full detail). */}
                 </VStack>
               </Box>
 
@@ -1574,7 +1458,7 @@ function ProductDetail() {
               )}
 
               {/* Production Images Gallery - Visual proof of farming practices */}
-              {completeData?.images && completeData.images.length > 0 && (
+              {completeData?.images && completeData.images.length > 0 ? (
                 <Box
                   bg="white"
                   borderRadius="xl"
@@ -1585,13 +1469,36 @@ function ProductDetail() {
                 >
                   <StandardImageGallery
                     images={completeData.images}
-                    title="Production Photos"
+                    title={intl.formatMessage({
+                      id: 'consumer.detail.productionPhotos',
+                      defaultMessage: 'Production Photos'
+                    })}
                     variant="consumer"
                     enablePreview={true}
                     showImageCount={true}
                     maxDisplayImages={3}
                     aspectRatio="16/9"
                   />
+                </Box>
+              ) : (
+                /* Explicit empty state — a 0-photo batch used to make the whole gallery card
+                   vanish silently (2026-06 audit P2-9). One muted line is clearer. */
+                <Box
+                  bg="gray.50"
+                  borderRadius="xl"
+                  border="1px dashed"
+                  borderColor="gray.200"
+                  p={{ base: 4, smd: 5 }}
+                  mb={6}
+                  textAlign="center"
+                >
+                  <Text fontSize="sm" color="gray.500">
+                    {intl.formatMessage({
+                      id: 'consumer.detail.noPhotos',
+                      defaultMessage:
+                        'No photos for this batch — the written records below still document the season.'
+                    })}
+                  </Text>
                 </Box>
               )}
 
@@ -1618,11 +1525,6 @@ function ProductDetail() {
                     const events = completeData?.timeline || [];
 
                     if (Array.isArray(events) && events.length > 0) {
-                      // Calculate carbon data per event from the total production data
-                      const totalEvents = events.length;
-                      const totalCO2e = getAccurateCarbonFootprint(); // Use accurate carbon data (transparency API preferred)
-                      const averageCO2ePerEvent = totalEvents > 0 ? totalCO2e / totalEvents : 0;
-
                       // Helper function to map backend type strings to numeric event_type
                       // This handles both transparency API format (FR, DR, HL, etc.) and other formats
                       const mapBackendTypeToEventType = (backendType: string): number => {
@@ -1772,7 +1674,10 @@ function ProductDetail() {
                           is_highlight: (event as any).is_highlight,
                           // Add carbon data that UltraMobileProductionJourney expects
                           carbon_data: {
-                            co2e: averageCO2ePerEvent,
+                            // Real per-event carbon when the backend computed it; never an
+                            // even split of the total across events (that fabricated a
+                            // per-event figure — 2026-06 audit P2-2). 0 = not separately known.
+                            co2e: (event as any).extra_data?.carbon_calculation?.co2e || 0,
                             usda_factors_used: completeData?.isUsdaVerified || false,
                             efficiency_score: completeData?.carbonScore || 0,
                             total_emissions: completeData?.totalEmissions || 0,
@@ -1798,12 +1703,17 @@ function ProductDetail() {
                         <VStack spacing={3} py={8}>
                           <Icon as={MdTimeline} boxSize={16} color="gray.400" />
                           <Heading as="h4" size="md" color="gray.600">
-                            {intl.formatMessage({ id: 'app.noTimelineData' }) ||
-                              'No events recorded yet'}
+                            {intl.formatMessage({
+                              id: 'app.noTimelineData',
+                              defaultMessage: 'No events documented yet'
+                            })}
                           </Heading>
                           <Text fontSize="sm" color="gray.400" textAlign="center">
-                            {intl.formatMessage({ id: 'app.timelineComingSoon' }) ||
-                              'Production journey details will be available soon'}
+                            {intl.formatMessage({
+                              id: 'app.timelineComingSoon',
+                              defaultMessage:
+                                "This farm hasn't published growing details for this batch yet — check back soon."
+                            })}
                           </Text>
                         </VStack>
                       );
@@ -1840,10 +1750,16 @@ function ProductDetail() {
 
                   <VStack spacing={2}>
                     <Heading size={{ base: 'sm', smd: 'md', lg: 'lg' }} color="gray.800">
-                      Meet Your Transparent Farmers
+                      {intl.formatMessage({
+                        id: 'consumer.detail.meetFarmers',
+                        defaultMessage: 'Meet Your Transparent Farmers'
+                      })}
                     </Heading>
                     <Text color="gray.600" maxW="md" fontSize="sm">
-                      The people, places, and practices behind your product.
+                      {intl.formatMessage({
+                        id: 'consumer.detail.meetFarmersSubtitle',
+                        defaultMessage: 'The people, places, and practices behind your product.'
+                      })}
                     </Text>
                   </VStack>
 
@@ -1856,21 +1772,37 @@ function ProductDetail() {
                   >
                     <HStack spacing={1}>
                       <Icon as={FaUsers} boxSize={3} />
-                      <Text>Producer</Text>
+                      <Text>
+                        {intl.formatMessage({
+                          id: 'consumer.detail.producer',
+                          defaultMessage: 'Producer'
+                        })}
+                      </Text>
                     </HStack>
                     <HStack spacing={1}>
                       <Icon as={FaUniversity} boxSize={3} />
-                      <Text>Documented Farm</Text>
+                      <Text>
+                        {intl.formatMessage({
+                          id: 'consumer.detail.documentedFarm',
+                          defaultMessage: 'Documented Farm'
+                        })}
+                      </Text>
                     </HStack>
                     <HStack spacing={1}>
                       <Icon as={FaMapMarkerAlt} boxSize={3} />
-                      <Text>Location</Text>
+                      <Text>
+                        {intl.formatMessage({
+                          id: 'consumer.detail.location',
+                          defaultMessage: 'Location'
+                        })}
+                      </Text>
                     </HStack>
                   </HStack>
                 </VStack>
               </Box>
 
               <CompanyFarmInfo
+                showContactInfo={isProofView}
                 companyData={{
                   // Use company data from the enhanced API response
                   id: (completeData as any)?.farmer?.company?.id,
@@ -1880,14 +1812,16 @@ function ProductDetail() {
                   city: (completeData as any)?.farmer?.company?.city,
                   state: (completeData as any)?.farmer?.company?.state,
                   country: (completeData as any)?.farmer?.company?.country,
-                  phone: (completeData as any)?.farmer?.company?.phone,
-                  email: (completeData as any)?.farmer?.company?.email,
                   website: (completeData as any)?.farmer?.company?.website,
                   facebook: (completeData as any)?.farmer?.company?.facebook,
                   instagram: (completeData as any)?.farmer?.company?.instagram,
                   logo: (completeData as any)?.farmer?.company?.logo,
-                  fiscal_id: (completeData as any)?.farmer?.company?.fiscal_id,
-                  contact_email: (completeData as any)?.farmer?.company?.contact_email,
+                  // Defense-in-depth (2026-06-14): company PII (phone, email,
+                  // contact_email, fiscal_id/Tax ID) is intentionally NOT passed to
+                  // the consumer modals. The transparency endpoint already nulls these
+                  // (P2-6), so this is zero-behavior-change — it just guarantees the
+                  // Contact/Legal modal sections can never render PII even if the
+                  // backend stripping regresses. Buyers use the BuyerDocRequest form.
                   // Company overview stats for consumer transparency
                   total_establishments: (completeData as any)?.farmer?.company
                     ?.total_establishments,
@@ -1916,11 +1850,11 @@ function ProductDetail() {
                   zone: (completeData as any)?.farmer?.zone,
                   latitude: (completeData as any)?.farmer?.latitude,
                   longitude: (completeData as any)?.farmer?.longitude,
-                  contact_person: (completeData as any)?.farmer?.contact_person,
-                  contact_phone: (completeData as any)?.farmer?.contact_phone,
-                  contact_email: (completeData as any)?.farmer?.contact_email,
-                  email: (completeData as any)?.farmer?.email,
-                  phone: (completeData as any)?.farmer?.phone,
+                  // Defense-in-depth (2026-06-14): farmer PII (contact_person,
+                  // contact_phone, contact_email, email, phone) is intentionally NOT
+                  // passed to the consumer modals. The transparency endpoint already
+                  // nulls these (P2-6); this guarantees the Contact modal section can
+                  // never render PII even if the backend stripping regresses.
                   zip_code: (completeData as any)?.farmer?.zip_code,
                   facebook: (completeData as any)?.farmer?.facebook,
                   instagram: (completeData as any)?.farmer?.instagram,
@@ -2012,10 +1946,17 @@ function ProductDetail() {
             <VStack spacing={8}>
               <QuickFeedback
                 productionId={productionId || ''}
+                reviewsCount={(completeData as any)?.reviews?.count ?? 0}
                 onFeedbackSubmitted={() => {
                   toast({
-                    title: 'Thanks for your feedback!',
-                    description: 'Your scan helps this farm show real engagement.',
+                    title: intl.formatMessage({
+                      id: 'consumer.detail.feedbackThanksTitle',
+                      defaultMessage: 'Thanks for your feedback!'
+                    }),
+                    description: intl.formatMessage({
+                      id: 'consumer.detail.feedbackThanksDesc',
+                      defaultMessage: 'Your scan helps this farm show real engagement.'
+                    }),
                     status: 'success',
                     duration: 4000,
                     isClosable: true

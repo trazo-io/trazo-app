@@ -9,7 +9,7 @@ import { ChakraProvider, Portal, useDisclosure, CSSReset } from '@chakra-ui/reac
 import { CacheProvider } from '@emotion/react';
 import { emotionCache } from '../emotion-cache';
 import { Outlet, Route, useLocation, Location } from 'react-router-dom';
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { ROLE_DISPLAY_COMPANY_ADMIN } from 'config';
 
 // Layout components
@@ -344,7 +344,11 @@ export default function Dashboard(props: any) {
             paddingInlineEnd={{ base: '4px', md: '15px' }}
           >
             <PanelContainer padding={{ base: '4px 0px', lg: '30px 15px' }}>
-              <Outlet />
+              {/* Suspense boundary so lazy-loaded dashboard route views (see App.tsx
+                  lazyWithRetry conversion) have a fallback while their chunk loads. */}
+              <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
+                <Outlet />
+              </Suspense>
             </PanelContainer>
           </PanelContent>
         ) : null}

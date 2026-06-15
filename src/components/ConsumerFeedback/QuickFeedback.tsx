@@ -22,13 +22,21 @@ interface QuickFeedbackProps {
   productionId: string;
   scanId?: string;
   onFeedbackSubmitted?: () => void;
+  // P2-7: number of published consumer reviews. When 0, the prompt flips to a
+  // cold-start invite ("be the first") so the first in-aisle scanner is
+  // actively asked rather than shown a generic feedback box. Star ratings stay
+  // sign-in-gated (anti-gaming) — this is copy/UX only, no anonymous rating.
+  reviewsCount?: number;
 }
 
 export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
   productionId,
   scanId,
-  onFeedbackSubmitted
+  onFeedbackSubmitted,
+  reviewsCount
 }) => {
+  // Cold-start: no published reviews yet → invite framing.
+  const isColdStart = reviewsCount === 0;
   const [quickMessage, setQuickMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
@@ -213,13 +221,21 @@ export const QuickFeedback: React.FC<QuickFeedbackProps> = ({
       <VStack spacing={5} align="stretch">
         {/* Header */}
         <HStack spacing={3}>
-          <Icon as={FaComments} color="green.500" boxSize={5} />
+          <Icon as={isColdStart ? FaStar : FaComments} color="green.500" boxSize={5} />
           <Text fontSize={{ base: 'md', smd: 'lg' }} fontWeight="600" color={textColor}>
-            {intl.formatMessage({ id: 'quickFeedback.title' })}
+            {intl.formatMessage({
+              id: isColdStart ? 'quickFeedback.coldStartTitle' : 'quickFeedback.title',
+              defaultMessage: isColdStart ? 'Be the first to share' : 'Share Your Experience'
+            })}
           </Text>
         </HStack>
         <Text fontSize="sm" color="gray.500">
-          {intl.formatMessage({ id: 'quickFeedback.subtitle' })}
+          {intl.formatMessage({
+            id: isColdStart ? 'quickFeedback.coldStartSubtitle' : 'quickFeedback.subtitle',
+            defaultMessage: isColdStart
+              ? "No one's reviewed this batch yet — your note helps the next shopper decide."
+              : 'Quick feedback helps farmers improve their growing practices'
+          })}
         </Text>
 
         {/* Quick Message */}

@@ -2,6 +2,7 @@ import { Flex, Link, Text } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { resetConsent } from '../Privacy/ConsentBanner';
+import LanguageToggle from './LanguageToggle';
 
 const LANDING_URL = 'https://trazo.io';
 
@@ -30,7 +31,13 @@ export default function Footer() {
         &copy; {new Date().getFullYear()} Trazo&trade;. Agricultural Transparency
         Platform.
       </Text>
-      <Flex gap={{ base: '16px', md: '32px' }} flexWrap="wrap" justifyContent="center">
+      <Flex
+        gap={{ base: '16px', md: '32px' }}
+        flexWrap="wrap"
+        justifyContent="center"
+        alignItems="center"
+      >
+        {isConsumerHost && <LanguageToggle />}
         {isConsumerHost && (
           <Link
             as={RouterLink}
@@ -39,7 +46,10 @@ export default function Footer() {
             fontSize="sm"
             _hover={{ color: 'green.500' }}
           >
-            How our data works
+            {intl.formatMessage({
+              id: 'consumer.footer.howOurDataWorks',
+              defaultMessage: 'How our data works',
+            })}
           </Link>
         )}
         <Link
@@ -85,7 +95,10 @@ export default function Footer() {
           _hover={{ color: 'green.500' }}
           onClick={() => resetConsent()}
         >
-          Privacy Settings
+          {intl.formatMessage({
+            id: 'consumer.footer.privacySettings',
+            defaultMessage: 'Privacy Settings',
+          })}
         </Link>
       </Flex>
     </Flex>

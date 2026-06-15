@@ -4,15 +4,9 @@ import {
   VStack,
   HStack,
   Text,
-  Badge,
   Icon,
-  Button,
-  Circle,
-  Progress,
-  Flex,
   Image,
   useColorModeValue,
-  useDisclosure,
   Container,
   Grid,
   GridItem,
@@ -22,24 +16,9 @@ import {
   useBreakpointValue
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  FaLeaf,
-  FaCertificate,
-  FaUsers,
-  FaStar,
-  FaCheckCircle,
-  FaCarSide,
-  FaTree,
-  FaGlobeAmericas,
-  FaChartLine,
-  FaInfoCircle,
-  FaBolt,
-  FaAward,
-  FaRecycle,
-  FaTachometerAlt,
-  FaEye
-} from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { useIntl } from 'react-intl';
+import { FaStar, FaCheckCircle, FaInfoCircle, FaEye } from 'react-icons/fa';
 import { BsShieldCheck } from 'react-icons/bs';
 import { formatHarvestDate } from 'utils/consumerDisplay';
 
@@ -130,6 +109,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   practicesCount,
   lotId
 }) => {
+  const intl = useIntl();
   const [visibleElements, setVisibleElements] = useState(0);
   const [showDetailedComparison, setShowDetailedComparison] = useState(false);
 
@@ -165,113 +145,33 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     return 'red.500';
   };
 
-  const getScoreGrade = (score: number) => {
-    if (score >= 90) return { grade: 'A+', text: 'Outstanding', color: 'green' };
-    if (score >= 80) return { grade: 'A', text: 'Excellent', color: 'green' };
-    if (score >= 70) return { grade: 'B', text: 'Good', color: 'green' };
-    if (score >= 60) return { grade: 'C', text: 'Average', color: 'yellow' };
-    if (score >= 40) return { grade: 'D', text: 'Below Average', color: 'orange' };
-    return { grade: 'F', text: 'Needs Improvement', color: 'red' };
-  };
-
-  const getImpactLevel = (footprint: number) => {
-    if (footprint <= 0)
-      return {
-        level: 'Carbon Negative',
-        color: 'green',
-        icon: FaRecycle,
-        description: 'Actually removes carbon from the atmosphere'
-      };
-    if (footprint < 1)
-      return {
-        level: 'Ultra Low Impact',
-        color: 'green',
-        icon: FaLeaf,
-        description: 'Minimal environmental footprint'
-      };
-    if (footprint < 5)
-      return {
-        level: 'Low Impact',
-        color: 'green',
-        icon: FaTree,
-        description: 'Environmentally conscious choice'
-      };
-    if (footprint < 15)
-      return {
-        level: 'Moderate Impact',
-        color: 'yellow',
-        icon: FaGlobeAmericas,
-        description: 'Average environmental impact'
-      };
-    if (footprint < 30)
-      return {
-        level: 'High Impact',
-        color: 'orange',
-        icon: FaCarSide,
-        description: 'Consider offsetting this impact'
-      };
-    return {
-      level: 'Very High Impact',
-      color: 'red',
-      icon: FaBolt,
-      description: 'Significant environmental consideration'
-    };
-  };
-
   // Claim-safe narrative line. The old score-tiered ladder ("Open Book
   // Farm — complete growing story… you can see it all") made unsubstantiated
   // completeness claims and implied a ranking. One neutral, factual message
   // regardless of score.
   const getTransparencyMessage = (_score: number) => {
     return {
-      primary: '🌱 Documented growing story',
-      secondary:
-        'This farmer records their growing practices on Trazo — from soil preparation to harvest. Explore the timeline below.',
+      primary: intl.formatMessage({
+        id: 'consumer.hero.documentedStoryHeading',
+        defaultMessage: '🌱 Documented growing story'
+      }),
+      secondary: intl.formatMessage({
+        id: 'consumer.hero.documentedStorySubtitle',
+        defaultMessage:
+          'This farmer records their growing practices on Trazo — from soil preparation to harvest. Explore the timeline below.'
+      }),
       action: ''
     };
   };
 
-  const getConsumerMessage = (score: number, footprint: number) => {
-    // Use transparency messaging when in transparency mode
-    if (carbonData?.level === 'transparency') {
-      return getTransparencyMessage(score);
-    }
+  // The consumer page always renders in transparency mode (ProductDetail passes
+  // level:'transparency'). The old score-tiered ladder below this returned unqualified
+  // environmental-benefit claims ("excellent environmental stewardship", "Sustainable
+  // Farming Practices") derived from a self-reported score — FTC 16 CFR 260.4 / EU ECGT
+  // point 4a risk — so it has been removed. One neutral, factual message regardless of score.
+  const getConsumerMessage = (score: number) => getTransparencyMessage(score);
 
-    // Informative carbon messaging (not competitive)
-    const grade = getScoreGrade(score);
-    const impact = getImpactLevel(footprint);
-
-    if (score >= 80) {
-      return {
-        primary: '🌱 Sustainable Farming Practices',
-        secondary:
-          'This farm demonstrates excellent environmental stewardship with documented sustainable practices',
-        action: 'Learn about the specific farming methods used'
-      };
-    }
-    if (score >= 60) {
-      return {
-        primary: '🌿 Environmentally Conscious Farming',
-        secondary: 'This farm follows good environmental practices and tracks their impact',
-        action: 'See the environmental practices used'
-      };
-    }
-    if (score >= 40) {
-      return {
-        primary: '🌾 Standard Environmental Practices',
-        secondary:
-          'This farm meets environmental standards and provides transparency about their methods',
-        action: 'Explore the farming methods documented'
-      };
-    }
-    return {
-      primary: '🌱 Developing Sustainable Practices',
-      secondary: 'This farm is working to improve their environmental practices and transparency',
-      action: 'Support farmers improving their sustainability'
-    };
-  };
-
-  const getRelatableComparison = (footprint: number) => {
+  const getRelatableComparison = (_footprint: number) => {
     // In transparency mode, show transparency-related information instead of carbon comparisons
     if (carbonData?.level === 'transparency') {
       const score = carbonData.score || 0;
@@ -280,56 +180,71 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
       if (score >= 95) {
         return {
           icon: BsShieldCheck,
-          text: `Complete farm story from planting to harvest`,
+          text: intl.formatMessage({
+            id: 'consumer.hero.comparisonCompleteText',
+            defaultMessage: 'Complete farm story from planting to harvest'
+          }),
           color: 'green.600',
-          emphasis: 'Every farming step shared with you'
+          emphasis: intl.formatMessage({
+            id: 'consumer.hero.comparisonCompleteEmphasis',
+            defaultMessage: 'Every farming step shared with you'
+          })
         };
       } else if (score >= 85) {
         return {
           icon: FaCheckCircle,
-          text: `Rich story of how your food was grown`,
+          text: intl.formatMessage({
+            id: 'consumer.hero.comparisonRichText',
+            defaultMessage: 'Rich story of how your food was grown'
+          }),
           color: 'green.500',
-          emphasis: 'Detailed farming journey available'
+          emphasis: intl.formatMessage({
+            id: 'consumer.hero.comparisonRichEmphasis',
+            defaultMessage: 'Detailed farming journey available'
+          })
         };
       } else if (score >= 70) {
         return {
           icon: FaInfoCircle,
-          text: `Key farming moments shared with care`,
+          text: intl.formatMessage({
+            id: 'consumer.hero.comparisonKeyText',
+            defaultMessage: 'Key farming moments shared with care'
+          }),
           color: 'blue.500',
-          emphasis: 'Important growing steps documented'
+          emphasis: intl.formatMessage({
+            id: 'consumer.hero.comparisonKeyEmphasis',
+            defaultMessage: 'Important growing steps documented'
+          })
         };
       } else {
         return {
           icon: FaEye,
-          text: `Essential farming practices revealed`,
+          text: intl.formatMessage({
+            id: 'consumer.hero.comparisonEssentialText',
+            defaultMessage: 'Essential farming practices revealed'
+          }),
           color: 'orange.500',
-          emphasis: 'Basic farm story building'
+          emphasis: intl.formatMessage({
+            id: 'consumer.hero.comparisonEssentialEmphasis',
+            defaultMessage: 'Basic farm story building'
+          })
         };
       }
     }
 
-    // Original carbon comparison for carbon mode
-    const absFootprint = Math.abs(footprint);
-
-    if (footprint <= 0) {
-      return {
-        icon: FaRecycle,
-        text: `Removes ${(absFootprint / 0.35548).toFixed(1)} miles worth of CO₂`,
-        color: 'green.500',
-        emphasis: 'Actually helps the environment!'
-      };
-    }
-
+    // Non-transparency ("carbon mode") is never used on the consumer page (ProductDetail
+    // passes level:'transparency'). The old carbon-mode comparison here returned
+    // unsubstantiated claims ("Removes N miles worth of CO₂", "Actually helps the
+    // environment!", "Consider offsetting") — FTC 16 CFR 260.3(c)/260.5 risk — and has been
+    // removed. Neutral fallback for the unreachable path.
     return {
-      icon: FaCarSide,
-      text: `Like driving ${(absFootprint / 0.35548).toFixed(1)} miles`,
-      color: getScoreColor(carbonData?.score || 0),
-      emphasis:
-        footprint < 5
-          ? 'Very low impact'
-          : footprint < 15
-          ? 'Moderate impact'
-          : 'Consider offsetting'
+      icon: FaEye,
+      text: intl.formatMessage({
+        id: 'consumer.hero.comparisonDocumentedPractices',
+        defaultMessage: 'Documented growing practices'
+      }),
+      color: 'green.500',
+      emphasis: ''
     };
   };
 
@@ -379,14 +294,14 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   }
 
   const score = carbonData.score || 0;
-  const message = getConsumerMessage(score, carbonData.footprint || 0);
+  const message = getConsumerMessage(score);
 
   // Format harvest date for hero overlay (e.g. "Harvested Mar 18, 2026").
   // Falls back to nothing when missing — never renders "Recently harvested"
   // placeholder which feels like a stand-in. Uses formatHarvestDate so
   // date-only strings ("2026-03-18") parse as local, not UTC midnight
   // (which renders as the previous day west of UTC).
-  const formattedHarvest = formatHarvestDate(harvestDate);
+  const formattedHarvest = formatHarvestDate(harvestDate, intl.locale);
 
   // Consumer review rating — renders only when real reviews exist. Zero
   // reviews shows nothing (no "No ratings yet" placeholder on the hero).
@@ -476,6 +391,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
             pointerEvents="auto"
           >
             <Text
+              as="h1"
               fontSize={{ base: '2xl', md: '4xl' }}
               fontWeight="bold"
               lineHeight="1.1"
@@ -492,9 +408,20 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               noOfLines={2}
               textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.4)' : 'none'}
             >
-              {productData?.name ?? 'Product'}
-              {lotId ? ` · Lot ${lotId}` : ''}
-              {formattedHarvest ? ` · Harvested ${formattedHarvest}` : ''}
+              {productData?.name ??
+                intl.formatMessage({ id: 'consumer.hero.productFallback', defaultMessage: 'Product' })}
+              {lotId
+                ? intl.formatMessage(
+                    { id: 'consumer.hero.lotLabel', defaultMessage: ' · Lot {lot}' },
+                    { lot: lotId }
+                  )
+                : ''}
+              {formattedHarvest
+                ? intl.formatMessage(
+                    { id: 'consumer.hero.harvestedLabel', defaultMessage: ' · Harvested {date}' },
+                    { date: formattedHarvest }
+                  )
+                : ''}
             </Text>
           </VStack>
 
@@ -568,7 +495,10 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                         textAlign="center"
                         noOfLines={1}
                       >
-                        by {certifierName.split(' (')[0]}
+                        {intl.formatMessage(
+                          { id: 'consumer.hero.byCertifier', defaultMessage: 'by {certifier}' },
+                          { certifier: certifierName.split(' (')[0] }
+                        )}
                       </Text>
                     )}
                     {(practicesCount ?? 0) > 0 && (
@@ -579,7 +509,13 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                         noOfLines={1}
                         mt={0.5}
                       >
-                        {practicesCount} practices documented
+                        {intl.formatMessage(
+                          {
+                            id: 'consumer.hero.practicesDocumented',
+                            defaultMessage: '{count} practices documented'
+                          },
+                          { count: practicesCount }
+                        )}
                       </Text>
                     )}
                   </>
@@ -602,7 +538,10 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                       textAlign="center"
                       lineHeight="1.2"
                     >
-                      practices documented
+                      {intl.formatMessage({
+                        id: 'consumer.hero.practicesDocumentedLabel',
+                        defaultMessage: 'practices documented'
+                      })}
                     </Text>
                   </>
                 )}

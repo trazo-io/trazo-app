@@ -26,6 +26,8 @@
  */
 
 import React from 'react';
+import { useIntl } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 import {
   Box,
   Container,
@@ -46,13 +48,13 @@ import {
 import {
   FaCertificate,
   FaClipboardCheck,
+  FaInfoCircle,
   FaLeaf,
   FaMapMarkerAlt,
   FaSeedling,
   FaShieldAlt
 } from 'react-icons/fa';
 import type { IconType } from 'react-icons';
-import { ConsumerTooltip } from 'components/Design/StandardComponents';
 import { formatHarvestDate } from 'utils/consumerDisplay';
 import type { ConsumerCertification, OrganicClaim } from 'types/certification';
 
@@ -106,29 +108,38 @@ const TONE_STYLES: Record<
  * ORIGIN pillar — answers "Where did this come from?"
  * Hide when no farm name available (anything else is misleading).
  */
-function buildOriginPillar(props: TrustSummaryHeaderProps): PillarData | null {
+function buildOriginPillar(props: TrustSummaryHeaderProps, intl: IntlShape): PillarData | null {
   const { farmName, location } = props;
   if (!farmName) return null;
 
-  const baseTooltip =
-    'This product is traceable to a specific farm and harvest period. Every event below is tied to this production batch.';
+  const baseTooltip = intl.formatMessage({
+    id: 'consumer.trust.originTooltip',
+    defaultMessage:
+      'This product is traceable to a specific farm and harvest period. Every event below is tied to this production batch.'
+  });
 
   // Batch identity (lot/harvest) is owned by the HARVEST pillar — the old
   // harvestDate-dependent "Lot tracked" variant duplicated it here.
   if (location) {
     return {
-      pillarName: 'ORIGIN',
+      pillarName: intl.formatMessage({ id: 'consumer.trust.pillarOrigin', defaultMessage: 'ORIGIN' }),
       pillarIcon: FaMapMarkerAlt,
-      badgeLabel: 'Farm tracked',
+      badgeLabel: intl.formatMessage({
+        id: 'consumer.trust.farmTracked',
+        defaultMessage: 'Farm tracked'
+      }),
       badgeSublabel: location,
       tooltipExplainer: baseTooltip,
       tone: 'verified'
     };
   }
   return {
-    pillarName: 'ORIGIN',
+    pillarName: intl.formatMessage({ id: 'consumer.trust.pillarOrigin', defaultMessage: 'ORIGIN' }),
     pillarIcon: FaMapMarkerAlt,
-    badgeLabel: 'Origin disclosed',
+    badgeLabel: intl.formatMessage({
+      id: 'consumer.trust.originDisclosed',
+      defaultMessage: 'Origin disclosed'
+    }),
     badgeSublabel: farmName,
     tooltipExplainer: baseTooltip,
     tone: 'documented'
@@ -147,12 +158,15 @@ function buildOriginPillar(props: TrustSummaryHeaderProps): PillarData | null {
  *
  * Hide when no events have been documented (nothing meaningful to say).
  */
-function buildPracticesPillar(props: TrustSummaryHeaderProps): PillarData | null {
+function buildPracticesPillar(props: TrustSummaryHeaderProps, intl: IntlShape): PillarData | null {
   const { organicClaim, certifications, documentedEventsCount } = props;
   if (!documentedEventsCount || documentedEventsCount === 0) return null;
 
-  const tooltipExplainer =
-    "We label this based on what's verified, not what's claimed. 'Certified Organic' requires a USDA Organic Integrity Database match; 'Transitioning' requires documented transition records; otherwise we report this as 'Conventional, Documented' regardless of farmer-picked labels.";
+  const tooltipExplainer = intl.formatMessage({
+    id: 'consumer.trust.practicesTooltip',
+    defaultMessage:
+      "We label this based on what's verified, not what's claimed. 'Certified Organic' requires a USDA Organic Integrity Database match; 'Transitioning' requires documented transition records; otherwise we report this as 'Conventional, Documented' regardless of farmer-picked labels."
+  });
 
   // Phase 3 lot gate: can_display_organic goes false when THIS lot is
   // ineligible (prohibited input, cert window, crop scope) even on a
@@ -165,15 +179,27 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps): PillarData | null
     const showUsdaSeal = Boolean(oidMatchedCert);
 
     return {
-      pillarName: 'PRACTICES',
+      pillarName: intl.formatMessage({
+        id: 'consumer.trust.pillarPractices',
+        defaultMessage: 'PRACTICES'
+      }),
       pillarIcon: FaLeaf,
-      badgeLabel: 'Certified Organic',
+      badgeLabel: intl.formatMessage({
+        id: 'consumer.trust.certifiedOrganic',
+        defaultMessage: 'Certified Organic'
+      }),
       // Short certifier name — "via CCOF (California Certified Organic
       // Farm…" truncated mid-word in the pillar. Full legal name lives in
       // the Certifications card.
       badgeSublabel: certifierName
-        ? `via ${certifierName.split(' (')[0]}`
-        : 'via USDA-accredited certifier',
+        ? intl.formatMessage(
+            { id: 'consumer.trust.viaCertifier', defaultMessage: 'via {certifier}' },
+            { certifier: certifierName.split(' (')[0] }
+          )
+        : intl.formatMessage({
+            id: 'consumer.trust.viaUsdaAccredited',
+            defaultMessage: 'via USDA-accredited certifier'
+          }),
       tooltipExplainer,
       tone: 'verified',
       showUsdaSeal,
@@ -183,10 +209,19 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps): PillarData | null
 
   if (organicClaim?.status === 'transitioning') {
     return {
-      pillarName: 'PRACTICES',
+      pillarName: intl.formatMessage({
+        id: 'consumer.trust.pillarPractices',
+        defaultMessage: 'PRACTICES'
+      }),
       pillarIcon: FaSeedling,
-      badgeLabel: 'Transitioning to Organic',
-      badgeSublabel: '3-year transition in progress',
+      badgeLabel: intl.formatMessage({
+        id: 'consumer.trust.transitioningToOrganic',
+        defaultMessage: 'Transitioning to Organic'
+      }),
+      badgeSublabel: intl.formatMessage({
+        id: 'consumer.trust.transitionInProgress',
+        defaultMessage: '3-year transition in progress'
+      }),
       tooltipExplainer,
       tone: 'progress'
     };
@@ -195,10 +230,19 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps): PillarData | null
   // self_reported and conventional both fall through here — we do not invent
   // a fourth state that implies organic without third-party evidence.
   return {
-    pillarName: 'PRACTICES',
+    pillarName: intl.formatMessage({
+      id: 'consumer.trust.pillarPractices',
+      defaultMessage: 'PRACTICES'
+    }),
     pillarIcon: FaCertificate,
-    badgeLabel: 'Conventional, Documented',
-    badgeSublabel: 'Practice records on file',
+    badgeLabel: intl.formatMessage({
+      id: 'consumer.trust.conventionalDocumented',
+      defaultMessage: 'Conventional, Documented'
+    }),
+    badgeSublabel: intl.formatMessage({
+      id: 'consumer.trust.practiceRecordsOnFile',
+      defaultMessage: 'Practice records on file'
+    }),
     tooltipExplainer,
     tone: 'documented'
   };
@@ -215,15 +259,21 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps): PillarData | null
  *
  * Always renders — falls back to "Limited Data" when no events on file.
  */
-function buildEventsPillar(props: TrustSummaryHeaderProps): PillarData | null {
+function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): PillarData | null {
   const { transparencyScore, documentedEventsCount = 0, expectedEventsCount, productName } = props;
 
   if (transparencyScore == null && documentedEventsCount === 0) {
     return {
-      pillarName: 'EVENTS',
+      pillarName: intl.formatMessage({ id: 'consumer.trust.pillarEvents', defaultMessage: 'EVENTS' }),
       pillarIcon: FaClipboardCheck,
-      badgeLabel: 'Limited Data',
-      tooltipExplainer: 'Documentation data is being collected for this production.',
+      badgeLabel: intl.formatMessage({
+        id: 'consumer.trust.limitedData',
+        defaultMessage: 'Limited Data'
+      }),
+      tooltipExplainer: intl.formatMessage({
+        id: 'consumer.trust.limitedDataTooltip',
+        defaultMessage: 'Documentation data is being collected for this production.'
+      }),
       tone: 'limited'
     };
   }
@@ -243,25 +293,76 @@ function buildEventsPillar(props: TrustSummaryHeaderProps): PillarData | null {
   // - When no expected count: plain count
   const showFraction = expectedEventsCount != null && documentedEventsCount < expectedEventsCount;
   const badgeLabel = showFraction
-    ? `${documentedEventsCount} of ${expectedEventsCount}`
-    : `${documentedEventsCount} event${documentedEventsCount === 1 ? '' : 's'}`;
+    ? intl.formatMessage(
+        { id: 'consumer.trust.eventsFraction', defaultMessage: '{count} of {expected}' },
+        { count: documentedEventsCount, expected: expectedEventsCount }
+      )
+    : intl.formatMessage(
+        {
+          id: 'consumer.trust.eventsCount',
+          defaultMessage: '{count} {count, plural, one {event} other {events}}'
+        },
+        { count: documentedEventsCount }
+      );
 
-  const productPhrase = productName ? `this ${productName} production` : 'this production';
+  const productPhrase = productName
+    ? intl.formatMessage(
+        { id: 'consumer.trust.thisNamedProduction', defaultMessage: 'this {productName} production' },
+        { productName }
+      )
+    : intl.formatMessage({
+        id: 'consumer.trust.thisProduction',
+        defaultMessage: 'this production'
+      });
   const tooltipExplainer = showFraction
-    ? `${documentedEventsCount} of ${expectedEventsCount} expected farming practices documented for ${productPhrase}${
-        score != null ? ` (${score}% complete)` : ''
-      }.`
+    ? intl.formatMessage(
+        {
+          id: 'consumer.trust.eventsFractionTooltip',
+          defaultMessage:
+            '{count} of {expected} expected farming practices documented for {productPhrase}{scoreSuffix}.'
+        },
+        {
+          count: documentedEventsCount,
+          expected: expectedEventsCount,
+          productPhrase,
+          scoreSuffix:
+            score != null
+              ? intl.formatMessage(
+                  {
+                    id: 'consumer.trust.eventsScoreSuffix',
+                    defaultMessage: ' ({score}% complete)'
+                  },
+                  { score }
+                )
+              : ''
+        }
+      )
     : expectedEventsCount != null
-    ? `${documentedEventsCount} farming event${
-        documentedEventsCount === 1 ? '' : 's'
-      } documented for ${productPhrase} — exceeds the ${expectedEventsCount}-event baseline for this crop.`
-    : `${documentedEventsCount} farming event${documentedEventsCount === 1 ? '' : 's'} documented.`;
+    ? intl.formatMessage(
+        {
+          id: 'consumer.trust.eventsExceedsTooltip',
+          defaultMessage:
+            '{count} farming {count, plural, one {event} other {events}} documented for {productPhrase} — exceeds the {expected}-event baseline for this crop.'
+        },
+        { count: documentedEventsCount, expected: expectedEventsCount, productPhrase }
+      )
+    : intl.formatMessage(
+        {
+          id: 'consumer.trust.eventsDocumentedTooltip',
+          defaultMessage:
+            '{count} farming {count, plural, one {event} other {events}} documented.'
+        },
+        { count: documentedEventsCount }
+      );
 
   return {
-    pillarName: 'EVENTS',
+    pillarName: intl.formatMessage({ id: 'consumer.trust.pillarEvents', defaultMessage: 'EVENTS' }),
     pillarIcon: FaClipboardCheck,
     badgeLabel,
-    badgeSublabel: 'farming practices',
+    badgeSublabel: intl.formatMessage({
+      id: 'consumer.trust.farmingPractices',
+      defaultMessage: 'farming practices'
+    }),
     tooltipExplainer,
     tone
   };
@@ -274,20 +375,36 @@ function buildEventsPillar(props: TrustSummaryHeaderProps): PillarData | null {
  * 'documented'. Hidden when neither fact exists; the EVENTS pillar takes
  * the slot instead.
  */
-function buildHarvestPillar(props: TrustSummaryHeaderProps): PillarData | null {
+function buildHarvestPillar(props: TrustSummaryHeaderProps, intl: IntlShape): PillarData | null {
   const { harvestDate, lotId } = props;
   if (!harvestDate && !lotId) return null;
 
-  const formattedHarvest = formatHarvestDate(harvestDate);
+  const formattedHarvest = formatHarvestDate(harvestDate, intl.locale);
   if (!formattedHarvest && !lotId) return null;
 
+  const lotLabel = intl.formatMessage(
+    { id: 'consumer.trust.lotLabel', defaultMessage: 'Lot {lotId}' },
+    { lotId }
+  );
+
   return {
-    pillarName: 'HARVEST',
+    pillarName: intl.formatMessage({
+      id: 'consumer.trust.pillarHarvest',
+      defaultMessage: 'HARVEST'
+    }),
     pillarIcon: FaSeedling,
-    badgeLabel: formattedHarvest ? `Harvested ${formattedHarvest}` : `Lot ${lotId}`,
-    badgeSublabel: formattedHarvest && lotId ? `Lot ${lotId}` : undefined,
-    tooltipExplainer:
-      'Harvest date and lot number tie this product to one specific production batch — the basis of traceability. Reported by the farmer.',
+    badgeLabel: formattedHarvest
+      ? intl.formatMessage(
+          { id: 'consumer.trust.harvested', defaultMessage: 'Harvested {date}' },
+          { date: formattedHarvest }
+        )
+      : lotLabel,
+    badgeSublabel: formattedHarvest && lotId ? lotLabel : undefined,
+    tooltipExplainer: intl.formatMessage({
+      id: 'consumer.trust.harvestTooltip',
+      defaultMessage:
+        'Harvest date and lot number tie this product to one specific production batch — the basis of traceability. Reported by the farmer.'
+    }),
     tone: 'documented'
   };
 }
@@ -306,7 +423,7 @@ function buildHarvestPillar(props: TrustSummaryHeaderProps): PillarData | null {
  * elsewhere on the page is the correct place to alert consumers. Also hide
  * when there are no photos AND no events.
  */
-function buildRecordsPillar(props: TrustSummaryHeaderProps): PillarData | null {
+function buildRecordsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): PillarData | null {
   const { blockchainStatus, totalPhotoEvidenceCount = 0, documentedEventsCount = 0 } = props;
   const hasEvents = documentedEventsCount > 0;
 
@@ -317,23 +434,50 @@ function buildRecordsPillar(props: TrustSummaryHeaderProps): PillarData | null {
 
   if (totalPhotoEvidenceCount >= 5) {
     return {
-      pillarName: 'RECORDS',
+      pillarName: intl.formatMessage({
+        id: 'consumer.trust.pillarRecords',
+        defaultMessage: 'RECORDS'
+      }),
       pillarIcon: FaShieldAlt,
-      badgeLabel: 'Photo-evidenced',
-      badgeSublabel: `${totalPhotoEvidenceCount} photos across events`,
-      tooltipExplainer:
-        '5+ photos are attached across documented events, providing visual evidence alongside the written records.',
+      badgeLabel: intl.formatMessage({
+        id: 'consumer.trust.photoEvidenced',
+        defaultMessage: 'Photo-evidenced'
+      }),
+      badgeSublabel: intl.formatMessage(
+        {
+          id: 'consumer.trust.photosAcrossEvents',
+          defaultMessage: '{count} photos across events'
+        },
+        { count: totalPhotoEvidenceCount }
+      ),
+      tooltipExplainer: intl.formatMessage({
+        id: 'consumer.trust.photoEvidencedTooltip',
+        defaultMessage:
+          '5+ photos are attached across documented events, providing visual evidence alongside the written records.'
+      }),
       tone: 'verified'
     };
   }
   if (hasEvents) {
     return {
-      pillarName: 'RECORDS',
+      pillarName: intl.formatMessage({
+        id: 'consumer.trust.pillarRecords',
+        defaultMessage: 'RECORDS'
+      }),
       pillarIcon: FaShieldAlt,
-      badgeLabel: 'Records on file',
-      badgeSublabel: 'Farmer-logged records',
-      tooltipExplainer:
-        'Farmer-logged records are on file. Photo evidence appears here once events include photos.',
+      badgeLabel: intl.formatMessage({
+        id: 'consumer.trust.recordsOnFile',
+        defaultMessage: 'Records on file'
+      }),
+      badgeSublabel: intl.formatMessage({
+        id: 'consumer.trust.farmerLoggedRecords',
+        defaultMessage: 'Farmer-logged records'
+      }),
+      tooltipExplainer: intl.formatMessage({
+        id: 'consumer.trust.recordsOnFileTooltip',
+        defaultMessage:
+          'Farmer-logged records are on file. Photo evidence appears here once events include photos.'
+      }),
       tone: 'documented'
     };
   }
@@ -345,64 +489,95 @@ function buildRecordsPillar(props: TrustSummaryHeaderProps): PillarData | null {
  * no separate info icon). Tapping reveals the nominative-fair-use disclaimer
  * required by USPTO/INTA prong 3.
  */
-const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }) => (
-  <Popover trigger="click" placement="bottom-start">
-    <PopoverTrigger>
-      <Box
-        as="button"
-        type="button"
-        aria-label="About the USDA Organic seal"
-        cursor="pointer"
-        display="inline-flex"
-        alignItems="center"
-        justifyContent="center"
-        bg="transparent"
-        border="none"
-        p={0}
-        borderRadius="full"
-        transition="transform 0.15s ease"
-        _hover={{ transform: 'scale(1.05)' }}
-        _focusVisible={{
-          outline: '2px solid',
-          outlineColor: 'green.500',
-          outlineOffset: '2px'
-        }}
-      >
-        <Image
-          src="/certifications/usda-organic-seal.svg"
-          alt={
-            certifierName
-              ? `USDA Organic seal — farm certified by ${certifierName}`
-              : 'USDA Organic seal — farm certified by a USDA-accredited certifier'
-          }
-          boxSize="36px"
-          objectFit="contain"
-          fallback={<Icon as={FaCertificate} aria-hidden="true" color="green.600" boxSize={5} />}
-        />
-      </Box>
-    </PopoverTrigger>
-    <PopoverContent fontSize="xs" maxW="280px">
-      <PopoverArrow />
-      <PopoverBody>
-        <Text fontSize="xs" color="gray.700" lineHeight="1.5">
-          USDA Organic seal is a registered mark of the U.S. Department of Agriculture.
-          {certifierName
-            ? ` Displayed because this farm is certified by ${certifierName}.`
-            : ' Displayed because this farm is certified to the USDA NOP standard.'}
-        </Text>
-        <Link
-          mt={2}
-          href="https://www.ams.usda.gov/rules-regulations/organic/organic-seal"
-          isExternal
-          fontSize="xs"
-          color="green.600"
+const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }) => {
+  const intl = useIntl();
+  return (
+    <Popover trigger="click" placement="bottom-start">
+      <PopoverTrigger>
+        <Box
+          as="button"
+          type="button"
+          aria-label={intl.formatMessage({
+            id: 'consumer.trust.sealAriaLabel',
+            defaultMessage: 'About the USDA Organic seal'
+          })}
+          cursor="pointer"
+          display="inline-flex"
+          alignItems="center"
+          justifyContent="center"
+          bg="transparent"
+          border="none"
+          p={0}
+          borderRadius="full"
+          transition="transform 0.15s ease"
+          _hover={{ transform: 'scale(1.05)' }}
+          _focusVisible={{
+            outline: '2px solid',
+            outlineColor: 'green.500',
+            outlineOffset: '2px'
+          }}
         >
-          Learn more at USDA AMS
-        </Link>
-      </PopoverBody>
-    </PopoverContent>
-  </Popover>
-);
+          <Image
+            src="/certifications/usda-organic-seal.svg"
+            alt={
+              certifierName
+                ? intl.formatMessage(
+                    {
+                      id: 'consumer.trust.sealAltCertifier',
+                      defaultMessage: 'USDA Organic seal — farm certified by {certifier}'
+                    },
+                    { certifier: certifierName }
+                  )
+                : intl.formatMessage({
+                    id: 'consumer.trust.sealAltGeneric',
+                    defaultMessage: 'USDA Organic seal — farm certified by a USDA-accredited certifier'
+                  })
+            }
+            boxSize="36px"
+            objectFit="contain"
+            fallback={<Icon as={FaCertificate} aria-hidden="true" color="green.600" boxSize={5} />}
+          />
+        </Box>
+      </PopoverTrigger>
+      <PopoverContent fontSize="xs" maxW="280px">
+        <PopoverArrow />
+        <PopoverBody>
+          <Text fontSize="xs" color="gray.700" lineHeight="1.5">
+            {intl.formatMessage({
+              id: 'consumer.trust.sealRegisteredMark',
+              defaultMessage:
+                'USDA Organic seal is a registered mark of the U.S. Department of Agriculture.'
+            })}
+            {certifierName
+              ? intl.formatMessage(
+                  {
+                    id: 'consumer.trust.sealDisplayedCertifier',
+                    defaultMessage: ' Displayed because this farm is certified by {certifier}.'
+                  },
+                  { certifier: certifierName }
+                )
+              : intl.formatMessage({
+                  id: 'consumer.trust.sealDisplayedNop',
+                  defaultMessage: ' Displayed because this farm is certified to the USDA NOP standard.'
+                })}
+          </Text>
+          <Link
+            mt={2}
+            href="https://www.ams.usda.gov/rules-regulations/organic/organic-seal"
+            isExternal
+            fontSize="xs"
+            color="green.600"
+          >
+            {intl.formatMessage({
+              id: 'consumer.trust.learnMoreUsdaAms',
+              defaultMessage: 'Learn more at USDA AMS'
+            })}
+          </Link>
+        </PopoverBody>
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 /**
  * A single pillar card — compact, modern, with subtle elevation and a
@@ -411,76 +586,114 @@ const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }
  */
 const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
   const tone = TONE_STYLES[pillar.tone];
+  const intl = useIntl();
 
   return (
-    <ConsumerTooltip label={pillar.badgeLabel} explanation={pillar.tooltipExplainer}>
-      <Box
-        bg="white"
-        borderWidth="1px"
-        borderColor="gray.200"
-        borderRadius="xl"
-        px={3.5}
-        py={3}
-        minH="92px"
-        display="flex"
-        flexDirection="column"
-        justifyContent="space-between"
-        cursor="default"
-        role="group"
-        boxShadow="0 1px 2px rgba(0, 0, 0, 0.04)"
-        transition="box-shadow 0.15s ease, border-color 0.15s ease"
-        _hover={{
-          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)',
-          borderColor: `${tone.badgeColor}.200`
-        }}
-      >
-        <HStack spacing={2} align="center" minH="36px">
-          {pillar.showUsdaSeal ? (
-            <UsdaOrganicSeal certifierName={pillar.usdaSealCertifierName} />
-          ) : (
+    <Box
+      bg="white"
+      borderWidth="1px"
+      borderColor="gray.200"
+      borderRadius="xl"
+      px={3.5}
+      py={3}
+      minH="92px"
+      display="flex"
+      flexDirection="column"
+      justifyContent="space-between"
+      role="group"
+      boxShadow="0 1px 2px rgba(0, 0, 0, 0.04)"
+      transition="box-shadow 0.15s ease, border-color 0.15s ease"
+      _hover={{
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)',
+        borderColor: `${tone.badgeColor}.200`
+      }}
+    >
+      <HStack spacing={2} align="center" minH="36px">
+        {pillar.showUsdaSeal ? (
+          <UsdaOrganicSeal certifierName={pillar.usdaSealCertifierName} />
+        ) : (
+          <Box
+            bg={tone.bg}
+            borderRadius="md"
+            w="28px"
+            h="28px"
+            display="inline-flex"
+            alignItems="center"
+            justifyContent="center"
+            flexShrink={0}
+          >
+            <Icon as={pillar.pillarIcon} aria-hidden="true" color={tone.iconColor} boxSize={3.5} />
+          </Box>
+        )}
+        <Text
+          flex="1"
+          fontSize={{ base: '11px', lg: 'xs' }}
+          fontWeight="semibold"
+          color="gray.500"
+          letterSpacing="0.08em"
+          textTransform="uppercase"
+          noOfLines={1}
+        >
+          {pillar.pillarName}
+        </Text>
+        {/* Dedicated tap/click info affordance — reachable on TOUCH (2026-06 audit P1-4).
+            A separate ⓘ button (not the whole card) avoids nesting with the USDA seal's
+            own popover and never alters the grid card's sizing. */}
+        <Popover trigger="click" placement="bottom-end" isLazy>
+          <PopoverTrigger>
             <Box
-              bg={tone.bg}
-              borderRadius="md"
-              w="28px"
-              h="28px"
-              display="inline-flex"
-              alignItems="center"
-              justifyContent="center"
+              as="button"
+              type="button"
               flexShrink={0}
+              lineHeight="0"
+              color="gray.300"
+              cursor="pointer"
+              aria-label={intl.formatMessage({
+                id: 'consumer.trust.whatThisMeans',
+                defaultMessage: 'What this means'
+              })}
+              _hover={{ color: 'gray.500' }}
+              _focusVisible={{
+                outline: '2px solid',
+                outlineColor: 'green.500',
+                outlineOffset: '2px',
+                borderRadius: 'full'
+              }}
             >
-              <Icon as={pillar.pillarIcon} aria-hidden="true" color={tone.iconColor} boxSize={3.5} />
+              <Icon as={FaInfoCircle} aria-hidden="true" boxSize={3} />
             </Box>
-          )}
-          <Text
-            fontSize={{ base: '11px', lg: 'xs' }}
-            fontWeight="semibold"
-            color="gray.500"
-            letterSpacing="0.08em"
-            textTransform="uppercase"
-            noOfLines={1}
-          >
-            {pillar.pillarName}
-          </Text>
-        </HStack>
+          </PopoverTrigger>
+          <PopoverContent fontSize="xs" maxW="280px">
+            <PopoverArrow />
+            <PopoverBody>
+              <Text fontWeight="bold" mb={1} fontSize="sm">
+                {pillar.badgeLabel}
+              </Text>
+              <Text fontSize="xs" color="gray.700" lineHeight="1.5">
+                {pillar.tooltipExplainer}
+              </Text>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
+      </HStack>
 
-        <VStack align="stretch" spacing={0.5} mt={2}>
-          <Text
-            fontSize={{ base: 'sm', lg: 'md' }}
-            fontWeight="bold"
-            color={`${tone.badgeColor}.700`}
-            lineHeight="1.3"
-            noOfLines={2}
-          >
-            {pillar.badgeLabel}
+      <VStack align="stretch" spacing={0.5} mt={2}>
+        <Text
+          fontSize={{ base: 'sm', lg: 'md' }}
+          fontWeight="bold"
+          color={`${tone.badgeColor}.700`}
+          lineHeight="1.3"
+          noOfLines={2}
+        >
+          {pillar.badgeLabel}
+        </Text>
+        {pillar.badgeSublabel && (
+          <Text fontSize={{ base: 'xs', lg: 'sm' }} color="gray.600" noOfLines={1}>
+            {pillar.badgeSublabel}
           </Text>
-          {pillar.badgeSublabel && (
-            <Text fontSize={{ base: 'xs', lg: 'sm' }} color="gray.600" noOfLines={1}>
-              {pillar.badgeSublabel}
-            </Text>
-          )}
-        </VStack>
-      </Box>
-    </ConsumerTooltip>
+        )}
+      </VStack>
+    </Box>
   );
 };
 
@@ -506,6 +719,7 @@ const PillarSkeleton: React.FC = () => (
 
 const TrustSummaryHeader: React.FC<TrustSummaryHeaderProps> = (props) => {
   const { onMethodologyClick, isLoading } = props;
+  const intl = useIntl();
 
   if (isLoading) {
     return (
@@ -525,12 +739,12 @@ const TrustSummaryHeader: React.FC<TrustSummaryHeaderProps> = (props) => {
   // Order: certification first (strongest third-party signal), then origin,
   // then harvest/lot (falls back to events count when no harvest data),
   // then records evidence. Blockchain moved to the Production Journey footer.
-  const harvestPillar = buildHarvestPillar(props);
+  const harvestPillar = buildHarvestPillar(props, intl);
   const pillars = [
-    buildPracticesPillar(props),
-    buildOriginPillar(props),
-    harvestPillar ?? buildEventsPillar(props),
-    buildRecordsPillar(props)
+    buildPracticesPillar(props, intl),
+    buildOriginPillar(props, intl),
+    harvestPillar ?? buildEventsPillar(props, intl),
+    buildRecordsPillar(props, intl)
   ].filter((p): p is PillarData => p !== null);
 
   // Don't render if we have nothing meaningful to say. Hero will still render.
@@ -555,8 +769,11 @@ const TrustSummaryHeader: React.FC<TrustSummaryHeaderProps> = (props) => {
             are labeled. */}
         <HStack spacing={2} pt={4} flexWrap="wrap" justify="center" align="baseline">
           <Text fontSize="xs" color="gray.500" textAlign="center">
-            Practice records are farmer-reported, not independently audited. Certifications are
-            labeled separately as Verified or Self-Reported.
+            {intl.formatMessage({
+              id: 'consumer.trust.ftcDisclaimer',
+              defaultMessage:
+                'Practice records are farmer-reported, not independently audited. Certifications are labeled separately as Verified or Self-Reported.'
+            })}
           </Text>
           {onMethodologyClick && (
             <Box
@@ -578,7 +795,10 @@ const TrustSummaryHeader: React.FC<TrustSummaryHeaderProps> = (props) => {
                 outlineOffset: '2px'
               }}
             >
-              How is this calculated?
+              {intl.formatMessage({
+                id: 'consumer.trust.howCalculated',
+                defaultMessage: 'How is this calculated?'
+              })}
             </Box>
           )}
         </HStack>

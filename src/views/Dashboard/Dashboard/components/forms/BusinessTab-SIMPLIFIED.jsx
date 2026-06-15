@@ -81,7 +81,7 @@ const BusinessTab = forwardRef(
         name: initialValues.name || '',
         carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
         carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
-        verification_status: initialValues.verification_status || '',
+        verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
         sustainability_practice: initialValues.sustainability_practice || '',
         trust_impact: initialValues.trust_impact || '',
         transparency_benefit: initialValues.transparency_benefit || '',
@@ -136,7 +136,7 @@ const BusinessTab = forwardRef(
           certification_type: initialValues.certification_type || '',
           carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
           carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
-          verification_status: initialValues.verification_status || '',
+          verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
           sustainability_practice: initialValues.sustainability_practice || '',
           trust_impact: initialValues.trust_impact || '',
           transparency_benefit: initialValues.transparency_benefit || '',
@@ -396,9 +396,10 @@ const BusinessTab = forwardRef(
                                 {/* Sprint 2 Epic 2.2: Additional certifications */}
                                 <option value="global_gap">GlobalG.A.P. Certification</option>
                                 <option value="non_gmo">Non-GMO Project Verified</option>
-                                <option value="certified_naturally_grown">
-                                  Certified Naturally Grown (CNG)
-                                </option>
+                                {/* F13 fix (2026-06): value must be "cng" to match the
+                                    backend CERTIFICATION_TYPE_CHOICES — "certified_naturally_grown"
+                                    is not a valid choice and returned a DRF 400 on submit. */}
+                                <option value="cng">Certified Naturally Grown (CNG)</option>
                                 <option value="food_safety">
                                   Food Safety (Primus GFS, SQF, BRC)
                                 </option>

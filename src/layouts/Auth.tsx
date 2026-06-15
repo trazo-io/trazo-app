@@ -11,7 +11,7 @@ import { useRef } from 'react';
 
 // core components
 import AuthNavbar from 'components/Navbars/AuthNavbar';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Route as RouteType } from 'types/common';
 import theme from 'theme/theme';
 import { ConsentBanner } from '../components/Privacy/ConsentBanner';
@@ -101,7 +101,10 @@ export default function Pages() {
       </Portal>
       <Box w="100%">
         <Box ref={wrapper} w="100%">
-          <Outlet />
+          {/* Suspense boundary for lazy-loaded auth route views (App.tsx lazyWithRetry). */}
+          <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
+            <Outlet />
+          </Suspense>
         </Box>
       </Box>
       {/* Privacy consent banner for GDPR compliance */}

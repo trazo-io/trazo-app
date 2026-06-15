@@ -55,7 +55,8 @@ export const baseApi = createApi({
     'VoiceConfig',
     'Certification',
     'ParcelCropHistory',
-    'OSP'
+    'OSP',
+    'SalesRecords'
   ]
 });
 

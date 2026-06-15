@@ -30,13 +30,21 @@ import {
   FaInstagram
 } from 'react-icons/fa';
 import { BsStarFill, BsStarHalf, BsStar } from 'react-icons/bs';
+import { useIntl } from 'react-intl';
 import { CompanyModal } from './CompanyModal';
+import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 import { FarmModal } from './FarmModal';
 import { ParcelMapInfo } from './ParcelMapInfo';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
 interface CompanyFarmInfoProps {
+  /**
+   * Show the farm's direct phone/email. Only true in the buyer-facing proof view
+   * (?view=proof). On the public story view it stays false so a random shopper does not
+   * get the producer's personal contact details. 2026-06 audit P2-6.
+   */
+  showContactInfo?: boolean;
   companyData?: {
     name?: string;
     description?: string;
@@ -204,8 +212,10 @@ const formatLabel = (value: string | undefined): string => {
 export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
   companyData,
   establishmentData,
-  parcelData
+  parcelData,
+  showContactInfo = false
 }) => {
+  const intl = useIntl();
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
@@ -277,10 +287,17 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                     color={textColor}
                     noOfLines={2}
                   >
-                    {companyData.name || 'Company Name'}
+                    {companyData.name ||
+                      intl.formatMessage({
+                        id: 'consumer.farm.companyName',
+                        defaultMessage: 'Company Name'
+                      })}
                   </Text>
                   <Text fontSize="xs" color={mutedColor}>
-                    Agricultural Producer
+                    {intl.formatMessage({
+                      id: 'consumer.farm.agriculturalProducer',
+                      defaultMessage: 'Agricultural Producer'
+                    })}
                   </Text>
                 </VStack>
               </HStack>
@@ -295,7 +312,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                 flexShrink={0}
                 alignSelf={{ base: 'flex-start', smd: 'center' }}
               >
-                More Info
+                {intl.formatMessage({
+                  id: 'consumer.farm.moreInfo',
+                  defaultMessage: 'More Info'
+                })}
               </Button>
             </Flex>
 
@@ -311,7 +331,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                 <HStack spacing={2}>
                   <Icon as={FaLeaf} color="green.500" boxSize={4} />
                   <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                    Sustainability Commitment
+                    {intl.formatMessage({
+                      id: 'consumer.farm.sustainabilityCommitment',
+                      defaultMessage: 'Sustainability Commitment'
+                    })}
                   </Text>
                 </HStack>
                 <HStack spacing={2} flexWrap="wrap">
@@ -348,13 +371,18 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                   <HStack spacing={2}>
                     <Icon as={FaGlobe} color="green.500" boxSize={4} />
                     <Text fontSize="sm" color="green.500" _hover={{ color: 'green.600' }}>
-                      Visit Website
+                      {intl.formatMessage({
+                        id: 'consumer.farm.visitWebsite',
+                        defaultMessage: 'Visit Website'
+                      })}
                     </Text>
                   </HStack>
                 </Link>
               )}
 
-              {companyData.phone && (
+              {/* Direct contact details are buyer-only (proof view) — not exposed to anonymous
+                  shoppers on the public story view. 2026-06 audit P2-6. */}
+              {showContactInfo && companyData.phone && (
                 <Link href={`tel:${companyData.phone}`} _hover={{ textDecoration: 'none' }}>
                   <HStack spacing={2}>
                     <Icon as={FaPhone} color="green.500" boxSize={4} />
@@ -365,7 +393,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                 </Link>
               )}
 
-              {companyData.email && (
+              {showContactInfo && companyData.email && (
                 <Link href={`mailto:${companyData.email}`} _hover={{ textDecoration: 'none' }}>
                   <HStack spacing={2}>
                     <Icon as={FaEnvelope} color="green.500" boxSize={4} />
@@ -393,7 +421,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                           color="green.500"
                           display={{ base: 'none', md: 'block' }}
                         >
-                          Facebook
+                          {intl.formatMessage({
+                            id: 'consumer.farm.facebook',
+                            defaultMessage: 'Facebook'
+                          })}
                         </Text>
                       </HStack>
                     </Link>
@@ -412,7 +443,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                           color="pink.500"
                           display={{ base: 'none', md: 'block' }}
                         >
-                          Instagram
+                          {intl.formatMessage({
+                            id: 'consumer.farm.instagram',
+                            defaultMessage: 'Instagram'
+                          })}
                         </Text>
                       </HStack>
                     </Link>
@@ -454,10 +488,18 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                     color={textColor}
                     noOfLines={2}
                   >
-                    {establishmentData.name || 'Farm Name'}
+                    {establishmentData.name ||
+                      intl.formatMessage({
+                        id: 'consumer.farm.farmName',
+                        defaultMessage: 'Farm Name'
+                      })}
                   </Text>
                   <Text fontSize="xs" color={mutedColor} noOfLines={1}>
-                    {establishmentData.location || 'Farm Location'}
+                    {establishmentData.location ||
+                      intl.formatMessage({
+                        id: 'consumer.farm.farmLocation',
+                        defaultMessage: 'Farm Location'
+                      })}
                   </Text>
                 </VStack>
               </HStack>
@@ -472,7 +514,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                 fontSize="xs"
                 flexShrink={0}
               >
-                More Info
+                {intl.formatMessage({
+                  id: 'consumer.farm.moreInfo',
+                  defaultMessage: 'More Info'
+                })}
               </Button>
             </Flex>
 
@@ -480,7 +525,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
               {establishmentData.type && (
                 <VStack align="start" spacing={1}>
                   <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                    TYPE
+                    {intl.formatMessage({
+                      id: 'consumer.farm.type',
+                      defaultMessage: 'TYPE'
+                    })}
                   </Text>
                   <Badge colorScheme="green" borderRadius="full" px={3}>
                     {establishmentData.type}
@@ -491,7 +539,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
               {establishmentData.size && (
                 <VStack align="start" spacing={1}>
                   <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                    SIZE
+                    {intl.formatMessage({
+                      id: 'consumer.farm.size',
+                      defaultMessage: 'SIZE'
+                    })}
                   </Text>
                   <Text fontSize="sm" color={textColor}>
                     {establishmentData.size}
@@ -502,7 +553,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
               {establishmentData.establishedYear && (
                 <VStack align="start" spacing={1}>
                   <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                    ESTABLISHED
+                    {intl.formatMessage({
+                      id: 'consumer.farm.established',
+                      defaultMessage: 'ESTABLISHED'
+                    })}
                   </Text>
                   <Text fontSize="sm" color={textColor}>
                     {establishmentData.establishedYear}
@@ -526,7 +580,10 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                   <HStack spacing={2}>
                     <Icon as={FaTractor} color="green.500" boxSize={4} />
                     <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                      Operations & Practices
+                      {intl.formatMessage({
+                        id: 'consumer.farm.operationsPractices',
+                        defaultMessage: 'Operations & Practices'
+                      })}
                     </Text>
                   </HStack>
                   <Stack direction={{ base: 'column', md: 'row' }} spacing={4} flexWrap="wrap">
@@ -548,10 +605,19 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                         return (
                           <VStack align="start" spacing={1}>
                             <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                              WATER ({waterSources.length})
+                              {intl.formatMessage(
+                                {
+                                  id: 'consumer.farm.water',
+                                  defaultMessage: 'WATER ({count})'
+                                },
+                                { count: waterSources.length }
+                              )}
                             </Text>
                             <Text fontSize="xs" color={textColor} noOfLines={1}>
-                              {waterSources.slice(0, 2).join(', ')}
+                              {waterSources
+                                .slice(0, 2)
+                                .map((s: string) => localizeFieldValue(s, intl.locale))
+                                .join(', ')}
                               {waterSources.length > 2 && '...'}
                             </Text>
                           </VStack>
@@ -601,10 +667,19 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                         return (
                           <VStack align="start" spacing={1}>
                             <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                              SOIL HEALTH ({soilHealthPractices.length})
+                              {intl.formatMessage(
+                                {
+                                  id: 'consumer.farm.soilHealth',
+                                  defaultMessage: 'SOIL HEALTH ({count})'
+                                },
+                                { count: soilHealthPractices.length }
+                              )}
                             </Text>
                             <Text fontSize="xs" color={textColor} noOfLines={1}>
-                              {soilHealthPractices.slice(0, 2).join(', ')}
+                              {soilHealthPractices
+                                .slice(0, 2)
+                                .map((s: string) => localizeFieldValue(s, intl.locale))
+                                .join(', ')}
                               {soilHealthPractices.length > 2 && '...'}
                             </Text>
                           </VStack>
@@ -631,10 +706,19 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                         return (
                           <VStack align="start" spacing={1}>
                             <Text fontSize="xs" color={mutedColor} fontWeight="semibold">
-                              IRRIGATION ({irrigationMethods.length})
+                              {intl.formatMessage(
+                                {
+                                  id: 'consumer.farm.irrigationCount',
+                                  defaultMessage: 'IRRIGATION ({count})'
+                                },
+                                { count: irrigationMethods.length }
+                              )}
                             </Text>
                             <Text fontSize="xs" color={textColor} noOfLines={1}>
-                              {irrigationMethods.slice(0, 2).join(', ')}
+                              {irrigationMethods
+                                .slice(0, 2)
+                                .map((s: string) => localizeFieldValue(s, intl.locale))
+                                .join(', ')}
                               {irrigationMethods.length > 2 && '...'}
                             </Text>
                           </VStack>
@@ -664,14 +748,15 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
             city: companyData.city,
             state: companyData.state,
             country: companyData.country,
-            phone: companyData.phone,
-            email: companyData.email,
+            // Contact details are buyer-only (proof view) — see P2-6.
+            phone: showContactInfo ? companyData.phone : undefined,
+            email: showContactInfo ? companyData.email : undefined,
             website: companyData.website,
             facebook: companyData.facebook,
             instagram: companyData.instagram,
             logo: companyData.logo,
             fiscal_id: companyData.fiscal_id,
-            contact_email: companyData.contact_email,
+            contact_email: showContactInfo ? companyData.contact_email : undefined,
             established_year: companyData.established_year,
             employee_count: companyData.employee_count,
             total_establishments: companyData.total_establishments,
@@ -709,11 +794,12 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
             zone: establishmentData.zone,
             latitude: establishmentData.latitude,
             longitude: establishmentData.longitude,
-            contact_person: establishmentData.contact_person,
-            contact_phone: establishmentData.contact_phone,
-            contact_email: establishmentData.contact_email,
-            email: establishmentData.email,
-            phone: establishmentData.phone,
+            // Contact details (incl. the named contact person) are buyer-only — see P2-6.
+            contact_person: showContactInfo ? establishmentData.contact_person : undefined,
+            contact_phone: showContactInfo ? establishmentData.contact_phone : undefined,
+            contact_email: showContactInfo ? establishmentData.contact_email : undefined,
+            email: showContactInfo ? establishmentData.email : undefined,
+            phone: showContactInfo ? establishmentData.phone : undefined,
             zip_code: establishmentData.zip_code,
             facebook: establishmentData.facebook,
             instagram: establishmentData.instagram,
@@ -805,7 +891,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
       )}
 
       {/* Parcel Information with Map */}
-      {parcelData && <ParcelMapInfo parcelData={parcelData} />}
+      {parcelData && <ParcelMapInfo parcelData={parcelData} showContactInfo={showContactInfo} />}
     </VStack>
   );
 };

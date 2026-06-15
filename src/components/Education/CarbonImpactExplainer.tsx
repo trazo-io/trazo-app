@@ -180,6 +180,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             <HStack>
               <Icon as={FaGlobeAmericas} color={accentColor} boxSize={5} />
               <Text
+                as="h2"
                 fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                 fontWeight="bold"
                 color={textColor}
@@ -192,13 +193,18 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             </Text>
           </VStack>
 
-          <VStack align="end" spacing={1}>
+          <VStack align="end" spacing={0}>
             <Text
               fontSize={{ base: 'xl', smd: '2xl', lg: '3xl' }}
               fontWeight="bold"
               color={`${scoreInfo.color}.600`}
             >
               {Math.round(documentationScore)}%
+            </Text>
+            {/* Qualify the % so it cannot read as a 100%-good environmental rating: this is
+                documentation completeness, not an environmental-performance score (FTC 260.3(c)). */}
+            <Text fontSize="xs" color={mutedColor} fontWeight="medium" mb={1}>
+              documented
             </Text>
             <Badge colorScheme={scoreInfo.color} variant="solid">
               {scoreInfo.label}

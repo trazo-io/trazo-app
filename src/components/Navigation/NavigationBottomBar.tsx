@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Box, HStack, VStack, Text, Icon, useColorModeValue, Center } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaLeaf, FaShieldAlt, FaHome, FaComments } from 'react-icons/fa';
+import { useIntl } from 'react-intl';
 
 const MotionBox = motion(Box);
 
 interface NavigationItem {
   id: string;
-  label: string;
+  labelId: string;
+  defaultLabel: string;
   icon: any;
   targetSection: string;
 }
@@ -22,25 +24,29 @@ interface NavigationBottomBarProps {
 const navigationItems: NavigationItem[] = [
   {
     id: 'transparency',
-    label: 'Story',
+    labelId: 'consumer.nav.story',
+    defaultLabel: 'Story',
     icon: FaShieldAlt,
     targetSection: 'transparency-section'
   },
   {
     id: 'carbon',
-    label: 'Impact',
+    labelId: 'consumer.nav.impact',
+    defaultLabel: 'Impact',
     icon: FaLeaf,
     targetSection: 'carbon-section'
   },
   {
     id: 'farm',
-    label: 'Farm',
+    labelId: 'consumer.nav.farm',
+    defaultLabel: 'Farm',
     icon: FaHome,
     targetSection: 'farm-section'
   },
   {
     id: 'reviews',
-    label: 'Reviews',
+    labelId: 'consumer.nav.reviews',
+    defaultLabel: 'Reviews',
     icon: FaComments,
     targetSection: 'reviews-section'
   }
@@ -52,6 +58,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
   onScrollStart,
   onScrollEnd
 }) => {
+  const intl = useIntl();
   const [currentActiveSection, setCurrentActiveSection] = useState(activeSection);
   const [clickedSection, setClickedSection] = useState<string | null>(null);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -135,7 +142,16 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      <HStack as="nav" aria-label="Page sections" spacing={0} justify="space-around" w="full">
+      <HStack
+        as="nav"
+        aria-label={intl.formatMessage({
+          id: 'consumer.nav.pageSections',
+          defaultMessage: 'Page sections'
+        })}
+        spacing={0}
+        justify="space-around"
+        w="full"
+      >
         {navigationItems.map((item) => {
           // Show as active if clicked (immediate feedback) OR if it's the current active section
           const isActive = clickedSection === item.id || currentActiveSection === item.id;
@@ -187,7 +203,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
                   lineHeight="1"
                   noOfLines={1}
                 >
-                  {item.label}
+                  {intl.formatMessage({ id: item.labelId, defaultMessage: item.defaultLabel })}
                 </Text>
 
                 {/* Active indicator dot */}

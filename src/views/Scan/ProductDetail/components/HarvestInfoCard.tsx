@@ -21,6 +21,7 @@ import {
 import { useIntl } from 'react-intl';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
+import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 // Consumer-readable batch quantity — see utils/consumerDisplay.ts
 import { formatHarvestQuantity } from 'utils/consumerDisplay';
 
@@ -96,7 +97,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
             <Icon as={FaBoxes} color="green.500" boxSize={5} />
           </Flex>
           <VStack align="start" spacing={0}>
-            <Text fontWeight="bold" color={textColor} fontSize="md">
+            <Text as="h2" fontWeight="bold" color={textColor} fontSize="md">
               {intl.formatMessage({ id: 'app.batchDetails' })}
             </Text>
             <Text fontSize="xs" color={mutedColor}>
@@ -121,7 +122,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
                 fontSize="md"
                 color={useColorModeValue('green.700', 'green.200')}
               >
-                {harvestDetails.production_method}
+                {localizeFieldValue(harvestDetails.production_method || '', intl.locale)}
               </Text>
             </HStack>
           </Box>
@@ -185,7 +186,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
             >
               <Icon as={FaClipboardCheck} color="green.500" boxSize={4} mb={1} />
               <Text fontSize="sm" fontWeight="bold" color="green.600">
-                {humanize(harvestDetails.quality_grade || '')}
+                {localizeFieldValue(humanize(harvestDetails.quality_grade || ''), intl.locale)}
               </Text>
               <Text fontSize="xs" color={mutedColor} textTransform="uppercase">
                 {intl.formatMessage({ id: 'app.quality' })}
@@ -203,7 +204,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
             >
               <Icon as={FaTractor} color="green.500" boxSize={4} mb={1} />
               <Text fontSize="xs" fontWeight="medium" color={textColor}>
-                {humanize(harvestDetails.harvest_method || '')}
+                {localizeFieldValue(humanize(harvestDetails.harvest_method || ''), intl.locale)}
               </Text>
               <Text fontSize="xs" color={mutedColor} textTransform="uppercase">
                 {intl.formatMessage({ id: 'app.harvestMethod' })}

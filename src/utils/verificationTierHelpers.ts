@@ -271,23 +271,6 @@ export function getVerificationProgressionMessage(
 }
 
 /**
- * Map verification_level to gallery strength format for PhotoVerificationGallery
- * Enables consistency between event-level and category-level displays
- */
-export function mapVerificationLevelToGalleryStrength(
-  level: VerificationLevel | undefined
-): string {
-  const strengthMap: Record<VerificationLevel, string> = {
-    self_reported: 'minimal',
-    photo_documented: 'basic',
-    photo_verified: 'moderate',
-    data_verified: 'strong',
-    certified: 'strong'
-  };
-  return strengthMap[level || 'self_reported'];
-}
-
-/**
  * Get event-type-specific photo recommendations
  * Helps farmers understand exactly what photos to upload for their event
  */

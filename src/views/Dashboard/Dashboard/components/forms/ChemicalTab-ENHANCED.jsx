@@ -15,8 +15,13 @@ import {
   Switch,
   SimpleGrid,
   Input,
-  Divider
+  Divider,
+  Wrap,
+  WrapItem,
+  Button
 } from '@chakra-ui/react';
+import { useParams } from 'react-router-dom';
+import { useGetRecentInputsQuery } from 'store/api/historyApi';
 import {
   StandardCard,
   StandardButton,
@@ -108,6 +113,11 @@ const formSchemaMainInfo = object({
   observation: string().optional(),
   // EPA Worker Protection Standard (WPS) Compliance Fields - 40 CFR 170.309
   applicator_name: string().optional(),
+  // F21 — GG authorizer (FV-GFS 32.02.01 #10) + FSMA supervisor review (112.161(b))
+  authorizer_name: string().optional(),
+  reviewed: string().optional(), // 'true' / 'false' string for the Switch
+  reviewer_name: string().optional(),
+  review_date: string().optional(),
   epa_registration_number: string().optional(),
   restricted_use_pesticide: string().optional(), // 'true' or 'false' as string for form handling
   applicator_certification: string().optional(), // Required when restricted_use_pesticide is true
@@ -142,6 +152,20 @@ const formSchemaMainInfo = object({
   ca_dpr_permit_number: string().optional(),
   ca_dpr_permit_county: string().optional(),
   ca_dpr_permit_expires: string().optional(),
+  // F20 — legal spray-record completeness (GLOBALG.A.P. FV-GFS 32.02.01 + CA PUR DPR-PML-017C)
+  manufacturer: string().optional(),
+  application_start: string().optional(),
+  application_end: string().optional(),
+  planted_area: string().optional(),
+  planted_area_unit: string().optional(),
+  operator_id: string().optional(),
+  site_id: string().optional(),
+  application_county: string().optional(),
+  mtrs_section: string().optional(),
+  mtrs_township: string().optional(),
+  mtrs_range: string().optional(),
+  mtrs_base_meridian: string().optional(),
+  ffm_code: string().optional(),
   // Phase 3: Application fuel tracking for equipment fuel emissions
   application_fuel_type: string().optional(),
   application_fuel_consumed: string()
@@ -292,6 +316,12 @@ const ChemicalTab = forwardRef(
         observation: initialValues.observation || '',
         // EPA WPS Compliance Fields
         applicator_name: initialValues.applicator_name || '',
+        // F21 — authorizer (GG) + supervisor review (FSMA)
+        authorizer_name: initialValues.authorizer_name || '',
+        reviewed:
+          initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
+        reviewer_name: initialValues.reviewer_name || '',
+        review_date: initialValues.review_date || '',
         epa_registration_number: initialValues.epa_registration_number || '',
         restricted_use_pesticide: initialValues.restricted_use_pesticide?.toString() || 'false',
         applicator_certification: initialValues.applicator_certification || '',
@@ -309,6 +339,20 @@ const ChemicalTab = forwardRef(
         ca_dpr_permit_number: initialValues.ca_dpr_permit_number || '',
         ca_dpr_permit_county: initialValues.ca_dpr_permit_county || '',
         ca_dpr_permit_expires: initialValues.ca_dpr_permit_expires || '',
+        // F20 — legal spray-record completeness
+        manufacturer: initialValues.manufacturer || '',
+        application_start: (initialValues.application_start || '').slice(0, 16),
+        application_end: (initialValues.application_end || '').slice(0, 16),
+        planted_area: initialValues.planted_area?.toString() || '',
+        planted_area_unit: initialValues.planted_area_unit || 'acres',
+        operator_id: initialValues.operator_id || '',
+        site_id: initialValues.site_id || '',
+        application_county: initialValues.application_county || '',
+        mtrs_section: initialValues.mtrs_section || '',
+        mtrs_township: initialValues.mtrs_township || '',
+        mtrs_range: initialValues.mtrs_range || '',
+        mtrs_base_meridian: initialValues.mtrs_base_meridian || '',
+        ffm_code: initialValues.ffm_code || '',
         // Phase 3: Application fuel tracking
         application_fuel_type: initialValues.application_fuel_type || '',
         application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
@@ -337,6 +381,36 @@ const ChemicalTab = forwardRef(
         growth_stage: initialValues.growth_stage || ''
       }
     });
+
+    // Quick-pick: recently used chemical inputs on this establishment (route :farmId)
+    // Clicking a chip prefills product identity fields; the farmer can still edit everything.
+    const { farmId } = useParams();
+    const { data: recentInputs } = useGetRecentInputsQuery(
+      { establishmentId: farmId },
+      { skip: !farmId }
+    );
+
+    const ORGANIC_APPROVED_VALUES = ['omri_listed', 'usda_nop_approved'];
+    const RECENT_INPUT_PREFILL_FIELDS = [
+      'commercial_name',
+      'active_ingredient',
+      'concentration',
+      'organic_approved',
+      'epa_registration_number',
+      'application_method'
+    ];
+
+    const handleRecentInputPick = (product) => {
+      // Only set the chemical type when the farmer hasn't chosen one yet
+      if (!methods.getValues('type') && ['FE', 'PE', 'FU', 'HE'].includes(product.type)) {
+        methods.setValue('type', product.type, { shouldDirty: true });
+      }
+      RECENT_INPUT_PREFILL_FIELDS.forEach((field) => {
+        if (product[field] !== null && product[field] !== undefined && product[field] !== '') {
+          methods.setValue(field, String(product[field]), { shouldDirty: true });
+        }
+      });
+    };
 
     // Ref to always hold the latest submit handler, avoiding stale closures in useImperativeHandle
     const submitHandlerRef = useRef(null);
@@ -484,6 +558,12 @@ const ChemicalTab = forwardRef(
           observation: initialValues.observation || '',
           // EPA WPS Compliance Fields
           applicator_name: initialValues.applicator_name || '',
+          // F21 — authorizer (GG) + supervisor review (FSMA)
+          authorizer_name: initialValues.authorizer_name || '',
+          reviewed:
+            initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
+          reviewer_name: initialValues.reviewer_name || '',
+          review_date: initialValues.review_date || '',
           epa_registration_number: initialValues.epa_registration_number || '',
           restricted_use_pesticide: initialValues.restricted_use_pesticide?.toString() || 'false',
           applicator_certification: initialValues.applicator_certification || '',
@@ -503,6 +583,20 @@ const ChemicalTab = forwardRef(
           ca_dpr_permit_number: initialValues.ca_dpr_permit_number || '',
           ca_dpr_permit_county: initialValues.ca_dpr_permit_county || '',
           ca_dpr_permit_expires: initialValues.ca_dpr_permit_expires || '',
+          // F20 — legal spray-record completeness
+          manufacturer: initialValues.manufacturer || '',
+          application_start: (initialValues.application_start || '').slice(0, 16),
+          application_end: (initialValues.application_end || '').slice(0, 16),
+          planted_area: initialValues.planted_area?.toString() || '',
+          planted_area_unit: initialValues.planted_area_unit || 'acres',
+          operator_id: initialValues.operator_id || '',
+          site_id: initialValues.site_id || '',
+          application_county: initialValues.application_county || '',
+          mtrs_section: initialValues.mtrs_section || '',
+          mtrs_township: initialValues.mtrs_township || '',
+          mtrs_range: initialValues.mtrs_range || '',
+          mtrs_base_meridian: initialValues.mtrs_base_meridian || '',
+          ffm_code: initialValues.ffm_code || '',
           // Phase 3: Application fuel tracking
           application_fuel_type: initialValues.application_fuel_type || '',
           application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
@@ -749,6 +843,15 @@ const ChemicalTab = forwardRef(
 
       const processedData = {
         ...filteredData,
+        // F20 — legal spray-record fields flow via ...filteredData as top-level model
+        // fields. Coerce the two datetimes to null when blank: a DRF DateTimeField
+        // rejects "" with a 400 (it must be null or a valid timestamp).
+        application_start: data.application_start || null,
+        application_end: data.application_end || null,
+        // F21 — supervisor review: coerce the Switch's 'true'/'false' string to a real
+        // bool and blank review_date to null (DRF DateField rejects "").
+        reviewed: data.reviewed === 'true' || data.reviewed === true,
+        review_date: data.review_date || null,
         // SPRINT 6 FIX (2025-12-24): Explicitly set fields to undefined that are now in extra_data
         // This prevents stale top-level values from eventFormData being preserved during merge
         // When onSubmitMainInfo does {...eventFormData, ...data}, undefined values will be filtered by cleanEventData
@@ -836,8 +939,13 @@ const ChemicalTab = forwardRef(
             fuel_consumption_total: data.fuel_consumption_total
               ? parseFloat(data.fuel_consumption_total)
               : null,
-            fuel_unit: data.application_fuel_unit || 'gal',
-            fuel_type: data.application_fuel_type || 'diesel'
+            // F28 fix (2026-06): don't inject phantom diesel/gal fuel metadata when
+            // no fuel was reported for the summary period. Only assert unit/type when
+            // the farmer provided a fuel amount or explicitly picked a fuel type.
+            ...((data.fuel_consumption_total || data.application_fuel_type) && {
+              fuel_unit: data.application_fuel_unit || 'gal',
+              fuel_type: data.application_fuel_type || 'diesel'
+            })
           })
         }
       };
@@ -867,7 +975,7 @@ const ChemicalTab = forwardRef(
               <HStack spacing={2} mb={2}>
                 <Icon as={FaShieldAlt} color="blue.500" />
                 <Text fontSize="sm" fontWeight="bold">
-                  EPA-Verified Carbon Calculations
+                  EPA/USDA-Sourced Carbon Calculations
                 </Text>
               </HStack>
               <Text fontSize="sm">
@@ -876,6 +984,46 @@ const ChemicalTab = forwardRef(
                 agricultural practices.
               </Text>
             </StandardAlert>
+
+            {/* Quick-pick: products recently used on this establishment */}
+            {recentInputs && recentInputs.length > 0 && (
+              <Box>
+                <HStack spacing={2} mb={2} flexWrap="wrap">
+                  <Icon as={FaFlask} color="green.500" boxSize={3.5} />
+                  <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                    {intl.formatMessage({ id: 'chemical.recentInputs.title' })}
+                  </Text>
+                  <Text fontSize="xs" color="gray.500">
+                    {intl.formatMessage({ id: 'chemical.recentInputs.helper' })}
+                  </Text>
+                </HStack>
+                <Wrap spacing={2}>
+                  {recentInputs.slice(0, 6).map((product, index) => (
+                    <WrapItem key={`${product.commercial_name}-${index}`}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        colorScheme="green"
+                        borderRadius="full"
+                        minH="36px"
+                        onClick={() => handleRecentInputPick(product)}
+                      >
+                        <HStack spacing={1.5}>
+                          <Text fontSize="xs" fontWeight="medium" noOfLines={1} maxW="160px">
+                            {product.commercial_name}
+                          </Text>
+                          {ORGANIC_APPROVED_VALUES.includes(product.organic_approved) && (
+                            <Badge colorScheme="green" fontSize="11px" borderRadius="full" px={1.5}>
+                              {intl.formatMessage({ id: 'chemical.recentInputs.organicBadge' })}
+                            </Badge>
+                          )}
+                        </HStack>
+                      </Button>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
+            )}
 
             {USE_FIELD_REGISTRY ? (
               <RegistryFormSections
@@ -893,7 +1041,7 @@ const ChemicalTab = forwardRef(
                     icon={FaFlask}
                     iconColor="purple.500"
                     title="Chemical Application Details"
-                    badge="EPA Verified"
+                    badge="EPA/USDA-Sourced"
                     badgeColorScheme="purple"
                   />
                   <VStack spacing={4} align="stretch">
@@ -1377,9 +1525,7 @@ const ChemicalTab = forwardRef(
                             Aggregate fertilizer carbon = (N × 10.5) + (P × 1.19) + (K × 0.65) +
                             fuel emissions
                             <br />
-                            <strong>
-                              IPCC 2006 & EPA 40 CFR Part 98 verified emission factors
-                            </strong>
+                            <strong>IPCC 2006 & EPA 40 CFR Part 98 emission factors</strong>
                           </Text>
                         </Box>
                       </Box>
@@ -2297,6 +2443,21 @@ const ChemicalTab = forwardRef(
                                 </option>
                               </>
                             )}
+
+                            {/* F20 (2026-06): orchard / CA DPR method categories shared by all
+                                spray chemicals (PE/HE/FU). Air-blast is the orchard standard;
+                                aerial/fumigation map to DPR-PML-017C box 21 "Air"/"Fume". */}
+                            {['PE', 'HE', 'FU'].includes(chemicalType) && (
+                              <>
+                                <option value="air_blast">
+                                  💨 Air-Blast - Orchard/vineyard sprayer
+                                </option>
+                                <option value="aerial">🚁 Aerial - Plane / drone</option>
+                                <option value="fumigation">
+                                  ☣️ Fumigation - Requires field fumigation method (FFM) code
+                                </option>
+                              </>
+                            )}
                           </StandardSelect>
                         )}
                       />
@@ -2530,6 +2691,203 @@ const ChemicalTab = forwardRef(
                   </SectionBox>
                 )}
 
+                {/* F20 (2026-06): Legal Spray Record — lets one Trazo event double as a
+                    GLOBALG.A.P. IFA v6 FV-GFS 32.02.01 PPP record AND a CA Pesticide Use
+                    Report (DPR-PML-017C). Manufacturer + start/end + planted-area are
+                    universal; the CA PUR block is clearly California-only. */}
+                {!isSummaryMode && (
+                  <SectionBox variant="default">
+                    <SectionHeader
+                      icon={FaClock}
+                      iconColor="purple.600"
+                      title="Legal Spray Record"
+                      badge="GLOBALG.A.P. / CA PUR"
+                      badgeColorScheme="purple"
+                      description="Optional fields that make this entry a complete legal pesticide-use record — GLOBALG.A.P. FV-GFS 32.02.01 and the CA monthly Pesticide Use Report (DPR-PML-017C)."
+                    />
+                    <VStack spacing={4} align="stretch">
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        <StandardField
+                          label="Manufacturer / Registrant"
+                          helpText="GLOBALG.A.P. FV-GFS 32.02.01 + DPR box 28 (commercial name holds the brand)"
+                        >
+                          <Controller
+                            name="manufacturer"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardInput
+                                {...field}
+                                placeholder="e.g., Corteva, Bayer, Valent"
+                              />
+                            )}
+                          />
+                        </StandardField>
+                        <StandardField
+                          label="Total Planted Area"
+                          helpText="DPR box 9 — total planted acres/units at the site (distinct from area treated)"
+                        >
+                          <HStack spacing={2}>
+                            <Controller
+                              name="planted_area"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  flex={2}
+                                />
+                              )}
+                            />
+                            <Controller
+                              name="planted_area_unit"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardSelect {...field} flex={1}>
+                                  <option value="acres">Acres</option>
+                                  <option value="ha">Hectares</option>
+                                  <option value="sq_ft">Sq ft</option>
+                                  <option value="units">Units</option>
+                                </StandardSelect>
+                              )}
+                            />
+                          </HStack>
+                        </StandardField>
+                        <StandardField
+                          label="Application Start"
+                          helpText="3 CCR 6624(c)(2) / DPR box 17 — start date & time"
+                        >
+                          <Controller
+                            name="application_start"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardInput {...field} type="datetime-local" />
+                            )}
+                          />
+                        </StandardField>
+                        <StandardField
+                          label="Application End"
+                          helpText="3 CCR 6624(c)(2) / DPR box 18 — completion date & time"
+                        >
+                          <Controller
+                            name="application_end"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardInput {...field} type="datetime-local" />
+                            )}
+                          />
+                        </StandardField>
+                      </SimpleGrid>
+
+                      {/* CA Pesticide Use Report identity — California only */}
+                      <Box
+                        p={3}
+                        bg="gray.50"
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor="gray.200"
+                      >
+                        <HStack mb={2}>
+                          <Icon as={FaFileInvoiceDollar} color="gray.600" />
+                          <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                            California Pesticide Use Report (PUR) — California only
+                          </Text>
+                        </HStack>
+                        <Text fontSize="xs" color="gray.600" mb={3}>
+                          County-issued identifiers from your Operator ID / permit and field maps.
+                          Required to generate the monthly PUR (DPR-PML-017C). Leave blank if
+                          outside California.
+                        </Text>
+                        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                          <StandardField label="Operator ID / Permit No." helpText="DPR box 3">
+                            <Controller
+                              name="operator_id"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} placeholder="e.g., 37-1234" />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField label="Site ID" helpText="DPR box 8 (1-8 chars)">
+                            <Controller
+                              name="site_id"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} placeholder="e.g., 0001" />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField label="County" helpText="DPR box 10">
+                            <Controller
+                              name="application_county"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} placeholder="e.g., Fresno" />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField label="Section" helpText="DPR box 11 (MTRS)">
+                            <Controller
+                              name="mtrs_section"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} placeholder="e.g., 12" />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField label="Township" helpText="DPR box 12 (N/S)">
+                            <Controller
+                              name="mtrs_township"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} placeholder="e.g., 14S" />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField label="Range" helpText="DPR box 13 (E/W)">
+                            <Controller
+                              name="mtrs_range"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} placeholder="e.g., 22E" />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField label="Base & Meridian" helpText="DPR box 14 (H/M/S)">
+                            <Controller
+                              name="mtrs_base_meridian"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardSelect {...field} placeholder="Select...">
+                                  <option value="">Select...</option>
+                                  <option value="H">H — Humboldt</option>
+                                  <option value="M">M — Mount Diablo</option>
+                                  <option value="S">S — San Bernardino</option>
+                                </StandardSelect>
+                              )}
+                            />
+                          </StandardField>
+                          {watch('application_method') === 'fumigation' && (
+                            <StandardField
+                              label="Field Fumigation Method (FFM) Code"
+                              helpText="DPR box 21 / 3 CCR 6624(c)(8) — required for fumigation"
+                            >
+                              <Controller
+                                name="ffm_code"
+                                control={methods.control}
+                                render={({ field }) => (
+                                  <StandardInput {...field} placeholder="4-digit FFM code" />
+                                )}
+                              />
+                            </StandardField>
+                          )}
+                        </SimpleGrid>
+                      </Box>
+                    </VStack>
+                  </SectionBox>
+                )}
+
                 {/* Section 3.6: CA DPR Restricted Materials Permit (P0-3) */}
                 {/* Shown whenever commercial_name matches a CA county-restricted keyword.
                     Drift detector gates the actual CA-only finding server-side. */}
@@ -2570,10 +2928,7 @@ const ChemicalTab = forwardRef(
                                 name="ca_dpr_permit_number"
                                 control={methods.control}
                                 render={({ field }) => (
-                                  <StandardInput
-                                    {...field}
-                                    placeholder="e.g., SD-2026-00147"
-                                  />
+                                  <StandardInput {...field} placeholder="e.g., SD-2026-00147" />
                                 )}
                               />
                             </StandardField>
@@ -2792,7 +3147,71 @@ const ChemicalTab = forwardRef(
                             )}
                           />
                         </StandardField>
+
+                        {/* F21 — GG FV-GFS 32.02.01 #10: technically-responsible authorizer */}
+                        <StandardField
+                          label="Authorized By"
+                          helpText="Technically-responsible person who authorized this application (GLOBALG.A.P.) — often the grower or PCA"
+                        >
+                          <Controller
+                            name="authorizer_name"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardInput {...field} placeholder="e.g., J. Smith, PCA #12345" />
+                            )}
+                          />
+                        </StandardField>
                       </SimpleGrid>
+
+                      {/* F21 — FSMA PSR § 112.161(b) supervisor review / sign-off */}
+                      <Box
+                        mt={4}
+                        p={3}
+                        bg="gray.50"
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor="gray.200"
+                      >
+                        <HStack justify="space-between" mb={3}>
+                          <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                            Supervisor Review (FSMA § 112.161(b))
+                          </Text>
+                          <Controller
+                            name="reviewed"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <Switch
+                                isChecked={field.value === 'true'}
+                                onChange={(e) =>
+                                  field.onChange(e.target.checked ? 'true' : 'false')
+                                }
+                                colorScheme="green"
+                              />
+                            )}
+                          />
+                        </HStack>
+                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                          <StandardField
+                            label="Reviewed By"
+                            helpText="Supervisor who reviewed this record"
+                          >
+                            <Controller
+                              name="reviewer_name"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput {...field} placeholder="Reviewer name" />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField label="Review Date">
+                            <Controller
+                              name="review_date"
+                              control={methods.control}
+                              render={({ field }) => <StandardInput {...field} type="date" />}
+                            />
+                          </StandardField>
+                        </SimpleGrid>
+                      </Box>
 
                       {/* Restricted Use Pesticide - Clean toggle design */}
                       <StandardField

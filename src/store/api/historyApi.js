@@ -255,6 +255,46 @@ export const historyApi = baseApi.injectEndpoints({
         body: { claim_tokens }
       }),
       invalidatesTags: (result) => (result?.claimed > 0 ? ['History'] : [])
+    }),
+    // Recent chemical inputs for quick-pick prefill (distinct products, most recent first)
+    getRecentInputs: build.query({
+      query: ({ establishmentId }) => ({
+        url: `histories/recent-inputs/?establishment_id=${establishmentId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (result) => (result ? ['Event'] : [])
+    }),
+    // Sales records per production lot (SOE traceback) — owner-gated, never public
+    getSalesRecords: build.query({
+      query: ({ productionId }) => ({
+        url: `sales_records/?production_id=${productionId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (result, error, { productionId }) => [
+        { type: 'SalesRecords', id: productionId }
+      ]
+    }),
+    createSalesRecord: build.mutation({
+      query: (salesRecord) => ({
+        url: 'sales_records/',
+        method: 'POST',
+        credentials: 'include',
+        body: salesRecord
+      }),
+      invalidatesTags: (result, error, { production_id }) =>
+        result ? [{ type: 'SalesRecords', id: production_id }] : []
+    }),
+    deleteSalesRecord: build.mutation({
+      query: ({ recordId }) => ({
+        url: `sales_records/${recordId}/`,
+        method: 'DELETE',
+        credentials: 'include'
+      }),
+      invalidatesTags: (result, error, { productionId }) => [
+        { type: 'SalesRecords', id: productionId }
+      ]
     })
   }),
   overrideExisting: false
@@ -280,7 +320,11 @@ export const {
   useGetProductionsByFarmQuery,
   useGetFarmScansPaginatedQuery,
   useCreateScanMutation,
-  useClaimScansMutation
+  useClaimScansMutation,
+  useGetRecentInputsQuery,
+  useGetSalesRecordsQuery,
+  useCreateSalesRecordMutation,
+  useDeleteSalesRecordMutation
 } = historyApi;
 
 // Backward-compat aliases for renamed hooks
