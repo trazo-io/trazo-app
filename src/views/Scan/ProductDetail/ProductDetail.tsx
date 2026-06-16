@@ -398,8 +398,15 @@ function ProductDetail() {
     const farmName: string | undefined = data?.farmer?.name;
     const practicesCount: number = data?.timeline?.length ?? 0;
     // Same hero-photo resolution as the CarbonHeroSection render below.
+    // `images` is a string[] of S3 URLs (the gallery's source). images[0] is the
+    // explicit cover (cover_image_url) when set, else the first auto-collected photo;
+    // tolerate the legacy object shape ({image}) too. Falls back to the first
+    // timeline event photo when the production has no top-level images.
+    const firstImg: unknown = data?.images?.[0];
+    const firstGalleryPhoto: string | undefined =
+      typeof firstImg === 'string' ? firstImg : (firstImg as any)?.image;
     const heroImage: string | undefined =
-      data?.images?.[0]?.image ||
+      firstGalleryPhoto ||
       data?.timeline?.find((ev: any) => ev?.album?.images?.[0]?.image)?.album?.images?.[0]?.image;
     const lot: string | undefined = data?.harvestDetails?.lot_number;
     const reviews = data?.reviews;
@@ -757,10 +764,16 @@ function ProductDetail() {
           const harvestDate =
             (completeData as any)?.farm_context?.production_period?.end ||
             (completeData as any)?.finish_date;
-          // First production photo (S3 URL) — hero background. Falls back
-          // to score-tinted gradient inside CarbonHeroSection when absent.
+          // First production photo (S3 URL) — hero background. `images` is a
+          // string[]; images[0] is the explicit cover (cover_image_url) when set,
+          // else the first auto-collected photo. Tolerate the legacy {image}
+          // shape, then fall back to the first timeline event photo, then to the
+          // score-tinted gradient inside CarbonHeroSection when none exist.
+          const firstImg: unknown = (completeData as any)?.images?.[0];
+          const firstGalleryPhoto =
+            typeof firstImg === 'string' ? firstImg : (firstImg as any)?.image;
           const heroPhotoUrl =
-            (completeData as any)?.images?.[0]?.image ||
+            firstGalleryPhoto ||
             (completeData as any)?.timeline?.find((ev: any) => ev?.album?.images?.[0]?.image)?.album
               ?.images?.[0]?.image;
           const blockchainScore = getBlockchainScore();

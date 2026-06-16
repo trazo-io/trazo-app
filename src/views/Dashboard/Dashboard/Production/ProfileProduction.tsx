@@ -47,7 +47,8 @@ import { useIntl } from 'react-intl';
 
 import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 'components/Design/StandardComponents';
 import { StandardImageGallery } from 'components/ImageGallery';
-import { useGetPublicHistoryQuery } from 'store/api/historyApi';
+import { useGetPublicHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
+import { TrazoImageUpload } from 'components/Upload';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import { useGetCompleteSummaryQuery } from 'store/api/carbonApi';
 import { config } from 'config/environment';
@@ -178,6 +179,7 @@ function ProfileProduction() {
   const { canWrite } = useUserRole();
   const { farmId, productionId, parcelId } = useParams();
   const [establishment, setEstablishment] = useState<any>(null);
+  const [updateProduction, { isLoading: isSavingCover }] = useUpdateProductionMutation();
   const {
     isOpen: isQuickAddOpen,
     onOpen: onQuickAddOpen,
@@ -217,6 +219,51 @@ function ProfileProduction() {
     skip: !productionId,
     refetchOnMountOrArgChange: true
   });
+
+  // Consumer QR hero/cover photo. Persists History.cover_image_url, which the
+  // public serializer surfaces first in `images` (-> the hero background + lead
+  // gallery photo). PATCH resolves the production by public_id (HistoryViewSet
+  // .get_object accepts the UUID). Pass null to clear and fall back to auto-pick.
+  const persistCover = async (
+    coverUrl: string | null,
+    successMessage: string
+  ) => {
+    const historyId = historyData?.public_id || productionId;
+    if (!historyId) return;
+    try {
+      await updateProduction({ historyId, cover_image_url: coverUrl }).unwrap();
+      toast({ title: successMessage, status: 'success', duration: 3000, isClosable: true });
+    } catch (error) {
+      toast({
+        title: intl.formatMessage({ id: 'app.errorUpdating', defaultMessage: 'Update failed' }),
+        description: intl.formatMessage({
+          id: 'production.cover.error',
+          defaultMessage: 'Could not update the cover photo. Please try again.'
+        }),
+        status: 'error',
+        duration: 4000,
+        isClosable: true
+      });
+    }
+  };
+
+  const handleSetCover = (urls: string[]) => {
+    const url = urls?.[0];
+    if (!url) return;
+    persistCover(
+      url,
+      intl.formatMessage({ id: 'production.cover.updated', defaultMessage: 'Cover photo updated' })
+    );
+  };
+
+  const handleClearCover = () =>
+    persistCover(
+      null,
+      intl.formatMessage({
+        id: 'production.cover.cleared',
+        defaultMessage: 'Cover cleared — using the first photo automatically'
+      })
+    );
 
   // Backend type code to numeric event type mapping
   const mapBackendTypeToEventType = (backendType: string | number | undefined): number => {
@@ -728,6 +775,90 @@ function ProfileProduction() {
               showEmptyState={false}
               maxDisplayImages={4}
             />
+          </StandardCard>
+        )}
+
+        {/* Cover Photo Section (consumer QR hero) — write access only */}
+        {canWrite && (
+          <StandardCard
+            title={intl.formatMessage({ id: 'production.cover.title', defaultMessage: 'Cover Photo' })}
+            variant="elevated"
+            padding={{ base: 3, md: 4 }}
+          >
+            <VStack align="stretch" spacing={4}>
+              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
+                {intl.formatMessage({
+                  id: 'production.cover.help',
+                  defaultMessage:
+                    'Shown as the hero image at the top of the public QR page. Upload a photo to set it; leave it empty to auto-pick the first timeline photo.'
+                })}
+              </Text>
+
+              <HStack spacing={4} align="start" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+                {/* Current cover preview */}
+                <Box flexShrink={0}>
+                  <Text fontSize="xs" color="gray.500" mb={1}>
+                    {intl.formatMessage({ id: 'production.cover.current', defaultMessage: 'Current cover' })}
+                  </Text>
+                  {historyData?.cover_image_url ? (
+                    <Image
+                      src={historyData.cover_image_url}
+                      alt={intl.formatMessage({ id: 'production.cover.title', defaultMessage: 'Cover Photo' })}
+                      borderRadius="lg"
+                      objectFit="cover"
+                      boxSize={{ base: '120px', md: '140px' }}
+                      border="1px solid"
+                      borderColor="gray.200"
+                    />
+                  ) : (
+                    <Box
+                      boxSize={{ base: '120px', md: '140px' }}
+                      borderRadius="lg"
+                      border="1px dashed"
+                      borderColor="gray.300"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      bg="gray.50"
+                    >
+                      <Text fontSize="xs" color="gray.400" textAlign="center" px={2}>
+                        {intl.formatMessage({
+                          id: 'production.cover.auto',
+                          defaultMessage: 'Auto (first photo)'
+                        })}
+                      </Text>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Uploader — emits a permanent S3 URL, persisted as the cover */}
+                <Box flex={1} minW={{ base: '100%', md: '240px' }}>
+                  <TrazoImageUpload
+                    maxFiles={1}
+                    maxSize={5 * 1024 * 1024}
+                    existingImages={[]}
+                    onImagesChange={handleSetCover}
+                    isLoading={isSavingCover}
+                  />
+                </Box>
+              </HStack>
+
+              {historyData?.cover_image_url && (
+                <HStack>
+                  <StandardButton
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearCover}
+                    isLoading={isSavingCover}
+                  >
+                    {intl.formatMessage({
+                      id: 'production.cover.reset',
+                      defaultMessage: 'Reset to auto-pick'
+                    })}
+                  </StandardButton>
+                </HStack>
+              )}
+            </VStack>
           </StandardCard>
         )}
 
