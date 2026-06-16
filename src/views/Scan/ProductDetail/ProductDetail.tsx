@@ -1743,7 +1743,7 @@ function ProductDetail() {
           <Divider borderColor="gray.200" />
 
           {/* Farm Section — intro + company info */}
-          <Box id="farm-section">
+          <Box id="farm-section" w="100%">
             <VStack spacing={6} align="stretch">
               {/* Producer Information Transition Section */}
               <Box
@@ -1955,8 +1955,8 @@ function ProductDetail() {
           <Divider borderColor="gray.200" />
 
           {/* Consumer Feedback Section */}
-          <Box id="reviews-section">
-            <VStack spacing={8}>
+          <Box id="reviews-section" w="100%">
+            <VStack spacing={8} align="stretch">
               <QuickFeedback
                 productionId={productionId || ''}
                 reviewsCount={(completeData as any)?.reviews?.count ?? 0}
