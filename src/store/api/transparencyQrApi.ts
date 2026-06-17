@@ -128,21 +128,6 @@ export interface TransparencyResponse {
   response_timestamp: string;
 }
 
-// Lightweight mobile summary for ultra-fast loading
-export interface TransparencySummary {
-  farm_name: string;
-  product_name: string;
-  transparency: {
-    percentage: number;
-    message: string;
-    level: 'excellent' | 'good' | 'basic';
-  };
-  carbon: {
-    kg_per_kg: number;
-  };
-  scan_timestamp: string;
-}
-
 // Consumer education content
 export interface TransparencyExplanation {
   title: string;
@@ -198,15 +183,6 @@ export interface BlockchainIntegrityResponse {
 // NEW Transparency-First QR API
 const transparencyQrApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    // Ultra-fast mobile summary (< 1 second target)
-    getTransparencySummary: build.query<TransparencySummary, string>({
-      query: (productionId) => ({
-        url: `/transparency/${productionId}/summary/`,
-        method: 'GET'
-      }),
-      providesTags: (result, error, id) => [{ type: 'TransparencySummary', id }]
-    }),
-
     // Complete transparency data with progressive loading structure
     getTransparencyDetails: build.query<TransparencyResponse, string>({
       query: (productionId) => ({
@@ -243,10 +219,7 @@ const transparencyQrApi = baseApi.injectEndpoints({
           scan_type: 'transparency_qr' // Track as transparency-focused scan
         }
       }),
-      invalidatesTags: (result, error, { production_id }) => [
-        { type: 'TransparencySummary', id: production_id },
-        { type: 'TransparencyDetails', id: production_id }
-      ]
+      invalidatesTags: (result, error, { production_id }) => [{ type: 'TransparencyDetails', id: production_id }]
     }),
 
     // Buyer/retailer supplier documentation request (public, no auth)
@@ -262,7 +235,6 @@ const transparencyQrApi = baseApi.injectEndpoints({
 
 // Export hooks following Trazo conventions
 export const {
-  useGetTransparencySummaryQuery,
   useGetTransparencyDetailsQuery,
   useGetTransparencyExplanationQuery,
   useVerifyBlockchainIntegrityQuery,

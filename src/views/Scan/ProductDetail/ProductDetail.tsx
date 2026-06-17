@@ -473,23 +473,20 @@ function ProductDetail() {
     };
   }, [completeData]);
 
-  // Helper function to get proper transparency score from backend TransparencyCalculator
-  const getTransparencyScore = (): number => {
-    // ✅ 2025 BEST PRACTICE: Single source of truth - transparency API
-    // Consolidated from dual API approach to single transparency endpoint
-
-    if (completeData?.quick_view?.transparency_score?.percentage !== undefined) {
-      return completeData.quick_view.transparency_score.percentage;
-    }
-
-    console.warn('⚠️ Transparency API not ready - showing loading state');
-    return 0; // Triggers loading state in UI instead of inconsistent score
+  // Helper function to get proper transparency score from backend TransparencyCalculator.
+  // Returns null when absent — the score is now a FARMER-dashboard KPI and is gated out of
+  // the anonymous consumer payload (claim-safety, 2026-06). null means "no score on this
+  // surface", NOT 0; consumer color/tone fallbacks must treat null as neutral, never as 0%.
+  const getTransparencyScore = (): number | null => {
+    const pct = completeData?.quick_view?.transparency_score?.percentage;
+    return pct !== undefined && pct !== null ? pct : null;
   };
 
-  // Helper function for consistent consumer-facing display (whole numbers)
-  const getDisplayTransparencyScore = (): number => {
-    const rawScore = getTransparencyScore(); // Get precise backend score (e.g., 12.5)
-    return Math.round(rawScore); // Round for consumer display (e.g., 13)
+  // Helper function for consistent consumer-facing display (whole numbers).
+  // Passes null straight through so downstream components render no graded number.
+  const getDisplayTransparencyScore = (): number | null => {
+    const rawScore = getTransparencyScore();
+    return rawScore == null ? null : Math.round(rawScore);
   };
 
   // Helper function to calculate blockchain verification score
@@ -578,14 +575,17 @@ function ProductDetail() {
   // Transparency celebration system
   const celebrationTransparencyData = completeData
     ? {
-        transparencyScore: getTransparencyScore(),
+        // Score is gated out of the consumer payload (claim-safety) → null here.
+        // Coerced to 0 so the celebration stays suppressed on the consumer page
+        // (a score "🎉 verdict" modal is the self-graded label we removed).
+        transparencyScore: getTransparencyScore() ?? 0,
         farmName: completeData?.farmer?.name,
         productName: completeData?.product?.name,
         eventsDocumented: completeData?.timeline?.length || 0,
         photoCount: undefined, // Only show if actual photo data available from API
         isUSDAVerified: completeData?.isUsdaVerified || false,
         isBlockchainVerified: getBlockchainScore().isVerified,
-        isTrazoVerified: getTransparencyScore() >= 80,
+        isTrazoVerified: (getTransparencyScore() ?? 0) >= 80,
         scansCount: completeData?.scansCount, // Load from API
         farmHistory: completeData?.farmHistory // Load from API
       }
@@ -1523,7 +1523,6 @@ function ProductDetail() {
                   {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
                   <Suspense fallback={<CarbonExplainerLoader />}>
                     <CarbonImpactExplainer
-                      documentationScore={getDisplayTransparencyScore()}
                       totalCO2e={getAccurateCarbonFootprint()}
                       productName={completeData?.product?.name || completeData?.farmer?.name}
                       relatableFootprint={completeData?.relatableFootprint}

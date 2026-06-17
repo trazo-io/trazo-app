@@ -8,10 +8,8 @@ import {
   Badge,
   Button,
   Collapse,
-  Progress,
   Divider,
   useColorModeValue,
-  Circle,
   Link
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -41,20 +39,16 @@ interface ConsumerContext {
 }
 
 interface CarbonImpactExplainerProps {
-  documentationScore: number;
   totalCO2e: number;
   productName?: string;
-  isCompact?: boolean;
   relatableFootprint?: string;
   backendComparisons?: BackendComparisons;
   consumerContext?: ConsumerContext;
 }
 
 export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
-  documentationScore,
   totalCO2e,
   productName = 'this product',
-  isCompact = false,
   consumerContext
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -66,50 +60,12 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const accentColor = useColorModeValue('green.500', 'green.400');
 
-  // Score interpretation — TRANSPARENCY score (documentation completeness)
-  const getScoreInterpretation = (score: number) => {
-    if (score >= 100)
-      return {
-        label: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumented' }),
-        color: 'green',
-        description: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumentedDesc' }),
-        advice: intl.formatMessage({
-          id: 'app.carbonExplainer.scoreAllDocumentedAdvice',
-          defaultMessage: 'This farm documents all agricultural practices.'
-        })
-      };
-    if (score >= 90)
-      return {
-        label: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumented' }),
-        color: 'green',
-        description: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumentedDesc' }),
-        advice: intl.formatMessage({ id: 'app.carbonExplainer.scoreFullyDocumentedAdvice' })
-      };
-    if (score >= 70)
-      return {
-        label: intl.formatMessage({ id: 'app.carbonExplainer.scoreWellDocumented' }),
-        color: 'blue',
-        description: intl.formatMessage({ id: 'app.carbonExplainer.scoreWellDocumentedDesc' }),
-        advice: intl.formatMessage({ id: 'app.carbonExplainer.scoreWellDocumentedAdvice' })
-      };
-    if (score >= 50)
-      return {
-        label: intl.formatMessage({ id: 'app.carbonExplainer.scorePartiallyDocumented' }),
-        color: 'yellow',
-        description: intl.formatMessage({
-          id: 'app.carbonExplainer.scorePartiallyDocumentedDesc'
-        }),
-        advice: intl.formatMessage({ id: 'app.carbonExplainer.scorePartiallyDocumentedAdvice' })
-      };
-    return {
-      label: intl.formatMessage({ id: 'app.carbonExplainer.scoreEarlyStage' }),
-      color: 'orange',
-      description: intl.formatMessage({ id: 'app.carbonExplainer.scoreEarlyStageDesc' }),
-      advice: intl.formatMessage({ id: 'app.carbonExplainer.scoreEarlyStageAdvice' })
-    };
-  };
-
-  const scoreInfo = getScoreInterpretation(documentationScore);
+  // Self-graded transparency score removed from the consumer surface (2026-06 claim-safety):
+  // a self-assigned "% documented / Fully Documented" verdict shown to shoppers is the
+  // self-created sustainability-label class banned by EU ECGT 2024/825 (live 2026-09-27)
+  // and an FTC 16 CFR 260.6 general-benefit risk. The score stays on the FARMER dashboard
+  // as the engagement KPI; consumers see the factual evidence instead (hero practices count,
+  // photos, third-party certs, timeline). This card now shows carbon facts only.
   const isNegativeEmissions = totalCO2e < 0;
   const hasPerKgData = consumerContext?.has_per_kg_data && consumerContext.kg_per_kg > 0;
 
@@ -133,38 +89,6 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
     }
   ];
 
-  if (isCompact) {
-    return (
-      <Box
-        bg={cardBg}
-        p={4}
-        borderRadius="xl"
-        border="1px solid"
-        borderColor={useColorModeValue('green.200', 'green.700')}
-      >
-        <HStack spacing={4} align="center">
-          <Circle size="50px" bg={`${scoreInfo.color}.500`} color="white">
-            <Text fontSize="lg" fontWeight="bold">
-              {documentationScore}
-            </Text>
-          </Circle>
-
-          <VStack align="start" spacing={1} flex="1">
-            <Badge colorScheme={scoreInfo.color} variant="solid" fontSize="xs">
-              {scoreInfo.label}
-            </Badge>
-            <Text fontSize="sm" color={mutedColor}>
-              {scoreInfo.description}
-            </Text>
-            <Text fontSize="xs" color="green.600" fontWeight="medium">
-              {scoreInfo.advice}
-            </Text>
-          </VStack>
-        </HStack>
-      </Box>
-    );
-  }
-
   return (
     <Box
       bg={bgColor}
@@ -173,55 +97,25 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       borderColor={useColorModeValue('gray.200', 'gray.600')}
       overflow="hidden"
     >
-      {/* Header — Transparency Documentation Score */}
+      {/* Header — carbon-impact card title. No self-graded documentation score:
+          consumers see facts (counts/photos/certs), not a self-assigned grade. */}
       <Box p={4} bg={cardBg}>
-        <HStack justify="space-between" align="start">
-          <VStack align="start" spacing={2}>
-            <HStack>
-              <Icon as={FaGlobeAmericas} color={accentColor} boxSize={5} />
-              <Text
-                as="h2"
-                fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
-                fontWeight="bold"
-                color={textColor}
-              >
-                {intl.formatMessage({ id: 'app.carbonExplainer.title' })}
-              </Text>
-            </HStack>
-            <Text fontSize="sm" color={mutedColor}>
-              {intl.formatMessage({ id: 'app.carbonExplainer.subtitle' }, { productName })}
-            </Text>
-          </VStack>
-
-          <VStack align="end" spacing={0}>
+        <VStack align="start" spacing={2}>
+          <HStack>
+            <Icon as={FaGlobeAmericas} color={accentColor} boxSize={5} />
             <Text
-              fontSize={{ base: 'xl', smd: '2xl', lg: '3xl' }}
+              as="h2"
+              fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
               fontWeight="bold"
-              color={`${scoreInfo.color}.600`}
+              color={textColor}
             >
-              {Math.round(documentationScore)}%
+              {intl.formatMessage({ id: 'app.carbonExplainer.title' })}
             </Text>
-            {/* Qualify the % so it cannot read as a 100%-good environmental rating: this is
-                documentation completeness, not an environmental-performance score (FTC 260.3(c)). */}
-            <Text fontSize="xs" color={mutedColor} fontWeight="medium" mb={1}>
-              documented
-            </Text>
-            <Badge colorScheme={scoreInfo.color} variant="solid">
-              {scoreInfo.label}
-            </Badge>
-          </VStack>
-        </HStack>
-
-        {/* Transparency Documentation Bar — slim minimalist */}
-        <Box mt={3}>
-          <Progress
-            value={documentationScore}
-            colorScheme={scoreInfo.color}
-            size="xs"
-            borderRadius="full"
-            bg={useColorModeValue('gray.100', 'gray.700')}
-          />
-        </Box>
+          </HStack>
+          <Text fontSize="sm" color={mutedColor}>
+            {intl.formatMessage({ id: 'app.carbonExplainer.subtitle' }, { productName })}
+          </Text>
+        </VStack>
       </Box>
 
       {/* PRIMARY: Consumer-friendly impact summary */}
@@ -311,19 +205,6 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               </Text>
             </Box>
           ) : null}
-
-          {/* Transparency advice */}
-          <Box
-            bg={useColorModeValue(`${scoreInfo.color}.50`, `${scoreInfo.color}.900`)}
-            p={3}
-            borderRadius="lg"
-            borderLeft="3px solid"
-            borderLeftColor={`${scoreInfo.color}.500`}
-          >
-            <Text fontSize="sm" color={`${scoreInfo.color}.700`} fontWeight="medium">
-              {scoreInfo.advice}
-            </Text>
-          </Box>
 
           {/* Expand Button */}
           <Button

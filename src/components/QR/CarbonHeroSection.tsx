@@ -136,15 +136,6 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     }
   }, [isLoading, carbonData]);
 
-  // Score calculations and display logic
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'green.500';
-    if (score >= 60) return 'green.400';
-    if (score >= 40) return 'yellow.400';
-    if (score >= 20) return 'orange.400';
-    return 'red.500';
-  };
-
   // Claim-safe narrative line. The old score-tiered ladder ("Open Book
   // Farm — complete growing story… you can see it all") made unsubstantiated
   // completeness claims and implied a ranking. One neutral, factual message
@@ -359,9 +350,11 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
           <Box
             position="absolute"
             inset={0}
-            bgGradient={`linear(135deg, ${getScoreColor(score)}30 0%, ${getScoreColor(
-              score
-            )}10 100%)`}
+            // Neutral brand gradient. Was score-tinted (getScoreColor), but the
+            // transparency score left the consumer hero (claim-safety, 2026-06) —
+            // a score-derived tint here is both meaningless and, at a 0/absent
+            // score, alarmingly red. Fixed brand green regardless of score.
+            bgGradient="linear(135deg, green.100 0%, green.50 100%)"
           />
         )}
 

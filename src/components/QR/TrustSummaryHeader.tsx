@@ -325,16 +325,11 @@ function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
           count: documentedEventsCount,
           expected: expectedEventsCount,
           productPhrase,
-          scoreSuffix:
-            score != null
-              ? intl.formatMessage(
-                  {
-                    id: 'consumer.trust.eventsScoreSuffix',
-                    defaultMessage: ' ({score}% complete)'
-                  },
-                  { score }
-                )
-              : ''
+          // Self-graded "% complete" removed from the consumer surface (2026-06
+          // claim-safety): the pillar communicates the factual fraction only
+          // (e.g. "12 of 13"); the self-assigned percentage is a farmer-dashboard
+          // KPI, not a consumer claim (EU ECGT 2024/825 / FTC 16 CFR 260.6).
+          scoreSuffix: ''
         }
       )
     : expectedEventsCount != null
