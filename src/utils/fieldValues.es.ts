@@ -414,5 +414,34 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Windy, dry conditions': 'Condiciones ventosas y secas',
   'Windy, wet conditions': 'Condiciones ventosas y húmedas',
   'pH Adjustment': 'Ajuste de pH',
-  'pH Meter': 'Medidor de pH'
+  'pH Meter': 'Medidor de pH',
+
+  // --- Biodiversity / habitat (HD/NS) — soil subtype labels + habitat_type values ---
+  'Habitat Development': 'Desarrollo de hábitat',
+  'Nesting / Shelter Structures': 'Anidación / estructuras de refugio',
+  Hedgerow: 'Seto vivo',
+  'Insectary / Beneficial-Insect Strip': 'Franja insectaria / de insectos benéficos',
+  'Native Planting': 'Plantación nativa',
+  'Pollinator Habitat': 'Hábitat de polinizadores',
+  'Field Border': 'Borde de campo',
+  'Riparian Buffer': 'Franja ribereña',
+  'Living Groundcover Habitat': 'Hábitat de cobertura viva',
+  'Wildlife Corridor': 'Corredor de fauna',
+  'Barn-Owl Box': 'Caja para lechuza',
+  'Raptor Perch': 'Percha para rapaces',
+  'Songbird Box': 'Caja para aves canoras',
+  'Native-Bee Nest Block': 'Bloque de anidación para abejas nativas',
+  'Bat Box': 'Caja para murciélagos',
+  'Insect Hotel': 'Hotel de insectos',
+  'Beetle Bank': 'Banco de escarabajos',
+  'Brush Pile / Hibernacula': 'Pila de ramas / hibernáculo',
+  // BR beneficial-release organic approval (formatter output)
+  'OMRI / Organic-approved': 'Aprobado OMRI / orgánico',
+  'Not organic-approved': 'No aprobado para uso orgánico',
+  'Approval status unknown': 'Estado de aprobación desconocido',
+  // TM trap types (formatter output; "Other" already maps to "Otro")
+  'Sticky card': 'Trampa adhesiva',
+  'Pheromone lure': 'Trampa de feromona',
+  'Delta trap': 'Trampa delta',
+  'Bucket / funnel': 'Embudo / cubeta'
 };

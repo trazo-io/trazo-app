@@ -184,7 +184,12 @@ export function getFieldsForSurface(
       }
     }
 
-    const rawValue = event[field.name];
+    // Resolve from the top-level field, falling back to extra_data — many fields (cover_crop_species,
+    // habitat species_planted / wildlife_observed / structure_notes, etc.) are persisted inside
+    // extra_data, not as model columns. Without this fallback those never render on the card.
+    const extraData =
+      event.extra_data && typeof event.extra_data === 'object' ? event.extra_data : {};
+    const rawValue = event[field.name] ?? extraData[field.name];
     let formattedValue: string | null;
 
     // For enum fields: use custom formatter if available, otherwise capitalize and humanize

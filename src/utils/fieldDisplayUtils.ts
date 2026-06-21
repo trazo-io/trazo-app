@@ -638,6 +638,28 @@ export function localizeFieldValue(
     const tr = FIELD_VALUE_ES[m[2]];
     if (tr) return m[1] + tr;
   }
+  // "MMM YYYY" date label (e.g. habitat install date "Feb 2019"). The registry formatter is
+  // locale-blind (the resolver passes no intl), so the English month token leaks onto the es
+  // page; the dynamic year can't be a FIELD_VALUE_ES key, so translate the month here.
+  const md = str.match(/^([A-Z][a-z]{2}) (\d{4})$/);
+  if (md) {
+    const ES_MONTHS: Record<string, string> = {
+      Jan: 'ene',
+      Feb: 'feb',
+      Mar: 'mar',
+      Apr: 'abr',
+      May: 'may',
+      Jun: 'jun',
+      Jul: 'jul',
+      Aug: 'ago',
+      Sep: 'sep',
+      Oct: 'oct',
+      Nov: 'nov',
+      Dec: 'dic'
+    };
+    const mo = ES_MONTHS[md[1]];
+    if (mo) return `${mo} ${md[2]}`;
+  }
   return str;
 }
 
@@ -3108,35 +3130,36 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
   }
 
   // Grazing Management fields (GR subtype)
+  // BUGFIX (2026-06-20): this block referenced `normalizedEvent`, which is undefined in this
+  // function (the param is `event`) — rendering any grazing event on the consumer soil view threw
+  // "normalizedEvent is not defined" and crashed ConsumerEventCard. Use `event` like the rest.
   const operationType = operationTypes[soilType] || soilType;
   if (soilType === 'GR' || operationType === 'Grazing Management') {
-    if (normalizedEvent.animal_type) {
+    if (event.animal_type) {
       details.push({
         label: 'Animal Type',
-        value:
-          normalizedEvent.animal_type.charAt(0).toUpperCase() +
-          normalizedEvent.animal_type.slice(1),
+        value: event.animal_type.charAt(0).toUpperCase() + event.animal_type.slice(1),
         priority: 'details',
         category: 'grazing'
       });
     }
-    if (normalizedEvent.animal_count) {
+    if (event.animal_count) {
       details.push({
         label: 'Number of Animals',
-        value: String(normalizedEvent.animal_count),
+        value: String(event.animal_count),
         priority: 'details',
         category: 'grazing'
       });
     }
-    if (normalizedEvent.grazing_duration_days) {
+    if (event.grazing_duration_days) {
       details.push({
         label: 'Grazing Duration',
-        value: `${normalizedEvent.grazing_duration_days} days`,
+        value: `${event.grazing_duration_days} days`,
         priority: 'details',
         category: 'grazing'
       });
     }
-    if (normalizedEvent.grazing_purpose) {
+    if (event.grazing_purpose) {
       const purposeLabels: Record<string, string> = {
         weed_control: 'Weed Control',
         cover_crop: 'Cover Crop Termination',
@@ -3145,9 +3168,89 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
       };
       details.push({
         label: 'Purpose',
-        value: purposeLabels[normalizedEvent.grazing_purpose] || normalizedEvent.grazing_purpose,
+        value: purposeLabels[event.grazing_purpose] || event.grazing_purpose,
         priority: 'details',
         category: 'grazing'
+      });
+    }
+  }
+
+  // Biodiversity / Habitat fields (HD = Habitat Development, NS = Nesting/Shelter). Facts only.
+  if (soilType === 'HD' || soilType === 'NS' || event.habitat_type) {
+    const habitatLabels: Record<string, string> = {
+      hedgerow: 'Hedgerow',
+      insectary_strip: 'Insectary / Beneficial-Insect Strip',
+      native_planting: 'Native Planting',
+      pollinator_habitat: 'Pollinator Habitat',
+      field_border: 'Field Border',
+      riparian_buffer: 'Riparian Buffer',
+      living_groundcover_habitat: 'Living Groundcover Habitat',
+      wildlife_corridor: 'Wildlife Corridor',
+      barn_owl_box: 'Barn-Owl Box',
+      raptor_perch: 'Raptor Perch',
+      songbird_box: 'Songbird Box',
+      native_bee_block: 'Native-Bee Nest Block',
+      bat_box: 'Bat Box',
+      insect_hotel: 'Insect Hotel',
+      beetle_bank: 'Beetle Bank',
+      brush_pile_hibernacula: 'Brush Pile / Hibernacula'
+    };
+    if (event.habitat_type) {
+      details.push({
+        label: soilType === 'NS' ? 'Structure Type' : 'Habitat Type',
+        value: habitatLabels[event.habitat_type] || event.habitat_type,
+        priority: 'details',
+        category: 'habitat'
+      });
+    }
+    if (event.habitat_structure_count) {
+      details.push({
+        label: 'Number Installed',
+        value: String(event.habitat_structure_count),
+        priority: 'details',
+        category: 'habitat'
+      });
+    }
+    if (event.habitat_install_date) {
+      // date-only string must parse as LOCAL — `new Date("YYYY-MM-DD")` is UTC midnight and renders
+      // as the previous month in negative-offset timezones (e.g. "2020-01-01" -> "Dec 2019").
+      const raw = String(event.habitat_install_date);
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+      const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(raw);
+      details.push({
+        label: soilType === 'NS' ? 'Installed' : 'Established',
+        value: isNaN(d.getTime())
+          ? raw
+          : d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' }),
+        priority: 'details',
+        category: 'habitat'
+      });
+    }
+    const speciesPlanted = event.species_planted || extraData.species_planted;
+    if (speciesPlanted) {
+      details.push({
+        label: 'Species Planted',
+        value: String(speciesPlanted),
+        priority: 'details',
+        category: 'habitat'
+      });
+    }
+    const structureNotes = event.structure_notes || extraData.structure_notes;
+    if (structureNotes) {
+      details.push({
+        label: 'Placement / Occupancy',
+        value: String(structureNotes),
+        priority: 'details',
+        category: 'habitat'
+      });
+    }
+    const wildlifeObserved = event.wildlife_observed || extraData.wildlife_observed;
+    if (wildlifeObserved) {
+      details.push({
+        label: 'Wildlife Observed',
+        value: String(wildlifeObserved),
+        priority: 'details',
+        category: 'habitat'
       });
     }
   }
@@ -3415,8 +3518,33 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
         category: 'measurement'
       });
     }
-
-    // Ghost field cleanup: Removed time_spent_hours (never in form)
+    if (event.trap_type) {
+      const trapTypeLabels: Record<string, string> = {
+        sticky: 'Sticky card',
+        pheromone: 'Pheromone lure',
+        delta: 'Delta trap',
+        bucket_funnel: 'Bucket / funnel',
+        other: 'Other'
+      };
+      secondary.push({
+        label: 'Trap Type',
+        value: trapTypeLabels[event.trap_type] || event.trap_type,
+        priority: 'secondary',
+        category: 'measurement'
+      });
+    }
+    if (
+      event.pest_catch_count !== null &&
+      event.pest_catch_count !== undefined &&
+      event.pest_catch_count !== ''
+    ) {
+      secondary.push({
+        label: 'Insects Caught',
+        value: String(event.pest_catch_count),
+        priority: 'secondary',
+        category: 'measurement'
+      });
+    }
   }
 
   // BR (Beneficial Release) - Biological control fields
@@ -3439,6 +3567,37 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
         value: formattedQty,
         priority: 'secondary',
         category: 'measurement'
+      });
+    }
+    // NOP 205.206 beneficial-release traceability. Supplier + lot show in the producer/audit
+    // path only (the public serializer omits them); organic-approval is a transparency positive.
+    if (event.beneficial_organic_approved) {
+      const orgLabels: Record<string, string> = {
+        yes: 'OMRI / Organic-approved',
+        no: 'Not organic-approved',
+        unknown: 'Approval status unknown'
+      };
+      secondary.push({
+        label: 'Organic Approval',
+        value: orgLabels[event.beneficial_organic_approved] || event.beneficial_organic_approved,
+        priority: 'secondary',
+        category: 'environmental'
+      });
+    }
+    if (event.beneficial_supplier) {
+      details.push({
+        label: 'Beneficial Supplier',
+        value: event.beneficial_supplier,
+        priority: 'details',
+        category: 'environmental'
+      });
+    }
+    if (event.beneficial_lot_number) {
+      details.push({
+        label: 'Lot / Batch #',
+        value: event.beneficial_lot_number,
+        priority: 'details',
+        category: 'environmental'
       });
     }
   }

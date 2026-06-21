@@ -7,7 +7,19 @@ import React, {
   forwardRef,
   useImperativeHandle
 } from 'react';
-import { Text, useColorModeValue, HStack, Box, SimpleGrid, Flex } from '@chakra-ui/react';
+import {
+  Text,
+  useColorModeValue,
+  HStack,
+  VStack,
+  Box,
+  SimpleGrid,
+  Flex,
+  Switch,
+  Badge,
+  Divider,
+  Icon
+} from '@chakra-ui/react';
 import {
   StandardButton,
   StandardField,
@@ -47,12 +59,11 @@ const FUEL_TYPES = [
 
 const formSchemaSoilManagement = object({
   type: string().min(1, 'Soil management type is required'),
-  area_covered: string()
-    .min(1, 'Area is required')
-    .refine((val) => val !== '' && parseFloat(val) > 0, {
-      message: 'Area must be greater than 0'
-    }),
-  area_unit: string().min(1, 'Area unit is required'),
+  // Area is required and > 0 for most soil practices, but NOT for habitat structures (NS) — nesting
+  // boxes / perches have no meaningful area. Habitat development (HD) area is optional. Enforced
+  // per-subtype in the superRefine below so the base field stays optional.
+  area_covered: string().optional(),
+  area_unit: string().optional(),
   soil_ph: string().optional(),
   organic_matter_percentage: string().optional(),
   soil_texture: string().optional(),
@@ -82,6 +93,20 @@ const formSchemaSoilManagement = object({
   animal_count: string().optional(),
   grazing_duration_days: string().optional(),
   grazing_purpose: string().optional(),
+  // Biodiversity / habitat (HD / NS subtypes) — facts only, no score
+  habitat_type: string().optional(),
+  habitat_structure_count: string().optional(),
+  habitat_install_date: string().optional(),
+  species_planted: string().optional(),
+  wildlife_observed: string().optional(),
+  structure_notes: string().optional(),
+  // Grazing Summary Mode (GTM-v3): log a whole rotation as one event (mirrors pest scouting)
+  is_summary: string().optional(), // "true" | "false" as string for form compatibility
+  date_start: string().optional(),
+  date_end: string().optional(),
+  event_count: string().optional(), // number of grazing passes in the rotation
+  total_grazing_days: string().optional(), // summed days across passes
+  area_covered_total: string().optional(), // combined area grazed across passes
   amendment_amount_numeric: string().optional(),
   amendment_amount_unit: string().optional(),
   // NOP Compliance fields (7 CFR 205.203)
@@ -111,17 +136,38 @@ const formSchemaSoilManagement = object({
       photo_id: string().optional()
     })
   ).optional()
+}).superRefine((data, ctx) => {
+  // NS (nesting/shelter structures) has no meaningful area; HD (habitat development) area is optional.
+  // Every other soil subtype still requires area > 0.
+  const areaOptional = data.type === 'NS' || data.type === 'HD';
+  if (!areaOptional) {
+    if (!data.area_covered || parseFloat(data.area_covered) <= 0) {
+      ctx.addIssue({
+        path: ['area_covered'],
+        code: 'custom',
+        message: 'Area must be greater than 0'
+      });
+    }
+    if (!data.area_unit) {
+      ctx.addIssue({ path: ['area_unit'], code: 'custom', message: 'Area unit is required' });
+    }
+  }
 });
 
 // Sprint 2 Epic 2.1.3: Removed soil_moisture, weather_conditions, temperature_range from defaults
+// V3 hardening (2026-06): MEASUREMENT fields (soil_ph, organic_matter_percentage, soil_texture)
+// carry NO default value. They are lab/field readings the farmer must enter — injecting a number
+// fabricates a measurement and previously earned an undeserved +5 carbon-confidence credit and a
+// false NOP soil baseline in the audit export. The subtype-switch effect already skips these via
+// MEASUREMENT_FIELDS; blanking the literals here is defense-in-depth so they can never reappear.
 const getSoilManagementDefaults = (soilType) => {
   const defaults = {
     ST: {
       area_covered: '2.0',
       area_unit: 'ha',
-      soil_ph: '6.5',
-      organic_matter_percentage: '3.5',
-      soil_texture: 'loam',
+      soil_ph: '',
+      organic_matter_percentage: '',
+      soil_texture: '',
       depth: '30',
       depth_unit: 'cm'
     },
@@ -130,9 +176,9 @@ const getSoilManagementDefaults = (soilType) => {
     PA: {
       area_covered: '2.0',
       area_unit: 'ha',
-      soil_ph: '6.8',
-      organic_matter_percentage: '4.0',
-      soil_texture: 'clay_loam',
+      soil_ph: '',
+      organic_matter_percentage: '',
+      soil_texture: '',
       depth: '20',
       depth_unit: 'cm',
       // Amendment fields for carbon calculation (IPCC 2006 lime dissolution)
@@ -143,38 +189,51 @@ const getSoilManagementDefaults = (soilType) => {
     CC: {
       area_covered: '2.0',
       area_unit: 'ha',
-      soil_ph: '6.5',
-      organic_matter_percentage: '3.5',
-      soil_texture: 'loam',
+      soil_ph: '',
+      organic_matter_percentage: '',
+      soil_texture: '',
       depth: '30',
       depth_unit: 'cm'
     },
     OM: {
       area_covered: '2.0',
       area_unit: 'ha',
-      soil_ph: '6.5',
-      organic_matter_percentage: '3.5',
-      soil_texture: 'loam',
+      soil_ph: '',
+      organic_matter_percentage: '',
+      soil_texture: '',
       depth: '20',
       depth_unit: 'cm'
     },
     TI: {
       area_covered: '2.0',
       area_unit: 'ha',
-      soil_ph: '7.0',
-      organic_matter_percentage: '3.0',
-      soil_texture: 'sandy_loam',
+      soil_ph: '',
+      organic_matter_percentage: '',
+      soil_texture: '',
       depth: '25',
       depth_unit: 'cm'
     },
     CO: {
       area_covered: '2.0',
       area_unit: 'ha',
-      soil_ph: '6.5',
-      organic_matter_percentage: '4.0',
-      soil_texture: 'loam',
+      soil_ph: '',
+      organic_matter_percentage: '',
+      soil_texture: '',
       depth: '20',
       depth_unit: 'cm'
+    },
+    // Biodiversity / habitat — no phantom measurements; the farmer enters real area / counts.
+    HD: {
+      area_unit: 'ha',
+      soil_ph: '',
+      organic_matter_percentage: '',
+      soil_texture: ''
+    },
+    NS: {
+      area_unit: 'ha',
+      soil_ph: '',
+      organic_matter_percentage: '',
+      soil_texture: ''
     }
   };
 
@@ -253,6 +312,41 @@ const SoilManagementTab = forwardRef(
         animal_count: initialValues.animal_count || '',
         grazing_duration_days: initialValues.grazing_duration_days || '',
         grazing_purpose: initialValues.grazing_purpose || '',
+        // Biodiversity / habitat (HD / NS). Free-text fields persist in extra_data, so read the
+        // extra_data fallback on EDIT (same pattern as grazing summary + cover_crop_species).
+        habitat_type: initialValues.habitat_type || '',
+        habitat_structure_count: initialValues.habitat_structure_count?.toString() || '',
+        habitat_install_date: initialValues.habitat_install_date || '',
+        species_planted:
+          initialValues.species_planted || initialValues.extra_data?.species_planted || '',
+        wildlife_observed:
+          initialValues.wildlife_observed || initialValues.extra_data?.wildlife_observed || '',
+        structure_notes:
+          initialValues.structure_notes || initialValues.extra_data?.structure_notes || '',
+        // Grazing Summary Mode — summary fields persist in extra_data, so on EDIT read both the
+        // top-level (when the edit path normalized them up) AND the extra_data fallback (when it
+        // didn't), so the toggle + rotation values are restored either way.
+        is_summary:
+          initialValues.is_summary === 'true' ||
+          initialValues.is_summary === true ||
+          initialValues.extra_data?.is_summary === 'true' ||
+          initialValues.extra_data?.is_summary === true
+            ? 'true'
+            : 'false',
+        date_start: initialValues.date_start || initialValues.extra_data?.date_start || '',
+        date_end: initialValues.date_end || initialValues.extra_data?.date_end || '',
+        event_count:
+          initialValues.event_count?.toString() ||
+          initialValues.extra_data?.event_count?.toString() ||
+          '',
+        total_grazing_days:
+          initialValues.total_grazing_days?.toString() ||
+          initialValues.extra_data?.total_grazing_days?.toString() ||
+          '',
+        area_covered_total:
+          initialValues.area_covered_total?.toString() ||
+          initialValues.extra_data?.area_covered_total?.toString() ||
+          '',
         amendment_amount_numeric: initialValues.amendment_amount_numeric || '',
         amendment_amount_unit: initialValues.amendment_amount_unit || 'kg',
         // NOP Compliance fields (7 CFR 205.203)
@@ -593,6 +687,46 @@ const SoilManagementTab = forwardRef(
         }
       };
 
+      // Grazing Summary Mode: only send summary fields for an active grazing summary; otherwise
+      // strip them so non-summary (and non-grazing) soil events don't carry stray rotation fields.
+      // Mirrors the pest-tab guard. The backend MERGES extra_data, so to actually clear a stale
+      // flag when editing a summary event back to normal, explicitly set is_summary=false (a plain
+      // delete would be dropped by the merge and the old "true" would persist).
+      const isGrazingSummarySubmit = data.type === 'GR' && data.is_summary === 'true';
+      if (!isGrazingSummarySubmit) {
+        delete processedData.date_start;
+        delete processedData.date_end;
+        delete processedData.event_count;
+        delete processedData.total_grazing_days;
+        delete processedData.area_covered_total;
+        processedData.is_summary = false;
+        if (processedData.extra_data) {
+          processedData.extra_data.is_summary = false;
+          delete processedData.extra_data.date_start;
+          delete processedData.extra_data.date_end;
+          delete processedData.extra_data.event_count;
+          delete processedData.extra_data.total_grazing_days;
+          delete processedData.extra_data.area_covered_total;
+        }
+      }
+
+      // Biodiversity / habitat: only send habitat fields for the HD/NS subtypes; otherwise strip them
+      // so non-habitat soil events don't carry stray habitat_type / empty species/notes into extra_data.
+      const isHabitatSubmit = data.type === 'HD' || data.type === 'NS';
+      if (!isHabitatSubmit) {
+        delete processedData.habitat_type;
+        delete processedData.habitat_structure_count;
+        delete processedData.habitat_install_date;
+        delete processedData.species_planted;
+        delete processedData.wildlife_observed;
+        delete processedData.structure_notes;
+        if (processedData.extra_data) {
+          delete processedData.extra_data.species_planted;
+          delete processedData.extra_data.wildlife_observed;
+          delete processedData.extra_data.structure_notes;
+        }
+      }
+
       console.log('[SoilManagementTab] Submitting with standardized fuel fields:', {
         fuel_consumed: processedData.fuel_consumed,
         fuel_unit: processedData.fuel_unit,
@@ -679,6 +813,8 @@ const SoilManagementTab = forwardRef(
                         <option value="TI">Tillage</option>
                         <option value="CO">Composting Operation</option>
                         <option value="GR">Grazing Management</option>
+                        <option value="HD">Habitat Development</option>
+                        <option value="NS">Nesting / Shelter Structures</option>
                       </StandardSelect>
                     </StandardField>
 
@@ -693,33 +829,40 @@ const SoilManagementTab = forwardRef(
                       />
                     </StandardField>
 
-                    <StandardField
-                      label="Area Covered"
-                      required
-                      error={errors.area_covered?.message}
-                    >
-                      <HStack spacing={2}>
-                        <StandardInput
-                          flex={2}
-                          type="number"
-                          step="0.1"
-                          placeholder="2.0"
-                          bg="white"
-                          {...register('area_covered')}
-                        />
-                        <StandardSelect flex={1} bg="white" {...register('area_unit')}>
-                          <option value="ha">Hectares</option>
-                          <option value="acres">Acres</option>
-                        </StandardSelect>
-                      </HStack>
-                    </StandardField>
+                    {/* Area is hidden for NS (nesting/shelter structures have no meaningful area)
+                        and optional for HD (habitat development); required for every other subtype. */}
+                    {watch('type') !== 'NS' && (
+                      <StandardField
+                        label={watch('type') === 'HD' ? 'Area Covered (optional)' : 'Area Covered'}
+                        required={watch('type') !== 'HD'}
+                        error={errors.area_covered?.message}
+                      >
+                        <HStack spacing={2}>
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="0.1"
+                            placeholder="2.0"
+                            bg="white"
+                            {...register('area_covered')}
+                          />
+                          <StandardSelect flex={1} bg="white" {...register('area_unit')}>
+                            <option value="ha">Hectares</option>
+                            <option value="acres">Acres</option>
+                          </StandardSelect>
+                        </HStack>
+                      </StandardField>
+                    )}
 
                     {/* F34 fix (2026-06): hide this common "Working Depth" for the
                         amendment subtypes (PA/OM/CC/CO) — they render their own
                         "Application Depth" field below, also bound to register('depth').
                         Showing both put two inputs on one value (desync/confusion).
-                        Each subtype now shows the depth input exactly once. */}
-                    {!['PA', 'OM', 'CC', 'CO'].includes(watch('type')) && (
+                        Each subtype now shows the depth input exactly once.
+                        2026-06-20: also hide for grazing (GR) and habitat (HD/NS) — there is no
+                        "working depth" for livestock grazing, hedgerows, or nesting boxes. Leaves
+                        Working Depth on ST (sampling depth) and TI (tillage depth) only. */}
+                    {!['PA', 'OM', 'CC', 'CO', 'GR', 'HD', 'NS'].includes(watch('type')) && (
                       <StandardField label="Working Depth">
                         <HStack spacing={2}>
                           <StandardInput
@@ -751,7 +894,10 @@ const SoilManagementTab = forwardRef(
                   )}
                 </SectionBox>
 
-                {/* Sprint 3 Epic 3.1: Consolidated Section 2 - Fuel & Equipment Operations (merged Fuel + Environmental) */}
+                {/* Fuel & Equipment hidden for grazing (GR) — a livestock rotation burns no fuel and
+                    uses no equipment, so the whole section is noise there. Kept for HD/NS because
+                    planting a hedgerow or mounting nest boxes can use an auger/tractor. */}
+                {watch('type') !== 'GR' && (
                 <SectionBox variant="highlighted">
                   <SectionHeader
                     icon={FaSeedling}
@@ -859,6 +1005,7 @@ const SoilManagementTab = forwardRef(
                     />
                   </Box>
                 </SectionBox>
+                )}
 
                 {/* Soil Amendment fields — PA (pH Adjustment), OM (Organic Matter), CC (Cover Crop), CO (Composting) */}
                 {['PA', 'OM', 'CC', 'CO'].includes(watch('type')) && (
@@ -1108,7 +1255,12 @@ const SoilManagementTab = forwardRef(
                   </SectionBox>
                 )}
 
-                {watch('type') && (
+                {/* Soil Properties (pH / OM / texture) are field MEASUREMENTS — only meaningful for
+                    soil-working subtypes. Hide for grazing (GR), habitat (HD/NS) and tillage (TI):
+                    a sheep rotation, hedgerow, owl box, or a tillage pass doesn't measure soil pH,
+                    and showing these empty fields invited fabricated readings. PA/OM/CC/CO keep them
+                    (the soil pH / OM reading is the context that justifies the amendment). */}
+                {watch('type') && !['GR', 'HD', 'NS', 'TI'].includes(watch('type')) && (
                   <SectionBox variant="default">
                     <SectionHeader
                       icon={FaThermometerHalf}
@@ -1275,6 +1427,114 @@ const SoilManagementTab = forwardRef(
                       badgeColorScheme="green"
                       description="Document grazing activities for cover crop management, weed control, and soil health."
                     />
+
+                    {/* Grazing Summary Mode (GTM-v3) — log a whole rotation as one event,
+                        mirroring pest scouting summary mode. Blue scheme matches other tabs. */}
+                    {(() => {
+                      const isGrazingSummary = watch('is_summary') === 'true';
+                      return (
+                        <>
+                          <Box
+                            p={4}
+                            mb={4}
+                            bg={isGrazingSummary ? 'blue.50' : 'gray.50'}
+                            borderRadius="md"
+                            border="1px solid"
+                            borderColor={isGrazingSummary ? 'blue.200' : 'gray.200'}
+                          >
+                            <HStack justify="space-between" align="center">
+                              <VStack align="start" spacing={0}>
+                                <HStack>
+                                  <Text fontWeight="semibold" fontSize="sm">
+                                    📊 Grazing Summary Mode
+                                  </Text>
+                                  {isGrazingSummary && (
+                                    <Badge colorScheme="blue" size="sm">
+                                      Active
+                                    </Badge>
+                                  )}
+                                </HStack>
+                                <Text fontSize="xs" color="gray.600">
+                                  {isGrazingSummary
+                                    ? 'Log a whole grazing rotation as one summary (e.g., "sheep, 4 paddocks over 6 weeks")'
+                                    : 'Enable to log a full grazing rotation at once'}
+                                </Text>
+                              </VStack>
+                              <Controller
+                                name="is_summary"
+                                control={methods.control}
+                                render={({ field }) => (
+                                  <Switch
+                                    colorScheme="blue"
+                                    size="lg"
+                                    isChecked={field.value === 'true'}
+                                    onChange={(e) =>
+                                      field.onChange(e.target.checked ? 'true' : 'false')
+                                    }
+                                  />
+                                )}
+                              />
+                            </HStack>
+                          </Box>
+
+                          {isGrazingSummary && (
+                            <SectionBox variant="default" mb={4}>
+                              <Text fontWeight="semibold" color="green.700" mb={3}>
+                                <Icon as={FaSeedling} mr={2} />
+                                Grazing Rotation Period
+                              </Text>
+                              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
+                                <StandardField
+                                  label="Period Start Date"
+                                  helpText="When did this rotation begin?"
+                                >
+                                  <StandardInput type="date" {...register('date_start')} />
+                                </StandardField>
+                                <StandardField
+                                  label="Period End Date"
+                                  helpText="When did this rotation end?"
+                                >
+                                  <StandardInput type="date" {...register('date_end')} />
+                                </StandardField>
+                                <StandardField
+                                  label="Number of Grazing Passes"
+                                  helpText="How many grazing passes/paddocks in this rotation"
+                                >
+                                  <StandardInput
+                                    type="number"
+                                    min="1"
+                                    placeholder="e.g., 4"
+                                    {...register('event_count')}
+                                  />
+                                </StandardField>
+                                <StandardField
+                                  label="Total Grazing Days"
+                                  helpText="Combined grazing days across all passes"
+                                >
+                                  <StandardInput
+                                    type="number"
+                                    min="1"
+                                    placeholder="e.g., 12"
+                                    {...register('total_grazing_days')}
+                                  />
+                                </StandardField>
+                                <StandardField
+                                  label="Total Area Grazed"
+                                  helpText="Combined area grazed across all passes"
+                                >
+                                  <StandardInput
+                                    type="number"
+                                    placeholder="e.g., 20"
+                                    {...register('area_covered_total')}
+                                  />
+                                </StandardField>
+                              </SimpleGrid>
+                            </SectionBox>
+                          )}
+                        </>
+                      );
+                    })()}
+
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField label="Animal Type" helpText="Type of animal used for grazing">
                         <StandardSelect
@@ -1323,6 +1583,129 @@ const SoilManagementTab = forwardRef(
                         </StandardSelect>
                       </StandardField>
                     </SimpleGrid>
+                  </SectionBox>
+                )}
+
+                {/* Habitat Development (HD) — biodiversity infrastructure. Facts only, no score.
+                    The living-floor / bugs / birds proof rides on the event photos. */}
+                {watch('type') === 'HD' && (
+                  <SectionBox variant="highlighted" borderColor="green.200">
+                    <SectionHeader
+                      icon={FaSeedling}
+                      iconColor="green.600"
+                      title="Habitat Development"
+                      badge="Biodiversity Practice"
+                      badgeColorScheme="green"
+                      description="Document planted/established habitat — hedgerows, insectary strips, native plantings, riparian buffers, or living groundcover. Add photos as evidence."
+                    />
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField label="Habitat Type" helpText="What habitat was established">
+                        <StandardSelect
+                          placeholder="Select habitat type..."
+                          {...register('habitat_type')}
+                        >
+                          <option value="hedgerow">Hedgerow (NRCS 422)</option>
+                          <option value="insectary_strip">
+                            Insectary / Beneficial-Insect Strip
+                          </option>
+                          <option value="native_planting">Native Planting</option>
+                          <option value="pollinator_habitat">Pollinator Habitat (NRCS 327)</option>
+                          <option value="field_border">Field Border (NRCS 386)</option>
+                          <option value="riparian_buffer">Riparian Buffer (NRCS 391)</option>
+                          <option value="living_groundcover_habitat">
+                            Living Groundcover Habitat
+                          </option>
+                          <option value="wildlife_corridor">Wildlife Corridor</option>
+                        </StandardSelect>
+                      </StandardField>
+                      <StandardField
+                        label="Species Planted"
+                        helpText="Key species (free text, optional)"
+                      >
+                        <StandardInput
+                          placeholder="e.g., native coyote brush, ceanothus, yarrow"
+                          {...register('species_planted')}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                    <StandardField
+                      label="Established (optional)"
+                      helpText="When the habitat was first planted/established — an older hedgerow is a stronger consumer signal."
+                    >
+                      <StandardInput type="date" {...register('habitat_install_date')} />
+                    </StandardField>
+                    <StandardField
+                      label="Wildlife Observed (optional)"
+                      helpText="Note any beneficial insects, birds, or wildlife you've seen here. Photos are the best evidence."
+                    >
+                      <StandardTextarea
+                        placeholder="e.g., abundant lady beetles and lacewings; songbirds and a resident hawk"
+                        {...register('wildlife_observed')}
+                      />
+                    </StandardField>
+                  </SectionBox>
+                )}
+
+                {/* Nesting / Shelter Structures (NS) — installed wildlife structures. Facts only. */}
+                {watch('type') === 'NS' && (
+                  <SectionBox variant="highlighted" borderColor="green.200">
+                    <SectionHeader
+                      icon={FaSeedling}
+                      iconColor="green.600"
+                      title="Nesting / Shelter Structures"
+                      badge="Biodiversity Practice"
+                      badgeColorScheme="green"
+                      description="Document installed wildlife structures — barn-owl & songbird boxes, raptor perches, native-bee blocks, bat boxes, insect hotels, beetle banks. Add photos as evidence."
+                    />
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField label="Structure Type" helpText="What was installed">
+                        <StandardSelect
+                          placeholder="Select structure type..."
+                          {...register('habitat_type')}
+                        >
+                          <option value="barn_owl_box">Barn-Owl Box</option>
+                          <option value="raptor_perch">Raptor Perch</option>
+                          <option value="songbird_box">Songbird Box</option>
+                          <option value="native_bee_block">Native-Bee Nest Block</option>
+                          <option value="bat_box">Bat Box</option>
+                          <option value="insect_hotel">Insect Hotel</option>
+                          <option value="beetle_bank">Beetle Bank</option>
+                          <option value="brush_pile_hibernacula">Brush Pile / Hibernacula</option>
+                        </StandardSelect>
+                      </StandardField>
+                      <StandardField label="Number Installed" helpText="How many structures">
+                        <StandardInput
+                          type="number"
+                          min="1"
+                          placeholder="e.g., 6"
+                          {...register('habitat_structure_count')}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                    <StandardField
+                      label="Installed (optional)"
+                      helpText="When the structures were installed."
+                    >
+                      <StandardInput type="date" {...register('habitat_install_date')} />
+                    </StandardField>
+                    <StandardField
+                      label="Placement / Occupancy Notes (optional)"
+                      helpText="Mounting, orientation, or whether occupied"
+                    >
+                      <StandardInput
+                        placeholder="e.g., 12 ft poles on field margins; 4 of 6 boxes occupied"
+                        {...register('structure_notes')}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label="Wildlife Observed (optional)"
+                      helpText="Note any wildlife using the structures. Photos are the best evidence."
+                    >
+                      <StandardTextarea
+                        placeholder="e.g., barn owls nesting; reduced rodent pressure"
+                        {...register('wildlife_observed')}
+                      />
+                    </StandardField>
                   </SectionBox>
                 )}
 

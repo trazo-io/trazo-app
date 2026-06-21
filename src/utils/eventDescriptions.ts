@@ -1657,6 +1657,27 @@ export function getConsumerEventDescription(
         description:
           'Sustainable compost application to enrich soil fertility and promote beneficial microbial activity',
         impact: 'HIGH'
+      },
+      GR: {
+        title: 'Grazing Management',
+        icon: '🐑',
+        description:
+          'Integrated livestock grazing for natural weed control, cover-crop termination and soil health',
+        impact: 'HIGH'
+      },
+      HD: {
+        title: 'Habitat Development',
+        icon: '🌿',
+        description:
+          'On-farm habitat — hedgerows, insectary plantings and living groundcover — that supports beneficial insects and birds',
+        impact: 'HIGH'
+      },
+      NS: {
+        title: 'Nesting / Shelter Structures',
+        icon: '🦉',
+        description:
+          'Wildlife structures — owl and songbird boxes, raptor perches, native-bee blocks — that invite natural pest control',
+        impact: 'HIGH'
       }
     };
 
@@ -1749,6 +1770,21 @@ export function getConsumerEventDescription(
         'Compost application enriches soil naturally and promotes beneficial microbial diversity.';
       sustainabilityBenefit =
         'Composting recycles organic materials, reduces waste, and builds soil fertility through sustainable practices.';
+    } else if (soilType === 'GR' || soilType.includes('Grazing')) {
+      consumerImpact =
+        'Integrated livestock grazing controls weeds naturally and builds soil health without chemicals.';
+      sustainabilityBenefit =
+        'Managed grazing recycles nutrients, stimulates root growth, and reduces the need for mowing and herbicides.';
+    } else if (soilType === 'HD' || soilType.includes('Habitat')) {
+      consumerImpact =
+        'On-farm habitat — hedgerows, insectary plantings and living groundcover — supports the beneficial insects and birds that keep this farm in balance.';
+      sustainabilityBenefit =
+        'Documented habitat builds biodiversity and natural pest control, reducing reliance on chemical inputs.';
+    } else if (soilType === 'NS' || soilType.includes('Nesting') || soilType.includes('Shelter')) {
+      consumerImpact =
+        'Nesting and shelter structures — owl and songbird boxes, raptor perches, native-bee blocks — invite wildlife that controls pests naturally.';
+      sustainabilityBenefit =
+        'Providing wildlife habitat supports natural pest control and pollination, a hallmark of regenerative farming.';
     }
 
     // Enhanced title resolution for soil management events

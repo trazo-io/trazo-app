@@ -133,6 +133,34 @@ const formatGrazingPurpose = (v: unknown): string | null => {
   return GRAZING_PURPOSE_LABELS[v] ?? v;
 };
 
+// Biodiversity / habitat labels (HD + NS subtypes) — match SoilManagementTab.jsx dropdowns and the
+// backend HABITAT_TYPE_LABELS (audit_export_service.py). Facts only, no score.
+const HABITAT_TYPE_LABELS: Record<string, string> = {
+  // HD — Habitat Development
+  hedgerow: 'Hedgerow',
+  insectary_strip: 'Insectary / Beneficial-Insect Strip',
+  native_planting: 'Native Planting',
+  pollinator_habitat: 'Pollinator Habitat',
+  field_border: 'Field Border',
+  riparian_buffer: 'Riparian Buffer',
+  living_groundcover_habitat: 'Living Groundcover Habitat',
+  wildlife_corridor: 'Wildlife Corridor',
+  // NS — Nesting / Shelter
+  barn_owl_box: 'Barn-Owl Box',
+  raptor_perch: 'Raptor Perch',
+  songbird_box: 'Songbird Box',
+  native_bee_block: 'Native-Bee Nest Block',
+  bat_box: 'Bat Box',
+  insect_hotel: 'Insect Hotel',
+  beetle_bank: 'Beetle Bank',
+  brush_pile_hibernacula: 'Brush Pile / Hibernacula'
+};
+
+const formatHabitatType = (v: unknown): string | null => {
+  if (typeof v !== 'string' || v === '') return null;
+  return HABITAT_TYPE_LABELS[v] ?? v;
+};
+
 // Raw manure harvest interval labels — match SoilManagementTab.jsx OM dropdown
 // (7 CFR 205.203(c)(1)). Default enum resolver would render bare "120"/"90"/"Na"
 // — we inject the NOP context so the consumer card + farmer modal stay readable.
@@ -167,7 +195,9 @@ const SOIL_SUBTYPE_LABELS: Record<string, string> = {
   OM: 'Organic Matter Addition',
   TI: 'Tillage',
   CO: 'Composting Operation',
-  GR: 'Grazing Management'
+  GR: 'Grazing Management',
+  HD: 'Habitat Development',
+  NS: 'Nesting / Shelter Structures'
 };
 
 const formatSoilSubtype = (value: unknown, _event: SoilData): string => {
@@ -476,6 +506,92 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     surfaces: {
       modal: 'immediate',
       form: 'immediate',
+      consumer_card: 'secondary'
+    }
+  },
+
+  // ---- Biodiversity / Habitat (HD = developed habitat, NS = nesting/shelter) ----
+  // Facts only — never a biodiversity score. The living-floor / bugs / birds proof rides on photos.
+  {
+    name: 'habitat_type',
+    labelKey: 'events.soil.fields.habitatType',
+    valueType: 'enum',
+    formatter: formatHabitatType,
+    visibleForSubtypes: ['HD', 'NS'],
+    surfaces: {
+      timeline: 'immediate',
+      card: 'hero',
+      modal: 'hero',
+      form: 'immediate',
+      consumer_card: 'hero',
+      consumer_timeline: 'immediate'
+    }
+  },
+  {
+    name: 'habitat_structure_count',
+    labelKey: 'events.soil.fields.habitatStructureCount',
+    valueType: 'number',
+    formatter: formatNumber,
+    visibleForSubtypes: ['NS'],
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate'
+    }
+  },
+  {
+    // habitat maturity — an established hedgerow / long-standing owl box is a stronger signal, so
+    // "Established 2019" belongs in Key Details (immediate), not the collapsed Additional section.
+    name: 'habitat_install_date',
+    labelKey: 'events.soil.fields.habitatInstallDate',
+    valueType: 'string',
+    visibleForSubtypes: ['HD', 'NS'],
+    formatter: (v) => {
+      if (typeof v !== 'string' || !v) return null;
+      // date-only ("YYYY-MM-DD") must parse as LOCAL — `new Date("YYYY-MM-DD")` is UTC midnight,
+      // which renders as the PREVIOUS month in negative-offset zones (e.g. "2020-01-01" -> "Dec 2019").
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v);
+      const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(v);
+      if (isNaN(d.getTime())) return v;
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+    },
+    surfaces: {
+      modal: 'immediate',
+      form: 'secondary',
+      consumer_card: 'immediate',
+      consumer_timeline: 'secondary'
+    }
+  },
+  {
+    name: 'species_planted',
+    labelKey: 'events.soil.fields.speciesPlanted',
+    valueType: 'string',
+    visibleForSubtypes: ['HD'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary',
+      consumer_card: 'secondary'
+    }
+  },
+  {
+    name: 'structure_notes',
+    labelKey: 'events.soil.fields.structureNotes',
+    valueType: 'string',
+    visibleForSubtypes: ['NS'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary',
+      consumer_card: 'details'
+    }
+  },
+  {
+    name: 'wildlife_observed',
+    labelKey: 'events.soil.fields.wildlifeObserved',
+    valueType: 'string',
+    visibleForSubtypes: ['HD', 'NS'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary',
       consumer_card: 'secondary'
     }
   },

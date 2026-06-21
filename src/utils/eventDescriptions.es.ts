@@ -462,5 +462,28 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'This equipment operation demonstrates efficient farm equipment management, showing how modern agricultural practices optimize resource use while maintaining food quality.':
     'Esta operación de equipo demuestra una gestión eficiente del equipo agrícola, mostrando cómo las prácticas agrícolas modernas optimizan el uso de recursos a la vez que mantienen la calidad de los alimentos.',
   'Documented equipment operations help build consumer trust through operational transparency and support sustainable farming through efficient resource management.':
-    'Las operaciones de equipo documentadas ayudan a generar la confianza del consumidor mediante la transparencia operativa y respaldan la agricultura sostenible mediante un uso eficiente de los recursos.'
+    'Las operaciones de equipo documentadas ayudan a generar la confianza del consumidor mediante la transparencia operativa y respaldan la agricultura sostenible mediante un uso eficiente de los recursos.',
+
+  // --- Biodiversity / habitat (GR grazing, HD habitat, NS nesting) — descriptions + impact + benefit ---
+  // soilTypeMap descriptions
+  'Integrated livestock grazing for natural weed control, cover-crop termination and soil health':
+    'Pastoreo integrado de ganado para control natural de malezas, terminación de cultivos de cobertura y salud del suelo',
+  'On-farm habitat — hedgerows, insectary plantings and living groundcover — that supports beneficial insects and birds':
+    'Hábitat en la finca — setos vivos, plantaciones insectarias y cobertura viva — que sostiene insectos benéficos y aves',
+  'Wildlife structures — owl and songbird boxes, raptor perches, native-bee blocks — that invite natural pest control':
+    'Estructuras para fauna — cajas para lechuzas y aves canoras, perchas para rapaces, bloques para abejas nativas — que favorecen el control natural de plagas',
+  // consumerImpact ("Qué significa para ti")
+  'Integrated livestock grazing controls weeds naturally and builds soil health without chemicals.':
+    'El pastoreo integrado de ganado controla las malezas de forma natural y mejora la salud del suelo sin químicos.',
+  'On-farm habitat — hedgerows, insectary plantings and living groundcover — supports the beneficial insects and birds that keep this farm in balance.':
+    'El hábitat en la finca — setos vivos, plantaciones insectarias y cobertura viva — sostiene los insectos benéficos y las aves que mantienen el equilibrio de esta finca.',
+  'Nesting and shelter structures — owl and songbird boxes, raptor perches, native-bee blocks — invite wildlife that controls pests naturally.':
+    'Las estructuras de anidación y refugio — cajas para lechuzas y aves canoras, perchas para rapaces, bloques para abejas nativas — atraen fauna que controla las plagas de forma natural.',
+  // sustainabilityBenefit ("Beneficio ambiental")
+  'Managed grazing recycles nutrients, stimulates root growth, and reduces the need for mowing and herbicides.':
+    'El pastoreo manejado recicla nutrientes, estimula el crecimiento de raíces y reduce la necesidad de siega y herbicidas.',
+  'Documented habitat builds biodiversity and natural pest control, reducing reliance on chemical inputs.':
+    'El hábitat documentado fomenta la biodiversidad y el control natural de plagas, reduciendo la dependencia de insumos químicos.',
+  'Providing wildlife habitat supports natural pest control and pollination, a hallmark of regenerative farming.':
+    'Brindar hábitat para la fauna favorece el control natural de plagas y la polinización, un sello de la agricultura regenerativa.'
 };

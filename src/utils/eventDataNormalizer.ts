@@ -1876,6 +1876,13 @@ function normalizeSoilManagementEventData(
     'compost_initial_cn_ratio',
     'manure_harvest_interval',
     'manure_application_date',
+    // Biodiversity / habitat fields (HD / NS subtypes) — facts only, no score
+    'habitat_type',
+    'habitat_structure_count',
+    'habitat_install_date',
+    'species_planted',
+    'wildlife_observed',
+    'structure_notes',
     // ENHANCED: Tillage depth fields for soil CO2 flux calculation (TI events)
     'tillage_depth',
     'tillage_depth_unit',
@@ -1941,6 +1948,56 @@ function normalizeSoilManagementEventData(
     (soilData as any).depth_unit = soilData.tillage_depth_unit;
   }
 
+  // Grazing Summary Mode (GTM-v3): log a rotation of grazing passes as one summary event,
+  // mirroring the pest-scouting aggregate pattern. Only meaningful for the GR (grazing) subtype.
+  // Carries the date range, pass count, and totals so a sheep-grazing regenerative grower can
+  // record a whole rotation without 12 separate entries. is_summary + companion fields live in
+  // extra_data (extracted server-side); no model migration.
+  const soilType = (soilData as any).type || rawData.type || rawData.soil_management_type;
+  const isGrazingSummary =
+    soilType === 'GR' &&
+    (rawData.is_summary === 'true' ||
+      rawData.is_summary === true ||
+      rawData.extra_data?.is_summary === true ||
+      rawData.extra_data?.is_summary === 'true');
+
+  if (isGrazingSummary) {
+    (soilData as any).is_summary = true;
+
+    const dateStart = rawData.date_start || rawData.extra_data?.date_start;
+    const dateEnd = rawData.date_end || rawData.extra_data?.date_end;
+    if (dateStart) (soilData as any).date_start = dateStart;
+    if (dateEnd) (soilData as any).date_end = dateEnd;
+
+    const eventCount = rawData.event_count || rawData.extra_data?.event_count;
+    if (eventCount) {
+      const parsed = typeof eventCount === 'string' ? parseInt(eventCount, 10) : eventCount;
+      if (!isNaN(parsed) && parsed > 0) (soilData as any).event_count = parsed;
+    }
+
+    const totalGrazingDays = rawData.total_grazing_days || rawData.extra_data?.total_grazing_days;
+    if (totalGrazingDays) {
+      const parsed =
+        typeof totalGrazingDays === 'string' ? parseInt(totalGrazingDays, 10) : totalGrazingDays;
+      if (!isNaN(parsed) && parsed > 0) (soilData as any).total_grazing_days = parsed;
+    }
+
+    const areaTotal =
+      rawData.area_covered_total ||
+      rawData.field_area_total ||
+      rawData.extra_data?.area_covered_total;
+    const areaUnit = rawData.area_unit || rawData.extra_data?.area_unit || 'ha';
+    if (areaTotal) {
+      const parsed = typeof areaTotal === 'string' ? parseFloat(areaTotal) : areaTotal;
+      if (!isNaN(parsed) && parsed > 0) {
+        (soilData as any).area_covered_total = parsed;
+        (soilData as any).area_unit = areaUnit;
+      }
+    }
+  } else if (rawData.is_summary === 'false' || rawData.is_summary === false) {
+    (soilData as any).is_summary = false;
+  }
+
   return soilData;
 }
 
@@ -1964,8 +2021,14 @@ function normalizePestManagementEventData(
     // Ghost field cleanup: Removed time_spent_hours, field_area_hectares, travel_distance_km
     // (never in form — form uses area_covered and fuel_consumed instead)
     'trap_count',
+    'trap_type',
+    'pest_catch_count',
     'beneficial_species',
     'release_quantity',
+    // BR NOP 205.206 traceability (supplier/lot audit-only, organic-approved consumer-visible)
+    'beneficial_supplier',
+    'beneficial_lot_number',
+    'beneficial_organic_approved',
     'economic_threshold_met',
     'weather_conditions',
     'crop_growth_stage',

@@ -85,7 +85,7 @@ export type ChemicalSubtype = 'FE' | 'PE' | 'FU' | 'HE';
 
 export type EquipmentSubtype = 'MN' | 'RE' | 'CA' | 'FC' | 'BD' | 'EI';
 
-export type SoilManagementSubtype = 'ST' | 'PA' | 'OM' | 'CC' | 'TI' | 'CO' | 'GR';
+export type SoilManagementSubtype = 'ST' | 'PA' | 'OM' | 'CC' | 'TI' | 'CO' | 'GR' | 'HD' | 'NS';
 
 export type PestManagementSubtype = 'SC' | 'BR' | 'TM' | 'PI' | 'TA' | 'IP';
 

@@ -94,7 +94,12 @@ const pestSchema = object({
   pest_pressure_level: string().optional(),
   beneficial_species: string().optional(),
   release_quantity: string().optional(),
+  beneficial_supplier: string().optional(),
+  beneficial_lot_number: string().optional(),
+  beneficial_organic_approved: string().optional(),
   trap_count: string().optional(),
+  trap_type: string().optional(),
+  pest_catch_count: string().optional(),
   damage_percentage: string().optional(),
   action_threshold_met: string().optional(), // Changed to string for StandardSelect
   ipm_strategy: string().optional(),
@@ -171,7 +176,12 @@ const PestManagementTab = forwardRef(
         pest_pressure_level: (initialValues.pest_pressure_level || '').toLowerCase(), // F37: lowercased so legacy Capitalized values match the now-lowercase options on edit
         beneficial_species: initialValues.beneficial_species || '',
         release_quantity: initialValues.release_quantity || '',
+        beneficial_supplier: initialValues.beneficial_supplier || '',
+        beneficial_lot_number: initialValues.beneficial_lot_number || '',
+        beneficial_organic_approved: initialValues.beneficial_organic_approved || '',
         trap_count: initialValues.trap_count?.toString() || '',
+        trap_type: initialValues.trap_type || '',
+        pest_catch_count: initialValues.pest_catch_count?.toString() || '',
         damage_percentage: initialValues.damage_percentage?.toString() || '',
         action_threshold_met: initialValues.action_threshold_met?.toString() || '',
         ipm_strategy: initialValues.ipm_strategy || '',
@@ -380,9 +390,15 @@ const PestManagementTab = forwardRef(
         ...data,
         // REMOVED: observation → description mapping now handled universally in cleanEventData
         trap_count: data.trap_count ? parseInt(data.trap_count) : null,
+        pest_catch_count: data.pest_catch_count ? parseInt(data.pest_catch_count) : null,
         damage_percentage: data.damage_percentage ? parseFloat(data.damage_percentage) : null,
         // NOP Compliance: Model fields — empty string → null for backend CharField/TextField
         threshold_rationale: data.threshold_rationale || null,
+        // BR/TM traceability — empty string → null so blanks don't persist as ""
+        beneficial_supplier: data.beneficial_supplier || null,
+        beneficial_lot_number: data.beneficial_lot_number || null,
+        beneficial_organic_approved: data.beneficial_organic_approved || null,
+        trap_type: data.trap_type || null,
         identified_by: data.identified_by || null,
         identification_method: data.identification_method || null,
         // Sprint 5: Aggregate Pest Scouting Support
@@ -1123,6 +1139,53 @@ const PestManagementTab = forwardRef(
                       </SimpleGrid>
                     )}
 
+                    {/* Beneficial-Release Traceability (BR) — NOP 7 CFR 205.206 source documentation.
+                        BR only (not IP): a certifier needs the SOURCE of any introduced biological control. */}
+                    {pestType === 'BR' && (
+                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mb={6}>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'events.pest.fields.beneficialSupplier' }) ||
+                            'Beneficial Supplier'
+                          }
+                          helpText="Insectary / supplier the beneficials came from (NOP traceability)"
+                        >
+                          <StandardInput
+                            {...methods.register('beneficial_supplier')}
+                            placeholder="e.g., Rincon-Vitova Insectaries"
+                          />
+                        </StandardField>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'events.pest.fields.beneficialLotNumber' }) ||
+                            'Lot / Batch #'
+                          }
+                          helpText="Supplier lot or batch number"
+                        >
+                          <StandardInput
+                            {...methods.register('beneficial_lot_number')}
+                            placeholder="e.g., LOT-2026-0412"
+                          />
+                        </StandardField>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'events.pest.fields.beneficialOrganicApproved' }) ||
+                            'Organic Approved?'
+                          }
+                          helpText="Is the beneficial organism approved for organic systems?"
+                        >
+                          <StandardSelect {...methods.register('beneficial_organic_approved')}>
+                            <option value="">Select…</option>
+                            <option value="yes">{intl.formatMessage({ id: 'app.yes' }) || 'Yes'}</option>
+                            <option value="no">{intl.formatMessage({ id: 'app.no' }) || 'No'}</option>
+                            <option value="unknown">
+                              {intl.formatMessage({ id: 'app.unknown' }) || 'Unknown'}
+                            </option>
+                          </StandardSelect>
+                        </StandardField>
+                      </SimpleGrid>
+                    )}
+
                     {/* Trap Monitoring Details */}
                     {pestType === 'TM' && (
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
@@ -1134,6 +1197,32 @@ const PestManagementTab = forwardRef(
                             type="number"
                             min="0"
                             {...methods.register('trap_count')}
+                            placeholder="0"
+                          />
+                        </StandardField>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'events.pest.fields.trapType' }) || 'Trap Type'}
+                          helpText="Kind of trap deployed"
+                        >
+                          <StandardSelect {...methods.register('trap_type')}>
+                            <option value="">Select…</option>
+                            <option value="sticky">Sticky card</option>
+                            <option value="pheromone">Pheromone lure</option>
+                            <option value="delta">Delta trap</option>
+                            <option value="bucket_funnel">Bucket / funnel</option>
+                            <option value="other">Other</option>
+                          </StandardSelect>
+                        </StandardField>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'events.pest.fields.pestCatchCount' }) || 'Insects Caught'
+                          }
+                          helpText="Total insects caught — not the number of traps"
+                        >
+                          <StandardInput
+                            type="number"
+                            min="0"
+                            {...methods.register('pest_catch_count')}
                             placeholder="0"
                           />
                         </StandardField>

@@ -411,11 +411,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     const timing = (template.timing || '').toLowerCase();
 
     // ── Chemical events: target pest/disease ──
-    if (
-      templateId === 'fungicide' ||
-      templateId === 'pest_control' ||
-      templateId === 'herbicide'
-    ) {
+    if (templateId === 'fungicide' || templateId === 'pest_control' || templateId === 'herbicide') {
       // Fungicide / pest control disease keywords
       if (templateId === 'fungicide' || templateId === 'pest_control') {
         if (name.includes('pruning') || desc.includes('pruning')) {
@@ -463,29 +459,36 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       templateId === 'fertilization'
     ) {
       const timingContext = `${name} ${desc} ${timing} ${reasoning}`;
-      if (timingContext.includes('dormant') || timingContext.includes('winter') || timingContext.includes('pruning')) {
+      if (
+        timingContext.includes('dormant') ||
+        timingContext.includes('winter') ||
+        timingContext.includes('pruning')
+      ) {
         overrides.application_timing = 'dormant';
-      } else if (timingContext.includes('bloom') || timingContext.includes('flower') || timingContext.includes('blossom')) {
+      } else if (
+        timingContext.includes('bloom') ||
+        timingContext.includes('flower') ||
+        timingContext.includes('blossom')
+      ) {
         overrides.application_timing = 'flowering';
       } else if (timingContext.includes('fruit') || timingContext.includes('set')) {
         overrides.application_timing = 'fruit_development';
       } else if (timingContext.includes('pre-harvest') || timingContext.includes('preharvest')) {
         overrides.application_timing = 'harvest';
-      } else if (timingContext.includes('pre-plant') || timingContext.includes('preplant') || timingContext.includes('before planting')) {
+      } else if (
+        timingContext.includes('pre-plant') ||
+        timingContext.includes('preplant') ||
+        timingContext.includes('before planting')
+      ) {
         overrides.application_timing = 'pre_plant';
       }
       // If no match, let config default stand
     }
 
-    // ── Chemical events: weather conditions default ──
-    if (
-      templateId === 'fertilization' ||
-      templateId === 'pest_control' ||
-      templateId === 'herbicide' ||
-      templateId === 'fungicide'
-    ) {
-      overrides.weather_conditions = 'calm_dry';
-    }
+    // ── Chemical events: weather conditions ──
+    // V4 (2026-06): do NOT inject a phantom 'calm_dry' weather observation. Spray weather is a
+    // compliance field on the legal spray record (CA PUR / GLOBALG.A.P.); auto-asserting calm & dry
+    // fabricates conditions the farmer never observed. Leave blank for the farmer to enter.
 
     // ── Chemical events: map AI best_practices to application_details ──
     if (
@@ -501,10 +504,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       }
     }
 
-    // ── Harvest: quality grade default ──
-    if (templateId === 'harvest') {
-      overrides.harvest_quality_grade = 'grade_a';
-    }
+    // ── Harvest: quality grade ──
+    // V4 (2026-06): do NOT inject a phantom 'grade_a' grade. Harvest grade is a real, consumer-facing
+    // and audit-relevant assessment; defaulting it asserts a quality the farmer never graded. Leave blank.
 
     return overrides;
   };
@@ -646,8 +648,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       'bolivia',
       'peru'
     ];
-    const isSouthern =
-      (latitude != null && latitude < 0) || southernCountries.includes(country);
+    const isSouthern = (latitude != null && latitude < 0) || southernCountries.includes(country);
 
     if (isSouthern) {
       if (month >= 12 || month <= 2) return 'summer';
@@ -944,7 +945,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       // Call backend to increment usage counter
       const csrfToken = document.cookie
         .split('; ')
-        .find(row => row.startsWith('csrftoken='))
+        .find((row) => row.startsWith('csrftoken='))
         ?.split('=')[1];
       await fetch(`/api/carbon/event-templates/${actualId}/use_template/`, {
         method: 'POST',
@@ -1190,9 +1191,10 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       description: eventData.description || `Voice-detected ${templateMapping.displayName}`,
       carbonImpact: 0,
       costEstimate: 0,
-      efficiency_tip: summary.detected.length > 0
-        ? `Detected: ${summary.detected.join(', ')}`
-        : 'Please review and complete the fields below',
+      efficiency_tip:
+        summary.detected.length > 0
+          ? `Detected: ${summary.detected.join(', ')}`
+          : 'Please review and complete the fields below',
       typical_duration: '30 minutes',
       carbonCategory: 'medium' as const,
       sustainabilityScore: 8,
@@ -1253,15 +1255,16 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       // Valid subtypes per backend event model (from Django model choices)
       const VALID_SUBTYPES: Record<number, string[]> = {
         1: ['PL', 'HA', 'IR', 'PR', 'TR', 'EM', 'CU', 'TH'], // ProductionEvent
-        2: ['FE', 'PE', 'HE', 'FU'],                            // ChemicalEvent
-        4: ['MN', 'RE', 'CA', 'EI'],                            // EquipmentEvent
-        5: ['ST', 'PA', 'OM', 'CC', 'TI', 'CO'],               // SoilManagementEvent
+        2: ['FE', 'PE', 'HE', 'FU'], // ChemicalEvent
+        4: ['MN', 'RE', 'CA', 'EI'], // EquipmentEvent
+        5: ['ST', 'PA', 'OM', 'CC', 'TI', 'CO'] // SoilManagementEvent
       };
       const validForModel = VALID_SUBTYPES[eventType] || [];
       // Use config type only if it's valid for the target model; otherwise fall back to template type
-      const resolvedType = (configType && validForModel.includes(configType as string))
-        ? configType
-        : (templateType || configType);
+      const resolvedType =
+        configType && validForModel.includes(configType as string)
+          ? configType
+          : templateType || configType;
 
       const backendEventData = {
         companyId: currentCompany.id,
@@ -1327,8 +1330,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
       photoTier === 'essential'
         ? 'red.200'
         : photoTier === 'recommended'
-          ? 'orange.200'
-          : 'gray.200';
+        ? 'orange.200'
+        : 'gray.200';
 
     return (
       <Box
@@ -1380,9 +1383,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                 justifyContent="space-between"
                 color="gray.600"
                 fontWeight="medium"
-                rightIcon={
-                  <Icon as={isGuidanceOpen ? FaChevronUp : FaChevronDown} boxSize={3} />
-                }
+                rightIcon={<Icon as={isGuidanceOpen ? FaChevronUp : FaChevronDown} boxSize={3} />}
                 _hover={{ bg: 'gray.50' }}
               >
                 {intl.formatMessage({
@@ -1412,7 +1413,12 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'full', md: '2xl' }} scrollBehavior="inside">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size={{ base: 'full', md: '2xl' }}
+      scrollBehavior="inside"
+    >
       <ModalOverlay />
       <ModalContent
         maxH={{ base: '100vh', md: '90vh' }}
@@ -1529,7 +1535,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                         borderRadius="full"
                       >
                         {selectedTemplate.id.startsWith('ai-')
-                          ? `${intl.formatMessage({ id: 'quickAdd.aiMatch' })} ${Math.round((selectedTemplate as any).confidence)}%`
+                          ? `${intl.formatMessage({ id: 'quickAdd.aiMatch' })} ${Math.round(
+                              (selectedTemplate as any).confidence
+                            )}%`
                           : `${selectedTemplate.sustainabilityScore}/10`}
                       </Badge>
                     </HStack>
@@ -1590,7 +1598,10 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                           ? intl.formatMessage({ id: 'quickAdd.voiceLooksGood' })
                           : intl.formatMessage({ id: 'quickAdd.voiceReviewNeeded' })}
                       </Text>
-                      <Badge colorScheme={voiceBanner.confidence >= 70 ? 'green' : 'yellow'} size="sm">
+                      <Badge
+                        colorScheme={voiceBanner.confidence >= 70 ? 'green' : 'yellow'}
+                        size="sm"
+                      >
                         {voiceBanner.confidence}%
                       </Badge>
                     </HStack>
@@ -1684,25 +1695,14 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
             // (pattern used by Notion, Linear, Slack Workflow Builder).
             <VStack spacing={4} align="stretch">
               {/* Selected Template Summary with "Change" affordance */}
-              <Box
-                p={4}
-                bg="green.50"
-                borderRadius="xl"
-                border="1px solid"
-                borderColor="green.200"
-              >
+              <Box p={4} bg="green.50" borderRadius="xl" border="1px solid" borderColor="green.200">
                 <HStack justify="space-between" align="start" spacing={3}>
                   <HStack spacing={3} flex={1} minW={0}>
                     <Box p={2} bg="green.100" borderRadius="lg" flexShrink={0}>
                       <Icon as={selectedTemplate.icon} color="green.600" boxSize={5} />
                     </Box>
                     <VStack align="start" spacing={0} flex={1} minW={0}>
-                      <Text
-                        fontWeight="semibold"
-                        color="gray.800"
-                        fontSize="sm"
-                        noOfLines={2}
-                      >
+                      <Text fontWeight="semibold" color="gray.800" fontSize="sm" noOfLines={2}>
                         {selectedTemplate.name.replace('🤖 ', '').replace('⭐ ', '')}
                       </Text>
                       <Text fontSize="xs" color="gray.600" noOfLines={2}>
@@ -1896,7 +1896,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
 
               {/* Voice Input Section */}
               {(() => {
-                const plan = currentCompany?.subscription_plan || currentCompany?.subscription?.plan;
+                const plan =
+                  currentCompany?.subscription_plan || currentCompany?.subscription?.plan;
                 const hasVoiceFeature = !!plan?.features?.voice_recording;
 
                 if (!hasVoiceFeature) {
@@ -1911,7 +1912,8 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                           badgeColorScheme="gray"
                         />
                         <Text fontSize="sm" color="gray.600" textAlign="center">
-                          Voice input is available on Basic ($69/mo) and higher plans. Upgrade to capture farm events by simply speaking.
+                          Voice input is available on Basic ($69/mo) and higher plans. Upgrade to
+                          capture farm events by simply speaking.
                         </Text>
                       </VStack>
                     </SectionBox>
@@ -2188,11 +2190,7 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
               unmount/remount when switching between commit and detailed form views.
               Without this, TrazoImageUpload's S3Image children lose their load state
               and render broken thumbnails on the second view. */}
-          {selectedTemplate && (
-            <Box pt={showDetailedForm ? 6 : 4}>
-              {renderPhotoSection()}
-            </Box>
-          )}
+          {selectedTemplate && <Box pt={showDetailedForm ? 6 : 4}>{renderPhotoSection()}</Box>}
         </ModalBody>
 
         {/* Fixed Bottom Action Section - Show when template is selected */}
@@ -2233,7 +2231,9 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                     py={1}
                   >
                     {selectedTemplate.id.startsWith('ai-')
-                      ? `${intl.formatMessage({ id: 'quickAdd.aiMatch' })} ${Math.round((selectedTemplate as any).confidence)}%`
+                      ? `${intl.formatMessage({ id: 'quickAdd.aiMatch' })} ${Math.round(
+                          (selectedTemplate as any).confidence
+                        )}%`
                       : `${selectedTemplate.sustainabilityScore}/10`}
                   </Badge>
                 </HStack>

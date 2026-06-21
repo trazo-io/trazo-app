@@ -197,6 +197,49 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
       consumer_card: 'immediate'
     }
   },
+  // BR NOP 205.206 traceability. Supplier + lot are AUDIT-ONLY (commercially sensitive — no
+  // consumer surface). Organic-approval IS a consumer transparency positive.
+  {
+    name: 'beneficial_supplier',
+    labelKey: 'events.pest.fields.beneficialSupplier',
+    valueType: 'string',
+    visibleForSubtypes: ['BR'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    name: 'beneficial_lot_number',
+    labelKey: 'events.pest.fields.beneficialLotNumber',
+    valueType: 'string',
+    visibleForSubtypes: ['BR'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    name: 'beneficial_organic_approved',
+    labelKey: 'events.pest.fields.beneficialOrganicApproved',
+    valueType: 'enum',
+    visibleForSubtypes: ['BR'],
+    formatter: (v) => {
+      if (typeof v !== 'string' || !v) return null;
+      const m: Record<string, string> = {
+        yes: 'OMRI / Organic-approved',
+        no: 'Not organic-approved',
+        unknown: 'Approval status unknown'
+      };
+      return m[v.toLowerCase()] ?? v;
+    },
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate',
+      consumer_timeline: 'secondary'
+    }
+  },
 
   // ---- Trap Monitoring (TM) ----
   {
@@ -210,6 +253,42 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
       modal: 'immediate',
       form: 'immediate',
       consumer_card: 'secondary'
+    }
+  },
+  {
+    name: 'trap_type',
+    labelKey: 'events.pest.fields.trapType',
+    valueType: 'enum',
+    visibleForSubtypes: ['TM'],
+    formatter: (v) => {
+      if (typeof v !== 'string' || !v) return null;
+      const m: Record<string, string> = {
+        sticky: 'Sticky card',
+        pheromone: 'Pheromone lure',
+        delta: 'Delta trap',
+        bucket_funnel: 'Bucket / funnel',
+        other: 'Other'
+      };
+      return m[v.toLowerCase()] ?? v;
+    },
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'secondary'
+    }
+  },
+  {
+    // the actual catch is the RESULT of trap monitoring — promote to Key Details (immediate);
+    // trap_type / trap_count are configuration, they stay in Additional (secondary).
+    name: 'pest_catch_count',
+    labelKey: 'events.pest.fields.pestCatchCount',
+    valueType: 'number',
+    visibleForSubtypes: ['TM'],
+    formatter: formatNumber,
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate'
     }
   },
 

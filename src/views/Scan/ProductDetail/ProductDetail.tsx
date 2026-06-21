@@ -71,7 +71,8 @@ import {
   FaUniversity,
   FaAward,
   FaClipboardList,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaRecycle
 } from 'react-icons/fa';
 import { BsStarFill, BsStarHalf, BsStar, BsShieldCheck } from 'react-icons/bs';
 import Card from 'components/Card/Card';
@@ -1157,6 +1158,138 @@ function ProductDetail() {
                             </>
                           );
                         })()}
+
+                      {/* Documented practices — GTM-v3 "real vs. fake organic" differentiator.
+                          FACTS the farmer logged (integrated grazing, cover crops, on-farm compost),
+                          never a grade, verdict, or regenerative badge (transparency-first.md /
+                          EU ECGT 2024/825). The list is full for a real practice-based grower and
+                          empty for an input-substitution farm — the difference shows itself. */}
+                      {(() => {
+                        const practices =
+                          (completeData as any)?.standard_view?.practice_summary?.practices || [];
+                        if (!practices.length) return null;
+                        const iconFor = (key: string) =>
+                          key === 'cover_crops'
+                            ? FaSeedling
+                            : key === 'on_farm_compost'
+                            ? FaRecycle
+                            : FaLeaf;
+                        // Localize raw codes (sheep, hedgerow, barn_owl_box, …) → readable, translated
+                        // labels. defaultMessage = Title-Cased English fallback so it never shows a raw code.
+                        const titleCase = (t: string) =>
+                          (t || '')
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, (c) => c.toUpperCase())
+                            .trim();
+                        const locList = (codes: string[], group: string) =>
+                          (codes || [])
+                            .filter(Boolean)
+                            .map((c) =>
+                              intl.formatMessage({
+                                id: `consumer.habitat.${group}.${c}`,
+                                defaultMessage: titleCase(c)
+                              })
+                            )
+                            .join(', ');
+                        const labelFor = (p: any) => {
+                          if (p.key === 'integrated_grazing') {
+                            const animals = locList(p.animal_types, 'animal');
+                            return animals
+                              ? intl.formatMessage(
+                                  {
+                                    id: 'consumer.practices.grazingAnimals',
+                                    defaultMessage: 'Integrated grazing: {animals}'
+                                  },
+                                  { animals }
+                                )
+                              : intl.formatMessage({
+                                  id: 'consumer.practices.grazing',
+                                  defaultMessage: 'Integrated grazing'
+                                });
+                          }
+                          if (p.key === 'cover_crops') {
+                            const species = (p.species || []).join(', ');
+                            return species
+                              ? intl.formatMessage(
+                                  {
+                                    id: 'consumer.practices.coverCropsSpecies',
+                                    defaultMessage: 'Cover crops: {species}'
+                                  },
+                                  { species }
+                                )
+                              : intl.formatMessage({
+                                  id: 'consumer.practices.coverCrops',
+                                  defaultMessage: 'Cover cropping'
+                                });
+                          }
+                          if (p.key === 'on_farm_compost') {
+                            return intl.formatMessage({
+                              id: 'consumer.practices.compost',
+                              defaultMessage: 'On-farm compost'
+                            });
+                          }
+                          if (p.key === 'habitat_development') {
+                            const types = locList(p.habitat_types, 'type');
+                            return types
+                              ? intl.formatMessage(
+                                  {
+                                    id: 'consumer.practices.habitatDev',
+                                    defaultMessage: 'Habitat established: {types}'
+                                  },
+                                  { types }
+                                )
+                              : intl.formatMessage({
+                                  id: 'consumer.practices.habitatDevGeneric',
+                                  defaultMessage: 'Habitat development'
+                                });
+                          }
+                          if (p.key === 'nesting_shelter') {
+                            const types = locList(p.structures, 'structure');
+                            return types
+                              ? intl.formatMessage(
+                                  {
+                                    id: 'consumer.practices.nestingShelter',
+                                    defaultMessage: 'Nesting & shelter: {types}'
+                                  },
+                                  { types }
+                                )
+                              : intl.formatMessage({
+                                  id: 'consumer.practices.nestingShelterGeneric',
+                                  defaultMessage: 'Nesting & shelter structures'
+                                });
+                          }
+                          return intl.formatMessage({
+                            id: 'consumer.practices.documented',
+                            defaultMessage: 'Documented practice'
+                          });
+                        };
+                        return (
+                          <>
+                            <Divider />
+                            <VStack align="start" spacing={1.5}>
+                              <Text fontSize="xs" fontWeight="semibold" color="gray.500">
+                                {intl.formatMessage({
+                                  id: 'consumer.practices.title',
+                                  defaultMessage: 'Documented farming practices'
+                                })}
+                              </Text>
+                              {practices.map((p: any) => (
+                                <HStack key={p.key} spacing={2} align="start">
+                                  <Icon
+                                    as={iconFor(p.key)}
+                                    color="green.600"
+                                    boxSize={3.5}
+                                    mt="2px"
+                                  />
+                                  <Text fontSize="sm" color="gray.700">
+                                    {labelFor(p)}
+                                  </Text>
+                                </HStack>
+                              ))}
+                            </VStack>
+                          </>
+                        );
+                      })()}
 
                       {/* Continuous proof messaging — only for non-organic verified certs */}
                       {!organicSummary &&
