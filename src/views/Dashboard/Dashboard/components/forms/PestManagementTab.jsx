@@ -92,6 +92,9 @@ const pestSchema = object({
   // Existing pest management fields
   pest_species: string().optional(),
   pest_pressure_level: string().optional(),
+  // F44: quantitative UC-IPM monitoring count (e.g. 5 mites/leaf) + its unit.
+  monitoring_count: string().optional(),
+  monitoring_unit: string().optional(),
   beneficial_species: string().optional(),
   release_quantity: string().optional(),
   beneficial_supplier: string().optional(),
@@ -174,6 +177,8 @@ const PestManagementTab = forwardRef(
         // Existing pest management fields
         pest_species: initialValues.pest_species || '',
         pest_pressure_level: (initialValues.pest_pressure_level || '').toLowerCase(), // F37: lowercased so legacy Capitalized values match the now-lowercase options on edit
+        monitoring_count: initialValues.monitoring_count?.toString() || '',
+        monitoring_unit: initialValues.monitoring_unit || '',
         beneficial_species: initialValues.beneficial_species || '',
         release_quantity: initialValues.release_quantity || '',
         beneficial_supplier: initialValues.beneficial_supplier || '',
@@ -271,6 +276,8 @@ const PestManagementTab = forwardRef(
           // Existing pest management fields
           pest_species: initialValues.pest_species || '',
           pest_pressure_level: (initialValues.pest_pressure_level || '').toLowerCase(), // F37: lowercased so legacy Capitalized values match the now-lowercase options on edit
+          monitoring_count: initialValues.monitoring_count?.toString() || '',
+          monitoring_unit: initialValues.monitoring_unit || '',
           beneficial_species: initialValues.beneficial_species || '',
           release_quantity: initialValues.release_quantity || '',
           trap_count: initialValues.trap_count?.toString() || '',
@@ -392,6 +399,9 @@ const PestManagementTab = forwardRef(
         trap_count: data.trap_count ? parseInt(data.trap_count) : null,
         pest_catch_count: data.pest_catch_count ? parseInt(data.pest_catch_count) : null,
         damage_percentage: data.damage_percentage ? parseFloat(data.damage_percentage) : null,
+        // F44: quantitative monitoring count + unit
+        monitoring_count: data.monitoring_count ? parseFloat(data.monitoring_count) : null,
+        monitoring_unit: data.monitoring_unit || null,
         // NOP Compliance: Model fields — empty string → null for backend CharField/TextField
         threshold_rationale: data.threshold_rationale || null,
         // BR/TM traceability — empty string → null so blanks don't persist as ""
@@ -1096,6 +1106,45 @@ const PestManagementTab = forwardRef(
                             </StandardSelect>
                           </StandardField>
                         )}
+                      </SimpleGrid>
+                    )}
+
+                    {/* F44: quantitative UC-IPM monitoring count — the measured number behind the
+                        scouting/trap decision (e.g. 5 mites/leaf, 12% fruit infested). */}
+                    {(pestType === 'SC' || pestType === 'TM' || pestType === 'PI') && (
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'events.pest.fields.monitoringCount' }) ||
+                            'Monitoring Count'
+                          }
+                          helpText="Measured count (e.g. 5 mites per leaf, 12% fruit infested)"
+                        >
+                          <StandardInput
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            {...methods.register('monitoring_count')}
+                            placeholder="e.g., 5"
+                          />
+                        </StandardField>
+                        <StandardField
+                          label={
+                            intl.formatMessage({ id: 'events.pest.fields.monitoringUnit' }) ||
+                            'Count Unit'
+                          }
+                          helpText="UC IPM monitoring unit"
+                        >
+                          <StandardSelect {...methods.register('monitoring_unit')}>
+                            <option value="">Select unit…</option>
+                            <option value="per_leaf">per leaf</option>
+                            <option value="per_trap">per trap</option>
+                            <option value="per_tree">per tree</option>
+                            <option value="per_100_fruit">per 100 fruit</option>
+                            <option value="percent_infested">% infested</option>
+                            <option value="per_sample">per sample</option>
+                          </StandardSelect>
+                        </StandardField>
                       </SimpleGrid>
                     )}
 

@@ -800,6 +800,14 @@ function normalizeProductionEventData(
     ) {
       (productionData as any).grain_moisture = rawData.grain_moisture;
     }
+    // F43: dry-matter % (avocado/nut maturity) — top-level model field, like grain_moisture.
+    if (
+      rawData.dry_matter_percentage !== undefined &&
+      rawData.dry_matter_percentage !== null &&
+      rawData.dry_matter_percentage !== ''
+    ) {
+      (productionData as any).dry_matter_percentage = rawData.dry_matter_percentage;
+    }
 
     // Phase 2: Extra form fields that flow into extra_data for consumer display
     // These merge with any existing extra_data from rawData (preserved by createBaseEvent)
@@ -811,7 +819,6 @@ function normalizeProductionEventData(
       // form-preview path. Backend path is handled below in normalizeBackendProductionData.
       (productionData as any).harvest_method = rawData.harvest_method;
     }
-    if (rawData.brix_levels) extraFormFields.brix_levels = rawData.brix_levels;
     if (rawData.native_species_planted)
       extraFormFields.native_species_planted = rawData.native_species_planted;
     if (rawData.habitat_area_hectares)
@@ -1006,6 +1013,11 @@ function normalizeProductionEventData(
     }
     if (rawData.grain_moisture !== undefined && rawData.grain_moisture !== null) {
       (productionData as any).grain_moisture = rawData.grain_moisture;
+    }
+    // F43: dry-matter % — BACKEND/consumer path (the form path carries it at ~809; this branch
+    // is the one the consumer QR + audit modal actually run, so it MUST carry it too).
+    if (rawData.dry_matter_percentage !== undefined && rawData.dry_matter_percentage !== null) {
+      (productionData as any).dry_matter_percentage = rawData.dry_matter_percentage;
     }
 
     // Phase 2: harvest_method and brix_levels come from extra_data on backend
@@ -2018,6 +2030,8 @@ function normalizePestManagementEventData(
     'pest_species',
     'damage_percentage',
     'pest_pressure_level',
+    'monitoring_count',
+    'monitoring_unit',
     // Ghost field cleanup: Removed time_spent_hours, field_area_hectares, travel_distance_km
     // (never in form — form uses area_covered and fuel_consumed instead)
     'trap_count',

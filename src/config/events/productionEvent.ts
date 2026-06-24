@@ -268,6 +268,25 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
+    // F43: dry-matter % — the maturity metric for avocado & nuts (the CA orchard ICP). Hidden when
+    // null/0 (registry can't read crop metadata), so citrus/grain harvests don't show an empty row.
+    name: 'dry_matter_percentage',
+    labelKey: 'events.production.fields.dryMatterPercentage',
+    valueType: 'number',
+    visibleForSubtypes: ['HA', 'PH'],
+    formatter: (v) => {
+      if (v == null || v === '') return null;
+      const num = typeof v === 'number' ? v : parseFloat(String(v));
+      if (!isFinite(num) || num <= 0) return null;
+      return `${num}%`;
+    },
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'secondary'
+    }
+  },
+  {
     // Grain moisture is only relevant for grain crops (corn, wheat, rice,
     // soybean, etc.). Fruit/vegetable/nut harvests should NOT display this.
     // Since the registry can't access crop metadata, hide when null/0 — that

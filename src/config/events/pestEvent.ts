@@ -98,6 +98,35 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     }
   },
   {
+    // F44: quantitative UC-IPM monitoring count — formatter folds in the unit (e.g. "5 per leaf")
+    // so monitoring_unit isn't a separate row. SC/TM/PI only.
+    name: 'monitoring_count',
+    labelKey: 'events.pest.fields.monitoringCount',
+    valueType: 'number',
+    visibleForSubtypes: ['SC', 'TM', 'PI'],
+    formatter: (v, event) => {
+      if (v == null || v === '') return null;
+      const num = typeof v === 'number' ? v : parseFloat(String(v));
+      if (!isFinite(num)) return null;
+      const unitLabels: Record<string, string> = {
+        per_leaf: 'per leaf',
+        per_trap: 'per trap',
+        per_tree: 'per tree',
+        per_100_fruit: 'per 100 fruit',
+        percent_infested: '% infested',
+        per_sample: 'per sample'
+      };
+      const u = (event?.monitoring_unit as string) || '';
+      const unit = unitLabels[u] ?? u;
+      return unit ? `${num} ${unit}` : `${num}`;
+    },
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'secondary'
+    }
+  },
+  {
     name: 'damage_percentage',
     labelKey: 'events.pest.fields.damagePercentage',
     valueType: 'number',

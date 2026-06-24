@@ -660,6 +660,13 @@ export function localizeFieldValue(
     const mo = ES_MONTHS[md[1]];
     if (mo) return `${mo} ${md[2]}`;
   }
+  // "<number> <unit>" technical counts (e.g. monitoring "5 per leaf") — translate a KNOWN unit
+  // suffix; unknown suffixes (farmer free-text like "5000 eggs/acre") pass through unchanged.
+  const um = str.match(/^(\d+(?:\.\d+)?)\s+(.+)$/);
+  if (um) {
+    const unitEs = FIELD_VALUE_ES[um[2]];
+    if (unitEs) return `${um[1]} ${unitEs}`;
+  }
   return str;
 }
 
@@ -1852,6 +1859,17 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
         priority: 'immediate',
         category: 'measurement',
         tooltip: 'Sugar content measurement - higher brix means sweeter, more flavorful fruit'
+      });
+    }
+
+    // F43: dry-matter % — avocado/nut maturity (the CA orchard ICP metric)
+    if (isValidValue(event.dry_matter_percentage)) {
+      immediate.push({
+        label: 'Dry Matter',
+        value: `${event.dry_matter_percentage}%`,
+        priority: 'immediate',
+        category: 'measurement',
+        tooltip: 'Dry matter % — maturity standard for avocado and nuts (CA Hass legal min ~20.8%)'
       });
     }
 
@@ -3384,6 +3402,25 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
     immediate.push({
       label: 'Crop Impact Level',
       value: `${event.damage_percentage}%`,
+      priority: 'immediate',
+      category: 'measurement'
+    });
+  }
+
+  // F44: quantitative monitoring count (e.g. "5 per leaf") — fold in the unit
+  if (event.monitoring_count !== null && event.monitoring_count !== undefined && event.monitoring_count !== '') {
+    const unitLabels: Record<string, string> = {
+      per_leaf: 'per leaf',
+      per_trap: 'per trap',
+      per_tree: 'per tree',
+      per_100_fruit: 'per 100 fruit',
+      percent_infested: '% infested',
+      per_sample: 'per sample'
+    };
+    const u = unitLabels[event.monitoring_unit] || event.monitoring_unit || '';
+    immediate.push({
+      label: 'Monitoring Count',
+      value: u ? `${event.monitoring_count} ${u}` : `${event.monitoring_count}`,
       priority: 'immediate',
       category: 'measurement'
     });

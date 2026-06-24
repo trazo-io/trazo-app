@@ -67,6 +67,14 @@ const formSchemaSoilManagement = object({
   soil_ph: string().optional(),
   organic_matter_percentage: string().optional(),
   soil_texture: string().optional(),
+  // F19: Soil-test lab RESULTS (ST only) — packed into the test_results JSONField on submit.
+  soil_lab_name: string().optional(),
+  soil_sample_id: string().optional(),
+  soil_report_date: string().optional(),
+  soil_nitrogen: string().optional(),
+  soil_phosphorus: string().optional(),
+  soil_potassium: string().optional(),
+  soil_cec: string().optional(),
   // Sprint 2 Epic 2.1.3: Removed soil_moisture (duplicates Weather event)
   depth: string().optional(),
   depth_unit: string().optional(),
@@ -116,6 +124,9 @@ const formSchemaSoilManagement = object({
   compost_turning_count: string().optional(),
   compost_method: string().optional(),
   compost_initial_cn_ratio: string().optional(),
+  // F24: complete the NOP 5021 compost record — feedstock + temperature-monitoring readings.
+  compost_feedstock: string().optional(),
+  compost_temperature_log: string().optional(),
   manure_harvest_interval: string().optional(),
   manure_application_date: string().optional(),
   observation: string().optional(),
@@ -286,6 +297,14 @@ const SoilManagementTab = forwardRef(
         soil_ph: initialValues.soil_ph || '',
         organic_matter_percentage: initialValues.organic_matter_percentage || '',
         soil_texture: initialValues.soil_texture || '',
+        // F19: soil-test results pre-fill from the stored test_results JSON on edit
+        soil_lab_name: initialValues.test_results?.lab_name || '',
+        soil_sample_id: initialValues.test_results?.sample_id || '',
+        soil_report_date: initialValues.test_results?.report_date || '',
+        soil_nitrogen: initialValues.test_results?.nitrogen?.toString?.() || '',
+        soil_phosphorus: initialValues.test_results?.phosphorus?.toString?.() || '',
+        soil_potassium: initialValues.test_results?.potassium?.toString?.() || '',
+        soil_cec: initialValues.test_results?.cec?.toString?.() || '',
         // Sprint 2 Epic 2.1.3: Removed soil_moisture
         depth: initialValues.depth || '',
         depth_unit: initialValues.depth_unit || 'cm',
@@ -356,6 +375,8 @@ const SoilManagementTab = forwardRef(
         compost_turning_count: initialValues.compost_turning_count || '',
         compost_method: initialValues.compost_method || '',
         compost_initial_cn_ratio: initialValues.compost_initial_cn_ratio || '',
+        compost_feedstock: initialValues.compost_feedstock || '',
+        compost_temperature_log: initialValues.compost_temperature_log || '',
         manure_harvest_interval: initialValues.manure_harvest_interval || '',
         manure_application_date: initialValues.manure_application_date || '',
         observation: initialValues.observation || '',
@@ -687,6 +708,26 @@ const SoilManagementTab = forwardRef(
         }
       };
 
+      // F19: pack the soil-test lab RESULTS (ST only) into the reserved test_results JSONField. A
+      // soil test that records only pH/OM/texture but no N/P/K/CEC/lab is an incomplete certifier
+      // record. Only non-empty values are stored; report_date lives inside the JSON (no DRF 400).
+      if (data.type === 'ST') {
+        const tr = {};
+        const put = (k, v) => {
+          if (v !== undefined && v !== null && String(v).trim() !== '') tr[k] = v;
+        };
+        put('lab_name', data.soil_lab_name);
+        put('sample_id', data.soil_sample_id);
+        put('report_date', data.soil_report_date);
+        put('nitrogen', data.soil_nitrogen);
+        put('phosphorus', data.soil_phosphorus);
+        put('potassium', data.soil_potassium);
+        put('cec', data.soil_cec);
+        if (Object.keys(tr).length > 0) {
+          processedData.test_results = { ...(processedData.test_results || {}), ...tr };
+        }
+      }
+
       // Grazing Summary Mode: only send summary fields for an active grazing summary; otherwise
       // strip them so non-summary (and non-grazing) soil events don't carry stray rotation fields.
       // Mirrors the pest-tab guard. The backend MERGES extra_data, so to actually clear a stale
@@ -898,113 +939,120 @@ const SoilManagementTab = forwardRef(
                     uses no equipment, so the whole section is noise there. Kept for HD/NS because
                     planting a hedgerow or mounting nest boxes can use an auger/tractor. */}
                 {watch('type') !== 'GR' && (
-                <SectionBox variant="highlighted">
-                  <SectionHeader
-                    icon={FaSeedling}
-                    iconColor="green.600"
-                    title="Fuel & Equipment Operations"
-                    badge="Enhanced Carbon Accuracy"
-                    badgeColorScheme="green"
-                    description="Document your equipment usage, fuel consumption, and operational details to build consumer trust through transparent farming practices."
-                  />
+                  <SectionBox variant="highlighted">
+                    <SectionHeader
+                      icon={FaSeedling}
+                      iconColor="green.600"
+                      title="Fuel & Equipment Operations"
+                      badge="Enhanced Carbon Accuracy"
+                      badgeColorScheme="green"
+                      description="Document your equipment usage, fuel consumption, and operational details to build consumer trust through transparent farming practices."
+                    />
 
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    {/* Phase 3: Fuel Type Selector */}
-                    <StandardField
-                      label="Fuel Type"
-                      helpText="Select a fuel type only if powered equipment was used. Leave blank for hand/manual operations."
-                    >
-                      <StandardSelect placeholder="Select fuel type..." {...register('fuel_type')}>
-                        {FUEL_TYPES.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label} ({type.factor})
-                          </option>
-                        ))}
-                      </StandardSelect>
-                    </StandardField>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      {/* Phase 3: Fuel Type Selector */}
+                      <StandardField
+                        label="Fuel Type"
+                        helpText="Select a fuel type only if powered equipment was used. Leave blank for hand/manual operations."
+                      >
+                        <StandardSelect
+                          placeholder="Select fuel type..."
+                          {...register('fuel_type')}
+                        >
+                          {FUEL_TYPES.map((type) => (
+                            <option key={type.value} value={type.value}>
+                              {type.label} ({type.factor})
+                            </option>
+                          ))}
+                        </StandardSelect>
+                      </StandardField>
 
-                    <StandardField
-                      label={
-                        watch('fuel_type') === 'electric' ? 'Energy Amount (kWh)' : 'Fuel Consumed'
-                      }
-                      helpText={
-                        watch('fuel_type') === 'electric'
-                          ? 'Energy consumption for carbon emission calculation'
-                          : 'Total fuel used for soil management equipment'
-                      }
-                    >
-                      <HStack spacing={2}>
+                      <StandardField
+                        label={
+                          watch('fuel_type') === 'electric'
+                            ? 'Energy Amount (kWh)'
+                            : 'Fuel Consumed'
+                        }
+                        helpText={
+                          watch('fuel_type') === 'electric'
+                            ? 'Energy consumption for carbon emission calculation'
+                            : 'Total fuel used for soil management equipment'
+                        }
+                      >
+                        <HStack spacing={2}>
+                          <StandardInput
+                            flex={2}
+                            type="number"
+                            step="0.1"
+                            placeholder={
+                              watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : '15.5'
+                            }
+                            {...register('fuel_consumed')}
+                          />
+                          <StandardSelect flex={1} {...register('fuel_unit')}>
+                            <option value="L">Liters</option>
+                            <option value="gal">Gallons</option>
+                            <option value="kg">Kilograms</option>
+                            <option value="kWh">Kilowatt-hours</option>
+                          </StandardSelect>
+                        </HStack>
+                      </StandardField>
+
+                      <StandardField
+                        label="Equipment Hours"
+                        helpText="Total equipment operating time"
+                      >
                         <StandardInput
-                          flex={2}
                           type="number"
                           step="0.1"
-                          placeholder={watch('fuel_type') === 'electric' ? 'e.g., 15 kWh' : '15.5'}
-                          {...register('fuel_consumed')}
+                          placeholder="3.5"
+                          {...register('equipment_hours')}
                         />
-                        <StandardSelect flex={1} {...register('fuel_unit')}>
-                          <option value="L">Liters</option>
-                          <option value="gal">Gallons</option>
-                          <option value="kg">Kilograms</option>
-                          <option value="kWh">Kilowatt-hours</option>
+                      </StandardField>
+
+                      <StandardField
+                        label="Production Efficiency"
+                        helpText="Equipment efficiency rating for carbon scoring"
+                      >
+                        <StandardSelect {...register('production_efficiency')}>
+                          <option value="">Select efficiency level</option>
+                          <option value="high">High Efficiency</option>
+                          <option value="normal">Normal Efficiency</option>
+                          <option value="low">Low Efficiency</option>
                         </StandardSelect>
-                      </HStack>
-                    </StandardField>
+                      </StandardField>
 
-                    <StandardField
-                      label="Equipment Hours"
-                      helpText="Total equipment operating time"
-                    >
-                      <StandardInput
-                        type="number"
-                        step="0.1"
-                        placeholder="3.5"
-                        {...register('equipment_hours')}
-                      />
-                    </StandardField>
+                      <StandardField
+                        label="Equipment Used"
+                        helpText="Equipment used for this operation"
+                      >
+                        <StandardInput
+                          type="text"
+                          placeholder="e.g., tractor with disc harrow, soil auger"
+                          {...register('equipment_used')}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
 
-                    <StandardField
-                      label="Production Efficiency"
-                      helpText="Equipment efficiency rating for carbon scoring"
-                    >
-                      <StandardSelect {...register('production_efficiency')}>
-                        <option value="">Select efficiency level</option>
-                        <option value="high">High Efficiency</option>
-                        <option value="normal">Normal Efficiency</option>
-                        <option value="low">Low Efficiency</option>
-                      </StandardSelect>
-                    </StandardField>
+                    {/* Phase 3: Electric Equipment Info Box */}
+                    {watch('fuel_type') === 'electric' && (
+                      <Box mt={3}>
+                        <StandardAlert
+                          status="info"
+                          title="Electric Equipment"
+                          description="Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions."
+                        />
+                      </Box>
+                    )}
 
-                    <StandardField
-                      label="Equipment Used"
-                      helpText="Equipment used for this operation"
-                    >
-                      <StandardInput
-                        type="text"
-                        placeholder="e.g., tractor with disc harrow, soil auger"
-                        {...register('equipment_used')}
-                      />
-                    </StandardField>
-                  </SimpleGrid>
-
-                  {/* Phase 3: Electric Equipment Info Box */}
-                  {watch('fuel_type') === 'electric' && (
                     <Box mt={3}>
                       <StandardAlert
                         status="info"
-                        title="Electric Equipment"
-                        description="Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions."
+                        title="Building Consumer Trust"
+                        description="Documenting actual fuel consumption and equipment usage provides consumers with complete transparency into your farming operations."
                       />
                     </Box>
-                  )}
-
-                  <Box mt={3}>
-                    <StandardAlert
-                      status="info"
-                      title="Building Consumer Trust"
-                      description="Documenting actual fuel consumption and equipment usage provides consumers with complete transparency into your farming operations."
-                    />
-                  </Box>
-                </SectionBox>
+                  </SectionBox>
                 )}
 
                 {/* Soil Amendment fields — PA (pH Adjustment), OM (Organic Matter), CC (Cover Crop), CO (Composting) */}
@@ -1207,6 +1255,29 @@ const SoilManagementTab = forwardRef(
                             />
                           </StandardField>
                         </SimpleGrid>
+                        {/* F24: feedstock + temperature-monitoring readings complete the NOP 5021
+                            record (a single peak temp is not a monitoring log). */}
+                        <StandardField
+                          label="Feedstock"
+                          helpText="What the compost is made of — NOP 5021 source record"
+                        >
+                          <StandardInput
+                            placeholder="e.g., horse manure + straw + green waste"
+                            {...register('compost_feedstock')}
+                          />
+                        </StandardField>
+                        <StandardField
+                          label="Temperature Monitoring Log"
+                          helpText="NOP 5021 readings — one per line (date · temp · turned?)"
+                        >
+                          <StandardTextarea
+                            rows={4}
+                            placeholder={
+                              '2026-03-01: 145°F (turned)\n2026-03-05: 152°F\n2026-03-12: 148°F (turned)'
+                            }
+                            {...register('compost_temperature_log')}
+                          />
+                        </StandardField>
                       </>
                     )}
 
@@ -1318,6 +1389,71 @@ const SoilManagementTab = forwardRef(
                           <option value="silt">Silt</option>
                           <option value="silt_loam">Silt Loam</option>
                         </StandardSelect>
+                      </StandardField>
+                    </SimpleGrid>
+                  </SectionBox>
+                )}
+
+                {/* F19: Soil Test Results (ST only) — the lab numbers (N/P/K/CEC) + lab provenance
+                    that make a soil test a complete certifier/agronomic record. Packed into the
+                    test_results JSONField on submit; pH/OM/texture stay as their own columns above. */}
+                {watch('type') === 'ST' && (
+                  <SectionBox variant="default">
+                    <SectionHeader
+                      icon={FaThermometerHalf}
+                      iconColor="orange.600"
+                      title="Soil Test Results"
+                      badge="Lab Report"
+                      badgeColorScheme="orange"
+                    />
+                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+                      <StandardField label="Lab Name" helpText="Testing laboratory">
+                        <StandardInput
+                          placeholder="e.g., A&L Western Labs"
+                          {...register('soil_lab_name')}
+                        />
+                      </StandardField>
+                      <StandardField label="Sample / Report ID" helpText="Lab sample or report #">
+                        <StandardInput placeholder="e.g., 25-04812" {...register('soil_sample_id')} />
+                      </StandardField>
+                      <StandardField label="Report Date">
+                        <StandardInput type="date" {...register('soil_report_date')} />
+                      </StandardField>
+                      <StandardField label="Nitrogen (ppm)" helpText="Available N">
+                        <StandardInput
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          placeholder="e.g., 18"
+                          {...register('soil_nitrogen')}
+                        />
+                      </StandardField>
+                      <StandardField label="Phosphorus (ppm)">
+                        <StandardInput
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          placeholder="e.g., 32"
+                          {...register('soil_phosphorus')}
+                        />
+                      </StandardField>
+                      <StandardField label="Potassium (ppm)">
+                        <StandardInput
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          placeholder="e.g., 210"
+                          {...register('soil_potassium')}
+                        />
+                      </StandardField>
+                      <StandardField label="CEC (meq/100g)" helpText="Cation exchange capacity">
+                        <StandardInput
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          placeholder="e.g., 14.5"
+                          {...register('soil_cec')}
+                        />
                       </StandardField>
                     </SimpleGrid>
                   </SectionBox>

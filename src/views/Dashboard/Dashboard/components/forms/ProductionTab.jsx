@@ -186,7 +186,14 @@ const formSchemaMainInfo = object({
     }, 'Grain moisture must be between 0 and 100%'),
   // Phase 2: Additional harvest fields for Quick Add parity
   harvest_method: string().optional(),
-  brix_levels: string().optional(),
+  // F43: tree-crop maturity (avocado/nut). brix_levels (plural) was dead — removed.
+  dry_matter_percentage: string()
+    .optional()
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0 && num <= 100;
+    }, 'Dry matter must be between 0 and 100%'),
   // Production method for manual-operation detection (enables accurate carbon for hand labor)
   // Documenting "Hand thinning", "Pruning shears", etc. routes to ~5 kg manual estimate
   // instead of USDA blanket mechanical averages (~150 kg for thinning, ~600 kg for pruning).
@@ -260,8 +267,8 @@ const formSchemaMainInfo = object({
     .refine((val) => {
       if (!val || val === '') return true;
       const num = parseFloat(val);
-      return !isNaN(num) && num >= 0 && num <= 100;
-    }, 'Brix level must be between 0 and 100'),
+      return !isNaN(num) && num >= 0 && num <= 45;
+    }, 'Brix level must be between 0 and 45'),
   // Phase 2: Pollination (PO) specific extra_data fields
   pollinator_type: string().optional(),
   hive_count: string()
@@ -358,7 +365,7 @@ const ProductionTab = forwardRef(
         harvest_quality_grade: initialValues.harvest_quality_grade || '',
         grain_moisture: initialValues.grain_moisture?.toString() || '',
         harvest_method: initialValues.harvest_method || '',
-        brix_levels: initialValues.brix_levels || '',
+        dry_matter_percentage: initialValues.dry_matter_percentage?.toString() || '',
         // Production method: supports both top-level and extra_data.method
         // (demo data stores it in extra_data.method, e.g. "Hand thinning with pruning shears")
         production_method:
@@ -509,6 +516,15 @@ const ProductionTab = forwardRef(
           observation: initialValues.observation || '',
           // Sprint 3 Epic 3.2: Consumer Trust Fields
           seeds_source: initialValues.seeds_source || '',
+          // F15 fix (2026-06): the 6 NOP 205.204 seed-traceability fields MUST be in resetData —
+          // they're in defaultValues but were omitted here, so methods.reset() on edit wiped the
+          // farmer's logged seed records (supplier/date/invoice/lot/cert/treatment).
+          seed_supplier_name: initialValues.seed_supplier_name || '',
+          seed_purchase_date: initialValues.seed_purchase_date || '',
+          seed_purchase_invoice: initialValues.seed_purchase_invoice || '',
+          seed_lot_number: initialValues.seed_lot_number || '',
+          seed_certification_status: initialValues.seed_certification_status || '',
+          seed_treatment: initialValues.seed_treatment || '',
           water_source: initialValues.water_source || '',
           // ENHANCED: USDA NASS 2023 irrigation water estimation fields
           irrigation_method: initialValues.irrigation_method || '',
@@ -535,7 +551,7 @@ const ProductionTab = forwardRef(
           harvest_quality_grade: initialValues.harvest_quality_grade || '',
           grain_moisture: initialValues.grain_moisture?.toString() || '',
           harvest_method: initialValues.harvest_method || '',
-          brix_levels: initialValues.brix_levels || '',
+          dry_matter_percentage: initialValues.dry_matter_percentage?.toString() || '',
           // Production method for manual-operation detection
           production_method:
             initialValues.production_method ||
@@ -693,7 +709,7 @@ const ProductionTab = forwardRef(
       'irrigation_method',
       // Harvest-specific fields for preview card updates
       'harvest_method',
-      'brix_levels',
+      'dry_matter_percentage',
       'grain_moisture',
       'quality_grade',
       'production_efficiency',
@@ -771,7 +787,7 @@ const ProductionTab = forwardRef(
             'irrigation_method',
             // Harvest-specific fields for preview card updates
             'harvest_method',
-            'brix_levels',
+            'dry_matter_percentage',
             'grain_moisture',
             'quality_grade',
             'production_efficiency',
@@ -866,7 +882,9 @@ const ProductionTab = forwardRef(
         grain_moisture: data.grain_moisture ? parseFloat(data.grain_moisture) : undefined,
         // Phase 2: Additional harvest fields
         harvest_method: data.harvest_method || undefined,
-        brix_levels: data.brix_levels || undefined,
+        dry_matter_percentage: data.dry_matter_percentage
+          ? parseFloat(data.dry_matter_percentage)
+          : undefined,
         // Phase 2: Universal CommonEvent top-level fields
         variety: data.variety || undefined,
         block_id: data.block_id || undefined,
@@ -1489,6 +1507,7 @@ const ProductionTab = forwardRef(
                                   <option value="tons">Tonnes</option>
                                   <option value="lbs">Pounds</option>
                                   <option value="boxes">Boxes</option>
+                                  <option value="bins">Bins</option>
                                   <option value="plants">Plants</option>
                                   <option value="seeds">Seeds</option>
                                 </StandardSelect>
@@ -1623,6 +1642,37 @@ const ProductionTab = forwardRef(
                             />
                           </StandardField>
                         </Box>
+
+                        {/* F43: Dry matter % — the correct maturity metric for avocado & nuts (the
+                            CA orchard ICP). Brix is for citrus/sugar fruit; grain moisture is grain-only. */}
+                        <Box flex={1}>
+                          <StandardField
+                            label="Dry Matter %"
+                            error={errors.dry_matter_percentage?.message}
+                            helpText="Avocado & nut maturity (CA Hass legal min ~20.8%). Leave blank for citrus (use Brix) or grain (use moisture)."
+                          >
+                            <Controller
+                              name="dry_matter_percentage"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <NumberInput
+                                  min={0}
+                                  max={100}
+                                  precision={1}
+                                  step={0.1}
+                                  value={field.value || ''}
+                                  onChange={(valueString) => field.onChange(valueString)}
+                                >
+                                  <NumberInputField placeholder="Leave blank if N/A" />
+                                  <NumberInputStepper>
+                                    <NumberIncrementStepper />
+                                    <NumberDecrementStepper />
+                                  </NumberInputStepper>
+                                </NumberInput>
+                              )}
+                            />
+                          </StandardField>
+                        </Box>
                       </HStack>
                     </VStack>
                   </SectionBox>
@@ -1742,6 +1792,7 @@ const ProductionTab = forwardRef(
                                     <option value="kg">Kilograms</option>
                                     <option value="tons">Tonnes</option>
                                     <option value="boxes">Boxes</option>
+                                    <option value="bins">Bins</option>
                                   </StandardSelect>
                                 )}
                               />

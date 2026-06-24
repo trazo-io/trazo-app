@@ -443,5 +443,12 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Sticky card': 'Trampa adhesiva',
   'Pheromone lure': 'Trampa de feromona',
   'Delta trap': 'Trampa delta',
-  'Bucket / funnel': 'Embudo / cubeta'
+  'Bucket / funnel': 'Embudo / cubeta',
+  // F44 UC-IPM monitoring units (suffix of "<count> <unit>", translated via the unit pattern)
+  'per leaf': 'por hoja',
+  'per trap': 'por trampa',
+  'per tree': 'por árbol',
+  'per 100 fruit': 'por 100 frutos',
+  '% infested': '% infestado',
+  'per sample': 'por muestra'
 };
