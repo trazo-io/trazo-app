@@ -13,6 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { FaShieldAlt, FaChartLine } from 'react-icons/fa';
 
+
 interface ConsentBannerProps {
   onConsentChange?: (consent: boolean) => void;
 }
@@ -37,9 +38,7 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
 
       // Only show on consumer pages or QR scanning pages
       const isConsumerPage =
-        path.includes('/production/') ||
-        path.includes('/farm/') ||
-        host.includes('consumer');
+        path.includes('/production/') || path.includes('/farm/') || host.includes('consumer');
 
       // Don't show on producer auth pages
       const isProducerAuth =
@@ -98,15 +97,28 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
 
     const hostname = window.location.hostname;
     const isSecure = window.location.protocol === 'https:';
-    let cookieString = `trazo-analytics-consent=${consent}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax${isSecure ? '; Secure' : ''}`;
 
-    if (hostname.includes('localhost')) {
-      cookieString += `; domain=localhost`;
+    // Scope the cookie to the registrable domain so it is also sent to the API
+    // on a sibling subdomain (consumer/app.trazo.io → api.trazo.io). Without a
+    // domain attribute the cookie is host-only and never reaches api.trazo.io,
+    // so the backend reads consent_given=False and records every scan as
+    // anonymous (no geolocation, no session dedup).
+    const cookieDomain = hostname.endsWith('trazo.io')
+      ? '.trazo.io'
+      : hostname.includes('localhost')
+      ? 'localhost'
+      : '';
+
+    let cookieString = `trazo-analytics-consent=${consent}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax${
+      isSecure ? '; Secure' : ''
+    }`;
+    if (cookieDomain) {
+      cookieString += `; domain=${cookieDomain}`;
     }
 
     document.cookie = cookieString;
 
-    // Also set a backup cookie without domain restriction for localhost
+    // Also set a host-only backup cookie on localhost (domain=localhost can be flaky)
     if (hostname.includes('localhost')) {
       const backupCookieString = `trazo-analytics-consent=${consent}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
       document.cookie = backupCookieString;
@@ -134,9 +146,7 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
     const host = window.location.host;
 
     const isConsumerPage =
-      path.includes('/production/') ||
-      path.includes('/farm/') ||
-      host.includes('consumer');
+      path.includes('/production/') || path.includes('/farm/') || host.includes('consumer');
 
     const isProducerAuth =
       path.includes('/auth/') &&
@@ -181,8 +191,8 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
             <HStack spacing={2} align="start">
               <Icon as={FaShieldAlt} color="green.500" boxSize={5} mt={0.5} />
               <Text fontSize="sm" color={textColor} lineHeight="1.5">
-                Allow an anonymous scan count for this farmer's dashboard? No name, email, or raw
-                IP is stored.{' '}
+                Allow an anonymous scan count for this farmer's dashboard? No name, email, or raw IP
+                is stored.{' '}
                 <Box
                   as="button"
                   type="button"
@@ -204,13 +214,12 @@ export const ConsentBanner: React.FC<ConsentBannerProps> = ({ onConsentChange })
               <Text fontSize="sm" color={textColor} lineHeight="1.5">
                 Scanning this QR code can record an anonymous visit for the farmer's analytics
                 dashboard. We collect: approximate location (country/region), time spent on page,
-                and a one-way hashed device identifier. No name, email, or raw IP address is
-                stored.
+                and a one-way hashed device identifier. No name, email, or raw IP address is stored.
               </Text>
 
               <Text fontSize="sm" color={textColor} lineHeight="1.5">
-                If you create an account, your previous scan activity will be linked to your
-                profile and appear in your scan history.
+                If you create an account, your previous scan activity will be linked to your profile
+                and appear in your scan history.
               </Text>
 
               <HStack spacing={2} fontSize="xs" color="gray.500">
@@ -295,12 +304,18 @@ export const getConsentStatus = (): 'granted' | 'denied' | 'unknown' => {
  */
 export const resetConsent = (): void => {
   localStorage.removeItem(CONSENT_STORAGE_KEY);
-  // Clear cookie by setting past expiry
+  const hostname = window.location.hostname;
+  // Clear the host-only cookie
   document.cookie =
     'trazo-analytics-consent=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax';
-  if (window.location.hostname.includes('localhost')) {
-    document.cookie =
-      'trazo-analytics-consent=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; domain=localhost';
+  // Clear the domain-scoped cookie (must match the domain it was set with, else it lingers)
+  const cookieDomain = hostname.endsWith('trazo.io')
+    ? '.trazo.io'
+    : hostname.includes('localhost')
+    ? 'localhost'
+    : '';
+  if (cookieDomain) {
+    document.cookie = `trazo-analytics-consent=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax; domain=${cookieDomain}`;
   }
   // Dispatch event so listening components can react
   window.dispatchEvent(new CustomEvent('trazo-consent-changed', { detail: { consent: null } }));
