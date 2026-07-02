@@ -97,6 +97,10 @@ const formSchemaSoilManagement = object({
   amendment_amount: string().optional(),
   amendment_unit: string().optional(),
   amendment_type: string().optional(),
+  amendment_product_name: string().optional(),
+  amendment_manufacturer: string().optional(),
+  // CC subtype — routed into extra_data on submit (NOP §205.203 cover-crop record)
+  cover_crop_species: string().optional(),
   animal_type: string().optional(),
   animal_count: string().optional(),
   grazing_duration_days: string().optional(),
@@ -129,6 +133,10 @@ const formSchemaSoilManagement = object({
   compost_temperature_log: string().optional(),
   manure_harvest_interval: string().optional(),
   manure_application_date: string().optional(),
+  // NOP 5006 — processed animal manure (interval-exempt when documented)
+  manure_treatment: string().optional(),
+  processed_manure_temp_f: string().optional(),
+  processed_manure_attestation: string().optional(),
   observation: string().optional(),
   // Phase 2: Universal CommonEvent fields (variety, block_id, growth_stage)
   variety: string().optional(),
@@ -327,6 +335,14 @@ const SoilManagementTab = forwardRef(
         amendment_amount: initialValues.amendment_amount || '',
         amendment_unit: initialValues.amendment_unit || 'kg',
         amendment_type: initialValues.amendment_type || '',
+        amendment_product_name: initialValues.amendment_product_name || '',
+        amendment_manufacturer: initialValues.amendment_manufacturer || '',
+        // Cover-crop species persists in extra_data, so on EDIT read both the top-level
+        // (when the edit path normalized it up) AND the extra_data fallback.
+        cover_crop_species:
+          initialValues.cover_crop_species ||
+          initialValues.extra_data?.cover_crop_species ||
+          '',
         animal_type: initialValues.animal_type || '',
         animal_count: initialValues.animal_count || '',
         grazing_duration_days: initialValues.grazing_duration_days || '',
@@ -379,6 +395,9 @@ const SoilManagementTab = forwardRef(
         compost_temperature_log: initialValues.compost_temperature_log || '',
         manure_harvest_interval: initialValues.manure_harvest_interval || '',
         manure_application_date: initialValues.manure_application_date || '',
+        manure_treatment: initialValues.manure_treatment || '',
+        processed_manure_temp_f: initialValues.processed_manure_temp_f || '',
+        processed_manure_attestation: initialValues.processed_manure_attestation || '',
         observation: initialValues.observation || '',
         // Phase 2: Universal CommonEvent fields
         variety: initialValues.variety || '',
@@ -691,6 +710,10 @@ const SoilManagementTab = forwardRef(
         ...tillageDepthData,
         // NOP DateField: backend rejects empty strings — convert to null
         manure_application_date: cleanedCoreData.manure_application_date || null,
+        // NOP 5006 processed manure — coerce empties to null (DecimalField/choice)
+        manure_treatment: cleanedCoreData.manure_treatment || null,
+        processed_manure_temp_f: cleanedCoreData.processed_manure_temp_f || null,
+        processed_manure_attestation: cleanedCoreData.processed_manure_attestation || null,
         // Map observation field to description (required by backend CommonEvent model)
         // Backend requires non-empty description, so provide fallback if observation is empty
         description:
@@ -1088,6 +1111,70 @@ const SoilManagementTab = forwardRef(
                       </StandardField>
 
                       <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.soil.fields.amendmentProductName',
+                          defaultMessage: 'Amendment Product Name',
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.amendmentProductNameHelp',
+                          defaultMessage:
+                            'Specific product (e.g., Malibu Compost Bu’s Blend) — required for the NOP/CCOF input record',
+                        })}
+                      >
+                        <StandardInput
+                          placeholder={intl.formatMessage({
+                            id: 'events.soil.amendmentProductNamePlaceholder',
+                            defaultMessage: 'e.g., Malibu Compost Bu’s Blend',
+                          })}
+                          {...register('amendment_product_name')}
+                        />
+                      </StandardField>
+
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.soil.fields.amendmentManufacturer',
+                          defaultMessage: 'Amendment Manufacturer',
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.amendmentManufacturerHelp',
+                          defaultMessage: 'Manufacturer / supplier of the amendment',
+                        })}
+                      >
+                        <StandardInput
+                          placeholder={intl.formatMessage({
+                            id: 'events.soil.amendmentManufacturerPlaceholder',
+                            defaultMessage: 'e.g., Malibu Compost',
+                          })}
+                          {...register('amendment_manufacturer')}
+                        />
+                      </StandardField>
+
+                      {/* Cover-crop species — CC subtype only. Persists in extra_data
+                          (routed on submit); the audit export reads it for the §205.203
+                          cover-crop record. */}
+                      {watch('type') === 'CC' && (
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.soil.coverCropSpecies',
+                            defaultMessage: 'Cover-Crop Species',
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.coverCropSpeciesHelp',
+                            defaultMessage:
+                              'Species / mix sown (e.g., vetch + bell beans + oats) — for the NOP §205.203 cover-crop record',
+                          })}
+                        >
+                          <StandardInput
+                            placeholder={intl.formatMessage({
+                              id: 'events.soil.coverCropSpeciesPlaceholder',
+                              defaultMessage: 'e.g., Vetch / bell beans / oats',
+                            })}
+                            {...register('cover_crop_species')}
+                          />
+                        </StandardField>
+                      )}
+
+                      <StandardField
                         label="Amendment Amount"
                         helpText="Total quantity of amendment applied"
                       >
@@ -1321,6 +1408,54 @@ const SoilManagementTab = forwardRef(
                             <StandardInput type="date" {...register('manure_application_date')} />
                           </StandardField>
                         </SimpleGrid>
+
+                        {/* NOP 5006 — processed animal manure. A third class between raw
+                            (c)(1) and composted (c)(2): manure processed to reduce pathogens
+                            is interval-exempt when documented (temperature and/or attestation). */}
+                        <StandardField
+                          label="Manure Treatment (NOP 5006)"
+                          helpText="Raw manure follows the 90/120-day interval. Composted (c)(2) and processed (NOP 5006) manure are interval-exempt when documented."
+                          mt={4}
+                        >
+                          <StandardSelect
+                            placeholder="Select manure treatment"
+                            {...register('manure_treatment')}
+                          >
+                            <option value="raw">
+                              Raw / uncomposted — 90/120-day interval applies
+                            </option>
+                            <option value="composted">
+                              Composted (7 CFR 205.203(c)(2)) — no interval
+                            </option>
+                            <option value="processed_5006">
+                              Processed to reduce pathogens (NOP 5006) — no interval
+                            </option>
+                          </StandardSelect>
+                        </StandardField>
+                        {watch('manure_treatment') === 'processed_5006' && (
+                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
+                            <StandardField
+                              label="Processing Temperature (°F)"
+                              helpText="Peak temperature reached for pathogen reduction"
+                            >
+                              <StandardInput
+                                type="number"
+                                step="0.1"
+                                placeholder="e.g., 150"
+                                {...register('processed_manure_temp_f')}
+                              />
+                            </StandardField>
+                            <StandardField
+                              label="Processing Attestation"
+                              helpText="OMRI / supplier documentation basis for the exemption"
+                            >
+                              <StandardInput
+                                placeholder="e.g., OMRI-listed heat-processed poultry pellets, PFRP"
+                                {...register('processed_manure_attestation')}
+                              />
+                            </StandardField>
+                          </SimpleGrid>
+                        )}
                       </>
                     )}
                   </SectionBox>

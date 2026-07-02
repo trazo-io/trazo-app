@@ -56,7 +56,11 @@ export const baseApi = createApi({
     'Certification',
     'ParcelCropHistory',
     'OSP',
-    'SalesRecords'
+    'SalesRecords',
+    'StateOrganicRegistration',
+    'LandownerAffidavit',
+    'OSPAnnualUpdate',
+    'OSPChangeNotification'
   ]
 });
 

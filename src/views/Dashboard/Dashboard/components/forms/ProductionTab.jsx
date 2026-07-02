@@ -173,6 +173,7 @@ const formSchemaMainInfo = object({
   // NOP Compliance: Post-Harvest Sanitizer (7 CFR 205.272 + § 205.605)
   sanitizer_name: string().optional(),
   sanitizer_ppm: string().optional(),
+  sanitizer_residual_ppm_at_discharge: string().optional(),
   rinse_step_documented: string().optional(),
   sanitizer_nop_reference: string().optional(),
   // Phase 2: Target market fields for harvest events
@@ -208,6 +209,14 @@ const formSchemaMainInfo = object({
   seed_lot_number: string().optional(),
   seed_certification_status: string().optional(),
   seed_treatment: string().optional(),
+  // NOP 5029 / 7 CFR 205.204(a)(1) — organic-seed commercial-availability search
+  seed_search_attempts: array(
+    object({
+      supplier: string().optional(),
+      date_contacted: string().optional(),
+      result: string().optional()
+    })
+  ).optional(),
   water_source: string().optional(), // Water source for irrigation
   // ENHANCED: USDA NASS 2023 irrigation water estimation fields
   irrigation_method: string().optional(), // drip, sprinkler, flood, etc.
@@ -220,6 +229,9 @@ const formSchemaMainInfo = object({
       return !isNaN(num) && num >= 0;
     }, 'Pump depth cannot be negative'),
   electricity_source: string().optional(), // grid, solar, wind, diesel_generator, mixed
+  // NOP irrigation/well water test (7 CFR 205.272 / 205.671)
+  water_test_date: string().optional(),
+  water_test_lab: string().optional(),
   irrigation_depth: string()
     .optional()
     .refine((val) => {
@@ -383,12 +395,15 @@ const ProductionTab = forwardRef(
         seed_lot_number: initialValues.seed_lot_number || '',
         seed_certification_status: initialValues.seed_certification_status || '',
         seed_treatment: initialValues.seed_treatment || '',
+        seed_search_attempts: initialValues.seed_search_attempts || [],
         water_source: initialValues.water_source || '',
         // ENHANCED: USDA NASS 2023 irrigation water estimation fields
         irrigation_method: initialValues.irrigation_method || '',
         // Phase 3: Irrigation pump fields
         pump_depth_ft: initialValues.pump_depth_ft?.toString() || '',
         electricity_source: initialValues.electricity_source || '',
+        water_test_date: initialValues.water_test_date || '',
+        water_test_lab: initialValues.water_test_lab || '',
         irrigation_depth: initialValues.irrigation_depth?.toString() || '',
         irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches',
         // Sprint 4: Aggregate Irrigation Support
@@ -448,6 +463,9 @@ const ProductionTab = forwardRef(
         // NOP Compliance: Post-Harvest Sanitizer (7 CFR 205.272 + § 205.605)
         sanitizer_name: initialValues.sanitizer_name || '',
         sanitizer_ppm: initialValues.sanitizer_ppm ? String(initialValues.sanitizer_ppm) : '',
+        sanitizer_residual_ppm_at_discharge: initialValues.sanitizer_residual_ppm_at_discharge
+          ? String(initialValues.sanitizer_residual_ppm_at_discharge)
+          : '',
         rinse_step_documented: initialValues.rinse_step_documented ? 'true' : 'false',
         sanitizer_nop_reference: initialValues.sanitizer_nop_reference || '',
         // Phase 2.3: Custom fields initialization
@@ -525,12 +543,15 @@ const ProductionTab = forwardRef(
           seed_lot_number: initialValues.seed_lot_number || '',
           seed_certification_status: initialValues.seed_certification_status || '',
           seed_treatment: initialValues.seed_treatment || '',
+          seed_search_attempts: initialValues.seed_search_attempts || [],
           water_source: initialValues.water_source || '',
           // ENHANCED: USDA NASS 2023 irrigation water estimation fields
           irrigation_method: initialValues.irrigation_method || '',
           // Phase 3: Irrigation pump fields
           pump_depth_ft: initialValues.pump_depth_ft?.toString() || '',
           electricity_source: initialValues.electricity_source || '',
+          water_test_date: initialValues.water_test_date || '',
+          water_test_lab: initialValues.water_test_lab || '',
           irrigation_depth: initialValues.irrigation_depth?.toString() || '',
           irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches',
           // Sprint 4: Aggregate Irrigation Support
@@ -600,6 +621,9 @@ const ProductionTab = forwardRef(
           // NOP Compliance: Post-Harvest Sanitizer (7 CFR 205.272 + § 205.605)
           sanitizer_name: initialValues.sanitizer_name || '',
           sanitizer_ppm: initialValues.sanitizer_ppm ? String(initialValues.sanitizer_ppm) : '',
+          sanitizer_residual_ppm_at_discharge: initialValues.sanitizer_residual_ppm_at_discharge
+            ? String(initialValues.sanitizer_residual_ppm_at_discharge)
+            : '',
           rinse_step_documented: initialValues.rinse_step_documented ? 'true' : 'false',
           sanitizer_nop_reference: initialValues.sanitizer_nop_reference || '',
           // Phase 2.3: Custom fields reset
@@ -621,6 +645,33 @@ const ProductionTab = forwardRef(
     const isSummaryMode = watch('is_summary') === 'true';
     // NOP: Watch shared_with_conventional for visual feedback on cleaning section
     const isSharedWithConventional = watch('shared_with_conventional') === 'true';
+
+    // NOP 5029 / 7 CFR 205.204(a)(1): non-organic seed/planting stock requires a
+    // documented >=3-supplier commercial-availability search. The widget appears only
+    // when the farmer selects a non-organic seed certification status.
+    const seedCertStatus = watch('seed_certification_status');
+    const needsSeedSearch =
+      seedCertStatus === 'non_organic_untreated' || seedCertStatus === 'non_organic_treated';
+    const seedSearchAttempts = watch('seed_search_attempts') || [];
+    const addSeedSearch = () =>
+      methods.setValue(
+        'seed_search_attempts',
+        [
+          ...(methods.getValues('seed_search_attempts') || []),
+          { supplier: '', date_contacted: '', result: '' }
+        ],
+        { shouldDirty: true }
+      );
+    const removeSeedSearch = (idx) => {
+      const next = [...(methods.getValues('seed_search_attempts') || [])];
+      next.splice(idx, 1);
+      methods.setValue('seed_search_attempts', next, { shouldDirty: true });
+    };
+    const updateSeedSearch = (idx, key, value) => {
+      const next = [...(methods.getValues('seed_search_attempts') || [])];
+      next[idx] = { ...next[idx], [key]: value };
+      methods.setValue('seed_search_attempts', next, { shouldDirty: true });
+    };
 
     // Sprint 2: Auto-generate event name from production type (removes farmer burden ~20 sec per event)
     // FIX: Only auto-generate if name is empty or was previously auto-generated.
@@ -703,6 +754,8 @@ const ProductionTab = forwardRef(
       // Phase 3: Irrigation pump fields
       'pump_depth_ft',
       'electricity_source',
+      'water_test_date',
+      'water_test_lab',
       // Irrigation depth / method — drive water-volume carbon calc (area × depth × 27154)
       'irrigation_depth',
       'irrigation_depth_unit',
@@ -738,6 +791,7 @@ const ProductionTab = forwardRef(
       // NOP Compliance: Post-Harvest Sanitizer (7 CFR 205.272 + § 205.605)
       'sanitizer_name',
       'sanitizer_ppm',
+      'sanitizer_residual_ppm_at_discharge',
       'rinse_step_documented',
       'sanitizer_nop_reference'
     ]);
@@ -781,6 +835,8 @@ const ProductionTab = forwardRef(
             // Phase 3: Irrigation pump fields
             'pump_depth_ft',
             'electricity_source',
+            'water_test_date',
+            'water_test_lab',
             // Irrigation depth / method — drive water-volume carbon calc (area × depth × 27154)
             'irrigation_depth',
             'irrigation_depth_unit',
@@ -803,6 +859,7 @@ const ProductionTab = forwardRef(
             // NOP Compliance: Post-Harvest Sanitizer (7 CFR 205.272 + § 205.605)
             'sanitizer_name',
             'sanitizer_ppm',
+            'sanitizer_residual_ppm_at_discharge',
             'rinse_step_documented',
             'sanitizer_nop_reference'
           ];
@@ -919,6 +976,9 @@ const ProductionTab = forwardRef(
           // NOP Compliance: Post-Harvest Sanitizer (7 CFR 205.272 + § 205.605)
           sanitizer_name: data.sanitizer_name || undefined,
           sanitizer_ppm: data.sanitizer_ppm ? parseFloat(data.sanitizer_ppm) : undefined,
+          sanitizer_residual_ppm_at_discharge: data.sanitizer_residual_ppm_at_discharge
+            ? parseFloat(data.sanitizer_residual_ppm_at_discharge)
+            : undefined,
           rinse_step_documented: data.rinse_step_documented === 'true',
           sanitizer_nop_reference: data.sanitizer_nop_reference || undefined
         }),
@@ -932,6 +992,9 @@ const ProductionTab = forwardRef(
           data.type === 'IR' && data.pump_depth_ft ? parseFloat(data.pump_depth_ft) : undefined,
         electricity_source:
           data.type === 'IR' && data.electricity_source ? data.electricity_source : undefined,
+        // NOP irrigation/well water test (IR) — top-level model fields
+        water_test_date: data.type === 'IR' && data.water_test_date ? data.water_test_date : undefined,
+        water_test_lab: data.type === 'IR' && data.water_test_lab ? data.water_test_lab : undefined,
         // Summary mode fields stored in extra_data (not model fields)
         extra_data: {
           is_summary: isSummaryEvent,
@@ -1354,8 +1417,8 @@ const ProductionTab = forwardRef(
                             />
                           </StandardField>
                           <StandardField
-                            label="Concentration (ppm)"
-                            helpText="Chlorine residual must stay ≤ 4 mg/L per § 205.605(b)"
+                            label="Applied Concentration (ppm)"
+                            helpText="Wash/dose concentration at point of use"
                           >
                             <Controller
                               name="sanitizer_ppm"
@@ -1368,6 +1431,25 @@ const ProductionTab = forwardRef(
                                   max="10000"
                                   step="0.1"
                                   placeholder="e.g., 150"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                          <StandardField
+                            label="Residual Chlorine at Discharge (ppm)"
+                            helpText="NOP 5026 / § 205.605(b): residual at last crop contact must not exceed the SDWA MRDL (4 mg/L free chlorine, 0.8 mg/L chlorine dioxide)"
+                          >
+                            <Controller
+                              name="sanitizer_residual_ppm_at_discharge"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  type="number"
+                                  min="0"
+                                  max="10000"
+                                  step="0.1"
+                                  placeholder="e.g., 3.5"
                                 />
                               )}
                             />
@@ -3010,6 +3092,99 @@ const ProductionTab = forwardRef(
                               )}
                             />
                           </StandardField>
+
+                          {/* NOP 5029 / 7 CFR 205.204(a)(1) — organic-seed search, shown
+                              only for non-organic seed/planting stock */}
+                          {needsSeedSearch && (
+                            <Box
+                              gridColumn={{ md: 'span 2' }}
+                              p={3}
+                              bg="orange.50"
+                              borderRadius="md"
+                              borderLeft="3px solid"
+                              borderLeftColor="orange.400"
+                            >
+                              <Text fontSize="sm" fontWeight="semibold" color="orange.700" mb={1}>
+                                {intl.formatMessage({
+                                  id: 'events.production.seedSearch.title',
+                                  defaultMessage:
+                                    'Organic-Seed Commercial-Availability Search (NOP 5029 / 7 CFR 205.204)'
+                                })}
+                              </Text>
+                              <Text fontSize="xs" color="orange.600" mb={3}>
+                                {intl.formatMessage(
+                                  {
+                                    id: 'events.production.seedSearch.help',
+                                    defaultMessage:
+                                      'Non-organic seed requires documenting a search of at least 3 suppliers for an organic equivalent. {count} of 3 minimum recorded.'
+                                  },
+                                  { count: seedSearchAttempts.length }
+                                )}
+                              </Text>
+                              <VStack spacing={2} align="stretch">
+                                {seedSearchAttempts.map((row, idx) => (
+                                  <SimpleGrid
+                                    key={idx}
+                                    columns={{ base: 1, md: 3 }}
+                                    spacing={2}
+                                  >
+                                    <StandardInput
+                                      size="sm"
+                                      value={row.supplier || ''}
+                                      onChange={(e) =>
+                                        updateSeedSearch(idx, 'supplier', e.target.value)
+                                      }
+                                      placeholder={intl.formatMessage({
+                                        id: 'events.production.seedSearch.supplierPlaceholder',
+                                        defaultMessage: 'Supplier contacted'
+                                      })}
+                                    />
+                                    <StandardInput
+                                      size="sm"
+                                      type="date"
+                                      value={row.date_contacted || ''}
+                                      onChange={(e) =>
+                                        updateSeedSearch(idx, 'date_contacted', e.target.value)
+                                      }
+                                    />
+                                    <HStack spacing={1}>
+                                      <StandardInput
+                                        size="sm"
+                                        value={row.result || ''}
+                                        onChange={(e) =>
+                                          updateSeedSearch(idx, 'result', e.target.value)
+                                        }
+                                        placeholder={intl.formatMessage({
+                                          id: 'events.production.seedSearch.resultPlaceholder',
+                                          defaultMessage: 'Result (e.g., not available organic)'
+                                        })}
+                                      />
+                                      <StandardButton
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => removeSeedSearch(idx)}
+                                      >
+                                        ✕
+                                      </StandardButton>
+                                    </HStack>
+                                  </SimpleGrid>
+                                ))}
+                                <StandardButton
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  alignSelf="flex-start"
+                                  onClick={addSeedSearch}
+                                >
+                                  {intl.formatMessage({
+                                    id: 'events.production.seedSearch.addButton',
+                                    defaultMessage: '+ Add supplier search'
+                                  })}
+                                </StandardButton>
+                              </VStack>
+                            </Box>
+                          )}
                         </>
                       )}
 
@@ -3307,6 +3482,50 @@ const ProductionTab = forwardRef(
                                     })}
                                   </option>
                                 </StandardSelect>
+                              )}
+                            />
+                          </StandardField>
+
+                          {/* NOP irrigation/well water test (7 CFR 205.272 / 205.671) */}
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.production.fields.waterTestDate',
+                              defaultMessage: 'Water Test Date'
+                            })}
+                            helpText={intl.formatMessage({
+                              id: 'events.production.waterTestDateHelp',
+                              defaultMessage:
+                                'Date of the annual irrigation/well water analysis (CCOF water-quality record)'
+                            })}
+                          >
+                            <Controller
+                              name="water_test_date"
+                              control={methods.control}
+                              render={({ field }) => <StandardInput {...field} type="date" />}
+                            />
+                          </StandardField>
+
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.production.fields.waterTestLab',
+                              defaultMessage: 'Water Test Laboratory'
+                            })}
+                            helpText={intl.formatMessage({
+                              id: 'events.production.waterTestLabHelp',
+                              defaultMessage: 'Lab that analyzed the water sample (attach the report as a photo)'
+                            })}
+                          >
+                            <Controller
+                              name="water_test_lab"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardInput
+                                  {...field}
+                                  placeholder={intl.formatMessage({
+                                    id: 'events.production.waterTestLabPlaceholder',
+                                    defaultMessage: 'e.g., BlueWater Labs'
+                                  })}
+                                />
                               )}
                             />
                           </StandardField>

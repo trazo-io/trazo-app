@@ -46,6 +46,8 @@ import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
 import FieldHistorySection from './FieldHistorySection';
+import LandownerAffidavitSection from './LandownerAffidavitSection';
+import ParcelComplianceCard from './ParcelComplianceCard';
 import { formatAreaWithBothUnits } from '../../../../utils/areaUnits';
 
 // Type definitions
@@ -944,6 +946,27 @@ function ProfileParcel(): React.ReactElement {
         {/* Field History Section */}
         {parcelId && (
           <FieldHistorySection parcelId={parcelId} canWrite={canWrite} />
+        )}
+
+        {/* Parcel organic-compliance records: buffer zones + parcel identity (7 CFR 205.202) */}
+        {parcelId && currentCompany?.id && farmId && (
+          <ParcelComplianceCard
+            companyId={currentCompany.id}
+            farmId={farmId}
+            parcelId={parcelId}
+            parcel={parcelData}
+            canWrite={canWrite}
+          />
+        )}
+
+        {/* Landowner / prior-manager affidavit (7 CFR 205.202(b)) */}
+        {parcelId && currentCompany?.id && farmId && (
+          <LandownerAffidavitSection
+            companyId={currentCompany.id}
+            farmId={farmId}
+            parcelId={parcelId}
+            canWrite={canWrite}
+          />
         )}
 
         {/* Company & Establishment Section */}

@@ -115,8 +115,38 @@ export const OSP_URL = (
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/`;
 
+// CDFA State Organic Program producer registration (CA Food & Ag Code §§ 46000-46029)
+export const STATE_ORGANIC_REGISTRATION_URL = (
+  companyId: string,
+  farmId: string,
+  regId?: string | number
+) =>
+  regId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/state-organic-registrations/${regId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/state-organic-registrations/`;
+
+// Landowner / prior-manager affidavit (3-year transition proof, 7 CFR 205.202(b))
+export const LANDOWNER_AFFIDAVIT_URL = (
+  companyId: string,
+  farmId: string,
+  affidavitId?: string | number
+) =>
+  affidavitId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/affidavits/${affidavitId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/affidavits/`;
+
 export const OSP_SUBMIT_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/submit/`;
+
+// OSP annual continuation filing (7 CFR 205.406(a))
+export const OSP_ANNUAL_UPDATE_URL = (
+  companyId: string,
+  farmId: string,
+  updateId?: string | number
+) =>
+  updateId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osp-annual-updates/${updateId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osp-annual-updates/`;
 
 export const OSP_ACTIVATE_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/activate/`;
@@ -137,6 +167,14 @@ export const OSP_REMOVE_APPROVED_INPUT_URL = (
   ospId: string | number
 ) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/remove-approved-input/`;
+
+// NOP 2615 §3.4 — Notification of Changes (7 CFR 205.400(f)). GET list + POST create.
+export const OSP_CHANGE_NOTIFICATIONS_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/change-notifications/`;
 
 // NOP input verifier — reused by the OSP Approved Inputs typeahead. Resolves a
 // free-text product name to NationalListSubstance and/or OMRIProduct PKs.

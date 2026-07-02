@@ -258,8 +258,14 @@ export const StandardCard = ({
     <Card {...cardProps[variant]} mb={6}>
       {(title || headerAction) && (
         <CardHeader pb={title && subtitle ? 2 : 4}>
-          <Flex justify="space-between" align="center" w="100%">
-            <VStack align="start" spacing={1}>
+          <Flex
+            direction={{ base: 'column', md: 'row' }}
+            justify="space-between"
+            align={{ base: 'flex-start', md: 'center' }}
+            gap={2}
+            w="100%"
+          >
+            <VStack align="start" spacing={1} flexShrink={0}>
               {title && (
                 <Heading as="h3" size={{ base: 'sm', md: 'md' }} color="gray.700">
                   {title}

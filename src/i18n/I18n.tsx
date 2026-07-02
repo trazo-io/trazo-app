@@ -2,11 +2,22 @@
 import { defaultLocale, locales, loadLocaleMessages } from './i18n-config';
 
 import { IntlProvider } from 'react-intl';
+import type { IntlConfig } from 'react-intl';
 import { LocaleContext } from './LocaleContext';
 import { useEffect, useState } from 'react';
 
 type I18nProps = {
   children: React.ReactNode;
+};
+
+// react-intl's default onError floods the dev console with MISSING_TRANSLATION
+// for every absent key. A missing key still renders its id (no throw), and the
+// `used-keys` test gate now catches absent keys at build time, so swallow that
+// one error code while letting every other intl error surface normally.
+const handleIntlError: IntlConfig['onError'] = (error) => {
+  if (error.code === 'MISSING_TRANSLATION') return;
+  // eslint-disable-next-line no-console
+  console.error(error);
 };
 
 const LOCALE_STORAGE_KEY = 'trazo_locale';
@@ -72,7 +83,12 @@ export default function I18n(props: I18nProps) {
 
   return (
     <LocaleContext.Provider value={{ locale: currentLocale, setLocale }}>
-      <IntlProvider locale={currentLocale} defaultLocale="en-US" messages={messages}>
+      <IntlProvider
+        locale={currentLocale}
+        defaultLocale="en-US"
+        messages={messages}
+        onError={handleIntlError}
+      >
         {props.children}
       </IntlProvider>
     </LocaleContext.Provider>

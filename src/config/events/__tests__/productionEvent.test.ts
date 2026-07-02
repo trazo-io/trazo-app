@@ -127,7 +127,7 @@ describe('Production: labelKeys resolve in en-US.json', () => {
 
   it('resolves every Production subtype labelKey', () => {
     const subtypes = getSubtypes('production');
-    expect(subtypes.length).toBe(11);
+    expect(subtypes.length).toBe(13);
     for (const subtype of subtypes) {
       expect(enUS[subtype.labelKey], `missing en-US key: ${subtype.labelKey}`).toBeTypeOf('string');
     }

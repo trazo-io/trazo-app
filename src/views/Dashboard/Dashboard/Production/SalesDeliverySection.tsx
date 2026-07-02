@@ -36,6 +36,8 @@ interface SalesDeliverySectionProps {
     organic_on_invoice?: boolean;
     transport_method?: string;
     destination?: string;
+    transport_vehicle_id?: string;
+    transport_affidavit_on_file?: boolean;
     retention_until?: string;
   };
   canWrite: boolean;
@@ -89,6 +91,8 @@ export function SalesDeliverySection({
     organic_on_invoice: boolean;
     transport_method: string;
     destination: string;
+    transport_vehicle_id: string;
+    transport_affidavit_on_file: boolean;
   }>({
     sold_to: historyData.sold_to ?? '',
     sale_date: formatDisplayDate(historyData.sale_date),
@@ -103,7 +107,9 @@ export function SalesDeliverySection({
         : '',
     organic_on_invoice: historyData.organic_on_invoice ?? false,
     transport_method: historyData.transport_method ?? '',
-    destination: historyData.destination ?? ''
+    destination: historyData.destination ?? '',
+    transport_vehicle_id: historyData.transport_vehicle_id ?? '',
+    transport_affidavit_on_file: historyData.transport_affidavit_on_file ?? false
   });
 
   // Keep the form in sync with refreshed server data (RTK Query invalidation
@@ -125,7 +131,9 @@ export function SalesDeliverySection({
           : '',
       organic_on_invoice: historyData.organic_on_invoice ?? false,
       transport_method: historyData.transport_method ?? '',
-      destination: historyData.destination ?? ''
+      destination: historyData.destination ?? '',
+      transport_vehicle_id: historyData.transport_vehicle_id ?? '',
+      transport_affidavit_on_file: historyData.transport_affidavit_on_file ?? false
     });
   }, [
     historyData.sold_to,
@@ -136,6 +144,8 @@ export function SalesDeliverySection({
     historyData.organic_on_invoice,
     historyData.transport_method,
     historyData.destination,
+    historyData.transport_vehicle_id,
+    historyData.transport_affidavit_on_file,
     isEditing
   ]);
 
@@ -153,6 +163,9 @@ export function SalesDeliverySection({
       payload.organic_on_invoice = formData.organic_on_invoice;
       if (formData.transport_method) payload.transport_method = formData.transport_method;
       if (formData.destination) payload.destination = formData.destination;
+      if (formData.transport_vehicle_id)
+        payload.transport_vehicle_id = formData.transport_vehicle_id;
+      payload.transport_affidavit_on_file = formData.transport_affidavit_on_file;
 
       if (BOX_UNITS.has(formData.quantity_sold_unit) && formData.box_weight_lb) {
         payload.box_weight_lb = Number(formData.box_weight_lb);
@@ -334,6 +347,23 @@ export function SalesDeliverySection({
                   placeholder={intl.formatMessage({ id: 'sales.field.destination.placeholder' })}
                 />
               </FormControl>
+              {/* Clean-transport record for off-farm transfer (CCOF G6.1 / 7 CFR 205.272) */}
+              <FormControl>
+                <FormLabel fontSize="xs">
+                  {intl.formatMessage({
+                    id: 'sales.field.transportVehicleId',
+                    defaultMessage: 'Vehicle / Container ID'
+                  })}
+                </FormLabel>
+                <Input
+                  size="sm"
+                  value={formData.transport_vehicle_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, transport_vehicle_id: e.target.value })
+                  }
+                  placeholder="e.g., TRK-9921"
+                />
+              </FormControl>
             </SimpleGrid>
             <FormControl display="flex" alignItems="center">
               <FormLabel
@@ -363,6 +393,24 @@ export function SalesDeliverySection({
                   setFormData({
                     ...formData,
                     organic_on_invoice: e.target.checked
+                  })
+                }
+              />
+            </FormControl>
+            <FormControl display="flex" alignItems="center">
+              <FormLabel fontSize="xs" mb={0}>
+                {intl.formatMessage({
+                  id: 'sales.field.transportAffidavitOnFile',
+                  defaultMessage: 'Clean-transport affidavit on file'
+                })}
+              </FormLabel>
+              <Switch
+                size="sm"
+                isChecked={formData.transport_affidavit_on_file}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    transport_affidavit_on_file: e.target.checked
                   })
                 }
               />

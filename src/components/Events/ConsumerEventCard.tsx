@@ -563,6 +563,46 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const accentColor = useColorModeValue('green.500', 'green.400');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const highlightBg = useColorModeValue('green.50', 'gray.700');
+  // Hoisted color-mode values. These were previously called inline inside JSX,
+  // .map() callbacks and conditional branches — that varies the hook count
+  // between renders and triggers React's "change in order of Hooks" warning.
+  // Hooks must run unconditionally at the top level, so they live here.
+  const strongText = useColorModeValue('gray.800', 'white');
+  const secondaryText = useColorModeValue('gray.700', 'gray.300');
+  const greenSoftBg = useColorModeValue('green.50', 'green.900');
+  const greenSoftBorder = useColorModeValue('green.100', 'green.800');
+  const greenStrongText = useColorModeValue('green.800', 'green.100');
+  const greenBorder = useColorModeValue('green.200', 'green.700');
+  const neutralSoftBg = useColorModeValue('gray.50', 'gray.800');
+  const neutralBorder = useColorModeValue('gray.200', 'gray.700');
+  const summaryBg = useColorModeValue(
+    event.type === 'FE'
+      ? 'blue.50'
+      : event.type === 'FU'
+      ? 'purple.50'
+      : event.type === 'PE'
+      ? 'orange.50'
+      : event.type === 'SC'
+      ? 'green.50'
+      : event.type === 'HA'
+      ? 'yellow.50'
+      : 'gray.50',
+    'gray.700'
+  );
+  const summaryBorder = useColorModeValue(
+    event.type === 'FE'
+      ? 'blue.200'
+      : event.type === 'FU'
+      ? 'purple.200'
+      : event.type === 'PE'
+      ? 'orange.200'
+      : event.type === 'SC'
+      ? 'green.200'
+      : event.type === 'HA'
+      ? 'yellow.200'
+      : 'gray.200',
+    'gray.600'
+  );
 
   return (
     <Box ref={cardRef} position="relative">
@@ -704,7 +744,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   <Text
                     fontSize={{ base: 'md', md: 'lg' }}
                     fontWeight="bold"
-                    color={useColorModeValue('gray.800', 'white')}
+                    color={strongText}
                   >
                     {eventInfo.title}
                   </Text>
@@ -794,7 +834,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             <VStack spacing={3} align="stretch" mb={{ base: 4, md: 3 }}>
               <Text
                 fontSize={{ base: 'md', md: 'md' }}
-                color={useColorModeValue('gray.700', 'gray.300')}
+                color={secondaryText}
                 lineHeight={{ base: '1.6', md: '1.5' }}
                 noOfLines={slim && !isExpanded ? 2 : undefined}
               >
@@ -812,16 +852,16 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 <HStack
                   spacing={2}
                   align="flex-start"
-                  bg={useColorModeValue('green.50', 'green.900')}
+                  bg={greenSoftBg}
                   border="1px solid"
-                  borderColor={useColorModeValue('green.100', 'green.800')}
+                  borderColor={greenSoftBorder}
                   borderRadius="md"
                   p={3}
                 >
                   <Icon as={FaShieldAlt} color="green.500" boxSize={3} mt="3px" flexShrink={0} />
                   <Text
                     fontSize="sm"
-                    color={useColorModeValue('green.800', 'green.100')}
+                    color={greenStrongText}
                     lineHeight="1.5"
                     noOfLines={{ base: 3, md: 2 }}
                   >
@@ -835,9 +875,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   be shown as "Farmer's Field Notes" — that would be dishonest to consumers. */}
               {event.observation && event.observation.trim() && (!slim || isExpanded) && (
                 <Box
-                  bg={useColorModeValue('green.50', 'green.900')}
+                  bg={greenSoftBg}
                   border="1px solid"
-                  borderColor={useColorModeValue('green.200', 'green.700')}
+                  borderColor={greenBorder}
                   borderRadius="md"
                   p={3}
                 >
@@ -852,7 +892,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   </HStack>
                   <Text
                     fontSize="sm"
-                    color={useColorModeValue('green.800', 'green.100')}
+                    color={greenStrongText}
                     fontStyle="italic"
                     lineHeight="1.4"
                   >
@@ -1206,36 +1246,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {isSummaryEvent && (
                   <Box
                     p={4}
-                    bg={useColorModeValue(
-                      event.type === 'FE'
-                        ? 'blue.50'
-                        : event.type === 'FU'
-                        ? 'purple.50'
-                        : event.type === 'PE'
-                        ? 'orange.50'
-                        : event.type === 'SC'
-                        ? 'green.50'
-                        : event.type === 'HA'
-                        ? 'yellow.50'
-                        : 'gray.50',
-                      'gray.700'
-                    )}
+                    bg={summaryBg}
                     borderRadius="lg"
                     border="1px solid"
-                    borderColor={useColorModeValue(
-                      event.type === 'FE'
-                        ? 'blue.200'
-                        : event.type === 'FU'
-                        ? 'purple.200'
-                        : event.type === 'PE'
-                        ? 'orange.200'
-                        : event.type === 'SC'
-                        ? 'green.200'
-                        : event.type === 'HA'
-                        ? 'yellow.200'
-                        : 'gray.200',
-                      'gray.600'
-                    )}
+                    borderColor={summaryBorder}
                   >
                     <HStack mb={3}>
                       <Icon
@@ -1537,10 +1551,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           <Box
                             key={idx}
                             p={3}
-                            bg={useColorModeValue('green.50', 'green.900')}
+                            bg={greenSoftBg}
                             borderRadius="lg"
                             border="1px solid"
-                            borderColor={useColorModeValue('green.200', 'green.700')}
+                            borderColor={greenBorder}
                           >
                             <HStack spacing={2} mb={1}>
                               {fuelIcon ? (
@@ -1842,10 +1856,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       {/* Trust indicator */}
                       <Box
                         p={{ base: 3, md: 2 }}
-                        bg={useColorModeValue('gray.50', 'gray.800')}
+                        bg={neutralSoftBg}
                         borderRadius="lg"
                         border="1px solid"
-                        borderColor={useColorModeValue('gray.200', 'gray.700')}
+                        borderColor={neutralBorder}
                       >
                         <HStack spacing={{ base: 3, md: 2 }}>
                           <Icon as={FaShieldAlt} boxSize={{ base: 5, md: 4 }} color="green.500" />

@@ -52,6 +52,7 @@ import {
 import { useGetFarmQuery, useEditFarmMutation } from 'store/api/companyApi';
 import { StandardImageGallery } from 'components/ImageGallery';
 import CertificationManager from 'components/Certifications/CertificationManager';
+import OperationAuditExportButton from './OperationAuditExportButton';
 import PURExportModal from 'components/PURExport/PURExportModal';
 
 // Type definitions
@@ -867,6 +868,11 @@ function ProfileFarm() {
           >
             <CertificationManager companyId={currentCompany?.id} farmId={farmId} />
           </StandardCard>
+        </Box>
+
+        {/* Operation-wide audit dossier — one combined NOP PDF across all parcels × productions */}
+        <Box w="full">
+          <OperationAuditExportButton companyId={currentCompany?.id} farmId={farmId} />
         </Box>
 
         {/* Sustainability Practices */}

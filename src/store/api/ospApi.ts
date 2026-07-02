@@ -9,6 +9,7 @@ import {
   INPUT_VERIFY_URL,
   OSP_ACTIVATE_URL,
   OSP_ADD_APPROVED_INPUT_URL,
+  OSP_CHANGE_NOTIFICATIONS_URL,
   OSP_NEW_VERSION_URL,
   OSP_REMOVE_APPROVED_INPUT_URL,
   OSP_SUBMIT_URL,
@@ -16,9 +17,11 @@ import {
 } from 'config';
 import {
   ApprovedInputKind,
+  CreateOSPChangeNotificationData,
   CreateOSPData,
   InputVerifyResult,
   OSP,
+  OSPChangeNotification,
   OSPSummary,
   UpdateOSPData
 } from 'types/osp';
@@ -184,6 +187,31 @@ const ospApi = baseApi.injectEndpoints({
       ]
     }),
 
+    // NOP 2615 §3.4 — Notification of Changes (7 CFR 205.400(f)).
+    getOSPChangeNotifications: build.query<OSPChangeNotification[], OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_CHANGE_NOTIFICATIONS_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSPChangeNotification', id: Number(ospId) }]
+    }),
+
+    createOSPChangeNotification: build.mutation<
+      OSPChangeNotification,
+      OSPOne & { data: CreateOSPChangeNotificationData }
+    >({
+      query: ({ companyId, farmId, ospId, data }) => ({
+        url: OSP_CHANGE_NOTIFICATIONS_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body: data,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSPChangeNotification', id: Number(ospId) }
+      ]
+    }),
+
     // Resolve a free-text product name to NL/OMRI matches. Used by the
     // Approved Inputs typeahead. Backend route: /certifications/verify-input/?name=
     verifyInput: build.query<InputVerifyResult, { name: string; omri_id?: string }>({
@@ -207,6 +235,8 @@ export const {
   useNewOSPVersionMutation,
   useAddApprovedInputMutation,
   useRemoveApprovedInputMutation,
+  useGetOSPChangeNotificationsQuery,
+  useCreateOSPChangeNotificationMutation,
   useLazyVerifyInputQuery
 } = ospApi;
 

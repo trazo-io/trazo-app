@@ -79,6 +79,10 @@ const SmartUsageCard = ({
     'linear(to-r, green.900, blue.900)'
   );
   const statBg = useColorModeValue('gray.50', 'gray.600');
+  // Hoisted (was called inline in JSX after the isLoading/error early returns —
+  // varied the hook count between renders, triggering the "change in order of
+  // Hooks" warning).
+  const cardBorderAccent = useColorModeValue('green.100', 'green.700');
 
   const getSmartInsights = () => {
     if (!metrics) return getDefaultInsight();
@@ -353,7 +357,7 @@ const SmartUsageCard = ({
           p={3}
           borderRadius="md"
           border="1px solid"
-          borderColor={useColorModeValue('green.100', 'green.700')}
+          borderColor={cardBorderAccent}
         >
           <Flex align="center" justify="space-between">
             <HStack spacing={3}>

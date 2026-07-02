@@ -334,6 +334,21 @@ export const MANURE_HARVEST_INTERVALS: readonly EnumOption[] = [
   { value: 'na', labelKey: 'enums.manure_harvest_intervals.na' }
 ] as const;
 
+/** Manure treatment class — SoilManagementEvent (NOP 5006 / 7 CFR 205.203(c)) */
+export const MANURE_TREATMENTS: readonly EnumOption[] = [
+  { value: 'raw', labelKey: 'enums.manure_treatments.raw' },
+  { value: 'composted', labelKey: 'enums.manure_treatments.composted' },
+  { value: 'processed_5006', labelKey: 'enums.manure_treatments.processed_5006' }
+] as const;
+
+/** Fertilizer nitrogen source — ChemicalEvent (NOP 5012 / 7 CFR 205.105(a)) */
+export const NITROGEN_SOURCES: readonly EnumOption[] = [
+  { value: 'organic', labelKey: 'enums.nitrogen_sources.organic' },
+  { value: 'mined_natural', labelKey: 'enums.nitrogen_sources.mined_natural' },
+  { value: 'synthetic_prohibited', labelKey: 'enums.nitrogen_sources.synthetic_prohibited' },
+  { value: 'unknown', labelKey: 'enums.nitrogen_sources.unknown' }
+] as const;
+
 /** Contamination source — GeneralEvent (7 CFR 205.201(b)) */
 export const CONTAMINATION_SOURCES: readonly EnumOption[] = [
   { value: 'spray_drift', labelKey: 'enums.contamination_sources.spray_drift' },
@@ -385,7 +400,9 @@ export const ENUM_OPTIONS = {
   // NOP Compliance
   identified_by: IDENTIFIED_BY,
   contamination_sources: CONTAMINATION_SOURCES,
-  manure_harvest_intervals: MANURE_HARVEST_INTERVALS
+  manure_harvest_intervals: MANURE_HARVEST_INTERVALS,
+  manure_treatments: MANURE_TREATMENTS,
+  nitrogen_sources: NITROGEN_SOURCES
 } as const;
 
 export type EnumSourceKey = keyof typeof ENUM_OPTIONS;

@@ -69,6 +69,9 @@ import {
 import { OSP, OSP_SECTION_KEYS, OSPSectionKey, OSPSections, OSPStatus, emptySections } from 'types/osp';
 import OSPActivateModal from './OSPActivateModal';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
+import OSPChangeNotificationsPanel from './OSPChangeNotificationsPanel';
+import StateOrganicRegistrationCard from './StateOrganicRegistrationCard';
+import OSPAnnualUpdateCard from './OSPAnnualUpdateCard';
 
 interface RootState {
   company: {
@@ -654,6 +657,19 @@ const OSPView: React.FC = () => {
       title={intl.formatMessage({ id: 'osp.title' })}
       description={intl.formatMessage({ id: 'osp.subtitle' })}
     >
+      {/* CDFA State Organic Program producer registration (CA Food & Ag Code §§ 46000-46029) */}
+      {companyId && farmId && (
+        <StateOrganicRegistrationCard companyId={companyId} farmId={farmId} />
+      )}
+      {/* OSP annual continuation / update (7 CFR 205.406) */}
+      {companyId && farmId && (
+        <OSPAnnualUpdateCard
+          companyId={companyId}
+          farmId={farmId}
+          ospId={focusedOspId ?? fetchedOsp?.id ?? null}
+          currentYear={new Date().getFullYear()}
+        />
+      )}
       {/* Header card — status + progress + actions */}
       <StandardCard mb={4}>
         <VStack align="stretch" spacing={3}>
@@ -912,6 +928,15 @@ const OSPView: React.FC = () => {
       {/* Approved inputs panel — drives the drift detector (Sprint 5.1). */}
       {companyId && farmId && (
         <OSPApprovedInputsPanel
+          companyId={companyId}
+          farmId={farmId}
+          osp={editableOsp}
+        />
+      )}
+
+      {/* Notification of Changes panel — NOP 2615 §3.4 / 7 CFR 205.400(f). */}
+      {companyId && farmId && (
+        <OSPChangeNotificationsPanel
           companyId={companyId}
           farmId={farmId}
           osp={editableOsp}

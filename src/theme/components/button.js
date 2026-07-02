@@ -53,7 +53,7 @@ export const buttonStyles = {
         outline: {
           border: '1px solid',
           borderColor: 'green.500',
-          color: 'green.500',
+          color: 'green.700', // green.700 #2E7D32 = 5.13:1 on white (WCAG AA); green.500 was 2.78:1
           bg: 'transparent',
           _hover: {
             bg: {
@@ -65,21 +65,21 @@ export const buttonStyles = {
               _dark: 'green.400'
             },
             color: {
-              base: 'green.600',
+              base: 'green.800', // darken on hover (rest is green.700) — was green.600 (lighter, backwards)
               _dark: 'green.400'
             }
           }
         },
         ghost: {
           bg: 'transparent',
-          color: 'green.500',
+          color: 'green.700', // WCAG AA on white (green.500 failed at 2.78:1)
           _hover: {
             bg: {
               base: 'green.50',
               _dark: 'green.900'
             },
             color: {
-              base: 'green.600',
+              base: 'green.800', // darken on hover (rest is green.700)
               _dark: 'green.400'
             }
           }
@@ -88,9 +88,10 @@ export const buttonStyles = {
       baseStyle: {
         borderRadius: '12px',
         fontWeight: '500',
-        _focus: {
+        _focusVisible: {
+          // Visible keyboard focus ring (green.100 #C6F6D5 was too faint to see on white)
           boxShadow: {
-            base: '0 0 0 3px #C6F6D5', // green.100
+            base: '0 0 0 3px rgba(76, 175, 80, 0.6)', // green.500 @ 60%
             _dark: '0 0 0 3px #276749' // green.800
           }
         },

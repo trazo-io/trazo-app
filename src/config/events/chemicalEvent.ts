@@ -268,6 +268,18 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     formatter: formatPercentage
   },
   {
+    // NOP 5012 — liquid/soluble fertilizer nitrogen source (certifier detail).
+    name: 'nitrogen_source',
+    labelKey: 'events.chemical.fields.nitrogenSource',
+    valueType: 'enum',
+    enumSource: 'nitrogen_sources',
+    visibleForSubtypes: ['FE'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
     // Bug Pattern #6 — BooleanField(default=False) on backend never returns null,
     // so without visibleWhen this would render "Is Fertigation: ✗" on every
     // non-fertigation FE event, polluting the consumer card with negative noise.
@@ -297,6 +309,11 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     name: 'target_pest_disease',
     labelKey: 'events.chemical.fields.targetPestDisease',
     valueType: 'string',
+    // Deliberately NOT FE (enforced by chemicalEvent.test.ts): on a fertilizer a
+    // "target pest/disease" reads wrong. The FE application reason IS still captured —
+    // the form input is ungated so FE saves target_pest_disease, and the certifier PDF
+    // prints it for every chemical row. A dedicated fertilizer-reason field would be the
+    // clean way to also DISPLAY it on FE modal/card (deferred design decision).
     visibleForSubtypes: ['PE', 'FU', 'HE'],
     surfaces: {
       card: 'hero',
@@ -524,6 +541,18 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
       form: 'secondary'
     }
   },
+  {
+    // Manufacturer/supplier lot/batch # — required NOP purchase-record field (CCOF G8.0)
+    // for input traceability + mass-balance. Producer/certifier-only; NO consumer_card
+    // surface (mirrors supplier_name; backend also strips it from the public payload).
+    name: 'chemical_lot_number',
+    labelKey: 'events.chemical.fields.chemicalLotNumber',
+    valueType: 'string',
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
 
   // ---- F20 (2026-06): Legal spray-record fields (GLOBALG.A.P. / CA PUR) ----
   // Farmer-facing review only (modal + form). Deliberately NO consumer surface:
@@ -574,6 +603,32 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     labelKey: 'events.chemical.fields.applicationCounty',
     valueType: 'string',
     surfaces: { modal: 'details', form: 'secondary' }
+  },
+  {
+    // Tank-mix partners (adjuvants/spreader-stickers). Audit/modal display only —
+    // each CA-registered partner emits its own PUR line (boxes 23/24) on export.
+    // valueType 'string' + formatter: the value is a list of objects; the form input
+    // is hand-crafted (not auto-rendered), so this entry only drives the modal summary.
+    name: 'tank_mix_partners',
+    labelKey: 'events.chemical.fields.tankMixPartners',
+    valueType: 'string',
+    visibleForSubtypes: ['PE', 'FU', 'HE'],
+    surfaces: { modal: 'details' },
+    formatter: (value) => {
+      if (!Array.isArray(value) || value.length === 0) return null;
+      const names = value
+        .map((p) =>
+          p && typeof p === 'object'
+            ? String(
+                (p as Record<string, unknown>).commercial_name ||
+                  (p as Record<string, unknown>).epa_registration_number ||
+                  ''
+              )
+            : ''
+        )
+        .filter(Boolean);
+      return names.length ? names.join(', ') : null;
+    }
   },
 
   // ---- F21: GG authorizer (FV-GFS 32.02.01 #10) + FSMA supervisor review (112.161(b)) ----

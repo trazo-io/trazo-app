@@ -484,6 +484,29 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       consumer_card: 'details'
     }
   },
+  {
+    // NOP irrigation/well water test (7 CFR 205.272 / 205.671) — CCOF water-quality
+    // record. Producer/certifier-only; NO consumer_card surface (backend keeps it out
+    // of the public payload).
+    name: 'water_test_date',
+    labelKey: 'events.production.fields.waterTestDate',
+    valueType: 'date',
+    visibleForSubtypes: ['IR'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    name: 'water_test_lab',
+    labelKey: 'events.production.fields.waterTestLab',
+    valueType: 'string',
+    visibleForSubtypes: ['IR'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
 
   // ---- Equipment Maintenance (EM — merged from deprecated EquipmentEvent type 4) ----
   {
@@ -656,6 +679,18 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       modal: 'secondary',
       form: 'secondary',
       consumer_card: 'secondary'
+    }
+  },
+  {
+    // NOP 5026 — residual chlorine at discharge vs SDWA MRDL (certifier detail).
+    name: 'sanitizer_residual_ppm_at_discharge',
+    labelKey: 'events.production.fields.sanitizerResidualPpm',
+    placeholderKey: 'events.production.fields.sanitizerResidualPpmPlaceholder',
+    valueType: 'number',
+    visibleForSubtypes: ['EM'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
     }
   },
   {

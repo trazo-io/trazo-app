@@ -45,6 +45,9 @@ const OnboardingChecklist: React.FC = () => {
   const checkColor = useColorModeValue('green.500', 'green.400');
   const itemBg = useColorModeValue('gray.50', 'gray.700');
   const itemHoverBg = useColorModeValue('gray.100', 'gray.600');
+  // Hoisted (was called inline in JSX after the early return below — varied the
+  // hook count between renders, triggering the "change in order of Hooks" warning).
+  const progressBg = useColorModeValue('gray.100', 'gray.700');
 
   if (!isVisible || allComplete) return null;
 
@@ -110,7 +113,7 @@ const OnboardingChecklist: React.FC = () => {
         value={progress}
         size="xs"
         colorScheme="green"
-        bg={useColorModeValue('gray.100', 'gray.700')}
+        bg={progressBg}
       />
 
       {/* Checklist items */}

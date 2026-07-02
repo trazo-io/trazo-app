@@ -43,6 +43,19 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('area', parcelData.area || '0'); // Ensure area is a string number
         formData.append('polygon', JSON.stringify(parcelData.polygon || []));
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
+        if (parcelData.buffer_zones && parcelData.buffer_zones.length > 0) {
+          formData.append('buffer_zones', JSON.stringify(parcelData.buffer_zones));
+        }
+        if (parcelData.apn) formData.append('apn', parcelData.apn);
+        if (parcelData.section_township_range)
+          formData.append('section_township_range', parcelData.section_township_range);
+        if (parcelData.date_began_managing)
+          formData.append('date_began_managing', parcelData.date_began_managing);
+        formData.append('treated_lumber_present', parcelData.treated_lumber_present ? 'true' : 'false');
+        if (parcelData.treated_lumber_description)
+          formData.append('treated_lumber_description', parcelData.treated_lumber_description);
+        if (parcelData.treated_lumber_install_date)
+          formData.append('treated_lumber_install_date', parcelData.treated_lumber_install_date);
         formData.append('establishment', farmId);
 
         // ✅ Contact & Identification Fields - Send ALL fields
@@ -136,6 +149,19 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('certified', parcelData.certified || false);
         formData.append('polygon', JSON.stringify(parcelData.polygon || []));
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
+        if (parcelData.buffer_zones && parcelData.buffer_zones.length > 0) {
+          formData.append('buffer_zones', JSON.stringify(parcelData.buffer_zones));
+        }
+        if (parcelData.apn) formData.append('apn', parcelData.apn);
+        if (parcelData.section_township_range)
+          formData.append('section_township_range', parcelData.section_township_range);
+        if (parcelData.date_began_managing)
+          formData.append('date_began_managing', parcelData.date_began_managing);
+        formData.append('treated_lumber_present', parcelData.treated_lumber_present ? 'true' : 'false');
+        if (parcelData.treated_lumber_description)
+          formData.append('treated_lumber_description', parcelData.treated_lumber_description);
+        if (parcelData.treated_lumber_install_date)
+          formData.append('treated_lumber_install_date', parcelData.treated_lumber_install_date);
 
         // ✅ Contact & Identification Fields - Send ALL fields
         if (parcelData.soil_type) {
@@ -217,6 +243,42 @@ export const productApi = baseApi.injectEndpoints({
           // Invalidation will handle refetch on error
         }
       }
+    }),
+    // Compliance-only PATCH: sends ONLY the parcel organic-compliance fields (buffer
+    // zones + identity). This is deliberately separate from updateParcel, which
+    // UNCONDITIONALLY appends name/description/area/certified/polygon/map_metadata/
+    // contact_*/address — calling that from the compliance card would blank the parcel's
+    // map geometry + contacts. The viewset's partial_update (partial=True) only touches
+    // the fields present here, so nothing else is disturbed.
+    updateParcelCompliance: build.mutation({
+      query: ({ companyId, farmId, parcelId, compliance }) => {
+        const fd = new FormData();
+        // Always send buffer_zones + treated_lumber_present so they can be cleared/toggled.
+        fd.append('buffer_zones', JSON.stringify(compliance.buffer_zones || []));
+        fd.append('treated_lumber_present', compliance.treated_lumber_present ? 'true' : 'false');
+        // CharFields (blank=True) — send even when empty so a cleared value persists.
+        fd.append('apn', compliance.apn ?? '');
+        fd.append('section_township_range', compliance.section_township_range ?? '');
+        fd.append('treated_lumber_description', compliance.treated_lumber_description ?? '');
+        // DateFields — omit when empty (DRF rejects "" for a date).
+        if (compliance.date_began_managing) {
+          fd.append('date_began_managing', compliance.date_began_managing);
+        }
+        if (compliance.treated_lumber_install_date) {
+          fd.append('treated_lumber_install_date', compliance.treated_lumber_install_date);
+        }
+        return {
+          url: PARCEL_URL(companyId, farmId, parcelId),
+          method: 'PATCH',
+          credentials: 'include',
+          body: fd,
+          formData: true
+        };
+      },
+      invalidatesTags: (result, error, { parcelId, farmId }) => [
+        { type: 'Parcel', parcelId },
+        { type: 'Farm', id: farmId }
+      ]
     }),
     getProducts: build.query({
       query: () => ({
@@ -301,6 +363,7 @@ export const {
   useGetParcelQuery,
   useCreateParcelMutation,
   useUpdateParcelMutation,
+  useUpdateParcelComplianceMutation,
   useGetProductsQuery,
   useGetFarmProductsQuery,
   useGetFarmHistoriesQuery,

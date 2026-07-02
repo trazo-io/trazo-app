@@ -14,9 +14,13 @@ import {
   WrapItem,
   useDisclosure,
   useToast,
-  Progress,
   Button,
-  Tooltip
+  Heading,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  IconButton
 } from '@chakra-ui/react';
 import {
   FaSeedling,
@@ -35,7 +39,8 @@ import {
   FaChartLine,
   FaEye,
   FaLink,
-  FaTag
+  FaTag,
+  FaEllipsisV
 } from 'react-icons/fa';
 import { BsStar, BsStarFill } from 'react-icons/bs';
 import { MdTimeline, MdLocationOn } from 'react-icons/md';
@@ -45,7 +50,12 @@ import { useSelector } from 'react-redux';
 import { useUserRole } from 'hooks/useUserRole';
 import { useIntl } from 'react-intl';
 
-import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 'components/Design/StandardComponents';
+import {
+  StandardCard,
+  StandardButton,
+  StandardPage,
+  StandardPageLoading
+} from 'components/Design/StandardComponents';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetPublicHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
 import { TrazoImageUpload } from 'components/Upload';
@@ -56,9 +66,7 @@ import { config } from 'config/environment';
 // Data normalization imports
 import { normalizeBackendEventData } from 'utils/eventDataNormalizer';
 import { StandardizedEvent } from 'types/standardizedEvents';
-import {
-  UltraMobileProductionJourney
-} from 'views/Scan/ProductDetail/components';
+import { UltraMobileProductionJourney } from 'views/Scan/ProductDetail/components';
 
 // Week 2 Voice & Mobile Components
 import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
@@ -91,34 +99,56 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text', on
   const renderValue = () => {
     if (onClick) {
       return (
-        <Text
+        <Button
+          variant="link"
           fontWeight="medium"
           fontSize={{ base: 'sm', md: 'md' }}
-          color="green.600"
-          cursor="pointer"
+          color="green.700"
+          px={0}
+          minW={0}
+          height="auto"
+          whiteSpace="normal"
+          textAlign="left"
+          justifyContent="flex-start"
           _hover={{ textDecoration: 'underline' }}
           onClick={onClick}
         >
           {value}
-        </Text>
+        </Button>
       );
     }
     switch (type) {
       case 'link':
         return (
-          <Link href={value as string} isExternal color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
+          <Link
+            href={value as string}
+            isExternal
+            color="green.600"
+            fontWeight="medium"
+            fontSize={{ base: 'sm', md: 'md' }}
+          >
             {value}
           </Link>
         );
       case 'email':
         return (
-          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
+          <Link
+            href={`mailto:${value}`}
+            color="green.600"
+            fontWeight="medium"
+            fontSize={{ base: 'sm', md: 'md' }}
+          >
             {value}
           </Link>
         );
       case 'phone':
         return (
-          <Link href={`tel:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
+          <Link
+            href={`tel:${value}`}
+            color="green.600"
+            fontWeight="medium"
+            fontSize={{ base: 'sm', md: 'md' }}
+          >
             {value}
           </Link>
         );
@@ -186,11 +216,7 @@ function ProfileProduction() {
     onClose: onQuickAddClose
   } = useDisclosure();
 
-  const {
-    isOpen: isExportOpen,
-    onOpen: onExportOpen,
-    onClose: onExportClose
-  } = useDisclosure();
+  const { isOpen: isExportOpen, onOpen: onExportOpen, onClose: onExportClose } = useDisclosure();
 
   const establishments = useSelector(
     (state: RootState) => state.company.currentCompany?.establishments
@@ -200,7 +226,8 @@ function ProfileProduction() {
     data: historyData,
     isLoading,
     isError,
-    isUninitialized
+    isUninitialized,
+    refetch: refetchHistory
   } = useGetPublicHistoryQuery(productionId || '', {
     skip: !productionId
   });
@@ -208,26 +235,27 @@ function ProfileProduction() {
   // Transparency API - uses public_id (UUID) as backend expects UUID, not numeric ID
   const {
     data: transparencyApiData,
-    isLoading: transparencyLoading
+    isLoading: transparencyLoading,
+    refetch: refetchTransparency
   } = useGetTransparencyDetailsQuery(historyData?.public_id || '', {
     skip: !historyData?.public_id,
     refetchOnMountOrArgChange: true
   });
 
   // Complete API for timeline data
-  const { data: completeData } = useGetCompleteSummaryQuery(productionId || '', {
-    skip: !productionId,
-    refetchOnMountOrArgChange: true
-  });
+  const { data: completeData, refetch: refetchComplete } = useGetCompleteSummaryQuery(
+    productionId || '',
+    {
+      skip: !productionId,
+      refetchOnMountOrArgChange: true
+    }
+  );
 
   // Consumer QR hero/cover photo. Persists History.cover_image_url, which the
   // public serializer surfaces first in `images` (-> the hero background + lead
   // gallery photo). PATCH resolves the production by public_id (HistoryViewSet
   // .get_object accepts the UUID). Pass null to clear and fall back to auto-pick.
-  const persistCover = async (
-    coverUrl: string | null,
-    successMessage: string
-  ) => {
+  const persistCover = async (coverUrl: string | null, successMessage: string) => {
     const historyId = historyData?.public_id || productionId;
     if (!historyId) return;
     try {
@@ -330,7 +358,8 @@ function ProfileProduction() {
 
       // Distribute production-level carbon total across events (CarbonEntry is source of truth)
       const totalCO2e = completeData?.totalEmissions || 0;
-      const averageCO2ePerEvent = normalizedEvents.length > 0 ? totalCO2e / normalizedEvents.length : 0;
+      const averageCO2ePerEvent =
+        normalizedEvents.length > 0 ? totalCO2e / normalizedEvents.length : 0;
 
       const timelineEvents = normalizedEvents.map((event: any, index: number) => {
         const standardizedEvent = event as StandardizedEvent & {
@@ -529,8 +558,14 @@ function ProfileProduction() {
   const handleShare = async () => {
     try {
       await navigator.share({
-        title: `${historyData?.product?.name || 'Production'} - Production Profile`,
-        text: 'Check out this sustainable production! #Trazo #SustainableAgriculture',
+        title: intl.formatMessage(
+          { id: 'production.share.title', defaultMessage: '{name} — Trazo production record' },
+          { name: historyData?.product?.name || historyData?.name || 'Production' }
+        ),
+        text: intl.formatMessage({
+          id: 'production.share.text',
+          defaultMessage: 'See the documented production journey for this lot on Trazo. #Trazo #Traceability'
+        }),
         url: window.location.href
       });
     } catch (error) {
@@ -573,9 +608,7 @@ function ProfileProduction() {
     return (
       <StandardPage
         showBackButton
-        onBack={() =>
-          navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
-        }
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
       >
         <StandardPageLoading />
       </StandardPage>
@@ -586,9 +619,7 @@ function ProfileProduction() {
     return (
       <StandardPage
         showBackButton
-        onBack={() =>
-          navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
-        }
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
       >
         <Box py={8} textAlign="center">
           <Text color="red.500">Error loading production data. Please try again.</Text>
@@ -603,36 +634,25 @@ function ProfileProduction() {
   return (
     <StandardPage
       showBackButton
-      onBack={() =>
-        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
-      }
+      onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
     >
       <VStack spacing={{ base: 4, md: 8 }} w="100%">
         {/* Identity Section */}
         <StandardCard
-          title={intl.formatMessage({ id: 'app.production' })}
           variant="elevated"
           padding={{ base: 3, md: 4 }}
           headerAction={
-            <Wrap spacing={1}>
+            <Wrap spacing={1} justify={{ base: 'flex-start', md: 'flex-end' }}>
+              {/* Primary wedge action + the buyer handoff stay visible; secondary
+                  actions collapse into an overflow menu to reduce header clutter. */}
               <WrapItem>
                 <StandardButton
-                  variant="outline"
+                  variant="primary"
                   size="xs"
-                  leftIcon={<Icon as={FaEye} />}
-                  onClick={handleViewPublicPage}
+                  leftIcon={<Icon as={FiDownload} />}
+                  onClick={onExportOpen}
                 >
-                  {intl.formatMessage({ id: 'app.viewPublicPage' })}
-                </StandardButton>
-              </WrapItem>
-              <WrapItem>
-                <StandardButton
-                  variant="outline"
-                  size="xs"
-                  leftIcon={<Icon as={FaShare} />}
-                  onClick={handleShare}
-                >
-                  {intl.formatMessage({ id: 'app.share' })}
+                  {intl.formatMessage({ id: 'app.exportForAudit' })}
                 </StandardButton>
               </WrapItem>
               <WrapItem>
@@ -646,53 +666,55 @@ function ProfileProduction() {
                 </StandardButton>
               </WrapItem>
               <WrapItem>
-                <Tooltip
-                  hasArrow
-                  shouldWrapChildren
-                  isDisabled={Boolean(historyData?.lot_id)}
-                  label={intl.formatMessage({ id: 'production.lotTag.disabledTooltip' })}
-                >
-                  <StandardButton
+                <Menu placement="bottom-end" autoSelect={false}>
+                  <MenuButton
+                    as={IconButton}
                     variant="outline"
                     size="xs"
-                    leftIcon={<Icon as={FaTag} />}
-                    onClick={handleDownloadLotTag}
-                    isDisabled={!historyData?.lot_id}
-                  >
-                    {intl.formatMessage({ id: 'production.lotTag.button' })}
-                  </StandardButton>
-                </Tooltip>
-              </WrapItem>
-              {canWrite && !historyData?.finish_date && (
-                <WrapItem>
-                  <StandardButton
-                    variant="outline"
-                    size="xs"
-                    leftIcon={<Icon as={FaEdit} />}
-                    onClick={() =>
-                      navigate(
-                        `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}/change`
-                      )
-                    }
-                  >
-                    {intl.formatMessage({ id: 'app.edit' })}
-                  </StandardButton>
-                </WrapItem>
-              )}
-              <WrapItem>
-                <StandardButton
-                  variant="outline"
-                  size="xs"
-                  leftIcon={<Icon as={FiDownload} />}
-                  onClick={onExportOpen}
-                >
-                  {intl.formatMessage({ id: 'app.exportForAudit' })}
-                </StandardButton>
+                    minH="32px"
+                    aria-label={intl.formatMessage({
+                      id: 'production.moreActions',
+                      defaultMessage: 'More actions'
+                    })}
+                    icon={<Icon as={FaEllipsisV} />}
+                  />
+                  <MenuList>
+                    <MenuItem icon={<Icon as={FaEye} />} onClick={handleViewPublicPage}>
+                      {intl.formatMessage({ id: 'app.viewPublicPage' })}
+                    </MenuItem>
+                    <MenuItem icon={<Icon as={FaShare} />} onClick={handleShare}>
+                      {intl.formatMessage({ id: 'app.share' })}
+                    </MenuItem>
+                    <MenuItem
+                      icon={<Icon as={FaTag} />}
+                      onClick={handleDownloadLotTag}
+                      isDisabled={!historyData?.lot_id}
+                    >
+                      {intl.formatMessage({ id: 'production.lotTag.button' })}
+                    </MenuItem>
+                    {canWrite && !historyData?.finish_date && (
+                      <MenuItem
+                        icon={<Icon as={FaEdit} />}
+                        onClick={() =>
+                          navigate(
+                            `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}/change`
+                          )
+                        }
+                      >
+                        {intl.formatMessage({ id: 'app.edit' })}
+                      </MenuItem>
+                    )}
+                  </MenuList>
+                </Menu>
               </WrapItem>
             </Wrap>
           }
         >
-          <HStack spacing={{ base: 3, md: 6 }} align="flex-start" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
+          <HStack
+            spacing={{ base: 3, md: 6 }}
+            align="flex-start"
+            flexWrap={{ base: 'wrap', md: 'nowrap' }}
+          >
             <Avatar
               size={{ base: 'xl', md: '2xl' }}
               src={historyData?.images?.[0]?.url}
@@ -703,9 +725,14 @@ function ProfileProduction() {
             />
             <VStack align="start" spacing={{ base: 1, md: 3 }} flex={1}>
               <Box>
-                <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color="gray.800">
+                <Heading
+                  as="h1"
+                  fontSize={{ base: 'lg', md: '2xl' }}
+                  fontWeight="bold"
+                  color="gray.800"
+                >
                   {historyData?.product?.name || historyData?.name}
-                </Text>
+                </Heading>
                 {historyData?.lot_id && (
                   <Text fontSize={{ base: 'xs', md: 'md' }} color="gray.500">
                     Lot ID: {historyData.lot_id}
@@ -713,7 +740,12 @@ function ProfileProduction() {
                 )}
               </Box>
               {historyData?.description && (
-                <Text color="gray.600" fontSize={{ base: 'xs', md: 'sm' }} lineHeight="1.6" noOfLines={3}>
+                <Text
+                  color="gray.600"
+                  fontSize={{ base: 'xs', md: 'sm' }}
+                  lineHeight="1.6"
+                  noOfLines={3}
+                >
                   {historyData.description}
                 </Text>
               )}
@@ -727,33 +759,68 @@ function ProfileProduction() {
                     borderRadius="full"
                     fontSize="xs"
                   >
-                    {historyData?.finish_date ? 'Finished' : 'Active'}
+                    {historyData?.finish_date
+                      ? intl.formatMessage({ id: 'production.status.finished', defaultMessage: 'Finished' })
+                      : intl.formatMessage({ id: 'production.status.active', defaultMessage: 'Active' })}
                   </Badge>
                 </WrapItem>
                 {historyData?.is_outdoor !== undefined && (
                   <WrapItem>
-                    <Badge colorScheme="green" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                    <Badge
+                      colorScheme="green"
+                      variant="subtle"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                      fontSize="xs"
+                    >
                       <HStack spacing={1}>
                         <Icon as={FaSeedling} boxSize={2.5} />
-                        <Text>{historyData.is_outdoor ? intl.formatMessage({ id: 'production.outdoor' }) : intl.formatMessage({ id: 'production.indoor' })}</Text>
+                        <Text>
+                          {historyData.is_outdoor
+                            ? intl.formatMessage({ id: 'production.outdoor' })
+                            : intl.formatMessage({ id: 'production.indoor' })}
+                        </Text>
                       </HStack>
                     </Badge>
                   </WrapItem>
                 )}
                 {historyData?.qr_code && (
                   <WrapItem>
-                    <Badge colorScheme="blue" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
+                    <Badge
+                      colorScheme="blue"
+                      variant="subtle"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                      fontSize="xs"
+                    >
                       <HStack spacing={1}>
                         <Icon as={FaQrcode} boxSize={2.5} />
-                        <Text>QR Available</Text>
+                        <Text>
+                          {intl.formatMessage({
+                            id: 'production.badge.qrAvailable',
+                            defaultMessage: 'QR Available'
+                          })}
+                        </Text>
                       </HStack>
                     </Badge>
                   </WrapItem>
                 )}
                 {historyData?.published && (
                   <WrapItem>
-                    <Badge colorScheme="purple" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
-                      Published
+                    <Badge
+                      colorScheme="purple"
+                      variant="subtle"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                      fontSize="xs"
+                    >
+                      {intl.formatMessage({
+                        id: 'production.badge.published',
+                        defaultMessage: 'Published'
+                      })}
                     </Badge>
                   </WrapItem>
                 )}
@@ -764,7 +831,14 @@ function ProfileProduction() {
 
         {/* Photo Gallery Section */}
         {historyData?.images && historyData.images.length > 0 && (
-          <StandardCard title="Photo Gallery" variant="elevated" padding={{ base: 3, md: 4 }}>
+          <StandardCard
+            title={intl.formatMessage({
+              id: 'production.section.photoGallery',
+              defaultMessage: 'Photo Gallery'
+            })}
+            variant="elevated"
+            padding={{ base: 3, md: 4 }}
+          >
             <StandardImageGallery
               images={historyData.images}
               title=""
@@ -781,7 +855,10 @@ function ProfileProduction() {
         {/* Cover Photo Section (consumer QR hero) — write access only */}
         {canWrite && (
           <StandardCard
-            title={intl.formatMessage({ id: 'production.cover.title', defaultMessage: 'Cover Photo' })}
+            title={intl.formatMessage({
+              id: 'production.cover.title',
+              defaultMessage: 'Cover Photo'
+            })}
             variant="elevated"
             padding={{ base: 3, md: 4 }}
           >
@@ -798,12 +875,18 @@ function ProfileProduction() {
                 {/* Current cover preview */}
                 <Box flexShrink={0}>
                   <Text fontSize="xs" color="gray.500" mb={1}>
-                    {intl.formatMessage({ id: 'production.cover.current', defaultMessage: 'Current cover' })}
+                    {intl.formatMessage({
+                      id: 'production.cover.current',
+                      defaultMessage: 'Current cover'
+                    })}
                   </Text>
                   {historyData?.cover_image_url ? (
                     <Image
                       src={historyData.cover_image_url}
-                      alt={intl.formatMessage({ id: 'production.cover.title', defaultMessage: 'Cover Photo' })}
+                      alt={intl.formatMessage({
+                        id: 'production.cover.title',
+                        defaultMessage: 'Cover Photo'
+                      })}
                       borderRadius="lg"
                       objectFit="cover"
                       boxSize={{ base: '120px', md: '140px' }}
@@ -821,7 +904,7 @@ function ProfileProduction() {
                       justifyContent="center"
                       bg="gray.50"
                     >
-                      <Text fontSize="xs" color="gray.400" textAlign="center" px={2}>
+                      <Text fontSize="xs" color="gray.500" textAlign="center" px={2}>
                         {intl.formatMessage({
                           id: 'production.cover.auto',
                           defaultMessage: 'Auto (first photo)'
@@ -862,12 +945,29 @@ function ProfileProduction() {
           </StandardCard>
         )}
 
+        {/* Sprint 5.1 — OSP ↔ events drift summary (only renders if findings present).
+            Surfaced high (above Quick Stats) so any compliance action is seen first. */}
+        <DriftFindingsBanner events={timelineEvents as any[]} />
+
         {/* Quick Stats Section */}
-        <StandardCard title="Quick Stats" variant="elevated" padding={{ base: 3, md: 4 }}>
+        <StandardCard
+          title={intl.formatMessage({
+            id: 'production.section.quickStats',
+            defaultMessage: 'Quick Stats'
+          })}
+          variant="elevated"
+          padding={{ base: 3, md: 4 }}
+        >
           <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2, md: 4 }}>
             <StatCard
               icon={FaSeedling}
-              value={historyData?.is_outdoor ? intl.formatMessage({ id: 'production.outdoor' }) : historyData?.is_outdoor === false ? intl.formatMessage({ id: 'production.indoor' }) : intl.formatMessage({ id: 'production.general' })}
+              value={
+                historyData?.is_outdoor
+                  ? intl.formatMessage({ id: 'production.outdoor' })
+                  : historyData?.is_outdoor === false
+                  ? intl.formatMessage({ id: 'production.indoor' })
+                  : intl.formatMessage({ id: 'production.general' })
+              }
               label={intl.formatMessage({ id: 'production.environment' })}
               colorScheme="green"
             />
@@ -880,19 +980,21 @@ function ProfileProduction() {
                   ? '...'
                   : '0%'
               }
-              label="Transparency"
+              label={intl.formatMessage({ id: 'production.stat.transparency', defaultMessage: 'Transparency' })}
               colorScheme="green"
             />
             <StatCard
               icon={FaClipboardList}
               value={timelineEvents.length || 0}
-              label="Events"
+              label={intl.formatMessage({ id: 'production.stat.events', defaultMessage: 'Events' })}
               colorScheme="purple"
             />
             <StatCard
               icon={FaFlag}
-              value={historyData?.finish_date ? 'Finished' : 'Active'}
-              label="Status"
+              value={historyData?.finish_date
+                      ? intl.formatMessage({ id: 'production.status.finished', defaultMessage: 'Finished' })
+                      : intl.formatMessage({ id: 'production.status.active', defaultMessage: 'Active' })}
+              label={intl.formatMessage({ id: 'production.stat.status', defaultMessage: 'Status' })}
               colorScheme="orange"
             />
           </SimpleGrid>
@@ -901,9 +1003,7 @@ function ProfileProduction() {
               variant="ghost"
               size="sm"
               leftIcon={<Icon as={FaChartLine} />}
-              onClick={() =>
-                navigate(`/admin/dashboard/farm/${farmId}/transparency`)
-              }
+              onClick={() => navigate(`/admin/dashboard/farm/${farmId}/transparency`)}
             >
               {intl.formatMessage({ id: 'production.viewTransparencyDetails' })}
             </StandardButton>
@@ -912,7 +1012,14 @@ function ProfileProduction() {
 
         {/* QR Code & Consumer Access - Prominent position for packaging workflow */}
         {historyData?.qr_code && (
-          <StandardCard title="QR Code & Consumer Access" variant="elevated" padding={{ base: 3, md: 4 }}>
+          <StandardCard
+            title={intl.formatMessage({
+              id: 'production.section.qrAccess',
+              defaultMessage: 'QR Code & Consumer Access'
+            })}
+            variant="elevated"
+            padding={{ base: 3, md: 4 }}
+          >
             <VStack spacing={{ base: 3, md: 5 }} align="center">
               {/* Finished production banner */}
               {historyData?.finish_date && (
@@ -926,8 +1033,11 @@ function ProfileProduction() {
                   textAlign="center"
                 >
                   <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
-                    Your production is complete! Print this QR code and attach it to your
-                    packaging.
+                    {intl.formatMessage({
+                      id: 'production.qr.completeBanner',
+                      defaultMessage:
+                        'Your production is complete! Print this QR code and attach it to your packaging.'
+                    })}
                   </Text>
                 </Box>
               )}
@@ -948,8 +1058,11 @@ function ProfileProduction() {
                   fallback={
                     <VStack spacing={2} p={8}>
                       <Icon as={FaQrcode} boxSize={12} color="gray.300" />
-                      <Text fontSize="sm" color="gray.400">
-                        Loading QR...
+                      <Text fontSize="sm" color="gray.500">
+                        {intl.formatMessage({
+                          id: 'production.qr.loading',
+                          defaultMessage: 'Loading QR...'
+                        })}
                       </Text>
                     </VStack>
                   }
@@ -957,10 +1070,23 @@ function ProfileProduction() {
               </Box>
 
               {/* Description */}
-              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" textAlign="center" maxW="400px">
+              <Text
+                fontSize={{ base: 'xs', md: 'sm' }}
+                color="gray.600"
+                textAlign="center"
+                maxW="400px"
+              >
                 {historyData?.finish_date
-                  ? 'Print this QR and attach it to your packaging so consumers can see your production\'s transparency journey.'
-                  : 'Your QR code is ready. Consumers can scan it to view your production\'s transparency details.'}
+                  ? intl.formatMessage({
+                      id: 'production.qr.instruction',
+                      defaultMessage:
+                        "Print this QR and attach it to your packaging so consumers can see your production's transparency journey."
+                    })
+                  : intl.formatMessage({
+                      id: 'production.qr.instructionActive',
+                      defaultMessage:
+                        "Your QR code is ready. Consumers can scan it to view your production's transparency details."
+                    })}
               </Text>
 
               {/* Action buttons */}
@@ -971,7 +1097,10 @@ function ProfileProduction() {
                   leftIcon={<Icon as={FaDownload} />}
                   onClick={downloadQRCode}
                 >
-                  Download QR
+                  {intl.formatMessage({
+                    id: 'production.qr.download',
+                    defaultMessage: 'Download QR'
+                  })}
                 </StandardButton>
                 <StandardButton
                   variant="outline"
@@ -979,7 +1108,7 @@ function ProfileProduction() {
                   leftIcon={<Icon as={FaEye} />}
                   onClick={handleViewPublicPage}
                 >
-                  View Public Page
+                  {intl.formatMessage({ id: 'app.viewPublicPage' })}
                 </StandardButton>
               </HStack>
 
@@ -993,21 +1122,43 @@ function ProfileProduction() {
                 borderColor="blue.100"
               >
                 <Text fontSize="xs" color="blue.700" textAlign="center">
-                  Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download
-                  the high-resolution PNG for print quality.
+                  {intl.formatMessage({
+                    id: 'production.qr.tip',
+                    defaultMessage:
+                      'Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download the high-resolution PNG for print quality.'
+                  })}
                 </Text>
               </Box>
             </VStack>
           </StandardCard>
         )}
 
-        {/* Production Details Section */}
-        <StandardCard title="Production Details" variant="elevated" padding={{ base: 3, md: 4 }}>
+        {/* Static metadata cards — 2-col on desktop, single column mobile-first.
+            alignItems start so uneven-height cards align to the top, no stretch. */}
+        <SimpleGrid
+          columns={{ base: 1, lg: 2 }}
+          spacing={{ base: 4, md: 6 }}
+          w="100%"
+          alignItems="start"
+        >
+          {/* Production Details Section */}
+          <StandardCard
+            title={intl.formatMessage({
+              id: 'production.section.details',
+              defaultMessage: 'Production Details'
+            })}
+            variant="elevated"
+            padding={{ base: 3, md: 4 }}
+          >
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
-            <InfoRow icon={FaSeedling} label="Product" value={historyData?.product?.name} />
+            <InfoRow
+              icon={FaSeedling}
+              label={intl.formatMessage({ id: 'production.field.product', defaultMessage: 'Product' })}
+              value={historyData?.product?.name}
+            />
             <InfoRow
               icon={FaTractor}
-              label="Type"
+              label={intl.formatMessage({ id: 'production.field.type', defaultMessage: 'Type' })}
               value={
                 historyData?.type === 'OR'
                   ? 'Orchard'
@@ -1020,32 +1171,64 @@ function ProfileProduction() {
             />
             <InfoRow
               icon={FaCalendarAlt}
-              label="Start Date"
+              label={intl.formatMessage({ id: 'production.field.startDate', defaultMessage: 'Start Date' })}
               value={formatDate(historyData?.start_date)}
             />
             <InfoRow
               icon={FaCalendarAlt}
-              label="End Date"
-              value={historyData?.finish_date ? formatDate(historyData.finish_date) : 'In Progress'}
+              label={intl.formatMessage({ id: 'production.field.endDate', defaultMessage: 'End Date' })}
+              value={
+                historyData?.finish_date
+                  ? formatDate(historyData.finish_date)
+                  : intl.formatMessage({
+                      id: 'production.status.inProgress',
+                      defaultMessage: 'In Progress'
+                    })
+              }
             />
+            {historyData?.start_date && historyData?.finish_date && (
+              <InfoRow
+                icon={FaCalendarAlt}
+                label={intl.formatMessage({
+                  id: 'production.field.duration',
+                  defaultMessage: 'Duration'
+                })}
+                value={intl.formatMessage(
+                  { id: 'production.field.durationDays', defaultMessage: '{days} days' },
+                  {
+                    days: Math.ceil(
+                      (new Date(historyData.finish_date).getTime() -
+                        new Date(historyData.start_date).getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    )
+                  }
+                )}
+              />
+            )}
             {historyData?.production_amount && (
               <InfoRow
                 icon={FaClipboardList}
-                label="Production Amount"
-                value={`${historyData.production_amount} ${historyData.production_unit || 'units'}`}
+                label={intl.formatMessage({ id: 'production.field.amount', defaultMessage: 'Production Amount' })}
+                value={`${intl.formatNumber(Number(historyData.production_amount))} ${
+                  historyData.production_unit || 'units'
+                }`}
               />
             )}
             {historyData?.earning && (
               <InfoRow
                 icon={FaChartLine}
-                label="Revenue"
+                label={intl.formatMessage({ id: 'production.field.revenue', defaultMessage: 'Revenue' })}
                 value={`$${historyData.earning.toLocaleString()}`}
               />
             )}
             <InfoRow
               icon={FaLeaf}
               label={intl.formatMessage({ id: 'production.environment' })}
-              value={historyData?.is_outdoor ? intl.formatMessage({ id: 'production.outdoor' }) : intl.formatMessage({ id: 'production.indoor' })}
+              value={
+                historyData?.is_outdoor
+                  ? intl.formatMessage({ id: 'production.outdoor' })
+                  : intl.formatMessage({ id: 'production.indoor' })
+              }
             />
           </SimpleGrid>
         </StandardCard>
@@ -1055,49 +1238,73 @@ function ProfileProduction() {
           historyData?.number_of_plants ||
           historyData?.soil_ph ||
           historyData?.crop_type) && (
-          <StandardCard title="Agricultural Information" variant="elevated" padding={{ base: 3, md: 4 }}>
+          <StandardCard
+            title={intl.formatMessage({
+              id: 'production.section.agInfo',
+              defaultMessage: 'Agricultural Information'
+            })}
+            variant="elevated"
+            padding={{ base: 3, md: 4 }}
+          >
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
               {historyData?.age_of_plants && (
-                <InfoRow icon={FaSeedling} label="Plant Age" value={historyData.age_of_plants} />
+                <InfoRow
+                  icon={FaSeedling}
+                  label={intl.formatMessage({ id: 'production.field.plantAge', defaultMessage: 'Plant Age' })}
+                  value={historyData.age_of_plants}
+                />
               )}
               {historyData?.number_of_plants && (
                 <InfoRow
                   icon={FaSeedling}
-                  label="Number of Plants"
+                  label={intl.formatMessage({ id: 'production.field.plantCount', defaultMessage: 'Number of Plants' })}
                   value={historyData.number_of_plants.toLocaleString()}
                 />
               )}
               {historyData?.soil_ph && (
-                <InfoRow icon={FaLeaf} label="Soil pH" value={historyData.soil_ph} />
+                <InfoRow
+                  icon={FaLeaf}
+                  label={intl.formatMessage({ id: 'production.field.soilPh', defaultMessage: 'Soil pH' })}
+                  value={historyData.soil_ph}
+                />
               )}
               {historyData?.crop_type && (
-                <InfoRow icon={FaSeedling} label="Crop Type" value={historyData.crop_type} />
+                <InfoRow
+                  icon={FaSeedling}
+                  label={intl.formatMessage({ id: 'production.field.cropType', defaultMessage: 'Crop Type' })}
+                  value={historyData.crop_type}
+                />
               )}
             </SimpleGrid>
           </StandardCard>
         )}
 
         {/* Location Section */}
-        <StandardCard title="Location" variant="elevated" padding={{ base: 3, md: 4 }}>
+        <StandardCard
+          title={intl.formatMessage({
+            id: 'production.section.location',
+            defaultMessage: 'Location'
+          })}
+          variant="elevated"
+          padding={{ base: 3, md: 4 }}
+        >
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
             <InfoRow
               icon={FaBuilding}
-              label="Establishment"
+              label={intl.formatMessage({ id: 'production.field.establishment', defaultMessage: 'Establishment' })}
               value={historyData?.parcel?.establishment?.name || 'Unknown'}
               onClick={() => navigate(`/admin/dashboard/farm/${farmId}`)}
             />
             <InfoRow
               icon={MdLocationOn}
-              label="Parcel"
+              label={intl.formatMessage({ id: 'production.field.parcel', defaultMessage: 'Parcel' })}
               value={historyData?.parcel?.name || 'Unknown'}
-              onClick={() =>
-                navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
-              }
+              onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
             />
             {historyData?.parcel?.establishment?.location && (
               <InfoRow
                 icon={FaMapMarkerAlt}
-                label="Address"
+                label={intl.formatMessage({ id: 'production.field.address', defaultMessage: 'Address' })}
                 value={historyData.parcel.establishment.location}
               />
             )}
@@ -1105,7 +1312,14 @@ function ProfileProduction() {
         </StandardCard>
 
         {/* Reputation & Operator Section */}
-        <StandardCard title="Reputation & Operator" variant="elevated" padding={{ base: 3, md: 4 }}>
+        <StandardCard
+          title={intl.formatMessage({
+            id: 'production.section.reputation',
+            defaultMessage: 'Reputation & Operator'
+          })}
+          variant="elevated"
+          padding={{ base: 3, md: 4 }}
+        >
           <VStack spacing={{ base: 3, md: 6 }} align="stretch">
             <Box>
               <Text
@@ -1115,23 +1329,35 @@ function ProfileProduction() {
                 fontWeight="semibold"
                 mb={1}
               >
-                Reputation Score
+                {intl.formatMessage({
+                  id: 'production.reputation.score',
+                  defaultMessage: 'Reputation Score'
+                })}
               </Text>
-              <HStack spacing={2}>
-                <HStack spacing={0.5}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Icon
-                      key={star}
-                      as={star <= safeReputation ? BsStarFill : BsStar}
-                      color={star <= safeReputation ? 'yellow.400' : 'gray.300'}
-                      boxSize={{ base: 4, md: 5 }}
-                    />
-                  ))}
+              {safeReputation > 0 ? (
+                <HStack spacing={2}>
+                  <HStack spacing={0.5}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Icon
+                        key={star}
+                        as={star <= safeReputation ? BsStarFill : BsStar}
+                        color={star <= safeReputation ? 'yellow.400' : 'gray.300'}
+                        boxSize={{ base: 4, md: 5 }}
+                      />
+                    ))}
+                  </HStack>
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
+                    ({safeReputation.toFixed(1)}/5.0)
+                  </Text>
                 </HStack>
-                <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
-                  ({safeReputation.toFixed(1)}/5.0)
+              ) : (
+                <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" fontStyle="italic">
+                  {intl.formatMessage({
+                    id: 'production.reputation.notRated',
+                    defaultMessage: 'Not yet rated'
+                  })}
                 </Text>
-              </HStack>
+              )}
             </Box>
 
             {historyData?.operator && (
@@ -1143,7 +1369,10 @@ function ProfileProduction() {
                   fontWeight="semibold"
                   mb={1}
                 >
-                  Operator
+                  {intl.formatMessage({
+                    id: 'production.reputation.operator',
+                    defaultMessage: 'Operator'
+                  })}
                 </Text>
                 <HStack spacing={2}>
                   <Avatar
@@ -1152,7 +1381,11 @@ function ProfileProduction() {
                   />
                   <VStack spacing={0} align="start" minW={0}>
                     <Text fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }} noOfLines={1}>
-                      {historyData.operator.full_name || 'Unnamed Operator'}
+                      {historyData.operator.full_name ||
+                        intl.formatMessage({
+                          id: 'production.reputation.unnamedOperator',
+                          defaultMessage: 'Unnamed Operator'
+                        })}
                     </Text>
                     <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" noOfLines={1}>
                       {historyData.operator.email}
@@ -1161,159 +1394,74 @@ function ProfileProduction() {
                 </HStack>
               </Box>
             )}
-
           </VStack>
         </StandardCard>
-
-        {/* Sprint 5.1 — OSP ↔ events drift summary (only renders if findings present) */}
-        <DriftFindingsBanner events={timelineEvents as any[]} />
+        </SimpleGrid>
 
         {/* Production Timeline Section */}
 
-          {timelineEvents.length > 0 ? (
-            <UltraMobileProductionJourney
-              events={timelineEvents}
-              transparencyScore={Math.round(transparencyScore)}
-            />
-          ) : (
-            <VStack spacing={{ base: 2, md: 4 }} py={{ base: 4, md: 8 }}>
-              <Icon as={MdTimeline} boxSize={{ base: 10, md: 16 }} color="gray.400" />
-              <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="medium" color="gray.600">
-                No events recorded yet
+        {timelineEvents.length > 0 ? (
+          <UltraMobileProductionJourney
+            events={timelineEvents}
+            transparencyScore={Math.round(transparencyScore)}
+          />
+        ) : (
+          <VStack spacing={{ base: 2, md: 4 }} py={{ base: 4, md: 8 }}>
+            <Icon as={MdTimeline} boxSize={{ base: 10, md: 16 }} color="gray.400" />
+            <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="medium" color="gray.600">
+              {intl.formatMessage({
+                id: 'production.timeline.empty',
+                defaultMessage: 'No events recorded yet'
+              })}
+            </Text>
+            <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" textAlign="center">
+              {intl.formatMessage({
+                id: 'production.timeline.emptyHint',
+                defaultMessage: 'Events will appear here as the production progresses'
+              })}
+            </Text>
+            {canWrite && !historyData?.finish_date && (
+              <Button
+                leftIcon={<Icon as={FaSeedling} />}
+                colorScheme="green"
+                size="lg"
+                onClick={onQuickAddOpen}
+                mt={4}
+              >
+                Add Your First Event
+              </Button>
+            )}
+            {historyData?.finish_date && (
+              <Text fontSize="sm" color="gray.500" mt={4} textAlign="center">
+                This production is finished. Events cannot be added to completed productions.
               </Text>
-              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.400" textAlign="center">
-                Events will appear here as the production progresses
-              </Text>
-              {canWrite && !historyData?.finish_date && (
-                <Button
-                  leftIcon={<Icon as={FaSeedling} />}
-                  colorScheme="green"
-                  size="lg"
-                  onClick={onQuickAddOpen}
-                  mt={4}
-                >
-                  Add Your First Event
-                </Button>
-              )}
-              {historyData?.finish_date && (
-                <Text fontSize="sm" color="gray.500" mt={4} textAlign="center">
-                  This production is finished. Events cannot be added to completed productions.
-                </Text>
-              )}
-            </VStack>
-          )}
+            )}
+          </VStack>
+        )}
 
-        {/* Production Summary Section */}
-        <StandardCard title="Production Summary" variant="elevated" padding={{ base: 3, md: 4 }}>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
-            <VStack align="start" spacing={{ base: 2, md: 4 }}>
-              <Box w="full">
-                <Text
-                  fontSize="xs"
-                  color="gray.500"
-                  textTransform="uppercase"
-                  fontWeight="semibold"
-                  mb={1}
-                >
-                  Production Status
-                </Text>
-                <Badge
-                  colorScheme={historyData?.finish_date ? 'green' : 'yellow'}
-                  variant="subtle"
-                  fontSize={{ base: 'xs', md: 'sm' }}
-                  px={3}
-                  py={0.5}
-                  borderRadius="full"
-                >
-                  {historyData?.finish_date ? 'Completed' : 'In Progress'}
-                </Badge>
-              </Box>
-              {historyData?.start_date && historyData?.finish_date && (
-                <Box w="full">
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                    fontWeight="semibold"
-                    mb={1}
-                  >
-                    Duration
-                  </Text>
-                  <Text fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
-                    {Math.ceil(
-                      (new Date(historyData.finish_date).getTime() -
-                        new Date(historyData.start_date).getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    )}{' '}
-                    days
-                  </Text>
-                </Box>
-              )}
-            </VStack>
-            <VStack align="start" spacing={{ base: 2, md: 4 }}>
-              <Box w="full">
-                <Text
-                  fontSize="xs"
-                  color="gray.500"
-                  textTransform="uppercase"
-                  fontWeight="semibold"
-                  mb={1}
-                >
-                  Events Recorded
-                </Text>
-                <Text fontWeight="bold" fontSize={{ base: 'lg', md: 'xl' }} color="green.600">
-                  {timelineEvents.length || 0} {(timelineEvents.length || 0) === 1 ? 'Event' : 'Events'}
-                </Text>
-              </Box>
-              {timelineEvents.length > 0 && (
-                <Box w="full">
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                    fontWeight="semibold"
-                    mb={1}
-                  >
-                    Timeline Progress
-                  </Text>
-                  <HStack spacing={2}>
-                    <Progress
-                      value={historyData.finish_date ? 100 : 50}
-                      colorScheme="green"
-                      size={{ base: 'sm', md: 'md' }}
-                      borderRadius="full"
-                      flex={1}
-                    />
-                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" minW="40px">
-                      {historyData.finish_date ? '100%' : '50%'}
-                    </Text>
-                  </HStack>
-                </Box>
-              )}
-            </VStack>
-          </SimpleGrid>
-        </StandardCard>
       </VStack>
 
-      {/* Sales & Delivery Section (post-finish only) */}
+      {/* Sales & Buyer Handoff (post-finish only) — one section grouping the two
+          complementary sales surfaces: the aggregate Shipment Summary and the
+          per-buyer Sales Records ledger. */}
       {historyData?.finish_date && (
-        <Box mt={{ base: 4, md: 6 }}>
+        <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" mt={{ base: 4, md: 6 }}>
+          <Heading as="h2" size={{ base: 'sm', md: 'md' }} color="gray.700" px={1}>
+            {intl.formatMessage({
+              id: 'production.salesSection.title',
+              defaultMessage: 'Sales & Buyer Handoff'
+            })}
+          </Heading>
           <SalesDeliverySection
             historyId={productionId || ''}
             historyData={historyData}
             canWrite={canWrite}
           />
-        </Box>
-      )}
-
-      {/* Sales Records (per-buyer SOE traceback, post-finish only) */}
-      {historyData?.finish_date && (
-        <Box mt={{ base: 4, md: 6 }}>
           <SalesRecordsSection
             productionId={historyData?.public_id || productionId || ''}
             canWrite={canWrite}
           />
-        </Box>
+        </VStack>
       )}
 
       {/* Quick Add Event Modal */}
@@ -1322,9 +1470,12 @@ function ProfileProduction() {
         onClose={onQuickAddClose}
         cropType={historyData?.product?.name || 'citrus'}
         productionMethod={historyData?.production_method}
-        onEventAdded={(eventData) => {
-          console.log('New event added:', eventData);
-          window.location.reload();
+        onEventAdded={() => {
+          // Refetch the queries that drive this page instead of a full reload —
+          // keeps scroll position and the SPA feel (was window.location.reload()).
+          refetchHistory();
+          refetchComplete();
+          refetchTransparency();
         }}
       />
 

@@ -290,6 +290,31 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     }
   },
   {
+    // Specific product identity + manufacturer for the NOP/CCOF input record
+    // (7 CFR 205.203). Certifier/producer-only (modal + form), mirroring chemical
+    // supplier_name — NO consumer surface. The generic amendment_type already serves
+    // the consumer; the specific product/manufacturer is a certifier detail and the
+    // backend keeps them out of the public payload.
+    name: 'amendment_product_name',
+    labelKey: 'events.soil.fields.amendmentProductName',
+    valueType: 'string',
+    visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate'
+    }
+  },
+  {
+    name: 'amendment_manufacturer',
+    labelKey: 'events.soil.fields.amendmentManufacturer',
+    valueType: 'string',
+    visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
     name: 'amendment_amount_numeric',
     labelKey: 'events.soil.fields.amendmentAmount',
     valueType: 'number',
@@ -415,6 +440,59 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       modal: 'secondary',
       form: 'immediate',
       consumer_card: 'secondary'
+    }
+  },
+
+  // ---- NOP 5006: Processed animal manure (interval-exempt when documented) ----
+  // Certifier-facing compliance detail — not shown on the consumer QR card.
+  {
+    name: 'manure_treatment',
+    labelKey: 'events.soil.fields.manureTreatment',
+    valueType: 'enum',
+    enumSource: 'manure_treatments',
+    visibleForSubtypes: ['OM'],
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate'
+    }
+  },
+  {
+    name: 'processed_manure_temp_f',
+    labelKey: 'events.soil.fields.processedManureTemp',
+    placeholderKey: 'events.soil.fields.processedManureTempPlaceholder',
+    valueType: 'number',
+    formatter: formatNumber,
+    visibleForSubtypes: ['OM'],
+    // Accept both the raw enum value and the post-normalizer display label
+    // (the registry normalizer may resolve enum → label before this runs).
+    visibleWhen: (event) => {
+      const v = String(
+        (event as Record<string, unknown>).manure_treatment ?? ''
+      ).toLowerCase();
+      return v === 'processed_5006' || v.includes('5006') || v.includes('processed');
+    },
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    name: 'processed_manure_attestation',
+    labelKey: 'events.soil.fields.processedManureAttestation',
+    placeholderKey: 'events.soil.fields.processedManureAttestationPlaceholder',
+    valueType: 'text',
+    visibleForSubtypes: ['OM'],
+    // Accept both the raw enum value and the post-normalizer display label
+    // (the registry normalizer may resolve enum → label before this runs).
+    visibleWhen: (event) => {
+      const v = String(
+        (event as Record<string, unknown>).manure_treatment ?? ''
+      ).toLowerCase();
+      return v === 'processed_5006' || v.includes('5006') || v.includes('processed');
+    },
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
     }
   },
 
@@ -582,6 +660,19 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       modal: 'secondary',
       form: 'secondary',
       consumer_card: 'details'
+    }
+  },
+  {
+    // CC subtype cover-crop species (extra_data; NOP §205.203). A documented regen
+    // practice — consumer-safe fact, so it carries a consumer_card surface.
+    name: 'cover_crop_species',
+    labelKey: 'events.soil.coverCropSpecies',
+    valueType: 'string',
+    visibleForSubtypes: ['CC'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary',
+      consumer_card: 'secondary'
     }
   },
   {

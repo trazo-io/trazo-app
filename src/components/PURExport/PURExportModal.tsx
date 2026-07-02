@@ -26,10 +26,17 @@ import {
   Badge,
   Divider,
   Spinner,
+  Link,
   useColorModeValue,
   useToast
 } from '@chakra-ui/react';
-import { FiDownload, FiFileText, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
+import {
+  FiDownload,
+  FiFileText,
+  FiAlertTriangle,
+  FiCheckCircle,
+  FiExternalLink
+} from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 import { StandardButton, StandardSelect } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
@@ -369,6 +376,18 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                       { id: 'app.pur.deadlineNote' },
                       { deadline: summary.filing_deadline, form: summary.form }
                     )}
+                  </Text>
+                  <Text fontSize="xs" color={infoText} lineHeight="1.6" mt={2}>
+                    {intl.formatMessage({ id: 'app.pur.filingHelp' })}{' '}
+                    <Link
+                      href="https://www.calagpermits.org/"
+                      isExternal
+                      color="green.500"
+                      fontWeight="semibold"
+                    >
+                      calagpermits.org
+                      <Icon as={FiExternalLink} boxSize={3} ml={1} verticalAlign="middle" />
+                    </Link>
                   </Text>
                 </Box>
               </VStack>

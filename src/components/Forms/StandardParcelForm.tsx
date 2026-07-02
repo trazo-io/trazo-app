@@ -62,7 +62,7 @@ import {
 } from '../Design';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, boolean, number } from 'zod';
+import { object, string, boolean, number, array } from 'zod';
 import { useIntl } from 'react-intl';
 import { GoogleMap, Polygon, Marker, useLoadScript } from '@react-google-maps/api';
 import { TrazoImageUpload } from '../Upload';
@@ -238,6 +238,32 @@ const parcelSchema = object({
   soil_type: string().optional(),
   unique_code: string().optional(),
 
+  // CCOF Parcel Application identity + treated-lumber contamination source (7 CFR 205.272)
+  apn: string().optional(),
+  section_township_range: string().optional(),
+  date_began_managing: string().optional(),
+  treated_lumber_present: boolean().optional(),
+  treated_lumber_description: string().optional(),
+  treated_lumber_install_date: string().optional(),
+
+  // NOP 7 CFR 205.202(c) — per-boundary buffer / adjoining-land record
+  buffer_zones: array(
+    object({
+      direction: string().optional(),
+      adjoining_land_use: string().optional(),
+      buffer_width_m: number().optional(),
+      drift_risk: string().optional(),
+      prevention: string().optional(),
+      // CCOF OSP Sections D & E
+      adjacent_organic: boolean().optional(),
+      buffer_type: string().optional(),
+      crop_in_buffer: string().optional(),
+      // § 205.400(f)(1) drift-notification readiness
+      neighbor_notified: boolean().optional(),
+      neighbor_notification_date: string().optional()
+    })
+  ).optional(),
+
   // ✅ Advanced Agricultural Fields - NOW SUPPORTED via agricultural_details JSONField
   // Soil Health Management
   soil_ph: number().min(0).max(14).optional(),
@@ -367,6 +393,28 @@ interface ParcelFormData {
   soil_type?: string;
   unique_code?: string;
 
+  // CCOF Parcel Application identity + treated-lumber (7 CFR 205.272)
+  apn?: string;
+  section_township_range?: string;
+  date_began_managing?: string;
+  treated_lumber_present?: boolean;
+  treated_lumber_description?: string;
+  treated_lumber_install_date?: string;
+
+  // NOP buffer zones / adjoining land (7 CFR 205.202(c))
+  buffer_zones?: Array<{
+    direction?: string;
+    adjoining_land_use?: string;
+    buffer_width_m?: number;
+    drift_risk?: string;
+    prevention?: string;
+    adjacent_organic?: boolean;
+    buffer_type?: string;
+    crop_in_buffer?: string;
+    neighbor_notified?: boolean;
+    neighbor_notification_date?: string;
+  }>;
+
   // Media (optional)
   images?: string[];
 
@@ -465,6 +513,13 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
       // Agricultural details (optional)
       soil_type: '',
       unique_code: '',
+      buffer_zones: [],
+      apn: '',
+      section_township_range: '',
+      date_began_managing: '',
+      treated_lumber_present: false,
+      treated_lumber_description: '',
+      treated_lumber_install_date: '',
 
       // Media (optional)
       images: [],
@@ -503,6 +558,21 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
     setValue,
     formState: { errors }
   } = methods;
+
+  // NOP 7 CFR 205.202(c): fixed per-boundary buffer / adjoining-land editor.
+  // Stored as the buffer_zones array; each side is matched/updated by direction.
+  const bufferDirections = ['North', 'South', 'East', 'West'];
+  const getBufferRow = (direction: string): Record<string, unknown> =>
+    ((watch('buffer_zones') as Array<Record<string, unknown>>) || []).find(
+      (b) => b && b.direction === direction
+    ) || {};
+  const setBufferField = (direction: string, key: string, value: unknown) => {
+    const arr = [...((methods.getValues('buffer_zones') as Array<Record<string, unknown>>) || [])];
+    const idx = arr.findIndex((b) => b && b.direction === direction);
+    if (idx >= 0) arr[idx] = { ...arr[idx], [key]: value };
+    else arr.push({ direction, [key]: value });
+    setValue('buffer_zones', arr as never, { shouldDirty: true });
+  };
 
   const [currentStep, setCurrentStep] = useState(0);
   const [polygon, setPolygon] = useState<Array<{ lat: number; lng: number }>>(
@@ -669,6 +739,13 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
         address: '',
         soil_type: '',
         unique_code: '',
+        buffer_zones: [],
+        apn: '',
+        section_township_range: '',
+        date_began_managing: '',
+        treated_lumber_present: false,
+        treated_lumber_description: '',
+        treated_lumber_install_date: '',
         contact_person: '',
         contact_email: '',
         images: [],
@@ -1321,6 +1398,325 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     />
                   </StandardField>
                 </SimpleGrid>
+
+                {/* CCOF Parcel Application identity + treated-lumber (7 CFR 205.272) */}
+                <Box>
+                  <Text fontSize="lg" fontWeight="semibold" color="gray.700" mb={3}>
+                    <Icon as={FaMapMarkedAlt} mr={2} color="green.500" />
+                    {intl.formatMessage({
+                      id: 'parcel.identity.section',
+                      defaultMessage: 'Parcel Identity & Contamination'
+                    })}
+                  </Text>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'parcel.fields.apn',
+                        defaultMessage: "Assessor's Parcel Number (APN)"
+                      })}
+                      helpText={intl.formatMessage({
+                        id: 'parcel.fields.apnHelp',
+                        defaultMessage: 'CCOF Parcel Application identifier'
+                      })}
+                    >
+                      <Input
+                        {...register('apn')}
+                        placeholder={intl.formatMessage({
+                          id: 'parcel.fields.apnPlaceholder',
+                          defaultMessage: 'e.g., 045-120-031'
+                        })}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'parcel.fields.str',
+                        defaultMessage: 'Section-Township-Range'
+                      })}
+                      helpText={intl.formatMessage({
+                        id: 'parcel.fields.strHelp',
+                        defaultMessage: 'PLSS legal description (CCOF Parcel Application)'
+                      })}
+                    >
+                      <Input
+                        {...register('section_township_range')}
+                        placeholder={intl.formatMessage({
+                          id: 'parcel.fields.strPlaceholder',
+                          defaultMessage: 'e.g., S12 T14S R22E'
+                        })}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'parcel.fields.dateBeganManaging',
+                        defaultMessage: 'Date Began Managing'
+                      })}
+                    >
+                      <Input type="date" {...register('date_began_managing')} />
+                    </StandardField>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'parcel.fields.treatedLumberDesc',
+                        defaultMessage: 'Treated Lumber Description (if any)'
+                      })}
+                    >
+                      <Input
+                        {...register('treated_lumber_description')}
+                        placeholder={intl.formatMessage({
+                          id: 'parcel.fields.treatedLumberDescPlaceholder',
+                          defaultMessage: 'e.g., arsenate-treated trellis end-posts, north edge'
+                        })}
+                      />
+                    </StandardField>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'parcel.fields.treatedLumberInstallDate',
+                        defaultMessage: 'Treated Lumber Install Date'
+                      })}
+                    >
+                      <Input type="date" {...register('treated_lumber_install_date')} />
+                    </StandardField>
+                    <FormControl display="flex" alignItems="center">
+                      <FormLabel fontSize="sm" mb={0} mr={3}>
+                        {intl.formatMessage({
+                          id: 'parcel.fields.treatedLumberPresent',
+                          defaultMessage: 'Treated lumber present (7 CFR 205.272)'
+                        })}
+                      </FormLabel>
+                      <Switch {...register('treated_lumber_present')} />
+                    </FormControl>
+                  </SimpleGrid>
+                </Box>
+
+                {/* NOP 7 CFR 205.202(c) — Buffer Zones & Adjoining Land */}
+                <Box>
+                  <Text fontSize="lg" fontWeight="semibold" color="gray.700" mb={1}>
+                    <Icon as={FaShieldAlt} mr={2} color="green.500" />
+                    {intl.formatMessage({
+                      id: 'parcel.buffer.title',
+                      defaultMessage: 'Buffer Zones & Adjoining Land (7 CFR 205.202(c))',
+                    })}
+                  </Text>
+                  <Text fontSize="sm" color="gray.500" mb={3}>
+                    {intl.formatMessage({
+                      id: 'parcel.buffer.description',
+                      defaultMessage:
+                        'Record what borders each side of the parcel and the drift-prevention measure. Leave a side blank if it does not apply.',
+                    })}
+                  </Text>
+                  <VStack spacing={3} align="stretch">
+                    {bufferDirections.map((dir) => {
+                      const row = getBufferRow(dir);
+                      return (
+                        <Box
+                          key={dir}
+                          p={3}
+                          borderWidth="1px"
+                          borderColor="gray.200"
+                          borderRadius="md"
+                        >
+                          <Text fontSize="sm" fontWeight="semibold" mb={2}>
+                            {intl.formatMessage({
+                              id: `parcel.buffer.direction.${dir.toLowerCase()}`,
+                              defaultMessage: dir,
+                            })}
+                          </Text>
+                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                            <StandardField
+                              label={intl.formatMessage({
+                                id: 'parcel.buffer.adjoiningLandUse',
+                                defaultMessage: 'Adjoining Land Use',
+                              })}
+                              helpText={intl.formatMessage({
+                                id: 'parcel.buffer.adjoiningLandUseHelp',
+                                defaultMessage:
+                                  'What borders this side (e.g., conventional orchard, road)',
+                              })}
+                            >
+                              <Input
+                                value={(row.adjoining_land_use as string) || ''}
+                                onChange={(e) =>
+                                  setBufferField(dir, 'adjoining_land_use', e.target.value)
+                                }
+                                placeholder={intl.formatMessage({
+                                  id: 'parcel.buffer.adjoiningLandUsePlaceholder',
+                                  defaultMessage: 'e.g., Conventional walnut orchard',
+                                })}
+                              />
+                            </StandardField>
+                            <StandardField
+                              label={intl.formatMessage({
+                                id: 'parcel.buffer.width',
+                                defaultMessage: 'Buffer Width (m)',
+                              })}
+                            >
+                              <Input
+                                type="number"
+                                min={0}
+                                value={
+                                  row.buffer_width_m === undefined || row.buffer_width_m === null
+                                    ? ''
+                                    : (row.buffer_width_m as number)
+                                }
+                                onChange={(e) =>
+                                  setBufferField(
+                                    dir,
+                                    'buffer_width_m',
+                                    e.target.value === '' ? undefined : Number(e.target.value)
+                                  )
+                                }
+                                placeholder={intl.formatMessage({
+                                  id: 'parcel.buffer.widthPlaceholder',
+                                  defaultMessage: 'e.g., 8',
+                                })}
+                              />
+                            </StandardField>
+                            <StandardField
+                              label={intl.formatMessage({
+                                id: 'parcel.buffer.driftRisk',
+                                defaultMessage: 'Drift Risk',
+                              })}
+                            >
+                              <Select
+                                value={(row.drift_risk as string) || ''}
+                                onChange={(e) => setBufferField(dir, 'drift_risk', e.target.value)}
+                                placeholder={intl.formatMessage({
+                                  id: 'parcel.buffer.driftRiskPlaceholder',
+                                  defaultMessage: 'Select risk',
+                                })}
+                              >
+                                <option value="low">
+                                  {intl.formatMessage({
+                                    id: 'parcel.buffer.driftRisk.low',
+                                    defaultMessage: 'Low',
+                                  })}
+                                </option>
+                                <option value="medium">
+                                  {intl.formatMessage({
+                                    id: 'parcel.buffer.driftRisk.medium',
+                                    defaultMessage: 'Medium',
+                                  })}
+                                </option>
+                                <option value="high">
+                                  {intl.formatMessage({
+                                    id: 'parcel.buffer.driftRisk.high',
+                                    defaultMessage: 'High',
+                                  })}
+                                </option>
+                              </Select>
+                            </StandardField>
+                            <StandardField
+                              label={intl.formatMessage({
+                                id: 'parcel.buffer.prevention',
+                                defaultMessage: 'Prevention Measure',
+                              })}
+                            >
+                              <Input
+                                value={(row.prevention as string) || ''}
+                                onChange={(e) =>
+                                  setBufferField(dir, 'prevention', e.target.value)
+                                }
+                                placeholder={intl.formatMessage({
+                                  id: 'parcel.buffer.preventionPlaceholder',
+                                  defaultMessage: 'e.g., 8 m hedgerow + neighbor letter',
+                                })}
+                              />
+                            </StandardField>
+                            <StandardField
+                              label={intl.formatMessage({
+                                id: 'parcel.buffer.bufferType',
+                                defaultMessage: 'Buffer Type',
+                              })}
+                              helpText={intl.formatMessage({
+                                id: 'parcel.buffer.bufferTypeHelp',
+                                defaultMessage:
+                                  'Physical barrier on this side (CCOF OSP Section E)',
+                              })}
+                            >
+                              <Input
+                                value={(row.buffer_type as string) || ''}
+                                onChange={(e) =>
+                                  setBufferField(dir, 'buffer_type', e.target.value)
+                                }
+                                placeholder={intl.formatMessage({
+                                  id: 'parcel.buffer.bufferTypePlaceholder',
+                                  defaultMessage: 'e.g., Hedgerow, road, fallow strip',
+                                })}
+                              />
+                            </StandardField>
+                            <StandardField
+                              label={intl.formatMessage({
+                                id: 'parcel.buffer.cropInBuffer',
+                                defaultMessage: 'Crop in Buffer',
+                              })}
+                              helpText={intl.formatMessage({
+                                id: 'parcel.buffer.cropInBufferHelp',
+                                defaultMessage:
+                                  'Anything grown in the strip — never sold as organic (CCOF OSP Section E)',
+                              })}
+                            >
+                              <Input
+                                value={(row.crop_in_buffer as string) || ''}
+                                onChange={(e) =>
+                                  setBufferField(dir, 'crop_in_buffer', e.target.value)
+                                }
+                                placeholder={intl.formatMessage({
+                                  id: 'parcel.buffer.cropInBufferPlaceholder',
+                                  defaultMessage: 'e.g., None / unharvested cover',
+                                })}
+                              />
+                            </StandardField>
+                            <Checkbox
+                              isChecked={Boolean(row.adjacent_organic)}
+                              onChange={(e) =>
+                                setBufferField(dir, 'adjacent_organic', e.target.checked)
+                              }
+                              colorScheme="green"
+                            >
+                              {intl.formatMessage({
+                                id: 'parcel.buffer.adjacentOrganic',
+                                defaultMessage:
+                                  'Adjoining land is also certified organic (no buffer required)',
+                              })}
+                            </Checkbox>
+                            <Checkbox
+                              isChecked={Boolean(row.neighbor_notified)}
+                              onChange={(e) =>
+                                setBufferField(dir, 'neighbor_notified', e.target.checked)
+                              }
+                              colorScheme="green"
+                            >
+                              {intl.formatMessage({
+                                id: 'parcel.buffer.neighborNotified',
+                                defaultMessage:
+                                  'Annual drift-notification letter sent to this neighbor (§ 205.400(f)(1))',
+                              })}
+                            </Checkbox>
+                            {Boolean(row.neighbor_notified) && (
+                              <StandardField
+                                label={intl.formatMessage({
+                                  id: 'parcel.buffer.neighborNotificationDate',
+                                  defaultMessage: 'Notification Date',
+                                })}
+                              >
+                                <Input
+                                  type="date"
+                                  value={(row.neighbor_notification_date as string) || ''}
+                                  onChange={(e) =>
+                                    setBufferField(
+                                      dir,
+                                      'neighbor_notification_date',
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </StandardField>
+                            )}
+                          </SimpleGrid>
+                        </Box>
+                      );
+                    })}
+                  </VStack>
+                </Box>
 
                 {/* Navigation */}
                 <HStack spacing={3} justify="space-between" pt={4}>

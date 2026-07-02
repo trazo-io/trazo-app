@@ -49,9 +49,11 @@ import {
   FaTractor,
   FaGasPump,
   FaFileInvoiceDollar,
-  FaTruck
+  FaTruck,
+  FaPlus,
+  FaTrash
 } from 'react-icons/fa';
-import { FormProvider, useForm, Controller } from 'react-hook-form';
+import { FormProvider, useForm, Controller, useFieldArray } from 'react-hook-form';
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import InputVerifyHelper from 'components/Compliance/InputVerifyHelper';
 import { object, string, array } from 'zod';
@@ -104,6 +106,8 @@ const formSchemaMainInfo = object({
   area_unit: string().optional(),
   // Phase 3: Fertigation toggle — fertilizer injected through irrigation system
   is_fertigation: string().optional(),
+  // NOP 5012 — liquid-fertilizer nitrogen source
+  nitrogen_source: string().optional(),
   application_method: string().min(1, 'Application method is required'),
   // Sprint 2 Epic 2.2: Application Details for USDA/EPA method specificity
   application_details: string().optional(),
@@ -148,6 +152,7 @@ const formSchemaMainInfo = object({
   supplier_name: string().optional(),
   purchase_date: string().optional(),
   purchase_invoice: string().optional(),
+  chemical_lot_number: string().optional(),
   // P0-3 — CA DPR Restricted Materials Permit (CA state law, 3 CCR 6400 et seq.)
   ca_dpr_permit_number: string().optional(),
   ca_dpr_permit_county: string().optional(),
@@ -166,6 +171,18 @@ const formSchemaMainInfo = object({
   mtrs_range: string().optional(),
   mtrs_base_meridian: string().optional(),
   ffm_code: string().optional(),
+  // Tank-mix partners (adjuvants/spreader-stickers) — each CA-registered partner
+  // is reportable on its own PUR line (DPR boxes 23/24). Repeatable structured list.
+  tank_mix_partners: array(
+    object({
+      commercial_name: string().optional(),
+      manufacturer: string().optional(),
+      epa_registration_number: string().optional(),
+      volume: string().optional(),
+      volume_unit: string().optional(),
+      organic_approved: string().optional()
+    })
+  ).optional(),
   // Phase 3: Application fuel tracking for equipment fuel emissions
   application_fuel_type: string().optional(),
   application_fuel_consumed: string()
@@ -303,6 +320,7 @@ const ChemicalTab = forwardRef(
           initialValues.is_fertigation === true || initialValues.is_fertigation === 'true'
             ? 'true'
             : 'false',
+        nitrogen_source: initialValues.nitrogen_source || '',
         application_method: initialValues.application_method || '',
         // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (stored there in onSubmit)
         application_details:
@@ -335,6 +353,8 @@ const ChemicalTab = forwardRef(
         purchase_date: initialValues.purchase_date || initialValues.extra_data?.purchase_date || '',
         purchase_invoice:
           initialValues.purchase_invoice || initialValues.extra_data?.purchase_invoice || '',
+        chemical_lot_number:
+          initialValues.chemical_lot_number || initialValues.extra_data?.chemical_lot_number || '',
         // P0-3 — CA DPR Restricted Materials Permit
         ca_dpr_permit_number: initialValues.ca_dpr_permit_number || '',
         ca_dpr_permit_county: initialValues.ca_dpr_permit_county || '',
@@ -353,6 +373,20 @@ const ChemicalTab = forwardRef(
         mtrs_range: initialValues.mtrs_range || '',
         mtrs_base_meridian: initialValues.mtrs_base_meridian || '',
         ffm_code: initialValues.ffm_code || '',
+        // Normalize to strings: the form schema declares every adjuvant field as a
+        // zod string(), but the backend returns organic_approved as a bool (and volume
+        // may be numeric). Un-normalized values fail zod validation on edit → blocked save.
+        tank_mix_partners: Array.isArray(initialValues.tank_mix_partners)
+          ? initialValues.tank_mix_partners.map((p) => ({
+              commercial_name: p.commercial_name || '',
+              manufacturer: p.manufacturer || '',
+              epa_registration_number: p.epa_registration_number || '',
+              volume: p.volume != null ? String(p.volume) : '',
+              volume_unit: p.volume_unit || 'gal',
+              organic_approved:
+                p.organic_approved === true || p.organic_approved === 'true' ? 'true' : 'false'
+            }))
+          : [],
         // Phase 3: Application fuel tracking
         application_fuel_type: initialValues.application_fuel_type || '',
         application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
@@ -539,6 +573,7 @@ const ChemicalTab = forwardRef(
             initialValues.is_fertigation === true || initialValues.is_fertigation === 'true'
               ? 'true'
               : 'false',
+          nitrogen_source: initialValues.nitrogen_source || '',
           application_method:
             initialValues.application_method || initialValues.way_of_application || '',
           // SPRINT 6 FIX (2025-12-24): Read from extra_data as fallback (stored there in onSubmit)
@@ -579,6 +614,10 @@ const ChemicalTab = forwardRef(
             initialValues.purchase_date || initialValues.extra_data?.purchase_date || '',
           purchase_invoice:
             initialValues.purchase_invoice || initialValues.extra_data?.purchase_invoice || '',
+          chemical_lot_number:
+            initialValues.chemical_lot_number ||
+            initialValues.extra_data?.chemical_lot_number ||
+            '',
           // P0-3 — CA DPR Restricted Materials Permit
           ca_dpr_permit_number: initialValues.ca_dpr_permit_number || '',
           ca_dpr_permit_county: initialValues.ca_dpr_permit_county || '',
@@ -597,6 +636,19 @@ const ChemicalTab = forwardRef(
           mtrs_range: initialValues.mtrs_range || '',
           mtrs_base_meridian: initialValues.mtrs_base_meridian || '',
           ffm_code: initialValues.ffm_code || '',
+          // Normalize to strings (see the primary defaultValues block): backend returns
+          // organic_approved as a bool / volume as numeric, which fail zod string() on edit.
+          tank_mix_partners: Array.isArray(initialValues.tank_mix_partners)
+            ? initialValues.tank_mix_partners.map((p) => ({
+                commercial_name: p.commercial_name || '',
+                manufacturer: p.manufacturer || '',
+                epa_registration_number: p.epa_registration_number || '',
+                volume: p.volume != null ? String(p.volume) : '',
+                volume_unit: p.volume_unit || 'gal',
+                organic_approved:
+                  p.organic_approved === true || p.organic_approved === 'true' ? 'true' : 'false'
+              }))
+            : [],
           // Phase 3: Application fuel tracking
           application_fuel_type: initialValues.application_fuel_type || '',
           application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
@@ -641,6 +693,13 @@ const ChemicalTab = forwardRef(
       watch,
       formState: { errors }
     } = methods;
+
+    // Tank-mix adjuvants — repeatable structured rows (each becomes its own PUR line).
+    const {
+      fields: adjuvantFields,
+      append: appendAdjuvant,
+      remove: removeAdjuvant
+    } = useFieldArray({ control: methods.control, name: 'tank_mix_partners' });
 
     const chemicalType = watch('type');
     const areaValue = watch('area_numeric') || watch('area_treated');
@@ -704,6 +763,7 @@ const ChemicalTab = forwardRef(
       'supplier_name',
       'purchase_date',
       'purchase_invoice',
+      'chemical_lot_number',
       // P0-3 — CA DPR Restricted Materials Permit
       'ca_dpr_permit_number',
       'ca_dpr_permit_county',
@@ -764,6 +824,7 @@ const ChemicalTab = forwardRef(
             'supplier_name',
             'purchase_date',
             'purchase_invoice',
+            'chemical_lot_number',
             // P0-3 — CA DPR Restricted Materials Permit
             'ca_dpr_permit_number',
             'ca_dpr_permit_county',
@@ -829,6 +890,7 @@ const ChemicalTab = forwardRef(
         supplier_name,
         purchase_date,
         purchase_invoice,
+        chemical_lot_number,
         // Phase 3: Extract is_fertigation to include in extra_data
         is_fertigation,
         ...filteredData
@@ -887,10 +949,25 @@ const ChemicalTab = forwardRef(
         supplier_name: supplier_name || null,
         purchase_date: purchase_date || null, // DateField — empty string must be null
         purchase_invoice: purchase_invoice || null,
+        chemical_lot_number: chemical_lot_number || null,
         // P0-3 — CA DPR Restricted Materials Permit (direct model fields)
         ca_dpr_permit_number: data.ca_dpr_permit_number || null,
         ca_dpr_permit_county: data.ca_dpr_permit_county || null,
         ca_dpr_permit_expires: data.ca_dpr_permit_expires || null,
+        // Tank-mix adjuvants (direct JSONField) — drop fully-blank rows the farmer
+        // added but never filled; coerce the organic flag to a real bool.
+        tank_mix_partners: Array.isArray(data.tank_mix_partners)
+          ? data.tank_mix_partners
+              .filter((p) => p && (p.commercial_name || p.epa_registration_number || p.volume))
+              .map((p) => ({
+                commercial_name: p.commercial_name || '',
+                manufacturer: p.manufacturer || '',
+                epa_registration_number: p.epa_registration_number || '',
+                volume: p.volume || '',
+                volume_unit: p.volume_unit || 'gal',
+                organic_approved: p.organic_approved === 'true' || p.organic_approved === true
+              }))
+          : [],
         // Store enhanced fields in extra_data for backend compatibility
         extra_data: {
           // Unit fields for carbon calculation accuracy
@@ -2336,6 +2413,34 @@ const ChemicalTab = forwardRef(
                       </>
                     )}
 
+                    {/* NOP 5012 — liquid/soluble fertilizer nitrogen-source verification. */}
+                    {chemicalType === 'FE' && (
+                      <StandardField
+                        label="Nitrogen Source (NOP 5012)"
+                        helpText="Liquid/soluble fertilizers must be free of prohibited synthetic nitrogen. Synthetic N is prohibited (§ 205.105(a)); sodium nitrate is capped at 20% of the crop's N need."
+                      >
+                        <Controller
+                          name="nitrogen_source"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect {...field} bg="white">
+                              <option value="">Select nitrogen source...</option>
+                              <option value="organic">
+                                Organic (plant / animal / approved natural source)
+                              </option>
+                              <option value="mined_natural">
+                                Mined / natural — restricted (e.g., sodium nitrate, ≤20% of N need)
+                              </option>
+                              <option value="synthetic_prohibited">
+                                Synthetic — prohibited (§ 205.105(a))
+                              </option>
+                              <option value="unknown">Unknown / not verified</option>
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+                    )}
+
                     {/* Sprint 2 Epic 2.2: Consolidated Application Methods - USDA/EPA Standards
                   Fertilizer: 5 USDA NRCS methods (Conservation Practice Standard 590)
                   Pesticide/Fungicide/Herbicide: 4 EPA methods (Pesticide Product Label Requirements)
@@ -2668,6 +2773,32 @@ const ChemicalTab = forwardRef(
                         />
                       </StandardField>
 
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.chemical.fields.chemicalLotNumber',
+                          defaultMessage: 'Lot / Batch Number',
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.chemical.chemicalLotNumberHelp',
+                          defaultMessage:
+                            'Manufacturer/supplier lot or batch # for NOP input traceability',
+                        })}
+                      >
+                        <Controller
+                          name="chemical_lot_number"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              placeholder={intl.formatMessage({
+                                id: 'events.chemical.chemicalLotNumberPlaceholder',
+                                defaultMessage: 'e.g., LOT-ENT-4471',
+                              })}
+                            />
+                          )}
+                        />
+                      </StandardField>
+
                       <Box
                         bg="orange.50"
                         p={3}
@@ -2883,6 +3014,205 @@ const ChemicalTab = forwardRef(
                             </StandardField>
                           )}
                         </SimpleGrid>
+                      </Box>
+
+                      {/* Tank-mix adjuvants — each CA-registered partner is a separate PUR line */}
+                      <Box
+                        p={3}
+                        bg="gray.50"
+                        borderRadius="md"
+                        border="1px solid"
+                        borderColor="gray.200"
+                      >
+                        <HStack mb={2} justify="space-between">
+                          <HStack>
+                            <Icon as={FaFlask} color="gray.600" />
+                            <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                              {intl.formatMessage({
+                                id: 'events.chemical.adjuvants.title',
+                                defaultMessage: 'Tank-mix adjuvants / spreader-stickers'
+                              })}
+                            </Text>
+                          </HStack>
+                          <StandardButton
+                            size="sm"
+                            variant="outline"
+                            leftIcon={<FaPlus />}
+                            onClick={() =>
+                              appendAdjuvant({
+                                commercial_name: '',
+                                manufacturer: '',
+                                epa_registration_number: '',
+                                volume: '',
+                                volume_unit: 'gal',
+                                organic_approved: 'false'
+                              })
+                            }
+                          >
+                            {intl.formatMessage({
+                              id: 'events.chemical.adjuvants.add',
+                              defaultMessage: 'Add adjuvant'
+                            })}
+                          </StandardButton>
+                        </HStack>
+                        <Text fontSize="xs" color="gray.600" mb={3}>
+                          {intl.formatMessage({
+                            id: 'events.chemical.adjuvants.help',
+                            defaultMessage:
+                              'CA-registered adjuvants applied in the tank mix are reportable — each is added as its own line on the Pesticide Use Report (DPR boxes 23/24). Leave empty if none.'
+                          })}
+                        </Text>
+
+                        {adjuvantFields.length === 0 ? (
+                          <Text fontSize="xs" color="gray.500" fontStyle="italic">
+                            {intl.formatMessage({
+                              id: 'events.chemical.adjuvants.empty',
+                              defaultMessage: 'No adjuvants added.'
+                            })}
+                          </Text>
+                        ) : (
+                          <VStack spacing={3} align="stretch">
+                            {adjuvantFields.map((adjuvant, index) => (
+                              <Box
+                                key={adjuvant.id}
+                                p={3}
+                                bg="white"
+                                borderRadius="md"
+                                border="1px solid"
+                                borderColor="gray.200"
+                              >
+                                <HStack mb={2} justify="space-between">
+                                  <Text fontSize="xs" fontWeight="semibold" color="gray.600">
+                                    {intl.formatMessage(
+                                      {
+                                        id: 'events.chemical.adjuvants.itemLabel',
+                                        defaultMessage: 'Adjuvant {n}'
+                                      },
+                                      { n: index + 1 }
+                                    )}
+                                  </Text>
+                                  <StandardButton
+                                    size="sm"
+                                    variant="ghost"
+                                    leftIcon={<FaTrash />}
+                                    onClick={() => removeAdjuvant(index)}
+                                  >
+                                    {intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.remove',
+                                      defaultMessage: 'Remove'
+                                    })}
+                                  </StandardButton>
+                                </HStack>
+                                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
+                                  <StandardField
+                                    label={intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.productName',
+                                      defaultMessage: 'Product name'
+                                    })}
+                                  >
+                                    <Controller
+                                      name={`tank_mix_partners.${index}.commercial_name`}
+                                      control={methods.control}
+                                      render={({ field }) => (
+                                        <StandardInput {...field} placeholder="e.g., Dyne-Amic" />
+                                      )}
+                                    />
+                                  </StandardField>
+                                  <StandardField
+                                    label={intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.manufacturer',
+                                      defaultMessage: 'Manufacturer'
+                                    })}
+                                  >
+                                    <Controller
+                                      name={`tank_mix_partners.${index}.manufacturer`}
+                                      control={methods.control}
+                                      render={({ field }) => (
+                                        <StandardInput {...field} placeholder="e.g., Helena" />
+                                      )}
+                                    />
+                                  </StandardField>
+                                  <StandardField
+                                    label={intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.epaReg',
+                                      defaultMessage: 'EPA / State Reg. No.'
+                                    })}
+                                    helpText="DPR box 23"
+                                  >
+                                    <Controller
+                                      name={`tank_mix_partners.${index}.epa_registration_number`}
+                                      control={methods.control}
+                                      render={({ field }) => (
+                                        <StandardInput {...field} placeholder="e.g., 5905-501" />
+                                      )}
+                                    />
+                                  </StandardField>
+                                  <StandardField
+                                    label={intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.amount',
+                                      defaultMessage: 'Total product used'
+                                    })}
+                                    helpText="DPR box 24"
+                                  >
+                                    <HStack spacing={2}>
+                                      <Controller
+                                        name={`tank_mix_partners.${index}.volume`}
+                                        control={methods.control}
+                                        render={({ field }) => (
+                                          <StandardInput
+                                            {...field}
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            flex={2}
+                                          />
+                                        )}
+                                      />
+                                      <Controller
+                                        name={`tank_mix_partners.${index}.volume_unit`}
+                                        control={methods.control}
+                                        render={({ field }) => (
+                                          <StandardSelect {...field} flex={1}>
+                                            <option value="gal">gal</option>
+                                            <option value="qt">qt</option>
+                                            <option value="pt">pt</option>
+                                            <option value="fl_oz">fl oz</option>
+                                            <option value="oz">oz</option>
+                                            <option value="lb">lb</option>
+                                            <option value="L">L</option>
+                                          </StandardSelect>
+                                        )}
+                                      />
+                                    </HStack>
+                                  </StandardField>
+                                </SimpleGrid>
+                                <HStack mt={2}>
+                                  <Controller
+                                    name={`tank_mix_partners.${index}.organic_approved`}
+                                    control={methods.control}
+                                    render={({ field }) => (
+                                      <Switch
+                                        isChecked={
+                                          field.value === 'true' || field.value === true
+                                        }
+                                        onChange={(e) =>
+                                          field.onChange(e.target.checked ? 'true' : 'false')
+                                        }
+                                        colorScheme="green"
+                                      />
+                                    )}
+                                  />
+                                  <Text fontSize="xs" color="gray.600">
+                                    {intl.formatMessage({
+                                      id: 'events.chemical.adjuvants.organicApproved',
+                                      defaultMessage: 'OMRI-listed / organic-approved adjuvant'
+                                    })}
+                                  </Text>
+                                </HStack>
+                              </Box>
+                            ))}
+                          </VStack>
+                        )}
                       </Box>
                     </VStack>
                   </SectionBox>

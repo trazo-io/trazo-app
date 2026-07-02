@@ -83,6 +83,45 @@ export interface ApprovedInputChangeLog {
   notes: string;
 }
 
+// NOP 2615 §3.4 — Notification of Changes (7 CFR 205.400(f)).
+export type OSPChangeCategory =
+  | 'prohibited_substance_application'
+  | 'acreage_field_addition'
+  | 'field_removal'
+  | 'new_retail_label'
+  | 'new_processing_handling'
+  | 'practice_input_procedure_change';
+
+export type OSPNotificationMethod = 'verbal' | 'written';
+
+export type OSPDocumentationTiming = 'submitted_at_notification' | 'deferred_to_annual_update';
+
+export interface OSPChangeNotification {
+  id: number;
+  osp: number;
+  change_category: OSPChangeCategory;
+  change_category_display: string;
+  description: string;
+  date_notified: string | null;
+  method: OSPNotificationMethod | null;
+  method_display: string;
+  documentation_timing: OSPDocumentationTiming | null;
+  documentation_timing_display: string;
+  supporting_document: string | null;
+  certifier_acknowledged_at: string | null;
+  cfr_reference: string;
+  is_immediate: boolean;
+  created_at: string;
+}
+
+export interface CreateOSPChangeNotificationData {
+  change_category: OSPChangeCategory;
+  description: string;
+  date_notified?: string;
+  method?: OSPNotificationMethod;
+  documentation_timing?: OSPDocumentationTiming;
+}
+
 export interface OSP extends OSPSummary {
   establishment: number;
   certification: number | null;

@@ -90,6 +90,19 @@ function Sidebar(props: SidebarProps) {
   const { sidebarWidth, setSidebarWidth, toggleSidebar } = React.useContext(SidebarContext);
   const mainPanel = React.useRef();
 
+  // Hoisted color-mode values — Rules of Hooks. These were previously called
+  // inside createLinks / createAccordionLinks (each run once per route-group) and
+  // inside conditional branches, so the number of hook calls varied between
+  // renders and triggered React's "change in order of Hooks" warning. Hooks must
+  // run unconditionally at the top level, so they live here and are read below.
+  const cmGreen = useColorModeValue('green.500', 'green.500');
+  const cmWhiteGray = useColorModeValue('white', 'gray.700');
+  const cmWhiteWhite = useColorModeValue('white', 'white');
+  const cmActiveColor = useColorModeValue('gray.700', 'white');
+  const cmInactiveColor = useColorModeValue('gray.400', 'gray.400');
+  const cmInactiveBgOpaque = useColorModeValue('gray.100', 'gray.600');
+  const cmThumb = useColorModeValue(renderThumbLight, renderThumbDark);
+
   let variantChange = '0.2s linear';
 
   const activeRoute = (regex: RegExp) => {
@@ -195,23 +208,18 @@ function Sidebar(props: SidebarProps) {
   // this function creates the links and collapses that appear in the sidebar (left menu)
   const createLinks = (routes: any) => {
     const { sidebarVariant } = props;
-    // Chakra Color Mode
-    let activeBg = useColorModeValue('green.500', 'green.500');
-    let activeAccordionBg = useColorModeValue('white', 'gray.700');
-    let inactiveBg = useColorModeValue('white', 'gray.700');
-    let inactiveColorIcon = useColorModeValue('green.500', 'green.500');
-    let activeColorIcon = useColorModeValue('white', 'white');
-    let activeColor = useColorModeValue('gray.700', 'white');
-    let inactiveColor = useColorModeValue('gray.400', 'gray.400');
-    let sidebarActiveShadow = '0px 7px 11px rgba(0, 0, 0, 0.04)';
-    // Here are all the props that may change depending on sidebar's state.(Opaque or transparent)
-    if (sidebarVariant === 'opaque') {
-      activeBg = useColorModeValue('green.500', 'green.500');
-      inactiveBg = useColorModeValue('gray.100', 'gray.600');
-      activeColor = useColorModeValue('gray.700', 'white');
-      inactiveColor = useColorModeValue('gray.400', 'gray.400');
-      sidebarActiveShadow = 'none';
-    }
+    const isOpaque = sidebarVariant === 'opaque';
+    // Chakra Color Mode — values hoisted to the component top (Rules of Hooks).
+    // Only inactiveBg + the shadow actually differ between the opaque/transparent
+    // variants; the rest are identical in both.
+    const activeBg = cmGreen;
+    const activeAccordionBg = cmWhiteGray;
+    const inactiveBg = isOpaque ? cmInactiveBgOpaque : cmWhiteGray;
+    const inactiveColorIcon = cmGreen;
+    const activeColorIcon = cmWhiteWhite;
+    const activeColor = cmActiveColor;
+    const inactiveColor = cmInactiveColor;
+    const sidebarActiveShadow = isOpaque ? 'none' : '0px 7px 11px rgba(0, 0, 0, 0.04)';
     return routes?.map((prop: Route, index: number) => {
       if (prop.category) {
         return (
@@ -563,8 +571,8 @@ function Sidebar(props: SidebarProps) {
   };
 
   const createAccordionLinks = (routes: Route[] | undefined) => {
-    let inactiveColor = useColorModeValue('gray.400', 'gray.400');
-    let activeColor = useColorModeValue('gray.700', 'white');
+    const inactiveColor = cmInactiveColor;
+    const activeColor = cmActiveColor;
     return routes?.map((prop, index) => {
       return (
         <NavLink to={prop.layout + prop.path}>
@@ -594,7 +602,7 @@ function Sidebar(props: SidebarProps) {
   let sidebarRadius = '0px';
   let sidebarMargins = '0px';
   if (sidebarVariant === 'opaque') {
-    sidebarBg = useColorModeValue('white', 'gray.700');
+    sidebarBg = cmWhiteGray;
     sidebarRadius = '16px';
     sidebarMargins = '16px 0px 16px 16px';
   }
@@ -680,7 +688,7 @@ function Sidebar(props: SidebarProps) {
             sm: '16px'
           }}
           borderRadius="16px"
-          bg={useColorModeValue('white', 'gray.700')}
+          bg={cmWhiteGray}
         >
           <DrawerCloseButton
             _focus={{ boxShadow: 'none' }}
@@ -731,7 +739,7 @@ function Sidebar(props: SidebarProps) {
               <Scrollbars
                 autoHide
                 renderTrackVertical={renderTrack}
-                renderThumbVertical={useColorModeValue(renderThumbLight, renderThumbDark)}
+                renderThumbVertical={cmThumb}
                 renderView={renderView}
               >
                 <Box pe="15px">
