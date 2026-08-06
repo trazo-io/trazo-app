@@ -11,12 +11,10 @@ import {
   useColorModeValue,
   Icon,
   Fade,
-  ScaleFade,
   Container,
   Circle,
   SimpleGrid,
   Progress,
-  Badge,
   Divider
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
@@ -33,11 +31,6 @@ import { ModernSkeletonCard } from './ModernSkeletonCard';
 
 interface ModernTrazoLoaderProps {
   loadingStage: 'scanning' | 'carbon' | 'transparency' | 'journey' | 'complete';
-  carbonPreview?: {
-    score?: number;
-    productName?: string;
-    isVerified?: boolean;
-  };
   progressPercent?: number;
 }
 
@@ -56,7 +49,6 @@ const shimmer = keyframes`
 
 export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
   loadingStage,
-  carbonPreview,
   progressPercent
 }) => {
   const intl = useIntl();
@@ -64,20 +56,25 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
   const [visibleSkeletons, setVisibleSkeletons] = useState<string[]>([]);
 
   // Trazo design system colors
-  const bgColor = useColorModeValue('white', 'gray.800');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const accentColor = 'green.500';
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
-  // Progressive sustainability messages aligned with Trazo's mission
+  // Progressive messages aligned with Trazo's mission.
+  //
+  // Localized: this loader is the first thing a shopper sees after a QR scan, so English-only
+  // copy here made the whole page read as untranslated to a Spanish visitor. Note the
+  // deliberate wording change too — the first message used to say "Verifying farm
+  // transparency", but Trazo verifies nothing here; it loads farmer-reported records
+  // (compliance.md: "documented", not "verified").
   const sustainabilityMessages = [
-    'Verifying farm transparency...',
-    'Loading farming practice data...',
-    'Analyzing agricultural practices...',
-    'Building trust through transparency...',
-    'Connecting you to the farm story...'
+    intl.formatMessage({ id: 'consumer.loader.msgLoadingTransparency' }),
+    intl.formatMessage({ id: 'consumer.loader.msgLoadingPractices' }),
+    intl.formatMessage({ id: 'consumer.loader.msgAnalyzingPractices' }),
+    intl.formatMessage({ id: 'consumer.loader.msgBuildingTrust' }),
+    intl.formatMessage({ id: 'consumer.loader.msgConnectingStory' })
   ];
 
   // Rotate messages every 2.5 seconds
@@ -111,15 +108,15 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
     const stages = {
       scanning: {
         icon: FaQrcode,
-        title: 'Scanning Product',
-        subtitle: 'Verifying QR authenticity...',
+        title: intl.formatMessage({ id: 'consumer.loader.scanningTitle' }),
+        subtitle: intl.formatMessage({ id: 'consumer.loader.scanningSubtitle' }),
         color: 'blue.500',
         progress: 20
       },
       carbon: {
         icon: FaLeaf,
-        title: 'Loading Carbon Data',
-        subtitle: 'Calculating sustainability metrics...',
+        title: intl.formatMessage({ id: 'consumer.loader.carbonTitle' }),
+        subtitle: intl.formatMessage({ id: 'consumer.loader.carbonSubtitle' }),
         color: 'green.500',
         progress: 45
       },
@@ -132,15 +129,15 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
       },
       journey: {
         icon: FaTractor,
-        title: 'Loading Farm Journey',
-        subtitle: 'Connecting to production story...',
+        title: intl.formatMessage({ id: 'consumer.loader.journeyTitle' }),
+        subtitle: intl.formatMessage({ id: 'consumer.loader.journeySubtitle' }),
         color: 'orange.500',
         progress: 90
       },
       complete: {
         icon: FaCheckCircle,
-        title: 'Ready!',
-        subtitle: 'Complete transparency loaded',
+        title: intl.formatMessage({ id: 'consumer.loader.readyTitle' }),
+        subtitle: intl.formatMessage({ id: 'consumer.loader.readySubtitle' }),
         color: 'green.500',
         progress: 100
       }
@@ -150,63 +147,11 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
 
   const stageInfo = getStageInfo();
 
-  // Carbon Score Preview (when available)
-  const CarbonScorePreview = () => {
-    if (!carbonPreview?.score || loadingStage !== 'carbon') return null;
-
-    return (
-      <ScaleFade in={true} initialScale={0.95}>
-        <Box
-          bg={bgColor}
-          p={6}
-          borderRadius="xl"
-          border="2px solid"
-          borderColor="green.200"
-          boxShadow="lg"
-          maxW="sm"
-          mx="auto"
-        >
-          <VStack spacing={4}>
-            <Circle size="60px" bg="green.100">
-              <Text fontSize="xl" fontWeight="bold" color="green.600">
-                {carbonPreview.score}
-              </Text>
-            </Circle>
-
-            <VStack spacing={2} textAlign="center">
-              <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                {carbonPreview.productName || 'Product'}
-              </Text>
-              <Badge colorScheme="green" fontSize="sm" px={3} py={1} borderRadius="full">
-                Transparency Score: {carbonPreview.score}/100
-              </Badge>
-              {carbonPreview.isVerified && (
-                <HStack spacing={2}>
-                  <Icon as={FaCertificate} color="blue.500" boxSize={4} />
-                  <Text fontSize="sm" color="blue.600">
-                    {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
-                  </Text>
-                </HStack>
-              )}
-            </VStack>
-
-            <Progress
-              value={75}
-              colorScheme="green"
-              size="sm"
-              borderRadius="full"
-              w="full"
-              hasStripe
-              isAnimated
-            />
-            <Text fontSize="xs" color={mutedColor}>
-              Loading complete transparency data...
-            </Text>
-          </VStack>
-        </Box>
-      </ScaleFade>
-    );
-  };
+  // NOTE: a "Transparency Score: n/100" preview card used to live here. Removed
+  // 2026-07 — a self-assigned sustainability grade on a consumer surface is the
+  // self-created-label class banned by EU ECGT 2024/825 (live 2026-09-27) and an
+  // FTC 16 CFR 260.6 general-benefit risk. The score is a PRODUCER-dashboard KPI
+  // only. See .claude/rules/transparency-first.md and compliance.md.
 
   // Content Structure Skeletons
   const ContentSkeletons = () => (
@@ -310,9 +255,6 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
             </HStack>
           </Box>
         </VStack>
-
-        {/* Carbon Score Preview */}
-        <CarbonScorePreview />
 
         {/* Progressive Content Skeletons */}
         {loadingStage !== 'scanning' && <ContentSkeletons />}

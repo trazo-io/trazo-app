@@ -54,6 +54,8 @@ import { StandardImageGallery } from 'components/ImageGallery';
 import CertificationManager from 'components/Certifications/CertificationManager';
 import OperationAuditExportButton from './OperationAuditExportButton';
 import PURExportModal from 'components/PURExport/PURExportModal';
+import { normalizeState } from 'utils/usStates';
+import CertifierLinkCard from 'components/Certifications/CertifierLinkCard';
 
 // Type definitions
 interface RootState {
@@ -599,8 +601,34 @@ function ProfileFarm() {
           </HStack>
         </StandardCard>
 
-        {/* Compliance & Reports — establishment-level regulatory exports */}
-        {canWrite && (
+        {/* The standalone "Inspection readiness" panel was removed here 2026-08-04.
+            It rendered the operation blockers a second time: `CertifierLinkCard` below
+            already shows them inline (variant="preshare") to explain why sharing is blocked,
+            so this page listed the same finding twice, one card apart. Worse, its badge
+            counted only `blockers` while the farm dashboard's "Ready for your certifier"
+            counted season findings — the same farm read "1 to fix" here and "3" there, with
+            nothing on either page explaining that they measured different scopes.
+
+            Operation readiness now folds into `CertifierReadinessCard` on the farm dashboard,
+            which reports ONE count across both scopes. This page keeps the ACTIONS — share a
+            link, generate the dossier, file the PUR — which is what a farmer comes here to do. */}
+
+        {/* Certifier review links — national, not state-gated: every certified
+            operation has a certifier, whatever state it is in. */}
+        {currentCompany?.id && farmId && (
+          <CertifierLinkCard
+            companyId={String(currentCompany.id)}
+            farmId={String(farmId)}
+            canWrite={canWrite}
+          />
+        )}
+
+        {/* Compliance & Reports — establishment-level regulatory exports.
+            CA-only: the PUR is a California filing (3 CCR 6626) and the export embeds
+            CA county codes, so offering it to an out-of-state farm produced a CSV
+            titled "California Pesticide Use Report" naming a non-CA county. The
+            backend 404s for non-CA farms; this keeps the button off the page too. */}
+        {canWrite && normalizeState(establishmentData?.state) === 'CA' && (
           <StandardCard
             title={intl.formatMessage({ id: 'app.pur.complianceReports' })}
             variant="elevated"
@@ -1359,7 +1387,7 @@ function ProfileFarm() {
         </StandardCard>
       </VStack>
 
-      {farmId && (
+      {farmId && normalizeState(establishmentData?.state) === 'CA' && (
         <PURExportModal
           isOpen={purModalOpen}
           onClose={() => setPurModalOpen(false)}

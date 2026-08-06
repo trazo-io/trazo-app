@@ -298,12 +298,20 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
     const hasWSDA = result.wsda_material_pk != null;
 
     if (!hasOMRI && !hasNL && !hasWSDA) {
+      // Trazo's OMRI catalog is a licensed reference subset, not the full
+      // ~6,000-product listing, so "no match" is the COMMON case for a real
+      // grower, not the exception. The old copy stated the consequence
+      // (events keep flagging as drift) and offered no action — a dead end on
+      // the flagship feature. Name the two routes that actually work.
       return (
-        <Alert status="warning" fontSize="sm" borderRadius="md">
+        <Alert status="warning" fontSize="sm" borderRadius="md" alignItems="flex-start">
           <AlertIcon />
-          <Text>
-            {intl.formatMessage({ id: 'osp.approvedInputs.search.noMatch' })}
-          </Text>
+          <VStack align="stretch" spacing={1}>
+            <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.noMatch' })}</Text>
+            <Text fontSize="xs" color={subtextColor}>
+              {intl.formatMessage({ id: 'osp.approvedInputs.search.noMatchNextStep' })}
+            </Text>
+          </VStack>
         </Alert>
       );
     }

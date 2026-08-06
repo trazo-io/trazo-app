@@ -29,12 +29,20 @@ import {
 } from '../Design/StandardComponents';
 import { TrazoImageUpload } from '../Upload';
 import { HeroPreviewCard } from '../QR/HeroPreviewCard';
-import { FaLeaf, FaCamera, FaBoxes, FaClipboardCheck, FaLock, FaExclamationTriangle } from 'react-icons/fa';
+import {
+  FaLeaf,
+  FaCamera,
+  FaBoxes,
+  FaClipboardCheck,
+  FaLock,
+  FaExclamationTriangle
+} from 'react-icons/fa';
 import { MdDescription, MdInventory } from 'react-icons/md';
 import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useIntl } from 'react-intl';
+import { useDefaultUnits } from 'src/hooks/useMeasurementSystem';
 
 // Unit options for production amount
 const UNIT_OPTIONS = [
@@ -134,6 +142,10 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   const [currentStep, setCurrentStep] = useState(0);
   const [savedFormData, setSavedFormData] = useState<Partial<FormStateData>>({});
   const intl = useIntl();
+  // US-first unit default — see useMeasurementSystem. Walnuts, almonds and citrus are
+  // sold by the pound in the US, but this form defaulted the FINAL production amount
+  // (the number that reaches the consumer QR page and the certifier packet) to kg.
+  const defaultUnits = useDefaultUnits();
   const toast = useToast();
 
   // Confirmation dialog for finishing production (immutability warning)
@@ -160,7 +172,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     mode: 'onChange',
     defaultValues: {
       production_amount: '',
-      production_unit: 'kg',
+      production_unit: defaultUnits.mass,
       lot_id: '',
       finish_date: '',
       quality_grade: '',
@@ -184,7 +196,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     if (initialData) {
       const formDefaults: FormStateData = {
         production_amount: initialData.production_amount?.toString() || '',
-        production_unit: initialData.production_unit || 'kg',
+        production_unit: initialData.production_unit || defaultUnits.mass,
         lot_id: initialData.lot_id || '',
         finish_date: initialData.finish_date || '',
         quality_grade: initialData.quality_grade || '',
@@ -215,7 +227,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
       const finalFormData: FinishProductionFormData = {
         production_amount: Number(mergedData.production_amount || 0),
-        production_unit: mergedData.production_unit || 'kg',
+        production_unit: mergedData.production_unit || defaultUnits.mass,
         lot_id: mergedData.lot_id || '',
         finish_date: mergedData.finish_date || '',
         quality_grade: mergedData.quality_grade,
@@ -630,10 +642,12 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                   badgeColorScheme="orange"
                 />
                 <Text fontSize="sm" color="gray.600" mb={1}>
-                  Upload up to 5 photos. The first is shown as the cover on the public consumer QR page.
+                  Upload up to 5 photos. The first is shown as the cover on the public consumer QR
+                  page.
                 </Text>
                 <Text fontSize="xs" color="gray.500" mb={5}>
-                  No upload? We&apos;ll auto-pick the first photo from your timeline events. Upload here for full control.
+                  No upload? We&apos;ll auto-pick the first photo from your timeline events. Upload
+                  here for full control.
                 </Text>
                 <VStack spacing={6} align="stretch">
                   <Box
@@ -731,7 +745,8 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
             <AlertDialogBody pb={6}>
               <VStack align="start" spacing={3}>
                 <Text color="gray.600">
-                  Are you sure you want to finish this production? This action is permanent and cannot be undone.
+                  Are you sure you want to finish this production? This action is permanent and
+                  cannot be undone.
                 </Text>
                 <Box p={3} bg="orange.50" borderRadius="lg" w="full">
                   <Text fontSize="sm" color="orange.700" fontWeight="medium">
@@ -740,11 +755,22 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                   <VStack align="start" spacing={1} mt={2} fontSize="sm" color="orange.600">
                     <HStack spacing={2}>
                       <Icon as={FaLock} boxSize={3} />
-                      <Text>All events will be permanently locked and cannot be edited or deleted</Text>
+                      <Text>
+                        All events will be permanently locked and cannot be edited or deleted
+                      </Text>
                     </HStack>
                     <HStack spacing={2}>
                       <Icon as={FaLock} boxSize={3} />
-                      <Text>Event data will be secured for blockchain verification</Text>
+                      {/*
+                        compliance.md: "blockchain-recorded" is SAFE, "blockchain-verified"
+                        is NOT — blockchain proves the record was not altered, never that
+                        the practice happened. It is also a $15/mo add-on, so this dialog
+                        must not imply every finalized production gets it.
+                      */}
+                      <Text>
+                        A tamper-evident fingerprint of this record is stored (blockchain recording
+                        is an optional add-on)
+                      </Text>
                     </HStack>
                     <HStack spacing={2}>
                       <Icon as={FaLock} boxSize={3} />
@@ -761,11 +787,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
             <AlertDialogFooter pt={4}>
               <HStack spacing={3} w="full" justify="flex-end">
-                <StandardButton
-                  ref={confirmCancelRef}
-                  variant="outline"
-                  onClick={onConfirmClose}
-                >
+                <StandardButton ref={confirmCancelRef} variant="outline" onClick={onConfirmClose}>
                   Review Events
                 </StandardButton>
                 <StandardButton

@@ -417,15 +417,18 @@ function ProfileProduction() {
     }
   }, [farmId, establishments]);
 
-  // Get transparency score
-  const getTransparencyScore = (): number => {
-    if (transparencyApiData?.quick_view?.transparency_score?.percentage !== undefined) {
-      return transparencyApiData.quick_view.transparency_score.percentage;
-    }
-    if (historyData?.transparency_score !== undefined && historyData?.transparency_score !== null) {
-      return historyData.transparency_score;
-    }
-    return 0;
+  // Get transparency score — freshly calculated only.
+  //
+  // The `historyData.transparency_score` fallback was removed: that DB column is only
+  // refreshed by update_trust_metrics() on event CRUD and drifts from the calculator
+  // (production 543 in dev stored 75.0 while the calculator returned 74). Falling back to it
+  // meant this page could quietly disagree with the transparency dashboard by a point or two.
+  //
+  // Returns null rather than 0 when the score has not loaded or does not exist yet, so the
+  // caller can say "not started" instead of rendering a 0% that reads as a failing grade.
+  const getTransparencyScore = (): number | null => {
+    const percentage = transparencyApiData?.quick_view?.transparency_score?.percentage;
+    return percentage === undefined || percentage === null ? null : percentage;
   };
 
   // Format dates
@@ -974,11 +977,14 @@ function ProfileProduction() {
             <StatCard
               icon={FaLeaf}
               value={
-                transparencyScore > 0
-                  ? `${Math.round(transparencyScore)}%`
-                  : transparencyLoading
+                transparencyLoading
                   ? '...'
-                  : '0%'
+                  : transparencyScore === null
+                  ? intl.formatMessage({
+                      id: 'dashboard.trustScore.notStarted',
+                      defaultMessage: 'Not started'
+                    })
+                  : `${Math.round(transparencyScore)}%`
               }
               label={intl.formatMessage({ id: 'production.stat.transparency', defaultMessage: 'Transparency' })}
               colorScheme="green"
@@ -1403,7 +1409,12 @@ function ProfileProduction() {
         {timelineEvents.length > 0 ? (
           <UltraMobileProductionJourney
             events={timelineEvents}
-            transparencyScore={Math.round(transparencyScore)}
+            transparencyScore={transparencyScore === null ? 0 : Math.round(transparencyScore)}
+            // This is the producer's preview of the CONSUMER journey, so it must be fed the
+            // same backend-computed organic classification the consumer page uses. Without
+            // it the "All inputs organic-approved" chip silently never renders here — and
+            // more importantly the producer would not see the claim their shoppers see.
+            organicSummary={(transparencyApiData as any)?.standard_view?.organic_summary}
           />
         ) : (
           <VStack spacing={{ base: 2, md: 4 }} py={{ base: 4, md: 8 }}>

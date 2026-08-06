@@ -13,6 +13,57 @@
 import type { FieldFormatter } from './registry';
 
 // ============================================================================
+// Enum fallback
+// ============================================================================
+
+/**
+ * What to show when a value is NOT in its label map.
+ *
+ * Every enum map in this registry ends `?? v` / `|| v`, which returns the RAW database
+ * value. The forms write values the maps do not always cover, so real consumer cards
+ * rendered `quality_control` and the bare subtype code `LA` — a database row shown to a
+ * shopper. Found 2026-08-01 while auditing the full consumer_card matrix.
+ *
+ * Rules:
+ *  - `snake_case` → Title Case ("quality_control" → "Quality Control").
+ *  - A short ALL-CAPS code ("LA", "CE") carries no meaning outside the database, so it is
+ *    DROPPED (null) rather than shown. Losing one row beats printing an internal code —
+ *    and null is how every formatter here already says "render nothing".
+ *  - Anything else is returned unchanged (free text the farmer typed).
+ *
+ * Use via `lookupEnumLabel`, or directly as the fallback in a map lookup.
+ */
+export function humanizeEnumFallback(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const raw = value.trim();
+  if (!raw) return null;
+
+  // Internal short code (LA, CE, MN, FC…) — meaningless to a reader.
+  if (/^[A-Z]{2,4}$/.test(raw)) return null;
+
+  if (raw.includes('_')) {
+    return raw
+      .split('_')
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  // Single lowercase word ("manual", "banded") reads as a slug next to Title Case labels.
+  if (raw === raw.toLowerCase() && raw.length < 40) {
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }
+
+  return raw;
+}
+
+/** Map lookup with a safe, human fallback. Prefer this over `MAP[v] ?? v`. */
+export function lookupEnumLabel(table: Record<string, string>, value: unknown): string | null {
+  if (typeof value !== 'string' || value === '') return null;
+  return table[value] ?? humanizeEnumFallback(value);
+}
+
+// ============================================================================
 // Primitive formatters
 // ============================================================================
 
@@ -57,6 +108,19 @@ export const formatBoolean: FieldFormatter<boolean | string> = (value) => {
  * We detect bare YYYY-MM-DD inputs and parse them in local time to keep the
  * displayed day matching what the user typed on the form.
  */
+/**
+ * Bare `toLocaleDateString()` rendered "2/26/2026" — ambiguous (2 Feb or 26 Feb depends on
+ * where the reader is from) and inconsistent with the card header, which uses
+ * `formatHarvestDate` ("Feb 26, 2026"). A month NAME removes the ambiguity in every locale
+ * and matches the header: en-US "Feb 26, 2026", es-419 "26 feb 2026".
+ * Locale stays `undefined` so it follows the runtime locale, as before.
+ */
+const DATE_DISPLAY_OPTS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric'
+};
+
 export const formatDate: FieldFormatter<string> = (value) => {
   if (!value) return null;
   try {
@@ -67,11 +131,11 @@ export const formatDate: FieldFormatter<string> = (value) => {
       const [, y, m, d] = bareDateMatch;
       const local = new Date(Number(y), Number(m) - 1, Number(d));
       if (Number.isNaN(local.getTime())) return str;
-      return local.toLocaleDateString();
+      return local.toLocaleDateString(undefined, DATE_DISPLAY_OPTS);
     }
     const parsed = new Date(str);
     if (Number.isNaN(parsed.getTime())) return str;
-    return parsed.toLocaleDateString();
+    return parsed.toLocaleDateString(undefined, DATE_DISPLAY_OPTS);
   } catch {
     return String(value);
   }
@@ -153,20 +217,43 @@ export const formatNPK: FieldFormatter<number | null, Record<string, unknown>> =
 };
 
 /**
- * Format temperature with unit, reading a companion `temperature_unit` field
- * from the event payload (values: "C" | "F"). Defaults to Celsius when unset.
- * Used by weather fields highest_temperature (HT) and lower_temperature (FR).
+ * Format temperature, reading a companion `temperature_unit` field ("C" | "F") from the event.
+ *
+ * Two fixes here (2026-08-02):
+ *
+ * 1. It used to DEFAULT to Celsius when the unit was unset, so a Fahrenheit value rendered as
+ *    "111°C" — 232°F — on a card whose own title read "Heat wave - 5 days over 105 F". A
+ *    physically impossible number does more damage than a missing one: once a shopper sees it,
+ *    every other figure on the page is suspect. When the unit is absent we now INFER from
+ *    magnitude instead of asserting: the highest air temperature ever recorded on Earth is
+ *    56.7 °C, so an agricultural air temperature above 60 is Fahrenheit, and one below is
+ *    Celsius. Wrong only for readings no farm will ever log.
+ *
+ * 2. It showed a single scale. A US shopper reading "44°C" learns nothing, and a metric reader
+ *    learns nothing from "111°F", so both are given with the reader's own first.
  */
+const HOTTEST_PLAUSIBLE_CELSIUS = 60;
+
 export const formatTemperature: FieldFormatter<number | string, Record<string, unknown>> = (
   value,
-  event
+  event,
+  intl
 ) => {
   if (value == null || value === '') return null;
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (Number.isNaN(num)) return null;
+
   const rawUnit = event && typeof event.temperature_unit === 'string' ? event.temperature_unit : '';
-  const unitSymbol = rawUnit.toUpperCase() === 'F' ? '°F' : '°C';
-  return `${num}${unitSymbol}`;
+  const declared = rawUnit.toUpperCase();
+  const isFahrenheit =
+    declared === 'F' ? true : declared === 'C' ? false : num > HOTTEST_PLAUSIBLE_CELSIUS;
+
+  const round = (v: number) => Math.round(v);
+  const f = isFahrenheit ? num : num * 1.8 + 32;
+  const c = isFahrenheit ? (num - 32) / 1.8 : num;
+
+  const prefersMetric = Boolean(intl?.locale && !intl.locale.toLowerCase().startsWith('en'));
+  return prefersMetric ? `${round(c)}°C (${round(f)}°F)` : `${round(f)}°F (${round(c)}°C)`;
 };
 
 /**
@@ -281,4 +368,69 @@ export const defaultFormatter: FieldFormatter = (value) => {
   }
   if (value instanceof Date) return value.toLocaleDateString();
   return String(value);
+};
+
+/**
+ * Drop a trailing scientific binomial from a pest or disease name, for consumer surfaces only.
+ *
+ * WHY (2026-08-02): live cards read "Citrus leafminer (Phyllocnistis citrella)" and "Persea
+ * mite (Oligonychus perseae), Avocado thrips (Scirtothrips perseae)" under a label that says
+ * "What it protects against". A shopper gains nothing from the Latin, and it makes an otherwise
+ * plain sentence look like a lab report. The certifier PDF keeps the full string — that reader
+ * does want it.
+ *
+ * This OMITS, it does not rewrite: the grower's own common name is what survives. The pattern
+ * is deliberately narrow — exactly "(Genus species)", capitalised genus, lowercase species — so
+ * a parenthetical the farmer wrote for a human ("(root rot)", "(2nd flight)") is left alone. A
+ * value that is only Latin ("Phytophthora cinnamomi root rot") has no common name to fall back
+ * to and is also left alone.
+ */
+const BINOMIAL_PARENTHETICAL = /\s*\(\s*[A-Z][a-z]+\s+[a-z][a-z-]+\s*\)/g;
+
+export const stripScientificName = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const stripped = value.replace(BINOMIAL_PARENTHETICAL, '').replace(/\s+,/g, ',').trim();
+  // Never return less than a usable name: if removing the Latin empties the value, keep the
+  // original.
+  return stripped.length >= 3 ? stripped : value;
+};
+
+export const formatConsumerPestName: FieldFormatter<string> = (value) => stripScientificName(value);
+
+/**
+ * "Action Threshold Met: ✗" told a shopper nothing, and what it encodes is good news: pest
+ * counts stayed under the level that would justify treating. Say that.
+ */
+export const formatConsumerActionThreshold: FieldFormatter<boolean | string> = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const met = value === true || value === 'true' || value === 'Yes' || value === 'yes';
+  return met
+    ? 'Yes, counts reached the level that calls for treatment'
+    : 'No, counts stayed below the level that calls for treatment';
+};
+
+/**
+ * A contamination incident must never render to a shopper as a bare "✓".
+ *
+ * WHY (2026-08-02 sweep): `is_contamination_incident` is gated to display only when TRUE, so
+ * the consumer card was showing "Is Contamination Incident: ✓" — a checkmark, which reads as
+ * approval, against the one fact on the page where that is exactly backwards.
+ *
+ * The answer is plain words, not removal. An incident the grower recorded is what a
+ * transparency record is for; the source, affected area and corrective action render beside it.
+ */
+export const formatConsumerContaminationIncident: FieldFormatter<boolean | string> = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const yes = value === true || value === 'true' || value === 'Yes' || value === 'yes';
+  return yes ? 'Yes, recorded by the farm with the follow-up below' : null;
+};
+
+/**
+ * Cold chain, said plainly. "Temperature Control: ✓" meant nothing to a shopper; keeping fruit
+ * cool after picking is one of the few post-harvest facts they can act on.
+ */
+export const formatConsumerTemperatureControl: FieldFormatter<boolean | string> = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const yes = value === true || value === 'true' || value === 'Yes' || value === 'yes';
+  return yes ? 'Yes, kept cool after picking' : 'Not recorded as temperature-controlled';
 };

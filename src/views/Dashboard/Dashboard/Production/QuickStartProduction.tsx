@@ -83,6 +83,7 @@ import CardHeader from 'components/Card/CardHeader';
 import { PlanLimitAlert } from 'components/Subscription/PlanLimitAlert';
 import { getEventTypeMapping, getEventDataForType } from 'utils/eventTypeMapping';
 import { useIntl } from 'react-intl';
+import { useDefaultUnits } from 'src/hooks/useMeasurementSystem';
 
 // Utility function for formatting carbon values with appropriate precision
 const formatCarbonValue = (value: number): string => {
@@ -340,6 +341,37 @@ const CropTypeSearchPicker: React.FC<CropTypeSearchPickerProps> = ({
   );
 };
 
+/** Production methods under which a prohibited synthetic input must never be pre-enabled. */
+const ORGANIC_PRODUCTION_METHODS = ['organic', 'regenerative'];
+
+/**
+ * Is this template event one the operation is not permitted to perform at all?
+ *
+ * Template events are saved as REAL, backdated records attributed to the farmer by name — not
+ * drafts. Crop templates are generic, so the walnut template ships "Roundup PowerMax 3
+ * (glyphosate)" (`organic_approved: 'not_organic'`). Writing that to a certified organic
+ * operation is a § 205.105 hard disqualification in the certifier dossier and a synthetic
+ * herbicide published on the consumer QR page.
+ *
+ * Used for two things: these events start unselected like every other, AND "Select all" refuses
+ * to turn them on — a farmer bulk-accepting a template must not be able to bulk-accept a
+ * prohibited substance in one tap.
+ *
+ * Exported for testing: this predicate is the last thing standing between a generic template and
+ * a decertification-grade entry in a real grower's audit file.
+ */
+export function isTemplateEventProhibited(event: any, productionMethod?: string): boolean {
+  const method = String(productionMethod || '').toLowerCase();
+  if (!ORGANIC_PRODUCTION_METHODS.includes(method)) return false;
+
+  // backend_event_fields is where the template carries the input's real attributes; the event
+  // may also carry them flattened, so check both and let either mark it prohibited.
+  const fields = { ...(event?.backend_event_fields || {}), ...(event || {}) };
+  const approval = String(fields.organic_approved || '').toLowerCase();
+  const subtype = String(fields.chemical_subtype || '').toLowerCase();
+  return approval === 'not_organic' || subtype.includes('synthetic');
+}
+
 const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   parcelId: propParcelId,
   parcelName,
@@ -405,6 +437,27 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   // ✅ NEW: State for USDA-based carbon calculations
   // IMPORTANT: Area from Redux parcel data, fallback to user input or 10 hectares
   const [areaInput, setAreaInput] = useState<number>(10);
+
+  // Parcel.area is STORED in hectares (carbon maths depends on it) but was also DISPLAYED
+  // in hectares on a US-only product, so a grower who entered 42.5 acres on the parcel form
+  // — which already converts — then saw "17.1992 hectares" here and had to convert back to
+  // recognise their own block. Storage is unchanged; only the read-out is localised.
+  const areaUnits = useDefaultUnits();
+  const ACRES_PER_HECTARE = 2.47105;
+  const areaLabel =
+    areaUnits.system === 'imperial'
+      ? intl.formatMessage({
+          id: 'production.parcelAreaAcres',
+          defaultMessage: 'Parcel Area (acres)'
+        })
+      : intl.formatMessage({
+          id: 'production.parcelAreaHectares',
+          defaultMessage: 'Parcel Area (hectares)'
+        });
+  const areaDisplayValue =
+    areaUnits.system === 'imperial'
+      ? `${(areaInput * ACRES_PER_HECTARE).toFixed(2)} acres (${areaInput} ha)`
+      : `${areaInput} hectares`;
   // Carbon previews derived from template pre-calculated values (no API calls needed)
   // carbon_impact is an absolute estimate per event, not a per-hectare rate
   const carbonPreviews = useMemo(() => {
@@ -487,6 +540,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     handleSubmit,
     watch,
     setValue,
+    getValues,
     reset,
     formState: { errors }
   } = useForm<ProductionFormData>({
@@ -499,6 +553,42 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       crop_type_id: ''
     }
   });
+
+  /**
+   * Seed production_method from the farm's own farming method.
+   *
+   * The static default above is "conventional" regardless of how the farm was set up,
+   * so an organic operation started every production mislabelled and had to notice and
+   * change it each time. The consumer page reads this value, so the wrong default was
+   * surfacing on organic growers' QR pages — the opposite of the ICP. Only seeds when
+   * the farmer hasn't already chosen, and never overrides an edit in progress.
+   *
+   * The farm's farming_method has a WIDER option set than production_method
+   * (it also offers biodynamic and permaculture), so seeding blindly would put a value
+   * in this <select> that has no matching <option> — the field would render blank and
+   * submit something the backend doesn't accept. Only inherit values this select can
+   * actually represent; anything else keeps the "conventional" default.
+   */
+  const PRODUCTION_METHOD_OPTIONS = useMemo(
+    () => ['conventional', 'organic', 'regenerative', 'sustainable'],
+    []
+  );
+
+  const farmDefaultMethod = useMemo(() => {
+    const farm = currentCompany?.establishments?.find(
+      (est) => est?.id?.toString() === farmId?.toString()
+    ) as { farming_method?: string } | undefined;
+    const method = farm?.farming_method?.toLowerCase() ?? '';
+    return PRODUCTION_METHOD_OPTIONS.includes(method) ? method : '';
+  }, [currentCompany, farmId, PRODUCTION_METHOD_OPTIONS]);
+
+  useEffect(() => {
+    if (isEdit || !farmDefaultMethod) return;
+    const current = getValues('production_method');
+    if (!current || current === 'conventional') {
+      setValue('production_method', farmDefaultMethod);
+    }
+  }, [farmDefaultMethod, isEdit, getValues, setValue]);
 
   // Populate form with existing production data when in edit mode
   useEffect(() => {
@@ -614,29 +704,43 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     }
   }, [propCropType, cropTypesData, setValue]);
 
-  // Templates are now filtered by the API based on crop type
-  const filteredTemplates = templatesData?.templates || [];
+  // Templates are filtered by the API on crop type; the API returns them in insertion order,
+  // which puts the conventional one first for every crop. Surface the one matching how this
+  // farm actually operates instead — an organic grower opening the picker should not have to
+  // scroll past "Walnuts - Conventional Production" to find the programme that fits them, and
+  // the conventional list is where the prohibited inputs live.
+  const filteredTemplates = useMemo(() => {
+    const templates = templatesData?.templates || [];
+    const method = (getValues('production_method') || farmDefaultMethod || '').toLowerCase();
+    if (!method) return templates;
+    return [...templates].sort((a: any, b: any) => {
+      const aMatch = String(a?.system_type || '').toLowerCase() === method ? 0 : 1;
+      const bMatch = String(b?.system_type || '').toLowerCase() === method ? 0 : 1;
+      return aMatch - bMatch;
+    });
+  }, [templatesData, getValues, farmDefaultMethod]);
 
-  // Auto-select template when crop type changes and new templates are loaded
+  // Templates are OPT-IN: choosing a crop must not apply one.
+  //
+  // This effect used to auto-select filteredTemplates[0] the moment a crop was picked, which
+  // made the "Select a Smart Template" card below unreachable and turned the whole feature into
+  // something that happened TO the farmer. Because a template's events are saved as real,
+  // backdated records attributed to them by name, that meant a grower who only chose "Walnuts"
+  // acquired ~20 documented operations they never performed — including, on a certified organic
+  // farm, a glyphosate application. A template is a suggestion; the farmer opts in by picking
+  // one from the modal (or "Change Template" once chosen).
+  //
+  // What remains here is only the CLEARING half. Switching crops is handled by the
+  // watchedCropTypeId effect just below, which already resets the selection — so a walnut
+  // template cannot survive a switch to almonds.
   useEffect(() => {
     if (isLoadingTemplates) {
-      return; // Wait for templates to finish loading before auto-selecting
+      return;
     }
-    if (selectedCropTypeId && filteredTemplates.length > 0) {
-      const firstTemplate = filteredTemplates[0];
-      if (firstTemplate.template_id) {
-        setSelectedTemplateId(firstTemplate.template_id.toString());
-        setSelectedTemplate(firstTemplate);
-      }
-    } else if (selectedCropTypeId && filteredTemplates.length === 0) {
-      // Templates loaded but none found for this crop type
+    if (!selectedCropTypeId || filteredTemplates.length === 0) {
       setSelectedTemplate(null);
       setSelectedTemplateId(null);
       setCustomEvents([]);
-    } else if (!selectedCropTypeId) {
-      setSelectedTemplate(null);
-      setSelectedTemplateId(null);
-      setCustomEvents([]); // Clear events when no crop type is selected
     }
   }, [selectedCropTypeId, filteredTemplates, isLoadingTemplates]);
 
@@ -660,20 +764,42 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     }
   }, [currentParcel?.area]);
 
-  // Auto-fill form when template is selected
+  // Auto-fill form when template is selected.
+  //
+  // A template SUGGESTS; it must not overwrite what the farmer (or the farm) has already
+  // said. Selecting a crop can auto-apply a template, and this effect used to clobber three
+  // fields unconditionally — so typing "2025 Howard Walnut Season - Block 7", then choosing
+  // the crop, silently replaced the name with "Walnuts 2026" and the description with the
+  // template blurb.
   useEffect(() => {
     if (templateDetail) {
       const currentYear = new Date().getFullYear();
-      setValue('name', generateProductionName(templateDetail.name, currentYear));
-      setValue(
-        'description',
-        `${templateDetail.description} This production includes ${
-          templateDetail.events?.length || 4
-        } pre-configured events for optimal carbon tracking.`
-      );
+      // Only fill fields the farmer has left empty — never replace typed text.
+      if (!getValues('name')?.trim()) {
+        setValue('name', generateProductionName(templateDetail.name, currentYear));
+      }
+      if (!getValues('description')?.trim()) {
+        setValue(
+          'description',
+          `${templateDetail.description} This production includes ${
+            templateDetail.events?.length || 4
+          } pre-configured events for optimal carbon tracking.`
+        );
+      }
 
-      // Auto-set production method from template farming approach
-      if (templateDetail.system_type) {
+      // Auto-set production method from the template's farming approach — but ONLY when
+      // nothing more authoritative has spoken.
+      //
+      // This line used to run unconditionally, and it is the third route into the
+      // "organic farm, conventional production" bug: a generic crop template ("Comprehensive
+      // production template for walnuts") carries a system_type that mapped to
+      // `conventional`, overwriting both the farm's inherited farming_method and an explicit
+      // choice by the farmer. The consumer QR page reads this value, so an organic grower's
+      // lot was published as conventional. The farm is the authority on its own organic
+      // status; a crop template is not.
+      const currentMethod = getValues('production_method');
+      const farmerOrFarmChose = Boolean(farmDefaultMethod) || (currentMethod && currentMethod !== 'conventional');
+      if (templateDetail.system_type && !farmerOrFarmChose) {
         const methodMap: Record<string, string> = {
           organic: 'organic',
           conventional: 'conventional',
@@ -685,7 +811,14 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         setValue('production_method', methodMap[templateDetail.system_type] || 'conventional');
       }
 
-      // Set custom events from template
+      // Set custom events from template — ALL UNSELECTED.
+      //
+      // Each of these is saved as a REAL, backdated record attributed to the farmer by name.
+      // Choosing a template says "these are the operations typical for this crop"; it does not
+      // say "I performed all of them on these dates". Selecting the template is the first
+      // opt-in; ticking an event is the second, and it is the one that turns a suggestion into
+      // a claim in a certifier's audit file. "Select all" is right there for a farmer who really
+      // did run the standard programme — one tap, but a tap they chose to make.
       if (templateDetail.events) {
         setCustomEvents(
           templateDetail.events.map((event, index) => ({
@@ -694,12 +827,12 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             ...(event.backend_event_fields || {}),
             id: `template-${index}`,
             scheduled_date: calculateEventDate(event.timing),
-            enabled: true
+            enabled: false
           }))
         );
       }
     }
-  }, [templateDetail, setValue]);
+  }, [templateDetail, setValue, getValues, farmDefaultMethod]);
 
   const calculateEventDate = (timing: string) => {
     const startDate = new Date(watch('start_date') || new Date());
@@ -776,9 +909,30 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     );
   };
 
+  /**
+   * Are all the events "Select all" is allowed to turn on currently on?
+   *
+   * Measured over the SELECTABLE events only. Counting the prohibited ones would make this
+   * permanently false on an organic farm — the master switch would read unchecked forever and
+   * could never be used to clear the list again.
+   */
+  const allSelectableEventsEnabled = useMemo(() => {
+    const method = getValues('production_method') || farmDefaultMethod || '';
+    const selectable = customEvents.filter((event) => !isTemplateEventProhibited(event, method));
+    return selectable.length > 0 && selectable.every((event) => event.enabled);
+  }, [customEvents, getValues, farmDefaultMethod]);
+
   const handleToggleAll = () => {
-    const allSelected = customEvents.every((event) => event.enabled);
-    setCustomEvents((events) => events.map((event) => ({ ...event, enabled: !allSelected })));
+    const method = getValues('production_method') || farmDefaultMethod || '';
+    setCustomEvents((events) =>
+      events.map((event) => ({
+        ...event,
+        // "Select all" must not be a one-tap route to a prohibited substance. On an organic
+        // operation a template's synthetic inputs stay off; the farmer can still enable one
+        // individually if they really did apply it (and lose their certification over it).
+        enabled: !allSelectableEventsEnabled && !isTemplateEventProhibited(event, method)
+      }))
+    );
   };
 
   const handleEventDateChange = (eventId: string, newDate: string) => {
@@ -1250,7 +1404,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     <StandardField
                       label={
                         <>
-                          Parcel Area (hectares)
+                          {areaLabel}
                           {currentParcel?.area && (
                             <Badge ml={2} colorScheme="green" variant="subtle">
                               Auto-Loaded
@@ -1266,7 +1420,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     >
                       {currentParcel?.area ? (
                         <StandardInput
-                          value={`${areaInput} hectares`}
+                          value={areaDisplayValue}
                           isReadOnly
                           bg="gray.50"
                           cursor="not-allowed"
@@ -1383,13 +1537,13 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     </Text>
                     <HStack spacing={3}>
                       <Switch
-                        isChecked={customEvents.every((event) => event.enabled)}
+                        isChecked={allSelectableEventsEnabled}
                         onChange={handleToggleAll}
                         colorScheme="green"
                         size="md"
                       />
                       <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                        {customEvents.every((event) => event.enabled)
+                        {allSelectableEventsEnabled
                           ? 'Unselect All'
                           : 'Select All'}
                       </Text>

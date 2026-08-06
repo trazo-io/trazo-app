@@ -16,7 +16,7 @@
  *  - Copy is hardcoded English (consumer-page convention, see
  *    TrustSummaryHeader).
  *  - Each section has a stable anchor id so claims elsewhere in the app can
- *    deep-link: #transparency #carbon #photos #blockchain #certifications
+ *    deep-link: #transparency #carbon #photos #certifications
  *    #data.
  *  - "Last updated" is a string literal by design — do not compute at
  *    runtime; it must only change when the content changes.
@@ -171,23 +171,6 @@ const MethodologyPage: React.FC = () => {
             </NotClaim>
           </Section>
 
-          <Section id="blockchain" title="Blockchain record">
-            <Body>
-              Blockchain recording is an optional add-on that farms subscribe to — not every
-              product page has it.
-            </Body>
-            <Body>
-              When a farm subscribes, its production records are sealed monthly on the Polygon
-              blockchain. Sealing creates a permanent fingerprint of the records as submitted,
-              so any change made afterward is detectable. That makes the records
-              tamper-evident after submission.
-            </Body>
-            <NotClaim>
-              The blockchain records what the farmer submitted. It cannot verify that the
-              farming practices described in those records are accurate. A blockchain badge
-              means &ldquo;recorded,&rdquo; not &ldquo;verified.&rdquo;
-            </NotClaim>
-          </Section>
 
           <Section id="certifications" title="Certifications">
             <Body>

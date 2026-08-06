@@ -40,9 +40,20 @@ export interface TransparencyMetrics {
 
 export interface ComprehensiveData {
   total_productions: number;
+  // Corrected 2026-08-04 to match `company/views.py::_calculate_comprehensive_metrics()`, the
+  // function that actually builds this object. It was missing 4 fields the establishment
+  // dashboard reads off this exact interface (`total_events`, `active_productions`,
+  // `completed_productions`, `transparency_percentage`) — TypeScript had nothing to check
+  // those call sites against, so a backend rename here would have failed silently at runtime
+  // (reading `undefined`, coerced to 0/[]) with zero compile-time warning.
+  active_productions: number;
+  completed_productions: number;
   total_carbon_entries: number;
   total_verified_events: number;
   total_photos: number;
+  total_events: number;
+  transparency_percentage: number;
+  activity_breakdown: Record<string, number>;
   verification_status: {
     usda_factors_used: number;
     blockchain_verified: number;
@@ -55,7 +66,9 @@ export interface ComprehensiveData {
     description: string;
     potential_improvement: string;
   }>;
+  seasonal_patterns: Record<string, unknown>;
   data_completeness: number;
+  carbon_intensity_per_hectare: number;
   trust_indicators_count: number;
 }
 
@@ -68,19 +81,52 @@ export interface CarbonSummary {
   carbon_intensity_trend: number;
 }
 
+export interface CertifierReadinessFinding {
+  label: string;
+  // REVIEW = the record exists but needs attention. FAIL = a required record appears missing.
+  // Both describe the RECORD in Trazo — the certifying agent makes the compliance decision.
+  status: 'REVIEW' | 'FAIL';
+  detail: string;
+  // Which section of the audit export carries the full evidence, when the row is not PASS.
+  section_hint: string | null;
+}
+
+export interface CertifierReadiness {
+  establishment_id: number;
+  // null when the farm has no productions at all.
+  production: {
+    id: number;
+    name: string | null;
+    finish_date: string | null;
+    is_finished: boolean;
+  } | null;
+  findings: CertifierReadinessFinding[];
+  outstanding_count: number;
+  // How many compliance rows were evaluated (findings are the non-PASS subset).
+  checked_count: number;
+}
+
 export interface FarmDashboardMetrics {
   // Consumer engagement
   consumer_reach: number;
   monthly_scans: number;
   scan_growth_percentage: number;
-  // Transparency (PRIMARY)
-  transparency_score: number;
+  // Transparency (PRIMARY).
+  // `null` when the farm has no FINISHED, published season — an absence of a verdict, not a
+  // zero. Only finished seasons are averaged, so starting a new production no longer drags
+  // the farm's headline down. Never coerce null to 0 (`Math.round(null) === 0`).
+  transparency_score: number | null;
+  // How many finished seasons the score averages over (0 when transparency_score is null).
+  scored_productions: number;
   total_documented_events: number;
   // Production counts
   total_productions: number;
+  // Seasons with no finish date yet. Not simply `total_productions - scored_productions`:
+  // a finished-but-unpublished season is neither scored nor underway.
+  productions_in_progress: number;
   blockchain_verified_count: number;
   // Score-tier label (non-comparative, derived from farm's own score)
-  transparency_tier: 'excellent' | 'strong' | 'good' | 'solid' | 'developing';
+  transparency_tier: 'excellent' | 'strong' | 'good' | 'solid' | 'developing' | 'not_started';
   // Subscription
   subscription_usage_percentage: number;
 }
@@ -146,6 +192,17 @@ const dashboardMetricsApi = baseApi.injectEndpoints({
       }),
       providesTags: (result, error, { farmId }) => [{ type: 'Farm', id: farmId }]
     }),
+    // Outstanding items a certifier would query, for the farm's most recent season.
+    // Same rows page 1 of the NOP audit PDF prints, so the dashboard and the certifier packet
+    // cannot disagree. Tag id is namespaced so routine `Farm` invalidation does not evict it.
+    getCertifierReadiness: build.query<CertifierReadiness, { companyId: number | string; farmId: number }>({
+      query: ({ companyId, farmId }) => ({
+        url: `/companies/${companyId}/establishments/${farmId}/certifier-readiness/`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (result, error, { farmId }) => [{ type: 'Farm', id: `certifier-${farmId}` }]
+    }),
     // Phase 4 — buyer documentation requests (leads) for the dashboard.
     getBuyerDocRequests: build.query<BuyerDocRequestLead[], { farmId: number }>({
       query: ({ farmId }) => ({
@@ -202,6 +259,7 @@ export interface BuyerDocRequestLead {
 export const {
   useGetFarmDashboardMetricsQuery,
   useGetFarmComprehensiveDashboardQuery,
+  useGetCertifierReadinessQuery,
   useGetFarmRoiSummaryQuery,
   useGetBuyerDocRequestsQuery,
   useUpdateBuyerDocRequestStatusMutation

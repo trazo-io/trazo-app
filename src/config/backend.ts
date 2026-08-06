@@ -18,11 +18,7 @@ export const FARM_URL = (companyId: string, farmId?: string) =>
   farmId
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/`;
-export const PARCEL_URL = (
-  companyId: string,
-  farmId: string,
-  parcelId: string | null = null
-) =>
+export const PARCEL_URL = (companyId: string, farmId: string, parcelId: string | null = null) =>
   parcelId
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/`;
@@ -32,10 +28,8 @@ export const FARM_PRODUCTS_URL = (companyId: string, farmId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/products/`;
 export const FARM_HISTORIES_URL = (companyId: string, farmId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/histories/`;
-export const FARM_CHART_SCANS_VS_SALES_INFO_URL = (
-  companyId: string,
-  farmId: string
-) => `${ROOT_URL}companies/${companyId}/establishments/${farmId}/get_charts_data/`;
+export const FARM_CHART_SCANS_VS_SALES_INFO_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/get_charts_data/`;
 export const SCANS_BY_FARM_URL = (companyId: string, farmId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/scans/list_scans_by_establishment/`;
 
@@ -90,11 +84,7 @@ export const COMMENT_HISTORY_URL = (scanId: string) => `${ROOT_URL}public_scans/
 export const UPLOAD_URLS_URL = `${ROOT_URL}upload-urls/`;
 
 // Certification URLs
-export const CERTIFICATION_URL = (
-  companyId: string,
-  farmId: string,
-  certificationId?: string
-) =>
+export const CERTIFICATION_URL = (companyId: string, farmId: string, certificationId?: string) =>
   certificationId
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifications/${certificationId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifications/`;
@@ -106,11 +96,7 @@ export const CERTIFICATION_VERIFY_URL = (
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifications/${certificationId}/verify/`;
 
 // OSP URLs — Sprint 5A (7 CFR 205.201)
-export const OSP_URL = (
-  companyId: string,
-  farmId: string,
-  ospId?: string | number
-) =>
+export const OSP_URL = (companyId: string, farmId: string, ospId?: string | number) =>
   ospId != null
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/`;
@@ -124,6 +110,24 @@ export const STATE_ORGANIC_REGISTRATION_URL = (
   regId != null
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/state-organic-registrations/${regId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/state-organic-registrations/`;
+
+// Certifier review links — farmer-side management (mint / list / revoke).
+// The link a certifier actually opens is anonymous and lives at
+// /certifier-review/<token>/, deliberately outside this authenticated namespace.
+export const CERTIFIER_LINKS_URL = (companyId: string, farmId: string, linkId?: string | number) =>
+  linkId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifier-links/${linkId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifier-links/`;
+
+// Pre-inspection readiness: what a certifier would reject this operation over.
+// Same endpoint behind the pre-share warning and the dashboard checklist, so the
+// two can never disagree.
+export const OPERATION_READINESS_URL = (
+  companyId: string,
+  farmId: string,
+  certificationType = 'organic'
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifier-links/readiness/?certification_type=${certificationType}`;
 
 // Landowner / prior-manager affidavit (3-year transition proof, 7 CFR 205.202(b))
 export const LANDOWNER_AFFIDAVIT_URL = (
@@ -158,8 +162,7 @@ export const OSP_ADD_APPROVED_INPUT_URL = (
   companyId: string,
   farmId: string,
   ospId: string | number
-) =>
-  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/add-approved-input/`;
+) => `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/add-approved-input/`;
 
 export const OSP_REMOVE_APPROVED_INPUT_URL = (
   companyId: string,

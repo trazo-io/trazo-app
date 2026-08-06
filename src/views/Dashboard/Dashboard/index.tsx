@@ -61,6 +61,8 @@ import bgImage from 'assets/img/backgroundImage.png';
 // assets
 import imageFarm from 'assets/img/imageFarm.png';
 import TransparencySummaryCard from './components/farm/CarbonSummaryCard';
+import CertifierReadinessCard from './components/farm/CertifierReadinessCard';
+import CertifierDeadlinesStrip from './components/farm/CertifierDeadlinesStrip';
 import TrialStatusBanner from 'components/Trial/TrialStatusBanner';
 import { useTour } from 'hooks/useTour';
 import { useTourScenario } from 'hooks/useTourScenario';
@@ -765,6 +767,25 @@ export default function DashboardView() {
           </Card>
         )}
       </Grid>
+
+      {/* Page order, top to bottom: DEADLINES → READINESS → RECORDS.
+          Dates the certifier sets, then what is outstanding against those records, then the
+          counts. The transparency score is deliberately absent from this page as of
+          2026-08-04 — it is Trazo's own completeness metric, measured against a baseline Trazo
+          authored, with no external deadline and no audience beyond its own page. It lives at
+          /admin/dashboard/farm/:farmId/transparency. Everything above it here has a real
+          external clock: § 205.406 annual updates, certificate expiries, CDFA renewals. */}
+      {establishment?.id && activeCompany?.id && (
+        <Box width="100%" mb={{ base: 4, md: 6 }}>
+          <CertifierDeadlinesStrip companyId={activeCompany.id} farmId={establishment.id} />
+        </Box>
+      )}
+
+      {establishment?.id && activeCompany?.id && (
+        <Box width="100%" mb={{ base: 4, md: 6 }} data-tour="certifier-readiness">
+          <CertifierReadinessCard companyId={activeCompany.id} farmId={establishment.id} />
+        </Box>
+      )}
 
       {/* Single Transparency Overview Card for selected establishment */}
       {establishment?.id && (

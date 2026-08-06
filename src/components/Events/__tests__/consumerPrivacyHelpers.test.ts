@@ -46,16 +46,28 @@ describe('formatHarvestDate (local-safe harvest date)', () => {
 });
 
 describe('formatHarvestQuantity (consumer-readable batch quantity)', () => {
-  it('rolls large kg quantities up to tonnes', () => {
-    expect(formatHarvestQuantity(560000, 'kg')).toEqual({ value: '560', unit: 'tonnes' });
+  // 2026-08-01: this helper became locale-aware. The batch header was reading "135 TONNES"
+  // on the same page where the harvest card said "50 tons (45,000 kg)" — two units for one
+  // crop, a screen apart. Metric readers keep metric; English readers get tons/pounds. The
+  // no-locale default converts, matching withUSUnits, so legacy call sites do not silently
+  // show a US audience metric.
+  it('rolls large kg quantities up to tonnes for metric readers', () => {
+    expect(formatHarvestQuantity(560000, 'kg', 'es-419')).toEqual({
+      value: '560',
+      unit: 'tonnes'
+    });
   });
 
   it('keeps one decimal for small tonne values', () => {
-    expect(formatHarvestQuantity(12500, 'kg')).toEqual({ value: '12.5', unit: 'tonnes' });
+    expect(formatHarvestQuantity(12500, 'kg', 'es-419')).toEqual({ value: '12.5', unit: 'tonnes' });
   });
 
-  it('leaves small kg quantities untouched', () => {
-    expect(formatHarvestQuantity(500, 'kg')).toEqual({ value: '500', unit: 'kg' });
+  it('leaves small kg quantities untouched for metric readers', () => {
+    expect(formatHarvestQuantity(500, 'kg', 'es-419')).toEqual({ value: '500', unit: 'kg' });
+  });
+
+  it('defaults to US units when no locale is supplied', () => {
+    expect(formatHarvestQuantity(560000, 'kg')).toEqual({ value: '617', unit: 'tons' });
   });
 
   it('leaves non-kg units untouched', () => {

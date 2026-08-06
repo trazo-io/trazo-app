@@ -50,6 +50,10 @@ interface ParcelLike {
   treated_lumber_present?: boolean;
   treated_lumber_description?: string;
   treated_lumber_install_date?: string;
+  pump_efficiency_pct?: number | string;
+  system_pressure_psi?: number | string;
+  pump_test_date?: string;
+  pump_test_provider?: string;
 }
 
 interface Props {
@@ -74,7 +78,11 @@ const ParcelComplianceCard: React.FC<Props> = ({ companyId, farmId, parcelId, pa
     date_began_managing: '',
     treated_lumber_present: false,
     treated_lumber_description: '',
-    treated_lumber_install_date: ''
+    treated_lumber_install_date: '',
+    pump_efficiency_pct: '',
+    system_pressure_psi: '',
+    pump_test_date: '',
+    pump_test_provider: ''
   });
 
   useEffect(() => {
@@ -86,7 +94,13 @@ const ParcelComplianceCard: React.FC<Props> = ({ companyId, farmId, parcelId, pa
       date_began_managing: parcel.date_began_managing || '',
       treated_lumber_present: Boolean(parcel.treated_lumber_present),
       treated_lumber_description: parcel.treated_lumber_description || '',
-      treated_lumber_install_date: parcel.treated_lumber_install_date || ''
+      treated_lumber_install_date: parcel.treated_lumber_install_date || '',
+      pump_efficiency_pct:
+        parcel.pump_efficiency_pct != null ? String(parcel.pump_efficiency_pct) : '',
+      system_pressure_psi:
+        parcel.system_pressure_psi != null ? String(parcel.system_pressure_psi) : '',
+      pump_test_date: parcel.pump_test_date || '',
+      pump_test_provider: parcel.pump_test_provider || ''
     });
   }, [parcel]);
 
@@ -126,7 +140,13 @@ const ParcelComplianceCard: React.FC<Props> = ({ companyId, farmId, parcelId, pa
           date_began_managing: identity.date_began_managing,
           treated_lumber_present: identity.treated_lumber_present,
           treated_lumber_description: identity.treated_lumber_description,
-          treated_lumber_install_date: identity.treated_lumber_install_date
+          treated_lumber_install_date: identity.treated_lumber_install_date,
+          // Empty string would fail DecimalField/DateField validation, and it must also be
+          // possible to CLEAR a stale pump test — so send null rather than "".
+          pump_efficiency_pct: identity.pump_efficiency_pct || null,
+          system_pressure_psi: identity.system_pressure_psi || null,
+          pump_test_date: identity.pump_test_date || null,
+          pump_test_provider: identity.pump_test_provider
         }
       }).unwrap();
       toast({
@@ -258,6 +278,92 @@ const ParcelComplianceCard: React.FC<Props> = ({ companyId, farmId, parcelId, pa
             </StandardField>
           </SimpleGrid>
         )}
+
+        <Divider />
+
+        {/* Irrigation pumping plant (§E-6). Parcel-level because a pump test measures one
+            plant once a year, and every irrigation event that season is costed against it.
+            This is the input that turns the generic irrigation carbon estimate into this
+            farm's own number. */}
+        <Box>
+          <Text fontSize="md" fontWeight="semibold" color="gray.700" mb={1}>
+            {intl.formatMessage({
+              id: 'parcel.pump.title',
+              defaultMessage: 'Irrigation Pumping Plant'
+            })}
+          </Text>
+          <Text fontSize="sm" color="gray.600" mb={3}>
+            {intl.formatMessage({
+              id: 'parcel.pump.help',
+              defaultMessage:
+                'From your most recent pump test. Used to calculate irrigation energy for this parcel — leave empty to use a 70% efficiency and a pressure derived from your irrigation method.'
+            })}
+          </Text>
+          <SimpleGrid columns={{ base: 1, smd: 2 }} spacing={4}>
+            <StandardField
+              label={intl.formatMessage({
+                id: 'parcel.pump.efficiency',
+                defaultMessage: 'Plant Efficiency (%)'
+              })}
+            >
+              <Input
+                type="number"
+                step="0.1"
+                min={0}
+                max={100}
+                value={identity.pump_efficiency_pct}
+                isDisabled={!canWrite}
+                onChange={(e) => setIdentityField('pump_efficiency_pct', e.target.value)}
+                placeholder="70"
+              />
+            </StandardField>
+            <StandardField
+              label={intl.formatMessage({
+                id: 'parcel.pump.pressure',
+                defaultMessage: 'System Pressure (psi)'
+              })}
+            >
+              <Input
+                type="number"
+                step="0.1"
+                min={0}
+                value={identity.system_pressure_psi}
+                isDisabled={!canWrite}
+                onChange={(e) => setIdentityField('system_pressure_psi', e.target.value)}
+                placeholder="15"
+              />
+            </StandardField>
+            <StandardField
+              label={intl.formatMessage({
+                id: 'parcel.pump.testDate',
+                defaultMessage: 'Pump Test Date'
+              })}
+            >
+              <Input
+                type="date"
+                value={identity.pump_test_date}
+                isDisabled={!canWrite}
+                onChange={(e) => setIdentityField('pump_test_date', e.target.value)}
+              />
+            </StandardField>
+            <StandardField
+              label={intl.formatMessage({
+                id: 'parcel.pump.provider',
+                defaultMessage: 'Tested By'
+              })}
+            >
+              <Input
+                value={identity.pump_test_provider}
+                isDisabled={!canWrite}
+                onChange={(e) => setIdentityField('pump_test_provider', e.target.value)}
+                placeholder={intl.formatMessage({
+                  id: 'parcel.pump.providerPlaceholder',
+                  defaultMessage: 'e.g., utility programme or pump company'
+                })}
+              />
+            </StandardField>
+          </SimpleGrid>
+        </Box>
 
         <Divider />
 

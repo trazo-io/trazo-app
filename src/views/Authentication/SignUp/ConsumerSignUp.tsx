@@ -34,6 +34,7 @@ import { motion } from 'framer-motion';
 import { useDispatch } from 'react-redux';
 import AuthFooter from 'components/Footer/AuthFooter';
 import { passwordValidator } from '../../../utils/passwordValidation';
+import { PERSON_NAME_PATTERN, PERSON_NAME_MAX_LENGTH } from '../../../utils/nameValidation';
 import { PasswordStrengthIndicator } from '../../../components/Forms/PasswordStrengthIndicator';
 import { useSignUpMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { useClaimScansMutation } from '../../../store/api/historyApi';
@@ -465,9 +466,10 @@ const ConsumerSignUp: React.FC = () => {
                         transition="all 0.2s"
                         {...registerField('firstName', {
                           required: 'First name is required',
+                          maxLength: { value: PERSON_NAME_MAX_LENGTH, message: 'First name is too long' },
                           pattern: {
-                            value: /^[A-Za-z\s]+$/,
-                            message: 'First name should only contain letters'
+                            value: PERSON_NAME_PATTERN,
+                            message: "First name can't contain numbers or symbols"
                           }
                         })}
                         onFocus={() => setFocusedField('firstName')}
@@ -521,9 +523,10 @@ const ConsumerSignUp: React.FC = () => {
                         transition="all 0.2s"
                         {...registerField('lastName', {
                           required: 'Last name is required',
+                          maxLength: { value: PERSON_NAME_MAX_LENGTH, message: 'Last name is too long' },
                           pattern: {
-                            value: /^[A-Za-z\s]+$/,
-                            message: 'Last name should only contain letters'
+                            value: PERSON_NAME_PATTERN,
+                            message: "Last name can't contain numbers or symbols"
                           }
                         })}
                         onFocus={() => setFocusedField('lastName')}

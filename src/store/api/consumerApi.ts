@@ -29,8 +29,10 @@ export interface EnhancedScan {
   // Transparency-first fields
   transparency_score?: number;
   events_viewed?: number;
-  // Carbon fields (secondary)
-  carbon_score: string;
+  // Carbon fields (secondary). `carbon_score` (an A+-to-F grade) was removed from the API on
+  // 2026-08-04 — a self-created sustainability label, with thresholds attributed to the USDA.
+  // `carbon_footprint` is the measured amount, e.g. "1.23 kg CO₂e" (NOT per kg — see
+  // backend/constants.format_carbon_amount).
   carbon_footprint: string;
   carbon_saved: string;
   sustainability_practices: string[];
@@ -41,17 +43,19 @@ export interface EnhancedScan {
 }
 
 export interface ProductComparison {
-  id: number;
+  /** The API identifies productions by public_id; the internal pk is not exposed. */
+  public_id: string;
   name: string;
   farm: string;
   location: string;
-  carbon_score: string;
+  /** Formatted measurement, e.g. "1.23 kg CO₂e". */
   carbon_footprint: string;
-  price: string;
-  distance: string;
+  /** The raw number the comparison ranks on; null when the production has no carbon entry. */
+  carbon_kg_co2e: number | null;
   farming_method: string;
-  sustainability_rating: number;
   certifications: string[];
+  // Removed with the backend fields that never existed in the response: carbon_score (A+-to-F
+  // grade), price, distance, sustainability_rating.
 }
 
 export interface UserFavorite {
@@ -60,7 +64,6 @@ export interface UserFavorite {
   product_name: string;
   farm_name: string;
   location: string;
-  carbon_score: string;
   carbon_footprint: string;
   created_at: string;
 }
@@ -124,9 +127,11 @@ export interface ProductComparisonResponse {
   comparison_id?: number;
   products: ProductComparison[];
   comparison_summary: {
-    best_carbon_score: string;
-    average_rating: number;
-    local_options: number;
+    /** Lowest recorded CO₂e across the compared productions; null when none have carbon data. */
+    lowest_carbon_kg_co2e: number | null;
+    lowest_carbon_footprint: string | null;
+    total_products: number;
+    epa_usda_sourced_products: number;
   };
 }
 
@@ -148,7 +153,6 @@ export const consumerApi = baseApi.injectEndpoints({
       {
         date_from?: string;
         date_to?: string;
-        carbon_score?: string;
         is_favorite?: boolean;
         page?: number;
         page_size?: number;

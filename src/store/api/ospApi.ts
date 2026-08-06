@@ -212,6 +212,21 @@ const ospApi = baseApi.injectEndpoints({
       ]
     }),
 
+    // Withdraw a notification the certifier has not acknowledged yet. The
+    // backend refuses once `certifier_acknowledged_at` is set — an
+    // acknowledged entry is a record of what a third party was told, and
+    // correcting it means filing a NEW notification, not editing the old one.
+    deleteOSPChangeNotification: build.mutation<void, OSPOne & { notificationId: number }>({
+      query: ({ companyId, farmId, ospId, notificationId }) => ({
+        url: `${OSP_CHANGE_NOTIFICATIONS_URL(companyId, farmId, ospId)}${notificationId}/`,
+        method: 'DELETE',
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSPChangeNotification', id: Number(ospId) }
+      ]
+    }),
+
     // Resolve a free-text product name to NL/OMRI matches. Used by the
     // Approved Inputs typeahead. Backend route: /certifications/verify-input/?name=
     verifyInput: build.query<InputVerifyResult, { name: string; omri_id?: string }>({
@@ -237,6 +252,7 @@ export const {
   useRemoveApprovedInputMutation,
   useGetOSPChangeNotificationsQuery,
   useCreateOSPChangeNotificationMutation,
+  useDeleteOSPChangeNotificationMutation,
   useLazyVerifyInputQuery
 } = ospApi;
 

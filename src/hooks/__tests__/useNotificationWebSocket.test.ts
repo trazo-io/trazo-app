@@ -9,22 +9,29 @@ import userSlice from '../../store/features/userSlice';
 import notificationSlice from '../../store/features/notificationSlice';
 import baseApi from '../../store/api/baseApi';
 
-// Mock the notification WebSocket service
-const mockNotificationWebSocket = {
+// Mock the notification WebSocket service.
+//
+// These MUST be created with vi.hoisted(). `vi.mock` calls are hoisted to the top of the
+// module, above every `const`, so a factory that closes over a plain top-level const throws
+// "Cannot access 'mockNotificationWebSocket' before initialization" and the whole suite
+// fails to collect — zero tests run, which reads as a passing file in a summary count.
+// vi.hoisted() runs its initialiser in the same hoisted phase, so the binding exists by the
+// time the factory executes.
+const mockNotificationWebSocket = vi.hoisted(() => ({
   setAuthToken: vi.fn(),
   connect: vi.fn(),
   disconnect: vi.fn(),
   isConnected: vi.fn().mockReturnValue(false),
   markAsRead: vi.fn(),
   markAllAsRead: vi.fn()
-};
+}));
 
 vi.mock('../../services/notificationWebSocket', () => ({
   notificationWebSocket: mockNotificationWebSocket
 }));
 
 // Mock the notification API
-const mockGetNotificationCount = vi.fn();
+const mockGetNotificationCount = vi.hoisted(() => vi.fn());
 
 vi.mock('../../store/api/notificationApi', () => ({
   useGetNotificationCountQuery: () => mockGetNotificationCount()

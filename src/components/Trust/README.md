@@ -185,8 +185,15 @@ const calculateTrustScore = (data: TrustData): number => {
 
 ### Replace Existing Trust Indicators
 
+> ⚠️ The "before" snippet below is kept only to show what was replaced. **Do not copy it.**
+> Both badges are unsafe on a consumer surface: a bare "Verified" for blockchain is the exact
+> claim `compliance.md` forbids (the chain proves a record is unchanged since sealing, not that
+> the practice happened), and the consumer blockchain surface was removed entirely on
+> 2026-08-03. A USDA badge may only render for a USDA Organic Integrity Database match — ask
+> `history/services/claim_authority.py`, never a local boolean.
+
 ```tsx
-// Before: Basic verification badges
+// Before: Basic verification badges — REMOVED, see warning above
 <HStack spacing={2}>
   {isUSDAVerified && <Badge colorScheme="green">USDA</Badge>}
   {isBlockchainVerified && <Badge colorScheme="blue">Verified</Badge>}

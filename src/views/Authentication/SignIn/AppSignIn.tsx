@@ -29,6 +29,7 @@ import {
   FaEyeSlash
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { useIntl } from 'react-intl';
 import { StandardInput } from '../../../components/Design/StandardComponents';
 import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { useClaimScansMutation } from '../../../store/api/historyApi';
@@ -55,6 +56,7 @@ interface SignInFormData {
 const AppSignIn: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const intl = useIntl();
   const toast = useToast();
   const [login, { isLoading }] = useLoginMutation();
   const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
@@ -318,29 +320,68 @@ const AppSignIn: React.FC = () => {
             zIndex={10}
           >
             <VStack spacing={4}>
+              {/*
+                Compliance (.claude/rules/compliance.md): "premium positioning through
+                transparency" is SAFE; "deserves premium prices" / "get commodity prices"
+                are pricing-outcome promises and are NOT. Also avoid "verified story" —
+                Trazo documents, it does not verify (see verification-language-guide).
+              */}
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Honest farming deserves premium prices.
+                {intl.formatMessage({
+                  id: 'auth.signin.hero.headline',
+                  defaultMessage: 'Honest farming deserves to be seen.'
+                })}
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Without proof, premium farms get commodity prices.
+                {intl.formatMessage({
+                  id: 'auth.signin.hero.subhead',
+                  defaultMessage:
+                    'Without documentation, careful growers look the same as everyone else.'
+                })}
                 <br />
-                Log in and keep building your verified story.
+                {intl.formatMessage({
+                  id: 'auth.signin.hero.cta',
+                  defaultMessage: 'Log in and keep building your record.'
+                })}
               </Text>
             </VStack>
 
             <VStack spacing={3} pt={4}>
+              {/*
+                Blockchain was deliberately removed from this list: the GTM-v3 realign
+                took it off public surfaces (kept in legal + billing only). "your prices"
+                was also dropped — a pricing nudge, same rule as the headline above.
+              */}
               {[
-                'Buyers see exactly how your food was grown',
-                'Every event logged raises your transparency score',
-                'QR codes turn scans into trust',
-                'Optional blockchain for tamper-proof records',
-                'Consumer reviews build your reputation',
-                'Your farm story, your prices, your data'
-              ].map((feature, index) => (
-                <HStack key={index} spacing={3}>
+                {
+                  id: 'auth.signin.benefit.buyersSee',
+                  defaultMessage: 'Buyers see exactly how your food was grown'
+                },
+                {
+                  id: 'auth.signin.benefit.eventsRaiseScore',
+                  defaultMessage: 'Every event logged raises your transparency score'
+                },
+                {
+                  id: 'auth.signin.benefit.qrTrust',
+                  defaultMessage: 'QR codes turn scans into trust'
+                },
+                {
+                  id: 'auth.signin.benefit.certifierExport',
+                  defaultMessage: 'Records export as documentation your certifier reviews'
+                },
+                {
+                  id: 'auth.signin.benefit.reviews',
+                  defaultMessage: 'Consumer reviews build your reputation'
+                },
+                {
+                  id: 'auth.signin.benefit.ownYourData',
+                  defaultMessage: 'Your farm story, your records, your data'
+                }
+              ].map((feature) => (
+                <HStack key={feature.id} spacing={3}>
                   <Box w={2} h={2} bg="white" borderRadius="50%" />
                   <Text fontSize="sm" fontWeight="500" opacity={0.9}>
-                    {feature}
+                    {intl.formatMessage(feature)}
                   </Text>
                 </HStack>
               ))}
@@ -382,7 +423,16 @@ const AppSignIn: React.FC = () => {
                   color={useColorModeValue('gray.500', 'gray.400')}
                   textAlign="center"
                 >
-                  Your verified story is waiting.
+                  {/*
+                    Was "Your verified story is waiting." — the exact phrase the
+                    compliance comment at the top of this file tells us to avoid.
+                    Trazo documents; it does not verify. Also i18n'd, per the
+                    bilingual rule.
+                  */}
+                  {intl.formatMessage({
+                    id: 'auth.signin.welcome.subtitle',
+                    defaultMessage: 'Your farm records are waiting.'
+                  })}
                 </Text>
               </VStack>
             </VStack>

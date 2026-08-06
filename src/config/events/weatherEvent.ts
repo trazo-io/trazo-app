@@ -199,6 +199,16 @@ const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
     labelKey: 'events.weather.fields.duration',
     valueType: 'string',
     visibleForSubtypes: ['HL', 'TS', 'HW', 'HH', 'LH'],
+    // Rendered as a bare "Duration: 2" — two what? The form labels this field
+    // "Storm duration in hours" (WeatherTab.jsx), so the unit is known; it was just never
+    // attached on the way out. On several weather subtypes this is the ONLY field on the
+    // card, so a unitless number was most of what a shopper got.
+    formatter: (v) => {
+      if (v == null || v === '') return null;
+      const num = typeof v === 'number' ? v : parseFloat(String(v));
+      if (!Number.isFinite(num) || num <= 0) return null;
+      return num === 1 ? '1 hour' : `${num} hours`;
+    },
     surfaces: {
       timeline: 'immediate',
       card: 'immediate',
@@ -243,17 +253,21 @@ const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
     surfaces: { modal: 'details', form: 'details' }
   },
   {
+    // Display-only: a weather observation is recorded against the parcel, not a crop, so
+    // WeatherTab has no variety/growth-stage input. These columns exist on CommonEvent and
+    // render if something else populates them; declaring a `form` surface for an input
+    // that does not exist just guarantees a permanently empty field.
     name: 'variety',
     labelKey: 'events.common.fields.variety',
     valueType: 'string',
-    surfaces: { modal: 'details', form: 'details', consumer_card: 'details' }
+    surfaces: { modal: 'details' }
   },
   {
     name: 'growth_stage',
     labelKey: 'events.common.fields.growthStage',
     valueType: 'enum',
     enumSource: 'growth_stages',
-    surfaces: { modal: 'details', form: 'details', consumer_card: 'details' }
+    surfaces: { modal: 'details' }
   }
 ];
 

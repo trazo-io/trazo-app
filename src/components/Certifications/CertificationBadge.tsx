@@ -155,9 +155,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
         {visibleVerified.length > 0 && visibleVerified.map((cert, i) => renderCertDetail(cert, i))}
         {visibleVerified.length > 0 && visibleSelfReported.length > 0 && <Divider />}
         {visibleSelfReported.length > 0 &&
-          visibleSelfReported.map((cert, i) =>
-            renderCertDetail(cert, visibleVerified.length + i)
-          )}
+          visibleSelfReported.map((cert, i) => renderCertDetail(cert, visibleVerified.length + i))}
       </VStack>
     );
   };

@@ -6,6 +6,7 @@
  * field naming and structure.
  */
 
+import { resolveBusinessSubtype } from '../config/events/businessSubtype';
 import {
   StandardizedEvent,
   StandardizedEventBase,
@@ -137,6 +138,26 @@ export function normalizeEventData(
   dataSource: DataSource,
   options: NormalizationOptions = {}
 ): StandardizedEvent {
+  const normalized = buildNormalizedEvent(eventType, rawData, dataSource, options);
+
+  // Per-type builders can synthesize a sub-type key the raw payload never had — form-sourced
+  // business events, for instance, only gain `business_event_type: 'CE'` inside
+  // normalizeBusinessEventData, well after createBaseEvent ran. Resolve again against the
+  // merged result so `event.subtype` agrees with what extractSubtypeCode(event) would say.
+  if (!normalized.subtype) {
+    const resolved = extractSubtypeCode(normalized);
+    if (resolved) normalized.subtype = resolved;
+  }
+
+  return normalized;
+}
+
+function buildNormalizedEvent(
+  eventType: number,
+  rawData: any,
+  dataSource: DataSource,
+  options: NormalizationOptions = {}
+): StandardizedEvent {
   const { preserveOriginal = false, generateMockVerification = dataSource === 'form' } = options;
 
   // Get field mapping for this event type and data source
@@ -216,6 +237,44 @@ export function normalizeEventData(
 }
 
 /**
+ * Resolve the two-letter sub-type code from whichever per-family key the payload carries.
+ *
+ * The consumer API names this key differently per event family (`chemical_type`,
+ * `production_type`, `soil_management_type`, …); form-preview payloads and legacy rows
+ * just use `type`. Mirrors the resolution order the field-registry bridge already uses in
+ * ConsumerEventCard so both paths agree on what the sub-type is.
+ */
+export function extractSubtypeCode(rawData: any): string | undefined {
+  if (!rawData) return undefined;
+
+  const candidates = [
+    rawData.subtype,
+    rawData.weather_type,
+    rawData.production_type,
+    rawData.chemical_type,
+    rawData.soil_management_type,
+    rawData.pest_management_type,
+    rawData.business_event_type,
+    rawData.operation_type, // equipment family
+    rawData.type
+  ];
+
+  // Every sub-type code in the system is exactly two upper-case letters (FE, HA, CL, …).
+  // `type` in particular is NOT always a code — post-normalization it holds the family
+  // name ('chemical'), and a general event holds an activity slug ('maintenance').
+  // Test each candidate rather than taking the first truthy one, so an unrecognised value
+  // in an earlier slot falls through to a valid code in a later one instead of yielding
+  // undefined.
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string') continue;
+    const trimmed = candidate.trim();
+    if (/^[A-Z]{2}$/.test(trimmed)) return trimmed;
+  }
+
+  return undefined;
+}
+
+/**
  * Create base event data common to all event types
  */
 function createBaseEvent(
@@ -227,7 +286,13 @@ function createBaseEvent(
 ): StandardizedEventBase {
   const baseEvent: StandardizedEventBase = {
     id: rawData.id || 'preview-event',
+    // NOTE: `type` becomes the event FAMILY name here, overwriting whatever sub-type code
+    // the backend sent. Chapter routing and the registry bridge depend on that, so it
+    // stays — but it means `event.type === 'FE'` can never be true downstream. `subtype`
+    // below preserves the code so sub-type branches (aggregate totals, summary badges)
+    // actually fire.
     type: EVENT_TYPE_MAP[eventType as keyof typeof EVENT_TYPE_MAP] || 'general',
+    subtype: extractSubtypeCode(rawData),
     title: generateTitle(eventType, rawData), // 🚨 CRITICAL FIX: Add title generation
     // Only show farmer's actual notes — no generated fallback text
     // "Farmer's Field Notes" should only appear when the farmer wrote something
@@ -263,13 +328,23 @@ function createBaseEvent(
     }
   });
 
-  // Ensure Farmer's Field Notes shows on consumer cards when notes are stored
-  // in the description field (common for test events and legacy data).
-  // The form edit path maps description → observation textarea, so the preview
-  // always has observation populated. We match that behavior for the backend path.
-  if (!(baseEvent as any).observation?.trim() && baseEvent.description?.trim()) {
-    (baseEvent as any).observation = baseEvent.description;
-  }
+  // REMOVED 2026-08-01: `observation = description` fallback.
+  //
+  // It was added so "Farmer's Field Notes" would appear for events whose notes sat in
+  // `description`. But ConsumerEventCard renders `observation` in QUOTATION MARKS, italic,
+  // attributed to the farmer — and its own comment says the opposite of what this did:
+  //
+  //     description contains system-generated text (template names, etc.) and must NOT be
+  //     shown as "Farmer's Field Notes" — that would be dishonest to consumers.
+  //
+  // The two were written to opposite intentions and this one won. With 328+ AI templates
+  // generating descriptions, the effect on a public page is machine copy in quotes presented
+  // as a grower's own words. Found on the live walnut fixture, whose `observation` is null
+  // while the card displayed its CFR-citing description as a quote.
+  //
+  // Nothing is lost: the event FORM has its own "Observations & Notes" field bound to
+  // `observation`, so anything a farmer actually typed still renders. Preview/consumer parity
+  // improves — both surfaces now show notes when, and only when, notes exist.
 
   // Handle photo/album data
   baseEvent.album = normalizePhotoData(rawData);
@@ -902,6 +977,18 @@ function normalizeProductionEventData(
     if (rawData.cleaning_protocol_reference && String(rawData.cleaning_protocol_reference).trim()) {
       (productionData as any).cleaning_protocol_reference = rawData.cleaning_protocol_reference;
     }
+    // §E-5 — custom operator + the cleaning event covering this operation (7 CFR 205.272).
+    // This normalizer is an allow-list: a field omitted here never reaches any card, however
+    // correct the model, serializer and registry entries are.
+    if (rawData.operator_is_custom !== undefined) {
+      (productionData as any).operator_is_custom = rawData.operator_is_custom;
+    }
+    if (
+      rawData.equipment_cleaning_event !== undefined &&
+      rawData.equipment_cleaning_event !== null
+    ) {
+      (productionData as any).equipment_cleaning_event = rawData.equipment_cleaning_event;
+    }
     // Post-Harvest Sanitizer detail (7 CFR 205.272 + § 205.605)
     if (rawData.sanitizer_name && String(rawData.sanitizer_name).trim()) {
       (productionData as any).sanitizer_name = rawData.sanitizer_name;
@@ -1253,6 +1340,13 @@ function normalizeChemicalEventData(
     'nitrogen_total_kg',
     'phosphorus_total_kg',
     'potassium_total_kg',
+    // §E-3 Micronutrients (FE) — 7 CFR 205.601(j)(6). Same allow-list rule as the soil lab
+    // fields: without these names the registry FieldConfigs resolve nothing on the card.
+    // micronutrient_rate/_unit are already stripped from the anonymous payload by the backend;
+    // they are listed so the producer preview and modal can still show them.
+    'micronutrient_type',
+    'micronutrient_rate',
+    'micronutrient_rate_unit',
     'application_timing',
     'application_details', // Sprint 6: Additional application notes for transparency
     'weather_conditions',
@@ -1624,15 +1718,27 @@ function normalizeEquipmentEventData(
 ): Partial<StandardizedEquipmentEvent> {
   const equipmentData: Partial<StandardizedEquipmentEvent> = {};
 
-  // Map equipment-specific fields
+  // Map equipment-specific fields.
+  //
+  // `fuel_unit`, `area_unit`, `equipment` (the machine name) and `block_id` were added
+  // 2026-07: the backend sends all four (PublicHistorySerializer emits `fuel_unit` with a
+  // default of "L" and `area_unit` with "ha"), but they were absent from this list, so
+  // mapFields dropped them. The visible symptom was unitless numbers on the consumer card —
+  // "Fuel Used: 10" with no litres or gallons, on a record an inspector or buyer may read.
+  // The units were only ever recovered by accident, in the string-parsing branch below that
+  // splits values like "10 L" apart.
   const equipmentFields = [
     'operation_type',
     'operation_name',
     'equipment_type',
+    'equipment',
     'fuel_consumed',
     'fuel_type',
+    'fuel_unit',
     'hours_operated',
     'area_worked',
+    'area_unit',
+    'block_id',
     'operation_efficiency',
     'operation_notes'
   ];
@@ -1878,6 +1984,10 @@ function normalizeSoilManagementEventData(
     // ENHANCED: IPCC 2006 lime dissolution fields (PA events)
     'amendment_amount',
     'amendment_unit',
+    // D5 — the STRUCTURED pair the registry binds to. Absent from this allow-list they were
+    // dropped before any card saw them, so a backend-populated amendment amount rendered blank.
+    'amendment_amount_numeric',
+    'amendment_amount_unit',
     'amendment_type',
     // NOP Compliance fields (7 CFR 205.203) — Amendment approval + Compost + Manure tracking
     'amendment_organic_approved',
@@ -1899,6 +2009,23 @@ function normalizeSoilManagementEventData(
     'tillage_depth',
     'tillage_depth_unit',
     'depth',
+    // §E-2 Lab analysis (LA + ST). This list is an ALLOW-LIST: a field absent here is dropped
+    // before the card ever sees it, so a registry FieldConfig alone is not enough to render
+    // anything. The lab_* names are the flattened `test_results` JSON the backend serializer
+    // exposes; the numeric results stay off the consumer surface by way of the registry
+    // surfaces, not by being withheld here (the producer modal needs them).
+    'sample_matrix',
+    'lab_name',
+    'lab_sample_id',
+    'lab_report_date',
+    'lab_nitrogen',
+    'lab_phosphorus',
+    'lab_potassium',
+    'lab_cec',
+    'lab_zinc_ppm',
+    'lab_boron_ppm',
+    'lab_manganese_ppm',
+    'lab_iron_ppm',
     // Universal context fields present across event types
     'variety',
     'block_id',
@@ -2025,6 +2152,9 @@ function normalizePestManagementEventData(
 
   // Map pest-specific fields
   const pestFields = [
+    // §E-4 — preventive cultural practice (7 CFR 205.206(a)). Allow-list: omit it and the
+    // consumer card renders nothing regardless of the registry FieldConfig.
+    'cultural_practice',
     'pest_management_type',
     'pest_management_name',
     'pest_species',
@@ -2197,21 +2327,19 @@ function normalizeBusinessEventData(
 
   mapFields(rawData, businessData, businessFields, fieldMapping);
 
-  // BusinessTab-SIMPLIFIED.jsx does not render a `type` input — it uses
-  // `business_type` (certification / compliance / verification / ...) to drive
-  // the activity selector and relies on the backend model default
-  // (BusinessEvent.type = CE) on save. Form-sourced preview data therefore
-  // never carries `business_event_type`, so ConsumerEventCard +
-  // RegistryFieldRendererBridge resolve `subtype = undefined`, which hides every
-  // field gated by `visibleForSubtypes: ['CE']` (certification_type,
-  // verified_certifier_name, certificate_number).
+  // BusinessTab-SIMPLIFIED.jsx does not render a `type` input — it uses `business_type`
+  // (certification / compliance / verification / ...) to drive the activity selector. Form-
+  // sourced preview data therefore carries no `business_event_type`, so ConsumerEventCard and
+  // the registry bridge would resolve `subtype = undefined` and hide every field gated by the
+  // business subtypes.
   //
-  // Mirror the saved-event behavior: every currently-saved business event ends
-  // up with type='CE' because the form omits the field. If the save path is
-  // later taught to assign CM/IN, update this mapping so the preview stays
-  // honest with what will actually land in the DB.
+  // D3: the tab now derives the real subtype on submit via resolveBusinessSubtype, so the
+  // preview uses the SAME function. It previously hardcoded 'CE', which made the preview claim
+  // a certification for an inspection — and matched the equally wrong value the save path
+  // produced. Both sides now read from one map, so the preview a farmer approves is the row
+  // that lands in the database.
   if (dataSource === 'form' && !businessData.business_event_type && rawData.business_type) {
-    (businessData as any).business_event_type = 'CE';
+    (businessData as any).business_event_type = resolveBusinessSubtype(rawData.business_type);
   }
 
   return businessData;

@@ -23,16 +23,21 @@ import enUS from '../lang/en-US.json';
  */
 
 // Pre-existing missing keys (debt to fix separately, then remove from here).
-const BASELINE = new Set<string>([
-  // Consumer PublicFarmProfile self-graded "Sustainability Score" / "Sustainable
-  // Establishment" labels — deliberately left untranslated. Adding a translation
-  // would render a self-created sustainability label on a CONSUMER surface, which
-  // EU ECGT 2024/825 + FTC 16 CFR 260.6 prohibit (see .claude/rules/compliance.md
-  // and transparency-first.md). These need a compliance review of that section,
-  // not a translation. The other 10 baseline keys were filled 2026-06-27.
-  'app.sustainabilityScore',
-  'app.sustainableEstablishment'
-]);
+//
+// EMPTY as of 2026-07. The last two entries were `app.sustainabilityScore` and
+// `app.sustainableEstablishment` on PublicFarmProfile. The note here said they were left
+// untranslated on purpose because translating them would render a self-created
+// sustainability label on a consumer surface (EU ECGT 2024/825 / FTC 16 CFR 260.6), and
+// that the section needed a compliance review rather than a translation.
+//
+// That review happened: `/farm/:farmId` is a public route, and the section was rendering a
+// "Sustainability Score" heading over <CarbonScore>, which draws a 0-100 dial plus a letter
+// grade (A+/A/B/C/D/F) and a verdict word. The whole block — plus an "Eco Score" stat tile
+// and a "sustainable establishment" toast — was removed, and the guard in
+// src/views/Scan/__tests__/noScoreOnConsumer.test.ts now bans the component and the label
+// wording outright so it cannot come back. Leaving the strings untranslated was never a
+// fix; it just made the claim monolingual.
+const BASELINE = new Set<string>([]);
 
 const SRC_DIR = join(process.cwd(), 'src');
 const FORMAT_MESSAGE = /formatMessage\(\s*\{([\s\S]*?)\}/g;

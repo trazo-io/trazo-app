@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Box,
   Flex,
@@ -54,12 +55,13 @@ const StandardImageGallery = ({
   borderRadius = 'xl',
   showEmptyState = true,
   emptyStateIcon = FaImage,
-  emptyStateText = 'No photos available',
-  emptyStateSubtext = 'Photos will appear here when uploaded',
+  emptyStateText,
+  emptyStateSubtext,
   maxDisplayImages = 3,
   aspectRatio = '16/9',
   clickable = true
 }: StandardImageGalleryProps) => {
+  const intl = useIntl();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -134,8 +136,17 @@ const StandardImageGallery = ({
         variant="large"
         height={height}
         borderRadius={borderRadius}
-        primaryText={emptyStateText}
-        secondaryText={emptyStateSubtext}
+        primaryText={
+          emptyStateText ??
+          intl.formatMessage({ id: 'gallery.empty', defaultMessage: 'No photos available' })
+        }
+        secondaryText={
+          emptyStateSubtext ??
+          intl.formatMessage({
+            id: 'gallery.emptySubtext',
+            defaultMessage: 'Photos will appear here when uploaded'
+          })
+        }
         icon={emptyStateIcon as any}
       />
     );
@@ -194,14 +205,30 @@ const StandardImageGallery = ({
             </Box>
           )}
         </Box>
-        <VStack align="start" spacing={1}>
-          <Text fontSize="sm" color="gray.600" fontWeight="medium">
-            1 photo available
-          </Text>
-          <Text fontSize="xs" color="gray.400">
-            Click to view full size
-          </Text>
-        </VStack>
+        {/* Gated on showImageCount (2026-08-01). Two problems in three lines: these strings
+            were hardcoded English on a bilingual product, and on the consumer event card they
+            restated the provenance caption rendered directly below the gallery ("1 photo,
+            checked for authenticity"). Consumer callers already pass showImageCount={false},
+            which is exactly what this label is. */}
+        {showImageCount && (
+          <VStack align="start" spacing={1}>
+            <Text fontSize="sm" color="gray.600" fontWeight="medium">
+              {intl.formatMessage(
+                {
+                  id: 'gallery.photoCount',
+                  defaultMessage: '{count, plural, one {# photo} other {# photos}}'
+                },
+                { count: 1 }
+              )}
+            </Text>
+            <Text fontSize="xs" color="gray.400">
+              {intl.formatMessage({
+                id: 'gallery.viewFullSize',
+                defaultMessage: 'View full size'
+              })}
+            </Text>
+          </VStack>
+        )}
       </HStack>
     );
   };
@@ -224,7 +251,13 @@ const StandardImageGallery = ({
                 borderRadius="full"
                 fontSize="sm"
               >
-                {processedImages.length} {processedImages.length === 1 ? 'photo' : 'photos'}
+                {intl.formatMessage(
+                  {
+                    id: 'gallery.photoCount',
+                    defaultMessage: '{count, plural, one {# photo} other {# photos}}'
+                  },
+                  { count: processedImages.length }
+                )}
               </Badge>
             )}
           </HStack>
@@ -284,7 +317,13 @@ const StandardImageGallery = ({
                       +{remainingCount}
                     </Text>
                     <Text color="whiteAlpha.900" fontSize="sm" fontWeight="medium">
-                      more {remainingCount === 1 ? 'photo' : 'photos'}
+                      {intl.formatMessage(
+                        {
+                          id: 'gallery.morePhotos',
+                          defaultMessage: '{count, plural, one {more photo} other {more photos}}'
+                        },
+                        { count: remainingCount }
+                      )}
                     </Text>
                   </VStack>
                 </Box>
@@ -311,7 +350,10 @@ const StandardImageGallery = ({
                     <VStack spacing={1}>
                       <Icon as={FaExpand} boxSize={6} color="white" />
                       <Text color="white" fontSize="xs" fontWeight="medium">
-                        View Full Size
+                        {intl.formatMessage({
+                          id: 'gallery.viewFullSize',
+                          defaultMessage: 'View full size'
+                        })}
                       </Text>
                     </VStack>
                   </Box>
@@ -354,7 +396,10 @@ const StandardImageGallery = ({
           >
             <ModalCloseButton
               position="absolute"
-              top={{ base: "calc(env(safe-area-inset-top, 0px) + 48px)", md: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
+              top={{
+                base: 'calc(env(safe-area-inset-top, 0px) + 48px)',
+                md: 'calc(env(safe-area-inset-top, 0px) + 16px)'
+              }}
               right={4}
               zIndex={20}
               bg="blackAlpha.700"
@@ -414,7 +459,10 @@ const StandardImageGallery = ({
                       color="white"
                       size="lg"
                       borderRadius="full"
-                      onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goToPrevious();
+                      }}
                       _hover={{ bg: 'blackAlpha.900', transform: 'translateY(-50%) scale(1.1)' }}
                       _focus={{ boxShadow: 'none' }}
                       transition="all 0.2s"
@@ -433,7 +481,10 @@ const StandardImageGallery = ({
                       color="white"
                       size="lg"
                       borderRadius="full"
-                      onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goToNext();
+                      }}
                       _hover={{ bg: 'blackAlpha.900', transform: 'translateY(-50%) scale(1.1)' }}
                       _focus={{ boxShadow: 'none' }}
                       transition="all 0.2s"
@@ -474,7 +525,10 @@ const StandardImageGallery = ({
                     top={0}
                     bottom={0}
                     width="25%"
-                    onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goToPrevious();
+                    }}
                     cursor="pointer"
                     zIndex={10}
                     display="flex"
@@ -498,7 +552,10 @@ const StandardImageGallery = ({
                     top={0}
                     bottom={0}
                     width="25%"
-                    onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goToNext();
+                    }}
                     cursor="pointer"
                     zIndex={10}
                     display="flex"

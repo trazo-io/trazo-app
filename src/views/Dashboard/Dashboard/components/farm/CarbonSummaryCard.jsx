@@ -11,12 +11,15 @@ import {
   Button,
   useColorModeValue,
   CircularProgress,
-  Progress,
   HStack,
   VStack,
   Icon,
   SimpleGrid,
-  Divider
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon
 } from '@chakra-ui/react';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -26,14 +29,12 @@ import { MdEco } from 'react-icons/md';
 import { useGetCarbonFootprintSummaryQuery } from 'store/api/companyApi';
 import { useGetFarmComprehensiveDashboardQuery } from 'store/api/dashboardMetricsApi';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 
 const TransparencySummaryCard = ({ farmId }) => {
   const intl = useIntl();
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.700', 'white');
-  const navigate = useNavigate();
   const year = new Date().getFullYear();
 
   // Get company from Redux state
@@ -65,39 +66,28 @@ const TransparencySummaryCard = ({ farmId }) => {
     { refetchOnMountOrArgChange: true }
   );
 
-  // Use comprehensive data as primary source, carbon data as fallback
-  const data = comprehensiveData || carbonData;
+  // `data` (comprehensiveData || carbonData) was removed with the client-side transparency
+  // fallback formula that was its only consumer. Each remaining reader picks its source
+  // explicitly, so no caller can silently read a carbon payload where it expected a
+  // transparency one.
   const isLoading = isLoadingComprehensive || isLoadingCarbon;
   const isFetching = isFetchingComprehensive || isFetchingCarbon;
   const isError = isErrorComprehensive && isErrorCarbon;
 
-  // Skip transparency API call for establishment level
-  // This API is for production-level transparency, not establishment-level
-  // We'll use carbon data to estimate transparency at establishment level
-  const transparencyData = null; // Placeholder - API needs production ID, not establishment ID
-
-  // Calculate transparency metrics - PRIMARY FOCUS
-  const getTransparencyScore = () => {
-    // Use comprehensive dashboard data if available (nested structure)
-    const compData = comprehensiveData?.comprehensive_data;
-    if (compData?.transparency_percentage !== undefined) {
-
-      return compData.transparency_percentage;
-    }
-
-    // Fallback to carbon data calculation
-    const eventCount = data?.entries_count?.total || 0;
-    const photoCount = getPhotoCount();
-    const productionCount = getActiveProductionsCount();
-
-    // Dynamic transparency calculation based on actual establishment activity
-    const baseScore = Math.min(60, (eventCount / 10) * 60); // Events contribute up to 60%
-    const photoBonus = Math.min(20, (photoCount / 5) * 20); // Photos contribute up to 20%
-    const productionBonus = Math.min(20, (productionCount / 3) * 20); // Productions contribute up to 20%
-
-    const calculated = Math.min(100, Math.round(baseScore + photoBonus + productionBonus));
-    return calculated;
-  };
+  // NO TRANSPARENCY SCORE ON THIS CARD — removed 2026-08-04.
+  //
+  // This card used to render the score four times over (a "Transparency Score" stat, a
+  // re-worded "Transparency: Complete" stat, a progress bar, and a verdict headline), and
+  // SmartUsageCard above it rendered a fifth. One farm, one number, five renders on one screen.
+  //
+  // The score is Trazo's own completeness measure against a baseline Trazo authored
+  // (TransparencyCalculator.EXPECTED_EVENTS). It has no external deadline and no buyer asking
+  // for it, so it is a poor headline for a certified grower whose actual pressure is the
+  // annual inspection. Farm home now leads with what a certifier would query
+  // (CertifierReadinessCard) and states facts here. The score keeps its own page:
+  // /admin/dashboard/farm/:farmId/transparency.
+  //
+  // Do not reintroduce a score, tier badge, grade, or progress bar on this card.
 
   const getEventCount = () => {
     // Use comprehensive dashboard data if available (nested structure)
@@ -156,38 +146,11 @@ const TransparencySummaryCard = ({ farmId }) => {
     return carbonData?.active_productions_count || 0;
   };
 
-  const getVerificationStatus = () => {
-    // Check comprehensive dashboard verification data (nested structure)
-    let verificationData = comprehensiveData?.verification_breakdown;
-
-    // If not found at root, check in transparency_metrics
-    if (!verificationData && comprehensiveData?.transparency_metrics) {
-      verificationData = comprehensiveData.transparency_metrics.verification_breakdown;
-    }
-
-    // Also check comprehensive_data.verification_status as fallback
-    if (!verificationData && comprehensiveData?.comprehensive_data?.verification_status) {
-      verificationData = comprehensiveData.comprehensive_data.verification_status;
-    }
-
-    // Transparency journey progression:
-    // Blockchain = highest level (immutable, tamper-proof record)
-    // Complete documentation = strong transparency
-    // In progress = still building documentation
-    if (verificationData?.blockchain_verified > 0 || data?.blockchain_verified) {
-      return intl.formatMessage({ id: 'dashboard.verificationBlockchain' });
-    }
-
-    const score = getTransparencyScore();
-
-    if (score >= 80) {
-      return intl.formatMessage({ id: 'dashboard.verificationComplete' });
-    }
-    if (score >= 50) {
-      return intl.formatMessage({ id: 'dashboard.verificationAdvanced' });
-    }
-    return intl.formatMessage({ id: 'dashboard.verificationInProgress' });
-  };
+  // `getVerificationStatus()` was removed with the score (2026-08-04). It rendered a
+  // "Transparency: Complete / Advanced / In Progress" verdict derived from the same
+  // percentage shown two stats to its left — a second wording of one number, and a
+  // documentation-quality verdict Trazo assigns to itself. Blockchain state, the one genuinely
+  // distinct fact it carried, is a production-level attribute and is shown where it belongs.
 
   // Get carbon data (for environmental impact section)
   const getCarbonData = () => {
@@ -199,13 +162,23 @@ const TransparencySummaryCard = ({ farmId }) => {
     return carbonData?.net_carbon || 0;
   };
 
-  const getTransparencyMessage = (score) => {
-    if (score >= 95) return intl.formatMessage({ id: 'dashboard.transparencyComplete' });
-    if (score >= 85) return intl.formatMessage({ id: 'dashboard.excellentDocumentation' });
-    if (score >= 70) return intl.formatMessage({ id: 'dashboard.goodTransparency' });
-    if (score >= 50) return intl.formatMessage({ id: 'dashboard.basicTransparency' });
-    return intl.formatMessage({ id: 'dashboard.buildingTransparency' });
-  };
+  // Carbon per ACRE. The backend reports per_hectare; US growers work in acres, and the rest
+  // of the product already enters and displays area in acres. null when unavailable so the
+  // row is omitted rather than showing a fabricated 0.
+  const HECTARES_PER_ACRE = 0.404686;
+  const perHectareCarbon = comprehensiveData?.carbon_summary?.per_hectare;
+  const perAcreCarbon =
+    typeof perHectareCarbon === 'number' && perHectareCarbon > 0
+      ? perHectareCarbon * HECTARES_PER_ACRE
+      : null;
+
+  // `getTransparencyMessage()` was removed with the score (2026-08-04). It titled the card with
+  // a verdict on the farm — "Full Transparency!" at >= 95, "Excellent Documentation" at >= 85.
+  // Beyond duplicating the number below it, the claim was not true: 98% means "met the event
+  // baseline Trazo expects for this crop", not that a farm is fully transparent. A grower who
+  // screenshots that headline into a buyer deck has published a sustainability grade Trazo
+  // invented — the exact artefact EU ECGT 2024/825 and FTC 16 CFR 260.6 target. The card now
+  // states what was recorded and lets the reader judge.
 
   if (isLoading || isFetching) {
     return (
@@ -250,8 +223,14 @@ const TransparencySummaryCard = ({ farmId }) => {
         <Flex direction="column">
           <HStack spacing={2} align="center">
             <Icon as={FaClipboardList} color="green.500" boxSize={{ base: 5, md: 6 }} />
-            <Text fontSize={{ base: 'xl', md: 'xl' }} color="gray.700" fontWeight="700">
-              {getTransparencyMessage(getTransparencyScore())}
+            {/* `textColor` is colour-mode aware; the literal "gray.700" that used to be here went
+                near-invisible on the dark theme. It also left `textColor` defined-but-unused once
+                the score header above it was removed. */}
+            <Text fontSize={{ base: 'xl', md: 'xl' }} color={textColor} fontWeight="700">
+              {intl.formatMessage({
+                id: 'dashboard.farmRecordsTitle',
+                defaultMessage: 'Your farm records'
+              })}
             </Text>
           </HStack>
           <Text fontSize={{ base: 'sm', md: 'sm' }} color="gray.500" fontWeight="400" ml={7}>
@@ -260,28 +239,8 @@ const TransparencySummaryCard = ({ farmId }) => {
         </Flex>
       </CardHeader>
       <CardBody px={0}>
-        {/* PRIMARY: Transparency Metrics - Mobile Optimized */}
-        <SimpleGrid columns={{ base: 1, md: 3, lg: 5 }} spacing={{ base: 3, md: 3 }}>
-          <Box
-            textAlign="center"
-            p={{ base: 4, md: 2 }}
-            bg={{ base: 'green.50', md: 'transparent' }}
-            borderRadius={{ base: 'lg', md: 'none' }}
-            border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'green.200', md: 'transparent' }}
-          >
-            <Stat>
-              <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                {intl.formatMessage({ id: 'dashboard.transparencyScore' })}
-              </StatLabel>
-              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="green.500" fontWeight="bold">
-                {getTransparencyScore()}%
-              </StatNumber>
-              <StatHelpText fontSize="xs" mt={1}>
-{intl.formatMessage({ id: 'dashboard.completeDocumentation' })}
-              </StatHelpText>
-            </Stat>
-          </Box>
+        {/* Facts only — counts of what was actually recorded. No score, no verdict, no grade. */}
+        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: 3, md: 3 }}>
           <Box
             textAlign="center"
             p={{ base: 4, md: 2 }}
@@ -342,86 +301,66 @@ const TransparencySummaryCard = ({ farmId }) => {
               </StatHelpText>
             </Stat>
           </Box>
-          <Box
-            textAlign="center"
-            p={{ base: 4, md: 2 }}
-            bg={{ base: 'purple.50', md: 'transparent' }}
-            borderRadius={{ base: 'lg', md: 'none' }}
-            border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'purple.200', md: 'transparent' }}
-          >
-            <Stat>
-              <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
-                {intl.formatMessage({ id: 'dashboard.transparency' })}
-              </StatLabel>
-              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="green.500" fontWeight="bold">
-                {getVerificationStatus()}
-              </StatNumber>
-              <StatHelpText fontSize="xs" mt={1}>
-                <Icon as={FaClipboardList} /> {intl.formatMessage({ id: 'dashboard.documentationLevel' })}
-              </StatHelpText>
-            </Stat>
-          </Box>
         </SimpleGrid>
 
-        {/* Divider */}
-        <Divider my={{ base: 3, md: 4 }} />
+        {/* SECONDARY: Environmental Impact — collapsed by design.
+            `transparency-first.md` mandates progressive disclosure: documentation facts first,
+            carbon on demand. The Transparency Dashboard already follows this (its own
+            "Environmental Impact Details" accordion); farm home was the last surface still
+            printing carbon inline, above the fold, unasked. Carbon here is a background
+            calculation for B2B reporting, not something the grower acts on from this card. */}
+        <Accordion allowToggle mt={{ base: 3, md: 4 }}>
+          <AccordionItem border="none">
+            <AccordionButton px={0} _hover={{ bg: 'transparent' }}>
+              <Heading size="sm" color="gray.600" fontWeight="600" flex="1" textAlign="left">
+                {intl.formatMessage({ id: 'dashboard.environmentalImpactLabel' })}
+              </Heading>
+              <AccordionIcon color="gray.500" />
+            </AccordionButton>
+            <AccordionPanel px={0} pb={2}>
+              {/* Rounded to whole kg: two decimals on a five-figure number ("45832.72 kg CO₂e")
+                  implied a precision the estimate does not have. Neutral colour, not orange —
+                  orange read as a failing grade on a number that has no target and that the
+                  farmer cannot act on from this card. The per-acre line gives it a denominator,
+                  in acres because that is the unit US growers work in.
 
-        {/* PRIMARY: Transparency Progress Section */}
-        <Box mb={{ base: 2, md: 2 }}>
-          <Heading
-            size="sm"
-            mb={{ base: 2, md: 3 }}
-            color="green.700"
-            fontWeight="600"
-          >
-            {intl.formatMessage({ id: 'dashboard.transparencyProgress' })}
-          </Heading>
-          <Progress
-            value={getTransparencyScore()}
-            colorScheme={getTransparencyScore() >= 80 ? 'green' : 'blue'}
-            size={{ base: 'md', md: 'lg' }}
-            borderRadius="md"
-            mb={{ base: 2, md: 3 }}
-            height={{ base: '12px', md: '16px' }}
-            bg="gray.100"
-          />
-          <Text
-            textAlign="center"
-            fontSize={{ base: 'xs', md: 'sm' }}
-            color="gray.600"
-            fontWeight="500"
-          >
-            {intl.formatMessage({ id: 'dashboard.documentationCompletePercent' }, { score: getTransparencyScore() })}
-            {getTransparencyScore() >= 95 && (
-              <Text as="span" color="green.500" fontWeight="bold">
-                {intl.formatMessage({ id: 'dashboard.certifiedTransparency' })}
-              </Text>
-            )}
-          </Text>
-        </Box>
-
-        {/* SECONDARY: Environmental Impact Section */}
-        <Divider my={{ base: 3, md: 4 }} />
-
-        <Box mb={{ base: 2, md: 2 }}>
-          <Heading
-            size="sm"
-            mb={{ base: 2, md: 3 }}
-            color="gray.600"
-            fontWeight="600"
-          >
-            {intl.formatMessage({ id: 'dashboard.environmentalImpactLabel' })}
-          </Heading>
-          <VStack spacing={2}>
-            <HStack justify="space-between" w="full" fontSize="sm">
-              <Text color="gray.600">{intl.formatMessage({ id: 'dashboard.netFootprint' })}</Text>
-              <Text fontWeight="medium" color={getCarbonData() >= 0 ? 'orange.600' : 'green.600'}>
-                {intl.formatMessage({ id: 'dashboard.kgCO2e' }, { value: getCarbonData().toFixed(2) })}
-              </Text>
-            </HStack>
-          </VStack>
-        </Box>
+                  Labelled "Direct operational emissions", not "Net Footprint" (changed
+                  2026-08-04). Per `compliance.md`, "footprint" implies a full life-cycle
+                  assessment; Trazo measures Scope 1 only — the fuel, fertiliser, and energy the
+                  farmer actually controls — and excludes supply chain, packaging, distribution
+                  and end-of-life. "Net" additionally implied offsets had been netted out. */}
+              <VStack spacing={2} align="stretch">
+                <HStack justify="space-between" w="full" fontSize="sm">
+                  <Text color="gray.600">
+                    {intl.formatMessage({ id: 'dashboard.netFootprint' })}
+                  </Text>
+                  <Text fontWeight="medium" color="gray.700">
+                    {intl.formatMessage(
+                      { id: 'dashboard.kgCO2e' },
+                      { value: Math.round(getCarbonData()).toLocaleString() }
+                    )}
+                  </Text>
+                </HStack>
+                {perAcreCarbon !== null && (
+                  <HStack justify="space-between" w="full" fontSize="xs">
+                    <Text color="gray.500">
+                      {intl.formatMessage({
+                        id: 'dashboard.perAcre',
+                        defaultMessage: 'Per acre'
+                      })}
+                    </Text>
+                    <Text color="gray.500">
+                      {intl.formatMessage(
+                        { id: 'dashboard.kgCO2e' },
+                        { value: Math.round(perAcreCarbon).toLocaleString() }
+                      )}
+                    </Text>
+                  </HStack>
+                )}
+              </VStack>
+            </AccordionPanel>
+          </AccordionItem>
+        </Accordion>
 
       </CardBody>
     </Card>

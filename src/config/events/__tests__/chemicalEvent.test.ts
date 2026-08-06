@@ -99,17 +99,23 @@ const herbicideEvent = {
 describe('Chemical: FE-only fields (Pattern 1: simple subtype gate)', () => {
   it('shows NPK fields on modal for FE', () => {
     const result = getFieldsForSurface('chemical', 'FE', 'modal', fertilizerEvent);
-    const fieldNames = [...result.hero, ...result.immediate, ...result.secondary, ...result.details].map(
-      (f) => f.name
-    );
+    const fieldNames = [
+      ...result.hero,
+      ...result.immediate,
+      ...result.secondary,
+      ...result.details
+    ].map((f) => f.name);
     expect(fieldNames).toContain('nitrogen_percentage');
   });
 
   it('hides NPK fields on modal for PE', () => {
     const result = getFieldsForSurface('chemical', 'PE', 'modal', pesticideEvent);
-    const fieldNames = [...result.hero, ...result.immediate, ...result.secondary, ...result.details].map(
-      (f) => f.name
-    );
+    const fieldNames = [
+      ...result.hero,
+      ...result.immediate,
+      ...result.secondary,
+      ...result.details
+    ].map((f) => f.name);
     expect(fieldNames).not.toContain('nitrogen_percentage');
     expect(fieldNames).not.toContain('phosphorus_percentage');
     expect(fieldNames).not.toContain('potassium_percentage');
@@ -117,7 +123,9 @@ describe('Chemical: FE-only fields (Pattern 1: simple subtype gate)', () => {
 
   it('formats NPK as N-P-K ratio via groupWith', () => {
     const result = getFieldsForSurface('chemical', 'FE', 'modal', fertilizerEvent);
-    const npkField = [...result.hero, ...result.immediate].find((f) => f.name === 'nitrogen_percentage');
+    const npkField = [...result.hero, ...result.immediate].find(
+      (f) => f.name === 'nitrogen_percentage'
+    );
     expect(npkField).toBeDefined();
     expect(npkField?.formattedValue).toBe('10-10-10');
   });
@@ -246,14 +254,33 @@ describe('Chemical: Surface-specific field sets', () => {
     expect(result.hero[0].name).toBe('commercial_name');
   });
 
-  it('consumer_card places carbon fields in details tier', () => {
+  it('keeps per-event carbon fields off the consumer card entirely', () => {
+    // Was: "consumer_card places carbon fields in details tier". The `details` tier was
+    // REMOVED from consumer_card on 2026-07-31 — it rendered inside a second, collapsed
+    // accordion two taps deep, which is where operator data hid rather than where carbon
+    // got disclosed. Litres of diesel per spray is not a shopper's question; the page has a
+    // dedicated Environmental Impact section for the production's carbon story.
+    // The FTC constraint is unchanged and now absolute: never in hero, and now nowhere else
+    // on this surface either.
     const result = getFieldsForSurface('chemical', 'FE', 'consumer_card', fertilizerEvent);
-    const detailNames = result.details.map((f) => f.name);
-    expect(detailNames).toContain('application_fuel_type');
-    expect(detailNames).toContain('application_fuel_consumed');
-    // Verify NOT in hero
-    const heroNames = result.hero.map((f) => f.name);
-    expect(heroNames).not.toContain('application_fuel_type');
+    const allNames = [
+      ...result.hero,
+      ...result.immediate,
+      ...result.secondary,
+      ...result.details
+    ].map((f) => f.name);
+    expect(allNames).not.toContain('application_fuel_type');
+    expect(allNames).not.toContain('application_fuel_consumed');
+    expect(result.details).toHaveLength(0);
+  });
+
+  it('still resolves carbon fields for the producer modal', () => {
+    const result = getFieldsForSurface('chemical', 'FE', 'modal', fertilizerEvent);
+    const names = [...result.hero, ...result.immediate, ...result.secondary, ...result.details].map(
+      (f) => f.name
+    );
+    expect(names).toContain('application_fuel_type');
+    expect(names).toContain('application_fuel_consumed');
   });
 
   it('modal shows all tiers', () => {
@@ -304,18 +331,119 @@ describe('Chemical: Photo tiers', () => {
 describe('Chemical: Verification badges on consumer surfaces', () => {
   it('organic_approved has verification badge on consumer_card', () => {
     const result = getFieldsForSurface('chemical', 'FE', 'consumer_card', fertilizerEvent);
-    const organic = [...result.hero, ...result.immediate, ...result.secondary, ...result.details].find(
-      (f) => f.name === 'organic_approved'
-    );
+    const organic = [
+      ...result.hero,
+      ...result.immediate,
+      ...result.secondary,
+      ...result.details
+    ].find((f) => f.name === 'organic_approved');
     expect(organic).toBeDefined();
     expect(organic?.requiresVerificationBadge).toBe(true);
   });
 
-  it('REI/PHI have verification badges on consumer_card', () => {
-    const result = getFieldsForSurface('chemical', 'PE', 'consumer_card', pesticideEvent);
+  it('REI/PHI still resolve for the producer after leaving the consumer card', () => {
+    // The resolved `requiresVerificationBadge` is ANDed with the surface rule
+    // (resolver.ts:229 — `field.requiresVerificationBadge && surfaceRule.requiresVerificationBadges`),
+    // and `modal.requiresVerificationBadges` is false, so the flag is correctly false here.
+    // Badges are a CONSUMER-surface concern; what matters on the producer surface is that
+    // the fields are still captured and displayed at all.
+    const result = getFieldsForSurface('chemical', 'PE', 'modal', pesticideEvent);
     const all = [...result.hero, ...result.immediate, ...result.secondary, ...result.details];
-    const phiField = all.find((f) => f.name === 'phi_days');
-    expect(phiField).toBeDefined();
-    expect(phiField?.requiresVerificationBadge).toBe(true);
+    expect(all.find((f) => f.name === 'phi_days')).toBeDefined();
+    expect(all.find((f) => f.name === 'rei_hours')).toBeDefined();
+  });
+});
+
+// ============================================================================
+// Worker-protection / enforcement data must not reach a consumer surface
+// ============================================================================
+
+describe('Chemical: worker-safety and enforcement fields are certifier-only', () => {
+  /**
+   * INTENT REVERSAL, 2026-07-31 (Oscar's call during the consumer editorial review).
+   *
+   * This suite previously asserted that `phi_days` RESOLVED on `consumer_card`. That was a
+   * deliberate choice at the time, so it is worth recording why it changed rather than
+   * silently deleting the assertion.
+   *
+   * REI/PHI protect the workers who re-enter a treated field; applicator name/certification
+   * and the EPA registration number identify a person and a regulated product to an
+   * inspector; buffer distance is drift management; "restricted use" is a purchasing
+   * licence class. None of them describe what is on the food a shopper is holding, and
+   * several actively imply a consumer hazard they do not describe.
+   *
+   * The server already stripped all of them from the anonymous payload, so the registry
+   * declarations never reached a real shopper. What they DID reach:
+   *   - EventPreviewModal, which renders this card from unstripped form data under
+   *     "How consumers will see this event" — showing growers fields consumers never saw;
+   *   - the owner's own view of their QR page, which skips the strip.
+   * Both lied to the farmer about their own product page, which is the opposite of the
+   * point. See newCertifierFields.render.test.ts for the same pattern.
+   *
+   * Every field remains on modal + form and in the certifier NOP PDF.
+   */
+  const CERTIFIER_ONLY = [
+    'rei_hours',
+    'phi_days',
+    'applicator_name',
+    'applicator_certification',
+    'epa_registration_number',
+    'buffer_zone_meters',
+    'restricted_use_pesticide'
+  ];
+
+  for (const subtype of ['PE', 'FU', 'HE'] as const) {
+    it(`does not surface worker-safety/enforcement fields on consumer_card (${subtype})`, () => {
+      const result = getFieldsForSurface('chemical', subtype, 'consumer_card', {
+        ...pesticideEvent,
+        restricted_use_pesticide: true,
+        applicator_name: 'Ana Torres',
+        applicator_certification: 'CA QAL-4287',
+        epa_registration_number: '62719-621',
+        rei_hours: 48,
+        phi_days: 14,
+        buffer_zone_meters: 30
+      });
+      const names = [
+        ...result.hero,
+        ...result.immediate,
+        ...result.secondary,
+        ...result.details
+      ].map((f) => f.name);
+
+      const leaked = CERTIFIER_ONLY.filter((n) => names.includes(n));
+      expect(
+        leaked,
+        `worker-safety/enforcement fields reached the consumer card: ${leaked.join(', ')}`
+      ).toEqual([]);
+    });
+  }
+
+  it('still resolves them on the producer modal surface', () => {
+    const result = getFieldsForSurface('chemical', 'PE', 'modal', {
+      ...pesticideEvent,
+      restricted_use_pesticide: true,
+      applicator_name: 'Ana Torres',
+      rei_hours: 48,
+      phi_days: 14
+    });
+    const names = [...result.hero, ...result.immediate, ...result.secondary, ...result.details].map(
+      (f) => f.name
+    );
+    for (const field of ['rei_hours', 'phi_days', 'applicator_name']) {
+      expect(names, `${field} must remain available to the producer`).toContain(field);
+    }
+  });
+
+  it('keeps the consumer-relevant chemical facts', () => {
+    // Guard against over-removal: what was applied, to what, and whether it is
+    // organic-approved is exactly what a shopper came for.
+    const result = getFieldsForSurface('chemical', 'PE', 'consumer_card', pesticideEvent);
+    const names = [...result.hero, ...result.immediate, ...result.secondary, ...result.details].map(
+      (f) => f.name
+    );
+    expect(names).toContain('commercial_name');
+    expect(names).toContain('organic_approved');
+    expect(names).toContain('target_pest_disease');
   });
 });

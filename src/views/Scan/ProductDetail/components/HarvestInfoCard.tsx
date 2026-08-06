@@ -142,7 +142,8 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               {(() => {
                 const formatted = formatHarvestQuantity(
                   harvestDetails.amount as number,
-                  harvestDetails.unit
+                  harvestDetails.unit,
+                  intl.locale
                 );
                 return (
                   <>

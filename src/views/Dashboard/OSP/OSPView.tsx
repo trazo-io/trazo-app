@@ -66,12 +66,23 @@ import {
   useSubmitOSPMutation,
   useUpdateOSPMutation
 } from 'store/api/ospApi';
-import { OSP, OSP_SECTION_KEYS, OSPSectionKey, OSPSections, OSPStatus, emptySections } from 'types/osp';
+import {
+  OSP,
+  OSP_SECTION_KEYS,
+  OSPSectionKey,
+  OSPSections,
+  OSPStatus,
+  emptySections
+} from 'types/osp';
 import OSPActivateModal from './OSPActivateModal';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
 import OSPChangeNotificationsPanel from './OSPChangeNotificationsPanel';
-import StateOrganicRegistrationCard from './StateOrganicRegistrationCard';
+import StateOrganicRegistrationCard, {
+  STATE_ORGANIC_PROGRAMS
+} from './StateOrganicRegistrationCard';
 import OSPAnnualUpdateCard from './OSPAnnualUpdateCard';
+import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
+import { todayLocalISODate } from 'utils/dateOnly';
 
 interface RootState {
   company: {
@@ -97,7 +108,32 @@ const STATUS_COLOR: Record<OSPStatus, string> = {
  */
 const OSP_MATERIAL_FLOOR = 400;
 
-type SectionTier = 'empty' | 'brief' | 'complete';
+/**
+ * Mirror of `looks_like_padding` in `trazo-back/history/services/
+ * audit_export_service.py`. MUST stay in sync with it — when it drifted, this
+ * page showed "Complete — 602 chars" and 83% for an OSP whose audit dossier
+ * simultaneously read "0% substantively filled / DO NOT SUBMIT". Two surfaces
+ * measuring the same thing differently is worse than either bar alone.
+ *
+ * Only applied above MIN_TOKENS, so a genuinely terse answer is never judged
+ * by lexical diversity. Does NOT catch a single run of keyboard noise.
+ */
+const PADDING_MIN_TOKENS = 12;
+const PADDING_MAX_DOMINANT_SHARE = 0.35;
+const PADDING_MIN_UNIQUE_RATIO = 0.35;
+
+function looksLikePadding(text: string): boolean {
+  if (!text) return false;
+  const tokens = text.toLowerCase().split(/\W+/).filter(Boolean);
+  if (tokens.length < PADDING_MIN_TOKENS) return false;
+  const counts = new Map<string, number>();
+  tokens.forEach((t) => counts.set(t, (counts.get(t) || 0) + 1));
+  const uniqueRatio = counts.size / tokens.length;
+  const dominantShare = Math.max(...counts.values()) / tokens.length;
+  return uniqueRatio < PADDING_MIN_UNIQUE_RATIO || dominantShare > PADDING_MAX_DOMINANT_SHARE;
+}
+
+type SectionTier = 'empty' | 'brief' | 'padded' | 'complete';
 
 interface SectionStatus {
   tier: SectionTier;
@@ -107,7 +143,7 @@ interface SectionStatus {
 }
 
 /**
- * Three-tier status for a § 205.201(a) narrative, matching the backend's
+ * Four-tier status for a § 205.201(a) narrative, matching the backend's
  * submit gate and the PDF snapshot's "Status" column. Character-count is
  * the one visible signal the farmer gets before they try to submit —
  * returning it in the badge closes the Day-1 UX loop where a farmer
@@ -122,6 +158,9 @@ function sectionStatus(narrative: string): SectionStatus {
   if (charCount < OSP_MATERIAL_FLOOR) {
     return { tier: 'brief', label: 'brief', badgeColor: 'orange', charCount };
   }
+  if (looksLikePadding(trimmed)) {
+    return { tier: 'padded', label: 'padded', badgeColor: 'red', charCount };
+  }
   return { tier: 'complete', label: 'complete', badgeColor: 'green', charCount };
 }
 
@@ -130,15 +169,18 @@ function sectionStatus(narrative: string): SectionStatus {
 const SECTION_PROMPTS: Array<{ key: OSPSectionKey; prompt: string }> = [
   {
     key: 'practices_procedures',
-    prompt: 'Describe your production practices — crop rotation, tillage, cover crops, pest management, irrigation, buffer zones.'
+    prompt:
+      'Describe your production practices — crop rotation, tillage, cover crops, pest management, irrigation, buffer zones.'
   },
   {
     key: 'inputs_list',
-    prompt: 'List every input you apply — fertilizers, pesticides, soil amendments. Add each one to the Approved inputs panel so drift detection has a target to match against.'
+    prompt:
+      'List every input you apply — fertilizers, pesticides, soil amendments. Add each one to the Approved inputs panel so drift detection has a target to match against.'
   },
   {
     key: 'monitoring_plan',
-    prompt: 'How do you verify your practices and prevent fraud? SOE requires supplier verification and fraud-prevention procedures.'
+    prompt:
+      'How do you verify your practices and prevent fraud? SOE requires supplier verification and fraud-prevention procedures.'
   },
   {
     key: 'recordkeeping_description',
@@ -146,11 +188,13 @@ const SECTION_PROMPTS: Array<{ key: OSPSectionKey; prompt: string }> = [
   },
   {
     key: 'commingling_barriers',
-    prompt: 'If you run organic + non-organic or share equipment with conventional neighbors, how do you prevent mixing and contamination?'
+    prompt:
+      'If you run organic + non-organic or share equipment with conventional neighbors, how do you prevent mixing and contamination?'
   },
   {
     key: 'additional_certifier_info',
-    prompt: 'Anything specific to your certifier (CCOF, Oregon Tilth, QAI) that does not fit the sections above — land-use history, ICS details for co-ops, pollinator hedgerow plans, etc.'
+    prompt:
+      'Anything specific to your certifier (CCOF, Oregon Tilth, QAI) that does not fit the sections above — land-use history, ICS details for co-ops, pollinator hedgerow plans, etc.'
   }
 ];
 
@@ -185,10 +229,38 @@ const OSPView: React.FC = () => {
   const { farmId } = useParams<{ farmId: string }>();
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
   const companyId = currentCompany?.id;
+  const farmState = useFarmState(farmId);
+  const farm = useFarm(farmId);
+
+  /**
+   * The farm's own parcel record, in acres, shown while the farmer writes.
+   *
+   * A § 205.201(a) narrative is prose describing an operation, and nothing can
+   * verify prose against records — that is what the inspection is for. But the
+   * farmer was writing it with no sight of their own acreage, from memory. When
+   * I wrote this demo farm's OSP I said "60 acres" against parcels totalling
+   * 148; a certifier reading the dossier would have asked about the other 88.
+   *
+   * So: put the record next to the writing rather than parse the writing
+   * afterward. `Parcel.area` is stored in hectares (see its help_text); the
+   * producer-facing unit is acres everywhere else, so convert here.
+   */
+  const parcelSummary = useMemo(() => {
+    const parcels: any[] = Array.isArray(farm?.parcels) ? farm.parcels : [];
+    const withArea = parcels
+      .map((p) => ({ name: p?.name as string, acres: Number(p?.area || 0) * 2.47105 }))
+      .filter((p) => p.name && p.acres > 0);
+    if (withArea.length === 0) return null;
+    return {
+      parcels: withArea,
+      totalAcres: withArea.reduce((sum, p) => sum + p.acres, 0)
+    };
+  }, [farm]);
 
   const subtextColor = useColorModeValue('gray.600', 'gray.400');
   const emptyBg = useColorModeValue('green.50', 'green.900');
   const submissionBg = useColorModeValue('blue.50', 'blue.900');
+  const lockedBg = useColorModeValue('gray.50', 'gray.700');
 
   // --- Fetching -----------------------------------------------------------
   // The list endpoint returns OSPSummary[]; we load the newest one's detail
@@ -218,10 +290,7 @@ const OSPView: React.FC = () => {
   const focusedOspId = selectedOspId ?? newestSummaryId;
 
   // Fetch the detail for the focused OSP. The hook handles caching.
-  const {
-    data: fetchedOsp,
-    isFetching: detailLoading
-  } = useGetOSPQuery(
+  const { data: fetchedOsp, isFetching: detailLoading } = useGetOSPQuery(
     { companyId: companyId || '', farmId: farmId || '', ospId: focusedOspId ?? 0 },
     { skip: !companyId || !farmId || focusedOspId == null }
   );
@@ -258,9 +327,7 @@ const OSPView: React.FC = () => {
     }
     draftRestoredFor.current = fetchedOsp.id;
     try {
-      const raw = window.localStorage.getItem(
-        ospDraftStorageKey(companyId, farmId, fetchedOsp.id)
-      );
+      const raw = window.localStorage.getItem(ospDraftStorageKey(companyId, farmId, fetchedOsp.id));
       if (!raw) return;
       const payload: OSPDraftPayload = JSON.parse(raw);
       // Only restore if the stored draft is materially different from the
@@ -268,9 +335,7 @@ const OSPView: React.FC = () => {
       const serverJson = JSON.stringify(fetchedOsp.sections || {});
       const draftJson = JSON.stringify(payload.sections || {});
       if (serverJson === draftJson) {
-        window.localStorage.removeItem(
-          ospDraftStorageKey(companyId, farmId, fetchedOsp.id)
-        );
+        window.localStorage.removeItem(ospDraftStorageKey(companyId, farmId, fetchedOsp.id));
         return;
       }
       setEditableOsp({ ...fetchedOsp, sections: payload.sections });
@@ -290,9 +355,7 @@ const OSPView: React.FC = () => {
       // editing the server version rather than being blocked by a parse
       // error on something that should be additive only.
       try {
-        window.localStorage.removeItem(
-          ospDraftStorageKey(companyId, farmId, fetchedOsp.id)
-        );
+        window.localStorage.removeItem(ospDraftStorageKey(companyId, farmId, fetchedOsp.id));
       } catch {
         /* storage quota or disabled — ignore */
       }
@@ -305,13 +368,7 @@ const OSPView: React.FC = () => {
   // not destroy the farmer's work. When the save API succeeds, handleSave
   // clears this key so we don't keep showing a stale-restore toast.
   useEffect(() => {
-    if (
-      !dirty ||
-      !editableOsp ||
-      !companyId ||
-      !farmId ||
-      typeof window === 'undefined'
-    ) {
+    if (!dirty || !editableOsp || !companyId || !farmId || typeof window === 'undefined') {
       return;
     }
     const handle = window.setTimeout(() => {
@@ -402,9 +459,7 @@ const OSPView: React.FC = () => {
       // we don't re-offer a restore on the next page load.
       if (typeof window !== 'undefined') {
         try {
-          window.localStorage.removeItem(
-            ospDraftStorageKey(companyId, farmId, editableOsp.id)
-          );
+          window.localStorage.removeItem(ospDraftStorageKey(companyId, farmId, editableOsp.id));
         } catch {
           /* ignore */
         }
@@ -571,13 +626,7 @@ const OSPView: React.FC = () => {
             </Text>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mt={1}>
               {SECTION_PROMPTS.map(({ key, prompt }) => (
-                <Box
-                  key={key}
-                  p={3}
-                  borderWidth="1px"
-                  borderColor="gray.200"
-                  borderRadius="md"
-                >
+                <Box key={key} p={3} borderWidth="1px" borderColor="gray.200" borderRadius="md">
                   <HStack mb={1} spacing={2}>
                     <Text fontWeight="semibold" fontSize="xs">
                       {intl.formatMessage({ id: `osp.section.${key}` })}
@@ -618,8 +667,7 @@ const OSPView: React.FC = () => {
   // of Hooks — useMemo must run on every render). Use it here to compute
   // the gated completion count.
   const registrySyncHasWarning = !!editableOsp.registry_sync_diff?.has_warning;
-  const unreferencedCount =
-    editableOsp.registry_sync_diff?.entries_not_in_narrative?.length || 0;
+  const unreferencedCount = editableOsp.registry_sync_diff?.entries_not_in_narrative?.length || 0;
 
   const completeSectionCount = OSP_SECTION_KEYS.reduce((acc, key) => {
     const isMaterialComplete = perSectionStatus[key].tier === 'complete';
@@ -631,9 +679,9 @@ const OSPView: React.FC = () => {
     }
     return acc + (isMaterialComplete ? 1 : 0);
   }, 0);
-  const completionPct = Math.round(
-    (completeSectionCount / OSP_SECTION_KEYS.length) * 100
-  );
+  const completionPct = Math.round((completeSectionCount / OSP_SECTION_KEYS.length) * 100);
+  // Mirrors `OrganicSystemPlanViewSet.perform_update` — only a draft accepts edits.
+  const isEditable = editableOsp.status === 'draft';
   const statusColor = STATUS_COLOR[editableOsp.status] || 'gray';
   const submissionPdfUrl = resolveBackendFileUrl(editableOsp.submission_pdf);
 
@@ -644,7 +692,12 @@ const OSPView: React.FC = () => {
         ...prev.sections,
         [key]: {
           narrative,
-          last_updated: new Date().toISOString().slice(0, 10)
+          // `toISOString().slice(0, 10)` is the UTC date, not the farmer's. A
+          // grower east of UTC editing before 09:00, or one west of UTC editing
+          // after 17:00, stamped the section with a date they were not working
+          // on — and § 205.201(a) section dates are what an inspector reads to
+          // establish when the plan was last reviewed.
+          last_updated: todayLocalISODate()
         }
       };
       return { ...prev, sections: nextSections };
@@ -657,19 +710,6 @@ const OSPView: React.FC = () => {
       title={intl.formatMessage({ id: 'osp.title' })}
       description={intl.formatMessage({ id: 'osp.subtitle' })}
     >
-      {/* CDFA State Organic Program producer registration (CA Food & Ag Code §§ 46000-46029) */}
-      {companyId && farmId && (
-        <StateOrganicRegistrationCard companyId={companyId} farmId={farmId} />
-      )}
-      {/* OSP annual continuation / update (7 CFR 205.406) */}
-      {companyId && farmId && (
-        <OSPAnnualUpdateCard
-          companyId={companyId}
-          farmId={farmId}
-          ospId={focusedOspId ?? fetchedOsp?.id ?? null}
-          currentYear={new Date().getFullYear()}
-        />
-      )}
       {/* Header card — status + progress + actions */}
       <StandardCard mb={4}>
         <VStack align="stretch" spacing={3}>
@@ -684,15 +724,25 @@ const OSPView: React.FC = () => {
               </Badge>
             </HStack>
             <HStack spacing={2} flexWrap="wrap">
-              <StandardButton
-                variant="primary"
-                size="sm"
-                onClick={handleSave}
-                isLoading={saving}
-                isDisabled={!dirty}
-              >
-                {intl.formatMessage({ id: 'osp.action.save' })}
-              </StandardButton>
+              {/* Save only exists while the OSP is a draft. The backend's
+                  perform_update rejects any edit once the OSP leaves 'draft'
+                  (it is an attested record — 21 CFR Part 11 trustworthy-records
+                  principle), but this button stayed live and the six narratives
+                  stayed editable, so a farmer could retype a whole section on a
+                  submitted plan and collect a 400 on Save. The approved-inputs
+                  panel already locked itself with an explanation; the narratives
+                  did not. */}
+              {isEditable && (
+                <StandardButton
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSave}
+                  isLoading={saving}
+                  isDisabled={!dirty}
+                >
+                  {intl.formatMessage({ id: 'osp.action.save' })}
+                </StandardButton>
+              )}
               {editableOsp.status === 'draft' && (
                 <StandardButton
                   variant="secondary"
@@ -704,11 +754,7 @@ const OSPView: React.FC = () => {
                 </StandardButton>
               )}
               {editableOsp.status === 'submitted' && (
-                <StandardButton
-                  variant="secondary"
-                  size="sm"
-                  onClick={openActivateModal}
-                >
+                <StandardButton variant="secondary" size="sm" onClick={openActivateModal}>
                   {intl.formatMessage({ id: 'osp.action.activate' })}
                 </StandardButton>
               )}
@@ -805,11 +851,7 @@ const OSPView: React.FC = () => {
                 rel="noopener noreferrer"
                 _hover={{ textDecoration: 'none' }}
               >
-                <StandardButton
-                  variant="secondary"
-                  size="sm"
-                  leftIcon={<FaDownload />}
-                >
+                <StandardButton variant="secondary" size="sm" leftIcon={<FaDownload />}>
                   {intl.formatMessage({ id: 'osp.submissionPdf.download' })}
                 </StandardButton>
               </ChakraLink>
@@ -825,6 +867,42 @@ const OSPView: React.FC = () => {
           "registry gap" indicator when approved inputs aren't referenced
           in the narrative — matches the PDF's demotion logic. */}
       <StandardCard>
+        {!isEditable && (
+          <Alert status="info" borderRadius="md" mb={3} fontSize="sm" alignItems="flex-start">
+            <AlertIcon />
+            <Text>
+              {intl.formatMessage({ id: 'osp.sectionsLocked' })}
+            </Text>
+          </Alert>
+        )}
+        {parcelSummary && (
+          <Box
+            mb={3}
+            p={2}
+            borderWidth="1px"
+            borderRadius="md"
+            borderColor="gray.200"
+            bg={lockedBg}
+          >
+            <Text fontSize="xs" color={subtextColor}>
+              <b>
+                {intl.formatMessage(
+                  { id: 'osp.parcelReference' },
+                  {
+                    count: parcelSummary.parcels.length,
+                    acres: parcelSummary.totalAcres.toFixed(1)
+                  }
+                )}
+              </b>{' '}
+              {parcelSummary.parcels
+                .map((p) => `${p.name} ${p.acres.toFixed(1)}`)
+                .join(' · ')}
+            </Text>
+            <Text fontSize="xs" color={subtextColor} mt={1}>
+              {intl.formatMessage({ id: 'osp.parcelReferenceHelp' })}
+            </Text>
+          </Box>
+        )}
         <Accordion allowMultiple defaultIndex={[0]}>
           {OSP_SECTION_KEYS.map((key) => {
             const section = editableOsp.sections[key] || { narrative: '', last_updated: null };
@@ -909,6 +987,8 @@ const OSPView: React.FC = () => {
                     placeholder={intl.formatMessage({ id: 'osp.section.narrative' })}
                     rows={8}
                     resize="vertical"
+                    isReadOnly={!isEditable}
+                    bg={isEditable ? undefined : lockedBg}
                   />
                   {status.tier === 'brief' && (
                     <Text fontSize="xs" color="orange.600" mt={2}>
@@ -916,6 +996,11 @@ const OSPView: React.FC = () => {
                         { id: 'osp.section.briefHint' },
                         { chars: status.charCount, floor: OSP_MATERIAL_FLOOR }
                       )}
+                    </Text>
+                  )}
+                  {status.tier === 'padded' && (
+                    <Text fontSize="xs" color="red.600" mt={2}>
+                      {intl.formatMessage({ id: 'osp.section.paddedHint' })}
                     </Text>
                   )}
                 </AccordionPanel>
@@ -927,20 +1012,41 @@ const OSPView: React.FC = () => {
 
       {/* Approved inputs panel — drives the drift detector (Sprint 5.1). */}
       {companyId && farmId && (
-        <OSPApprovedInputsPanel
-          companyId={companyId}
-          farmId={farmId}
-          osp={editableOsp}
-        />
+        <OSPApprovedInputsPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
       )}
 
       {/* Notification of Changes panel — NOP 2615 §3.4 / 7 CFR 205.400(f). */}
       {companyId && farmId && (
-        <OSPChangeNotificationsPanel
+        <OSPChangeNotificationsPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
+      )}
+
+      {/* --- Secondary filings, BELOW the plan itself -------------------------
+          These two cards used to render ABOVE the § 205.201(a) narratives. On a
+          375px phone that put ~2,200px of accessory forms between the page title
+          and the actual Organic System Plan — and a grower opening this page in
+          October is here to write the plan, not to update a state registration.
+
+          Both are also downstream of it in reality: the annual continuation
+          (§ 205.406) summarises changes to a plan you must already have, and the
+          CDFA registration is a California administrative record that is not part
+          of § 205.201 at all. Order the page the way the work happens. */}
+
+      {/* OSP annual continuation / update (7 CFR 205.406) */}
+      {companyId && farmId && (
+        <OSPAnnualUpdateCard
           companyId={companyId}
           farmId={farmId}
-          osp={editableOsp}
+          ospId={focusedOspId ?? fetchedOsp?.id ?? null}
+          currentYear={new Date().getFullYear()}
         />
+      )}
+
+      {/* CDFA State Organic Program producer registration (CA Food & Ag Code §§ 46000-46029).
+          California is the only state with a USDA-approved State Organic Program, so this
+          card is CA-only — asking a New York grower for a CDFA registration number, and
+          then storing their answer as state="CA", is an instant credibility loss. */}
+      {companyId && farmId && farmState && STATE_ORGANIC_PROGRAMS[farmState] && (
+        <StateOrganicRegistrationCard companyId={companyId} farmId={farmId} state={farmState} />
       )}
 
       {/* Version history — prior versions. */}

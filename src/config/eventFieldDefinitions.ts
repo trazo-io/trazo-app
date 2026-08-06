@@ -1092,9 +1092,14 @@ export function validateConcentration(
     return { isValid: false, error: 'Concentration is required' };
   }
 
-  // NPK format for fertilizers: "10-10-10"
+  // NPK format for fertilizers: "10-10-10", and decimals like "2.5-1-1".
+  // The integer-only pattern this used to carry disagreed with validateNPKFormat in
+  // components/Forms/ConcentrationValidation.tsx, which the manual chemical form uses and which
+  // has always allowed decimals. So the SAME product — a 2.5-1-1 fish emulsion, or the value
+  // ChemicalTab now auto-derives from the structured NPK trio — was accepted by the manual form
+  // and rejected by Quick-Add, the path a farmer uses in the field.
   if (chemicalType === 'FE' || chemicalType === 'fertilizer') {
-    const npkPattern = /^\d{1,3}-\d{1,3}-\d{1,3}$/;
+    const npkPattern = /^\d{1,3}(?:\.\d+)?-\d{1,3}(?:\.\d+)?-\d{1,3}(?:\.\d+)?$/;
     if (!npkPattern.test(value)) {
       return { isValid: false, error: 'Use NPK format (e.g., 10-10-10)' };
     }

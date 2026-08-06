@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maskPerformerName } from '../consumerDisplay';
+import { maskPerformerName, withUSUnits, formatHarvestQuantity } from '../consumerDisplay';
 
 describe('maskPerformerName', () => {
   it('masks a full name to initials', () => {
@@ -19,5 +19,127 @@ describe('maskPerformerName', () => {
 
   it('falls back to plain label for empty-ish input', () => {
     expect(maskPerformerName('   ')).toBe('Farm team');
+  });
+});
+
+/**
+ * withUSUnits multiplies numbers that are shown to shoppers and wholesale buyers as
+ * measurement claims (treated area, distances). It shipped with ZERO test coverage, and in
+ * 2026-07 it faithfully converted a mislabelled backend value into a 2.47x overstatement of
+ * pesticide-treated area on the public page ("210 acres (85 ha)" for an 85-acre application).
+ */
+describe('withUSUnits', () => {
+  it('converts hectares to acres, keeping the original for accuracy', () => {
+    expect(withUSUnits('20 ha')).toBe('49 acres (20 ha)');
+  });
+
+  it('converts cm, km and m', () => {
+    expect(withUSUnits('30 cm')).toBe('12 in (30 cm)');
+    expect(withUSUnits('85 km')).toBe('53 mi (85 km)');
+    expect(withUSUnits('10 m')).toBe('33 ft (10 m)');
+  });
+
+  it('leaves values that are already in US units untouched', () => {
+    // The acres path is why the 2026-07 bug was one-directional: a correctly-labelled
+    // "85 acres" passes straight through, so only mislabelled metric inflated.
+    expect(withUSUnits('85 acres')).toBe('85 acres');
+    expect(withUSUnits('1,200 lbs')).toBe('1,200 lbs');
+  });
+
+  it('is idempotent — re-running must not double-convert', () => {
+    // Previously "49 acres (20 ha)" re-matched the trailing "20 ha" and produced
+    // "49 acres (49 acres (20 ha))".
+    const once = withUSUnits('20 ha');
+    expect(withUSUnits(once)).toBe(once);
+    expect(withUSUnits('12 in (30 cm)')).toBe('12 in (30 cm)');
+  });
+
+  it('does not convert when the unit token is part of a larger expression', () => {
+    // "m" followed by a superscript still satisfies a word boundary, so "5 m³" used to
+    // become "16 ft (5 m³)".
+    expect(withUSUnits('5 m³')).toBe('5 m³');
+    expect(withUSUnits('10 m/s')).toBe('10 m/s');
+    expect(withUSUnits('200 m2')).toBe('200 m2');
+  });
+
+  it('leaves metric alone for non-English audiences', () => {
+    // A Spanish-locale shopper has a reference frame for hectares and none for acres.
+    expect(withUSUnits('20 ha', 'es-419')).toBe('20 ha');
+    expect(withUSUnits('30 cm', 'es')).toBe('30 cm');
+    expect(withUSUnits('20 ha', 'en-US')).toBe('49 acres (20 ha)');
+    // No locale supplied => legacy behaviour preserved for older call sites.
+    expect(withUSUnits('20 ha')).toBe('49 acres (20 ha)');
+  });
+
+  it('passes through non-numeric and empty input safely', () => {
+    expect(withUSUnits('')).toBe('');
+    expect(withUSUnits(null)).toBe('');
+    expect(withUSUnits(undefined)).toBe('');
+    expect(withUSUnits('Ground Spray')).toBe('Ground Spray');
+  });
+
+  it('handles comma decimal separators', () => {
+    expect(withUSUnits('1,5 ha')).toBe('3.7 acres (1,5 ha)');
+  });
+});
+
+describe('withUSUnits — mass and volume (added 2026-08-01)', () => {
+  /**
+   * The live avocado page showed "Yield: 45,000 kg" to a US shopper. Area already converted
+   * ("37 acres (15 ha)") so the omission read as an oversight, not a choice.
+   */
+  it('rolls a large kg harvest to tons, because nobody pictures 45,000 kg', () => {
+    expect(withUSUnits('45,000 kg', 'en-US')).toBe('50 tons (45,000 kg)');
+  });
+
+  it('uses pounds below the ton threshold', () => {
+    expect(withUSUnits('200 kg', 'en-US')).toBe('441 lb (200 kg)');
+  });
+
+  it('converts tonnes and litres', () => {
+    expect(withUSUnits('12 tonnes', 'en-US')).toBe('13 tons (12 tonnes)');
+    expect(withUSUnits('13.25 L', 'en-US')).toBe('3.5 gal (13.25 L)');
+  });
+
+  /**
+   * THE bug this parser exists for: `parseFloat('45,000')` is 45. Before grouped-number
+   * support, a 45-tonne harvest would have converted as 45 kg — a 1000x understatement
+   * rendered with total confidence.
+   */
+  it('reads grouped thousands, not a decimal comma', () => {
+    expect(withUSUnits('45,000 kg', 'en-US')).toContain('50 tons');
+    // …while a genuine decimal comma still parses as a fraction.
+    expect(withUSUnits('2,5 ha', 'en-US')).toBe('6.2 acres (2,5 ha)');
+  });
+
+  it('leaves metric readers alone', () => {
+    expect(withUSUnits('45,000 kg', 'es-419')).toBe('45,000 kg');
+  });
+
+  it('does not double-convert its own output', () => {
+    const once = withUSUnits('45,000 kg', 'en-US');
+    expect(withUSUnits(once, 'en-US')).toBe(once);
+  });
+});
+
+describe('formatHarvestQuantity — locale (added 2026-08-01)', () => {
+  /**
+   * The batch header read "135 TONNES" on the same page where the harvest event card said
+   * "50 tons (45,000 kg)". Two units for one crop, a screen apart.
+   */
+  it('gives English readers short tons for a big harvest', () => {
+    expect(formatHarvestQuantity(135000, 'kg', 'en-US')).toEqual({ value: '149', unit: 'tons' });
+  });
+
+  it('keeps metric for Spanish readers', () => {
+    expect(formatHarvestQuantity(135000, 'kg', 'es-419')).toEqual({ value: '135', unit: 'tonnes' });
+  });
+
+  it('uses pounds for a small English harvest', () => {
+    expect(formatHarvestQuantity(500, 'kg', 'en-US')).toEqual({ value: '1,102', unit: 'lb' });
+  });
+
+  it('converts a tonne-denominated amount too', () => {
+    expect(formatHarvestQuantity(135, 'tonnes', 'en-US')).toEqual({ value: '149', unit: 'tons' });
   });
 });

@@ -25,8 +25,9 @@ export {
 // Empty State Components
 export { EmptyImageState } from './EmptyImageState';
 
-// Transparency Components
-export { TransparencyIndicator } from './TransparencyIndicator';
+// TransparencyIndicator removed 2026-08-02 — unreachable, and it mapped a percentage onto a
+// green/yellow/gray verdict. See ProfileSections/index.ts for why dead ladders get deleted
+// rather than left in place.
 
 // Media Components
 export { S3Image, type S3ImageProps } from '../Media/S3Image';

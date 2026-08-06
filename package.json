@@ -90,6 +90,8 @@
     "test:coverage": "vitest run --coverage --watch=false",
     "lint": "eslint .",
     "lint:fix": "eslint --fix",
+    "typecheck": "node scripts/typecheck-gate.mjs",
+    "typecheck:update": "node scripts/typecheck-gate.mjs --update",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,md,json}\" --config ./.prettierrc",
     "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css,md,json}\" --config ./.prettierrc",
     "knip": "knip",

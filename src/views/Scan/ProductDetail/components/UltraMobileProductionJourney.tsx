@@ -90,7 +90,9 @@ import { PhotoDocumentationTooltip } from 'components/Education/EducationalToolt
 
 // Buyer documentation CTA — proof view only, lazy so the story view (the
 // default consumer landing) doesn't pay for the form chunk.
-const BuyerDocRequestCTA = React.lazy(() => import('components/BuyerDocRequest/BuyerDocRequestCTA'));
+const BuyerDocRequestCTA = React.lazy(
+  () => import('components/BuyerDocRequest/BuyerDocRequestCTA')
+);
 
 // The consumer route (/production/:productionId) carries the production
 // PUBLIC UUID; the farmer dashboard route reuses the same param name for the
@@ -172,6 +174,19 @@ interface UltraMobileProductionJourneyProps {
     block_number?: number;
     network?: string;
   };
+  /**
+   * Backend-computed organic input summary (`standard_view.organic_summary`).
+   * REQUIRED for the "All inputs organic-approved" chip: it is the same
+   * classification that drives the certification narrative in ProductDetail,
+   * derived from `claim_resolver.ORGANIC_APPROVED_VALUES` server-side. The chip
+   * must never re-derive this locally — see the note on `allInputsOrganic` below.
+   */
+  organicSummary?: {
+    has_input_data?: boolean;
+    total_chemical_inputs?: number;
+    organic_approved_inputs?: number;
+    all_inputs_organic?: boolean;
+  } | null;
 }
 
 export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourneyProps> = ({
@@ -179,7 +194,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   productionId,
   // transparencyScore prop retained in the interface (parent still passes it)
   // but no longer rendered — the numeric score left the stats strip 2026-06.
-  productionBlockchain
+  productionBlockchain,
+  organicSummary
 }) => {
   const intl = useIntl();
 
@@ -189,7 +205,6 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const bgColor = useColorModeValue('white', 'gray.800');
-  const proofShellBorderColor = useColorModeValue('gray.100', 'gray.700');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -217,12 +232,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     setSelectedEvent(null);
   };
 
-  // Helper function to get efficiency color
-  const getEfficiencyColor = (score: number) => {
-    if (score >= 80) return 'green';
-    if (score >= 60) return 'yellow';
-    return 'orange';
-  };
+  // A getEfficiencyColor(score) helper used to live here, mapping a score to green/yellow/
+  // orange. It was never called, and a colour scale keyed to a self-reported score grades the
+  // farm just as surely as a number does — deleted 2026-07 rather than left for someone to
+  // wire up. See src/views/Scan/__tests__/noScoreOnConsumer.test.ts.
 
   // Helper function to get verification confidence icon
   const getConfidenceIcon = (confidence?: 'high' | 'medium' | 'low') => {
@@ -593,13 +606,9 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   // retained only for potential producer-side reuse; the kind==='group'
   // render branch below is intentionally unreachable on this page.
   void groupEvents;
-  const groupedDisplayEvents = (selectedCategory !== 'all'
-    ? filteredEvents
-    : showAll
-    ? filteredEvents
-    : displayedEvents
+  const groupedDisplayEvents = (
+    selectedCategory !== 'all' ? filteredEvents : showAll ? filteredEvents : displayedEvents
   ).map((event) => ({ kind: 'single' as const, event }));
-
 
   const categories = [
     'all',
@@ -611,9 +620,9 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   ];
 
   // ── Phase 2: consumer story chapters ─────────────────────────────────────
-  // Default view groups the season into five shopper-meaningful chapters and
+  // Default view groups the season into six shopper-meaningful chapters and
   // shows only highlight events; the complete chronological log (including
-  // equipment/business/general events) lives in the proof view (?view=proof).
+  // equipment/general events) lives in the proof view (?view=proof).
   // No market-leading consumer experience shows a raw 20-event audit log.
   const [searchParams, setSearchParams] = useSearchParams();
   const isProofView = searchParams.get('view') === 'proof';
@@ -675,7 +684,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     }
   }, [isProofView, catParam]);
 
-  type ChapterKey = 'soil' | 'care' | 'inputs' | 'pest' | 'harvest';
+  type ChapterKey = 'trust' | 'soil' | 'care' | 'inputs' | 'pest' | 'harvest';
   const CHAPTER_DEFS: Array<{
     key: ChapterKey;
     icon: any;
@@ -683,6 +692,23 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     subtitle: string;
     colorScheme: string;
   }> = [
+    {
+      // Business events are third-party certifications, inspections and audits — the
+      // single strongest trust signal on the page and the only claim on it that is NOT
+      // farmer-self-reported. They used to return null from getChapterKey, so they were
+      // reachable only via "View the full record". First chapter, deliberately.
+      key: 'trust',
+      icon: FaCertificate,
+      title: intl.formatMessage({
+        id: 'consumer.journey.chapterTrustTitle',
+        defaultMessage: 'Certifications & Audits'
+      }),
+      subtitle: intl.formatMessage({
+        id: 'consumer.journey.chapterTrustSubtitle',
+        defaultMessage: 'Independent checks on how this farm operates'
+      }),
+      colorScheme: 'purple'
+    },
     {
       key: 'soil',
       icon: FaLayerGroup,
@@ -763,7 +789,19 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   // FP is always a highlight (frost events are infrequent and notable); MO is
   // first-occurrence only on the backend (mowing recurs) so it is not listed here.
   const HIGHLIGHT_ALWAYS = new Set([
-    'PL', 'HA', 'FE', 'PE', 'FU', 'HE', 'CC', 'OM', 'PA', 'TM', 'BR', 'PI', 'FP'
+    'PL',
+    'HA',
+    'FE',
+    'PE',
+    'FU',
+    'HE',
+    'CC',
+    'OM',
+    'PA',
+    'TM',
+    'BR',
+    'PI',
+    'FP'
   ]);
 
   const getChapterKey = (event: TimelineEvent): ChapterKey | null => {
@@ -771,7 +809,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     if (t === 'chemical') return 'inputs';
     if (t === 'soil_management') return 'soil';
     if (t === 'pest_management') return 'pest';
-    if (t === 'equipment' || t === 'business' || t === 'general') return null;
+    if (t === 'business') return 'trust';
+    // Equipment maintenance and general admin activity are operational records, not part
+    // of the crop's story — proof view only.
+    if (t === 'equipment' || t === 'general') return null;
     // Weather events are season context — they live with crop care.
     if (t === 'weather' || WEATHER_CODES.has(t)) return 'care';
     // The normalizer rewrites production events to type='production' and
@@ -794,17 +835,42 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   };
 
   const countEventPhotos = (event: TimelineEvent): number =>
-    event.album?.images?.length ??
-    ((event as any).albums?.[0]?.images?.length || 0);
+    event.album?.images?.length ?? ((event as any).albums?.[0]?.images?.length || 0);
+
+  /**
+   * Client-side fallback for `verification_level` when the payload omits it.
+   *
+   * Deliberately tops out at 'photo_documented'. The server's higher tier
+   * ('photo_verified') means GPS + timestamp corroboration, which a photo COUNT cannot
+   * establish — inferring it here would manufacture a verification claim the data does not
+   * support (compliance.md: "documented", never "verified", unless something third-party
+   * says so). Under-claiming is the safe direction.
+   */
+  const derivePhotoTierLevel = (event: TimelineEvent): 'self_reported' | 'photo_documented' =>
+    countEventPhotos(event) > 0 ? 'photo_documented' : 'self_reported';
 
   const chapterData = CHAPTER_DEFS.map((def) => {
     const chapterEvents = sortedEvents.filter((e) => getChapterKey(e) === def.key);
     const highlights = chapterEvents.filter(isHighlightEvent);
     const photoCount = chapterEvents.reduce((acc, e) => acc + countEventPhotos(e), 0);
+    // FTC 16 CFR 260.6 / EU ECGT: this chip is an affirmative organic claim, so it
+    // may ONLY come from the backend classification (`claim_resolver`), never from a
+    // local scan of `organic_approved`.
+    //
+    // The previous implementation was `chapterEvents.every((e) => Boolean(e.organic_approved))`.
+    // `organic_approved` is an ENUM STRING whose values include 'not_organic', and
+    // `Boolean('not_organic') === true` — so a chapter of entirely conventional inputs
+    // satisfied `every(...)` and the page rendered "All Inputs Organic-Approved" on a lot
+    // where zero inputs were approved, directly contradicting the "{n} of {m} crop inputs
+    // are OMRI/National List–approved" line the same page renders from organic_summary.
+    //
+    // Absence of a summary is NOT evidence of a negative — when it is missing we simply
+    // render no chip rather than claiming or denying anything.
     const allInputsOrganic =
       def.key === 'inputs' &&
       chapterEvents.length > 0 &&
-      chapterEvents.every((e) => Boolean((e as any).organic_approved));
+      organicSummary?.has_input_data === true &&
+      organicSummary?.all_inputs_organic === true;
     return { ...def, events: chapterEvents, highlights, photoCount, allInputsOrganic };
   }).filter((ch) => ch.events.length > 0);
 
@@ -815,7 +881,9 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   // 20-event production). Every chapter shows at least one card; the
   // remaining budget goes to the chapters shoppers weigh most.
   const CARD_BUDGET = 9;
-  const CHAPTER_PRIORITY: ChapterKey[] = ['inputs', 'harvest', 'soil', 'pest', 'care'];
+  // 'trust' leads: a third-party certification is the only non-self-reported claim on the
+  // page, so extra budget goes there before anything the farmer asserts about themselves.
+  const CHAPTER_PRIORITY: ChapterKey[] = ['trust', 'inputs', 'harvest', 'soil', 'pest', 'care'];
   const visibleCountByChapter: Record<string, number> = {};
   let budgetLeft = CARD_BUDGET;
   chapterData.forEach((ch) => {
@@ -851,6 +919,47 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ? proofChapter.events.map((event) => ({ kind: 'single' as const, event }))
     : groupedDisplayEvents;
 
+  /**
+   * Which cards in a rendered list would repeat an explanation another card already gave.
+   *
+   * WHY (2026-08-01 editorial review): consumer copy is written per SUBTYPE, so a farm that
+   * logs three habitat events — raptor perches, nest blocks, an insectary strip — got three
+   * cards reading the same two sentences verbatim, one under the other. Correct, and it looks
+   * auto-generated, which is the one thing this page cannot afford.
+   *
+   * The explanation is a general truth about the practice, so it belongs on the first card
+   * that needs it; the repeats keep their own title, date, facts, photos and the farmer's own
+   * words — the parts that actually differ. Computed PER RENDERED LIST, not globally, so a
+   * card is never stripped because of a sibling the reader cannot see (chapter filters and the
+   * "+N more" deep link both render subsets).
+   */
+  const computeRepeatedCopy = (list: TimelineEvent[]) => {
+    const seenImpact = new Set<string>();
+    const seenShort = new Set<string>();
+    const repeatImpact = new Set<string>();
+    const repeatShort = new Set<string>();
+    for (const ev of list) {
+      let info: { shortDescription?: string; consumerImpact?: string };
+      try {
+        info = getConsumerEventDescription(ev.description ?? '', ev as never);
+      } catch {
+        continue;
+      }
+      const id = String(ev.id);
+      const impact = (info.consumerImpact ?? '').trim();
+      if (impact) {
+        if (seenImpact.has(impact)) repeatImpact.add(id);
+        else seenImpact.add(impact);
+      }
+      const short = (info.shortDescription ?? '').trim();
+      if (short) {
+        if (seenShort.has(short)) repeatShort.add(id);
+        else seenShort.add(short);
+      }
+    }
+    return { repeatImpact, repeatShort };
+  };
+
   // Build enhanced event with blockchain verification, photo data, and transparency fields
   const buildEnhancedEvent = (event: TimelineEvent) => {
     const normalizedEventId = event.id.toString().includes('_')
@@ -877,7 +986,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         event.extra_data?.carbon_calculation?.usda_compliance || event.usda_factors_used || false,
       carbon_impact: event.extra_data?.carbon_calculation?.co2e || undefined,
       certified: event.certified || false,
-      verification_level: event.verification_level || 'self_reported',
+      // Fall back to the photo count rather than a flat 'self_reported'. The server
+      // computes this level (PublicHistorySerializer._get_verification_level_for_event);
+      // when it is absent — older payloads, preview data — defaulting to 'self_reported'
+      // understated events that plainly have photo evidence attached.
+      verification_level: event.verification_level || derivePhotoTierLevel(event),
       photo_verified_count: event.photo_verified_count || 0,
       area_covered: event.area_covered,
       yield_quantity: event.yield_quantity,
@@ -964,44 +1077,39 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     }
   };
 
-  // Story view must NOT render the custom <Card>: the production CSS
-  // fallback (trazo-dashboard-styles.css, protected file) forces
-  // `.trazo-card { background: white; padding: 14/22px } !important` on every
-  // Card, so emotion props can never make it transparent. A plain Box carries
-  // no .trazo-card class — the chapters become true top-level cards, two
-  // nesting levels (chapter > event), no father card.
-  const JourneyShell: React.ElementType = isProofView ? Card : Box;
-  const proofShellProps = isProofView
-    ? {
-        bg: bgColor,
-        shadow: 'sm',
-        borderRadius: 'xl',
-        overflow: 'hidden',
-        border: '1px solid',
-        borderColor: proofShellBorderColor
-      }
-    : {};
+  // NEITHER view renders the custom <Card>.
+  //
+  // Story view could not: the production CSS fallback (trazo-dashboard-styles.css, a protected
+  // file) forces `.trazo-card { background: white; padding: 14/22px } !important` on every
+  // Card, so emotion props can never make it transparent. A plain Box carries no .trazo-card
+  // class, which is what makes the chapters true top-level cards.
+  //
+  // Proof view kept the Card until 2026-08-02, and it was the one visible structural difference
+  // left between the two: the same events sat inside a father card, giving three nesting levels
+  // (journey > event > detail boxes) where story view had two. The wrapper carried no meaning —
+  // the page already delimits the section, and "Back to story view" plus the filter chips
+  // already signal the drilled-down state — while costing horizontal room that matters at
+  // 375px. Same content, same container, in both views.
+  const JourneyShell: React.ElementType = Box;
+  const proofShellProps = {};
 
   return (
     <Box ref={sectionRef} data-journey-root scrollMarginTop="120px" overflow="hidden" w="100%">
       <JourneyShell {...proofShellProps}>
-        <CardBody
-          p={isProofView ? { base: 4, md: 6 } : 0}
-          pb={isProofView ? undefined : 0}
-          bg="transparent"
-          minW={0}
-        >
-          {/* Header — its own compact card in story view (the chapters are
-              siblings, not children, so the page background shows between). */}
+        <CardBody p={0} pb={0} bg="transparent" minW={0}>
+          {/* Header — its own compact card in BOTH views. The chapters and events are
+              siblings, not children, so the page background shows between them. It used to be
+              bare in proof view because the father card supplied the surface; with that gone,
+              the header carries its own. */}
           <VStack
             spacing={5}
-            mb={isProofView ? 6 : 4}
+            mb={4}
             minW={0}
-            bg={isProofView ? undefined : bgColor}
-            borderRadius={isProofView ? undefined : 'xl'}
-            borderWidth={isProofView ? undefined : '1px'}
-            borderColor={isProofView ? undefined : 'gray.200'}
-            p={isProofView ? undefined : { base: 4, md: 5 }}
+            bg={bgColor}
+            borderRadius="xl"
+            borderWidth="1px"
+            borderColor="gray.200"
+            p={{ base: 4, md: 5 }}
           >
             <VStack spacing={3} w="full" minW={0}>
               <HStack w="full" justify="space-between" align="start">
@@ -1054,8 +1162,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               {/* Production Stats Row — minimalist horizontal layout with dividers */}
               <HStack
                 spacing={0}
-                w={isProofView ? { base: 'calc(100% + 16px)', md: 'calc(100% + 32px)' } : '100%'}
-                mx={isProofView ? { base: -2, md: -4 } : 0}
+                w="100%"
                 bg={useColorModeValue('gray.50', 'gray.800')}
                 borderRadius="lg"
                 py={3}
@@ -1273,19 +1380,13 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
           </VStack>
         </CardBody>
 
-        <CardBody
-          pt={0}
-          px={isProofView ? { base: 0, md: 6 } : 0}
-          pb={isProofView ? { base: 2, md: 6 } : 0}
-          minW={0}
-        >
+        <CardBody pt={0} px={0} pb={0} minW={0}>
           {/* ── Consumer story view (default): five chapters, highlights only ── */}
           {!isProofView && (
             <VStack spacing={6} align="stretch" minW={0}>
               {chapterData.map((ch) => {
-                const visibleCards = (ch.highlights.length > 0
-                  ? ch.highlights
-                  : ch.events.slice(0, 1)
+                const visibleCards = (
+                  ch.highlights.length > 0 ? ch.highlights : ch.events.slice(0, 1)
                 ).slice(0, visibleCountByChapter[ch.key] ?? 1);
                 const hiddenCount = ch.events.length - visibleCards.length;
                 return (
@@ -1376,20 +1477,25 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
                     {/* Highlight cards — top-level, flat */}
                     <VStack spacing={2} align="stretch">
-                      {visibleCards.map((event) => {
-                        const enhancedEvent = buildEnhancedEvent(event);
-                        return (
-                          <ConsumerEventCard
-                            key={event.id}
-                            event={enhancedEvent}
-                            isGrouped
-                            slim
-                            isExpanded={expandedEventId === event.id}
-                            onToggleExpand={() => toggleEventExpand(event.id)}
-                            productionBlockchain={productionBlockchain}
-                          />
-                        );
-                      })}
+                      {(() => {
+                        const { repeatImpact, repeatShort } = computeRepeatedCopy(visibleCards);
+                        return visibleCards.map((event) => {
+                          const enhancedEvent = buildEnhancedEvent(event);
+                          return (
+                            <ConsumerEventCard
+                              key={event.id}
+                              event={enhancedEvent}
+                              isGrouped
+                              slim
+                              suppressImpactLine={repeatImpact.has(String(event.id))}
+                              suppressShortDescription={repeatShort.has(String(event.id))}
+                              isExpanded={expandedEventId === event.id}
+                              onToggleExpand={() => toggleEventExpand(event.id)}
+                              productionBlockchain={productionBlockchain}
+                            />
+                          );
+                        });
+                      })()}
                     </VStack>
 
                     {hiddenCount > 0 && (
@@ -1401,12 +1507,16 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         colorScheme="green"
                         onClick={() => openProofView(ch.key)}
                       >
+                        {/* Names the destination (2026-08-02). "+2 more in the full record"
+                            reads like an inline expander, but it switches to the full-record
+                            view filtered to this chapter — so the label now says the chapter
+                            and the TOTAL it will show, not the remainder it hides. */}
                         {intl.formatMessage(
                           {
-                            id: 'consumer.journey.moreInFullRecord',
-                            defaultMessage: '+{count} more in the full record →'
+                            id: 'consumer.journey.seeAllInChapter',
+                            defaultMessage: 'See all {count} in {chapter} →'
                           },
-                          { count: hiddenCount }
+                          { count: ch.events.length, chapter: ch.title }
                         )}
                       </Button>
                     )}
@@ -1444,7 +1554,8 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
               >
                 {intl.formatMessage({
                   id: 'consumer.journey.buyerEntry',
-                  defaultMessage: 'Buyer or retailer? See the full sourcing record & request documents →'
+                  defaultMessage:
+                    'Buyer or retailer? See the full sourcing record & request documents →'
                 })}
               </Button>
             </VStack>
@@ -1461,7 +1572,12 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   })}
                 </Button>
                 {proofChapter && (
-                  <Button size="xs" variant="link" colorScheme="gray" onClick={() => openProofView()}>
+                  <Button
+                    size="xs"
+                    variant="link"
+                    colorScheme="gray"
+                    onClick={() => openProofView()}
+                  >
                     {intl.formatMessage(
                       {
                         id: 'consumer.journey.viewAllEvents',
@@ -1484,8 +1600,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     {intl.formatMessage(
                       {
                         id: 'consumer.journey.proofChapterHeader',
-                        defaultMessage:
-                          '{title} — {count, plural, one {# event} other {# events}}'
+                        defaultMessage: '{title} — {count, plural, one {# event} other {# events}}'
                       },
                       { title: proofChapter.title, count: proofChapter.events.length }
                     )}
@@ -1495,200 +1610,209 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             </Box>
           )}
           {isProofView && (
-          <VStack spacing={{ base: 2, md: 4 }} align="stretch" minW={0}>
-            {proofDisplayGroups.map((item, groupIndex) => {
-              if (item.kind === 'group') {
-                const config = getEventConfig(item.events[0]);
-                const isExpanded = expandedGroup === item.type;
-                const totalEvents = item.events.length;
+            <VStack spacing={{ base: 2, md: 4 }} align="stretch" minW={0}>
+              {(() => {
+                // One ledger for the whole proof list — a grouped event and a single event are
+                // siblings on screen, so they must dedupe against each other.
+                const { repeatImpact, repeatShort } = computeRepeatedCopy(
+                  proofDisplayGroups.flatMap((it) => (it.kind === 'group' ? it.events : [it.event]))
+                );
+                return proofDisplayGroups.map((item, groupIndex) => {
+                  if (item.kind === 'group') {
+                    const config = getEventConfig(item.events[0]);
+                    const isExpanded = expandedGroup === item.type;
+                    const totalEvents = item.events.length;
 
-                // Compute summary metrics for the grouped events
-                const subtypeNames = item.events.map((evt) => {
-                  const info = localizeConsumerDescription(
-                    getConsumerEventDescription(evt.description, evt),
-                    intl.locale
-                  );
-                  return info.title;
-                });
-                // Deduplicate while preserving order
-                const uniqueSubtypes = [...new Set(subtypeNames)];
+                    // Compute summary metrics for the grouped events
+                    const subtypeNames = item.events.map((evt) => {
+                      const info = localizeConsumerDescription(
+                        getConsumerEventDescription(evt.description, evt),
+                        intl.locale
+                      );
+                      return info.title;
+                    });
+                    // Deduplicate while preserving order
+                    const uniqueSubtypes = [...new Set(subtypeNames)];
 
-                const blockchainCount = item.events.filter(
-                  (evt) => evt.blockchain_verified || evt.extra_data?.blockchain_verified
-                ).length;
+                    const blockchainCount = item.events.filter(
+                      (evt) => evt.blockchain_verified || evt.extra_data?.blockchain_verified
+                    ).length;
 
-                const impactCounts = { high: 0, medium: 0, low: 0 };
-                item.events.forEach((evt) => {
-                  const level = getSustainabilityImpact(evt.description, evt);
-                  impactCounts[level]++;
-                });
+                    const impactCounts = { high: 0, medium: 0, low: 0 };
+                    item.events.forEach((evt) => {
+                      const level = getSustainabilityImpact(evt.description, evt);
+                      impactCounts[level]++;
+                    });
 
-                return (
-                  <Box key={`group-${item.type}`}>
-                    <Box
-                      bg={bgColor}
-                      borderRadius="xl"
-                      border="1px solid"
-                      borderColor={isExpanded ? config.color : 'gray.200'}
-                      overflow="hidden"
-                      cursor="pointer"
-                      onClick={() => toggleGroup(item.type)}
-                      _hover={{ borderColor: config.color, shadow: 'md' }}
-                      transition="all 0.2s"
-                      shadow={isExpanded ? 'sm' : 'none'}
-                    >
-                      <Box p={4}>
-                        {/* Row 1: Icon + Title + Date Range + Chevron */}
-                        <HStack spacing={3}>
-                          <Circle size="40px" bg={config.bgColor} flexShrink={0}>
-                            <Icon as={config.icon} color={config.color} boxSize={4} />
-                          </Circle>
-                          <VStack align="start" spacing={0} flex={1}>
-                            <HStack>
-                              <Text fontWeight="bold" fontSize="sm" color={textColor}>
-                                {intl.formatMessage(
-                                  {
-                                    id: 'consumer.journey.groupEventCount',
-                                    defaultMessage:
-                                      '{count, plural, one {# {category} Event} other {# {category} Events}}'
-                                  },
-                                  { count: totalEvents, category: item.category }
-                                )}
-                              </Text>
-                              <Badge
-                                colorScheme={config.categoryColor}
-                                fontSize="xs"
-                                borderRadius="full"
-                              >
-                                {item.dateRange}
-                              </Badge>
+                    return (
+                      <Box key={`group-${item.type}`}>
+                        <Box
+                          bg={bgColor}
+                          borderRadius="xl"
+                          border="1px solid"
+                          borderColor={isExpanded ? config.color : 'gray.200'}
+                          overflow="hidden"
+                          cursor="pointer"
+                          onClick={() => toggleGroup(item.type)}
+                          _hover={{ borderColor: config.color, shadow: 'md' }}
+                          transition="all 0.2s"
+                          shadow={isExpanded ? 'sm' : 'none'}
+                        >
+                          <Box p={4}>
+                            {/* Row 1: Icon + Title + Date Range + Chevron */}
+                            <HStack spacing={3}>
+                              <Circle size="40px" bg={config.bgColor} flexShrink={0}>
+                                <Icon as={config.icon} color={config.color} boxSize={4} />
+                              </Circle>
+                              <VStack align="start" spacing={0} flex={1}>
+                                <HStack>
+                                  <Text fontWeight="bold" fontSize="sm" color={textColor}>
+                                    {intl.formatMessage(
+                                      {
+                                        id: 'consumer.journey.groupEventCount',
+                                        defaultMessage:
+                                          '{count, plural, one {# {category} Event} other {# {category} Events}}'
+                                      },
+                                      { count: totalEvents, category: item.category }
+                                    )}
+                                  </Text>
+                                  <Badge
+                                    colorScheme={config.categoryColor}
+                                    fontSize="xs"
+                                    borderRadius="full"
+                                  >
+                                    {item.dateRange}
+                                  </Badge>
+                                </HStack>
+                              </VStack>
+                              <Icon
+                                as={isExpanded ? FaChevronUp : FaChevronDown}
+                                color={mutedColor}
+                                boxSize={3}
+                                flexShrink={0}
+                              />
                             </HStack>
-                          </VStack>
-                          <Icon
-                            as={isExpanded ? FaChevronUp : FaChevronDown}
-                            color={mutedColor}
-                            boxSize={3}
-                            flexShrink={0}
-                          />
-                        </HStack>
 
-                        {/* Row 2: Sub-event journey breadcrumb */}
-                        <HStack mt={2} ml="52px" spacing={1} flexWrap="wrap">
-                          {uniqueSubtypes.map((name, idx) => (
-                            <React.Fragment key={name}>
-                              <Text fontSize="xs" color={mutedColor} fontWeight="medium">
-                                {name}
-                              </Text>
-                              {idx < uniqueSubtypes.length - 1 && (
-                                <Text fontSize="xs" color="gray.400">
-                                  ›
-                                </Text>
-                              )}
-                            </React.Fragment>
-                          ))}
-                        </HStack>
+                            {/* Row 2: Sub-event journey breadcrumb */}
+                            <HStack mt={2} ml="52px" spacing={1} flexWrap="wrap">
+                              {uniqueSubtypes.map((name, idx) => (
+                                <React.Fragment key={name}>
+                                  <Text fontSize="xs" color={mutedColor} fontWeight="medium">
+                                    {name}
+                                  </Text>
+                                  {idx < uniqueSubtypes.length - 1 && (
+                                    <Text fontSize="xs" color="gray.400">
+                                      ›
+                                    </Text>
+                                  )}
+                                </React.Fragment>
+                              ))}
+                            </HStack>
 
-                        {/* Row 3: Trust & Impact badges */}
-                        <HStack mt={2} ml="52px" spacing={2} flexWrap="wrap">
-                          {/* Blockchain wording: "recorded" never "verified"
+                            {/* Row 3: Trust & Impact badges */}
+                            <HStack mt={2} ml="52px" spacing={2} flexWrap="wrap">
+                              {/* Blockchain wording: "recorded" never "verified"
                               (compliance rule). Impact-level badges ("Core
                               Practices" / "Standard" / "Supplementary")
                               removed 2026-06 — internal scoring jargon with
                               no consumer meaning. */}
-                          {blockchainCount > 0 && (
-                            <Badge
-                              colorScheme="green"
-                              fontSize="xs"
-                              borderRadius="full"
-                              px={2}
-                              py={0.5}
-                            >
-                              <HStack spacing={1}>
-                                <Icon as={MdVerified} boxSize={2.5} />
-                                <Text>
-                                  {blockchainCount === totalEvents
-                                    ? intl.formatMessage({
-                                        id: 'consumer.journey.allRecorded',
-                                        defaultMessage: 'ALL RECORDED'
-                                      })
-                                    : intl.formatMessage(
-                                        {
-                                          id: 'consumer.journey.partialRecorded',
-                                          defaultMessage: '{count}/{total} RECORDED'
-                                        },
-                                        { count: blockchainCount, total: totalEvents }
-                                      )}
-                                </Text>
-                              </HStack>
-                            </Badge>
-                          )}
-                        </HStack>
-
-                        {/* Row 4: Expand hint */}
-                        <Text fontSize="xs" color={mutedColor} mt={1.5} ml="52px">
-                          {isExpanded
-                            ? intl.formatMessage({
-                                id: 'consumer.journey.clickToCollapse',
-                                defaultMessage: 'Click to collapse'
-                              })
-                            : intl.formatMessage(
-                                {
-                                  id: 'consumer.journey.clickToSeeAll',
-                                  defaultMessage: 'Click to see all {count} events'
-                                },
-                                { count: totalEvents }
+                              {blockchainCount > 0 && (
+                                <Badge
+                                  colorScheme="green"
+                                  fontSize="xs"
+                                  borderRadius="full"
+                                  px={2}
+                                  py={0.5}
+                                >
+                                  <HStack spacing={1}>
+                                    <Icon as={MdVerified} boxSize={2.5} />
+                                    <Text>
+                                      {blockchainCount === totalEvents
+                                        ? intl.formatMessage({
+                                            id: 'consumer.journey.allRecorded',
+                                            defaultMessage: 'ALL RECORDED'
+                                          })
+                                        : intl.formatMessage(
+                                            {
+                                              id: 'consumer.journey.partialRecorded',
+                                              defaultMessage: '{count}/{total} RECORDED'
+                                            },
+                                            { count: blockchainCount, total: totalEvents }
+                                          )}
+                                    </Text>
+                                  </HStack>
+                                </Badge>
                               )}
-                        </Text>
+                            </HStack>
+
+                            {/* Row 4: Expand hint */}
+                            <Text fontSize="xs" color={mutedColor} mt={1.5} ml="52px">
+                              {isExpanded
+                                ? intl.formatMessage({
+                                    id: 'consumer.journey.clickToCollapse',
+                                    defaultMessage: 'Click to collapse'
+                                  })
+                                : intl.formatMessage(
+                                    {
+                                      id: 'consumer.journey.clickToSeeAll',
+                                      defaultMessage: 'Click to see all {count} events'
+                                    },
+                                    { count: totalEvents }
+                                  )}
+                            </Text>
+                          </Box>
+                        </Box>
+
+                        <Collapse in={isExpanded} animateOpacity>
+                          <VStack
+                            spacing={2}
+                            mt={2}
+                            ml={{ base: 0, md: 4 }}
+                            pl={{ base: 2, md: 3 }}
+                            borderLeft="3px solid"
+                            borderColor={config.color}
+                            align="stretch"
+                          >
+                            {item.events.map((event, eventIndex) => {
+                              const enhancedEvent = buildEnhancedEvent(event);
+                              return (
+                                <ConsumerEventCard
+                                  key={event.id}
+                                  event={enhancedEvent}
+                                  isLast={eventIndex === item.events.length - 1}
+                                  isGrouped
+                                  suppressImpactLine={repeatImpact.has(String(event.id))}
+                                  suppressShortDescription={repeatShort.has(String(event.id))}
+                                  isExpanded={expandedEventId === event.id}
+                                  onToggleExpand={() => toggleEventExpand(event.id)}
+                                  productionBlockchain={productionBlockchain}
+                                />
+                              );
+                            })}
+                          </VStack>
+                        </Collapse>
                       </Box>
-                    </Box>
+                    );
+                  }
 
-                    <Collapse in={isExpanded} animateOpacity>
-                      <VStack
-                        spacing={2}
-                        mt={2}
-                        ml={{ base: 0, md: 4 }}
-                        pl={{ base: 2, md: 3 }}
-                        borderLeft="3px solid"
-                        borderColor={config.color}
-                        align="stretch"
-                      >
-                        {item.events.map((event, eventIndex) => {
-                          const enhancedEvent = buildEnhancedEvent(event);
-                          return (
-                            <ConsumerEventCard
-                              key={event.id}
-                              event={enhancedEvent}
-                              isFirst={eventIndex === 0}
-                              isLast={eventIndex === item.events.length - 1}
-                              isGrouped
-                              isExpanded={expandedEventId === event.id}
-                              onToggleExpand={() => toggleEventExpand(event.id)}
-                              productionBlockchain={productionBlockchain}
-                            />
-                          );
-                        })}
-                      </VStack>
-                    </Collapse>
-                  </Box>
-                );
-              }
-
-              // Single event rendering
-              const event = item.event;
-              const enhancedEvent = buildEnhancedEvent(event);
-              return (
-                <ConsumerEventCard
-                  key={event.id}
-                  event={enhancedEvent}
-                  isFirst={groupIndex === 0}
-                  isLast={groupIndex === proofDisplayGroups.length - 1}
-                  isExpanded={expandedEventId === event.id}
-                  onToggleExpand={() => toggleEventExpand(event.id)}
-                  productionBlockchain={productionBlockchain}
-                />
-              );
-            })}
-          </VStack>
+                  // Single event rendering
+                  const event = item.event;
+                  const enhancedEvent = buildEnhancedEvent(event);
+                  return (
+                    <ConsumerEventCard
+                      key={event.id}
+                      event={enhancedEvent}
+                      isLast={groupIndex === proofDisplayGroups.length - 1}
+                      suppressImpactLine={repeatImpact.has(String(event.id))}
+                      suppressShortDescription={repeatShort.has(String(event.id))}
+                      isExpanded={expandedEventId === event.id}
+                      onToggleExpand={() => toggleEventExpand(event.id)}
+                      productionBlockchain={productionBlockchain}
+                    />
+                  );
+                });
+              })()}
+            </VStack>
           )}
 
           {/* Show More Button */}
@@ -1710,8 +1834,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   : intl.formatMessage(
                       {
                         id: 'consumer.journey.showAllEvents',
-                        defaultMessage:
-                          'Show All {count, plural, one {# Event} other {# Events}}'
+                        defaultMessage: 'Show All {count, plural, one {# Event} other {# Events}}'
                       },
                       { count: filteredEvents.length }
                     )}
@@ -1719,9 +1842,15 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             </Box>
           )}
 
-          {/* Buyer documentation CTA — bottom of the proof view only (the
-              story view stays consumer-focused). */}
-          {isProofView && buyerDocProductionId && (
+          {/* Buyer documentation CTA — the foot of BOTH views (2026-08-02).
+              It used to render only in the proof view, which meant the one
+              conversion path aimed at buyers was reachable only by a reader who
+              had already opened the full record. A buyer who lands, skims the
+              story and leaves never saw it. It stays at the FOOT, and stays
+              quiet: the consumer story is the page's job, and this is an exit
+              for the minority who want paperwork rather than a banner
+              competing with the record itself. */}
+          {buyerDocProductionId && (
             <React.Suspense fallback={null}>
               <Box mt={4}>
                 <BuyerDocRequestCTA productionId={buyerDocProductionId} />

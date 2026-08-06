@@ -27,6 +27,17 @@ export interface VerificationBadgeConfig {
   bgColor: string;
   borderColor: string;
   icon: any;
+  /**
+   * i18n key for the badge text. Resolve with `intl.formatMessage` at the call site — this
+   * module is a pure helper and must stay renderer-agnostic (no hook access here).
+   */
+  labelKey: string;
+  /** i18n key for the badge tooltip. Same contract as `labelKey`. */
+  tooltipKey: string;
+  /**
+   * English fallbacks. Kept so a caller that has not been localized yet still renders
+   * readable text rather than a raw dotted key, and so `defaultMessage` can be supplied.
+   */
   label: string;
   tooltip: string;
   trustScore: number;
@@ -42,6 +53,8 @@ export function getVerificationBadgeConfig(
   const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
     self_reported: {
       level: 'self_reported',
+      labelKey: 'consumer.eventCard.tier.self_reported',
+      tooltipKey: 'consumer.eventCard.tierTooltip.self_reported',
       color: 'gray.600',
       bgColor: 'gray.50',
       borderColor: 'gray.300',
@@ -52,6 +65,8 @@ export function getVerificationBadgeConfig(
     },
     photo_documented: {
       level: 'photo_documented',
+      labelKey: 'consumer.eventCard.tier.photo_documented',
+      tooltipKey: 'consumer.eventCard.tierTooltip.photo_documented',
       color: 'teal.600',
       bgColor: 'teal.50',
       borderColor: 'teal.300',
@@ -63,6 +78,8 @@ export function getVerificationBadgeConfig(
     },
     photo_verified: {
       level: 'photo_verified',
+      labelKey: 'consumer.eventCard.tier.photo_verified',
+      tooltipKey: 'consumer.eventCard.tierTooltip.photo_verified',
       color: 'blue.600',
       bgColor: 'blue.50',
       borderColor: 'blue.300',
@@ -74,6 +91,8 @@ export function getVerificationBadgeConfig(
     },
     data_verified: {
       level: 'data_verified',
+      labelKey: 'consumer.eventCard.tier.data_verified',
+      tooltipKey: 'consumer.eventCard.tierTooltip.data_verified',
       color: 'green.600',
       bgColor: 'green.50',
       borderColor: 'green.300',
@@ -85,6 +104,8 @@ export function getVerificationBadgeConfig(
     },
     certified: {
       level: 'certified',
+      labelKey: 'consumer.eventCard.tier.certified',
+      tooltipKey: 'consumer.eventCard.tierTooltip.certified',
       color: 'purple.600',
       bgColor: 'purple.50',
       borderColor: 'purple.300',
@@ -464,21 +485,65 @@ export function getPhotoRecommendations(eventType: number | undefined): PhotoRec
 }
 
 /**
- * Get consumer-friendly explanation of photo recommendations
+ * The pieces of the photo-guidance sentence, unformatted.
+ *
+ * The sentence used to be assembled here with template literals, which made it untranslatable:
+ * a locale dictionary can only map whole strings, and these are composed at runtime from an
+ * event-type name plus a list of examples. Returning the PARTS lets the caller build the
+ * sentence from an ICU message, so word order and punctuation follow the locale rather than
+ * English. Callers that just want English can use getPhotoGuidanceText below.
  */
-export function getPhotoGuidanceText(eventType: number | undefined, photoCount: number): string {
+export interface PhotoGuidanceParts {
+  /** 0 = nothing uploaded yet, 1 = one photo, 2 = two or more. */
+  stage: 0 | 1 | 2;
+  /** Localisable event-type name, e.g. "Production Activity". */
+  eventTypeName: string;
+  /** First two examples, each independently localisable. */
+  examples: string[];
+  /** The tier sentence for the current photo count, localisable. */
+  tierText: string;
+}
+
+export function getPhotoGuidanceParts(
+  eventType: number | undefined,
+  photoCount: number
+): PhotoGuidanceParts | null {
   const recs = getPhotoRecommendations(eventType);
-  if (!recs) return '';
+  if (!recs) return null;
 
   if (photoCount === 0) {
-    return `To verify this ${recs.eventType}, upload photos showing: ${recs.examples
-      .slice(0, 2)
-      .join(', ')}`;
-  } else if (photoCount === 1) {
-    return `${recs.toAchieveTier.photo_documented} Add another photo from a different angle for stronger verification.`;
-  } else {
-    return `${recs.toAchieveTier.photo_verified} Excellent documentation for this activity!`;
+    return { stage: 0, eventTypeName: recs.eventType, examples: recs.examples.slice(0, 2), tierText: '' };
   }
+  if (photoCount === 1) {
+    return {
+      stage: 1,
+      eventTypeName: recs.eventType,
+      examples: [],
+      tierText: recs.toAchieveTier.photo_documented
+    };
+  }
+  return {
+    stage: 2,
+    eventTypeName: recs.eventType,
+    examples: [],
+    tierText: recs.toAchieveTier.photo_verified
+  };
+}
+
+/**
+ * English-only convenience wrapper, kept for callers that render without an `intl`.
+ */
+export function getPhotoGuidanceText(eventType: number | undefined, photoCount: number): string {
+  const parts = getPhotoGuidanceParts(eventType, photoCount);
+  if (!parts) return '';
+
+  if (parts.stage === 0) {
+    return `To verify this ${parts.eventTypeName}, upload photos showing: ${parts.examples.join(', ')}`;
+  }
+  if (parts.stage === 1) {
+    return `${parts.tierText} Add another photo from a different angle for stronger verification.`;
+  }
+  return `${parts.tierText} Excellent documentation for this activity!`;
 }
 
 /**
@@ -603,8 +668,10 @@ const PRODUCTION_SUBTYPE_RECOMMENDATIONS: Record<string, SubtypePhotoRecommendat
     ],
     tips: [
       'Hour meter readings provide strong verification',
-      'Show maintenance parts or fluids being replaced',
-      'Note: EQ is legacy code, new events use EM'
+      'Show maintenance parts or fluids being replaced'
+      // Removed: an internal note about EQ being a legacy code was sitting in this list, so a
+      // farmer photographing a repair was shown "Note: EQ is legacy code, new events use EM"
+      // as if it were photography advice.
     ]
   }
 };

@@ -25,7 +25,6 @@ import {
   StatHelpText,
   Tooltip,
   SimpleGrid,
-  Badge,
   Circle,
   useColorModeValue
 } from '@chakra-ui/react';
@@ -34,8 +33,7 @@ import { BsShield, BsLightning } from 'react-icons/bs';
 import {
   FaChartLine,
   FaCrown,
-  FaLeaf,
-  FaMedal
+  FaLeaf
 } from 'react-icons/fa';
 import { MdTrendingUp } from 'react-icons/md';
 import Card from 'components/Card/Card';
@@ -88,7 +86,13 @@ const SmartUsageCard = ({
     if (!metrics) return getDefaultInsight();
 
     const isHighEngagement = metrics.monthly_scans > 1000;
-    const isTopPerformer = metrics.transparency_score >= 80;
+    // transparency_score is null until a season is finished. Compare explicitly: `null < 70`
+    // is TRUE in JS, which would tell a farm with no finished season to "document more events"
+    // on the basis of a score that does not exist yet.
+    const hasFinishedSeasonScore =
+      metrics.transparency_score !== null && metrics.transparency_score !== undefined;
+    const isTopPerformer = hasFinishedSeasonScore && metrics.transparency_score >= 80;
+    const isUnderDocumented = hasFinishedSeasonScore && metrics.transparency_score < 70;
     const isGrowingFast = metrics.scan_growth_percentage > 25;
 
     if (isHighEngagement && isTopPerformer && isGrowingFast) {
@@ -102,7 +106,7 @@ const SmartUsageCard = ({
       };
     }
 
-    if (isHighEngagement && metrics.transparency_score < 70) {
+    if (isHighEngagement && isUnderDocumented) {
       return {
         status: intl.formatMessage({ id: 'dashboard.highDemandOpportunity' }),
         insight: intl.formatMessage({ id: 'dashboard.highDemandInsight' }),
@@ -156,8 +160,7 @@ const SmartUsageCard = ({
 
   const smartInsight = getSmartInsights();
 
-  // Concrete, farmer-understandable values
-  const trustScore = metrics ? Math.round(metrics.transparency_score) : 0;
+  // Concrete, farmer-understandable values.
   const marketReach = metrics
     ? metrics.consumer_reach > 10000
       ? `${Math.round(metrics.consumer_reach / 1000)}K`
@@ -167,18 +170,26 @@ const SmartUsageCard = ({
   const qrScanGrowth = metrics ? metrics.scan_growth_percentage : 0;
   const documentedEvents = metrics ? metrics.total_documented_events : 0;
   const totalProductions = metrics ? metrics.total_productions : 0;
-  const transparencyTier = metrics ? metrics.transparency_tier : 'developing';
-  // Show tier badge only for farms at or above the "solid" threshold (score >= 60).
-  // Below that, the farm is still building documentation and no badge is shown.
-  const showTierBadge = ['excellent', 'strong', 'good', 'solid'].includes(transparencyTier);
 
-  const getLetterGrade = (score) => {
-    if (score >= 90) return 'A+';
-    if (score >= 80) return 'A';
-    if (score >= 70) return 'B';
-    if (score >= 60) return 'C';
-    return 'D';
-  };
+  // The A+/A/B/C/D letter grade was removed 2026-08-02; the transparency PERCENTAGE and the
+  // `transparency_tier` badge that replaced the letter were removed from this card 2026-08-04.
+  //
+  // A letter is a verdict on the FARM, not a description of the record. In practice it read as
+  // an insult: a grower who had logged a full 13-event walnut season was shown "D". The tier
+  // badge ("Excellent Documentation") was the same verdict spelled out, and the percentage is
+  // the same verdict as a number — all three measure the farm against a baseline Trazo authored,
+  // which is the artefact an organic watchdog treats as a self-created sustainability label.
+  //
+  // Farm home now reports counts. The score keeps one home, on the transparency page, where a
+  // farmer goes deliberately to see what is missing.
+  //
+  // Precisely what remains: `metrics.transparency_tier` is no longer read at all.
+  // `metrics.transparency_score` IS still read — but only inside `getSmartInsights()` above, as a
+  // GATE on the engagement nudges ("high demand, thin documentation → document more events"),
+  // never as something rendered. No number, no tier, no letter reaches this card. That nudge is
+  // the core loop and it only fires for farms already past 1,000 monthly scans, so it is a
+  // prompt about what to do next rather than a verdict on the farm.
+  const scoredProductions = metrics ? metrics.scored_productions ?? 0 : 0;
 
   if (isLoading) {
     return (
@@ -256,31 +267,13 @@ const SmartUsageCard = ({
               >
                 {smartInsight.status}
               </Text>
-              {showTierBadge && (
-                <Tooltip
-                  label={intl.formatMessage({ id: `dashboard.tooltipTier.${transparencyTier}` })}
-                  fontSize="xs"
-                  bg="gray.800"
-                  color="white"
-                  borderRadius="md"
-                  px={3}
-                  py={2}
-                  hasArrow
-                  placement="top"
-                >
-                  <Badge
-                    colorScheme="green"
-                    fontSize="xs"
-                    px={2}
-                    py={1}
-                    borderRadius="full"
-                    cursor="pointer"
-                  >
-                    <Icon as={FaMedal} w={2} h={2} mr={1} />
-                    {intl.formatMessage({ id: `dashboard.tier.${transparencyTier}` })}
-                  </Badge>
-                </Tooltip>
-              )}
+              {/* The tier badge ("Excellent / Strong / Good / Solid Documentation", with a medal
+                  icon) was removed 2026-08-04. It was the letter grade in words: a verdict Trazo
+                  assigns to a farm from its own baseline, awarded above a threshold Trazo chose.
+                  The A+/A/B/C/D ladder was deleted for exactly this reason on 2026-08-02 — a
+                  medal that says "Excellent Documentation" is the same artefact with better
+                  manners, and it is what a farmer screenshots into a buyer deck. Farm home states
+                  counts; the score and its wording stay on the transparency page. */}
             </HStack>
             <Text fontSize="xs" color={subtitleColor} lineHeight="1.3">
               {smartInsight.insight}
@@ -310,20 +303,36 @@ const SmartUsageCard = ({
             </Stat>
           </Tooltip>
 
-          {/* Transparency Score */}
-          <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipTrustScore' })} hasArrow>
+          {/* Finished seasons — a COUNT, not a score.
+              This tile used to show the transparency percentage, which made farm home render
+              the same number five times (here, three ways inside TransparencySummaryCard, and
+              its progress bar). The score now lives only on
+              /admin/dashboard/farm/:farmId/transparency. `scored_productions` is the honest
+              fact underneath it: how many seasons have been closed out and published. */}
+          <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipFinishedSeasons' })} hasArrow>
             <Stat textAlign="center" bg={statBg} p={1} borderRadius="md">
               <StatLabel fontSize="xs" color={subtitleColor}>
-                {intl.formatMessage({ id: 'dashboard.trustScore' })}
+                {intl.formatMessage({
+                  id: 'dashboard.finishedSeasons',
+                  defaultMessage: 'Finished seasons'
+                })}
               </StatLabel>
               <StatNumber fontSize="sm" color={textColor} fontWeight="bold">
-                {trustScore}%
+                {scoredProductions}
               </StatNumber>
               <StatHelpText fontSize="xs" m={0}>
                 <HStack spacing={1} justify="center">
                   <Icon as={BsShield} color={accentColor} w={2.5} h={2.5} />
                   <Text color={subtitleColor}>
-                    {getLetterGrade(trustScore)}
+                    {scoredProductions > 0
+                      ? intl.formatMessage({
+                          id: 'dashboard.readyForCertifier',
+                          defaultMessage: 'Records closed out'
+                        })
+                      : intl.formatMessage({
+                          id: 'dashboard.trustScore.noFinishedSeason',
+                          defaultMessage: 'No finished season yet'
+                        })}
                   </Text>
                 </HStack>
               </StatHelpText>

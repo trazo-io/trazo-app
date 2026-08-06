@@ -91,12 +91,14 @@ const BUSINESS_FIELDS: readonly FieldConfig<unknown, BusinessData>[] = [
     labelKey: 'events.business.fields.businessType',
     valueType: 'enum',
     formatter: formatBusinessType,
+    // NO consumer_card: "Business Activity Type: Certification Achievement" sits directly
+    // above "Certification Type: GlobalG.A.P. Certified" — the same fact twice. Live data
+    // also rendered the RAW code "CE" here.
     surfaces: {
       timeline: 'immediate',
       card: 'immediate',
       modal: 'immediate',
-      form: 'immediate',
-      consumer_card: 'immediate'
+      form: 'immediate'
     }
   },
   {
@@ -172,8 +174,7 @@ const BUSINESS_FIELDS: readonly FieldConfig<unknown, BusinessData>[] = [
     formatter: formatNumber,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {

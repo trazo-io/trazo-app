@@ -1,16 +1,23 @@
 /**
  * Soil Management Event Registry.
  *
- * 7 subtypes: ST(Soil Test), PA(pH Adjustment), OM(Organic Matter),
- * CC(Cover Crop), TI(Tillage), CO(Composting), GR(Grazing).
+ * 8 subtypes: ST(Soil Test), PA(pH Adjustment), OM(Organic Matter),
+ * CC(Cover Crop), TI(Tillage), CO(Composting), GR(Grazing), LA(Lab Analysis).
  *
  * GR (Grazing) has unique fields: animal_type, animal_count, grazing_duration_days.
  * TI (Tillage) has unique fields: working_depth, depth_unit.
+ * LA (Lab Analysis) has sample_matrix + the lab_* results, which the backend flattens out of
+ * the test_results JSONField so the resolver can reach them; ST shares the lab_* block.
+ *
+ * HD (Habitat Development) and NS (Nesting / Shelter) exist on the backend but are not yet
+ * registered here — see D4.
  */
 
 import type { EventRegistryEntry, FieldConfig, SoilManagementSubtype } from './registry';
 import {
   formatArea,
+  formatDate,
+  lookupEnumLabel,
   formatDurationDays,
   formatDurationHours,
   formatFuelConsumption,
@@ -30,6 +37,51 @@ const formatTemperatureF = (v: unknown): string | null => {
 };
 
 type SoilData = Record<string, unknown>;
+
+// Hoisted: building this inside the field formatter re-created it on every render of every
+// amendment row.
+const formatAmendmentAmountPair = makeUnitPairFormatter('amendment_amount_unit');
+
+// §E-2 — lab analysis. English labels here + es-419 in utils/fieldValues.es.ts, matching every
+// other enum in this file: getFieldsForSurface() has no `intl`, so a formatter returning an i18n
+// key would render the raw key. localizeFieldValue() maps the English string downstream.
+const SAMPLE_MATRIX_LABELS: Record<string, string> = {
+  soil: 'Soil',
+  leaf: 'Leaf tissue',
+  petiole: 'Petiole',
+  hull: 'Hull',
+  compost: 'Compost',
+  water: 'Irrigation water'
+};
+
+const formatSampleMatrix = (v: unknown): string | null => {
+  if (v == null || v === '') return null;
+  const key = String(v);
+  return SAMPLE_MATRIX_LABELS[key] ?? key;
+};
+
+// Parts per million — the unit micronutrient results are reported in.
+const formatPpm = (v: unknown): string | null => {
+  if (v == null || v === '') return null;
+  const num = typeof v === 'string' ? parseFloat(v) : typeof v === 'number' ? v : NaN;
+  if (Number.isNaN(num)) return null;
+  return `${num.toLocaleString(undefined, { maximumFractionDigits: 2 })} ppm`;
+};
+
+// Lab N/P/K rendered atomically, so a report showing only N doesn't imply P and K were 0.
+const formatLabNpk = (_v: unknown, event?: SoilData): string | null => {
+  const read = (k: string): number | null => {
+    const raw = event?.[k];
+    if (raw == null || raw === '') return null;
+    const num = typeof raw === 'string' ? parseFloat(raw) : typeof raw === 'number' ? raw : NaN;
+    return Number.isNaN(num) ? null : num;
+  };
+  const parts = [read('lab_nitrogen'), read('lab_phosphorus'), read('lab_potassium')];
+  if (parts.every((p) => p === null)) return null;
+  return parts
+    .map((p) => (p === null ? '—' : p.toLocaleString(undefined, { maximumFractionDigits: 2 })))
+    .join(' / ');
+};
 
 // Organic approval labels — acronyms must be properly capitalized (OMRI, USDA, NOP)
 const ORGANIC_APPROVED_LABELS: Record<string, string> = {
@@ -200,10 +252,10 @@ const SOIL_SUBTYPE_LABELS: Record<string, string> = {
   NS: 'Nesting / Shelter Structures'
 };
 
-const formatSoilSubtype = (value: unknown, _event: SoilData): string => {
-  const code = String(value ?? '');
-  return SOIL_SUBTYPE_LABELS[code] || code;
-};
+// `LA` (lab analysis) was missing from the map, so the consumer card printed the raw
+// two-letter code. lookupEnumLabel drops unknown short codes rather than showing them.
+const formatSoilSubtype = (value: unknown, _event: SoilData): string | null =>
+  lookupEnumLabel(SOIL_SUBTYPE_LABELS, value);
 
 const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
   // ---- Core (ALL subtypes) ----
@@ -226,9 +278,10 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     labelKey: 'events.soil.fields.soilManagementType',
     valueType: 'enum',
     formatter: formatSoilSubtype,
+    // NO consumer_card: this duplicates the card TITLE on every soil card
+    // ("Soil Testing & Analysis" heading + "Soil Management Type: Soil Testing" row).
     surfaces: {
-      modal: 'immediate',
-      consumer_card: 'immediate'
+      modal: 'immediate'
     }
   },
   {
@@ -247,6 +300,133 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     }
   },
 
+  // ---- Lab analysis (ST + LA) — §E-2 ----------------------------------------------------
+  // These values have always been collected by the soil form and written into the
+  // `test_results` JSONField, but nothing read them back: the resolver looks at the top level
+  // and at extra_data only, so every lab result was write-only. The read serializer now
+  // flattens the JSON into `lab_*` fields, which is what these configs bind to.
+  //
+  // Only `sample_matrix` and the lab's identity reach the consumer: an outside lab is genuine
+  // third-party evidence, whereas N/P/K and CEC numbers are the jargon class
+  // transparency-first.md keeps off consumer surfaces.
+  {
+    name: 'sample_matrix',
+    labelKey: 'events.soil.fields.sampleMatrix',
+    valueType: 'enum',
+    formatter: formatSampleMatrix,
+    visibleForSubtypes: ['LA'],
+    surfaces: {
+      timeline: 'immediate',
+      card: 'hero',
+      modal: 'hero',
+      form: 'immediate',
+      consumer_card: 'immediate',
+      consumer_timeline: 'immediate'
+    }
+  },
+  {
+    name: 'lab_name',
+    labelKey: 'events.soil.fields.labName',
+    valueType: 'string',
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: {
+      card: 'immediate',
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'secondary'
+    }
+  },
+  {
+    name: 'lab_report_date',
+    labelKey: 'events.soil.fields.labReportDate',
+    valueType: 'date',
+    // Every other `date` field in the registry pairs with formatDate; without it the raw
+    // "2026-07-18" from the test_results JSON would render verbatim. formatDate also parses a
+    // bare YYYY-MM-DD as LOCAL midnight, so the date does not slip a day west of UTC.
+    formatter: formatDate,
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'immediate',
+      consumer_card: 'secondary'
+    }
+  },
+  {
+    name: 'lab_sample_id',
+    labelKey: 'events.soil.fields.labSampleId',
+    valueType: 'string',
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: { modal: 'secondary', form: 'immediate' }
+  },
+  {
+    // N/P/K render as one atomic group, like the chemical-event NPK trio.
+    name: 'lab_nitrogen',
+    labelKey: 'events.soil.fields.labNpk',
+    valueType: 'number',
+    formatter: formatLabNpk,
+    groupWith: ['lab_phosphorus', 'lab_potassium'],
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: { modal: 'secondary', form: 'immediate' }
+  },
+  {
+    name: 'lab_phosphorus',
+    labelKey: 'events.soil.fields.labPhosphorus',
+    valueType: 'number',
+    formatter: formatNumber,
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: { form: 'immediate' }
+  },
+  {
+    name: 'lab_potassium',
+    labelKey: 'events.soil.fields.labPotassium',
+    valueType: 'number',
+    formatter: formatNumber,
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: { form: 'immediate' }
+  },
+  {
+    name: 'lab_cec',
+    labelKey: 'events.soil.fields.labCec',
+    valueType: 'number',
+    formatter: formatNumber,
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: { modal: 'secondary', form: 'immediate' }
+  },
+  // Micronutrient results — the documented deficiency that 7 CFR 205.601(j)(6) requires
+  // before a micronutrient may be applied (see chemicalEvent.ts micronutrient_type).
+  {
+    name: 'lab_zinc_ppm',
+    labelKey: 'events.soil.fields.labZincPpm',
+    valueType: 'number',
+    formatter: formatPpm,
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: { modal: 'secondary', form: 'immediate' }
+  },
+  {
+    name: 'lab_boron_ppm',
+    labelKey: 'events.soil.fields.labBoronPpm',
+    valueType: 'number',
+    formatter: formatPpm,
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: { modal: 'secondary', form: 'immediate' }
+  },
+  {
+    name: 'lab_manganese_ppm',
+    labelKey: 'events.soil.fields.labManganesePpm',
+    valueType: 'number',
+    formatter: formatPpm,
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: { modal: 'secondary', form: 'immediate' }
+  },
+  {
+    name: 'lab_iron_ppm',
+    labelKey: 'events.soil.fields.labIronPpm',
+    valueType: 'number',
+    formatter: formatPpm,
+    visibleForSubtypes: ['ST', 'LA'],
+    surfaces: { modal: 'secondary', form: 'immediate' }
+  },
+
   // ---- Soil properties (all subtypes — form shows these for any selected type) ----
   {
     name: 'soil_ph',
@@ -258,7 +438,6 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       card: 'hero',
       modal: 'hero',
       form: 'immediate',
-      consumer_card: 'details',
       consumer_timeline: 'immediate'
     }
   },
@@ -271,7 +450,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       card: 'immediate',
       modal: 'immediate',
       form: 'immediate',
-      consumer_card: 'details'
+      consumer_card: 'secondary'
     }
   },
 
@@ -315,12 +494,25 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     }
   },
   {
+    // D5 — one concept, two storage columns. `amendment_amount` is a legacy CharField that the
+    // form still writes; `amendment_amount_numeric` + `amendment_amount_unit` are the structured
+    // pair. Displaying only the numeric pair meant every amendment a farmer entered through the
+    // form rendered blank on the card, while the PDF showed it — because
+    // audit_export_service.py already falls back to the legacy column. This mirrors that
+    // fallback so one amendment reads the same everywhere, with no rename and no migration.
     name: 'amendment_amount_numeric',
     labelKey: 'events.soil.fields.amendmentAmount',
     valueType: 'number',
     unitField: 'amendment_amount_unit',
     visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
-    formatter: makeUnitPairFormatter('amendment_amount_unit'),
+    formatter: (value, event) => {
+      const structured = formatAmendmentAmountPair(value as never, event);
+      if (structured) return structured;
+      const legacy = event?.amendment_amount;
+      if (legacy == null || legacy === '') return null;
+      const unit = typeof event?.amendment_unit === 'string' ? event.amendment_unit : '';
+      return unit ? `${legacy} ${unit}`.trim() : String(legacy);
+    },
     surfaces: {
       modal: 'immediate',
       form: 'immediate',
@@ -418,13 +610,23 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
   },
 
   // ---- NOP Compliance: Raw manure harvest interval (7 CFR 205.203(c)(1)) ----
+  // GR (Grazing Management) is included deliberately. Livestock turned into a crop
+  // production area deposit RAW manure, so the same 90/120-day pre-harvest interval
+  // applies as for a spreader pass — 120 days where the edible portion contacts the
+  // soil, 90 days where it does not (7 CFR 205.203(c)(1)(ii)-(iii)). Oregon Tilth
+  // states it directly: "Livestock grazing ... follows the same rules for raw manure.
+  // Animals must be removed either 90 or 120 days prior to harvest." AMS's own manure
+  // guidance illustrates the risk with a photo of sheep grazing a walnut orchard.
+  // Until now these fields rendered for OM only, so a grower logging sheep in an
+  // orchard produced an audit packet with no interval documented at all — the first
+  // thing an inspector asks about when they see livestock in a crop field.
   {
     name: 'manure_harvest_interval',
     labelKey: 'events.soil.fields.manureHarvestInterval',
     valueType: 'enum',
     enumSource: 'manure_harvest_intervals',
     formatter: formatManureHarvestInterval,
-    visibleForSubtypes: ['OM'],
+    visibleForSubtypes: ['OM', 'GR'],
     surfaces: {
       modal: 'immediate',
       form: 'immediate',
@@ -433,9 +635,13 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
   },
   {
     name: 'manure_application_date',
+    // For GR this is the date the animals came OFF the block: the interval runs from
+    // the last day of grazing, not the first.
     labelKey: 'events.soil.fields.manureApplicationDate',
     valueType: 'date',
-    visibleForSubtypes: ['OM'],
+    // Raw ISO otherwise — see the note on corrective_action_date in generalEvent.ts.
+    formatter: formatDate,
+    visibleForSubtypes: ['OM', 'GR'],
     surfaces: {
       modal: 'secondary',
       form: 'immediate',
@@ -466,9 +672,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     // Accept both the raw enum value and the post-normalizer display label
     // (the registry normalizer may resolve enum → label before this runs).
     visibleWhen: (event) => {
-      const v = String(
-        (event as Record<string, unknown>).manure_treatment ?? ''
-      ).toLowerCase();
+      const v = String((event as Record<string, unknown>).manure_treatment ?? '').toLowerCase();
       return v === 'processed_5006' || v.includes('5006') || v.includes('processed');
     },
     surfaces: {
@@ -485,9 +689,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     // Accept both the raw enum value and the post-normalizer display label
     // (the registry normalizer may resolve enum → label before this runs).
     visibleWhen: (event) => {
-      const v = String(
-        (event as Record<string, unknown>).manure_treatment ?? ''
-      ).toLowerCase();
+      const v = String((event as Record<string, unknown>).manure_treatment ?? '').toLowerCase();
       return v === 'processed_5006' || v.includes('5006') || v.includes('processed');
     },
     surfaces: {
@@ -507,8 +709,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     surfaces: {
       card: 'immediate',
       modal: 'immediate',
-      form: 'immediate',
-      consumer_card: 'details'
+      form: 'immediate'
     }
   },
   {
@@ -518,8 +719,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     formatter: formatSoilTexture,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -529,8 +729,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     formatter: formatSoilMoisture,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
 
@@ -658,8 +857,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     visibleForSubtypes: ['NS'],
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -697,8 +895,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     carbonRelevant: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -709,8 +906,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     carbonRelevant: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -721,8 +917,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     carbonRelevant: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -732,8 +927,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     carbonRelevant: true,
     formatter: formatNumber,
     surfaces: {
-      modal: 'secondary',
-      consumer_card: 'details'
+      modal: 'secondary'
     }
   },
 
@@ -743,7 +937,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     labelKey: 'events.common.fields.weatherConditions',
     valueType: 'enum',
     formatter: formatWeatherConditions,
-    surfaces: { modal: 'details', form: 'secondary', consumer_card: 'details' }
+    surfaces: { modal: 'details', form: 'secondary' }
   },
   {
     // See weatherEvent.ts for the full rationale: modal surface omitted so
@@ -767,14 +961,14 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     labelKey: 'events.common.fields.growthStage',
     valueType: 'enum',
     enumSource: 'growth_stages',
-    surfaces: { modal: 'details', form: 'details', consumer_card: 'details' }
+    surfaces: { modal: 'details', form: 'details' }
   },
   {
     name: 'production_efficiency',
     labelKey: 'events.common.fields.productionEfficiency',
     valueType: 'enum',
     enumSource: 'production_efficiency',
-    surfaces: { modal: 'details', form: 'secondary', consumer_card: 'details' }
+    surfaces: { modal: 'details', form: 'secondary' }
   },
   {
     name: 'equipment_used',
@@ -782,8 +976,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     valueType: 'string',
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
 
@@ -794,8 +987,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     valueType: 'string',
     surfaces: {
       modal: 'details',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -804,8 +996,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     valueType: 'string',
     surfaces: {
       modal: 'details',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   }
 ];
@@ -821,7 +1012,16 @@ export const soilEventRegistry: EventRegistryEntry<SoilManagementSubtype, SoilDa
     { code: 'CC', labelKey: 'events.soil.subtypes.coverCrop', photoTier: 'essential' },
     { code: 'TI', labelKey: 'events.soil.subtypes.tillage', photoTier: 'optional' },
     { code: 'CO', labelKey: 'events.soil.subtypes.composting', photoTier: 'recommended' },
-    { code: 'GR', labelKey: 'events.soil.subtypes.grazing', photoTier: 'recommended' }
+    { code: 'GR', labelKey: 'events.soil.subtypes.grazing', photoTier: 'recommended' },
+    // §E-2 — matches ST's tier: the typed results are the record, a photo of the lab report
+    // corroborates it. Mirrors PHOTO_TIER_RECOMMENDED in transparency_calculator.py.
+    { code: 'LA', labelKey: 'events.soil.subtypes.labAnalysis', photoTier: 'recommended' },
+    // D4 — HD and NS existed on the backend and in this form but were absent from the registry,
+    // so nothing here described them. `photoTier` MIRRORS the backend: neither code appears in
+    // PHOTO_TIER_ESSENTIAL or PHOTO_TIER_RECOMMENDED, so no photo penalty applies and claiming
+    // a stricter tier here would misstate the score a farmer is about to receive.
+    { code: 'HD', labelKey: 'events.soil.subtypes.habitatDevelopment', photoTier: 'optional' },
+    { code: 'NS', labelKey: 'events.soil.subtypes.nestingShelter', photoTier: 'optional' }
   ],
   defaultPhotoTier: 'optional',
   fields: SOIL_FIELDS

@@ -20,12 +20,12 @@ import { MdPreview } from 'react-icons/md';
 import { ConsumerEventCard } from './ConsumerEventCard';
 import { hasMinimalPreviewData, type PreviewEventData } from '../../utils/eventPreviewUtils';
 import { normalizeFormEventData } from '../../utils/eventDataNormalizer';
+import { toConsumerVisibleEvent } from '../../utils/consumerDisplay';
+import { scanEventNotes } from '../../utils/consumerNoteScan';
 import { StandardizedEvent, EVENT_TYPE_NAMES } from '../../types/standardizedEvents';
 import { getConsumerEventDescription } from '../../utils/eventDescriptions';
 import {
   calculatePreviewVerificationLevel,
-  getPhotoRecommendations,
-  getPhotoGuidanceText,
   type VerificationLevel
 } from '../../utils/verificationTierHelpers';
 import { useIntl } from 'react-intl';
@@ -51,8 +51,16 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
   // Check if we have enough data for preview
   const hasEnoughData = hasMinimalPreviewData(activeEventType, formData);
 
-  // Calculate mock verification level based on form photos
-  const photoCount = formData?.album?.images?.length || 0;
+  // Calculate mock verification level based on form photos.
+  // D8 — the wizard holds photos in `acceptedFiles` (NewEvent.jsx sets it on upload and when
+  // mapping an existing album for edit); `album.images` is the SAVED shape and is absent during
+  // creation. Reading only the latter made the preview say "0 photos" no matter how many the
+  // farmer had just attached, so the verification tier it previewed was always the lowest one —
+  // telling them their documentation was weaker than what they were about to submit.
+  const photoCount =
+    (formData as { acceptedFiles?: unknown[] })?.acceptedFiles?.length ??
+    formData?.album?.images?.length ??
+    0;
   const hasGpsData = !!(formData?.latitude || formData?.longitude || formData?.gps_coordinates);
   const hasTimestamp = !!(formData?.timestamp || formData?.date);
 
@@ -63,16 +71,25 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
     activeEventType
   );
 
-  // Transform form data to standardized event format
+  // Transform form data to standardized event format.
+  //
+  // `toConsumerVisibleEvent` applies the SAME strip the backend applies before an event
+  // reaches an anonymous shopper (PublicHistorySerializer._CERTIFIER_ONLY_EVENT_FIELDS).
+  // Without it this modal renders raw wizard form data — which has never been through the
+  // public API — under the heading "How consumers will see this event", so growers were
+  // shown REI, PHI, applicator name, EPA registration number and the supplier chain as
+  // though shoppers saw them. They never did. A preview that overstates what is published
+  // is worse than no preview: it is the screen a farmer uses to decide what is safe to
+  // record, and it was telling them their private compliance data was public.
   const previewEvent: StandardizedEvent = hasEnoughData
-    ? {
+    ? toConsumerVisibleEvent({
         ...normalizeFormEventData(activeEventType, formData, {
           generateMockVerification: true
         }),
         // MVP Photo Verification: Add calculated verification level for preview
         verification_level: mockVerificationLevel,
         photo_verified_count: photoCount > 0 ? photoCount : undefined
-      }
+      })
     : ({
         id: 'preview-event',
         type: 'general',
@@ -81,6 +98,20 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
         event_type: activeEventType,
         verification_level: 'self_reported'
       } as StandardizedEvent);
+
+  // Free-text notes are published VERBATIM as "Farmer's Field Notes". Trazo strips
+  // worker-safety, commercial and regulatory data as structured fields, and the narrative
+  // walks straight past all of it — live records carried "REI 48 hours posted",
+  // "Score: 98.5%" and a neighbouring ranch by name onto the public page.
+  //
+  // This warns; it never edits, truncates or withholds. These are the grower's own words
+  // about their own farm and the most human part of the page — silently rewriting them (or
+  // silently dropping the note) would be worse than the exposure, because the farmer would
+  // never learn why. The decision stays with them.
+  const noteFindings = React.useMemo(
+    () => (hasEnoughData ? scanEventNotes(formData ?? {}) : []),
+    [hasEnoughData, formData]
+  );
 
   // Use official event type names to prevent mapping errors
   const eventTypeName =
@@ -178,8 +209,78 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                 overflow="hidden"
                 p={4}
               >
-                <ConsumerEventCard event={previewEvent as any} isFirst={true} isLast={true} />
+                <ConsumerEventCard event={previewEvent as any} isLast={true} />
               </Box>
+
+              {/* Field-notes publish notice. Advisory only — nothing is edited or withheld. */}
+              {hasEnoughData && (
+                <Box
+                  mt={4}
+                  p={3}
+                  borderRadius="md"
+                  bg={useColorModeValue(
+                    noteFindings.length > 0 ? 'orange.50' : 'gray.50',
+                    noteFindings.length > 0 ? 'orange.900' : 'gray.700'
+                  )}
+                  border="1px solid"
+                  borderColor={useColorModeValue(
+                    noteFindings.length > 0 ? 'orange.200' : 'gray.200',
+                    noteFindings.length > 0 ? 'orange.700' : 'gray.600'
+                  )}
+                >
+                  <HStack spacing={2} align="start">
+                    <Icon
+                      as={FaInfoCircle}
+                      color={noteFindings.length > 0 ? 'orange.500' : 'gray.500'}
+                      boxSize={4}
+                      mt="2px"
+                    />
+                    <VStack spacing={noteFindings.length > 0 ? 2 : 1} align="start" flex={1}>
+                      <Text fontSize="sm" fontWeight="semibold">
+                        {intl.formatMessage({
+                          id: 'events.noteScan.heading',
+                          defaultMessage: 'Your notes will be public'
+                        })}
+                      </Text>
+
+                      {noteFindings.length === 0 ? (
+                        // No findings is NOT a clean bill of health — the scanner is tuned for
+                        // precision and cannot recognise, say, a neighbour's farm name. Keep a
+                        // short standing reminder rather than implying "all clear".
+                        <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
+                          {intl.formatMessage({
+                            id: 'events.noteScan.alwaysPublic',
+                            defaultMessage:
+                              "Notes are published as written. Avoid worker names, other farms' names, prices and licence numbers unless you want shoppers to see them."
+                          })}
+                        </Text>
+                      ) : (
+                        <>
+                          <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
+                            {intl.formatMessage({
+                              id: 'events.noteScan.intro',
+                              defaultMessage:
+                                'Field notes appear on the product page exactly as you write them. A few things below may be worth a second look before you save — this is only a suggestion, nothing is changed or hidden.'
+                            })}
+                          </Text>
+                          <VStack spacing={1.5} align="start" pl={1}>
+                            {noteFindings.map((finding, i) => (
+                              <Box key={`${finding.category}-${i}`}>
+                                <Text fontSize="xs" fontWeight="semibold">
+                                  “{finding.match}”
+                                </Text>
+                                <Text fontSize="xs" color={mutedColor} lineHeight="1.4">
+                                  {intl.formatMessage({ id: finding.reasonKey })}
+                                </Text>
+                              </Box>
+                            ))}
+                          </VStack>
+                        </>
+                      )}
+                    </VStack>
+                  </HStack>
+                </Box>
+              )}
             </Box>
             {/* Preview Details
             {hasEnoughData && (

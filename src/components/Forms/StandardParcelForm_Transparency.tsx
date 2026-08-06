@@ -332,14 +332,36 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     return completed;
   };
 
+  // Names the field that is actually blocking, so the toast says "Enter the parcel
+  // area in acres" rather than the generic "complete all required fields".
+  const blockingReason = (stepNumber: number, formData: any): string | null => {
+    switch (stepNumber) {
+      case 0:
+        if (!formData.name || !formData.name.trim()) return 'Enter a parcel name.';
+        if (!(formData.area > 0)) return 'Enter the parcel area in acres.';
+        return null;
+      case 1:
+        return isValidPolygon() || boundarySkipped
+          ? null
+          : 'Draw the parcel boundary on the map, or choose to add it later.';
+      case 2:
+        return (formData.transparency_description || '').trim().length >= 3
+          ? null
+          : 'Add a short description of what grows on this parcel.';
+      default:
+        return null;
+    }
+  };
+
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
       const formData = watch();
+      const reason = blockingReason(currentStep, formData);
 
-      if (!validateStep(currentStep, formData)) {
+      if (reason) {
         toast({
-          title: 'Required Fields Missing',
-          description: `Please complete all required fields in ${steps[currentStep].title} before continuing.`,
+          title: 'Almost there',
+          description: reason,
           status: 'warning',
           duration: 4000,
           isClosable: true
@@ -448,6 +470,35 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     polygonRef.current = undefined;
   }, []);
 
+  // Resolver rejected the submit. Jump to the step owning the first bad field and
+  // name it — otherwise "Create Parcel" reads as a button that does nothing.
+  const STEP_BY_FIELD: Record<string, number> = {
+    name: 0,
+    area: 0,
+    transparency_description: 2,
+    sustainability_practices: 2,
+    consumer_story: 2,
+    images: 3
+  };
+
+  const onInvalidSubmit = (formErrors: Record<string, { message?: string }>) => {
+    const badField = Object.keys(formErrors)[0];
+    const stepIndex = STEP_BY_FIELD[badField];
+
+    if (stepIndex !== undefined && stepIndex !== currentStep) {
+      setCurrentStep(stepIndex);
+    }
+
+    toast({
+      title: 'Check your details',
+      description:
+        formErrors[badField]?.message || 'Some required information is missing or invalid.',
+      status: 'error',
+      duration: 5000,
+      isClosable: true
+    });
+  };
+
   const onSubmitForm = (data: TransparencyParcelFormData) => {
     try {
       const imageUrls = data.images && data.images.length > 0 ? data.images : uploadedImageUrls;
@@ -505,7 +556,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       />
 
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmitForm)}>
+        <form onSubmit={handleSubmit(onSubmitForm, onInvalidSubmit)}>
           {/* 🎯 STEP 0: Parcel Identity */}
           {currentStep === 0 && (
             <StandardCard title="Parcel Identity" subtitle="Basic information for transparency">
@@ -523,35 +574,77 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                       size="lg"
                     />
                   </StandardField>
 
+                  {/*
+                    Entered in ACRES, stored in hectares.
+                    Trazo's ICP is US specialty-crop farms — a California walnut grower
+                    says "42 acres", never "17 hectares". Asking for hectares made them
+                    convert by hand, which is friction and an error source. `Parcel.area`
+                    stays metric because the carbon calculations depend on it, so we
+                    convert on the way in and echo the stored hectares underneath.
+                  */}
                   <StandardField
-                    label="Area (hectares)"
+                    label={intl.formatMessage({
+                      id: 'parcel.areaAcres',
+                      defaultMessage: 'Area (acres)'
+                    })}
                     required
                     error={errors.area?.message}
-                    helpText="Area in hectares - provides scale context for consumers and carbon calculations"
+                    helpText={intl.formatMessage({
+                      id: 'parcel.areaAcresHelp',
+                      defaultMessage: 'Total planted area in acres. We store hectares for carbon math.'
+                    })}
                   >
                     <Controller
                       name="area"
                       control={methods.control}
-                      render={({ field }) => (
-                        <NumberInput
-                          value={field.value || 0}
-                          onChange={(_, num) => field.onChange(num || 0)}
-                          min={0.01}
-                          step={0.1}
-                          precision={2}
-                        >
-                          <NumberInputField borderRadius="lg" />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
-                      )}
+                      render={({ field }) => {
+                        const HECTARES_PER_ACRE = 0.404686;
+                        const acres = field.value ? field.value / HECTARES_PER_ACRE : 0;
+                        return (
+                          <>
+                            <NumberInput
+                              value={acres ? Number(acres.toFixed(2)) : 0}
+                              onChange={(_, num) =>
+                                field.onChange(num ? Number((num * HECTARES_PER_ACRE).toFixed(4)) : 0)
+                              }
+                              min={0}
+                              step={1}
+                              precision={2}
+                            >
+                              <NumberInputField
+                                borderRadius="lg"
+                                // 44px touch target: this is a required field a farmer
+                                // fills on a phone in the orchard.
+                                h="44px"
+                                placeholder={intl.formatMessage({
+                                  id: 'parcel.areaAcresPlaceholder',
+                                  defaultMessage: 'e.g., 42.5'
+                                })}
+                              />
+                              <NumberInputStepper>
+                                <NumberIncrementStepper />
+                                <NumberDecrementStepper />
+                              </NumberInputStepper>
+                            </NumberInput>
+                            {field.value > 0 && (
+                              <Text fontSize="xs" color="gray.500" mt={1}>
+                                {intl.formatMessage(
+                                  {
+                                    id: 'parcel.areaHectaresEquivalent',
+                                    defaultMessage: '= {ha} hectares'
+                                  },
+                                  { ha: Number(field.value).toFixed(2) }
+                                )}
+                              </Text>
+                            )}
+                          </>
+                        );
+                      }}
                     />
                   </StandardField>
                 </SimpleGrid>
@@ -569,7 +662,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}
                   >
                     Continue to Location
                   </StandardButton>
@@ -708,10 +800,17 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                 {!isValidPolygon() && (
                   <VStack spacing={1} align="center" pt={2}>
                     <StandardButton variant="ghost" size="sm" onClick={handleSkipBoundary}>
-                      {intl.formatMessage({ id: 'parcel.skipBoundary.action' })}
+                      {intl.formatMessage({
+                        id: 'parcel.skipBoundary.action',
+                        defaultMessage: 'Continue without boundary — draw it later'
+                      })}
                     </StandardButton>
                     <Text fontSize="xs" color="gray.500" textAlign="center" maxW="420px">
-                      {intl.formatMessage({ id: 'parcel.skipBoundary.caption' })}
+                      {intl.formatMessage({
+                        id: 'parcel.skipBoundary.caption',
+                        defaultMessage:
+                          "A field boundary improves the map on your consumer page, but it isn't required to start logging events."
+                      })}
                     </Text>
                   </VStack>
                 )}
@@ -732,7 +831,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(1)}
                     >
                       Continue to Story
                     </StandardButton>
@@ -758,7 +856,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     borderRadius="lg"
                     borderColor="gray.300"
                     _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                     size="lg"
                     minH="150px"
                   />
@@ -776,7 +874,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                       size="lg"
                       minH="120px"
                     />
@@ -793,7 +891,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                       size="lg"
                       minH="120px"
                     />
@@ -822,15 +920,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={(() => {
-                        const currentStepValid = validateStep(currentStep, watch());
-                        console.log('🔍 Button state:', {
-                          currentStep,
-                          currentStepValid,
-                          formData: watch()
-                        });
-                        return !currentStepValid;
-                      })()}
                     >
                       Continue to Documentation
                     </StandardButton>

@@ -12,15 +12,37 @@ import {
 } from '@chakra-ui/react';
 import { FiCheck, FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi';
 import { FormattedMessage } from 'react-intl';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useOnboardingChecklist } from '../../hooks/useOnboardingChecklist';
 import { useTourStore } from '../../store/tourStore';
 import { ChecklistVariant } from '../../tours/types';
 
 /**
+ * Route suffixes where the widget must not render.
+ *
+ * The widget is `position: fixed` in the bottom-right at zIndex 1000 — exactly where
+ * the create/finish wizards put their primary action ("Continue to Location",
+ * "Create Parcel", "Finish production"). It physically intercepted those clicks
+ * (verified with Playwright: the button was enabled but unclickable until the panel
+ * was dismissed). Because the widget only renders for new accounts, it blocked the
+ * first step of the very checklist it was showing.
+ *
+ * Every wizard route ends in one of these, so suffix matching is sufficient; earlier
+ * `/event/add` and `/production/add` entries were redundant with `/add`.
+ */
+const FORM_ROUTE_SUFFIXES = ['/add', '/edit', '/finish'];
+
+/** Trailing slashes appear on some routes (e.g. after finalize redirects), so normalise. */
+const isFormRoute = (pathname: string): boolean => {
+  const normalized = pathname.replace(/\/+$/, '');
+  return FORM_ROUTE_SUFFIXES.some((suffix) => normalized.endsWith(suffix));
+};
+
+/**
  * Floating onboarding checklist widget — bottom-right corner.
  * Shows Writer (5-item creation) or Viewer (4-item exploration) variant.
  * Collapsible, dismissible, auto-hides when all complete or after 30 days.
+ * Suppressed on form routes — see FORM_ROUTE_SUFFIXES above.
  */
 const OnboardingChecklist: React.FC = () => {
   const {
@@ -36,7 +58,9 @@ const OnboardingChecklist: React.FC = () => {
 
   const [isExpanded, setIsExpanded] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
   const trackPageVisit = useTourStore((s) => s.trackPageVisit);
+  const isOnFormRoute = isFormRoute(location.pathname);
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -49,7 +73,7 @@ const OnboardingChecklist: React.FC = () => {
   // hook count between renders, triggering the "change in order of Hooks" warning).
   const progressBg = useColorModeValue('gray.100', 'gray.700');
 
-  if (!isVisible || allComplete) return null;
+  if (!isVisible || allComplete || isOnFormRoute) return null;
 
   return (
     <Box

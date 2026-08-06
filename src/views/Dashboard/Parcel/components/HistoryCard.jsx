@@ -28,13 +28,11 @@ import {
 import {
   FaSeedling,
   FaChartLine,
-  FaLeaf,
   FaPlus,
   FaFilter,
   FaSortAmountDown,
   FaCalendarAlt,
   FaAward,
-  FaExclamationTriangle,
   FaEye,
   FaEdit,
   FaArchive,
@@ -52,6 +50,22 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { useUserRole } from 'hooks/useUserRole';
+
+// Sentinels that park unscored (unfinished) productions at the END of either sort direction.
+// Scores are 0-100, so these can never collide with a real value.
+const UNSCORED_LAST_DESC = -1;
+const UNSCORED_LAST_ASC = 101;
+
+/**
+ * The one value this card sorts and averages by: the backend transparency score of a FINISHED
+ * season. Unfinished seasons have no meaningful score (the metric is measured against a whole
+ * season's expected events) and display none, so they sort to the end via `fallback`.
+ */
+function sortableScore(production, fallback) {
+  if (!production?.finish_date) return fallback;
+  const score = production.transparency_score;
+  return score === undefined || score === null ? fallback : score;
+}
 
 const HistoryCard = ({ amount }) => {
   const intl = useIntl();
@@ -125,46 +139,33 @@ const HistoryCard = ({ amount }) => {
       return startDate <= now && finishDay >= today;
     }).length;
 
-    // Calculate average transparency score using TRANSPARENCY-FIRST approach (per CLAUDE.md)
-    const avgTransparencyScore = data.reduce((sum, p) => {
-      const extraData = p.extra_data || {};
-      let score = null;
-
-      // PRIMARY: Backend transparency_score (calculated with anti-gaming measures)
-      if (p.transparency_score !== undefined && p.transparency_score !== null) {
-        score = p.transparency_score;
-      }
-      // SECONDARY: Extra data transparency_score (fallback)
-      else if (
-        extraData.transparency_score !== undefined &&
-        extraData.transparency_score !== null
-      ) {
-        score = extraData.transparency_score;
-      }
-      // TERTIARY: Carbon score (only when no transparency score available)
-      else if (extraData.carbon_score !== undefined && extraData.carbon_score !== null) {
-        score = extraData.carbon_score;
-      }
-      // CRITICAL: No hardcoded fallbacks - only use real backend data
-      else {
-        return sum; // Skip productions without real backend scores
-      }
-
-      return sum + score;
-    }, 0);
-
-    // Only calculate average if we have productions with actual scores
-    const productionsWithScores = data.filter((p) => {
-      const extraData = p.extra_data || {};
-      return (
-        (p.transparency_score !== undefined && p.transparency_score !== null) ||
-        (extraData.transparency_score !== undefined && extraData.transparency_score !== null) ||
-        (extraData.carbon_score !== undefined && extraData.carbon_score !== null)
-      );
-    });
+    // Average transparency score across FINISHED, PUBLISHED seasons, from the backend column only.
+    //
+    // Matches `EstablishmentDashboardMetricsSerializer.get_metrics_for_establishment` exactly:
+    // `published=True, finish_date__isnull=False`. Both predicates matter — the payload contains
+    // finished-but-unpublished seasons, which the backend average excludes, so filtering on
+    // `finish_date` alone would have reproduced the very cross-surface disagreement this change
+    // set out to remove (an earlier draft of this comment claimed parity the filter did not have).
+    //
+    // This card previously averaged every production carrying any score-ish value — including open
+    // seasons and including `extra_data.carbon_score`, a different measurement entirely.
+    //
+    // NB the per-row score below gates on `isCompleted` only, not `published`: an unpublished
+    // finished season is still the farmer's own record and is fine to show them. It is the
+    // AGGREGATE that must agree with the farm dashboard.
+    const productionsWithScores = data.filter(
+      (p) =>
+        p.published === true &&
+        !!p.finish_date &&
+        p.transparency_score !== undefined &&
+        p.transparency_score !== null
+    );
 
     const avgScore =
-      productionsWithScores.length > 0 ? avgTransparencyScore / productionsWithScores.length : null;
+      productionsWithScores.length > 0
+        ? productionsWithScores.reduce((sum, p) => sum + p.transparency_score, 0) /
+          productionsWithScores.length
+        : null;
 
     const totalEmissions = data.reduce((sum, p) => {
       const extraData = p.extra_data || {};
@@ -215,18 +216,18 @@ const HistoryCard = ({ amount }) => {
       filtered.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
     } else if (sortBy === 'oldest') {
       filtered.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+      // Sort by the SAME value the card displays: the backend column, finished seasons only.
+      // These comparators kept the `extra_data.transparency_score ?? extra_data.carbon_score`
+      // fallback chain after it was removed from the display (2026-08-04), so "sort by score"
+      // ordered the list by numbers that were no longer on screen — including carbon values for
+      // productions whose visible score was blank.
     } else if (sortBy === 'scoreHigh') {
-      filtered.sort((a, b) => {
-        const scoreA = a.transparency_score ?? a.extra_data?.transparency_score ?? a.extra_data?.carbon_score ?? -1;
-        const scoreB = b.transparency_score ?? b.extra_data?.transparency_score ?? b.extra_data?.carbon_score ?? -1;
-        return scoreB - scoreA;
-      });
+      filtered.sort((a, b) => sortableScore(b, UNSCORED_LAST_DESC) - sortableScore(a, UNSCORED_LAST_DESC));
     } else if (sortBy === 'scoreLow') {
-      filtered.sort((a, b) => {
-        const scoreA = a.transparency_score ?? a.extra_data?.transparency_score ?? a.extra_data?.carbon_score ?? Infinity;
-        const scoreB = b.transparency_score ?? b.extra_data?.transparency_score ?? b.extra_data?.carbon_score ?? Infinity;
-        return scoreA - scoreB;
-      });
+      // Finite sentinel, not Infinity: two unscored productions would compare as
+      // `Infinity - Infinity` → NaN. The spec coerces a NaN comparator result to +0 so it does not
+      // throw, but a comparator that can produce NaN is a trap for the next reader.
+      filtered.sort((a, b) => sortableScore(a, UNSCORED_LAST_ASC) - sortableScore(b, UNSCORED_LAST_ASC));
     }
 
     return filtered;
@@ -589,34 +590,34 @@ const HistoryCard = ({ amount }) => {
                             isCompleted = false;
                           }
 
-                          // TRANSPARENCY-FIRST: Use backend transparency_score (per CLAUDE.md)
+                          // Transparency score: FINISHED seasons only, backend column only.
+                          //
+                          // Two bugs were fixed here on 2026-08-04, both of which made this card
+                          // disagree with the transparency dashboard for the same production on
+                          // the same day:
+                          //
+                          // 1. A score was shown for ACTIVE productions. The transparency
+                          //    dashboard deliberately renders "—" while a season is open, because
+                          //    the score is measured against the events expected across a WHOLE
+                          //    season — mid-season it is guaranteed to read low and means nothing.
+                          //    This card published "80/100" for the same open season. The farmer
+                          //    sees a number here and a dash there.
+                          //
+                          // 2. The `extra_data.transparency_score` and `extra_data.carbon_score`
+                          //    fallbacks. The stored column is known to drift from the calculator,
+                          //    and a CARBON score rendered under a "TRANSPARENCY SCORE" label is
+                          //    simply a different measurement wearing the wrong label.
+                          //
+                          // TransparencyCalculator is the single source of truth. If the backend
+                          // has no score for a finished season, show nothing rather than guess.
                           let transparencyScore = null;
-                          let carbonScore = null;
 
-                          // PRIMARY: Backend transparency_score (calculated with anti-gaming measures)
                           if (
+                            isCompleted &&
                             production.transparency_score !== undefined &&
                             production.transparency_score !== null
                           ) {
                             transparencyScore = production.transparency_score;
-                          }
-
-                          // SECONDARY: Extra data transparency_score (fallback)
-                          if (
-                            transparencyScore === null &&
-                            extraData.transparency_score !== undefined &&
-                            extraData.transparency_score !== null
-                          ) {
-                            transparencyScore = extraData.transparency_score;
-                          }
-
-                          // TERTIARY: Carbon Score (only when no transparency score available)
-                          if (
-                            transparencyScore === null &&
-                            extraData.carbon_score !== undefined &&
-                            extraData.carbon_score !== null
-                          ) {
-                            carbonScore = extraData.carbon_score;
                           }
 
                           // CRITICAL: No hardcoded fallbacks - show only real backend data
@@ -626,82 +627,12 @@ const HistoryCard = ({ amount }) => {
                           // EPA/USDA factors used (methodology indicator, NOT third-party verification)
                           const usesUSDAFactors = Boolean(extraData.usda_factors_used || extraData.usda_factors_based);
 
-                          // TRANSPARENCY-FIRST: Use transparency score primarily, carbon as secondary
-                          const getTransparencyImpactLevel = () => {
-                            const score = transparencyScore || carbonScore;
-                            if (!score) return null; // No hardcoded fallbacks
-
-                            if (score >= 85)
-                              return {
-                                level: intl.formatMessage({ id: 'parcel.levelExcellent' }),
-                                color: 'green.500',
-                                icon: FaAward,
-                                type: transparencyScore ? 'Transparency' : 'Carbon',
-                                score: score
-                              };
-                            if (score >= 70)
-                              return {
-                                level: intl.formatMessage({ id: 'parcel.levelGood' }),
-                                color: 'blue.500',
-                                icon: FaLeaf,
-                                type: transparencyScore ? 'Transparency' : 'Carbon',
-                                score: score
-                              };
-                            if (score >= 55)
-                              return {
-                                level: intl.formatMessage({ id: 'parcel.levelFair' }),
-                                color: 'yellow.500',
-                                icon: FaSeedling,
-                                type: transparencyScore ? 'Transparency' : 'Carbon',
-                                score: score
-                              };
-                            return {
-                              level: intl.formatMessage({ id: 'parcel.levelImproving' }),
-                              color: 'orange.500',
-                              icon: FaExclamationTriangle,
-                              type: transparencyScore ? 'Transparency' : 'Carbon',
-                              score: score
-                            };
-                          };
-
-                          const impactData = getTransparencyImpactLevel();
-
-                          // Define carbonImpact for carbon score fallback display
-                          const carbonImpact =
-                            carbonScore !== null
-                              ? {
-                                  level:
-                                    carbonScore >= 85
-                                      ? intl.formatMessage({ id: 'parcel.levelExcellent' })
-                                      : carbonScore >= 70
-                                      ? intl.formatMessage({ id: 'parcel.levelGood' })
-                                      : carbonScore >= 55
-                                      ? intl.formatMessage({ id: 'parcel.levelFair' })
-                                      : intl.formatMessage({ id: 'parcel.levelImproving' }),
-                                  color:
-                                    carbonScore >= 85
-                                      ? 'green.500'
-                                      : carbonScore >= 70
-                                      ? 'blue.500'
-                                      : carbonScore >= 55
-                                      ? 'yellow.500'
-                                      : 'orange.500',
-                                  icon:
-                                    carbonScore >= 85
-                                      ? FaAward
-                                      : carbonScore >= 70
-                                      ? FaLeaf
-                                      : carbonScore >= 55
-                                      ? FaSeedling
-                                      : FaExclamationTriangle
-                                }
-                              : null;
-
-                          const getScoreColor = (score) => {
-                            if (score >= 80) return 'green';
-                            if (score >= 60) return 'yellow';
-                            return 'orange';
-                          };
+                          // `getTransparencyImpactLevel()` and `carbonImpact` were removed
+                          // 2026-08-04 along with the carbon fallback that fed them. Both graded
+                          // a season Excellent / Good / Fair / Improving — and, worse, did so
+                          // from `transparencyScore || carbonScore`, so a CARBON number could be
+                          // labelled a transparency verdict. The card shows the finished season's
+                          // percentage; the transparency page explains what is missing.
 
                           const formatDateRange = (startDate, endDate) => {
                             const start = new Date(startDate).toLocaleDateString('en-US', {
@@ -1073,116 +1004,32 @@ const HistoryCard = ({ amount }) => {
                                         </VStack>
                                       </HStack>
                                       <VStack align="end" spacing={0}>
+                                        {/* "%" not "/100", and no HIGH/MEDIUM/BASIC badge.
+                                            The value is a percentage everywhere else in the
+                                            product; "/100" made it look like a different,
+                                            points-based measure. The uppercase badge was a
+                                            third grade ladder (after the A-F letters removed
+                                            2026-08-02 and the tier badges removed 2026-08-04) —
+                                            same self-authored verdict, louder typography. */}
                                         <Text
                                           fontSize={{ base: 'lg', md: 'xl' }}
                                           fontWeight="700"
                                           color="green.500"
                                           lineHeight="1"
                                         >
-                                          {transparencyScore}
-                                          <Text
-                                            as="span"
-                                            fontSize="xs"
-                                            color="gray.500"
-                                            fontWeight="400"
-                                          >
-                                            /100
-                                          </Text>
+                                          {transparencyScore}%
                                         </Text>
-                                        <Badge
-                                          colorScheme="green"
-                                          variant="subtle"
-                                          fontSize="xs"
-                                          fontWeight="600"
-                                          px={2}
-                                          py={0.5}
-                                          borderRadius="full"
-                                          textTransform="uppercase"
-                                          letterSpacing="wide"
-                                        >
-                                          {transparencyScore >= 80
-                                            ? intl.formatMessage({ id: 'parcel.transparencyHigh' })
-                                            : transparencyScore >= 60
-                                            ? intl.formatMessage({ id: 'parcel.transparencyMedium' })
-                                            : intl.formatMessage({ id: 'parcel.transparencyBasic' })}
-                                        </Badge>
                                       </VStack>
                                     </HStack>
                                   )}
 
-                                  {/* Carbon Score - Secondary Display (Progressive Disclosure) */}
-                                  {carbonScore !== null &&
-                                    transparencyScore === null &&
-                                    carbonImpact && (
-                                      <HStack
-                                        justify="space-between"
-                                        align="center"
-                                        pt={2}
-                                        borderTop="1px solid"
-                                        borderColor={useColorModeValue('gray.200', 'gray.600')}
-                                      >
-                                        <HStack spacing={2}>
-                                          <Box
-                                            p={1.5}
-                                            bg={`${carbonImpact.color.split('.')[0]}.50`}
-                                            borderRadius="md"
-                                            border="1px solid"
-                                            borderColor={`${carbonImpact.color.split('.')[0]}.200`}
-                                          >
-                                            <Icon
-                                              as={carbonImpact.icon}
-                                              color={carbonImpact.color}
-                                              boxSize={3}
-                                            />
-                                          </Box>
-                                          <VStack align="start" spacing={0}>
-                                            <Text
-                                              fontSize="xs"
-                                              color="gray.500"
-                                              fontWeight="600"
-                                              textTransform="uppercase"
-                                              letterSpacing="wide"
-                                            >
-                                              {intl.formatMessage({ id: 'parcel.transparencyScoreLabel' })}
-                                            </Text>
-                                            <Text fontSize="xs" color="gray.600">
-                                              {intl.formatMessage({ id: 'parcel.agriculturalPractices' })}
-                                            </Text>
-                                          </VStack>
-                                        </HStack>
-                                        <VStack align="end" spacing={0}>
-                                          <Text
-                                            fontSize="xl"
-                                            fontWeight="700"
-                                            color={carbonImpact.color}
-                                            lineHeight="1"
-                                          >
-                                            {carbonScore}
-                                            <Text
-                                              as="span"
-                                              fontSize="xs"
-                                              color="gray.500"
-                                              fontWeight="400"
-                                            >
-                                              /100
-                                            </Text>
-                                          </Text>
-                                          <Badge
-                                            colorScheme={carbonImpact.color.split('.')[0]}
-                                            variant="subtle"
-                                            fontSize="xs"
-                                            fontWeight="600"
-                                            px={2}
-                                            py={0.5}
-                                            borderRadius="full"
-                                            textTransform="uppercase"
-                                            letterSpacing="wide"
-                                          >
-                                            {carbonImpact.level}
-                                          </Badge>
-                                        </VStack>
-                                      </HStack>
-                                    )}
+                                  {/* The carbon-score fallback block was removed 2026-08-04. When a
+                                      production had no transparency score, it rendered
+                                      `extra_data.carbon_score` underneath the literal label
+                                      "TRANSPARENCY SCORE / Agricultural Practices" — one
+                                      measurement presented as another, with its own /100 and its
+                                      own Excellent/Good/Fair badge. Carbon has its own row on this
+                                      card and its own section on the transparency page. */}
                                 </VStack>
                               </CardBody>
                             </Card>

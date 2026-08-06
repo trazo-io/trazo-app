@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
+import { useIntl } from 'react-intl';
 import { Box, VStack, HStack, Text, Icon, useColorModeValue } from '@chakra-ui/react';
 import { FaCamera } from 'react-icons/fa';
 import {
   getPhotoRecommendations,
-  getPhotoGuidanceText,
+  getPhotoGuidanceParts,
   getEnhancedPhotoRecommendations,
   PhotoRecommendation,
   SubtypePhotoRecommendation
 } from '../../utils/verificationTierHelpers';
+import { localizePhotoGuidance } from '../../utils/photoGuidance.es';
 
 interface PhotoRecommendationsBoxProps {
   activeEventType: number;
@@ -42,6 +44,7 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
   subtype
 }) => {
   // Get subtype-specific or event-level recommendations with memoization
+  const intl = useIntl();
   const photoRecs = useMemo(
     () => getEnhancedPhotoRecommendations(activeEventType, subtype),
     [activeEventType, subtype]
@@ -54,10 +57,40 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
   const isSubtypeSpecific = subtype && 'subtypeCode' in photoRecs;
   const subtypeRec = isSubtypeSpecific ? (photoRecs as SubtypePhotoRecommendation) : null;
 
-  // Get guidance text (for non-subtype events)
-  const guidanceText = !isSubtypeSpecific
-    ? getPhotoGuidanceText(activeEventType, photoCount)
-    : null;
+  // Guidance text for non-subtype events. Built from PARTS via ICU rather than a pre-composed
+  // English sentence, so the wording and order follow the locale; each part is then mapped
+  // through the es-419 dictionary.
+  const tr = (value: string) => localizePhotoGuidance(value, intl.locale);
+  const parts = !isSubtypeSpecific ? getPhotoGuidanceParts(activeEventType, photoCount) : null;
+  const guidanceText = !parts
+    ? null
+    : parts.stage === 0
+    ? intl.formatMessage(
+        {
+          id: 'events.photos.guidanceNone',
+          defaultMessage: 'To verify this {activity}, upload photos showing: {examples}'
+        },
+        {
+          activity: tr(parts.eventTypeName),
+          examples: parts.examples.map(tr).join(', ')
+        }
+      )
+    : parts.stage === 1
+    ? intl.formatMessage(
+        {
+          id: 'events.photos.guidanceOne',
+          defaultMessage:
+            '{tier} Add another photo from a different angle for stronger verification.'
+        },
+        { tier: tr(parts.tierText) }
+      )
+    : intl.formatMessage(
+        {
+          id: 'events.photos.guidanceMany',
+          defaultMessage: '{tier} Excellent documentation for this activity!'
+        },
+        { tier: tr(parts.tierText) }
+      );
 
   // Trazo green color scheme (professional agricultural branding)
   const bgColor = useColorModeValue('green.50', 'green.900');
@@ -75,9 +108,10 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
       p={4}
       boxShadow="sm"
       role="region"
-      aria-label={`Photo guidance for ${
-        subtypeRec?.subtypeName || (photoRecs as PhotoRecommendation).eventType
-      }`}
+      aria-label={intl.formatMessage(
+        { id: 'events.photos.guidanceFor', defaultMessage: 'Photo guidance for {activity}' },
+        { activity: tr(subtypeRec?.subtypeName || (photoRecs as PhotoRecommendation).eventType) }
+      )}
     >
       <VStack spacing={3} align="stretch">
         {/* Title with Icon - No emoji, clean professional design */}
@@ -85,15 +119,21 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
           <Icon as={FaCamera} color={iconColor} boxSize={5} />
           <Text fontSize="sm" fontWeight="semibold" color={textPrimary}>
             {subtypeRec
-              ? `${subtypeRec.subtypeName} - Photo Guidance`
-              : `Photo Guidance for ${(photoRecs as PhotoRecommendation).eventType}`}
+              ? intl.formatMessage(
+                  { id: 'events.photos.guidanceTitle', defaultMessage: '{activity} — photo guidance' },
+                  { activity: tr(subtypeRec.subtypeName) }
+                )
+              : intl.formatMessage(
+                  { id: 'events.photos.guidanceFor', defaultMessage: 'Photo guidance for {activity}' },
+                  { activity: tr((photoRecs as PhotoRecommendation).eventType) }
+                )}
           </Text>
         </HStack>
 
         {/* Subtype-Specific or Event-Level Guidance Text */}
         {subtypeRec ? (
           <Text fontSize="xs" color={textSecondary} lineHeight="1.6">
-            {subtypeRec.guidanceText}
+            {tr(subtypeRec.guidanceText)}
           </Text>
         ) : (
           guidanceText && (
@@ -107,12 +147,15 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
         {photoCount === 0 && (
           <Box>
             <Text fontSize="xs" fontWeight="semibold" color={textPrimary} mb={1}>
-              Example photos:
+              {intl.formatMessage({
+                id: 'events.photos.examples',
+                defaultMessage: 'Example photos:'
+              })}
             </Text>
             <VStack spacing={1} align="start" pl={3}>
               {photoRecs.examples.slice(0, 3).map((example, idx) => (
                 <Text key={idx} fontSize="xs" color={textSecondary}>
-                  • {example}
+                  • {tr(example)}
                 </Text>
               ))}
             </VStack>
@@ -124,14 +167,14 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
           photoCount < 2 && (
             <Box>
               <Text fontSize="xs" fontWeight="semibold" color={textPrimary} mb={1}>
-                Tips:
+                {intl.formatMessage({ id: 'events.photos.tips', defaultMessage: 'Tips:' })}
               </Text>
               <VStack spacing={1} align="start" pl={3}>
                 {(subtypeRec?.tips || (photoRecs as PhotoRecommendation).tips)
                   ?.slice(0, 2)
                   .map((tip, idx) => (
                     <Text key={idx} fontSize="xs" color={textSecondary}>
-                      • {tip}
+                      • {tr(tip)}
                     </Text>
                   ))}
               </VStack>

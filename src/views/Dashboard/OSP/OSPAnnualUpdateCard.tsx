@@ -4,16 +4,19 @@
  * (mirrors StateOrganicRegistrationCard). Files an annual update against the current OSP
  * version (prior_osp). Mounted in OSPView.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Badge,
   Box,
   Checkbox,
+  Divider,
   FormControl,
+  FormErrorMessage,
   FormLabel,
   HStack,
   Icon,
   Input,
+  SimpleGrid,
   Text,
   Textarea,
   useToast,
@@ -43,6 +46,124 @@ const linesToList = (text: string): string[] =>
     .map((l) => l.trim())
     .filter(Boolean);
 
+/**
+ * Mirrors OSP_SECTION_KEYS in certifications/models.py — the six § 205.201(a)(1)-(6)
+ * sections. Order matters: it is the order a certifier reads them in.
+ */
+const OSP_SECTION_KEYS = [
+  'practices_procedures',
+  'inputs_list',
+  'monitoring_plan',
+  'recordkeeping_description',
+  'commingling_barriers',
+  'additional_certifier_info'
+] as const;
+
+const SECTION_LABELS: Record<string, { id: string; defaultMessage: string }> = {
+  practices_procedures: {
+    id: 'osp.annual.section.practicesProcedures',
+    defaultMessage: 'Practices & procedures'
+  },
+  inputs_list: { id: 'osp.annual.section.inputsList', defaultMessage: 'Inputs list' },
+  monitoring_plan: { id: 'osp.annual.section.monitoringPlan', defaultMessage: 'Monitoring plan' },
+  recordkeeping_description: {
+    id: 'osp.annual.section.recordkeeping',
+    defaultMessage: 'Recordkeeping'
+  },
+  commingling_barriers: {
+    id: 'osp.annual.section.comminglingBarriers',
+    defaultMessage: 'Commingling barriers'
+  },
+  additional_certifier_info: {
+    id: 'osp.annual.section.additionalCertifierInfo',
+    defaultMessage: 'Additional certifier info'
+  }
+};
+
+const emptyAttestation = (): Record<string, boolean> =>
+  OSP_SECTION_KEYS.reduce((acc, key) => ({ ...acc, [key]: false }), {});
+
+/**
+ * The fields a save error can be attributed to. Anything the API rejects under a key
+ * outside this list has no input to attach to, so it goes to the toast body instead of
+ * being dropped.
+ */
+const FIELD_KEYS = ['reporting_year', 'changes_summary', 'additions', 'deletions'] as const;
+type FieldKey = (typeof FIELD_KEYS)[number];
+type FieldErrors = Partial<Record<FieldKey, string>>;
+
+/**
+ * Mirrors PLACEHOLDER_VALUES / MIN_CHANGE_ENTRY_CHARS in
+ * trazo-back/certifications/serializers.py. Duplicated on purpose: this filing goes to a
+ * certifier, and the farmer should see "that is placeholder text" next to the box they
+ * typed it in, not after a round trip that names a snake_case field. The backend stays
+ * the authority — anything this copy misses still comes back as a field error and lands
+ * in the same place. Keeping this copy *looser* than the backend is safe; stricter is not.
+ */
+const PLACEHOLDER_VALUES = new Set([
+  'test',
+  'tests',
+  'testing',
+  'tbd',
+  'todo',
+  'n/a',
+  'na',
+  'none',
+  'asdf',
+  'qwerty',
+  'xxx',
+  'aaa',
+  'foo',
+  'bar',
+  'sample',
+  'placeholder',
+  'prueba'
+]);
+
+const MIN_CHANGE_ENTRY_CHARS = 4;
+
+/**
+ * True when *every* word is scratch input. Whole-string matching let "test test" through,
+ * which is the exact failure this guard exists to stop. Token matching still clears
+ * "Latest soil test results", where only one word is a placeholder.
+ */
+const looksLikePlaceholder = (value: string): boolean => {
+  const tokens = value
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    // Strip surrounding punctuation but keep "/" so "n/a" survives.
+    .map((token) => token.replace(/^[^\p{L}\p{N}/]+|[^\p{L}\p{N}/]+$/gu, ''))
+    .filter(Boolean);
+  return tokens.length > 0 && tokens.every((token) => PLACEHOLDER_VALUES.has(token));
+};
+
+const quoteAll = (items: string[]): string => items.map((item) => `"${item}"`).join(', ');
+
+/**
+ * Splits a DRF error payload into per-field messages and everything else. `err.data` is
+ * absent on a transport failure (RTK Query FETCH_ERROR), which used to stringify to
+ * "[object Object]" in the toast — hence the null return rather than a String(err).
+ */
+const parseApiErrors = (err: unknown): { fields: FieldErrors; general: string | null } => {
+  const fields: FieldErrors = {};
+  const general: string[] = [];
+  const payload = (err as { data?: unknown })?.data;
+  if (typeof payload === 'string') {
+    general.push(payload);
+  } else if (payload && typeof payload === 'object') {
+    Object.entries(payload as Record<string, unknown>).forEach(([key, msgs]) => {
+      const text = Array.isArray(msgs) ? msgs.map(String).join(' ') : String(msgs);
+      if ((FIELD_KEYS as readonly string[]).includes(key)) {
+        fields[key as FieldKey] = text;
+      } else {
+        general.push(text);
+      }
+    });
+  }
+  return { fields, general: general.length ? general.join(' ') : null };
+};
+
 const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, currentYear }) => {
   const intl = useIntl();
   const toast = useToast();
@@ -59,50 +180,211 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
     changes_summary: '',
     additions: '',
     deletions: '',
-    submitted: false
+    submitted: false,
+    sections_unchanged: emptyAttestation()
   });
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const fieldRefs = useRef<Partial<Record<FieldKey, HTMLDivElement | null>>>({});
 
   useEffect(() => {
     setForm((f) => ({ ...f, reporting_year: f.reporting_year || String(currentYear) }));
   }, [currentYear]);
 
-  const set = (key: string, value: unknown) => setForm((prev) => ({ ...prev, [key]: value }));
+  const set = (key: string, value: unknown) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    // Clear the field's error as soon as it is touched. Leaving a red border under a box
+    // the farmer has already rewritten reads as "still wrong".
+    setFieldErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key as FieldKey];
+      return next;
+    });
+  };
+
+  /**
+   * The card sits well below the fold, so a toast alone leaves the farmer looking at a
+   * message that names a field they cannot see (and, before this, named it in snake_case).
+   */
+  const focusFirstError = (errors: FieldErrors) => {
+    const first = FIELD_KEYS.find((key) => errors[key]);
+    fieldRefs.current[first as FieldKey]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  /** Per-entry problems for the additions/deletions textareas, or undefined if clean. */
+  const entryListError = (raw: string): string | undefined => {
+    const items = linesToList(raw);
+    const placeholders = items.filter((item) => looksLikePlaceholder(item));
+    const tooShort = items.filter(
+      (item) => !looksLikePlaceholder(item) && item.length < MIN_CHANGE_ENTRY_CHARS
+    );
+    const parts: string[] = [];
+    if (placeholders.length) {
+      parts.push(
+        intl.formatMessage(
+          {
+            id: 'osp.annual.error.entriesPlaceholder',
+            defaultMessage:
+              'Placeholder text, not a change: {entries}. Replace or delete {count, plural, one {that line} other {those lines}}.'
+          },
+          { entries: quoteAll(placeholders), count: placeholders.length }
+        )
+      );
+    }
+    if (tooShort.length) {
+      parts.push(
+        intl.formatMessage(
+          {
+            id: 'osp.annual.error.entriesTooShort',
+            defaultMessage:
+              'Too short to describe a change: {entries}. Use at least {min} characters, or delete {count, plural, one {that line} other {those lines}}.'
+          },
+          { entries: quoteAll(tooShort), min: MIN_CHANGE_ENTRY_CHARS, count: tooShort.length }
+        )
+      );
+    }
+    return parts.length ? parts.join(' ') : undefined;
+  };
+
+  const validate = (year: number): FieldErrors => {
+    const errors: FieldErrors = {};
+    if (!year || year < 2000 || year > 2100) {
+      errors.reporting_year = intl.formatMessage({
+        id: 'osp.annual.invalidYear',
+        defaultMessage: 'Enter a reporting year between 2000 and 2100.'
+      });
+    }
+    if (looksLikePlaceholder(form.changes_summary)) {
+      errors.changes_summary = intl.formatMessage(
+        {
+          id: 'osp.annual.error.summaryPlaceholder',
+          defaultMessage:
+            'Describe the actual changes for {year}, or state that there were none. Your certifier reads this text as filed.'
+        },
+        { year: year || form.reporting_year }
+      );
+    }
+    const additions = entryListError(form.additions);
+    if (additions) errors.additions = additions;
+    const deletions = entryListError(form.deletions);
+    if (deletions) errors.deletions = deletions;
+    return errors;
+  };
+
+  const setSection = (key: string, value: boolean) =>
+    setForm((prev) => ({
+      ...prev,
+      sections_unchanged: { ...prev.sections_unchanged, [key]: value }
+    }));
+
+  /**
+   * The DB enforces unique(prior_osp, reporting_year). Detect the collision from the
+   * already-loaded list so the farmer gets "you already filed 2026, edit it?" instead of
+   * a raw IntegrityError in a toast.
+   */
+  const duplicateForYear = useMemo(() => {
+    const year = parseInt(form.reporting_year, 10);
+    if (!year) return null;
+    // Excludes the record being edited: re-saving 2026 on the 2026 filing is not a
+    // collision, but re-pointing the 2025 filing at 2026 is.
+    return updates.find((u) => u.reporting_year === year && u.id !== editingId) ?? null;
+  }, [updates, form.reporting_year, editingId]);
 
   const startEdit = (u: OSPAnnualUpdate) => {
     setEditingId(u.id);
+    setFieldErrors({});
     setForm({
       reporting_year: String(u.reporting_year ?? currentYear),
       changes_summary: u.changes_summary || '',
       additions: Array.isArray(u.additions) ? u.additions.map(String).join('\n') : '',
       deletions: Array.isArray(u.deletions) ? u.deletions.map(String).join('\n') : '',
-      submitted: Boolean(u.submitted_at)
+      submitted: Boolean(u.submitted_at),
+      sections_unchanged: { ...emptyAttestation(), ...(u.sections_unchanged_attestation || {}) }
     });
   };
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({ reporting_year: String(currentYear), changes_summary: '', additions: '', deletions: '', submitted: false });
+    setFieldErrors({});
+    setForm({
+      reporting_year: String(currentYear),
+      changes_summary: '',
+      additions: '',
+      deletions: '',
+      submitted: false,
+      sections_unchanged: emptyAttestation()
+    });
   };
 
   const handleSave = async () => {
     if (!companyId || !farmId || ospId == null) return;
+    setFieldErrors({});
     const year = parseInt(form.reporting_year, 10);
-    if (!year || year < 2000 || year > 2100) {
+    // Run the same checks the serializer runs, before spending a round trip on a payload
+    // that is already known to be rejected.
+    const clientErrors = validate(year);
+    if (Object.keys(clientErrors).length) {
+      setFieldErrors(clientErrors);
+      focusFirstError(clientErrors);
       toast({
         status: 'warning',
+        isClosable: true,
+        position: 'top',
         title: intl.formatMessage({
-          id: 'osp.annual.invalidYear',
-          defaultMessage: 'Enter a valid reporting year'
+          id: 'osp.annual.toast.checkFields',
+          defaultMessage: 'Nothing saved yet — check the highlighted fields'
         })
       });
       return;
     }
+    // Filing the same year twice violates unique(prior_osp, reporting_year). Resolve it
+    // here rather than letting the DB reject the write.
+    if (duplicateForYear) {
+      if (editingId == null) {
+        // Creating a year that already exists: load the existing filing so the farmer
+        // continues on the right record.
+        startEdit(duplicateForYear);
+        toast({
+          status: 'info',
+          title: intl.formatMessage({
+            id: 'osp.annual.toast.alreadyFiled',
+            defaultMessage: 'An update already exists for that year'
+          }),
+          description: intl.formatMessage({
+            id: 'osp.annual.toast.alreadyFiledDesc',
+            defaultMessage: 'Loaded it for editing — review the details and save again.'
+          })
+        });
+      } else {
+        // Editing an existing filing and re-pointing it at a year another filing owns.
+        // Do NOT swap records here — that would discard the edits already typed.
+        toast({
+          status: 'warning',
+          title: intl.formatMessage({
+            id: 'osp.annual.toast.yearTaken',
+            defaultMessage: 'Another filing already covers that year'
+          }),
+          description: intl.formatMessage({
+            id: 'osp.annual.toast.yearTakenDesc',
+            defaultMessage: 'Pick a different reporting year, or edit that filing directly.'
+          })
+        });
+      }
+      return;
+    }
+
     const data: Partial<OSPAnnualUpdate> = {
       prior_osp: ospId,
       reporting_year: year,
       changes_summary: form.changes_summary,
       additions: linesToList(form.additions),
       deletions: linesToList(form.deletions),
+      // Only ticked sections are sent. Persisting the un-ticked ones as `false` would
+      // record "this section changed" for a farmer who simply never used the widget —
+      // a claim they never made, on a document their certifier reads.
+      sections_unchanged_attestation: Object.fromEntries(
+        Object.entries(form.sections_unchanged).filter(([, isUnchanged]) => isUnchanged)
+      ),
       // Setting submitted_at is the farmer's attestation that this was filed with the certifier.
       submitted_at: form.submitted ? new Date().toISOString() : null
     };
@@ -121,13 +403,35 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
       });
       resetForm();
     } catch (err: unknown) {
+      // DRF returns {field: [msg]}. Show each message under its own input rather than
+      // pasting the raw snake_case key into a toast the farmer has to decode.
+      const { fields, general } = parseApiErrors(err);
+      const hasFieldErrors = Object.keys(fields).length > 0;
+      if (hasFieldErrors) {
+        setFieldErrors(fields);
+        focusFirstError(fields);
+      }
       toast({
         status: 'error',
+        // Long enough to read while fixing, and dismissible — the default 5s expiry ran
+        // out on a three-part message.
+        duration: 9000,
+        isClosable: true,
+        position: 'top',
         title: intl.formatMessage({
           id: 'osp.annual.toast.error',
           defaultMessage: 'Could not save the annual update'
         }),
-        description: String((err as { data?: unknown })?.data || err)
+        description: hasFieldErrors
+          ? intl.formatMessage({
+              id: 'osp.annual.toast.errorFields',
+              defaultMessage: 'Fix the highlighted fields, then save again.'
+            })
+          : general ??
+            intl.formatMessage({
+              id: 'osp.annual.toast.errorGeneric',
+              defaultMessage: 'Please try again. If it keeps failing, check your connection.'
+            })
       });
     }
   };
@@ -157,7 +461,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
           <Text fontSize="sm" color="orange.600">
             {intl.formatMessage({
               id: 'osp.annual.noOsp',
-              defaultMessage: 'Create your Organic System Plan first, then file the annual update against it.'
+              defaultMessage:
+                'Create your Organic System Plan first, then file the annual update against it.'
             })}
           </Text>
         )}
@@ -180,7 +485,10 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
               <HStack spacing={2}>
                 {u.submitted_at ? (
                   <Badge colorScheme="green">
-                    {intl.formatMessage({ id: 'osp.annual.submitted', defaultMessage: 'Submitted' })}
+                    {intl.formatMessage({
+                      id: 'osp.annual.submitted',
+                      defaultMessage: 'Submitted'
+                    })}
                   </Badge>
                 ) : (
                   <Badge colorScheme="orange">
@@ -198,7 +506,13 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
         {ospId != null && (
           <Box p={3} borderWidth="1px" borderColor="green.200" borderRadius="md">
             <VStack align="stretch" spacing={3}>
-              <FormControl maxW="200px">
+              <FormControl
+                maxW="200px"
+                isInvalid={Boolean(fieldErrors.reporting_year)}
+                ref={(el: HTMLDivElement | null) => {
+                  fieldRefs.current.reporting_year = el;
+                }}
+              >
                 <FormLabel fontSize="sm">
                   {intl.formatMessage({
                     id: 'osp.annual.reportingYear',
@@ -212,8 +526,14 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                   value={form.reporting_year}
                   onChange={(e) => set('reporting_year', e.target.value)}
                 />
+                <FormErrorMessage fontSize="xs">{fieldErrors.reporting_year}</FormErrorMessage>
               </FormControl>
-              <FormControl>
+              <FormControl
+                isInvalid={Boolean(fieldErrors.changes_summary)}
+                ref={(el: HTMLDivElement | null) => {
+                  fieldRefs.current.changes_summary = el;
+                }}
+              >
                 <FormLabel fontSize="sm">
                   {intl.formatMessage({
                     id: 'osp.annual.changesSummary',
@@ -226,11 +546,18 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                   onChange={(e) => set('changes_summary', e.target.value)}
                   placeholder={intl.formatMessage({
                     id: 'osp.annual.changesSummaryPlaceholder',
-                    defaultMessage: 'Describe any changes since last year, or state that there are none.'
+                    defaultMessage:
+                      'Describe any changes since last year, or state that there are none.'
                   })}
                 />
+                <FormErrorMessage fontSize="xs">{fieldErrors.changes_summary}</FormErrorMessage>
               </FormControl>
-              <FormControl>
+              <FormControl
+                isInvalid={Boolean(fieldErrors.additions)}
+                ref={(el: HTMLDivElement | null) => {
+                  fieldRefs.current.additions = el;
+                }}
+              >
                 <FormLabel fontSize="sm">
                   {intl.formatMessage({
                     id: 'osp.annual.additions',
@@ -246,8 +573,14 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                     defaultMessage: 'e.g., New 2-acre block; new OMRI compost supplier'
                   })}
                 />
+                <FormErrorMessage fontSize="xs">{fieldErrors.additions}</FormErrorMessage>
               </FormControl>
-              <FormControl>
+              <FormControl
+                isInvalid={Boolean(fieldErrors.deletions)}
+                ref={(el: HTMLDivElement | null) => {
+                  fieldRefs.current.deletions = el;
+                }}
+              >
                 <FormLabel fontSize="sm">
                   {intl.formatMessage({
                     id: 'osp.annual.deletions',
@@ -263,7 +596,86 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                     defaultMessage: 'e.g., Discontinued a pest material'
                   })}
                 />
+                <FormErrorMessage fontSize="xs">{fieldErrors.deletions}</FormErrorMessage>
               </FormControl>
+              <Divider />
+
+              {/*
+                § 205.406(a)(1) asks for a summary of changes since the prior OSP. For a
+                mature operation the honest answer is usually "nothing changed" — but a
+                free-text box makes that unverifiable per section. These per-section
+                attestations give the certifier a section-by-section answer.
+              */}
+              <Box>
+                <HStack justify="space-between" align="center" mb={2}>
+                  <FormLabel fontSize="sm" mb={0}>
+                    {intl.formatMessage({
+                      id: 'osp.annual.sectionsUnchanged',
+                      defaultMessage: 'Sections unchanged since the prior OSP'
+                    })}
+                  </FormLabel>
+                  <StandardButton
+                    size="xs"
+                    variant="ghost"
+                    onClick={() =>
+                      set(
+                        'sections_unchanged',
+                        OSP_SECTION_KEYS.reduce((acc, key) => ({ ...acc, [key]: true }), {})
+                      )
+                    }
+                  >
+                    {intl.formatMessage({
+                      id: 'osp.annual.markAllUnchanged',
+                      defaultMessage: 'Mark all unchanged'
+                    })}
+                  </StandardButton>
+                </HStack>
+                <Text fontSize="xs" color="gray.500" mb={2}>
+                  {intl.formatMessage({
+                    id: 'osp.annual.sectionsUnchangedHelp',
+                    defaultMessage:
+                      'Tick each section of your Organic System Plan that has not changed. Leave a section unticked if you describe its change above.'
+                  })}
+                </Text>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+                  {OSP_SECTION_KEYS.map((key) => (
+                    <Checkbox
+                      key={key}
+                      size="sm"
+                      colorScheme="green"
+                      isChecked={Boolean(form.sections_unchanged[key])}
+                      onChange={(e) => setSection(key, e.target.checked)}
+                    >
+                      <Text fontSize="sm">{intl.formatMessage(SECTION_LABELS[key])}</Text>
+                    </Checkbox>
+                  ))}
+                </SimpleGrid>
+              </Box>
+
+              <Divider />
+
+              {duplicateForYear && (
+                <Text fontSize="sm" color="orange.600">
+                  {editingId == null
+                    ? intl.formatMessage(
+                        {
+                          id: 'osp.annual.duplicateYearWarning',
+                          defaultMessage:
+                            'You already filed an update for {year}. Saving will open it for editing.'
+                        },
+                        { year: form.reporting_year }
+                      )
+                    : intl.formatMessage(
+                        {
+                          id: 'osp.annual.yearTakenWarning',
+                          defaultMessage:
+                            'Another filing already covers {year}. Pick a different year.'
+                        },
+                        { year: form.reporting_year }
+                      )}
+                </Text>
+              )}
+
               <Checkbox
                 isChecked={form.submitted}
                 colorScheme="green"
@@ -282,8 +694,14 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                 )}
                 <StandardButton size="sm" onClick={handleSave} isLoading={creating || updating}>
                   {editingId != null
-                    ? intl.formatMessage({ id: 'osp.annual.update', defaultMessage: 'Update Filing' })
-                    : intl.formatMessage({ id: 'osp.annual.save', defaultMessage: 'Save Annual Update' })}
+                    ? intl.formatMessage({
+                        id: 'osp.annual.update',
+                        defaultMessage: 'Update Filing'
+                      })
+                    : intl.formatMessage({
+                        id: 'osp.annual.save',
+                        defaultMessage: 'Save Annual Update'
+                      })}
                 </StandardButton>
               </HStack>
             </VStack>

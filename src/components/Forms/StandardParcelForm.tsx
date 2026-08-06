@@ -1052,6 +1052,13 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     />
                   </StandardField>
 
+                  {/*
+                    NOTE: this file is currently DEAD CODE — nothing imports
+                    StandardParcelForm; the mounted parcel wizard is
+                    StandardParcelForm_Transparency.tsx, which is where the
+                    acres-entry field lives. Left as-is deliberately so the diff
+                    stays focused; delete this file or reconcile it before reviving.
+                  */}
                   <StandardField
                     label="Area (hectares)"
                     required

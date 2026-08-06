@@ -39,7 +39,9 @@ import CheckAuth from './utils/protections/CheckAuth';
 const CommercialView = lazyWithRetry(() => import('views/Dashboard/Commercial'));
 // Lazy load dashboard for mobile performance
 const DashboardView = lazyWithRetry(() => import('views/Dashboard/Dashboard'));
-const FinishProduction = lazyWithRetry(() => import('views/Dashboard/Dashboard/Production/FinishProduction'));
+const FinishProduction = lazyWithRetry(
+  () => import('views/Dashboard/Dashboard/Production/FinishProduction')
+);
 //@ts-ignore
 import NotAuthenticated from './utils/protections/NotAuthenticated';
 //@ts-ignore
@@ -63,22 +65,34 @@ const MethodologyPage = lazyWithRetry(() => import('views/Scan/Methodology'));
 const ProfileFarm = lazyWithRetry(() => import('views/Dashboard/Dashboard/Farm/ProfileFarm'));
 //@ts-ignore
 const ProfileParcel = lazyWithRetry(() => import('views/Dashboard/Dashboard/Parcel/ProfileParcel'));
-const ProfileProduction = lazyWithRetry(() => import('views/Dashboard/Dashboard/Production/ProfileProduction'));
+const ProfileProduction = lazyWithRetry(
+  () => import('views/Dashboard/Dashboard/Production/ProfileProduction')
+);
 const ProfileUser = lazyWithRetry(() => import('views/Dashboard/Dashboard/User/ProfileUser'));
 //@ts-ignore
-const SelectCompanyView = lazyWithRetry(() => import('views/Dashboard/Dashboard/Company/AddCompany'));
-const ModernProductReview = lazyWithRetry(() => import('views/Scan/ProductReview/ModernProductReview'));
+const SelectCompanyView = lazyWithRetry(
+  () => import('views/Dashboard/Dashboard/Company/AddCompany')
+);
+const ModernProductReview = lazyWithRetry(
+  () => import('views/Scan/ProductReview/ModernProductReview')
+);
 const SettingsView = lazyWithRetry(() => import('views/Dashboard/Settings'));
 const SignIn = lazyWithRetry(() => import('views/Authentication/SignIn/SignInIllustration'));
 const SignInApp = lazyWithRetry(() => import('views/Authentication/SignIn/SignInBasic'));
 const SignUp = lazyWithRetry(() => import('views/Authentication/SignUp/SignUpBasic'));
 import Unauthorized from './views/Applications/DataTables/index';
 const UpdateEvent = lazyWithRetry(() => import('views/Dashboard/Dashboard/Event/UpdateEvent'));
-const UpdateProduction = lazyWithRetry(() => import('views/Dashboard/Dashboard/Production/UpdateProduction'));
-const QuickStartProduction = lazyWithRetry(() => import('views/Dashboard/Dashboard/Production/QuickStartProduction'));
+const UpdateProduction = lazyWithRetry(
+  () => import('views/Dashboard/Dashboard/Production/UpdateProduction')
+);
+const QuickStartProduction = lazyWithRetry(
+  () => import('views/Dashboard/Dashboard/Production/QuickStartProduction')
+);
 import VerifyEmail from './views/Authentication/SignUp/VerifyEmail';
 import { useSelector } from 'react-redux';
-const VerifyEmailConsumer = lazyWithRetry(() => import('views/Authentication/SignUp/VerifyEmailConsumer'));
+const VerifyEmailConsumer = lazyWithRetry(
+  () => import('views/Authentication/SignUp/VerifyEmailConsumer')
+);
 const SignInConsumer = lazyWithRetry(() => import('views/Authentication/SignIn/SignInConsumer'));
 // NOTE: removed dead import of the orphan, broken `SignUpConsumer` view (never referenced;
 // the real consumer signup is `ConsumerSignUp` via routes/config.ts). It was tree-shaken while a
@@ -86,7 +100,9 @@ const SignInConsumer = lazyWithRetry(() => import('views/Authentication/SignIn/S
 import AdminConsumerLayout from 'layouts/AdminConsumer';
 
 const ImpactDashboard = lazyWithRetry(() => import('views/Dashboard/ImpactDashboard'));
-const ConsumerEducationDashboard = lazyWithRetry(() => import('views/Dashboard/EducationDashboard'));
+const ConsumerEducationDashboard = lazyWithRetry(
+  () => import('views/Dashboard/EducationDashboard')
+);
 
 const CarbonJourney = lazyWithRetry(() => import('views/Dashboard/CarbonJourney'));
 const AllScansJourney = lazyWithRetry(() => import('views/Dashboard/CarbonJourney/AllScans'));
@@ -95,26 +111,38 @@ const ConsumerProfile = lazyWithRetry(() => import('views/Dashboard/ConsumerProf
 import { routeConfig } from './routes/config';
 import SubscriptionRequired from './utils/protections/SubscriptionRequired';
 const DashboardPricing = lazyWithRetry(() => import('views/Dashboard/Dashboard/Pricing'));
-const StripeSuccessRedirect = lazyWithRetry(() => import('views/Dashboard/Dashboard/Subscription/StripeSuccessRedirect'));
-const UnifiedSubscriptionDashboard = lazyWithRetry(() => import('views/Dashboard/UnifiedSubscription'));
+const StripeSuccessRedirect = lazyWithRetry(
+  () => import('views/Dashboard/Dashboard/Subscription/StripeSuccessRedirect')
+);
+const UnifiedSubscriptionDashboard = lazyWithRetry(
+  () => import('views/Dashboard/UnifiedSubscription')
+);
 import NoSubscriptionRedirect from './utils/protections/NoSubscriptionRedirect';
-const ModernCarbonDashboard = lazyWithRetry(() => import('views/Dashboard/Dashboard/Farm/ModernCarbonDashboard'));
-const PublicFarmProfile = lazyWithRetry(() => import('views/Scan/PublicFarmProfile/PublicFarmProfile'));
+const ModernCarbonDashboard = lazyWithRetry(
+  () => import('views/Dashboard/Dashboard/Farm/ModernCarbonDashboard')
+);
 import { usePointsStore } from './store/pointsStore';
 const ProducerEducationDashboard = lazyWithRetry(() => import('views/Dashboard/Education'));
-const EducationTopicDetail = lazyWithRetry(() => import('views/Dashboard/Education/EducationTopicDetail'));
+const EducationTopicDetail = lazyWithRetry(
+  () => import('views/Dashboard/Education/EducationTopicDetail')
+);
 const EducationFAQ = lazyWithRetry(() => import('views/Dashboard/Education/EducationFAQ'));
 const AllScansView = lazyWithRetry(() => import('views/Dashboard/Commercial/AllScans'));
 const AllReviewsView = lazyWithRetry(() => import('views/Dashboard/Commercial/AllReviews'));
 import { useGetCsrfTokenQuery } from './store/api/baseApi';
 const GoogleAuthCallback = lazyWithRetry(() => import('views/Authentication/GoogleAuthCallback'));
-const AcceptInvitation = lazyWithRetry(() => import('views/Authentication/Invitation/AcceptInvitation'));
+const CertifierReview = lazyWithRetry(() => import('views/CertifierReview/CertifierReview'));
+const AcceptInvitation = lazyWithRetry(
+  () => import('views/Authentication/Invitation/AcceptInvitation')
+);
 const SetupPassword = lazyWithRetry(() => import('views/Authentication/Invitation/SetupPassword'));
 import { ErrorBoundary } from 'react-error-boundary';
 import * as Sentry from '@sentry/react';
 const ChangePassword = lazyWithRetry(() => import('views/Settings/ChangePassword'));
 import { AdminGuard } from 'components/Guards/AdminGuard';
-const ConsumerChangePassword = lazyWithRetry(() => import('views/Consumer/Settings/ConsumerChangePassword'));
+const ConsumerChangePassword = lazyWithRetry(
+  () => import('views/Consumer/Settings/ConsumerChangePassword')
+);
 import RedirectGuard from './utils/RedirectGuard';
 
 // Short, human-readable correlation ID for support lookups (e.g. "K3F9-2A7B").
@@ -280,6 +308,11 @@ const App = () => {
         <Route path="/pricing" element={<AuthLayout />}>
           <Route index element={<Pricing />} />
         </Route>
+
+        {/* Certifier review link — ANONYMOUS by design. A certification reviewer
+            opens this with no Trazo account; the token in the URL is the credential.
+            Must stay outside CheckAuth so it never redirects to login. */}
+        <Route path="/certifier-review/:token" element={<CertifierReview />} />
 
         {/* OAuth Callback - must be accessible from localhost:3000 */}
         <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
@@ -481,9 +514,6 @@ const App = () => {
                     </Suspense>
                   }
                 />
-              </Route>
-              <Route element={<AuthLayout />}>
-                <Route path="/farm/:farmId" element={<PublicFarmProfile />} />
               </Route>
               <Route element={<Authenticated allowedRoles={config.protected.roles} />}>
                 <Route

@@ -11,10 +11,12 @@ import { baseApi } from './baseApi';
 
 // IMMEDIATE LOAD (2 seconds) - Most critical consumer info
 export interface TransparencyQuickView {
-  transparency_score: {
+  // Owner-only: stripped entirely for anonymous callers (claim safety), so treat as optional.
+  transparency_score?: {
     percentage: number;
     message: string;
-    status: 'excellent' | 'certification' | 'good' | 'minimum' | 'below_minimum';
+    // `status` removed 2026-08-02 — it carried the invented benchmark level
+    // ("certification"/"minimum"/"below_minimum"). Nothing rendered it.
   };
 }
 
@@ -56,23 +58,18 @@ export interface TransparencyDetailedView {
     }>;
     strong_categories: string[];
   };
-  benchmark_comparison: {
-    benchmark_level: 'excellent' | 'certification' | 'good' | 'minimum' | 'below_minimum';
-    message: string;
-    benchmarks: {
-      industry_minimum: number;
-      good_practice: number;
-      excellent_practice: number;
-      certification_standard: number;
-    };
+  // Replaced `benchmark_comparison` / `improvement_suggestions` (2026-08-02). Those described
+  // hardcoded "industry_minimum 60 / certification_standard 90" thresholds that Trazo invented;
+  // progress is now measured only against the farm's own previous finished seasons.
+  // Owner-only — the backend computes it just for the owner and drops the whole detailed_view
+  // for anonymous callers, so it is absent on a consumer scan.
+  own_history_comparison?: {
     current_score: number;
-    next_target: {
-      target_score: number;
-      target_name: string;
-      points_needed: number;
-    };
-  };
-  improvement_suggestions: object;
+    previous_best: number | null;
+    previous_seasons_scored: number;
+    delta_vs_previous_best: number | null;
+    is_personal_best: boolean;
+  } | null;
   verification_status: {
     organic_certified: boolean;
     third_party_audited: boolean;
@@ -244,57 +241,23 @@ export const {
 
 export default transparencyQrApi;
 
-// Utility functions for transparency display
-
-/**
- * Get Trazo-branded transparency badge color following design system
- */
-export const getTransparencyBadgeColor = (percentage: number): string => {
-  if (percentage >= 90) return 'green.500'; // Excellent - Trazo primary green
-  if (percentage >= 70) return 'green.400'; // Good - Lighter green
-  if (percentage >= 50) return 'yellow.500'; // Basic - Warning yellow
-  return 'gray.500'; // Limited - Neutral gray
-};
-
-/**
- * Get consumer-friendly transparency message following Trazo voice
- */
-export const getTransparencyMessage = (percentage: number): string => {
-  if (percentage >= 95) return 'Complete farm transparency ✨';
-  if (percentage >= 85) return 'Comprehensive farm record 🌟';
-  if (percentage >= 70) return 'Good record keeping 📋';
-  if (percentage >= 50) return 'Basic farm information 📝';
-  return 'Limited information available ❓';
-};
-
-/**
- * Get trust indicator emoji following Trazo visual language
- */
-export const getTransparencyTrustIcon = (status: string): string => {
-  switch (status) {
-    case 'excellent':
-      return '🏆';
-    case 'certification':
-      return '✅';
-    case 'good':
-      return '👍';
-    case 'minimum':
-      return '📋';
-    default:
-      return '❓';
-  }
-};
-
-/**
- * Format carbon score for consumer display (Trazo standard)
- */
-export const formatCarbonScore = (kgPerKg: number): string => {
-  return `${kgPerKg.toFixed(2)} kg CO₂ per kg`;
-};
-
-/**
- * Check if farm qualifies for Trazo Transparency Certification
- */
-export const isTrazoTransparencyCertified = (percentage: number): boolean => {
-  return percentage >= 80; // Trazo transparency certification threshold
-};
+// REMOVED 2026-08-04 — a self-created sustainability label, sitting in the CONSUMER API module.
+//
+// This file exported a complete grade ladder for consumer display: `getTransparencyBadgeColor`
+// (90/70/50 colour bands), `getTransparencyMessage` ("Complete farm transparency ✨" …
+// "Limited information available ❓"), `getTransparencyTrustIcon` (🏆/✅/👍/📋), and
+// `isTrazoTransparencyCertified` — which returned true at >= 80 and called it a
+// "Trazo transparency certification threshold".
+//
+// A score Trazo computes against a baseline Trazo invented, rendered to shoppers as a badge and
+// the word "certified", is exactly the self-created sustainability label banned by EU ECGT
+// 2024/825 (live 2026-09-27) and a general-benefit claim under FTC 16 CFR 260.6. The score was
+// gated out of every consumer surface in June 2026 (see the producer-only strip in
+// `history/transparency_views.py`), but these helpers survived here with zero call sites — one
+// import away from putting it back. Dead code in the consumer module is not harmless.
+//
+// The score is a producer-dashboard metric only. It lives at /admin/dashboard/farm/:id/transparency.
+// Consumers get facts: documented-practice counts, photos, third-party certifications, timeline.
+// Do not reintroduce a grade, badge, tier, or threshold on any consumer path.
+//
+// `formatCarbonScore` went with them (also unused; carbon is formatted at each render site).

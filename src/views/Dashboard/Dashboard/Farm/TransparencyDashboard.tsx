@@ -39,8 +39,7 @@ import {
   FaExternalLinkAlt,
   FaSeedling,
   FaCamera,
-  FaBullseye,
-  FaTrophy
+  FaBullseye
 } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
 import { config } from 'config/environment';
@@ -53,9 +52,11 @@ import transparencyQrApi from 'store/api/transparencyQrApi';
 import { useGetProductionsByFarmQuery } from 'store/api/companyApi';
 import { useUpdateProductionMutation } from 'store/api/historyApi.js';
 import ConsumerEngagementRoiCard from './components/ConsumerEngagementRoiCard';
+import CertifierReadinessCard from '../components/farm/CertifierReadinessCard';
 import TransparencyCategoryBreakdown from 'components/ProfileSections/TransparencyCategoryBreakdown';
 import TransparencyImprovementRoadmap from 'components/ProfileSections/TransparencyImprovementRoadmap';
 import PhotoVerificationGap from 'components/ProfileSections/PhotoVerificationGap';
+import { CATEGORY_WEIGHTS } from 'components/ProfileSections/transparencyCategoryWeights';
 
 // Product tour
 import { useTour } from 'hooks/useTour';
@@ -241,7 +242,10 @@ function TransparencyDashboard() {
 
   // Transparency score: event-based ratio (consistent with consumer QR page)
   // Documentation Coverage section provides per-category photo guidance separately
-  const getTransparencyScore = (): number => {
+  // null when the farm has no FINISHED, published season. The backend now returns null rather
+  // than 0 in that case, and this must not flatten it back: a farm mid-season has no verdict
+  // yet, and rendering "0%" reads as a failing grade for work that is simply still underway.
+  const getTransparencyScore = (): number | null => {
     if (transparencyMetrics?.overall_transparency_score !== undefined && transparencyMetrics?.overall_transparency_score !== null) {
       return transparencyMetrics.overall_transparency_score;
     }
@@ -251,24 +255,38 @@ function TransparencyDashboard() {
     if (productionId && transparencyApiData?.quick_view?.transparency_score?.percentage) {
       return transparencyApiData.quick_view.transparency_score.percentage;
     }
-    return 0;
+    return null;
   };
 
-  const actualTransparencyScore = getTransparencyScore() / 100;
+  const transparencyScoreValue = getTransparencyScore();
+  const hasTransparencyScore = transparencyScoreValue !== null;
+  const actualTransparencyScore = (transparencyScoreValue ?? 0) / 100;
 
-  // Category weights matching backend TransparencyCalculator._calculate_completeness_score
-  const CATEGORY_WEIGHTS: Record<string, number> = {
-    production: 30, chemical: 20, soil: 18,
-    pest: 12, weather: 5, business: 10, general: 5
-  };
+  // The farm's own best previous season — the only honest reference point we have.
+  //
+  // This replaces a four-rung milestone ladder (60 "Industry Minimum", 80 "Good Practice",
+  // 90 "Certification Standard", 95 "Excellence") that mirrored hardcoded backend thresholds.
+  // Those numbers were ours: no industry publishes them and no certifier requires any Trazo
+  // score, so "Next Goal: Industry Minimum" was an unsourced benchmark claim and
+  // "Certification Standard" implied a regulatory bar we invented. See compliance.md.
+  //
+  // Returns null on a first season: with nothing to compare against, showing no target is
+  // correct — inventing one is the whole problem being fixed here.
+  //
+  // Compares the MOST RECENT finished season against the best of the ones before it. Both
+  // sides are single-season scores from the same source, so the comparison is like-for-like.
+  // (An earlier revision compared the farm-level AVERAGE against the single best season,
+  // which are different quantities — with seasons of 74 and 50 it would have shown
+  // "your best season: 74%" beside a headline of 62% and called it a shortfall.)
+  const getPersonalBest = () => {
+    const finished = (productions || [])
+      .filter((p: any) => p.finish_date && typeof p.transparency_score === 'number')
+      .sort((a: any, b: any) => new Date(b.finish_date).getTime() - new Date(a.finish_date).getTime());
+    if (finished.length < 2) return null;
 
-  // Benchmark thresholds (matching backend compare_with_benchmarks)
-  const getNextMilestone = (score: number) => {
-    if (score < 60) return { target: 60, label: intl.formatMessage({ id: 'transparency.milestoneIndustryMinimum' }) };
-    if (score < 80) return { target: 80, label: intl.formatMessage({ id: 'transparency.milestoneGoodPractice' }) };
-    if (score < 90) return { target: 90, label: intl.formatMessage({ id: 'transparency.milestoneCertificationStandard' }) };
-    if (score < 95) return { target: 95, label: intl.formatMessage({ id: 'transparency.milestoneExcellence' }) };
-    return null; // Already excellent
+    const latest = finished[0].transparency_score;
+    const bestEarlier = Math.max(...finished.slice(1).map((p: any) => p.transparency_score));
+    return { latest, bestEarlier, isBest: latest >= bestEarlier };
   };
 
   // Consumer-friendly category names (matching backend transparency_calculator.py:515-556)
@@ -481,11 +499,12 @@ function TransparencyDashboard() {
   const activeProductions = comprehensiveData?.active_productions || 0;
   const completedProductions = comprehensiveData?.completed_productions || 0;
 
-  // Process event validation opportunities - Fix data source location
-  const eventOpportunities =
-    dashboardData?.missing_data_opportunities ||
-    comprehensiveData?.missing_data_opportunities ||
-    [];
+  // `missing_data_opportunities` lives under `comprehensive_data`, never at the top level of the
+  // response — a `dashboardData?.missing_data_opportunities` fallback here could never resolve to
+  // anything and existed only because `ComprehensiveData` was missing enough of its real fields
+  // that TypeScript could not have caught the wrong nesting either way (fixed 2026-08-04, see
+  // dashboardMetricsApi.ts).
+  const eventOpportunities = comprehensiveData?.missing_data_opportunities || [];
 
 
   const priorityGroups = eventOpportunities.reduce((acc, opportunity) => {
@@ -617,23 +636,28 @@ function TransparencyDashboard() {
         >
           <CardBody>
             <VStack spacing={{ base: 6, md: 8 }} align="stretch">
-              {/* Transparency Quick Stats - Matching Environmental Impact pattern */}
+              {/* Leads the page (2026-08-04, part of the top-tier-recordkeeping reframe): what a
+                  certifier would query, compact. The full card — every finding, both scopes, the
+                  close-out links — lives once, on farm home; duplicating it here would recreate
+                  the "two cards, two counts" defect its own header docstring describes fixing.
+                  This is a pointer to that single source of truth, not a second copy of it. */}
+              {farmId && currentCompany?.id && (
+                <Box>
+                  <CertifierReadinessCard
+                    companyId={currentCompany.id}
+                    farmId={Number(farmId)}
+                    compact
+                  />
+                </Box>
+              )}
+
+              {/* Transparency Quick Stats - Matching Environmental Impact pattern.
+                  Reordered 2026-08-04: facts (events, photos, productions) lead; the score — a
+                  coverage GAUGE, not the certifier answer — trails, in neutral gray rather than
+                  brand green, so it reads as context rather than the page's headline number. The
+                  readiness card above is the headline now. */}
               <Box data-tour="transparency-stats">
                 <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2, md: 4 }}>
-                  <Card bg="green.50" border="1px solid" borderColor="green.100" borderRadius="xl">
-                    <CardBody p={{ base: 3, md: 4 }} textAlign="center">
-                      <VStack spacing={{ base: 1, md: 2 }}>
-                        <Icon as={FaLeaf} color="green.500" boxSize={{ base: 5, md: 6 }} />
-                        <Text fontSize={{ base: 'md', md: 'xl' }} fontWeight="bold" color="green.700">
-                          {Math.round(actualTransparencyScore * 100)}%
-                        </Text>
-                        <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.600" whiteSpace="nowrap">
-                          {intl.formatMessage({ id: 'transparency.transparencyScore' })}
-                        </Text>
-                      </VStack>
-                    </CardBody>
-                  </Card>
-
                   <Card bg="blue.50" border="1px solid" borderColor="blue.100" borderRadius="xl">
                     <CardBody p={{ base: 3, md: 4 }} textAlign="center">
                       <VStack spacing={{ base: 1, md: 2 }}>
@@ -697,6 +721,30 @@ function TransparencyDashboard() {
                       </VStack>
                     </CardBody>
                   </Card>
+
+                  <Card bg="gray.50" border="1px solid" borderColor="gray.200" borderRadius="xl">
+                    <CardBody p={{ base: 3, md: 4 }} textAlign="center">
+                      <VStack spacing={{ base: 1, md: 2 }}>
+                        <Icon as={FaLeaf} color="gray.500" boxSize={{ base: 5, md: 6 }} />
+                        <Text fontSize={{ base: 'md', md: 'xl' }} fontWeight="bold" color="gray.700">
+                          {hasTransparencyScore
+                            ? `${Math.round(actualTransparencyScore * 100)}%`
+                            : intl.formatMessage({
+                                id: 'dashboard.trustScore.notStarted',
+                                defaultMessage: 'Not started'
+                              })}
+                        </Text>
+                        <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" whiteSpace="nowrap">
+                          {hasTransparencyScore
+                            ? intl.formatMessage({ id: 'transparency.transparencyScore' })
+                            : intl.formatMessage({
+                                id: 'dashboard.trustScore.noFinishedSeason',
+                                defaultMessage: 'No finished season yet'
+                              })}
+                        </Text>
+                      </VStack>
+                    </CardBody>
+                  </Card>
                 </SimpleGrid>
               </Box>
 
@@ -705,83 +753,91 @@ function TransparencyDashboard() {
                   Shows transparency ENGAGEMENT, not revenue (project rule). */}
               {farmId && <ConsumerEngagementRoiCard farmId={Number(farmId)} />}
 
-              {/* Score Insight Banner - Next Milestone */}
+              {/* Where documenting more would move the score most, plus this farm's own
+                  previous best. No external benchmark is asserted anywhere in this block. */}
               {(() => {
                 const score = Math.round(actualTransparencyScore * 100);
-                const milestone = getNextMilestone(score);
-
-                if (!milestone) {
-                  return (
-                    <Card bg="green.50" border="1px solid" borderColor="green.200" borderRadius="xl">
-                      <CardBody p={4}>
-                        <HStack spacing={3}>
-                          <Icon as={FaTrophy} color="green.500" boxSize={6} />
-                          <VStack align="start" spacing={1} flex={1}>
-                            <Text fontWeight="bold" color="green.700" fontSize="sm">
-                              {intl.formatMessage({ id: 'transparency.outstandingTitle' })}
-                            </Text>
-                            <Text fontSize="xs" color="green.600">
-                              {intl.formatMessage({ id: 'transparency.outstandingDescription' })}
-                            </Text>
-                          </VStack>
-                        </HStack>
-                      </CardBody>
-                    </Card>
-                  );
-                }
-
-                const pointsNeeded = milestone.target - score;
-                const progressPercent = (score / milestone.target) * 100;
-
-                // Identify top bottleneck from category breakdown
+                const personalBest = getPersonalBest();
                 const breakdown = transparencyMetrics?.transparency_breakdown || {};
-                const criticalCategories = Object.entries(breakdown)
-                  .filter(([key, cat]: [string, any]) =>
-                    cat.requires_photos && cat.actual_count > 0 && cat.photo_verification_rate < 80
-                  );
-                const hasPhotoBottleneck = criticalCategories.length > 0 && totalPhotos === 0;
-                const emptyCategories = Object.entries(breakdown)
-                  .filter(([, cat]: [string, any]) => cat.actual_count === 0);
 
-                let bottleneckText = '';
-                if (hasPhotoBottleneck) {
-                  bottleneckText = intl.formatMessage({ id: 'transparency.addPhotosToEvents' }, { count: criticalCategories.length });
-                } else if (emptyCategories.length > 0) {
-                  const names = emptyCategories.map(([key]: [string, any]) => CATEGORY_CONSUMER_NAMES[key] || key).join(', ');
-                  bottleneckText = intl.formatMessage({ id: 'transparency.startDocumenting' }, { names });
-                }
+                // Rank opportunities by WEIGHT x GAP, not by whichever gap is largest.
+                // Previously an empty "Additional Details" category (5% of the score) was
+                // presented as the top opportunity while missing spray photos (20% category,
+                // half-documented) sat further down — i.e. the advice pointed at the least
+                // valuable work available.
+                const opportunities = Object.entries(breakdown)
+                  .map(([key, cat]: [string, any]) => {
+                    const weight = CATEGORY_WEIGHTS[key] ?? 0;
+                    const completeness = cat.completeness_percentage ?? 0;
+                    const needsPhotos =
+                      cat.requires_photos && cat.actual_count > 0 && (cat.photo_verification_rate ?? 0) < 80;
+                    return {
+                      key,
+                      name: CATEGORY_CONSUMER_NAMES[key] || key,
+                      impact: (weight * (100 - completeness)) / 100,
+                      isEmpty: cat.actual_count === 0,
+                      needsPhotos
+                    };
+                  })
+                  .filter((o) => o.impact > 0)
+                  .sort((a, b) => b.impact - a.impact);
+
+                const top = opportunities[0];
+                if (!top && personalBest === null) return null;
 
                 return (
-                  <Card bg="blue.50" border="1px solid" borderColor="blue.200" borderRadius="xl">
+                  <Card bg="green.50" border="1px solid" borderColor="green.200" borderRadius="xl">
                     <CardBody p={4}>
                       <VStack spacing={3} align="stretch">
                         <HStack spacing={3}>
-                          <Icon as={FaBullseye} color="blue.500" boxSize={5} />
+                          <Icon as={FaBullseye} color="green.500" boxSize={5} />
                           <VStack align="start" spacing={0} flex={1}>
-                            <Text fontWeight="bold" color="blue.700" fontSize="sm">
-                              {intl.formatMessage({ id: 'transparency.nextGoal' }, { label: milestone.label })}
+                            <Text fontWeight="bold" color="green.700" fontSize="sm">
+                              {intl.formatMessage({
+                                id: 'transparency.biggestOpportunity',
+                                defaultMessage: 'Where documenting helps most'
+                              })}
                             </Text>
-                            <Text fontSize="xs" color="blue.600">
-                              {intl.formatMessage({ id: 'transparency.pointsToReach' }, { points: pointsNeeded, target: milestone.target })}
-                            </Text>
+                            {top && (
+                              <Text fontSize="xs" color="green.600">
+                                {top.needsPhotos
+                                  ? intl.formatMessage(
+                                      {
+                                        id: 'transparency.opportunityPhotosFor',
+                                        defaultMessage: 'Add photos to your {name} events'
+                                      },
+                                      { name: top.name }
+                                    )
+                                  : intl.formatMessage(
+                                      {
+                                        id: 'transparency.opportunityDocument',
+                                        defaultMessage: 'Document your {name}'
+                                      },
+                                      { name: top.name }
+                                    )}
+                              </Text>
+                            )}
                           </VStack>
-                          <Text fontWeight="bold" color="blue.700" fontSize="lg">
-                            {score}%
-                            <Text as="span" fontWeight="normal" fontSize="sm" color="blue.500">
-                              {' '}/ {milestone.target}%
+                          {hasTransparencyScore && (
+                            <Text fontWeight="bold" color="green.700" fontSize="lg">
+                              {score}%
                             </Text>
-                          </Text>
+                          )}
                         </HStack>
-                        <Progress
-                          value={progressPercent}
-                          colorScheme="blue"
-                          borderRadius="full"
-                          size="sm"
-                          bg="blue.100"
-                        />
-                        {bottleneckText && (
-                          <Text fontSize="xs" color="blue.600">
-                            {intl.formatMessage({ id: 'transparency.topOpportunity' }, { text: bottleneckText })}
+                        {personalBest !== null && (
+                          <Text fontSize="xs" color="green.600">
+                            {personalBest.isBest
+                              ? intl.formatMessage({
+                                  id: 'transparency.personalBestReached',
+                                  defaultMessage: 'Your latest season is your best documented one yet'
+                                })
+                              : intl.formatMessage(
+                                  {
+                                    id: 'transparency.personalBestPrevious',
+                                    defaultMessage: 'Your best documented season: {best}%'
+                                  },
+                                  { best: Math.round(personalBest.bestEarlier) }
+                                )}
                           </Text>
                         )}
                       </VStack>
@@ -827,7 +883,7 @@ function TransparencyDashboard() {
                 <Box data-tour="improvement-roadmap">
                   <TransparencyImprovementRoadmap
                     opportunities={sortedOpportunities}
-                    currentScore={Math.round(actualTransparencyScore * 100)}
+                    currentScore={hasTransparencyScore ? Math.round(actualTransparencyScore * 100) : null}
                     onAddEvent={() => navigate(`/admin/dashboard/farm/${farmId}`)}
                   />
                 </Box>
@@ -965,7 +1021,19 @@ function TransparencyDashboard() {
                       .map((production: any) => {
                         const isActive = !production.finish_date;
                         const score = production.transparency_score || 0;
-                        const scoreColor = score >= 80 ? 'green' : score >= 60 ? 'yellow' : 'red';
+                        // An in-progress season has no verdict yet — it has barely started, so
+                        // of course it has few events. It used to render as a red "0% / No Data",
+                        // i.e. the farmer's current season was displayed as their worst failure.
+                        // Show it in neutral brand green with its running event count instead.
+                        // Same 90 / 70 bands as the label below, so the colour and the word can
+                        // never disagree (green + "Good" was reachable at 81%).
+                        const scoreColor = isActive
+                          ? 'green'
+                          : score >= 90
+                          ? 'green'
+                          : score >= 70
+                          ? 'yellow'
+                          : 'orange';
 
                         return (
                           <AccordionItem
@@ -1004,7 +1072,7 @@ function TransparencyDashboard() {
                                       <HStack spacing={2} flexShrink={0}>
                                         <HStack spacing={1}>
                                           <Text fontWeight="bold" fontSize="md" color={`${scoreColor}.600`} whiteSpace="nowrap">
-                                            {score}%
+                                            {isActive ? '—' : `${score}%`}
                                           </Text>
                                           <Icon as={FaLeaf} boxSize={3} color={`${scoreColor}.500`} />
                                         </HStack>
@@ -1021,7 +1089,29 @@ function TransparencyDashboard() {
                                         </Text>
                                       )}
                                       <Text fontWeight="medium" color={`${scoreColor}.600`} whiteSpace="nowrap">
-                                        {score >= 80 ? intl.formatMessage({ id: 'transparency.levelExcellent' }) : score >= 60 ? intl.formatMessage({ id: 'transparency.levelGood' }) : score > 0 ? intl.formatMessage({ id: 'transparency.levelNeedsImprovement' }) : intl.formatMessage({ id: 'transparency.levelNoData' })}
+                                        {isActive
+                                          ? intl.formatMessage(
+                                              {
+                                                id: 'transparency.levelInProgress',
+                                                defaultMessage:
+                                                  'In progress — {count, plural, one {# event} other {# events}} logged'
+                                              },
+                                              { count: production.events_count ?? 0 }
+                                            )
+                                          : /* Bands match the backend's own definition in
+                                                `history/transparency_views.transparency_explanation`:
+                                                excellent 90-100, good 70-89, basic 50-69. This list
+                                                used >= 80 / >= 60, so an 81% season was labelled
+                                                "Excellent" here while every other surface in the
+                                                product called 81% "Good" — the same word meaning two
+                                                different things depending on which page you were on. */
+                                          score >= 90
+                                          ? intl.formatMessage({ id: 'transparency.levelExcellent' })
+                                          : score >= 70
+                                          ? intl.formatMessage({ id: 'transparency.levelGood' })
+                                          : score > 0
+                                          ? intl.formatMessage({ id: 'transparency.levelNeedsImprovement' })
+                                          : intl.formatMessage({ id: 'transparency.levelNoData' })}
                                       </Text>
                                     </Flex>
                                   </VStack>

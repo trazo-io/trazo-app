@@ -14,6 +14,7 @@
 
 import { businessEventRegistry } from './businessEvent';
 import { chemicalEventRegistry } from './chemicalEvent';
+import { equipmentEventRegistry } from './equipmentEvent';
 import { generalEventRegistry } from './generalEvent';
 import { pestEventRegistry } from './pestEvent';
 import { productionEventRegistry } from './productionEvent';
@@ -111,26 +112,20 @@ export {
 // ============================================================================
 
 /**
- * Equipment (type 4) was merged into Production subtype 'EM' (Equipment Maintenance).
- * The backend constant still exists for backward compatibility but the UI no longer
- * shows Equipment as a separate event type. This entry stays as an empty placeholder
- * so that resolver.getRegistryEntry(4) returns a valid (empty) entry instead of null.
+ * Equipment (type 4) was merged into Production subtype 'EM' (Equipment Maintenance), so the
+ * UI no longer offers it when creating an event. It is NOT an empty placeholder any more:
+ * pre-merge rows are still in the database and still render on the consumer timeline's full
+ * record, and an empty `fields: []` made `getFieldsForSurface(4, …)` return nothing, which
+ * dropped every one of them onto the legacy English-only display path.
+ * See equipmentEvent.ts.
  */
-const DEPRECATED_EQUIPMENT_ENTRY = {
-  eventType: 4 as const,
-  eventTypeName: 'equipment' as const,
-  labelKey: 'events.types.equipment',
-  subtypes: [] as const,
-  defaultPhotoTier: 'optional' as const,
-  fields: [] as const
-};
 
 const eventRegistry: EventRegistry = {
   weather: weatherEventRegistry,
   production: productionEventRegistry,
   chemical: chemicalEventRegistry,
   general: generalEventRegistry,
-  equipment: DEPRECATED_EQUIPMENT_ENTRY,
+  equipment: equipmentEventRegistry,
   soil_management: soilEventRegistry,
   pest_management: pestEventRegistry,
   business: businessEventRegistry

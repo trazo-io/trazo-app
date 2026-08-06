@@ -204,29 +204,28 @@ export default function SignUpConsumer() {
                   <FormErrorMessage>{errors.password2.message}</FormErrorMessage>
                 )}
               </FormControl>
-                <Button
-                  type="submit"
-                  bg="green.500"
-                  color="white"
-                  w="100%"
-                  h="44px"
-                  fontSize="sm"
-                  fontWeight="600"
-                  borderRadius="xl"
-                  mt="12px"
-                  mb="24px"
-                  _hover={{
-                    bg: 'green.600',
-                    transform: 'translateY(-1px)'
-                  }}
-                  _active={{
-                    bg: 'green.700'
-                  }}
-                  isLoading={isLoading}
-                >
-                  {isLoading ? 'Creating Account...' : 'Sign Up'}
-                </Button>
-              </FormControl>
+              <Button
+                type="submit"
+                bg="green.500"
+                color="white"
+                w="100%"
+                h="44px"
+                fontSize="sm"
+                fontWeight="600"
+                borderRadius="xl"
+                mt="12px"
+                mb="24px"
+                _hover={{
+                  bg: 'green.600',
+                  transform: 'translateY(-1px)'
+                }}
+                _active={{
+                  bg: 'green.700'
+                }}
+                isLoading={isLoading}
+              >
+                {isLoading ? 'Creating Account...' : 'Sign Up'}
+              </Button>
             </form>
           </FormProvider>
           <Flex

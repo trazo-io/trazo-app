@@ -193,15 +193,22 @@ export function getFieldsForSurface(
     let formattedValue: string | null;
 
     // For enum fields: use custom formatter if available, otherwise capitalize and humanize
-    if (field.valueType === 'enum' && typeof rawValue === 'string' && field.formatter) {
-      formattedValue = field.formatter(rawValue, event);
+    // Consumer surfaces may re-voice the VALUE, not just the label — see
+    // FieldConfig.consumerFormatter. Falls back to the shared formatter when absent.
+    const activeFormatter =
+      surfaceRule.isConsumerFacing && field.consumerFormatter
+        ? field.consumerFormatter
+        : field.formatter;
+
+    if (field.valueType === 'enum' && typeof rawValue === 'string' && activeFormatter) {
+      formattedValue = activeFormatter(rawValue, event);
     } else if (field.valueType === 'enum' && typeof rawValue === 'string') {
       formattedValue = rawValue
         .split('_')
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
-    } else if (field.formatter) {
-      formattedValue = field.formatter(rawValue, event);
+    } else if (activeFormatter) {
+      formattedValue = activeFormatter(rawValue, event);
     } else {
       formattedValue = defaultFormatter(rawValue, event);
       // Auto-capitalize short string values that look like raw enum keys (e.g., "loam" → "Loam", "manure" → "Manure")
@@ -220,7 +227,14 @@ export function getFieldsForSurface(
 
     const resolved: ResolvedField = {
       name: field.name,
-      labelKey: field.labelKey,
+      // Consumer surfaces get `consumerLabelKey` when the field defines one — producers and
+      // shoppers need different words for the same data (see FieldConfig.consumerLabelKey).
+      // `surfaceRule.isConsumerFacing` is the existing switch, so this follows whatever
+      // surfaces.ts already classifies as consumer-facing rather than hardcoding a list.
+      labelKey:
+        surfaceRule.isConsumerFacing && field.consumerLabelKey
+          ? field.consumerLabelKey
+          : field.labelKey,
       helpKey: field.helpKey,
       tier,
       formattedValue,

@@ -23,10 +23,8 @@ import { useIntl } from 'react-intl';
 // Event Field Registry (Phase 5G — form integration)
 import { useFormFields } from 'src/hooks/useFormFields';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
-import { RegistryFormSections } from 'src/components/Forms/RegistryFormSections';
-
-// Forms keep their rich hand-crafted rendering. Registry drives display surfaces only.
-const USE_FIELD_REGISTRY = false;
+// D3 — the stored subtype must follow the chosen activity, not the model default.
+import { resolveBusinessSubtype } from 'src/config/events/businessSubtype';
 
 // Business type display names for auto-generated event names
 const BUSINESS_TYPE_NAMES = {
@@ -67,6 +65,39 @@ const formSchemaMainInfo = object({
       photo_id: string().optional()
     })
   ).optional()
+}).superRefine((data, ctx) => {
+  // Mirrors the backend rule in history/serializers.py: a verification event may not be left
+  // "pending" or "not applicable". The form offered both, so a farmer could pick an option the
+  // API then refused — the round trip surfaced it, but only after they thought they were done.
+  if (
+    data.business_type === 'verification' &&
+    ['pending', 'not_applicable'].includes(data.verification_status)
+  ) {
+    ctx.addIssue({
+      path: ['verification_status'],
+      code: 'custom',
+      message: 'A verification event needs a definitive status: verified, in progress or failed'
+    });
+  }
+  // Same shape: a carbon-credits transaction must carry an amount.
+  if (data.business_type === 'carbon_credits' && !data.carbon_credits_earned) {
+    ctx.addIssue({
+      path: ['carbon_credits_earned'],
+      code: 'custom',
+      message: 'Enter the number of credits generated or traded'
+    });
+  }
+  // Same shape again: the field renders with a required asterisk for certification events and
+  // the API rejects a blank one, but the schema left it optional — so the step advanced, the
+  // farmer uploaded photos, and only the POST failed, with a raw "certification_type: ..."
+  // toast on a screen that no longer showed the field. Fail here, on the field, instead.
+  if (data.business_type === 'certification' && !data.certification_type) {
+    ctx.addIssue({
+      path: ['certification_type'],
+      code: 'custom',
+      message: 'Select the certification obtained or renewed (e.g. USDA Organic)'
+    });
+  }
 });
 
 const BusinessTab = forwardRef(
@@ -245,6 +276,11 @@ const BusinessTab = forwardRef(
       const earned = Number.isFinite(parsedEarned) && parsedEarned > 0 ? parsedEarned : undefined;
       const processedData = {
         ...data,
+        // D3 — BusinessEvent.type defaults to CE ("Certification Event"). This form never set
+        // it, so an inspection, a compliance filing and a carbon-credit transaction all stored
+        // and displayed as certifications on the audit PDF and the consumer page. Derive it
+        // from the activity the farmer actually picked.
+        type: resolveBusinessSubtype(data.business_type),
         carbon_credits_earned: earned,
         carbon_credits_unit: earned ? data.carbon_credits_unit : undefined
       };
@@ -259,7 +295,13 @@ const BusinessTab = forwardRef(
         <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <VStack spacing={6} align="stretch">
             {/* Transparency Focus Alert */}
-            <StandardAlert status="info" title="Agricultural Transparency Documentation">
+            <StandardAlert
+              status="info"
+              title={intl.formatMessage({
+                id: 'events.business.sections.agriculturalTransparencyDocumentation',
+                defaultMessage: 'Agricultural Transparency Documentation'
+              })}
+            >
               <HStack spacing={2} mb={2}>
                 <Text fontSize="sm" fontWeight="bold">
                   Building Consumer Trust Through Verification
@@ -272,341 +314,510 @@ const BusinessTab = forwardRef(
               </Text>
             </StandardAlert>
 
-            {USE_FIELD_REGISTRY ? (
-              <RegistryFormSections
-                eventType="business"
-                subtype={watch('type')}
-                control={methods.control}
-                eventData={methods.getValues()}
-                errors={errors}
-              />
-            ) : (
-              <>
-                {/* Section 1: Business Event Information */}
-                <SectionBox variant="default">
-                  <SectionHeader
-                    icon={FaClipboardList}
-                    iconColor="teal.500"
-                    title="Trust-Building Business Activity"
-                    badge="Consumer Trust"
-                    badgeColorScheme="teal"
-                  />
-                  <VStack spacing={4} align="stretch">
+            {/* Forms are hand-crafted by design: the NOP section grouping below is what
+                makes the audit export complete, and the registry renderer flattens it.
+                The field registry is the SSOT for DISPLAY surfaces (consumer card, modal,
+                timeline) and is enforced here by src/config/events/__tests__/
+                formConformance.test.ts, not by a runtime flag. */}
+            <>
+              {/* Section 1: Business Event Information */}
+              <SectionBox variant="default">
+                <SectionHeader
+                  icon={FaClipboardList}
+                  iconColor="teal.500"
+                  title={intl.formatMessage({
+                    id: 'events.business.sections.trustBuildingBusinessActivity',
+                    defaultMessage: 'Trust-Building Business Activity'
+                  })}
+                  badge="Consumer Trust"
+                  badgeColorScheme="teal"
+                />
+                <VStack spacing={4} align="stretch">
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'events.business.fields.businessActivityType',
+                        defaultMessage: 'Business Activity Type'
+                      })}
+                      required
+                      error={errors.business_type?.message}
+                      helpText={intl.formatMessage({
+                        id: 'events.business.help.selectActivitiesThatBuildConsumerTrustAndEnh',
+                        defaultMessage:
+                          'Select activities that build consumer trust and enhance transparency'
+                      })}
+                    >
+                      <Controller
+                        name="business_type"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'events.business.placeholders.selectBusinessActivityType',
+                              defaultMessage: 'Select business activity type...'
+                            })}
+                          >
+                            <option value="certification">
+                              {intl.formatMessage({
+                                id: 'events.business.options.certificationAchievementOrganicFairTradeEtc',
+                                defaultMessage:
+                                  'Certification Achievement (Organic, Fair Trade, etc.)'
+                              })}
+                            </option>
+                            <option value="verification">
+                              {intl.formatMessage({
+                                id: 'events.business.options.thirdPartyVerificationCompleted',
+                                defaultMessage: 'Third-Party Verification Completed'
+                              })}
+                            </option>
+                            <option value="sustainability_audit">
+                              {intl.formatMessage({
+                                id: 'events.business.options.sustainabilityAssessmentPassed',
+                                defaultMessage: 'Sustainability Assessment Passed'
+                              })}
+                            </option>
+                            <option value="transparency">
+                              {intl.formatMessage({
+                                id: 'events.business.options.transparencyInitiativeLaunched',
+                                defaultMessage: 'Transparency Initiative Launched'
+                              })}
+                            </option>
+                            <option value="carbon_credits">
+                              {intl.formatMessage({
+                                id: 'events.business.options.carbonCreditsEarned',
+                                defaultMessage: 'Carbon Credits Earned'
+                              })}
+                            </option>
+                            <option value="compliance">
+                              {intl.formatMessage({
+                                id: 'events.business.options.regulatoryComplianceAchieved',
+                                defaultMessage: 'Regulatory Compliance Achieved'
+                              })}
+                            </option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+
+                    {/* Event Name - Optional, auto-generated from business type if empty */}
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'events.business.fields.eventName',
+                        defaultMessage: 'Event Name'
+                      })}
+                      helpText={intl.formatMessage({
+                        id: 'events.business.help.autoGeneratedFromActivityTypeCustomizeForSpe',
+                        defaultMessage:
+                          'Auto-generated from activity type. Customize for specific events.'
+                      })}
+                    >
+                      <StandardInput
+                        type="text"
+                        placeholder={`e.g., ${
+                          BUSINESS_TYPE_NAMES[businessType] || 'Business Event'
+                        } - Q1 2025`}
+                        {...methods.register('name')}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'events.business.fields.verificationStatus',
+                        defaultMessage: 'Verification Status'
+                      })}
+                      error={errors.verification_status?.message}
+                      helpText={intl.formatMessage({
+                        id: 'events.business.help.statusOfVerificationForConsumerTransparency',
+                        defaultMessage: 'Status of verification for consumer transparency'
+                      })}
+                    >
+                      <Controller
+                        name="verification_status"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field}>
+                            <option value="pending">
+                              {intl.formatMessage({
+                                id: 'events.business.options.pendingVerification',
+                                defaultMessage: 'Pending Verification'
+                              })}
+                            </option>
+                            <option value="verified">
+                              {intl.formatMessage({
+                                id: 'events.business.options.verified',
+                                defaultMessage: 'Verified'
+                              })}
+                            </option>
+                            <option value="in_progress">
+                              {intl.formatMessage({
+                                id: 'events.business.options.verificationInProgress',
+                                defaultMessage: 'Verification In Progress'
+                              })}
+                            </option>
+                            <option value="failed">
+                              {intl.formatMessage({
+                                id: 'events.business.options.verificationFailed',
+                                defaultMessage: 'Verification Failed'
+                              })}
+                            </option>
+                            <option value="not_applicable">
+                              {intl.formatMessage({
+                                id: 'events.business.options.notApplicable',
+                                defaultMessage: 'Not Applicable'
+                              })}
+                            </option>
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+                  </SimpleGrid>
+
+                  {/* Certification/Verification Details - For certification and verification events */}
+                  {(businessType === 'certification' || businessType === 'verification') && (
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField
-                        label="Business Activity Type"
-                        required
-                        error={errors.business_type?.message}
-                        helpText="Select activities that build consumer trust and enhance transparency"
+                        label={
+                          businessType === 'certification'
+                            ? 'Certification Type'
+                            : 'Standard / Audit Type'
+                        }
+                        required={businessType === 'certification'}
+                        error={errors.certification_type?.message}
+                        helpText={
+                          businessType === 'certification'
+                            ? 'Type of certification obtained or renewed'
+                            : 'Standard or audit framework used for verification'
+                        }
                       >
                         <Controller
-                          name="business_type"
+                          name="certification_type"
                           control={methods.control}
                           render={({ field }) => (
                             <StandardSelect
                               {...field}
-                              placeholder="Select business activity type..."
+                              placeholder={intl.formatMessage({
+                                id: 'events.business.placeholders.selectCertificationType',
+                                defaultMessage: 'Select certification type...'
+                              })}
                             >
-                              <option value="certification">
-                                Certification Achievement (Organic, Fair Trade, etc.)
+                              <option value="">Select certification...</option>
+                              <option value="organic_usda">USDA Organic</option>
+                              <option value="carbon_neutral">Carbon Neutral Certification</option>
+                              <option value="rainforest_alliance">Rainforest Alliance</option>
+                              <option value="fair_trade">Fair Trade Certified</option>
+                              <option value="regenerative">Regenerative Organic Certified</option>
+                              <option value="sustainable_agriculture">
+                                {intl.formatMessage({
+                                  id: 'events.business.options.sustainableAgricultureStandard',
+                                  defaultMessage: 'Sustainable Agriculture Standard'
+                                })}
                               </option>
-                              <option value="verification">
-                                Third-Party Verification Completed
+                              <option value="water_stewardship">
+                                {intl.formatMessage({
+                                  id: 'events.business.options.waterStewardshipCertification',
+                                  defaultMessage: 'Water Stewardship Certification'
+                                })}
                               </option>
-                              <option value="sustainability_audit">
-                                Sustainability Assessment Passed
+                              {/* Sprint 2 Epic 2.2: Additional certifications */}
+                              <option value="global_gap">GlobalG.A.P. Certification</option>
+                              <option value="non_gmo">Non-GMO Project Verified</option>
+                              {/* F13 fix (2026-06): value must be "cng" to match the
+                                    backend CERTIFICATION_TYPE_CHOICES — "certified_naturally_grown"
+                                    is not a valid choice and returned a DRF 400 on submit. */}
+                              <option value="cng">Certified Naturally Grown (CNG)</option>
+                              <option value="food_safety">
+                                {intl.formatMessage({
+                                  id: 'events.business.options.foodSafetyPrimusGfsSqfBrc',
+                                  defaultMessage: 'Food Safety (Primus GFS, SQF, BRC)'
+                                })}
                               </option>
-                              <option value="transparency">Transparency Initiative Launched</option>
-                              <option value="carbon_credits">Carbon Credits Earned</option>
-                              <option value="compliance">Regulatory Compliance Achieved</option>
                             </StandardSelect>
                           )}
                         />
                       </StandardField>
 
-                      {/* Event Name - Optional, auto-generated from business type if empty */}
+                      {/* Sprint 3 Epic 3.2: Consumer Trust Field */}
                       <StandardField
-                        label="Event Name"
-                        helpText="Auto-generated from activity type. Customize for specific events."
+                        label={
+                          businessType === 'certification'
+                            ? 'Certifier Organization Name'
+                            : 'Auditing Organization'
+                        }
+                        error={errors.verified_certifier_name?.message}
+                        helpText={
+                          businessType === 'certification'
+                            ? 'Name of the certifying organization (builds consumer trust)'
+                            : 'Name of the auditing or verification body'
+                        }
                       >
-                        <StandardInput
-                          type="text"
-                          placeholder={`e.g., ${
-                            BUSINESS_TYPE_NAMES[businessType] || 'Business Event'
-                          } - Q1 2025`}
-                          {...methods.register('name')}
+                        <Controller
+                          name="verified_certifier_name"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              placeholder={
+                                businessType === 'certification'
+                                  ? 'e.g., Oregon Tilth, CCOF, QCS'
+                                  : 'e.g., Primus Auditing Ops, SCS Global'
+                              }
+                            />
+                          )}
                         />
                       </StandardField>
 
                       <StandardField
-                        label="Verification Status"
-                        error={errors.verification_status?.message}
-                        helpText="Status of verification for consumer transparency"
+                        label={
+                          businessType === 'certification'
+                            ? 'Certificate Number'
+                            : 'Report / Reference Number'
+                        }
+                        error={errors.certificate_number?.message}
+                        helpText={
+                          businessType === 'certification'
+                            ? 'Reference number for the certification document'
+                            : 'Audit report or verification reference number'
+                        }
                       >
                         <Controller
-                          name="verification_status"
+                          name="certificate_number"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              placeholder={
+                                businessType === 'certification'
+                                  ? 'Enter certificate reference number (e.g., GGN-123456)'
+                                  : 'Enter report/reference number'
+                              }
+                            />
+                          )}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                  )}
+
+                  {/* Carbon Credits - Only for carbon credit events */}
+                  {businessType === 'carbon_credits' && (
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.business.fields.carbonCreditsEarned',
+                          defaultMessage: 'Carbon Credits Earned'
+                        })}
+                        required
+                        error={errors.carbon_credits_earned?.message}
+                        helpText={intl.formatMessage({
+                          id: 'events.business.help.amountOfCarbonCreditsGeneratedOrTraded',
+                          defaultMessage: 'Amount of carbon credits generated or traded'
+                        })}
+                      >
+                        <Controller
+                          name="carbon_credits_earned"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardInput
+                              {...field}
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                            />
+                          )}
+                        />
+                      </StandardField>
+
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.business.fields.unit',
+                          defaultMessage: 'Unit'
+                        })}
+                      >
+                        <Controller
+                          name="carbon_credits_unit"
                           control={methods.control}
                           render={({ field }) => (
                             <StandardSelect {...field}>
-                              <option value="pending">Pending Verification</option>
-                              <option value="verified">Verified</option>
-                              <option value="in_progress">Verification In Progress</option>
-                              <option value="failed">Verification Failed</option>
-                              <option value="not_applicable">Not Applicable</option>
+                              <option value="tCO2e">
+                                {intl.formatMessage({
+                                  id: 'events.business.options.tco2eTonnesCo2Equivalent',
+                                  defaultMessage: 'tCO2e (tonnes CO2 equivalent)'
+                                })}
+                              </option>
+                              <option value="kgCO2e">
+                                {intl.formatMessage({
+                                  id: 'events.business.options.kgco2eKilogramsCo2Equivalent',
+                                  defaultMessage: 'kgCO2e (kilograms CO2 equivalent)'
+                                })}
+                              </option>
+                              <option value="credits">
+                                {intl.formatMessage({
+                                  id: 'events.business.options.carbonCreditsUnits',
+                                  defaultMessage: 'Carbon Credits (units)'
+                                })}
+                              </option>
                             </StandardSelect>
                           )}
                         />
                       </StandardField>
                     </SimpleGrid>
+                  )}
+                </VStack>
+              </SectionBox>
 
-                    {/* Certification/Verification Details - For certification and verification events */}
-                    {(businessType === 'certification' || businessType === 'verification') && (
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label={
-                            businessType === 'certification'
-                              ? 'Certification Type'
-                              : 'Standard / Audit Type'
-                          }
-                          required={businessType === 'certification'}
-                          error={errors.certification_type?.message}
-                          helpText={
-                            businessType === 'certification'
-                              ? 'Type of certification obtained or renewed'
-                              : 'Standard or audit framework used for verification'
-                          }
-                        >
-                          <Controller
-                            name="certification_type"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardSelect {...field} placeholder="Select certification type...">
-                                <option value="">Select certification...</option>
-                                <option value="organic_usda">USDA Organic</option>
-                                <option value="carbon_neutral">Carbon Neutral Certification</option>
-                                <option value="rainforest_alliance">Rainforest Alliance</option>
-                                <option value="fair_trade">Fair Trade Certified</option>
-                                <option value="regenerative">Regenerative Organic Certified</option>
-                                <option value="sustainable_agriculture">
-                                  Sustainable Agriculture Standard
-                                </option>
-                                <option value="water_stewardship">
-                                  Water Stewardship Certification
-                                </option>
-                                {/* Sprint 2 Epic 2.2: Additional certifications */}
-                                <option value="global_gap">GlobalG.A.P. Certification</option>
-                                <option value="non_gmo">Non-GMO Project Verified</option>
-                                {/* F13 fix (2026-06): value must be "cng" to match the
-                                    backend CERTIFICATION_TYPE_CHOICES — "certified_naturally_grown"
-                                    is not a valid choice and returned a DRF 400 on submit. */}
-                                <option value="cng">Certified Naturally Grown (CNG)</option>
-                                <option value="food_safety">
-                                  Food Safety (Primus GFS, SQF, BRC)
-                                </option>
-                              </StandardSelect>
-                            )}
-                          />
-                        </StandardField>
-
-                        {/* Sprint 3 Epic 3.2: Consumer Trust Field */}
-                        <StandardField
-                          label={
-                            businessType === 'certification'
-                              ? 'Certifier Organization Name'
-                              : 'Auditing Organization'
-                          }
-                          error={errors.verified_certifier_name?.message}
-                          helpText={
-                            businessType === 'certification'
-                              ? 'Name of the certifying organization (builds consumer trust)'
-                              : 'Name of the auditing or verification body'
-                          }
-                        >
-                          <Controller
-                            name="verified_certifier_name"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                placeholder={
-                                  businessType === 'certification'
-                                    ? 'e.g., Oregon Tilth, CCOF, QCS'
-                                    : 'e.g., Primus Auditing Ops, SCS Global'
-                                }
-                              />
-                            )}
-                          />
-                        </StandardField>
-
-                        <StandardField
-                          label={
-                            businessType === 'certification'
-                              ? 'Certificate Number'
-                              : 'Report / Reference Number'
-                          }
-                          error={errors.certificate_number?.message}
-                          helpText={
-                            businessType === 'certification'
-                              ? 'Reference number for the certification document'
-                              : 'Audit report or verification reference number'
-                          }
-                        >
-                          <Controller
-                            name="certificate_number"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                placeholder={
-                                  businessType === 'certification'
-                                    ? 'Enter certificate reference number (e.g., GGN-123456)'
-                                    : 'Enter report/reference number'
-                                }
-                              />
-                            )}
-                          />
-                        </StandardField>
-                      </SimpleGrid>
+              {/* Section 2: Sustainability Practice */}
+              <SectionBox variant="default">
+                <SectionHeader
+                  icon={FaLeaf}
+                  iconColor="green.500"
+                  title={intl.formatMessage({
+                    id: 'events.business.sections.sustainabilityPractice',
+                    defaultMessage: 'Sustainability Practice'
+                  })}
+                  badge="Consumer Story"
+                  badgeColorScheme="green"
+                />
+                <StandardField
+                  label={intl.formatMessage({
+                    id: 'events.business.fields.sustainabilityPracticeImplemented',
+                    defaultMessage: 'Sustainability Practice Implemented'
+                  })}
+                  error={errors.sustainability_practice?.message}
+                  helpText={intl.formatMessage({
+                    id: 'events.business.help.practiceThatEnhancesCarbonTransparencyOrEnvi',
+                    defaultMessage:
+                      'Practice that enhances carbon transparency or environmental benefit'
+                  })}
+                >
+                  <Controller
+                    name="sustainability_practice"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardSelect {...field}>
+                        <option value="">Select practice...</option>
+                        <option value="cover_cropping">
+                          {intl.formatMessage({
+                            id: 'events.business.options.coverCroppingImplementation',
+                            defaultMessage: 'Cover Cropping Implementation'
+                          })}
+                        </option>
+                        <option value="no_till">
+                          {intl.formatMessage({
+                            id: 'events.business.options.noTillFarmingAdoption',
+                            defaultMessage: 'No-Till Farming Adoption'
+                          })}
+                        </option>
+                        <option value="integrated_pest">
+                          {intl.formatMessage({
+                            id: 'events.business.options.integratedPestManagement',
+                            defaultMessage: 'Integrated Pest Management'
+                          })}
+                        </option>
+                        <option value="water_conservation">
+                          {intl.formatMessage({
+                            id: 'events.business.options.waterConservationMeasures',
+                            defaultMessage: 'Water Conservation Measures'
+                          })}
+                        </option>
+                        <option value="renewable_energy">
+                          {intl.formatMessage({
+                            id: 'events.business.options.renewableEnergyInstallation',
+                            defaultMessage: 'Renewable Energy Installation'
+                          })}
+                        </option>
+                        <option value="composting">
+                          {intl.formatMessage({
+                            id: 'events.business.options.onFarmCompostingProgram',
+                            defaultMessage: 'On-Farm Composting Program'
+                          })}
+                        </option>
+                        <option value="biodiversity">
+                          {intl.formatMessage({
+                            id: 'events.business.options.biodiversityConservation',
+                            defaultMessage: 'Biodiversity Conservation'
+                          })}
+                        </option>
+                        <option value="soil_health">
+                          {intl.formatMessage({
+                            id: 'events.business.options.soilHealthImprovement',
+                            defaultMessage: 'Soil Health Improvement'
+                          })}
+                        </option>
+                      </StandardSelect>
                     )}
-
-                    {/* Carbon Credits - Only for carbon credit events */}
-                    {businessType === 'carbon_credits' && (
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label="Carbon Credits Earned"
-                          required
-                          error={errors.carbon_credits_earned?.message}
-                          helpText="Amount of carbon credits generated or traded"
-                        >
-                          <Controller
-                            name="carbon_credits_earned"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput
-                                {...field}
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="0.00"
-                              />
-                            )}
-                          />
-                        </StandardField>
-
-                        <StandardField label="Unit">
-                          <Controller
-                            name="carbon_credits_unit"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardSelect {...field}>
-                                <option value="tCO2e">tCO2e (tonnes CO2 equivalent)</option>
-                                <option value="kgCO2e">kgCO2e (kilograms CO2 equivalent)</option>
-                                <option value="credits">Carbon Credits (units)</option>
-                              </StandardSelect>
-                            )}
-                          />
-                        </StandardField>
-                      </SimpleGrid>
-                    )}
-                  </VStack>
-                </SectionBox>
-
-                {/* Section 2: Sustainability Practice */}
-                <SectionBox variant="default">
-                  <SectionHeader
-                    icon={FaLeaf}
-                    iconColor="green.500"
-                    title="Sustainability Practice"
-                    badge="Consumer Story"
-                    badgeColorScheme="green"
                   />
+                </StandardField>
+              </SectionBox>
+
+              {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
+              <SectionBox variant="default">
+                <SectionHeader
+                  icon={FaSeedling}
+                  iconColor="green.500"
+                  title={intl.formatMessage({
+                    id: 'events.business.sections.farmerSFieldNotesConsumerTransparency',
+                    defaultMessage: "Farmer's Field Notes & Consumer Transparency"
+                  })}
+                  badge="Consumer Transparency"
+                  badgeColorScheme="green"
+                />
+                <VStack spacing={4} align="stretch">
                   <StandardField
-                    label="Sustainability Practice Implemented"
-                    error={errors.sustainability_practice?.message}
-                    helpText="Practice that enhances carbon transparency or environmental benefit"
+                    label={
+                      businessType === 'certification' ? 'Inspector / Auditor Name' : 'Performed By'
+                    }
+                    error={errors.performed_by?.message}
+                    helpText={
+                      businessType === 'certification'
+                        ? 'Name and role of the certifying inspector (e.g., Sarah Chen, CCOF Inspector). Required for NOP audit trail.'
+                        : 'Name and role of the person who performed this activity'
+                    }
                   >
                     <Controller
-                      name="sustainability_practice"
+                      name="performed_by"
                       control={methods.control}
                       render={({ field }) => (
-                        <StandardSelect {...field}>
-                          <option value="">Select practice...</option>
-                          <option value="cover_cropping">Cover Cropping Implementation</option>
-                          <option value="no_till">No-Till Farming Adoption</option>
-                          <option value="integrated_pest">Integrated Pest Management</option>
-                          <option value="water_conservation">Water Conservation Measures</option>
-                          <option value="renewable_energy">Renewable Energy Installation</option>
-                          <option value="composting">On-Farm Composting Program</option>
-                          <option value="biodiversity">Biodiversity Conservation</option>
-                          <option value="soil_health">Soil Health Improvement</option>
-                        </StandardSelect>
+                        <StandardInput
+                          {...field}
+                          placeholder={
+                            businessType === 'certification'
+                              ? 'e.g., Sarah Chen (CCOF Inspector)'
+                              : 'e.g., John Doe (Farm Manager)'
+                          }
+                        />
                       )}
                     />
                   </StandardField>
-                </SectionBox>
 
-                {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
-                <SectionBox variant="default">
-                  <SectionHeader
-                    icon={FaSeedling}
-                    iconColor="green.500"
-                    title="Farmer's Field Notes & Consumer Transparency"
-                    badge="Consumer Transparency"
-                    badgeColorScheme="green"
-                  />
-                  <VStack spacing={4} align="stretch">
-                    <StandardField
-                      label={
-                        businessType === 'certification'
-                          ? 'Inspector / Auditor Name'
-                          : 'Performed By'
-                      }
-                      error={errors.performed_by?.message}
-                      helpText={
-                        businessType === 'certification'
-                          ? 'Name and role of the certifying inspector (e.g., Sarah Chen, CCOF Inspector). Required for NOP audit trail.'
-                          : 'Name and role of the person who performed this activity'
-                      }
-                    >
-                      <Controller
-                        name="performed_by"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardInput
-                            {...field}
-                            placeholder={
-                              businessType === 'certification'
-                                ? 'e.g., Sarah Chen (CCOF Inspector)'
-                                : 'e.g., John Doe (Farm Manager)'
-                            }
-                          />
-                        )}
-                      />
-                    </StandardField>
-
-                    <StandardField
-                      label={
-                        intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'
-                      }
-                      error={errors.observation?.message}
-                      helpText="Share details about this business activity's impact on carbon transparency that help consumers understand your commitment to sustainability"
-                    >
-                      <Controller
-                        name="observation"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardTextarea
-                            {...field}
-                            placeholder="Optional: Describe how this certification or business activity improves transparency, e.g., Certification process improved carbon tracking accuracy, new practice reduced emissions by 15%..."
-                            rows={4}
-                          />
-                        )}
-                      />
-                    </StandardField>
-                  </VStack>
-                </SectionBox>
-              </>
-            )}
+                  <StandardField
+                    label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
+                    error={errors.observation?.message}
+                    helpText={intl.formatMessage({
+                      id: 'events.business.help.shareDetailsAboutThisBusinessActivitySImpact',
+                      defaultMessage:
+                        "Share details about this business activity's impact on carbon transparency that help consumers understand your commitment to sustainability"
+                    })}
+                  >
+                    <Controller
+                      name="observation"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardTextarea
+                          {...field}
+                          placeholder={intl.formatMessage({
+                            id: 'events.business.placeholders.optionalDescribeHowThisCertificationOrBusine',
+                            defaultMessage:
+                              'Optional: Describe how this certification or business activity improves transparency, e.g., Certification process improved carbon tracking accuracy, new practice reduced emissions by 15%...'
+                          })}
+                          rows={4}
+                        />
+                      )}
+                    />
+                  </StandardField>
+                </VStack>
+              </SectionBox>
+            </>
 
             {/* Phase 2.3: Custom Fields Section */}
             <CustomFieldsForm

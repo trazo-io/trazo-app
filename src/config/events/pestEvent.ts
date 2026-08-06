@@ -1,10 +1,13 @@
 /**
  * Pest Management Event Registry.
  *
- * 6 subtypes: SC(Scouting), BR(Beneficial Release), TM(Trap Monitoring),
- * PI(Pest Identification), TA(Threshold Assessment), IP(IPM Implementation).
+ * 7 subtypes: SC(Scouting), BR(Beneficial Release), TM(Trap Monitoring),
+ * PI(Pest Identification), TA(Threshold Assessment), IP(IPM Implementation),
+ * CU(Cultural / Sanitation Control — §E-4).
  *
  * BR (Beneficial Release) and PI (Pest ID) are ESSENTIAL photo tier events.
+ * Every `photoTier` here mirrors transparency_calculator.py — the backend owns the penalty,
+ * this file only reports it.
  */
 
 import type { EventRegistryEntry, FieldConfig, PestManagementSubtype } from './registry';
@@ -14,7 +17,9 @@ import {
   formatDurationHours,
   formatFuelConsumption,
   formatNumber,
-  formatPercentage
+  formatPercentage,
+  formatConsumerPestName,
+  formatConsumerActionThreshold
 } from './formatters';
 
 type PestData = Record<string, unknown>;
@@ -23,6 +28,23 @@ type PestData = Record<string, unknown>;
 // NOTE: The form stores CAPITALIZED values ("Low", "High") for non-scouting types,
 // and lowercase ("none", "low") for the scouting `average_pest_pressure` field.
 // The formatter handles both cases via lowercase lookup + fallback.
+// §E-4 — preventive cultural practices (7 CFR 205.206(a)). English here + es-419 in
+// utils/fieldValues.es.ts, matching every other enum map in this file: getFieldsForSurface() has
+// no `intl`, so a formatter returning an i18n key would render the raw key.
+const CULTURAL_PRACTICE_LABELS: Record<string, string> = {
+  mummy_removal: 'Mummy nut removal',
+  sanitation_shake: 'Sanitation shake',
+  brush_shred: 'Brush / mummy shredding',
+  pruning_removal: 'Pruning removal and destruction',
+  field_sanitation: 'Field sanitation',
+  trap_crop: 'Trap crop'
+};
+
+const formatCulturalPractice = (v: unknown): string | null => {
+  if (typeof v !== 'string' || v === '') return null;
+  return CULTURAL_PRACTICE_LABELS[v] ?? v;
+};
+
 const PEST_PRESSURE_LABELS: Record<string, string> = {
   none: 'None',
   low: 'Low',
@@ -70,10 +92,33 @@ const formatBeneficialInsects = (v: unknown): string | null => {
 };
 
 const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
+  // ---- Cultural / sanitation control (CU) — §E-4, 7 CFR 205.206(a) ----
+  // Hero on the consumer card: removing overwintering pest sites INSTEAD of spraying is the
+  // single most legible organic practice on the page, and it is a plain fact about work done,
+  // not a claim about outcomes.
+  {
+    name: 'cultural_practice',
+    labelKey: 'events.pest.fields.culturalPractice',
+    helpKey: 'events.pest.fields.culturalPracticeHelp',
+    valueType: 'enum',
+    formatter: formatCulturalPractice,
+    visibleForSubtypes: ['CU'],
+    surfaces: {
+      timeline: 'hero',
+      card: 'hero',
+      modal: 'hero',
+      form: 'immediate',
+      preview: 'hero',
+      consumer_card: 'hero',
+      consumer_timeline: 'hero'
+    }
+  },
   // ---- Core (ALL subtypes) ----
   {
     name: 'pest_species',
     labelKey: 'events.pest.fields.pestSpecies',
+    // Shoppers get the common name without the Latin binomial; the certifier PDF keeps it.
+    consumerFormatter: formatConsumerPestName,
     valueType: 'string',
     surfaces: {
       timeline: 'hero',
@@ -148,6 +193,10 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     // semantics, but suppress the field entirely on BR/TM/PI where it's just noise.
     name: 'action_threshold_met',
     labelKey: 'events.pest.fields.thresholdMet',
+    // A bare ✗ meant nothing to a shopper, and it encodes good news: counts stayed under the
+    // level that would justify treating. The consumer surface says it in words.
+    consumerLabelKey: 'events.consumer.fields.actionThresholdMet',
+    consumerFormatter: formatConsumerActionThreshold,
     valueType: 'boolean',
     visibleForSubtypes: ['SC', 'TA', 'IP'],
     formatter: formatBoolean,
@@ -183,7 +232,7 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'immediate',
-      consumer_card: 'details'
+      consumer_card: 'secondary'
     }
   },
   {
@@ -194,8 +243,7 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     visibleForSubtypes: ['PI', 'SC'],
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
 
@@ -203,6 +251,9 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
   {
     name: 'beneficial_species',
     labelKey: 'events.pest.fields.beneficialSpecies',
+    // Same as pest_species: the released insect's common name is the consumer story,
+    // "(Aphytis melinus)" is not.
+    consumerFormatter: formatConsumerPestName,
     valueType: 'string',
     visibleForSubtypes: ['BR'],
     surfaces: {
@@ -296,6 +347,9 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
         pheromone: 'Pheromone lure',
         delta: 'Delta trap',
         bucket_funnel: 'Bucket / funnel',
+        // Vertebrate traps (§E-7) — gopher and ground squirrel are routine orchard work.
+        gopher_trap: 'Gopher trap',
+        ground_squirrel_trap: 'Ground squirrel trap',
         other: 'Other'
       };
       return m[v.toLowerCase()] ?? v;
@@ -338,10 +392,13 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     labelKey: 'events.pest.fields.beneficialInsectsUsed',
     valueType: 'enum',
     formatter: formatBeneficialInsects,
+    // NO consumer_card: it rendered as "Beneficial Insects Used: Using Beneficial Insects" —
+    // the label restated as the value, on EVERY pest card including ones with no release.
+    // Where beneficials were genuinely released, `beneficial_species` ("Green lacewing")
+    // already says it at hero tier, concretely.
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -379,8 +436,7 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     carbonRelevant: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -389,7 +445,7 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     valueType: 'enum',
     enumSource: 'fuel_types',
     carbonRelevant: true,
-    surfaces: { modal: 'secondary', form: 'secondary', consumer_card: 'details' }
+    surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     name: 'equipment_hours',
@@ -397,7 +453,7 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     valueType: 'number',
     formatter: formatDurationHours,
     carbonRelevant: true,
-    surfaces: { modal: 'secondary', form: 'secondary', consumer_card: 'details' }
+    surfaces: { modal: 'secondary', form: 'secondary' }
   },
 
   // ---- Context ----
@@ -420,14 +476,14 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     labelKey: 'events.common.fields.growthStage',
     valueType: 'enum',
     enumSource: 'growth_stages',
-    surfaces: { modal: 'details', form: 'details', consumer_card: 'details' }
+    surfaces: { modal: 'details', form: 'details' }
   },
   {
     name: 'production_efficiency',
     labelKey: 'events.common.fields.productionEfficiency',
     valueType: 'enum',
     enumSource: 'production_efficiency',
-    surfaces: { modal: 'details', form: 'secondary', consumer_card: 'details' }
+    surfaces: { modal: 'details', form: 'secondary' }
   }
 ];
 
@@ -441,7 +497,12 @@ export const pestEventRegistry: EventRegistryEntry<PestManagementSubtype, PestDa
     { code: 'TM', labelKey: 'events.pest.subtypes.trapMonitoring', photoTier: 'recommended' },
     { code: 'PI', labelKey: 'events.pest.subtypes.pestIdentification', photoTier: 'essential' },
     { code: 'TA', labelKey: 'events.pest.subtypes.thresholdAssessment', photoTier: 'optional' },
-    { code: 'IP', labelKey: 'events.pest.subtypes.ipmImplementation', photoTier: 'recommended' }
+    { code: 'IP', labelKey: 'events.pest.subtypes.ipmImplementation', photoTier: 'recommended' },
+    // §E-4 — MIRRORS the backend: transparency_calculator.py keys its tiers by the raw subtype
+    // code across every event model, and "CU" sits in PHOTO_TIER_RECOMMENDED. Declaring
+    // 'essential' here would promise a 50% photo penalty the backend never applies, so a farmer
+    // would be told their score depends on a photo that in fact costs them 25%.
+    { code: 'CU', labelKey: 'events.pest.subtypes.culturalControl', photoTier: 'recommended' }
   ],
   defaultPhotoTier: 'optional',
   fields: PEST_FIELDS

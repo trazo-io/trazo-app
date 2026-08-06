@@ -34,9 +34,11 @@ import {
   FaRedo
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 import AuthFooter from 'components/Footer/AuthFooter';
 import { passwordValidator } from '../../../utils/passwordValidation';
+import { PERSON_NAME_PATTERN, PERSON_NAME_MAX_LENGTH } from '../../../utils/nameValidation';
 import { PasswordStrengthIndicator } from '../../../components/Forms/PasswordStrengthIndicator';
 import { useSignUpMutation, useResendVerificationEmailMutation, useSocialAuthMutation } from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
@@ -65,6 +67,7 @@ interface SignUpFormData {
 const AppSignUp: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const intl = useIntl();
   const toast = useToast();
   const [signUp, { isLoading }] = useSignUpMutation();
   const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
@@ -471,29 +474,53 @@ const AppSignUp: React.FC = () => {
             zIndex={10}
           >
             <VStack spacing={4}>
+              {/*
+                Compliance (.claude/rules/compliance.md): market positioning may be
+                described as "premium positioning through transparency" — never as a
+                pricing outcome. "earn what your products are worth" promised a price
+                result, which is the FTC 16 CFR 260.6 exposure the rule exists to avoid.
+              */}
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Great farms still compete on price.
+                {intl.formatMessage({
+                  id: 'auth.signup.hero.headline',
+                  defaultMessage: "Great farms can't prove what makes them different."
+                })}
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Because buyers can't see how the food was grown.
-                Trazo gives you the proof to earn what your products are worth.
+                {intl.formatMessage({
+                  id: 'auth.signup.hero.subhead',
+                  defaultMessage:
+                    "Because buyers can't see how the food was grown. Trazo turns your records into proof buyers can check — documentation for your certifier, and a page they can scan."
+                })}
               </Text>
             </VStack>
 
             <VStack spacing={4} pt={4}>
               <Text fontSize="sm" opacity={0.9} fontWeight="500">
-                Built for specialty crop farms. 14-day free trial.
+                {intl.formatMessage({
+                  id: 'auth.signup.hero.trial',
+                  defaultMessage: 'Built for specialty crop farms. 14-day free trial.'
+                })}
               </Text>
               <VStack spacing={3}>
                 {[
-                  'Record practices in under 2 minutes',
-                  'QR codes auto-generate after harvest',
-                  '22 US crops pre-configured and ready'
-                ].map((feature, index) => (
-                  <HStack key={index} spacing={3}>
+                  {
+                    id: 'auth.signup.benefit.quickRecord',
+                    defaultMessage: 'Record practices in under 2 minutes'
+                  },
+                  {
+                    id: 'auth.signup.benefit.qrAfterHarvest',
+                    defaultMessage: 'QR codes auto-generate after harvest'
+                  },
+                  {
+                    id: 'auth.signup.benefit.cropsReady',
+                    defaultMessage: '22 US crops pre-configured and ready'
+                  }
+                ].map((feature) => (
+                  <HStack key={feature.id} spacing={3}>
                     <Box w={2} h={2} bg="white" borderRadius="50%" />
                     <Text fontSize="sm" fontWeight="500" opacity={0.9}>
-                      {feature}
+                      {intl.formatMessage(feature)}
                     </Text>
                   </HStack>
                 ))}
@@ -617,13 +644,14 @@ const AppSignUp: React.FC = () => {
                             fontWeight="600"
                             px={{ base: 3, sm: 6 }}
                             py={2}
+                            minH="44px"
                             onClick={() => setJoinExistingCompany(false)}
                             transition="all 0.2s"
                             boxShadow={
                               !joinExistingCompany ? '0 2px 8px rgba(72, 187, 120, 0.2)' : 'none'
                             }
                           >
-                            Create New Company
+                            {intl.formatMessage({ id: 'auth.signup.mode.createCompany', defaultMessage: 'Create New Company' })}
                           </Button>
                           <Button
                             size="sm"
@@ -649,13 +677,14 @@ const AppSignUp: React.FC = () => {
                             fontWeight="600"
                             px={{ base: 3, sm: 6 }}
                             py={2}
+                            minH="44px"
                             onClick={() => setJoinExistingCompany(true)}
                             transition="all 0.2s"
                             boxShadow={
                               joinExistingCompany ? '0 2px 8px rgba(72, 187, 120, 0.2)' : 'none'
                             }
                           >
-                            Join Existing Company
+                            {intl.formatMessage({ id: 'auth.signup.mode.joinCompany', defaultMessage: 'Join Existing Company' })}
                           </Button>
                         </HStack>
                       </MotionBox>
@@ -681,7 +710,7 @@ const AppSignUp: React.FC = () => {
                             <Box
                               as="input"
                               type="text"
-                              placeholder="Enter 6-character company code"
+                              placeholder={intl.formatMessage({ id: 'auth.signup.field.companyCode.placeholder', defaultMessage: 'Enter 6-character company code' })}
                               w="full"
                               h="44px"
                               fontSize="sm"
@@ -717,17 +746,17 @@ const AppSignUp: React.FC = () => {
                                 minLength: joinExistingCompany
                                   ? {
                                       value: 6,
-                                      message: 'Company code must be at least 6 characters'
+                                      message: intl.formatMessage({ id: 'auth.validation.companyCode.tooShort', defaultMessage: 'Company code must be at least 6 characters' })
                                     }
                                   : undefined,
                                 maxLength: {
                                   value: 8,
-                                  message: 'Company code must be 8 characters or less'
+                                  message: intl.formatMessage({ id: 'auth.validation.companyCode.tooLong', defaultMessage: 'Company code must be 8 characters or less' })
                                 },
                                 pattern: joinExistingCompany
                                   ? {
                                       value: /^[A-Z0-9]{6,8}$/,
-                                      message: 'Company code must be 6-8 letters and numbers only'
+                                      message: intl.formatMessage({ id: 'auth.validation.companyCode.pattern', defaultMessage: 'Company code must be 6-8 letters and numbers only' })
                                     }
                                   : undefined,
                                 validate: joinExistingCompany
@@ -809,12 +838,12 @@ const AppSignUp: React.FC = () => {
                             color={useColorModeValue('gray.700', 'gray.300')}
                             mb={1}
                           >
-                            First Name
+                            {intl.formatMessage({ id: 'auth.signup.field.firstName.label', defaultMessage: 'First Name' })}
                           </Text>
                           <Box
                             as="input"
                             type="text"
-                            placeholder="First name"
+                            placeholder={intl.formatMessage({ id: 'auth.signup.field.firstName.placeholder', defaultMessage: 'First name' })}
                             w="full"
                             h="44px"
                             fontSize="sm"
@@ -842,12 +871,30 @@ const AppSignUp: React.FC = () => {
                             }}
                             transition="all 0.2s"
                             {...registerField('first_name', {
-                              required: 'First name is required',
-                              minLength: { value: 1, message: 'First name is required' },
-                              maxLength: { value: 100, message: 'First name too long' },
+                              required: intl.formatMessage({
+                                id: 'auth.validation.firstName.required',
+                                defaultMessage: 'First name is required'
+                              }),
+                              minLength: {
+                                value: 1,
+                                message: intl.formatMessage({
+                                  id: 'auth.validation.firstName.required',
+                                  defaultMessage: 'First name is required'
+                                })
+                              },
+                              maxLength: {
+                                value: PERSON_NAME_MAX_LENGTH,
+                                message: intl.formatMessage({
+                                  id: 'auth.validation.firstName.tooLong',
+                                  defaultMessage: 'First name is too long'
+                                })
+                              },
                               pattern: {
-                                value: /^[A-Za-z\s]+$/,
-                                message: 'First name should only contain letters'
+                                value: PERSON_NAME_PATTERN,
+                                message: intl.formatMessage({
+                                  id: 'auth.validation.firstName.pattern',
+                                  defaultMessage: "First name can't contain numbers or symbols"
+                                })
                               }
                             })}
                             onFocus={() => setFocusedField('first_name')}
@@ -867,12 +914,12 @@ const AppSignUp: React.FC = () => {
                             color={useColorModeValue('gray.700', 'gray.300')}
                             mb={1}
                           >
-                            Last Name
+                            {intl.formatMessage({ id: 'auth.signup.field.lastName.label', defaultMessage: 'Last Name' })}
                           </Text>
                           <Box
                             as="input"
                             type="text"
-                            placeholder="Last name"
+                            placeholder={intl.formatMessage({ id: 'auth.signup.field.lastName.placeholder', defaultMessage: 'Last name' })}
                             w="full"
                             h="44px"
                             fontSize="sm"
@@ -900,12 +947,30 @@ const AppSignUp: React.FC = () => {
                             }}
                             transition="all 0.2s"
                             {...registerField('last_name', {
-                              required: 'Last name is required',
-                              minLength: { value: 1, message: 'Last name is required' },
-                              maxLength: { value: 100, message: 'Last name too long' },
+                              required: intl.formatMessage({
+                                id: 'auth.validation.lastName.required',
+                                defaultMessage: 'Last name is required'
+                              }),
+                              minLength: {
+                                value: 1,
+                                message: intl.formatMessage({
+                                  id: 'auth.validation.lastName.required',
+                                  defaultMessage: 'Last name is required'
+                                })
+                              },
+                              maxLength: {
+                                value: PERSON_NAME_MAX_LENGTH,
+                                message: intl.formatMessage({
+                                  id: 'auth.validation.lastName.tooLong',
+                                  defaultMessage: 'Last name is too long'
+                                })
+                              },
                               pattern: {
-                                value: /^[A-Za-z\s]+$/,
-                                message: 'Last name should only contain letters'
+                                value: PERSON_NAME_PATTERN,
+                                message: intl.formatMessage({
+                                  id: 'auth.validation.lastName.pattern',
+                                  defaultMessage: "Last name can't contain numbers or symbols"
+                                })
                               }
                             })}
                             onFocus={() => setFocusedField('last_name')}
@@ -927,7 +992,7 @@ const AppSignUp: React.FC = () => {
                           color={useColorModeValue('gray.700', 'gray.300')}
                           mb={1}
                         >
-                          Business Email
+                          {intl.formatMessage({ id: 'auth.signup.field.email.label', defaultMessage: 'Business Email' })}
                         </Text>
                         <InputGroup size="lg">
                           <InputLeftElement pointerEvents="none">
@@ -940,7 +1005,7 @@ const AppSignUp: React.FC = () => {
                           <Box
                             as="input"
                             type="email"
-                            placeholder="Enter business email address"
+                            placeholder={intl.formatMessage({ id: 'auth.signup.field.email.placeholder', defaultMessage: 'Enter business email address' })}
                             pl="3rem"
                             w="full"
                             h="44px"
@@ -968,10 +1033,10 @@ const AppSignUp: React.FC = () => {
                             }}
                             transition="all 0.2s"
                             {...registerField('email', {
-                              required: 'Email is required',
+                              required: intl.formatMessage({ id: 'auth.validation.email.required', defaultMessage: 'Email is required' }),
                               pattern: {
                                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                message: 'Invalid email address'
+                                message: intl.formatMessage({ id: 'auth.validation.email.invalid', defaultMessage: 'Enter a valid email address' })
                               }
                             })}
                             onFocus={() => setFocusedField('email')}
@@ -993,7 +1058,7 @@ const AppSignUp: React.FC = () => {
                           color={useColorModeValue('gray.700', 'gray.300')}
                           mb={1}
                         >
-                          Password
+                          {intl.formatMessage({ id: 'auth.signup.field.password.label', defaultMessage: 'Password' })}
                         </Text>
                         <InputGroup size="lg">
                           <InputLeftElement pointerEvents="none">
@@ -1006,7 +1071,7 @@ const AppSignUp: React.FC = () => {
                           <Box
                             as="input"
                             type={showPassword ? 'text' : 'password'}
-                            placeholder="Create secure password (8+ characters)"
+                            placeholder={intl.formatMessage({ id: 'auth.signup.field.password.placeholder', defaultMessage: 'Create secure password (8+ characters)' })}
                             pl="3rem"
                             pr="3rem"
                             w="full"
@@ -1035,14 +1100,14 @@ const AppSignUp: React.FC = () => {
                             }}
                             transition="all 0.2s"
                             {...registerField('password', {
-                              required: 'Password is required',
+                              required: intl.formatMessage({ id: 'auth.validation.password.required', defaultMessage: 'Password is required' }),
                               minLength: {
                                 value: 8,
-                                message: 'Password must be more than 8 characters'
+                                message: intl.formatMessage({ id: 'auth.validation.password.tooShort', defaultMessage: 'Password must be at least 8 characters' })
                               },
                               maxLength: {
                                 value: 32,
-                                message: 'Password must be less than 32 characters'
+                                message: intl.formatMessage({ id: 'auth.validation.password.tooLong', defaultMessage: 'Password must be under 32 characters' })
                               }
                             })}
                             onFocus={() => setFocusedField('password')}
@@ -1053,6 +1118,13 @@ const AppSignUp: React.FC = () => {
                               variant="ghost"
                               onClick={() => setShowPassword(!showPassword)}
                               size="sm"
+                              minW="44px"
+                              h="44px"
+                              aria-label={intl.formatMessage(
+                                showPassword
+                                  ? { id: 'auth.signup.field.password.hide', defaultMessage: 'Hide password' }
+                                  : { id: 'auth.signup.field.password.show', defaultMessage: 'Show password' }
+                              )}
                               _hover={{ bg: 'transparent' }}
                             >
                               <Icon
@@ -1090,7 +1162,7 @@ const AppSignUp: React.FC = () => {
                           color={useColorModeValue('gray.700', 'gray.300')}
                           mb={1}
                         >
-                          Confirm Password
+                          {intl.formatMessage({ id: 'auth.signup.field.confirmPassword.label', defaultMessage: 'Confirm Password' })}
                         </Text>
                         <InputGroup size="lg">
                           <InputLeftElement pointerEvents="none">
@@ -1103,7 +1175,7 @@ const AppSignUp: React.FC = () => {
                           <Box
                             as="input"
                             type={showConfirmPassword ? 'text' : 'password'}
-                            placeholder="Confirm your password"
+                            placeholder={intl.formatMessage({ id: 'auth.signup.field.confirmPassword.placeholder', defaultMessage: 'Confirm your password' })}
                             pl="3rem"
                             pr="3rem"
                             w="full"
@@ -1134,7 +1206,7 @@ const AppSignUp: React.FC = () => {
                             }}
                             transition="all 0.2s"
                             {...registerField('password2', {
-                              required: 'Please confirm your password',
+                              required: intl.formatMessage({ id: 'auth.validation.confirmPassword.required', defaultMessage: 'Please confirm your password' }),
                               validate: (value: string) =>
                                 value === password || 'Passwords do not match'
                             })}
@@ -1146,6 +1218,13 @@ const AppSignUp: React.FC = () => {
                               variant="ghost"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                               size="sm"
+                              minW="44px"
+                              h="44px"
+                              aria-label={intl.formatMessage(
+                                showConfirmPassword
+                                  ? { id: 'auth.signup.field.confirmPassword.hide', defaultMessage: 'Hide password' }
+                                  : { id: 'auth.signup.field.confirmPassword.show', defaultMessage: 'Show password' }
+                              )}
                               _hover={{ bg: 'transparent' }}
                             >
                               <Icon
@@ -1185,32 +1264,56 @@ const AppSignUp: React.FC = () => {
                           colorScheme="green"
                           spacing={3}
                           {...registerField('acceptTerms', {
-                            required: 'You must accept the terms and conditions'
+                            required: intl.formatMessage({ id: 'auth.validation.terms.required', defaultMessage: 'You must accept the terms and conditions' })
                           })}
                         >
                           <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
-                            I agree to the{' '}
-                            <a href="https://trazo.io/terms-conditions" target="_blank" rel="noopener noreferrer">
-                              <Text
-                                as="span"
-                                color="green.500"
-                                fontWeight="medium"
-                                _hover={{ textDecoration: 'underline' }}
-                              >
-                                Terms of Service
-                              </Text>
-                            </a>{' '}
-                            and{' '}
-                            <a href="https://trazo.io/privacy-policy" target="_blank" rel="noopener noreferrer">
-                              <Text
-                                as="span"
-                                color="green.500"
-                                fontWeight="medium"
-                                _hover={{ textDecoration: 'underline' }}
-                              >
-                                Privacy Policy
-                              </Text>
-                            </a>
+                            {intl.formatMessage(
+                              {
+                                id: 'auth.signup.terms.agree',
+                                defaultMessage: 'I agree to the {tos} and {privacy}'
+                              },
+                              {
+                                tos: (
+                                  <a
+                                    href="https://trazo.io/terms-conditions"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <Text
+                                      as="span"
+                                      color="green.500"
+                                      fontWeight="medium"
+                                      _hover={{ textDecoration: 'underline' }}
+                                    >
+                                      {intl.formatMessage({
+                                        id: 'auth.signup.terms.tos',
+                                        defaultMessage: 'Terms of Service'
+                                      })}
+                                    </Text>
+                                  </a>
+                                ),
+                                privacy: (
+                                  <a
+                                    href="https://trazo.io/privacy-policy"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <Text
+                                      as="span"
+                                      color="green.500"
+                                      fontWeight="medium"
+                                      _hover={{ textDecoration: 'underline' }}
+                                    >
+                                      {intl.formatMessage({
+                                        id: 'auth.signup.terms.privacy',
+                                        defaultMessage: 'Privacy Policy'
+                                      })}
+                                    </Text>
+                                  </a>
+                                )
+                              }
+                            )}
                           </Text>
                         </Checkbox>
                         {errors.acceptTerms && (
@@ -1252,10 +1355,19 @@ const AppSignUp: React.FC = () => {
                         transition="all 0.2s"
                       >
                         {isValidatingCode
-                          ? 'Validating...'
+                          ? intl.formatMessage({
+                              id: 'auth.signup.cta.validating',
+                              defaultMessage: 'Validating...'
+                            })
                           : joinExistingCompany
-                          ? 'Join Company'
-                          : 'Create Business Account'}
+                          ? intl.formatMessage({
+                              id: 'auth.signup.cta.joinCompany',
+                              defaultMessage: 'Join Company'
+                            })
+                          : intl.formatMessage({
+                              id: 'auth.signup.cta.createAccount',
+                              defaultMessage: 'Create Business Account'
+                            })}
                       </Button>
                     </VStack>
                   </form>
@@ -1283,7 +1395,16 @@ const AppSignUp: React.FC = () => {
                         <Button
                           key={social.name}
                           flex={1}
-                          h="40px"
+                          // 44px minimum touch target; icon-only buttons also need an
+                          // accessible name or they announce as just "button".
+                          h="44px"
+                          aria-label={intl.formatMessage(
+                            {
+                              id: 'auth.signup.social.continueWith',
+                              defaultMessage: 'Continue with {provider}'
+                            },
+                            { provider: social.name }
+                          )}
                           bg={useColorModeValue('white', 'gray.700')}
                           border="1px solid"
                           borderColor={useColorModeValue('gray.300', 'gray.600')}

@@ -6,15 +6,12 @@ import {
   VStack,
   HStack,
   Icon,
-  Badge,
   useColorModeValue,
   SimpleGrid,
-  Flex,
   Circle
 } from '@chakra-ui/react';
 import {
   FaLeaf,
-  FaShoppingBasket,
   FaRecycle,
   FaAppleAlt,
   FaTruck,
@@ -31,15 +28,23 @@ interface SustainabilityPractice {
   description: string;
 }
 
+/**
+ * NOTE: this component used to take a `carbonScore` and drive a verdict ladder off it —
+ * an "{Excellent|Good|Average|Fair} Score" badge, a tiered title/description
+ * ("Excellent Choice", "lower carbon footprint than average"), and score-keyed colours.
+ * The prop was removed in 2026-07 rather than merely unused, so no caller can reintroduce
+ * the grading: a self-assigned 0-100 score rendered as a verdict on a consumer surface is
+ * the self-created sustainability label banned by EU ECGT 2024/825 (live 2026-09-27), and
+ * "lower carbon footprint than average" is an unsubstantiated comparative claim under FTC
+ * 16 CFR 260.4(c). What remains — the documented practice list — is the factual story.
+ */
 interface ConsumerSustainabilityInfoProps {
   productName: string;
-  carbonScore: number;
   sustainabilityPractices?: SustainabilityPractice[];
 }
 
 export const ConsumerSustainabilityInfo: React.FC<ConsumerSustainabilityInfoProps> = ({
   productName,
-  carbonScore,
   sustainabilityPractices = []
 }) => {
   const intl = useIntl();
@@ -73,125 +78,20 @@ export const ConsumerSustainabilityInfo: React.FC<ConsumerSustainabilityInfoProp
 
   const practices = sustainabilityPractices.length > 0 ? sustainabilityPractices : defaultPractices;
 
-  // Impact messages based on carbon score
-  const getConsumerImpact = () => {
-    if (carbonScore >= 80) {
-      return {
-        title: intl.formatMessage({ id: 'app.excellentChoice' }),
-        description:
-          "By choosing this product, you're supporting agricultural practices that significantly reduce carbon emissions and protect the environment."
-      };
-    } else if (carbonScore >= 60) {
-      return {
-        title: intl.formatMessage({ id: 'app.goodGreenChoice' }),
-        description:
-          'This product has a lower carbon footprint than average, helping reduce environmental impact.'
-      };
-    } else if (carbonScore >= 40) {
-      return {
-        title: intl.formatMessage({ id: 'app.averageImpact' }),
-        description:
-          'This product has an average environmental footprint. The producer is working on sustainability improvements.'
-      };
-    } else {
-      return {
-        title: intl.formatMessage({ id: 'app.improvementOpportunity' }),
-        description:
-          'While this product has a higher carbon footprint, your scan helps encourage the producer to adopt greener practices.'
-      };
-    }
-  };
-
-  const impact = getConsumerImpact();
+  // The score-tiered getConsumerImpact() ladder that used to live here was deleted — see
+  // the note on ConsumerSustainabilityInfoProps above.
 
   return (
     <Box bg={bgColor} borderRadius="lg" boxShadow="md" p={6}>
       <VStack spacing={6} align="stretch">
-        <Flex
-          align="center"
-          justify="space-between"
-          flexDirection={{ base: 'column', md: 'row' }}
-          gap={4}
-        >
-          <Heading size="md" color={accentColor}>
-            {intl.formatMessage({ id: 'app.sustainabilityHighlights' })}
-          </Heading>
-          <Flex justifyContent="flex-end" w="100%">
-            <Badge
-              colorScheme={
-                carbonScore >= 80
-                  ? 'green'
-                  : carbonScore >= 60
-                  ? 'blue'
-                  : carbonScore >= 40
-                  ? 'yellow'
-                  : 'orange'
-              }
-              fontSize="md"
-              px={2}
-              py={1}
-              borderRadius="full"
-            >
-              {carbonScore >= 80
-                ? intl.formatMessage({ id: 'app.excellentScore' })
-                : carbonScore >= 60
-                ? intl.formatMessage({ id: 'app.goodScore' })
-                : carbonScore >= 40
-                ? intl.formatMessage({ id: 'app.averageScore' })
-                : intl.formatMessage({ id: 'app.fairScore' })}
-              {' Score'}
-            </Badge>
-          </Flex>
-        </Flex>
+        <Heading size="md" color={accentColor}>
+          {intl.formatMessage({ id: 'app.sustainabilityHighlights' })}
+        </Heading>
 
-        {/* Consumer impact section */}
-        <Box
-          p={4}
-          bg={
-            carbonScore >= 80
-              ? 'green.50'
-              : carbonScore >= 60
-              ? 'blue.50'
-              : carbonScore >= 40
-              ? 'yellow.50'
-              : 'orange.50'
-          }
-          borderRadius="md"
-        >
-          <HStack spacing={3} mb={2}>
-            <Circle
-              size="40px"
-              bg={
-                carbonScore >= 80
-                  ? 'green.100'
-                  : carbonScore >= 60
-                  ? 'blue.100'
-                  : carbonScore >= 40
-                  ? 'yellow.100'
-                  : 'orange.100'
-              }
-            >
-              <Icon
-                as={FaShoppingBasket}
-                color={
-                  carbonScore >= 80
-                    ? 'green.500'
-                    : carbonScore >= 60
-                    ? 'blue.500'
-                    : carbonScore >= 40
-                    ? 'yellow.500'
-                    : 'orange.500'
-                }
-                boxSize={5}
-              />
-            </Circle>
-            <Heading size="sm">{impact.title}</Heading>
-          </HStack>
-          <Text ml={12} fontSize="sm">
-            {impact.description}
-          </Text>
-        </Box>
-
+        {/* The "{Excellent|Good|Average|Fair} Score" badge and the score-tiered impact panel
+            that used to sit here are gone — see the note on the props interface. Colour was
+            part of the claim too: green-through-orange keyed to the score grades the farm
+            wordlessly, which is the same label in a different medium. */}
         {/* Sustainability practices */}
         <Heading size="sm" mt={2}>
           {intl.formatMessage({ id: 'app.whatMakesProductSustainable' })}

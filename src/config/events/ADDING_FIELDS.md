@@ -103,17 +103,35 @@ and add a `FieldConfig` entry:
   // Required: which surfaces show this field + at what priority tier
   //   hero     = always visible, above-the-fold
   //   immediate = "Key Details" section
-  //   secondary = "Additional Details" / "Technical Details"
-  //   details  = expandable "Learn More" section
+  //   secondary = "Additional Information" (one tap)
+  //   details   = producer surfaces ONLY — see the warning below
   surfaces: {
-    form: 'immediate',        // Show in create/edit form
-    modal: 'secondary',       // Show in producer detail modal
-    consumer_card: 'details', // Show in consumer QR card (expandable)
-    // timeline: 'immediate', // Uncomment to show on producer timeline
-    // preview: 'immediate',  // Uncomment to show in event preview
+    form: 'immediate',          // Show in create/edit form
+    modal: 'secondary',         // Show in producer detail modal
+    // consumer_card: 'secondary',  // ONLY if a SHOPPER needs it — see below
+    // timeline: 'immediate',   // Uncomment to show on producer timeline
+    // preview: 'immediate',    // Uncomment to show in event preview
   },
 },
 ```
+
+> **⚠️ `consumer_card` has no `details` tier** (removed 2026-07-31). `resolver.ts` silently
+> skips any field whose tier is not in that surface's `allowedTiers`, so
+> `consumer_card: 'details'` renders **nowhere** while looking, in the registry, as though it
+> appears on the consumer card. `__tests__/consumerCardTiers.test.ts` fails the build if one
+> is added.
+>
+> Before adding `consumer_card` at all, apply the three-question test — a consumer-card field
+> must answer one of:
+> 1. **What did they do, and why?**
+> 2. **What went on or near my food, and was it allowed under organic rules?**
+> 3. **Can I believe it?** (photo, third-party certificate, date)
+>
+> If it answers none, it is operator data: leave it on `modal`/`form`. The certifier PDF reads
+> the event models directly, so omitting `consumer_card` costs zero audit coverage. Worker
+> names, licence/permit numbers, internal SOP or block IDs, raw CFR citations and per-event
+> fuel figures all fail the test — several of them also have to be stripped server-side in
+> `PublicHistorySerializer._CERTIFIER_ONLY_EVENT_FIELDS`.
 
 ### Step 6: Add to form tab (if the field should appear in create/edit forms)
 

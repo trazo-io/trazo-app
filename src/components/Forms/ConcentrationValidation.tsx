@@ -34,7 +34,8 @@ export interface ConcentrationValidationResult {
  */
 export const validateConcentration = (
   concentration: string,
-  chemicalType: string
+  chemicalType: string,
+  options: { isMicronutrient?: boolean } = {}
 ): ConcentrationValidationResult => {
   // Safety checks for invalid inputs
   if (!concentration || typeof concentration !== 'string') {
@@ -69,6 +70,15 @@ export const validateConcentration = (
   const isPesticide = ['PE', 'HE', 'FU'].includes(chemicalType);
 
   if (isFertilizer) {
+    // §E-3: a single-nutrient micronutrient product has no NPK analysis to give. Zinc sulfate
+    // is 36% Zn; 20% boron is 20% B. Demanding "10-10-10" would force the farmer to invent an
+    // NPK ratio for a product that has none — a fabricated number on a certifier record, which
+    // is the one thing this form must never require. Accept either form for these, and keep
+    // NPK strict for ordinary blended fertilizers.
+    if (options.isMicronutrient) {
+      const npk = validateNPKFormat(trimmed);
+      return npk.isValid ? npk : validatePercentageFormat(trimmed);
+    }
     return validateNPKFormat(trimmed);
   } else if (isPesticide) {
     return validatePercentageFormat(trimmed);
@@ -110,15 +120,23 @@ const validateNPKFormat = (input: string): ConcentrationValidationResult => {
   const phosphorus = parseFloat(match[2]);
   const potassium = parseFloat(match[3]);
 
-  // Validate individual NPK values
+  // Validate individual NPK values.
+  //
+  // A guaranteed analysis states P as P2O5 and K as K2O, which run higher than the caps this
+  // used to carry. The old 50% limits rejected products that are stocked everywhere:
+  //   0-0-60  muriate of potash        0-0-50  sulfate of potash
+  //   11-52-0 monoammonium phosphate   0-46-0  triple superphosphate
+  // A farmer entering what the bag says was told the bag was invalid. Bounds below are the
+  // physical maxima of the concentrated forms (82-0-0 anhydrous ammonia for N), so a genuine
+  // typo is still caught while a real label passes.
   if (nitrogen < 0 || nitrogen > 85) {
     errors.push('Nitrogen percentage should be 0-85%');
   }
-  if (phosphorus < 0 || phosphorus > 50) {
-    errors.push('Phosphorus percentage should be 0-50%');
+  if (phosphorus < 0 || phosphorus > 60) {
+    errors.push('Phosphorus (P2O5) percentage should be 0-60%');
   }
-  if (potassium < 0 || potassium > 50) {
-    errors.push('Potassium percentage should be 0-50%');
+  if (potassium < 0 || potassium > 65) {
+    errors.push('Potassium (K2O) percentage should be 0-65%');
   }
 
   // Check total NPK (should not exceed 100%)

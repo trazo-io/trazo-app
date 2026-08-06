@@ -267,6 +267,14 @@ export const productApi = baseApi.injectEndpoints({
         if (compliance.treated_lumber_install_date) {
           fd.append('treated_lumber_install_date', compliance.treated_lumber_install_date);
         }
+        // §E-6 pumping plant. Sent even when empty — unlike the dates above, the serializer
+        // coerces "" -> None for these (CreateParcelSerializer._BLANKABLE_PUMP_FIELDS), so a
+        // stale pump test can actually be CLEARED. An out-of-date efficiency is weaker
+        // evidence than none, so clearing has to be possible.
+        fd.append('pump_efficiency_pct', compliance.pump_efficiency_pct ?? '');
+        fd.append('system_pressure_psi', compliance.system_pressure_psi ?? '');
+        fd.append('pump_test_date', compliance.pump_test_date ?? '');
+        fd.append('pump_test_provider', compliance.pump_test_provider ?? '');
         return {
           url: PARCEL_URL(companyId, farmId, parcelId),
           method: 'PATCH',

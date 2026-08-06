@@ -42,7 +42,7 @@ import {
 } from '../../../../components/Design';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, array } from 'zod';
+import { object, string, array, literal } from 'zod';
 // @ts-ignore: JS module in TS file
 import { useCreateCompanyMutation } from 'store/api/companyApi';
 import { setCompany } from 'store/features/companySlice';
@@ -108,21 +108,53 @@ const US_STATES = [
 // Fields removed: website, industry, employeeCount, description, facebook, instagram, certifications, isActive, fiscalId
 // These fields either exist at Establishment level, are not essential for transparency, or are in Settings
 // See CLAUDE.md "Strategic Architecture Transformation" for rationale
+// Mirrors common/validators.py `validate_us_phone` on the backend. Normalize to
+// digits rather than matching a punctuation pattern — growers write US numbers
+// every possible way ("(559) 555-0142", "+1-559-555-0987", "559.555.0142"), and a
+// format regex rejects real numbers. Keep this in step with the server rule so the
+// client is never stricter than what the API would accept.
+const isValidUsPhone = (value) => {
+  let digits = (value || '').replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('1')) digits = digits.slice(1);
+  if (digits.length !== 10) return false;
+  // NANP: area code and exchange code both start 2-9, so "000-000-0000" fails.
+  return !'01'.includes(digits[0]) && !'01'.includes(digits[3]);
+};
+
+const US_ZIP_PATTERN = /^\d{5}(-\d{4})?$/;
+
 const companySchema = object({
   // Essential Company Identity
-  name: string().min(1, 'Company name is required'),
-  tradename: string().optional(),
-  email: string().email('Invalid email address'),
-  phone: string().min(1, 'Phone number is required'),
+  // max lengths mirror company/models.py so the client never posts what the
+  // serializer will reject (name 150, address 200, phone 20).
+  name: string().min(1, 'Company name is required').max(150, 'Company name must be 150 characters or less'),
+  tradename: string().max(150, 'Trade name must be 150 characters or less').optional(),
+  email: string().min(1, 'Email address is required').email('Enter a valid email address'),
+  phone: string()
+    .min(1, 'Phone number is required')
+    .max(20, 'Phone number must be 20 characters or less')
+    .refine(isValidUsPhone, 'Enter a 10-digit US phone number, e.g. (559) 555-0142'),
   legalStructure: string().optional(),
   // Location fields (Step 1) - Company headquarters address
-  address: string().optional(),
-  city: string().optional(),
+  address: string().max(200, 'Address must be 200 characters or less').optional(),
+  city: string().max(100, 'City must be 100 characters or less').optional(),
   state: string().min(1, 'State is required'),
-  zipCode: string().optional(),
+  zipCode: string()
+    .regex(US_ZIP_PATTERN, 'Enter a 5-digit ZIP code, e.g. 93257')
+    .optional()
+    .or(literal('')),
   // Sustainability (Step 2)
   sustainabilityGoals: array(string()).optional()
 });
+
+// Which schema fields belong to which wizard step. `nextStep` validates only the
+// current step's fields, so a farmer is told about a bad value on the step where
+// they can actually see and fix it — see FIELDS_BY_STEP usage below.
+const FIELDS_BY_STEP = [
+  ['name', 'tradename', 'email', 'phone', 'legalStructure'],
+  ['address', 'city', 'state', 'zipCode'],
+  ['sustainabilityGoals']
+];
 
 // CompanyFormData interface (for reference):
 // Essential: name, tradename, email, phone, legalStructure
@@ -218,6 +250,11 @@ function AddCompany({ isEdit = false }) {
 
   const methods = useForm({
     resolver: zodResolver(companySchema),
+    // Validate a field once it has been touched, and re-check on every keystroke
+    // afterwards, so a corrected value clears its error immediately instead of
+    // leaving the step gate stuck on a stale failure.
+    mode: 'onTouched',
+    reValidateMode: 'onChange',
     defaultValues: {
       sustainabilityGoals: [],
       state: '',
@@ -235,6 +272,27 @@ function AddCompany({ isEdit = false }) {
   } = methods;
 
   const sustainabilityGoals = watch('sustainabilityGoals') || [];
+
+  // Submit was rejected by the resolver. Jump to the step holding the first bad
+  // field and say so, rather than leaving the farmer on a button that appears to
+  // do nothing at all.
+  const handleInvalidSubmit = (formErrors) => {
+    const badField = Object.keys(formErrors)[0];
+    const stepIndex = FIELDS_BY_STEP.findIndex((fields) => fields.includes(badField));
+
+    if (stepIndex >= 0 && stepIndex !== currentStep) {
+      setCurrentStep(stepIndex);
+    }
+
+    toast({
+      title: 'Check your details',
+      description:
+        formErrors[badField]?.message || 'Some required information is missing or invalid.',
+      status: 'error',
+      duration: 5000,
+      isClosable: true
+    });
+  };
 
   const handleFormSubmit = async (data) => {
     console.log('🏢 AddCompany: handleSubmit called with data:', data);
@@ -336,18 +394,21 @@ function AddCompany({ isEdit = false }) {
   };
 
   // Step validation - Essential fields only for transparency-first onboarding
+  // Drives the stepper's "completed" ticks only. Errors are scoped to the step's
+  // own fields — a problem on the Location step must not mark Company Identity
+  // incomplete.
   const isStepComplete = (step) => {
     const name = watch('name');
     const email = watch('email');
     const phone = watch('phone');
     const state = watch('state');
-    const hasErrors = Object.keys(errors).length > 0;
+    const stepHasErrors = (FIELDS_BY_STEP[step] || []).some((field) => errors[field]);
 
     switch (step) {
       case 0: // Company Info - name, email, phone required
-        return !!name && !!email && !!phone && !hasErrors;
+        return !!name && !!email && !!phone && !stepHasErrors;
       case 1: // Location - state required for company address
-        return !!state;
+        return !!state && !stepHasErrors;
       case 2: // Sustainability - optional
         return true;
       default:
@@ -366,10 +427,16 @@ function AddCompany({ isEdit = false }) {
     return completed;
   };
 
-  const nextStep = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
+  // Validate the current step before advancing. Without this, an invalid value on
+  // an earlier step (e.g. a malformed email) let the farmer walk to the end and
+  // then hit a submit button that silently did nothing, because the resolver
+  // rejected the form while the offending field was on a step they could no
+  // longer see.
+  const nextStep = async () => {
+    if (currentStep >= steps.length - 1) return;
+    const valid = await trigger(FIELDS_BY_STEP[currentStep]);
+    if (!valid) return;
+    setCurrentStep(currentStep + 1);
   };
 
   const previousStep = () => {
@@ -472,7 +539,7 @@ function AddCompany({ isEdit = false }) {
       />
 
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
+        <form onSubmit={handleSubmit(handleFormSubmit, handleInvalidSubmit)}>
           {/* Step 0: Company Identity - Essential fields only for transparency-first onboarding */}
           {currentStep === 0 && (
             <StandardCard
@@ -573,10 +640,12 @@ function AddCompany({ isEdit = false }) {
                       Cancel
                     </StandardButton>
                   )}
+                  {/* Deliberately always enabled: nextStep() validates and shows
+                      what is wrong. A disabled button gave the farmer a dead
+                      control with no stated reason. */}
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}
                   >
                     {isMobile ? 'Continue' : 'Continue to Location'}
                   </StandardButton>
@@ -667,7 +736,6 @@ function AddCompany({ isEdit = false }) {
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(1)}
                     >
                       {isMobile ? 'Continue' : 'Continue to Sustainability'}
                     </StandardButton>

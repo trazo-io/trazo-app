@@ -27,13 +27,25 @@ import {
   useUpdateStateOrganicRegistrationMutation
 } from 'store/api/stateOrganicRegistrationApi';
 
+/**
+ * States that run a USDA-approved State Organic Program under 7 CFR 205.620.
+ * California (CDFA) is the only one today — a one-entry map is the honest state
+ * of the world, and adding another is a one-line change. OSPView uses this to
+ * decide whether to render the card at all.
+ */
+export const STATE_ORGANIC_PROGRAMS: Record<string, string> = {
+  CA: 'CDFA State Organic Program'
+};
+
 interface Props {
   companyId: string;
   farmId: string;
+  /** Canonical 2-letter code of the farm's state. Required — the card previously
+      defaulted to 'CA' and stored that for out-of-state operations. */
+  state: string;
 }
 
 const EMPTY = {
-  state: 'CA',
   operation_type: 'producer',
   status: 'registered',
   registration_number: '',
@@ -44,7 +56,7 @@ const EMPTY = {
   renewal_date: ''
 };
 
-const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) => {
+const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, state }) => {
   const intl = useIntl();
   const toast = useToast();
   const { data: regs } = useGetStateOrganicRegistrationsQuery({ companyId, farmId });
@@ -57,7 +69,6 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
   useEffect(() => {
     if (existing) {
       setForm({
-        state: existing.state || 'CA',
         operation_type: existing.operation_type || 'producer',
         status: existing.status || 'registered',
         registration_number: existing.registration_number || '',
@@ -77,7 +88,10 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
 
   const handleSave = async () => {
     const data: Record<string, unknown> = {
-      state: form.state,
+      // Comes from the farm, not the form — a registration must never be filed
+      // under a state the operation is not actually in.
+      state,
+      program_name: STATE_ORGANIC_PROGRAMS[state],
       operation_type: form.operation_type,
       status: form.status,
       registration_number: form.registration_number || null,
@@ -106,15 +120,15 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
         status: 'success',
         title: intl.formatMessage({
           id: 'osp.cdfa.toast.saved',
-          defaultMessage: 'State Organic Program registration saved',
-        }),
+          defaultMessage: 'State Organic Program registration saved'
+        })
       });
     } catch (err: unknown) {
       toast({
         status: 'error',
         title: intl.formatMessage({
           id: 'osp.cdfa.toast.errorTitle',
-          defaultMessage: 'Could not save registration',
+          defaultMessage: 'Could not save registration'
         }),
         description: String((err as { data?: unknown })?.data || err)
       });
@@ -130,7 +144,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
             <Text fontWeight="bold" fontSize="lg">
               {intl.formatMessage({
                 id: 'osp.cdfa.title',
-                defaultMessage: 'State Organic Program Registration (CDFA)',
+                defaultMessage: 'State Organic Program Registration (CDFA)'
               })}
             </Text>
           </HStack>
@@ -146,7 +160,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
           {intl.formatMessage({
             id: 'osp.cdfa.description',
             defaultMessage:
-              'California producers selling more than $5,000/yr organic must register annually with the CDFA State Organic Program before their first organic sale (CA Food & Ag Code §§ 46000-46029). Distinct from CDFA OIM input-material registration.',
+              'California producers selling more than $5,000/yr organic must register annually with the CDFA State Organic Program before their first organic sale (CA Food & Ag Code §§ 46000-46029). Distinct from CDFA OIM input-material registration.'
           })}
         </Text>
 
@@ -155,7 +169,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
             <FormLabel fontSize="sm">
               {intl.formatMessage({
                 id: 'osp.cdfa.operationType',
-                defaultMessage: 'Operation Type',
+                defaultMessage: 'Operation Type'
               })}
             </FormLabel>
             <Select
@@ -165,25 +179,25 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
               <option value="producer">
                 {intl.formatMessage({
                   id: 'osp.cdfa.operationType.producer',
-                  defaultMessage: 'Producer / Grower',
+                  defaultMessage: 'Producer / Grower'
                 })}
               </option>
               <option value="handler">
                 {intl.formatMessage({
                   id: 'osp.cdfa.operationType.handler',
-                  defaultMessage: 'Handler (CDFA raw-ag handling)',
+                  defaultMessage: 'Handler (CDFA raw-ag handling)'
                 })}
               </option>
               <option value="producer_handler">
                 {intl.formatMessage({
                   id: 'osp.cdfa.operationType.producerHandler',
-                  defaultMessage: 'Producer & Handler',
+                  defaultMessage: 'Producer & Handler'
                 })}
               </option>
               <option value="retailer">
                 {intl.formatMessage({
                   id: 'osp.cdfa.operationType.retailer',
-                  defaultMessage: 'Retailer',
+                  defaultMessage: 'Retailer'
                 })}
               </option>
             </Select>
@@ -196,7 +210,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
               <option value="registered">
                 {intl.formatMessage({
                   id: 'osp.cdfa.status.registered',
-                  defaultMessage: 'Registered',
+                  defaultMessage: 'Registered'
                 })}
               </option>
               <option value="pending">
@@ -208,7 +222,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
               <option value="exempt">
                 {intl.formatMessage({
                   id: 'osp.cdfa.status.exempt',
-                  defaultMessage: 'Exempt (< $5,000 organic sales)',
+                  defaultMessage: 'Exempt (< $5,000 organic sales)'
                 })}
               </option>
             </Select>
@@ -217,7 +231,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
             <FormLabel fontSize="sm">
               {intl.formatMessage({
                 id: 'osp.cdfa.registrationNumber',
-                defaultMessage: 'Registration Number',
+                defaultMessage: 'Registration Number'
               })}
             </FormLabel>
             <Input
@@ -225,7 +239,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
               onChange={(e) => set('registration_number', e.target.value)}
               placeholder={intl.formatMessage({
                 id: 'osp.cdfa.registrationNumberPlaceholder',
-                defaultMessage: 'e.g., TUL-2026-0042',
+                defaultMessage: 'e.g., TUL-2026-0042'
               })}
             />
           </FormControl>
@@ -238,7 +252,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
               onChange={(e) => set('county', e.target.value)}
               placeholder={intl.formatMessage({
                 id: 'osp.cdfa.countyPlaceholder',
-                defaultMessage: 'e.g., Tulare',
+                defaultMessage: 'e.g., Tulare'
               })}
             />
           </FormControl>
@@ -246,7 +260,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
             <FormLabel fontSize="sm">
               {intl.formatMessage({
                 id: 'osp.cdfa.priorYearSales',
-                defaultMessage: 'Prior-Year Organic Gross Sales (USD)',
+                defaultMessage: 'Prior-Year Organic Gross Sales (USD)'
               })}
             </FormLabel>
             <Input
@@ -256,7 +270,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
               onChange={(e) => set('prior_year_organic_gross_sales', e.target.value)}
               placeholder={intl.formatMessage({
                 id: 'osp.cdfa.priorYearSalesPlaceholder',
-                defaultMessage: 'e.g., 125000',
+                defaultMessage: 'e.g., 125000'
               })}
             />
           </FormControl>
@@ -264,7 +278,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
             <FormLabel fontSize="sm">
               {intl.formatMessage({
                 id: 'osp.cdfa.commodities',
-                defaultMessage: 'Commodities (comma-separated)',
+                defaultMessage: 'Commodities (comma-separated)'
               })}
             </FormLabel>
             <Input
@@ -272,7 +286,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
               onChange={(e) => set('commodities', e.target.value)}
               placeholder={intl.formatMessage({
                 id: 'osp.cdfa.commoditiesPlaceholder',
-                defaultMessage: 'e.g., Navel orange, Lemon',
+                defaultMessage: 'e.g., Navel orange, Lemon'
               })}
             />
           </FormControl>
@@ -280,7 +294,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
             <FormLabel fontSize="sm">
               {intl.formatMessage({
                 id: 'osp.cdfa.registrationDate',
-                defaultMessage: 'Registration Date',
+                defaultMessage: 'Registration Date'
               })}
             </FormLabel>
             <Input
@@ -293,7 +307,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
             <FormLabel fontSize="sm">
               {intl.formatMessage({
                 id: 'osp.cdfa.renewalDate',
-                defaultMessage: 'Renewal Date',
+                defaultMessage: 'Renewal Date'
               })}
             </FormLabel>
             <Input
@@ -309,7 +323,7 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId }) =>
             {existing
               ? intl.formatMessage({
                   id: 'osp.cdfa.update',
-                  defaultMessage: 'Update Registration',
+                  defaultMessage: 'Update Registration'
                 })
               : intl.formatMessage({ id: 'osp.cdfa.save', defaultMessage: 'Save Registration' })}
           </StandardButton>

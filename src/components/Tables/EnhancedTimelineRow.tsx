@@ -122,7 +122,8 @@ interface EnhancedTimelineRowProps {
 // Real carbon calculation result from API
 interface CarbonCalculationResult {
   co2e: number;
-  efficiency_score: number;
+  // Still sent by the API, no longer rendered — see the removal note in the footer row.
+  efficiency_score?: number;
   usda_factors_based?: boolean;
   verification_status?: string;
   data_source?: string;
@@ -1097,11 +1098,15 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   const isZeroEmissionType =
     event.event_type === 0 || event.event_type === 3 || event.event_type === 7;
   const zeroEmissionLabels: Record<number, string> = { 0: 'weather', 3: 'general', 7: 'business' };
-  const carbonData = isZeroEmissionType
+  // Annotated rather than inferred: without it the synthetic branch produced a narrower object
+  // type, so `carbonData` became a union and every optional field read off it (usda_factors_based,
+  // error) was a type error on the synthetic side. One declared type, one shape.
+  const carbonData: CarbonCalculationResult | null = isZeroEmissionType
     ? {
         co2e: 0,
-        efficiency_score: 100,
-        calculation_method: `${zeroEmissionLabels[event.event_type]}_transparency`
+        calculation_method: `${zeroEmissionLabels[event.event_type]}_transparency`,
+        event_type: String(event.event_type),
+        timestamp: event.date || ''
       }
     : event.carbon_data || null;
 
@@ -1289,7 +1294,16 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       {/* Verification Badge - COMPACT PRIMARY (Optimized Space) */}
                       {event.verification_level && (
                         <Tooltip
-                          label={getVerificationBadgeConfig(event.verification_level).tooltip}
+                          label={(() => {
+                            // Resolve the tier keys here rather than reading the English
+                            // fallbacks: getVerificationBadgeConfig is a pure helper and
+                            // returns labelKey/tooltipKey for exactly this reason.
+                            const tier = getVerificationBadgeConfig(event.verification_level);
+                            return intl.formatMessage({
+                              id: tier.tooltipKey,
+                              defaultMessage: tier.tooltip
+                            });
+                          })()}
                           hasArrow
                           placement="top"
                         >
@@ -1316,14 +1330,26 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                               boxSize={3}
                             />
                             <Text display={{ base: 'none', md: 'inline' }}>
-                              {getVerificationBadgeConfig(event.verification_level).label}
+                              {(() => {
+                                const tier = getVerificationBadgeConfig(event.verification_level);
+                                return intl.formatMessage({
+                                  id: tier.labelKey,
+                                  defaultMessage: tier.label
+                                });
+                              })()}
                             </Text>
                           </Badge>
                         </Tooltip>
                       )}
 
-                      {/* EPA/USDA-sourced Badge - ULTRA-COMPACT SECONDARY (Optimized Space) */}
-                      {carbonData?.usda_factors_based && (
+                      {/* EPA/USDA-sourced Badge - ULTRA-COMPACT SECONDARY (Optimized Space).
+                          Requires actual emissions (2026-08-04): the badge states that the
+                          EMISSION FACTORS behind this event's number came from EPA/USDA
+                          publications, so on an event with no emissions there is no factor to
+                          have sourced. It was rendering on pest-trap installs and worker-training
+                          records, where it reads as a government endorsement of the activity —
+                          the "USDA Verified" implication `compliance.md` forbids. */}
+                      {carbonData?.usda_factors_based && (carbonData?.co2e ?? 0) > 0 && (
                         <Tooltip
                           label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                           hasArrow
@@ -1486,31 +1512,14 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                   </HStack>
                 )}
 
-                {/* Efficiency Score & Operator */}
+                {/* Operator & Photo Status.
+                    The per-event "Efficiency {n}/100" readout was removed (2026-08-04): it was a
+                    FOURTH scoring vocabulary on top of the transparency percentage, the parcel
+                    card's /100 and the farm tier words — and in practice it printed the same
+                    constant (90/100, 100/100) on every event, so it carried no information while
+                    teaching the farmer that numbers on this page are decoration. Carbon is already
+                    shown next to it as an absolute kg CO₂e, which is the actionable figure. */}
                 <HStack spacing={3} flexShrink={0}>
-                  {carbonData?.efficiency_score && carbonData.efficiency_score > 0 && (
-                    <HStack spacing={1}>
-                      <Text fontSize="xs" color="gray.500" whiteSpace="nowrap">
-                        Efficiency
-                      </Text>
-                      <Text
-                        fontSize="sm"
-                        fontWeight="600"
-                        whiteSpace="nowrap"
-                        color={
-                          carbonData.efficiency_score >= 70
-                            ? 'green.600'
-                            : carbonData.efficiency_score >= 50
-                            ? 'yellow.600'
-                            : 'red.600'
-                        }
-                      >
-                        {carbonData.efficiency_score}/100
-                      </Text>
-                    </HStack>
-                  )}
-
-                  {/* Operator & Photo Status */}
                   <Text fontSize="xs" color="gray.500" textAlign="right" maxW="100px" noOfLines={1}>
                     {operatorName}
                   </Text>

@@ -6,7 +6,14 @@
  */
 
 import type { EventRegistryEntry, FieldConfig } from './registry';
-import { formatBoolean, formatDurationHours, formatNumber } from './formatters';
+import {
+  formatBoolean,
+  formatDate,
+  formatDurationHours,
+  formatNumber,
+  lookupEnumLabel,
+  formatConsumerContaminationIncident
+} from './formatters';
 
 type GeneralData = Record<string, unknown>;
 
@@ -29,7 +36,9 @@ const formatActivityType = (v: unknown): string | null => {
   // Hide the generic "Other" label on consumer surfaces — it adds no value
   // when a specific category (Training, Inspection, etc.) wasn't chosen.
   if (v === 'other') return null;
-  return ACTIVITY_TYPE_LABELS[v] ?? v;
+  // The form writes values this map does not cover (live data had `quality_control`),
+  // and the old `?? v` printed the raw slug on the consumer card.
+  return lookupEnumLabel(ACTIVITY_TYPE_LABELS, v);
 };
 
 const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
@@ -67,12 +76,14 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     // NOTE: consumer_card intentionally omitted — the activity name is already
     // rendered as the card hero title (via generateTitle → rawData.name).
     // Keeping it here would duplicate the title in Key Details.
+    // Display-only: GeneralTab collects the event's `name`, not a separate `activity_name`.
+    // The backend column exists and is shown if populated, but there is no input for it —
+    // a `form` surface here would promise one that has never existed.
     name: 'activity_name',
     labelKey: 'events.general.fields.activityName',
     valueType: 'string',
     surfaces: {
-      modal: 'immediate',
-      form: 'immediate'
+      modal: 'immediate'
     }
   },
   {
@@ -119,17 +130,20 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     surfaces: { modal: 'details', form: 'details' }
   },
   {
+    // Display-only: "other farm activity" covers admin, training and maintenance, which are
+    // not crop-specific, so GeneralTab has no variety/growth-stage input. Declaring a
+    // `form` surface for an input that does not exist guarantees a permanently empty field.
     name: 'variety',
     labelKey: 'events.common.fields.variety',
     valueType: 'string',
-    surfaces: { modal: 'details', form: 'details', consumer_card: 'details' }
+    surfaces: { modal: 'details' }
   },
   {
     name: 'growth_stage',
     labelKey: 'events.common.fields.growthStage',
     valueType: 'enum',
     enumSource: 'growth_stages',
-    surfaces: { modal: 'details', form: 'details', consumer_card: 'details' }
+    surfaces: { modal: 'details' }
   },
 
   // ---- NOP Compliance: Contamination Incident Reporting (7 CFR 205.201(b)) ----
@@ -141,6 +155,14 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
   {
     name: 'is_contamination_incident',
     labelKey: 'events.general.fields.isContaminationIncident',
+    // A consumer surface must not report an incident as a bare "✓". The glyph reads as
+    // POSITIVE — the one place a checkmark is exactly backwards — and "Is Contamination
+    // Incident" is internal phrasing. The field is gated to render only when true, so the
+    // consumer wording states plainly that something was recorded; the source, affected area
+    // and corrective action render beside it. Withholding it was never an option: an incident
+    // the grower logged is precisely what a transparency record exists to carry.
+    consumerLabelKey: 'events.consumer.fields.contaminationIncident',
+    consumerFormatter: formatConsumerContaminationIncident,
     valueType: 'boolean',
     formatter: formatBoolean,
     visibleWhen: (e) => Boolean(e.is_contamination_incident),
@@ -171,7 +193,7 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      consumer_card: 'details'
+      consumer_card: 'secondary'
     }
   },
   {
@@ -190,11 +212,14 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     name: 'corrective_action_date',
     labelKey: 'events.general.fields.correctiveActionDate',
     valueType: 'date',
+    // Without this the raw ISO string ("2026-03-17") renders verbatim — `valueType: 'date'`
+    // is metadata, not behaviour; the resolver's defaultFormatter just stringifies.
+    formatter: formatDate,
     visibleWhen: (e) => Boolean(e.is_contamination_incident),
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      consumer_card: 'details'
+      consumer_card: 'secondary'
     }
   },
   {
@@ -205,19 +230,18 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     visibleWhen: (e) => Boolean(e.is_contamination_incident),
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
     name: 'certifier_notification_date',
     labelKey: 'events.general.fields.certifierNotificationDate',
     valueType: 'date',
+    formatter: formatDate,
     visibleWhen: (e) => Boolean(e.is_contamination_incident),
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   }
 ];

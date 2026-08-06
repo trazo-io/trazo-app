@@ -165,7 +165,7 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps, intl: IntlShape): 
   const tooltipExplainer = intl.formatMessage({
     id: 'consumer.trust.practicesTooltip',
     defaultMessage:
-      "We label this based on what's verified, not what's claimed. 'Certified Organic' requires a USDA Organic Integrity Database match; 'Transitioning' requires documented transition records; otherwise we report this as 'Conventional, Documented' regardless of farmer-picked labels."
+      "We label this based on what's verified, not what's claimed. 'Certified Organic' requires a USDA Organic Integrity Database match; 'Transitioning' requires documented transition records. Without one of those on file we say 'Practices Documented' — the farm's records are here, but we have not independently verified a certification either way."
   });
 
   // Phase 3 lot gate: can_display_organic goes false when THIS lot is
@@ -229,19 +229,32 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps, intl: IntlShape): 
 
   // self_reported and conventional both fall through here — we do not invent
   // a fourth state that implies organic without third-party evidence.
+  //
+  // This state means "no third-party evidence on file", which is NOT the same as
+  // "this farm is conventional". Labelling it "Conventional, Documented" asserted
+  // something we have not established: a CCOF-certified operation whose certificate
+  // is not yet linked as a Certification record rendered as "Conventional" in the
+  // hero while its own timeline showed a USDA Organic Certification event.
+  // Withholding a claim and asserting the opposite are different things, and the
+  // affirmative version is the more damaging error for an organic grower.
+  //
+  // ConsumerEventCard already models this correctly at the input level — it uses a
+  // neutral "Input documented" badge when a substance is unclassified and reserves
+  // "Conventional input" for inputs actually classified as non-organic. Same rule
+  // applies here.
   return {
     pillarName: intl.formatMessage({
       id: 'consumer.trust.pillarPractices',
       defaultMessage: 'PRACTICES'
     }),
-    pillarIcon: FaCertificate,
+    pillarIcon: FaClipboardCheck,
     badgeLabel: intl.formatMessage({
-      id: 'consumer.trust.conventionalDocumented',
-      defaultMessage: 'Conventional, Documented'
+      id: 'consumer.trust.practicesDocumented',
+      defaultMessage: 'Practices Documented'
     }),
     badgeSublabel: intl.formatMessage({
-      id: 'consumer.trust.practiceRecordsOnFile',
-      defaultMessage: 'Practice records on file'
+      id: 'consumer.trust.notIndependentlyVerified',
+      defaultMessage: 'Not independently verified'
     }),
     tooltipExplainer,
     tone: 'documented'
@@ -278,14 +291,13 @@ function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
     };
   }
 
-  const score = transparencyScore != null ? Math.round(transparencyScore) : null;
-  let tone: PillarTone = 'documented';
-  if (score != null) {
-    if (score >= 70) tone = 'verified';
-    else if (score >= 50) tone = 'progress';
-  } else if (documentedEventsCount > 0) {
-    tone = 'documented';
-  }
+  // Tone is FIXED, never score-derived. Colour-coding a pillar by transparency-score
+  // thresholds (this used to be >=70 → 'verified', >=50 → 'progress') is a self-assigned
+  // grade rendered as colour — the same claim the numeric score makes, just wordless.
+  // Banned on consumer surfaces by EU ECGT 2024/825 (live 2026-09-27) / FTC 16 CFR 260.6.
+  // The score is null on the anonymous payload today, so this was dormant; hard-coding the
+  // tone means un-gating the score server-side can never silently reintroduce grading.
+  const tone: PillarTone = 'documented';
 
   // Display rules:
   // - When actual < expected: "12 of 13" (transparency about completeness)
@@ -643,10 +655,25 @@ const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
               lineHeight="0"
               color="gray.300"
               cursor="pointer"
+              position="relative"
               aria-label={intl.formatMessage({
                 id: 'consumer.trust.whatThisMeans',
                 defaultMessage: 'What this means'
               })}
+              // The icon renders at 12px, which is far below the 44px minimum touch
+              // target — on the QR page, which is almost entirely phone traffic, these
+              // were effectively untappable. A centred pseudo-element extends the hit
+              // area to 44x44 WITHOUT affecting layout, so the grid card sizing the
+              // comment above depends on is preserved.
+              _before={{
+                content: '""',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '44px',
+                height: '44px'
+              }}
               _hover={{ color: 'gray.500' }}
               _focusVisible={{
                 outline: '2px solid',

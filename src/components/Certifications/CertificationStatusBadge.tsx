@@ -9,11 +9,14 @@ interface CertificationStatusBadgeProps {
   size?: 'sm' | 'md';
 }
 
-const STATUS_CONFIG: Record<string, {
-  colorScheme: string;
-  icon: React.ElementType;
-  messageId: string;
-}> = {
+const STATUS_CONFIG: Record<
+  string,
+  {
+    colorScheme: string;
+    icon: React.ElementType;
+    messageId: string;
+  }
+> = {
   verified: {
     colorScheme: 'green',
     icon: FaCheckCircle,
@@ -78,9 +81,7 @@ const CertificationStatusBadge: React.FC<CertificationStatusBadgeProps> = ({
     >
       <HStack spacing={1}>
         <Icon as={config.icon} boxSize={size === 'md' ? 3.5 : 3} />
-        <Text fontSize="xs">
-          {intl.formatMessage({ id: config.messageId })}
-        </Text>
+        <Text fontSize="xs">{intl.formatMessage({ id: config.messageId })}</Text>
       </HStack>
     </Badge>
   );

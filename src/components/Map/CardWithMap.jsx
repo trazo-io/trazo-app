@@ -83,6 +83,19 @@ const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 const CardWithMap = ({ polygon, zoom, center }) => {
   const intl = useIntl();
+  // See the note beside the early return below.
+  const [authFailed, setAuthFailed] = useState(false);
+  useEffect(() => {
+    const previous = window.gm_authFailure;
+    window.gm_authFailure = () => {
+      setAuthFailed(true);
+      if (typeof previous === 'function') previous();
+    };
+    return () => {
+      window.gm_authFailure = previous;
+    };
+  }, []);
+
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey
   });
@@ -127,7 +140,16 @@ const CardWithMap = ({ polygon, zoom, center }) => {
     }
   }, [zoom, center, polygon]);
 
-  if (loadError) return intl.formatMessage({ id: 'parcel.errorLoadingMaps' });
+  // `loadError` only fires when the SCRIPT fails to fetch. When the key loads but is
+  // unauthorised — billing lapsed, quota exceeded, referrer restriction changed — Google
+  // considers the load a success and paints its own overlay INSIDE the map:
+  // "This page can't load Google Maps correctly. Do you own this website?", with "For
+  // development purposes only" watermarked across a darkened tile. A shopper who scanned a
+  // QR code sees a developer error box on a food page, which reads as a dead or fake site.
+  //
+  // `gm_authFailure` is Google's documented hook for exactly that state. It is global by
+  // design, so it is set on mount and torn down on unmount.
+  if (loadError || authFailed) return intl.formatMessage({ id: 'parcel.errorLoadingMaps' });
 
   // Loading: Google Maps script not yet ready
   if (!isLoaded) {

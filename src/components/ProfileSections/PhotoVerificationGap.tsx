@@ -10,6 +10,7 @@ import {
   Badge
 } from "@chakra-ui/react";
 import { FaCamera, FaCheckCircle } from "react-icons/fa";
+import { useIntl } from "react-intl";
 
 interface CategoryData {
   actual_count: number;
@@ -23,14 +24,15 @@ interface PhotoVerificationGapProps {
   compact?: boolean;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  production: "Growing & Harvesting",
-  chemical: "Chemical Applications",
-  soil: "Soil Management",
-  pest: "Pest Management",
-  business: "Business & Certifications",
-  weather: "Weather Monitoring",
-  general: "General Documentation"
+// Shares the producer-side category vocabulary with TransparencyCategoryBreakdown.
+const CATEGORY_LABEL_IDS: Record<string, string> = {
+  production: "transparency.breakdownCategoryProduction",
+  chemical: "transparency.breakdownCategoryChemical",
+  soil: "transparency.breakdownCategorySoil",
+  pest: "transparency.breakdownCategoryPest",
+  business: "transparency.breakdownCategoryBusiness",
+  weather: "transparency.breakdownCategoryWeather",
+  general: "transparency.breakdownCategoryGeneral"
 };
 
 const CATEGORY_ORDER = ["production", "chemical", "soil", "pest", "business", "weather", "general"];
@@ -39,6 +41,7 @@ const PhotoVerificationGap: React.FC<PhotoVerificationGapProps> = ({
   categoryBreakdown,
   compact = false
 }) => {
+  const intl = useIntl();
   const rowBg = useColorModeValue("gray.50", "gray.700");
   const textColor = useColorModeValue("gray.700", "gray.200");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
@@ -74,7 +77,7 @@ const PhotoVerificationGap: React.FC<PhotoVerificationGapProps> = ({
         <HStack spacing={2}>
           <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
           <Text fontSize="xs" color="green.600" fontWeight="medium">
-            All essential events documented with photos
+            {intl.formatMessage({ id: "transparency.photoGapAllCovered" })}
           </Text>
         </HStack>
       );
@@ -83,7 +86,10 @@ const PhotoVerificationGap: React.FC<PhotoVerificationGapProps> = ({
       <HStack spacing={2}>
         <Icon as={FaCamera} color="orange.400" boxSize={4} />
         <Text fontSize="xs" color="orange.600" fontWeight="medium">
-          {`${totalMissing} of ${totalPhotoRequired} essential events need photos`}
+          {intl.formatMessage(
+            { id: "transparency.photoGapSummary" },
+            { missing: totalMissing, total: totalPhotoRequired }
+          )}
         </Text>
       </HStack>
     );
@@ -102,10 +108,10 @@ const PhotoVerificationGap: React.FC<PhotoVerificationGapProps> = ({
           <Icon as={FaCheckCircle} color="green.500" boxSize={5} flexShrink={0} />
           <VStack align="start" spacing={0} flex={1}>
             <Text fontWeight="bold" color={successText} fontSize="sm">
-              All essential events documented with photos
+              {intl.formatMessage({ id: "transparency.photoGapAllCovered" })}
             </Text>
             <Text fontSize="xs" color={successSubColor}>
-              Photo evidence increases consumer trust and your transparency score.
+              {intl.formatMessage({ id: "transparency.photoGapAllCoveredHelp" })}
             </Text>
           </VStack>
         </HStack>
@@ -119,16 +125,23 @@ const PhotoVerificationGap: React.FC<PhotoVerificationGapProps> = ({
       <HStack spacing={2} flexWrap="wrap">
         <Icon as={FaCamera} color="orange.400" boxSize={4} flexShrink={0} />
         <Text fontSize="sm" color={textColor} fontWeight="medium">
-          {`${totalMissing} of ${totalPhotoRequired} essential events need photos`}
+          {intl.formatMessage(
+            { id: "transparency.photoGapSummary" },
+            { missing: totalMissing, total: totalPhotoRequired }
+          )}
         </Text>
         <Badge colorScheme="orange" fontSize="xs" borderRadius="full" variant="subtle">
-          {`${Math.round((totalPhotoCovered / totalPhotoRequired) * 100)}% covered`}
+          {intl.formatMessage(
+            { id: "transparency.photoGapCovered" },
+            { percent: Math.round((totalPhotoCovered / totalPhotoRequired) * 100) }
+          )}
         </Badge>
       </HStack>
 
       {/* Per-category gap rows */}
       {gapCategories.map(({ key, cat }) => {
-        const label = CATEGORY_LABELS[key] || key;
+        const labelId = CATEGORY_LABEL_IDS[key];
+        const label = labelId ? intl.formatMessage({ id: labelId }) : key;
         const verifiedCount = cat.photo_verified_count;
         const totalCount = cat.actual_count;
         const rate =
@@ -161,7 +174,10 @@ const PhotoVerificationGap: React.FC<PhotoVerificationGapProps> = ({
                 </Text>
               </HStack>
               <Text fontSize="xs" color={mutedColor} whiteSpace="nowrap" flexShrink={0}>
-                {`${verifiedCount} of ${totalCount} have photos`}
+                {intl.formatMessage(
+                  { id: "transparency.photoGapCategoryCoverage" },
+                  { verified: verifiedCount, total: totalCount }
+                )}
               </Text>
             </HStack>
 
@@ -174,9 +190,13 @@ const PhotoVerificationGap: React.FC<PhotoVerificationGapProps> = ({
             />
 
             <Text fontSize="xs" color="orange.600" mt={1}>
-              {missingCount === 1
-                ? "1 event is missing photo documentation"
-                : `${missingCount} events are missing photo documentation`}
+              {/* The singular used to be a hardcoded English literal while the plural went through
+                  intl — so a Spanish grower with exactly one gap saw English. The key is a plural
+                  rule; it handles both. */}
+              {intl.formatMessage(
+                { id: "transparency.photoGapCategoryMissing" },
+                { count: missingCount }
+              )}
             </Text>
           </Box>
         );

@@ -112,7 +112,16 @@ export interface ClaimEvidence {
 export interface OrganicClaim {
   can_display_organic: boolean;
   can_display_transitioning: boolean;
+  /**
+   * English, composed server-side. FALLBACK ONLY — prefer `display_label_key`.
+   * A server-composed string cannot be translated, so this rendered as bare English
+   * inside the Spanish consumer page ("Organic practices (farmer-reported)").
+   */
   display_label: string;
+  /** react-intl message id — the source of truth for what a consumer reads. */
+  display_label_key?: string | null;
+  /** Interpolation values. `methodKey` is itself a message id, resolved before use. */
+  display_label_params?: Record<string, string | number> | null;
   disclaimer: string;
   status: OrganicClaimStatus;
   status_color: OrganicClaimColor;

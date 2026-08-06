@@ -11,7 +11,15 @@ import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
+import { IntlProvider } from 'react-intl';
 import TrustSummaryHeader, { TrustSummaryHeaderProps } from '../TrustSummaryHeader';
+import enUS from '../../../i18n/lang/en-US.json';
+
+// TrustSummaryHeader calls useIntl(), so it needs an IntlProvider ancestor. Without one
+// the suite threw at render and **zero tests ran** — and these are the claim-safety guards
+// for the consumer trust strip (records are farmer-reported, certifications labelled
+// separately, no invented organic state). Real en-US catalogue so a missing key shows up.
+const messages = enUS as unknown as Record<string, string>;
 
 const renderHeader = (props: Partial<TrustSummaryHeaderProps> = {}) => {
   const defaultProps: TrustSummaryHeaderProps = {
@@ -31,7 +39,9 @@ const renderHeader = (props: Partial<TrustSummaryHeaderProps> = {}) => {
   };
   return render(
     <ChakraProvider>
-      <TrustSummaryHeader {...defaultProps} {...props} />
+      <IntlProvider locale="en" messages={messages} onError={() => {}}>
+        <TrustSummaryHeader {...defaultProps} {...props} />
+      </IntlProvider>
     </ChakraProvider>
   );
 };
@@ -82,12 +92,20 @@ describe('TrustSummaryHeader (claim-safe trust strip)', () => {
     expect(screen.getByText(/14 photos across events/)).toBeInTheDocument();
   });
 
-  it('reports conventional farms honestly without inventing organic states', () => {
+  it('withholds a claim for self-reported farms without asserting the opposite', () => {
+    // This assertion used to expect "Conventional, Documented". That label was REMOVED
+    // deliberately: withholding a claim and asserting the opposite are different things,
+    // and a real CCOF-certified grower whose cert was not yet wired into a Certification
+    // record was being shown "Conventional" above the fold to their buyers.
+    // `self_reported` and `conventional` both fall through to the neutral state — we do
+    // not invent a fourth state implying organic without third-party evidence, and we do
+    // not assert conventional either.
     renderHeader({
       organicClaim: { status: 'self_reported' } as any,
       certifications: []
     });
-    expect(screen.getByText('Conventional, Documented')).toBeInTheDocument();
+    expect(screen.getByText('Practices Documented')).toBeInTheDocument();
+    expect(screen.queryByText(/Conventional/i)).not.toBeInTheDocument();
     expect(screen.queryByText('Certified Organic')).not.toBeInTheDocument();
   });
 });

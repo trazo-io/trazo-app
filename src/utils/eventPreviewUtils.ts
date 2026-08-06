@@ -510,6 +510,12 @@ export function transformFormDataToEvent(
       if (formData.harvest_method) {
         event.harvest_method = formData.harvest_method;
       }
+      // D12 — Quick-Add now writes the real `brix_level` column; older form state and legacy
+      // rows still carry `brix_levels` in extra_data. Forward whichever is present so the
+      // preview shows the value the farmer just typed either way.
+      if (formData.brix_level !== undefined && formData.brix_level !== '') {
+        event.brix_level = formData.brix_level;
+      }
       if (formData.brix_levels) {
         event.brix_levels = formData.brix_levels;
       }

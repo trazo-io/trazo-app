@@ -102,6 +102,26 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
   const style = lotSuppressed ? STATUS_STYLE.self_reported : STATUS_STYLE[claim.status];
   if (!style) return null;
 
+  // The claim label the consumer reads. `display_label` is composed server-side in
+  // English and therefore cannot be translated — it used to render as a bare English
+  // phrase inside the Spanish QR page. Prefer the message id the API now sends, and fall
+  // back to the English string only when the key is absent (older backend) or unknown to
+  // this locale bundle. A claim-bearing line is the last place to show a raw i18n key.
+  const localisedClaimLabel = (() => {
+    const key = claim.display_label_key;
+    if (!key || !intl.messages[key]) return claim.display_label;
+    const params = { ...(claim.display_label_params ?? {}) } as Record<string, string | number>;
+    // `methodKey` is itself a message id ("…method.organic"), so resolve it to a word
+    // in the active locale before interpolating it into the sentence.
+    if (typeof params.methodKey === 'string') {
+      params.method = intl.messages[params.methodKey]
+        ? intl.formatMessage({ id: params.methodKey })
+        : String(params.methodKey).split('.').pop() ?? '';
+      delete params.methodKey;
+    }
+    return intl.formatMessage({ id: key }, params);
+  })();
+
   // Transition progress: "X of 36 months documented."
   const progressText = (() => {
     if (claim.status !== 'transitioning') return null;
@@ -131,7 +151,7 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
         <VStack align="stretch" spacing={1} flex={1}>
           <HStack spacing={2} flexWrap="wrap">
             <Text fontWeight="bold" fontSize="sm" color={textColor}>
-              {claim.display_label}
+              {localisedClaimLabel}
             </Text>
             <Badge
               colorScheme={style.colorScheme}

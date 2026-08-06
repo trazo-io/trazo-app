@@ -132,9 +132,10 @@ describe('Soil Management: labelKeys resolve in en-US.json', () => {
         SAMPLE_EVENTS[code]
       );
       for (const field of allFields(result)) {
-        expect(enUS[field.labelKey], `missing en-US key: ${field.labelKey} (subtype ${code})`).toBeTypeOf(
-          'string'
-        );
+        expect(
+          enUS[field.labelKey],
+          `missing en-US key: ${field.labelKey} (subtype ${code})`
+        ).toBeTypeOf('string');
         expect(enUS[field.labelKey].length).toBeGreaterThan(0);
       }
     }
@@ -142,7 +143,21 @@ describe('Soil Management: labelKeys resolve in en-US.json', () => {
 
   it('resolves every Soil Management subtype labelKey', () => {
     const subtypes = getSubtypes('soil_management');
-    expect(subtypes.length).toBe(7);
+    // The explicit set rather than a count: it says WHICH subtypes exist, so adding one is a
+    // conscious edit here and a missing one fails loudly. This now matches
+    // history/models.py SOIL_TYPE_CHOICES exactly — D4 closed the HD/NS gap.
+    expect(subtypes.map((s) => s.code).sort()).toEqual([
+      'CC',
+      'CO',
+      'GR',
+      'HD',
+      'LA',
+      'NS',
+      'OM',
+      'PA',
+      'ST',
+      'TI'
+    ]);
     for (const subtype of subtypes) {
       expect(enUS[subtype.labelKey], `missing en-US key: ${subtype.labelKey}`).toBeTypeOf('string');
     }

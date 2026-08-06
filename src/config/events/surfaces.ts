@@ -89,15 +89,28 @@ export const DISPLAY_SURFACE_RULES: Readonly<Record<DisplaySurface, SurfaceRule>
   },
   // --- Consumer surfaces (FTC-constrained) ---
   consumer_card: {
-    // Bumped from 20 → 30: Chemical events can resolve 22+ fields when all NOP
-    // compliance + carbon tracking data is populated. The prior limit silently
-    // dropped application_fuel_type/consumed (carbon-relevant details tier)
-    // because hero `commercial_name` and filtered-out `observation` still count
-    // toward the total even though they render outside the field list.
-    maxFields: 30,
-    allowedTiers: ['hero', 'immediate', 'secondary', 'details'],
+    // 2026-07-31 consumer editorial review. Was maxFields: 30 with a `details` tier.
+    //
+    // `details` rendered inside a SECOND, collapsed-by-default "Technical Details (N)"
+    // accordion — two taps from the collapsed card. A shopper has 20-40 seconds and one
+    // question ("is this worth it / is it what it claims?"); essentially nobody opened it.
+    // What it did do was concentrate liability: 64 field declarations sat there, including
+    // EPA registration numbers, buffer distances, internal block IDs, raw CFR citations and
+    // per-event fuel figures. Two taps deep is not disclosure — it is a place for operator
+    // data to hide on a consumer surface.
+    //
+    // The rule is enforced at resolve time: resolver.ts skips any field whose tier is not
+    // in `allowedTiers`, so a stray `consumer_card: 'details'` silently renders nowhere.
+    // `consumerCardTiers.test.ts` fails the build if one is re-added, because a silent
+    // no-op is exactly how a field ends up lying about where it appears.
+    //
+    // Fields a shopper genuinely needs were re-homed to `secondary` (one tap, in
+    // "Additional Information"); everything else keeps modal/form for the producer and the
+    // certifier PDF, which reads the event models directly and loses nothing.
+    maxFields: 12,
+    allowedTiers: ['hero', 'immediate', 'secondary'],
     isConsumerFacing: true,
-    allowsHeroCarbon: false, // FTC: carbon in expandable details, not hero
+    allowsHeroCarbon: false, // FTC: carbon lives in its own section, never in a hero
     requiresVerificationBadges: true,
     supportsFullLabels: true
   },

@@ -13,7 +13,22 @@
 export interface StandardizedEventBase {
   // Core identification
   id: string;
+  /**
+   * Event FAMILY name — 'chemical' | 'production' | 'soil_management' | … (see
+   * EVENT_TYPE_MAP). NOT the two-letter sub-type code. Consumers of this field include
+   * the timeline's chapter routing and the field-registry bridge, both of which key on
+   * the family. To branch on a sub-type (FE, HA, SC, …) use `subtype` below.
+   */
   type: string;
+  /**
+   * Two-letter sub-type code — 'FE' | 'HA' | 'SC' | 'GR' | … — normalized from whichever
+   * per-family key the backend sent (`chemical_type`, `production_type`, …).
+   *
+   * Exists because `type` is overwritten with the family name during normalization, which
+   * silently killed every `event.type === 'FE'` style comparison downstream (aggregate
+   * summary totals rendered a header and no body). Branch on this, never on `type`.
+   */
+  subtype?: string;
   title: string; // 🚨 CRITICAL FIX: Add title field for preview-display consistency
   name?: string;
   description: string;

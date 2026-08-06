@@ -171,9 +171,11 @@ function SearchTable1(props: SearchTable1Props) {
           direction={{ sm: 'column', md: 'row' }}
           justify="space-between"
           align="center"
-          px="22px"
           w="100%"
-          px={{ md: '22px' }}
+          // Was `px="22px"` AND `px={{ md: '22px' }}` — the later prop wins, so
+          // the base padding was silently dropped on mobile. Kept the responsive
+          // form and gave it the base value the first prop intended.
+          px={{ base: '22px', md: '22px' }}
         >
           <Text fontSize="sm" color="gray.500" fontWeight="normal" mb={{ sm: '24px', md: '0px' }}>
             Showing {pageSize * pageIndex + 1} to{' '}

@@ -1,0 +1,295 @@
+/**
+ * Certifier deadlines — the dates Trazo already knew and never said out loud.
+ *
+ * Every date rendered here was ALREADY stored and already on the wire before this component
+ * existed: `Certification.expiry_date`, `StateOrganicRegistration.renewal_date`, and whether an
+ * `OSPAnnualUpdate` exists for the current `reporting_year` (7 CFR 205.406(a)). Nothing new is
+ * computed server-side and no new endpoint was added — the product simply never surfaced the
+ * one thing about a certified operation that has a real external deadline. The only
+ * "expires in N days" string anywhere in the codebase was buried inside a generated PDF.
+ *
+ * Why it leads the farm dashboard: a grower's year is not uniform. Harvest (roughly Aug–Nov for
+ * CA orchards) is when they have no bandwidth for software; the postharvest window, ~October
+ * through February, is when they plan — and it is exactly when the certifier's annual OSP
+ * update cycle lands. A dashboard whose headline is a documentation percentage has nothing to
+ * say in that window. A dashboard that opens with "your OSP annual update for 2026 has not been
+ * filed" is talking about the thing already on the grower's desk.
+ *
+ * SCOPE — this DISPLAYS dates. It is deliberately not a reminder system:
+ * no notifications, no emails, no scheduled jobs, no task store, no snooze/dismiss state,
+ * no calendar. Trazo is not a farm-management app. If this ever grows a `dismissed_at`, that
+ * is the boundary being crossed.
+ *
+ * Rendered only for NOP-scoped operations, reusing the SAME `applicable` flag that gates
+ * `OperationReadinessPanel` (`OperationReadinessService._nop_checks_apply`) rather than
+ * inventing a second rule for "is this farm organic" — two rules would eventually disagree.
+ */
+import React from 'react';
+import { useIntl } from 'react-intl';
+import { useNavigate } from 'react-router-dom';
+
+import { HStack, Icon, Text, VStack, useColorModeValue } from '@chakra-ui/react';
+import { FaChevronRight, FaRegCalendarAlt } from 'react-icons/fa';
+
+import Card from 'components/Card/Card';
+import CardBody from 'components/Card/CardBody';
+import { useGetOperationReadinessQuery } from 'store/api/certifierLinkApi';
+import { useGetCertificationsQuery } from 'store/api/certificationApi';
+import { useGetOSPAnnualUpdatesQuery } from 'store/api/ospAnnualUpdateApi';
+import { useGetStateOrganicRegistrationsQuery } from 'store/api/stateOrganicRegistrationApi';
+
+/**
+ * How far ahead a date becomes worth showing. 120 days ≈ 4 months, chosen so that a grower
+ * opening the dashboard in October — the first month of the postharvest planning window — can
+ * already see a February expiry. A shorter horizon would surface the deadline in the middle of
+ * harvest, when it is useless; a longer one would keep a permanent banner on screen, which is
+ * how a warning becomes wallpaper.
+ */
+const HORIZON_DAYS = 120;
+
+/**
+ * How far PAST a date is still worth reporting. Without a floor, a certificate that lapsed three
+ * years ago renders "1095 days overdue" on the dashboard forever — a permanent red row nobody can
+ * clear, which is precisely how the horizon above is supposed to stop a warning becoming
+ * wallpaper. A year covers the whole renewal cycle; anything older is a lapsed operation, which is
+ * the readiness card's subject, not a date reminder's.
+ */
+const OVERDUE_LOOKBACK_DAYS = 365;
+
+/** Inside the window we report on: recently overdue, or due within the horizon. */
+function isWorthShowing(days: number): boolean {
+  return days <= HORIZON_DAYS && days >= -OVERDUE_LOOKBACK_DAYS;
+}
+
+type Urgency = 'overdue' | 'soon';
+
+interface Deadline {
+  key: string;
+  label: string;
+  detail: string;
+  urgency: Urgency;
+  /** Where the farmer actually resolves it. A date with no route is a nag, not a task. */
+  href: string;
+}
+
+/**
+ * Whole days from today to `iso`, or null when the date is absent/unparseable.
+ *
+ * Date-only strings are parsed as LOCAL midnight, not UTC. `new Date('2026-08-02')` is defined by
+ * the spec to mean UTC midnight, so reading it back with the local-time getters lands on Aug 1 in
+ * every US timezone — a deadline would be reported one day earlier than it is, and a renewal due
+ * today would read "1 day overdue". These fields (`expiry_date`, `renewal_date`) are Django
+ * DateFields serialized as bare `YYYY-MM-DD` with no timezone to honour, so local is the correct
+ * reading. This is the same off-by-one already recorded against the parcel page's start date.
+ */
+function daysUntil(iso?: string | null): number | null {
+  if (!iso) return null;
+
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const target = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+    : new Date(iso);
+  if (Number.isNaN(target.getTime())) return null;
+
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfTarget = new Date(target.getFullYear(), target.getMonth(), target.getDate());
+  // Round, not floor: DST transitions make a "day" 23 or 25 hours long twice a year.
+  return Math.round((startOfTarget.getTime() - startOfToday.getTime()) / 86_400_000);
+}
+
+/**
+ * Turn a day delta into the phrase shown on the right of the row.
+ * Zero is its own case — "in 0 days" is not something a person says, and "today" is the single
+ * most actionable state this strip has.
+ */
+function describeDelta(days: number, intl: ReturnType<typeof useIntl>): string {
+  if (days === 0) return intl.formatMessage({ id: 'deadlines.today' });
+  if (days < 0) {
+    return intl.formatMessage({ id: 'deadlines.expiredDaysAgo' }, { days: Math.abs(days) });
+  }
+  return intl.formatMessage({ id: 'deadlines.inDays' }, { days });
+}
+
+const CertifierDeadlinesStrip: React.FC<{
+  companyId: number | string;
+  farmId: number | string;
+}> = ({ companyId, farmId }) => {
+  const intl = useIntl();
+  const navigate = useNavigate();
+  const scope = { companyId: String(companyId), farmId: String(farmId) };
+  const skip = { skip: !companyId || !farmId };
+
+  // Both destinations already exist. The OSP page holds the § 205.406 annual-continuation form
+  // AND the CDFA registration (with its renewal date); certificates live on the farm profile,
+  // alongside the certifier-link and dossier actions.
+  const ospHref = `/admin/dashboard/farm/${farmId}/osp`;
+  const profileHref = `/admin/dashboard/farm/${farmId}/profile`;
+
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const mutedColor = useColorModeValue('gray.500', 'gray.400');
+  const textColor = useColorModeValue('gray.700', 'gray.200');
+  const hoverBg = useColorModeValue('gray.50', 'gray.700');
+
+  const { data: readiness } = useGetOperationReadinessQuery(scope, skip);
+  // Only the annual-update query needs a load flag — the cert and registration rows are driven by
+  // dates being PRESENT, so an unloaded query simply contributes no rows and claims nothing.
+  const { data: certifications } = useGetCertificationsQuery(scope, skip);
+  const { data: registrations } = useGetStateOrganicRegistrationsQuery(scope, skip);
+  const { data: annualUpdates, isSuccess: updatesLoaded } = useGetOSPAnnualUpdatesQuery(scope, skip);
+
+  // A conventional operation is not on the NOP calendar and must not be shown organic
+  // deadlines it was never subject to.
+  if (!readiness?.applicable) return null;
+
+  const currentYear = new Date().getFullYear();
+  const deadlines: Deadline[] = [];
+
+  // 7 CFR 205.406(a) — the annual continuation. This is the anchor of the whole strip: unlike a
+  // certificate expiry it has no date field to read, only presence or absence for the year, and
+  // it is the single most likely reason a grower opens Trazo in October.
+  //
+  // Gated on `updatesLoaded` because absence of data is not evidence of absence. Every other row
+  // is driven by a date that is PRESENT, so an unloaded query contributes nothing and claims
+  // nothing; this row is the only one asserting a NEGATIVE. `annualUpdates` is `undefined` while
+  // the request is in flight, and `(undefined || []).find(...)` is indistinguishable from a real
+  // empty list — so without the flag the strip would accuse a farm of missing its filing during
+  // every page load, then quietly retract it. Telling a grower they are out of compliance is not
+  // something to do from a loading state.
+  const updateThisYear = (annualUpdates || []).find((u) => u.reporting_year === currentYear);
+  if (updatesLoaded && !updateThisYear) {
+    deadlines.push({
+      key: 'osp-annual-update',
+      label: intl.formatMessage({ id: 'deadlines.ospAnnualUpdate' }, { year: currentYear }),
+      detail: intl.formatMessage({ id: 'deadlines.ospAnnualUpdateNotFiled' }),
+      urgency: 'overdue',
+      href: ospHref
+    });
+  } else if (updateThisYear && !updateThisYear.submitted_at) {
+    deadlines.push({
+      key: 'osp-annual-update',
+      label: intl.formatMessage({ id: 'deadlines.ospAnnualUpdate' }, { year: currentYear }),
+      detail: intl.formatMessage({ id: 'deadlines.ospAnnualUpdateDraft' }),
+      urgency: 'soon',
+      href: ospHref
+    });
+  }
+
+  // Certificate expiry. `is_active` already accounts for revoked/suspended and past-expiry, but
+  // an EXPIRED certificate is exactly what a grower most needs to see, so expiry is read
+  // directly rather than filtering on `is_active`.
+  (certifications || []).forEach((cert) => {
+    // A revoked or suspended certificate is already void — counting down to its expiry date would
+    // tell the grower it is fine for another 90 days. Its status is the readiness card's subject,
+    // not a deadline. (Deliberately NOT filtering on `is_active`, which also excludes EXPIRED
+    // certificates — an expired certificate is the single most important row this strip can show.)
+    if (cert.verification_status === 'revoked' || cert.verification_status === 'suspended') return;
+
+    const days = daysUntil(cert.expiry_date);
+    if (days === null || !isWorthShowing(days)) return;
+    deadlines.push({
+      key: `cert-${cert.id}`,
+      label: intl.formatMessage(
+        { id: 'deadlines.certificationExpiry' },
+        { type: cert.certification_type_display || cert.certification_type }
+      ),
+      detail: describeDelta(days, intl),
+      urgency: days < 0 ? 'overdue' : 'soon',
+      href: profileHref
+    });
+  });
+
+  // CDFA State Organic Program registration renews annually (CA Food & Ag Code §§ 46000-46029).
+  (registrations || []).forEach((reg) => {
+    // An operation marked exempt sells under the $5,000 threshold and has nothing to renew
+    // (CA Food & Ag Code §§ 46000-46029). Nagging it about a renewal date left over from a
+    // previous year would be telling a grower to do something they are excused from.
+    if (reg.status === 'exempt') return;
+
+    const days = daysUntil(reg.renewal_date);
+    if (days === null || !isWorthShowing(days)) return;
+    deadlines.push({
+      key: `state-reg-${reg.id}`,
+      // `program_name` is optional and `state` can be blank, which produced a label of just
+      // " renewal" with a leading space. Fall back to a generic but complete phrase.
+      label: reg.program_name || reg.state
+        ? intl.formatMessage(
+            { id: 'deadlines.stateRegistrationRenewal' },
+            { program: reg.program_name || reg.state }
+          )
+        : intl.formatMessage({ id: 'deadlines.stateRegistrationRenewalGeneric' }),
+      detail: describeDelta(days, intl),
+      urgency: days < 0 ? 'overdue' : 'soon',
+      href: ospHref
+    });
+  });
+
+  // Nothing due inside the horizon is the common case for most of the year. Render nothing
+  // rather than a reassuring "all clear" banner that trains the farmer to skip this row.
+  if (deadlines.length === 0) return null;
+
+  // Overdue first; ties keep insertion order, which puts the § 205.406 filing above the rest.
+  deadlines.sort((a, b) => Number(b.urgency === 'overdue') - Number(a.urgency === 'overdue'));
+
+  return (
+    <Card>
+      <CardBody>
+        <VStack align="stretch" spacing={3} w="100%">
+          <HStack spacing={2}>
+            <Icon as={FaRegCalendarAlt} color={mutedColor} boxSize={4} />
+            <Text fontSize="xs" fontWeight="bold" color={mutedColor} textTransform="uppercase">
+              {intl.formatMessage({ id: 'deadlines.title' })}
+            </Text>
+          </HStack>
+
+          <VStack align="stretch" spacing={2}>
+            {deadlines.map((d) => (
+              <HStack
+                key={d.key}
+                as="button"
+                type="button"
+                onClick={() => navigate(d.href)}
+                justify="space-between"
+                spacing={3}
+                flexWrap="wrap"
+                textAlign="left"
+                w="100%"
+                minH="44px"
+                borderLeft="3px solid"
+                borderLeftColor={d.urgency === 'overdue' ? 'red.400' : 'orange.300'}
+                borderBottom="1px solid"
+                borderBottomColor={borderColor}
+                pl={3}
+                pb={2}
+                _hover={{ bg: hoverBg }}
+              >
+                <Text fontSize="sm" color={textColor} fontWeight="medium">
+                  {d.label}
+                </Text>
+                <HStack spacing={2} flexShrink={0}>
+                  <Text
+                    fontSize="xs"
+                    fontWeight="semibold"
+                    color={d.urgency === 'overdue' ? 'red.500' : 'orange.500'}
+                    whiteSpace="nowrap"
+                  >
+                    {d.detail}
+                  </Text>
+                  <Icon as={FaChevronRight} color={mutedColor} boxSize={2.5} />
+                </HStack>
+              </HStack>
+            ))}
+          </VStack>
+
+          {/* Same posture as CertifierReadinessCard: Trazo reports what its records show.
+              Dates come from what the farmer entered; the certifier sets the real schedule. */}
+          <Text fontSize="xs" color={mutedColor}>
+            {intl.formatMessage({ id: 'deadlines.disclaimer' })}
+          </Text>
+        </VStack>
+      </CardBody>
+    </Card>
+  );
+};
+
+export default CertifierDeadlinesStrip;

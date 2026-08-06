@@ -91,6 +91,8 @@ import { TrazoImageUpload } from 'components/Upload';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
 import TierPhotoBanner from 'components/Events/TierPhotoBanner';
 import { getPhotoTier, type PhotoTier } from 'utils/photoTierHelpers';
+import { useFarm } from 'hooks/useMeasurementSystem';
+import { normalizeState } from 'utils/usStates';
 
 interface EventTemplate {
   id: string;
@@ -559,19 +561,23 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   // Get crop types and find the crop type ID for the current production
   const { data: cropTypesData } = useGetCropTypesDropdownQuery();
 
-  // Real USDA data for enhanced suggestions
-  // Get state from establishment data or default to user's company location
-  const farmState =
-    currentCompany?.establishments?.[0]?.state || currentUser?.company?.state || 'CA'; // Fallback if no establishment data available
+  // Real USDA data for enhanced suggestions.
+  // This used to read `establishments[0].state || 'CA'` — the FIRST farm on the
+  // company rather than the one this event belongs to, then California if that was
+  // empty. A Texas grower whose CA farm happened to sort first got California
+  // emission factors on Texas events. Resolve the event's own farm, and when the
+  // state is unknown skip the regional queries entirely rather than guessing.
+  const farm = useFarm(farmId);
+  const farmState = normalizeState(farm?.state);
 
   // Real USDA API queries for enhanced event suggestions
   const { data: realUSDAData } = useGetUSDAEmissionFactorsQuery(
     {
       crop_type: cropType.toLowerCase(),
-      state: farmState
+      state: farmState as string
     },
     {
-      skip: !cropType || !isOpen // Only fetch when modal is open
+      skip: !cropType || !isOpen || !farmState // Only fetch when modal is open and the state is known
     }
   );
 
@@ -579,10 +585,10 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
     {
       carbon_intensity: 0.001, // Default value for suggestions
       crop_type: cropType.toLowerCase(),
-      state: farmState
+      state: farmState as string
     },
     {
-      skip: !cropType || !isOpen // Only fetch when modal is open
+      skip: !cropType || !isOpen || !farmState
     }
   );
 
@@ -632,10 +638,12 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
   );
 
   const getCurrentSeason = (month: number): string => {
-    // Detect Southern Hemisphere via establishment latitude or country
-    const establishment = currentCompany?.establishments?.[0];
-    const latitude = establishment?.latitude;
-    const country = (establishment?.country || '').toLowerCase();
+    // Detect Southern Hemisphere via establishment latitude or country.
+    // Resolved from THIS event's farm, not `establishments[0]` — a Uruguayan
+    // farm sitting behind a US farm in the list was getting northern-hemisphere
+    // seasons, which inverts every seasonal suggestion the form makes.
+    const latitude = farm?.latitude;
+    const country = (farm?.country || '').toLowerCase();
     const southernCountries = [
       'uruguay',
       'argentina',

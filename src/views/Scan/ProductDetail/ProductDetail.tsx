@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useCallback, useEffect, useState, Suspense } from 'react';
 import {
   Avatar,
   Box,
@@ -79,7 +79,6 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
 // API imports - Using single transparency API (consolidated from dual requests)
-import { useTransparencyCelebration } from '../../../hooks/useTransparencyCelebration';
 import {
   useGetTransparencyDetailsQuery,
   useVerifyBlockchainIntegrityQuery
@@ -88,6 +87,7 @@ import { useCreateScanMutation } from '../../../store/api/historyApi';
 import { addPendingScanToken } from '../../../utils/pendingScanStorage';
 import { hasAnalyticsConsent } from '../../../components/Privacy/ConsentBanner';
 import { HarvestInfoCard } from './components/HarvestInfoCard';
+import { convertArea } from '../../../utils/areaUnits';
 
 // Data normalization imports
 import { normalizeBackendEventData } from '../../../utils/eventDataNormalizer';
@@ -104,7 +104,11 @@ import OrganicClaimBadge from '../../../components/Certifications/OrganicClaimBa
 
 // Other components
 import { ModernTrazoLoader } from './components/ModernTrazoLoader';
-import { ModernErrorState } from './components/ModernErrorState';
+import {
+  ModernErrorState,
+  classifyConsumerError,
+  buildErrorReference
+} from './components/ModernErrorState';
 import { HeroShimmer, JourneyShimmer, TransparencyShimmer } from './components/TrazoShimmers';
 import { StandardImageGallery } from '../../../components/ImageGallery';
 import QuickFeedback from '../../../components/ConsumerFeedback/QuickFeedback';
@@ -235,42 +239,45 @@ function ProductDetail() {
   // Get QR access metadata for analytics
   // const qrMetadata = getQRAccessMetadata(); // Unused for now
 
-  useEffect(() => {
-    const verifyQRAccess = async () => {
-      // Try to extract production ID from current URL (handles secure QR format)
-      const parseResult = extractProductionIdFromCurrentURL();
+  // Callable so "Try Again" can re-run the real verification instead of reloading the page
+  const verifyQRAccess = useCallback(async () => {
+    setQrVerificationError(null);
 
-      if (parseResult.isSecure) {
-        // This is a secure QR code, verify it
-        setIsVerifyingQR(true);
+    // Try to extract production ID from current URL (handles secure QR format)
+    const parseResult = extractProductionIdFromCurrentURL();
 
-        try {
-          const verification = await verifySecureQR(window.location.href);
+    if (parseResult.isSecure) {
+      // This is a secure QR code, verify it
+      setIsVerifyingQR(true);
 
-          if (verification.valid && verification.productionId) {
-            setVerifiedProductionId(verification.productionId);
-          } else {
-            setQrVerificationError(verification.error || 'Invalid QR code');
-            console.error('❌ QR verification failed:', verification.error);
-          }
-        } catch (error) {
-          setQrVerificationError('Unable to verify QR code');
-          console.error('❌ QR verification error:', error);
-        } finally {
-          setIsVerifyingQR(false);
+      try {
+        const verification = await verifySecureQR(window.location.href);
+
+        if (verification.valid && verification.productionId) {
+          setVerifiedProductionId(verification.productionId);
+        } else {
+          setQrVerificationError(verification.error || 'Invalid QR code');
+          console.error('❌ QR verification failed:', verification.error);
         }
-      } else if (parseResult.isValid) {
-        // This is a legacy QR code or direct URL access
-        setVerifiedProductionId(parseResult.productionId || urlProductionId);
-      } else {
-        // Invalid URL format
-        setQrVerificationError(parseResult.error || 'Invalid URL format');
-        console.error('❌ Invalid URL format:', parseResult.error);
+      } catch (error) {
+        setQrVerificationError('Unable to verify QR code');
+        console.error('❌ QR verification error:', error);
+      } finally {
+        setIsVerifyingQR(false);
       }
-    };
-
-    verifyQRAccess();
+    } else if (parseResult.isValid) {
+      // This is a legacy QR code or direct URL access
+      setVerifiedProductionId(parseResult.productionId || urlProductionId);
+    } else {
+      // Invalid URL format
+      setQrVerificationError(parseResult.error || 'Invalid URL format');
+      console.error('❌ Invalid URL format:', parseResult.error);
+    }
   }, [urlProductionId]);
+
+  useEffect(() => {
+    verifyQRAccess();
+  }, [verifyQRAccess]);
 
   // Use the verified production ID for API calls
   const productionId = verifiedProductionId;
@@ -573,31 +580,16 @@ function ProductDetail() {
   } = useDisclosure();
   const [educationTopic, setEducationTopic] = useState<string | null>(null);
 
-  // Transparency celebration system
-  const celebrationTransparencyData = completeData
-    ? {
-        // Score is gated out of the consumer payload (claim-safety) → null here.
-        // Coerced to 0 so the celebration stays suppressed on the consumer page
-        // (a score "🎉 verdict" modal is the self-graded label we removed).
-        transparencyScore: getTransparencyScore() ?? 0,
-        farmName: completeData?.farmer?.name,
-        productName: completeData?.product?.name,
-        eventsDocumented: completeData?.timeline?.length || 0,
-        photoCount: undefined, // Only show if actual photo data available from API
-        isUSDAVerified: completeData?.isUsdaVerified || false,
-        isBlockchainVerified: getBlockchainScore().isVerified,
-        isTrazoVerified: (getTransparencyScore() ?? 0) >= 80,
-        scansCount: completeData?.scansCount, // Load from API
-        farmHistory: completeData?.farmHistory // Load from API
-      }
-    : null;
-
-  const { showCelebration, celebrationData, triggerType, closeCelebration } =
-    useTransparencyCelebration(celebrationTransparencyData, {
-      minScoreForCelebration: 70,
-      celebrateOnScan: true,
-      showCelebrationOnce: true
-    });
+  // The transparency-celebration system was removed from this page (2026-07).
+  //
+  // It was a score-gated "🎉 verdict" modal: useTransparencyCelebration fired above
+  // minScoreForCelebration: 70, which is a self-assigned sustainability grade delivered as a
+  // congratulation (EU ECGT 2024/825 / FTC 16 CFR 260.6). It was already inert twice over —
+  // the score is null on the anonymous payload and was coerced to 0, and the hook's
+  // showCelebration/celebrationData outputs were never rendered by this component at all.
+  // Deleting the wiring rather than leaving it suppressed means un-gating the score
+  // server-side cannot switch a verdict modal back on. The generic celebration components
+  // remain in src/components/Notifications for producer-side use.
 
   // Navigation state - TRANSPARENCY FIRST
   const [activeSection, setActiveSection] = useState('transparency');
@@ -651,12 +643,13 @@ function ProductDetail() {
   }
 
   // QR Verification error state
+  // The raw reason is a developer string — it goes to the support reference, never to the shopper
   if (qrVerificationError) {
     return (
       <ModernErrorState
         type="qr_verification"
-        message={qrVerificationError}
-        onRetry={() => window.location.reload()}
+        errorId={buildErrorReference({ status: 'QR' }, urlProductionId)}
+        onRetry={verifyQRAccess}
       />
     );
   }
@@ -686,39 +679,13 @@ function ProductDetail() {
     );
   }
 
-  // Error state
+  // Error state — copy is owned by ModernErrorState so offline/server/not-found never blur together
   if (completeError) {
-    const error = completeError as any;
-    const errorType = error?.status === 404 ? 'not_found' : 'network';
-
     return (
       <ModernErrorState
-        type={errorType}
-        title={
-          errorType === 'not_found'
-            ? intl.formatMessage({
-                id: 'consumer.detail.errorNotFoundTitle',
-                defaultMessage: 'Product Not Found'
-              })
-            : intl.formatMessage({
-                id: 'consumer.detail.errorLoadTitle',
-                defaultMessage: 'Unable to Load Product'
-              })
-        }
-        message={
-          errorType === 'not_found'
-            ? intl.formatMessage({
-                id: 'consumer.detail.errorNotFoundMsg',
-                defaultMessage:
-                  'This product information is not available. Please verify the QR code and try again.'
-              })
-            : intl.formatMessage({
-                id: 'consumer.detail.errorLoadMsg',
-                defaultMessage:
-                  'Please check your connection and try again, or scan a different product.'
-              })
-        }
-        onRetry={() => window.location.reload()}
+        type={classifyConsumerError(completeError)}
+        errorId={buildErrorReference(completeError, productionId)}
+        onRetry={refetchTransparency}
       />
     );
   }
@@ -736,7 +703,8 @@ function ProductDetail() {
           id: 'consumer.detail.noDataMsg',
           defaultMessage: 'Please scan a valid QR code to view product information.'
         })}
-        onRetry={() => window.location.reload()}
+        errorId={buildErrorReference({ status: 'NODATA' }, productionId)}
+        onRetry={refetchTransparency}
       />
     );
   }
@@ -832,7 +800,6 @@ function ProductDetail() {
                 trustData={{
                   confidenceScore: getDisplayTransparencyScore(),
                   isUSDAVerified: completeData?.isUsdaVerified || false,
-                  isBlockchainVerified: getBlockchainScore().isVerified,
                   reviewsCount: consumerReviews?.count ?? 0,
                   averageRating: consumerReviews?.average ?? safeReputation,
                   scansCount: 0,
@@ -1399,195 +1366,13 @@ function ProductDetail() {
                       );
                     })()}
 
-                    {/* Blockchain Security — five states: tampered, verified, sealed, finished/not-recorded, in-progress */}
-                    {(() => {
-                      const blockchain = getBlockchainScore();
-
-                      // STATE 1: Tamper detected (Layer 1 or Layer 2) — red warning
-                      if (blockchain.isTampered) {
-                        return (
-                          <Box
-                            bg="red.50"
-                            p={3}
-                            borderRadius="md"
-                            border="1px solid"
-                            borderColor="red.300"
-                          >
-                            <HStack align="start" spacing={3}>
-                              <Icon
-                                as={FaExclamationTriangle}
-                                color="red.500"
-                                boxSize="20px"
-                                mt={1}
-                              />
-                              <Box>
-                                <Text fontWeight="bold" color="red.700">
-                                  {intl.formatMessage({
-                                    id: 'consumer.blockchain.dataIntegrityWarning',
-                                    defaultMessage: 'Data Integrity Warning'
-                                  })}
-                                </Text>
-                                <Text fontSize="sm" color="red.600">
-                                  {integrityData?.data_integrity_detail ||
-                                    intl.formatMessage({
-                                      id: 'consumer.blockchain.dataIntegrityWarningDetail',
-                                      defaultMessage:
-                                        'Production data may have been modified after finalization'
-                                    })}
-                                </Text>
-                                {blockchain.txHash && (
-                                  <Link
-                                    href={`${
-                                      import.meta.env.VITE_POLYGON_EXPLORER_URL ||
-                                      'https://polygonscan.com'
-                                    }/tx/${blockchain.txHash}`}
-                                    isExternal
-                                    fontSize="xs"
-                                    color="red.500"
-                                    mt={1}
-                                    display="inline-block"
-                                  >
-                                    {intl.formatMessage({
-                                      id: 'consumer.blockchain.checkPublicRecord',
-                                      defaultMessage: 'Check the public record ↗'
-                                    })}
-                                  </Link>
-                                )}
-                              </Box>
-                            </HStack>
-                          </Box>
-                        );
-                      }
-
-                      // STATE 2: Recorded on-chain — green shield (Trazo brand)
-                      if (blockchain.isVerified) {
-                        return (
-                          <HStack align="start" spacing={3}>
-                            <Icon as={FaShieldAlt} color="green.500" boxSize="20px" mt={1} />
-                            <Box>
-                              <Text fontWeight="semibold" color="gray.800">
-                                {intl.formatMessage({
-                                  id: 'consumer.blockchain.blockchainRecorded',
-                                  defaultMessage: 'Blockchain Recorded'
-                                })}
-                              </Text>
-                              {/* "Tamper-proof" overclaims — blockchain proves the
-                                  record is unchanged since sealing, not that it was
-                                  accurate when submitted. */}
-                              <Text fontSize="sm" color="gray.600">
-                                {blockchain.isIntegrityChecked
-                                  ? intl.formatMessage({
-                                      id: 'consumer.blockchain.recordUnchanged',
-                                      defaultMessage:
-                                        'Record unchanged since sealing — integrity check passed'
-                                    })
-                                  : intl.formatMessage({
-                                      id: 'consumer.blockchain.recordSealed',
-                                      defaultMessage:
-                                        'Record sealed on the Polygon blockchain after submission'
-                                    })}
-                              </Text>
-                              {blockchain.txHash && (
-                                <Link
-                                  href={`${
-                                    import.meta.env.VITE_POLYGON_EXPLORER_URL ||
-                                    'https://polygonscan.com'
-                                  }/tx/${blockchain.txHash}`}
-                                  isExternal
-                                  fontSize="xs"
-                                  color="green.600"
-                                  mt={1}
-                                  display="inline-block"
-                                >
-                                  {intl.formatMessage({
-                                    id: 'consumer.blockchain.checkPublicRecord',
-                                    defaultMessage: 'Check the public record ↗'
-                                  })}
-                                </Link>
-                              )}
-                            </Box>
-                          </HStack>
-                        );
-                      }
-
-                      // STATE 3: Sealed (finalized) but not yet on blockchain — gray lock
-                      if (blockchain.isPending) {
-                        return (
-                          <HStack align="start" spacing={3}>
-                            <Icon as={FaShieldAlt} color="gray.500" boxSize="20px" mt={1} />
-                            <Box>
-                              <Text fontWeight="semibold" color="gray.800">
-                                {intl.formatMessage({
-                                  id: 'consumer.blockchain.dataSealed',
-                                  defaultMessage: 'Data Sealed'
-                                })}
-                              </Text>
-                              <Text fontSize="sm" color="gray.600">
-                                {blockchain.isIntegrityChecked
-                                  ? intl.formatMessage({
-                                      id: 'consumer.blockchain.allEventsSealed',
-                                      defaultMessage:
-                                        'All events cryptographically sealed — blockchain submission in progress'
-                                    })
-                                  : intl.formatMessage({
-                                      id: 'consumer.blockchain.productionFinalized',
-                                      defaultMessage:
-                                        'Production finalized — preparing for blockchain recording'
-                                    })}
-                              </Text>
-                            </Box>
-                          </HStack>
-                        );
-                      }
-
-                      // STATE 4: Production finished but not blockchain-recorded
-                      // (blockchain is an optional $15/mo add-on per Trazo pricing)
-                      const finishDate = (completeData as any)?.finish_date;
-                      if (finishDate) {
-                        return (
-                          <HStack align="start" spacing={3}>
-                            <Icon as={FaShieldAlt} color="gray.400" boxSize="20px" mt={1} />
-                            <Box>
-                              <Text fontWeight="semibold" color="gray.800">
-                                {intl.formatMessage({
-                                  id: 'consumer.blockchain.notBlockchainRecorded',
-                                  defaultMessage: 'Not Blockchain-Recorded'
-                                })}
-                              </Text>
-                              <Text fontSize="sm" color="gray.600">
-                                {intl.formatMessage({
-                                  id: 'consumer.blockchain.notBlockchainRecordedDetail',
-                                  defaultMessage:
-                                    'Production documented through farmer-reported events. Blockchain recording is an optional add-on.'
-                                })}
-                              </Text>
-                            </Box>
-                          </HStack>
-                        );
-                      }
-
-                      // STATE 5: Truly in-progress (no finish_date) — gray
-                      return (
-                        <HStack align="start" spacing={3}>
-                          <Icon as={FaShieldAlt} color="gray.400" boxSize="20px" mt={1} />
-                          <Box>
-                            <Text fontWeight="semibold" color="gray.800">
-                              {intl.formatMessage({
-                                id: 'consumer.blockchain.notYetRecorded',
-                                defaultMessage: 'Not Yet Recorded'
-                              })}
-                            </Text>
-                            <Text fontSize="sm" color="gray.600">
-                              {intl.formatMessage({
-                                id: 'consumer.blockchain.notYetRecordedDetail',
-                                defaultMessage:
-                                  'Production in progress — blockchain recording available after completion (optional add-on).'
-                              })}
-                            </Text>
-                          </Box>
-                        </HStack>
-                      );
-                    })()}
+                    {/* Blockchain status intentionally NOT rendered to consumers.
+                        Removed 2026-08-03 with the consumer blockchain surface. What the chain
+                        can honestly support — "this record is unchanged since it was sealed" —
+                        does not answer what a shopper is asking, and compliance.md forbids the
+                        "verified" reading a badge invites (FTC 16 CFR 260.6, EU ECGT 2024/825).
+                        The hash is still written and still appears in the certifier packet as an
+                        integrity line. Do not reintroduce a consumer badge. */}
                   </SimpleGrid>
 
                   {/* P2-5: removed redundant green "Farm: / Harvest:" box — farm
@@ -1841,6 +1626,11 @@ function ProductDetail() {
                           transparencyScore={getDisplayTransparencyScore()}
                           productionBlockchain={(completeData as any)?.blockchain_verification}
                           productionId={productionId || undefined}
+                          // Same source as the certification narrative above, so the
+                          // "All inputs organic-approved" chip cannot contradict the
+                          // "{n} of {m} inputs approved" line. Backend classification
+                          // (claim_resolver) is the sole authority for this claim.
+                          organicSummary={(completeData as any)?.standard_view?.organic_summary}
                         />
                       );
                     } else {
@@ -2037,8 +1827,15 @@ function ProductDetail() {
                           longitude: (completeData as any)?.farmer?.longitude
                         }
                       : undefined,
-                  area: (completeData as any)?.parcel?.area,
-                  areaUnit: 'hectares',
+                  // Parcel area is STORED in hectares (carbon calcs depend on it) but every
+                  // other number a US shopper reads on this page is customary — pounds,
+                  // acres in the event cards, miles in the carbon equivalence. Leaving this
+                  // one stat metric made the parcel card read "15.62 hectares" for a 38.6-acre
+                  // block. Convert for display; storage is untouched.
+                  area: (completeData as any)?.parcel?.area
+                    ? convertArea((completeData as any).parcel.area, 'hectares', 'acres', 2)
+                    : (completeData as any)?.parcel?.area,
+                  areaUnit: 'acres',
                   soilType: (completeData as any)?.parcel?.soilType,
                   cropType: (completeData as any)?.product?.name,
                   plantingDate: (completeData as any)?.start_date,

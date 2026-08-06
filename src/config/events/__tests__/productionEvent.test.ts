@@ -117,9 +117,10 @@ describe('Production: labelKeys resolve in en-US.json', () => {
     for (const code of SUBTYPE_CODES) {
       const result = getFieldsForSurface('production', code, 'consumer_card', SAMPLE_EVENTS[code]);
       for (const field of allFields(result)) {
-        expect(enUS[field.labelKey], `missing en-US key: ${field.labelKey} (subtype ${code})`).toBeTypeOf(
-          'string'
-        );
+        expect(
+          enUS[field.labelKey],
+          `missing en-US key: ${field.labelKey} (subtype ${code})`
+        ).toBeTypeOf('string');
         expect(enUS[field.labelKey].length).toBeGreaterThan(0);
       }
     }
@@ -176,10 +177,22 @@ describe('Production: subtype gating on consumer_card', () => {
       })
     ).map((f) => f.name);
 
+    // Cleaning EVIDENCE is legitimate consumer transparency and stays subtype-gated.
     expect(cleaningNames).toContain('cleaning_method');
-    expect(cleaningNames).toContain('cleaned_by');
     expect(maintenanceNames).not.toContain('cleaning_method');
+
+    // But the PERSON who did it never reaches a consumer. `cleaned_by` is free text
+    // holding real worker names ("Miguel Ramirez (Farm Manager)" in live data) and it
+    // rendered on the public product page until 2026-07-31. This assertion was inverted
+    // then: `performed_by` is masked to initials and `applicator_name` is stripped for
+    // exactly this reason, so surfacing `cleaned_by` was an inconsistency, not a policy.
+    // It remains on modal/form (producer) and in the certifier PDF.
+    expect(cleaningNames).not.toContain('cleaned_by');
     expect(maintenanceNames).not.toContain('cleaned_by');
+
+    // Same pass: an internal SOP id and a raw CFR citation are operator vocabulary.
+    expect(cleaningNames).not.toContain('cleaning_protocol_reference');
+    expect(cleaningNames).not.toContain('sanitizer_nop_reference');
   });
 
   it('keeps carbon fields out of consumer_card hero/immediate tiers', () => {

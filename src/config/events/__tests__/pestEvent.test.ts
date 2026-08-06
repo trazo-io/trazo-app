@@ -114,9 +114,10 @@ describe('Pest Management: labelKeys resolve in en-US.json', () => {
         SAMPLE_EVENTS[code]
       );
       for (const field of allFields(result)) {
-        expect(enUS[field.labelKey], `missing en-US key: ${field.labelKey} (subtype ${code})`).toBeTypeOf(
-          'string'
-        );
+        expect(
+          enUS[field.labelKey],
+          `missing en-US key: ${field.labelKey} (subtype ${code})`
+        ).toBeTypeOf('string');
         expect(enUS[field.labelKey].length).toBeGreaterThan(0);
       }
     }
@@ -124,7 +125,9 @@ describe('Pest Management: labelKeys resolve in en-US.json', () => {
 
   it('resolves every Pest Management subtype labelKey', () => {
     const subtypes = getSubtypes('pest_management');
-    expect(subtypes.length).toBe(6);
+    // The explicit set rather than a count: it says WHICH subtypes exist, so adding one is a
+    // conscious edit here and a missing one fails loudly.
+    expect(subtypes.map((s) => s.code).sort()).toEqual(['BR', 'CU', 'IP', 'PI', 'SC', 'TA', 'TM']);
     for (const subtype of subtypes) {
       expect(enUS[subtype.labelKey], `missing en-US key: ${subtype.labelKey}`).toBeTypeOf('string');
     }
@@ -137,7 +140,12 @@ describe('Pest Management: labelKeys resolve in en-US.json', () => {
 
 describe('Pest Management: subtype gating on consumer_card', () => {
   it('shows beneficial release fields only for BR (hero placement)', () => {
-    const brResult = getFieldsForSurface('pest_management', 'BR', 'consumer_card', SAMPLE_EVENTS.BR);
+    const brResult = getFieldsForSurface(
+      'pest_management',
+      'BR',
+      'consumer_card',
+      SAMPLE_EVENTS.BR
+    );
     const brHeroNames = brResult.hero.map((f) => f.name);
     expect(brHeroNames).toContain('beneficial_species');
 

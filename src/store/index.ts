@@ -13,9 +13,15 @@ import productReducer from './features/productSlice';
 import userReducer from './features/userSlice';
 import notificationReducer from './features/notificationSlice';
 import { setupListeners } from '@reduxjs/toolkit/query';
-import { carbonApi } from './api/carbonApi';
 import { mediaApi } from './api/mediaApi';
-import { globalSearchApi } from './api/globalSearchApi';
+// Side-effect imports, NOT unused. Both modules call
+// `baseApi.injectEndpoints(...)` at import time; importing them here guarantees
+// their endpoints are registered on baseApi before the store is constructed,
+// rather than depending on whichever component happens to import a hook first.
+// They deliberately contribute no reducer or middleware of their own — they ARE
+// baseApi (see the note in the reducer map below).
+import './api/carbonApi';
+import './api/globalSearchApi';
 import { config } from 'config/environment';
 
 export const store = configureStore({
@@ -27,22 +33,24 @@ export const store = configureStore({
     form: formReducer,
     history: historySlice,
     notifications: notificationReducer,
+    // `carbonApi` and `globalSearchApi` are `baseApi.injectEndpoints(...)`, which
+    // returns THE SAME api instance — same reducerPath ('baseApi'), same reducer,
+    // same middleware. Listing them here registered one reducer under one key
+    // three times (TS1117, invisible while the typecheck gate was down) and, more
+    // importantly, concat'd the identical RTK Query middleware three times below.
+    // RTK warns against that: every dispatched action ran the same middleware
+    // three times, tripling its subscription bookkeeping.
+    //
+    // Only genuinely distinct APIs belong here. `mediaApi` is its own createApi.
     [baseApi.reducerPath]: baseApi.reducer,
-    [carbonApi.reducerPath]: carbonApi.reducer,
-    [mediaApi.reducerPath]: mediaApi.reducer,
-    [globalSearchApi.reducerPath]: globalSearchApi.reducer
+    [mediaApi.reducerPath]: mediaApi.reducer
   },
   devTools: config.ENABLE_DEVTOOLS,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
       immutableCheck: config.IS_DEVELOPMENT // Only run expensive checks in development
-    }).concat(
-      baseApi.middleware,
-      carbonApi.middleware,
-      mediaApi.middleware,
-      globalSearchApi.middleware
-    )
+    }).concat(baseApi.middleware, mediaApi.middleware)
 });
 
 // Set up listeners for refetching behavior

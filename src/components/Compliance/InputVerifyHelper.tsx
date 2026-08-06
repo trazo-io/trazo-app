@@ -68,6 +68,22 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({ name, buttonLabel
           onClick={handleClick}
           isLoading={isFetching}
           isDisabled={disabled}
+          // Rendered 24px tall at 375px — barely half the 44px touch minimum, on the one
+          // control that tells an organic grower whether the input they just typed is even
+          // allowed, tapped standing in an orchard. Extend the HIT AREA without changing the
+          // visual size (same technique as the consumer page's info triggers), so the compact
+          // inline layout this sits in is preserved.
+          position="relative"
+          _before={{
+            content: '""',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '100%',
+            minWidth: '44px',
+            height: '44px'
+          }}
         >
           {buttonLabel ||
             intl.formatMessage({ id: 'inputVerify.button', defaultMessage: 'Verify against OMRI / WSDA / National List' })}

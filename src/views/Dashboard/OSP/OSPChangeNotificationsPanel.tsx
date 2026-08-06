@@ -8,9 +8,16 @@
  * Changes" block.
  *
  * Backend contract:
- *   - GET  /osps/{id}/change-notifications/   → OSPChangeNotification[]
- *   - POST /osps/{id}/change-notifications/   body: { change_category, description,
- *          date_notified?, method?, documentation_timing? }
+ *   - GET    /osps/{id}/change-notifications/       → OSPChangeNotification[]
+ *   - POST   /osps/{id}/change-notifications/       body: { change_category, description,
+ *            date_notified?, method?, documentation_timing? }
+ *   - DELETE /osps/{id}/change-notifications/{nid}/ → 204, only while unacknowledged
+ *
+ * Entries are append-only ONCE the certifier has acknowledged them: at that
+ * point the row records what a third party was told and correcting it means
+ * filing a new notification. Before acknowledgment a mistyped entry is just a
+ * mistake, and must be withdrawable — otherwise it rides into the certifier
+ * dossier forever.
  */
 
 import React, { useState } from 'react';
@@ -31,14 +38,16 @@ import {
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaPlus } from 'react-icons/fa';
+import { FaPlus, FaTrash } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import { StandardCard } from 'components/Design/StandardComponents';
 import {
   useCreateOSPChangeNotificationMutation,
+  useDeleteOSPChangeNotificationMutation,
   useGetOSPChangeNotificationsQuery
 } from 'store/api/ospApi';
+import { formatDateOnly } from 'utils/dateOnly';
 import type {
   CreateOSPChangeNotificationData,
   OSP,
@@ -79,6 +88,9 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
     { skip: !companyId || !farmId || !osp }
   );
   const [createNotification, { isLoading: isSaving }] = useCreateOSPChangeNotificationMutation();
+  const [deleteNotification, { isLoading: isDeleting }] =
+    useDeleteOSPChangeNotificationMutation();
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
 
   const [category, setCategory] = useState<OSPChangeCategory | ''>('');
   const [description, setDescription] = useState('');
@@ -94,6 +106,34 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
     setDateNotified('');
     setMethod('');
     setDocTiming('');
+  };
+
+  const handleDelete = async (notificationId: number) => {
+    try {
+      await deleteNotification({ companyId, farmId, ospId, notificationId }).unwrap();
+      toast({
+        status: 'success',
+        title: intl.formatMessage({
+          id: 'osp.changeNotifications.withdrawn',
+          defaultMessage: 'Change notification withdrawn.'
+        }),
+        duration: 3000,
+        isClosable: true
+      });
+    } catch (err: any) {
+      toast({
+        status: 'error',
+        title: intl.formatMessage({
+          id: 'osp.changeNotifications.withdrawError',
+          defaultMessage: 'Could not withdraw the change notification.'
+        }),
+        description: String(err?.data?.error || err?.message || ''),
+        duration: 6000,
+        isClosable: true
+      });
+    } finally {
+      setPendingDeleteId(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -183,13 +223,9 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                 <Text fontSize="xs" fontWeight="semibold">
                   {cn.change_category_display}
                 </Text>
-                {cn.date_notified && (
+                {formatDateOnly(cn.date_notified) && (
                   <Text fontSize="xs" color={subtextColor}>
-                    {new Date(cn.date_notified).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
+                    {formatDateOnly(cn.date_notified)}
                   </Text>
                 )}
                 <Badge
@@ -206,6 +242,53 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                         defaultMessage: 'Acknowledgment pending'
                       })}
                 </Badge>
+                {!cn.certifier_acknowledged_at &&
+                  (pendingDeleteId === cn.id ? (
+                    <HStack spacing={1}>
+                      <Button
+                        size="xs"
+                        colorScheme="red"
+                        variant="solid"
+                        isLoading={isDeleting}
+                        onClick={() => handleDelete(cn.id)}
+                      >
+                        {intl.formatMessage({
+                          id: 'osp.changeNotifications.withdrawConfirm',
+                          defaultMessage: 'Withdraw'
+                        })}
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => setPendingDeleteId(null)}
+                      >
+                        {intl.formatMessage({
+                          id: 'osp.changeNotifications.withdrawCancel',
+                          defaultMessage: 'Cancel'
+                        })}
+                      </Button>
+                    </HStack>
+                  ) : (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorScheme="red"
+                      leftIcon={<FaTrash />}
+                      onClick={() => setPendingDeleteId(cn.id)}
+                      aria-label={intl.formatMessage(
+                        {
+                          id: 'osp.changeNotifications.withdrawAria',
+                          defaultMessage: 'Withdraw change notification: {description}'
+                        },
+                        { description: cn.description }
+                      )}
+                    >
+                      {intl.formatMessage({
+                        id: 'osp.changeNotifications.withdraw',
+                        defaultMessage: 'Withdraw'
+                      })}
+                    </Button>
+                  ))}
               </HStack>
               <Text fontSize="xs" color={subtextColor}>
                 {cn.description}

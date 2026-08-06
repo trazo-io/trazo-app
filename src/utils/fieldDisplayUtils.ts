@@ -581,11 +581,16 @@ export function getReadableFieldValue(field: string, value: string): string {
       under_tree_sprinkler: '💧 Under-Tree Sprinklers',
       other: '❄️ Other Frost Protection'
     },
+    // `flame_weed` added 2026-07; `herbicide_strip` dropped from the FORM picker but kept
+    // here so already-saved events still render a label instead of the raw slug. See
+    // FLOOR_MANAGEMENT_LABELS in src/config/events/productionEvent.ts for the rationale
+    // (organic ICP; a synthetic herbicide strip is prohibited under 7 CFR 205.105).
     floor_management_type: {
       mow: '🌱 Mow',
       mulch: '🍂 Mulch',
       cover_crop_mgmt: '🌿 Cover-Crop Management',
-      herbicide_strip: '🚿 Herbicide Strip'
+      flame_weed: '🔥 Flame Weeding',
+      herbicide_strip: '🚿 Herbicide Strip' // legacy value — no longer offered in the form
     },
     // Organic compliance fields (NOP record-keeping)
     treated_or_untreated: {
@@ -1452,7 +1457,10 @@ export function getProductionEventFields(event: any): EventFieldDisplay {
   // Skip "Area Covered: 0 ha" for EM events — not meaningful for equipment maintenance
   const isEMEvent = event.production_type === 'EM' || event.production_type === 'EQ';
   if (isValidValue(event.area_covered) && !(isEMEvent && parseFloat(event.area_covered) === 0)) {
-    const areaUnit = event.area_unit || 'ha';
+    // Unknown unit defaults to acres — Trazo's ICP is US-only (see useDefaultUnits), so a
+    // metric guess is wrong more often than not, and a wrong "ha" label here gets doubled
+    // by withUSUnits' ha->acres conversion on the consumer page (see consumerDisplay.ts).
+    const areaUnit = event.area_unit || 'acres';
     const areaValue = String(event.area_covered).includes(areaUnit)
       ? event.area_covered
       : `${formatNumber(event.area_covered)} ${areaUnit}`;
@@ -2613,7 +2621,7 @@ export function getEquipmentEventFields(event: any): EventFieldDisplay {
   }
 
   if (event.area_worked !== undefined && event.area_worked !== '' && event.area_worked !== null) {
-    const unit = event.area_unit || 'ha';
+    const unit = event.area_unit || 'acres';
     secondary.push({
       label: 'Area Worked',
       value: `${event.area_worked} ${unit}`,
@@ -2710,7 +2718,7 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
 
   // Area Covered (from database field)
   if (event.area_covered) {
-    const unit = event.area_unit || 'ha'; // Consistent with other event types
+    const unit = event.area_unit || 'acres'; // Consistent with other event types
     immediate.push({
       label: 'Area Covered',
       value: `${formatNumber(event.area_covered)} ${unit}`,
@@ -3508,7 +3516,7 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
         extraData.field_area_total ||
         extraData.area_covered_total;
       if (totalArea) {
-        const areaUnit = event.area_unit || extraData.area_unit || 'ha';
+        const areaUnit = event.area_unit || extraData.area_unit || 'acres';
         secondary.push({
           label: 'Total Area Scouted',
           value: `${totalArea} ${areaUnit}`,
@@ -3534,7 +3542,7 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
 
       const areaScouted = event.area_covered;
       if (areaScouted) {
-        const areaUnit = event.area_unit || 'ha';
+        const areaUnit = event.area_unit || 'acres';
         secondary.push({
           label: 'Area Scouted',
           value: `${areaScouted} ${areaUnit}`,
@@ -4337,7 +4345,17 @@ export function getEventFieldDisplay(event: any): EventFieldDisplay {
  * @param event Event object containing custom_fields
  * @returns Field display with custom fields merged into secondary array
  */
-function mergeCustomFieldsIntoDisplay(
+/**
+ * Append the farmer's consumer-visible custom fields to a resolved field display.
+ *
+ * Exported (2026-07) because ConsumerEventCard also needs it on the FIELD-REGISTRY path.
+ * Previously this ran only inside `getEventFieldDisplay()`, the legacy path — so with
+ * `VITE_USE_FIELD_REGISTRY=true` (the default in every env file) any event that resolved
+ * at least one registry field returned early and the farmer's custom fields silently
+ * vanished from the consumer card. A farmer could add a field, mark it consumer-visible,
+ * see it in the producer preview, and have it never appear on the public page.
+ */
+export function mergeCustomFieldsIntoDisplay(
   fieldDisplay: EventFieldDisplay,
   event: any
 ): EventFieldDisplay {

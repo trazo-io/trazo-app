@@ -34,7 +34,8 @@ import {
   formatDurationHours,
   formatNPK,
   formatPercentage,
-  makeUnitPairFormatter
+  makeUnitPairFormatter,
+  formatConsumerPestName
 } from './formatters';
 
 // Organic approval labels — acronyms must be properly capitalized (OMRI, USDA, NOP)
@@ -45,6 +46,31 @@ const ORGANIC_APPROVED_LABELS: Record<string, string> = {
   not_organic: 'Not Organic',
   transitional: 'Transitional',
   not_applicable: 'Not Applicable'
+};
+
+// Consumer phrasing for organic approval. The label is a QUESTION ("Approved for organic
+// use"), so the value must be an ANSWER. Pairing that label with the producer value
+// "Not Organic" produced "Approved for organic use: Not Organic" on the live card — a label
+// asserting approval next to a value denying it, inside a green-styled Key Details box.
+// That was a regression introduced with the consumer relabel on 2026-07-31.
+//
+// Answering "No" plainly is the honest option: hiding a conventional input would be a
+// material omission on a page whose entire premise is documentation.
+const CONSUMER_ORGANIC_APPROVED_LABELS: Record<string, string> = {
+  omri_listed: 'Yes, OMRI Listed',
+  usda_nop_approved: 'Yes, USDA NOP approved',
+  organic_equivalent: 'Yes, organic-equivalent',
+  transitional: 'Transitional, farm is converting to organic',
+  not_organic: 'No, conventional input',
+  // "not_applicable" is not an answer to this question; render nothing.
+  not_applicable: ''
+};
+
+const formatConsumerOrganicApproved = (v: unknown): string | null => {
+  if (typeof v !== 'string' || v === '') return null;
+  const label = CONSUMER_ORGANIC_APPROVED_LABELS[v];
+  if (label === '') return null;
+  return label ?? ORGANIC_APPROVED_LABELS[v] ?? null;
 };
 
 const formatOrganicApproved = (v: unknown): string | null => {
@@ -82,24 +108,39 @@ const formatApplicationTiming = (v: unknown): string | null => {
   return APPLICATION_TIMING_LABELS[v] ?? v;
 };
 
-// Application method labels — covers FE/PE/FU/HE dropdown values from ChemicalTab-ENHANCED.jsx
-// (sans emoji/description). Most codes (ground_spray, soil_incorporation) render correctly
-// via the resolver's default split-capitalize, but `subsurface` needs the "Injection"
-// qualifier from the dropdown, and the explicit map hardens against future dropdown drift
-// per Standard Fix #1.
-const APPLICATION_METHOD_LABELS: Record<string, string> = {
+// Display labels for a stored application method. Covers the FE/PE/FU/HE dropdown values
+// (sans emoji/description); `subsurface` needs the "Injection" qualifier from the dropdown. This is a SEPARATE map from the form's
+// option lists in `enums.ts` — 2026-08-02 added air_blast/aerial to those lists but not here,
+// so an orchard airblast spray still rendered the raw key `air_blast` to shoppers (verified
+// live 2026-08-03 on the Entrust card). The formatter falls through to `?? v`, so ANY stored
+// value absent from this map leaks its enum key.
+//
+// Kept deliberately wider than the form offers: `banding`, `injection`, `drip` and `fumigation`
+// exist in stored data and in the PUR exporter's method map (`pur_export_service._METHOD_TO_DPR`),
+// so they must render as words even though no current form writes them.
+export const APPLICATION_METHOD_LABELS: Record<string, string> = {
   broadcast: 'Broadcast',
   banded: 'Banded',
+  banding: 'Banded',
   subsurface: 'Subsurface Injection',
+  injection: 'Subsurface Injection',
   fertigation: 'Fertigation',
   foliar: 'Foliar',
   ground_spray: 'Ground Spray',
+  // These English strings are chosen to MATCH keys that already exist in
+  // `utils/fieldValues.es.ts` ("Air Blast Sprayer", "Aerial Spray", "Drip Irrigation"), which is
+  // keyed by the English label rather than the enum value. Inventing "Air-Blast Sprayer" here
+  // would render untranslated on the Spanish consumer page.
+  air_blast: 'Air Blast Sprayer',
+  aerial: 'Aerial Spray',
   chemigation: 'Chemigation',
+  drip: 'Drip Irrigation',
+  fumigation: 'Fumigation',
   seed_treatment: 'Seed Treatment',
   soil_incorporation: 'Soil Incorporation'
 };
 
-const formatApplicationMethod = (v: unknown): string | null => {
+export const formatApplicationMethod = (v: unknown): string | null => {
   if (typeof v !== 'string' || v === '') return null;
   return APPLICATION_METHOD_LABELS[v] ?? v;
 };
@@ -122,6 +163,29 @@ const CHEMICAL_SUBTYPES: readonly SubtypeEntry<ChemicalSubtype>[] = [
 const formatVolumeApplied = makeUnitPairFormatter('volume_unit');
 const formatAreaTreated = makeUnitPairFormatter('area_unit');
 const formatAppFuel = makeUnitPairFormatter('application_fuel_unit');
+const formatMicronutrientRate = makeUnitPairFormatter('micronutrient_rate_unit');
+
+// §E-3 — micronutrient labels. English here + es-419 in utils/fieldValues.es.ts, matching the
+// other enum maps in this file (getFieldsForSurface has no `intl`, so a formatter returning an
+// i18n key would render the raw key; localizeFieldValue maps the English string downstream).
+// The element symbol rides along because it is how a lab report and an OMRI label print it.
+const MICRONUTRIENT_LABELS: Record<string, string> = {
+  zinc: 'Zinc (Zn)',
+  boron: 'Boron (B)',
+  manganese: 'Manganese (Mn)',
+  iron: 'Iron (Fe)',
+  copper: 'Copper (Cu)',
+  calcium: 'Calcium (Ca)',
+  magnesium: 'Magnesium (Mg)',
+  sulfur: 'Sulfur (S)',
+  other: 'Other'
+};
+
+const formatMicronutrientType = (v: unknown): string | null => {
+  if (v == null || v === '') return null;
+  const key = String(v);
+  return MICRONUTRIENT_LABELS[key] ?? key;
+};
 
 // ============================================================================
 // Field configurations
@@ -161,6 +225,8 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
   {
     name: 'active_ingredient',
     labelKey: 'events.chemical.fields.activeIngredient',
+    // "Active Ingredient: Copper Hydroxide" reads like a warning label to a shopper.
+    consumerLabelKey: 'events.consumer.fields.activeIngredient',
     valueType: 'string',
     surfaces: {
       modal: 'immediate',
@@ -227,8 +293,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     surfaces: {
       modal: 'immediate',
       form: 'immediate',
-      quick_form: 'immediate',
-      consumer_card: 'details'
+      quick_form: 'immediate'
     }
   },
 
@@ -267,6 +332,42 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     surfaces: { form: 'immediate' },
     formatter: formatPercentage
   },
+  // ---- Micronutrients (FE only) — §E-3, 7 CFR 205.601(j)(6) -----------------------------
+  // Synthetic micronutrients are permitted ONLY where a soil or plant-tissue deficiency is
+  // documented, and never as a defoliant/herbicide/desiccant. WHICH nutrient is plain language
+  // ("zinc") so it reaches the consumer card; the RATE is an application detail of the same
+  // class as the NPK percentages and is stripped from the public payload by the backend.
+  {
+    name: 'micronutrient_type',
+    labelKey: 'events.chemical.fields.micronutrientType',
+    helpKey: 'events.chemical.fields.micronutrientTypeHelp',
+    valueType: 'enum',
+    formatter: formatMicronutrientType,
+    visibleForSubtypes: ['FE'],
+    surfaces: {
+      card: 'immediate',
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'secondary'
+    }
+  },
+  {
+    name: 'micronutrient_rate',
+    labelKey: 'events.chemical.fields.micronutrientRate',
+    valueType: 'number',
+    unitField: 'micronutrient_rate_unit',
+    formatter: formatMicronutrientRate,
+    visibleForSubtypes: ['FE'],
+    surfaces: { modal: 'secondary', form: 'immediate' }
+  },
+  {
+    name: 'micronutrient_rate_unit',
+    labelKey: 'events.chemical.fields.micronutrientRateUnit',
+    valueType: 'string',
+    visibleForSubtypes: ['FE'],
+    // Hidden individually — rendered as the unit of micronutrient_rate.
+    surfaces: { form: 'immediate' }
+  },
   {
     // NOP 5012 — liquid/soluble fertilizer nitrogen source (certifier detail).
     name: 'nitrogen_source',
@@ -299,8 +400,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     formatter: formatBoolean,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
 
@@ -308,6 +408,15 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
   {
     name: 'target_pest_disease',
     labelKey: 'events.chemical.fields.targetPestDisease',
+    // Producer/certifier wording stays on the form; a shopper reads "What it protects
+    // against". Note the VALUE is often a Latin binomial the farmer typed
+    // ("Anthracnose (Colletotrichum gloeosporioides)") — that is the grower's own text and
+    // is left as written; only the label is re-voiced.
+    consumerLabelKey: 'events.consumer.fields.targetPestDisease',
+    // 2026-08-02: the note above said the Latin binomial is "left as written". Seeing it live
+    // ("Citrus leafminer (Phyllocnistis citrella)") changed the call — dropping the
+    // parenthetical omits the Latin without rewriting the grower's common name.
+    consumerFormatter: formatConsumerPestName,
     valueType: 'string',
     // Deliberately NOT FE (enforced by chemicalEvent.test.ts): on a fertilizer a
     // "target pest/disease" reads wrong. The FE application reason IS still captured —
@@ -335,8 +444,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     visibleForSubtypes: ['PE', 'FU', 'HE', 'FE'],
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
 
@@ -358,10 +466,15 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
       e.restricted_use_pesticide === 'yes',
     formatter: formatBoolean,
     requiresVerificationBadge: true,
+    // NO consumer_card: "Restricted Use Pesticide" is an EPA licensing classification about
+    // who may PURCHASE and APPLY a product, not a statement about residue on food. The
+    // legacy renderer even paired it with "⚠️ Restricted Use - Certified applicator
+    // required", which reads as a consumer warning it was never meant to be. Stripped
+    // server-side as certifier-only; the RUP chip on the card is driven separately by
+    // `input_status` from the backend claim_resolver.
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   // ---- Applicator tracking (PE, FU, HE) ----
@@ -371,6 +484,27 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
   // biological pesticides — forcing farmers to falsely mark RUP=true just to
   // document who applied the product. `required` stays RUP-gated (EPA WPS only
   // mandates certification for restricted-use products).
+  // ⚠️ NONE of the five fields below declare `consumer_card` (2026-07-31 review, Oscar's call).
+  //
+  // They are worker-protection and enforcement data: REI/PHI protect the people who
+  // re-enter a treated field, and the applicator name / certification / EPA registration
+  // number identify a person and a regulated product to an inspector. To a shopper they
+  // are at best meaningless ("Worker Re-Entry Interval: 48 hours") and at worst frightening,
+  // implying a consumer hazard that the numbers do not describe.
+  //
+  // The server already strips all five from the anonymous payload
+  // (PublicHistorySerializer._CERTIFIER_ONLY_EVENT_FIELDS), so the declarations were inert
+  // for real shoppers. They were not inert everywhere, and that was the actual harm:
+  //   1. EventPreviewModal renders ConsumerEventCard from UNSTRIPPED wizard form data under
+  //      the heading "How consumers will see this event" — so growers were shown REI, PHI,
+  //      applicator name and EPA reg # as if consumers saw them. They never did.
+  //   2. `to_representation` strips only `if not self._is_owner(obj)`, so a logged-in owner
+  //      scanning their own QR link saw the same fields on the real consumer page.
+  // Both surfaces lied to the farmer about their own product page.
+  //
+  // Every one of these remains on `modal` + `form` (producer) and in the certifier NOP PDF,
+  // which reads the event models directly — zero audit or compliance coverage is lost.
+  // Locked by chemicalEvent.test.ts; see newCertifierFields.render.test.ts for the pattern.
   {
     name: 'applicator_name',
     labelKey: 'events.chemical.fields.applicatorName',
@@ -378,8 +512,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     visibleForSubtypes: ['PE', 'FU', 'HE'],
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
   {
@@ -391,8 +524,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     requiresVerificationBadge: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
   {
@@ -402,8 +534,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     visibleForSubtypes: ['PE', 'FU', 'HE'],
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -416,8 +547,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     requiresVerificationBadge: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -430,8 +560,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     requiresVerificationBadge: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
 
@@ -443,13 +572,16 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     formatter: formatWeatherConditions,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
     name: 'organic_approved',
     labelKey: 'events.chemical.fields.organicApproved',
+    // "Organic Status" is ambiguous — it reads as a status of the PRODUCT. The field
+    // actually says whether this INPUT is approved for use on organic farms.
+    consumerLabelKey: 'events.consumer.fields.organicApproved',
+    consumerFormatter: formatConsumerOrganicApproved,
     valueType: 'enum',
     enumSource: 'organic_approved',
     formatter: formatOrganicApproved,
@@ -468,10 +600,12 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     labelKey: 'events.chemical.fields.bufferZone',
     valueType: 'number',
     formatter: (v) => (v != null ? `${v} m` : null),
+    // NO consumer_card: a buffer distance from a sensitive area (a creek, a school, a
+    // neighbouring field) is drift-management data for a regulator. Out of that context it
+    // reads to a shopper as "they sprayed near water". Stripped server-side as well.
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
 
@@ -485,8 +619,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      quick_form: 'secondary',
-      consumer_card: 'details' // FTC: carbon detail, not hero
+      quick_form: 'secondary' // FTC: carbon detail, not hero
     }
   },
   {
@@ -499,8 +632,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      quick_form: 'secondary',
-      consumer_card: 'details' // FTC: carbon detail, not hero
+      quick_form: 'secondary' // FTC: carbon detail, not hero
     }
   },
 
@@ -671,8 +803,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     valueType: 'text',
     surfaces: {
       modal: 'details',
-      form: 'details',
-      consumer_card: 'details'
+      form: 'details'
     }
   },
 
@@ -705,7 +836,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      consumer_card: 'details'
+      consumer_card: 'secondary'
     }
   },
   {
@@ -715,8 +846,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     enumSource: 'growth_stages',
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {

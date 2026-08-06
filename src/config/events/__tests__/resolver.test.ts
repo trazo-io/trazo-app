@@ -76,7 +76,8 @@ const groupedField: FieldConfig = {
   valueType: 'number',
   groupWith: ['phosphorus_percentage', 'potassium_percentage'] as const,
   surfaces: { modal: 'immediate' },
-  formatter: (_v, e) => `${e.nitrogen_percentage}-${e.phosphorus_percentage}-${e.potassium_percentage}`
+  formatter: (_v, e) =>
+    `${e.nitrogen_percentage}-${e.phosphorus_percentage}-${e.potassium_percentage}`
 };
 
 const phosphorusField: FieldConfig = {
@@ -213,19 +214,27 @@ describe('Subtype-conditional visibility', () => {
 
 describe('Predicate-based visibility', () => {
   it('shows field when predicate returns true', () => {
-    expect(isFieldVisible(predicateGatedField, 'PE', { restricted_use_pesticide: true })).toBe(true);
+    expect(isFieldVisible(predicateGatedField, 'PE', { restricted_use_pesticide: true })).toBe(
+      true
+    );
   });
 
   it('hides field when predicate returns false', () => {
-    expect(isFieldVisible(predicateGatedField, 'PE', { restricted_use_pesticide: false })).toBe(false);
+    expect(isFieldVisible(predicateGatedField, 'PE', { restricted_use_pesticide: false })).toBe(
+      false
+    );
     expect(isFieldVisible(predicateGatedField, 'PE', {})).toBe(false);
   });
 
   it('applies subtype AND predicate gates together', () => {
     // PE subtype + predicate true = visible
-    expect(isFieldVisible(predicateGatedField, 'PE', { restricted_use_pesticide: true })).toBe(true);
+    expect(isFieldVisible(predicateGatedField, 'PE', { restricted_use_pesticide: true })).toBe(
+      true
+    );
     // FE subtype + predicate true = hidden (subtype not in list)
-    expect(isFieldVisible(predicateGatedField, 'FE', { restricted_use_pesticide: true })).toBe(false);
+    expect(isFieldVisible(predicateGatedField, 'FE', { restricted_use_pesticide: true })).toBe(
+      false
+    );
   });
 
   it('hides field when predicate throws', () => {

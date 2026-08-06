@@ -1,3 +1,4 @@
+import { useIntl } from 'react-intl';
 import React from 'react';
 import {
   Box,
@@ -10,6 +11,8 @@ import {
   FormControl,
   FormLabel,
   Input,
+  InputGroup,
+  InputLeftElement,
   Textarea,
   Select,
   Badge,
@@ -606,17 +609,42 @@ export const StandardField = ({
 };
 
 // Standard Input Components
-export const StandardInput = React.forwardRef<HTMLInputElement, any>((props, ref) => (
-  <Input
-    ref={ref}
-    borderRadius="lg"
-    borderColor="gray.200"
-    _hover={{ borderColor: 'green.400' }}
-    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #2E7D32' }}
-    size="lg"
-    {...props}
-  />
-));
+export const StandardInput = React.forwardRef<HTMLInputElement, any>(
+  ({ type, inputMode, leftElement, ...props }, ref) => {
+    const input = (
+      <Input
+        ref={ref}
+        borderRadius="lg"
+        borderColor="gray.200"
+        _hover={{ borderColor: 'green.400' }}
+        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-700)' }}
+        size="lg"
+        type={type}
+        // D11 — every numeric field in the event forms is a measurement a farmer types on a phone
+        // in the field: 6.8 pH, 44.5 acres, 0.8 ppm. `type="number"` alone does not guarantee the
+        // decimal keypad on iOS, so they were reaching for a full keyboard to enter a number.
+        // Defaulted here rather than at ~90 call sites; pass inputMode explicitly to override
+        // (e.g. "numeric" for whole counts).
+        inputMode={inputMode ?? (type === 'number' ? 'decimal' : undefined)}
+        {...props}
+      />
+    );
+
+    // `leftElement` was previously spread onto <Input>, so callers that passed an
+    // adornment icon got no icon and a "React does not recognize the leftElement
+    // prop" warning. Render it as a real InputLeftElement instead.
+    if (!leftElement) return input;
+
+    return (
+      <InputGroup size="lg">
+        <InputLeftElement pointerEvents="none" h="full">
+          {leftElement}
+        </InputLeftElement>
+        {input}
+      </InputGroup>
+    );
+  }
+);
 StandardInput.displayName = 'StandardInput';
 
 export const StandardTextarea = React.forwardRef<HTMLTextAreaElement, any>((props, ref) => (
@@ -625,7 +653,7 @@ export const StandardTextarea = React.forwardRef<HTMLTextAreaElement, any>((prop
     borderRadius="lg"
     borderColor="gray.200"
     _hover={{ borderColor: 'green.400' }}
-    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #2E7D32' }}
+    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-700)' }}
     minH="120px"
     resize="vertical"
     {...props}
@@ -639,7 +667,7 @@ export const StandardSelect = React.forwardRef<HTMLSelectElement, any>((props, r
     borderRadius="lg"
     borderColor="gray.200"
     _hover={{ borderColor: 'green.400' }}
-    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #2E7D32' }}
+    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-700)' }}
     size="lg"
     {...props}
   />
@@ -1628,21 +1656,22 @@ export const DraftRestorationAlert = ({
   onDiscard,
   show = true
 }: DraftRestorationAlertProps) => {
+  const intl = useIntl();
   if (!hasDraft || !show) return null;
 
+  // D10 — was hand-rolled English pluralization ("2 minutes ago"), which cannot be translated.
+  // Intl.RelativeTimeFormat gets the plural rules right in every locale for free.
   const formatTimeAgo = (date: Date | null): string => {
-    if (!date) return 'some time ago';
+    if (!date) return intl.formatMessage({ id: 'events.draft.someTimeAgo', defaultMessage: 'earlier' });
 
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-    return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    const diffMins = Math.round((Date.now() - date.getTime()) / 60000);
+    if (diffMins < 1) {
+      return intl.formatMessage({ id: 'events.draft.justNow', defaultMessage: 'just now' });
+    }
+    if (diffMins < 60) return intl.formatRelativeTime(-diffMins, 'minute', { numeric: 'auto' });
+    const diffHours = Math.round(diffMins / 60);
+    if (diffHours < 24) return intl.formatRelativeTime(-diffHours, 'hour', { numeric: 'auto' });
+    return intl.formatRelativeTime(-Math.round(diffHours / 24), 'day', { numeric: 'auto' });
   };
 
   return (
@@ -1665,18 +1694,24 @@ export const DraftRestorationAlert = ({
       >
         <VStack align="flex-start" spacing={0}>
           <Text fontWeight="semibold" fontSize="sm" color="blue.700">
-            Draft Available
+            {intl.formatMessage({ id: 'events.draft.available', defaultMessage: 'Draft available' })}
           </Text>
           <Text fontSize="xs" color="blue.600">
-            You have an unsaved draft from {formatTimeAgo(lastSaved)}
+            {intl.formatMessage(
+              {
+                id: 'events.draft.availableBody',
+                defaultMessage: 'You have an unsaved draft from {when}'
+              },
+              { when: formatTimeAgo(lastSaved) }
+            )}
           </Text>
         </VStack>
         <HStack spacing={2}>
-          <Button size="sm" colorScheme="blue" variant="solid" onClick={onRestore}>
-            Restore Draft
+          <Button size="sm" colorScheme="blue" variant="solid" minH="44px" onClick={onRestore}>
+            {intl.formatMessage({ id: 'events.draft.restore', defaultMessage: 'Restore draft' })}
           </Button>
-          <Button size="sm" colorScheme="gray" variant="outline" onClick={onDiscard}>
-            Discard
+          <Button size="sm" colorScheme="gray" variant="outline" minH="44px" onClick={onDiscard}>
+            {intl.formatMessage({ id: 'events.draft.discard', defaultMessage: 'Discard' })}
           </Button>
         </HStack>
       </Flex>
@@ -1695,6 +1730,7 @@ interface AutoSaveStatusProps {
 }
 
 export const AutoSaveStatus = ({ lastSaved, isSaving }: AutoSaveStatusProps) => {
+  const intl = useIntl();
   if (!lastSaved && !isSaving) return null;
 
   return (
@@ -1702,14 +1738,16 @@ export const AutoSaveStatus = ({ lastSaved, isSaving }: AutoSaveStatusProps) => 
       {isSaving ? (
         <>
           <Spinner size="xs" color="green.500" />
-          <Text>Saving draft...</Text>
+          <Text>{intl.formatMessage({ id: 'events.draft.saving', defaultMessage: 'Saving draft…' })}</Text>
         </>
       ) : lastSaved ? (
         <>
           <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
           <Text>
-            Draft saved at{' '}
-            {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {intl.formatMessage(
+              { id: 'events.draft.savedAt', defaultMessage: 'Draft saved at {time}' },
+              { time: intl.formatTime(lastSaved, { hour: '2-digit', minute: '2-digit' }) }
+            )}
           </Text>
         </>
       ) : null}

@@ -113,7 +113,12 @@ const US_STATES = [
 
 // Form Schema
 const establishmentSchema = object({
-  name: string().min(1, 'Establishment name is required').max(100, 'Name too long'),
+  // required_error matters as much as min(1): these fields have no defaultValue,
+  // so an untouched field is `undefined` and zod falls back to a bare "Required"
+  // instead of the message written below.
+  name: string({ required_error: 'Farm name is required' })
+    .min(1, 'Farm name is required')
+    .max(100, 'Farm name must be 100 characters or less'),
   email: string()
     .refine((val) => !val || val.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
       message: 'Invalid email format'
@@ -122,7 +127,10 @@ const establishmentSchema = object({
   phone: string().optional(),
   address: string().optional(),
   country: string().optional(),
-  state: string().min(1, 'State is required for regional agricultural context'),
+  state: string({ required_error: 'State is required for regional agricultural context' }).min(
+    1,
+    'State is required for regional agricultural context'
+  ),
   city: string().optional(),
   zone: string().optional(),
   zipCode: string().optional(),
@@ -306,6 +314,29 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
       setUploadedImageUrls(imageUrls);
     }
   }, [isEdit, initialData?.images]);
+
+  // The resolver rejected the submit. Send the farmer back to the step holding
+  // the first bad field and name it, instead of leaving "Create Farm" looking
+  // like a button that does nothing.
+  const onInvalidSubmit = (formErrors: Record<string, { message?: string }>) => {
+    const badField = Object.keys(formErrors)[0];
+    const stepIndex = [0, 1, 2, 3].find((step) =>
+      (getFieldsForStep(step) as string[]).includes(badField)
+    );
+
+    if (stepIndex !== undefined && stepIndex !== currentStep) {
+      setCurrentStep(stepIndex);
+    }
+
+    toast({
+      title: 'Check your details',
+      description:
+        formErrors[badField]?.message || 'Some required information is missing or invalid.',
+      status: 'error',
+      duration: 5000,
+      isClosable: true
+    });
+  };
 
   const onSubmitForm = async (data: EstablishmentFormData) => {
     try {
@@ -517,7 +548,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
       case 0:
         return ['name', 'establishmentType', 'description'];
       case 1:
-        return ['address', 'city', 'state', 'country'];
+        // zipCode/latitude/longitude live on this step too — omitting them meant an
+        // out-of-range coordinate sailed past Next and only failed (silently) at
+        // final submit, on a step the farmer could no longer see.
+        return ['address', 'city', 'state', 'country', 'zipCode', 'latitude', 'longitude'];
       case 2:
         return ['description'];
       case 3:
@@ -532,8 +566,8 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
   return (
     <StandardPage
-      title={isEdit ? 'Edit Establishment' : 'Add New Establishment'}
-      description={`${isEdit ? 'Update' : 'Register'} your agricultural establishment${
+      title={isEdit ? 'Edit Farm' : 'Add New Farm'}
+      description={`${isEdit ? 'Update' : 'Register'} your farm${
         companyName ? ` under ${companyName}` : ''
       }`}
       showBackButton
@@ -549,15 +583,15 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
       />
 
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmitForm)}>
+        <form onSubmit={handleSubmit(onSubmitForm, onInvalidSubmit)}>
           {/* Step 0: Basic Information */}
           {currentStep === 0 && (
-            <StandardCard title="Establishment Information" subtitle="Tell us about your farm">
+            <StandardCard title="Farm Information" subtitle="Tell us about your farm">
               <VStack spacing={6} align="stretch">
                 {/* Name & Type */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
-                    label="Establishment Name"
+                    label="Farm Name"
                     required
                     error={errors.name?.message}
                     helpText="Farm, ranch, or facility name"
@@ -572,7 +606,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                           size="lg"
                         />
                       )}
@@ -580,7 +614,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   </StandardField>
 
                   <StandardField
-                    label="Establishment Type"
+                    label="Farm Type"
                     error={errors.establishmentType?.message}
                     helpText="Primary type of agricultural operation"
                   >
@@ -594,7 +628,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                           size="lg"
                         >
                           <option value="crop_farm">Crop Farm</option>
@@ -627,7 +661,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                         minH="120px"
                         resize="vertical"
                       />
@@ -647,7 +681,6 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       fontSize="md"
                       fontWeight="semibold"
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(0)}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}
                     >
@@ -663,7 +696,6 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(0)}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}
                     >
@@ -686,7 +718,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 <StandardField
                   label="Street Address"
                   error={errors.address?.message}
-                  helpText="Physical address of your establishment"
+                  helpText="Physical address of your farm"
                 >
                   <Controller
                     name="address"
@@ -698,7 +730,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                         size="lg"
                       />
                     )}
@@ -718,7 +750,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                           size="lg"
                         />
                       )}
@@ -741,7 +773,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                           size="lg"
                         >
                           {US_STATES.map((state) => (
@@ -768,7 +800,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                           size="lg"
                         />
                       )}
@@ -792,7 +824,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                         size="lg"
                       />
                     )}
@@ -862,7 +894,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                             size="lg"
                           />
                         )}
@@ -921,7 +953,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                             size="lg"
                           />
                         )}
@@ -1012,7 +1044,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                           size="lg"
                         >
                           <option value="conventional">Conventional</option>
@@ -1026,10 +1058,18 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     />
                   </StandardField>
 
+                  {/*
+                    ACRES, not hectares. `Establishment.total_acreage` is documented
+                    and stored as acres, and every read path renders it as acres
+                    (ProfileFarm, the consumer FarmModal). This input alone used to be
+                    labelled "Hectares", so a grower who dutifully converted 320 acres
+                    to 129.5 stored 129.5 *acres* — a silent 2.47x understatement that
+                    surfaced on the consumer page.
+                  */}
                   <StandardField
-                    label="Total Area (Hectares)"
+                    label="Total Area (acres)"
                     error={errors.totalAcreage?.message}
-                    helpText="Total land area in hectares - displayed on your farm profile"
+                    helpText="Total land area in acres - displayed on your farm profile"
                   >
                     <Controller
                       name="totalAcreage"
@@ -1038,8 +1078,9 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         <NumberInput
                           value={field.value || 0}
                           onChange={(_, num) => field.onChange(num || 0)}
+                          min={0}
                         >
-                          <NumberInputField borderRadius="lg" />
+                          <NumberInputField borderRadius="lg" placeholder="e.g., 320" />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
                             <NumberDecrementStepper />
@@ -1055,7 +1096,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   <StandardField
                     label="Year Established"
                     error={errors.yearEstablished?.message}
-                    helpText="When was the establishment founded"
+                    helpText="When was the farm founded"
                   >
                     <Controller
                       name="yearEstablished"
@@ -1104,7 +1145,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                             size="lg"
                           />
                           <StandardButton
@@ -1169,7 +1210,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                             size="lg"
                           />
                           <StandardButton
@@ -1262,7 +1303,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                             size="lg"
                           />
                           <StandardButton onClick={addWaterSource} leftIcon={<FaPlus />} size="sm">
@@ -1310,7 +1351,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                             size="lg"
                           />
                           <StandardButton
@@ -1362,7 +1403,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                             size="lg"
                           />
                           <StandardButton
@@ -1404,7 +1445,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
                         minH="100px"
                         resize="vertical"
                       />
@@ -1473,8 +1514,8 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
           {/* Step 3: Media */}
           {currentStep === 3 && (
             <StandardCard
-              title="Establishment Images"
-              subtitle="Upload images to showcase your establishment"
+              title="Farm Images"
+              subtitle="Upload images to showcase your farm"
             >
               <VStack spacing={8} align="stretch">
                 {/* 2025 Modern Image Upload */}
@@ -1544,7 +1585,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         borderRadius="xl"
                         _hover={{ transform: 'translateY(-1px)' }}
                       >
-                        {isEdit ? 'Update Establishment' : 'Create Establishment'}
+                        {isEdit ? 'Update Farm' : 'Create Farm'}
                       </StandardButton>
                     </HStack>
                   </HStack>

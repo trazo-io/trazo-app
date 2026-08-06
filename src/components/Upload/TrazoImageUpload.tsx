@@ -37,6 +37,7 @@ import {
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
+import { useIntl } from 'react-intl';
 import {
   FaCamera,
   FaTimes,
@@ -81,6 +82,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
   onImagesChange
 }) => {
   // State management - SIMPLIFIED for farmers
+  const intl = useIntl();
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -141,15 +143,20 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         'image/heif'
       ];
       // Some browsers report HEIC as empty string or application/octet-stream
-      const isHeicByExtension = (file: File) =>
-        /\.(heic|heif)$/i.test(file.name);
+      const isHeicByExtension = (file: File) => /\.(heic|heif)$/i.test(file.name);
       const invalidFiles = files.filter(
         (file) => !allowedTypes.includes(file.type) && !isHeicByExtension(file)
       );
       if (invalidFiles.length > 0) {
         toast({
-          title: 'Invalid file type',
-          description: `Only JPG, PNG, GIF, WEBP, and HEIC images are allowed`,
+          title: intl.formatMessage({
+            id: 'upload.toast.invalidType',
+            defaultMessage: 'Invalid file type'
+          }),
+          description: intl.formatMessage({
+            id: 'upload.toast.invalidTypeBody',
+            defaultMessage: 'Only JPG, PNG, GIF, WEBP and HEIC images are allowed'
+          }),
           status: 'error',
           duration: 4000,
           isClosable: true
@@ -160,8 +167,17 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       // Validation
       if (newTotal > maxFiles) {
         toast({
-          title: 'Too many photos',
-          description: `You can only add up to ${maxFiles} photos total`,
+          title: intl.formatMessage({
+            id: 'upload.toast.tooMany',
+            defaultMessage: 'Too many photos'
+          }),
+          description: intl.formatMessage(
+            {
+              id: 'upload.toast.tooManyBody',
+              defaultMessage: 'You can only add up to {max} photos in total'
+            },
+            { max: maxFiles }
+          ),
           status: 'warning',
           duration: 4000,
           isClosable: true
@@ -173,8 +189,17 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       const oversizedFiles = files.filter((file) => file.size > maxSize);
       if (oversizedFiles.length > 0) {
         toast({
-          title: 'Photos too large',
-          description: `Some photos are too large. Max size: ${maxSize / 1024 / 1024}MB`,
+          title: intl.formatMessage({
+            id: 'upload.toast.tooLarge',
+            defaultMessage: 'Photos too large'
+          }),
+          description: intl.formatMessage(
+            {
+              id: 'upload.toast.tooLargeBody',
+              defaultMessage: 'Some photos are too large. Maximum size: {mb}MB'
+            },
+            { mb: maxSize / 1024 / 1024 }
+          ),
           status: 'error',
           duration: 4000,
           isClosable: true
@@ -216,11 +241,16 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             };
             fileToUpload = await imageCompression(file, compressionOptions);
             console.log(
-              `[TrazoImageUpload] Compressed ${file.name}: ${(file.size / 1024).toFixed(0)}KB → ${(fileToUpload.size / 1024).toFixed(0)}KB`
+              `[TrazoImageUpload] Compressed ${file.name}: ${(file.size / 1024).toFixed(0)}KB → ${(
+                fileToUpload.size / 1024
+              ).toFixed(0)}KB`
             );
           } catch (compressionError) {
             // Compression failed - upload original (server will compress)
-            console.warn('[TrazoImageUpload] Client compression failed, uploading original:', compressionError);
+            console.warn(
+              '[TrazoImageUpload] Client compression failed, uploading original:',
+              compressionError
+            );
             fileToUpload = file;
           }
 
@@ -267,8 +297,17 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
               await offlinePhotoQueue.enqueue(file);
               setUploadingFiles((prev) => prev.filter((item) => item.file.name !== file.name));
               toast({
-                title: 'Photo saved offline',
-                description: `${file.name} will upload automatically when you reconnect.`,
+                title: intl.formatMessage({
+                  id: 'upload.toast.savedOffline',
+                  defaultMessage: 'Photo saved offline'
+                }),
+                description: intl.formatMessage(
+                  {
+                    id: 'upload.toast.savedOfflineBody',
+                    defaultMessage: '{name} will upload automatically when you reconnect.'
+                  },
+                  { name: file.name }
+                ),
                 status: 'info',
                 duration: 4000,
                 isClosable: true
@@ -279,26 +318,55 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             }
           }
 
-          let errorMessage = 'Upload failed. Tap to retry.';
-          let toastTitle = 'Upload failed';
-          let toastDescription = `Failed to upload ${file.name}. Check your connection and try again.`;
+          let errorMessage = intl.formatMessage({
+            id: 'upload.error.retryHint',
+            defaultMessage: 'Upload failed. Tap to retry.'
+          });
+          let toastTitle = intl.formatMessage({
+            id: 'upload.error.title',
+            defaultMessage: 'Upload failed'
+          });
+          let toastDescription = intl.formatMessage(
+            {
+              id: 'upload.error.body',
+              defaultMessage: 'Could not upload {name}. Check your connection and try again.'
+            },
+            { name: file.name }
+          );
 
           if (isStorageQuotaError(error)) {
-            const quotaError = (error as { data: { error: string; remaining_gb?: number; limit_gb?: number } }).data;
-            errorMessage = 'Storage limit reached.';
-            toastTitle = 'Storage limit reached';
+            const quotaError = (
+              error as { data: { error: string; remaining_gb?: number; limit_gb?: number } }
+            ).data;
+            errorMessage = intl.formatMessage({
+              id: 'upload.error.storageShort',
+              defaultMessage: 'Storage limit reached.'
+            });
+            toastTitle = intl.formatMessage({
+              id: 'upload.toast.storageLimit',
+              defaultMessage: 'Storage limit reached'
+            });
             toastDescription =
               quotaError.remaining_gb !== undefined
-                ? `You have ${quotaError.remaining_gb.toFixed(2)} GB remaining out of ${quotaError.limit_gb} GB. Upgrade your plan for more storage.`
-                : quotaError.error || 'Your storage limit has been reached. Please upgrade your plan.';
+                ? intl.formatMessage(
+                    {
+                      id: 'upload.error.storageRemaining',
+                      defaultMessage:
+                        'You have {remaining} GB remaining of {limit} GB. Upgrade your plan for more storage.'
+                    },
+                    { remaining: quotaError.remaining_gb.toFixed(2), limit: quotaError.limit_gb }
+                  )
+                : quotaError.error ||
+                  intl.formatMessage({
+                    id: 'upload.error.storageGeneric',
+                    defaultMessage: 'Your storage limit has been reached. Upgrade your plan.'
+                  });
           }
 
           // Mark as error by file name
           setUploadingFiles((prev) =>
             prev.map((item) =>
-              item.file.name === file.name
-                ? { ...item, status: 'error', errorMessage }
-                : item
+              item.file.name === file.name ? { ...item, status: 'error', errorMessage } : item
             )
           );
 
@@ -350,8 +418,18 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       if (imageFiles.length > 0) {
         handleFileSelect(imageFiles);
         toast({
-          title: '📋 Photos pasted',
-          description: `${imageFiles.length} photo(s) pasted from clipboard`,
+          title: intl.formatMessage({
+            id: 'upload.toast.pasted',
+            defaultMessage: '📋 Photos pasted'
+          }),
+          description: intl.formatMessage(
+            {
+              id: 'upload.toast.pastedBody',
+              defaultMessage:
+                '{count, plural, one {# photo pasted from the clipboard} other {# photos pasted from the clipboard}}'
+            },
+            { count: imageFiles.length }
+          ),
           status: 'success',
           duration: 2000
         });
@@ -379,8 +457,14 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       setIsCameraOpen(true);
     } catch (error) {
       toast({
-        title: 'Camera unavailable',
-        description: 'Please check camera permissions and try again',
+        title: intl.formatMessage({
+          id: 'upload.toast.cameraUnavailable',
+          defaultMessage: 'Camera unavailable'
+        }),
+        description: intl.formatMessage({
+          id: 'upload.toast.cameraUnavailableBody',
+          defaultMessage: 'Check camera permissions and try again'
+        }),
         status: 'error',
         duration: 4000
       });
@@ -462,7 +546,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
 
       toast({
         title: '✅ Upload successful',
-        description: 'Photo uploaded successfully',
+        description: intl.formatMessage({
+          id: 'upload.toast.uploadedBody',
+          defaultMessage: 'Photo uploaded successfully'
+        }),
         status: 'success',
         duration: 2000
       });
@@ -481,13 +568,21 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       );
 
       if (isQuotaError) {
-        const quotaError = (error as { data: { error: string; remaining_gb?: number; limit_gb?: number } }).data;
+        const quotaError = (
+          error as { data: { error: string; remaining_gb?: number; limit_gb?: number } }
+        ).data;
         toast({
-          title: 'Storage limit reached',
+          title: intl.formatMessage({
+            id: 'upload.toast.storageLimit',
+            defaultMessage: 'Storage limit reached'
+          }),
           description:
             quotaError.remaining_gb !== undefined
-              ? `You have ${quotaError.remaining_gb.toFixed(2)} GB remaining out of ${quotaError.limit_gb} GB. Upgrade your plan for more storage.`
-              : quotaError.error || 'Your storage limit has been reached. Please upgrade your plan.',
+              ? `You have ${quotaError.remaining_gb.toFixed(2)} GB remaining out of ${
+                  quotaError.limit_gb
+                } GB. Upgrade your plan for more storage.`
+              : quotaError.error ||
+                'Your storage limit has been reached. Please upgrade your plan.',
           status: 'error',
           duration: 6000,
           isClosable: true
@@ -557,7 +652,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             : {}
         }
       >
-        <input {...getInputProps()} accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.heic,.heif" />
+        <input
+          {...getInputProps()}
+          accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif,.heic,.heif"
+        />
 
         {/* Content based on state */}
         {totalImages === 0 ? (
@@ -576,10 +674,16 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
 
               <VStack spacing={2}>
                 <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                  Add your farm photos
+                  {intl.formatMessage({
+                    id: 'upload.addPhotos',
+                    defaultMessage: 'Add your farm photos'
+                  })}
                 </Text>
                 <Text fontSize="sm" color={mutedColor} textAlign="center">
-                  Photos upload automatically when selected
+                  {intl.formatMessage({
+                    id: 'upload.autoUpload',
+                    defaultMessage: 'Photos upload automatically when selected'
+                  })}
                 </Text>
               </VStack>
 
@@ -595,13 +699,19 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   _hover={{ bg: useColorModeValue('green.600', 'green.500') }}
                   borderRadius="xl"
                 >
-                  Choose Photos
+                  {intl.formatMessage({
+                    id: 'upload.choosePhotos',
+                    defaultMessage: 'Choose Photos'
+                  })}
                 </Button>
 
                 {isMobile && (
                   <IconButton
                     type="button"
-                    aria-label="Take photo"
+                    aria-label={intl.formatMessage({
+                      id: 'upload.aria.takePhoto',
+                      defaultMessage: 'Take photo'
+                    })}
                     icon={<FaCamera />}
                     size="md"
                     variant="outline"
@@ -616,12 +726,22 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
               <HStack spacing={4} fontSize="xs" color={mutedColor}>
                 <HStack>
                   <Icon as={FaPaste} />
-                  <Text>Paste with Ctrl+V</Text>
+                  <Text>
+                    {intl.formatMessage({
+                      id: 'upload.pasteHint',
+                      defaultMessage: 'Paste with Ctrl+V'
+                    })}
+                  </Text>
                 </HStack>
                 {isMobile && (
                   <HStack>
                     <Icon as={FaMobileAlt} />
-                    <Text>Tap to capture</Text>
+                    <Text>
+                      {intl.formatMessage({
+                        id: 'upload.tapToCapture',
+                        defaultMessage: 'Tap to capture'
+                      })}
+                    </Text>
                   </HStack>
                 )}
               </HStack>
@@ -674,7 +794,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                     {/* Remove button */}
                     <IconButton
                       type="button"
-                      aria-label="Remove photo"
+                      aria-label={intl.formatMessage({
+                        id: 'upload.aria.removePhoto',
+                        defaultMessage: 'Remove photo'
+                      })}
                       icon={<FaTimes />}
                       size="xs"
                       position="absolute"
@@ -755,7 +878,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                             onClick={() => retryUpload(index)}
                             borderRadius="full"
                           >
-                            Retry
+                            {intl.formatMessage({ id: 'upload.retry', defaultMessage: 'Retry' })}
                           </Button>
                         </VStack>
                       </Box>
@@ -778,7 +901,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                     {item.status === 'error' && (
                       <IconButton
                         type="button"
-                        aria-label="Remove failed photo"
+                        aria-label={intl.formatMessage({
+                          id: 'upload.aria.removeFailed',
+                          defaultMessage: 'Remove failed photo'
+                        })}
                         icon={<FaTimes />}
                         size="xs"
                         position="absolute"
@@ -815,7 +941,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                     <VStack spacing={2}>
                       <Icon as={FaPlus} boxSize={6} color={mutedColor} />
                       <Text fontSize="xs" color={mutedColor}>
-                        Add more
+                        {intl.formatMessage({ id: 'upload.addMore', defaultMessage: 'Add more' })}
                       </Text>
                     </VStack>
                   </Box>
@@ -831,8 +957,11 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         <Alert status="error" borderRadius="xl">
           <AlertIcon />
           <AlertDescription>
-            Some photos failed to upload. Check your internet connection and tap "Retry" to try
-            again.
+            {intl.formatMessage({
+              id: 'upload.error.banner',
+              defaultMessage:
+                'Some photos failed to upload. Check your internet connection and tap Retry to try again.'
+            })}
           </AlertDescription>
         </Alert>
       )}
@@ -857,7 +986,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             size="xs"
             borderRadius="full"
             bg="gray.100"
-            aria-label="Upload progress"
+            aria-label={intl.formatMessage({
+              id: 'upload.aria.progress',
+              defaultMessage: 'Upload progress'
+            })}
             sx={{
               '& > div': {
                 background: 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)',
@@ -871,9 +1003,17 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
       {/* Status text */}
       <HStack justify="space-between" fontSize="sm">
         <Text color={mutedColor}>
-          {uploadedUrls.length} of {maxFiles} photos uploaded
+          {intl.formatMessage(
+            { id: 'upload.countUploaded', defaultMessage: '{count} of {max} photos uploaded' },
+            { count: uploadedUrls.length, max: maxFiles }
+          )}
         </Text>
-        <Text color={mutedColor}>Max {maxSize / 1024 / 1024}MB per photo</Text>
+        <Text color={mutedColor}>
+          {intl.formatMessage(
+            { id: 'upload.maxSize', defaultMessage: 'Max {mb}MB per photo' },
+            { mb: maxSize / 1024 / 1024 }
+          )}
+        </Text>
       </HStack>
 
       {/* Camera Modal - Unchanged */}
@@ -899,7 +1039,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   onClick={capturePhoto}
                   borderRadius="xl"
                 >
-                  Capture Photo
+                  {intl.formatMessage({
+                    id: 'upload.capturePhoto',
+                    defaultMessage: 'Capture Photo'
+                  })}
                 </Button>
                 <Button
                   type="button"
@@ -908,7 +1051,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   onClick={closeCamera}
                   borderRadius="xl"
                 >
-                  Cancel
+                  {intl.formatMessage({ id: 'upload.cancel', defaultMessage: 'Cancel' })}
                 </Button>
               </HStack>
             </VStack>
@@ -931,7 +1074,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
               />
               <IconButton
                 type="button"
-                aria-label="Close preview"
+                aria-label={intl.formatMessage({
+                  id: 'upload.aria.closePreview',
+                  defaultMessage: 'Close preview'
+                })}
                 icon={<FaTimes />}
                 position="absolute"
                 top={4}

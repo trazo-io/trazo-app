@@ -17,13 +17,17 @@ import type { EventRegistryEntry, FieldConfig, ProductionSubtype } from './regis
 import {
   formatArea,
   formatBoolean,
+  formatDate,
+  humanizeEnumFallback,
+  lookupEnumLabel,
   formatDurationHours,
   formatFuelConsumption,
   formatIrrigationDepth,
   formatNumber,
   formatPercentage,
   formatTransportationDistance,
-  formatYield
+  formatYield,
+  formatConsumerTemperatureControl
 } from './formatters';
 
 type ProductionData = Record<string, unknown>;
@@ -129,11 +133,27 @@ const PROCESSING_TYPE_LABELS: Record<string, string> = {
   smoking: 'Smoking'
 };
 
-const lookupLabel = (table: Record<string, string>, v: unknown): string | null => {
-  if (typeof v !== 'string' || v === '') return null;
-  return table[v] ?? v;
+// Harvest grade, in a SHOPPER's words. To a grower and a buyer "Grade B" is a precise
+// size/appearance sorting class; on a consumer card it reads as "this food is second-rate",
+// which is untrue and damaging to the farmer whose page it is. Producer surfaces keep the
+// trade term via the shared `formatter`; only consumer surfaces get these.
+// English by design (the resolver has no `intl`); es lives in utils/fieldValues.es.ts.
+const CONSUMER_HARVEST_GRADE_LABELS: Record<string, string> = {
+  export_quality: 'Meets export size and appearance standards',
+  grade_a: 'Top grade, best size and appearance',
+  grade_b: 'Sold for juice or processing, same quality inside',
+  grade_c: 'Sold for processing, same quality inside',
+  processing: 'Grown for juice or processing',
+  organic_premium: 'Organic premium grade'
 };
 
+// Falls back to a humanized form, never the raw database value — see
+// formatters.humanizeEnumFallback. "manual" rendered as a bare slug on live cards.
+const lookupLabel = (table: Record<string, string>, v: unknown): string | null =>
+  lookupEnumLabel(table, v);
+
+const formatConsumerHarvestGrade = (v: unknown): string | null =>
+  lookupLabel(CONSUMER_HARVEST_GRADE_LABELS, v);
 const formatWaterSource = (v: unknown): string | null => lookupLabel(WATER_SOURCE_LABELS, v);
 const formatIrrigationMethod = (v: unknown): string | null =>
   lookupLabel(IRRIGATION_METHOD_LABELS, v);
@@ -154,11 +174,22 @@ const PROTECTION_METHOD_LABELS: Record<string, string> = {
   under_tree_sprinkler: 'Under-tree sprinklers',
   other: 'Other'
 };
+// Orchard-floor operations. `flame_weed` added 2026-07: propane flame weeding of tree rows
+// is a core organic weed-control practice — the UC Davis 2024 organic-almond cost study
+// budgets six passes a year — and it had nowhere to be logged.
+//
+// `herbicide_strip` was removed from the FORM picker at the same time: Trazo's ICP is
+// certified organic orchards, where a synthetic herbicide strip is prohibited under
+// 7 CFR 205.105, so offering it is a wrong answer a grower could pick and then have to
+// explain to their certifier. It stays in THIS map on purpose — display labels must keep
+// covering values that already exist in the database, or previously-saved events render
+// the raw slug "herbicide_strip" on the consumer card and in the audit modal.
 const FLOOR_MANAGEMENT_LABELS: Record<string, string> = {
   mow: 'Mow',
   mulch: 'Mulch',
   cover_crop_mgmt: 'Cover-crop management',
-  herbicide_strip: 'Herbicide strip'
+  flame_weed: 'Flame weeding',
+  herbicide_strip: 'Herbicide strip' // legacy value — no longer offered in the form
 };
 const formatProtectionMethod = (v: unknown): string | null =>
   lookupLabel(PROTECTION_METHOD_LABELS, v);
@@ -220,6 +251,11 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   {
     name: 'harvest_quality_grade',
     labelKey: 'events.production.fields.harvestQuality',
+    // "Quality Grade: Grade B" reads to a shopper as "this food is second-rate". It is a
+    // size/appearance sorting class, not a judgement about the food. See the value labels
+    // in enums.ts (events.consumer.harvestQuality.*).
+    consumerLabelKey: 'events.consumer.fields.harvestQuality',
+    consumerFormatter: formatConsumerHarvestGrade,
     valueType: 'enum',
     enumSource: 'harvest_quality_grades',
     visibleForSubtypes: ['HA', 'PH'],
@@ -253,6 +289,9 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // (e.g. avocado — dry matter % is the relevant ripeness metric, not Brix).
     name: 'brix_level',
     labelKey: 'events.production.fields.brixLevel',
+    // Brix is standard trade vocabulary for a grower and a buyer, and jargon to a shopper —
+    // it is simply sugar content.
+    consumerLabelKey: 'events.consumer.fields.brixLevel',
     valueType: 'number',
     visibleForSubtypes: ['HA', 'PH'],
     formatter: (v) => {
@@ -260,6 +299,15 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       const num = typeof v === 'number' ? v : parseFloat(String(v));
       if (!isFinite(num) || num <= 0) return null;
       return `${num}° Brix`;
+    },
+    // Relabelling alone left "Sugar content: 12.5° Brix" — half-translated, with the jargon
+    // still in the value. Degrees Brix ≈ % sugar by weight, which is the form a shopper can
+    // actually use.
+    consumerFormatter: (v) => {
+      if (v == null || v === '') return null;
+      const num = typeof v === 'number' ? v : parseFloat(String(v));
+      if (!isFinite(num) || num <= 0) return null;
+      return `${num}%`;
     },
     surfaces: {
       modal: 'immediate',
@@ -304,8 +352,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     },
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
 
@@ -394,8 +441,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     visibleForSubtypes: ['PL'],
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -466,8 +512,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     carbonRelevant: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -480,8 +525,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     carbonRelevant: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -550,6 +594,8 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'cleaning_date',
     labelKey: 'events.production.fields.cleaningDate',
     valueType: 'date',
+    // Rendered as the raw ISO "2026-02-26" on the live consumer card until 2026-07-31.
+    formatter: formatDate,
     visibleForSubtypes: ['EM'],
     visibleWhen: (e) => {
       // The normalizer converts equipment_operation_type from raw "CL" to display
@@ -610,10 +656,13 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       const op = String(e.equipment_operation_type || '').toLowerCase();
       return op === 'cl' || op === 'cleaning';
     },
+    // NO consumer_card: this is free text naming a real person ("Miguel Ramirez
+    // (Farm Manager)" in live data) and it rendered on the public product page until
+    // 2026-07-31. `performed_by` is masked to initials and `applicator_name` is stripped
+    // for exactly this reason. Also stripped server-side (PublicHistorySerializer).
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
   {
@@ -632,11 +681,33 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       return e.shared_with_conventional === true || e.shared_with_conventional === 'true';
     },
     formatter: formatBoolean,
+    // A bare "✓" for what is arguably the strongest integrity disclosure on the page.
+    // `visibleWhen` already restricts this to the TRUE case, so the consumer form can be a
+    // plain sentence — and saying it outright is better for the farmer than a tick a shopper
+    // has to decode.
+    consumerFormatter: () => 'Yes — and it was cleaned before use here',
     requiresVerificationBadge: true,
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      consumer_card: 'details'
+      consumer_card: 'secondary'
+    }
+  },
+  {
+    // §E-5 — a custom operator's equipment arrives from another farm, which is precisely the
+    // § 205.272 commingling exposure. NOT gated to EM: the flag belongs on the OPERATION that
+    // was custom-hired (harvest, mowing, shredding), not on the cleaning record.
+    // Bug Pattern #6 — BooleanField(default=False) never returns null, so gate on truthy or
+    // every self-performed pass would print "Custom Operator: No" as negative noise.
+    name: 'operator_is_custom',
+    labelKey: 'events.production.fields.operatorIsCustom',
+    helpKey: 'events.production.fields.operatorIsCustomHelp',
+    valueType: 'boolean',
+    visibleWhen: (e) => e.operator_is_custom === true || e.operator_is_custom === 'true',
+    formatter: formatBoolean,
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
     }
   },
   {
@@ -651,10 +722,11 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       return op === 'cl' || op === 'cleaning';
     },
     placeholderKey: 'events.production.fields.cleaningProtocolReferencePlaceholder',
+    // NO consumer_card: an internal SOP identifier ("SOP-CLEAN-001 (NOP 205.272
+    // Compliance)") is an operator document reference, meaningless to a shopper.
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
 
@@ -663,7 +735,21 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'sanitizer_name',
     labelKey: 'events.production.fields.sanitizerName',
     valueType: 'string',
-    visibleForSubtypes: ['EM'],
+    // "Chlorine (sodium hypochlorite)" rendered bare on a certified-organic avocado card.
+    // It is accurate AND permitted — NOP § 205.605 lists chlorine materials for post-harvest
+    // water — but with no context it reads as contamination. Withholding it would be worse
+    // (a shopper deserves to know what touched the food), so explain it instead.
+    consumerFormatter: (v) => {
+      if (typeof v !== 'string' || !v.trim()) return null;
+      if (/chlorine|hypochlorite/i.test(v)) {
+        return 'Chlorine — the same treatment used in drinking water, and permitted for washing organic produce';
+      }
+      if (/peroxyacetic|peracetic|hydrogen peroxide/i.test(v)) {
+        return `${v.trim()} — a peroxide-based wash that breaks down into water and oxygen`;
+      }
+      return v.trim();
+    },
+    visibleForSubtypes: ['EM', 'PH'],
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -674,7 +760,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'sanitizer_ppm',
     labelKey: 'events.production.fields.sanitizerPpm',
     valueType: 'number',
-    visibleForSubtypes: ['EM'],
+    visibleForSubtypes: ['EM', 'PH'],
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -687,7 +773,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.sanitizerResidualPpm',
     placeholderKey: 'events.production.fields.sanitizerResidualPpmPlaceholder',
     valueType: 'number',
-    visibleForSubtypes: ['EM'],
+    visibleForSubtypes: ['EM', 'PH'],
     surfaces: {
       modal: 'secondary',
       form: 'secondary'
@@ -697,7 +783,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'rinse_step_documented',
     labelKey: 'events.production.fields.rinseStepDocumented',
     valueType: 'boolean',
-    visibleForSubtypes: ['EM'],
+    visibleForSubtypes: ['EM', 'PH'],
     // Bug Pattern #6 — BooleanField(default=False); gate on truthy + cleaning op.
     // Two-tier predicate (CL operation AND rinse_step_documented=true) so non-cleaning
     // EM events don't pollute, and Cleaning events without the rinse step don't ✗-spam.
@@ -708,22 +794,26 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       return isCleaning && truthy;
     },
     formatter: formatBoolean,
+    consumerFormatter: () => 'Yes — equipment was rinsed after sanitising',
     requiresVerificationBadge: true,
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      consumer_card: 'details'
+      consumer_card: 'secondary'
     }
   },
   {
     name: 'sanitizer_nop_reference',
     labelKey: 'events.production.fields.sanitizerNopReference',
     valueType: 'string',
-    visibleForSubtypes: ['EM'],
+    visibleForSubtypes: ['EM', 'PH'],
+    // NO consumer_card: the value is a raw CFR citation ("§ 205.605(b) - Sodium
+    // hypochlorite"). transparency-first.md bans raw regulatory citations on consumer
+    // surfaces — it is the certifier's vocabulary, not a shopper's. The substance itself
+    // (sanitizer_name / sanitizer_ppm) still shows; only the citation is withheld.
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
 
@@ -775,6 +865,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // fallback to mirror the formatter.
     name: 'temperature_control',
     labelKey: 'events.production.fields.temperatureControl',
+    // "✓" told a shopper nothing; cold chain is one of the few post-harvest facts they can
+    // actually use.
+    consumerLabelKey: 'events.consumer.fields.temperatureControl',
+    consumerFormatter: formatConsumerTemperatureControl,
     valueType: 'boolean',
     formatter: (v, event) => {
       const raw =
@@ -791,7 +885,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      consumer_card: 'details'
+      consumer_card: 'secondary'
     }
   },
 
@@ -830,8 +924,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     visibleForSubtypes: ['FP'],
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -865,8 +958,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       timeline: 'immediate',
       modal: 'secondary',
       form: 'secondary',
-      quick_form: 'secondary',
-      consumer_card: 'details'
+      quick_form: 'secondary'
     }
   },
   {
@@ -878,8 +970,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      quick_form: 'secondary',
-      consumer_card: 'details'
+      quick_form: 'secondary'
     }
   },
   {
@@ -890,8 +981,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     carbonRelevant: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
   {
@@ -909,8 +999,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     carbonRelevant: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'details'
+      form: 'secondary'
     }
   },
 
@@ -920,10 +1009,15 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.common.fields.productionEfficiency',
     valueType: 'enum',
     enumSource: 'production_efficiency',
+    // NO consumer_card. This rendered as "Efficiency: High" / "Efficiency: Normal" on the
+    // live card — a grade the farmer awards their own operation, with no scale, no basis and
+    // no meaning to a shopper. It fails all three consumer-card questions, and a self-assigned
+    // rating on a consumer surface is the category the 2026-06 score demotion removed
+    // (EU ECGT 2024/825 / FTC 16 CFR 260.6). It stays on modal/form as a producer's own note.
+    // equipmentEvent.ts already excluded its twin `operation_efficiency` for this reason.
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
   {
@@ -954,7 +1048,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'method',
     labelKey: 'events.production.fields.operationMethod',
     valueType: 'string',
-    visibleForSubtypes: ['HA', 'PR', 'TR', 'CU', 'TH', 'CM'],
+    // HA removed 2026-08-01: harvest cards already carry the STRUCTURED
+    // `harvest_method` ("Hand Picking"), so this rendered a second, vaguer row
+    // ("Operation Method: manual") saying the same thing.
+    visibleForSubtypes: ['PR', 'TR', 'CU', 'TH', 'CM'],
     // Backend stores operation method in `extra_data.method`. The form-preview
     // path mirrors it to top-level via eventDataNormalizer, but the Event Details
     // modal reads raw API data (no normalizer in that path). Fall back to
@@ -963,7 +1060,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       const topLevel = typeof v === 'string' && v.trim() ? v : null;
       const extra = (event as any)?.extra_data?.method;
       const fallback = typeof extra === 'string' && extra.trim() ? extra : null;
-      return topLevel ?? fallback;
+      // Humanize: this is free text, and the raw value "manual" rendered lowercase next to
+      // Title Case labels. Because a formatter EXISTS, the resolver's own auto-capitalize
+      // branch never runs — the formatter has to do it.
+      return humanizeEnumFallback(topLevel ?? fallback);
     },
     surfaces: {
       modal: 'immediate',
@@ -982,7 +1082,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
-      consumer_card: 'details'
+      consumer_card: 'secondary'
     }
   },
   {
@@ -991,13 +1091,13 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     valueType: 'enum',
     enumSource: 'growth_stages',
     formatter: formatGrowthStage,
-    surfaces: { modal: 'details', form: 'secondary', consumer_card: 'details' }
+    surfaces: { modal: 'details', form: 'secondary' }
   },
   {
     name: 'block_id',
     labelKey: 'events.common.fields.blockId',
     valueType: 'string',
-    surfaces: { modal: 'details', form: 'details', consumer_card: 'details' }
+    surfaces: { modal: 'details', form: 'details' }
   }
 ];
 

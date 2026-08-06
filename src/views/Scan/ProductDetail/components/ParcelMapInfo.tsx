@@ -128,6 +128,12 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
 
+  // NOTE (2026-08-02): `onParcelModalOpen` is never called anywhere in this file, so
+  // <ParcelModal> below is currently unreachable on the consumer page — there is no affordance
+  // that opens it. Left in place (rather than deleted) because it is a built surface awaiting a
+  // trigger, but it is NOT live: the unit labels and any other content inside it are unverified
+  // against a real render. Wiring it up needs a leak review first — it renders the parcel
+  // `description`, which is free-text the farmer never chose to publish.
   const {
     isOpen: isParcelModalOpen,
     onOpen: onParcelModalOpen,
@@ -514,6 +520,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
             name: parcelData.name || 'Parcel',
             description: parcelData.description,
             area: parcelData.area || 0,
+            areaUnit: parcelData.areaUnit,
             polygon: parcelData.polygon,
             map_metadata: parcelData.map_metadata
               ? {

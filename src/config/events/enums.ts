@@ -44,11 +44,19 @@ export const VOLUME_UNITS: readonly EnumOption[] = [
 ] as const;
 
 /** Fuel units — diesel, gasoline, electricity */
+// Gas units are NOT optional extras. The EPA natural-gas factor is per standard
+// cubic foot, so a dryer or huller running on gas cannot be recorded at all with
+// only litres/gallons/kg — the backend refuses a liquid unit for a gas rather than
+// emit a fabricated near-zero figure. therm/ccf are what US gas bills are printed in.
 export const FUEL_UNITS: readonly EnumOption[] = [
   { value: 'L', labelKey: 'events.units.fuel.liters' },
   { value: 'gal', labelKey: 'events.units.fuel.gallons' },
   { value: 'kg', labelKey: 'events.units.fuel.kilograms' },
-  { value: 'kWh', labelKey: 'events.units.fuel.kilowattHours' }
+  { value: 'kWh', labelKey: 'events.units.fuel.kilowattHours' },
+  { value: 'therm', labelKey: 'events.units.fuel.therms' },
+  { value: 'ccf', labelKey: 'events.units.fuel.ccf' },
+  { value: 'm3', labelKey: 'events.units.fuel.cubicMeters' },
+  { value: 'MMBtu', labelKey: 'events.units.fuel.mmbtu' }
 ] as const;
 
 /** Yield units — harvest quantities */
@@ -121,18 +129,26 @@ export const APPLICATION_METHODS_BY_CHEMICAL_TYPE: Record<string, readonly EnumO
   ],
   PE: [
     { value: 'ground_spray', labelKey: 'events.applicationMethods.groundSpray' },
+    // air_blast/aerial were absent from every spray subtype, so an orchard airblast
+    // application fell through to the raw key and rendered "air_blast" to a shopper.
+    { value: 'air_blast', labelKey: 'events.applicationMethods.airBlast' },
+    { value: 'aerial', labelKey: 'events.applicationMethods.aerial' },
     { value: 'chemigation', labelKey: 'events.applicationMethods.chemigation' },
     { value: 'seed_treatment', labelKey: 'events.applicationMethods.seedTreatment' },
     { value: 'soil_incorporation', labelKey: 'events.applicationMethods.soilIncorporation' }
   ],
   HE: [
     { value: 'ground_spray', labelKey: 'events.applicationMethods.groundSpray' },
+    { value: 'air_blast', labelKey: 'events.applicationMethods.airBlast' },
+    { value: 'aerial', labelKey: 'events.applicationMethods.aerial' },
     { value: 'chemigation', labelKey: 'events.applicationMethods.chemigation' },
     { value: 'seed_treatment', labelKey: 'events.applicationMethods.seedTreatment' },
     { value: 'soil_incorporation', labelKey: 'events.applicationMethods.soilIncorporation' }
   ],
   FU: [
     { value: 'ground_spray', labelKey: 'events.applicationMethods.groundSpray' },
+    { value: 'air_blast', labelKey: 'events.applicationMethods.airBlast' },
+    { value: 'aerial', labelKey: 'events.applicationMethods.aerial' },
     { value: 'chemigation', labelKey: 'events.applicationMethods.chemigation' },
     { value: 'seed_treatment', labelKey: 'events.applicationMethods.seedTreatment' },
     { value: 'soil_incorporation', labelKey: 'events.applicationMethods.soilIncorporation' }

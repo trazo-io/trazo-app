@@ -49,8 +49,12 @@ import {
   StandardStepper,
   StandardPage,
   SectionBox,
-  SectionHeader
+  SectionHeader,
+  // D9 — both were built for this screen and had never been mounted anywhere.
+  DraftRestorationAlert,
+  AutoSaveStatus
 } from 'components/Design/StandardComponents';
+import { useEventDraft } from 'src/hooks/useEventDraft';
 import { TrazoImageUpload } from 'components/Upload';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -175,6 +179,25 @@ const steps = [
 function NewEvent({ isEdit = false, eventId = null }) {
   const intl = useIntl();
   const toast = useToast();
+
+  // D7 — move the farmer to the first field that failed validation. react-hook-form marks
+  // invalid inputs with aria-invalid, so this works for every tab without each one having to
+  // report its state upward (only WeatherTab ever did, which is why the old disabled-Continue
+  // gate was dead for the other six).
+  const focusFirstInvalidField = useCallback(() => {
+    if (typeof document === 'undefined') return;
+    const firstInvalid = document.querySelector('[aria-invalid="true"]');
+    if (!firstInvalid) return;
+    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Focus after the scroll settles so the browser doesn't fight the smooth scroll.
+    window.setTimeout(() => {
+      try {
+        firstInvalid.focus({ preventScroll: true });
+      } catch {
+        /* not focusable — the scroll already did the useful part */
+      }
+    }, 350);
+  }, []);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { parcelId, farmId } = useParams();
@@ -216,7 +239,56 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // Step management
   const [activeStep, setActiveStep] = useState(0);
-  const [tabHasErrors, setTabHasErrors] = useState(false); // Track validation errors from event tabs
+
+  // D9 — persist the in-progress event so a refresh, a locked phone or a stray Back does not
+  // discard a half-filled chemical application. Scoped per parcel and per create/edit target.
+  const {
+    hasDraft,
+    draftSavedAt,
+    draftPhotoCount,
+    lastSaved: draftLastSaved,
+    isSaving: isSavingDraft,
+    saveDraft,
+    restoreDraft,
+    discardDraft,
+    clearDraft
+  } = useEventDraft({ parcelId, eventId, enabled: !isEdit });
+
+  // D9 — write a draft whenever the form state or the chosen type changes. The hook debounces
+  // and refuses to store an empty form, so this stays cheap and does not arm a restore banner
+  // for someone who merely opened the wizard.
+  useEffect(() => {
+    saveDraft(activeEventType, eventFormData, acceptedFiles?.length || 0);
+  }, [activeEventType, eventFormData, acceptedFiles, saveDraft]);
+
+  const handleRestoreDraft = useCallback(() => {
+    const draft = restoreDraft();
+    if (!draft) return;
+    if (draft.activeEventType != null) setActiveEventType(draft.activeEventType);
+    setEventFormData(draft.eventFormData || {});
+    toast({
+      title: intl.formatMessage({ id: 'events.draft.restored', defaultMessage: 'Draft restored' }),
+      // Photos are the one thing a draft cannot carry, so say so rather than let the farmer
+      // submit an event they believe still has its photo evidence attached.
+      description: draft.photoCount
+        ? intl.formatMessage(
+            {
+              id: 'events.draft.restoredPhotos',
+              defaultMessage:
+                'Your entries are back. {count, plural, one {# photo} other {# photos}} could not be saved with the draft — please attach them again.'
+            },
+            { count: draft.photoCount }
+          )
+        : intl.formatMessage({
+            id: 'events.draft.restoredBody',
+            defaultMessage: 'Your entries are back where you left them.'
+          }),
+      status: 'success',
+      duration: 7000,
+      isClosable: true,
+      position: 'top'
+    });
+  }, [restoreDraft, intl, toast]);
 
   // Form methods for each step
   const basicMethods = useForm({
@@ -584,11 +656,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
         application_fuel_consumed:
           existingEvent.application_fuel_consumed ?? existingEvent.fuel_consumed ?? '',
         description: existingEvent.description || '',
-        // 🚨 CRITICAL FIX: Ensure observation field is preserved for Weather Events
-        // Weather Events have both description and observation fields
-        // When creating, observation → description mapping happens
-        // When editing, we need to ensure observation field is populated
-        observation: existingEvent.observation || existingEvent.description || '', // Fallback to description if observation is empty
+        // Pre-fill the notes box from `observation` ONLY — no `description` fallback.
+        //
+        // That fallback existed because, before the create path started persisting
+        // `observation`, editing an event would otherwise show an empty notes box. It is now
+        // actively unsafe: `observation` is what ConsumerEventCard quotes as the grower's own
+        // words, and `description` on a legacy row is just as likely to be output from one of
+        // the 328+ AI templates. Seeding the box from it meant that merely opening and saving
+        // an old event would promote machine copy into a quoted farmer voice on the public
+        // page — the exact fabrication eventDataNormalizer's mirror was removed to prevent.
+        //
+        // Nothing is lost on legacy rows: their text stays in `description`, which still shows
+        // as "Field Notes" in the producer detail modal and still prints in the certifier PDF.
+        // The box starts empty, and whatever the farmer types is genuinely theirs.
+        observation: existingEvent.observation || '',
 
         // SOIL MANAGEMENT FIX (2025-12-25): Map backend field names to form field names
         // Backend stores: working_depth, but form uses: depth
@@ -1394,6 +1475,29 @@ function NewEvent({ isEdit = false, eventId = null }) {
         delete_image_ids: isEdit ? deletedImageIds : []
       });
 
+      // Keep the farmer's own words as `observation`, not only as `description`.
+      //
+      // Every branch of cleanEventData renames observation → description, because
+      // CommonEvent.description is NOT NULL. That rename is still needed — but it was also the
+      // ONLY thing that happened, so the observation column stayed empty on every UI-logged
+      // event. ConsumerEventCard renders `observation` (quoted, italic, "Farmer's Field Notes")
+      // and nothing else, so a grower was shown "Your notes will be public — published as
+      // written", typed a paragraph about their season, and no shopper ever saw a word of it.
+      //
+      // Why not mirror description → observation on the way out instead: 328+ AI templates
+      // write `description`, and quoting machine copy as a grower's own words is exactly the
+      // dishonesty eventDataNormalizer removed that mirror to prevent (see its comment, and
+      // history/serializers.py's note on why the API does not mirror either). Provenance has to
+      // come from the input the human actually typed, which is this one. Only send it when the
+      // farmer left something: an empty observation must not blank an existing note on edit.
+      const farmerNote =
+        typeof enhancedEventFormData?.observation === 'string'
+          ? enhancedEventFormData.observation.trim()
+          : '';
+      if (farmerNote) {
+        finalEventData.observation = farmerNote;
+      }
+
       if (isEdit) {
         // Update existing event
         await updateEvent({
@@ -1432,6 +1536,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
           isClosable: true
         });
       }
+
+      // D9 — the event is saved, so the draft is done. Without this the next visit would offer
+      // to restore work that already exists as a real event, inviting a duplicate.
+      clearDraft();
 
       // Navigate back to the parcel details
       navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`, {
@@ -1531,7 +1639,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       {/* 2025 UX: Enhanced loading state with progress indication */}
       {isEdit && isLoadingEvent && (
         <StandardCard>
-          <CardBody py={8} px={{ base: 0, md: 6 }}>
+          <CardBody py={8} px={{ base: 4, md: 6 }}>
             <Flex justify="center" align="center">
               <CircularProgress isIndeterminate color="green.500" />
             </Flex>
@@ -1542,7 +1650,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       {/* Error state when editing */}
       {isEdit && eventError && (
         <Card boxShadow="xl" bg={bgColor} borderRadius="2xl">
-          <CardBody py={8} px={{ base: 0, md: 6 }}>
+          <CardBody py={8} px={{ base: 4, md: 6 }}>
             <VStack spacing={4} align="center">
               <Text fontSize="lg" fontWeight="semibold" color="red.500">
                 {intl.formatMessage({ id: 'app.errorLoadingEvent' }) || 'Error loading event data'}
@@ -1555,12 +1663,28 @@ function NewEvent({ isEdit = false, eventId = null }) {
       {/* Main Content - Show only when not loading or when creating */}
       {(!isEdit || !isLoadingEvent) && !eventError && (
         <VStack spacing={{ base: 6, md: 8 }} align="stretch">
+          {/* D9 — offered only on step 0: restoring mid-wizard would replace the form under
+                the farmer's hands while they are typing in it. */}
+          {activeStep === 0 && (
+            <DraftRestorationAlert
+              hasDraft={hasDraft}
+              lastSaved={draftSavedAt}
+              onRestore={handleRestoreDraft}
+              onDiscard={discardDraft}
+            />
+          )}
+
           {/* Progress Stepper - Using StandardStepper */}
-          <StandardStepper
-            steps={steps}
-            currentStep={activeStep}
-            completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
-          />
+          <VStack spacing={2} align="stretch">
+            <StandardStepper
+              steps={steps}
+              currentStep={activeStep}
+              completedSteps={Array.from({ length: activeStep }, (_, i) => i)}
+            />
+            <Flex justify="flex-end">
+              <AutoSaveStatus lastSaved={draftLastSaved} isSaving={isSavingDraft} />
+            </Flex>
+          </VStack>
 
           {/* Step Content */}
           <Flex
@@ -1793,7 +1917,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         'Basic Event Information'}
                     </Text>
                   </CardHeader>
-                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
+                  <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
                     <FormProvider {...basicMethods}>
                       <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)} noValidate>
                         <VStack spacing={{ base: 5, md: 6 }} align="stretch">
@@ -1802,7 +1926,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             <SectionHeader
                               icon={FaTasks}
                               iconColor="green.500"
-                              title="Event Type"
+                              title={intl.formatMessage({
+                                id: 'events.wizard.eventType',
+                                defaultMessage: 'Event Type'
+                              })}
                               badge="Required"
                               badgeColorScheme="green"
                               description="Select the type of agricultural activity you want to document"
@@ -1914,7 +2041,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             <SectionHeader
                               icon={FaCalendarAlt}
                               iconColor="blue.500"
-                              title="Event Timing & Traceability"
+                              title={intl.formatMessage({
+                                id: 'events.wizard.timing',
+                                defaultMessage: 'Event Timing & Traceability'
+                              })}
                               badge="USDA GAP"
                               badgeColorScheme="blue"
                               description="When did this activity occur and who performed it?"
@@ -1927,7 +2057,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   'Event Date & Time'
                                 }
                                 required
-                                helpText="Select the exact date and time when this activity was performed"
+                                helpText={intl.formatMessage({
+                                  id: 'events.wizard.dateHelp',
+                                  defaultMessage:
+                                    'Select the exact date and time when this activity was performed'
+                                })}
                                 error={basicMethods.formState.errors.date?.message}
                               >
                                 <StandardInput
@@ -1938,8 +2072,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
                               {/* Sprint 1 Epic 1.4: USDA GAP Traceability - Who performed this activity */}
                               <StandardField
-                                label="Performed By"
-                                helpText="Name of person who performed this activity (optional, helps with traceability)"
+                                label={intl.formatMessage({
+                                  id: 'events.wizard.performedBy',
+                                  defaultMessage: 'Performed By'
+                                })}
+                                helpText={intl.formatMessage({
+                                  id: 'events.wizard.performedByHelp',
+                                  defaultMessage:
+                                    'Name of person who performed this activity (optional, helps with traceability)'
+                                })}
                                 required={false}
                                 error={basicMethods.formState.errors.performed_by?.message}
                               >
@@ -1982,13 +2123,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       {intl.formatMessage({ id: 'app.eventDetails' }) || 'Event Details'}
                     </Text>
                   </CardHeader>
-                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
+                  <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
                     {activeEventType === 0 && (
                       <WeatherTab
                         ref={weatherTabRef}
                         onSubmitHandler={onSubmitMainInfo}
                         onDataChange={onDataChange}
-                        onValidationChange={setTabHasErrors}
                         onPrev={goToPreviousStep}
                         initialValues={eventFormData}
                         hideActions={true}
@@ -2111,8 +2251,25 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   await currentTabRef.current.submitForm();
                                   // onSubmitMainInfo handles setActiveStep(2)
                                 } catch (errors) {
-                                  // Validation failed — do NOT advance step
-                                  console.warn('Form validation failed:', errors);
+                                  // D7 — validation failure used to be a console.warn, which a
+                                  // farmer never sees: Continue simply did nothing and the page
+                                  // did not move. Tell them what happened and take them to it.
+                                  focusFirstInvalidField();
+                                  toast({
+                                    title: intl.formatMessage({
+                                      id: 'events.form.validationFailedTitle',
+                                      defaultMessage: 'Some required details are missing'
+                                    }),
+                                    description: intl.formatMessage({
+                                      id: 'events.form.validationFailedBody',
+                                      defaultMessage:
+                                        'We highlighted the first field that needs attention.'
+                                    }),
+                                    status: 'error',
+                                    duration: 6000,
+                                    isClosable: true,
+                                    position: 'top'
+                                  });
                                 }
                               } else {
                                 // Fallback for any tab that doesn't have submitForm yet
@@ -2123,10 +2280,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             rightIcon={<FaChevronRight />}
                             size={{ base: 'md', md: 'lg' }}
                             flex={{ base: 1, md: 'none' }}
-                            isDisabled={tabHasErrors}
-                            title={
-                              tabHasErrors ? 'Please fix validation errors before continuing' : ''
-                            }
                           >
                             {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                           </StandardButton>
@@ -2145,7 +2298,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         'Media & Documentation'}
                     </Text>
                   </CardHeader>
-                  <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
+                  <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
                     <VStack spacing={{ base: 5, md: 6 }} align="stretch">
                       {/* Photo Recommendations - Event-Type & Subtype-Specific Guidance */}
                       <PhotoRecommendationsBox
@@ -2156,7 +2309,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
                       <StandardField
                         label={intl.formatMessage({ id: 'app.eventPhotos' }) || 'Event Photos'}
-                        helpText="Upload photos documenting this agricultural event"
+                        helpText={intl.formatMessage({
+                          id: 'events.wizard.photosHelp',
+                          defaultMessage: 'Upload photos documenting this agricultural event'
+                        })}
                       >
                         <TrazoImageUpload
                           maxFiles={5}

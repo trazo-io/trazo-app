@@ -47,10 +47,6 @@ import { useIntl } from 'react-intl';
 // Event Field Registry (Phase 5G — form integration)
 import { useFormFields } from 'src/hooks/useFormFields';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
-import { RegistryFormSections } from 'src/components/Forms/RegistryFormSections';
-
-// Forms keep their rich hand-crafted rendering. Registry drives display surfaces only.
-const USE_FIELD_REGISTRY = false;
 
 // Weather type display names for auto-generated event names
 const WEATHER_TYPE_NAMES = {
@@ -516,377 +512,591 @@ const WeatherTab = forwardRef(
         <form onSubmit={mainInfoSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <Flex direction="column" w="100%">
             {/* Transparency Focus Alert */}
-            <StandardAlert status="info" title="Weather Event & Transparency Documentation">
+            <StandardAlert
+              status="info"
+              title={intl.formatMessage({
+                id: 'events.weather.sections.weatherEventTransparencyDocumentation',
+                defaultMessage: 'Weather Event & Transparency Documentation'
+              })}
+            >
               <HStack spacing={2} mb={2}>
                 <Icon as={FaCloud} color="blue.500" />
                 <Text fontSize="sm" fontWeight="bold">
-                  Agricultural Climate Transparency
+                  {intl.formatMessage({
+                    id: 'events.weather.intro.title',
+                    defaultMessage: 'Agricultural Climate Transparency'
+                  })}
                 </Text>
               </HStack>
               <Text fontSize="sm">
-                Document weather conditions that affect your agricultural operations. This
-                environmental context helps consumers understand the challenges and conditions that
-                impact farming practices.
+                {intl.formatMessage({
+                  id: 'events.weather.intro.body',
+                  defaultMessage:
+                    'Document weather conditions that affect your agricultural operations. This environmental context helps consumers understand the challenges and conditions that impact farming practices.'
+                })}
               </Text>
             </StandardAlert>
 
-            {USE_FIELD_REGISTRY ? (
-              <RegistryFormSections
-                eventType="weather"
-                subtype={mainInfoMethods.watch('type')}
-                control={mainInfoMethods.control}
-                eventData={mainInfoMethods.getValues()}
-                errors={errors}
-              />
-            ) : (
-              <>
-                {/* Section 1: Weather Event Information */}
-                <SectionBox variant="default">
-                  <SectionHeader
-                    icon={FaCloud}
-                    iconColor="green.600"
-                    title="Weather Event Information"
-                    badge="Environmental Documentation"
-                    badgeColorScheme="green"
-                  />
+            {/* Forms are hand-crafted by design: the NOP section grouping below is what
+                makes the audit export complete, and the registry renderer flattens it.
+                The field registry is the SSOT for DISPLAY surfaces (consumer card, modal,
+                timeline) and is enforced here by src/config/events/__tests__/
+                formConformance.test.ts, not by a runtime flag. */}
+            <>
+              {/* Section 1: Weather Event Information */}
+              <SectionBox variant="default">
+                <SectionHeader
+                  icon={FaCloud}
+                  iconColor="green.600"
+                  title={intl.formatMessage({
+                    id: 'events.weather.sections.weatherEventInformation',
+                    defaultMessage: 'Weather Event Information'
+                  })}
+                  badge="Environmental Documentation"
+                  badgeColorScheme="green"
+                />
 
-                  <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
-                    <StandardField
-                      label="Weather Event Type"
-                      required
-                      error={errors.type?.message}
-                      helpText="Document weather conditions that affect your agricultural operations"
-                    >
-                      <Controller
-                        name="type"
-                        control={mainInfoMethods.control}
-                        render={({ field }) => (
-                          <StandardSelect placeholder="Select weather event type" {...field}>
-                            <option value="FR">Frost</option>
-                            <option value="DR">Drought</option>
-                            <option value="HL">Hailstorms</option>
-                            <option value="HT">High Temperatures</option>
-                            <option value="TS">Tropical Storm</option>
-                            <option value="HW">High Winds</option>
-                            <option value="HH">High Humidity</option>
-                            <option value="LH">Low Humidity</option>
-                          </StandardSelect>
-                        )}
-                      />
-                    </StandardField>
-
-                    {/* Event Name - Optional, auto-generated from weather type if empty */}
-                    <StandardField
-                      label="Event Name"
-                      helpText="Auto-generated from weather type. Customize for specific events."
-                    >
-                      <StandardInput
-                        type="text"
-                        placeholder={`e.g., ${
-                          WEATHER_TYPE_NAMES[type] || 'Weather Event'
-                        } - North Field`}
-                        {...register('name')}
-                      />
-                    </StandardField>
-                  </SimpleGrid>
-                </SectionBox>
-
-                {/* Section 2: Weather Details & Measurements (Dynamic based on type) */}
-                {type && (
-                  <SectionBox variant="highlighted">
-                    <SectionHeader
-                      icon={FaThermometerHalf}
-                      iconColor="green.600"
-                      title="Weather Details & Measurements"
-                      badge="Climate Context"
-                      badgeColorScheme="green"
-                    />
-
-                    {type === 'FR' ? (
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label="Lower Temperature"
-                          helpText="Minimum temperature recorded during frost event"
-                          error={errors.lower_temperature?.message}
-                        >
-                          <HStack spacing={2} align="stretch">
-                            <Box flex="1">
-                              <StandardInput
-                                type="number"
-                                step="0.1"
-                                min="-58"
-                                max="122"
-                                placeholder="e.g., 28 (°F) or -2 (°C)"
-                                {...register('lower_temperature')}
-                              />
-                            </Box>
-                            <Box w="90px" flexShrink={0}>
-                              <StandardSelect {...register('temperature_unit')}>
-                                <option value="F">°F</option>
-                                <option value="C">°C</option>
-                              </StandardSelect>
-                            </Box>
-                          </HStack>
-                        </StandardField>
-                        <StandardField
-                          label="Protection Method"
-                          helpText="Measures taken to protect crops"
-                        >
-                          <StandardInput
-                            type="text"
-                            placeholder="e.g., frost blankets, irrigation"
-                            {...register('way_of_protection')}
-                          />
-                        </StandardField>
-                      </SimpleGrid>
-                    ) : type === 'DR' ? (
-                      <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
-                        <StandardField
-                          label="Water Deficit (mm)"
-                          helpText="Accumulated water deficit during drought period"
-                          error={errors.water_deficit?.message}
-                        >
-                          <StandardInput
-                            type="number"
-                            step="1"
-                            min="0"
-                            max="500"
-                            placeholder="50"
-                            {...register('water_deficit')}
-                          />
-                        </StandardField>
-                      </SimpleGrid>
-                    ) : type === 'HL' ? (
-                      // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail, no consumer impact)
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label="Duration (minutes)"
-                          helpText="How long the hailstorm lasted"
-                          error={errors.duration?.message}
-                        >
-                          <StandardInput
-                            type="number"
-                            step="1"
-                            min="0"
-                            max="1440"
-                            placeholder="15"
-                            {...register('duration')}
-                          />
-                        </StandardField>
-                        <StandardField
-                          label="Protection Method"
-                          helpText="Measures taken to protect crops"
-                        >
-                          <StandardInput
-                            type="text"
-                            placeholder="e.g., hail nets, covered structures"
-                            {...register('way_of_protection')}
-                          />
-                        </StandardField>
-                      </SimpleGrid>
-                    ) : type === 'HT' ? (
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label="Highest Temperature"
-                          helpText="Peak temperature during heat event"
-                          error={errors.highest_temperature?.message}
-                        >
-                          <HStack spacing={2} align="stretch">
-                            <Box flex="1">
-                              <StandardInput
-                                type="number"
-                                step="0.1"
-                                min="-20"
-                                max="140"
-                                placeholder="e.g., 105 (°F) or 42 (°C)"
-                                {...register('highest_temperature')}
-                              />
-                            </Box>
-                            <Box w="90px" flexShrink={0}>
-                              <StandardSelect {...register('temperature_unit')}>
-                                <option value="F">°F</option>
-                                <option value="C">°C</option>
-                              </StandardSelect>
-                            </Box>
-                          </HStack>
-                        </StandardField>
-                        <StandardField
-                          label="Start Date"
-                          helpText="When the high temperature period began"
-                        >
-                          <StandardInput type="datetime-local" {...register('start_date')} />
-                        </StandardField>
-                        <StandardField
-                          label="End Date"
-                          helpText="When the high temperature period ended"
-                        >
-                          <StandardInput type="datetime-local" {...register('end_date')} />
-                        </StandardField>
-                      </SimpleGrid>
-                    ) : type === 'TS' ? (
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label="Wind Speed (km/h)"
-                          helpText="Maximum wind speed recorded"
-                          error={errors.wind_speed?.message}
-                        >
-                          <StandardInput
-                            type="number"
-                            step="1"
-                            min="0"
-                            max="400"
-                            placeholder="120"
-                            {...register('wind_speed')}
-                          />
-                        </StandardField>
-                        <StandardField
-                          label="Precipitation Amount (mm)"
-                          helpText="Total rainfall during storm"
-                          error={errors.precipitation_amount?.message}
-                        >
-                          <StandardInput
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            max="1000"
-                            placeholder="150"
-                            {...register('precipitation_amount')}
-                          />
-                        </StandardField>
-                        <StandardField
-                          label="Duration (hours)"
-                          helpText="Storm duration in hours"
-                          error={errors.duration?.message}
-                        >
-                          <StandardInput
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            max="168"
-                            placeholder="6"
-                            {...register('duration')}
-                          />
-                        </StandardField>
-                        <StandardField
-                          label="Damage Assessment"
-                          helpText="Description of damage to crops/infrastructure"
-                        >
-                          <StandardInput
-                            type="text"
-                            placeholder="e.g., minor leaf damage, no structural damage"
-                            {...register('damage_assessment')}
-                          />
-                        </StandardField>
-                      </SimpleGrid>
-                    ) : type === 'HW' ? (
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label="Wind Speed (km/h)"
-                          helpText="Maximum wind speed recorded"
-                          error={errors.wind_speed?.message}
-                        >
-                          <StandardInput
-                            type="number"
-                            step="1"
-                            min="0"
-                            max="400"
-                            placeholder="80"
-                            {...register('wind_speed')}
-                          />
-                        </StandardField>
-                        <StandardField
-                          label="Duration (hours)"
-                          helpText="High wind period duration"
-                          error={errors.duration?.message}
-                        >
-                          <StandardInput
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            max="168"
-                            placeholder="3"
-                            {...register('duration')}
-                          />
-                        </StandardField>
-                        <StandardField
-                          label="Protection Measures"
-                          helpText="Actions taken to protect crops"
-                        >
-                          <StandardInput
-                            type="text"
-                            placeholder="e.g., secured equipment, protected young plants"
-                            {...register('protection_measures')}
-                          />
-                        </StandardField>
-                      </SimpleGrid>
-                    ) : type === 'HH' || type === 'LH' ? (
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label="Humidity Level (%)"
-                          helpText="Humidity percentage recorded (0-100%)"
-                          error={errors.humidity_level?.message}
-                        >
-                          <StandardInput
-                            type="number"
-                            step="1"
-                            min="0"
-                            max="100"
-                            placeholder="85"
-                            {...register('humidity_level')}
-                          />
-                        </StandardField>
-                        <StandardField
-                          label="Duration (hours)"
-                          helpText="How long unusual humidity lasted"
-                          error={errors.duration?.message}
-                        >
-                          <StandardInput
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            max="720"
-                            placeholder="48"
-                            {...register('duration')}
-                          />
-                        </StandardField>
-                        <StandardField
-                          label="Crop Impact"
-                          helpText="Effects on crop health and growth"
-                        >
-                          <StandardInput
-                            type="text"
-                            placeholder="e.g., increased disease pressure, slower growth"
-                            {...register('crop_impact')}
-                          />
-                        </StandardField>
-                      </SimpleGrid>
-                    ) : null}
-                  </SectionBox>
-                )}
-
-                {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
-                <SectionBox variant="default">
-                  <SectionHeader
-                    icon={FaSeedling}
-                    iconColor="green.500"
-                    title="Farmer's Field Notes & Consumer Transparency"
-                    badge="Consumer Transparency"
-                    badgeColorScheme="green"
-                  />
-
+                <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
                   <StandardField
-                    label="Observations & Notes"
-                    helpText="Share additional details about weather impact and farming response that help consumers understand your practices"
+                    label={intl.formatMessage({
+                      id: 'events.weather.fields.weatherEventType',
+                      defaultMessage: 'Weather Event Type'
+                    })}
+                    required
+                    error={errors.type?.message}
+                    helpText={intl.formatMessage({
+                      id: 'events.weather.help.documentWeatherConditionsThatAffectYourAgric',
+                      defaultMessage:
+                        'Document weather conditions that affect your agricultural operations'
+                    })}
                   >
-                    <StandardTextarea
-                      placeholder="Optional: Describe how this weather event affected your farming operations, what measures you took, and how it impacts the quality or safety of your produce."
-                      rows={4}
-                      {...register('observation')}
+                    <Controller
+                      name="type"
+                      control={mainInfoMethods.control}
+                      render={({ field }) => (
+                        <StandardSelect
+                          placeholder={intl.formatMessage({
+                            id: 'events.weather.placeholders.selectWeatherEventType',
+                            defaultMessage: 'Select weather event type'
+                          })}
+                          {...field}
+                        >
+                          <option value="FR">
+                            {intl.formatMessage({
+                              id: 'events.weather.options.frost',
+                              defaultMessage: 'Frost'
+                            })}
+                          </option>
+                          <option value="DR">
+                            {intl.formatMessage({
+                              id: 'events.weather.options.drought',
+                              defaultMessage: 'Drought'
+                            })}
+                          </option>
+                          <option value="HL">
+                            {intl.formatMessage({
+                              id: 'events.weather.options.hailstorms',
+                              defaultMessage: 'Hailstorms'
+                            })}
+                          </option>
+                          <option value="HT">
+                            {intl.formatMessage({
+                              id: 'events.weather.options.highTemperatures',
+                              defaultMessage: 'High Temperatures'
+                            })}
+                          </option>
+                          <option value="TS">
+                            {intl.formatMessage({
+                              id: 'events.weather.options.tropicalStorm',
+                              defaultMessage: 'Tropical Storm'
+                            })}
+                          </option>
+                          <option value="HW">
+                            {intl.formatMessage({
+                              id: 'events.weather.options.highWinds',
+                              defaultMessage: 'High Winds'
+                            })}
+                          </option>
+                          <option value="HH">
+                            {intl.formatMessage({
+                              id: 'events.weather.options.highHumidity',
+                              defaultMessage: 'High Humidity'
+                            })}
+                          </option>
+                          <option value="LH">
+                            {intl.formatMessage({
+                              id: 'events.weather.options.lowHumidity',
+                              defaultMessage: 'Low Humidity'
+                            })}
+                          </option>
+                        </StandardSelect>
+                      )}
                     />
                   </StandardField>
+
+                  {/* Event Name - Optional, auto-generated from weather type if empty */}
+                  <StandardField
+                    label={intl.formatMessage({
+                      id: 'events.weather.fields.eventName',
+                      defaultMessage: 'Event Name'
+                    })}
+                    helpText={intl.formatMessage({
+                      id: 'events.weather.help.autoGeneratedFromWeatherTypeCustomizeForSpec',
+                      defaultMessage:
+                        'Auto-generated from weather type. Customize for specific events.'
+                    })}
+                  >
+                    <StandardInput
+                      type="text"
+                      placeholder={`e.g., ${
+                        WEATHER_TYPE_NAMES[type] || 'Weather Event'
+                      } - North Field`}
+                      {...register('name')}
+                    />
+                  </StandardField>
+                </SimpleGrid>
+              </SectionBox>
+
+              {/* Section 2: Weather Details & Measurements (Dynamic based on type) */}
+              {type && (
+                <SectionBox variant="highlighted">
+                  <SectionHeader
+                    icon={FaThermometerHalf}
+                    iconColor="green.600"
+                    title={intl.formatMessage({
+                      id: 'events.weather.sections.weatherDetailsMeasurements',
+                      defaultMessage: 'Weather Details & Measurements'
+                    })}
+                    badge="Climate Context"
+                    badgeColorScheme="green"
+                  />
+
+                  {type === 'FR' ? (
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.lowerTemperature',
+                          defaultMessage: 'Lower Temperature'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.minimumTemperatureRecordedDuringFrostEvent',
+                          defaultMessage: 'Minimum temperature recorded during frost event'
+                        })}
+                        error={errors.lower_temperature?.message}
+                      >
+                        <HStack spacing={2} align="stretch">
+                          <Box flex="1">
+                            <StandardInput
+                              type="number"
+                              step="0.1"
+                              min="-58"
+                              max="122"
+                              placeholder="e.g., 28 (°F) or -2 (°C)"
+                              {...register('lower_temperature')}
+                            />
+                          </Box>
+                          <Box w="90px" flexShrink={0}>
+                            <StandardSelect {...register('temperature_unit')}>
+                              <option value="F">
+                                {intl.formatMessage({
+                                  id: 'events.weather.options.f',
+                                  defaultMessage: '°F'
+                                })}
+                              </option>
+                              <option value="C">
+                                {intl.formatMessage({
+                                  id: 'events.weather.options.c',
+                                  defaultMessage: '°C'
+                                })}
+                              </option>
+                            </StandardSelect>
+                          </Box>
+                        </HStack>
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.protectionMethod',
+                          defaultMessage: 'Protection Method'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.measuresTakenToProtectCrops',
+                          defaultMessage: 'Measures taken to protect crops'
+                        })}
+                      >
+                        <StandardInput
+                          type="text"
+                          placeholder="e.g., frost blankets, irrigation"
+                          {...register('way_of_protection')}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                  ) : type === 'DR' ? (
+                    <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.waterDeficitMm',
+                          defaultMessage: 'Water Deficit (mm)'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.accumulatedWaterDeficitDuringDroughtPeriod',
+                          defaultMessage: 'Accumulated water deficit during drought period'
+                        })}
+                        error={errors.water_deficit?.message}
+                      >
+                        <StandardInput
+                          type="number"
+                          step="1"
+                          min="0"
+                          max="500"
+                          placeholder="50"
+                          {...register('water_deficit')}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                  ) : type === 'HL' ? (
+                    // Sprint 2 Epic 2.1.3: Removed weight and diameter fields (excessive detail, no consumer impact)
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.durationMinutes',
+                          defaultMessage: 'Duration (minutes)'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.howLongTheHailstormLasted',
+                          defaultMessage: 'How long the hailstorm lasted'
+                        })}
+                        error={errors.duration?.message}
+                      >
+                        <StandardInput
+                          type="number"
+                          step="1"
+                          min="0"
+                          max="1440"
+                          placeholder="15"
+                          {...register('duration')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.protectionMethod',
+                          defaultMessage: 'Protection Method'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.measuresTakenToProtectCrops',
+                          defaultMessage: 'Measures taken to protect crops'
+                        })}
+                      >
+                        <StandardInput
+                          type="text"
+                          placeholder="e.g., hail nets, covered structures"
+                          {...register('way_of_protection')}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                  ) : type === 'HT' ? (
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.highestTemperature',
+                          defaultMessage: 'Highest Temperature'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.peakTemperatureDuringHeatEvent',
+                          defaultMessage: 'Peak temperature during heat event'
+                        })}
+                        error={errors.highest_temperature?.message}
+                      >
+                        <HStack spacing={2} align="stretch">
+                          <Box flex="1">
+                            <StandardInput
+                              type="number"
+                              step="0.1"
+                              min="-20"
+                              max="140"
+                              placeholder="e.g., 105 (°F) or 42 (°C)"
+                              {...register('highest_temperature')}
+                            />
+                          </Box>
+                          <Box w="90px" flexShrink={0}>
+                            <StandardSelect {...register('temperature_unit')}>
+                              <option value="F">
+                                {intl.formatMessage({
+                                  id: 'events.weather.options.f',
+                                  defaultMessage: '°F'
+                                })}
+                              </option>
+                              <option value="C">
+                                {intl.formatMessage({
+                                  id: 'events.weather.options.c',
+                                  defaultMessage: '°C'
+                                })}
+                              </option>
+                            </StandardSelect>
+                          </Box>
+                        </HStack>
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.startDate',
+                          defaultMessage: 'Start Date'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.whenTheHighTemperaturePeriodBegan',
+                          defaultMessage: 'When the high temperature period began'
+                        })}
+                      >
+                        <StandardInput type="datetime-local" {...register('start_date')} />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.endDate',
+                          defaultMessage: 'End Date'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.whenTheHighTemperaturePeriodEnded',
+                          defaultMessage: 'When the high temperature period ended'
+                        })}
+                      >
+                        <StandardInput type="datetime-local" {...register('end_date')} />
+                      </StandardField>
+                    </SimpleGrid>
+                  ) : type === 'TS' ? (
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.windSpeedKmH',
+                          defaultMessage: 'Wind Speed (km/h)'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.maximumWindSpeedRecorded',
+                          defaultMessage: 'Maximum wind speed recorded'
+                        })}
+                        error={errors.wind_speed?.message}
+                      >
+                        <StandardInput
+                          type="number"
+                          step="1"
+                          min="0"
+                          max="400"
+                          placeholder="120"
+                          {...register('wind_speed')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.precipitationAmountMm',
+                          defaultMessage: 'Precipitation Amount (mm)'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.totalRainfallDuringStorm',
+                          defaultMessage: 'Total rainfall during storm'
+                        })}
+                        error={errors.precipitation_amount?.message}
+                      >
+                        <StandardInput
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1000"
+                          placeholder="150"
+                          {...register('precipitation_amount')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.durationHours',
+                          defaultMessage: 'Duration (hours)'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.stormDurationInHours',
+                          defaultMessage: 'Storm duration in hours'
+                        })}
+                        error={errors.duration?.message}
+                      >
+                        <StandardInput
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          max="168"
+                          placeholder="6"
+                          {...register('duration')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.damageAssessment',
+                          defaultMessage: 'Damage Assessment'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.descriptionOfDamageToCropsInfrastructure',
+                          defaultMessage: 'Description of damage to crops/infrastructure'
+                        })}
+                      >
+                        <StandardInput
+                          type="text"
+                          placeholder="e.g., minor leaf damage, no structural damage"
+                          {...register('damage_assessment')}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                  ) : type === 'HW' ? (
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.windSpeedKmH',
+                          defaultMessage: 'Wind Speed (km/h)'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.maximumWindSpeedRecorded',
+                          defaultMessage: 'Maximum wind speed recorded'
+                        })}
+                        error={errors.wind_speed?.message}
+                      >
+                        <StandardInput
+                          type="number"
+                          step="1"
+                          min="0"
+                          max="400"
+                          placeholder="80"
+                          {...register('wind_speed')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.durationHours',
+                          defaultMessage: 'Duration (hours)'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.highWindPeriodDuration',
+                          defaultMessage: 'High wind period duration'
+                        })}
+                        error={errors.duration?.message}
+                      >
+                        <StandardInput
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          max="168"
+                          placeholder="3"
+                          {...register('duration')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.protectionMeasures',
+                          defaultMessage: 'Protection Measures'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.actionsTakenToProtectCrops',
+                          defaultMessage: 'Actions taken to protect crops'
+                        })}
+                      >
+                        <StandardInput
+                          type="text"
+                          placeholder="e.g., secured equipment, protected young plants"
+                          {...register('protection_measures')}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                  ) : type === 'HH' || type === 'LH' ? (
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.humidityLevel',
+                          defaultMessage: 'Humidity Level (%)'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.humidityPercentageRecorded0100',
+                          defaultMessage: 'Humidity percentage recorded (0-100%)'
+                        })}
+                        error={errors.humidity_level?.message}
+                      >
+                        <StandardInput
+                          type="number"
+                          step="1"
+                          min="0"
+                          max="100"
+                          placeholder="85"
+                          {...register('humidity_level')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.durationHours',
+                          defaultMessage: 'Duration (hours)'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.howLongUnusualHumidityLasted',
+                          defaultMessage: 'How long unusual humidity lasted'
+                        })}
+                        error={errors.duration?.message}
+                      >
+                        <StandardInput
+                          type="number"
+                          step="0.5"
+                          min="0"
+                          max="720"
+                          placeholder="48"
+                          {...register('duration')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.weather.fields.cropImpact',
+                          defaultMessage: 'Crop Impact'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.weather.help.effectsOnCropHealthAndGrowth',
+                          defaultMessage: 'Effects on crop health and growth'
+                        })}
+                      >
+                        <StandardInput
+                          type="text"
+                          placeholder="e.g., increased disease pressure, slower growth"
+                          {...register('crop_impact')}
+                        />
+                      </StandardField>
+                    </SimpleGrid>
+                  ) : null}
                 </SectionBox>
-              </>
-            )}
+              )}
+
+              {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
+              <SectionBox variant="default">
+                <SectionHeader
+                  icon={FaSeedling}
+                  iconColor="green.500"
+                  title={intl.formatMessage({
+                    id: 'events.weather.sections.farmerSFieldNotesConsumerTransparency',
+                    defaultMessage: "Farmer's Field Notes & Consumer Transparency"
+                  })}
+                  badge="Consumer Transparency"
+                  badgeColorScheme="green"
+                />
+
+                <StandardField
+                  label={intl.formatMessage({
+                    id: 'events.weather.fields.observationsNotes',
+                    defaultMessage: 'Observations & Notes'
+                  })}
+                  helpText={intl.formatMessage({
+                    id: 'events.weather.help.shareAdditionalDetailsAboutWeatherImpactAndF',
+                    defaultMessage:
+                      'Share additional details about weather impact and farming response that help consumers understand your practices'
+                  })}
+                >
+                  <StandardTextarea
+                    placeholder={intl.formatMessage({
+                      id: 'events.weather.placeholders.optionalDescribeHowThisWeatherEventAffectedY',
+                      defaultMessage:
+                        'Optional: Describe how this weather event affected your farming operations, what measures you took, and how it impacts the quality or safety of your produce.'
+                    })}
+                    rows={4}
+                    {...register('observation')}
+                  />
+                </StandardField>
+              </SectionBox>
+            </>
 
             {/* Phase 2.3: Custom Fields Section */}
             <CustomFieldsForm

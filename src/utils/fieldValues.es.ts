@@ -15,6 +15,21 @@
 // Certified (ROC)) and free-text the farmer typed.
 
 export const FIELD_VALUE_ES: Record<string, string> = {
+  'Yes, counts reached the level that calls for treatment':
+    'Sí, los conteos alcanzaron el nivel que justifica un tratamiento',
+  'No, counts stayed below the level that calls for treatment':
+    'No, los conteos se mantuvieron por debajo del nivel que justifica un tratamiento',
+
+  // Organic-approval answers shown on the consumer card (chemicalEvent.ts). These were
+  // never translated — FIELD_VALUE_ES sits outside the i18n JSON gates, so the miss was
+  // silent (`dict[s] || s` falls back to English).
+  'Yes, OMRI Listed': 'Sí, listado por OMRI',
+  'Yes, USDA NOP approved': 'Sí, aprobado por el USDA NOP',
+  'Yes, organic-equivalent': 'Sí, equivalente a orgánico',
+  'Transitional, farm is converting to organic':
+    'En transición, la finca se está convirtiendo a orgánico',
+  'No, conventional input': 'No, insumo convencional',
+
   'Active growth period': 'Período de crecimiento activo',
   'Aerial Spray': 'Aplicación aérea',
   'After harvest': 'Después de la cosecha',
@@ -120,6 +135,7 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Foliar Spray': 'Aspersión foliar',
   'Foliar spray': 'Aspersión foliar',
   Freezing: 'Heladas',
+  Fumigation: 'Fumigación',
   'Fruit Development': 'Desarrollo del fruto',
   'Fruit Set': 'Cuajado del fruto',
   'Fruit Set Stage': 'Etapa de cuajado del fruto',
@@ -450,5 +466,51 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'per tree': 'por árbol',
   'per 100 fruit': 'por 100 frutos',
   '% infested': '% infestado',
-  'per sample': 'por muestra'
+  'per sample': 'por muestra',
+
+  // Vertebrate traps (§E-7, 2026-07)
+  'Gopher trap': 'Trampa para tuzas',
+  'Ground squirrel trap': 'Trampa para ardillas terrestres',
+  // --- §E-2 lab-analysis sample matrices (soilEvent.ts SAMPLE_MATRIX_LABELS). 'Soil' and
+  // 'Compost' already appear above. ---
+  'Leaf tissue': 'Tejido foliar',
+  Petiole: 'Pecíolo',
+  Hull: 'Cáscara',
+  'Irrigation water': 'Agua de riego',
+  // --- §E-4 preventive cultural practices (pestEvent.ts CULTURAL_PRACTICE_LABELS) ---
+  'Mummy nut removal': 'Retiro de frutos momificados',
+  'Sanitation shake': 'Sacudida sanitaria',
+  'Brush / mummy shredding': 'Trituración de restos y momias',
+  'Pruning removal and destruction': 'Retiro y destrucción de restos de poda',
+  'Field sanitation': 'Sanidad del campo',
+  'Trap crop': 'Cultivo trampa',
+  // --- §E-3 micronutrients (chemicalEvent.ts MICRONUTRIENT_LABELS). Element symbols are
+  // universal; only the nutrient name is translated. ---
+  'Zinc (Zn)': 'Zinc (Zn)',
+  'Boron (B)': 'Boro (B)',
+  'Manganese (Mn)': 'Manganeso (Mn)',
+  'Iron (Fe)': 'Hierro (Fe)',
+  'Copper (Cu)': 'Cobre (Cu)',
+  'Calcium (Ca)': 'Calcio (Ca)',
+  'Magnesium (Mg)': 'Magnesio (Mg)',
+  'Sulfur (S)': 'Azufre (S)',
+  // --- Consumer harvest-grade wording (productionEvent.ts CONSUMER_HARVEST_GRADE_LABELS).
+  // Producer surfaces keep the trade term ("Grade B"); these are the shopper-facing forms. ---
+  'Meets export size and appearance standards':
+    'Cumple los estándares de tamaño y apariencia para exportación',
+  'Top grade, best size and appearance': 'Categoría superior: mejor tamaño y apariencia',
+  'Sold for juice or processing, same quality inside':
+    'Se vende para jugo o procesamiento: la misma calidad por dentro',
+  'Sold for processing, same quality inside':
+    'Se vende para procesamiento: la misma calidad por dentro',
+  'Grown for juice or processing': 'Cultivado para jugo o procesamiento',
+  'Organic premium grade': 'Categoría orgánica premium',
+  // --- Consumer sentence-form values (productionEvent.ts consumerFormatter). Bare "✓" and
+  // an unexplained "Chlorine (sodium hypochlorite)" were replaced with plain statements. ---
+  'Yes — and it was cleaned before use here': 'Sí — y se limpió antes de usarlo aquí',
+  'Yes — equipment was rinsed after sanitising':
+    'Sí — el equipo se enjuagó después de desinfectarlo',
+  'Chlorine — the same treatment used in drinking water, and permitted for washing organic produce':
+    'Cloro — el mismo tratamiento que se usa en el agua potable, y permitido para lavar productos orgánicos',
+  '1 hour': '1 hora'
 };

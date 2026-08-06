@@ -58,6 +58,7 @@ export const baseApi = createApi({
     'OSP',
     'SalesRecords',
     'StateOrganicRegistration',
+    'CertifierAccessLink',
     'LandownerAffidavit',
     'OSPAnnualUpdate',
     'OSPChangeNotification'

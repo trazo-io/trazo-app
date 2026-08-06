@@ -85,9 +85,19 @@ export type ChemicalSubtype = 'FE' | 'PE' | 'FU' | 'HE';
 
 export type EquipmentSubtype = 'MN' | 'RE' | 'CA' | 'FC' | 'BD' | 'EI';
 
-export type SoilManagementSubtype = 'ST' | 'PA' | 'OM' | 'CC' | 'TI' | 'CO' | 'GR' | 'HD' | 'NS';
+export type SoilManagementSubtype =
+  | 'ST'
+  | 'PA'
+  | 'OM'
+  | 'CC'
+  | 'TI'
+  | 'CO'
+  | 'GR'
+  | 'HD'
+  | 'NS'
+  | 'LA';
 
-export type PestManagementSubtype = 'SC' | 'BR' | 'TM' | 'PI' | 'TA' | 'IP';
+export type PestManagementSubtype = 'SC' | 'BR' | 'TM' | 'PI' | 'TA' | 'IP' | 'CU';
 
 export type BusinessSubtype = 'CE' | 'CM' | 'IN';
 
@@ -201,6 +211,20 @@ export interface FieldConfig<
 
   /** i18n message keys (never hardcoded strings) */
   labelKey: string;
+  /**
+   * Optional label used ONLY on consumer-facing surfaces (`consumer_card`,
+   * `consumer_timeline`, `preview`). Falls back to `labelKey` when absent.
+   *
+   * Producers and shoppers need different words for the same field, and `labelKey` alone
+   * forced one to lose. "Target Pest / Disease" is exactly right on the spray form — it is
+   * the grower's and the certifier's vocabulary — and near-meaningless on a shopper's card,
+   * where the honest phrasing is "What it protects against". Rewriting the shared label to
+   * suit the shopper would have degraded the form the farmer fills in every week.
+   *
+   * Use this ONLY where the audiences genuinely need different words. Most fields should
+   * keep one label for everyone.
+   */
+  consumerLabelKey?: string;
   helpKey?: string;
   tooltipKey?: string;
   placeholderKey?: string;
@@ -230,7 +254,11 @@ export interface FieldConfig<
   /**
    * Which surfaces this field renders on + what tier.
    * Omission from a surface's key = field not shown there.
-   * Example: { form: 'immediate', modal: 'secondary', consumer_card: 'details' }
+   * Example: { form: 'immediate', modal: 'secondary', consumer_card: 'secondary' }
+   *
+   * NOTE: `consumer_card` supports hero | immediate | secondary only — it has NO `details`
+   * tier (removed 2026-07-31). The resolver silently skips a tier a surface does not allow,
+   * so `consumer_card: 'details'` renders nowhere. See surfaces.ts and ADDING_FIELDS.md.
    */
   surfaces: Partial<Record<DisplaySurface, PriorityTier>>;
 
@@ -253,6 +281,21 @@ export interface FieldConfig<
   // --- Formatting ---
   /** Custom value-to-string formatter */
   formatter?: FieldFormatter<TValue, TEvent>;
+
+  /**
+   * Optional formatter used ONLY on consumer-facing surfaces; falls back to `formatter`.
+   *
+   * The companion to `consumerLabelKey`, for cases where the VALUE — not just the label —
+   * means something different to a shopper. "Grade B" is the motivating case: to a grower and
+   * a buyer it is a precise size/appearance sorting class, and to a shopper it reads as
+   * "this food is second-rate", which is both wrong and actively harmful to the farmer whose
+   * page it is.
+   *
+   * Returns ENGLISH, like every other registry formatter (the resolver has no `intl`), and is
+   * translated downstream by `localizeFieldValue` / `FIELD_VALUE_ES`. Any string added here
+   * MUST get a matching es entry in utils/fieldValues.es.ts or the Spanish page shows English.
+   */
+  consumerFormatter?: FieldFormatter<TValue, TEvent>;
 
   /** Companion unit field (e.g., 'volume_numeric' pairs with 'volume_unit') */
   unitField?: string;

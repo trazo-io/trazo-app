@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parse as parseIcu } from '@formatjs/icu-messageformat-parser';
 import enUS from '../lang/en-US.json';
 import es419 from '../lang/es-419.json';
 
@@ -23,17 +24,30 @@ describe('i18n locale parity', () => {
   });
 
   it('ICU arguments match between locales', () => {
-    // Comma-form arguments only ({count, plural …}, {pct, number …}) — words
-    // inside plural option text ("one {day}") are translatable and excluded.
-    const argRe = /\{(\w+)\s*,/g;
+    // Parsed, not regexed. The previous /\{(\w+)\s*,/ caught comma-form arguments
+    // ({count, plural …}) but missed bare ones ({days}), so a translation that simply
+    // dropped "{days}" passed this gate and shipped a sentence with a hole in it.
+    // A looser regex is not the fix: inside "{count, plural, one {day} other {days}}" the
+    // option body {day} is syntactically identical to an argument reference, so any pattern
+    // loose enough to catch {days} also reports day/days and every correct plural fails.
+    // Walking the parsed AST is the only way to tell the two apart.
+    const extract = (value: string): string => {
+      const names = new Set<string>();
+      const walkNodes = (nodes: any[]) => {
+        for (const node of nodes) {
+          // type 0 is a literal; every other node with a string `value` is an argument name.
+          if (node.type !== 0 && typeof node.value === 'string') names.add(node.value);
+          if (node.options) for (const opt of Object.values<any>(node.options)) walkNodes(opt.value);
+          if (node.children) walkNodes(node.children);
+        }
+      };
+      walkNodes(parseIcu(value));
+      return [...names].sort().join(',');
+    };
+
     const mismatches: string[] = [];
     for (const key of enKeys) {
       if (!esKeys.has(key)) continue;
-      const extract = (s: string) =>
-        [...String(s).matchAll(argRe)]
-          .map((m) => m[1])
-          .sort()
-          .join(',');
       const en = extract((enUS as Record<string, string>)[key]);
       const es = extract((es419 as Record<string, string>)[key]);
       if (en !== es) mismatches.push(`${key} (en: ${en || '∅'} vs es: ${es || '∅'})`);

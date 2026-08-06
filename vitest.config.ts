@@ -32,6 +32,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // vite.config.ts aliases bare `src/...` imports, which app code uses widely
+      // (e.g. `import { useFormFields } from 'src/hooks/useFormFields'`). Without the
+      // same alias here, any test that mounts a real view fails to resolve at import
+      // time — which is why no test had ever rendered a form component.
+      'src': path.resolve(__dirname, './src'),
       'components': path.resolve(__dirname, './src/components'),
       'views': path.resolve(__dirname, './src/views'),
       'utils': path.resolve(__dirname, './src/utils'),

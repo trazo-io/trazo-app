@@ -93,6 +93,9 @@ interface ParcelModalProps {
     name: string;
     description?: string;
     area: number;
+    /** Unit `area` is expressed in. Consumer surfaces pass acres (US customary); the two
+        literals below used to hardcode "hectares"/"ha" and would mislabel the value. */
+    areaUnit?: string;
     polygon?: any;
     map_metadata?: {
       center?: [number, number];
@@ -163,7 +166,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
             py={1}
             borderRadius="full"
           >
-            {parcelData.area} hectares
+            {parcelData.area} {parcelData.areaUnit || 'hectares'}
           </Badge>
         </HStack>
       </VStack>
@@ -197,7 +200,9 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
               <StatLabel color="gray.500">
                 {intl.formatMessage({ id: 'consumer.modal.area', defaultMessage: 'Area' })}
               </StatLabel>
-              <StatNumber color={accentColor}>{parcelData.area} ha</StatNumber>
+              <StatNumber color={accentColor}>
+                {parcelData.area} {parcelData.areaUnit === 'acres' ? 'ac' : 'ha'}
+              </StatNumber>
             </Stat>
             {parcelData.productions_completed !== undefined && (
               <Stat>

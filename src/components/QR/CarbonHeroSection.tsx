@@ -18,8 +18,7 @@ import {
 import { keyframes } from '@emotion/react';
 import { motion } from 'framer-motion';
 import { useIntl } from 'react-intl';
-import { FaStar, FaCheckCircle, FaInfoCircle, FaEye } from 'react-icons/fa';
-import { BsShieldCheck } from 'react-icons/bs';
+import { FaStar, FaCheckCircle, FaInfoCircle } from 'react-icons/fa';
 import { formatHarvestDate } from 'utils/consumerDisplay';
 
 const MotionBox = motion(Box);
@@ -61,7 +60,6 @@ interface CarbonScoreData {
 interface TrustIndicatorData {
   confidenceScore: number;
   isUSDAVerified: boolean;
-  isBlockchainVerified: boolean;
   reviewsCount: number;
   averageRating?: number | null;
   scansCount: number;
@@ -162,82 +160,13 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   // point 4a risk — so it has been removed. One neutral, factual message regardless of score.
   const getConsumerMessage = (score: number) => getTransparencyMessage(score);
 
-  const getRelatableComparison = (_footprint: number) => {
-    // In transparency mode, show transparency-related information instead of carbon comparisons
-    if (carbonData?.level === 'transparency') {
-      const score = carbonData.score || 0;
-      const eventCount = Math.round((score / 100) * 15); // Approximate events based on score
-
-      if (score >= 95) {
-        return {
-          icon: BsShieldCheck,
-          text: intl.formatMessage({
-            id: 'consumer.hero.comparisonCompleteText',
-            defaultMessage: 'Complete farm story from planting to harvest'
-          }),
-          color: 'green.600',
-          emphasis: intl.formatMessage({
-            id: 'consumer.hero.comparisonCompleteEmphasis',
-            defaultMessage: 'Every farming step shared with you'
-          })
-        };
-      } else if (score >= 85) {
-        return {
-          icon: FaCheckCircle,
-          text: intl.formatMessage({
-            id: 'consumer.hero.comparisonRichText',
-            defaultMessage: 'Rich story of how your food was grown'
-          }),
-          color: 'green.500',
-          emphasis: intl.formatMessage({
-            id: 'consumer.hero.comparisonRichEmphasis',
-            defaultMessage: 'Detailed farming journey available'
-          })
-        };
-      } else if (score >= 70) {
-        return {
-          icon: FaInfoCircle,
-          text: intl.formatMessage({
-            id: 'consumer.hero.comparisonKeyText',
-            defaultMessage: 'Key farming moments shared with care'
-          }),
-          color: 'blue.500',
-          emphasis: intl.formatMessage({
-            id: 'consumer.hero.comparisonKeyEmphasis',
-            defaultMessage: 'Important growing steps documented'
-          })
-        };
-      } else {
-        return {
-          icon: FaEye,
-          text: intl.formatMessage({
-            id: 'consumer.hero.comparisonEssentialText',
-            defaultMessage: 'Essential farming practices revealed'
-          }),
-          color: 'orange.500',
-          emphasis: intl.formatMessage({
-            id: 'consumer.hero.comparisonEssentialEmphasis',
-            defaultMessage: 'Basic farm story building'
-          })
-        };
-      }
-    }
-
-    // Non-transparency ("carbon mode") is never used on the consumer page (ProductDetail
-    // passes level:'transparency'). The old carbon-mode comparison here returned
-    // unsubstantiated claims ("Removes N miles worth of CO₂", "Actually helps the
-    // environment!", "Consider offsetting") — FTC 16 CFR 260.3(c)/260.5 risk — and has been
-    // removed. Neutral fallback for the unreachable path.
-    return {
-      icon: FaEye,
-      text: intl.formatMessage({
-        id: 'consumer.hero.comparisonDocumentedPractices',
-        defaultMessage: 'Documented growing practices'
-      }),
-      color: 'green.500',
-      emphasis: ''
-    };
-  };
+  // NOTE: a `getRelatableComparison()` helper used to live here. It was already dead
+  // (defined, never called), but it built a four-tier verdict ladder off the self-reported
+  // score — "Complete farm story" / "Rich story" / "Key farming moments" / "Basic farm story
+  // building" — which is a self-assigned sustainability grade in all but name. Deleted
+  // 2026-07 rather than neutralized, because a dead helper is one call site away from
+  // re-exposing it. EU ECGT 2024/825 (live 2026-09-27) + FTC 16 CFR 260.6.
+  // Its carbon-mode branch had already been stripped for unsubstantiated offset claims.
 
   if (isLoading) {
     return (
@@ -389,7 +318,11 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               fontWeight="bold"
               lineHeight="1.1"
               letterSpacing="-0.02em"
-              noOfLines={2}
+              // 3 lines at 375px (2026-08-01). The badge reserves 190px, leaving the title a
+              // 169px column — at 24px that is ~13 characters a line, so a two-line clamp cut
+              // "Solana Verde Organic Ranch (DEMO)" to "Solana Verde / Organic Ranc" with no
+              // ellipsis. The farm's own name is the most identity-critical text on the page.
+              noOfLines={{ base: 3, md: 2 }}
               textShadow={heroPhotoUrl ? '0 2px 12px rgba(0,0,0,0.4)' : 'none'}
             >
               {productData?.company.name ?? 'Farm'}
@@ -398,11 +331,16 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               fontSize={{ base: 'sm', md: 'md' }}
               fontWeight="medium"
               opacity={heroPhotoUrl ? 0.95 : 0.8}
-              noOfLines={2}
+              // Same 169px column as the title above: "Avocado · Lot SVR-2026-HA-001 ·
+              // Harvested Apr 14, 2026" is ~55 characters and was being cut at "Harvested Apr".
+              noOfLines={{ base: 3, md: 2 }}
               textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.4)' : 'none'}
             >
               {productData?.name ??
-                intl.formatMessage({ id: 'consumer.hero.productFallback', defaultMessage: 'Product' })}
+                intl.formatMessage({
+                  id: 'consumer.hero.productFallback',
+                  defaultMessage: 'Product'
+                })}
               {lotId
                 ? intl.formatMessage(
                     { id: 'consumer.hero.lotLabel', defaultMessage: ' · Lot {lot}' },
@@ -450,9 +388,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                 align="center"
                 justify="center"
                 boxShadow={
-                  heroPhotoUrl
-                    ? '0 8px 32px rgba(0, 0, 0, 0.18)'
-                    : '0 4px 16px rgba(0, 0, 0, 0.08)'
+                  heroPhotoUrl ? '0 8px 32px rgba(0, 0, 0, 0.18)' : '0 4px 16px rgba(0, 0, 0, 0.08)'
                 }
               >
                 {certifiedLabel ? (
@@ -582,12 +518,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
         >
           {message.primary}
         </Text>
-        <Text
-          fontSize={{ base: 'sm', md: 'md' }}
-          color={mutedColor}
-          maxW="2xl"
-          lineHeight="1.5"
-        >
+        <Text fontSize={{ base: 'sm', md: 'md' }} color={mutedColor} maxW="2xl" lineHeight="1.5">
           {message.secondary}
         </Text>
       </MotionVStack>

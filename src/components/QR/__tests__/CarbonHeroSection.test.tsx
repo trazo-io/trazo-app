@@ -10,7 +10,16 @@ import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { ChakraProvider } from '@chakra-ui/react';
+import { IntlProvider } from 'react-intl';
 import { CarbonHeroSection } from '../CarbonHeroSection';
+import enUS from '../../../i18n/lang/en-US.json';
+
+// The component calls useIntl(), so it needs an IntlProvider ancestor. Without one the
+// whole suite threw at render and **zero tests ran** — these are the claim-safety guards
+// (no numeric score, no letter grade on the consumer hero: FTC 16 CFR 260.6(d) / EU ECGT),
+// so a silently-not-running suite is exactly the wrong thing to have here.
+// Real en-US catalogue, not a stub, so a missing key surfaces as a raw id in an assertion.
+const messages = enUS as unknown as Record<string, string>;
 
 const baseProps = {
   carbonData: { score: 100, footprint: 21.5, level: 'transparency' },
@@ -24,7 +33,9 @@ const baseProps = {
 const renderHero = (props: Record<string, unknown> = {}) =>
   render(
     <ChakraProvider>
-      <CarbonHeroSection {...(baseProps as any)} {...props} />
+      <IntlProvider locale="en" messages={messages} onError={() => {}}>
+        <CarbonHeroSection {...(baseProps as any)} {...props} />
+      </IntlProvider>
     </ChakraProvider>
   );
 

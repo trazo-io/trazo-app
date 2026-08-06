@@ -10,10 +10,18 @@ import {
   useColorModeValue
 } from "@chakra-ui/react";
 import { FaCamera, FaCheck } from "react-icons/fa";
+import { useIntl } from "react-intl";
+
+// Single source of truth (also used by TransparencyDashboard.tsx) — see the file's own header
+// for why this is no longer a locally-duplicated object.
+import { CATEGORY_WEIGHTS } from "./transparencyCategoryWeights";
 
 interface CategoryData {
   actual_count: number;
   photo_verified_count: number;
+  /** Event coverage BEFORE the photo penalty. Optional: older cached payloads predate it. */
+  records_completeness_percentage?: number;
+  /** Event coverage AFTER the photo penalty — drives the score, not this display. */
   completeness_percentage: number;
   status: string;
   requires_photos: boolean;
@@ -24,24 +32,20 @@ interface TransparencyCategoryBreakdownProps {
   compact?: boolean;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  production: "Growing & Harvesting",
-  chemical: "Chemical Applications",
-  soil: "Soil Management",
-  pest: "Pest Management",
-  business: "Business & Certifications",
-  weather: "Weather Monitoring",
-  general: "General Documentation"
-};
-
-const CATEGORY_WEIGHTS: Record<string, number> = {
-  production: 30,
-  chemical: 20,
-  soil: 18,
-  pest: 12,
-  business: 10,
-  weather: 5,
-  general: 5
+// Message ids, resolved through intl at render time.
+//
+// NB these are the PRODUCER-side category names ("Chemical Applications"), which differ from
+// the consumer-facing set in TransparencyDashboard's CATEGORY_CONSUMER_NAMES ("Treatment
+// Details"). Both vocabularies are live on the same page today; the wording is preserved
+// as-is here so this i18n pass changes no visible copy.
+const CATEGORY_LABEL_IDS: Record<string, string> = {
+  production: "transparency.breakdownCategoryProduction",
+  chemical: "transparency.breakdownCategoryChemical",
+  soil: "transparency.breakdownCategorySoil",
+  pest: "transparency.breakdownCategoryPest",
+  business: "transparency.breakdownCategoryBusiness",
+  weather: "transparency.breakdownCategoryWeather",
+  general: "transparency.breakdownCategoryGeneral"
 };
 
 const CATEGORY_ORDER = [
@@ -72,6 +76,7 @@ const TransparencyCategoryBreakdown: React.FC<TransparencyCategoryBreakdownProps
   categoryBreakdown,
   compact = false
 }) => {
+  const intl = useIntl();
   const rowBg = useColorModeValue("gray.50", "gray.700");
   const textColor = useColorModeValue("gray.700", "gray.200");
   const mutedColor = useColorModeValue("gray.500", "gray.400");
@@ -91,12 +96,26 @@ const TransparencyCategoryBreakdown: React.FC<TransparencyCategoryBreakdownProps
   return (
     <VStack spacing={compact ? 2 : 3} align="stretch">
       {allEntries.map(([key, cat]) => {
-        const label = CATEGORY_LABELS[key] || key;
+        const labelId = CATEGORY_LABEL_IDS[key];
+        const label = labelId ? intl.formatMessage({ id: labelId }) : key;
         const weight = CATEGORY_WEIGHTS[key] || 5;
-        const completeness = cat.completeness_percentage || 0;
         const hasEvents = cat.actual_count > 0;
-        const colorScheme = getProgressColorScheme(completeness, hasEvents);
-        const borderColor = getBorderColor(completeness, hasEvents);
+
+        // This row reports RECORD COVERAGE, not the score.
+        //
+        // `completeness_percentage` is record coverage multiplied by a photo penalty
+        // (0.5 + 0.5 x rate for essential subtypes). Showing that product here told a grower with
+        // 20 complete spray records and no photos that they were at 50% — on records that satisfy
+        // NOP 205.103, which asks for auditable records and never for photographs. Photos serve the
+        // consumer QR page; they are reported separately below as a count.
+        //
+        // The penalty is untouched and still drives the transparency score. It just no longer
+        // masquerades as documentation completeness. Falls back to the penalized value only for
+        // payloads cached before the backend started returning the pre-penalty number.
+        const records =
+          cat.records_completeness_percentage ?? cat.completeness_percentage ?? 0;
+        const colorScheme = getProgressColorScheme(records, hasEvents);
+        const borderColor = getBorderColor(records, hasEvents);
         const photosMissing =
           cat.requires_photos && hasEvents && cat.photo_verified_count < cat.actual_count;
         const allPhotosVerified =
@@ -140,17 +159,22 @@ const TransparencyCategoryBreakdown: React.FC<TransparencyCategoryBreakdownProps
                     color={allPhotosVerified ? "green.500" : photosMissing ? "orange.400" : "gray.400"}
                   />
                 )}
-                {completeness >= 90 && hasEvents && (
+                {records >= 90 && hasEvents && (
                   <Icon as={FaCheck} boxSize={3} color="green.500" />
                 )}
                 <Text fontSize="xs" color={mutedColor} whiteSpace="nowrap">
-                  {hasEvents ? `${cat.actual_count} event${cat.actual_count !== 1 ? "s" : ""}` : "No events"}
+                  {hasEvents
+                    ? intl.formatMessage(
+                        { id: "transparency.breakdownEventCount" },
+                        { count: cat.actual_count }
+                      )
+                    : intl.formatMessage({ id: "transparency.breakdownNoEvents" })}
                 </Text>
               </HStack>
             </HStack>
 
             <Progress
-              value={completeness}
+              value={records}
               colorScheme={colorScheme}
               borderRadius="full"
               size="sm"
@@ -160,14 +184,25 @@ const TransparencyCategoryBreakdown: React.FC<TransparencyCategoryBreakdownProps
 
             {!compact && (
               <HStack justify="space-between" spacing={2}>
+                {/* Facts, always — two independent counts that cannot contradict each other.
+                    The old line switched between "Fully documented", a photo-coverage string and a
+                    percentage depending on thresholds, which is how "Fully documented" ended up
+                    printed directly above "5 events are missing photo documentation". */}
                 <Text fontSize="xs" color={mutedColor}>
-                  {completeness >= 90 && hasEvents
-                    ? "Fully documented"
-                    : !hasEvents
-                    ? `Log events to contribute ${weight}% weight`
-                    : photosMissing
-                    ? `${cat.photo_verified_count} of ${cat.actual_count} events have photos`
-                    : `${Math.round(completeness)}% complete`}
+                  {!hasEvents
+                    ? intl.formatMessage(
+                        { id: "transparency.breakdownLogEventsForWeight" },
+                        { weight }
+                      )
+                    : cat.requires_photos
+                    ? intl.formatMessage(
+                        { id: "transparency.breakdownRecordsAndPhotos" },
+                        { logged: cat.actual_count, photos: cat.photo_verified_count }
+                      )
+                    : intl.formatMessage(
+                        { id: "transparency.breakdownRecordsOnly" },
+                        { logged: cat.actual_count }
+                      )}
                 </Text>
                 {hasEvents && (
                   <Badge
@@ -176,7 +211,7 @@ const TransparencyCategoryBreakdown: React.FC<TransparencyCategoryBreakdownProps
                     variant="subtle"
                     borderRadius="full"
                   >
-                    {Math.round(completeness)}%
+                    {Math.round(records)}%
                   </Badge>
                 )}
               </HStack>

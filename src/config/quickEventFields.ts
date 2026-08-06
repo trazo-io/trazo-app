@@ -371,10 +371,13 @@ export const harvestFields: QuickEventTypeConfig = {
         { value: 'strip_picking', labelKey: 'app.harvestMethod.stripPicking' }
       ]
     },
-    // Brix Levels - sugar content measurement (premium fruit quality indicator)
+    // Brix Level - sugar content measurement (premium fruit quality indicator).
+    // D12 — was `brix_levels` as free text, a legacy extra_data key. `brix_level` is the real
+    // DecimalField with a 0–45 validator and explicit serializer validation, so Quick-Add was
+    // storing an unvalidated string in a different place from the manual form's number.
     {
-      name: 'brix_levels',
-      type: 'text',
+      name: 'brix_level',
+      type: 'number',
       labelKey: 'app.brixLevels',
       helpKey: 'app.brixLevelsHelp',
       placeholderKey: 'app.brixLevelsPlaceholder',
@@ -819,11 +822,15 @@ export const thinningFields: QuickEventTypeConfig = {
   ]
 };
 
-// Equipment Maintenance Event (EquipmentEvent Type: MN)
+// Equipment Maintenance Event (ProductionEvent subtype: EM)
 // Aligned with ProductionTab.jsx - Uses SSOT imports
 export const equipmentMaintenanceFields: QuickEventTypeConfig = {
   templateId: 'equipment_maintenance',
-  eventType: 'MN', // EquipmentEvent.MAINTENANCE - valid backend choice
+  // D12 — was 'MN', an EquipmentEvent code. EquipmentEvent is deprecated: equipment work is a
+  // ProductionEvent 'EM' subtype now, and every seeded template agrees (backend_event_type=1
+  // with type='EM'). 'MN' is not in ProductionEvent's choices, so the subtype this config
+  // declared could not be stored by the model the template actually creates.
+  eventType: 'EM',
   quickFields: [
     // Equipment Type
     {
@@ -2209,7 +2216,7 @@ const fieldNameMapping: Record<string, string> = {
   buffer_zone_meters: 'buffer_zone_meters',
   // Harvest fields (stored in extra_data by backend serializer)
   harvest_method: 'harvest_method',
-  brix_levels: 'brix_levels'
+  brix_level: 'brix_level'
   // Note: observation field is handled separately by QuickAddEvent.tsx
 };
 
@@ -2249,12 +2256,20 @@ export function getFieldsForBackend(
 
   // Map Quick Event equipment_operation_type strings to backend 2-char codes
   if (result.equipment_operation_type) {
+    // Codes must match EQUIPMENT_OPERATION_TYPE in trazo-back/common/field_registry.py.
+    //
+    // 'cleaning' previously mapped to 'MN' (Maintenance), silently discarding the 'CL'
+    // code. That is compliance data loss, not a cosmetic mismatch: the entire
+    // § 205.272 equipment-cleaning log in the certifier PDF is gated on
+    // `equipment_operation_type == "CL"` (see audit_export_service._build_equipment_section),
+    // so every cleaning event logged through Quick Add vanished from the export a
+    // certifier reads — while still looking recorded in the app.
     const operationTypeMap: Record<string, string> = {
-      'routine_maintenance': 'MN',
-      'repair': 'RE',
-      'calibration': 'CA',
-      'cleaning': 'MN',
-      'inspection': 'EI',
+      routine_maintenance: 'MN',
+      repair: 'RE',
+      calibration: 'CA',
+      cleaning: 'CL',
+      inspection: 'EI'
     };
     result.equipment_operation_type =
       operationTypeMap[result.equipment_operation_type as string] ||
