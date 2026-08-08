@@ -98,20 +98,14 @@ export default function CarbonJourney() {
     const hasVerification = production.is_verified || production.blockchain_verified;
     const hasPhotos = production.images?.length > 0 || production.photo_count > 0;
 
-    // Transparency is about documentation, not carbon scores
-    // More documented events = higher transparency
-    let transparencyLevel = 'low';
-    let color = 'gray';
-
-    if (eventsCount >= 10 || hasVerification) {
-      transparencyLevel = 'high';
-      color = 'green';
-    } else if (eventsCount >= 5 || hasPhotos) {
-      transparencyLevel = 'medium';
-      color = 'blue';
-    }
-
-    return { eventsCount, transparencyLevel, color, hasVerification, hasPhotos };
+    // Documentation FACTS only — no derived tier.
+    //
+    // This used to bucket the farm into high/medium/low and map that to a green/blue/gray
+    // badge. Even with no words attached, a colour ladder keyed to thresholds Trazo invented
+    // is a self-assigned grade on a consumer surface: the label class ECGT 2024/825 bans
+    // (live 2026-09-27) and an FTC 16 CFR 260.6 general-benefit risk. The badge still shows
+    // the event COUNT, which is verifiable; the colour is now constant so it ranks nothing.
+    return { eventsCount, color: 'gray', hasVerification, hasPhotos };
   };
 
   return (

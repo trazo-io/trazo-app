@@ -10,7 +10,9 @@ import {
   OSP_ACTIVATE_URL,
   OSP_ADD_APPROVED_INPUT_URL,
   OSP_CHANGE_NOTIFICATIONS_URL,
+  OSP_ATTACHMENTS_URL,
   OSP_NEW_VERSION_URL,
+  OSP_RECORD_TYPES_URL,
   OSP_REMOVE_APPROVED_INPUT_URL,
   OSP_SUBMIT_URL,
   OSP_URL
@@ -22,6 +24,8 @@ import {
   InputVerifyResult,
   OSP,
   OSPChangeNotification,
+  OSPAttachmentsResponse,
+  OSPRecordTypesResponse,
   OSPSummary,
   UpdateOSPData
 } from 'types/osp';
@@ -227,6 +231,49 @@ const ospApi = baseApi.injectEndpoints({
       ]
     }),
 
+    // Common OSP § 11 "Records Maintained" — evidence derived from logged events.
+    // The response separates `suggested` (we found records) from `confirmed` (the operator
+    // says so). Only the latter may render as a ticked checkbox: 7 CFR 205.201(a) makes the
+    // producer the author of the plan.
+    getOSPRecordTypes: build.query<OSPRecordTypesResponse, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_RECORD_TYPES_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSPRecordTypes', id: Number(ospId) }]
+    }),
+
+    // Record the OPERATOR's confirmation for one or more § 11 record types. This is the only
+    // path from evidence to an assertion — never call it from a derivation or a bulk action.
+    confirmOSPRecordTypes: build.mutation<
+      OSPRecordTypesResponse,
+      OSPOne & { keys: string[]; confirmed?: boolean }
+    >({
+      query: ({ companyId, farmId, ospId, keys, confirmed = true }) => ({
+        url: OSP_RECORD_TYPES_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body: { keys, confirmed },
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSPRecordTypes', id: Number(ospId) },
+        { type: 'OSP', id: Number(ospId) }
+      ]
+    }),
+
+    // Common OSP required attachments — per-workbook row + blank-cell counts. The files
+    // themselves download straight from OSP_ATTACHMENTS_URL with ?workbook=, not through RTK
+    // Query, because the response is an .xlsx attachment rather than JSON.
+    getOSPAttachments: build.query<OSPAttachmentsResponse, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_ATTACHMENTS_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSPRecordTypes', id: Number(ospId) }]
+    }),
+
     // Resolve a free-text product name to NL/OMRI matches. Used by the
     // Approved Inputs typeahead. Backend route: /certifications/verify-input/?name=
     verifyInput: build.query<InputVerifyResult, { name: string; omri_id?: string }>({
@@ -253,6 +300,9 @@ export const {
   useGetOSPChangeNotificationsQuery,
   useCreateOSPChangeNotificationMutation,
   useDeleteOSPChangeNotificationMutation,
+  useGetOSPRecordTypesQuery,
+  useGetOSPAttachmentsQuery,
+  useConfirmOSPRecordTypesMutation,
   useLazyVerifyInputQuery
 } = ospApi;
 

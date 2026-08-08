@@ -33,7 +33,7 @@ interface StandardImageGalleryProps {
   enablePreview?: boolean;
   showImageCount?: boolean;
   fallbackImage?: string;
-  height?: string;
+  height?: string | object;
   borderRadius?: string;
   showEmptyState?: boolean;
   emptyStateIcon?: React.ComponentType;
@@ -71,7 +71,37 @@ const StandardImageGallery = ({
   const overlayBg = useColorModeValue('blackAlpha.600', 'blackAlpha.800');
 
   const isMobile = useBreakpointValue({ base: true, lg: false });
-  const gridColumns = useBreakpointValue({ base: 1, md: 2, lg: variant === 'compact' ? 2 : 3 });
+
+  /**
+   * Indices whose image could not be loaded.
+   *
+   * Both default fallbacks in this codebase point at files that DO NOT EXIST —
+   * `/assets/img/BgMusicCard.png` here and `/images/placeholder.jpg` in S3Image — so a broken
+   * URL 404'd the fallback too and the tile rendered as a silent grey rectangle. On the
+   * production profile that produced two blank tiles and a flat dark box (the "+N" scrim laid
+   * over nothing). A failed photo now renders an explicit empty state instead.
+   */
+  const [failedIndices, setFailedIndices] = useState<Set<number>>(new Set());
+  const markFailed = useCallback((index: number) => {
+    setFailedIndices((prev) => {
+      if (prev.has(index)) return prev;
+      const next = new Set(prev);
+      next.add(index);
+      return next;
+    });
+  }, []);
+  /**
+   * Columns must not be fewer than the number of tiles we intend to show, or the last tile
+   * wraps onto a row of its own with dead space beside it. That is exactly what
+   * `maxDisplayImages={4}` did against a hard-coded 3-column grid on the production profile:
+   * three thumbnails, then the "+N more" tile stranded on row two.
+   */
+  const desktopColumns = Math.min(maxDisplayImages, variant === 'compact' ? 2 : 4);
+  const gridColumns = useBreakpointValue({
+    base: Math.min(maxDisplayImages, 2),
+    md: Math.min(maxDisplayImages, 3),
+    lg: desktopColumns
+  });
 
   // Helper function to extract image data
   const getImageData = useCallback(
@@ -287,47 +317,64 @@ const StandardImageGallery = ({
               }
               transition="all 0.2s ease"
             >
-              <S3Image
-                src={imageData.url}
-                alt={imageData.name || `Gallery image ${index + 1}`}
-                w="100%"
-                h="100%"
-                objectFit="cover"
-                fallbackSrc={fallbackImage}
-                lazy={true}
-                presignedUrl={presignedUrls[imageData.url]}
-              />
-
-              {/* Show remaining count on last image */}
-              {index === maxDisplayImages - 1 && remainingCount > 0 && (
-                <Box
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  right={0}
-                  bottom={0}
-                  bg="blackAlpha.700"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  backdropFilter="blur(2px)"
-                >
-                  <VStack spacing={2}>
-                    <Text color="white" fontSize="2xl" fontWeight="bold">
-                      +{remainingCount}
-                    </Text>
-                    <Text color="whiteAlpha.900" fontSize="sm" fontWeight="medium">
-                      {intl.formatMessage(
-                        {
-                          id: 'gallery.morePhotos',
-                          defaultMessage: '{count, plural, one {more photo} other {more photos}}'
-                        },
-                        { count: remainingCount }
-                      )}
-                    </Text>
-                  </VStack>
-                </Box>
+              {failedIndices.has(index) ? (
+                <EmptyImageState
+                  variant="small"
+                  height="100%"
+                  borderRadius={borderRadius}
+                  primaryText={intl.formatMessage({
+                    id: 'gallery.imageUnavailable',
+                    defaultMessage: 'Photo unavailable'
+                  })}
+                />
+              ) : (
+                <S3Image
+                  src={imageData.url}
+                  alt={imageData.name || `Gallery image ${index + 1}`}
+                  w="100%"
+                  h="100%"
+                  objectFit="cover"
+                  fallbackSrc={fallbackImage}
+                  lazy={true}
+                  presignedUrl={presignedUrls[imageData.url]}
+                  onError={() => markFailed(index)}
+                />
               )}
+
+              {/* Show remaining count on last image.
+                  Skipped when the underlying photo failed: a dark scrim over an empty tile is
+                  the flat grey box that made this gallery look broken. */}
+              {index === maxDisplayImages - 1 &&
+                remainingCount > 0 &&
+                !failedIndices.has(index) && (
+                  <Box
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    right={0}
+                    bottom={0}
+                    bg="blackAlpha.700"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    backdropFilter="blur(2px)"
+                  >
+                    <VStack spacing={2}>
+                      <Text color="white" fontSize="2xl" fontWeight="bold">
+                        +{remainingCount}
+                      </Text>
+                      <Text color="whiteAlpha.900" fontSize="sm" fontWeight="medium">
+                        {intl.formatMessage(
+                          {
+                            id: 'gallery.morePhotos',
+                            defaultMessage: '{count, plural, one {more photo} other {more photos}}'
+                          },
+                          { count: remainingCount }
+                        )}
+                      </Text>
+                    </VStack>
+                  </Box>
+                )}
 
               {/* Expand overlay on hover */}
               {enablePreview &&

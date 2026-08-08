@@ -268,7 +268,22 @@ const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
     valueType: 'enum',
     enumSource: 'growth_stages',
     surfaces: { modal: 'details' }
-  }
+  },
+  {
+    // Farm block / row / section beneath the parcel. Present on CommonEvent, so every event
+    // type carries it — and it is already emitted as CA PUR box 22 (Block ID) by
+    // pur_export_service.py. It is also where a COG Pro migration lands "Row/Section ID".
+    name: 'block_id',
+    labelKey: 'events.common.fields.blockId',
+    valueType: 'string',
+    // Modal only, deliberately. The value DISPLAYS whenever it is set — including when a COG Pro
+    // migration lands "Row/Section ID" here — but there is no form input, because this tab has no
+    // Field Details section and adding one for a single optional field would bloat the form.
+    // Block identity is regulatory for pesticide applications (CA PUR box 22 -> ChemicalEvent)
+    // and agronomically meaningful for production/soil/pest work; a weather observation, a
+    // business transaction and a general note are not block-scoped in the same way.
+    surfaces: { modal: 'details' }
+  },
 ];
 
 export const weatherEventRegistry: EventRegistryEntry<WeatherSubtype, WeatherData> = {

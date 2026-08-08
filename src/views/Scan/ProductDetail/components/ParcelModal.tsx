@@ -74,6 +74,7 @@ import {
 import CardWithMap from 'components/Map/CardWithMap';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 
 // 🎯 Utility to format field values as Title Case (e.g., "organic" → "Organic", "fair_trade" → "Fair Trade")
 const formatDisplayValue = (value: string | undefined | null): string => {
@@ -330,7 +331,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                 <Icon as={FaCalendarAlt} color="blue.500" />
                 <Text color="blue.600" fontSize="sm">
                   Started:{' '}
-                  {new Date(parcelData.current_history.start_date).toLocaleDateString()}
+                  {formatDateFromTimestamp(parcelData.current_history.start_date)}
                 </Text>
               </HStack>
             </VStack>

@@ -83,26 +83,21 @@ export default function ImpactDashboard() {
                 icon={MdTrendingUp}
                 iconColor="green.600"
                 iconBg="green.100"
-                value={
-                  impactMetrics?.transparency_score_avg
-                    ? Math.round(impactMetrics.transparency_score_avg)
-                    : impactMetrics?.total_scans || 0
-                }
-                label={
-                  impactMetrics?.transparency_score_avg
-                    ? 'Avg Transparency Score'
-                    : 'Products Scanned'
-                }
-                subtitle={
-                  impactMetrics?.transparency_score_avg
-                    ? 'Farming practice visibility'
-                    : 'Start scanning to see scores'
-                }
+                // A count of what the shopper actually did, never a number Trazo assigned to a
+                // farm. This card previously led with the average transparency score, which is
+                // a PRODUCER-dashboard KPI — putting it in front of a shopper is the
+                // self-created sustainability label banned by ECGT 2024/825 (live 2026-09-27)
+                // and an FTC 16 CFR 260.6 general-benefit risk. See
+                // .claude/rules/transparency-first.md.
+                value={impactMetrics?.total_scans || 0}
+                label="Products Scanned"
+                subtitle="Your scan history"
                 size="lg"
                 tooltip={{
-                  label: 'Transparency Score',
+                  label: 'Products Scanned',
                   explanation:
-                    "This shows the average transparency level of products you've scanned. Transparency measures how many farming activities are documented - from planting to harvest. Higher scores mean you can see exactly how your food was grown, giving you confidence in your food choices."
+                    'How many products you have scanned. Open any one of them to see the ' +
+                    'farming activities the producer documented for that harvest.'
                 }}
               />
 
@@ -199,20 +194,11 @@ export default function ImpactDashboard() {
                           </Text>
                         </HStack>
 
-                        {/* Compact Badges Row */}
+                        {/* Compact Badges Row — documented FACTS only. The transparency-score
+                            percentage badge that used to lead this row was a producer KPI shown
+                            to a shopper; the event count below says something verifiable
+                            instead. */}
                         <HStack spacing={2} flexWrap="wrap">
-                          {scan.transparency_score && (
-                            <Badge
-                              colorScheme="green"
-                              variant="subtle"
-                              fontSize="xs"
-                              px={2}
-                              py={0.5}
-                              borderRadius="full"
-                            >
-                              {scan.transparency_score}%
-                            </Badge>
-                          )}
                           {scan.events_viewed > 0 && (
                             <Badge
                               colorScheme="blue"
@@ -258,12 +244,13 @@ export default function ImpactDashboard() {
                   iconColor="green.600"
                   iconBg="green.100"
                   value={quickStats?.better_choices || 0}
-                  label="Transparent Products"
+                  label="Documented Products"
                   size="sm"
                   tooltip={{
-                    label: 'Transparent Products',
+                    label: 'Documented Products',
                     explanation:
-                      "Products you've scanned that have high transparency scores, showing comprehensive documentation of farming practices."
+                      "Products you've scanned whose producer recorded their farming activities " +
+                      '— planting, inputs, harvest — so you can read what was done.'
                   }}
                 />
 

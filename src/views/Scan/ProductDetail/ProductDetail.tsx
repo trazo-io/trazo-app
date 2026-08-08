@@ -33,7 +33,6 @@ import {
   DrawerCloseButton,
   useDisclosure,
   useBreakpointValue,
-  useToast,
   Progress,
   Spinner,
   Skeleton,
@@ -111,7 +110,6 @@ import {
 } from './components/ModernErrorState';
 import { HeroShimmer, JourneyShimmer, TransparencyShimmer } from './components/TrazoShimmers';
 import { StandardImageGallery } from '../../../components/ImageGallery';
-import QuickFeedback from '../../../components/ConsumerFeedback/QuickFeedback';
 // Progressive loading for mobile performance - load heavy components only when needed
 const CarbonImpactExplainer = React.lazy(
   () => import('../../../components/Education/CarbonImpactExplainer')
@@ -224,7 +222,6 @@ function ProductDetail() {
   const { productionId: urlProductionId } = useParams();
   const navigate = useNavigate();
   const intl = useIntl();
-  const toast = useToast();
   // Proof view (?view=proof) is the link a farmer shares with a wholesale buyer. The farm's
   // direct phone/email is gated to it — a random shopper on the story view should not get the
   // producer's personal contact details (privacy / spam vector). 2026-06 audit P2-6.
@@ -417,7 +414,6 @@ function ProductDetail() {
       firstGalleryPhoto ||
       data?.timeline?.find((ev: any) => ev?.album?.images?.[0]?.image)?.album?.images?.[0]?.image;
     const lot: string | undefined = data?.harvestDetails?.lot_number;
-    const reviews = data?.reviews;
     // Phase 3 lot gate applies to machine-readable claims too: a certified
     // FARM whose LOT is ineligible (organic_claim.can_display_organic ===
     // false) must not carry an organic Certification on this Product node —
@@ -456,13 +452,10 @@ function ProductDetail() {
         return cert;
       });
     }
-    if (reviews?.count > 0 && Number.isFinite(Number(reviews?.average))) {
-      jsonLd.aggregateRating = {
-        '@type': 'AggregateRating',
-        ratingValue: Number(reviews.average),
-        reviewCount: reviews.count
-      };
-    }
+    // No `aggregateRating`. It emitted schema.org star ratings into Google rich results,
+    // sourced from the consumer reviews removed on 2026-08-06 — publishing a rating whose
+    // basis is no longer visible (or collectable) on the page would be a claim with nothing
+    // behind it. Structured data must describe what the page actually shows.
     if (lot) {
       jsonLd.additionalProperty = [{ '@type': 'PropertyValue', name: 'Lot', value: lot }];
     }
@@ -609,8 +602,7 @@ function ProductDetail() {
       const sections = [
         { id: 'transparency', element: document.getElementById('transparency-section') },
         { id: 'carbon', element: document.getElementById('carbon-section') },
-        { id: 'farm', element: document.getElementById('farm-section') },
-        { id: 'reviews', element: document.getElementById('reviews-section') }
+        { id: 'farm', element: document.getElementById('farm-section') }
       ];
 
       const scrollPosition = window.scrollY + 200; // Offset for header
@@ -630,12 +622,10 @@ function ProductDetail() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isUserScrolling]);
 
-  // ⚠️ TRANSPARENCY FIX: Only show real reputation data, never default to 4.2
-  // If reputation is missing, pass undefined so component can show "No ratings yet"
-  const safeReputation =
-    (completeData as any)?.reputation !== undefined
-      ? Math.max(0, Math.min(5, (completeData as any)?.reputation))
-      : undefined;
+  // `safeReputation` removed 2026-08-06 along with its last consumer. It clamped the farm
+  // `reputation` value for display; with consumer reviews gone (§10.5) nothing on this page
+  // renders a rating, and a clamped number with no visible source is exactly what the
+  // claim-safety rules forbid.
 
   // QR Verification loading state
   if (isVerifyingQR) {
@@ -783,9 +773,6 @@ function ProductDetail() {
           // harvestDetails.lot_number (transparency_views.py:451) — there is
           // no top-level lot_id on this endpoint.
           const lotId = (completeData as any)?.harvestDetails?.lot_number;
-          // Real consumer reviews (top-level "reviews" on the transparency
-          // payload — distinct from the legacy "reputation" field).
-          const consumerReviews = (completeData as any)?.reviews;
 
           return (
             <>
@@ -800,8 +787,12 @@ function ProductDetail() {
                 trustData={{
                   confidenceScore: getDisplayTransparencyScore(),
                   isUSDAVerified: completeData?.isUsdaVerified || false,
-                  reviewsCount: consumerReviews?.count ?? 0,
-                  averageRating: consumerReviews?.average ?? safeReputation,
+                  // Hard zero, not the payload value: the hero star rating renders only when
+                  // reviewsCount > 0, and consumer reviews were removed 2026-08-06 (§10.5).
+                  // The old fallback `?? safeReputation` was also wrong in kind — reputation
+                  // is not a consumer rating, so a farm with no reviews could still show stars.
+                  reviewsCount: 0,
+                  averageRating: null,
                   scansCount: 0,
                   transparencyScore: getDisplayTransparencyScore()
                 }}
@@ -875,9 +866,14 @@ function ProductDetail() {
 
                 // Tier 1 source: person-like story written by the farmer.
                 const aboutText = cleanText(farmerData?.about);
-                // Tier 2 sources: parcel consumer story, then company
-                // sustainability text (farm_context.company_sustainability).
-                const parcelStory = cleanText((completeData as any)?.parcel?.consumer_story);
+                // Tier 2 source: company sustainability text
+                // (farm_context.company_sustainability).
+                //
+                // The parcel `consumer_story` tier was removed 2026-08-07. It resolved
+                // against `_build_public_parcel`, which returns only name / area / polygon /
+                // map_metadata / location_disclosure_level — so it was ALWAYS undefined and
+                // this tier never once fired. The field is gone from the parcel form too.
+                const parcelStory = '';
                 const sustainabilityText =
                   cleanText(
                     (completeData as any)?.farm_context?.company_sustainability?.commitment
@@ -1797,22 +1793,27 @@ function ProductDetail() {
                   main_activities: (completeData as any)?.farmer?.main_activities,
                   location_highlights: (completeData as any)?.farmer?.location_highlights,
                   custom_message: (completeData as any)?.farmer?.custom_message,
-                  is_active: (completeData as any)?.farmer?.is_active,
                   crops_grown: (completeData as any)?.farmer?.crops_grown,
-                  sustainability_practices: (completeData as any)?.farmer?.sustainability_practices,
-                  employee_count: (completeData as any)?.farmer?.employee_count,
+                  // `sustainability_practices` removed 2026-08-07 — no longer published.
+                  // It shipped "USDA Organic Certified" (farmer free text, no database
+                  // backing) to shoppers as a green trust chip. `is_active` and
+                  // `employee_count` went with it: on the wire, rendered by nothing.
+                  //
+                  // `farming_method` was never published either — the pass-through only ever
+                  // resolved to undefined. Reading it here invites someone to "fix" the blank
+                  // by adding it back to the payload, which is precisely the FTC 16 CFR 260.6
+                  // self-declared-claim the backend withholds it to avoid.
                   total_acreage: (completeData as any)?.farmer?.total_acreage,
                   year_established: (completeData as any)?.farmer?.year_established,
                   establishment_type: (completeData as any)?.farmer?.establishment_type,
-                  farming_method: (completeData as any)?.farmer?.farming_method,
                   location: (completeData as any)?.farmer?.location,
-                  rating: safeReputation,
+                  // `rating` intentionally not passed: consumer reviews were removed with the
+                  // shopper-account product (§10.5), so there is no source behind a farm rating.
                   certifications: (completeData as any)?.farmer?.certifications || [],
-                  // Operational fields
-                  climate_zone: (completeData as any)?.farmer?.climate_zone,
+                  // Operational fields. `climate_zone` and `conservation_practices` dropped
+                  // 2026-08-07 — both were on the wire and rendered by nothing.
                   water_sources: (completeData as any)?.farmer?.water_sources,
                   soil_types: (completeData as any)?.farmer?.soil_types,
-                  conservation_practices: (completeData as any)?.farmer?.conservation_practices,
                   irrigation_methods: (completeData as any)?.farmer?.irrigation_methods
                 }}
                 parcelData={{
@@ -1860,8 +1861,13 @@ function ProductDetail() {
                   current_history: (completeData as any)?.parcel?.current_history,
                   // Transparency fields from Add Parcel form
                   transparency_description: (completeData as any)?.parcel?.transparency_description,
+                  // DIFFERENT FIELD from the establishment one removed above. This is
+                  // `Parcel.agricultural_details["sustainability_practices"]`, which feeds
+                  // the parcel transparency score (30 of 100 points) and the
+                  // carbon_calculation_enabled gate. `_build_public_parcel` does not put it
+                  // on the wire, so this already resolves to undefined — but removing it is
+                  // a scoring/carbon decision, not a claim-safety one. Leave it.
                   sustainability_practices: (completeData as any)?.parcel?.sustainability_practices,
-                  consumer_story: (completeData as any)?.parcel?.consumer_story,
                   primary_crop: (completeData as any)?.parcel?.primary_crop,
                   transparency_score: (completeData as any)?.parcel?.transparency_score,
                   transparency_ready: (completeData as any)?.parcel?.transparency_ready,
@@ -1883,32 +1889,16 @@ function ProductDetail() {
 
           <Divider borderColor="gray.200" />
 
-          {/* Consumer Feedback Section */}
-          <Box id="reviews-section" w="100%">
-            <VStack spacing={8} align="stretch">
-              <QuickFeedback
-                productionId={productionId || ''}
-                reviewsCount={(completeData as any)?.reviews?.count ?? 0}
-                onFeedbackSubmitted={() => {
-                  toast({
-                    title: intl.formatMessage({
-                      id: 'consumer.detail.feedbackThanksTitle',
-                      defaultMessage: 'Thanks for your feedback!'
-                    }),
-                    description: intl.formatMessage({
-                      id: 'consumer.detail.feedbackThanksDesc',
-                      defaultMessage: 'Your scan helps this farm show real engagement.'
-                    }),
-                    status: 'success',
-                    duration: 4000,
-                    isClosable: true
-                  });
-                  // Refresh transparency payload so the new review/rating shows
-                  refetchTransparency();
-                }}
-              />
-            </VStack>
-          </Box>
+          {/* Consumer review section removed 2026-08-06.
+              Star ratings were sign-in-gated (anti-gaming), so the section depended on the
+              authenticated consumer account product, which is being retired — see
+              documentation/strategy/TRAZO-OCTOBER-2026-PLAN.md §10.5. With consumer
+              registration closed, "write a review" navigated to a sign-in the scanner could
+              not complete: a dead funnel on the one page that has to be flawless.
+              The page keeps what it can substantiate — documented practices, photos,
+              third-party certifications, the timeline — and no longer publishes an
+              aggregate star rating. Anonymous scan counting is untouched; that, not reviews,
+              is the farmer's engagement evidence. */}
         </VStack>
       </Container>
 

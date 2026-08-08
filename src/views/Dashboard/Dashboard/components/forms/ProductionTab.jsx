@@ -55,6 +55,7 @@ import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useGetCurrentHistoryQuery } from 'store/api/historyApi';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
+import { BlockIdField } from 'components/Fields/BlockIdField';
 
 // Sprint 2 Epic 2.1: Equipment operation types (merged from EquipmentTab)
 const EQUIPMENT_OPERATION_TYPES = [
@@ -2066,23 +2067,7 @@ const ProductionTab = forwardRef(
                       />
                     </StandardField>
 
-                    <StandardField
-                      label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
-                      helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
-                    >
-                      <Controller
-                        name="block_id"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardInput
-                            {...field}
-                            placeholder={intl.formatMessage({
-                              id: 'fieldDetails.blockIdPlaceholder'
-                            })}
-                          />
-                        )}
-                      />
-                    </StandardField>
+                    <BlockIdField control={methods.control} />
 
                     {/* Growth Stage — hidden for PL, TR (meaningless at planting) and HA (always harvest_ready) */}
                     {!['PL', 'TR', 'HA'].includes(productionType) && (
@@ -2169,25 +2154,7 @@ const ProductionTab = forwardRef(
                         />
                       </StandardField>
 
-                      <StandardField
-                        label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
-                        helpText={intl.formatMessage({
-                          id: 'production.pollination.blockIdHelp'
-                        })}
-                      >
-                        <Controller
-                          name="block_id"
-                          control={methods.control}
-                          render={({ field }) => (
-                            <StandardInput
-                              {...field}
-                              placeholder={intl.formatMessage({
-                                id: 'fieldDetails.blockIdPlaceholder'
-                              })}
-                            />
-                          )}
-                        />
-                      </StandardField>
+                      <BlockIdField control={methods.control} />
 
                       <StandardField
                         label={intl.formatMessage({
@@ -2474,23 +2441,7 @@ const ProductionTab = forwardRef(
                         />
                       </StandardField>
 
-                      <StandardField
-                        label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
-                        helpText={intl.formatMessage({ id: 'production.canopy.blockIdHelp' })}
-                      >
-                        <Controller
-                          name="block_id"
-                          control={methods.control}
-                          render={({ field }) => (
-                            <StandardInput
-                              {...field}
-                              placeholder={intl.formatMessage({
-                                id: 'fieldDetails.blockIdPlaceholder'
-                              })}
-                            />
-                          )}
-                        />
-                      </StandardField>
+                      <BlockIdField control={methods.control} />
 
                       <StandardField
                         label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}

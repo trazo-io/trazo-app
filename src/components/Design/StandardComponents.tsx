@@ -224,8 +224,36 @@ interface StandardCardProps {
   title?: string;
   subtitle?: string;
   headerAction?: ReactNode;
+  /**
+   * ⚠️ CURRENTLY A NO-OP — every value renders identically.
+   *
+   * `assets/css/trazo-dashboard-styles.css` (one of the four protected CSS-production-build
+   * files CLAUDE.md marks DO NOT CHANGE) targets `.trazo-card` / `[data-component='Card']`
+   * and forces, with `!important`:
+   *     box-shadow: 0px 3.5px 5.5px rgba(0,0,0,0.02)
+   *     border-radius: 12px (mobile) / 15px (≥768px)
+   *     border: 1px solid #e2e8f0
+   * — the exact three properties this prop varies. So `elevated`, `outline` and `flat` all
+   * paint the same faint shadow, same radius and same hairline border.
+   *
+   * Do NOT design a visual hierarchy around this prop (2026-08-07: a farm-profile redesign
+   * did, and shipped three "elevated" action cards that were pixel-identical to the
+   * "outline" reference cards). Build hierarchy from section headings and spacing instead.
+   *
+   * Fixing it means either relaxing the protected CSS — which exists because production
+   * builds were dropping Card styles entirely — or rendering a plain `Box` instead of
+   * `Card` (see the `project_trazo_card_css_override` note). Both are deliberate decisions,
+   * not drive-by changes.
+   */
   variant?: 'elevated' | 'flat' | 'outline';
   padding?: string | object;
+  /**
+   * Bottom margin. Defaults to 6 (24px) to preserve the spacing every existing
+   * caller was built against. Pass 0 when the card sits inside a VStack that
+   * already owns the gap — stacking `mb={6}` inside a `spacing={8}` VStack is
+   * how the farm profile ended up with 56px between every pair of cards.
+   */
+  mb?: number | string | object;
 }
 
 export const StandardCard = ({
@@ -234,7 +262,8 @@ export const StandardCard = ({
   subtitle,
   headerAction,
   variant = 'elevated',
-  padding = { base: 3, md: 4 }
+  padding = { base: 3, md: 4 },
+  mb = 6
 }: StandardCardProps) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -258,7 +287,7 @@ export const StandardCard = ({
   };
 
   return (
-    <Card {...cardProps[variant]} mb={6}>
+    <Card {...cardProps[variant]} mb={mb}>
       {(title || headerAction) && (
         <CardHeader pb={title && subtitle ? 2 : 4}>
           <Flex
@@ -675,20 +704,27 @@ export const StandardSelect = React.forwardRef<HTMLSelectElement, any>((props, r
 StandardSelect.displayName = 'StandardSelect';
 
 // Action Components
+// The component spreads `...rest` onto Chakra's Button, so every prop below already
+// worked at runtime — the interface was just narrower than the component. Callers were
+// passing responsive widths, `size="xs"`, event-taking handlers and layout props and
+// eating a TS error for each one.
 interface StandardButtonProps {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   loadingText?: string;
   leftIcon?: ReactElement;
   rightIcon?: ReactElement;
-  onClick?: () => void;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   type?: 'button' | 'submit';
   disabled?: boolean;
-  w?: string;
-  width?: string;
+  w?: string | object;
+  width?: string | object;
   isDisabled?: boolean;
+  alignSelf?: string | object;
+  flexShrink?: number | string | object;
+  colorScheme?: string;
 }
 
 export const StandardButton = ({
@@ -852,7 +888,11 @@ export const StandardSection = ({ title, description, action, children }: Standa
   <Box mb={8}>
     <Flex justify="space-between" align="center" mb={4}>
       <VStack align="start" spacing={1}>
-        <Heading as="h2" size="lg" color="gray.700">
+        {/* Responsive, not a fixed `lg`. At 375px a fixed `lg` renders 24px while a page
+            title using the usual `{base:'md'}` renders 20px — so every section heading came
+            out LARGER than the h1 above it, inverting the hierarchy on the breakpoint that
+            matters most. 20px mobile / 24px desktop keeps h1 > h2 at both. */}
+        <Heading as="h2" size={{ base: 'md', md: 'lg' }} color="gray.700">
           {title}
         </Heading>
         {description && (
@@ -1662,7 +1702,8 @@ export const DraftRestorationAlert = ({
   // D10 — was hand-rolled English pluralization ("2 minutes ago"), which cannot be translated.
   // Intl.RelativeTimeFormat gets the plural rules right in every locale for free.
   const formatTimeAgo = (date: Date | null): string => {
-    if (!date) return intl.formatMessage({ id: 'events.draft.someTimeAgo', defaultMessage: 'earlier' });
+    if (!date)
+      return intl.formatMessage({ id: 'events.draft.someTimeAgo', defaultMessage: 'earlier' });
 
     const diffMins = Math.round((Date.now() - date.getTime()) / 60000);
     if (diffMins < 1) {
@@ -1694,7 +1735,10 @@ export const DraftRestorationAlert = ({
       >
         <VStack align="flex-start" spacing={0}>
           <Text fontWeight="semibold" fontSize="sm" color="blue.700">
-            {intl.formatMessage({ id: 'events.draft.available', defaultMessage: 'Draft available' })}
+            {intl.formatMessage({
+              id: 'events.draft.available',
+              defaultMessage: 'Draft available'
+            })}
           </Text>
           <Text fontSize="xs" color="blue.600">
             {intl.formatMessage(
@@ -1738,7 +1782,9 @@ export const AutoSaveStatus = ({ lastSaved, isSaving }: AutoSaveStatusProps) => 
       {isSaving ? (
         <>
           <Spinner size="xs" color="green.500" />
-          <Text>{intl.formatMessage({ id: 'events.draft.saving', defaultMessage: 'Saving draft…' })}</Text>
+          <Text>
+            {intl.formatMessage({ id: 'events.draft.saving', defaultMessage: 'Saving draft…' })}
+          </Text>
         </>
       ) : lastSaved ? (
         <>

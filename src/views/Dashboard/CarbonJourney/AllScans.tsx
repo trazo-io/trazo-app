@@ -52,18 +52,11 @@ export default function AllScans() {
     const hasVerification = production.is_verified || production.blockchain_verified;
     const hasPhotos = production.images?.length > 0 || production.photo_count > 0;
 
-    let transparencyLevel = 'low';
-    let color = 'gray';
-
-    if (eventsCount >= 10 || hasVerification) {
-      transparencyLevel = 'high';
-      color = 'green';
-    } else if (eventsCount >= 5 || hasPhotos) {
-      transparencyLevel = 'medium';
-      color = 'blue';
-    }
-
-    return { eventsCount, transparencyLevel, color, hasVerification, hasPhotos };
+    // Documentation FACTS only — no derived tier. Same removal as CarbonJourney/index.tsx:
+    // a threshold-keyed green/blue/gray ladder is a wordless self-assigned grade on a
+    // consumer surface (ECGT 2024/825, FTC 16 CFR 260.6). The event count stays; the colour
+    // is constant so it ranks nothing.
+    return { eventsCount, color: 'gray', hasVerification, hasPhotos };
   };
 
   return (

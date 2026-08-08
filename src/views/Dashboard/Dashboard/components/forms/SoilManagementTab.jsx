@@ -41,6 +41,7 @@ import { useIntl } from 'react-intl';
 import { useFormFields } from 'src/hooks/useFormFields';
 import { useDefaultUnits } from 'src/hooks/useMeasurementSystem';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
+import { BlockIdField } from 'components/Fields/BlockIdField';
 
 // Phase 3: Fuel types with EPA-verified emission factors (matching ProductionTab pattern)
 // UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
@@ -2212,23 +2213,7 @@ const SoilManagementTab = forwardRef(
                     />
                   </StandardField>
 
-                  <StandardField
-                    label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
-                    helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
-                  >
-                    <Controller
-                      name="block_id"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardInput
-                          {...field}
-                          placeholder={intl.formatMessage({
-                            id: 'fieldDetails.blockIdPlaceholder'
-                          })}
-                        />
-                      )}
-                    />
-                  </StandardField>
+                  <BlockIdField control={methods.control} />
 
                   <StandardField
                     label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}

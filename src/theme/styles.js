@@ -150,17 +150,28 @@ export const globalStyles = {
         }
       },
       // Fix Chakra UI spacing and layout issues
+      //
+      // The `margin: 0` neutralises Chakra's LEGACY margin-based stack spacing. Keep it:
+      // Chakra 2.10 spaces stacks with `gap`, so any margin surviving on a stack child is
+      // a double-space. (It also means an `mb` prop on a direct stack child is inert —
+      // e.g. StandardCard's `mb` — which is why card-to-card spacing comes from the
+      // parent's gap alone.)
+      //
+      // BUT dividers are the one exception. Chakra's Stack sets `gap: hasDivider ? undefined
+      // : spacing` (stack.cjs:72) and, when a divider IS present, applies the spacing as
+      // MARGINS on the divider via getDividerStyles(). This blanket rule killed exactly those
+      // margins, so every `<Stack divider={<Divider/>}>` in the app collapsed to flush,
+      // zero-spaced dividers (6 usages). Excluding the divider restores the documented
+      // behaviour without touching anything else.
       '.chakra-stack': {
-        '& > *': {
+        '& > *:not(.chakra-divider)': {
           margin: '0 !important'
         }
       },
-      '.chakra-stack[data-orientation="vertical"]': {
-        gap: 'var(--chakra-space-4)'
-      },
-      '.chakra-stack[data-orientation="horizontal"]': {
-        gap: 'var(--chakra-space-4)'
-      },
+      // The two `[data-orientation]` rules that used to live here were DELETED 2026-08-07:
+      // Chakra 2.10's Stack no longer emits a `data-orientation` attribute, so both selectors
+      // matched nothing. They read as "every stack is forced to a flat 16px gap", which is
+      // what made `spacing` look inert — it is not; it emits `gap` and works normally.
       '.chakra-simple-grid': {
         gap: 'var(--chakra-space-6)',
         '& > *': {

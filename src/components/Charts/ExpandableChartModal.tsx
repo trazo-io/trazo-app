@@ -65,11 +65,35 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
   const textColor = useColorModeValue('gray.800', 'white');
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size={{ base: 'full', md: '4xl' }} isCentered>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size={{ base: 'full', md: '4xl' }}
+      isCentered
+      scrollBehavior="inside"
+    >
       <ModalOverlay bg="blackAlpha.500" />
-      <ModalContent bg={bgColor} borderRadius={{ base: 'none', md: '2xl' }} boxShadow="xl" mx={{ base: 0, md: 4 }}>
-        <ModalHeader borderBottomWidth="1px" borderColor={borderColor} pb={3} px={{ base: 4, md: 6 }}>
-          <Flex direction={{ base: 'column', md: 'row' }} justify="space-between" align={{ base: 'flex-start', md: 'center' }} w="100%" pr={8} gap={2}>
+      <ModalContent
+        bg={bgColor}
+        borderRadius={{ base: 'none', md: '2xl' }}
+        boxShadow="xl"
+        maxH={{ base: '100vh', md: '90vh' }}
+        mx={{ base: 0, md: 4 }}
+      >
+        <ModalHeader
+          borderBottomWidth="1px"
+          borderColor={borderColor}
+          pb={3}
+          px={{ base: 4, md: 6 }}
+        >
+          <Flex
+            direction={{ base: 'column', md: 'row' }}
+            justify="space-between"
+            align={{ base: 'flex-start', md: 'center' }}
+            w="100%"
+            pr={8}
+            gap={2}
+          >
             <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="semibold" color={textColor}>
               {title}
             </Text>

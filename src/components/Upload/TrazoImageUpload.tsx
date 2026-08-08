@@ -63,7 +63,28 @@ export interface TrazoImageUploadProps {
   existingImages?: string[];
   isLoading?: boolean;
   onImagesChange?: (urls: string[]) => void;
+  /**
+   * Override the empty-state heading/subheading. The defaults say "Add your farm photos",
+   * which is wrong wherever this is reused for something that is not a farm gallery — the
+   * production cover-photo picker read "Add your farm photos" for a single hero image.
+   */
+  title?: string;
+  subtitle?: string;
+  /**
+   * Compact mode: smaller icon, tighter padding, no help-text row. For single-image pickers
+   * where a ~600px dropzone dwarfs the thing it is configuring.
+   */
+  compact?: boolean;
 }
+
+/** macOS uses ⌘, everything else Ctrl. `navigator.platform` is deprecated but still the
+ *  most reliable signal available synchronously; the fallback is the safe majority case. */
+const isMacPlatform = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  const platform =
+    (navigator as any).userAgentData?.platform || navigator.platform || navigator.userAgent || '';
+  return /mac|iphone|ipad|ipod/i.test(platform);
+};
 
 interface UploadingFile {
   file: File;
@@ -79,7 +100,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
   maxSize = 10 * 1024 * 1024, // 10MB - matches backend PhotoEvidenceService.MAX_FILE_SIZE
   existingImages = [],
   isLoading = false,
-  onImagesChange
+  onImagesChange,
+  title,
+  subtitle,
+  compact = false
 }) => {
   // State management - SIMPLIFIED for farmers
   const intl = useIntl();
@@ -667,23 +691,33 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <VStack spacing={6} py={8}>
-              <Circle size="80px" bg={useColorModeValue('green.50', 'green.900')}>
-                <Icon as={IoMdImages} boxSize={10} color={accentColor} />
+            <VStack spacing={compact ? 3 : 6} py={compact ? 3 : 8}>
+              <Circle
+                size={compact ? '48px' : '80px'}
+                bg={useColorModeValue('green.50', 'green.900')}
+              >
+                <Icon as={IoMdImages} boxSize={compact ? 6 : 10} color={accentColor} />
               </Circle>
 
-              <VStack spacing={2}>
-                <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                  {intl.formatMessage({
-                    id: 'upload.addPhotos',
-                    defaultMessage: 'Add your farm photos'
-                  })}
+              <VStack spacing={compact ? 1 : 2}>
+                <Text
+                  fontSize={compact ? 'md' : 'lg'}
+                  fontWeight="semibold"
+                  color={textColor}
+                  textAlign="center"
+                >
+                  {title ??
+                    intl.formatMessage({
+                      id: 'upload.addPhotos',
+                      defaultMessage: 'Add your farm photos'
+                    })}
                 </Text>
                 <Text fontSize="sm" color={mutedColor} textAlign="center">
-                  {intl.formatMessage({
-                    id: 'upload.autoUpload',
-                    defaultMessage: 'Photos upload automatically when selected'
-                  })}
+                  {subtitle ??
+                    intl.formatMessage({
+                      id: 'upload.autoUpload',
+                      defaultMessage: 'Photos upload automatically when selected'
+                    })}
                 </Text>
               </VStack>
 
@@ -723,14 +757,21 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
               </HStack>
 
               {/* Help text */}
-              <HStack spacing={4} fontSize="xs" color={mutedColor}>
+              <HStack
+                spacing={4}
+                fontSize="xs"
+                color={mutedColor}
+                display={compact ? 'none' : 'flex'}
+              >
                 <HStack>
                   <Icon as={FaPaste} />
+                  {/* Was hard-coded "Ctrl+V" — wrong on macOS, which is most of this team's
+                      and most growers' laptops. The modifier is detected, not assumed. */}
                   <Text>
-                    {intl.formatMessage({
-                      id: 'upload.pasteHint',
-                      defaultMessage: 'Paste with Ctrl+V'
-                    })}
+                    {intl.formatMessage(
+                      { id: 'upload.pasteHint', defaultMessage: 'Paste with {shortcut}' },
+                      { shortcut: isMacPlatform() ? '⌘V' : 'Ctrl+V' }
+                    )}
                   </Text>
                 </HStack>
                 {isMobile && (
@@ -1000,14 +1041,21 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         </Box>
       )}
 
-      {/* Status text */}
+      {/* Status text.
+          Hidden in compact mode: "0 of 1 photos uploaded" is batch-progress framing on a
+          single-image picker, where it reads as a task the farmer has failed to finish. The
+          size limit stays — that one is still useful. */}
       <HStack justify="space-between" fontSize="sm">
-        <Text color={mutedColor}>
-          {intl.formatMessage(
-            { id: 'upload.countUploaded', defaultMessage: '{count} of {max} photos uploaded' },
-            { count: uploadedUrls.length, max: maxFiles }
-          )}
-        </Text>
+        {compact ? (
+          <Box />
+        ) : (
+          <Text color={mutedColor}>
+            {intl.formatMessage(
+              { id: 'upload.countUploaded', defaultMessage: '{count} of {max} photos uploaded' },
+              { count: uploadedUrls.length, max: maxFiles }
+            )}
+          </Text>
+        )}
         <Text color={mutedColor}>
           {intl.formatMessage(
             { id: 'upload.maxSize', defaultMessage: 'Max {mb}MB per photo' },
@@ -1016,10 +1064,20 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         </Text>
       </HStack>
 
-      {/* Camera Modal - Unchanged */}
-      <Modal isOpen={isCameraOpen} onClose={closeCamera} size="xl">
+      {/* Camera Modal — full-bleed viewfinder on phones, centered dialog from `md` up */}
+      <Modal
+        isOpen={isCameraOpen}
+        onClose={closeCamera}
+        size={{ base: 'full', md: 'xl' }}
+        isCentered
+        scrollBehavior="inside"
+      >
         <ModalOverlay />
-        <ModalContent borderRadius="2xl">
+        <ModalContent
+          borderRadius={{ base: 'none', md: '2xl' }}
+          maxH={{ base: '100vh', md: '90vh' }}
+          mx={{ base: 0, md: 4 }}
+        >
           <ModalBody p={0}>
             <VStack spacing={4} p={4}>
               <Box borderRadius="xl" overflow="hidden" w="100%">
@@ -1059,10 +1117,20 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
         </ModalContent>
       </Modal>
 
-      {/* Preview Modal - Unchanged */}
-      <Modal isOpen={isPreviewOpen} onClose={onPreviewClose} size="xl">
+      {/* Preview Modal — full-bleed on phones, centered dialog from `md` up */}
+      <Modal
+        isOpen={isPreviewOpen}
+        onClose={onPreviewClose}
+        size={{ base: 'full', md: 'xl' }}
+        isCentered
+        scrollBehavior="inside"
+      >
         <ModalOverlay />
-        <ModalContent borderRadius="2xl">
+        <ModalContent
+          borderRadius={{ base: 'none', md: '2xl' }}
+          maxH={{ base: '100vh', md: '90vh' }}
+          mx={{ base: 0, md: 4 }}
+        >
           <ModalBody p={0}>
             <Box position="relative">
               <S3Image

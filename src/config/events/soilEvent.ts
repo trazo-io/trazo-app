@@ -983,9 +983,19 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
   // ---- NOP Audit Traceability Fields ----
   {
     name: 'block_id',
-    labelKey: 'fieldDetails.blockId',
+    labelKey: 'events.common.fields.blockId',
     valueType: 'string',
+    // `card: 'immediate'` — block is what tells two otherwise-identical records apart.
+    //
+    // Left at modal/'details' (the "Learn More" expander), an orchard that sprays Block 1 and
+    // Block 2 on consecutive days showed two rows with the same product, rate and notes and no
+    // visible difference — they read as DUPLICATES. Found exactly that way on the walnut
+    // migration: 74 legitimate per-block records, block rendered nowhere on the timeline.
+    //
+    // It is also the CA PUR box 22 value, so hiding it on the producer surface hides the field
+    // the regulator form is keyed on. Consumer surfaces already showed it.
     surfaces: {
+      card: 'immediate',
       modal: 'details',
       form: 'secondary'
     }

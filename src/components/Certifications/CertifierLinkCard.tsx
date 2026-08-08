@@ -17,17 +17,22 @@ import {
   Icon,
   Input,
   InputGroup,
-  Select,
   InputRightElement,
+  Link,
   Text,
   Tooltip,
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaCopy, FaEye, FaLink, FaTimes } from 'react-icons/fa';
+import { FaCopy, FaEye, FaLink } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardInput,
+  StandardSelect
+} from 'components/Design/StandardComponents';
 import {
   useCreateCertifierLinkMutation,
   useGetCertifierLinksQuery,
@@ -78,10 +83,40 @@ const periodDates = (choice: PeriodChoice): { period_start?: string; period_end?
 const formatDate = (value?: string | null) =>
   value ? new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' }) : null;
 
+// Access-log rows need the time as well as the date: two opens on the same afternoon are a
+// certifier working through the records, which a date alone flattens into one indistinguishable
+// entry.
+const formatDateTime = (value?: string | null) =>
+  value
+    ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+    : '';
+
+const EXPIRY_WARNING_DAYS = 30;
+
+/**
+ * Badge VARIANT (not colorScheme) for the expiry, by how close it actually is.
+ *
+ * Must be a variant: the Badge theme's `defaultProps.variant` is `brand` and every one of
+ * its variants hardcodes green, so `colorScheme` is silently ignored — a `colorScheme="red"`
+ * expiry badge rendered solid green. See theme/components/badge.js.
+ *
+ * `neutral` is the caller's signal to render plain text instead of a badge at all.
+ */
+const expiryVariant = (expiresAt?: string | null): 'neutral' | 'warning' | 'danger' => {
+  if (!expiresAt) return 'neutral';
+  const expiry = new Date(expiresAt).getTime();
+  if (Number.isNaN(expiry)) return 'neutral';
+  const days = (expiry - Date.now()) / 86_400_000;
+  if (days < 0) return 'danger';
+  if (days <= EXPIRY_WARNING_DAYS) return 'warning';
+  return 'neutral';
+};
+
 const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => {
   const intl = useIntl();
   const toast = useToast();
   const [label, setLabel] = useState('');
+  const [openLog, setOpenLog] = useState<number | null>(null);
   const [period, setPeriod] = useState<PeriodChoice>('current_year');
 
   const { data: links = [], isLoading } = useGetCertifierLinksQuery({ companyId, farmId });
@@ -194,8 +229,9 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
       })}
       variant="elevated"
       padding={{ base: 3, md: 4 }}
+      mb={0}
     >
-      <VStack align="stretch" spacing={3}>
+      <VStack align="stretch" gap={3}>
         <Text fontSize="sm" color="gray.600">
           {intl.formatMessage({
             id: 'certifierLink.description',
@@ -209,20 +245,22 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
         )}
 
         {canWrite && (
-          <HStack flexDirection={{ base: 'column', smd: 'row' }} spacing={2} align="stretch">
-            <Input
+          <HStack flexDirection={{ base: 'column', smd: 'row' }} gap={2} align="stretch">
+            <StandardInput
               size="sm"
               value={label}
-              onChange={(e) => setLabel(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLabel(e.target.value)}
               placeholder={intl.formatMessage({
                 id: 'certifierLink.labelPlaceholder',
                 defaultMessage: 'Label, e.g. CCOF 2026 renewal'
               })}
             />
-            <Select
+            <StandardSelect
               size="sm"
               value={period}
-              onChange={(e) => setPeriod(e.target.value as PeriodChoice)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setPeriod(e.target.value as PeriodChoice)
+              }
               w={{ base: 'full', smd: '13rem' }}
               flexShrink={0}
             >
@@ -247,7 +285,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                   defaultMessage: 'All records'
                 })}
               </option>
-            </Select>
+            </StandardSelect>
             <StandardButton
               size="sm"
               leftIcon={<Icon as={FaLink} />}
@@ -280,98 +318,175 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
           </Text>
         )}
 
-        {activeLinks.map((link) => (
-          <Box key={link.id} borderWidth="1px" borderColor="gray.200" borderRadius="md" p={3}>
-            <VStack align="stretch" spacing={2}>
-              <HStack justify="space-between" flexWrap="wrap">
-                <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-                  {link.label ||
-                    intl.formatMessage({
-                      id: 'certifierLink.unlabelled',
-                      defaultMessage: 'Certifier link'
-                    })}
-                </Text>
-                <HStack spacing={2}>
-                  {/* Whether the certifier actually opened it — the thing an
-                      emailed PDF can never tell the farmer. */}
-                  <Tooltip
-                    label={
-                      link.last_accessed_at
-                        ? intl.formatMessage(
-                            {
-                              id: 'certifierLink.lastOpened',
-                              defaultMessage: 'Last opened {date}'
-                            },
-                            { date: formatDate(link.last_accessed_at) }
-                          )
-                        : intl.formatMessage({
-                            id: 'certifierLink.neverOpened',
-                            defaultMessage: 'Not opened yet'
-                          })
-                    }
-                  >
-                    <Badge colorScheme={link.access_count > 0 ? 'green' : 'gray'}>
-                      <HStack spacing={1}>
+        {/* A LIST, not a stack of cards.
+            Each link used to be a bordered 180px box holding a full raw URL, three solid
+            badges and a heavy outline Revoke button. Six links — normal for a farm that has
+            been through a couple of renewals — filled 1,100px and buried every other card on
+            the farm profile under a wall of green. Rows now share one hairline-separated list:
+            two lines each, meta as quiet text, destructive action de-emphasised until hover. */}
+        {activeLinks.map((link, index) => {
+          const expiryTone = expiryVariant(link.expires_at);
+          return (
+            <Box
+              key={link.id}
+              borderTopWidth={index === 0 ? 0 : '1px'}
+              borderColor="gray.100"
+              pt={index === 0 ? 0 : 3}
+            >
+              <VStack align="stretch" gap={2}>
+                <HStack justify="space-between" align="baseline" gap={3} flexWrap="wrap">
+                  <Text fontSize="sm" fontWeight="semibold" color="gray.800" minW={0}>
+                    {link.label ||
+                      intl.formatMessage({
+                        id: 'certifierLink.unlabelled',
+                        defaultMessage: 'Certifier link'
+                      })}
+                  </Text>
+                  <HStack gap={2} flexWrap="wrap" justify="flex-end">
+                    {/* Whether the certifier actually opened it — the thing an emailed PDF can
+                        never tell the farmer. Plain text: a count is a fact, and rendering it
+                        as a solid green pill made "0 opens" read as reassurance. */}
+                    <Tooltip
+                      label={
+                        link.last_accessed_at
+                          ? intl.formatMessage(
+                              {
+                                id: 'certifierLink.lastOpened',
+                                defaultMessage: 'Last opened {date}'
+                              },
+                              { date: formatDate(link.last_accessed_at) }
+                            )
+                          : intl.formatMessage({
+                              id: 'certifierLink.neverOpened',
+                              defaultMessage: 'Not opened yet'
+                            })
+                      }
+                    >
+                      <HStack gap={1} color="gray.500" fontSize="xs">
                         <Icon as={FaEye} boxSize={3} />
                         <Text as="span">{link.access_count}</Text>
                       </HStack>
-                    </Badge>
-                  </Tooltip>
-                  <Badge colorScheme="purple">
-                    {link.period_start && link.period_end
-                      ? `${formatDate(link.period_start)} – ${formatDate(link.period_end)}`
-                      : intl.formatMessage({
-                          id: 'certifierLink.period.allShort',
-                          defaultMessage: 'All records'
-                        })}
-                  </Badge>
-                  <Badge colorScheme="blue">
-                    {intl.formatMessage(
-                      {
-                        id: 'certifierLink.expires',
-                        defaultMessage: 'Expires {date}'
-                      },
-                      { date: formatDate(link.expires_at) }
+                    </Tooltip>
+                    <Text fontSize="xs" color="gray.400">
+                      {link.period_start && link.period_end
+                        ? `${formatDate(link.period_start)} – ${formatDate(link.period_end)}`
+                        : intl.formatMessage({
+                            id: 'certifierLink.period.allShort',
+                            defaultMessage: 'All records'
+                          })}
+                    </Text>
+                    {/* The ONE place hue earns its keep: an expired or nearly-expired link is
+                        the difference between a certifier reading your records and a certifier
+                        hitting a dead page during renewal week. Silent until it matters. */}
+                    {expiryTone === 'neutral' ? (
+                      <Text fontSize="xs" color="gray.400">
+                        {intl.formatMessage(
+                          { id: 'certifierLink.expires', defaultMessage: 'Expires {date}' },
+                          { date: formatDate(link.expires_at) }
+                        )}
+                      </Text>
+                    ) : (
+                      <Badge variant={expiryTone}>
+                        {intl.formatMessage(
+                          { id: 'certifierLink.expires', defaultMessage: 'Expires {date}' },
+                          { date: formatDate(link.expires_at) }
+                        )}
+                      </Badge>
                     )}
-                  </Badge>
+                  </HStack>
                 </HStack>
-              </HStack>
 
-              <InputGroup size="sm">
-                <Input value={reviewUrl(link.token)} isReadOnly fontSize="xs" pr="2.5rem" />
-                <InputRightElement>
-                  <StandardButton
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => handleCopy(link)}
-                    aria-label={intl.formatMessage({
-                      id: 'certifierLink.copy',
-                      defaultMessage: 'Copy link'
-                    })}
-                  >
-                    <Icon as={FaCopy} />
-                  </StandardButton>
-                </InputRightElement>
-              </InputGroup>
+                <InputGroup size="sm">
+                  <Input
+                    value={reviewUrl(link.token)}
+                    isReadOnly
+                    fontSize="xs"
+                    pr="2.5rem"
+                    bg="gray.50"
+                    borderColor="gray.200"
+                    color="gray.600"
+                  />
+                  <InputRightElement>
+                    <StandardButton
+                      size="xs"
+                      variant="ghost"
+                      onClick={() => handleCopy(link)}
+                      aria-label={intl.formatMessage({
+                        id: 'certifierLink.copy',
+                        defaultMessage: 'Copy link'
+                      })}
+                    >
+                      <Icon as={FaCopy} />
+                    </StandardButton>
+                  </InputRightElement>
+                </InputGroup>
 
-              {canWrite && (
-                <StandardButton
-                  size="xs"
-                  variant="outline"
-                  colorScheme="red"
-                  alignSelf="flex-start"
-                  leftIcon={<Icon as={FaTimes} />}
-                  onClick={() => handleRevoke(link)}
-                >
-                  {intl.formatMessage({
-                    id: 'certifierLink.revoke',
-                    defaultMessage: 'Revoke'
-                  })}
-                </StandardButton>
-              )}
-            </VStack>
-          </Box>
-        ))}
+                {/* Text actions, not buttons. Two 44px buttons per row × six rows was most of
+                    this card's height, and neither is the primary action — creating a link is. */}
+                <HStack gap={4}>
+                  {/* The access log itself, not just a count. `accesses[]` was already on the
+                      wire and typed but rendered nowhere, so a farmer could see THAT their
+                      certifier opened the link but not WHAT they did — and "downloaded the
+                      dossier" is a materially different signal from "opened the page".
+                      Deliberately omits ip_address: that is Trazo's audit trail for abuse
+                      investigation, not something a farmer needs about a third party. */}
+                  {link.accesses.length > 0 && (
+                    <Link
+                      as="button"
+                      type="button"
+                      fontSize="xs"
+                      color="green.600"
+                      fontWeight="medium"
+                      onClick={() => setOpenLog(openLog === link.id ? null : link.id)}
+                    >
+                      {openLog === link.id
+                        ? intl.formatMessage({
+                            id: 'certifierLink.hideActivity',
+                            defaultMessage: 'Hide activity'
+                          })
+                        : intl.formatMessage(
+                            {
+                              id: 'certifierLink.showActivity',
+                              defaultMessage:
+                                'Show activity ({n, plural, one {# open} other {# opens}})'
+                            },
+                            { n: link.accesses.length }
+                          )}
+                    </Link>
+                  )}
+                  {canWrite && (
+                    <Link
+                      as="button"
+                      type="button"
+                      fontSize="xs"
+                      color="gray.500"
+                      fontWeight="medium"
+                      _hover={{ color: 'red.600' }}
+                      onClick={() => handleRevoke(link)}
+                    >
+                      {intl.formatMessage({
+                        id: 'certifierLink.revoke',
+                        defaultMessage: 'Revoke'
+                      })}
+                    </Link>
+                  )}
+                </HStack>
+
+                {openLog === link.id && link.accesses.length > 0 && (
+                  <VStack align="stretch" gap={1} pl={1} pb={1}>
+                    {link.accesses.map((entry) => (
+                      <HStack key={entry.id} gap={2} fontSize="xs" color="gray.500">
+                        <Text>{formatDateTime(entry.accessed_at)}</Text>
+                        <Text>·</Text>
+                        <Text>{entry.action_display}</Text>
+                      </HStack>
+                    ))}
+                  </VStack>
+                )}
+              </VStack>
+            </Box>
+          );
+        })}
       </VStack>
     </StandardCard>
   );

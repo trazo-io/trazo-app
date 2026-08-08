@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, HStack, VStack, Text, Icon, useColorModeValue, Center } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaLeaf, FaShieldAlt, FaHome, FaComments } from 'react-icons/fa';
+import { FaLeaf, FaShieldAlt, FaHome } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 const MotionBox = motion(Box);
@@ -42,14 +42,12 @@ const navigationItems: NavigationItem[] = [
     defaultLabel: 'Farm',
     icon: FaHome,
     targetSection: 'farm-section'
-  },
-  {
-    id: 'reviews',
-    labelId: 'consumer.nav.reviews',
-    defaultLabel: 'Reviews',
-    icon: FaComments,
-    targetSection: 'reviews-section'
   }
+  // The "Reviews" tab was removed on 2026-08-06 with the consumer review section it pointed
+  // at (`reviews-section`). Star ratings were sign-in-gated for anti-gaming reasons, and the
+  // authenticated consumer account product is being retired — so the review CTA had become a
+  // funnel into a sign-up that no longer accepts registrations. A nav tab that scrolls to a
+  // section which no longer exists is worse than no tab.
 ];
 
 export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({

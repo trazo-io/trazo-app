@@ -94,18 +94,22 @@ interface FarmModalProps {
     certifications?: string;
     // Operational agricultural fields - updated for transparency-first approach
     water_sources?: string[];
-    // climate_zone removed (not consumer-relevant)
     soil_health_practices?: string[]; // replaces soil_types
-    // conservation_practices merged into sustainability_practices
     irrigation_methods?: string[];
     about?: string;
     main_activities?: string;
     location_highlights?: string;
     custom_message?: string;
-    is_active?: boolean;
     crops_grown?: string[] | string;
-    sustainability_practices?: string[] | string;
-    employee_count?: number;
+    // `sustainability_practices` removed 2026-08-07 — the backend no longer publishes it.
+    // It was farmer free text rendered here as green leaf chips, and "USDA Organic
+    // Certified" shipped in it from three demo seeders: a certification attestation with
+    // no database backing, styled as a trust signal (FTC 16 CFR 260.6 / EU ECGT 2024/825).
+    // Certifications reach this page through `certifications`, gated server-side by
+    // history/services/claim_authority.py.
+    //
+    // `is_active`, `employee_count`, `climate_zone` and `conservation_practices` were
+    // dropped at the same time: all four were on the wire and rendered by nothing here.
     total_acreage?: number;
     year_established?: number;
     establishment_type?: string;
@@ -386,9 +390,8 @@ export const FarmModal: React.FC<FarmModalProps> = ({
         </CardBody>
       </Card>
 
-      {/* Crops and Practices */}
-      {(establishmentData.crops_grown?.length ||
-        establishmentData.sustainability_practices?.length) && (
+      {/* Crops */}
+      {!!establishmentData.crops_grown?.length && (
         <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
           <CardBody p={6}>
             <Heading size="md" color={textColor} mb={4}>
@@ -441,53 +444,6 @@ export const FarmModal: React.FC<FarmModalProps> = ({
                 </Box>
               )}
 
-              {establishmentData.sustainability_practices && (
-                <Box>
-                  <HStack mb={3}>
-                    <Icon as={FaLeaf} color={accentColor} />
-                    <Text fontWeight="semibold" color={textColor}>
-                      {intl.formatMessage({
-                        id: 'consumer.modal.sustainabilityPractices',
-                        defaultMessage: 'Sustainability Practices'
-                      })}
-                    </Text>
-                  </HStack>
-                  <Wrap spacing={2}>
-                    {(() => {
-                      let practices: string[] = [];
-
-                      if (Array.isArray(establishmentData.sustainability_practices)) {
-                        practices = establishmentData.sustainability_practices;
-                      } else if (
-                        typeof establishmentData.sustainability_practices === 'string'
-                      ) {
-                        try {
-                          practices = JSON.parse(establishmentData.sustainability_practices);
-                        } catch {
-                          practices = establishmentData.sustainability_practices
-                            .split(',')
-                            .map((practice) => practice.trim())
-                            .filter((practice) => practice);
-                        }
-                      }
-
-                      return practices.map((practice: string, index: number) => (
-                        <WrapItem key={index}>
-                          <Tag
-                            colorScheme="green"
-                            variant="subtle"
-                            borderRadius="full"
-                            size="md"
-                          >
-                            <TagLeftIcon as={FaLeaf} />
-                            <TagLabel>{practice}</TagLabel>
-                          </Tag>
-                        </WrapItem>
-                      ));
-                    })()}
-                  </Wrap>
-                </Box>
-              )}
             </VStack>
           </CardBody>
         </Card>

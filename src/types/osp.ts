@@ -201,3 +201,72 @@ export function emptySections(): OSPSections {
     return acc;
   }, {} as OSPSections);
 }
+
+/* -------------------------------------------------------------------------------------------
+ * Common OSP § 11 — "Records Maintained" (7 CFR 205.103)
+ *
+ * USDA AMS published the Common OSP template set (files dated 2026-05-26). Its § 11 asks the
+ * operation to check which record types it maintains, in four groups. Trazo derives EVIDENCE for
+ * each from what the farm logged — but evidence is not an answer.
+ *
+ * 🔴 `suggested` and `confirmed` are separate on purpose. § 205.201(a) makes the PRODUCER the
+ * author of the organic system plan, so only an explicit operator confirmation may render as a
+ * ticked checkbox. A UI that renders `suggested` as a tick has reintroduced exactly the
+ * auto-attestation bug this shape exists to prevent.
+ * ---------------------------------------------------------------------------------------- */
+
+export type OSPRecordEvidenceStatus =
+  | 'evidenced_in_trazo'
+  | 'not_evidenced_in_trazo'
+  /** The evidence check itself failed. Deliberately NOT folded into "none": "we could not
+   *  look" and "we looked and found nothing" are different statements to a certifier. */
+  | 'evidence_check_failed';
+
+export interface OSPRecordType {
+  key: string;
+  /** Verbatim USDA § 11 label — never reword it in the UI. */
+  label: string;
+  /** The § 11 question this checkbox sits under, verbatim. */
+  group: string;
+  cfr_cite: string;
+  status: OSPRecordEvidenceStatus;
+  count: number;
+  /** Human-readable basis, e.g. "11 harvest events logged". Empty when nothing was found. */
+  basis: string;
+  /** Trazo structurally cannot see this record type (weigh tickets, contracts, ...). */
+  external_by_design: boolean;
+  /** Evidence exists AND the operator has not confirmed yet. Render as a suggestion, not a tick. */
+  suggested: boolean;
+  /** The operator's own assertion — the ONLY thing that may render as a ticked checkbox. */
+  confirmed: boolean;
+  confirmed_at: string | null;
+  confirmed_by: number | null;
+}
+
+export interface OSPRecordTypesSummary {
+  total: number;
+  evidenced: number;
+  confirmed: number;
+  awaiting_confirmation: number;
+  external_by_design: number;
+  evidence_check_failed: number;
+}
+
+export interface OSPRecordTypesResponse {
+  summary: OSPRecordTypesSummary;
+  record_types: OSPRecordType[];
+}
+
+/** One Common OSP required attachment. `blank_cells` is work remaining for the operator to
+ *  complete — never a completeness score. */
+export interface OSPAttachmentSummary {
+  key: string;
+  title: string;
+  rows: number;
+  blank_cells: number;
+  error: boolean;
+}
+
+export interface OSPAttachmentsResponse {
+  workbooks: OSPAttachmentSummary[];
+}

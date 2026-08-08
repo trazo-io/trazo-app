@@ -2,7 +2,7 @@ import SignInConsumer from 'views/Authentication/SignIn/ConsumerSignIn';
 import VerifyEmailConsumer from 'views/Authentication/SignUp/VerifyEmailConsumer';
 import { CONSUMER, PRODUCER, SUPERUSER } from '../config';
 import { ComponentType } from 'react';
-import SignUpConsumer from 'views/Authentication/SignUp/ConsumerSignUp';
+import ConsumerSignUpClosed from 'views/Authentication/SignUp/ConsumerSignUpClosed';
 import SignInApp from 'views/Authentication/SignIn/AppSignIn';
 import SignUp from 'views/Authentication/SignUp/AppSignUp';
 import VerifyEmail from 'views/Authentication/SignUp/VerifyEmail';
@@ -59,7 +59,12 @@ export const routeConfig: AppConfig = {
     auth: {
       path: '/auth',
       signin: SignInConsumer,
-      signup: SignUpConsumer,
+      // Consumer registration closed 2026-08-06 — the authenticated shopper product is being
+      // retired (TRAZO-OCTOBER-2026-PLAN.md §10.5). Closing intake now keeps the November
+      // removal a code deletion instead of a user migration. Sign-IN stays open so existing
+      // account holders can still reach their data. `ConsumerSignUp` is unrouted, not deleted;
+      // restoring it is this one line.
+      signup: ConsumerSignUpClosed,
       verifyEmail: ModernVerifyEmailConsumer,
       forgotPassword: ConsumerForgotPassword,
       resetPassword: ConsumerResetPassword

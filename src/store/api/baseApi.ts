@@ -61,7 +61,8 @@ export const baseApi = createApi({
     'CertifierAccessLink',
     'LandownerAffidavit',
     'OSPAnnualUpdate',
-    'OSPChangeNotification'
+    'OSPChangeNotification',
+    'OSPRecordTypes'
   ]
 });
 

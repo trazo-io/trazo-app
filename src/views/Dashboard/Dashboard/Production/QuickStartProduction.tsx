@@ -33,13 +33,7 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   Switch,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
+  useColorModeValue,
   useDisclosure
 } from '@chakra-ui/react';
 import {
@@ -75,14 +69,12 @@ import {
   StandardField,
   StandardInput,
   StandardSelect,
-  StandardTextarea
+  StandardTextarea,
+  ResponsiveModal
 } from 'components/Design';
-import Card from 'components/Card/Card';
-import CardBody from 'components/Card/CardBody';
-import CardHeader from 'components/Card/CardHeader';
 import { PlanLimitAlert } from 'components/Subscription/PlanLimitAlert';
 import { getEventTypeMapping, getEventDataForType } from 'utils/eventTypeMapping';
-import { useIntl } from 'react-intl';
+import { useIntl, FormattedMessage } from 'react-intl';
 import { useDefaultUnits } from 'src/hooks/useMeasurementSystem';
 
 // Utility function for formatting carbon values with appropriate precision
@@ -709,16 +701,37 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   // farm actually operates instead — an organic grower opening the picker should not have to
   // scroll past "Walnuts - Conventional Production" to find the programme that fits them, and
   // the conventional list is where the prohibited inputs live.
+  //
+  // Reads the method via `watch`, NOT `getValues`. `getValues` returns a STABLE function
+  // reference, so listing it in the dependency array never invalidates the memo: the sort was
+  // computed once at first render and never again. Selecting "Organic" left the conventional
+  // template — the one carrying prohibited inputs — sitting first, which silently defeated the
+  // entire mitigation. Verified live before and after.
+  const watchedProductionMethod = watch('production_method');
   const filteredTemplates = useMemo(() => {
     const templates = templatesData?.templates || [];
-    const method = (getValues('production_method') || farmDefaultMethod || '').toLowerCase();
+    const method = (watchedProductionMethod || farmDefaultMethod || '').toLowerCase();
     if (!method) return templates;
     return [...templates].sort((a: any, b: any) => {
       const aMatch = String(a?.system_type || '').toLowerCase() === method ? 0 : 1;
       const bMatch = String(b?.system_type || '').toLowerCase() === method ? 0 : 1;
       return aMatch - bMatch;
     });
-  }, [templatesData, getValues, farmDefaultMethod]);
+  }, [templatesData, watchedProductionMethod, farmDefaultMethod]);
+
+  // Resolved crop name for the template picker's copy. Undefined until a crop is chosen,
+  // which is what switches the picker between its crop-specific and generic messages.
+  const selectedCropName = useMemo(
+    () =>
+      selectedCropTypeId && cropTypesData
+        ? cropTypesData.find((ct: any) => ct.id.toString() === selectedCropTypeId)?.name
+        : undefined,
+    [selectedCropTypeId, cropTypesData]
+  );
+
+  const cardBg = useColorModeValue('white', 'gray.700');
+  const selectedCardBg = useColorModeValue('blue.50', 'blue.900');
+  const cardBorderColor = useColorModeValue('gray.200', 'gray.600');
 
   // Templates are OPT-IN: choosing a crop must not apply one.
   //
@@ -798,7 +811,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       // lot was published as conventional. The farm is the authority on its own organic
       // status; a crop template is not.
       const currentMethod = getValues('production_method');
-      const farmerOrFarmChose = Boolean(farmDefaultMethod) || (currentMethod && currentMethod !== 'conventional');
+      const farmerOrFarmChose =
+        Boolean(farmDefaultMethod) || (currentMethod && currentMethod !== 'conventional');
       if (templateDetail.system_type && !farmerOrFarmChose) {
         const methodMap: Record<string, string> = {
           organic: 'organic',
@@ -1543,9 +1557,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         size="md"
                       />
                       <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                        {allSelectableEventsEnabled
-                          ? 'Unselect All'
-                          : 'Select All'}
+                        {allSelectableEventsEnabled ? 'Unselect All' : 'Select All'}
                       </Text>
                     </HStack>
                   </HStack>
@@ -1640,152 +1652,166 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           </VStack>
         </form>
 
-        {/* Template Selection Modal */}
-        <Modal isOpen={isTemplateOpen} onClose={onTemplateClose} size="6xl">
-          <ModalOverlay />
-          <ModalContent maxH="90vh" overflowY="auto">
-            <ModalHeader>
-              <VStack align="start" spacing={2}>
-                <HStack>
-                  <Icon as={FaRocket} color="blue.500" />
-                  <Heading size="lg">Select Production Template</Heading>
-                </HStack>
-                <Text fontSize="sm" color="gray.600" fontWeight="normal">
-                  {selectedCropTypeId && cropTypesData ? (
-                    <>
-                      Templates for{' '}
-                      <Text as="span" fontWeight="semibold" color="green.600">
-                        {cropTypesData.find((ct) => ct.id.toString() === selectedCropTypeId)?.name}
-                      </Text>{' '}
-                      • {filteredTemplates.length} template
-                      {filteredTemplates.length !== 1 ? 's' : ''} available
-                    </>
-                  ) : (
-                    'Choose a pre-configured template to accelerate your production setup'
-                  )}
+        {/* Template Selection Modal — bottom sheet below `md`, centered modal above */}
+        <ResponsiveModal
+          isOpen={isTemplateOpen}
+          onClose={onTemplateClose}
+          size="4xl"
+          header={
+            <VStack align="start" spacing={2}>
+              <HStack>
+                <Icon as={FaRocket} color="blue.500" />
+                <Heading size={{ base: 'md', md: 'lg' }}>
+                  {intl.formatMessage({ id: 'production.templateModal.title' })}
+                </Heading>
+              </HStack>
+              <Text fontSize="sm" color="gray.600" fontWeight="normal">
+                {selectedCropName ? (
+                  <FormattedMessage
+                    id="production.templateModal.subtitle"
+                    values={{
+                      crop: selectedCropName,
+                      count: filteredTemplates.length,
+                      highlight: (chunks: React.ReactNode) => (
+                        <Text as="span" fontWeight="semibold" color="green.600">
+                          {chunks}
+                        </Text>
+                      )
+                    }}
+                  />
+                ) : (
+                  intl.formatMessage({ id: 'production.templateModal.subtitleGeneric' })
+                )}
+              </Text>
+            </VStack>
+          }
+          footer={
+            <Button variant="ghost" onClick={onTemplateClose}>
+              {intl.formatMessage({ id: 'app.cancel' })}
+            </Button>
+          }
+        >
+          {filteredTemplates.length > 0 ? (
+            <Grid templateColumns="repeat(auto-fit, minmax(min(320px, 100%), 1fr))" gap={6}>
+              {filteredTemplates.map((template) => {
+                const CropIcon = getCropIcon(template.crop_type);
+                const isSelected = selectedTemplate?.template_id === template.template_id;
+                return (
+                  <Box
+                    key={template.template_id}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    p={4}
+                    borderWidth="1px"
+                    borderRadius="15px"
+                    borderColor={isSelected ? 'blue.300' : cardBorderColor}
+                    bg={isSelected ? selectedCardBg : cardBg}
+                    cursor="pointer"
+                    transition="all 0.2s"
+                    _hover={{
+                      transform: 'translateY(-2px)',
+                      shadow: 'lg'
+                    }}
+                    // A bare Box gets no focus ring from Chakra's button styles, so a
+                    // keyboard user tabbing the list would have no idea where they are.
+                    _focusVisible={{
+                      outline: '2px solid',
+                      outlineColor: 'blue.500',
+                      outlineOffset: '2px'
+                    }}
+                    onClick={() => handleTemplateSelect(template)}
+                    onKeyDown={(e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleTemplateSelect(template);
+                      }
+                    }}
+                  >
+                    <HStack justify="space-between" align="start" mb={3} spacing={3}>
+                      <HStack align="start" spacing={2} minW={0}>
+                        <Icon as={CropIcon} color="green.500" boxSize={5} mt={1} flexShrink={0} />
+                        <VStack align="start" spacing={0} minW={0}>
+                          <Heading size="sm">{template.name}</Heading>
+                          <Text fontSize="sm" color="gray.600">
+                            {template.crop_type
+                              .replace(/_/g, ' ')
+                              .replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                          </Text>
+                        </VStack>
+                      </HStack>
+                      <Badge colorScheme="blue" variant="subtle" flexShrink={0}>
+                        {intl.formatMessage(
+                          { id: 'production.templateModal.eventsCount' },
+                          { count: template.events_count }
+                        )}
+                      </Badge>
+                    </HStack>
+                    <Text fontSize="sm" color="gray.700" mb={4} noOfLines={2}>
+                      {template.description}
+                    </Text>
+                    <Grid templateColumns="repeat(2, 1fr)" gap={3}>
+                      <VStack align="start" spacing={1}>
+                        <HStack>
+                          <Icon as={FaClock} color="blue.500" boxSize={3} />
+                          <Text fontSize="xs" fontWeight="medium">
+                            {intl.formatMessage({ id: 'production.templateModal.setupTime' })}
+                          </Text>
+                        </HStack>
+                        <Text fontSize="sm" fontWeight="bold">
+                          {intl.formatMessage(
+                            { id: 'production.templateModal.setupMinutes' },
+                            { minutes: template.setup_time_minutes }
+                          )}
+                        </Text>
+                      </VStack>
+                      <VStack align="start" spacing={1}>
+                        <HStack>
+                          <Icon as={FaChartLine} color="green.500" boxSize={3} />
+                          <Text fontSize="xs" fontWeight="medium">
+                            {template.system_type === 'organic'
+                              ? intl.formatMessage({ id: 'template.badge.auditReady' })
+                              : intl.formatMessage({ id: 'template.badge.transparency' })}
+                          </Text>
+                        </HStack>
+                        <Text fontSize="sm" fontWeight="bold">
+                          {template.system_type === 'organic'
+                            ? intl.formatMessage({ id: 'template.badge.nopReady' })
+                            : intl.formatMessage({ id: 'template.badge.qrReady' })}
+                        </Text>
+                      </VStack>
+                    </Grid>
+                  </Box>
+                );
+              })}
+            </Grid>
+          ) : (
+            <VStack spacing={4} py={8} textAlign="center">
+              <Icon as={FaSeedling} boxSize={12} color="gray.400" />
+              <VStack spacing={2}>
+                <Heading size="md" color="gray.600">
+                  {intl.formatMessage({ id: 'production.templateModal.emptyTitle' })}
+                </Heading>
+                <Text color="gray.500" maxW="400px">
+                  {selectedCropName
+                    ? intl.formatMessage(
+                        { id: 'production.templateModal.emptyForCrop' },
+                        { crop: selectedCropName }
+                      )
+                    : intl.formatMessage({ id: 'production.templateModal.emptyNoCrop' })}
                 </Text>
               </VStack>
-            </ModalHeader>
-            <ModalCloseButton />
-            <ModalBody pb={6}>
-              {filteredTemplates.length > 0 ? (
-                <Grid templateColumns="repeat(auto-fit, minmax(350px, 1fr))" gap={6}>
-                  {filteredTemplates.map((template) => {
-                    const CropIcon = getCropIcon(template.crop_type);
-                    return (
-                      <Box
-                        cursor="pointer"
-                        transition="all 0.2s"
-                        _hover={{
-                          transform: 'translateY(-2px)',
-                          shadow: 'lg'
-                        }}
-                        onClick={() => handleTemplateSelect(template)}
-                      >
-                        <Card
-                          key={template.template_id}
-                          borderWidth="1px"
-                          borderColor={
-                            selectedTemplate?.template_id === template.template_id
-                              ? 'blue.300'
-                              : 'gray.200'
-                          }
-                          bg={
-                            selectedTemplate?.template_id === template.template_id
-                              ? 'blue.50'
-                              : 'white'
-                          }
-                        >
-                          <CardHeader pb={2}>
-                            <HStack justify="space-between">
-                              <HStack>
-                                <Icon as={CropIcon} color="green.500" boxSize={5} />
-                                <VStack align="start" spacing={0}>
-                                  <Heading size="md">{template.name}</Heading>
-                                  <Text fontSize="sm" color="gray.600">
-                                    {template.crop_type
-                                      .replace(/_/g, ' ')
-                                      .replace(/\b\w/g, (c: string) => c.toUpperCase())}
-                                  </Text>
-                                </VStack>
-                              </HStack>
-                              <Badge colorScheme="blue" variant="subtle">
-                                {template.events_count} events
-                              </Badge>
-                            </HStack>
-                          </CardHeader>
-                          <CardBody pt={0}>
-                            <Text fontSize="sm" color="gray.700" mb={4} noOfLines={2}>
-                              {template.description}
-                            </Text>
-                            <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-                              <VStack align="start" spacing={1}>
-                                <HStack>
-                                  <Icon as={FaClock} color="blue.500" boxSize={3} />
-                                  <Text fontSize="xs" fontWeight="medium">
-                                    Setup Time
-                                  </Text>
-                                </HStack>
-                                <Text fontSize="sm" fontWeight="bold">
-                                  {template.setup_time_minutes} minutes
-                                </Text>
-                              </VStack>
-                              <VStack align="start" spacing={1}>
-                                <HStack>
-                                  <Icon as={FaChartLine} color="green.500" boxSize={3} />
-                                  <Text fontSize="xs" fontWeight="medium">
-                                    {template.system_type === 'organic'
-                                      ? intl.formatMessage({ id: 'template.badge.auditReady' })
-                                      : intl.formatMessage({ id: 'template.badge.transparency' })}
-                                  </Text>
-                                </HStack>
-                                <Text fontSize="sm" fontWeight="bold">
-                                  {template.system_type === 'organic'
-                                    ? intl.formatMessage({ id: 'template.badge.nopReady' })
-                                    : intl.formatMessage({ id: 'template.badge.qrReady' })}
-                                </Text>
-                              </VStack>
-                            </Grid>
-                          </CardBody>
-                        </Card>
-                      </Box>
-                    );
-                  })}
-                </Grid>
-              ) : (
-                <VStack spacing={4} py={8} textAlign="center">
-                  <Icon as={FaSeedling} boxSize={12} color="gray.400" />
-                  <VStack spacing={2}>
-                    <Heading size="md" color="gray.600">
-                      No Templates Available
-                    </Heading>
-                    <Text color="gray.500" maxW="400px">
-                      {selectedCropTypeId
-                        ? `We don't have pre-configured templates for ${
-                            cropTypesData?.find((ct) => ct.id.toString() === selectedCropTypeId)
-                              ?.name
-                          } yet. You can still create a production manually.`
-                        : 'Select a crop type to see available templates.'}
-                    </Text>
-                  </VStack>
-                  <Button
-                    variant="outline"
-                    colorScheme="blue"
-                    onClick={onTemplateClose}
-                    leftIcon={<FaEdit />}
-                  >
-                    Continue Without Template
-                  </Button>
-                </VStack>
-              )}
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="ghost" mr={3} onClick={onTemplateClose}>
-                Cancel
+              <Button
+                variant="outline"
+                colorScheme="blue"
+                onClick={onTemplateClose}
+                leftIcon={<FaEdit />}
+              >
+                {intl.formatMessage({ id: 'production.templateModal.continueWithout' })}
               </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
+            </VStack>
+          )}
+        </ResponsiveModal>
       </StandardPage>
     </WriteAccessGuard>
   );

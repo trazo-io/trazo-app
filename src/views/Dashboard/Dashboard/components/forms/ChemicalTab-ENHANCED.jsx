@@ -65,6 +65,7 @@ import { useFormFields } from 'src/hooks/useFormFields';
 import { useFarmState } from 'hooks/useMeasurementSystem';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
 
+import { BlockIdField } from 'components/Fields/BlockIdField';
 import {
   validateConcentration,
   ConcentrationFeedback,
@@ -3907,23 +3908,7 @@ const ChemicalTab = forwardRef(
                     />
                   </StandardField>
 
-                  <StandardField
-                    label={intl.formatMessage({ id: 'fieldDetails.blockId' })}
-                    helpText={intl.formatMessage({ id: 'fieldDetails.blockIdHelp' })}
-                  >
-                    <Controller
-                      name="block_id"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardInput
-                          {...field}
-                          placeholder={intl.formatMessage({
-                            id: 'fieldDetails.blockIdPlaceholder'
-                          })}
-                        />
-                      )}
-                    />
-                  </StandardField>
+                  <BlockIdField control={methods.control} />
 
                   <StandardField
                     label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}

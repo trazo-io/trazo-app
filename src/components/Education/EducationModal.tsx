@@ -344,22 +344,38 @@ const EducationModal: React.FC<EducationModalProps> = ({
       return (
         <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
           <DrawerOverlay bg="blackAlpha.400" />
-          <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="82vh" containerProps={{ style: { zIndex: 10000 } }}>
-            <Box pt={3} pb={1} display="flex" justifyContent="center" cursor="grab" {...swipeHandlers}>
+          <DrawerContent
+            bg={bgColor}
+            borderTopRadius="2xl"
+            maxH="82vh"
+            containerProps={{ style: { zIndex: 10000 } }}
+          >
+            <Box
+              pt={3}
+              pb={1}
+              display="flex"
+              justifyContent="center"
+              cursor="grab"
+              {...swipeHandlers}
+            >
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>
             <DrawerCloseButton top={4} />
-            <DrawerHeader><Skeleton height="24px" width="200px" /></DrawerHeader>
+            <DrawerHeader>
+              <Skeleton height="24px" width="200px" />
+            </DrawerHeader>
             <DrawerBody>{loadingSkeleton}</DrawerBody>
           </DrawerContent>
         </Drawer>
       );
     }
     return (
-      <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+      <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
         <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
-        <ModalContent bg={bgColor} borderRadius="xl" mx={4}>
-          <ModalHeader><Skeleton height="24px" width="200px" /></ModalHeader>
+        <ModalContent bg={bgColor} borderRadius="xl" maxH="90vh" mx={4}>
+          <ModalHeader>
+            <Skeleton height="24px" width="200px" />
+          </ModalHeader>
           <ModalCloseButton />
           <ModalBody>{loadingSkeleton}</ModalBody>
         </ModalContent>
@@ -386,8 +402,20 @@ const EducationModal: React.FC<EducationModalProps> = ({
       return (
         <Drawer isOpen={isOpen} onClose={onClose} placement="bottom">
           <DrawerOverlay bg="blackAlpha.400" />
-          <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH="82vh" containerProps={{ style: { zIndex: 10000 } }}>
-            <Box pt={3} pb={1} display="flex" justifyContent="center" cursor="grab" {...swipeHandlers}>
+          <DrawerContent
+            bg={bgColor}
+            borderTopRadius="2xl"
+            maxH="82vh"
+            containerProps={{ style: { zIndex: 10000 } }}
+          >
+            <Box
+              pt={3}
+              pb={1}
+              display="flex"
+              justifyContent="center"
+              cursor="grab"
+              {...swipeHandlers}
+            >
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>
             <DrawerCloseButton top={4} />
@@ -398,9 +426,9 @@ const EducationModal: React.FC<EducationModalProps> = ({
       );
     }
     return (
-      <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+      <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
         <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
-        <ModalContent bg={bgColor} borderRadius="xl" mx={4}>
+        <ModalContent bg={bgColor} borderRadius="xl" maxH="90vh" mx={4}>
           <ModalHeader>Educational Content</ModalHeader>
           <ModalCloseButton />
           <ModalBody>{errorContent}</ModalBody>
@@ -500,8 +528,10 @@ const EducationModal: React.FC<EducationModalProps> = ({
         >
           {/* Drag handle - swipe down to dismiss */}
           <Box
-            pt={3} pb={1}
-            display="flex" justifyContent="center"
+            pt={3}
+            pb={1}
+            display="flex"
+            justifyContent="center"
             cursor="grab"
             {...swipeHandlers}
           >

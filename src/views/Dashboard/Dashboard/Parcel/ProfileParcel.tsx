@@ -1,24 +1,52 @@
+/**
+ * Parcel profile — the producer's field-level page.
+ *
+ * WHAT THIS PAGE IS FOR. A parcel is the unit a certifier inspects: 7 CFR 205.202 is written
+ * about *land*, not about the operation. So this page leads with the §205.202 record set —
+ * field history, buffer zones and parcel identity, and the landowner affidavit for the
+ * three-year prior-use requirement. The October plan calls these "the best-aligned non-OSP
+ * producer screen" and says KEEP + PROMOTE (§10.4); they were the LAST three cards of
+ * thirteen, sitting under Soil Health and Water Management.
+ *
+ * STRUCTURE (rebuilt 2026-08-07), mirroring ProfileFarm:
+ *
+ *   header (no card)      identity · one meta line · Edit
+ *   §1 organic compliance field history · parcel records · landowner affidavit  ← PROMOTED
+ *   §2 parcel details     ONE card, grouped definition lists   ← was 7 separate cards
+ *
+ * As on the farm profile, hierarchy comes from section headings and spacing, NOT from card
+ * chrome: `StandardCard`'s `variant` is inert (protected CSS forces one look on every
+ * `.trazo-card`). See its docstring.
+ *
+ * Removed in the rebuild:
+ *  - the transparency SCORE badge (rendered twice, mobile + desktop). Cut from the farm home
+ *    2026-08-04 and from the Production quick-stats per §10.4 as "the 4th duplicate of one
+ *    number". Its home is /transparency ("Farm Records").
+ *  - "Quick Stats" — area and crop, both duplicated by the Basic Information card below.
+ *  - the initials Avatar and the duplicated mobile/desktop identity layouts.
+ *  - "Share", which called navigator.share on `window.location.href` — an authenticated
+ *    /admin URL that opens a login wall for whoever receives it.
+ *  - the whole "Consumer transparency" section. `get_transparency_description()` returns
+ *    `self.description`, which the header already prints, and `consumer_story` reached no
+ *    surface at all. See the note where §2 used to be.
+ */
 import React, { useEffect, useState } from 'react';
 import {
   Box,
   VStack,
   HStack,
   Text,
-  Avatar,
+  Heading,
   SimpleGrid,
   Icon,
   Badge,
-  Link,
-  Wrap,
-  WrapItem,
+  Divider,
   Flex,
   CloseButton
 } from '@chakra-ui/react';
 import {
   FaMapMarkedAlt,
-  FaTractor,
   FaEdit,
-  FaShare,
   FaSeedling,
   FaPhone,
   FaEnvelope,
@@ -31,9 +59,8 @@ import {
   FaHashtag,
   FaGlobeAmericas,
   FaMountain,
-  FaEye,
-  FaCheckCircle,
   FaChartLine,
+  FaFlask,
   FaUsers
 } from 'react-icons/fa';
 import { MdEco, MdLocationOn } from 'react-icons/md';
@@ -42,7 +69,14 @@ import { useUserRole } from 'hooks/useUserRole';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
-import { StandardCard, StandardButton, StandardPage, StandardPageLoading } from 'components/Design/StandardComponents';
+import {
+  StandardCard,
+  StandardButton,
+  StandardPage,
+  StandardPageLoading,
+  StandardSection
+} from 'components/Design/StandardComponents';
+import { InfoRow, FieldGroup, PageHeaderMeta } from 'components/Design/ProfileField';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
 import FieldHistorySection from './FieldHistorySection';
@@ -96,7 +130,6 @@ interface ParcelData {
   transparency_score?: number;
   transparency_description?: string;
   sustainability_practices?: string;
-  consumer_story?: string;
   contact_person?: string;
   contact_email?: string;
   contact_phone?: string;
@@ -126,94 +159,6 @@ const formatDisplayValue = (value: string | undefined | null): string => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 };
-
-
-// InfoRow component - matches CompanyInfoTab pattern
-interface InfoRowProps {
-  icon: React.ElementType;
-  label: string;
-  value?: string | number | null;
-  type?: 'text' | 'link' | 'email' | 'phone';
-}
-
-const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) => {
-  if (!value) return null;
-
-  const renderValue = () => {
-    switch (type) {
-      case 'link':
-        return (
-          <Link href={value as string} isExternal color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
-            {value}
-          </Link>
-        );
-      case 'email':
-        return (
-          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
-            {value}
-          </Link>
-        );
-      case 'phone':
-        return (
-          <Link href={`tel:${value}`} color="green.600" fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }}>
-            {value}
-          </Link>
-        );
-      default:
-        return (
-          <Text fontWeight="medium" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
-            {value}
-          </Text>
-        );
-    }
-  };
-
-  return (
-    <HStack spacing={2} align="flex-start">
-      <Icon as={icon} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
-      <Box>
-        <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
-          {label}
-        </Text>
-        {renderValue()}
-      </Box>
-    </HStack>
-  );
-};
-
-// Stat card for quick stats section
-interface StatCardProps {
-  icon: React.ElementType;
-  value: string | number;
-  label: string;
-  subLabel?: string;
-  colorScheme: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ icon, value, label, subLabel, colorScheme }) => (
-  <VStack
-    spacing={{ base: 0.5, md: 2 }}
-    p={{ base: 3, md: 4 }}
-    bg={`${colorScheme}.50`}
-    borderRadius="xl"
-    border="1px solid"
-    borderColor={`${colorScheme}.200`}
-    align="center"
-  >
-    <Icon as={icon} boxSize={{ base: 5, md: 6 }} color={`${colorScheme}.500`} />
-    <Text fontSize={{ base: 'md', md: 'xl' }} fontWeight="bold" color="gray.800" textAlign="center">
-      {value}
-    </Text>
-    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" textAlign="center">
-      {label}
-    </Text>
-    {subLabel && (
-      <Text fontSize="xs" color="gray.500" textAlign="center">
-        {subLabel}
-      </Text>
-    )}
-  </VStack>
-);
 
 function ProfileParcel(): React.ReactElement {
   const intl = useIntl();
@@ -271,20 +216,6 @@ function ProfileParcel(): React.ReactElement {
     }
   }, [farmId, establishments]);
 
-  const handleShare = async (): Promise<void> => {
-    try {
-      if (navigator.share && parcelData?.name) {
-        await navigator.share({
-          title: `${parcelData.name} - ${intl.formatMessage({ id: 'parcel.shareTitle' })}`,
-          text: `${intl.formatMessage({ id: 'parcel.shareText' })} #Trazo`,
-          url: window.location.href
-        });
-      }
-    } catch (err) {
-      console.error('Error sharing:', err);
-    }
-  };
-
   if (isParcelLoading) {
     return (
       <StandardPage
@@ -296,62 +227,93 @@ function ProfileParcel(): React.ReactElement {
     );
   }
 
-  // Format location string
-  const formatLocation = () => {
-    const parts = [
-      parcelData?.address,
-      establishment?.city,
-      establishment?.state,
-      establishment?.country
-    ].filter(Boolean);
-    return parts.join(', ');
-  };
+  /**
+   * Read through a fallback, never straight from the query.
+   *
+   * `useGetParcelQuery` is SKIPPED when `currentParcel?.id === parcelId`, and a skipped RTK
+   * Query returns `data: undefined` — so a component that only reads `parcelData` renders a
+   * completely empty page in that state. It is reachable in principle: the parcel detail view
+   * (`views/Dashboard/Parcel/index.jsx`) dispatches `setParcel(data)`, and this page's own
+   * Back button points at it.
+   *
+   * It does not fire TODAY only because the API `id` is a number and the route `parcelId` is
+   * a string, so `===` is never true. That makes it a trap armed for whoever tightens that
+   * comparison. Falling back to the Redux copy is what the skip always implied, and it is
+   * correct whether or not the skip ever starts firing.
+   */
+  const parcel = parcelData ?? currentParcel;
 
-  // Check if agricultural details exist
-  const hasAgriculturalDetails =
-    parcelData?.agricultural_details &&
-    Object.values(parcelData.agricultural_details).some(
-      (v) => v !== undefined && v !== null && v !== ''
+  // No parcel and not loading = the fetch failed or the id is wrong. Say so, rather than
+  // painting a header with an empty <h1> and three empty sections. ProfileFarm has the
+  // equivalent guard; this page had none.
+  if (!parcel) {
+    return (
+      <StandardPage
+        showBackButton
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
+      >
+        <Box py={20} textAlign="center">
+          <Text color="red.500">
+            {intl.formatMessage({
+              id: 'parcel.errorLoading',
+              defaultMessage: 'This parcel could not be loaded.'
+            })}
+          </Text>
+        </Box>
+      </StandardPage>
     );
+  }
 
-  // Check for soil data
-  const hasSoilData =
-    parcelData?.agricultural_details &&
-    (parcelData.agricultural_details.soil_ph ||
-      parcelData.agricultural_details.soil_organic_matter ||
-      parcelData.agricultural_details.soil_nitrogen ||
-      parcelData.agricultural_details.soil_phosphorus);
+  const details = parcel?.agricultural_details;
 
-  // Check for water management data
-  const hasWaterData =
-    parcelData?.agricultural_details &&
-    (parcelData.agricultural_details.irrigation_efficiency ||
-      parcelData.agricultural_details.water_source_type ||
-      parcelData.agricultural_details.water_quality_ph ||
-      parcelData.agricultural_details.water_allocation_acre_feet);
+  const hasSoilData = Boolean(
+    details &&
+      (details.soil_ph ||
+        details.soil_organic_matter ||
+        details.soil_nitrogen ||
+        details.soil_phosphorus)
+  );
 
-  // Check for conservation practices
-  const hasConservationData =
-    parcelData?.agricultural_details &&
-    (parcelData.agricultural_details.cover_crop_management ||
-      parcelData.agricultural_details.crop_rotation_pattern ||
-      parcelData.agricultural_details.pest_management_strategy ||
-      parcelData.agricultural_details.fertilization_program);
+  const hasWaterData = Boolean(
+    details &&
+      (details.irrigation_efficiency ||
+        details.water_source_type ||
+        details.water_quality_ph ||
+        details.water_allocation_acre_feet)
+  );
+
+  const hasConservationData = Boolean(
+    details &&
+      (details.cover_crop_management ||
+        details.crop_rotation_pattern ||
+        details.pest_management_strategy ||
+        details.fertilization_program ||
+        details.sustainability_practices)
+  );
+
+  const hasContact = Boolean(
+    parcel?.contact_person || parcel?.contact_email || parcel?.contact_phone
+  );
 
   // Show the boundary nudge when the parcel has no drawn field boundary
   const showBoundaryNudge =
     canWrite &&
     !boundaryNudgeDismissed &&
-    !!parcelData &&
-    (!parcelData.polygon || parcelData.polygon.length < 3);
+    !!parcel &&
+    (!parcel.polygon || parcel.polygon.length < 3);
+
+  const cropLabel = formatDisplayValue(parcel?.primary_crop || parcel?.crop_type);
+  // 'US', not 'METRIC'. The ICP is Californian orchards and every certifier form, PUR filing
+  // and land record they touch is in acres; the page was leading with hectares.
+  const areaLabel = parcel?.area ? formatAreaWithBothUnits(parcel.area, 'US') : null;
 
   return (
     <StandardPage
       showBackButton
       onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
     >
-      <VStack spacing={{ base: 4, md: 8 }} w="100%">
-        {/* Boundary nudge - parcel saved without a field boundary */}
+      <VStack gap={{ base: 5, md: 8 }} w="100%" maxW="6xl" mx="auto" align="stretch">
+        {/* Boundary nudge — an action, so it stays above everything */}
         {showBoundaryNudge && (
           <Box
             w="100%"
@@ -366,13 +328,13 @@ function ProfileParcel(): React.ReactElement {
               align={{ base: 'stretch', md: 'center' }}
               gap={3}
             >
-              <HStack spacing={2} flex="1" align="flex-start">
+              <HStack gap={2} flex="1" align="flex-start">
                 <Icon as={FaMapMarkedAlt} color="blue.500" boxSize={4} mt={0.5} flexShrink={0} />
                 <Text fontSize="sm" color="blue.800">
                   {intl.formatMessage({ id: 'parcel.skipBoundary.nudgeMessage' })}
                 </Text>
               </HStack>
-              <HStack spacing={1} justify={{ base: 'flex-end', md: 'initial' }} flexShrink={0}>
+              <HStack gap={1} justify={{ base: 'flex-end', md: 'initial' }} flexShrink={0}>
                 <StandardButton
                   variant="outline"
                   size="sm"
@@ -392,590 +354,389 @@ function ProfileParcel(): React.ReactElement {
           </Box>
         )}
 
-        {/* Identity Section */}
-        <StandardCard
-          title={intl.formatMessage({ id: 'app.parcel' })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-          headerAction={
-            <HStack spacing={1}>
+        {/* ── PAGE HEADER — not a card ─────────────────────────────────────────── */}
+        <Box w="100%">
+          <Flex direction="row" justify="space-between" align="flex-start" gap={3}>
+            <VStack align="flex-start" gap={1} minW={0}>
+              <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color="gray.800">
+                {parcel?.name}
+              </Heading>
+              {establishment?.name && (
+                <Text fontSize="sm" color="gray.500">
+                  {establishment.name}
+                </Text>
+              )}
+              <PageHeaderMeta
+                items={[
+                  areaLabel,
+                  cropLabel || null,
+                  parcel?.unique_code
+                    ? intl.formatMessage(
+                        { id: 'parcel.codeMeta', defaultMessage: 'Code {code}' },
+                        { code: parcel.unique_code }
+                      )
+                    : null,
+                  establishment?.zone || null
+                ]}
+              />
+              <HStack gap={2} flexWrap="wrap" pt={1}>
+                <Badge variant="subtle" borderRadius="full" fontSize="xs">
+                  {intl.formatMessage({ id: 'app.active' })}
+                </Badge>
+                {/* NEUTRAL, not brand green. These are classifications, not approvals — and
+                    `colorScheme` is inert on Badge, so the old purple/orange/cyan/teal chips
+                    all rendered the same green as "Active" anyway. */}
+                {parcel?.carbon_calculation_enabled && (
+                  <Badge variant="neutral" borderRadius="full" fontSize="xs">
+                    <HStack gap={1}>
+                      <Icon as={FaLeaf} boxSize={3} />
+                      <Text>{intl.formatMessage({ id: 'parcel.carbonTracking' })}</Text>
+                    </HStack>
+                  </Badge>
+                )}
+                {/* Was "USDA Compliant" — a compliance ASSERTION driven by a locally computed
+                    `usda_compliance_eligible` flag, not a USDA Organic Integrity Database
+                    match. Relabelled to what the flag actually measures: a farmer reading
+                    "compliant" here could walk into an inspection believing a determination
+                    had been made. Only the certifier makes that call. */}
+                {parcel?.usda_compliance_eligible && (
+                  <Badge variant="neutral" borderRadius="full" fontSize="xs">
+                    {intl.formatMessage({
+                      id: 'parcel.usdaReportingReady',
+                      defaultMessage: 'Meets USDA reporting fields'
+                    })}
+                  </Badge>
+                )}
+                {parcel?.transparency_ready && (
+                  <Badge variant="neutral" borderRadius="full" fontSize="xs">
+                    {intl.formatMessage({ id: 'parcel.consumerReady' })}
+                  </Badge>
+                )}
+                {/* The transparency SCORE badge used to sit here. Removed 2026-08-07 — see
+                    the file docstring. */}
+              </HStack>
+            </VStack>
+            {canWrite && (
               <StandardButton
                 variant="outline"
                 size="sm"
-                leftIcon={<Icon as={FaShare} />}
-                onClick={handleShare}
+                leftIcon={<Icon as={FaEdit} />}
+                onClick={() =>
+                  navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`)
+                }
+                flexShrink={0}
+                w="auto"
               >
-                {intl.formatMessage({ id: 'app.share' })}
+                {intl.formatMessage({ id: 'app.edit' })}
               </StandardButton>
-              {canWrite && (
-                <StandardButton
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<Icon as={FaEdit} />}
-                  onClick={() =>
-                    navigate(
-                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`
-                    )
-                  }
-                >
-                  {intl.formatMessage({ id: 'app.edit' })}
-                </StandardButton>
-              )}
-            </HStack>
-          }
-        >
-          {/* Mobile: vertical centered layout */}
-          <VStack spacing={3} align="center" display={{ base: 'flex', md: 'none' }}>
-            <Avatar
-              size="xl"
-              src={parcelData?.images?.[0]?.url}
-              name={parcelData?.name}
-              bg="green.500"
-              color="white"
-              icon={<Icon as={FaMapMarkedAlt} boxSize={8} />}
-            />
-            <VStack align="center" spacing={1}>
-              <Text fontSize="lg" fontWeight="bold" color="gray.800" textAlign="center">
-                {parcelData?.name}
-              </Text>
-              {parcelData?.unique_code && (
-                <Text fontSize="sm" color="gray.500">
-                  {intl.formatMessage({ id: 'parcel.code' })}: {parcelData.unique_code}
-                </Text>
-              )}
-              {parcelData?.description && (
-                <Text color="gray.600" fontSize="xs" lineHeight="1.6" textAlign="center">
-                  {parcelData.description}
-                </Text>
-              )}
-              <Wrap spacing={2} justify="center">
-                <WrapItem>
-                  <Badge colorScheme="green" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
-                    {intl.formatMessage({ id: 'app.active' })}
-                  </Badge>
-                </WrapItem>
-                {parcelData?.carbon_calculation_enabled && (
-                  <WrapItem>
-                    <Badge colorScheme="purple" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
-                      <HStack spacing={1}>
-                        <Icon as={FaLeaf} boxSize={3} />
-                        <Text>{intl.formatMessage({ id: 'parcel.carbonTracking' })}</Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
-                {parcelData?.usda_compliance_eligible && (
-                  <WrapItem>
-                    <Badge colorScheme="orange" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
-                      <HStack spacing={1}>
-                        <Icon as={FaCheckCircle} boxSize={3} />
-                        <Text>{intl.formatMessage({ id: 'parcel.usdaCompliant' })}</Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
-                {parcelData?.transparency_ready && (
-                  <WrapItem>
-                    <Badge colorScheme="cyan" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
-                      <HStack spacing={1}>
-                        <Icon as={FaEye} boxSize={3} />
-                        <Text>{intl.formatMessage({ id: 'parcel.consumerReady' })}</Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
-                {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
-                  <WrapItem>
-                    <Badge colorScheme="teal" variant="subtle" px={2} py={0.5} borderRadius="full" fontSize="xs">
-                      {intl.formatMessage({ id: 'parcel.transparencyScore' }, { score: parcelData.transparency_score })}
-                    </Badge>
-                  </WrapItem>
-                )}
-              </Wrap>
-            </VStack>
-          </VStack>
-          {/* Desktop: horizontal layout */}
-          <HStack spacing={6} align="flex-start" display={{ base: 'none', md: 'flex' }}>
-            <Avatar
-              size="2xl"
-              src={parcelData?.images?.[0]?.url}
-              name={parcelData?.name}
-              bg="green.500"
-              color="white"
-              icon={<Icon as={FaMapMarkedAlt} boxSize={10} />}
-            />
-            <VStack align="start" spacing={3} flex={1}>
-              <Box>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.800">
-                  {parcelData?.name}
-                </Text>
-                {parcelData?.unique_code && (
-                  <Text fontSize="md" color="gray.500">
-                    {intl.formatMessage({ id: 'parcel.code' })}: {parcelData.unique_code}
-                  </Text>
-                )}
-              </Box>
-              {parcelData?.description && (
-                <Text color="gray.600" fontSize="sm" lineHeight="1.6">
-                  {parcelData.description}
-                </Text>
-              )}
-              <Wrap spacing={2}>
-                <WrapItem>
-                  <Badge colorScheme="green" variant="subtle" px={2} py={1} borderRadius="full">
-                    {intl.formatMessage({ id: 'app.active' })}
-                  </Badge>
-                </WrapItem>
-                {parcelData?.carbon_calculation_enabled && (
-                  <WrapItem>
-                    <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="full">
-                      <HStack spacing={1}>
-                        <Icon as={FaLeaf} boxSize={3} />
-                        <Text>{intl.formatMessage({ id: 'parcel.carbonTracking' })}</Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
-                {parcelData?.usda_compliance_eligible && (
-                  <WrapItem>
-                    <Badge colorScheme="orange" variant="subtle" px={2} py={1} borderRadius="full">
-                      <HStack spacing={1}>
-                        <Icon as={FaCheckCircle} boxSize={3} />
-                        <Text>{intl.formatMessage({ id: 'parcel.usdaCompliant' })}</Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
-                {parcelData?.transparency_ready && (
-                  <WrapItem>
-                    <Badge colorScheme="cyan" variant="subtle" px={2} py={1} borderRadius="full">
-                      <HStack spacing={1}>
-                        <Icon as={FaEye} boxSize={3} />
-                        <Text>{intl.formatMessage({ id: 'parcel.consumerReady' })}</Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
-                {parcelData?.transparency_score && parcelData.transparency_score > 0 && (
-                  <WrapItem>
-                    <Badge colorScheme="teal" variant="subtle" px={2} py={1} borderRadius="full">
-                      {intl.formatMessage({ id: 'parcel.transparencyScore' }, { score: parcelData.transparency_score })}
-                    </Badge>
-                  </WrapItem>
-                )}
-              </Wrap>
-            </VStack>
-          </HStack>
-        </StandardCard>
+            )}
+          </Flex>
+          {parcel?.description && (
+            <Text mt={3} color="gray.600" fontSize="sm" lineHeight="1.7">
+              {parcel.description}
+            </Text>
+          )}
+        </Box>
 
-        {/* Photo Gallery Section */}
-        {parcelData?.images && parcelData.images.length > 0 && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.photoGallery' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+        {/* Photo strip — no card chrome */}
+        {parcel?.images && parcel.images.length > 0 && (
+          <Box w="100%">
             <StandardImageGallery
-              images={parcelData.images}
-              title=""
+              images={parcel.images}
+              title={intl.formatMessage({ id: 'parcel.photoGallery' })}
               variant="default"
               enablePreview={true}
-              showImageCount={true}
-              height={{ base: '200px', sm: '250px', md: '280px' }}
-              showEmptyState={false}
+              showImageCount={false}
+              height={{ base: '160px', md: '200px' }}
               maxDisplayImages={4}
             />
-          </StandardCard>
+          </Box>
         )}
 
-        {/* Quick Stats Section */}
-        <StandardCard title={intl.formatMessage({ id: 'parcel.quickStats' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-          <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 4 }}>
-            <StatCard
-              icon={FaTractor}
-              value={parcelData?.area ? parcelData.area.toFixed(2) : '--'}
-              label={intl.formatMessage({ id: 'app.hectares' })}
-              subLabel={
-                parcelData?.area ? `(${(parcelData.area * 2.47105).toFixed(1)} ${intl.formatMessage({ id: 'app.acres' })})` : undefined
-              }
-              colorScheme="green"
-            />
-            <StatCard
-              icon={FaSeedling}
-              value={formatDisplayValue(parcelData?.primary_crop || parcelData?.crop_type) || '--'}
-              label={intl.formatMessage({ id: 'parcel.primaryCrop' })}
-              colorScheme="blue"
-            />
-          </SimpleGrid>
-          <HStack justify="flex-end" mt={{ base: 2, md: 3 }}>
-            <StandardButton
-              variant="ghost"
-              size="sm"
-              leftIcon={<Icon as={FaChartLine} />}
-              onClick={() =>
-                navigate(`/admin/dashboard/farm/${farmId}/transparency`)
-              }
-            >
-              {intl.formatMessage({ id: 'parcel.viewTransparencyDetails' })}
-            </StandardButton>
-          </HStack>
-        </StandardCard>
+        {/* ── §1 ORGANIC COMPLIANCE (7 CFR 205.202) ────────────────────────────
+            Promoted from positions 11-13. §205.202 is written about LAND, which makes this
+            the parcel's reason to exist for a certifier. */}
+        <StandardSection
+          title={intl.formatMessage({
+            id: 'parcel.section.organicCompliance',
+            defaultMessage: 'Organic compliance'
+          })}
+          description={intl.formatMessage({
+            id: 'parcel.section.organicComplianceHelp',
+            defaultMessage:
+              'The land records your certifier reviews for this field — use history, boundaries and prior management.'
+          })}
+        >
+          <VStack align="stretch" gap={4} w="100%">
+            {parcelId && <FieldHistorySection parcelId={parcelId} canWrite={canWrite} />}
 
-        {/* Consumer Transparency Section */}
-        {(parcelData?.transparency_description ||
-          parcelData?.sustainability_practices ||
-          parcelData?.consumer_story) && (
-          <StandardCard title={intl.formatMessage({ id: 'app.consumerTransparency' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-            <VStack spacing={{ base: 3, md: 4 }} align="stretch">
-              {parcelData?.transparency_description && (
-                <Box p={{ base: 3, md: 4 }} bg="green.50" borderRadius="lg" border="1px" borderColor="green.200">
-                  <HStack spacing={2} mb={{ base: 1, md: 2 }}>
-                    <Icon as={FaLeaf} color="green.600" boxSize={{ base: 3.5, md: 4 }} />
-                    <Text fontWeight="bold" color="green.700" fontSize={{ base: 'xs', md: 'sm' }} textTransform="uppercase">
-                      {intl.formatMessage({ id: 'parcel.whatMakesSpecial' })}
-                    </Text>
-                  </HStack>
-                  <Text color="gray.700" lineHeight="tall" fontSize={{ base: 'sm', md: 'md' }}>
-                    {parcelData.transparency_description}
-                  </Text>
-                </Box>
-              )}
-
-              {parcelData?.sustainability_practices && (
-                <Box p={{ base: 3, md: 4 }} bg="blue.50" borderRadius="lg" border="1px" borderColor="blue.200">
-                  <HStack spacing={2} mb={{ base: 1, md: 2 }}>
-                    <Icon as={FaSeedling} color="blue.600" boxSize={{ base: 3.5, md: 4 }} />
-                    <Text fontWeight="bold" color="blue.700" fontSize={{ base: 'xs', md: 'sm' }} textTransform="uppercase">
-                      {intl.formatMessage({ id: 'parcel.keySustainabilityPractices' })}
-                    </Text>
-                  </HStack>
-                  <Text color="gray.700" lineHeight="tall" fontSize={{ base: 'sm', md: 'md' }}>
-                    {parcelData.sustainability_practices}
-                  </Text>
-                </Box>
-              )}
-
-              {parcelData?.consumer_story && (
-                <Box p={{ base: 3, md: 4 }} bg="purple.50" borderRadius="lg" border="1px" borderColor="purple.200">
-                  <HStack spacing={2} mb={{ base: 1, md: 2 }}>
-                    <Icon as={FaUsers} color="purple.600" boxSize={{ base: 3.5, md: 4 }} />
-                    <Text fontWeight="bold" color="purple.700" fontSize={{ base: 'xs', md: 'sm' }} textTransform="uppercase">
-                      {intl.formatMessage({ id: 'parcel.whyConsumersShouldCare' })}
-                    </Text>
-                  </HStack>
-                  <Text color="gray.700" lineHeight="tall" fontSize={{ base: 'sm', md: 'md' }}>
-                    {parcelData.consumer_story}
-                  </Text>
-                </Box>
-              )}
-            </VStack>
-          </StandardCard>
-        )}
-
-        {/* Basic Information Section */}
-        <StandardCard title={intl.formatMessage({ id: 'parcel.basicInformation' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-            <InfoRow icon={FaMapMarkedAlt} label={intl.formatMessage({ id: 'app.parcelName' })} value={parcelData?.name} />
-            <InfoRow
-              icon={FaRulerCombined}
-              label={intl.formatMessage({ id: 'app.area' })}
-              value={
-                parcelData?.area ? formatAreaWithBothUnits(parcelData.area, 'METRIC') : undefined
-              }
-            />
-            <InfoRow icon={FaHashtag} label={intl.formatMessage({ id: 'parcel.uniqueCode' })} value={parcelData?.unique_code} />
-            <InfoRow
-              icon={FaSeedling}
-              label={intl.formatMessage({ id: 'parcel.primaryCrop' })}
-              value={formatDisplayValue(parcelData?.primary_crop || parcelData?.crop_type)}
-            />
-          </SimpleGrid>
-        </StandardCard>
-
-        {/* Location Section */}
-        <StandardCard title={intl.formatMessage({ id: 'parcel.locationDetails' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-            <InfoRow icon={FaMapMarkerAlt} label={intl.formatMessage({ id: 'app.address' })} value={formatLocation()} />
-            <InfoRow
-              icon={FaGlobeAmericas}
-              label={intl.formatMessage({ id: 'app.coordinates' })}
-              value={
-                parcelData?.latitude && parcelData?.longitude
-                  ? `${parseFloat(parcelData.latitude.toString()).toFixed(6)}, ${parseFloat(
-                      parcelData.longitude.toString()
-                    ).toFixed(6)}`
-                  : undefined
-              }
-            />
-            <InfoRow
-              icon={FaMountain}
-              label={intl.formatMessage({ id: 'parcel.elevation' })}
-              value={parcelData?.elevation ? `${parcelData.elevation} ft` : undefined}
-            />
-            {establishment?.zone && (
-              <InfoRow icon={MdLocationOn} label={intl.formatMessage({ id: 'app.zone' })} value={establishment.zone} />
+            {parcelId && currentCompany?.id && farmId && (
+              <ParcelComplianceCard
+                companyId={currentCompany.id}
+                farmId={farmId}
+                parcelId={parcelId}
+                parcel={parcel}
+                canWrite={canWrite}
+              />
             )}
-          </SimpleGrid>
-        </StandardCard>
 
-        {/* Contact Information Section */}
-        {(parcelData?.contact_person || parcelData?.contact_email || parcelData?.contact_phone) && (
-          <StandardCard title={intl.formatMessage({ id: 'app.contactInformation' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-              <InfoRow icon={FaUser} label={intl.formatMessage({ id: 'parcel.contactPerson' })} value={parcelData?.contact_person} />
-              <InfoRow
-                icon={FaEnvelope}
-                label={intl.formatMessage({ id: 'app.email' })}
-                value={parcelData?.contact_email}
-                type="email"
+            {parcelId && currentCompany?.id && farmId && (
+              <LandownerAffidavitSection
+                companyId={currentCompany.id}
+                farmId={farmId}
+                parcelId={parcelId}
+                canWrite={canWrite}
               />
-              <InfoRow
-                icon={FaPhone}
-                label={intl.formatMessage({ id: 'app.phone' })}
-                value={parcelData?.contact_phone}
-                type="phone"
-              />
-            </SimpleGrid>
-          </StandardCard>
-        )}
+            )}
+          </VStack>
+        </StandardSection>
 
-        {/* Soil Health Section */}
-        {hasSoilData && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.soilHealth' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 3, md: 4 }}>
-              {parcelData?.agricultural_details?.soil_ph && (
-                <VStack
-                  spacing={0.5}
-                  p={{ base: 3, md: 4 }}
-                  bg="orange.50"
-                  borderRadius="lg"
-                  border="1px"
-                  borderColor="orange.200"
-                >
-                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
-                    {parseFloat(parcelData.agricultural_details.soil_ph).toFixed(1)}
-                  </Text>
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                    {intl.formatMessage({ id: 'parcel.phLevel' })}
-                  </Text>
-                </VStack>
-              )}
-              {parcelData?.agricultural_details?.soil_organic_matter && (
-                <VStack
-                  spacing={0.5}
-                  p={{ base: 3, md: 4 }}
-                  bg="green.50"
-                  borderRadius="lg"
-                  border="1px"
-                  borderColor="green.200"
-                >
-                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
-                    {parseFloat(parcelData.agricultural_details.soil_organic_matter).toFixed(1)}%
-                  </Text>
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                    {intl.formatMessage({ id: 'parcel.organicMatter' })}
-                  </Text>
-                </VStack>
-              )}
-              {parcelData?.agricultural_details?.soil_nitrogen && (
-                <VStack
-                  spacing={0.5}
-                  p={{ base: 3, md: 4 }}
-                  bg="blue.50"
-                  borderRadius="lg"
-                  border="1px"
-                  borderColor="blue.200"
-                >
-                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
-                    {parseFloat(parcelData.agricultural_details.soil_nitrogen).toFixed(0)}
-                  </Text>
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                    {intl.formatMessage({ id: 'parcel.nitrogenPpm' })}
-                  </Text>
-                </VStack>
-              )}
-              {parcelData?.agricultural_details?.soil_phosphorus && (
-                <VStack
-                  spacing={0.5}
-                  p={{ base: 3, md: 4 }}
-                  bg="purple.50"
-                  borderRadius="lg"
-                  border="1px"
-                  borderColor="purple.200"
-                >
-                  <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="gray.800">
-                    {parseFloat(parcelData.agricultural_details.soil_phosphorus).toFixed(0)}
-                  </Text>
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                    {intl.formatMessage({ id: 'parcel.phosphorusPpm' })}
-                  </Text>
-                </VStack>
-              )}
-            </SimpleGrid>
-          </StandardCard>
-        )}
+        {/* §2 ("Consumer story") DELETED 2026-08-07 — it was a duplicate, twice over.
+            `get_transparency_description()` returns `self.description`, the exact string the
+            page header already renders. `get_sustainability_practices()` falls back to
+            `cover_crop_management`, which the Conservation practices group below already
+            shows as "Cover crops". So the section reprinted the description under a second
+            heading and risked reprinting the cover-crop text under a third.
 
-        {/* Water Management Section */}
-        {hasWaterData && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.waterManagement' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-              {parcelData?.agricultural_details?.irrigation_efficiency && (
-                <InfoRow
-                  icon={FaTint}
-                  label={intl.formatMessage({ id: 'parcel.irrigationEfficiency' })}
-                  value={`${parseFloat(
-                    parcelData.agricultural_details.irrigation_efficiency
-                  ).toFixed(0)}%`}
-                />
-              )}
-              {parcelData?.agricultural_details?.water_source_type && (
-                <InfoRow
-                  icon={FaTint}
-                  label={intl.formatMessage({ id: 'parcel.waterSource' })}
-                  value={formatDisplayValue(parcelData.agricultural_details.water_source_type)}
-                />
-              )}
-              {parcelData?.agricultural_details?.water_quality_ph && (
-                <InfoRow
-                  icon={FaTint}
-                  label={intl.formatMessage({ id: 'parcel.waterPh' })}
-                  value={parseFloat(parcelData.agricultural_details.water_quality_ph).toFixed(1)}
-                />
-              )}
-              {parcelData?.agricultural_details?.water_allocation_acre_feet && (
-                <InfoRow
-                  icon={FaTint}
-                  label={intl.formatMessage({ id: 'parcel.waterAllocation' })}
-                  value={`${parseFloat(
-                    parcelData.agricultural_details.water_allocation_acre_feet
-                  ).toFixed(1)} acre-feet`}
-                />
-              )}
-            </SimpleGrid>
-          </StandardCard>
-        )}
+            None of it reached a shopper either: `_build_public_parcel` publishes only
+            name / area / polygon / map_metadata / location_disclosure_level. The raw
+            `sustainability_practices` key now lives with the other agronomy in §3, which is
+            what it is — an input to the record, not consumer copy. */}
+        {/* ── §2 PARCEL DETAILS ────────────────────────────────────────────────
+            Was seven cards: Basic Information, Location, Contact, Soil Health, Water
+            Management, Conservation Practices, Company & Establishment. */}
+        <StandardSection
+          title={intl.formatMessage({
+            id: 'parcel.section.details',
+            defaultMessage: 'Parcel details'
+          })}
+        >
+          <StandardCard variant="outline" padding={{ base: 3, md: 4 }} mb={0}>
+            <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
+              <FieldGroup label={intl.formatMessage({ id: 'parcel.basicInformation' })}>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  <InfoRow
+                    icon={FaRulerCombined}
+                    label={intl.formatMessage({ id: 'app.area' })}
+                    value={areaLabel}
+                  />
+                  <InfoRow
+                    icon={FaSeedling}
+                    label={intl.formatMessage({ id: 'parcel.primaryCrop' })}
+                    value={cropLabel}
+                  />
+                  <InfoRow
+                    icon={FaHashtag}
+                    label={intl.formatMessage({ id: 'parcel.uniqueCode' })}
+                    value={parcel?.unique_code}
+                  />
+                </SimpleGrid>
+              </FieldGroup>
 
-        {/* Conservation Practices Section */}
-        {hasConservationData && (
-          <StandardCard title={intl.formatMessage({ id: 'parcel.conservationPractices' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-            <VStack spacing={{ base: 3, md: 4 }} align="stretch">
-              {parcelData?.agricultural_details?.cover_crop_management && (
-                <HStack
-                  spacing={2}
-                  p={{ base: 3, md: 4 }}
-                  bg="green.50"
-                  borderRadius="lg"
-                  border="1px"
-                  borderColor="green.200"
-                  align="flex-start"
-                >
-                  <Icon as={FaSeedling} color="green.600" mt={1} boxSize={{ base: 3.5, md: 4 }} />
-                  <Box>
-                    <Text fontWeight="semibold" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
-                      {intl.formatMessage({ id: 'parcel.coverCrops' })}
-                    </Text>
-                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                      {parcelData.agricultural_details.cover_crop_management}
-                    </Text>
-                  </Box>
-                </HStack>
+              <FieldGroup label={intl.formatMessage({ id: 'parcel.locationDetails' })}>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                  {/* Street only. The old formatLocation() appended the FARM's city, state
+                      and country, so this row repeated location already shown in the header
+                      and on the farm profile. */}
+                  <InfoRow
+                    icon={FaMapMarkerAlt}
+                    label={intl.formatMessage({ id: 'app.address' })}
+                    value={parcel?.address}
+                  />
+                  <InfoRow
+                    icon={FaGlobeAmericas}
+                    label={intl.formatMessage({ id: 'app.coordinates' })}
+                    value={
+                      parcel?.latitude && parcel?.longitude
+                        ? `${parseFloat(parcel.latitude.toString()).toFixed(6)}, ${parseFloat(
+                            parcel.longitude.toString()
+                          ).toFixed(6)}`
+                        : undefined
+                    }
+                  />
+                  <InfoRow
+                    icon={FaMountain}
+                    label={intl.formatMessage({ id: 'parcel.elevation' })}
+                    value={parcel?.elevation ? `${parcel.elevation} ft` : undefined}
+                  />
+                  <InfoRow
+                    icon={MdLocationOn}
+                    label={intl.formatMessage({ id: 'app.zone' })}
+                    value={establishment?.zone}
+                  />
+                </SimpleGrid>
+              </FieldGroup>
+
+              {hasContact && (
+                <FieldGroup label={intl.formatMessage({ id: 'app.contactInformation' })}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    <InfoRow
+                      icon={FaUser}
+                      label={intl.formatMessage({ id: 'parcel.contactPerson' })}
+                      value={parcel?.contact_person}
+                    />
+                    <InfoRow
+                      icon={FaEnvelope}
+                      label={intl.formatMessage({ id: 'app.email' })}
+                      value={parcel?.contact_email}
+                      type="email"
+                    />
+                    <InfoRow
+                      icon={FaPhone}
+                      label={intl.formatMessage({ id: 'app.phone' })}
+                      value={parcel?.contact_phone}
+                      type="phone"
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
               )}
-              {parcelData?.agricultural_details?.crop_rotation_pattern && (
-                <HStack
-                  spacing={2}
-                  p={{ base: 3, md: 4 }}
-                  bg="green.50"
-                  borderRadius="lg"
-                  border="1px"
-                  borderColor="green.200"
-                  align="flex-start"
-                >
-                  <Icon as={FaLeaf} color="green.500" mt={1} boxSize={{ base: 3.5, md: 4 }} />
-                  <Box>
-                    <Text fontWeight="semibold" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
-                      {intl.formatMessage({ id: 'parcel.cropRotation' })}
-                    </Text>
-                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                      {parcelData.agricultural_details.crop_rotation_pattern}
-                    </Text>
-                  </Box>
-                </HStack>
+
+              {hasSoilData && (
+                <FieldGroup label={intl.formatMessage({ id: 'parcel.soilHealth' })}>
+                  {/* Definition rows, not four tinted stat tiles in orange/green/blue/purple.
+                      A pH reading is a measurement; the hue carried no meaning. */}
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    <InfoRow
+                      icon={FaFlask}
+                      label={intl.formatMessage({ id: 'parcel.phLevel' })}
+                      value={details?.soil_ph ? parseFloat(details.soil_ph).toFixed(1) : undefined}
+                    />
+                    <InfoRow
+                      icon={FaLeaf}
+                      label={intl.formatMessage({ id: 'parcel.organicMatter' })}
+                      value={
+                        details?.soil_organic_matter
+                          ? `${parseFloat(details.soil_organic_matter).toFixed(1)}%`
+                          : undefined
+                      }
+                    />
+                    <InfoRow
+                      icon={FaFlask}
+                      label={intl.formatMessage({ id: 'parcel.nitrogenPpm' })}
+                      value={
+                        details?.soil_nitrogen
+                          ? parseFloat(details.soil_nitrogen).toFixed(0)
+                          : undefined
+                      }
+                    />
+                    <InfoRow
+                      icon={FaFlask}
+                      label={intl.formatMessage({ id: 'parcel.phosphorusPpm' })}
+                      value={
+                        details?.soil_phosphorus
+                          ? parseFloat(details.soil_phosphorus).toFixed(0)
+                          : undefined
+                      }
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
               )}
-              {parcelData?.agricultural_details?.pest_management_strategy && (
-                <HStack
-                  spacing={2}
-                  p={{ base: 3, md: 4 }}
-                  bg="yellow.50"
-                  borderRadius="lg"
-                  border="1px"
-                  borderColor="yellow.200"
-                  align="flex-start"
-                >
-                  <Icon as={FaChartLine} color="yellow.600" mt={1} boxSize={{ base: 3.5, md: 4 }} />
-                  <Box>
-                    <Text fontWeight="semibold" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
-                      {intl.formatMessage({ id: 'parcel.pestManagement' })}
-                    </Text>
-                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                      {parcelData.agricultural_details.pest_management_strategy}
-                    </Text>
-                  </Box>
-                </HStack>
+
+              {hasWaterData && (
+                <FieldGroup label={intl.formatMessage({ id: 'parcel.waterManagement' })}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    <InfoRow
+                      icon={FaTint}
+                      label={intl.formatMessage({ id: 'parcel.irrigationEfficiency' })}
+                      value={
+                        details?.irrigation_efficiency
+                          ? `${parseFloat(details.irrigation_efficiency).toFixed(0)}%`
+                          : undefined
+                      }
+                    />
+                    <InfoRow
+                      icon={FaTint}
+                      label={intl.formatMessage({ id: 'parcel.waterSource' })}
+                      value={formatDisplayValue(details?.water_source_type)}
+                    />
+                    <InfoRow
+                      icon={FaTint}
+                      label={intl.formatMessage({ id: 'parcel.waterPh' })}
+                      value={
+                        details?.water_quality_ph
+                          ? parseFloat(details.water_quality_ph).toFixed(1)
+                          : undefined
+                      }
+                    />
+                    <InfoRow
+                      icon={FaTint}
+                      label={intl.formatMessage({ id: 'parcel.waterAllocation' })}
+                      value={
+                        details?.water_allocation_acre_feet
+                          ? `${parseFloat(details.water_allocation_acre_feet).toFixed(1)} acre-feet`
+                          : undefined
+                      }
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
               )}
-              {parcelData?.agricultural_details?.fertilization_program && (
-                <HStack
-                  spacing={2}
-                  p={{ base: 3, md: 4 }}
-                  bg="purple.50"
-                  borderRadius="lg"
-                  border="1px"
-                  borderColor="purple.200"
-                  align="flex-start"
+
+              {hasConservationData && (
+                <FieldGroup label={intl.formatMessage({ id: 'parcel.conservationPractices' })}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    <InfoRow
+                      icon={FaSeedling}
+                      label={intl.formatMessage({ id: 'parcel.coverCrops' })}
+                      value={details?.cover_crop_management}
+                    />
+                    <InfoRow
+                      icon={FaLeaf}
+                      label={intl.formatMessage({ id: 'parcel.cropRotation' })}
+                      value={details?.crop_rotation_pattern}
+                    />
+                    <InfoRow
+                      icon={FaChartLine}
+                      label={intl.formatMessage({ id: 'parcel.pestManagement' })}
+                      value={details?.pest_management_strategy}
+                    />
+                    <InfoRow
+                      icon={MdEco}
+                      label={intl.formatMessage({ id: 'parcel.fertilizationProgram' })}
+                      value={details?.fertilization_program}
+                    />
+                    {/* The RAW agricultural_details key, not `parcel.sustainability_practices`
+                        — that serializer getter falls back to `cover_crop_management`, which
+                        would reprint the Cover crops row directly above. */}
+                    <InfoRow
+                      icon={FaLeaf}
+                      label={intl.formatMessage({ id: 'parcel.keySustainabilityPractices' })}
+                      value={details?.sustainability_practices}
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
+              )}
+
+              {(currentCompany?.name || establishment?.name) && (
+                <FieldGroup
+                  label={intl.formatMessage({ id: 'parcel.companyAndEstablishment' })}
+                  action={
+                    <StandardButton
+                      variant="ghost"
+                      size="sm"
+                      leftIcon={<Icon as={FaChartLine} />}
+                      onClick={() => navigate(`/admin/dashboard/farm/${farmId}/transparency`)}
+                    >
+                      {intl.formatMessage({ id: 'parcel.viewTransparencyDetails' })}
+                    </StandardButton>
+                  }
                 >
-                  <Icon as={MdEco} color="purple.500" mt={1} boxSize={{ base: 3.5, md: 4 }} />
-                  <Box>
-                    <Text fontWeight="semibold" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
-                      {intl.formatMessage({ id: 'parcel.fertilizationProgram' })}
-                    </Text>
-                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                      {parcelData.agricultural_details.fertilization_program}
-                    </Text>
-                  </Box>
-                </HStack>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    <InfoRow
+                      icon={FaBuilding}
+                      label={intl.formatMessage({ id: 'app.company' })}
+                      value={currentCompany?.name}
+                    />
+                    <InfoRow
+                      icon={FaUsers}
+                      label={intl.formatMessage({ id: 'app.establishment' })}
+                      value={establishment?.name}
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
               )}
             </VStack>
           </StandardCard>
-        )}
-
-        {/* Field History Section */}
-        {parcelId && (
-          <FieldHistorySection parcelId={parcelId} canWrite={canWrite} />
-        )}
-
-        {/* Parcel organic-compliance records: buffer zones + parcel identity (7 CFR 205.202) */}
-        {parcelId && currentCompany?.id && farmId && (
-          <ParcelComplianceCard
-            companyId={currentCompany.id}
-            farmId={farmId}
-            parcelId={parcelId}
-            parcel={parcelData}
-            canWrite={canWrite}
-          />
-        )}
-
-        {/* Landowner / prior-manager affidavit (7 CFR 205.202(b)) */}
-        {parcelId && currentCompany?.id && farmId && (
-          <LandownerAffidavitSection
-            companyId={currentCompany.id}
-            farmId={farmId}
-            parcelId={parcelId}
-            canWrite={canWrite}
-          />
-        )}
-
-        {/* Company & Establishment Section */}
-        <StandardCard title={intl.formatMessage({ id: 'parcel.companyAndEstablishment' })} variant="elevated" padding={{ base: 3, md: 4 }}>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-            <InfoRow icon={FaBuilding} label={intl.formatMessage({ id: 'app.company' })} value={currentCompany?.name} />
-            <InfoRow icon={FaBuilding} label={intl.formatMessage({ id: 'app.establishment' })} value={establishment?.name} />
-          </SimpleGrid>
-        </StandardCard>
+        </StandardSection>
       </VStack>
     </StandardPage>
   );

@@ -48,3 +48,30 @@ export function formatDateOnly(
   if (!d) return null;
   return d.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
 }
+
+/**
+ * Format a backend DATETIME column that semantically holds a DATE.
+ *
+ * `History.start_date` / `finish_date` are `DateTimeField`s with `USE_TZ`, so they arrive as
+ * `2026-01-01T00:00:00Z`. Rendering that with `toLocaleDateString()` uses the VIEWER's zone, so
+ * every US farmer saw a production starting 2026-01-01 labelled **"Dec 31, 25"** — a season
+ * apparently beginning in the previous year. The same value reaches the consumer parcel modal and
+ * the transparency dashboard.
+ *
+ * These are dates, not instants: nobody records a planting to the hour. So render the UTC
+ * calendar date the grower actually entered, rather than translating an instant into local time.
+ *
+ * This is the datetime-column sibling of `formatDateOnly` above — same defect, different column
+ * type, which is why `parseDateOnly` alone does not fix it (an ISO datetime falls through its
+ * `YYYY-MM-DD` pattern to `new Date(...)` and shifts exactly as before).
+ */
+export function formatDateFromTimestamp(
+  value?: string | null,
+  locale: string = 'en-US',
+  options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
+): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(locale, { ...options, timeZone: 'UTC' });
+}

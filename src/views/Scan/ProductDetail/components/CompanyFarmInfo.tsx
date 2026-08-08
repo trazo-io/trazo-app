@@ -29,7 +29,6 @@ import {
   FaFacebook,
   FaInstagram
 } from 'react-icons/fa';
-import { BsStarFill, BsStarHalf, BsStar } from 'react-icons/bs';
 import { useIntl } from 'react-intl';
 import { CompanyModal } from './CompanyModal';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
@@ -108,10 +107,9 @@ interface CompanyFarmInfoProps {
     main_activities?: string;
     location_highlights?: string;
     custom_message?: string;
-    is_active?: boolean;
     crops_grown?: string[];
-    sustainability_practices?: string[];
-    employee_count?: number;
+    // `sustainability_practices`, `is_active`, `employee_count` removed 2026-08-07 —
+    // the backend no longer publishes them. See FarmModal.tsx for the full reason.
     total_acreage?: number;
     year_established?: number;
     establishment_type?: string;
@@ -123,12 +121,10 @@ interface CompanyFarmInfoProps {
       area: number;
     }>;
     // Operational fields - updated for transparency-first approach
-    // climate_zone removed from UI (not consumer-relevant)
     water_sources?: string[] | string;
     // soil_health_practices replaces soil_types (more consumer-friendly)
     soil_health_practices?: string[] | string;
     soil_types?: string[] | string; // kept for backward compatibility
-    // conservation_practices merged into sustainability_practices
     irrigation_methods?: string[] | string;
   };
   parcelData?: {
@@ -186,7 +182,6 @@ interface CompanyFarmInfoProps {
     // Transparency fields from new parcel form
     transparency_description?: string;
     sustainability_practices?: string;
-    consumer_story?: string;
     primary_crop?: string;
     transparency_score?: number;
     transparency_ready?: boolean;
@@ -233,23 +228,12 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
     onClose: onEstablishmentModalClose
   } = useDisclosure();
 
-  const renderStars = (rating: number) => {
-    return (
-      <HStack spacing={1}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Icon
-            key={star}
-            as={rating >= star ? BsStarFill : rating >= star - 0.5 ? BsStarHalf : BsStar}
-            color="orange.400"
-            boxSize={4}
-          />
-        ))}
-        <Text fontSize="sm" color={mutedColor} ml={2}>
-          ({rating.toFixed(1)})
-        </Text>
-      </HStack>
-    );
-  };
+  // `renderStars` removed 2026-08-06. It was defined here but never called — dead code
+  // carrying a star-rating renderer on a consumer surface. Consumer reviews were removed with
+  // the shopper-account product (TRAZO-OCTOBER-2026-PLAN.md §10.5), so a farm rating on this
+  // page would have no source behind it. Deleted rather than left dormant: §10.6 lists
+  // "dead files still carrying grade ladders" as the thing to remove before someone re-imports
+  // one.
 
   return (
     <VStack spacing={6} align="stretch">
@@ -819,10 +803,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
             main_activities: establishmentData.main_activities,
             location_highlights: establishmentData.location_highlights,
             custom_message: establishmentData.custom_message,
-            is_active: establishmentData.is_active,
             crops_grown: establishmentData.crops_grown,
-            sustainability_practices: establishmentData.sustainability_practices,
-            employee_count: establishmentData.employee_count,
             total_acreage: establishmentData.total_acreage,
             year_established:
               establishmentData.year_established || establishmentData.establishedYear,
@@ -831,7 +812,6 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
             images: establishmentData.images,
             parcels: establishmentData.parcels,
             // Operational fields - handle both array and string formats
-            // climate_zone removed (not consumer-relevant)
             water_sources: (() => {
               if (Array.isArray(establishmentData.water_sources)) {
                 return establishmentData.water_sources;
@@ -872,7 +852,6 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
               }
               return [];
             })(),
-            // conservation_practices merged into sustainability_practices - pass empty
             irrigation_methods: (() => {
               if (Array.isArray(establishmentData.irrigation_methods)) {
                 return establishmentData.irrigation_methods;

@@ -111,7 +111,6 @@ interface ParcelMapInfoProps {
     // Transparency fields from new parcel form
     transparency_description?: string;
     sustainability_practices?: string;
-    consumer_story?: string;
     primary_crop?: string;
     transparency_score?: number;
     transparency_ready?: boolean;
@@ -398,9 +397,9 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
           </Box>
 
           {/* 🎯 CONSUMER TRANSPARENCY SECTION - Parcel story for consumers */}
-          {(parcelData?.transparency_description ||
-            parcelData?.sustainability_practices ||
-            parcelData?.consumer_story) && (
+          {/* `consumer_story` dropped from this guard 2026-08-07 along with the field —
+              `_build_public_parcel` never put it on the wire, so it was always undefined. */}
+          {(parcelData?.transparency_description || parcelData?.sustainability_practices) && (
             <>
               <Divider />
               <Box>
@@ -441,26 +440,6 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
                           </HStack>
                           <Text color="gray.700" fontSize="sm" lineHeight="tall">
                             {parcelData.sustainability_practices}
-                          </Text>
-                        </VStack>
-                      </Box>
-                    )}
-
-                    {/* Why consumers should care */}
-                    {parcelData?.consumer_story && (
-                      <Box p={4} bg="gray.50" borderRadius="lg" border="1px" borderColor="gray.200">
-                        <VStack spacing={2} align="stretch">
-                          <HStack>
-                            <Icon as={FaUsers} color="green.500" boxSize={4} />
-                            <Text fontWeight="bold" color="gray.700" fontSize="xs">
-                              {intl.formatMessage({
-                                id: 'consumer.farm.whyConsumersShouldCare',
-                                defaultMessage: 'WHY CONSUMERS SHOULD CARE'
-                              })}
-                            </Text>
-                          </HStack>
-                          <Text color="gray.700" fontSize="sm" lineHeight="tall">
-                            {parcelData.consumer_story}
                           </Text>
                         </VStack>
                       </Box>

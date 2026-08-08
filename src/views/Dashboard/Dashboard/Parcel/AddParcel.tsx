@@ -13,6 +13,7 @@ import { useGetFarmQuery } from 'store/api/companyApi';
 import { setFarmParcel } from 'store/features/companySlice';
 import { useToast } from '@chakra-ui/react';
 import { PlanLimitAlert } from 'components/Subscription/PlanLimitAlert';
+import { getLimit, isAtLimit } from 'utils/subscriptionLimits';
 
 interface AddParcelProps {
   isEdit?: boolean;
@@ -94,20 +95,19 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   // Pre-flight subscription limit check (informational only — backend enforces).
   // Parcel count comes from the Redux company state (same source UnifiedSubscription
   // uses), with the freshly-fetched farm data as a fallback.
-  const subscription = currentCompany?.subscription;
-  const subscriptionLimits: Record<string, any> =
-    subscription?.effective_limits || subscription?.plan?.features || {};
-  const maxParcelsPerFarm = subscriptionLimits?.max_parcels_per_establishment;
+  //
+  // Shares `utils/subscriptionLimits` with the "+ Add Parcel" tile in CarouselHorizontal. The two
+  // previously implemented this separately and disagreed: that guard read base plan features and
+  // treated -1 (unlimited) as "no limit configured", so it hid the button on unlimited plans and
+  // ignored purchased add-ons.
+  const maxParcelsPerFarm = getLimit(currentCompany, 'max_parcels_per_establishment');
   const farmFromStore = currentCompany?.establishments?.find(
     (est) => est?.id?.toString() === farmId?.toString()
   );
   const currentParcelCount =
     farmFromStore?.parcels?.length ?? establishmentData?.parcels?.length ?? 0;
   const isAtParcelLimit =
-    !isEdit &&
-    typeof maxParcelsPerFarm === 'number' &&
-    maxParcelsPerFarm !== -1 &&
-    currentParcelCount >= maxParcelsPerFarm;
+    !isEdit && isAtLimit(currentCompany, 'max_parcels_per_establishment', currentParcelCount);
 
   // 🎯 Transparency-focused initial data mapping
   const getInitialData = () => {
@@ -127,7 +127,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         parcelData.agricultural_details?.carbon_sequestration_practices ||
         parcelData.agricultural_details?.cover_crop_management ||
         '',
-      consumer_story: '', // New field, will be empty for existing parcels
 
       // Visual documentation
       images: parcelData.images || [],
@@ -164,8 +163,7 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       console.log('🎯 Transparency form data received:', data);
       console.log('🎯 Transparency fields:', {
         transparency_description: data.transparency_description,
-        sustainability_practices: data.sustainability_practices,
-        consumer_story: data.consumer_story
+        sustainability_practices: data.sustainability_practices
       });
 
       // 🌱 Store transparency narrative in agricultural_details for carbon context
@@ -177,9 +175,8 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         agriculturalDetails.cover_crop_management = data.sustainability_practices;
       }
 
-      if (data.consumer_story) {
-        agriculturalDetails.consumer_narrative = data.consumer_story;
-      }
+      // `consumer_story` -> agricultural_details.consumer_narrative removed 2026-08-07 with
+      // the field. It scored nothing and reached no consumer surface.
 
       // Basic carbon tracking capability
       const hasTransparencyData = !!(
@@ -227,8 +224,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         carbon_calculation_enabled: hasTransparencyData,
         transparency_ready: true, // Mark as transparency-focused parcel
 
-        // Consumer-facing fields
-        consumer_story: data.consumer_story || '',
         sustainability_practices: data.sustainability_practices || ''
       };
 
@@ -347,7 +342,10 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
         establishmentCoordinates={establishmentCoordinates}
         preFormAlert={
-          isAtParcelLimit ? (
+          // `isAtParcelLimit` is only ever true for a stated, finite limit, so the value is
+          // present here — but narrow explicitly rather than asserting, so that a future change
+          // to isAtLimit cannot quietly pass `undefined` into the alert's {limit} placeholder.
+          isAtParcelLimit && maxParcelsPerFarm !== undefined ? (
             <PlanLimitAlert limit={maxParcelsPerFarm} descriptionId="limits.parcelsReached" />
           ) : undefined
         }

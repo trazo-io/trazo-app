@@ -16,6 +16,7 @@ import {
   useToast,
   Button,
   Heading,
+  Flex,
   Menu,
   MenuButton,
   MenuList,
@@ -42,7 +43,6 @@ import {
   FaTag,
   FaEllipsisV
 } from 'react-icons/fa';
-import { BsStar, BsStarFill } from 'react-icons/bs';
 import { MdTimeline, MdLocationOn } from 'react-icons/md';
 import { FiDownload } from 'react-icons/fi';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -54,8 +54,10 @@ import {
   StandardCard,
   StandardButton,
   StandardPage,
-  StandardPageLoading
+  StandardPageLoading,
+  StandardSection
 } from 'components/Design/StandardComponents';
+import { InfoRow, PageHeaderMeta } from 'components/Design/ProfileField';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetPublicHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
 import { TrazoImageUpload } from 'components/Upload';
@@ -84,123 +86,9 @@ interface RootState {
   };
 }
 
-// InfoRow component - matches CompanyInfoTab pattern
-interface InfoRowProps {
-  icon: React.ElementType;
-  label: string;
-  value?: string | number | null;
-  type?: 'text' | 'link' | 'email' | 'phone';
-  onClick?: () => void;
-}
-
-const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text', onClick }) => {
-  if (!value) return null;
-
-  const renderValue = () => {
-    if (onClick) {
-      return (
-        <Button
-          variant="link"
-          fontWeight="medium"
-          fontSize={{ base: 'sm', md: 'md' }}
-          color="green.700"
-          px={0}
-          minW={0}
-          height="auto"
-          whiteSpace="normal"
-          textAlign="left"
-          justifyContent="flex-start"
-          _hover={{ textDecoration: 'underline' }}
-          onClick={onClick}
-        >
-          {value}
-        </Button>
-      );
-    }
-    switch (type) {
-      case 'link':
-        return (
-          <Link
-            href={value as string}
-            isExternal
-            color="green.600"
-            fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
-            {value}
-          </Link>
-        );
-      case 'email':
-        return (
-          <Link
-            href={`mailto:${value}`}
-            color="green.600"
-            fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
-            {value}
-          </Link>
-        );
-      case 'phone':
-        return (
-          <Link
-            href={`tel:${value}`}
-            color="green.600"
-            fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
-            {value}
-          </Link>
-        );
-      default:
-        return (
-          <Text fontWeight="medium" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
-            {value}
-          </Text>
-        );
-    }
-  };
-
-  return (
-    <HStack spacing={2} align="flex-start">
-      <Icon as={icon} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
-      <Box>
-        <Text fontSize="xs" color="gray.500" textTransform="uppercase" fontWeight="semibold">
-          {label}
-        </Text>
-        {renderValue()}
-      </Box>
-    </HStack>
-  );
-};
-
-// Stat card for quick stats section
-interface StatCardProps {
-  icon: React.ElementType;
-  value: string | number;
-  label: string;
-  colorScheme: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ icon, value, label, colorScheme }) => (
-  <VStack
-    spacing={{ base: 1, md: 2 }}
-    p={{ base: 3, md: 4 }}
-    bg={`${colorScheme}.50`}
-    borderRadius="xl"
-    border="1px solid"
-    borderColor={`${colorScheme}.200`}
-    align="center"
-  >
-    <Icon as={icon} boxSize={{ base: 5, md: 6 }} color={`${colorScheme}.500`} />
-    <Text fontSize={{ base: 'md', md: 'xl' }} fontWeight="bold" color="gray.800" textAlign="center">
-      {value}
-    </Text>
-    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" textAlign="center">
-      {label}
-    </Text>
-  </VStack>
-);
+// `InfoRow` and `StatCard` were defined here and copy-pasted into three other profile
+// pages. They now live once in components/Design/ProfileField.tsx; `StatCard` had no
+// remaining caller after the Quick Stats card was removed.
 
 function ProfileProduction() {
   const intl = useIntl();
@@ -567,7 +455,8 @@ function ProfileProduction() {
         ),
         text: intl.formatMessage({
           id: 'production.share.text',
-          defaultMessage: 'See the documented production journey for this lot on Trazo. #Trazo #Traceability'
+          defaultMessage:
+            'See the documented production journey for this lot on Trazo. #Trazo #Traceability'
         }),
         url: window.location.href
       });
@@ -605,7 +494,6 @@ function ProfileProduction() {
   };
 
   // Helper for reputation
-  const safeReputation = historyData?.reputation || 0;
 
   if (isLoading || isUninitialized) {
     return (
@@ -631,6 +519,25 @@ function ProfileProduction() {
     );
   }
 
+  /**
+   * Consumer-visibility markers, mirroring ProfileFarm.
+   *
+   * Ground truth (verified 2026-08-07):
+   *  PUBLISHED — product, start_date, finish_date, production_amount + unit, lot_id, type,
+   *    is_outdoor, parcel and the establishment name/city/state. `PublicHistorySerializer`
+   *    lists them and `transparency_views.py` ships harvestDetails{amount, unit, lot_number}.
+   *    Duration is marked public too: it is derived from two published dates.
+   *  WITHHELD — `operator` is stripped by `_OWNER_ONLY_FIELDS` (it carries the grower's
+   *    email and phone) and `earning` is not in the public serializer's field list at all.
+   *
+   * Those two are why this disclosure earns its space: a farmer can see at a glance that
+   * their revenue and their own contact details do NOT travel with the QR code.
+   */
+  const publicLabel = intl.formatMessage({
+    id: 'farm.details.publicMarker',
+    defaultMessage: 'Shoppers see this when they scan a QR code from this farm'
+  });
+
   const timelineEvents = getUnifiedTimelineEvents();
   const transparencyScore = getTransparencyScore();
 
@@ -640,12 +547,104 @@ function ProfileProduction() {
       onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
     >
       <VStack spacing={{ base: 4, md: 8 }} w="100%">
-        {/* Identity Section */}
-        <StandardCard
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-          headerAction={
-            <Wrap spacing={1} justify={{ base: 'flex-start', md: 'flex-end' }}>
+        {/* ── PAGE HEADER — not a card ─────────────────────────────────────────
+            Matches ProfileFarm and ProfileParcel. Was an elevated card wrapping an initials
+            Avatar (a green circle showing "O" for "Orange") plus a duplicated layout. The
+            actions stay exactly as they were — Export for audit is the wedge action on this
+            page and keeps its primary weight. */}
+        <Box w="100%">
+          <Flex direction="row" justify="space-between" align="flex-start" gap={3}>
+            <VStack align="flex-start" gap={1} minW={0}>
+              <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color="gray.800">
+                {historyData?.product?.name || historyData?.name}
+              </Heading>
+              {historyData?.lot_id && (
+                <Text fontSize="sm" color="gray.500">
+                  {intl.formatMessage(
+                    { id: 'production.lotIdLabel', defaultMessage: 'Lot ID: {id}' },
+                    { id: historyData.lot_id }
+                  )}
+                </Text>
+              )}
+              {/* Replaces the "Quick Stats" card. Event count was its only non-duplicated
+                  tile; environment and status are badges just below. */}
+              <PageHeaderMeta
+                items={[
+                  historyData?.parcel?.name || null,
+                  timelineEvents.length
+                    ? intl.formatMessage(
+                        {
+                          id: 'production.meta.events',
+                          defaultMessage: '{count, plural, one {# event} other {# events}}'
+                        },
+                        { count: timelineEvents.length }
+                      )
+                    : null,
+                  historyData?.start_date
+                    ? new Date(historyData.start_date).toLocaleDateString(undefined, {
+                        dateStyle: 'medium'
+                      })
+                    : null
+                ]}
+              />
+              <Wrap spacing={1.5} pt={1}>
+                <WrapItem>
+                  <Badge
+                    variant={historyData?.finish_date ? 'neutral' : 'subtle'}
+                    borderRadius="full"
+                    fontSize="xs"
+                  >
+                    {historyData?.finish_date
+                      ? intl.formatMessage({
+                          id: 'production.status.finished',
+                          defaultMessage: 'Finished'
+                        })
+                      : intl.formatMessage({
+                          id: 'production.status.active',
+                          defaultMessage: 'Active'
+                        })}
+                  </Badge>
+                </WrapItem>
+                {/* `neutral`, not colorScheme — every Badge variant in the theme hardcodes
+                    green and ignores colorScheme, so the old blue/purple chips all rendered
+                    the same green as the status badge. These are classifications. */}
+                {historyData?.is_outdoor !== undefined && (
+                  <WrapItem>
+                    <Badge variant="neutral" borderRadius="full" fontSize="xs">
+                      {historyData.is_outdoor
+                        ? intl.formatMessage({ id: 'production.outdoor' })
+                        : intl.formatMessage({ id: 'production.indoor' })}
+                    </Badge>
+                  </WrapItem>
+                )}
+                {historyData?.qr_code && (
+                  <WrapItem>
+                    <Badge variant="neutral" borderRadius="full" fontSize="xs">
+                      <HStack gap={1}>
+                        <Icon as={FaQrcode} boxSize={2.5} />
+                        <Text>
+                          {intl.formatMessage({
+                            id: 'production.badge.qrAvailable',
+                            defaultMessage: 'QR Available'
+                          })}
+                        </Text>
+                      </HStack>
+                    </Badge>
+                  </WrapItem>
+                )}
+                {historyData?.published && (
+                  <WrapItem>
+                    <Badge variant="neutral" borderRadius="full" fontSize="xs">
+                      {intl.formatMessage({
+                        id: 'production.badge.published',
+                        defaultMessage: 'Published'
+                      })}
+                    </Badge>
+                  </WrapItem>
+                )}
+              </Wrap>
+            </VStack>
+            <Wrap spacing={1} justify="flex-end" flexShrink={0}>
               {/* Primary wedge action + the buyer handoff stay visible; secondary
                   actions collapse into an overflow menu to reduce header clutter. */}
               <WrapItem>
@@ -711,126 +710,13 @@ function ProfileProduction() {
                 </Menu>
               </WrapItem>
             </Wrap>
-          }
-        >
-          <HStack
-            spacing={{ base: 3, md: 6 }}
-            align="flex-start"
-            flexWrap={{ base: 'wrap', md: 'nowrap' }}
-          >
-            <Avatar
-              size={{ base: 'xl', md: '2xl' }}
-              src={historyData?.images?.[0]?.url}
-              name={historyData?.product?.name || historyData?.name}
-              bg="green.500"
-              color="white"
-              icon={<Icon as={FaSeedling} boxSize={{ base: 7, md: 10 }} />}
-            />
-            <VStack align="start" spacing={{ base: 1, md: 3 }} flex={1}>
-              <Box>
-                <Heading
-                  as="h1"
-                  fontSize={{ base: 'lg', md: '2xl' }}
-                  fontWeight="bold"
-                  color="gray.800"
-                >
-                  {historyData?.product?.name || historyData?.name}
-                </Heading>
-                {historyData?.lot_id && (
-                  <Text fontSize={{ base: 'xs', md: 'md' }} color="gray.500">
-                    Lot ID: {historyData.lot_id}
-                  </Text>
-                )}
-              </Box>
-              {historyData?.description && (
-                <Text
-                  color="gray.600"
-                  fontSize={{ base: 'xs', md: 'sm' }}
-                  lineHeight="1.6"
-                  noOfLines={3}
-                >
-                  {historyData.description}
-                </Text>
-              )}
-              <Wrap spacing={1.5}>
-                <WrapItem>
-                  <Badge
-                    colorScheme={historyData?.finish_date ? 'gray' : 'green'}
-                    variant="subtle"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    fontSize="xs"
-                  >
-                    {historyData?.finish_date
-                      ? intl.formatMessage({ id: 'production.status.finished', defaultMessage: 'Finished' })
-                      : intl.formatMessage({ id: 'production.status.active', defaultMessage: 'Active' })}
-                  </Badge>
-                </WrapItem>
-                {historyData?.is_outdoor !== undefined && (
-                  <WrapItem>
-                    <Badge
-                      colorScheme="green"
-                      variant="subtle"
-                      px={2}
-                      py={0.5}
-                      borderRadius="full"
-                      fontSize="xs"
-                    >
-                      <HStack spacing={1}>
-                        <Icon as={FaSeedling} boxSize={2.5} />
-                        <Text>
-                          {historyData.is_outdoor
-                            ? intl.formatMessage({ id: 'production.outdoor' })
-                            : intl.formatMessage({ id: 'production.indoor' })}
-                        </Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
-                {historyData?.qr_code && (
-                  <WrapItem>
-                    <Badge
-                      colorScheme="blue"
-                      variant="subtle"
-                      px={2}
-                      py={0.5}
-                      borderRadius="full"
-                      fontSize="xs"
-                    >
-                      <HStack spacing={1}>
-                        <Icon as={FaQrcode} boxSize={2.5} />
-                        <Text>
-                          {intl.formatMessage({
-                            id: 'production.badge.qrAvailable',
-                            defaultMessage: 'QR Available'
-                          })}
-                        </Text>
-                      </HStack>
-                    </Badge>
-                  </WrapItem>
-                )}
-                {historyData?.published && (
-                  <WrapItem>
-                    <Badge
-                      colorScheme="purple"
-                      variant="subtle"
-                      px={2}
-                      py={0.5}
-                      borderRadius="full"
-                      fontSize="xs"
-                    >
-                      {intl.formatMessage({
-                        id: 'production.badge.published',
-                        defaultMessage: 'Published'
-                      })}
-                    </Badge>
-                  </WrapItem>
-                )}
-              </Wrap>
-            </VStack>
-          </HStack>
-        </StandardCard>
+          </Flex>
+          {historyData?.description && (
+            <Text mt={3} color="gray.600" fontSize="sm" lineHeight="1.7">
+              {historyData.description}
+            </Text>
+          )}
+        </Box>
 
         {/* Photo Gallery Section */}
         {historyData?.images && historyData.images.length > 0 && (
@@ -855,554 +741,600 @@ function ProfileProduction() {
           </StandardCard>
         )}
 
-        {/* Cover Photo Section (consumer QR hero) — write access only */}
-        {canWrite && (
-          <StandardCard
-            title={intl.formatMessage({
-              id: 'production.cover.title',
-              defaultMessage: 'Cover Photo'
-            })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-            <VStack align="stretch" spacing={4}>
-              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                {intl.formatMessage({
-                  id: 'production.cover.help',
-                  defaultMessage:
-                    'Shown as the hero image at the top of the public QR page. Upload a photo to set it; leave it empty to auto-pick the first timeline photo.'
+        {/* ── YOUR PUBLIC PAGE ─────────────────────────────────────────────────
+            Cover photo and QR access side by side, because they configure the SAME artifact:
+            the cover IS the hero of the QR page, and this is the link to it. Splitting them
+            into two stacked full-width cards also left the cover card ~1,200px of dead space
+            beside a 420px column on desktop. */}
+        <StandardSection
+          title={intl.formatMessage({
+            id: 'production.section.publicPage',
+            defaultMessage: 'Your public page'
+          })}
+          description={intl.formatMessage({
+            id: 'production.section.publicPageHelp',
+            defaultMessage: 'What a shopper sees when they scan this lot.'
+          })}
+        >
+          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 4, md: 6 }} alignItems="start">
+            {/* Cover Photo Section (consumer QR hero) — write access only */}
+            {canWrite && (
+              <StandardCard
+                title={intl.formatMessage({
+                  id: 'production.cover.title',
+                  defaultMessage: 'Cover Photo'
                 })}
-              </Text>
-
-              <HStack spacing={4} align="start" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
-                {/* Current cover preview */}
-                <Box flexShrink={0}>
-                  <Text fontSize="xs" color="gray.500" mb={1}>
+                variant="elevated"
+                padding={{ base: 3, md: 4 }}
+              >
+                <VStack align="stretch" spacing={4}>
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                     {intl.formatMessage({
-                      id: 'production.cover.current',
-                      defaultMessage: 'Current cover'
+                      id: 'production.cover.help',
+                      defaultMessage:
+                        'Shown as the hero image at the top of the public QR page. Upload a photo to set it; leave it empty to auto-pick the first timeline photo.'
                     })}
                   </Text>
-                  {historyData?.cover_image_url ? (
-                    <Image
-                      src={historyData.cover_image_url}
-                      alt={intl.formatMessage({
-                        id: 'production.cover.title',
-                        defaultMessage: 'Cover Photo'
-                      })}
-                      borderRadius="lg"
-                      objectFit="cover"
-                      boxSize={{ base: '120px', md: '140px' }}
-                      border="1px solid"
-                      borderColor="gray.200"
-                    />
-                  ) : (
-                    <Box
-                      boxSize={{ base: '120px', md: '140px' }}
-                      borderRadius="lg"
-                      border="1px dashed"
-                      borderColor="gray.300"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      bg="gray.50"
-                    >
-                      <Text fontSize="xs" color="gray.500" textAlign="center" px={2}>
+
+                  {/* The CURRENT COVER is the thing being configured, so it leads and it is
+                  large. Before, a 140px thumbnail sat beside a ~600px dropzone — the action
+                  dwarfed the state, and "Reset to auto-pick" floated below, detached from the
+                  image it resets. The uploader is now a compact strip underneath. */}
+                  <VStack align="stretch" spacing={3}>
+                    <Box>
+                      <Text fontSize="xs" color="gray.500" mb={2}>
                         {intl.formatMessage({
-                          id: 'production.cover.auto',
-                          defaultMessage: 'Auto (first photo)'
+                          id: 'production.cover.current',
+                          defaultMessage: 'Current cover'
+                        })}
+                      </Text>
+                      {historyData?.cover_image_url ? (
+                        <Box position="relative" w="100%">
+                          <Image
+                            src={historyData.cover_image_url}
+                            alt={intl.formatMessage({
+                              id: 'production.cover.title',
+                              defaultMessage: 'Cover Photo'
+                            })}
+                            borderRadius="lg"
+                            objectFit="cover"
+                            w="100%"
+                            aspectRatio="16/9"
+                            border="1px solid"
+                            borderColor="gray.200"
+                          />
+                          {/* Attached to the image it acts on, not stranded below the card. */}
+                          <StandardButton
+                            variant="outline"
+                            size="xs"
+                            onClick={handleClearCover}
+                            isLoading={isSavingCover}
+                            position="absolute"
+                            top={2}
+                            right={2}
+                            bg="white"
+                          >
+                            {intl.formatMessage({
+                              id: 'production.cover.reset',
+                              defaultMessage: 'Reset to auto-pick'
+                            })}
+                          </StandardButton>
+                        </Box>
+                      ) : (
+                        <Box
+                          w="100%"
+                          aspectRatio="16/9"
+                          borderRadius="lg"
+                          border="1px dashed"
+                          borderColor="gray.300"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          bg="gray.50"
+                        >
+                          <Text fontSize="sm" color="gray.500" textAlign="center" px={3}>
+                            {intl.formatMessage({
+                              id: 'production.cover.auto',
+                              defaultMessage: 'Auto (first photo)'
+                            })}
+                          </Text>
+                        </Box>
+                      )}
+                    </Box>
+
+                    {/* Compact, and captioned for THIS job — the defaults read "Add your farm
+                    photos", which is not what a single hero image is. */}
+                    <Box w="100%">
+                      <TrazoImageUpload
+                        maxFiles={1}
+                        maxSize={5 * 1024 * 1024}
+                        existingImages={[]}
+                        onImagesChange={handleSetCover}
+                        isLoading={isSavingCover}
+                        compact
+                        title={intl.formatMessage({
+                          id: 'production.cover.uploadTitle',
+                          defaultMessage: 'Replace cover photo'
+                        })}
+                        subtitle={intl.formatMessage({
+                          id: 'production.cover.uploadSubtitle',
+                          defaultMessage: 'Sets the hero image on the public QR page'
+                        })}
+                      />
+                    </Box>
+                  </VStack>
+                </VStack>
+              </StandardCard>
+            )}
+            {/* QR Code & Consumer Access - Prominent position for packaging workflow */}
+            {historyData?.qr_code && (
+              <StandardCard
+                title={intl.formatMessage({
+                  id: 'production.section.qrAccess',
+                  defaultMessage: 'QR Code & Consumer Access'
+                })}
+                variant="elevated"
+                padding={{ base: 3, md: 4 }}
+              >
+                <VStack spacing={{ base: 3, md: 5 }} align="center">
+                  {/* Finished production banner */}
+                  {historyData?.finish_date && (
+                    <Box
+                      w="full"
+                      p={{ base: 2, md: 3 }}
+                      bg="green.50"
+                      borderRadius="lg"
+                      border="1px solid"
+                      borderColor="green.200"
+                      textAlign="center"
+                    >
+                      <Text
+                        fontSize={{ base: 'xs', md: 'sm' }}
+                        fontWeight="semibold"
+                        color="green.700"
+                      >
+                        {intl.formatMessage({
+                          id: 'production.qr.completeBanner',
+                          defaultMessage:
+                            'Your production is complete! Print this QR code and attach it to your packaging.'
                         })}
                       </Text>
                     </Box>
                   )}
-                </Box>
 
-                {/* Uploader — emits a permanent S3 URL, persisted as the cover */}
-                <Box flex={1} minW={{ base: '100%', md: '240px' }}>
-                  <TrazoImageUpload
-                    maxFiles={1}
-                    maxSize={5 * 1024 * 1024}
-                    existingImages={[]}
-                    onImagesChange={handleSetCover}
-                    isLoading={isSavingCover}
-                  />
-                </Box>
-              </HStack>
-
-              {historyData?.cover_image_url && (
-                <HStack>
-                  <StandardButton
-                    variant="outline"
-                    size="sm"
-                    onClick={handleClearCover}
-                    isLoading={isSavingCover}
+                  {/* QR Image Preview */}
+                  <Box
+                    p={{ base: 3, md: 4 }}
+                    bg="gray.50"
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor="gray.200"
                   >
-                    {intl.formatMessage({
-                      id: 'production.cover.reset',
-                      defaultMessage: 'Reset to auto-pick'
-                    })}
-                  </StandardButton>
-                </HStack>
-              )}
-            </VStack>
-          </StandardCard>
-        )}
+                    <Image
+                      src={historyData.qr_code}
+                      alt={`QR Code for ${historyData?.product?.name || 'production'}`}
+                      maxW={{ base: '180px', md: '280px' }}
+                      borderRadius="md"
+                      fallback={
+                        <VStack spacing={2} p={8}>
+                          <Icon as={FaQrcode} boxSize={12} color="gray.300" />
+                          <Text fontSize="sm" color="gray.500">
+                            {intl.formatMessage({
+                              id: 'production.qr.loading',
+                              defaultMessage: 'Loading QR...'
+                            })}
+                          </Text>
+                        </VStack>
+                      }
+                    />
+                  </Box>
+
+                  {/* Description */}
+                  <Text
+                    fontSize={{ base: 'xs', md: 'sm' }}
+                    color="gray.600"
+                    textAlign="center"
+                    maxW="400px"
+                  >
+                    {historyData?.finish_date
+                      ? intl.formatMessage({
+                          id: 'production.qr.instruction',
+                          defaultMessage:
+                            "Print this QR and attach it to your packaging so consumers can see your production's transparency journey."
+                        })
+                      : intl.formatMessage({
+                          id: 'production.qr.instructionActive',
+                          defaultMessage:
+                            "Your QR code is ready. Consumers can scan it to view your production's transparency details."
+                        })}
+                  </Text>
+
+                  {/* Action buttons */}
+                  <HStack spacing={2} flexWrap="wrap" justify="center">
+                    <StandardButton
+                      variant="primary"
+                      size={{ base: 'xs', md: 'sm' }}
+                      leftIcon={<Icon as={FaDownload} />}
+                      onClick={downloadQRCode}
+                    >
+                      {intl.formatMessage({
+                        id: 'production.qr.download',
+                        defaultMessage: 'Download QR'
+                      })}
+                    </StandardButton>
+                    <StandardButton
+                      variant="outline"
+                      size={{ base: 'xs', md: 'sm' }}
+                      leftIcon={<Icon as={FaEye} />}
+                      onClick={handleViewPublicPage}
+                    >
+                      {intl.formatMessage({ id: 'app.viewPublicPage' })}
+                    </StandardButton>
+                  </HStack>
+
+                  {/* Print tip */}
+                  <Box
+                    w="full"
+                    p={{ base: 2, md: 3 }}
+                    bg="blue.50"
+                    borderRadius="md"
+                    border="1px solid"
+                    borderColor="blue.100"
+                  >
+                    <Text fontSize="xs" color="blue.700" textAlign="center">
+                      {intl.formatMessage({
+                        id: 'production.qr.tip',
+                        defaultMessage:
+                          'Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download the high-resolution PNG for print quality.'
+                      })}
+                    </Text>
+                  </Box>
+                </VStack>
+              </StandardCard>
+            )}
+          </SimpleGrid>
+        </StandardSection>
 
         {/* Sprint 5.1 — OSP ↔ events drift summary (only renders if findings present).
             Surfaced high (above Quick Stats) so any compliance action is seen first. */}
         <DriftFindingsBanner events={timelineEvents as any[]} />
 
         {/* Quick Stats Section */}
-        <StandardCard
-          title={intl.formatMessage({
-            id: 'production.section.quickStats',
-            defaultMessage: 'Quick Stats'
-          })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-        >
-          <SimpleGrid columns={{ base: 2, md: 4 }} spacing={{ base: 2, md: 4 }}>
-            <StatCard
-              icon={FaSeedling}
-              value={
-                historyData?.is_outdoor
-                  ? intl.formatMessage({ id: 'production.outdoor' })
-                  : historyData?.is_outdoor === false
-                  ? intl.formatMessage({ id: 'production.indoor' })
-                  : intl.formatMessage({ id: 'production.general' })
-              }
-              label={intl.formatMessage({ id: 'production.environment' })}
-              colorScheme="green"
-            />
-            <StatCard
-              icon={FaLeaf}
-              value={
-                transparencyLoading
-                  ? '...'
-                  : transparencyScore === null
-                  ? intl.formatMessage({
-                      id: 'dashboard.trustScore.notStarted',
-                      defaultMessage: 'Not started'
-                    })
-                  : `${Math.round(transparencyScore)}%`
-              }
-              label={intl.formatMessage({ id: 'production.stat.transparency', defaultMessage: 'Transparency' })}
-              colorScheme="green"
-            />
-            <StatCard
-              icon={FaClipboardList}
-              value={timelineEvents.length || 0}
-              label={intl.formatMessage({ id: 'production.stat.events', defaultMessage: 'Events' })}
-              colorScheme="purple"
-            />
-            <StatCard
-              icon={FaFlag}
-              value={historyData?.finish_date
-                      ? intl.formatMessage({ id: 'production.status.finished', defaultMessage: 'Finished' })
-                      : intl.formatMessage({ id: 'production.status.active', defaultMessage: 'Active' })}
-              label={intl.formatMessage({ id: 'production.stat.status', defaultMessage: 'Status' })}
-              colorScheme="orange"
-            />
-          </SimpleGrid>
-          <HStack justify="flex-end" mt={{ base: 2, md: 3 }}>
-            <StandardButton
-              variant="ghost"
-              size="sm"
-              leftIcon={<Icon as={FaChartLine} />}
-              onClick={() => navigate(`/admin/dashboard/farm/${farmId}/transparency`)}
-            >
-              {intl.formatMessage({ id: 'production.viewTransparencyDetails' })}
-            </StandardButton>
-          </HStack>
-        </StandardCard>
+        {/* "Quick Stats" DELETED 2026-08-07. Four tiles, three of them redundant:
+            - Transparency % — the October plan §10.4 names this exact tile as "the 4th
+              duplicate of one number". The score's home is /transparency ("Farm Records");
+              it was cut from the farm home 2026-08-04 and from the parcel profile today.
+            - Environment (indoor/outdoor) and Status (active/finished) — both already render
+              as badges in the header above.
+            Only the event count was unique, and it now sits in the header meta line. */}
 
-        {/* QR Code & Consumer Access - Prominent position for packaging workflow */}
-        {historyData?.qr_code && (
-          <StandardCard
-            title={intl.formatMessage({
-              id: 'production.section.qrAccess',
-              defaultMessage: 'QR Code & Consumer Access'
-            })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
+        {/* ── PRODUCTION RECORD ────────────────────────────────────────────────
+            A StandardSection heading, matching ProfileFarm and ProfileParcel. Those two
+            group their cards under h2 section headings; this page had none, so its cards
+            floated with no hierarchy above them.
+
+            The cards stay in a 2-col grid rather than merging into one like farm/parcel:
+            they are already short and the grid uses the horizontal space a merged column
+            would waste on desktop. */}
+        <StandardSection
+          title={intl.formatMessage({
+            id: 'production.section.record',
+            defaultMessage: 'Production record'
+          })}
+        >
+          {/* TWO EXPLICIT COLUMNS, not a flat grid.
+              A flat `columns={2}` grid flows children in order, so three cards of very uneven
+              height produced [tall Production details | short Location] and then
+              [Recorded by | EMPTY] — a gap under Location and another beside Recorded by.
+              Pairing the tall card against a stack of the short ones fills the row, and it
+              still collapses to a single column below `lg`. */}
+          <SimpleGrid
+            columns={{ base: 1, lg: 2 }}
+            spacing={{ base: 4, md: 6 }}
+            w="100%"
+            alignItems="start"
           >
-            <VStack spacing={{ base: 3, md: 5 }} align="center">
-              {/* Finished production banner */}
-              {historyData?.finish_date && (
-                <Box
-                  w="full"
-                  p={{ base: 2, md: 3 }}
-                  bg="green.50"
-                  borderRadius="lg"
-                  border="1px solid"
-                  borderColor="green.200"
-                  textAlign="center"
-                >
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
+            <VStack align="stretch" spacing={{ base: 4, md: 6 }}>
+              {/* Production Details Section */}
+              <StandardCard
+                title={intl.formatMessage({
+                  id: 'production.section.details',
+                  defaultMessage: 'Production Details'
+                })}
+                variant="elevated"
+                padding={{ base: 3, md: 4 }}
+              >
+                <VStack align="stretch" gap={4}>
+                  <Text fontSize="xs" color="gray.500" lineHeight="1.7">
+                    <Icon as={FaEye} boxSize={3} color="gray.400" mr={2} verticalAlign="-1px" />
                     {intl.formatMessage({
-                      id: 'production.qr.completeBanner',
+                      id: 'production.details.publicLegend',
                       defaultMessage:
-                        'Your production is complete! Print this QR code and attach it to your packaging.'
+                        'Marked fields appear on this lot\u2019s public page when a shopper scans its QR code. Revenue and operator details stay private.'
                     })}
                   </Text>
-                </Box>
-              )}
-
-              {/* QR Image Preview */}
-              <Box
-                p={{ base: 3, md: 4 }}
-                bg="gray.50"
-                borderRadius="xl"
-                border="1px solid"
-                borderColor="gray.200"
-              >
-                <Image
-                  src={historyData.qr_code}
-                  alt={`QR Code for ${historyData?.product?.name || 'production'}`}
-                  maxW={{ base: '180px', md: '280px' }}
-                  borderRadius="md"
-                  fallback={
-                    <VStack spacing={2} p={8}>
-                      <Icon as={FaQrcode} boxSize={12} color="gray.300" />
-                      <Text fontSize="sm" color="gray.500">
-                        {intl.formatMessage({
-                          id: 'production.qr.loading',
-                          defaultMessage: 'Loading QR...'
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
+                    <InfoRow
+                      icon={FaSeedling}
+                      label={intl.formatMessage({
+                        id: 'production.field.product',
+                        defaultMessage: 'Product'
+                      })}
+                      value={historyData?.product?.name}
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    <InfoRow
+                      icon={FaTractor}
+                      label={intl.formatMessage({
+                        id: 'production.field.type',
+                        defaultMessage: 'Type'
+                      })}
+                      value={
+                        historyData?.type === 'OR'
+                          ? 'Orchard'
+                          : historyData?.type === 'GA'
+                          ? 'Garden'
+                          : historyData?.type
+                          ? historyData.type
+                          : intl.formatMessage({ id: 'production.agriculturalProduction' })
+                      }
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    <InfoRow
+                      icon={FaCalendarAlt}
+                      label={intl.formatMessage({
+                        id: 'production.field.startDate',
+                        defaultMessage: 'Start Date'
+                      })}
+                      value={formatDate(historyData?.start_date)}
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    <InfoRow
+                      icon={FaCalendarAlt}
+                      label={intl.formatMessage({
+                        id: 'production.field.endDate',
+                        defaultMessage: 'End Date'
+                      })}
+                      value={
+                        historyData?.finish_date
+                          ? formatDate(historyData.finish_date)
+                          : intl.formatMessage({
+                              id: 'production.status.inProgress',
+                              defaultMessage: 'In Progress'
+                            })
+                      }
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    {historyData?.start_date && historyData?.finish_date && (
+                      <InfoRow
+                        icon={FaCalendarAlt}
+                        label={intl.formatMessage({
+                          id: 'production.field.duration',
+                          defaultMessage: 'Duration'
                         })}
-                      </Text>
-                    </VStack>
-                  }
-                />
-              </Box>
-
-              {/* Description */}
-              <Text
-                fontSize={{ base: 'xs', md: 'sm' }}
-                color="gray.600"
-                textAlign="center"
-                maxW="400px"
-              >
-                {historyData?.finish_date
-                  ? intl.formatMessage({
-                      id: 'production.qr.instruction',
-                      defaultMessage:
-                        "Print this QR and attach it to your packaging so consumers can see your production's transparency journey."
-                    })
-                  : intl.formatMessage({
-                      id: 'production.qr.instructionActive',
-                      defaultMessage:
-                        "Your QR code is ready. Consumers can scan it to view your production's transparency details."
-                    })}
-              </Text>
-
-              {/* Action buttons */}
-              <HStack spacing={2} flexWrap="wrap" justify="center">
-                <StandardButton
-                  variant="primary"
-                  size={{ base: 'xs', md: 'sm' }}
-                  leftIcon={<Icon as={FaDownload} />}
-                  onClick={downloadQRCode}
-                >
-                  {intl.formatMessage({
-                    id: 'production.qr.download',
-                    defaultMessage: 'Download QR'
-                  })}
-                </StandardButton>
-                <StandardButton
-                  variant="outline"
-                  size={{ base: 'xs', md: 'sm' }}
-                  leftIcon={<Icon as={FaEye} />}
-                  onClick={handleViewPublicPage}
-                >
-                  {intl.formatMessage({ id: 'app.viewPublicPage' })}
-                </StandardButton>
-              </HStack>
-
-              {/* Print tip */}
-              <Box
-                w="full"
-                p={{ base: 2, md: 3 }}
-                bg="blue.50"
-                borderRadius="md"
-                border="1px solid"
-                borderColor="blue.100"
-              >
-                <Text fontSize="xs" color="blue.700" textAlign="center">
-                  {intl.formatMessage({
-                    id: 'production.qr.tip',
-                    defaultMessage:
-                      'Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download the high-resolution PNG for print quality.'
-                  })}
-                </Text>
-              </Box>
-            </VStack>
-          </StandardCard>
-        )}
-
-        {/* Static metadata cards — 2-col on desktop, single column mobile-first.
-            alignItems start so uneven-height cards align to the top, no stretch. */}
-        <SimpleGrid
-          columns={{ base: 1, lg: 2 }}
-          spacing={{ base: 4, md: 6 }}
-          w="100%"
-          alignItems="start"
-        >
-          {/* Production Details Section */}
-          <StandardCard
-            title={intl.formatMessage({
-              id: 'production.section.details',
-              defaultMessage: 'Production Details'
-            })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
-            <InfoRow
-              icon={FaSeedling}
-              label={intl.formatMessage({ id: 'production.field.product', defaultMessage: 'Product' })}
-              value={historyData?.product?.name}
-            />
-            <InfoRow
-              icon={FaTractor}
-              label={intl.formatMessage({ id: 'production.field.type', defaultMessage: 'Type' })}
-              value={
-                historyData?.type === 'OR'
-                  ? 'Orchard'
-                  : historyData?.type === 'GA'
-                  ? 'Garden'
-                  : historyData?.type
-                  ? historyData.type
-                  : intl.formatMessage({ id: 'production.agriculturalProduction' })
-              }
-            />
-            <InfoRow
-              icon={FaCalendarAlt}
-              label={intl.formatMessage({ id: 'production.field.startDate', defaultMessage: 'Start Date' })}
-              value={formatDate(historyData?.start_date)}
-            />
-            <InfoRow
-              icon={FaCalendarAlt}
-              label={intl.formatMessage({ id: 'production.field.endDate', defaultMessage: 'End Date' })}
-              value={
-                historyData?.finish_date
-                  ? formatDate(historyData.finish_date)
-                  : intl.formatMessage({
-                      id: 'production.status.inProgress',
-                      defaultMessage: 'In Progress'
-                    })
-              }
-            />
-            {historyData?.start_date && historyData?.finish_date && (
-              <InfoRow
-                icon={FaCalendarAlt}
-                label={intl.formatMessage({
-                  id: 'production.field.duration',
-                  defaultMessage: 'Duration'
-                })}
-                value={intl.formatMessage(
-                  { id: 'production.field.durationDays', defaultMessage: '{days} days' },
-                  {
-                    days: Math.ceil(
-                      (new Date(historyData.finish_date).getTime() -
-                        new Date(historyData.start_date).getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    )
-                  }
-                )}
-              />
-            )}
-            {historyData?.production_amount && (
-              <InfoRow
-                icon={FaClipboardList}
-                label={intl.formatMessage({ id: 'production.field.amount', defaultMessage: 'Production Amount' })}
-                value={`${intl.formatNumber(Number(historyData.production_amount))} ${
-                  historyData.production_unit || 'units'
-                }`}
-              />
-            )}
-            {historyData?.earning && (
-              <InfoRow
-                icon={FaChartLine}
-                label={intl.formatMessage({ id: 'production.field.revenue', defaultMessage: 'Revenue' })}
-                value={`$${historyData.earning.toLocaleString()}`}
-              />
-            )}
-            <InfoRow
-              icon={FaLeaf}
-              label={intl.formatMessage({ id: 'production.environment' })}
-              value={
-                historyData?.is_outdoor
-                  ? intl.formatMessage({ id: 'production.outdoor' })
-                  : intl.formatMessage({ id: 'production.indoor' })
-              }
-            />
-          </SimpleGrid>
-        </StandardCard>
-
-        {/* Agricultural Information Section */}
-        {(historyData?.age_of_plants ||
-          historyData?.number_of_plants ||
-          historyData?.soil_ph ||
-          historyData?.crop_type) && (
-          <StandardCard
-            title={intl.formatMessage({
-              id: 'production.section.agInfo',
-              defaultMessage: 'Agricultural Information'
-            })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
-              {historyData?.age_of_plants && (
-                <InfoRow
-                  icon={FaSeedling}
-                  label={intl.formatMessage({ id: 'production.field.plantAge', defaultMessage: 'Plant Age' })}
-                  value={historyData.age_of_plants}
-                />
-              )}
-              {historyData?.number_of_plants && (
-                <InfoRow
-                  icon={FaSeedling}
-                  label={intl.formatMessage({ id: 'production.field.plantCount', defaultMessage: 'Number of Plants' })}
-                  value={historyData.number_of_plants.toLocaleString()}
-                />
-              )}
-              {historyData?.soil_ph && (
-                <InfoRow
-                  icon={FaLeaf}
-                  label={intl.formatMessage({ id: 'production.field.soilPh', defaultMessage: 'Soil pH' })}
-                  value={historyData.soil_ph}
-                />
-              )}
-              {historyData?.crop_type && (
-                <InfoRow
-                  icon={FaSeedling}
-                  label={intl.formatMessage({ id: 'production.field.cropType', defaultMessage: 'Crop Type' })}
-                  value={historyData.crop_type}
-                />
-              )}
-            </SimpleGrid>
-          </StandardCard>
-        )}
-
-        {/* Location Section */}
-        <StandardCard
-          title={intl.formatMessage({
-            id: 'production.section.location',
-            defaultMessage: 'Location'
-          })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-        >
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
-            <InfoRow
-              icon={FaBuilding}
-              label={intl.formatMessage({ id: 'production.field.establishment', defaultMessage: 'Establishment' })}
-              value={historyData?.parcel?.establishment?.name || 'Unknown'}
-              onClick={() => navigate(`/admin/dashboard/farm/${farmId}`)}
-            />
-            <InfoRow
-              icon={MdLocationOn}
-              label={intl.formatMessage({ id: 'production.field.parcel', defaultMessage: 'Parcel' })}
-              value={historyData?.parcel?.name || 'Unknown'}
-              onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-            />
-            {historyData?.parcel?.establishment?.location && (
-              <InfoRow
-                icon={FaMapMarkerAlt}
-                label={intl.formatMessage({ id: 'production.field.address', defaultMessage: 'Address' })}
-                value={historyData.parcel.establishment.location}
-              />
-            )}
-          </SimpleGrid>
-        </StandardCard>
-
-        {/* Reputation & Operator Section */}
-        <StandardCard
-          title={intl.formatMessage({
-            id: 'production.section.reputation',
-            defaultMessage: 'Reputation & Operator'
-          })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-        >
-          <VStack spacing={{ base: 3, md: 6 }} align="stretch">
-            <Box>
-              <Text
-                fontSize="xs"
-                color="gray.500"
-                textTransform="uppercase"
-                fontWeight="semibold"
-                mb={1}
-              >
-                {intl.formatMessage({
-                  id: 'production.reputation.score',
-                  defaultMessage: 'Reputation Score'
-                })}
-              </Text>
-              {safeReputation > 0 ? (
-                <HStack spacing={2}>
-                  <HStack spacing={0.5}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Icon
-                        key={star}
-                        as={star <= safeReputation ? BsStarFill : BsStar}
-                        color={star <= safeReputation ? 'yellow.400' : 'gray.300'}
-                        boxSize={{ base: 4, md: 5 }}
+                        value={intl.formatMessage(
+                          { id: 'production.field.durationDays', defaultMessage: '{days} days' },
+                          {
+                            days: Math.ceil(
+                              (new Date(historyData.finish_date).getTime() -
+                                new Date(historyData.start_date).getTime()) /
+                                (1000 * 60 * 60 * 24)
+                            )
+                          }
+                        )}
+                        isPublic
+                        publicLabel={publicLabel}
                       />
-                    ))}
-                  </HStack>
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
-                    ({safeReputation.toFixed(1)}/5.0)
-                  </Text>
-                </HStack>
-              ) : (
-                <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" fontStyle="italic">
-                  {intl.formatMessage({
-                    id: 'production.reputation.notRated',
-                    defaultMessage: 'Not yet rated'
-                  })}
-                </Text>
-              )}
-            </Box>
-
-            {historyData?.operator && (
-              <Box p={{ base: 3, md: 4 }} bg="gray.50" borderRadius="lg">
-                <Text
-                  fontSize="xs"
-                  color="gray.500"
-                  textTransform="uppercase"
-                  fontWeight="semibold"
-                  mb={1}
-                >
-                  {intl.formatMessage({
-                    id: 'production.reputation.operator',
-                    defaultMessage: 'Operator'
-                  })}
-                </Text>
-                <HStack spacing={2}>
-                  <Avatar
-                    size="sm"
-                    name={historyData.operator.full_name || historyData.operator.email}
-                  />
-                  <VStack spacing={0} align="start" minW={0}>
-                    <Text fontWeight="medium" fontSize={{ base: 'sm', md: 'md' }} noOfLines={1}>
-                      {historyData.operator.full_name ||
-                        intl.formatMessage({
-                          id: 'production.reputation.unnamedOperator',
-                          defaultMessage: 'Unnamed Operator'
+                    )}
+                    {historyData?.production_amount && (
+                      <InfoRow
+                        icon={FaClipboardList}
+                        label={intl.formatMessage({
+                          id: 'production.field.amount',
+                          defaultMessage: 'Production Amount'
                         })}
-                    </Text>
-                    <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" noOfLines={1}>
-                      {historyData.operator.email}
-                    </Text>
-                  </VStack>
-                </HStack>
-              </Box>
-            )}
-          </VStack>
-        </StandardCard>
-        </SimpleGrid>
+                        value={`${intl.formatNumber(Number(historyData.production_amount))} ${
+                          historyData.production_unit || 'units'
+                        }`}
+                        isPublic
+                        publicLabel={publicLabel}
+                      />
+                    )}
+                    {historyData?.earning && (
+                      <InfoRow
+                        icon={FaChartLine}
+                        label={intl.formatMessage({
+                          id: 'production.field.revenue',
+                          defaultMessage: 'Revenue'
+                        })}
+                        value={`$${historyData.earning.toLocaleString()}`}
+                      />
+                    )}
+                    <InfoRow
+                      icon={FaLeaf}
+                      label={intl.formatMessage({ id: 'production.environment' })}
+                      value={
+                        historyData?.is_outdoor
+                          ? intl.formatMessage({ id: 'production.outdoor' })
+                          : intl.formatMessage({ id: 'production.indoor' })
+                      }
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                  </SimpleGrid>
+                </VStack>
+              </StandardCard>
+
+              {/* Agricultural Information Section */}
+              {(historyData?.age_of_plants ||
+                historyData?.number_of_plants ||
+                historyData?.soil_ph ||
+                historyData?.crop_type) && (
+                <StandardCard
+                  title={intl.formatMessage({
+                    id: 'production.section.agInfo',
+                    defaultMessage: 'Agricultural Information'
+                  })}
+                  variant="elevated"
+                  padding={{ base: 3, md: 4 }}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
+                    {historyData?.age_of_plants && (
+                      <InfoRow
+                        icon={FaSeedling}
+                        label={intl.formatMessage({
+                          id: 'production.field.plantAge',
+                          defaultMessage: 'Plant Age'
+                        })}
+                        value={historyData.age_of_plants}
+                      />
+                    )}
+                    {historyData?.number_of_plants && (
+                      <InfoRow
+                        icon={FaSeedling}
+                        label={intl.formatMessage({
+                          id: 'production.field.plantCount',
+                          defaultMessage: 'Number of Plants'
+                        })}
+                        value={historyData.number_of_plants.toLocaleString()}
+                      />
+                    )}
+                    {historyData?.soil_ph && (
+                      <InfoRow
+                        icon={FaLeaf}
+                        label={intl.formatMessage({
+                          id: 'production.field.soilPh',
+                          defaultMessage: 'Soil pH'
+                        })}
+                        value={historyData.soil_ph}
+                      />
+                    )}
+                    {historyData?.crop_type && (
+                      <InfoRow
+                        icon={FaSeedling}
+                        label={intl.formatMessage({
+                          id: 'production.field.cropType',
+                          defaultMessage: 'Crop Type'
+                        })}
+                        value={historyData.crop_type}
+                      />
+                    )}
+                  </SimpleGrid>
+                </StandardCard>
+              )}
+            </VStack>
+
+            <VStack align="stretch" spacing={{ base: 4, md: 6 }}>
+              {/* Location Section */}
+              <StandardCard
+                title={intl.formatMessage({
+                  id: 'production.section.location',
+                  defaultMessage: 'Location'
+                })}
+                variant="elevated"
+                padding={{ base: 3, md: 4 }}
+              >
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
+                  <InfoRow
+                    icon={FaBuilding}
+                    label={intl.formatMessage({
+                      id: 'production.field.establishment',
+                      defaultMessage: 'Establishment'
+                    })}
+                    value={historyData?.parcel?.establishment?.name || 'Unknown'}
+                    onClick={() => navigate(`/admin/dashboard/farm/${farmId}`)}
+                    isPublic
+                    publicLabel={publicLabel}
+                  />
+                  <InfoRow
+                    icon={MdLocationOn}
+                    label={intl.formatMessage({
+                      id: 'production.field.parcel',
+                      defaultMessage: 'Parcel'
+                    })}
+                    value={historyData?.parcel?.name || 'Unknown'}
+                    onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
+                    isPublic
+                    publicLabel={publicLabel}
+                  />
+                  {historyData?.parcel?.establishment?.location && (
+                    <InfoRow
+                      icon={FaMapMarkerAlt}
+                      label={intl.formatMessage({
+                        id: 'production.field.address',
+                        defaultMessage: 'Address'
+                      })}
+                      value={historyData.parcel.establishment.location}
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                  )}
+                </SimpleGrid>
+              </StandardCard>
+
+              {/* The 5-star "Reputation Score" was removed here 2026-08-07.
+            `History.reputation` is the average of `self.reviews` — and consumer reviews went
+            away with the logged-in shopper product (TRAZO-OCTOBER-2026-PLAN §10.5). The
+            equivalent `renderStars` was deleted from the consumer farm surface on 2026-08-06
+            for exactly this reason: "a farm rating on this page would have no source behind
+            it". On demo data it renders a seeded number; on a real pilot farm it renders 0.0
+            forever. Same class as the transparency score — a KPI with no live input.
+            `History.operator` STAYS, retitled "Recorded by": it is set to `request.user` on
+            create (history/views.py:627), so it identifies the ACCOUNT that owns the record —
+            not whoever did the field work. Field workers are `performed_by` per event. It is
+            withheld from consumers by `_OWNER_ONLY_FIELDS` because it carries an email. */}
+              <StandardCard
+                title={intl.formatMessage({
+                  id: 'production.section.recordedBy',
+                  defaultMessage: 'Recorded by'
+                })}
+                variant="elevated"
+                padding={{ base: 3, md: 4 }}
+              >
+                <VStack spacing={{ base: 3, md: 6 }} align="stretch">
+                  {historyData?.operator && (
+                    <Box p={{ base: 3, md: 4 }} bg="gray.50" borderRadius="lg">
+                      {/* The inner "Operator" label was removed 2026-08-08. The card is titled
+                        "Recorded by", so this printed the same idea twice — and the two used
+                        DIFFERENT i18n keys, which Spanish translated inconsistently:
+                        "Operario" (a manual labourer) as the card title and "Operador" as the
+                        field label. Neither was right: `History.operator` is set to
+                        `request.user` on create (history/views.py:627), so it is the ACCOUNT
+                        that owns the record, not whoever did the field work. Field workers are
+                        `performed_by` on each event. */}
+                      <HStack spacing={2}>
+                        <Avatar
+                          size="sm"
+                          name={historyData.operator.full_name || historyData.operator.email}
+                        />
+                        <VStack spacing={0} align="start" minW={0}>
+                          <Text
+                            fontWeight="medium"
+                            fontSize={{ base: 'sm', md: 'md' }}
+                            noOfLines={1}
+                          >
+                            {historyData.operator.full_name ||
+                              intl.formatMessage({
+                                id: 'production.reputation.unnamedOperator',
+                                defaultMessage: 'Unnamed Operator'
+                              })}
+                          </Text>
+                          <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" noOfLines={1}>
+                            {historyData.operator.email}
+                          </Text>
+                        </VStack>
+                      </HStack>
+                    </Box>
+                  )}
+                </VStack>
+              </StandardCard>
+            </VStack>
+          </SimpleGrid>
+        </StandardSection>
 
         {/* Production Timeline Section */}
 
@@ -1449,7 +1381,6 @@ function ProfileProduction() {
             )}
           </VStack>
         )}
-
       </VStack>
 
       {/* Sales & Buyer Handoff (post-finish only) — one section grouping the two

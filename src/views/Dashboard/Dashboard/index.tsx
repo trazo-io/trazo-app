@@ -66,6 +66,17 @@ import CertifierDeadlinesStrip from './components/farm/CertifierDeadlinesStrip';
 import TrialStatusBanner from 'components/Trial/TrialStatusBanner';
 import { useTour } from 'hooks/useTour';
 import { useTourScenario } from 'hooks/useTourScenario';
+
+/**
+ * Farm location line, without the dangling punctuation.
+ *
+ * This was `${city || zone || ''}, ${state}`, which renders a farm with no city as a bare
+ * ", CA" — a stray leading comma under the farm name on the dashboard. Not hypothetical: the
+ * `provision_pilot` command sets state and country but no city, so EVERY white-glove pilot
+ * account created for October showed it on the first screen after login.
+ */
+const formatFarmLocation = (farm: { city?: string; zone?: string; state?: string }): string =>
+  [farm?.city || farm?.zone, farm?.state].map((p) => (p || '').trim()).filter(Boolean).join(', ');
 // // import BatchTestComponent from 'components/Debug/BatchTestComponent'; // DEBUG: Remove for production
 
 export default function DashboardView() {
@@ -532,9 +543,9 @@ export default function DashboardView() {
                                       }
                                       noOfLines={1}
                                       mt={1}
-                                      title={`${prop.city || prop.zone || ''}, ${prop.state}`}
+                                      title={formatFarmLocation(prop)}
                                     >
-                                      {`${prop.city || prop.zone || ''}, ${prop.state}`}
+                                      {formatFarmLocation(prop)}
                                     </Text>
                                   </Box>
                                 </Flex>
@@ -649,9 +660,9 @@ export default function DashboardView() {
                                   fontSize="sm"
                                   color={prop.id === establishment?.id ? 'green.100' : 'gray.500'}
                                   noOfLines={1}
-                                  title={`${prop.city || prop.zone || ''}, ${prop.state}`}
+                                  title={formatFarmLocation(prop)}
                                 >
-                                  {`${prop.city || prop.zone || ''}, ${prop.state}`}
+                                  {formatFarmLocation(prop)}
                                 </Text>
                               </Box>
                             </Flex>

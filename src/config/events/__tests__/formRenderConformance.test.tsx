@@ -41,6 +41,17 @@ vi.mock('store/api/historyApi', () => ({
   useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false })
 }));
 
+// BlockIdField fetches the parcel to build its block picker. Stubbed for the same reason as
+// historyApi above: this guard inspects the real component's real markup, and wiring a full
+// RTK Query store here would test the harness rather than the form. `known_block_ids` is
+// returned so the datalist path renders too, not just the bare input.
+vi.mock('store/api/productApi', () => ({
+  useGetParcelQuery: () => ({
+    data: { known_block_ids: ['Block 1', 'Block 2'] },
+    isLoading: false
+  })
+}));
+
 import { productionEventRegistry } from '../productionEvent';
 import { soilEventRegistry } from '../soilEvent';
 import enUS from '../../../i18n/lang/en-US.json';

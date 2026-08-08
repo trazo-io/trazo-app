@@ -370,8 +370,12 @@ const AppSignIn: React.FC = () => {
                   defaultMessage: 'Records export as documentation your certifier reviews'
                 },
                 {
-                  id: 'auth.signin.benefit.reviews',
-                  defaultMessage: 'Consumer reviews build your reputation'
+                  // Was "Consumer reviews build your reputation" — reviews were removed with the
+                  // shopper-account product on 2026-08-06 (§10.5), so that promised a feature
+                  // that no longer exists. Replaced with the renewal-season value the October
+                  // positioning actually leads on.
+                  id: 'auth.signin.benefit.renewalReady',
+                  defaultMessage: 'Walk into renewal season with your records already assembled'
                 },
                 {
                   id: 'auth.signin.benefit.ownYourData',

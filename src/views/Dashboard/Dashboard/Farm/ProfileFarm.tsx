@@ -1,16 +1,54 @@
+/**
+ * Farm profile — the producer's operation-level page.
+ *
+ * WHAT THIS PAGE IS FOR. The farm DASHBOARD answers "what is due and what is outstanding"
+ * (deadlines → readiness → records, `views/Dashboard/Dashboard/index.tsx`). This page keeps
+ * the ACTIONS: share a link with your certifier, generate the dossier, file the PUR — plus
+ * the operation-level facts those artifacts are built from.
+ *
+ * The standalone "Inspection readiness" panel was removed 2026-08-04: it rendered the
+ * operation blockers a second time (CertifierLinkCard already shows them inline, in
+ * variant="preshare", to explain why sharing is blocked) and its badge counted only
+ * `blockers` while the dashboard counted season findings, so the same farm read "1 to fix"
+ * here and "3" there with nothing explaining that the two measured different scopes.
+ * Readiness now lives in ONE place, `CertifierReadinessCard` on the dashboard.
+ *
+ * STRUCTURE (rebuilt 2026-08-07). This was 17 stacked elevated cards in no particular order,
+ * with the two highest-value certifier artifacts at positions 2 and 12, separated by nine
+ * descriptive cards (October plan §10.4). It is now three sections:
+ *
+ *   header (no card)   identity, one meta line, Edit
+ *   §1 certifier       share link · audit dossier · CA PUR      ← what you came here to do
+ *   §2 compliance      certifications · operation attestations
+ *   §3 farm details    one card, grouped definition lists       ← the facts behind them
+ *
+ * HIERARCHY COMES FROM THE SECTION HEADINGS AND SPACING, NOT FROM CARD CHROME. Every card
+ * on this page renders identically — same faint shadow, 15px radius, 1px hairline — because
+ * the protected `trazo-dashboard-styles.css` forces all three with `!important` on every
+ * `.trazo-card`, which makes `StandardCard`'s `variant` prop inert (see its docstring). The
+ * `variant` values below are kept as intent, not as something that paints.
+ *
+ * Measured rhythm at 1440px: every card left 329 / right 1386 / width 1057; 16px card→card,
+ * 16px section-heading→first card, 32px section→section. Card-to-card spacing comes from the
+ * parent stack's `gap` alone — a global rule zeroes margins on stack children, so
+ * StandardCard's own `mb` is inert here.
+ */
 import React, { useState } from 'react';
 import {
   Box,
   VStack,
   HStack,
+  Flex,
+  Heading,
   Text,
-  Avatar,
   SimpleGrid,
   Icon,
   Badge,
   Link,
   Input,
   FormLabel,
+  Divider,
+  useDisclosure,
   useToast,
   useColorModeValue,
   Center,
@@ -18,7 +56,6 @@ import {
   Textarea
 } from '@chakra-ui/react';
 import {
-  FaBuilding,
   FaMapMarkerAlt,
   FaPhone,
   FaEnvelope,
@@ -26,19 +63,18 @@ import {
   FaFacebook,
   FaInstagram,
   FaUsers,
+  FaEye,
   FaLeaf,
   FaEdit,
+  FaPlus,
   FaTractor,
   FaCalendar,
-  FaCertificate,
   FaSeedling,
   FaTint,
-  FaShare,
   FaFileAlt,
   FaShieldAlt,
   FaTrash
 } from 'react-icons/fa';
-// MdEco removed - climate_zone display removed for transparency-first approach
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useUserRole } from 'hooks/useUserRole';
@@ -47,8 +83,10 @@ import {
   StandardCard,
   StandardButton,
   StandardPage,
-  StandardPageLoading
+  StandardPageLoading,
+  StandardSection
 } from 'components/Design/StandardComponents';
+import { InfoRow, FieldGroup, PageHeaderMeta } from 'components/Design/ProfileField';
 import { useGetFarmQuery, useEditFarmMutation } from 'store/api/companyApi';
 import { StandardImageGallery } from 'components/ImageGallery';
 import CertificationManager from 'components/Certifications/CertificationManager';
@@ -63,84 +101,12 @@ interface RootState {
     currentCompany: {
       id: string;
       name: string;
+      website?: string;
+      facebook?: string;
+      instagram?: string;
     };
   };
 }
-
-interface InfoRowProps {
-  icon: React.ElementType;
-  label: string;
-  value?: string | number | null;
-  type?: 'text' | 'link' | 'email' | 'phone';
-}
-
-// InfoRow component - matching CompanyInfoTab pattern exactly
-const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) => {
-  if (!value) return null;
-
-  const renderValue = () => {
-    switch (type) {
-      case 'link':
-        return (
-          <Link
-            href={value as string}
-            isExternal
-            color="green.600"
-            fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
-            {value}
-          </Link>
-        );
-      case 'email':
-        return (
-          <Link
-            href={`mailto:${value}`}
-            color="green.600"
-            fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
-            {value}
-          </Link>
-        );
-      case 'phone':
-        return (
-          <Link
-            href={`tel:${value}`}
-            color="green.600"
-            fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
-            {value}
-          </Link>
-        );
-      default:
-        return (
-          <Text fontWeight="medium" color="gray.800" fontSize={{ base: 'sm', md: 'md' }}>
-            {value}
-          </Text>
-        );
-    }
-  };
-
-  return (
-    <HStack spacing={2} align="flex-start">
-      <Icon as={icon} color="green.500" boxSize={{ base: 3.5, md: 4 }} mt={1} flexShrink={0} />
-      <Box>
-        <Text
-          fontSize="xs"
-          color="gray.500"
-          textTransform="uppercase"
-          fontWeight="semibold"
-          letterSpacing="0.05em"
-        >
-          {label}
-        </Text>
-        {renderValue()}
-      </Box>
-    </HStack>
-  );
-};
 
 // Utility function to format snake_case values to Title Case
 const formatDisplayValue = (value: string | undefined | null): string => {
@@ -168,6 +134,9 @@ function ProfileFarm() {
   const [splitPlanText, setSplitPlanText] = useState('');
   const [splitPlanEditMode, setSplitPlanEditMode] = useState(false);
   const [purModalOpen, setPurModalOpen] = useState(false);
+  // Owned here so the "Add certification" button can sit in the card header instead of
+  // CertificationManager painting a second header inside an already-titled card.
+  const addCertDisclosure = useDisclosure();
   const infoBg = useColorModeValue('blue.50', 'blue.900');
   const infoColor = useColorModeValue('blue.700', 'blue.200');
 
@@ -186,21 +155,6 @@ function ProfileFarm() {
     }
   );
 
-  // Helper functions
-  const getCertifications = () => {
-    if (!establishmentData?.certifications) return [];
-    if (typeof establishmentData.certifications === 'string') {
-      return establishmentData.certifications
-        .split(',')
-        .map((cert: string) => cert.trim())
-        .filter(Boolean);
-    }
-    if (Array.isArray(establishmentData.certifications)) {
-      return establishmentData.certifications;
-    }
-    return [];
-  };
-
   const getCropsGrown = () => {
     if (!establishmentData?.crops_grown) return [];
     if (Array.isArray(establishmentData.crops_grown)) {
@@ -209,46 +163,13 @@ function ProfileFarm() {
     return [];
   };
 
-  const getSustainabilityPractices = () => {
-    if (!establishmentData?.sustainability_practices) return [];
-    if (Array.isArray(establishmentData.sustainability_practices)) {
-      return establishmentData.sustainability_practices;
-    }
-    return [];
-  };
-
-  const getWaterSources = () => {
-    if (!establishmentData?.water_sources) return [];
-    if (Array.isArray(establishmentData.water_sources)) {
-      return establishmentData.water_sources;
-    }
-    try {
-      return JSON.parse(establishmentData.water_sources);
-    } catch {
-      return [];
-    }
-  };
-
-  // Updated: getSoilHealthPractices replaces getSoilTypes for transparency-first approach
-  // Includes backward compatibility with old soil_types field
-  const getSoilHealthPractices = () => {
-    // Try new field first
-    if (establishmentData?.soil_health_practices) {
-      if (Array.isArray(establishmentData.soil_health_practices)) {
-        return establishmentData.soil_health_practices;
-      }
+  const parseJsonList = (value: unknown): string[] => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value as string[];
+    if (typeof value === 'string') {
       try {
-        const parsed = JSON.parse(establishmentData.soil_health_practices);
-        if (parsed.length > 0) return parsed;
-      } catch {}
-    }
-    // Fall back to old soil_types field for backward compatibility
-    if (establishmentData?.soil_types) {
-      if (Array.isArray(establishmentData.soil_types)) {
-        return establishmentData.soil_types;
-      }
-      try {
-        return JSON.parse(establishmentData.soil_types);
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
       } catch {
         return [];
       }
@@ -256,73 +177,20 @@ function ProfileFarm() {
     return [];
   };
 
-  const getIrrigationMethods = () => {
-    if (!establishmentData?.irrigation_methods) return [];
-    if (Array.isArray(establishmentData.irrigation_methods)) {
-      return establishmentData.irrigation_methods;
-    }
-    try {
-      return JSON.parse(establishmentData.irrigation_methods);
-    } catch {
-      return [];
-    }
-  };
+  const getWaterSources = () => parseJsonList(establishmentData?.water_sources);
+  const getIrrigationMethods = () => parseJsonList(establishmentData?.irrigation_methods);
+  /**
+   * `soil_types` is a legacy COLUMN NAME. The farm form asks for PRACTICES ("Cover cropping,
+   * Compost application, No-till") and writes them into this column, and every surface labels
+   * it "Soil health practices". The old `soil_health_practices` fallback read a field that
+   * exists in no serializer and no schema, so it never fired — dropped 2026-08-07 along with
+   * the seed data that put soil texture classes here and made the label read
+   * "Soil health practices: Sandy Loam, Clay Loam".
+   */
+  const getSoilHealthPractices = () => parseJsonList(establishmentData?.soil_types);
 
-  const formatAddress = () => {
-    const parts = [
-      establishmentData?.address,
-      establishmentData?.city,
-      establishmentData?.state,
-      establishmentData?.country
-    ].filter(Boolean);
-    return parts.join(', ');
-  };
-
-  const formatCoordinates = () => {
-    if (
-      typeof establishmentData?.latitude === 'number' &&
-      typeof establishmentData?.longitude === 'number' &&
-      !isNaN(establishmentData.latitude) &&
-      !isNaN(establishmentData.longitude)
-    ) {
-      return `${establishmentData.latitude.toFixed(6)}, ${establishmentData.longitude.toFixed(6)}`;
-    }
-    return null;
-  };
-
-  // Handle sharing
-  const handleShare = async () => {
-    try {
-      const baseUrl = window.location.hostname.includes('localhost')
-        ? 'http://localhost:3000'
-        : `https://consumer.${import.meta.env.VITE_APP_BASE_DOMAIN}`;
-
-      const publicProfileUrl = `${baseUrl}/farm/${farmId}`;
-
-      if (navigator.share) {
-        await navigator.share({
-          title: `${establishmentData?.name} - ${intl.formatMessage({
-            id: 'establishment.shareTitle'
-          })}`,
-          text: `${intl.formatMessage({ id: 'establishment.shareText' })} ${
-            establishmentData?.description || ''
-          }`,
-          url: publicProfileUrl
-        });
-      } else {
-        await navigator.clipboard.writeText(publicProfileUrl);
-        toast({
-          title: intl.formatMessage({ id: 'establishment.linkCopied' }),
-          description: intl.formatMessage({ id: 'establishment.linkCopiedDescription' }),
-          status: 'success',
-          duration: 3000,
-          isClosable: true
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
+  /** The coarse "City, State" a shopper sees — distinct from the full street address. */
+  const cityState = [establishmentData?.city, establishmentData?.state].filter(Boolean).join(', ');
 
   const handleSaveOfpp = async () => {
     try {
@@ -339,7 +207,10 @@ function ProfileFarm() {
         establishmentData: formData
       }).unwrap();
       toast({
-        title: 'SOE Compliance updated',
+        title: intl.formatMessage({
+          id: 'farm.soe.saved',
+          defaultMessage: 'Organic fraud prevention plan updated'
+        }),
         status: 'success',
         duration: 3000,
         isClosable: true
@@ -348,7 +219,10 @@ function ProfileFarm() {
       setOfppFile(null);
     } catch {
       toast({
-        title: 'Failed to save compliance data',
+        title: intl.formatMessage({
+          id: 'farm.soe.saveFailed',
+          defaultMessage: 'Failed to save compliance data'
+        }),
         status: 'error',
         duration: 3000,
         isClosable: true
@@ -434,960 +308,969 @@ function ProfileFarm() {
     );
   }
 
+  const isCalifornia = normalizeState(establishmentData?.state) === 'CA';
+  const crops = getCropsGrown();
+  const parcelCount = Array.isArray(establishmentData.parcels)
+    ? establishmentData.parcels.length
+    : 0;
+
+  /** Tooltip on every consumer-visibility marker. One string, many rows. */
+  const publicLabel = intl.formatMessage({
+    id: 'farm.details.publicMarker',
+    defaultMessage: 'Shoppers see this when they scan a QR code from this farm'
+  });
+
   return (
     <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
-      <VStack spacing={{ base: 4, md: 8 }} w="100%">
-        {/* Identity Section */}
-        <StandardCard
-          title={intl.formatMessage({ id: 'app.establishmentInformation' })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-          headerAction={
-            <HStack spacing={1}>
-              <StandardButton
-                variant="ghost"
-                size="sm"
-                leftIcon={<Icon as={FaShare} />}
-                onClick={handleShare}
-              >
-                {intl.formatMessage({ id: 'app.share' })}
-              </StandardButton>
-              {canWrite && (
-                <StandardButton
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<Icon as={FaEdit} />}
-                  onClick={() => navigate(`/admin/dashboard/farm/${farmId}/change`)}
-                >
-                  {intl.formatMessage({ id: 'app.edit' })}
-                </StandardButton>
-              )}
-            </HStack>
-          }
-        >
-          {/* Mobile: vertical centered layout, Desktop: horizontal */}
-          <VStack spacing={3} align="center" display={{ base: 'flex', md: 'none' }}>
-            <Avatar
-              size="xl"
-              src={establishmentData.images?.[0]?.url || establishmentData.images?.[0]}
-              name={establishmentData.name}
-              bg="green.500"
-              color="white"
-              icon={<Icon as={FaBuilding} boxSize={8} />}
-            />
-            <VStack align="center" spacing={1}>
-              <Text fontSize="lg" fontWeight="bold" color="gray.800" textAlign="center">
+      <VStack gap={{ base: 5, md: 8 }} w="100%" maxW="6xl" mx="auto" align="stretch">
+        {/* ── PAGE HEADER — deliberately not a card ─────────────────────────────────
+            The old identity card wrapped an initials Avatar (which rendered "C(" for
+            "Coastal Valleys Farm (DEMO)"), duplicated its entire layout for mobile and
+            desktop, and carried a purple `farming_method` badge — a self-declared
+            "Sustainable" styled as a trust chip, next to "Active". The backend refuses to
+            publish that field for exactly that reason; it is a plain row in §3 now. */}
+        <Box w="100%">
+          {/* Always a row. Stacking on mobile made Edit a 351px full-width button sitting
+              BETWEEN the badges and the description — a secondary action with primary-CTA
+              weight, interrupting the identity block. Compact and top-right at every width,
+              with the title wrapping beside it. */}
+          <Flex direction="row" justify="space-between" align="flex-start" gap={3}>
+            <VStack align="flex-start" gap={1} minW={0}>
+              <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color="gray.800">
                 {establishmentData.name}
-              </Text>
-              {establishmentData.company?.name && (
+              </Heading>
+              {currentCompany?.name && (
                 <Text fontSize="sm" color="gray.500">
-                  {establishmentData.company.name}
+                  {currentCompany.name}
                 </Text>
               )}
-              {establishmentData.description && (
-                <Text color="gray.600" fontSize="xs" lineHeight="1.6" textAlign="center">
-                  {establishmentData.description}
+              {cityState && (
+                <Text fontSize="sm" color="gray.600">
+                  {cityState}
                 </Text>
               )}
-              <HStack spacing={2} flexWrap="wrap" justify="center">
+              {/* Replaces the "Quick Stats" card — three tiles in green, purple and orange
+                  whose acres and founding year were verbatim duplicates of the Operations
+                  card two cards below. */}
+              <PageHeaderMeta
+                items={[
+                  establishmentData.total_acreage
+                    ? intl.formatMessage(
+                        {
+                          id: 'farm.meta.acres',
+                          defaultMessage: '{count, plural, one {# acre} other {# acres}}'
+                        },
+                        { count: establishmentData.total_acreage }
+                      )
+                    : null,
+                  establishmentData.year_established
+                    ? intl.formatMessage(
+                        { id: 'farm.meta.established', defaultMessage: 'est. {year}' },
+                        { year: establishmentData.year_established }
+                      )
+                    : null,
+                  parcelCount
+                    ? intl.formatMessage(
+                        {
+                          id: 'farm.meta.parcels',
+                          defaultMessage: '{count, plural, one {# parcel} other {# parcels}}'
+                        },
+                        { count: parcelCount }
+                      )
+                    : null,
+                  crops.length
+                    ? intl.formatMessage(
+                        {
+                          id: 'farm.meta.crops',
+                          defaultMessage: '{count, plural, one {# crop} other {# crops}}'
+                        },
+                        { count: crops.length }
+                      )
+                    : null
+                ]}
+              />
+              <HStack gap={2} flexWrap="wrap" pt={1}>
                 {establishmentData.is_active !== false && (
-                  <Badge
-                    colorScheme="green"
-                    variant="subtle"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    fontSize="xs"
-                  >
+                  <Badge colorScheme="green" variant="subtle" borderRadius="full" fontSize="xs">
                     {intl.formatMessage({ id: 'app.active' })}
                   </Badge>
                 )}
+                {/* `neutral`, not `colorScheme="gray"` — the Badge theme's variants all
+                    hardcode green and ignore colorScheme, so a classification badge rendered
+                    with the same weight as the "Active" status beside it. */}
                 {(establishmentData.establishment_type || establishmentData.type) && (
-                  <Badge
-                    colorScheme="blue"
-                    variant="subtle"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    fontSize="xs"
-                  >
+                  <Badge variant="neutral" borderRadius="full" fontSize="xs">
                     {formatDisplayValue(
                       establishmentData.establishment_type || establishmentData.type
                     )}
                   </Badge>
                 )}
-                {establishmentData.farming_method && (
-                  <Badge
-                    colorScheme="purple"
-                    variant="subtle"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    fontSize="xs"
-                  >
-                    {formatDisplayValue(establishmentData.farming_method)}
-                  </Badge>
-                )}
               </HStack>
             </VStack>
-          </VStack>
-          {/* Desktop: horizontal layout */}
-          <HStack spacing={6} align="flex-start" display={{ base: 'none', md: 'flex' }}>
-            <Avatar
-              size="2xl"
-              src={establishmentData.images?.[0]?.url || establishmentData.images?.[0]}
-              name={establishmentData.name}
-              bg="green.500"
-              color="white"
-              icon={<Icon as={FaBuilding} boxSize={10} />}
-            />
-            <VStack align="start" spacing={3} flex={1}>
-              <Box>
-                <Text fontSize="2xl" fontWeight="bold" color="gray.800">
-                  {establishmentData.name}
-                </Text>
-                {establishmentData.company?.name && (
-                  <Text fontSize="md" color="gray.500">
-                    {establishmentData.company.name}
-                  </Text>
-                )}
-              </Box>
-              {establishmentData.description && (
-                <Text color="gray.600" fontSize="sm" lineHeight="1.6">
-                  {establishmentData.description}
-                </Text>
-              )}
-              <HStack spacing={2} flexWrap="wrap">
-                {establishmentData.is_active !== false && (
-                  <Badge
-                    colorScheme="green"
-                    variant="subtle"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    fontSize="sm"
-                  >
-                    {intl.formatMessage({ id: 'app.active' })}
-                  </Badge>
-                )}
-                {(establishmentData.establishment_type || establishmentData.type) && (
-                  <Badge
-                    colorScheme="blue"
-                    variant="subtle"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    fontSize="sm"
-                  >
-                    {formatDisplayValue(
-                      establishmentData.establishment_type || establishmentData.type
-                    )}
-                  </Badge>
-                )}
-                {establishmentData.farming_method && (
-                  <Badge
-                    colorScheme="purple"
-                    variant="subtle"
-                    px={2}
-                    py={0.5}
-                    borderRadius="full"
-                    fontSize="sm"
-                  >
-                    {formatDisplayValue(establishmentData.farming_method)}
-                  </Badge>
-                )}
-              </HStack>
-            </VStack>
-          </HStack>
-        </StandardCard>
-
-        {/* The standalone "Inspection readiness" panel was removed here 2026-08-04.
-            It rendered the operation blockers a second time: `CertifierLinkCard` below
-            already shows them inline (variant="preshare") to explain why sharing is blocked,
-            so this page listed the same finding twice, one card apart. Worse, its badge
-            counted only `blockers` while the farm dashboard's "Ready for your certifier"
-            counted season findings — the same farm read "1 to fix" here and "3" there, with
-            nothing on either page explaining that they measured different scopes.
-
-            Operation readiness now folds into `CertifierReadinessCard` on the farm dashboard,
-            which reports ONE count across both scopes. This page keeps the ACTIONS — share a
-            link, generate the dossier, file the PUR — which is what a farmer comes here to do. */}
-
-        {/* Certifier review links — national, not state-gated: every certified
-            operation has a certifier, whatever state it is in. */}
-        {currentCompany?.id && farmId && (
-          <CertifierLinkCard
-            companyId={String(currentCompany.id)}
-            farmId={String(farmId)}
-            canWrite={canWrite}
-          />
-        )}
-
-        {/* Compliance & Reports — establishment-level regulatory exports.
-            CA-only: the PUR is a California filing (3 CCR 6626) and the export embeds
-            CA county codes, so offering it to an out-of-state farm produced a CSV
-            titled "California Pesticide Use Report" naming a non-CA county. The
-            backend 404s for non-CA farms; this keeps the button off the page too. */}
-        {canWrite && normalizeState(establishmentData?.state) === 'CA' && (
-          <StandardCard
-            title={intl.formatMessage({ id: 'app.pur.complianceReports' })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-            <HStack
-              justify="space-between"
-              align={{ base: 'flex-start', smd: 'center' }}
-              flexDirection={{ base: 'column', smd: 'row' }}
-              spacing={3}
-            >
-              <VStack align="flex-start" spacing={0.5}>
-                <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-                  {intl.formatMessage({ id: 'app.pur.title' })}
-                </Text>
-                <Text fontSize="xs" color="gray.500">
-                  {intl.formatMessage({ id: 'app.pur.cardSubtitle' })}
-                </Text>
-              </VStack>
+            {canWrite && (
               <StandardButton
                 variant="outline"
                 size="sm"
-                leftIcon={<Icon as={FaFileAlt} />}
-                onClick={() => setPurModalOpen(true)}
-                w={{ base: 'full', smd: 'auto' }}
+                leftIcon={<Icon as={FaEdit} />}
+                onClick={() => navigate(`/admin/dashboard/farm/${farmId}/change`)}
+                flexShrink={0}
+                w="auto"
               >
-                {intl.formatMessage({ id: 'app.pur.generate' })}
+                {intl.formatMessage({ id: 'app.edit' })}
               </StandardButton>
-            </HStack>
-          </StandardCard>
-        )}
+            )}
+          </Flex>
+          {establishmentData.description && (
+            <Text mt={3} color="gray.600" fontSize="sm" lineHeight="1.7">
+              {establishmentData.description}
+            </Text>
+          )}
+        </Box>
 
-        {/* Photo Gallery */}
+        {/* Photo strip — no card chrome, no title. The images are their own label. */}
         {establishmentData.images && establishmentData.images.length > 0 && (
-          <StandardCard
-            title={intl.formatMessage({ id: 'establishment.photoGallery' })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
+          <Box w="100%">
             <StandardImageGallery
               images={establishmentData.images}
               title={intl.formatMessage({ id: 'establishment.establishmentPhotos' })}
               variant="default"
               enablePreview={true}
-              showImageCount={true}
-              height={{ base: '200px', md: '280px' }}
+              showImageCount={false}
+              height={{ base: '160px', md: '200px' }}
               maxDisplayImages={4}
             />
-          </StandardCard>
+          </Box>
         )}
 
-        {/* Quick Stats - Updated: Removed employee_count (not consumer-relevant) */}
-        <StandardCard
-          title={intl.formatMessage({ id: 'establishment.quickStats' })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
+        {/* ── §1 FOR YOUR CERTIFIER ────────────────────────────────────────────────
+            Promoted here from positions 2 and 12 (October plan §10.4). These are the
+            artifacts a farmer opens this page to produce; everything below is reference. */}
+        <StandardSection
+          title={intl.formatMessage({
+            id: 'farm.section.forYourCertifier',
+            defaultMessage: 'For your certifier'
+          })}
+          description={intl.formatMessage({
+            id: 'farm.section.forYourCertifierHelp',
+            defaultMessage:
+              'Share your records or generate the packet your certifier asks for at renewal.'
+          })}
         >
-          <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 6 }}>
-            <VStack
-              spacing={0.5}
-              align="center"
-              p={{ base: 3, md: 4 }}
-              bg="green.50"
-              borderRadius="lg"
-            >
-              <Icon as={FaTractor} color="green.500" boxSize={{ base: 5, md: 6 }} />
-              <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color="gray.800">
-                {establishmentData.total_acreage || 0}
-              </Text>
-              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                {intl.formatMessage({ id: 'app.acres' })}
-              </Text>
-            </VStack>
-            <VStack
-              spacing={0.5}
-              align="center"
-              p={{ base: 3, md: 4 }}
-              bg="purple.50"
-              borderRadius="lg"
-            >
-              <Icon as={FaCalendar} color="purple.500" boxSize={{ base: 5, md: 6 }} />
-              <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color="gray.800">
-                {establishmentData.year_established || '--'}
-              </Text>
-              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                {intl.formatMessage({ id: 'establishment.founded' })}
-              </Text>
-            </VStack>
-            <VStack
-              spacing={0.5}
-              align="center"
-              p={{ base: 3, md: 4 }}
-              bg="orange.50"
-              borderRadius="lg"
-            >
-              <Icon as={FaSeedling} color="orange.500" boxSize={{ base: 5, md: 6 }} />
-              <Text fontSize={{ base: 'lg', md: '2xl' }} fontWeight="bold" color="gray.800">
-                {getCropsGrown().length}
-              </Text>
-              <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                {intl.formatMessage({ id: 'establishment.crops' })}
-              </Text>
-            </VStack>
-          </SimpleGrid>
-        </StandardCard>
+          <VStack align="stretch" gap={4} w="100%">
+            {currentCompany?.id && farmId && (
+              <CertifierLinkCard
+                companyId={String(currentCompany.id)}
+                farmId={String(farmId)}
+                canWrite={canWrite}
+              />
+            )}
 
-        {/* Contact Information */}
-        <StandardCard
-          title={intl.formatMessage({ id: 'app.contactInformation' })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-        >
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-            <InfoRow
-              icon={FaEnvelope}
-              label={intl.formatMessage({ id: 'establishment.emailAddress' })}
-              value={establishmentData.email || establishmentData.contact_email}
-              type="email"
-            />
-            <InfoRow
-              icon={FaPhone}
-              label={intl.formatMessage({ id: 'app.phone' })}
-              value={establishmentData.phone || establishmentData.contact_phone}
-              type="phone"
-            />
-            <InfoRow
-              icon={FaUsers}
-              label={intl.formatMessage({ id: 'establishment.contactPerson' })}
-              value={establishmentData.contact_person}
-            />
-            <InfoRow
-              icon={FaGlobe}
-              label={intl.formatMessage({ id: 'app.website' })}
-              value={establishmentData.company?.website}
-              type="link"
-            />
-          </SimpleGrid>
-        </StandardCard>
+            <OperationAuditExportButton companyId={currentCompany?.id} farmId={farmId} />
 
-        {/* Location Details */}
-        <StandardCard
-          title={intl.formatMessage({ id: 'app.location' })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-        >
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-            <InfoRow
-              icon={FaMapMarkerAlt}
-              label={intl.formatMessage({ id: 'app.address' })}
-              value={formatAddress()}
-            />
-            <InfoRow
-              icon={FaMapMarkerAlt}
-              label={intl.formatMessage({ id: 'establishment.zipCode' })}
-              value={establishmentData.zip_code}
-            />
-            <InfoRow
-              icon={FaMapMarkerAlt}
-              label={intl.formatMessage({ id: 'app.zone' })}
-              value={establishmentData.zone}
-            />
-            <InfoRow
-              icon={FaMapMarkerAlt}
-              label={intl.formatMessage({ id: 'app.coordinates' })}
-              value={formatCoordinates()}
-            />
-          </SimpleGrid>
-        </StandardCard>
-
-        {/* Operations - Updated: Removed employee_count (not consumer-relevant) */}
-        <StandardCard
-          title={intl.formatMessage({ id: 'establishment.operations' })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-        >
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 4, md: 6 }}>
-            <InfoRow
-              icon={FaTractor}
-              label={intl.formatMessage({ id: 'establishment.farmingMethod' })}
-              value={establishmentData.farming_method}
-            />
-            <InfoRow
-              icon={FaTractor}
-              label={intl.formatMessage({ id: 'establishment.totalArea' })}
-              value={
-                establishmentData.total_acreage ? `${establishmentData.total_acreage} acres` : null
-              }
-            />
-            <InfoRow
-              icon={FaCalendar}
-              label={intl.formatMessage({ id: 'establishment.yearEstablished' })}
-              value={establishmentData.year_established}
-            />
-          </SimpleGrid>
-        </StandardCard>
-
-        {/* Agricultural Information - Updated: Removed climate_zone, updated soil types to soil health practices */}
-        {(getWaterSources().length > 0 ||
-          getSoilHealthPractices().length > 0 ||
-          getIrrigationMethods().length > 0) && (
-          <StandardCard
-            title={intl.formatMessage({ id: 'app.agriculturalInformation' })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-            <VStack spacing={6} align="stretch">
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                {getWaterSources().length > 0 && (
-                  <InfoRow
-                    icon={FaTint}
-                    label={intl.formatMessage({ id: 'establishment.waterSources' })}
-                    value={getWaterSources().join(', ')}
-                  />
-                )}
-                {getSoilHealthPractices().length > 0 && (
-                  <InfoRow
-                    icon={FaLeaf}
-                    label={intl.formatMessage({ id: 'establishment.soilHealthPractices' })}
-                    value={getSoilHealthPractices().join(', ')}
-                  />
-                )}
-                {getIrrigationMethods().length > 0 && (
-                  <InfoRow
-                    icon={FaTint}
-                    label={intl.formatMessage({ id: 'establishment.irrigationMethods' })}
-                    value={getIrrigationMethods().join(', ')}
-                  />
-                )}
-              </SimpleGrid>
-            </VStack>
-          </StandardCard>
-        )}
-
-        {/* Crops Grown */}
-        {getCropsGrown().length > 0 && (
-          <StandardCard
-            title={intl.formatMessage({ id: 'establishment.crops' })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-            <HStack spacing={2} flexWrap="wrap">
-              {getCropsGrown().map((crop: string, index: number) => (
-                <Badge
-                  key={index}
-                  colorScheme="green"
-                  variant="subtle"
-                  px={{ base: 2, md: 3 }}
-                  py={0.5}
-                  borderRadius="full"
-                  fontSize={{ base: 'xs', md: 'sm' }}
+            {/* CA-only: the PUR is a California filing (3 CCR 6626) and the export embeds CA
+                county codes, so offering it to an out-of-state farm produced a CSV titled
+                "California Pesticide Use Report" naming a non-CA county. The backend 404s
+                for non-CA farms; this keeps the button off the page too. */}
+            {canWrite && isCalifornia && (
+              <StandardCard
+                title={intl.formatMessage({ id: 'app.pur.complianceReports' })}
+                variant="elevated"
+                padding={{ base: 3, md: 4 }}
+                mb={0}
+              >
+                <HStack
+                  justify="space-between"
+                  align={{ base: 'flex-start', smd: 'center' }}
+                  flexDirection={{ base: 'column', smd: 'row' }}
+                  gap={3}
                 >
-                  {crop}
-                </Badge>
-              ))}
-            </HStack>
-          </StandardCard>
-        )}
-
-        {/* Verified Certifications — Structured data with USDA verification */}
-        <Box data-tour="farm-certifications" w="full">
-          <StandardCard
-            title={intl.formatMessage({ id: 'certification.manage.title' })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-            <CertificationManager companyId={currentCompany?.id} farmId={farmId} />
-          </StandardCard>
-        </Box>
-
-        {/* Operation-wide audit dossier — one combined NOP PDF across all parcels × productions */}
-        <Box w="full">
-          <OperationAuditExportButton companyId={currentCompany?.id} farmId={farmId} />
-        </Box>
-
-        {/* Sustainability Practices */}
-        {getSustainabilityPractices().length > 0 && (
-          <StandardCard
-            title={intl.formatMessage({ id: 'establishment.sustainabilityPractices' })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-            <HStack spacing={2} flexWrap="wrap">
-              {getSustainabilityPractices().map((practice: string, index: number) => (
-                <Badge
-                  key={index}
-                  colorScheme="green"
-                  variant="subtle"
-                  px={{ base: 2, md: 3 }}
-                  py={0.5}
-                  borderRadius="full"
-                  fontSize={{ base: 'xs', md: 'sm' }}
-                >
-                  <HStack spacing={1}>
-                    <Icon as={FaLeaf} boxSize={3} />
-                    <Text>{practice}</Text>
-                  </HStack>
-                </Badge>
-              ))}
-            </HStack>
-          </StandardCard>
-        )}
-
-        {/* Social Media */}
-        {(establishmentData.company?.facebook || establishmentData.company?.instagram) && (
-          <StandardCard
-            title={intl.formatMessage({ id: 'establishment.socialMedia' })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-              {establishmentData.company?.facebook && (
-                <InfoRow
-                  icon={FaFacebook}
-                  label="Facebook"
-                  value={establishmentData.company.facebook}
-                  type="link"
-                />
-              )}
-              {establishmentData.company?.instagram && (
-                <InfoRow
-                  icon={FaInstagram}
-                  label="Instagram"
-                  value={establishmentData.company.instagram}
-                  type="link"
-                />
-              )}
-            </SimpleGrid>
-          </StandardCard>
-        )}
-
-        {/* About Section */}
-        {(establishmentData.about ||
-          establishmentData.main_activities ||
-          establishmentData.location_highlights) && (
-          <StandardCard
-            title={intl.formatMessage({ id: 'establishment.aboutEstablishment' })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
-            <VStack spacing={{ base: 3, md: 4 }} align="stretch">
-              {establishmentData.about && (
-                <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                    fontWeight="semibold"
-                    mb={1}
+                  <VStack align="flex-start" gap={0.5}>
+                    <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                      {intl.formatMessage({ id: 'app.pur.title' })}
+                    </Text>
+                    <Text fontSize="xs" color="gray.500">
+                      {intl.formatMessage({ id: 'app.pur.cardSubtitle' })}
+                    </Text>
+                  </VStack>
+                  <StandardButton
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Icon as={FaFileAlt} />}
+                    onClick={() => setPurModalOpen(true)}
+                    w={{ base: 'full', smd: 'auto' }}
                   >
-                    {intl.formatMessage({ id: 'app.description' })}
-                  </Text>
-                  <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
-                    {establishmentData.about}
-                  </Text>
-                </Box>
-              )}
-              {establishmentData.main_activities && (
-                <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                    fontWeight="semibold"
-                    mb={1}
-                  >
-                    {intl.formatMessage({ id: 'establishment.mainActivities' })}
-                  </Text>
-                  <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
-                    {establishmentData.main_activities}
-                  </Text>
-                </Box>
-              )}
-              {establishmentData.location_highlights && (
-                <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                    fontWeight="semibold"
-                    mb={1}
-                  >
-                    {intl.formatMessage({ id: 'establishment.locationHighlights' })}
-                  </Text>
-                  <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
-                    {establishmentData.location_highlights}
-                  </Text>
-                </Box>
-              )}
-            </VStack>
-          </StandardCard>
-        )}
+                    {intl.formatMessage({ id: 'app.pur.generate' })}
+                  </StandardButton>
+                </HStack>
+              </StandardCard>
+            )}
+          </VStack>
+        </StandardSection>
 
-        {/* SOE Compliance */}
-        <Box data-tour="farm-soe-compliance" w="full">
-          <StandardCard
-            title={intl.formatMessage({ id: 'farm.soe.title' })}
-            variant="elevated"
-            padding={{ base: 3, md: 4 }}
-            headerAction={
-              canWrite && !ofppEditMode ? (
-                <StandardButton
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<Icon as={FaEdit} />}
-                  onClick={() => {
-                    setOfppResponsible(establishmentData.ofpp_responsible_person || '');
-                    setOfppDate(establishmentData.fraud_prevention_plan_date || '');
-                    setOfppEditMode(true);
-                  }}
-                >
-                  Edit
-                </StandardButton>
-              ) : undefined
-            }
-          >
-            <VStack spacing={4} align="stretch">
-              {/* Status badge row */}
-              <HStack spacing={3} align="center">
-                <Icon
-                  as={FaShieldAlt}
-                  color={
-                    establishmentData.fraud_prevention_plan_uploaded ? 'green.500' : 'yellow.500'
-                  }
-                  boxSize={5}
-                />
-                <Badge
-                  colorScheme={
-                    establishmentData.fraud_prevention_plan_uploaded ? 'green' : 'yellow'
-                  }
-                  variant="subtle"
-                  px={3}
-                  py={1}
-                  borderRadius="full"
-                  fontSize={{ base: 'xs', md: 'sm' }}
-                >
-                  {establishmentData.fraud_prevention_plan_uploaded
-                    ? intl.formatMessage({ id: 'farm.soe.planUploaded' })
-                    : intl.formatMessage({ id: 'farm.soe.planMissing' })}
-                </Badge>
-              </HStack>
-
-              {/* View mode */}
-              {!ofppEditMode && (
-                <VStack spacing={3} align="stretch">
-                  {!establishmentData.fraud_prevention_plan_uploaded && canWrite && (
-                    <Box
-                      p={3}
-                      bg="yellow.50"
-                      borderRadius="md"
-                      border="1px solid"
-                      borderColor="yellow.200"
+        {/* ── §2 ORGANIC COMPLIANCE ──────────────────────────────────────────────── */}
+        <StandardSection
+          title={intl.formatMessage({
+            id: 'farm.section.organicCompliance',
+            defaultMessage: 'Organic compliance'
+          })}
+        >
+          <VStack align="stretch" gap={4} w="100%">
+            <Box data-tour="farm-certifications" w="full">
+              <StandardCard
+                title={intl.formatMessage({ id: 'certification.manage.title' })}
+                variant="outline"
+                padding={{ base: 3, md: 4 }}
+                mb={0}
+                headerAction={
+                  canWrite ? (
+                    <StandardButton
+                      size="sm"
+                      leftIcon={<Icon as={FaPlus} />}
+                      onClick={addCertDisclosure.onOpen}
                     >
-                      <HStack spacing={3} align="center">
-                        <Text fontSize="sm" color="yellow.800" flex={1}>
-                          {intl.formatMessage({ id: 'farm.soe.uploadCta' })}
-                        </Text>
+                      {intl.formatMessage({ id: 'certification.manage.add' })}
+                    </StandardButton>
+                  ) : undefined
+                }
+              >
+                <CertificationManager
+                  companyId={String(currentCompany?.id ?? '')}
+                  farmId={String(farmId ?? '')}
+                  hideHeader
+                  addDisclosure={addCertDisclosure}
+                />
+              </StandardCard>
+            </Box>
+
+            {/* SOE + Split merged. Both are operation-level attestations a certifier reads
+                together — §205.201(a)(3) fraud prevention and §205.272 commingling — and as
+                two separate cards each ended with its own blue regulatory note, so the page
+                showed the same shape of disclaimer twice in a row. One card, two groups,
+                one note. */}
+            <Box data-tour="farm-soe-compliance" w="full">
+              <StandardCard
+                title={intl.formatMessage({
+                  id: 'farm.attestations.title',
+                  defaultMessage: 'Operation attestations'
+                })}
+                subtitle={intl.formatMessage({
+                  id: 'farm.attestations.subtitle',
+                  defaultMessage: 'Statements your certifier expects on file for the operation.'
+                })}
+                variant="outline"
+                padding={{ base: 3, md: 4 }}
+                mb={0}
+              >
+                <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
+                  {/* ---- Organic fraud prevention plan (7 CFR 205.201(a)(3)) ---- */}
+                  <FieldGroup
+                    label={intl.formatMessage({ id: 'farm.soe.title' })}
+                    cfr="7 CFR 205.201(a)(3)"
+                    action={
+                      canWrite && !ofppEditMode ? (
                         <StandardButton
+                          variant="ghost"
                           size="sm"
+                          leftIcon={<Icon as={FaEdit} />}
                           onClick={() => {
                             setOfppResponsible(establishmentData.ofpp_responsible_person || '');
                             setOfppDate(establishmentData.fraud_prevention_plan_date || '');
                             setOfppEditMode(true);
                           }}
                         >
-                          {intl.formatMessage({ id: 'farm.soe.uploadButton' })}
+                          {intl.formatMessage({ id: 'app.edit' })}
                         </StandardButton>
-                      </HStack>
-                    </Box>
-                  )}
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 4 }}>
-                    <InfoRow
-                      icon={FaUsers}
-                      label="Responsible Person"
-                      value={establishmentData.ofpp_responsible_person}
-                    />
-                    <InfoRow
-                      icon={FaCalendar}
-                      label="Plan Date"
-                      value={establishmentData.fraud_prevention_plan_date}
-                    />
-                    {establishmentData.fraud_prevention_plan_document && (
-                      <HStack spacing={2} align="flex-start">
+                      ) : undefined
+                    }
+                  >
+                    <VStack gap={4} align="stretch">
+                      <HStack gap={3} align="center">
                         <Icon
-                          as={FaFileAlt}
-                          color="green.500"
-                          boxSize={{ base: 3.5, md: 4 }}
-                          mt={1}
-                          flexShrink={0}
+                          as={FaShieldAlt}
+                          color={
+                            establishmentData.fraud_prevention_plan_uploaded
+                              ? 'green.500'
+                              : 'yellow.500'
+                          }
+                          boxSize={5}
                         />
+                        <Badge
+                          colorScheme={
+                            establishmentData.fraud_prevention_plan_uploaded ? 'green' : 'yellow'
+                          }
+                          variant="subtle"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          fontSize={{ base: 'xs', md: 'sm' }}
+                        >
+                          {establishmentData.fraud_prevention_plan_uploaded
+                            ? intl.formatMessage({ id: 'farm.soe.planUploaded' })
+                            : intl.formatMessage({ id: 'farm.soe.planMissing' })}
+                        </Badge>
+                      </HStack>
+
+                      {/* View mode */}
+                      {!ofppEditMode && (
+                        <VStack gap={3} align="stretch">
+                          {!establishmentData.fraud_prevention_plan_uploaded && canWrite && (
+                            <Box
+                              p={3}
+                              bg="yellow.50"
+                              borderRadius="md"
+                              border="1px solid"
+                              borderColor="yellow.200"
+                            >
+                              <HStack
+                                gap={3}
+                                align={{ base: 'stretch', smd: 'center' }}
+                                flexDirection={{ base: 'column', smd: 'row' }}
+                              >
+                                <Text fontSize="sm" color="yellow.800" flex={1}>
+                                  {intl.formatMessage({ id: 'farm.soe.uploadCta' })}
+                                </Text>
+                                <StandardButton
+                                  size="sm"
+                                  w={{ base: 'full', smd: 'auto' }}
+                                  onClick={() => {
+                                    setOfppResponsible(
+                                      establishmentData.ofpp_responsible_person || ''
+                                    );
+                                    setOfppDate(establishmentData.fraud_prevention_plan_date || '');
+                                    setOfppEditMode(true);
+                                  }}
+                                >
+                                  {intl.formatMessage({ id: 'farm.soe.uploadButton' })}
+                                </StandardButton>
+                              </HStack>
+                            </Box>
+                          )}
+                          <SimpleGrid columns={{ base: 1, md: 2 }} gap={{ base: 3, md: 4 }}>
+                            <InfoRow
+                              icon={FaUsers}
+                              label={intl.formatMessage({ id: 'farm.soe.responsiblePerson' })}
+                              value={establishmentData.ofpp_responsible_person}
+                            />
+                            <InfoRow
+                              icon={FaCalendar}
+                              label={intl.formatMessage({ id: 'farm.soe.planDate' })}
+                              value={establishmentData.fraud_prevention_plan_date}
+                            />
+                            {establishmentData.fraud_prevention_plan_document && (
+                              <InfoRow
+                                icon={FaFileAlt}
+                                label={intl.formatMessage({ id: 'farm.soe.documentLabel' })}
+                                value={decodeURIComponent(
+                                  establishmentData.fraud_prevention_plan_document
+                                    .split('/')
+                                    .pop() ||
+                                    intl.formatMessage({
+                                      id: 'farm.soe.viewDocument',
+                                      defaultMessage: 'View document'
+                                    })
+                                )}
+                              />
+                            )}
+                          </SimpleGrid>
+                          {establishmentData.fraud_prevention_plan_document && (
+                            <Link
+                              href={establishmentData.fraud_prevention_plan_document}
+                              isExternal
+                              color="green.600"
+                              fontWeight="medium"
+                              fontSize="sm"
+                            >
+                              {intl.formatMessage({
+                                id: 'farm.soe.viewDocument',
+                                defaultMessage: 'View document'
+                              })}
+                            </Link>
+                          )}
+                        </VStack>
+                      )}
+
+                      {/* Edit mode */}
+                      {ofppEditMode && (
+                        <VStack gap={3} align="stretch">
+                          <Box>
+                            <FormLabel
+                              fontSize="xs"
+                              color="gray.500"
+                              textTransform="uppercase"
+                              fontWeight="semibold"
+                              mb={1}
+                            >
+                              {intl.formatMessage({ id: 'farm.soe.responsiblePerson' })}
+                            </FormLabel>
+                            <Input
+                              size="sm"
+                              value={ofppResponsible}
+                              onChange={(e) => setOfppResponsible(e.target.value)}
+                              placeholder={intl.formatMessage({
+                                id: 'farm.soe.responsiblePersonPlaceholder'
+                              })}
+                            />
+                          </Box>
+                          <Box>
+                            <FormLabel
+                              fontSize="xs"
+                              color="gray.500"
+                              textTransform="uppercase"
+                              fontWeight="semibold"
+                              mb={1}
+                            >
+                              {intl.formatMessage({ id: 'farm.soe.planDate' })}
+                            </FormLabel>
+                            <Input
+                              size="sm"
+                              type="date"
+                              value={ofppDate}
+                              onChange={(e) => setOfppDate(e.target.value)}
+                            />
+                          </Box>
+                          <Box>
+                            <FormLabel
+                              fontSize="xs"
+                              color="gray.500"
+                              textTransform="uppercase"
+                              fontWeight="semibold"
+                              mb={1}
+                            >
+                              {intl.formatMessage({ id: 'farm.soe.documentLabel' })}
+                            </FormLabel>
+                            <Box
+                              border="2px dashed"
+                              borderColor={ofppFile ? 'green.400' : 'gray.300'}
+                              borderRadius="lg"
+                              bg={ofppFile ? 'green.50' : 'gray.50'}
+                              p={4}
+                              textAlign="center"
+                              cursor="pointer"
+                              _hover={{ borderColor: 'green.400', bg: 'green.50' }}
+                              transition="all 0.2s"
+                              onClick={() => document.getElementById('ofpp-file-input')?.click()}
+                            >
+                              <input
+                                id="ofpp-file-input"
+                                type="file"
+                                accept=".pdf,.doc,.docx"
+                                style={{ display: 'none' }}
+                                onChange={(e) => setOfppFile(e.target.files?.[0] || null)}
+                              />
+                              {ofppFile ? (
+                                <HStack justify="center" gap={2}>
+                                  <Icon as={FaFileAlt} color="green.500" boxSize={4} />
+                                  <Text fontSize="sm" color="green.700" fontWeight="medium">
+                                    {ofppFile.name}
+                                  </Text>
+                                  <StandardButton
+                                    size="xs"
+                                    variant="ghost"
+                                    colorScheme="red"
+                                    onClick={(e: React.MouseEvent) => {
+                                      e.stopPropagation();
+                                      setOfppFile(null);
+                                    }}
+                                  >
+                                    <Icon as={FaTrash} boxSize={3} />
+                                  </StandardButton>
+                                </HStack>
+                              ) : (
+                                <VStack gap={1}>
+                                  <Icon as={FaFileAlt} color="gray.400" boxSize={6} />
+                                  <Text fontSize="sm" color="gray.500">
+                                    {intl.formatMessage({ id: 'farm.soe.documentPlaceholder' })}
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.400">
+                                    {intl.formatMessage({
+                                      id: 'farm.soe.documentFormats',
+                                      defaultMessage: 'PDF, DOC, DOCX (max 20MB)'
+                                    })}
+                                  </Text>
+                                </VStack>
+                              )}
+                            </Box>
+                            <Text fontSize="xs" color="gray.400" mt={1}>
+                              {intl.formatMessage({ id: 'farm.soe.documentHelp' })}
+                            </Text>
+                          </Box>
+                          <HStack gap={2} justify="flex-end">
+                            <StandardButton
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setOfppEditMode(false)}
+                            >
+                              {intl.formatMessage({ id: 'app.cancel' })}
+                            </StandardButton>
+                            <StandardButton
+                              size="sm"
+                              isLoading={isSavingOfpp}
+                              onClick={handleSaveOfpp}
+                            >
+                              {intl.formatMessage({ id: 'app.save' })}
+                            </StandardButton>
+                          </HStack>
+                        </VStack>
+                      )}
+                    </VStack>
+                  </FieldGroup>
+
+                  {/* ---- Split operation (7 CFR 205.272) ---- */}
+                  <FieldGroup
+                    label={intl.formatMessage({ id: 'farm.split.title' })}
+                    cfr="7 CFR 205.272"
+                  >
+                    <VStack gap={3} align="stretch">
+                      <HStack justify="space-between" align="center" gap={3}>
+                        <Box minW={0}>
+                          <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                            {intl.formatMessage({ id: 'farm.split.toggleLabel' })}
+                          </Text>
+                          <Text fontSize="xs" color="gray.500">
+                            {intl.formatMessage({ id: 'farm.split.toggleHelp' })}
+                          </Text>
+                        </Box>
+                        <Switch
+                          colorScheme="green"
+                          isChecked={establishmentData.has_split_operation || false}
+                          isDisabled={!canWrite || isSavingSplit}
+                          onChange={(e) => handleToggleSplitOperation(e.target.checked)}
+                        />
+                      </HStack>
+
+                      {establishmentData.has_split_operation && (
                         <Box>
-                          <Text
+                          <FormLabel
                             fontSize="xs"
                             color="gray.500"
                             textTransform="uppercase"
                             fontWeight="semibold"
-                            letterSpacing="0.05em"
+                            mb={1}
                           >
-                            {intl.formatMessage({ id: 'farm.soe.documentLabel' })}
-                          </Text>
-                          <Link
-                            href={establishmentData.fraud_prevention_plan_document}
-                            isExternal
-                            color="green.600"
-                            fontWeight="medium"
-                            fontSize={{ base: 'sm', md: 'md' }}
-                          >
-                            {decodeURIComponent(
-                              establishmentData.fraud_prevention_plan_document.split('/').pop() ||
-                                'View Document'
-                            )}
-                          </Link>
+                            {intl.formatMessage({ id: 'farm.split.planLabel' })}
+                          </FormLabel>
+                          {!splitPlanEditMode ? (
+                            <VStack gap={2} align="stretch">
+                              {establishmentData.split_operation_plan ? (
+                                <Box p={3} bg="gray.50" borderRadius="md">
+                                  <Text fontSize="sm" color="gray.700" whiteSpace="pre-wrap">
+                                    {establishmentData.split_operation_plan}
+                                  </Text>
+                                </Box>
+                              ) : (
+                                <Text fontSize="sm" color="gray.400" fontStyle="italic">
+                                  {intl.formatMessage({ id: 'farm.split.noPlan' })}
+                                </Text>
+                              )}
+                              {canWrite && (
+                                <StandardButton
+                                  variant="outline"
+                                  size="sm"
+                                  leftIcon={<Icon as={FaEdit} />}
+                                  alignSelf="flex-start"
+                                  onClick={() => {
+                                    setSplitPlanText(establishmentData.split_operation_plan || '');
+                                    setSplitPlanEditMode(true);
+                                  }}
+                                >
+                                  {establishmentData.split_operation_plan
+                                    ? intl.formatMessage({ id: 'farm.split.editPlan' })
+                                    : intl.formatMessage({ id: 'farm.split.addPlan' })}
+                                </StandardButton>
+                              )}
+                            </VStack>
+                          ) : (
+                            <VStack gap={2} align="stretch">
+                              <Textarea
+                                size="sm"
+                                value={splitPlanText}
+                                onChange={(e) => setSplitPlanText(e.target.value)}
+                                placeholder={intl.formatMessage({
+                                  id: 'farm.split.planPlaceholder'
+                                })}
+                                rows={4}
+                              />
+                              <HStack gap={2} justify="flex-end">
+                                <StandardButton
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setSplitPlanEditMode(false)}
+                                >
+                                  {intl.formatMessage({ id: 'app.cancel' })}
+                                </StandardButton>
+                                <StandardButton
+                                  size="sm"
+                                  isLoading={isSavingSplit}
+                                  onClick={handleSaveSplitPlan}
+                                >
+                                  {intl.formatMessage({ id: 'app.save' })}
+                                </StandardButton>
+                              </HStack>
+                            </VStack>
+                          )}
                         </Box>
-                      </HStack>
-                    )}
-                  </SimpleGrid>
-                </VStack>
-              )}
-
-              {/* Edit mode */}
-              {ofppEditMode && (
-                <VStack spacing={3} align="stretch">
-                  <Box>
-                    <FormLabel
-                      fontSize="xs"
-                      color="gray.500"
-                      textTransform="uppercase"
-                      fontWeight="semibold"
-                      mb={1}
-                    >
-                      {intl.formatMessage({ id: 'farm.soe.responsiblePerson' })}
-                    </FormLabel>
-                    <Input
-                      size="sm"
-                      value={ofppResponsible}
-                      onChange={(e) => setOfppResponsible(e.target.value)}
-                      placeholder={intl.formatMessage({
-                        id: 'farm.soe.responsiblePersonPlaceholder'
-                      })}
-                    />
-                  </Box>
-                  <Box>
-                    <FormLabel
-                      fontSize="xs"
-                      color="gray.500"
-                      textTransform="uppercase"
-                      fontWeight="semibold"
-                      mb={1}
-                    >
-                      {intl.formatMessage({ id: 'farm.soe.planDate' })}
-                    </FormLabel>
-                    <Input
-                      size="sm"
-                      type="date"
-                      value={ofppDate}
-                      onChange={(e) => setOfppDate(e.target.value)}
-                    />
-                  </Box>
-                  <Box>
-                    <FormLabel
-                      fontSize="xs"
-                      color="gray.500"
-                      textTransform="uppercase"
-                      fontWeight="semibold"
-                      mb={1}
-                    >
-                      {intl.formatMessage({ id: 'farm.soe.documentLabel' })}
-                    </FormLabel>
-                    <Box
-                      border="2px dashed"
-                      borderColor={ofppFile ? 'green.400' : 'gray.300'}
-                      borderRadius="lg"
-                      bg={ofppFile ? 'green.50' : 'gray.50'}
-                      p={4}
-                      textAlign="center"
-                      cursor="pointer"
-                      _hover={{ borderColor: 'green.400', bg: 'green.50' }}
-                      transition="all 0.2s"
-                      onClick={() => document.getElementById('ofpp-file-input')?.click()}
-                    >
-                      <input
-                        id="ofpp-file-input"
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        style={{ display: 'none' }}
-                        onChange={(e) => setOfppFile(e.target.files?.[0] || null)}
-                      />
-                      {ofppFile ? (
-                        <HStack justify="center" spacing={2}>
-                          <Icon as={FaFileAlt} color="green.500" boxSize={4} />
-                          <Text fontSize="sm" color="green.700" fontWeight="medium">
-                            {ofppFile.name}
-                          </Text>
-                          <StandardButton
-                            size="xs"
-                            variant="ghost"
-                            colorScheme="red"
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                              setOfppFile(null);
-                            }}
-                          >
-                            <Icon as={FaTrash} boxSize={3} />
-                          </StandardButton>
-                        </HStack>
-                      ) : (
-                        <VStack spacing={1}>
-                          <Icon as={FaFileAlt} color="gray.400" boxSize={6} />
-                          <Text fontSize="sm" color="gray.500">
-                            {intl.formatMessage({ id: 'farm.soe.documentPlaceholder' })}
-                          </Text>
-                          <Text fontSize="xs" color="gray.400">
-                            PDF, DOC, DOCX (max 20MB)
-                          </Text>
-                        </VStack>
                       )}
-                    </Box>
-                    <Text fontSize="xs" color="gray.400" mt={1}>
-                      {intl.formatMessage({ id: 'farm.soe.documentHelp' })}
+
+                      {!establishmentData.has_split_operation && (
+                        <Text fontSize="xs" color="gray.500">
+                          {intl.formatMessage({ id: 'farm.split.singleOperation' })}
+                        </Text>
+                      )}
+                    </VStack>
+                  </FieldGroup>
+
+                  {/* ONE regulatory note for both attestations, not two stacked blue boxes. */}
+                  <Box p={3} bg={infoBg} borderRadius="md">
+                    <Text fontSize="xs" color={infoColor} lineHeight="1.6">
+                      {intl.formatMessage({ id: 'farm.soe.regulatoryNote' })}{' '}
+                      {intl.formatMessage({ id: 'farm.split.regulatoryNote' })}
                     </Text>
                   </Box>
-                  <HStack spacing={2} justify="flex-end">
-                    <StandardButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setOfppEditMode(false)}
-                    >
-                      Cancel
-                    </StandardButton>
-                    <StandardButton size="sm" isLoading={isSavingOfpp} onClick={handleSaveOfpp}>
-                      Save
-                    </StandardButton>
-                  </HStack>
                 </VStack>
-              )}
-
-              {/* Regulatory info note */}
-              <Box p={3} bg={infoBg} borderRadius="md">
-                <Text fontSize="xs" color={infoColor} lineHeight="1.6">
-                  {intl.formatMessage({ id: 'farm.soe.regulatoryNote' })}
-                </Text>
-              </Box>
-            </VStack>
-          </StandardCard>
-        </Box>
-
-        {/* Split Operation (7 CFR 205.272) */}
-        <StandardCard
-          title={intl.formatMessage({ id: 'farm.split.title' })}
-          variant="elevated"
-          padding={{ base: 3, md: 4 }}
-        >
-          <VStack spacing={3} align="stretch">
-            <HStack justify="space-between" align="center">
-              <Box>
-                <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                  {intl.formatMessage({ id: 'farm.split.toggleLabel' })}
-                </Text>
-                <Text fontSize="xs" color="gray.500">
-                  {intl.formatMessage({ id: 'farm.split.toggleHelp' })}
-                </Text>
-              </Box>
-              <Switch
-                colorScheme="green"
-                isChecked={establishmentData.has_split_operation || false}
-                isDisabled={!canWrite || isSavingSplit}
-                onChange={(e) => handleToggleSplitOperation(e.target.checked)}
-              />
-            </HStack>
-
-            {establishmentData.has_split_operation && (
-              <Box>
-                <FormLabel
-                  fontSize="xs"
-                  color="gray.500"
-                  textTransform="uppercase"
-                  fontWeight="semibold"
-                  mb={1}
-                >
-                  {intl.formatMessage({ id: 'farm.split.planLabel' })}
-                </FormLabel>
-                {!splitPlanEditMode ? (
-                  <VStack spacing={2} align="stretch">
-                    {establishmentData.split_operation_plan ? (
-                      <Box p={3} bg="gray.50" borderRadius="md">
-                        <Text fontSize="sm" color="gray.700" whiteSpace="pre-wrap">
-                          {establishmentData.split_operation_plan}
-                        </Text>
-                      </Box>
-                    ) : (
-                      <Text fontSize="sm" color="gray.400" fontStyle="italic">
-                        {intl.formatMessage({ id: 'farm.split.noPlan' })}
-                      </Text>
-                    )}
-                    {canWrite && (
-                      <StandardButton
-                        variant="outline"
-                        size="sm"
-                        leftIcon={<Icon as={FaEdit} />}
-                        alignSelf="flex-start"
-                        onClick={() => {
-                          setSplitPlanText(establishmentData.split_operation_plan || '');
-                          setSplitPlanEditMode(true);
-                        }}
-                      >
-                        {establishmentData.split_operation_plan
-                          ? intl.formatMessage({ id: 'farm.split.editPlan' })
-                          : intl.formatMessage({ id: 'farm.split.addPlan' })}
-                      </StandardButton>
-                    )}
-                  </VStack>
-                ) : (
-                  <VStack spacing={2} align="stretch">
-                    <Textarea
-                      size="sm"
-                      value={splitPlanText}
-                      onChange={(e) => setSplitPlanText(e.target.value)}
-                      placeholder={intl.formatMessage({ id: 'farm.split.planPlaceholder' })}
-                      rows={4}
-                    />
-                    <HStack spacing={2} justify="flex-end">
-                      <StandardButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSplitPlanEditMode(false)}
-                      >
-                        Cancel
-                      </StandardButton>
-                      <StandardButton
-                        size="sm"
-                        isLoading={isSavingSplit}
-                        onClick={handleSaveSplitPlan}
-                      >
-                        Save
-                      </StandardButton>
-                    </HStack>
-                  </VStack>
-                )}
-              </Box>
-            )}
-
-            {!establishmentData.has_split_operation && (
-              <Box p={3} bg="green.50" borderRadius="md">
-                <Text fontSize="xs" color="green.700">
-                  {intl.formatMessage({ id: 'farm.split.singleOperation' })}
-                </Text>
-              </Box>
-            )}
-
-            {/* Regulatory info note */}
-            <Box p={3} bg={infoBg} borderRadius="md">
-              <Text fontSize="xs" color={infoColor} lineHeight="1.6">
-                {intl.formatMessage({ id: 'farm.split.regulatoryNote' })}
-              </Text>
+              </StandardCard>
             </Box>
           </VStack>
-        </StandardCard>
+        </StandardSection>
+
+        {/* ── §3 FARM DETAILS ──────────────────────────────────────────────────────
+            Was seven separate elevated cards — Contact, Location, Operations,
+            Agricultural Information, Crops, Social Media, About — several holding two
+            fields inside a full card with ~56px of margin above and below. One card,
+            divider-separated groups, definition-list grid. */}
+        <StandardSection
+          title={intl.formatMessage({
+            id: 'farm.section.details',
+            defaultMessage: 'Farm details'
+          })}
+        >
+          <StandardCard variant="outline" padding={{ base: 3, md: 4 }} mb={0}>
+            <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
+              {/* The disclosure legend. Neutral gray: which fields are public is a fact,
+                  not a claim, and colour on this page has to encode a real distinction. */}
+              {/* Icon inline INSIDE the Text, not a flex sibling — as an HStack child it
+                  wrapped onto its own line at tablet widths and read as a stray glyph. */}
+              <Text fontSize="xs" color="gray.500" lineHeight="1.7">
+                <Icon as={FaEye} boxSize={3} color="gray.400" mr={2} verticalAlign="-1px" />
+                {intl.formatMessage({
+                  id: 'farm.details.publicLegend',
+                  defaultMessage:
+                    'Marked fields appear on the consumer page when a shopper scans a QR code from this farm. Everything else stays private.'
+                })}
+              </Text>
+
+              {(establishmentData.address ||
+                establishmentData.zip_code ||
+                cityState ||
+                establishmentData.zone) && (
+                <FieldGroup label={intl.formatMessage({ id: 'app.location' })}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    {/* Street address and ZIP are hard-nulled by the backend as location PII
+                        — they are NOT marked public.
+
+                        Street ONLY, not the old formatAddress() join. That concatenated
+                        address + city + state + country, so this row read "4520 Foothill Rd,
+                        Ventura, CA, United States" directly above a "City and state" row
+                        reading "Ventura, CA" — the same data twice, and it blurred the split
+                        this card exists to make legible: the street is private, the city and
+                        state are what a shopper sees. */}
+                    <InfoRow
+                      icon={FaMapMarkerAlt}
+                      label={intl.formatMessage({ id: 'app.address' })}
+                      value={establishmentData.address}
+                    />
+                    <InfoRow
+                      icon={FaMapMarkerAlt}
+                      label={intl.formatMessage({ id: 'establishment.zipCode' })}
+                      value={establishmentData.zip_code}
+                    />
+                    <InfoRow
+                      icon={FaMapMarkerAlt}
+                      label={intl.formatMessage({
+                        id: 'farm.details.cityState',
+                        defaultMessage: 'City and state'
+                      })}
+                      value={cityState}
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    <InfoRow
+                      icon={FaMapMarkerAlt}
+                      label={intl.formatMessage({ id: 'app.zone' })}
+                      value={establishmentData.zone}
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
+              )}
+
+              {/* Guarded: InfoRow renders null for an empty value, so an operation with no
+                  contact details on file would otherwise leave an orphan "CONTACT
+                  INFORMATION" eyebrow and a divider sitting over nothing. */}
+              {(establishmentData.email ||
+                establishmentData.contact_email ||
+                establishmentData.phone ||
+                establishmentData.contact_phone ||
+                establishmentData.contact_person) && (
+                <FieldGroup label={intl.formatMessage({ id: 'app.contactInformation' })}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    {/* None of these reach a shopper — the backend nulls every contact field.
+                        Buyers reach the operation through the BuyerDocRequest form instead. */}
+                    <InfoRow
+                      icon={FaEnvelope}
+                      label={intl.formatMessage({ id: 'establishment.emailAddress' })}
+                      value={establishmentData.email || establishmentData.contact_email}
+                      type="email"
+                    />
+                    <InfoRow
+                      icon={FaPhone}
+                      label={intl.formatMessage({ id: 'app.phone' })}
+                      value={establishmentData.phone || establishmentData.contact_phone}
+                      type="phone"
+                    />
+                    <InfoRow
+                      icon={FaUsers}
+                      label={intl.formatMessage({ id: 'establishment.contactPerson' })}
+                      value={establishmentData.contact_person}
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
+              )}
+
+              {(establishmentData.total_acreage ||
+                establishmentData.year_established ||
+                establishmentData.farming_method) && (
+                <FieldGroup label={intl.formatMessage({ id: 'establishment.operations' })}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    <InfoRow
+                      icon={FaTractor}
+                      label={intl.formatMessage({ id: 'establishment.totalArea' })}
+                      value={
+                        establishmentData.total_acreage
+                          ? intl.formatMessage(
+                              {
+                                id: 'farm.meta.acres',
+                                defaultMessage: '{count, plural, one {# acre} other {# acres}}'
+                              },
+                              { count: establishmentData.total_acreage }
+                            )
+                          : null
+                      }
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    <InfoRow
+                      icon={FaCalendar}
+                      label={intl.formatMessage({ id: 'establishment.yearEstablished' })}
+                      value={establishmentData.year_established}
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    {/* Deliberately NOT public. It is free text the farmer types
+                        ("sustainable", "Regenerative Agriculture"); publishing it would be a
+                        self-declared environmental claim under FTC 16 CFR 260.6 and a
+                        self-created label under EU ECGT 2024/825. It used to render up in the
+                        header as a purple badge. */}
+                    <InfoRow
+                      icon={FaTractor}
+                      label={intl.formatMessage({ id: 'establishment.farmingMethod' })}
+                      value={formatDisplayValue(establishmentData.farming_method)}
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
+              )}
+
+              {(getWaterSources().length > 0 ||
+                getSoilHealthPractices().length > 0 ||
+                getIrrigationMethods().length > 0) && (
+                <FieldGroup label={intl.formatMessage({ id: 'app.agriculturalInformation' })}>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    <InfoRow
+                      icon={FaTint}
+                      label={intl.formatMessage({ id: 'establishment.waterSources' })}
+                      value={getWaterSources().join(', ')}
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    <InfoRow
+                      icon={FaLeaf}
+                      label={intl.formatMessage({ id: 'establishment.soilHealthPractices' })}
+                      value={getSoilHealthPractices().join(', ')}
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    <InfoRow
+                      icon={FaTint}
+                      label={intl.formatMessage({ id: 'establishment.irrigationMethods' })}
+                      value={getIrrigationMethods().join(', ')}
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
+              )}
+
+              {crops.length > 0 && (
+                <FieldGroup
+                  label={intl.formatMessage({ id: 'establishment.crops' })}
+                  action={
+                    <HStack gap={1}>
+                      <Icon as={FaEye} boxSize={2.5} color="gray.400" />
+                      <Text fontSize="xs" color="gray.400">
+                        {intl.formatMessage({
+                          id: 'farm.details.publicShort',
+                          defaultMessage: 'Shoppers see this'
+                        })}
+                      </Text>
+                    </HStack>
+                  }
+                >
+                  <HStack gap={2} flexWrap="wrap">
+                    {crops.map((crop: string, index: number) => (
+                      <Badge
+                        key={index}
+                        colorScheme="green"
+                        variant="subtle"
+                        px={{ base: 2, md: 3 }}
+                        py={0.5}
+                        borderRadius="full"
+                        fontSize={{ base: 'xs', md: 'sm' }}
+                      >
+                        <HStack gap={1}>
+                          <Icon as={FaSeedling} boxSize={3} />
+                          <Text>{crop}</Text>
+                        </HStack>
+                      </Badge>
+                    ))}
+                  </HStack>
+                </FieldGroup>
+              )}
+
+              {(establishmentData.about ||
+                establishmentData.main_activities ||
+                establishmentData.location_highlights) && (
+                <FieldGroup
+                  label={intl.formatMessage({ id: 'establishment.aboutEstablishment' })}
+                  action={
+                    <HStack gap={1}>
+                      <Icon as={FaEye} boxSize={2.5} color="gray.400" />
+                      <Text fontSize="xs" color="gray.400">
+                        {intl.formatMessage({
+                          id: 'farm.details.publicShort',
+                          defaultMessage: 'Shoppers see this'
+                        })}
+                      </Text>
+                    </HStack>
+                  }
+                >
+                  <VStack gap={{ base: 3, md: 4 }} align="stretch">
+                    {establishmentData.about && (
+                      <Box>
+                        <Text
+                          fontSize="xs"
+                          color="gray.500"
+                          textTransform="uppercase"
+                          fontWeight="semibold"
+                          mb={1}
+                        >
+                          {intl.formatMessage({ id: 'app.description' })}
+                        </Text>
+                        <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
+                          {establishmentData.about}
+                        </Text>
+                      </Box>
+                    )}
+                    {establishmentData.main_activities && (
+                      <Box>
+                        <Text
+                          fontSize="xs"
+                          color="gray.500"
+                          textTransform="uppercase"
+                          fontWeight="semibold"
+                          mb={1}
+                        >
+                          {intl.formatMessage({ id: 'establishment.mainActivities' })}
+                        </Text>
+                        <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
+                          {establishmentData.main_activities}
+                        </Text>
+                      </Box>
+                    )}
+                    {establishmentData.location_highlights && (
+                      <Box>
+                        <Text
+                          fontSize="xs"
+                          color="gray.500"
+                          textTransform="uppercase"
+                          fontWeight="semibold"
+                          mb={1}
+                        >
+                          {intl.formatMessage({ id: 'establishment.locationHighlights' })}
+                        </Text>
+                        <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
+                          {establishmentData.location_highlights}
+                        </Text>
+                      </Box>
+                    )}
+                  </VStack>
+                </FieldGroup>
+              )}
+
+              {/* Company links. Read from `currentCompany`, NOT `establishmentData.company`:
+                  RetrieveEstablishmentSerializer lists "company" with no nested serializer,
+                  so it arrives as a bare PK integer and `establishmentData.company?.website`
+                  is permanently undefined. The old Social Media card's render guard was
+                  `company?.facebook || company?.instagram` — always false, so that card
+                  could never appear at all. */}
+              {(currentCompany?.website ||
+                currentCompany?.facebook ||
+                currentCompany?.instagram) && (
+                <FieldGroup
+                  label={intl.formatMessage({
+                    id: 'farm.details.links',
+                    defaultMessage: 'Links'
+                  })}
+                >
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
+                    <InfoRow
+                      icon={FaGlobe}
+                      label={intl.formatMessage({ id: 'app.website' })}
+                      value={currentCompany.website}
+                      type="link"
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    <InfoRow
+                      icon={FaFacebook}
+                      label={intl.formatMessage({
+                        id: 'app.facebook',
+                        defaultMessage: 'Facebook'
+                      })}
+                      value={currentCompany.facebook}
+                      type="link"
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                    <InfoRow
+                      icon={FaInstagram}
+                      label={intl.formatMessage({
+                        id: 'app.instagram',
+                        defaultMessage: 'Instagram'
+                      })}
+                      value={currentCompany.instagram}
+                      type="link"
+                      isPublic
+                      publicLabel={publicLabel}
+                    />
+                  </SimpleGrid>
+                </FieldGroup>
+              )}
+            </VStack>
+          </StandardCard>
+        </StandardSection>
       </VStack>
 
-      {farmId && normalizeState(establishmentData?.state) === 'CA' && (
+      {farmId && isCalifornia && (
         <PURExportModal
           isOpen={purModalOpen}
           onClose={() => setPurModalOpen(false)}

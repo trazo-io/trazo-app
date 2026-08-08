@@ -2,6 +2,12 @@ import { expect, afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
 
+// Registers the jest-dom TYPE augmentation on Vitest's `Assertion`. `expect.extend` below only
+// installs the matchers at runtime, so without this every `toBeInTheDocument` / `toBeDisabled`
+// call was a TS2339 error — ~180 of them across the test suite, all sitting in the typecheck
+// baseline and hiding real errors behind noise.
+import '@testing-library/jest-dom/vitest';
+
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers);
 

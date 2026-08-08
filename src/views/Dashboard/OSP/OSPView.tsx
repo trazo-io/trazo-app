@@ -77,6 +77,7 @@ import {
 import OSPActivateModal from './OSPActivateModal';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
 import OSPChangeNotificationsPanel from './OSPChangeNotificationsPanel';
+import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import StateOrganicRegistrationCard, {
   STATE_ORGANIC_PROGRAMS
 } from './StateOrganicRegistrationCard';
@@ -1009,6 +1010,13 @@ const OSPView: React.FC = () => {
           })}
         </Accordion>
       </StandardCard>
+
+      {/* Common OSP § 11 "Records Maintained" — evidence derived from logged events, with an
+          explicit operator-confirm gate. Sits directly under the § 205.201(a) narratives
+          because it is the section a certifier reads next. */}
+      {companyId && farmId && (
+        <OSPRecordTypesPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
+      )}
 
       {/* Approved inputs panel — drives the drift detector (Sprint 5.1). */}
       {companyId && farmId && (

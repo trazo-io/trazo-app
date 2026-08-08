@@ -28,13 +28,6 @@ import {
   HStack,
   Icon,
   Input,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   Text,
   useToast,
   VStack
@@ -43,6 +36,7 @@ import { FaFileUpload } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import { StandardButton } from 'components/Design/StandardComponents';
+import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { useActivateOSPMutation } from 'store/api/ospApi';
 import type { OSP } from 'types/osp';
 
@@ -175,8 +169,7 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
         const next: Record<string, string> = {};
         for (const key of missing) {
           next[key] =
-            labelMap[key] ||
-            intl.formatMessage({ id: 'osp.activateModal.error.generic' });
+            labelMap[key] || intl.formatMessage({ id: 'osp.activateModal.error.generic' });
         }
         setFieldErrors(next);
       }
@@ -194,135 +187,19 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg" isCentered>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>
-          <HStack>
-            <Icon as={FaFileUpload} color="green.600" />
-            <Text>{intl.formatMessage({ id: 'osp.activateModal.title' })}</Text>
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton isDisabled={isLoading} />
-        <ModalBody>
-          <VStack align="stretch" spacing={4}>
-            <Alert status="info" fontSize="sm" borderRadius="md">
-              <AlertIcon />
-              <Text>{intl.formatMessage({ id: 'osp.activateModal.intro' })}</Text>
-            </Alert>
-
-            <FormControl isRequired isInvalid={!!fieldErrors.approval_document}>
-              <FormLabel fontSize="sm">
-                {intl.formatMessage({ id: 'osp.activateModal.file.label' })}
-              </FormLabel>
-              <Input
-                ref={fileInputRef}
-                type="file"
-                accept={ACCEPTED_MIME_TYPES}
-                onChange={(e) => {
-                  const next = e.target.files?.[0] || null;
-                  setFile(next);
-                  if (next && fieldErrors.approval_document) {
-                    setFieldErrors((prev) => {
-                      const { approval_document, ...rest } = prev;
-                      return rest;
-                    });
-                  }
-                }}
-                p={1}
-                sx={{
-                  '::file-selector-button': {
-                    border: 'none',
-                    outline: 'none',
-                    mr: 3,
-                    px: 3,
-                    py: 1,
-                    fontSize: 'sm',
-                    cursor: 'pointer'
-                  }
-                }}
-              />
-              {fieldErrors.approval_document ? (
-                <FormErrorMessage>{fieldErrors.approval_document}</FormErrorMessage>
-              ) : (
-                <FormHelperText fontSize="xs">{fileHint}</FormHelperText>
-              )}
-            </FormControl>
-
-            <FormControl
-              isRequired
-              isInvalid={!!fieldErrors.approval_certificate_number}
-            >
-              <FormLabel fontSize="sm">
-                {intl.formatMessage({ id: 'osp.activateModal.certNumber.label' })}
-              </FormLabel>
-              <Input
-                value={certNumber}
-                onChange={(e) => {
-                  setCertNumber(e.target.value);
-                  if (fieldErrors.approval_certificate_number) {
-                    setFieldErrors((prev) => {
-                      const { approval_certificate_number, ...rest } = prev;
-                      return rest;
-                    });
-                  }
-                }}
-                placeholder={intl.formatMessage({
-                  id: 'osp.activateModal.certNumber.placeholder'
-                })}
-                maxLength={100}
-              />
-              {fieldErrors.approval_certificate_number ? (
-                <FormErrorMessage>
-                  {fieldErrors.approval_certificate_number}
-                </FormErrorMessage>
-              ) : (
-                <FormHelperText fontSize="xs">
-                  {intl.formatMessage({ id: 'osp.activateModal.certNumber.hint' })}
-                </FormHelperText>
-              )}
-            </FormControl>
-
-            <FormControl
-              isRequired
-              isInvalid={!!fieldErrors.approval_certifier_name}
-            >
-              <FormLabel fontSize="sm">
-                {intl.formatMessage({
-                  id: 'osp.activateModal.certifierName.label'
-                })}
-              </FormLabel>
-              <Input
-                value={certifierName}
-                onChange={(e) => {
-                  setCertifierName(e.target.value);
-                  if (fieldErrors.approval_certifier_name) {
-                    setFieldErrors((prev) => {
-                      const { approval_certifier_name, ...rest } = prev;
-                      return rest;
-                    });
-                  }
-                }}
-                placeholder={intl.formatMessage({
-                  id: 'osp.activateModal.certifierName.placeholder'
-                })}
-                maxLength={200}
-              />
-              {fieldErrors.approval_certifier_name ? (
-                <FormErrorMessage>
-                  {fieldErrors.approval_certifier_name}
-                </FormErrorMessage>
-              ) : (
-                <FormHelperText fontSize="xs">
-                  {intl.formatMessage({
-                    id: 'osp.activateModal.certifierName.hint'
-                  })}
-                </FormHelperText>
-              )}
-            </FormControl>
-          </VStack>
-        </ModalBody>
-        <ModalFooter>
+    <ResponsiveModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size="lg"
+      isCloseDisabled={isLoading}
+      header={
+        <HStack>
+          <Icon as={FaFileUpload} color="green.600" />
+          <Text>{intl.formatMessage({ id: 'osp.activateModal.title' })}</Text>
+        </HStack>
+      }
+      footer={
+        <>
           <Button variant="ghost" mr={3} onClick={handleClose} isDisabled={isLoading}>
             {intl.formatMessage({ id: 'osp.activateModal.cancel' })}
           </Button>
@@ -334,9 +211,116 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
           >
             {intl.formatMessage({ id: 'osp.action.activate' })}
           </StandardButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </>
+      }
+    >
+      <VStack align="stretch" spacing={4}>
+        <Alert status="info" fontSize="sm" borderRadius="md">
+          <AlertIcon />
+          <Text>{intl.formatMessage({ id: 'osp.activateModal.intro' })}</Text>
+        </Alert>
+
+        <FormControl isRequired isInvalid={!!fieldErrors.approval_document}>
+          <FormLabel fontSize="sm">
+            {intl.formatMessage({ id: 'osp.activateModal.file.label' })}
+          </FormLabel>
+          <Input
+            ref={fileInputRef}
+            type="file"
+            accept={ACCEPTED_MIME_TYPES}
+            onChange={(e) => {
+              const next = e.target.files?.[0] || null;
+              setFile(next);
+              if (next && fieldErrors.approval_document) {
+                setFieldErrors((prev) => {
+                  const { approval_document, ...rest } = prev;
+                  return rest;
+                });
+              }
+            }}
+            p={1}
+            sx={{
+              '::file-selector-button': {
+                border: 'none',
+                outline: 'none',
+                mr: 3,
+                px: 3,
+                py: 1,
+                fontSize: 'sm',
+                cursor: 'pointer'
+              }
+            }}
+          />
+          {fieldErrors.approval_document ? (
+            <FormErrorMessage>{fieldErrors.approval_document}</FormErrorMessage>
+          ) : (
+            <FormHelperText fontSize="xs">{fileHint}</FormHelperText>
+          )}
+        </FormControl>
+
+        <FormControl isRequired isInvalid={!!fieldErrors.approval_certificate_number}>
+          <FormLabel fontSize="sm">
+            {intl.formatMessage({ id: 'osp.activateModal.certNumber.label' })}
+          </FormLabel>
+          <Input
+            value={certNumber}
+            onChange={(e) => {
+              setCertNumber(e.target.value);
+              if (fieldErrors.approval_certificate_number) {
+                setFieldErrors((prev) => {
+                  const { approval_certificate_number, ...rest } = prev;
+                  return rest;
+                });
+              }
+            }}
+            placeholder={intl.formatMessage({
+              id: 'osp.activateModal.certNumber.placeholder'
+            })}
+            maxLength={100}
+          />
+          {fieldErrors.approval_certificate_number ? (
+            <FormErrorMessage>{fieldErrors.approval_certificate_number}</FormErrorMessage>
+          ) : (
+            <FormHelperText fontSize="xs">
+              {intl.formatMessage({ id: 'osp.activateModal.certNumber.hint' })}
+            </FormHelperText>
+          )}
+        </FormControl>
+
+        <FormControl isRequired isInvalid={!!fieldErrors.approval_certifier_name}>
+          <FormLabel fontSize="sm">
+            {intl.formatMessage({
+              id: 'osp.activateModal.certifierName.label'
+            })}
+          </FormLabel>
+          <Input
+            value={certifierName}
+            onChange={(e) => {
+              setCertifierName(e.target.value);
+              if (fieldErrors.approval_certifier_name) {
+                setFieldErrors((prev) => {
+                  const { approval_certifier_name, ...rest } = prev;
+                  return rest;
+                });
+              }
+            }}
+            placeholder={intl.formatMessage({
+              id: 'osp.activateModal.certifierName.placeholder'
+            })}
+            maxLength={200}
+          />
+          {fieldErrors.approval_certifier_name ? (
+            <FormErrorMessage>{fieldErrors.approval_certifier_name}</FormErrorMessage>
+          ) : (
+            <FormHelperText fontSize="xs">
+              {intl.formatMessage({
+                id: 'osp.activateModal.certifierName.hint'
+              })}
+            </FormHelperText>
+          )}
+        </FormControl>
+      </VStack>
+    </ResponsiveModal>
   );
 };
 

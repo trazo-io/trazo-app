@@ -59,7 +59,7 @@ import { useIntl } from 'react-intl';
 import { loadStripe } from '@stripe/stripe-js/pure';
 import config from 'config/environment';
 import { useGetPlansQuery } from 'store/api/subscriptionApi';
-import { useCreateCheckoutSessionMutation, useSubscribeBlockchainMutation, useGetAddonsQuery, useChangePlanMutation, useStartTrialMutation } from 'store/api/billingApi';
+import { useCreateCheckoutSessionMutation, useGetAddonsQuery, useChangePlanMutation, useStartTrialMutation } from 'store/api/billingApi';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -137,7 +137,6 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
   });
   const { data: addons = [] } = useGetAddonsQuery();
   const [createCheckoutSession] = useCreateCheckoutSessionMutation();
-  const [subscribeBlockchain] = useSubscribeBlockchainMutation();
   const [changePlan] = useChangePlanMutation();
   const [startTrial, { isLoading: isStartingTrial }] = useStartTrialMutation();
   const [downgradePlanId, setDowngradePlanId] = useState(null);
@@ -150,8 +149,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
   const [addonQuantities, setAddonQuantities] = useState({
     'extra-production': 1,
     'extra-parcel': 1,
-    'extra-storage': 1,
-    'blockchain-verification': 1
+    'extra-storage': 1
   });
 
   const location = useLocation();
@@ -201,19 +199,6 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
         isClosable: true
       });
 
-      // Show blockchain add-on suggestion after successful subscription
-      if (planSubscribed === 'true') {
-        setTimeout(() => {
-          toast({
-            title: t('app.wantAddBlockchainVerification'),
-            description: t('app.scrollDownBlockchainOffer'),
-            status: 'info',
-            duration: 10000,
-            isClosable: true,
-            position: 'top'
-          });
-        }, 3000);
-      }
 
       // Handle return path
       const returnPath = localStorage.getItem('subscription_return_path');
@@ -347,106 +332,6 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     return null;
   }
 
-  // Enhanced blockchain subscription with plan integration
-  const handleSubscribeBlockchain = async () => {
-    // Early Access intercept: show modal instead of Stripe checkout
-    if (!config.PAYMENTS_ENABLED) {
-      setEarlyAccessPlanName('Blockchain Verification');
-      onEarlyAccessOpen();
-      return;
-    }
-
-    const companyId = getCompanyId();
-    if (!companyId) {
-      toast({
-        title: t('app.error'),
-        description: t('app.companyRequiredError'),
-        status: 'error',
-        duration: 5000,
-        isClosable: true
-      });
-      return;
-    }
-
-    setCheckoutLoading(true);
-
-    try {
-      console.log('Creating blockchain subscription for company:', companyId);
-
-      const result = await subscribeBlockchain().unwrap();
-
-      console.log('Blockchain subscription result:', result);
-
-      // Handle different response formats
-      let sessionId = null;
-      let checkoutUrl = null;
-
-      if (result.sessionId || result.session_id) {
-        sessionId = result.sessionId || result.session_id;
-      } else if (result.checkout_url) {
-        checkoutUrl = result.checkout_url;
-      } else if (result.url) {
-        checkoutUrl = result.url;
-      }
-
-      if (checkoutUrl) {
-        // Direct redirect to URL
-        window.location.href = checkoutUrl;
-      } else if (sessionId) {
-        // Use Stripe's redirectToCheckout
-        const stripe = await getStripe();
-        if (!stripe) {
-          throw new Error('Payments are not configured in this environment');
-        }
-        const { error } = await stripe.redirectToCheckout({
-          sessionId: sessionId
-        });
-
-        if (error) {
-          throw new Error(error.message);
-        }
-      } else {
-        throw new Error('Invalid response format: missing sessionId or checkout_url');
-      }
-    } catch (error) {
-      console.error('Blockchain subscription error:', error);
-
-      // Enhanced error handling
-      let errorMessage = t('app.blockchainSubscriptionError');
-
-      if (error.data?.detail) {
-        errorMessage = error.data.detail;
-      } else if (error.data?.error) {
-        errorMessage = error.data.error;
-      } else if (error.data?.message) {
-        errorMessage = error.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      // Check if the error is due to missing subscription
-      if (errorMessage.includes('subscription') || errorMessage.includes('plan')) {
-        toast({
-          title: t('app.subscriptionRequiredTitle'),
-          description: t('app.subscriptionRequiredForBlockchain'),
-          status: 'warning',
-          duration: 7000,
-          isClosable: true
-        });
-      } else {
-        toast({
-          title: t('app.blockchainSubscriptionErrorTitle'),
-          description: errorMessage,
-          status: 'error',
-          duration: 5000,
-          isClosable: true
-        });
-      }
-    } finally {
-      setCheckoutLoading(false);
-      setCheckoutPlanId(null);
-    }
-  };
 
   const getRecommendedPlan = (plans) => {
     // CONSISTENT recommendation - Standard is "Most Popular"
@@ -1241,149 +1126,11 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
         </VStack>
       </StandardSection>
 
-      {/* Compact Blockchain Add-on Section */}
-      <StandardSection
-        title={t('app.blockchainVerificationSection')}
-        description={t('app.addImmutableCarbonData')}
-      >
-        <Box maxW="4xl" mx="auto">
-          <StandardCard variant="outline" borderColor="green.200" bg="green.50">
-            <CardBody p={4}>
-              <VStack spacing={4}>
-                {/* Compact Header */}
-                <HStack spacing={3} w="full" align="center" justify="space-between">
-                  <HStack spacing={3} flex={1}>
-                    <Box p={2} bg="green.100" borderRadius="full">
-                      <Icon as={FaShieldAlt} boxSize={6} color="green.600" />
-                    </Box>
-
-                    <VStack align="start" spacing={0} flex={1}>
-                      <Text fontWeight="bold" color="gray.700" fontSize="sm">
-                        {t('app.immutableCarbonRecords')}
-                      </Text>
-                      <Text color="gray.500" fontSize="xs">
-                        {t('app.addImmutableCarbonData')}
-                      </Text>
-                    </VStack>
-                  </HStack>
-
-                  <VStack spacing={0} align="center" minW="60px">
-                    <Text fontSize="xl" fontWeight="bold" color="green.600">
-                      ${addons.find(a => a.slug === 'blockchain-verification')?.price ?? 15}
-                    </Text>
-                    <Text fontSize="xs" color="gray.500">
-                      /{t('app.perMonthShort')}
-                    </Text>
-                  </VStack>
-                </HStack>
-
-                {/* Compact Benefits */}
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3} w="full">
-                  <HStack
-                    spacing={2}
-                    p={2}
-                    bg="white"
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor="green.100"
-                  >
-                    <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
-                    <VStack align="start" spacing={0} flex={1}>
-                      <Text fontSize="xs" fontWeight="bold" color="gray.700">
-                        {t('app.usdaVerificationFeature')}
-                      </Text>
-                      <Text fontSize="xs" color="gray.500">
-                        {t('app.automaticCompliance')}
-                      </Text>
-                    </VStack>
-                  </HStack>
-
-                  <HStack
-                    spacing={2}
-                    p={2}
-                    bg="white"
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor="green.100"
-                  >
-                    <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
-                    <VStack align="start" spacing={0} flex={1}>
-                      <Text fontSize="xs" fontWeight="bold" color="gray.700">
-                        {t('app.carbonCreditsFeature')}
-                      </Text>
-                      <Text fontSize="xs" color="gray.500">
-                        {t('app.marketAccess')}
-                      </Text>
-                    </VStack>
-                  </HStack>
-
-                  <HStack
-                    spacing={2}
-                    p={2}
-                    bg="white"
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor="green.100"
-                  >
-                    <Icon as={FaCheckCircle} color="green.500" boxSize={4} />
-                    <VStack align="start" spacing={0} flex={1}>
-                      <Text fontSize="xs" fontWeight="bold" color="gray.700">
-                        {t('app.immutableRecordsFeature')}
-                      </Text>
-                      <Text fontSize="xs" color="gray.500">
-                        {t('app.transparentBlockchain')}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </SimpleGrid>
-
-                {/* Action Section */}
-                <VStack spacing={3} w="full">
-                  {activeCompany?.subscription ? (
-                    <VStack spacing={2} w="full">
-                      <Text fontSize="xs" color="green.600" textAlign="center" fontWeight="medium">
-                        {t('app.perfectYouHaveActivePlan')}
-                      </Text>
-                      <Flex direction={{ base: 'column', md: 'row' }} gap={2} justify="center" w="full">
-                        <StandardButton
-                          variant="primary"
-                          size="sm"
-                          onClick={handleSubscribeBlockchain}
-                          isLoading={checkoutLoading}
-                          loadingText={t('app.processingPayment')}
-                          leftIcon={<Icon as={FaShieldAlt} />}
-                          colorScheme="green"
-                          w={{ base: 'full', md: 'auto' }}
-                        >
-                          {t('app.addBlockchainPrice')}
-                        </StandardButton>
-                        <StandardButton
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate('/admin/dashboard')}
-                          leftIcon={<Icon as={FaRocket} />}
-                          w={{ base: 'full', md: 'auto' }}
-                        >
-                          {t('app.goToDashboard')}
-                        </StandardButton>
-                      </Flex>
-                    </VStack>
-                  ) : (
-                    <VStack spacing={1} w="full">
-                      <Text fontSize="xs" color="blue.600" textAlign="center" fontWeight="medium">
-                        {t('app.selectPlanFirstBlockchain')}
-                      </Text>
-                      <Text fontSize="xs" color="gray.500" textAlign="center" maxW="sm">
-                        {t('app.afterSubscribingBlockchain')}
-                      </Text>
-                    </VStack>
-                  )}
-                </VStack>
-              </VStack>
-            </CardBody>
-          </StandardCard>
-        </Box>
-      </StandardSection>
+      {/* Blockchain add-on section removed 2026-08-06.
+          The $15/mo blockchain add-on was withdrawn on 2026-08-03 along with its consumer
+          surface, but this purchase flow survived — the page kept offering a product that no
+          longer exists. BLOCKCHAIN_ENABLED now defaults to false backend-side; see
+          documentation/strategy/TRAZO-OCTOBER-2026-PLAN.md §10.8. */}
 
       {/* Benefits Section - Modern 2025 Style */}
       <Box mt={4}>
@@ -1470,10 +1217,6 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
             <FAQCard
               question={intl.formatMessage({ id: 'app.faqHowTrialWorks' })}
               answer={intl.formatMessage({ id: 'app.faqHowTrialWorksAnswer' })}
-            />
-            <FAQCard
-              question={intl.formatMessage({ id: 'app.faqBlockchainIncluded' })}
-              answer={intl.formatMessage({ id: 'app.faqBlockchainIncludedAnswer' })}
             />
           </VStack>
         </Box>

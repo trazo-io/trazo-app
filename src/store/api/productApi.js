@@ -51,7 +51,10 @@ export const productApi = baseApi.injectEndpoints({
           formData.append('section_township_range', parcelData.section_township_range);
         if (parcelData.date_began_managing)
           formData.append('date_began_managing', parcelData.date_began_managing);
-        formData.append('treated_lumber_present', parcelData.treated_lumber_present ? 'true' : 'false');
+        formData.append(
+          'treated_lumber_present',
+          parcelData.treated_lumber_present ? 'true' : 'false'
+        );
         if (parcelData.treated_lumber_description)
           formData.append('treated_lumber_description', parcelData.treated_lumber_description);
         if (parcelData.treated_lumber_install_date)
@@ -91,9 +94,6 @@ export const productApi = baseApi.injectEndpoints({
         // ✅ TRANSPARENCY FIELDS for consumer display
         if (parcelData.crop_focus) {
           formData.append('crop_focus', parcelData.crop_focus);
-        }
-        if (parcelData.consumer_story) {
-          formData.append('consumer_story', parcelData.consumer_story);
         }
         if (parcelData.sustainability_practices) {
           formData.append('sustainability_practices', parcelData.sustainability_practices);
@@ -157,7 +157,10 @@ export const productApi = baseApi.injectEndpoints({
           formData.append('section_township_range', parcelData.section_township_range);
         if (parcelData.date_began_managing)
           formData.append('date_began_managing', parcelData.date_began_managing);
-        formData.append('treated_lumber_present', parcelData.treated_lumber_present ? 'true' : 'false');
+        formData.append(
+          'treated_lumber_present',
+          parcelData.treated_lumber_present ? 'true' : 'false'
+        );
         if (parcelData.treated_lumber_description)
           formData.append('treated_lumber_description', parcelData.treated_lumber_description);
         if (parcelData.treated_lumber_install_date)
@@ -199,9 +202,6 @@ export const productApi = baseApi.injectEndpoints({
         // ✅ TRANSPARENCY FIELDS for consumer display
         if (parcelData.crop_focus) {
           formData.append('crop_focus', parcelData.crop_focus);
-        }
-        if (parcelData.consumer_story) {
-          formData.append('consumer_story', parcelData.consumer_story);
         }
         if (parcelData.sustainability_practices) {
           formData.append('sustainability_practices', parcelData.sustainability_practices);

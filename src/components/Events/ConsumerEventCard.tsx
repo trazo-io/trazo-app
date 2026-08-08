@@ -1952,6 +1952,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             marking WHICH BUCKET the registry put a field in, which means nothing
                             to a shopper. */}
                     <VStack align="stretch" spacing={2} pl={showFactSectionLabels ? 6 : 0}>
+                      {/* Both branches below run values through withUSUnits. They previously
+                          rendered {field.value} raw, so the same card could show
+                          "85 acres (34.4 ha)" in Key Details and a bare "34.4 ha" here — the
+                          exact split this file already fixed once for the aggregate tiles. */}
                       {visibleSecondaryFields.map((field, idx) => {
                         const fuelIcon = getFuelIcon(field.label, event.fuel_type);
                         const categoryIcon = getCategoryIcon(field.category);
@@ -1973,7 +1977,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                               </Text>
                             </HStack>
                             <Text fontSize="sm" color={secondaryText} pl={5}>
-                              {field.value}
+                              {withUSUnits(field.value, intl.locale)}
                             </Text>
                           </Box>
                         ) : (
@@ -1996,7 +2000,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                               </Text>
                             </HStack>
                             <Text fontSize="sm" color={secondaryText} fontWeight="semibold">
-                              {field.value}
+                              {withUSUnits(field.value, intl.locale)}
                             </Text>
                           </HStack>
                         );

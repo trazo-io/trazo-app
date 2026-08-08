@@ -22,10 +22,38 @@ import { dirname, join, relative, resolve } from 'node:path';
 const SRC = join(__dirname, '..', '..', '..');
 
 /**
- * Entry points that render to a consumer (QR / public-link) surface.
- * `views/Scan/**` is the public route tree; `components/QR/**` is its component library.
+ * Authenticated consumer surfaces — routed under the `consumer.*` subdomain (see App.tsx's
+ * `AdminConsumerLayout`: impact / journey / education / profile / settings).
+ *
+ * 🔴 These live under `src/views/Dashboard/`, which the producer-reachability subtraction
+ * below treats as "the producer tree". For as long as that subtraction ran unqualified, every
+ * authenticated consumer screen was subtracted out and NEVER SCANNED — which is how
+ * ImpactDashboard shipped a hero metric card literally labelled "Avg Transparency Score", and
+ * CarbonJourney shipped a green/blue/gray tier badge, past a green guard (2026-08-06).
+ *
+ * This is the third time one root cause produced a consumer claim leak: a login does not make
+ * a consumer claim safe. The A+–F carbon grade survived two earlier sweeps for the same reason
+ * (its endpoints were IsAuthenticated, so the anonymous-surface sweep never saw them).
+ * Being behind auth changes who reads the claim, not whether ECGT 2024/825 covers it.
  */
-const CONSUMER_ROOTS = [join(SRC, 'views', 'Scan'), join(SRC, 'components', 'QR')];
+const CONSUMER_DASHBOARD_ROOTS = [
+  join(SRC, 'views', 'Dashboard', 'ImpactDashboard'),
+  join(SRC, 'views', 'Dashboard', 'CarbonJourney'),
+  join(SRC, 'views', 'Dashboard', 'EducationDashboard'),
+  join(SRC, 'views', 'Dashboard', 'ConsumerProfile'),
+  join(SRC, 'views', 'Consumer')
+];
+
+/**
+ * Entry points that render to a consumer surface.
+ * `views/Scan/**` is the public/anonymous route tree; `components/QR/**` is its component
+ * library; `CONSUMER_DASHBOARD_ROOTS` are the logged-in shopper screens.
+ */
+const CONSUMER_ROOTS = [
+  join(SRC, 'views', 'Scan'),
+  join(SRC, 'components', 'QR'),
+  ...CONSUMER_DASHBOARD_ROOTS
+];
 
 /**
  * Consumer-facing components that the producer dashboard ALSO imports, so the
@@ -94,10 +122,16 @@ function resolveImport(specifier: string, fromFile: string): string | null {
   return null;
 }
 
-/** Every src file reachable from `roots`, following imports transitively. */
+/**
+ * Every src file reachable from `roots`, following imports transitively.
+ * Roots may be directories or individual files — the producer set is built by filtering
+ * files out of a directory listing, so it arrives as a file list.
+ */
 function reachableFrom(roots: string[]): Set<string> {
   const seen = new Set<string>();
-  const queue = roots.flatMap(collectSourceFiles);
+  const queue = roots.flatMap((root) =>
+    statSync(root).isDirectory() ? collectSourceFiles(root) : [root]
+  );
   // `import x from '…'`, `import '…'`, and `import('…')`.
   const importPattern = /(?:from\s*|import\s*\(?\s*)['"]([^'"]+)['"]/g;
 
@@ -129,8 +163,23 @@ function reachableFrom(roots: string[]): Set<string> {
  */
 function consumerOnlyFiles(): string[] {
   const consumer = reachableFrom(CONSUMER_ROOTS);
-  const producer = reachableFrom([join(SRC, 'views', 'Dashboard')]);
+
+  // The producer tree is views/Dashboard MINUS the consumer screens that happen to live inside
+  // it. Seeding those as producer roots is what made them invisible — they would reach
+  // themselves, land in `producer`, and get subtracted from their own scan.
+  const consumerDashboardFiles = new Set(CONSUMER_DASHBOARD_ROOTS.flatMap(collectSourceFiles));
+  const producerRoots = collectSourceFiles(join(SRC, 'views', 'Dashboard')).filter(
+    (f) => !consumerDashboardFiles.has(f)
+  );
+  const producer = reachableFrom(producerRoots);
   const scanned = [...consumer].filter((f) => !producer.has(f));
+
+  // A consumer screen is scanned unconditionally. Even if some producer screen transitively
+  // imports one, the file still renders to a shopper, and the subtraction must never be able
+  // to drop it.
+  for (const abs of consumerDashboardFiles) {
+    if (!scanned.includes(abs)) scanned.push(abs);
+  }
 
   // ...plus files whose PRIMARY job is rendering consumer copy even though the dashboard
   // also imports them. Without this the subtraction above silently excluded
@@ -197,6 +246,27 @@ const BANNED = [
     name: 'eco/green score label',
     pattern: /\b(Eco|Green|Carbon)\s+Score\b/i,
     reason: 'a self-computed environmental grade, whatever it is called, is the banned label class'
+  },
+  {
+    // "Transparency Score" was absent from this list for as long as the guard only saw
+    // ANONYMOUS pages, where the label never appears. Once the authenticated consumer
+    // dashboards came into scope it turned out ImpactDashboard renders it as a hero metric.
+    // The score is a producer KPI; naming it to a shopper is the label ECGT 2024/825 bans.
+    name: 'rendered transparency-score label',
+    pattern: /["'`][^"'`\n]*\bTransparency\s+Score\b/i,
+    reason:
+      'the transparency score is a PRODUCER-dashboard KPI — showing a shopper a number Trazo ' +
+      'assigned to a farm is a self-created sustainability label (ECGT 2024/825)'
+  },
+  {
+    // The ladder shape again, but keyed on the OUTPUT rather than the threshold operator.
+    // CarbonJourney derived high/medium/low from an event COUNT (so the `score >= NN` rule
+    // above never matched) and rendered it as a green/blue/gray badge — a wordless grade.
+    name: 'transparency tier ladder',
+    pattern: /transparencyLevel|transparency_score_avg/,
+    reason:
+      'bucketing a farm into high/medium/low grades it, even when the only output is a badge ' +
+      'colour; consumer surfaces show counts and facts, never a derived tier'
   },
   {
     // The ladder shape itself, independent of wording: comparing a score against a

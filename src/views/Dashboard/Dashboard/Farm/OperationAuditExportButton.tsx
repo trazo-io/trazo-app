@@ -4,11 +4,11 @@
  * GET /companies/{companyId}/establishments/{farmId}/operation-audit-export/?certification=…
  */
 import React, { useState } from 'react';
-import { Box, HStack, Icon, Select, Text, useToast, VStack } from '@chakra-ui/react';
+import { Box, HStack, Text, useToast } from '@chakra-ui/react';
 import { FaFilePdf } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import { StandardButton, StandardCard, StandardSelect } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
 
 interface Props {
@@ -70,54 +70,65 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
   };
 
   return (
-    <StandardCard variant="elevated" padding={{ base: 3, md: 4 }} mb={4}>
-      <VStack align="stretch" spacing={3}>
-        <Box>
-          <Text fontWeight="bold" fontSize="lg">
-            <Icon as={FaFilePdf} mr={2} color="green.500" />
+    // Title and subtitle come from StandardCard's own props. They used to be hand-rolled as
+    // a bold <Text fontSize="lg"> inside the body, which made this the one card on the farm
+    // profile whose header did not match its neighbours.
+    <StandardCard
+      variant="elevated"
+      padding={{ base: 3, md: 4 }}
+      mb={0}
+      title={intl.formatMessage({
+        id: 'operationAudit.title',
+        defaultMessage: 'Operation Audit Dossier'
+      })}
+      subtitle={intl.formatMessage({
+        id: 'operationAudit.subtitle',
+        defaultMessage:
+          'One combined NOP records PDF across every parcel and production — for your annual inspection.'
+      })}
+    >
+      <HStack
+        gap={3}
+        align={{ base: 'stretch', smd: 'flex-end' }}
+        flexDirection={{ base: 'column', smd: 'row' }}
+      >
+        <Box minW={{ smd: '200px' }} w={{ base: 'full', smd: 'auto' }}>
+          <Text fontSize="sm" mb={1} color="gray.600">
             {intl.formatMessage({
-              id: 'operationAudit.title',
-              defaultMessage: 'Operation Audit Dossier'
+              id: 'operationAudit.certification',
+              defaultMessage: 'Certification filter'
             })}
           </Text>
-          <Text fontSize="sm" color="gray.500">
-            {intl.formatMessage({
-              id: 'operationAudit.subtitle',
-              defaultMessage:
-                'One combined NOP records PDF across every parcel and production — for your annual inspection.'
-            })}
-          </Text>
-        </Box>
-        <HStack spacing={3} align="flex-end" flexWrap="wrap">
-          <Box minW="200px">
-            <Text fontSize="sm" mb={1} color="gray.600">
-              {intl.formatMessage({
-                id: 'operationAudit.certification',
-                defaultMessage: 'Certification filter'
-              })}
-            </Text>
-            <Select value={certification} onChange={(e) => setCertification(e.target.value)} size="sm">
-              {CERT_OPTIONS.map((c) => (
-                <option key={c} value={c}>
-                  {intl.formatMessage({ id: `operationAudit.cert.${c}`, defaultMessage: c.toUpperCase() })}
-                </option>
-              ))}
-            </Select>
-          </Box>
-          <StandardButton
+          <StandardSelect
+            value={certification}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCertification(e.target.value)}
             size="sm"
-            leftIcon={<FaFilePdf />}
-            onClick={handleDownload}
-            isLoading={isLoading}
-            isDisabled={!companyId || !farmId}
           >
-            {intl.formatMessage({
-              id: 'operationAudit.download',
-              defaultMessage: 'Download Operation Dossier'
-            })}
-          </StandardButton>
-        </HStack>
-      </VStack>
+            {CERT_OPTIONS.map((c) => (
+              <option key={c} value={c}>
+                {intl.formatMessage({
+                  id: `operationAudit.cert.${c}`,
+                  defaultMessage: c.toUpperCase()
+                })}
+              </option>
+            ))}
+          </StandardSelect>
+        </Box>
+        <StandardButton
+          size="sm"
+          leftIcon={<FaFilePdf />}
+          onClick={handleDownload}
+          isLoading={isLoading}
+          isDisabled={!companyId || !farmId}
+          w={{ base: 'full', smd: 'auto' }}
+          flexShrink={0}
+        >
+          {intl.formatMessage({
+            id: 'operationAudit.download',
+            defaultMessage: 'Download Operation Dossier'
+          })}
+        </StandardButton>
+      </HStack>
     </StandardCard>
   );
 };

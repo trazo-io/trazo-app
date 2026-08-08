@@ -22,6 +22,20 @@ export {
   CollapsibleSection
 } from './StandardComponents';
 
+// Profile page primitives — shared by ProfileFarm / ProfileParcel / ProfileProduction
+export {
+  InfoRow,
+  FieldGroup,
+  PageHeaderMeta,
+  type InfoRowProps,
+  type FieldGroupProps,
+  type PageHeaderMetaProps
+} from './ProfileField';
+
+// Dialog shell — bottom sheet below `md`, centered inside-scrolling modal above.
+// Use this instead of hand-rolling another Drawer/Modal breakpoint branch.
+export { ResponsiveModal, type ResponsiveModalProps } from './ResponsiveModal';
+
 // Empty State Components
 export { EmptyImageState } from './EmptyImageState';
 

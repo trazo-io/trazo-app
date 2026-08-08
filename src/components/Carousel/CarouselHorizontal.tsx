@@ -24,6 +24,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import CarouselCard from './CarouselCard';
+import { canCreateMore, getLimit } from 'utils/subscriptionLimits';
 import { FaPlus, FaSeedling } from 'react-icons/fa';
 // Assets
 import avatar2 from 'assets/img/avatars/avatar2.png';
@@ -129,35 +130,33 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
     }
   };
 
-  // Subscription limits check for parcel creation
+  // Subscription limits check for parcel creation.
+  //
+  // Goes through `canCreateMore` rather than reading plan.features inline. The previous version
+  // gated on `max_parcels_per_establishment > 0`, which is FALSE for an unlimited plan (-1) — so
+  // the `=== -1` branch below it was unreachable and the "+ Add Parcel" button never rendered on
+  // Enterprise, and would not have rendered on the Pilot plan either. It also read base plan
+  // features, ignoring purchased add-ons, so a customer the API allows 5 parcels lost the button
+  // at 2 while AddParcel.tsx (which reads effective_limits) disagreed.
   const company = useSelector((state) => state.company?.currentCompany);
   const canCreateParcel = useMemo(() => {
     if (!company || !farmId) return false;
 
-    const plan = company.subscription_plan || company.subscription?.plan;
-    if (!plan?.features) return false;
+    const establishment = company.establishments?.find(
+      (e) => String(e.id) === String(farmId)
+    );
+    const establishmentParcels = establishment?.parcels?.length || 0;
 
-    // For Corporate plans with per-establishment limits
-    if (plan.features.max_parcels_per_establishment > 0) {
-      const establishment = company.establishments?.find(
-        (e) => e.id === parseInt(String(farmId))
-      );
-      const establishmentParcels = establishment?.parcels?.length || 0;
-      const maxParcelsPerEst = plan.features.max_parcels_per_establishment;
-      return maxParcelsPerEst === -1 || establishmentParcels < maxParcelsPerEst;
+    if (getLimit(company, 'max_parcels_per_establishment') !== undefined) {
+      return canCreateMore(company, 'max_parcels_per_establishment', establishmentParcels);
     }
 
-    // For Basic/Standard plans with global parcel limits
-    if (plan.features.max_parcels > 0) {
-      let totalParcels = 0;
-      company.establishments?.forEach((est) => {
-        totalParcels += est.parcels?.length || 0;
-      });
-      const maxParcels = plan.features.max_parcels;
-      return maxParcels === -1 || totalParcels < maxParcels;
-    }
-
-    return false;
+    // Legacy plans expressed a single company-wide cap instead of a per-farm one.
+    const totalParcels = (company.establishments || []).reduce(
+      (sum: number, est: { parcels?: unknown[] }) => sum + (est.parcels?.length || 0),
+      0
+    );
+    return canCreateMore(company, 'max_parcels', totalParcels);
   }, [company, farmId]);
 
   // 2025 Best Practice: Batch load all parcel images at once

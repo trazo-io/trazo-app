@@ -50,6 +50,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import { useUserRole } from 'hooks/useUserRole';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 
 // Sentinels that park unscored (unfinished) productions at the END of either sort direction.
 // Scores are 0-100, so these can never collide with a real value.
@@ -635,14 +636,14 @@ const HistoryCard = ({ amount }) => {
                           // percentage; the transparency page explains what is missing.
 
                           const formatDateRange = (startDate, endDate) => {
-                            const start = new Date(startDate).toLocaleDateString('en-US', {
+                            const start = formatDateFromTimestamp(startDate, 'en-US', {
                               month: 'short',
                               day: 'numeric',
                               year: '2-digit'
                             });
 
                             if (endDate) {
-                              const end = new Date(endDate).toLocaleDateString('en-US', {
+                              const end = formatDateFromTimestamp(endDate, 'en-US', {
                                 month: 'short',
                                 day: 'numeric',
                                 year: '2-digit'

@@ -33,7 +33,13 @@ import {
   VStack,
   useColorModeValue
 } from '@chakra-ui/react';
-import { FaCheckCircle, FaDownload, FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
+import {
+  FaCheckCircle,
+  FaDownload,
+  FaExclamationCircle,
+  FaFileAlt,
+  FaInfoCircle
+} from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useParams } from 'react-router-dom';
 
@@ -278,6 +284,29 @@ const CertifierReview: React.FC = () => {
                                 <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
                                   {finding.detail}
                                 </Text>
+                                {/* Where to look in the PDF dossier. This was on the wire and
+                                    in the interface above but never rendered, so a reviewer got
+                                    a finding with no way to find the underlying records short of
+                                    reading a 900KB PDF end to end. */}
+                                {finding.section_hint && (
+                                  <HStack spacing={1} pt={0.5}>
+                                    <Icon
+                                      as={FaFileAlt}
+                                      boxSize={2.5}
+                                      color={mutedColor}
+                                      aria-hidden="true"
+                                    />
+                                    <Text fontSize="xs" color={mutedColor}>
+                                      {intl.formatMessage(
+                                        {
+                                          id: 'certifierReview.findingLocation',
+                                          defaultMessage: 'In the dossier: {section}'
+                                        },
+                                        { section: finding.section_hint }
+                                      )}
+                                    </Text>
+                                  </HStack>
+                                )}
                               </VStack>
                             </HStack>
                           </Box>

@@ -10,6 +10,12 @@ export interface Company {
   phone: string;
   email: string;
   website: string;
+  // RetrieveCompanySerializer carries these; read them from `state.company.currentCompany`.
+  // They are NOT reachable via the establishment payload — RetrieveEstablishmentSerializer
+  // lists "company" with no nested serializer, so it arrives as a bare PK integer and
+  // `establishment.company?.facebook` is permanently undefined.
+  facebook?: string;
+  instagram?: string;
   logo: string;
   invitation_code?: string;
   // Backend uses contact_email/contact_phone/fiscal_id

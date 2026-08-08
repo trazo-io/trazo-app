@@ -179,6 +179,19 @@ export const OSP_CHANGE_NOTIFICATIONS_URL = (
 ) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/change-notifications/`;
 
+// Common OSP § 11 "Records Maintained" (7 CFR 205.103). GET evidence + POST the operator's
+// own confirmation. Evidence alone never ticks a box — see services/common_osp_records.py.
+export const OSP_RECORD_TYPES_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) => `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/record-types/`;
+
+// Common OSP required attachments (Field & Crop Information, Crop/Livestock Product List,
+// Materials List, Supplier List). No `workbook` param returns a summary; with it, downloads xlsx.
+export const OSP_ATTACHMENTS_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/attachments/`;
+
 // NOP input verifier — reused by the OSP Approved Inputs typeahead. Resolves a
 // free-text product name to NationalListSubstance and/or OMRIProduct PKs.
 export const INPUT_VERIFY_URL = `${ROOT_URL}certifications/verify-input/`;

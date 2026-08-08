@@ -56,10 +56,9 @@ const transparencyParcelSchema = object({
 
   // Step 2: Location (polygon validated separately)
 
-  // Step 3: Transparency Story (Required)
-  transparency_description: string().min(3, 'Tell consumers about this parcel'),
+  // Step 3: Parcel description (Required)
+  transparency_description: string().min(3, 'Describe this parcel'),
   sustainability_practices: string().optional(),
-  consumer_story: string().optional(),
 
   // Step 4: Visual Documentation (Optional)
   images: array(string()).max(5).optional()
@@ -130,7 +129,6 @@ interface TransparencyParcelFormData {
   area: number;
   transparency_description: string;
   sustainability_practices?: string;
-  consumer_story?: string;
 
   // Visual documentation
   images?: string[];
@@ -184,7 +182,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       area: 0,
       transparency_description: '',
       sustainability_practices: '',
-      consumer_story: '',
       images: [],
       certified: false,
       certification_type: '',
@@ -271,8 +268,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       required: true
     },
     {
-      title: 'Transparency Story',
-      description: 'Consumer-facing narrative',
+      title: 'Description',
+      description: 'What this block is',
       icon: MdInfo,
       required: true
     },
@@ -477,7 +474,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     area: 0,
     transparency_description: 2,
     sustainability_practices: 2,
-    consumer_story: 2,
     images: 3
   };
 
@@ -574,7 +570,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
                       size="lg"
                     />
                   </StandardField>
@@ -596,7 +595,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     error={errors.area?.message}
                     helpText={intl.formatMessage({
                       id: 'parcel.areaAcresHelp',
-                      defaultMessage: 'Total planted area in acres. We store hectares for carbon math.'
+                      defaultMessage:
+                        'Total planted area in acres. We store hectares for carbon math.'
                     })}
                   >
                     <Controller
@@ -610,7 +610,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                             <NumberInput
                               value={acres ? Number(acres.toFixed(2)) : 0}
                               onChange={(_, num) =>
-                                field.onChange(num ? Number((num * HECTARES_PER_ACRE).toFixed(4)) : 0)
+                                field.onChange(
+                                  num ? Number((num * HECTARES_PER_ACRE).toFixed(4)) : 0
+                                )
                               }
                               min={0}
                               step={1}
@@ -649,20 +651,20 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   </StandardField>
                 </SimpleGrid>
 
+                {/* Reframed 2026-08-07 with the rest of this form. Name, area and crop are
+                    what a certifier matches against your OSP and your field records — a
+                    wholesale grower's buyer is a packer, not a shopper. */}
                 <StandardAlert
                   status="info"
-                  title="Transparency Focus"
-                  description="This information helps consumers understand the scale and purpose of this land, connecting them to the products they purchase."
+                  title="Why this matters"
+                  description="Your certifier identifies each field by name, area and crop — these are the details that tie your records to the right block."
                 />
 
                 <HStack spacing={3} justify="flex-end" pt={4}>
                   <StandardButton variant="outline" onClick={onCancel}>
                     Cancel
                   </StandardButton>
-                  <StandardButton
-                    onClick={nextStep}
-                    rightIcon={<FaChevronRight />}
-                  >
+                  <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
                     Continue to Location
                   </StandardButton>
                 </HStack>
@@ -828,11 +830,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     <StandardButton variant="outline" onClick={onCancel}>
                       Cancel
                     </StandardButton>
-                    <StandardButton
-                      onClick={nextStep}
-                      rightIcon={<FaChevronRight />}
-                    >
-                      Continue to Story
+                    <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
+                      Continue to description
                     </StandardButton>
                   </HStack>
                 </HStack>
@@ -840,33 +839,54 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
             </StandardCard>
           )}
 
-          {/* 🎯 STEP 2: Transparency Story */}
+          {/* 🎯 STEP 2: Parcel description */}
           {currentStep === 2 && (
-            <StandardCard title="Transparency Story" subtitle="Tell consumers about this parcel">
+            /* Reframed 2026-08-07 from "Transparency Story / Tell consumers about this
+               parcel". The ICP is wholesale CA orchards whose buyer is a packer, not a
+               shopper — and none of this text reaches a shopper anyway: the QR page reads
+               the transparency endpoint, whose `_build_public_parcel` returns only
+               name/area/polygon/map_metadata/location_disclosure_level.
+
+               `transparency_description` is NOT marketing copy despite the old label — it is
+               mapped straight onto `parcel.description` on submit (see finalData below), which
+               is what the profile header renders and what scores 40 of the 100 readiness
+               points. So the field stays; only the framing changes. */
+            <StandardCard
+              title="Parcel description"
+              subtitle="What this block is, in your own words"
+            >
               <VStack spacing={6} align="stretch">
                 <StandardField
-                  label="What makes this parcel special?"
+                  label="Describe this parcel"
                   required
                   error={errors.transparency_description?.message}
-                  helpText="Describe this parcel in a way that helps consumers understand its role in sustainable food production (100+ characters recommended for full points)"
+                  helpText="Crop, plantings, irrigation, anything that distinguishes this block from your others. 100+ characters recommended."
                 >
                   <Textarea
                     {...methods.register('transparency_description')}
-                    placeholder="e.g., This 12.5-acre organic avocado grove uses precision irrigation and cover cropping to reduce water usage by 30% while maintaining soil health. The grove has been certified organic since 2018 and serves as a demonstration site for sustainable farming practices..."
+                    placeholder="e.g., 12.5-acre Hass avocado block on the east slope, planted 2011 on Dusa rootstock. Drip irrigation from the deep well, cover cropped between rows over winter..."
                     borderRadius="lg"
                     borderColor="gray.300"
                     _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                    _focus={{
+                      borderColor: 'green.500',
+                      boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                    }}
                     size="lg"
                     minH="150px"
                   />
                 </StandardField>
 
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+                {/* `consumer_story` ("Why should consumers care?") removed 2026-08-07 — it
+                    scored nothing, no consumer surface rendered it, and its only read
+                    (ProductDetail.tsx) resolved against a payload that never carried it, so
+                    it was always undefined. Collecting storytelling from a wholesale grower
+                    with no destination is the setup-wizard inversion §10.4 calls out. */}
+                <SimpleGrid columns={1} spacing={6}>
                   <StandardField
-                    label="Key Sustainability Practices"
+                    label="Soil & conservation practices"
                     error={errors.sustainability_practices?.message}
-                    helpText="Highlight practices that consumers care about (+30 points)"
+                    helpText="Cover cropping, compost, buffer plantings — the practices your certifier asks about under 7 CFR 205.203."
                   >
                     <Textarea
                       {...methods.register('sustainability_practices')}
@@ -874,24 +894,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
-                      size="lg"
-                      minH="120px"
-                    />
-                  </StandardField>
-
-                  <StandardField
-                    label="Why should consumers care?"
-                    error={errors.consumer_story?.message}
-                    helpText="Connect this parcel to the consumer's values"
-                  >
-                    <Textarea
-                      {...methods.register('consumer_story')}
-                      placeholder="e.g., By choosing products from this parcel, consumers support regenerative agriculture that builds soil health, protects water resources, and creates habitat for beneficial insects..."
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
                       size="lg"
                       minH="120px"
                     />
@@ -899,9 +905,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                 </SimpleGrid>
 
                 <StandardAlert
-                  status="success"
-                  title="Consumer Transparency"
-                  description="This story helps consumers understand the positive impact of their food choices and builds trust through transparency."
+                  status="info"
+                  title="Where this goes"
+                  description="Your description appears on this parcel's profile and in the records you share with your certifier."
                 />
 
                 <HStack spacing={3} justify="space-between" pt={4}>
@@ -917,10 +923,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     <StandardButton variant="outline" onClick={onCancel}>
                       Cancel
                     </StandardButton>
-                    <StandardButton
-                      onClick={nextStep}
-                      rightIcon={<FaChevronRight />}
-                    >
+                    <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
                       Continue to Documentation
                     </StandardButton>
                   </HStack>
@@ -961,7 +964,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}
                   >
-                    Back to Story
+                    Back to description
                   </StandardButton>
 
                   <HStack spacing={3}>

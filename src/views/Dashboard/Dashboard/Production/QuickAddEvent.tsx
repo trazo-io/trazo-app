@@ -1920,8 +1920,11 @@ const QuickAddEvent: React.FC<QuickAddEventProps> = ({
                           badgeColorScheme="gray"
                         />
                         <Text fontSize="sm" color="gray.600" textAlign="center">
-                          Voice input is available on Basic ($69/mo) and higher plans. Upgrade to
-                          capture farm events by simply speaking.
+                          {intl.formatMessage({
+                            id: 'quickAdd.voiceInputUpgrade',
+                            defaultMessage:
+                              'Voice input is available on the Compliance plan. Upgrade to capture farm events by simply speaking.'
+                          })}
                         </Text>
                       </VStack>
                     </SectionBox>
