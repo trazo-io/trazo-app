@@ -383,7 +383,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       <CardHeader>
         <HStack justify="space-between">
           <VStack align="start" spacing={1}>
-            <Text fontSize="lg" fontWeight="bold" color="green.600">
+            <Text fontSize="lg" fontWeight="bold" color="green.700">
               Voice Event Capture
             </Text>
             <Text fontSize="sm" color="gray.600">
@@ -434,7 +434,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             <Box p={3} bg="green.50" borderRadius="md">
               <VStack spacing={2}>
                 <Progress value={75} colorScheme="green" size="sm" w="full" isIndeterminate />
-                <Text fontSize="sm" color="green.600">
+                <Text fontSize="sm" color="green.700">
                   {processingStage ||
                     (isProcessingVoice ? 'Processing with AI...' : 'Processing...')}
                 </Text>

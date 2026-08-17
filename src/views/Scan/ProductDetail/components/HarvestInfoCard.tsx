@@ -186,7 +186,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               textAlign="center"
             >
               <Icon as={FaClipboardCheck} color="green.500" boxSize={4} mb={1} />
-              <Text fontSize="sm" fontWeight="bold" color="green.600">
+              <Text fontSize="sm" fontWeight="bold" color="green.700">
                 {localizeFieldValue(humanize(harvestDetails.quality_grade || ''), intl.locale)}
               </Text>
               <Text fontSize="xs" color={mutedColor} textTransform="uppercase">

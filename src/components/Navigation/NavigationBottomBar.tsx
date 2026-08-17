@@ -68,7 +68,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
   const inactiveColor = useColorModeValue('gray.400', 'gray.500');
   const activeBgColor = useColorModeValue('green.50', 'green.900');
   const textColor = useColorModeValue('gray.600', 'gray.400');
-  const activeTextColor = useColorModeValue('green.600', 'green.400');
+  const activeTextColor = useColorModeValue('green.700', 'green.400');
 
   // Update active section when prop changes, but don't override during user-initiated scrolling
   useEffect(() => {

@@ -19,7 +19,8 @@ import {
   formatNumber,
   formatPercentage,
   formatConsumerPestName,
-  formatConsumerActionThreshold
+  formatConsumerActionThreshold,
+  formatConsumerOrganicStatus
 } from './formatters';
 
 type PestData = Record<string, unknown>;
@@ -131,7 +132,14 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     }
   },
   {
+    // Six subtypes, NOT all. PestManagementTab renders this only for SC/PI/TA/TM/BR/IP, and
+    // that exclusion is correct: CU is CULTURAL CONTROL (§ 205.206(a)(3) — sanitation,
+    // resistant varieties, site selection). A cultural practice does not produce a pest
+    // PRESSURE reading; pressure is an output of scouting and monitoring. Declaring it for CU
+    // put a value on the Cultural Control modal that no input could set or clear — the same
+    // over-declaration pattern as `applied_scope` on Planting.
     name: 'pest_pressure_level',
+    visibleForSubtypes: ['SC', 'PI', 'TA', 'TM', 'BR', 'IP'],
     labelKey: 'events.pest.fields.pressureLevel',
     valueType: 'enum',
     formatter: formatPestPressure,
@@ -313,6 +321,10 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
       };
       return m[v.toLowerCase()] ?? v;
     },
+    // The producer formatter above turns a bare `yes` into "OMRI / Organic-approved", which on
+    // a consumer card named a third-party listing program on the strength of one dropdown.
+    // Shoppers get the attributed wording instead.
+    consumerFormatter: formatConsumerOrganicStatus,
     surfaces: {
       modal: 'immediate',
       form: 'immediate',

@@ -25,7 +25,10 @@ describe('application method labels', () => {
         }
       }
     }
-    expect(missing, `these would render their raw enum key to a shopper: ${missing.join(', ')}`).toEqual([]);
+    expect(
+      missing,
+      `these would render their raw enum key to a shopper: ${missing.join(', ')}`
+    ).toEqual([]);
   });
 
   it('never returns a value that looks like a raw enum key', () => {

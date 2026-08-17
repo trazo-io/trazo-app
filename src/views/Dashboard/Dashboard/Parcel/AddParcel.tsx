@@ -89,8 +89,8 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
     establishmentData?.latitude && establishmentData?.longitude
       ? { lat: establishmentData.latitude, lng: establishmentData.longitude }
       : currentEstablishment?.latitude && currentEstablishment?.longitude
-      ? { lat: currentEstablishment.latitude, lng: currentEstablishment.longitude }
-      : undefined;
+        ? { lat: currentEstablishment.latitude, lng: currentEstablishment.longitude }
+        : undefined;
 
   // Pre-flight subscription limit check (informational only — backend enforces).
   // Parcel count comes from the Redux company state (same source UnifiedSubscription
@@ -133,15 +133,9 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       certified: parcelData.certified || false,
       certification_type: parcelData.certification_type || '',
 
-      // System fields (maintain compatibility)
+      // System fields (maintain compatibility). §205.202 facts deliberately
+      // absent — the Parcel Application wizard owns them (see handleSubmit).
       polygon: parcelData.polygon || [],
-      buffer_zones: parcelData.buffer_zones || [],
-      apn: parcelData.apn || '',
-      section_township_range: parcelData.section_township_range || '',
-      date_began_managing: parcelData.date_began_managing || '',
-      treated_lumber_present: parcelData.treated_lumber_present || false,
-      treated_lumber_description: parcelData.treated_lumber_description || '',
-      treated_lumber_install_date: parcelData.treated_lumber_install_date || '',
       map_metadata: parcelData.map_metadata || {
         center: { lat: 40.7128, lng: -74.006 },
         zoom: 13
@@ -200,18 +194,11 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         certification_type: data.certification_type || '',
         contact_person: data.contact_person || '',
         contact_email: data.contact_email || '',
-        // NOP buffer zones (7 CFR 205.202(c)) — only send sides the farmer filled in.
-        buffer_zones: (data.buffer_zones || []).filter(
-          (b: { adjoining_land_use?: string }) =>
-            b && b.adjoining_land_use && b.adjoining_land_use.trim()
-        ),
-        // CCOF Parcel Application identity + treated-lumber (7 CFR 205.272)
-        apn: data.apn || '',
-        section_township_range: data.section_township_range || '',
-        date_began_managing: data.date_began_managing || null,
-        treated_lumber_present: data.treated_lumber_present || false,
-        treated_lumber_description: data.treated_lumber_description || '',
-        treated_lumber_install_date: data.treated_lumber_install_date || null,
+        // §205.202 facts (buffer_zones / apn / S-T-R / date_began_managing /
+        // treated_lumber_*) removed 2026-08-10: the Parcel Application wizard
+        // is their single editor, this form never rendered them, and its
+        // round-trip carried the SAME destructive adjoining-land-use filter
+        // that caused the 2026-08-09 buffer data-loss incident.
         polygon: data.polygon || [],
         map_metadata: data.map_metadata || {
           center: { lat: 40.7128, lng: -74.006 },

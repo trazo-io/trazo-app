@@ -191,30 +191,30 @@ export function getReadableFieldValue(field: string, value: string): string {
   const fieldMappings: Record<string, Record<string, string>> = {
     fuel_type: {
       // 🔧 Added emojis for consistency with other categorical fields (seeds_source, water_source, equipment_type)
-      diesel: '⛽ Diesel',
-      gasoline: '⛽ Gasoline',
-      biodiesel: '🌿 Biodiesel',
-      electric: '⚡ Electric',
-      natural_gas: '💨 Natural Gas',
-      propane: '🔥 LPG / Propane',
-      none: '🔧 No Fuel / Manual'
+      diesel: 'Diesel',
+      gasoline: 'Gasoline',
+      biodiesel: 'Biodiesel',
+      electric: 'Electric',
+      natural_gas: 'Natural Gas',
+      propane: 'LPG / Propane',
+      none: 'No Fuel / Manual'
     },
     equipment_type: {
       // Generic equipment types
-      tractor: '🚜 Tractor',
-      harvester: '🌾 Harvester/Combine',
-      sprayer: '💨 Sprayer',
-      cultivator: '🔨 Cultivator',
-      transport: '🚛 Transport Vehicle',
-      irrigation_pump: '💧 Irrigation Pump',
-      truck: '🚛 Truck/Transport',
-      generator: '⚡ Generator',
-      pump: '💧 Irrigation Pump',
-      other: '🔧 Other Equipment',
+      tractor: 'Tractor',
+      harvester: 'Harvester/Combine',
+      sprayer: 'Sprayer',
+      cultivator: 'Cultivator',
+      transport: 'Transport Vehicle',
+      irrigation_pump: 'Irrigation Pump',
+      truck: 'Truck/Transport',
+      generator: 'Generator',
+      pump: 'Irrigation Pump',
+      other: 'Other Equipment',
       // Specific tractor sizes
-      tractor_small: '🚜 Small Tractor (25-75 HP)',
-      tractor_medium: '🚜 Medium Tractor (75-150 HP)',
-      tractor_large: '🚜 Large Tractor (150+ HP)'
+      tractor_small: 'Small Tractor (25-75 HP)',
+      tractor_medium: 'Medium Tractor (75-150 HP)',
+      tractor_large: 'Large Tractor (150+ HP)'
     },
     equipment_operation_type: {
       FC: 'Fuel Consumption',
@@ -227,175 +227,175 @@ export function getReadableFieldValue(field: string, value: string): string {
     },
     operation_efficiency: {
       // 🔧 Added emojis for consumer-friendly display
-      high: '✅ High Efficiency',
-      normal: '➖ Normal Efficiency',
-      low: '⚠️ Low Efficiency'
+      high: 'High Efficiency',
+      normal: 'Normal Efficiency',
+      low: 'Low Efficiency'
     },
     weather_conditions: {
       // 🔧 Added weather emojis for consumer-friendly display
-      calm_dry: '☀️ Calm & Dry - Ideal conditions',
-      clear_calm: '☀️ Clear & Calm - Ideal conditions',
-      light_wind: '🌤️ Light Wind - Suitable conditions',
-      humid: '💧 Humid - Acceptable conditions',
-      windy: '💨 Windy - Challenging conditions',
+      calm_dry: 'Calm & Dry - Ideal conditions',
+      clear_calm: 'Clear & Calm - Ideal conditions',
+      light_wind: 'Light Wind - Suitable conditions',
+      humid: 'Humid - Acceptable conditions',
+      windy: 'Windy - Challenging conditions',
       // Legacy mappings for backward compatibility
-      calm_wet: '🌧️ Calm, wet conditions',
-      windy_dry: '💨 Windy, dry conditions',
-      windy_wet: '🌬️ Windy, wet conditions',
-      rainy: '🌧️ Rainy conditions',
-      sunny: '☀️ Sunny conditions',
-      cloudy: '☁️ Cloudy conditions',
-      partly_cloudy: '⛅ Partly Cloudy - Good conditions',
-      overcast: '☁️ Overcast conditions',
-      overcast_humid: '☁️💧 Overcast & Humid'
+      calm_wet: 'Calm, wet conditions',
+      windy_dry: 'Windy, dry conditions',
+      windy_wet: 'Windy, wet conditions',
+      rainy: 'Rainy conditions',
+      sunny: 'Sunny conditions',
+      cloudy: 'Cloudy conditions',
+      partly_cloudy: 'Partly Cloudy - Good conditions',
+      overcast: 'Overcast conditions',
+      overcast_humid: 'Overcast & Humid'
     },
     application_timing: {
       // 🔧 Added emojis for consumer-friendly display
-      pre_plant: '🌱 Pre-Planting',
-      post_emergence: '🌿 Post-Emergence',
-      flowering: '🌸 Flowering Stage',
-      pre_bloom: '🌸 Pre-Bloom Stage',
-      fruit_set: '🍊 Fruit Set Stage',
-      post_bloom: '🍊 Post-Bloom Stage',
-      fruit_development: '🍎 Fruit Development',
-      harvest: '🌾 Pre-Harvest',
+      pre_plant: 'Pre-Planting',
+      post_emergence: 'Post-Emergence',
+      flowering: 'Flowering Stage',
+      pre_bloom: 'Pre-Bloom Stage',
+      fruit_set: 'Fruit Set Stage',
+      post_bloom: 'Post-Bloom Stage',
+      fruit_development: 'Fruit Development',
+      harvest: 'Pre-Harvest',
       // Legacy mappings for backward compatibility
-      at_plant: '🌱 At planting',
-      post_plant: '🌿 After planting',
-      pre_harvest: '🌾 Before harvest',
-      post_harvest: '📦 After harvest',
-      early_season: '🌱 Early season',
-      mid_season: '🌿 Mid season',
-      late_season: '🍂 Late season',
-      dormant: '❄️ Dormant period',
-      active_growth: '🌱 Active growth period'
+      at_plant: 'At planting',
+      post_plant: 'After planting',
+      pre_harvest: 'Before harvest',
+      post_harvest: 'After harvest',
+      early_season: 'Early season',
+      mid_season: 'Mid season',
+      late_season: 'Late season',
+      dormant: 'Dormant period',
+      active_growth: 'Active growth period'
     },
     way_of_application: {
-      spray: '💦 Spray application',
-      drip: '💧 Drip irrigation',
-      broadcast: '📡 Broadcast application',
-      injection: '💉 Soil injection',
-      foliar: '🍃 Foliar spray',
-      granular: '⚫ Granular application',
-      liquid: '💧 Liquid application',
-      powder: '🔵 Powder application'
+      spray: 'Spray application',
+      drip: 'Drip irrigation',
+      broadcast: 'Broadcast application',
+      injection: 'Soil injection',
+      foliar: 'Foliar spray',
+      granular: 'Granular application',
+      liquid: 'Liquid application',
+      powder: 'Powder application'
     },
     application_method: {
       // Fertilizer methods
-      broadcast_surface: '📡 Broadcast Surface - Uniform spreading',
-      broadcast_incorporated: '🔄 Broadcast Incorporated - Mixed into soil',
-      band_placement: '📏 Band Placement - Precise placement',
-      side_dress: '🌱 Side Dress - Growing season application',
-      fertigation: '💧 Fertigation - Through irrigation',
-      foliar_feed: '🍃 Foliar Feed - Leaf application',
-      soil_injection: '💉 Soil Injection - Liquid fertilizer',
-      granular_spreader: '⚙️ Granular Spreader - Mechanical application',
+      broadcast_surface: 'Broadcast Surface - Uniform spreading',
+      broadcast_incorporated: 'Broadcast Incorporated - Mixed into soil',
+      band_placement: 'Band Placement - Precise placement',
+      side_dress: 'Side Dress - Growing season application',
+      fertigation: 'Fertigation - Through irrigation',
+      foliar_feed: 'Foliar Feed - Leaf application',
+      soil_injection: 'Soil Injection - Liquid fertilizer',
+      granular_spreader: 'Granular Spreader - Mechanical application',
       // EPA Standard Methods (Sprint 6 - 2025-12-23)
-      ground_spray: '🌊 Ground Spray - Spray application to crops/soil',
-      chemigation: '💧 Chemigation - Through irrigation system',
-      aerial_spray: '✈️ Aerial Spray - Aircraft application',
+      ground_spray: 'Ground Spray - Spray application to crops/soil',
+      chemigation: 'Chemigation - Through irrigation system',
+      aerial_spray: 'Aerial Spray - Aircraft application',
       // Pesticide methods
-      broadcast_spray: '💦 Broadcast Spray - Full field coverage',
-      band_spray: '🎯 Band Spray - Row treatment',
-      soil_incorporation: '🔄 Soil Incorporation - Mixed into soil',
-      granular_preemergent: '⚫ Granular Pre-Emergent - Soil surface',
+      broadcast_spray: 'Broadcast Spray - Full field coverage',
+      band_spray: 'Band Spray - Row treatment',
+      soil_incorporation: 'Soil Incorporation - Mixed into soil',
+      granular_preemergent: 'Granular Pre-Emergent - Soil surface',
       // Fungicide methods
-      foliar_spray: '🍃 Foliar Spray - Leaf surface treatment',
-      air_blast_sprayer: '🌬️ Air Blast Sprayer - Orchard/vineyard coverage',
-      soil_drench: '🌊 Soil Drench - Root zone treatment',
-      seed_treatment: '🌰 Seed Treatment - Preventive coating',
-      trunk_injection: '🌳 Trunk Injection - Tree treatment',
-      dusting: '🔵 Dusting - Powder application',
+      foliar_spray: 'Foliar Spray - Leaf surface treatment',
+      air_blast_sprayer: 'Air Blast Sprayer - Orchard/vineyard coverage',
+      soil_drench: 'Soil Drench - Root zone treatment',
+      seed_treatment: 'Seed Treatment - Preventive coating',
+      trunk_injection: 'Trunk Injection - Tree treatment',
+      dusting: 'Dusting - Powder application',
       // Herbicide methods
-      pre_plant_incorporated: '🔄 Pre-Plant Incorporated - Soil preparation',
-      pre_emergence: '🌱 Pre-Emergence - Before sprouting',
-      post_emergence_directed: '🎯 Post-Emergence Directed - Targeted application',
-      post_emergence_over_top: '📡 Post-Emergence Over-Top - Full coverage',
-      spot_treatment: '📍 Spot Treatment - Localized application',
+      pre_plant_incorporated: 'Pre-Plant Incorporated - Soil preparation',
+      pre_emergence: 'Pre-Emergence - Before sprouting',
+      post_emergence_directed: 'Post-Emergence Directed - Targeted application',
+      post_emergence_over_top: 'Post-Emergence Over-Top - Full coverage',
+      spot_treatment: 'Spot Treatment - Localized application',
       // Form dropdown values (Sprint 2 Epic 2.2 standardized methods)
-      banded: '📏 Banded - Precise row/band placement',
-      subsurface: '💉 Subsurface - Below soil surface injection',
+      banded: 'Banded - Precise row/band placement',
+      subsurface: 'Subsurface - Below soil surface injection',
       // Legacy/generic mappings
-      spray: '💦 Spray Application',
-      broadcast: '📡 Broadcast Application',
-      broadcast_spreader: '📡 Broadcast Spreader - Uniform spreading',
-      drip: '💧 Drip/Irrigation',
-      foliar: '🍃 Foliar Application',
-      injection: '💉 Soil Injection',
-      granular: '⚫ Granular Application'
+      spray: 'Spray Application',
+      broadcast: 'Broadcast Application',
+      broadcast_spreader: 'Broadcast Spreader - Uniform spreading',
+      drip: 'Drip/Irrigation',
+      foliar: 'Foliar Application',
+      injection: 'Soil Injection',
+      granular: 'Granular Application'
     },
     // SOIL MANAGEMENT FIELD MAPPINGS (Type 5)
     soil_moisture: {
-      dry: '🏜️ Dry',
-      moderate: '🌱 Moderate',
-      moist: '💧 Moist',
-      wet: '🌊 Wet'
+      dry: 'Dry',
+      moderate: 'Moderate',
+      moist: 'Moist',
+      wet: 'Wet'
     },
     soil_texture: {
       // Primary soil textures - using contextual emojis
-      sandy: '🏖️ Sandy',
-      sandy_loam: '🏖️ Sandy Loam',
-      loam: '🌱 Loam',
-      clay_loam: '🧱 Clay Loam',
-      clay: '🧱 Clay',
-      silt: '💨 Silt',
-      silt_loam: '💨 Silt Loam',
-      silty_clay: '💨 Silty Clay',
-      silty_clay_loam: '💨 Silty Clay Loam',
-      sandy_clay: '🏖️ Sandy Clay',
-      sandy_clay_loam: '🏖️ Sandy Clay Loam',
+      sandy: 'Sandy',
+      sandy_loam: 'Sandy Loam',
+      loam: 'Loam',
+      clay_loam: 'Clay Loam',
+      clay: 'Clay',
+      silt: 'Silt',
+      silt_loam: 'Silt Loam',
+      silty_clay: 'Silty Clay',
+      silty_clay_loam: 'Silty Clay Loam',
+      sandy_clay: 'Sandy Clay',
+      sandy_clay_loam: 'Sandy Clay Loam',
       // Additional soil type variations
-      coarse_sandy: '🏖️ Coarse Sandy',
-      fine_sandy: '🏖️ Fine Sandy',
-      very_fine_sandy_loam: '🏖️ Very Fine Sandy Loam',
-      organic: '🌿 Organic Soil',
-      peat: '🌿 Peat Soil',
-      muck: '🌿 Muck Soil'
+      coarse_sandy: 'Coarse Sandy',
+      fine_sandy: 'Fine Sandy',
+      very_fine_sandy_loam: 'Very Fine Sandy Loam',
+      organic: 'Organic Soil',
+      peat: 'Peat Soil',
+      muck: 'Muck Soil'
     },
     equipment_used: {
       // Soil management specific equipment
-      plow: '🚜 Plow',
-      disk_harrow: '🚜 Disk Harrow',
-      field_cultivator: '🚜 Field Cultivator',
-      chisel_plow: '🚜 Chisel Plow',
-      subsoiler: '🚜 Subsoiler',
-      rototiller: '🚜 Rototiller',
-      moldboard_plow: '🚜 Moldboard Plow',
-      offset_disk: '🚜 Offset Disk',
-      tandem_disk: '🚜 Tandem Disk',
-      spring_tooth_harrow: '🚜 Spring Tooth Harrow',
-      spike_tooth_harrow: '🚜 Spike Tooth Harrow',
-      roller: '🚜 Roller/Compactor',
-      leveler: '🚜 Land Leveler',
-      soil_sampler: '🔬 Soil Sampler',
-      ph_meter: '📊 pH Meter',
-      soil_probe: '🔬 Soil Probe',
-      drainage_plow: '🚜 Drainage Plow',
-      terracing_equipment: '🚜 Terracing Equipment',
+      plow: 'Plow',
+      disk_harrow: 'Disk Harrow',
+      field_cultivator: 'Field Cultivator',
+      chisel_plow: 'Chisel Plow',
+      subsoiler: 'Subsoiler',
+      rototiller: 'Rototiller',
+      moldboard_plow: 'Moldboard Plow',
+      offset_disk: 'Offset Disk',
+      tandem_disk: 'Tandem Disk',
+      spring_tooth_harrow: 'Spring Tooth Harrow',
+      spike_tooth_harrow: 'Spike Tooth Harrow',
+      roller: 'Roller/Compactor',
+      leveler: 'Land Leveler',
+      soil_sampler: 'Soil Sampler',
+      ph_meter: 'pH Meter',
+      soil_probe: 'Soil Probe',
+      drainage_plow: 'Drainage Plow',
+      terracing_equipment: 'Terracing Equipment',
       // General equipment that might be used
-      tractor: '🚜 Tractor',
-      hand_tools: '🔧 Hand Tools',
-      no_till_drill: '🚜 No-Till Drill',
-      seeder: '🚜 Seeder',
-      broadcast_spreader: '🚜 Broadcast Spreader'
+      tractor: 'Tractor',
+      hand_tools: 'Hand Tools',
+      no_till_drill: 'No-Till Drill',
+      seeder: 'Seeder',
+      broadcast_spreader: 'Broadcast Spreader'
     },
     soil_management_activity: {
       // Common soil management practices - with contextual emojis
-      tillage: '🚜 Tillage Operation',
-      cultivation: '🌱 Cultivation',
-      soil_testing: '🔬 Soil Testing',
-      soil_amendment: '🧪 Soil Amendment Application',
-      drainage_installation: '💧 Drainage Installation',
-      terracing: '🏔️ Terracing/Erosion Control',
-      compaction_relief: '⚒️ Compaction Relief',
-      organic_matter_addition: '🌿 Organic Matter Addition',
-      ph_adjustment: '⚖️ pH Adjustment',
-      nutrient_management: '🧬 Nutrient Management',
-      cover_crop_termination: '🌾 Cover Crop Termination',
-      residue_management: '♻️ Crop Residue Management',
-      soil_conservation: '🛡️ Soil Conservation Practice',
-      moisture_management: '💦 Soil Moisture Management',
-      structure_improvement: '🔧 Soil Structure Improvement'
+      tillage: 'Tillage Operation',
+      cultivation: 'Cultivation',
+      soil_testing: 'Soil Testing',
+      soil_amendment: 'Soil Amendment Application',
+      drainage_installation: 'Drainage Installation',
+      terracing: 'Terracing/Erosion Control',
+      compaction_relief: 'Compaction Relief',
+      organic_matter_addition: 'Organic Matter Addition',
+      ph_adjustment: 'pH Adjustment',
+      nutrient_management: 'Nutrient Management',
+      cover_crop_termination: 'Cover Crop Termination',
+      residue_management: 'Crop Residue Management',
+      soil_conservation: 'Soil Conservation Practice',
+      moisture_management: 'Soil Moisture Management',
+      structure_improvement: 'Soil Structure Improvement'
     },
     // ============================================================
     // Sprint 3 Epic 3.2: Consumer Trust Field Mappings
@@ -403,67 +403,70 @@ export function getReadableFieldValue(field: string, value: string): string {
     // ============================================================
     organic_approved: {
       // Chemical event organic certification status
-      omri: '✅ OMRI Listed (Organic Certified)',
-      omri_listed: '✅ OMRI Listed (Organic Certified)',
-      usda_nop_approved: '🌱 USDA NOP Approved',
-      organic_equivalent: '🌿 Organic Equivalent',
-      not_organic: '⚠️ Conventional (Not Organic)',
-      transitional: '🔄 Transitional (In Certification)',
+      omri: 'OMRI Listed (Organic Certified)',
+      omri_listed: 'OMRI Listed (Organic Certified)',
+      wsda_listed: 'WSDA Listed',
+      nop_seal_on_label: 'NOP seal on label',
+      certifier_approved: 'Certifier-approved',
+      usda_nop_approved: 'USDA NOP Approved',
+      organic_equivalent: 'Organic Equivalent',
+      not_organic: 'Conventional (Not Organic)',
+      transitional: 'Transitional (In Certification)',
       // Legacy backend values
-      yes: '✅ Organic Approved',
-      no: '❌ Not Organic Approved',
+      yes: 'Organic Approved',
+      no: 'Not Organic Approved',
       not_applicable: 'N/A'
     },
     seeds_source: {
       // Production event seed SOURCE for transparency — where the seed came from
       // (For regulatory classification, use seed_certification_status)
-      farm_saved: '♻️ Farm-Saved Seeds',
-      local: '🏡 Local Nursery/Supplier',
-      cooperative: '🤝 Farmer Cooperative',
-      commercial: '🏭 Commercial Supplier',
-      other: '📝 Other Source',
+      farm_saved: 'Farm-Saved Seeds',
+      local: 'Local Nursery/Supplier',
+      cooperative: 'Farmer Cooperative',
+      commercial: 'Commercial Supplier',
+      other: 'Other Source',
       // Legacy backend values (migrated in 0152)
-      certified_organic: '🌱 Certified Organic Seeds',
-      imported: '✈️ Imported',
-      certified: '✅ Certified Organic Seeds'
+      certified_organic: 'Certified Organic Seeds',
+      imported: 'Imported',
+      certified: 'Certified Organic Seeds'
     },
     seed_certification_status: {
       // NOP 7 CFR 205.204 regulatory classification
-      certified_organic: '🌱 Certified Organic',
-      transitional: '🔄 Transitional',
-      non_organic_untreated: '⚪ Non-organic (Untreated)',
-      non_organic_treated: '⚠️ Non-organic (Treated)'
+      certified_organic: 'Certified Organic',
+      transitional: 'Transitional',
+      non_organic_untreated: 'Non-organic (Untreated)',
+      non_organic_treated: 'Non-organic (Treated)'
     },
     water_source: {
       // Production event water source for transparency
       // Form values from ProductionTab.jsx
-      well_groundwater: '💧 Well/Groundwater',
-      municipal: '🏢 Municipal Water Supply',
-      rainwater_harvesting: '🌧️ Rainwater Harvesting',
-      irrigation_canal: '🚿 Irrigation Canal/District',
-      river_stream: '🏞️ River/Stream',
-      pond_reservoir: '🌊 Pond/Reservoir',
-      recycled_water: '♻️ Recycled/Reclaimed Water',
-      other: '📝 Other Source',
+      well_groundwater: 'Well/Groundwater',
+      municipal: 'Municipal Water Supply',
+      rainwater_harvesting: 'Rainwater Harvesting',
+      irrigation_canal: 'Irrigation Canal/District',
+      river_stream: 'River/Stream',
+      pond_reservoir: 'Pond/Reservoir',
+      recycled_water: 'Recycled/Reclaimed Water',
+      other: 'Other Source',
       // Legacy backend values
-      well: '💧 Well Water',
-      rainwater: '🌧️ Rainwater Harvesting',
-      river: '🏞️ River/Stream',
-      recycled: '♻️ Recycled Water'
+      well: 'Well Water',
+      rainwater: 'Rainwater Harvesting',
+      river: 'River/Stream',
+      recycled: 'Recycled Water'
     },
     beneficial_insects_used: {
       // Pest management biological control indicator
-      yes: '🐞 Using Beneficial Insects',
+      yes: 'Using Beneficial Insects',
       no: 'Not Using Beneficial Insects',
-      planning: '📋 Planning to Implement'
+      planning: 'Planning to Implement'
     },
     // Phase 3: Electricity source for irrigation pump power
     electricity_source: {
-      grid: '⚡ Grid Electricity',
-      solar: '☀️ Solar',
-      wind: '💨 Wind',
-      diesel_generator: '⛽ Diesel Generator',
-      mixed: '🔀 Mixed Sources'
+      grid: 'Grid Electricity',
+      solar: 'Solar',
+      wind: 'Wind',
+      diesel_generator: 'Diesel Generator',
+      mixed: 'Mixed Sources'
     },
     // ============================================================
     // Chemical Subtype Mappings for Accurate Carbon Calculations
@@ -472,125 +475,125 @@ export function getReadableFieldValue(field: string, value: string): string {
     // ============================================================
     chemical_subtype: {
       // Herbicide subtypes (organic = 78% lower carbon than synthetic)
-      synthetic_herbicide: '🏭 Synthetic Herbicide',
-      organic_herbicide: '🌿 Organic/Natural Herbicide',
+      synthetic_herbicide: 'Synthetic Herbicide',
+      organic_herbicide: 'Organic/Natural Herbicide',
       // Fungicide subtypes (biological = 56% lower carbon than synthetic)
-      synthetic_fungicide: '🏭 Synthetic Fungicide',
-      organic_fungicide: '🌿 Organic/Natural Fungicide',
-      copper_fungicide: '🔶 Copper-Based Fungicide',
-      sulfur_fungicide: '🟡 Sulfur-Based Fungicide',
-      biological_fungicide: '🌱 Biological Fungicide',
+      synthetic_fungicide: 'Synthetic Fungicide',
+      organic_fungicide: 'Organic/Natural Fungicide',
+      copper_fungicide: 'Copper-Based Fungicide',
+      sulfur_fungicide: 'Sulfur-Based Fungicide',
+      biological_fungicide: 'Biological Fungicide',
       // Pesticide subtypes (biological = ~70% lower carbon than synthetic)
-      synthetic_pesticide: '🏭 Synthetic Pesticide',
-      organic_pesticide: '🌿 Organic/Natural Pesticide',
-      biological_pesticide: '🌱 Biological Pesticide',
-      neonicotinoid: '🏭 Neonicotinoid Insecticide',
+      synthetic_pesticide: 'Synthetic Pesticide',
+      organic_pesticide: 'Organic/Natural Pesticide',
+      biological_pesticide: 'Biological Pesticide',
+      neonicotinoid: 'Neonicotinoid Insecticide',
       // Fertilizer subtypes (organic = 83% lower carbon than synthetic)
-      synthetic_fertilizer: '🏭 Synthetic Fertilizer',
-      organic_fertilizer: '🌱 Organic Fertilizer',
+      synthetic_fertilizer: 'Synthetic Fertilizer',
+      organic_fertilizer: 'Organic Fertilizer',
       slow_release_fertilizer: '⏳ Slow-Release Fertilizer',
       // Generic/short-form subtypes (backend may send without type suffix)
-      synthetic: '🏭 Synthetic Chemical',
-      organic: '🌿 Organic/Natural',
-      biological: '🌱 Biological'
+      synthetic: 'Synthetic Chemical',
+      organic: 'Organic/Natural',
+      biological: 'Biological'
     },
     crop_growth_stage: {
-      seedling: '🌱 Seedling Stage',
-      vegetative: '🌿 Vegetative Growth',
-      flowering: '🌸 Flowering',
-      pre_bloom: '🌸 Pre-Bloom',
-      bloom: '🌸 Bloom',
-      post_bloom: '🍊 Post-Bloom',
-      fruit_set: '🍊 Fruit Set',
-      fruit_development: '🍎 Fruit Development',
-      maturation: '🍊 Maturation',
-      harvest: '🌾 Harvest Ready',
-      dormant: '❄️ Dormant',
-      post_harvest: '📦 Post-Harvest'
+      seedling: 'Seedling Stage',
+      vegetative: 'Vegetative Growth',
+      flowering: 'Flowering',
+      pre_bloom: 'Pre-Bloom',
+      bloom: 'Bloom',
+      post_bloom: 'Post-Bloom',
+      fruit_set: 'Fruit Set',
+      fruit_development: 'Fruit Development',
+      maturation: 'Maturation',
+      harvest: 'Harvest Ready',
+      dormant: 'Dormant',
+      post_harvest: 'Post-Harvest'
     },
     // ============================================================
     // Growth Stage display map — used for variety/block_id/growth_stage universal fields
     // ============================================================
     growth_stage: {
-      seedling: '🌱 Seedling',
-      vegetative: '🌿 Vegetative',
-      flowering: '🌸 Flowering',
-      pre_bloom: '🌸 Pre-Bloom',
-      bloom: '🌸 Bloom',
-      post_bloom: '🍊 Post-Bloom',
-      fruit_set: '🍊 Fruit Set',
-      fruit_development: '🍎 Fruit Development',
-      maturation: '🍊 Maturation',
-      harvest_ready: '🌾 Harvest Ready',
-      dormant: '❄️ Dormant',
-      post_harvest: '📦 Post-Harvest'
+      seedling: 'Seedling',
+      vegetative: 'Vegetative',
+      flowering: 'Flowering',
+      pre_bloom: 'Pre-Bloom',
+      bloom: 'Bloom',
+      post_bloom: 'Post-Bloom',
+      fruit_set: 'Fruit Set',
+      fruit_development: 'Fruit Development',
+      maturation: 'Maturation',
+      harvest_ready: 'Harvest Ready',
+      dormant: 'Dormant',
+      post_harvest: 'Post-Harvest'
     },
     // ============================================================
     // Pollination subtype field mappings (PO events)
     // ============================================================
     pollinator_type: {
-      honeybee: '🐝 Honeybee',
-      bumblebee: '🐝 Bumblebee',
-      mason_bee: '🐝 Mason Bee',
-      leafcutter_bee: '🐝 Leafcutter Bee',
-      wild_bee: '🐝 Wild Bee',
-      butterfly: '🦋 Butterfly',
-      moth: '🦋 Moth',
-      natural: '🌿 Natural Pollinators',
-      managed: '🐝 Managed Hive',
-      other: '🐝 Other Pollinator'
+      honeybee: 'Honeybee',
+      bumblebee: 'Bumblebee',
+      mason_bee: 'Mason Bee',
+      leafcutter_bee: 'Leafcutter Bee',
+      wild_bee: 'Wild Bee',
+      butterfly: 'Butterfly',
+      moth: 'Moth',
+      natural: 'Natural Pollinators',
+      managed: 'Managed Hive',
+      other: 'Other Pollinator'
     },
     // ============================================================
     // Post-Harvest Processing subtype field mappings (PH events)
     // ============================================================
     processing_type: {
-      washing: '💧 Washing & Cleaning',
-      sorting: '📦 Sorting & Grading',
-      packing: '📦 Packing & Packaging',
-      cooling: '❄️ Pre-Cooling',
-      drying: '☀️ Drying',
-      waxing: '✨ Waxing & Coating',
-      trimming: '✂️ Trimming & Cleaning',
-      juicing: '🧃 Juice Processing',
-      dehydration: '🌬️ Dehydration',
-      freezing: '❄️ Freezing',
-      other: '📦 Other Processing'
+      washing: 'Washing & Cleaning',
+      sorting: 'Sorting & Grading',
+      packing: 'Packing & Packaging',
+      cooling: 'Pre-Cooling',
+      drying: 'Drying',
+      waxing: 'Waxing & Coating',
+      trimming: 'Trimming & Cleaning',
+      juicing: 'Juice Processing',
+      dehydration: 'Dehydration',
+      freezing: 'Freezing',
+      other: 'Other Processing'
     },
     // ============================================================
     // Canopy Management subtype field mappings (CM events)
     // ============================================================
     canopy_operation: {
-      pruning: '✂️ Pruning',
-      hedging: '🌳 Hedging',
-      topping: '✂️ Topping',
-      skirting: '✂️ Skirting',
-      thinning: '🪚 Thinning',
-      leaf_pulling: '🍃 Leaf Pulling',
-      shoot_positioning: '🌱 Shoot Positioning',
-      leaf_removal: '🍃 Leaf Removal',
-      defoliation: '🍂 Defoliation',
-      tucking: '🤲 Tucking',
-      suckering: '🌿 Suckering',
-      training: '🪴 Training',
-      other: '✂️ Other Canopy Work'
+      pruning: 'Pruning',
+      hedging: 'Hedging',
+      topping: 'Topping',
+      skirting: 'Skirting',
+      thinning: 'Thinning',
+      leaf_pulling: 'Leaf Pulling',
+      shoot_positioning: 'Shoot Positioning',
+      leaf_removal: 'Leaf Removal',
+      defoliation: 'Defoliation',
+      tucking: 'Tucking',
+      suckering: 'Suckering',
+      training: 'Training',
+      other: 'Other Canopy Work'
     },
     // Frost Protection (FP) + Mowing/Orchard-Floor (MO) — Batch 3 (2026-06)
     protection_method: {
-      wind_machine: '🌀 Wind Machine',
-      orchard_heater: '🔥 Orchard Heater(s)',
-      under_tree_sprinkler: '💧 Under-Tree Sprinklers',
-      other: '❄️ Other Frost Protection'
+      wind_machine: 'Wind Machine',
+      orchard_heater: 'Orchard Heater(s)',
+      under_tree_sprinkler: 'Under-Tree Sprinklers',
+      other: 'Other Frost Protection'
     },
     // `flame_weed` added 2026-07; `herbicide_strip` dropped from the FORM picker but kept
     // here so already-saved events still render a label instead of the raw slug. See
     // FLOOR_MANAGEMENT_LABELS in src/config/events/productionEvent.ts for the rationale
     // (organic ICP; a synthetic herbicide strip is prohibited under 7 CFR 205.105).
     floor_management_type: {
-      mow: '🌱 Mow',
-      mulch: '🍂 Mulch',
-      cover_crop_mgmt: '🌿 Cover-Crop Management',
-      flame_weed: '🔥 Flame Weeding',
-      herbicide_strip: '🚿 Herbicide Strip' // legacy value — no longer offered in the form
+      mow: 'Mow',
+      mulch: 'Mulch',
+      cover_crop_mgmt: 'Cover-Crop Management',
+      flame_weed: 'Flame Weeding',
+      herbicide_strip: 'Herbicide Strip' // legacy value — no longer offered in the form
     },
     // Organic compliance fields (NOP record-keeping)
     treated_or_untreated: {
@@ -598,22 +601,22 @@ export function getReadableFieldValue(field: string, value: string): string {
       organically_treated: 'Organically Treated'
     },
     previous_use: {
-      organic: '🌱 Organic Production Only',
-      conventional: '🏭 Conventional Production',
-      mixed: '🔀 Mixed (Organic & Conventional)',
-      unknown: '❓ Unknown'
+      organic: 'Organic Production Only',
+      conventional: 'Conventional Production',
+      mixed: 'Mixed (Organic & Conventional)',
+      unknown: 'Unknown'
     },
     cleaning_protocol: {
-      water_rinse: '💧 Water Rinse',
-      detergent: '🧴 Detergent Wash',
-      triple_rinse: '💧💧💧 Triple Rinse',
-      steam: '♨️ Steam Cleaning',
+      water_rinse: 'Water Rinse',
+      detergent: 'Detergent Wash',
+      triple_rinse: 'Triple Rinse',
+      steam: 'Steam Cleaning',
       other: 'Other Method'
     },
     compost_temperature_reached_131f: {
-      yes: '✅ Yes (NOP Compliant)',
-      no: '❌ No',
-      not_measured: '❓ Not Measured'
+      yes: 'Yes (NOP Compliant)',
+      no: 'No',
+      not_measured: 'Not Measured'
     }
   };
 
@@ -1280,7 +1283,7 @@ export function getChemicalEventFields(event: any): EventFieldDisplay {
   if (isRestrictedUse) {
     secondary.push({
       label: 'Restricted Use Pesticide',
-      value: '⚠️ Restricted Use - Certified applicator required',
+      value: 'Restricted Use - Certified applicator required',
       priority: 'secondary',
       category: 'verification',
       tooltip: 'This product is classified as Restricted Use and requires EPA-certified applicator'
@@ -2825,6 +2828,9 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
   if (event.amendment_organic_approved) {
     const organicApprovalMap: Record<string, string> = {
       omri_listed: 'OMRI Listed',
+      wsda_listed: 'WSDA Listed',
+      nop_seal_on_label: 'NOP seal on label',
+      certifier_approved: 'Certifier-approved',
       usda_nop_approved: 'USDA NOP Approved',
       organic_equivalent: 'Organic Equivalent',
       transitional: 'Transitional',
@@ -3087,14 +3093,14 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
 
   if (tillageType) {
     const tillageTypeMap: Record<string, string> = {
-      conventional_plow: '🚜 Conventional Plow - Deep inversion',
-      chisel_plow: '⚡ Chisel Plow - Reduced tillage',
-      disk_harrow: '💿 Disk Harrow - Surface cultivation',
-      no_till: '🌱 No-Till - Direct seeding',
-      strip_till: '📏 Strip Till - Zonal tillage',
-      minimum_till: '🔄 Minimum Till - Conservation tillage',
-      subsoiling: '🔧 Subsoiling - Deep loosening',
-      cultivator: '🌾 Cultivator - Shallow cultivation',
+      conventional_plow: 'Conventional Plow - Deep inversion',
+      chisel_plow: 'Chisel Plow - Reduced tillage',
+      disk_harrow: 'Disk Harrow - Surface cultivation',
+      no_till: 'No-Till - Direct seeding',
+      strip_till: 'Strip Till - Zonal tillage',
+      minimum_till: 'Minimum Till - Conservation tillage',
+      subsoiling: 'Subsoiling - Deep loosening',
+      cultivator: 'Cultivator - Shallow cultivation',
       ridge_till: 'Ridge Till - Row-based system'
     };
 
@@ -3124,10 +3130,10 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
 
   if (tillageDirection) {
     const tillageDirectionMap: Record<string, string> = {
-      across_slope: '🏔️ Across Slope - Erosion control',
+      across_slope: 'Across Slope - Erosion control',
       up_down_slope: '⬇️ Up/Down Slope - Standard',
-      contour: '🌀 Contour - Following natural lines',
-      random: '🔀 Random - Variable direction'
+      contour: 'Contour - Following natural lines',
+      random: 'Random - Variable direction'
     };
 
     details.push({
@@ -3140,11 +3146,11 @@ export function getSoilManagementEventFields(event: any): EventFieldDisplay {
 
   if (residueManagement) {
     const residueManagementMap: Record<string, string> = {
-      incorporated: '♻️ Incorporated - Mixed into soil',
-      surface_left: '🌾 Surface Left - Protective cover',
-      removed: '🚛 Removed - Harvested/burned',
-      mulched: '🍂 Mulched - Chopped in place',
-      partial_removal: '📏 Partial Removal - Mixed approach'
+      incorporated: 'Incorporated - Mixed into soil',
+      surface_left: 'Surface Left - Protective cover',
+      removed: 'Removed - Harvested/burned',
+      mulched: 'Mulched - Chopped in place',
+      partial_removal: 'Partial Removal - Mixed approach'
     };
 
     details.push({
@@ -3416,7 +3422,11 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
   }
 
   // F44: quantitative monitoring count (e.g. "5 per leaf") — fold in the unit
-  if (event.monitoring_count !== null && event.monitoring_count !== undefined && event.monitoring_count !== '') {
+  if (
+    event.monitoring_count !== null &&
+    event.monitoring_count !== undefined &&
+    event.monitoring_count !== ''
+  ) {
     const unitLabels: Record<string, string> = {
       per_leaf: 'per leaf',
       per_trap: 'per trap',
@@ -3913,8 +3923,8 @@ export function getPestManagementEventFields(event: any): EventFieldDisplay {
   // Skip "normal" — it adds no informational value to consumers
   if (isValidValue(event.production_efficiency) && event.production_efficiency !== 'normal') {
     const efficiencyMap: Record<string, string> = {
-      high: '⚡ High Efficiency',
-      low: '⚠️ Low Efficiency'
+      high: 'High Efficiency',
+      low: 'Low Efficiency'
     };
 
     operationalTarget.push({

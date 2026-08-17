@@ -175,7 +175,7 @@ const TrazoTooltipContent: React.FC<TooltipMeta> = ({
 
         {/* Next / Finish */}
         <Button
-          bg="green.500"
+          bg="green.700"
           color="white"
           size="sm"
           minH="44px"

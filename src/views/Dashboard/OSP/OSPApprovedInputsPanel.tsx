@@ -52,10 +52,10 @@ import {
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaCheckCircle, FaPlus, FaSearch } from 'react-icons/fa';
+import { FaCheckCircle, FaPlus } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardCard } from 'components/Design/StandardComponents';
+import { StandardCard, StandardSearchInput } from 'components/Design/StandardComponents';
 import {
   useAddApprovedInputMutation,
   useLazyVerifyInputQuery,
@@ -116,14 +116,12 @@ const ChangeLogSection: React.FC<ChangeLogSectionProps> = ({ logs, subtextColor 
                       borderRadius="md"
                       bg={isAdded ? addedBg : removedBg}
                       borderLeft="3px solid"
-                      borderLeftColor={isAdded ? 'green.400' : 'red.400'}
-                    >
+                      borderLeftColor={isAdded ? 'green.400' : 'red.400'}>
                       <HStack spacing={2} mb={entry.change_notification_reference ? 1 : 0}>
                         <Badge
                           colorScheme={isAdded ? 'green' : 'red'}
-                          fontSize="xx-small"
-                          textTransform="uppercase"
-                        >
+                          fontSize="11px"
+                          textTransform="uppercase">
                           {intl.formatMessage({
                             id: isAdded
                               ? 'osp.approvedInputs.log.action.added'
@@ -225,14 +223,11 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         ospId: osp.id,
         kind,
         id,
-        change_notification_reference: certRef.trim() || undefined,
+        change_notification_reference: certRef.trim() || undefined
       }).unwrap();
       toast({
         status: 'success',
-        title: intl.formatMessage(
-          { id: 'osp.approvedInputs.toast.added' },
-          { name: label }
-        ),
+        title: intl.formatMessage({ id: 'osp.approvedInputs.toast.added' }, { name: label }),
         duration: 4000
       });
       setQuery('');
@@ -257,14 +252,11 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         ospId: osp.id,
         kind,
         id,
-        change_notification_reference: removeCertRef.trim() || undefined,
+        change_notification_reference: removeCertRef.trim() || undefined
       }).unwrap();
       toast({
         status: 'success',
-        title: intl.formatMessage(
-          { id: 'osp.approvedInputs.toast.removed' },
-          { name: label }
-        ),
+        title: intl.formatMessage({ id: 'osp.approvedInputs.toast.removed' }, { name: label }),
         duration: 4000
       });
       setPendingRemove(null);
@@ -284,14 +276,12 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   const renderSearchResult = (result: InputVerifyResult) => {
     if (!result) return null;
     const omriAlreadyApproved =
-      result.omri_product_pk != null &&
-      omriList.some((p) => p.id === result.omri_product_pk);
+      result.omri_product_pk != null && omriList.some((p) => p.id === result.omri_product_pk);
     const nlAlreadyApproved =
       result.national_list_substance_pk != null &&
       nlList.some((s) => s.id === result.national_list_substance_pk);
     const wsdaAlreadyApproved =
-      result.wsda_material_pk != null &&
-      wsdaList.some((w) => w.id === result.wsda_material_pk);
+      result.wsda_material_pk != null && wsdaList.some((w) => w.id === result.wsda_material_pk);
 
     const hasOMRI = result.omri_product_pk != null;
     const hasNL = result.national_list_substance_pk != null;
@@ -329,11 +319,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
             justify="space-between"
             align="center"
             gap={3}
-            wrap="wrap"
-          >
+            wrap="wrap">
             <VStack align="start" spacing={0} minW={0} flex={1}>
               <HStack spacing={2}>
-                <Badge colorScheme="purple" fontSize="xx-small">
+                <Badge colorScheme="purple" fontSize="11px">
                   OMRI
                 </Badge>
                 {result.omri_product_id && (
@@ -349,9 +338,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
             {omriAlreadyApproved ? (
               <HStack color="green.600" fontSize="sm">
                 <Icon as={FaCheckCircle} />
-                <Text>
-                  {intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}
-                </Text>
+                <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
               </HStack>
             ) : (
               <Button
@@ -365,8 +352,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                     result.omri_product_pk as number,
                     result.omri_product_name || ''
                   )
-                }
-              >
+                }>
                 {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
               </Button>
             )}
@@ -380,11 +366,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
             justify="space-between"
             align="center"
             gap={3}
-            wrap="wrap"
-          >
+            wrap="wrap">
             <VStack align="start" spacing={0} minW={0} flex={1}>
               <HStack spacing={2}>
-                <Badge colorScheme="blue" fontSize="xx-small">
+                <Badge colorScheme="blue" fontSize="11px">
                   {intl.formatMessage({ id: 'osp.approvedInputs.kind.national_list' })}
                 </Badge>
                 {result.national_list_cfr_section && (
@@ -400,9 +385,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
             {nlAlreadyApproved ? (
               <HStack color="green.600" fontSize="sm">
                 <Icon as={FaCheckCircle} />
-                <Text>
-                  {intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}
-                </Text>
+                <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
               </HStack>
             ) : (
               <Button
@@ -416,8 +399,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                     result.national_list_substance_pk as number,
                     result.national_list_substance_name || ''
                   )
-                }
-              >
+                }>
                 {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
               </Button>
             )}
@@ -431,11 +413,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
             justify="space-between"
             align="center"
             gap={3}
-            wrap="wrap"
-          >
+            wrap="wrap">
             <VStack align="start" spacing={0} minW={0} flex={1}>
               <HStack spacing={2}>
-                <Badge colorScheme="teal" fontSize="xx-small">
+                <Badge colorScheme="teal" fontSize="11px">
                   WSDA
                 </Badge>
                 {result.wsda_material_id && (
@@ -456,9 +437,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
             {wsdaAlreadyApproved ? (
               <HStack color="green.600" fontSize="sm">
                 <Icon as={FaCheckCircle} />
-                <Text>
-                  {intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}
-                </Text>
+                <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
               </HStack>
             ) : (
               <Button
@@ -472,8 +451,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                     result.wsda_material_pk as number,
                     result.wsda_material_name || ''
                   )
-                }
-              >
+                }>
                 {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
               </Button>
             )}
@@ -495,32 +473,21 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               {intl.formatMessage({ id: 'osp.approvedInputs.cfr' })}
             </Text>
           </VStack>
-          <Badge
-            colorScheme={totalApproved > 0 ? 'green' : 'gray'}
-            variant="subtle"
-            fontSize="xs"
-          >
-            {intl.formatMessage(
-              { id: 'osp.approvedInputs.count' },
-              { count: totalApproved }
-            )}
+          <Badge colorScheme={totalApproved > 0 ? 'green' : 'gray'} variant="subtle" fontSize="xs">
+            {intl.formatMessage({ id: 'osp.approvedInputs.count' }, { count: totalApproved })}
           </Badge>
         </Flex>
 
         {!isEditable && (
           <Alert status="warning" fontSize="xs" borderRadius="md">
             <AlertIcon />
-            <Text>
-              {intl.formatMessage({ id: 'osp.approvedInputs.lockedHint' })}
-            </Text>
+            <Text>{intl.formatMessage({ id: 'osp.approvedInputs.lockedHint' })}</Text>
           </Alert>
         )}
         {isEditable && !isActive && (
           <Alert status="info" fontSize="xs" borderRadius="md">
             <AlertIcon />
-            <Text>
-              {intl.formatMessage({ id: 'osp.approvedInputs.notActiveHint' })}
-            </Text>
+            <Text>{intl.formatMessage({ id: 'osp.approvedInputs.notActiveHint' })}</Text>
           </Alert>
         )}
         {/* P0-5 — Registry ↔ § 205.201(a)(2) narrative sync warning. Inspector
@@ -537,8 +504,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                     {intl.formatMessage(
                       { id: 'osp.approvedInputs.syncDiff.notInNarrative' },
                       {
-                        count:
-                          osp.registry_sync_diff.entries_not_in_narrative.length
+                        count: osp.registry_sync_diff.entries_not_in_narrative.length
                       }
                     )}
                   </Text>
@@ -547,8 +513,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                       .slice(0, 5)
                       .map((e) => `${e.source}: ${e.name}`)
                       .join(' · ')}
-                    {osp.registry_sync_diff.entries_not_in_narrative.length > 5 &&
-                      ' …'}
+                    {osp.registry_sync_diff.entries_not_in_narrative.length > 5 && ' …'}
                   </Text>
                 </>
               ) : (
@@ -583,8 +548,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                 <Tooltip
                   key={`omri-${p.id}`}
                   label={p.omri_id ? `OMRI #${p.omri_id}` : undefined}
-                  hasArrow
-                >
+                  hasArrow>
                   <Tag size="md" colorScheme="purple" borderRadius="md">
                     <TagLabel>{p.product_name}</TagLabel>
                     <TagCloseButton
@@ -622,11 +586,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
           ) : (
             <Flex wrap="wrap" gap={2}>
               {nlList.map((s) => (
-                <Tooltip
-                  key={`nl-${s.id}`}
-                  label={s.cfr_section || undefined}
-                  hasArrow
-                >
+                <Tooltip key={`nl-${s.id}`} label={s.cfr_section || undefined} hasArrow>
                   <Tag size="md" colorScheme="blue" borderRadius="md">
                     <TagLabel>{s.substance_name}</TagLabel>
                     <TagCloseButton
@@ -667,8 +627,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                 <Tooltip
                   key={`wsda-${w.id}`}
                   label={w.wsda_id ? `WSDA ${w.wsda_id}` : undefined}
-                  hasArrow
-                >
+                  hasArrow>
                   <Tag size="md" colorScheme="teal" borderRadius="md">
                     <TagLabel>{w.brand_name}</TagLabel>
                     <TagCloseButton
@@ -698,10 +657,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               {intl.formatMessage({ id: 'osp.approvedInputs.search.title' })}
             </Text>
             <Stack direction={{ base: 'column', md: 'row' }} spacing={2}>
-              <Input
+              <StandardSearchInput
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                   if (e.key === 'Enter' && !searching && query.trim()) {
                     e.preventDefault();
                     handleSearch();
@@ -710,17 +669,19 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                 placeholder={intl.formatMessage({
                   id: 'osp.approvedInputs.search.placeholder'
                 })}
-                size="sm"
+                flex="1"
               />
               <Button
                 size="sm"
+                // 44px to match the field beside it and the project's touch-target floor.
+                // No leftIcon: the field now carries the magnifier, and two in a row read as
+                // two different actions.
+                minH="44px"
                 colorScheme="green"
                 onClick={handleSearch}
                 isLoading={searching}
                 isDisabled={!query.trim()}
-                leftIcon={<FaSearch />}
-                flexShrink={0}
-              >
+                flexShrink={0}>
                 {intl.formatMessage({ id: 'osp.approvedInputs.search.button' })}
               </Button>
             </Stack>
@@ -758,18 +719,14 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               )}
           </Box>
         )}
-        <ChangeLogSection
-          logs={osp.approved_input_changes || []}
-          subtextColor={subtextColor}
-        />
+        <ChangeLogSection logs={osp.approved_input_changes || []} subtextColor={subtextColor} />
       </VStack>
 
       <AlertDialog
         isOpen={!!pendingRemove}
         leastDestructiveRef={cancelRemoveRef}
         onClose={() => !removing && setPendingRemove(null)}
-        isCentered
-      >
+        isCentered>
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
@@ -811,16 +768,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               <Button
                 ref={cancelRemoveRef}
                 onClick={() => setPendingRemove(null)}
-                isDisabled={removing}
-              >
+                isDisabled={removing}>
                 {intl.formatMessage({ id: 'osp.approvedInputs.removeConfirm.cancel' })}
               </Button>
-              <Button
-                colorScheme="red"
-                onClick={handleConfirmRemove}
-                ml={3}
-                isLoading={removing}
-              >
+              <Button colorScheme="red" onClick={handleConfirmRemove} ml={3} isLoading={removing}>
                 {intl.formatMessage({ id: 'osp.approvedInputs.removeConfirm.confirm' })}
               </Button>
             </AlertDialogFooter>

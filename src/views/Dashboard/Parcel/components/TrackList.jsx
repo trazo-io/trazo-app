@@ -30,15 +30,11 @@ import {
   FaRegCheckCircle,
   FaRegDotCircle,
   FaClock,
-  FaMicrophone,
   FaPlus,
   FaPlay,
   FaFlag,
   FaSeedling,
   FaChartLine,
-  FaChevronDown,
-  FaLeaf,
-  FaCamera,
   FaTrash
 } from 'react-icons/fa';
 import React, { useEffect, useState, useRef } from 'react';
@@ -50,7 +46,8 @@ import { getTimelineEventTitle } from 'utils/eventDescriptions';
 import { setCurrentHistory } from 'store/features/historySlice';
 import { useGetCurrentHistoryQuery, useDeleteProductionMutation } from 'store/api/historyApi';
 import { useIntl } from 'react-intl';
-import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
+import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
+import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { EventDetailsModal } from 'components/Modals/EventDetailsModal';
 import { useUserRole } from 'hooks/useUserRole';
 
@@ -78,11 +75,6 @@ const TrackList = ({ amount }) => {
   const { farmId, parcelId } = useParams();
 
   const { isOpen: isOpen1, onOpen: onOpen1, onClose: onClose1 } = useDisclosure();
-  const {
-    isOpen: isQuickAddOpen,
-    onOpen: onQuickAddOpen,
-    onClose: onQuickAddClose
-  } = useDisclosure();
   const {
     isOpen: isAddEventMenuOpen,
     onOpen: onAddEventMenuOpen,
@@ -136,12 +128,10 @@ const TrackList = ({ amount }) => {
     if (data) dispatch(setCurrentHistory(data));
   }, [data, dispatch]);
 
-  const bgButton = useColorModeValue('green.500', 'gray.800');
-
-  const handleEventCreated = () => {
-    // Refetch the current history data to show the new event
-    refetch();
-  };
+  // green.700: this fills two buttons that both carry WHITE labels ("Start production",
+  // "Add event"). green.500 under white is 2.78:1 — the same failure fixed app-wide; it was
+  // missed by the sweep because the colour arrives through a variable, not a literal prop.
+  const bgButton = useColorModeValue('green.700', 'gray.800');
 
   const handleEventClick = (event) => {
     setSelectedEvent(event);
@@ -179,7 +169,9 @@ const TrackList = ({ amount }) => {
       toast({
         title: intl.formatMessage({ id: 'app.error' }),
         description:
-          error?.data?.detail || error?.data?.message || intl.formatMessage({ id: 'app.productionDeleteError' }),
+          error?.data?.detail ||
+          error?.data?.message ||
+          intl.formatMessage({ id: 'app.productionDeleteError' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -194,7 +186,8 @@ const TrackList = ({ amount }) => {
       maxH={{ base: '700px', md: '700px' }}
       minW={{ base: '100%', md: '400px' }}
       w="100%"
-      className="trazo-card">
+      className="trazo-card"
+    >
       <CardHeader px={{ base: 4, md: 6 }} py={5} data-tour="current-production">
         <Flex direction="column" w="100%">
           {/* Header with consistent height */}
@@ -215,7 +208,8 @@ const TrackList = ({ amount }) => {
                   textTransform="none"
                   w="fit-content"
                   border="1px solid"
-                  borderColor="green.200">
+                  borderColor="green.200"
+                >
                   {currentHistory?.product}
                 </Badge>
               )}
@@ -226,7 +220,8 @@ const TrackList = ({ amount }) => {
                   onClick={onOpen1}
                   alignSelf="flex-start"
                   disabled={!currentHistory?.product}
-                  cursor={!currentHistory?.product ? 'default' : 'pointer'}>
+                  cursor={!currentHistory?.product ? 'default' : 'pointer'}
+                >
                   <Icon as={IoEllipsisVerticalSharp} color="gray.400" w="20px" h="20px" />
                 </MenuButton>
                 <MenuList>
@@ -236,7 +231,8 @@ const TrackList = ({ amount }) => {
                       navigate(
                         `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/change`
                       )
-                    }>
+                    }
+                  >
                     <Flex color={textColor} cursor="pointer" align="center" p="4px">
                       <Text fontSize="sm" fontWeight="500">
                         {intl.formatMessage({ id: 'app.edit' }).toUpperCase()}
@@ -248,7 +244,8 @@ const TrackList = ({ amount }) => {
                     onClick={() => {
                       onClose1();
                       onDeleteOpen();
-                    }}>
+                    }}
+                  >
                     <Flex color="red.500" cursor="pointer" align="center" p="4px">
                       <Text fontSize="sm" fontWeight="500">
                         {intl.formatMessage({ id: 'app.delete' }).toUpperCase()}
@@ -266,7 +263,8 @@ const TrackList = ({ amount }) => {
           {currentHistory?.product && (
             <HStack justify="space-between" pt={4}>
               <Text fontSize="xs" color="gray.500" fontWeight="medium">
-                {intl.formatMessage({ id: 'parcel.started' })} {new Date(currentHistory?.start_date).toLocaleDateString()}
+                {intl.formatMessage({ id: 'parcel.started' })}{' '}
+                {new Date(currentHistory?.start_date).toLocaleDateString()}
               </Text>
               <Text fontSize="xs" color="gray.500" fontWeight="medium">
                 {intl.formatMessage({ id: 'parcel.activeProduction' })}
@@ -275,7 +273,13 @@ const TrackList = ({ amount }) => {
           )}
         </Flex>
       </CardHeader>
-      <CardBody ps={{ base: '0px', md: '20px' }} pe="0px" mb="12px" position="relative" data-tour="events-timeline">
+      <CardBody
+        ps={{ base: '0px', md: '20px' }}
+        pe="0px"
+        mb="12px"
+        position="relative"
+        data-tour="events-timeline"
+      >
         <Box
           maxH={{ base: '400px', md: '450px' }}
           overflowY="auto"
@@ -289,14 +293,17 @@ const TrackList = ({ amount }) => {
               bg: 'gray.100',
               borderRadius: 'full'
             },
+            // Neutral, not brand: a scrollbar says "there is more content", which is
+            // not a brand statement, and green.500 on this track is 2.64:1 anyway.
             '&::-webkit-scrollbar-thumb': {
-              bg: 'green.500',
+              bg: 'gray.500',
               borderRadius: 'full',
               _hover: {
-                bg: 'green.600'
+                bg: 'gray.600'
               }
             }
-          }}>
+          }}
+        >
           <Flex direction="column" width={'100%'} pb={4}>
             {isLoading || isFetching ? (
               <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
@@ -324,14 +331,15 @@ const TrackList = ({ amount }) => {
                   );
                 })}
                 {/* Progressive loading indicator: events exist but more are being created */}
-                {currentHistory?.events?.length > 0 && currentHistory?.events_status === 'pending' && (
-                  <HStack spacing={2} justify="center" py={3} px={4}>
-                    <CircularProgress isIndeterminate color="green.500" size="16px" />
-                    <Text fontSize="xs" color="gray.500">
-                      {intl.formatMessage({ id: 'parcel.creatingMoreEvents' })}
-                    </Text>
-                  </HStack>
-                )}
+                {currentHistory?.events?.length > 0 &&
+                  currentHistory?.events_status === 'pending' && (
+                    <HStack spacing={2} justify="center" py={3} px={4}>
+                      <CircularProgress isIndeterminate color="green.500" size="16px" />
+                      <Text fontSize="xs" color="gray.500">
+                        {intl.formatMessage({ id: 'parcel.creatingMoreEvents' })}
+                      </Text>
+                    </HStack>
+                  )}
                 {!currentHistory?.events?.length > 0 && !currentHistory?.product && (
                   <VStack spacing={8} py={16} align="center" px={6}>
                     <VStack spacing={4} textAlign="center">
@@ -408,210 +416,137 @@ const TrackList = ({ amount }) => {
         </Box>
       </CardBody>
       {/* Modern Action Buttons - Single Add Event Dropdown */}
-      {!isLoading && !isFetching && <Flex justify={{ base: 'stretch', smd: 'flex-end' }} gap={3} p={{ base: '16px', md: '20px' }}>
-        {!currentHistory?.product ? (
-          <Button
-            bg={bgButton}
-            color="white"
-            fontSize="sm"
-            fontWeight="semibold"
-            variant="no-hover"
-            minW={{ base: '100%', smd: '140px', md: '160px' }}
-            w={{ base: '100%', smd: 'auto' }}
-            h="44px"
-            borderRadius="12px"
-            _hover={{
-              transform: 'translateY(-1px)',
-              boxShadow: 'lg'
-            }}
-            transition="all 0.2s"
-            onClick={() =>
-              navigate(
-                `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`
-              )
-            }>
-            {intl.formatMessage({ id: 'app.startProduction' })}
-          </Button>
-        ) : (
-          <Flex
-            data-tour="add-event-actions"
-            gap={{ base: 2, md: 3 }}
-            justify={{ base: 'stretch', smd: 'flex-end' }}
-            align={{ base: 'stretch', smd: 'center' }}
-            w="100%"
-            direction={{ base: 'column', smd: 'row' }}>
-            {/* Primary Add Event Dropdown Button */}
-            {canWrite && <Menu isOpen={isAddEventMenuOpen} onClose={onAddEventMenuClose}>
-              <MenuButton
-                as={Button}
-                leftIcon={<Icon as={FaPlus} />}
-                rightIcon={<Icon as={FaChevronDown} />}
-                bg={bgButton}
-                color="white"
-                fontSize="sm"
-                fontWeight="semibold"
-                variant="no-hover"
-                minW={{ base: '100%', smd: '120px', md: '140px' }}
-                w={{ base: '100%', smd: 'auto' }}
-                h="44px"
-                borderRadius="12px"
-                _hover={{
-                  transform: 'translateY(-1px)',
-                  boxShadow: 'lg'
-                }}
-                _active={{
-                  transform: 'translateY(0px)',
-                  boxShadow: 'md'
-                }}
-                transition="all 0.2s"
-                onClick={onAddEventMenuOpen}>
-                {intl.formatMessage({ id: 'app.addEvent' })}
-              </MenuButton>
-              <MenuList
-                bg={useColorModeValue('white', 'gray.800')}
-                borderColor={useColorModeValue('gray.200', 'gray.600')}
-                borderRadius="12px"
-                boxShadow="xl"
-                py="8px"
-                minW={{ base: '200px', md: '220px' }}>
-                {/* Carbon Focus Header - NEW */}
-                <Box
-                  px="16px"
-                  py="8px"
-                  borderBottom="1px solid"
-                  borderColor={useColorModeValue('gray.100', 'gray.700')}>
-                  <HStack>
-                    <Icon as={FaLeaf} color="green.500" boxSize={3} />
-                    <Text fontSize="xs" fontWeight="bold" color="green.600">
-                      {intl.formatMessage({ id: 'parcel.transparencyTracking' })}
-                    </Text>
-                  </HStack>
-                  <Text fontSize="xs" color="gray.500" mt={1}>
-                    {intl.formatMessage({ id: 'parcel.eventsVisibleToConsumers' })}
-                  </Text>
-                </Box>
-
-                <MenuItem
-                  icon={<Icon as={FaMicrophone} color="green.500" />}
+      {!isLoading && !isFetching && (
+        <Flex
+          justify={{ base: 'stretch', smd: 'flex-end' }}
+          gap={3}
+          p={{ base: '16px', md: '20px' }}
+        >
+          {/* Existence of the CURRENT PRODUCTION decides the CTA. This used to test
+              `!currentHistory?.product`, so a production without a product row rendered
+              its timeline above while the button still said "Start production". */}
+          {!currentHistory?.id ? (
+            <Button
+              bg={bgButton}
+              color="white"
+              fontSize="sm"
+              fontWeight="semibold"
+              variant="no-hover"
+              minW={{ base: '100%', smd: '140px', md: '160px' }}
+              w={{ base: '100%', smd: 'auto' }}
+              h="44px"
+              borderRadius="12px"
+              _hover={{
+                transform: 'translateY(-1px)',
+                boxShadow: 'lg'
+              }}
+              transition="all 0.2s"
+              onClick={() =>
+                navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`)
+              }
+            >
+              {intl.formatMessage({ id: 'app.startProduction' })}
+            </Button>
+          ) : (
+            <Flex
+              data-tour="add-event-actions"
+              gap={{ base: 2, md: 3 }}
+              justify={{ base: 'stretch', smd: 'flex-end' }}
+              align={{ base: 'stretch', smd: 'center' }}
+              w="100%"
+              direction={{ base: 'column', smd: 'row' }}
+            >
+              {/* WS-4b entry convergence: Add event opens the SAME "What did you do?"
+                  verb modal the Activities page uses (shared VerbPickerGrid) — all ten
+                  verbs always visible, never a scroll-hidden dropdown subset. */}
+              {canWrite && (
+                <Button
+                  leftIcon={<Icon as={FaPlus} />}
+                  bg={bgButton}
+                  color="white"
                   fontSize="sm"
-                  width={'96%'}
-                  fontWeight="medium"
-                  py="12px"
-                  px="16px"
-                  borderRadius="8px"
-                  mx="4px"
-                  mt="4px"
+                  fontWeight="semibold"
+                  variant="no-hover"
+                  minW={{ base: '100%', smd: '120px', md: '140px' }}
+                  w={{ base: '100%', smd: 'auto' }}
+                  h="44px"
+                  borderRadius="12px"
                   _hover={{
-                    bg: useColorModeValue('green.50', 'green.900'),
-                    color: useColorModeValue('green.700', 'green.200')
+                    transform: 'translateY(-1px)',
+                    boxShadow: 'lg'
                   }}
-                  onClick={() => {
-                    onAddEventMenuClose();
-                    onQuickAddOpen();
-                  }}>
-                  <VStack align="start" spacing={0} flex={1}>
-                    <HStack justify="space-between" width="100%">
-                      <Text fontWeight="semibold">{intl.formatMessage({ id: 'parcel.quickEvent' })}</Text>
-                      <Badge colorScheme="green" size="xs">
-                        {intl.formatMessage({ id: 'parcel.fastest' })}
-                      </Badge>
-                    </HStack>
-                    <Text fontSize="xs" color="gray.500">
-                      {intl.formatMessage({ id: 'parcel.quickEventExample' })}
-                    </Text>
-                  </VStack>
-                </MenuItem>
+                  _active={{
+                    transform: 'translateY(0px)',
+                    boxShadow: 'md'
+                  }}
+                  transition="all 0.2s"
+                  onClick={onAddEventMenuOpen}
+                >
+                  {intl.formatMessage({ id: 'app.addEvent' })}
+                </Button>
+              )}
 
-                <MenuItem
-                  icon={<Icon as={FaPlus} color="gray.600" />}
+              {/* Finish Production Button - Only show if there are events */}
+              {canWrite && currentHistory?.events && currentHistory?.events.length > 0 && (
+                <Button
+                  px={{ base: 4, md: '16px' }}
+                  leftIcon={<Icon as={FaFlag} />}
+                  variant="outline"
+                  colorScheme="green"
                   fontSize="sm"
-                  fontWeight="medium"
-                  width={'96%'}
-                  py="12px"
-                  px="16px"
-                  borderRadius="8px"
-                  mx="4px"
+                  fontWeight="semibold"
+                  w={{ base: '100%', smd: 'auto' }}
+                  h="44px"
+                  borderRadius="12px"
                   _hover={{
-                    bg: useColorModeValue('gray.50', 'gray.700'),
-                    color: useColorModeValue('gray.700', 'gray.200')
+                    transform: 'translateY(-1px)',
+                    boxShadow: 'md'
                   }}
-                  onClick={() => {
-                    onAddEventMenuClose();
+                  transition="all 0.2s"
+                  onClick={() =>
                     navigate(
-                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add`
-                    );
-                  }}>
-                  <VStack align="start" spacing={0} flex={1}>
-                    <HStack justify="space-between" width="100%">
-                      <Text fontWeight="semibold">{intl.formatMessage({ id: 'parcel.manualEntry' })}</Text>
-                      <Badge colorScheme="gray" size="xs">
-                        {intl.formatMessage({ id: 'parcel.detailed' })}
-                      </Badge>
-                    </HStack>
-                    <Text fontSize="xs" color="gray.500">
-                      {intl.formatMessage({ id: 'parcel.fullFormWithDetails' })}
-                    </Text>
-                  </VStack>
-                </MenuItem>
+                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/finish`
+                    )
+                  }
+                >
+                  <Text as="span" display={{ base: 'none', smd: 'inline' }}>
+                    {intl.formatMessage({ id: 'app.finishProduction' })}
+                  </Text>
+                  <Text as="span" display={{ base: 'inline', smd: 'none' }}>
+                    {intl.formatMessage({ id: 'app.finish' })}
+                  </Text>
+                </Button>
+              )}
+            </Flex>
+          )}
+        </Flex>
+      )}
 
-                {/* Carbon Impact Footer - NEW */}
-                <Box
-                  px="16px"
-                  py="8px"
-                  mt="4px"
-                  borderTop="1px solid"
-                  borderColor={useColorModeValue('gray.100', 'gray.700')}>
-                  <HStack>
-                    <Icon as={FaCamera} color="blue.400" boxSize={3} />
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage({ id: 'parcel.allEventsAppearOnQR' })}
-                    </Text>
-                  </HStack>
-                </Box>
-              </MenuList>
-            </Menu>}
-
-            {/* Finish Production Button - Only show if there are events */}
-            {canWrite && currentHistory?.events && currentHistory?.events.length > 0 && (
-              <Button
-                px={{ base: 4, md: '16px' }}
-                leftIcon={<Icon as={FaFlag} />}
-                variant="outline"
-                colorScheme="green"
-                fontSize="sm"
-                fontWeight="semibold"
-                w={{ base: '100%', smd: 'auto' }}
-                h="44px"
-                borderRadius="12px"
-                _hover={{
-                  transform: 'translateY(-1px)',
-                  boxShadow: 'md'
-                }}
-                transition="all 0.2s"
-                onClick={() =>
-                  navigate(
-                    `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/finish`
-                  )
-                }>
-                <Text as="span" display={{ base: 'none', smd: 'inline' }}>{intl.formatMessage({ id: 'app.finishProduction' })}</Text>
-                <Text as="span" display={{ base: 'inline', smd: 'none' }}>{intl.formatMessage({ id: 'app.finish' })}</Text>
-              </Button>
-            )}
-          </Flex>
-        )}
-      </Flex>}
-
-      {/* Week 2 Task 2.1: Voice-to-Event System Integration */}
-      <QuickAddEvent
-        isOpen={isQuickAddOpen}
-        onClose={onQuickAddClose}
-        cropType={currentHistory?.product || 'citrus'}
-        productionMethod={currentHistory?.production_method || data?.production_method}
-        onEventAdded={(eventData) => {
-          console.log('New event added from parcel dashboard:', eventData);
-          handleEventCreated();
-        }}
-      />
+      {/* WS-4b: shared "What did you do?" verb modal (same grid as Activities page).
+          Quick log rides on top as the voice/template accelerator until WS-4c ports
+          those into the wizard itself. */}
+      <ResponsiveModal
+        isOpen={isAddEventMenuOpen}
+        onClose={onAddEventMenuClose}
+        size="2xl"
+        header={
+          <Text fontSize="lg" fontWeight="semibold">
+            {intl.formatMessage({ id: 'activities.pickVerb' })}
+          </Text>
+        }
+      >
+        {/* WS-4 complete: voice + template accelerators live INSIDE the wizard
+            now, so the Quick-vs-Manual fork is gone — one grid, one flow. */}
+        <VerbPickerGrid
+          columns={{ base: 2, smd: 2, md: 3 }}
+          onSelect={(verb) => {
+            onAddEventMenuClose();
+            navigate(
+              `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?event_type=${verb.eventType}&verb=${verb.key}`
+            );
+          }}
+        />
+      </ResponsiveModal>
 
       {/* Event Details Modal */}
       <EventDetailsModal
@@ -628,7 +563,8 @@ const TrackList = ({ amount }) => {
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
         onClose={onDeleteClose}
-        isCentered>
+        isCentered
+      >
         <AlertDialogOverlay bg="blackAlpha.300" backdropFilter="blur(10px)">
           <AlertDialogContent borderRadius="xl" p={2} mx={4}>
             <AlertDialogHeader fontSize="lg" fontWeight="bold" pb={4}>
@@ -667,7 +603,8 @@ const TrackList = ({ amount }) => {
                   size="lg"
                   color="gray.600"
                   borderRadius="lg"
-                  _hover={{ bg: 'gray.100' }}>
+                  _hover={{ bg: 'gray.100' }}
+                >
                   {intl.formatMessage({ id: 'app.cancel' })}
                 </Button>
                 <Button
@@ -687,7 +624,8 @@ const TrackList = ({ amount }) => {
                     color: 'red.600',
                     borderColor: 'red.600'
                   }}
-                  transition="all 0.2s">
+                  transition="all 0.2s"
+                >
                   {intl.formatMessage({ id: 'app.delete' })}
                 </Button>
               </HStack>

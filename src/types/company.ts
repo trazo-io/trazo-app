@@ -68,6 +68,12 @@ export interface Parcel {
   has_current_production?: boolean;
   /** Name of the crop in the current production (from ParcelBasicSerializer) */
   product?: string | null;
+  /**
+   * § 205.202 parcel-application completeness, served by ParcelSerializer's
+   * `get_application_status` (product/serializers.py:59) as the bare `state` string from
+   * `parcel_application_status()`. Callers already read it; the type just never listed it.
+   */
+  application_status?: 'complete' | 'in_progress' | 'not_started';
   // Add other properties as needed
 }
 

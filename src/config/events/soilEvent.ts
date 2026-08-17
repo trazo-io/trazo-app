@@ -16,6 +16,7 @@
 import type { EventRegistryEntry, FieldConfig, SoilManagementSubtype } from './registry';
 import {
   formatArea,
+  formatConsumerOrganicStatus,
   formatDate,
   lookupEnumLabel,
   formatDurationDays,
@@ -86,6 +87,9 @@ const formatLabNpk = (_v: unknown, event?: SoilData): string | null => {
 // Organic approval labels — acronyms must be properly capitalized (OMRI, USDA, NOP)
 const ORGANIC_APPROVED_LABELS: Record<string, string> = {
   omri_listed: 'OMRI Listed',
+  wsda_listed: 'WSDA Listed',
+  nop_seal_on_label: 'NOP seal on label',
+  certifier_approved: 'Certifier-approved',
   usda_nop_approved: 'USDA NOP Approved',
   organic_equivalent: 'Organic Equivalent',
   not_organic: 'Not Organic',
@@ -285,7 +289,11 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     }
   },
   {
+    // NS excluded 2026-08-16: SoilManagementTab gates area behind `watch('type') !== 'NS'`.
+    // A nesting shelter is a box on a post — it covers no acreage. (HD keeps it, labelled
+    // "optional", because a hedgerow does have a length/area.)
     name: 'area_covered',
+    visibleForSubtypes: ['ST', 'PA', 'CC', 'OM', 'CO', 'LA', 'TI', 'GR', 'HD'],
     labelKey: 'events.common.fields.areaCovered',
     valueType: 'number',
     unitField: 'area_unit',
@@ -429,7 +437,13 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
 
   // ---- Soil properties (all subtypes — form shows these for any selected type) ----
   {
+    // MEASURED subtypes only. SoilManagementTab gates these behind
+    // `!['GR','HD','NS','TI'].includes(type)` and that exclusion is deliberate: a sheep
+    // rotation, a tillage pass, a hedgerow planting or a nesting shelter does not measure soil
+    // pH, and rendering an empty reading field invites a fabricated one. Declaring them for
+    // ALL subtypes put values on four modals that no input could set or clear.
     name: 'soil_ph',
+    visibleForSubtypes: ['ST', 'PA', 'CC', 'OM', 'CO', 'LA'],
     labelKey: 'events.soil.fields.soilPh',
     valueType: 'number',
     formatter: formatNumber,
@@ -442,7 +456,13 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     }
   },
   {
+    // MEASURED subtypes only. SoilManagementTab gates these behind
+    // `!['GR','HD','NS','TI'].includes(type)` and that exclusion is deliberate: a sheep
+    // rotation, a tillage pass, a hedgerow planting or a nesting shelter does not measure soil
+    // pH, and rendering an empty reading field invites a fabricated one. Declaring them for
+    // ALL subtypes put values on four modals that no input could set or clear.
     name: 'organic_matter_percentage',
+    visibleForSubtypes: ['ST', 'PA', 'CC', 'OM', 'CO', 'LA'],
     labelKey: 'events.soil.fields.organicMatterPercentage',
     valueType: 'number',
     formatter: formatPercentage,
@@ -534,6 +554,10 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     valueType: 'enum',
     enumSource: 'organic_approved',
     formatter: formatOrganicApproved,
+    // The producer surfaces may say "OMRI Listed" — that is the grower reading back their own
+    // record. A shopper cannot tell a self-report from a listing, so the consumer wording
+    // attributes it. See formatConsumerOrganicStatus.
+    consumerFormatter: formatConsumerOrganicStatus,
     visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
     surfaces: {
       modal: 'immediate',
@@ -634,6 +658,24 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     }
   },
   {
+    // USDA's crop documentation form records "Date of Harvest — Estimated" beside
+    // "Date of Harvest — Actual". The actual date is the harvest event itself, and
+    // `_validate_raw_manure_harvest_interval` already enforces § 205.203(c)(1) against it.
+    // What was missing is the ESTIMATE: the plan the grower held when the manure went on.
+    // Without it, a harvest that slipped and a plan that was never sound look identical.
+    name: 'manure_harvest_date_planned',
+    labelKey: 'events.soil.fields.manureHarvestDatePlanned',
+    valueType: 'date',
+    formatter: formatDate,
+    visibleForSubtypes: ['OM', 'GR'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'immediate'
+      // No consumer_card: a shopper cannot act on the grower's planning date, and it fails
+      // all three questions in ADDING_FIELDS.md.
+    }
+  },
+  {
     name: 'manure_application_date',
     // For GR this is the date the animals came OFF the block: the interval runs from
     // the last day of grazing, not the first.
@@ -646,6 +688,57 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       modal: 'secondary',
       form: 'immediate',
       consumer_card: 'secondary'
+    }
+  },
+
+  // ---- USDA manure form #9: the two columns Trazo had no home for ----
+  // "How Applied / Incorporated" and "Manure Type, Form and Source" ("Chicken, dry, on farm").
+  //
+  // Subtype scoping is deliberate. GR (grazing) gets ONLY the animal: grazed manure has no
+  // application method, no chosen form, and is on-farm by definition — asking would be three
+  // questions with one possible answer each. OM (organic matter) gets all four.
+  {
+    name: 'manure_application_method',
+    labelKey: 'events.soil.fields.manureApplicationMethod',
+    valueType: 'enum',
+    enumSource: 'manure_application_methods',
+    visibleForSubtypes: ['OM'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    name: 'manure_animal_source',
+    labelKey: 'events.soil.fields.manureAnimalSource',
+    valueType: 'enum',
+    enumSource: 'manure_animal_sources',
+    visibleForSubtypes: ['OM', 'GR'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    name: 'manure_form',
+    labelKey: 'events.soil.fields.manureForm',
+    valueType: 'enum',
+    enumSource: 'manure_forms',
+    visibleForSubtypes: ['OM'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    name: 'manure_origin',
+    labelKey: 'events.soil.fields.manureOrigin',
+    valueType: 'enum',
+    enumSource: 'manure_origins',
+    visibleForSubtypes: ['OM'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
     }
   },
 
@@ -713,7 +806,13 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     }
   },
   {
+    // MEASURED subtypes only. SoilManagementTab gates these behind
+    // `!['GR','HD','NS','TI'].includes(type)` and that exclusion is deliberate: a sheep
+    // rotation, a tillage pass, a hedgerow planting or a nesting shelter does not measure soil
+    // pH, and rendering an empty reading field invites a fabricated one. Declaring them for
+    // ALL subtypes put values on four modals that no input could set or clear.
     name: 'soil_texture',
+    visibleForSubtypes: ['ST', 'PA', 'CC', 'OM', 'CO', 'LA'],
     labelKey: 'events.soil.fields.soilTexture',
     valueType: 'enum',
     formatter: formatSoilTexture,
@@ -727,9 +826,13 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     labelKey: 'events.soil.fields.soilMoisture',
     valueType: 'enum',
     formatter: formatSoilMoisture,
+    // 🔴 `form` surface removed 2026-08-15. The input was deleted from
+    // SoilManagementTab in Sprint 2 Epic 2.1.3, but this declaration stayed — so the
+    // registry promised a form field that does not exist, and the conformance guard
+    // could not see it because the only mention left in the tab was the COMMENT
+    // recording the removal. `modal` is kept so previously-saved values still render.
     surfaces: {
-      modal: 'secondary',
-      form: 'secondary'
+      modal: 'secondary'
     }
   },
 
@@ -937,7 +1040,12 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     labelKey: 'events.common.fields.weatherConditions',
     valueType: 'enum',
     formatter: formatWeatherConditions,
-    surfaces: { modal: 'details', form: 'secondary' }
+    // 🔴 `form` surface removed 2026-08-15. The input was deleted from
+    // SoilManagementTab in Sprint 2 Epic 2.1.3, but this declaration stayed — so the
+    // registry promised a form field that does not exist, and the conformance guard
+    // could not see it because the only mention left in the tab was the COMMENT
+    // recording the removal. `modal` is kept so previously-saved values still render.
+    surfaces: { modal: 'details' }
   },
   {
     // See weatherEvent.ts for the full rationale: modal surface omitted so

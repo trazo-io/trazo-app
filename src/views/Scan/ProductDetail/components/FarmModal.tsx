@@ -2,6 +2,47 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { localizeFieldValue } from 'utils/fieldDisplayUtils';
 import { useSwipeToDismiss } from 'hooks/useSwipeToDismiss';
+
+/**
+ * One certification as the consumer payload carries it (backend:
+ * `certifications/serializers.py` ConsumerCertificationSerializer).
+ *
+ * `status` is the FTC gate — `verified_via_database` is the ONLY value that earns
+ * "Verified via USDA Organic Integrity Database"; everything else is the farmer's own
+ * attestation and must say so.
+ */
+interface ConsumerCertification {
+  display_name?: string;
+  certifier_name?: string;
+  status?: 'verified_via_database' | 'self_reported' | 'inactive' | 'pending';
+  effective_date?: string | null;
+  expiry_date?: string | null;
+  verification_source_url?: string | null;
+}
+
+/**
+ * The certifications this modal may display — ONE definition, used both to decide whether the
+ * card renders and to build its rows. Written twice, it is a drift waiting to happen: relax one
+ * copy and the card renders empty, tighten one and valid certifications vanish behind a heading
+ * that never appears.
+ *
+ * Drops anything that cannot be QUALIFIED:
+ *  - non-objects — a bare string carries no status, and until 2026-08-12 the backend published
+ *    the farmer's free-text field as exactly that (stale caches may still hold one);
+ *  - `Other` — a non-meaningful category, not a certification a shopper can act on;
+ *  - `inactive` / `pending` / anything unrecognised — no claim is available for these.
+ */
+const displayableCertifications = (value: unknown): ConsumerCertification[] =>
+  Array.isArray(value)
+    ? (value as ConsumerCertification[]).filter(
+        (cert) =>
+          cert &&
+          typeof cert === 'object' &&
+          !!cert.display_name &&
+          cert.display_name !== 'Other' &&
+          (cert.status === 'verified_via_database' || cert.status === 'self_reported')
+      )
+    : [];
 import {
   Modal,
   ModalOverlay,
@@ -91,7 +132,10 @@ interface FarmModalProps {
     zip_code?: string;
     facebook?: string;
     instagram?: string;
-    certifications?: string;
+    /** Structured certs from `ConsumerCertificationSerializer`. `unknown` because a stale
+     *  cached payload can still hold the retired free-text string shape; the renderer
+     *  narrows and drops anything without a status. */
+    certifications?: ConsumerCertification[] | unknown;
     // Operational agricultural fields - updated for transparency-first approach
     water_sources?: string[];
     soil_health_practices?: string[]; // replaces soil_types
@@ -149,7 +193,7 @@ export const FarmModal: React.FC<FarmModalProps> = ({
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
-  const accentColor = useColorModeValue('green.500', 'green.400');
+  const accentColor = useColorModeValue('green.700', 'green.300');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
   const iconBg = useColorModeValue('green.50', 'green.900');
   const messageBg = useColorModeValue('blue.50', 'blue.900');
@@ -596,8 +640,8 @@ export const FarmModal: React.FC<FarmModalProps> = ({
         </Card>
       )}
 
-      {/* Certifications */}
-      {establishmentData.certifications && (
+      {/* Certifications — only structured, status-carrying entries can be shown. */}
+      {displayableCertifications(establishmentData.certifications).length > 0 && (
         <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
           <CardBody p={6}>
             <Heading size="md" color={textColor} mb={4}>
@@ -611,22 +655,44 @@ export const FarmModal: React.FC<FarmModalProps> = ({
                 </Text>
               </HStack>
             </Heading>
-            <Text color={textColor} lineHeight="tall">
-              {(() => {
-                // Normalize cert data (array | object | comma-string) → names, then
-                // drop "Other" (non-meaningful cert category) regardless of shape.
-                const certs: any = establishmentData.certifications;
-                let names: string[] = [];
-                if (Array.isArray(certs)) {
-                  names = certs.map((c: any) => (typeof c === 'object' ? c.display_name || c.name : c));
-                } else if (typeof certs === 'object' && certs !== null) {
-                  names = [certs.display_name || String(certs)];
-                } else if (typeof certs === 'string') {
-                  names = certs.split(',').map((s: string) => s.trim());
-                }
-                return names.filter((n) => n && n !== 'Other').join(', ');
-              })()}
-            </Text>
+            {/* Each certification carries WHO stands behind it.
+                This used to normalise every shape (array | object | comma-string) down to
+                names and comma-join them, which threw away `status` — so a cert the farmer
+                merely typed in rendered identically to one matched against the USDA Organic
+                Integrity Database. An unqualified third-party certification name on a
+                consumer surface is the claim FTC 16 CFR 260.6 and EU ECGT 2024/825 police.
+                Bare strings are DROPPED rather than shown: a string carries no status, so it
+                cannot be qualified, and until 2026-08-12 the backend fell back to publishing
+                the farmer's free-text `certifications` field as exactly that. Stale cached
+                payloads may still contain one. */}
+            <VStack align="stretch" spacing={3}>
+              {displayableCertifications(establishmentData.certifications).map((cert, index) => {
+                const isDatabaseVerified = cert.status === 'verified_via_database';
+                return (
+                  <HStack
+                    key={`${cert.display_name}-${index}`}
+                    align="flex-start"
+                    justify="space-between"
+                    spacing={3}
+                    flexWrap="wrap">
+                    <Text color={textColor} lineHeight="tall" fontWeight="medium">
+                      {cert.display_name}
+                    </Text>
+                    <Badge
+                      colorScheme={isDatabaseVerified ? 'green' : 'gray'}
+                      fontSize="11px"
+                      whiteSpace="normal"
+                      textAlign="right">
+                      {intl.formatMessage({
+                        id: isDatabaseVerified
+                          ? 'certification.badge.verified'
+                          : 'certification.badge.selfReported'
+                      })}
+                    </Badge>
+                  </HStack>
+                );
+              })}
+            </VStack>
           </CardBody>
         </Card>
       )}

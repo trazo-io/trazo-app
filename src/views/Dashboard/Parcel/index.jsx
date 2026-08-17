@@ -1,5 +1,15 @@
 // Chakra imports
-import { Flex, Grid, Image, Text, useColorModeValue, Box, Button, Icon } from '@chakra-ui/react';
+import {
+  Flex,
+  Grid,
+  Image,
+  Text,
+  Tooltip,
+  useColorModeValue,
+  Box,
+  Button,
+  Icon
+} from '@chakra-ui/react';
 import React, { useEffect } from 'react';
 import { dashboardTableData, timelineData } from 'variables/general';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,6 +22,7 @@ import Shimmer from 'components/Shimmer/Shimmer';
 import HistoryCard from './components/HistoryCard';
 import TrackList from './components/TrackList';
 // assets
+import { FaClipboardCheck } from 'react-icons/fa';
 import imageMap from 'assets/img/imageMap.png';
 import imageParcel1 from 'assets/img/ImageParcel1.png';
 import { setParcel } from 'store/features/productSlice';
@@ -24,8 +35,6 @@ export default function ParcelView() {
   const intl = useIntl();
   const { farmId, parcelId } = useParams();
 
-  // Parcel dashboard tour — auto-starts on first visit
-  useTour('parcel-dashboard');
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -35,6 +44,18 @@ export default function ParcelView() {
   const currentCompany = useSelector((state) => state.company.currentCompany);
   // Get subscription from the company
   const subscription = currentCompany?.subscription;
+
+  /**
+   * Parcel dashboard tour — held until this parcel HAS a current production.
+   *
+   * Two of its four steps describe things that only exist then: the current-production summary,
+   * and the "Add event" actions, which TrackList swaps for a "Start production" button while
+   * there is no season (`!currentHistory?.id`). Ungated, the tour ran 3 of 4 steps on such a
+   * parcel and then marked itself complete — measured live on 2026-08-16 — so the step about
+   * logging events, the one that matters most, was never shown on that browser again.
+   */
+  const currentHistory = useSelector((state) => state.history?.currentHistory);
+  useTour('parcel-dashboard', { enabled: !!currentHistory?.id });
 
   const establishment = useSelector(
     (state) =>
@@ -72,24 +93,66 @@ export default function ParcelView() {
       px={{ base: '16px', md: '24px' }}
       w="100%"
       maxW="100%"
-      overflow="hidden">
-
-      <Box mb={{ base: '16px', md: '24px' }}>
+      overflow="hidden"
+    >
+      <Flex
+        mb={{ base: '16px', md: '24px' }}
+        justify="space-between"
+        align={{ base: 'stretch', smd: 'center' }}
+        direction={{ base: 'column', smd: 'row' }}
+        gap={3}
+      >
         <Text
           color={mainText}
           fontSize={{ base: 'xl', md: '2xl' }}
           fontWeight="bold"
-          px={{ base: '16px', md: '0' }}>
+          px={{ base: '16px', md: '0' }}
+        >
           {establishment?.name}
         </Text>
-      </Box>
+        {/* WS-5: THE entry to the per-parcel certifier record. Status text rides the
+            button so farmers see where they stand without opening it. */}
+        <Tooltip
+          isDisabled={!data?.application_missing?.length}
+          label={
+            data?.application_missing?.length
+              ? intl.formatMessage(
+                  { id: 'parcelApp.missingTooltip' },
+                  {
+                    items: data.application_missing
+                      .map((key) => intl.formatMessage({ id: `parcelApp.missing.${key}` }))
+                      .join(' · ')
+                  }
+                )
+              : undefined
+          }
+          hasArrow
+        >
+          <Button
+            leftIcon={<Icon as={FaClipboardCheck} />}
+            colorScheme="green"
+            variant={data?.application_status === 'complete' ? 'outline' : 'solid'}
+            minH="44px"
+            onClick={() =>
+              navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application`)
+            }
+          >
+            {intl.formatMessage({ id: 'parcelApp.title' })}
+            {data?.application_status
+              ? ` · ${intl.formatMessage({ id: `parcelApp.status.${data.application_status}` })}`
+              : ''}
+            {data?.application_missing?.length ? ` (${data.application_missing.length})` : ''}
+          </Button>
+        </Tooltip>
+      </Flex>
       <Grid
         templateColumns={{ md: '1fr', lg: '1.8fr 1.2fr' }}
         templateRows={{ md: '1fr auto', lg: '1fr' }}
         my={{ base: '20px', md: '26px' }}
         gap={{ base: '16px', md: '24px' }}
         w="100%"
-        maxW="100%">
+        maxW="100%"
+      >
         {establishment && !isFetching ? (
           <CardWithImage
             title={`${establishment?.city || establishment?.zone || ''}, ${establishment?.state}`}
@@ -132,7 +195,8 @@ export default function ParcelView() {
         templateRows={{ sm: '1fr auto', md: '1fr', lg: '1fr' }}
         gap={{ base: '16px', md: '24px' }}
         w="100%"
-        maxW="100%">
+        maxW="100%"
+      >
         <TrackList amount={40} />
         <HistoryCard
           title={intl.formatMessage({ id: 'parcel.history' })}

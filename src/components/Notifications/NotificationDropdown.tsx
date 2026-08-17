@@ -75,25 +75,35 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
+/**
+ * Fill for the notification's icon disc. It always carries a WHITE glyph, so every value here
+ * has to clear the 3:1 non-text floor (WCAG 1.4.11) against white — MEASURED, in this order:
+ * green.700 5.13, amber.900 3.79, red.700 4.98, gray.600 4.61.
+ *
+ * What was here failed: green.500 2.78 and green.600 4.12-as-a-glyph-ground were the usual
+ * green.500-under-white mistake, gray.500 was 2.68, and `orange.*` is not a Trazo token at
+ * all — the theme defines `amber`, so `orange.400` silently resolved to CHAKRA's orange
+ * (#ED8936, 2.55:1), a foreign accent that is neither accessible nor ours.
+ */
 const getNotificationColor = (type: string, priority: string) => {
   switch (type) {
     case 'product_scan':
-      return 'green.500';
+      return 'green.700';
     case 'product_review':
-      return 'orange.400';
+      return 'amber.900';
     case 'carbon_verification':
-      return 'green.600';
+      return 'green.700';
     case 'system_alert':
       switch (priority) {
         case 'urgent':
-          return 'red.500';
+          return 'red.700';
         case 'high':
-          return 'orange.500';
+          return 'amber.900';
         default:
-          return 'gray.500';
+          return 'gray.600';
       }
     default:
-      return 'green.500';
+      return 'green.700';
   }
 };
 
@@ -394,7 +404,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
         {/* Actions */}
         <VStack spacing="4px" alignItems="center">
           {!notification.read && (
-            <Box w="6px" h="6px" bg="green.500" borderRadius="full" title="Unread" />
+            <Box w="6px" h="6px" bg="green.700" borderRadius="full" title="Unread" />
           )}
           {!isNested && (
             <IconButton
@@ -448,12 +458,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
               >
                 <Icon as={getNotificationIcon(group.type)} boxSize={5} />
               </Box>
+              {/* No inline bg/color: inherit the `brand` variant, which is green.700 on white
+                  (~6.4:1). The hardcoded green.500 here measured 2.78:1 with white — an unread
+                  count is the one thing on a notification bell that has to be readable. */}
               <Badge
                 position="absolute"
                 top="-4px"
                 right="-4px"
-                bg="green.500"
-                color="white"
                 borderRadius="full"
                 minW="18px"
                 h="18px"
@@ -579,13 +590,12 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
     <Menu isOpen={isOpen} onOpen={() => setIsOpen(true)} onClose={() => setIsOpen(false)}>
       <MenuButton as={Box} position="relative" cursor="pointer">
         <BellIcon color={navbarIcon} w="18px" h="18px" />
+        {/* Same as the per-group count above — inherit `brand` rather than pin green.500. */}
         {unreadCount > 0 && (
           <Badge
             position="absolute"
             top="-8px"
             right="-8px"
-            bg="green.500"
-            color="white"
             borderRadius="full"
             minW="18px"
             h="18px"

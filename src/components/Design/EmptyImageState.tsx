@@ -8,7 +8,7 @@ import {
   useColorModeValue,
   ResponsiveValue
 } from '@chakra-ui/react';
-import { FaImage } from 'react-icons/fa';
+import { FaLeaf } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 
 interface EmptyImageStateProps {
@@ -20,7 +20,8 @@ interface EmptyImageStateProps {
 
   /**
    * Custom primary text (optional)
-   * Uses variant defaults if not provided
+   * small/medium render NO text unless this is explicitly set (quiet fill);
+   * large keeps its upload-prompt defaults.
    */
   primaryText?: string;
 
@@ -32,7 +33,7 @@ interface EmptyImageStateProps {
 
   /**
    * Custom icon (optional)
-   * @default FaImage
+   * @default FaLeaf
    */
   icon?: IconType;
 
@@ -58,18 +59,20 @@ interface EmptyImageStateProps {
 /**
  * EmptyImageState Component
  *
- * Modern, minimalist empty image state for dashboard cards and profile galleries
- * Provides consistent visual treatment across Trazo platform.
+ * THE one empty-image standard across Trazo surfaces (2026-08-09 unification:
+ * farm-profile card, parcel carousel cards, and galleries had drifted into
+ * different empty states — gray "No Image" boxes vs quiet leaf fills).
  *
- * Design: Subtle circular icon container with concise text messaging
- * - Icon: FaImage (universal symbol for photos)
- * - Colors: Trazo gray palette (professional, not temporary-feeling)
- * - Sizing: Responsive across contexts (40px → 70px)
- * - Accessibility: WCAG AA color contrast validated
+ * Design: a photo's absence is not an error, so card contexts must not
+ * announce it.
+ * - small/medium (cards): quiet brand-tinted fill + faint leaf watermark,
+ *   NO text unless explicitly passed (e.g. "Photo unavailable" error tiles).
+ * - large (galleries): keeps the action prompt — there the empty state IS
+ *   the upload invitation.
  *
  * Usage Examples:
  * ```tsx
- * // Dashboard card (small)
+ * // Dashboard card (small) — quiet fill, no text
  * <EmptyImageState variant="small" height="180px" borderRadius="20px" />
  *
  * // Profile gallery (large with custom text)
@@ -84,56 +87,58 @@ export const EmptyImageState: React.FC<EmptyImageStateProps> = ({
   variant = 'large',
   primaryText,
   secondaryText,
-  icon = FaImage,
+  icon = FaLeaf,
   height,
   borderRadius = 'md',
   showBorder = true
 }) => {
-  // Trazo color palette
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const circleBgColor = useColorModeValue('gray.100', 'gray.800');
-  const iconColor = useColorModeValue('gray.400', 'gray.500');
+  // Quiet brand-tinted fill (never a flat gray void)
+  const bgGradient = useColorModeValue(
+    'linear(to-br, green.50, gray.50)',
+    'linear(to-br, gray.800, gray.900)'
+  );
+  const borderColor = useColorModeValue('gray.100', 'gray.700');
+  const watermarkColor = useColorModeValue('green.200', 'green.700');
+  const circleBgColor = useColorModeValue('white', 'gray.800');
+  const largeIconColor = useColorModeValue('green.400', 'green.500');
   const primaryTextColor = useColorModeValue('gray.600', 'gray.300');
   const secondaryTextColor = useColorModeValue('gray.500', 'gray.400');
 
   // Variant configuration
   const variantConfig = {
     small: {
-      circleSize: '40px',
-      iconSize: 5, // 20px
-      spacing: 2, // 8px
-      primaryFontSize: 'sm',
+      iconSize: 7, // 28px watermark
+      spacing: 2,
+      primaryFontSize: 'xs',
       primaryFontWeight: '500' as const,
       showSecondaryText: false,
-      containerPadding: 4 // 16px
+      containerPadding: 4
     },
     medium: {
-      circleSize: '50px',
-      iconSize: 6, // 24px
-      spacing: 2, // 8px
+      iconSize: 8, // 32px watermark
+      spacing: 2,
       primaryFontSize: 'sm',
       primaryFontWeight: '500' as const,
       showSecondaryText: false,
-      containerPadding: 4 // 16px
+      containerPadding: 4
     },
     large: {
-      circleSize: { base: '60px', md: '70px' },
-      iconSize: { base: 6, md: 8 }, // 24px → 32px responsive
-      spacing: { base: 3, md: 4 }, // 12px → 16px responsive
-      primaryFontSize: { base: 'md', md: 'lg' }, // 16px → 18px responsive
+      iconSize: { base: 6, md: 8 },
+      spacing: { base: 3, md: 4 },
+      primaryFontSize: { base: 'md', md: 'lg' },
       primaryFontWeight: '600' as const,
       showSecondaryText: true,
-      containerPadding: 8 // 32px
+      containerPadding: 8
     }
   };
 
   const config = variantConfig[variant];
 
-  // Default text by variant
+  // small/medium: silent by default — text only when a caller states it
+  // (error tiles). large: the gallery's upload prompt.
   const defaultPrimaryText = {
-    small: 'No Image',
-    medium: 'No Image',
+    small: '',
+    medium: '',
     large: 'No photos available'
   };
 
@@ -148,7 +153,7 @@ export const EmptyImageState: React.FC<EmptyImageStateProps> = ({
 
   return (
     <Box
-      bg={bgColor}
+      bgGradient={bgGradient}
       border={showBorder ? '1px solid' : 'none'}
       borderColor={borderColor}
       borderRadius={borderRadius}
@@ -158,43 +163,55 @@ export const EmptyImageState: React.FC<EmptyImageStateProps> = ({
       justifyContent="center"
       p={config.containerPadding}
       minH={height ? undefined : 'inherit'}
+      role="img"
+      aria-label={displayPrimaryText || 'No photo'}
     >
-      <VStack
-        spacing={config.spacing}
-        textAlign="center"
-        role="img"
-        aria-label={displayPrimaryText}
-      >
-        {/* Icon Container */}
-        <Circle size={config.circleSize} bg={circleBgColor} color={iconColor} flexShrink={0}>
-          <Icon as={icon} boxSize={config.iconSize} />
-        </Circle>
-
-        {/* Text Container */}
-        <VStack spacing={1} w="100%">
-          {/* Primary Text */}
-          <Text
-            fontSize={config.primaryFontSize}
-            fontWeight={config.primaryFontWeight}
-            color={primaryTextColor}
-            lineHeight="tight"
+      {variant === 'large' ? (
+        <VStack spacing={config.spacing} textAlign="center">
+          <Circle
+            size={{ base: '60px', md: '70px' }}
+            bg={circleBgColor}
+            color={largeIconColor}
+            flexShrink={0}
+            boxShadow="sm"
           >
-            {displayPrimaryText}
-          </Text>
-
-          {/* Secondary Text - Only show for large variant or if explicitly set */}
-          {(config.showSecondaryText || secondaryText) && displaySecondaryText && (
+            <Icon as={icon} boxSize={config.iconSize} />
+          </Circle>
+          <VStack spacing={1} w="100%">
             <Text
-              fontSize="sm"
-              color={secondaryTextColor}
-              lineHeight="tall"
-              display={{ base: variant === 'large' ? 'none' : 'block', md: 'block' }}
+              fontSize={config.primaryFontSize}
+              fontWeight={config.primaryFontWeight}
+              color={primaryTextColor}
+              lineHeight="tight"
             >
-              {displaySecondaryText}
+              {displayPrimaryText}
+            </Text>
+            {displaySecondaryText && (
+              <Text fontSize="sm" color={secondaryTextColor} lineHeight="tall">
+                {displaySecondaryText}
+              </Text>
+            )}
+          </VStack>
+        </VStack>
+      ) : (
+        <VStack spacing={config.spacing} textAlign="center">
+          {/* A watermark is faint ON PURPOSE — green.200 measures 1.35:1 on white and is meant
+              to. That is only honest if it carries no information, so it is marked decorative:
+              the text beside it says what the empty state means. Without aria-hidden a
+              contrast audit reads it as a failing 28px icon, because it looks like one. */}
+          <Icon as={icon} boxSize={config.iconSize} color={watermarkColor} aria-hidden="true" />
+          {displayPrimaryText && (
+            <Text
+              fontSize={config.primaryFontSize}
+              fontWeight={config.primaryFontWeight}
+              color={primaryTextColor}
+              lineHeight="tight"
+            >
+              {displayPrimaryText}
             </Text>
           )}
         </VStack>
-      </VStack>
+      )}
     </Box>
   );
 };

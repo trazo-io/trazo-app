@@ -11,6 +11,9 @@ import {
   OSP_ADD_APPROVED_INPUT_URL,
   OSP_CHANGE_NOTIFICATIONS_URL,
   OSP_ATTACHMENTS_URL,
+  OSP_MODULE_DEFINITIONS_URL,
+  OSP_MODULE_URL,
+  OSP_MODULES_URL,
   OSP_NEW_VERSION_URL,
   OSP_RECORD_TYPES_URL,
   OSP_REMOVE_APPROVED_INPUT_URL,
@@ -29,6 +32,12 @@ import {
   OSPSummary,
   UpdateOSPData
 } from 'types/osp';
+import type {
+  ModuleDetailResponse,
+  ModuleListResponse,
+  ModuleRegistryResponse,
+  SaveModulePayload
+} from 'config/osp/types';
 import baseApi from './baseApi';
 
 interface OSPScope {
@@ -235,6 +244,55 @@ const ospApi = baseApi.injectEndpoints({
     // The response separates `suggested` (we found records) from `confirmed` (the operator
     // says so). Only the latter may render as a ticked checkbox: 7 CFR 205.201(a) makes the
     // producer the author of the plan.
+    // Guided OSP modules — WS-2.4. Definitions are content-versioned and stable per
+    // deploy; answers invalidate the module list and the OSP row (the compiler
+    // rewrites sections on every module save).
+    getOSPModuleDefinitions: build.query<ModuleRegistryResponse, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_MODULE_DEFINITIONS_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSPModules', id: `defs-${ospId}` }]
+    }),
+
+    getOSPModules: build.query<ModuleListResponse, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_MODULES_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSPModules', id: `list-${ospId}` }]
+    }),
+
+    getOSPModule: build.query<ModuleDetailResponse, OSPOne & { moduleKey: string }>({
+      query: ({ companyId, farmId, ospId, moduleKey }) => ({
+        url: OSP_MODULE_URL(companyId, farmId, ospId, moduleKey),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId, moduleKey }) => [
+        { type: 'OSPModules', id: `${ospId}-${moduleKey}` }
+      ]
+    }),
+
+    saveOSPModule: build.mutation<
+      ModuleDetailResponse,
+      OSPOne & { moduleKey: string; data: SaveModulePayload }
+    >({
+      query: ({ companyId, farmId, ospId, moduleKey, data }) => ({
+        url: OSP_MODULE_URL(companyId, farmId, ospId, moduleKey),
+        method: 'PUT',
+        credentials: 'include',
+        body: data
+      }),
+      invalidatesTags: (_r, _e, { ospId, moduleKey }) => [
+        { type: 'OSPModules', id: `${ospId}-${moduleKey}` },
+        { type: 'OSPModules', id: `list-${ospId}` },
+        { type: 'OSP', id: Number(ospId) }
+      ]
+    }),
+
     getOSPRecordTypes: build.query<OSPRecordTypesResponse, OSPOne>({
       query: ({ companyId, farmId, ospId }) => ({
         url: OSP_RECORD_TYPES_URL(companyId, farmId, ospId),
@@ -301,6 +359,10 @@ export const {
   useCreateOSPChangeNotificationMutation,
   useDeleteOSPChangeNotificationMutation,
   useGetOSPRecordTypesQuery,
+  useGetOSPModuleDefinitionsQuery,
+  useGetOSPModulesQuery,
+  useGetOSPModuleQuery,
+  useSaveOSPModuleMutation,
   useGetOSPAttachmentsQuery,
   useConfirmOSPRecordTypesMutation,
   useLazyVerifyInputQuery

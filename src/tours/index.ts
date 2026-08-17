@@ -8,11 +8,14 @@ import './welcomeTourFresh';
 import './welcomeTourInvited';
 import './welcomeTourViewer';
 
-// Feature discovery tours
+// Feature discovery tours — one per October-pivot destination in the sidebar
 import './parcelTour';
 import './productionTour';
-import './commercialTour';
-import './transparencyTour';
+import './activitiesTour';
+import './ospTour';
+import './documentsTour';
+import './buyerTour';
+import './farmProfileTour';
 
 // Re-export registry utilities
 export { getTour, getAllTours, getToursForPage } from './registry';

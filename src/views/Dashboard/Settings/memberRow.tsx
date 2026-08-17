@@ -98,12 +98,12 @@ const MemberRow = (props: MemberRowProps) => {
           px={{ base: 2, md: 4 }}
           py={1}
           borderRadius="full"
-          bg="blue.50"
-          color="blue.700"
+          bg="gray.100"
+          color="gray.700"
           fontSize="xs"
           fontWeight="semibold"
           border="1px solid"
-          borderColor="blue.200"
+          borderColor="gray.200"
           textTransform="capitalize"
           whiteSpace="nowrap"
         >

@@ -1082,7 +1082,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                     <Text fontSize="sm" fontWeight="semibold" color="green.700">
                       Production Method Impact:
                     </Text>
-                    <Text fontSize="sm" color="green.600">
+                    <Text fontSize="sm" color="green.700">
                       {watch('productionMethod') === 'organic' ||
                       watch('productionMethod') === 'biodynamic' ||
                       watch('productionMethod') === 'regenerative'
@@ -1329,7 +1329,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
 
                   <Divider my={4} />
 
-                  <Text fontSize="sm" color="green.600" textAlign="center">
+                  <Text fontSize="sm" color="green.700" textAlign="center">
                     🌱 Your production will be ready to track events and progress after creation
                   </Text>
                 </Box>

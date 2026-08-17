@@ -284,7 +284,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                             {row.cfr_cite}
                           </Text>
                           {row.basis && (
-                            <Text fontSize="xs" color="green.600">
+                            <Text fontSize="xs" color="green.700">
                               {row.basis}
                             </Text>
                           )}

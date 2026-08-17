@@ -573,7 +573,7 @@ const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }
             href="https://www.ams.usda.gov/rules-regulations/organic/organic-seal"
             isExternal
             fontSize="xs"
-            color="green.600"
+            color="green.700"
           >
             {intl.formatMessage({
               id: 'consumer.trust.learnMoreUsdaAms',

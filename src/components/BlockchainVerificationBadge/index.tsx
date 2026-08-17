@@ -48,8 +48,8 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('green.200', 'green.600');
   const textColor = useColorModeValue('gray.700', 'gray.300');
-  const iconColor = useColorModeValue('green.600', 'green.400');
-  const uspGreen = useColorModeValue('green.600', 'green.400');
+  const iconColor = useColorModeValue('green.700', 'green.400');
+  const uspGreen = useColorModeValue('green.700', 'green.400');
   const blockchainBlue = useColorModeValue('blue.600', 'blue.400');
 
   // Responsive sizing

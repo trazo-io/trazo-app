@@ -292,8 +292,7 @@ function NewCompany() {
                             id: 'app.tradenameHelp',
                             defaultMessage:
                               'Nombre alternativo o comercial de la empresa, si aplica.'
-                          })}
-                        >
+                          })}>
                           <InfoOutlineIcon ml={1} color="gray.400" cursor="pointer" />
                         </Tooltip>
                       </FormLabel>
@@ -414,8 +413,7 @@ function NewCompany() {
                     w="100px"
                     h="35px"
                     type="submit"
-                    rightIcon={<ArrowForwardIcon color="#fff" boxSize={3} ml={2} />}
-                  >
+                    rightIcon={<ArrowForwardIcon color="#fff" boxSize={3} ml={2} />}>
                     <Text fontSize="xs" color="#fff" fontWeight="bold">
                       {intl.formatMessage({ id: 'app.next' })}
                     </Text>
@@ -448,8 +446,7 @@ function NewCompany() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      onClick={() => mainInfoTab.current.click()}
-                    >
+                      onClick={() => mainInfoTab.current.click()}>
                       <Text fontSize="xs" color="gray.700" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.prev' })}
                       </Text>
@@ -461,8 +458,7 @@ function NewCompany() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      type="submit"
-                    >
+                      type="submit">
                       <Text fontSize="xs" color="#fff" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.next' })}
                       </Text>
@@ -484,8 +480,7 @@ function NewCompany() {
           <CardBody>
             <StandardField
               label={intl.formatMessage({ id: 'app.companyImage' }) || 'Company Image'}
-              helpText="Upload your company logo or representative image"
-            >
+              helpText="Upload your company logo or representative image">
               <StandardMediaUpload
                 onFilesChange={setUploadedFiles}
                 acceptedFiles={uploadedFiles}
@@ -507,8 +502,7 @@ function NewCompany() {
                 mt="24px"
                 w="100px"
                 h="35px"
-                onClick={() => descriptionTab.current.click()}
-              >
+                onClick={() => descriptionTab.current.click()}>
                 <Text fontSize="xs" color="gray.700" fontWeight="bold">
                   {intl.formatMessage({ id: 'app.prev' })}
                 </Text>
@@ -520,8 +514,7 @@ function NewCompany() {
                 mt="24px"
                 w="100px"
                 h="35px"
-                onClick={() => socialsTab.current.click()}
-              >
+                onClick={() => socialsTab.current.click()}>
                 <Text fontSize="xs" color="#fff" fontWeight="bold">
                   {intl.formatMessage({ id: 'app.next' })}
                 </Text>
@@ -567,8 +560,7 @@ function NewCompany() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      onClick={() => mediaTab.current.click()}
-                    >
+                      onClick={() => mediaTab.current.click()}>
                       <Text fontSize="xs" color="gray.700" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.prev' })}
                       </Text>
@@ -581,8 +573,7 @@ function NewCompany() {
                       mt="24px"
                       w="100px"
                       h="35px"
-                      type="submit"
-                    >
+                      type="submit">
                       <Text fontSize="xs" color="#fff" fontWeight="bold">
                         {intl.formatMessage({ id: 'app.send' })}
                       </Text>

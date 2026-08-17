@@ -71,6 +71,12 @@ type EstablishmentType = {
   parcels: ParcelType[];
 };
 
+/**
+ * Parcels listed under a farm in the sidebar before the list is cut off. Matches the cap the OSP
+ * page uses for its parcel-application list, so the two agree on "a few, then a way to see all".
+ */
+const SIDEBAR_PARCEL_LIMIT = 6;
+
 function Sidebar(props: SidebarProps) {
   const intl = useIntl();
   // to check for active links and opened collapses
@@ -79,10 +85,11 @@ function Sidebar(props: SidebarProps) {
   // this is for the rest of the collapses
 
   const [dynamicRoutes, setDynamicRoutes] = useState<Route[]>([]);
-  const [commercialDynamicRoutes, setCommercialDynamicRoutes] = useState([]);
-  const [transparencyDynamicRoutes, setTransparencyDynamicRoutes] = useState([]);
   const [ospDynamicRoutes, setOspDynamicRoutes] = useState([]);
   const [iotDynamicRoutes, setIotDynamicRoutes] = useState([]);
+  const [documentsDynamicRoutes, setDocumentsDynamicRoutes] = useState([]);
+  const [activitiesDynamicRoutes, setActivitiesDynamicRoutes] = useState([]);
+  const [buyerDynamicRoutes, setBuyerDynamicRoutes] = useState([]);
 
   const establishments = useSelector(
     (state: RootState) => state.company.currentCompany?.establishments
@@ -95,7 +102,11 @@ function Sidebar(props: SidebarProps) {
   // inside conditional branches, so the number of hook calls varied between
   // renders and triggered React's "change in order of Hooks" warning. Hooks must
   // run unconditionally at the top level, so they live here and are read below.
-  const cmGreen = useColorModeValue('green.500', 'green.500');
+  // green.700, not green.500. This one value paints BOTH the active nav chip (white glyph on
+  // it: green.500 = 2.78:1) and every inactive nav icon (green.500 on a near-white chip =
+  // 2.70:1). Both are below the 3:1 WCAG 1.4.11 asks of a meaningful graphic; green.700 is
+  // 5.13:1 and 4.98:1. green.500 stays the brand colour everywhere it is not carrying content.
+  const cmGreen = useColorModeValue('green.700', 'green.700');
   const cmWhiteGray = useColorModeValue('white', 'gray.700');
   const cmWhiteWhite = useColorModeValue('white', 'white');
   const cmActiveColor = useColorModeValue('gray.700', 'white');
@@ -110,9 +121,8 @@ function Sidebar(props: SidebarProps) {
   };
 
   useEffect(() => {
-    const dynamicRoutes: Route[] =
-      establishments &&
-      establishments.map((e: EstablishmentType) => {
+    const dynamicRoutes =
+      (establishments ?? []).map((e: EstablishmentType) => {
         return {
           name: e.name,
           path: `/dashboard/farm/${e.id}`,
@@ -121,55 +131,53 @@ function Sidebar(props: SidebarProps) {
           authIcon: <HomeIcon color="inherit" />,
           layout: '/admin',
           isDashboard: true,
-          regex: new RegExp(
-            `^\\/admin\\/dashboard\\/farm\\/${e.id}(\\/.*)?$`
-          ),
-          items: e?.parcels?.map((p: ParcelType) => {
-            return {
-              name: p.name,
-              path: `/dashboard/farm/${e.id}/parcel/${p.id}`,
-              component: Overview,
-              layout: '/admin',
-              isDashboard: true,
-              regex: new RegExp(
-                `^\\/admin\\/dashboard\\/farm\\/${e.id}\\/parcel\\/${p.id}(\\/.*)?$`
-              )
-            };
-          })
-        };
-      });
-
-    const commercialDynamicRoutes =
-      establishments &&
-      establishments.map((e: EstablishmentType) => {
-        return {
-          name: e.name,
-          path: `/dashboard/farm/${e.id}/commercial`,
-          farmId: e.id,
-          authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/commercial$`),
-          layout: '/admin',
-          items: []
-        };
-      });
-
-    const transparencyDynamicRoutes =
-      establishments &&
-      establishments.map((e: EstablishmentType) => {
-        return {
-          name: e.name,
-          path: `/dashboard/farm/${e.id}/transparency`,
-          farmId: e.id,
-          authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/transparency$`),
-          layout: '/admin',
-          items: []
+          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}(\\/.*)?$`),
+          // Parcels are CAPPED. Expanding a farm used to list every parcel it has, so a
+          // 25-parcel operation pushed Activities / OSP / Documents / Buyer Page off the bottom
+          // of the sidebar — the primary navigation buried under a data list. Neither a nested
+          // scroll region (scrollbar inside a scrollbar) nor pagination (navigation is not a
+          // dataset) belongs in a nav tree; the standard is a short list plus a way to reach the
+          // rest, which here is the farm home's parcel carousel and the ⌘K search this app
+          // already ships.
+          items: [
+            ...(e?.parcels ?? []).slice(0, SIDEBAR_PARCEL_LIMIT).map((p: ParcelType) => {
+              return {
+                name: p.name,
+                path: `/dashboard/farm/${e.id}/parcel/${p.id}`,
+                component: Overview,
+                layout: '/admin',
+                isDashboard: true,
+                regex: new RegExp(
+                  `^\\/admin\\/dashboard\\/farm\\/${e.id}\\/parcel\\/${p.id}(\\/.*)?$`
+                )
+              };
+            }),
+            ...((e?.parcels?.length ?? 0) > SIDEBAR_PARCEL_LIMIT
+              ? [
+                  {
+                    name: intl.formatMessage(
+                      { id: 'sidebar.viewAllParcels' },
+                      { count: e.parcels.length }
+                    ),
+                    path: `/dashboard/farm/${e.id}`,
+                    // Same shape as a parcel entry above, `component` included: a differently
+                    // shaped object turns `items` into a union type and the whole array stops
+                    // matching `Route[]`.
+                    component: Overview,
+                    layout: '/admin',
+                    isDashboard: true,
+                    // Deliberately matches nothing: this is a way out of the list, not a
+                    // destination that should ever paint itself as the active parcel.
+                    regex: /(?!)/
+                  }
+                ]
+              : [])
+          ]
         };
       });
 
     const iotDynamicRoutes =
-      establishments &&
-      establishments.map((e: EstablishmentType) => {
+      (establishments ?? []).map((e: EstablishmentType) => {
         return {
           name: e.name,
           path: `/dashboard/farm/${e.id}/iot`,
@@ -181,10 +189,51 @@ function Sidebar(props: SidebarProps) {
         };
       });
 
+    // WS-4 — Activities per establishment.
+    const activitiesDynamicRoutes =
+      (establishments ?? []).map((e: EstablishmentType) => {
+        return {
+          name: e.name,
+          path: `/dashboard/farm/${e.id}/activities`,
+          farmId: e.id,
+          authIcon: <HomeIcon color="inherit" />,
+          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/activities$`),
+          layout: '/admin',
+          items: []
+        };
+      });
+
+    // WS-6 — Buyer Page per establishment.
+    const buyerDynamicRoutes =
+      (establishments ?? []).map((e: EstablishmentType) => {
+        return {
+          name: e.name,
+          path: `/dashboard/farm/${e.id}/buyer`,
+          farmId: e.id,
+          authIcon: <HomeIcon color="inherit" />,
+          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/buyer$`),
+          layout: '/admin',
+          items: []
+        };
+      });
+
+    // WS-1 — Documents (DMS) per establishment.
+    const documentsDynamicRoutes =
+      (establishments ?? []).map((e: EstablishmentType) => {
+        return {
+          name: e.name,
+          path: `/dashboard/farm/${e.id}/documents`,
+          farmId: e.id,
+          authIcon: <HomeIcon color="inherit" />,
+          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/documents$`),
+          layout: '/admin',
+          items: []
+        };
+      });
+
     // Sprint 5A — Organic System Plan per establishment.
     const ospDynamicRoutes =
-      establishments &&
-      establishments.map((e: EstablishmentType) => {
+      (establishments ?? []).map((e: EstablishmentType) => {
         return {
           name: e.name,
           path: `/dashboard/farm/${e.id}/osp`,
@@ -198,12 +247,16 @@ function Sidebar(props: SidebarProps) {
 
     if (establishments) {
       setDynamicRoutes(dynamicRoutes);
-      setCommercialDynamicRoutes(commercialDynamicRoutes);
-      setTransparencyDynamicRoutes(transparencyDynamicRoutes);
       setOspDynamicRoutes(ospDynamicRoutes);
       setIotDynamicRoutes(iotDynamicRoutes);
+      setDocumentsDynamicRoutes(documentsDynamicRoutes);
+      setBuyerDynamicRoutes(buyerDynamicRoutes);
+      setActivitiesDynamicRoutes(activitiesDynamicRoutes);
     }
-  }, [establishments]);
+    // `intl.locale`, NOT the `intl` object: this effect calls setState, so depending on an
+    // object identity that a provider might not memoise is an infinite-render risk for the sake
+    // of one translated label. The locale string is the thing that actually changes.
+  }, [establishments, intl.locale]);
 
   // this function creates the links and collapses that appear in the sidebar (left menu)
   const createLinks = (routes: any) => {
@@ -315,7 +368,7 @@ function Sidebar(props: SidebarProps) {
                       <Icon
                         as={FaCircle}
                         w="10px"
-                        color="green.500"
+                        color="green.700"
                         display={sidebarWidth === 275 ? 'block' : 'none'}
                       />
                       {prop.farmId ? (
@@ -324,7 +377,7 @@ function Sidebar(props: SidebarProps) {
                             color={activeColor}
                             my="auto"
                             fontSize="sm"
-                            maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+                            maxW={sidebarWidth === 275 ? '180px' : 'none'}
                             wordBreak="break-word"
                             whiteSpace="normal"
                             lineHeight="1.4"
@@ -338,7 +391,7 @@ function Sidebar(props: SidebarProps) {
                           color={activeColor}
                           my="auto"
                           fontSize="sm"
-                          maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+                          maxW={sidebarWidth === 275 ? '180px' : 'none'}
                           wordBreak="break-word"
                           whiteSpace="normal"
                           lineHeight="1.4"
@@ -409,7 +462,7 @@ function Sidebar(props: SidebarProps) {
                       <Icon
                         as={FaCircle}
                         w="6px"
-                        color="green.500"
+                        color="green.700"
                         display={sidebarWidth === 275 ? 'block' : 'none'}
                       />
                       {prop.farmId ? (
@@ -419,7 +472,7 @@ function Sidebar(props: SidebarProps) {
                             my="auto"
                             fontSize="md"
                             fontWeight="normal"
-                            maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+                            maxW={sidebarWidth === 275 ? '180px' : 'none'}
                             wordBreak="break-word"
                             whiteSpace="normal"
                             lineHeight="1.4"
@@ -434,7 +487,7 @@ function Sidebar(props: SidebarProps) {
                           my="auto"
                           fontSize="md"
                           fontWeight="normal"
-                          maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+                          maxW={sidebarWidth === 275 ? '180px' : 'none'}
                           wordBreak="break-word"
                           whiteSpace="normal"
                           lineHeight="1.4"
@@ -472,10 +525,7 @@ function Sidebar(props: SidebarProps) {
               pb="8px"
               ps={prop.icon && !prop.isCompanySettings ? null : sidebarWidth === 275 ? null : '8px'}
             >
-              {(dynamicRoutes ||
-                commercialDynamicRoutes ||
-                transparencyDynamicRoutes ||
-                iotDynamicRoutes) && (
+              {(dynamicRoutes || iotDynamicRoutes) && (
                 <List>
                   {
                     prop.icon && !prop.isCompanySettings ? (
@@ -485,12 +535,14 @@ function Sidebar(props: SidebarProps) {
                           const routes =
                             prop.isDashboard && !prop.items
                               ? dynamicRoutes
-                              : prop.isCommercial
-                              ? commercialDynamicRoutes
-                              : prop.isTransparencyDashboard
-                              ? transparencyDynamicRoutes
                               : prop.isOrganicSystemPlan
                               ? ospDynamicRoutes
+                              : prop.isBuyer
+                              ? buyerDynamicRoutes
+                              : prop.isDocuments
+                              ? documentsDynamicRoutes
+                              : prop.isActivities
+                              ? activitiesDynamicRoutes
                               : prop.isIoTDashboard
                               ? iotDynamicRoutes
                               : prop.items;
@@ -501,10 +553,12 @@ function Sidebar(props: SidebarProps) {
                       createAccordionLinks(
                         prop.isDashboard && !prop.items
                           ? dynamicRoutes
-                          : prop.isCommercial
-                          ? commercialDynamicRoutes
-                          : prop.isTransparencyDashboard
-                          ? transparencyDynamicRoutes
+                          : prop.isBuyer
+                          ? buyerDynamicRoutes
+                          : prop.isDocuments
+                          ? documentsDynamicRoutes
+                          : prop.isActivities
+                          ? activitiesDynamicRoutes
                           : prop.isIoTDashboard
                           ? iotDynamicRoutes
                           : prop.items
@@ -523,7 +577,7 @@ function Sidebar(props: SidebarProps) {
               <Box>
                 <HStack spacing="14px" py="15px" px="15px">
                   <IconBox
-                    bg="green.500"
+                    bg="green.700"
                     color="white"
                     h="30px"
                     w="30px"
@@ -552,7 +606,7 @@ function Sidebar(props: SidebarProps) {
                   <Icon
                     as={FaCircle}
                     w={activeRoute(prop.regex) ? '10px' : '6px'}
-                    color="green.500"
+                    color="green.700"
                     display={sidebarWidth === 275 ? 'block' : 'none'}
                   />
                   <Text
@@ -582,7 +636,7 @@ function Sidebar(props: SidebarProps) {
               color={activeRoute(prop.regex) ? activeColor : inactiveColor}
               fontWeight={activeRoute(prop.regex) ? 'bold' : 'normal'}
               fontSize="sm"
-              maxW={sidebarWidth === 275 ? '180px' : 'auto'}
+              maxW={sidebarWidth === 275 ? '180px' : 'none'}
               wordBreak="break-word"
               whiteSpace="normal"
               lineHeight="1.4"
@@ -650,7 +704,13 @@ function Sidebar(props: SidebarProps) {
   let sidebarContent = (
     <Box>
       <Box mb="20px">{brand}</Box>
-      <Stack direction="column" mb="40px" as="nav" aria-label="Main navigation" data-tour="sidebar-nav">
+      <Stack
+        direction="column"
+        mb="40px"
+        as="nav"
+        aria-label="Main navigation"
+        data-tour="sidebar-nav"
+      >
         <Box>{links}</Box>
       </Stack>
       <SidebarHelp sidebarWidth={sidebarWidth} />
@@ -742,9 +802,7 @@ function Sidebar(props: SidebarProps) {
                 renderThumbVertical={cmThumb}
                 renderView={renderView}
               >
-                <Box pe="15px">
-                  {sidebarContent}
-                </Box>
+                <Box pe="15px">{sidebarContent}</Box>
               </Scrollbars>
             ) : (
               <Box id="sidebarScrollRemove" overflowY="scroll" height="100vh">

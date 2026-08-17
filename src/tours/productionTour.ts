@@ -2,8 +2,19 @@ import { TourDefinition } from './types';
 import { registerTour } from './registry';
 
 /**
- * Production creation tour — shown when user creates their first production.
- * Only for writers (Admin/Manager). 4 steps including center intro.
+ * Production creation tour — shown to a writer starting their first season. 2 steps.
+ *
+ * It declared THREE until 2026-08-16. The third pointed at the "Pre-configured Events" list,
+ * which only renders once a template has been applied — so on arrival the tour ran with two of
+ * its three targets and then marked itself complete (measured live: "Step 1 of 2"), and that
+ * step was never shown again on that browser. Gating the whole tour on the list existing was
+ * worse: it delayed the crop and template steps until after the farmer had already used both.
+ *
+ * A tour step has to point at something that is on screen at the moment the tour runs. These
+ * two are; the events list explains itself with the helper note rendered inside it.
+ *
+ * (The third step's anchor was also still named `transparency-score-preview` — a leftover from
+ * the producer score retired 2026-08-11.)
  */
 const productionTour: TourDefinition = {
   id: 'production-first',
@@ -23,13 +34,6 @@ const productionTour: TourDefinition = {
       titleKey: 'tour.production.step2.title',
       contentKey: 'tour.production.step2.content',
       placement: 'bottom',
-      disableBeacon: true
-    },
-    {
-      target: '[data-tour="transparency-score-preview"]',
-      titleKey: 'tour.production.step3.title',
-      contentKey: 'tour.production.step3.content',
-      placement: 'top',
       disableBeacon: true
     }
   ]

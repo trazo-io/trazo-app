@@ -250,13 +250,36 @@ const ELECTRICITY_SOURCE_KEYS: Record<string, string> = {
   mixed: 'consumer.eventCard.electricity.mixed'
 };
 
+// CLIENT FALLBACK ONLY — used when the payload predates server-side `input_status`.
+//
+// These keys are read from `event.organic_approved`, which is the GROWER'S DROPDOWN. The
+// client cannot see the OMRI or National List catalogs, so it cannot know whether a listing
+// claim is earned. Until 2026-08-09 `omri_listed` here rendered the words "OMRI Listed" —
+// naming a real third-party program on the strength of a self-report. Every value therefore
+// now falls back to the grower-reported wording; only the server (claim_authority
+// .may_claim_input_listing, which holds the catalog FKs) may upgrade it.
 const ORGANIC_STATUS_KEYS: Record<string, string> = {
-  omri_listed: 'consumer.eventCard.organic.omriListed',
-  usda_nop_approved: 'consumer.eventCard.organic.usdaNopApproved',
-  organic_equivalent: 'consumer.eventCard.organic.organicApproved',
-  organic_certified: 'consumer.eventCard.organic.organicApproved',
+  omri_listed: 'consumer.eventCard.organic.growerReported',
+  // 2026-08-15 — added with the rebuilt organic_approved enum. All map to the SAME
+  // grower-reported key: a new picker value must never silently upgrade a claim.
+  wsda_listed: 'consumer.eventCard.organic.growerReported',
+  nop_seal_on_label: 'consumer.eventCard.organic.growerReported',
+  certifier_approved: 'consumer.eventCard.organic.growerReported',
+  usda_nop_approved: 'consumer.eventCard.organic.growerReported',
+  organic_equivalent: 'consumer.eventCard.organic.growerReported',
+  organic_certified: 'consumer.eventCard.organic.growerReported',
   transitional: 'consumer.eventCard.organic.transitional',
-  yes: 'consumer.eventCard.organic.organicApproved'
+  yes: 'consumer.eventCard.organic.growerReported'
+};
+
+// Tooltip per server-resolved status. The single old tooltip asserted the input was
+// "approved for organic farming by the listed certification body" for EVERY chip, including
+// chips backed by nothing but the grower's dropdown — an unearned third-party attestation in
+// the tooltip even where the label was later softened.
+const ORGANIC_TOOLTIP_KEYS: Record<string, string> = {
+  omri_listed: 'consumer.eventCard.organic.tooltipOmri',
+  national_list_allowed: 'consumer.eventCard.organic.tooltipNationalList',
+  organic_approved: 'consumer.eventCard.organic.tooltipGrowerReported'
 };
 
 // Comprehensive event interface that includes all possible fields across all event types
@@ -578,11 +601,22 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const fieldDisplayBase: EventFieldDisplay = (() => {
     if (!USE_FIELD_REGISTRY) return legacyFieldDisplay;
 
+    // `translate` is what makes an enum render as its authored label ("Non-Organic
+    // (Untreated)") rather than a de-underscored slug ("Non Organic Untreated"). The modal
+    // gets it via useEventFields; this component calls the resolver directly, so without
+    // passing it here the two surfaces would word the same value differently.
+    const translateLabel = (id: string): string | null => {
+      if (!id) return null;
+      const out = intl.formatMessage({ id });
+      return out && out !== id ? out : null;
+    };
+
     const resolved = getFieldsForSurface(
       (event.event_type as number) ?? 3,
       eventSubtype as any,
       'consumer_card',
-      event as Record<string, unknown>
+      event as Record<string, unknown>,
+      translateLabel
     );
 
     // Bridge: convert ResolvedField[] → FieldDisplayItem[] for existing JSX
@@ -884,7 +918,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
-  const accentColor = useColorModeValue('green.500', 'green.400');
+  const accentColor = useColorModeValue('green.700', 'green.300');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const highlightBg = useColorModeValue('green.50', 'gray.700');
   // Hoisted color-mode values. These were previously called inline inside JSX,
@@ -923,15 +957,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
         align="flex-start"
         spacing={{ base: 0, md: isGrouped ? 0 : 4 }}
         position="relative"
-        zIndex={1}
-      >
+        zIndex={1}>
         {/* Timeline dot - DESKTOP ONLY, hidden when inside a group */}
         <Flex
           direction="column"
           align="center"
           minW="40px"
-          display={{ base: 'none', md: isGrouped ? 'none' : 'flex' }}
-        >
+          display={{ base: 'none', md: isGrouped ? 'none' : 'flex' }}>
           {/* A chronological marker, and nothing else (2026-08-02).
               This dot used to carry FIVE encodings with no legend anywhere on the page:
                 • filled vs outlined for the first event (arbitrary emphasis),
@@ -949,8 +981,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
             size={{ base: '40px', md: '48px' }}
             bg={bgColor}
             border="3px solid"
-            borderColor={accentColor}
-          >
+            borderColor={accentColor}>
             <Icon
               as={eventTypeConfig.icon}
               boxSize={{ base: 4, md: 5 }}
@@ -980,8 +1011,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
           overflow="clip"
           transition="all 0.2s"
           _hover={{ shadow: 'md', transform: 'translateY(-1px)' }}
-          mb={{ base: 4, md: 0 }}
-        >
+          mb={{ base: 4, md: 0 }}>
           {/* Mobile-Optimized Card Header */}
           <Box p={{ base: 4, md: 4 }}>
             <HStack justify="space-between" align="flex-start" mb={2}>
@@ -996,8 +1026,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   borderRadius="lg"
                   overflow="clip"
                   borderWidth="1px"
-                  borderColor={borderColor}
-                >
+                  borderColor={borderColor}>
                   <img
                     src={event.album.images[0].image}
                     alt={
@@ -1027,8 +1056,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       borderRadius="full"
                       display="flex"
                       alignItems="center"
-                      gap={1}
-                    >
+                      gap={1}>
                       <Icon as={FaLayerGroup} aria-hidden="true" boxSize={2.5} />
                       <Text>
                         {event.event_count ||
@@ -1100,8 +1128,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   fontSize={{ base: 'md', md: 'md' }}
                   color={secondaryText}
                   lineHeight={{ base: '1.6', md: '1.5' }}
-                  noOfLines={slim && !isExpanded ? 2 : undefined}
-                >
+                  noOfLines={slim && !isExpanded ? 2 : undefined}>
                   {eventInfo.shortDescription}
                 </Text>
               )}
@@ -1147,8 +1174,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       colorScheme="blue"
                       fontSize="xs"
                       px={2}
-                      py={1}
-                    >
+                      py={1}>
                       <HStack spacing={1}>
                         <Icon as={FaCheckCircle} aria-hidden="true" boxSize={3} />
                         <Text>{intl.formatMessage({ id: indicatorKey })}</Text>
@@ -1174,8 +1200,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       colorScheme={isSustainable ? 'green' : 'gray'}
                       fontSize="xs"
                       px={2}
-                      py={1}
-                    >
+                      py={1}>
                       <HStack spacing={1}>
                         <Icon
                           as={isSustainable ? FaWind : FaCheckCircle}
@@ -1211,19 +1236,39 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     );
                 const hasOrganicStatus = serverInput?.status
                   ? serverInput.status === 'omri_listed' ||
+                    serverInput.status === 'national_list_allowed' ||
                     serverInput.status === 'organic_approved'
                   : organicStatus &&
                     organicStatus !== 'not_organic' &&
                     organicStatus !== 'no' &&
                     organicStatus !== 'not_applicable';
-                // The server-resolved label wins when present (claim_resolver owns the
-                // vocabulary); otherwise localize the enum ourselves.
+                // The server-resolved STATUS wins when present (claim_authority owns which
+                // tier of evidence exists); the wording is then localized here. Rendering
+                // `serverInput.label` directly — as this did until 2026-08-09 — printed the
+                // backend's English into the Spanish page, so the one string a shopper reads
+                // to judge an input was the only untranslated thing on the card.
+                const serverStatusKey = serverInput?.status
+                  ? {
+                      omri_listed: 'consumer.eventCard.organic.omriListed',
+                      national_list_allowed: 'consumer.eventCard.organic.nationalListAllowed',
+                      organic_approved: 'consumer.eventCard.organic.growerReported'
+                    }[serverInput.status]
+                  : undefined;
                 const organicStatusKey = ORGANIC_STATUS_KEYS[organicStatus];
-                const organicChipText = serverInput?.label
-                  ? serverInput.label
-                  : intl.formatMessage({
+                const organicChipText = serverStatusKey
+                  ? intl.formatMessage({ id: serverStatusKey })
+                  : serverInput?.label ??
+                    intl.formatMessage({
                       id: organicStatusKey ?? 'consumer.eventCard.organic.generic'
                     });
+                // Only a real third-party catalog match earns the solid green trust chip.
+                // A grower-reported input is the grower's record and is styled as one
+                // (subtle, not a badge of approval) — self-reported trust signals must not
+                // look like verification.
+                const isVerifiedListing = serverInput?.status === 'omri_listed';
+                const organicTooltipKey =
+                  (serverInput?.status && ORGANIC_TOOLTIP_KEYS[serverInput.status]) ??
+                  'consumer.eventCard.organic.tooltipGrowerReported';
                 // Server distinguishes "explicitly conventional" from
                 // "farmer didn't classify" — only the former may carry the
                 // conventional label (claim-safety: absence of classification
@@ -1236,20 +1281,30 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   <HStack spacing={2} flexWrap="wrap">
                     {hasOrganicStatus && (
                       <Tooltip
-                        label={intl.formatMessage({ id: 'consumer.eventCard.organic.tooltip' })}
-                        placement="top"
-                      >
+                        label={intl.formatMessage({ id: organicTooltipKey })}
+                        placement="top">
+                        {/* Solid green = a third-party catalog match (OMRI). A National List
+                            citation or the grower's own record gets the same pill SHAPE — so
+                            the statuses stay comparable rather than looking like different
+                            kinds of thing — but an outlined, neutral treatment, because a
+                            self-reported signal must not be dressed as verification.
+                            `colorScheme` is inert app-wide (2026-08-07), so the colours are
+                            set explicitly here; reading the prop would not tell you what
+                            renders. */}
                         <Badge
-                          variant="solid"
-                          colorScheme="green"
+                          variant={isVerifiedListing ? 'solid' : 'outline'}
+                          bg={isVerifiedListing ? 'green.500' : 'transparent'}
+                          color={isVerifiedListing ? 'white' : secondaryText}
+                          borderColor={isVerifiedListing ? 'green.500' : 'gray.300'}
                           fontSize="xs"
                           px={3}
                           py={1}
                           borderRadius="full"
-                          cursor="pointer"
-                        >
+                          cursor="pointer">
                           <HStack spacing={1}>
-                            <Icon as={FaLeaf} aria-hidden="true" boxSize={3} />
+                            {isVerifiedListing && (
+                              <Icon as={FaLeaf} aria-hidden="true" boxSize={3} />
+                            )}
                             <Text>{organicChipText}</Text>
                           </HStack>
                         </Badge>
@@ -1260,8 +1315,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         label={intl.formatMessage({
                           id: 'consumer.eventCard.restrictedUse.tooltip'
                         })}
-                        placement="top"
-                      >
+                        placement="top">
                         <Badge
                           variant="subtle"
                           colorScheme="orange"
@@ -1269,8 +1323,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           px={3}
                           py={1}
                           borderRadius="full"
-                          cursor="pointer"
-                        >
+                          cursor="pointer">
                           {intl.formatMessage({ id: 'consumer.eventCard.restrictedUse.badge' })}
                         </Badge>
                       </Tooltip>
@@ -1282,8 +1335,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             ? 'consumer.eventCard.inputDocumented.tooltip'
                             : 'consumer.eventCard.conventionalDocumented.tooltip'
                         })}
-                        placement="top"
-                      >
+                        placement="top">
                         {/* Outlined, not `subtle` (2026-08-01). Chakra's subtle gray badge is
                             near-invisible on a white card — on the live page it read as loose
                             bold text next to the pill-shaped green OMRI chip, so the two
@@ -1301,8 +1353,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           px={3}
                           py={1}
                           borderRadius="full"
-                          cursor="pointer"
-                        >
+                          cursor="pointer">
                           {intl.formatMessage({
                             id: isUnclassified
                               ? 'consumer.eventCard.inputDocumented.badge'
@@ -1345,8 +1396,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           borderRadius="full"
                           display="flex"
                           alignItems="center"
-                          gap={1}
-                        >
+                          gap={1}>
                           <Icon as={FaCamera} aria-hidden="true" boxSize={3} />
                           <Text>
                             {intl.formatMessage(
@@ -1372,8 +1422,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           id: config.tooltipKey,
                           defaultMessage: config.tooltip
                         })}
-                        placement="top"
-                      >
+                        placement="top">
                         <Badge
                           colorScheme={colorScheme}
                           variant="subtle"
@@ -1383,8 +1432,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           borderRadius="full"
                           display="flex"
                           alignItems="center"
-                          gap={1}
-                        >
+                          gap={1}>
                           <Icon as={config.icon} aria-hidden="true" boxSize={3} />
                           <Text>
                             {intl.formatMessage({
@@ -1424,8 +1472,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 borderColor="green.400"
                 borderRadius="sm"
                 px={3}
-                py={3}
-              >
+                py={3}>
                 <HStack spacing={2} mb={2}>
                   <Icon as={FaEye} aria-hidden="true" boxSize={3} color={mutedColor} />
                   <Text
@@ -1433,8 +1480,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     fontWeight="semibold"
                     color={mutedColor}
                     textTransform="uppercase"
-                    letterSpacing="0.04em"
-                  >
+                    letterSpacing="0.04em">
                     {intl.formatMessage({
                       id: 'consumer.eventCard.farmerNotes',
                       defaultMessage: "Farmer's Field Notes"
@@ -1446,8 +1492,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   color={secondaryText}
                   fontStyle="italic"
                   lineHeight="1.5"
-                  noOfLines={slim && !isExpanded ? 2 : undefined}
-                >
+                  noOfLines={slim && !isExpanded ? 2 : undefined}>
                   "{event.observation}"
                 </Text>
               </Box>
@@ -1466,8 +1511,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               justifyContent={{ base: 'space-between', md: 'flex-start' }}
               minH={{ base: '44px', md: 'auto' }}
               fontSize={{ base: 'md', md: 'sm' }}
-              fontWeight="semibold"
-            >
+              fontWeight="semibold">
               {isExpanded
                 ? intl.formatMessage({
                     id: 'consumer.eventCard.showLess',
@@ -1518,8 +1562,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       fontWeight="semibold"
                       letterSpacing="wide"
                       textTransform="uppercase"
-                      color={mutedColor}
-                    >
+                      color={mutedColor}>
                       {intl.formatMessage({
                         id: 'consumer.eventCard.envBenefit',
                         defaultMessage: 'Environmental Benefit'
@@ -1542,8 +1585,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     bg={summaryBg}
                     borderRadius="lg"
                     border="1px solid"
-                    borderColor={summaryBorder}
-                  >
+                    borderColor={summaryBorder}>
                     <HStack mb={3}>
                       <Icon as={FaLayerGroup} color={summaryPalette.icon} boxSize={4} />
                       <Text fontWeight="bold" fontSize="sm" color={summaryPalette.text}>
@@ -1824,8 +1866,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                                     ? 'yellow'
                                     : 'red'
                                 }
-                                fontSize="xs"
-                              >
+                                fontSize="xs">
                                 {(
                                   event.average_pest_pressure ||
                                   event.extra_data?.average_pest_pressure
@@ -1838,7 +1879,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           <Box gridColumn={{ md: 'span 2' }} mt={2}>
                             <HStack spacing={2}>
                               <Icon as={MdEco} color="green.500" boxSize={4} />
-                              <Text fontSize="xs" color="green.600" fontWeight="medium">
+                              <Text fontSize="xs" color="green.700" fontWeight="medium">
                                 {intl.formatMessage({
                                   id: 'consumer.eventCard.agg.scoutingZeroCarbon'
                                 })}
@@ -1867,8 +1908,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         fontWeight="semibold"
                         letterSpacing="wide"
                         textTransform="uppercase"
-                        color={mutedColor}
-                      >
+                        color={mutedColor}>
                         {intl.formatMessage({
                           id: 'consumer.eventCard.keyDetails',
                           defaultMessage: 'Key Details'
@@ -1887,8 +1927,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       maxW={fieldDisplay.immediate.length > 1 ? undefined : '360px'}
                       columns={{ base: 1, smd: fieldDisplay.immediate.length > 1 ? 2 : 1 }}
                       spacing={3}
-                      pl={showFactSectionLabels ? 6 : 0}
-                    >
+                      pl={showFactSectionLabels ? 6 : 0}>
                       {fieldDisplay.immediate.map((field, idx) => {
                         const fuelIcon = getFuelIcon(field.label, event.fuel_type);
                         const categoryIcon = getCategoryIcon(field.category);
@@ -1903,8 +1942,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             bg={neutralSoftBg}
                             borderRadius="lg"
                             border="1px solid"
-                            borderColor={neutralBorder}
-                          >
+                            borderColor={neutralBorder}>
                             <HStack spacing={2} mb={1}>
                               {fuelIcon ? (
                                 <Text fontSize="sm" color={mutedColor}>
@@ -1939,8 +1977,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         fontWeight="semibold"
                         letterSpacing="wide"
                         textTransform="uppercase"
-                        color={mutedColor}
-                      >
+                        color={mutedColor}>
                         {intl.formatMessage({
                           id: 'consumer.eventCard.additionalInfo',
                           defaultMessage: 'Additional Information'
@@ -2043,8 +2080,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                               border="1px solid"
                               borderColor="gray.100"
                               _hover={{ borderColor: 'green.200', bg: 'green.50' }}
-                              transition="all 0.2s"
-                            >
+                              transition="all 0.2s">
                               <Text fontSize="xs" fontWeight="500" color="gray.500" mb={1}>
                                 {field.label}
                               </Text>
@@ -2063,8 +2099,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           bg="green.50"
                           borderRadius="xl"
                           border="1px solid"
-                          borderColor="green.200"
-                        >
+                          borderColor="green.200">
                           <HStack spacing={3}>
                             <Circle size="40px" bg="green.100">
                               <Icon as={FaGlobeAmericas} color="green.600" boxSize={5} />
@@ -2075,10 +2110,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                                   id: 'consumer.eventCard.environmentalImpact'
                                 })}
                               </Text>
-                              <Text fontSize="lg" fontWeight="bold" color="green.600">
+                              <Text fontSize="lg" fontWeight="bold" color="green.700">
                                 {event.carbon_impact.toFixed(2)} kg CO₂e
                               </Text>
-                              <Text fontSize="xs" color="green.600">
+                              <Text fontSize="xs" color="green.700">
                                 {intl.formatMessage({
                                   id: 'consumer.eventCard.carbonDataNote'
                                 })}
@@ -2118,8 +2153,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         px={0}
                         onClick={() => setShowTechnical((v) => !v)}
                         rightIcon={showTechnical ? <FaChevronUp /> : <FaChevronDown />}
-                        aria-expanded={showTechnical}
-                      >
+                        aria-expanded={showTechnical}>
                         <HStack spacing={2}>
                           <Icon as={FaEye} color="gray.500" boxSize={4} />
                           <Text fontWeight="semibold" fontSize="sm" color="gray.600">
@@ -2195,8 +2229,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       fontWeight="semibold"
                       letterSpacing="wide"
                       textTransform="uppercase"
-                      color={mutedColor}
-                    >
+                      color={mutedColor}>
                       {intl.formatMessage({ id: 'consumer.eventCard.seeThisPractice' })}
                     </Text>
 

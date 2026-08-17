@@ -97,7 +97,7 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
   const borderColor = useColorModeValue('green.300', 'green.700');
   const textPrimary = useColorModeValue('green.800', 'green.200');
   const textSecondary = useColorModeValue('green.700', 'green.300');
-  const iconColor = useColorModeValue('green.600', 'green.400');
+  const iconColor = useColorModeValue('green.700', 'green.400');
 
   return (
     <Box

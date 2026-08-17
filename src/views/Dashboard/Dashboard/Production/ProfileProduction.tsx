@@ -71,7 +71,6 @@ import { StandardizedEvent } from 'types/standardizedEvents';
 import { UltraMobileProductionJourney } from 'views/Scan/ProductDetail/components';
 
 // Week 2 Voice & Mobile Components
-import QuickAddEvent from 'views/Dashboard/Dashboard/Production/QuickAddEvent';
 import { SalesDeliverySection } from 'views/Dashboard/Dashboard/Production/SalesDeliverySection';
 import { SalesRecordsSection } from 'views/Dashboard/Dashboard/Production/SalesRecordsSection';
 import AuditExportModal from 'components/AuditExport/AuditExportModal';
@@ -98,11 +97,6 @@ function ProfileProduction() {
   const { farmId, productionId, parcelId } = useParams();
   const [establishment, setEstablishment] = useState<any>(null);
   const [updateProduction, { isLoading: isSavingCover }] = useUpdateProductionMutation();
-  const {
-    isOpen: isQuickAddOpen,
-    onOpen: onQuickAddOpen,
-    onClose: onQuickAddClose
-  } = useDisclosure();
 
   const { isOpen: isExportOpen, onOpen: onExportOpen, onClose: onExportClose } = useDisclosure();
 
@@ -499,8 +493,7 @@ function ProfileProduction() {
     return (
       <StandardPage
         showBackButton
-        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-      >
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
         <StandardPageLoading />
       </StandardPage>
     );
@@ -510,8 +503,7 @@ function ProfileProduction() {
     return (
       <StandardPage
         showBackButton
-        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-      >
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
         <Box py={8} textAlign="center">
           <Text color="red.500">Error loading production data. Please try again.</Text>
         </Box>
@@ -544,8 +536,7 @@ function ProfileProduction() {
   return (
     <StandardPage
       showBackButton
-      onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-    >
+      onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
       <VStack spacing={{ base: 4, md: 8 }} w="100%">
         {/* ── PAGE HEADER — not a card ─────────────────────────────────────────
             Matches ProfileFarm and ProfileParcel. Was an elevated card wrapping an initials
@@ -592,8 +583,7 @@ function ProfileProduction() {
                   <Badge
                     variant={historyData?.finish_date ? 'neutral' : 'subtle'}
                     borderRadius="full"
-                    fontSize="xs"
-                  >
+                    fontSize="xs">
                     {historyData?.finish_date
                       ? intl.formatMessage({
                           id: 'production.status.finished',
@@ -652,8 +642,7 @@ function ProfileProduction() {
                   variant="primary"
                   size="xs"
                   leftIcon={<Icon as={FiDownload} />}
-                  onClick={onExportOpen}
-                >
+                  onClick={onExportOpen}>
                   {intl.formatMessage({ id: 'app.exportForAudit' })}
                 </StandardButton>
               </WrapItem>
@@ -662,8 +651,7 @@ function ProfileProduction() {
                   variant="outline"
                   size="xs"
                   leftIcon={<Icon as={FaLink} />}
-                  onClick={handleCopyBuyerLink}
-                >
+                  onClick={handleCopyBuyerLink}>
                   {intl.formatMessage({ id: 'production.copyBuyerLink.button' })}
                 </StandardButton>
               </WrapItem>
@@ -690,8 +678,7 @@ function ProfileProduction() {
                     <MenuItem
                       icon={<Icon as={FaTag} />}
                       onClick={handleDownloadLotTag}
-                      isDisabled={!historyData?.lot_id}
-                    >
+                      isDisabled={!historyData?.lot_id}>
                       {intl.formatMessage({ id: 'production.lotTag.button' })}
                     </MenuItem>
                     {canWrite && !historyData?.finish_date && (
@@ -701,8 +688,7 @@ function ProfileProduction() {
                           navigate(
                             `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}/change`
                           )
-                        }
-                      >
+                        }>
                         {intl.formatMessage({ id: 'app.edit' })}
                       </MenuItem>
                     )}
@@ -726,8 +712,7 @@ function ProfileProduction() {
               defaultMessage: 'Photo Gallery'
             })}
             variant="elevated"
-            padding={{ base: 3, md: 4 }}
-          >
+            padding={{ base: 3, md: 4 }}>
             <StandardImageGallery
               images={historyData.images}
               title=""
@@ -754,8 +739,7 @@ function ProfileProduction() {
           description={intl.formatMessage({
             id: 'production.section.publicPageHelp',
             defaultMessage: 'What a shopper sees when they scan this lot.'
-          })}
-        >
+          })}>
           <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: 4, md: 6 }} alignItems="start">
             {/* Cover Photo Section (consumer QR hero) — write access only */}
             {canWrite && (
@@ -765,8 +749,7 @@ function ProfileProduction() {
                   defaultMessage: 'Cover Photo'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}
-              >
+                padding={{ base: 3, md: 4 }}>
                 <VStack align="stretch" spacing={4}>
                   <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                     {intl.formatMessage({
@@ -812,8 +795,7 @@ function ProfileProduction() {
                             position="absolute"
                             top={2}
                             right={2}
-                            bg="white"
-                          >
+                            bg="white">
                             {intl.formatMessage({
                               id: 'production.cover.reset',
                               defaultMessage: 'Reset to auto-pick'
@@ -830,8 +812,7 @@ function ProfileProduction() {
                           display="flex"
                           alignItems="center"
                           justifyContent="center"
-                          bg="gray.50"
-                        >
+                          bg="gray.50">
                           <Text fontSize="sm" color="gray.500" textAlign="center" px={3}>
                             {intl.formatMessage({
                               id: 'production.cover.auto',
@@ -874,8 +855,7 @@ function ProfileProduction() {
                   defaultMessage: 'QR Code & Consumer Access'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}
-              >
+                padding={{ base: 3, md: 4 }}>
                 <VStack spacing={{ base: 3, md: 5 }} align="center">
                   {/* Finished production banner */}
                   {historyData?.finish_date && (
@@ -886,13 +866,11 @@ function ProfileProduction() {
                       borderRadius="lg"
                       border="1px solid"
                       borderColor="green.200"
-                      textAlign="center"
-                    >
+                      textAlign="center">
                       <Text
                         fontSize={{ base: 'xs', md: 'sm' }}
                         fontWeight="semibold"
-                        color="green.700"
-                      >
+                        color="green.700">
                         {intl.formatMessage({
                           id: 'production.qr.completeBanner',
                           defaultMessage:
@@ -908,8 +886,7 @@ function ProfileProduction() {
                     bg="gray.50"
                     borderRadius="xl"
                     border="1px solid"
-                    borderColor="gray.200"
-                  >
+                    borderColor="gray.200">
                     <Image
                       src={historyData.qr_code}
                       alt={`QR Code for ${historyData?.product?.name || 'production'}`}
@@ -934,8 +911,7 @@ function ProfileProduction() {
                     fontSize={{ base: 'xs', md: 'sm' }}
                     color="gray.600"
                     textAlign="center"
-                    maxW="400px"
-                  >
+                    maxW="400px">
                     {historyData?.finish_date
                       ? intl.formatMessage({
                           id: 'production.qr.instruction',
@@ -955,8 +931,7 @@ function ProfileProduction() {
                       variant="primary"
                       size={{ base: 'xs', md: 'sm' }}
                       leftIcon={<Icon as={FaDownload} />}
-                      onClick={downloadQRCode}
-                    >
+                      onClick={downloadQRCode}>
                       {intl.formatMessage({
                         id: 'production.qr.download',
                         defaultMessage: 'Download QR'
@@ -966,8 +941,7 @@ function ProfileProduction() {
                       variant="outline"
                       size={{ base: 'xs', md: 'sm' }}
                       leftIcon={<Icon as={FaEye} />}
-                      onClick={handleViewPublicPage}
-                    >
+                      onClick={handleViewPublicPage}>
                       {intl.formatMessage({ id: 'app.viewPublicPage' })}
                     </StandardButton>
                   </HStack>
@@ -979,8 +953,7 @@ function ProfileProduction() {
                     bg="blue.50"
                     borderRadius="md"
                     border="1px solid"
-                    borderColor="blue.100"
-                  >
+                    borderColor="blue.100">
                     <Text fontSize="xs" color="blue.700" textAlign="center">
                       {intl.formatMessage({
                         id: 'production.qr.tip',
@@ -1002,8 +975,10 @@ function ProfileProduction() {
         {/* Quick Stats Section */}
         {/* "Quick Stats" DELETED 2026-08-07. Four tiles, three of them redundant:
             - Transparency % — the October plan §10.4 names this exact tile as "the 4th
-              duplicate of one number". The score's home is /transparency ("Farm Records");
-              it was cut from the farm home 2026-08-04 and from the parcel profile today.
+              duplicate of one number". Cut from the farm home 2026-08-04 and from the parcel
+              profile 2026-08-07. This note used to add that "the score's home is /transparency
+              (Farm Records)" — that page was never routed and was deleted 2026-08-11, when the
+              score came off producer UI entirely. It is a backend KPI with no screen.
             - Environment (indoor/outdoor) and Status (active/finished) — both already render
               as badges in the header above.
             Only the event count was unique, and it now sits in the header meta line. */}
@@ -1020,8 +995,7 @@ function ProfileProduction() {
           title={intl.formatMessage({
             id: 'production.section.record',
             defaultMessage: 'Production record'
-          })}
-        >
+          })}>
           {/* TWO EXPLICIT COLUMNS, not a flat grid.
               A flat `columns={2}` grid flows children in order, so three cards of very uneven
               height produced [tall Production details | short Location] and then
@@ -1032,8 +1006,7 @@ function ProfileProduction() {
             columns={{ base: 1, lg: 2 }}
             spacing={{ base: 4, md: 6 }}
             w="100%"
-            alignItems="start"
-          >
+            alignItems="start">
             <VStack align="stretch" spacing={{ base: 4, md: 6 }}>
               {/* Production Details Section */}
               <StandardCard
@@ -1042,8 +1015,7 @@ function ProfileProduction() {
                   defaultMessage: 'Production Details'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}
-              >
+                padding={{ base: 3, md: 4 }}>
                 <VStack align="stretch" gap={4}>
                   <Text fontSize="xs" color="gray.500" lineHeight="1.7">
                     <Icon as={FaEye} boxSize={3} color="gray.400" mr={2} verticalAlign="-1px" />
@@ -1180,8 +1152,7 @@ function ProfileProduction() {
                     defaultMessage: 'Agricultural Information'
                   })}
                   variant="elevated"
-                  padding={{ base: 3, md: 4 }}
-                >
+                  padding={{ base: 3, md: 4 }}>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
                     {historyData?.age_of_plants && (
                       <InfoRow
@@ -1236,14 +1207,16 @@ function ProfileProduction() {
                   defaultMessage: 'Location'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}
-              >
+                padding={{ base: 3, md: 4 }}>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
                   <InfoRow
                     icon={FaBuilding}
                     label={intl.formatMessage({
+                      // Key stays `…establishment` (the model name); the LABEL is "Farm".
+                      // Establishment is internal vocabulary — see app.establishment,
+                      // which has read "Farm" all along.
                       id: 'production.field.establishment',
-                      defaultMessage: 'Establishment'
+                      defaultMessage: 'Farm'
                     })}
                     value={historyData?.parcel?.establishment?.name || 'Unknown'}
                     onClick={() => navigate(`/admin/dashboard/farm/${farmId}`)}
@@ -1293,8 +1266,7 @@ function ProfileProduction() {
                   defaultMessage: 'Recorded by'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}
-              >
+                padding={{ base: 3, md: 4 }}>
                 <VStack spacing={{ base: 3, md: 6 }} align="stretch">
                   {historyData?.operator && (
                     <Box p={{ base: 3, md: 4 }} bg="gray.50" borderRadius="lg">
@@ -1315,8 +1287,7 @@ function ProfileProduction() {
                           <Text
                             fontWeight="medium"
                             fontSize={{ base: 'sm', md: 'md' }}
-                            noOfLines={1}
-                          >
+                            noOfLines={1}>
                             {historyData.operator.full_name ||
                               intl.formatMessage({
                                 id: 'production.reputation.unnamedOperator',
@@ -1341,6 +1312,13 @@ function ProfileProduction() {
         {timelineEvents.length > 0 ? (
           <UltraMobileProductionJourney
             events={timelineEvents}
+            // Producer preview of the consumer journey. The buyer-facing CTAs
+            // ("Buyer or retailer? …", the doc-request form) are suppressed here:
+            // this route carries the production PUBLIC UUID, so the CTA's old
+            // UUID-shape guard did not exclude it and the farm was shown a form
+            // for requesting documentation from itself. The producer's path to a
+            // buyer is the "Copy buyer link" action above.
+            audience="producer"
             transparencyScore={transparencyScore === null ? 0 : Math.round(transparencyScore)}
             // This is the producer's preview of the CONSUMER journey, so it must be fed the
             // same backend-computed organic classification the consumer page uses. Without
@@ -1368,10 +1346,11 @@ function ProfileProduction() {
                 leftIcon={<Icon as={FaSeedling} />}
                 colorScheme="green"
                 size="lg"
-                onClick={onQuickAddOpen}
-                mt={4}
-              >
-                Add Your First Event
+                onClick={() =>
+                  navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add`)
+                }
+                mt={4}>
+                {intl.formatMessage({ id: 'production.addFirstActivity' })}
               </Button>
             )}
             {historyData?.finish_date && (
@@ -1383,9 +1362,10 @@ function ProfileProduction() {
         )}
       </VStack>
 
-      {/* Sales & Buyer Handoff (post-finish only) — one section grouping the two
-          complementary sales surfaces: the aggregate Shipment Summary and the
-          per-buyer Sales Records ledger. */}
+      {/* Sales & Buyer Handoff (post-finish only). The itemized Sales Records
+          ledger is THE sales editor (SalesRecord rows win in audit exports).
+          SalesDeliverySection renders only as a read-only summary of legacy
+          single-sale data on pre-merge productions (export fallback). */}
       {historyData?.finish_date && (
         <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" mt={{ base: 4, md: 6 }}>
           <Heading as="h2" size={{ base: 'sm', md: 'md' }} color="gray.700" px={1}>
@@ -1394,32 +1374,19 @@ function ProfileProduction() {
               defaultMessage: 'Sales & Buyer Handoff'
             })}
           </Heading>
-          <SalesDeliverySection
-            historyId={productionId || ''}
-            historyData={historyData}
-            canWrite={canWrite}
-          />
           <SalesRecordsSection
             productionId={historyData?.public_id || productionId || ''}
             canWrite={canWrite}
+            establishmentId={farmId}
+            // Seeds the sale unit from the lot's own harvest unit. The audit export prints the
+            // mass-balance Balance line and the "sold exceeds harvest" review flag only when the
+            // two unit strings match, so a mismatched default silently deleted § 205.103(b)(2)
+            // reconciliation from the certifier packet.
+            harvestUnit={historyData?.production_unit}
           />
+          <SalesDeliverySection historyData={historyData} />
         </VStack>
       )}
-
-      {/* Quick Add Event Modal */}
-      <QuickAddEvent
-        isOpen={isQuickAddOpen}
-        onClose={onQuickAddClose}
-        cropType={historyData?.product?.name || 'citrus'}
-        productionMethod={historyData?.production_method}
-        onEventAdded={() => {
-          // Refetch the queries that drive this page instead of a full reload —
-          // keeps scroll position and the SPA feel (was window.location.reload()).
-          refetchHistory();
-          refetchComplete();
-          refetchTransparency();
-        }}
-      />
 
       {/* Audit Export Modal */}
       <AuditExportModal

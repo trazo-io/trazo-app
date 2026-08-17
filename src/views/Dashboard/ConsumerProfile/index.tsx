@@ -139,7 +139,7 @@ export default function ConsumerProfile() {
             <Avatar
               size="xl"
               name={`${user?.first_name || ''} ${user?.last_name || ''}`}
-              bg="green.500"
+              bg="green.700"
               color="white"
             />
             <VStack spacing={1}>
@@ -170,7 +170,7 @@ export default function ConsumerProfile() {
               spacing={1}
             >
               <Icon as={FaQrcode} boxSize={6} color="green.500" />
-              <Text fontSize="2xl" fontWeight="bold" color="green.600">
+              <Text fontSize="2xl" fontWeight="bold" color="green.700">
                 {impactMetrics?.total_scans || 0}
               </Text>
               <Text fontSize="xs" color={mutedColor} textAlign="center">

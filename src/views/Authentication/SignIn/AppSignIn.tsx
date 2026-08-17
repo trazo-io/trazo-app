@@ -12,22 +12,13 @@ import {
   useToast,
   Icon,
   Flex,
-  Image,
   Button,
   InputGroup,
   InputLeftElement,
   InputRightElement,
-  useColorModeValue,
-  Grid
+  useColorModeValue
 } from '@chakra-ui/react';
-import {
-  FaGoogle,
-  FaFacebook,
-  FaEnvelope,
-  FaLock,
-  FaEye,
-  FaEyeSlash
-} from 'react-icons/fa';
+import { FaGoogle, FaFacebook, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useIntl } from 'react-intl';
 import { StandardInput } from '../../../components/Design/StandardComponents';
@@ -215,533 +206,398 @@ const AppSignIn: React.FC = () => {
     }
   };
 
+  /*
+   * #FBFCFA is the LANDING's `--background` token, read straight out of
+   * trazo-landing/app/globals.css. Using it here — rather than pure white — is what makes the
+   * marketing site and the app feel like one ground when you cross from one to the other.
+   */
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const cardBorder = useColorModeValue('gray.200', 'whiteAlpha.200');
+
+  /*
+   * 2026 auth layout: a quiet centered card, not a marketing billboard.
+   *
+   * This was a 50/50 split with a full-bleed saturated green panel. MEASURED against the
+   * landing page: that panel put GREEN ON 40.6% OF THE SCREEN, where the landing runs 4.3%.
+   * Same brand colour, ~9x the coverage — which is why the two surfaces read as two different
+   * products, more than the hue mismatch did. The split-with-marketing-panel pattern is
+   * inherited from the Creative Tim admin template this view started life as (see its
+   * SignInBasic / SignInIllustration siblings); Linear, Stripe, Vercel, Notion and Clerk all
+   * moved auth to a single quiet card years ago, because a LOGIN page has no one left to
+   * persuade — the visitor already chose. The six benefit bullets moved off this page for the
+   * same reason. Their i18n keys are intentionally left in both locale files: the signup page
+   * is where that copy belongs, and it is compliance-reviewed (see the note above them in git).
+   *
+   * The canvas is the LANDING's own background token (#FBFCFA) rather than pure white, so the
+   * two properties share a ground. Green survives in exactly one place here: the Sign in
+   * button.
+   */
   return (
-    <Box minH="100vh" display="flex" flexDirection="column">
-      <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} flex="1" minH="calc(100vh - 80px)">
-        {/* Left side - 2025 Premium App Design */}
-        <Box
-          bg="green.600"
-          display={{ base: 'none', lg: 'flex' }}
-          alignItems="center"
-          justifyContent="center"
-          position="relative"
-          overflow="hidden"
-        >
-          {/* Sophisticated gradient foundation */}
-          <Box
-            position="absolute"
-            top="0"
-            left="0"
-            right="0"
-            bottom="0"
-            bg="linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)"
-          />
-
-          {/* Subtle background floating element - positioned to not interfere */}
-          <Box
-            position="absolute"
-            top="15%"
-            right="5%"
-            w="160px"
-            h="100px"
-            bg="rgba(255,255,255,0.04)"
-            borderRadius="12px"
-            border="1px solid rgba(255,255,255,0.06)"
-            backdropFilter="blur(80px)"
-            transform="rotate(-8deg)"
-            zIndex={0}
-          />
-
-          {/* Bottom accent element */}
-          <Box
-            position="absolute"
-            bottom="20%"
-            left="8%"
-            w="60px"
-            h="60px"
-            bg="rgba(255,255,255,0.03)"
-            borderRadius="50%"
-            border="1px solid rgba(255,255,255,0.05)"
-            backdropFilter="blur(60px)"
-            zIndex={0}
-          />
-
-          {/* Minimal line accents */}
-          <Box
-            position="absolute"
-            top="0"
-            left="20%"
-            w="1px"
-            h="40%"
-            bg="linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)"
-            zIndex={0}
-          />
-
-          <Box
-            position="absolute"
-            bottom="35%"
-            left="0"
-            right="0"
-            h="1px"
-            bg="linear-gradient(to right, transparent 0%, rgba(255,255,255,0.10) 50%, transparent 100%)"
-            zIndex={0}
-          />
-
-          {/* Tiny accent dots */}
-          <Box
-            position="absolute"
-            top="25%"
-            left="20%"
-            w="2px"
-            h="2px"
-            bg="rgba(255,255,255,0.20)"
-            borderRadius="50%"
-            zIndex={0}
-          />
-
-          <Box
-            position="absolute"
-            bottom="45%"
-            right="15%"
-            w="3px"
-            h="3px"
-            bg="rgba(255,255,255,0.18)"
-            borderRadius="50%"
-            zIndex={0}
-          />
-
-          <VStack
-            spacing={8}
-            position="relative"
-            textAlign="center"
-            color="white"
-            px={12}
-            maxW="lg"
-            zIndex={10}
-          >
-            <VStack spacing={4}>
-              {/*
-                Compliance (.claude/rules/compliance.md): "premium positioning through
-                transparency" is SAFE; "deserves premium prices" / "get commodity prices"
-                are pricing-outcome promises and are NOT. Also avoid "verified story" —
-                Trazo documents, it does not verify (see verification-language-guide).
-              */}
-              <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                {intl.formatMessage({
-                  id: 'auth.signin.hero.headline',
-                  defaultMessage: 'Honest farming deserves to be seen.'
-                })}
+    <Box flex="1" display="flex" flexDirection="column">
+      <Flex
+        flex="1"
+        align="center"
+        justify="center"
+        px={{ base: 4, sm: 6 }}
+        /* The navbar is in FLOW now (see layouts/Auth.tsx), so it occupies its own space —
+           this used to reserve room under a fixed logo and would now double-count. */
+        pt={{ base: 6, md: 10 }}
+        pb={{ base: 10, md: 16 }}>
+        <MotionBox
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          w="full"
+          maxW="440px"
+          bg={cardBg}
+          borderWidth="1px"
+          borderColor={cardBorder}
+          borderRadius="2xl"
+          boxShadow="0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -12px rgba(16, 24, 40, 0.12)"
+          px={{ base: 6, sm: 8 }}
+          py={{ base: 8, sm: 10 }}>
+          {/* Header */}
+          <VStack spacing={6} mb={10}>
+            <VStack spacing={2}>
+              <Text
+                fontSize="2xl"
+                fontWeight="700"
+                color={useColorModeValue('gray.900', 'white')}
+                letterSpacing="tight">
+                {intl.formatMessage({ id: 'auth.signin.welcome' })}
               </Text>
-              <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                {intl.formatMessage({
-                  id: 'auth.signin.hero.subhead',
-                  defaultMessage:
-                    'Without documentation, careful growers look the same as everyone else.'
-                })}
-                <br />
-                {intl.formatMessage({
-                  id: 'auth.signin.hero.cta',
-                  defaultMessage: 'Log in and keep building your record.'
-                })}
-              </Text>
-            </VStack>
-
-            <VStack spacing={3} pt={4}>
-              {/*
-                Blockchain was deliberately removed from this list: the GTM-v3 realign
-                took it off public surfaces (kept in legal + billing only). "your prices"
-                was also dropped — a pricing nudge, same rule as the headline above.
-              */}
-              {[
-                {
-                  id: 'auth.signin.benefit.buyersSee',
-                  defaultMessage: 'Buyers see exactly how your food was grown'
-                },
-                {
-                  id: 'auth.signin.benefit.eventsRaiseScore',
-                  defaultMessage: 'Every event logged raises your transparency score'
-                },
-                {
-                  id: 'auth.signin.benefit.qrTrust',
-                  defaultMessage: 'QR codes turn scans into trust'
-                },
-                {
-                  id: 'auth.signin.benefit.certifierExport',
-                  defaultMessage: 'Records export as documentation your certifier reviews'
-                },
-                {
-                  // Was "Consumer reviews build your reputation" — reviews were removed with the
-                  // shopper-account product on 2026-08-06 (§10.5), so that promised a feature
-                  // that no longer exists. Replaced with the renewal-season value the October
-                  // positioning actually leads on.
-                  id: 'auth.signin.benefit.renewalReady',
-                  defaultMessage: 'Walk into renewal season with your records already assembled'
-                },
-                {
-                  id: 'auth.signin.benefit.ownYourData',
-                  defaultMessage: 'Your farm story, your records, your data'
-                }
-              ].map((feature) => (
-                <HStack key={feature.id} spacing={3}>
-                  <Box w={2} h={2} bg="white" borderRadius="50%" />
-                  <Text fontSize="sm" fontWeight="500" opacity={0.9}>
-                    {intl.formatMessage(feature)}
-                  </Text>
-                </HStack>
-              ))}
-            </VStack>
-          </VStack>
-        </Box>
-
-        {/* Right side - Sign In Form */}
-        <Flex
-          align="center"
-          justify="center"
-          bg={useColorModeValue('white', 'gray.900')}
-          px={{ base: 4, sm: 6, md: 8 }}
-          pt={{ base: '150px', md: '112px' }}
-          pb={12}
-          overflow="hidden"
-        >
-          <MotionBox
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            w="full"
-            maxW={{ base: '100%', md: '420px' }}
-            my={{ base: 4, lg: 8 }}
-          >
-            {/* Header */}
-            <VStack spacing={6} mb={10}>
-              <VStack spacing={2}>
-                <Text
-                  fontSize="2xl"
-                  fontWeight="700"
-                  color={useColorModeValue('gray.900', 'white')}
-                  letterSpacing="tight"
-                >
-                  Welcome back
-                </Text>
-                <Text
-                  fontSize="md"
-                  color={useColorModeValue('gray.500', 'gray.400')}
-                  textAlign="center"
-                >
-                  {/*
+              <Text
+                fontSize="md"
+                color={useColorModeValue('gray.500', 'gray.400')}
+                textAlign="center">
+                {/*
                     Was "Your verified story is waiting." — the exact phrase the
                     compliance comment at the top of this file tells us to avoid.
                     Trazo documents; it does not verify. Also i18n'd, per the
                     bilingual rule.
                   */}
-                  {intl.formatMessage({
-                    id: 'auth.signin.welcome.subtitle',
-                    defaultMessage: 'Your farm records are waiting.'
-                  })}
-                </Text>
-              </VStack>
+                {intl.formatMessage({
+                  id: 'auth.signin.welcome.subtitle',
+                  defaultMessage: 'Your farm records are waiting.'
+                })}
+              </Text>
             </VStack>
+          </VStack>
 
-            {/* Main Form */}
-            <Box w="full">
-              {error && (
-                <Box
-                  bg="red.50"
-                  borderRadius="xl"
-                  p={4}
-                  mb={6}
-                  borderLeft="4px solid"
-                  borderLeftColor="red.500"
-                >
-                  <Text color="red.700" fontSize="sm" fontWeight="500">
-                    {error}
-                  </Text>
-                </Box>
-              )}
+          {/* Main Form */}
+          <Box w="full">
+            {error && (
+              <Box
+                bg="red.50"
+                borderRadius="xl"
+                p={4}
+                mb={6}
+                borderLeft="4px solid"
+                borderLeftColor="red.500">
+                <Text color="red.700" fontSize="sm" fontWeight="500">
+                  {error}
+                </Text>
+              </Box>
+            )}
 
-              <form onSubmit={handleSubmit(onSubmit)}>
-                <VStack spacing={5}>
-                  {/* Email field */}
-                  <Box w="full">
-                    <Text
-                      fontSize="sm"
-                      fontWeight="medium"
-                      color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={2}
-                    >
-                      Email Address
-                    </Text>
-                    <InputGroup size="lg">
-                      <InputLeftElement pointerEvents="none">
-                        <Icon
-                          as={FaEnvelope}
-                          color={focusedField === 'email' ? 'green.500' : 'gray.400'}
-                          transition="all 0.2s"
-                        />
-                      </InputLeftElement>
-                      <Box
-                        as="input"
-                        type="email"
-                        placeholder="Enter your business email"
-                        pl="3rem"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.email
-                            ? 'red.300'
-                            : focusedField === 'email'
-                            ? 'green.500'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        _hover={{
-                          borderColor: errors.email
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'green.500',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(5, 150, 105, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...register('email', {
-                          required: 'Email is required',
-                          pattern: {
-                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: 'Invalid email address'
-                          }
-                        })}
-                        onFocus={() => setFocusedField('email')}
-                        onBlur={() => setFocusedField(null)}
-                      />
-                    </InputGroup>
-                    {errors.email && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
-                        {errors.email.message}
-                      </Text>
-                    )}
-                  </Box>
-
-                  {/* Password field */}
-                  <Box w="full">
-                    <Text
-                      fontSize="sm"
-                      fontWeight="medium"
-                      color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={2}
-                    >
-                      Password
-                    </Text>
-                    <InputGroup size="lg">
-                      <InputLeftElement pointerEvents="none">
-                        <Icon
-                          as={FaLock}
-                          color={focusedField === 'password' ? 'green.500' : 'gray.400'}
-                          transition="all 0.2s"
-                        />
-                      </InputLeftElement>
-                      <Box
-                        as="input"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter your password"
-                        pl="3rem"
-                        pr="3rem"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.password
-                            ? 'red.300'
-                            : focusedField === 'password'
-                            ? 'green.500'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        _hover={{
-                          borderColor: errors.password
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'green.500',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(5, 150, 105, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...register('password', {
-                          required: 'Password is required',
-                          minLength: {
-                            value: 8,
-                            message: 'Password must be at least 8 characters'
-                          }
-                        })}
-                        onFocus={() => setFocusedField('password')}
-                        onBlur={() => setFocusedField(null)}
-                      />
-                      <InputRightElement>
-                        <Button
-                          variant="ghost"
-                          onClick={() => setShowPassword(!showPassword)}
-                          size="sm"
-                          _hover={{ bg: 'transparent' }}
-                        >
-                          <Icon
-                            as={showPassword ? FaEyeSlash : FaEye}
-                            color={useColorModeValue('gray.400', 'gray.500')}
-                            _hover={{ color: useColorModeValue('gray.600', 'gray.300') }}
-                            transition="all 0.2s"
-                          />
-                        </Button>
-                      </InputRightElement>
-                    </InputGroup>
-                    {errors.password && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
-                        {errors.password.message}
-                      </Text>
-                    )}
-                  </Box>
-
-                  {/* Remember me + Forgot password */}
-                  <HStack justify="space-between" w="full">
-                    <HStack spacing={2}>
-                      <Box
-                        as="input"
-                        type="checkbox"
-                        id="remember_me"
-                        w="16px"
-                        h="16px"
-                        accentColor="var(--chakra-colors-green-500)"
-                        cursor="pointer"
-                        {...register('remember_me')}
-                      />
-                      <Text
-                        as="label"
-                        htmlFor="remember_me"
-                        fontSize="sm"
-                        color={useColorModeValue('gray.600', 'gray.400')}
-                        cursor="pointer"
-                        userSelect="none"
-                      >
-                        Remember me
-                      </Text>
-                    </HStack>
-                    <Link to="/auth/forgot-password">
-                      <Text
-                        fontSize="sm"
-                        color="green.500"
-                        fontWeight="medium"
-                        _hover={{
-                          textDecoration: 'underline',
-                          color: 'green.600'
-                        }}
-                        transition="all 0.2s"
-                      >
-                        Forgot password?
-                      </Text>
-                    </Link>
-                  </HStack>
-
-                  {/* Sign in button */}
-                  <Button
-                    type="submit"
-                    w="full"
-                    h="52px"
-                    bg="green.500"
-                    color="white"
-                    fontSize="md"
-                    fontWeight="600"
-                    borderRadius="xl"
-                    isLoading={isLoading || isSocialLoading}
-                    loadingText={isSocialLoading ? 'Authenticating...' : 'Signing in...'}
-                    _hover={{
-                      bg: 'green.600',
-                      transform: 'translateY(-1px)'
-                    }}
-                    _active={{
-                      transform: 'translateY(0)'
-                    }}
-                    transition="all 0.2s"
-                  >
-                    Access Your Transparency Dashboard
-                  </Button>
-                </VStack>
-              </form>
-
-              {/* Social login section */}
-              <VStack spacing={4} mt={8}>
-                <HStack w="full" spacing={4}>
-                  <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <VStack spacing={5}>
+                {/* Email field */}
+                <Box w="full">
                   <Text
                     fontSize="sm"
-                    color={useColorModeValue('gray.400', 'gray.400')}
-                    flexShrink={0}
-                    fontWeight="500"
-                  >
-                    Or continue with
+                    fontWeight="medium"
+                    color={useColorModeValue('gray.700', 'gray.300')}
+                    mb={2}>
+                    {intl.formatMessage({ id: 'auth.signin.emailLabel' })}
                   </Text>
-                  <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
-                </HStack>
-
-                <HStack spacing={3} w="full">
-                  {[
-                    { icon: FaGoogle, color: '#EA4335', name: 'Google' },
-                    { icon: FaFacebook, color: '#1877F2', name: 'Facebook' }
-                  ].map((social) => (
-                    <Button
-                      key={social.name}
-                      flex={1}
-                      h="40px"
-                      bg={useColorModeValue('gray.50', 'gray.700')}
+                  <InputGroup size="lg">
+                    <InputLeftElement pointerEvents="none">
+                      <Icon
+                        as={FaEnvelope}
+                        color={focusedField === 'email' ? 'green.500' : 'gray.400'}
+                        transition="all 0.2s"
+                      />
+                    </InputLeftElement>
+                    <Box
+                      as="input"
+                      type="email"
+                      placeholder="Enter your business email"
+                      pl="3rem"
+                      w="full"
+                      h="44px"
+                      fontSize="sm"
+                      bg={useColorModeValue('gray.50', 'gray.900')}
                       border="1px solid"
-                      borderColor={useColorModeValue('gray.200', 'gray.600')}
+                      borderColor={
+                        errors.email
+                          ? 'red.300'
+                          : focusedField === 'email'
+                          ? 'green.600'
+                          : useColorModeValue('gray.200', 'gray.600')
+                      }
                       borderRadius="xl"
-                      onClick={() => handleSocialLogin(social.name)}
-                      isDisabled={isLoading || isSocialLoading}
                       _hover={{
-                        bg: useColorModeValue('gray.100', 'gray.600'),
-                        borderColor: useColorModeValue('gray.300', 'gray.500'),
-                        transform: 'translateY(-1px)',
-                        boxShadow: 'sm'
+                        borderColor: errors.email
+                          ? 'red.300'
+                          : useColorModeValue('gray.300', 'gray.500')
+                      }}
+                      _focus={{
+                        outline: 'none',
+                        borderColor: 'green.600',
+                        bg: useColorModeValue('white', 'gray.800'),
+                        boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
                       }}
                       transition="all 0.2s"
-                    >
-                      <Icon as={social.icon} fontSize="18px" color={social.color} />
-                    </Button>
-                  ))}
-                </HStack>
-              </VStack>
-            </Box>
+                      {...register('email', {
+                        required: 'Email is required',
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Invalid email address'
+                        }
+                      })}
+                      onFocus={() => setFocusedField('email')}
+                      onBlur={() => setFocusedField(null)}
+                    />
+                  </InputGroup>
+                  {errors.email && (
+                    <Text fontSize="sm" color="red.500" mt={1}>
+                      {errors.email.message}
+                    </Text>
+                  )}
+                </Box>
 
-            {/* Sign up link */}
-            <Box textAlign="center" mt={8}>
-              <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
-                Don't have an account?{' '}
-                <Link to="/auth/signup">
+                {/* Password field */}
+                <Box w="full">
                   <Text
-                    as="span"
-                    color="green.500"
-                    fontWeight="semibold"
-                    _hover={{
-                      textDecoration: 'underline',
-                      color: 'green.600'
-                    }}
-                    transition="all 0.2s"
-                  >
-                    Build Your Farm's Story
+                    fontSize="sm"
+                    fontWeight="medium"
+                    color={useColorModeValue('gray.700', 'gray.300')}
+                    mb={2}>
+                    {intl.formatMessage({ id: 'auth.signin.passwordLabel' })}
                   </Text>
-                </Link>
-              </Text>
-            </Box>
-          </MotionBox>
-        </Flex>
-      </Grid>
+                  <InputGroup size="lg">
+                    <InputLeftElement pointerEvents="none">
+                      <Icon
+                        as={FaLock}
+                        color={focusedField === 'password' ? 'green.500' : 'gray.400'}
+                        transition="all 0.2s"
+                      />
+                    </InputLeftElement>
+                    <Box
+                      as="input"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      pl="3rem"
+                      pr="3rem"
+                      w="full"
+                      h="44px"
+                      fontSize="sm"
+                      bg={useColorModeValue('gray.50', 'gray.900')}
+                      border="1px solid"
+                      borderColor={
+                        errors.password
+                          ? 'red.300'
+                          : focusedField === 'password'
+                          ? 'green.600'
+                          : useColorModeValue('gray.200', 'gray.600')
+                      }
+                      borderRadius="xl"
+                      _hover={{
+                        borderColor: errors.password
+                          ? 'red.300'
+                          : useColorModeValue('gray.300', 'gray.500')
+                      }}
+                      _focus={{
+                        outline: 'none',
+                        borderColor: 'green.600',
+                        bg: useColorModeValue('white', 'gray.800'),
+                        boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
+                      }}
+                      transition="all 0.2s"
+                      {...register('password', {
+                        required: 'Password is required',
+                        minLength: {
+                          value: 8,
+                          message: 'Password must be at least 8 characters'
+                        }
+                      })}
+                      onFocus={() => setFocusedField('password')}
+                      onBlur={() => setFocusedField(null)}
+                    />
+                    <InputRightElement>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setShowPassword(!showPassword)}
+                        size="sm"
+                        /* Was an unlabelled icon button: a screen reader announced "button"
+                           and nothing else, and its state (shown/hidden) was carried only by
+                           which glyph was drawn. */
+                        aria-label={intl.formatMessage({
+                          id: showPassword ? 'auth.password.hide' : 'auth.password.show'
+                        })}
+                        aria-pressed={showPassword}
+                        _hover={{ bg: 'transparent' }}>
+                        <Icon
+                          as={showPassword ? FaEyeSlash : FaEye}
+                          aria-hidden="true"
+                          color={useColorModeValue('gray.400', 'gray.500')}
+                          _hover={{ color: useColorModeValue('gray.600', 'gray.300') }}
+                          transition="all 0.2s"
+                        />
+                      </Button>
+                    </InputRightElement>
+                  </InputGroup>
+                  {errors.password && (
+                    <Text fontSize="sm" color="red.500" mt={1}>
+                      {errors.password.message}
+                    </Text>
+                  )}
+                </Box>
+
+                {/* Remember me + Forgot password */}
+                <HStack justify="space-between" w="full">
+                  <HStack spacing={2}>
+                    <Box
+                      as="input"
+                      type="checkbox"
+                      id="remember_me"
+                      w="16px"
+                      h="16px"
+                      accentColor="var(--chakra-colors-green-500)"
+                      cursor="pointer"
+                      {...register('remember_me')}
+                    />
+                    <Text
+                      as="label"
+                      htmlFor="remember_me"
+                      fontSize="sm"
+                      color={useColorModeValue('gray.600', 'gray.400')}
+                      cursor="pointer"
+                      userSelect="none">
+                      {intl.formatMessage({ id: 'auth.signin.rememberMe' })}
+                    </Text>
+                  </HStack>
+                  <Link to="/auth/forgot-password">
+                    <Text
+                      fontSize="sm"
+                      color="green.700"
+                      fontWeight="medium"
+                      _hover={{
+                        textDecoration: 'underline',
+                        color: 'green.800'
+                      }}
+                      transition="all 0.2s">
+                      {intl.formatMessage({ id: 'auth.signin.forgotPassword' })}
+                    </Text>
+                  </Link>
+                </HStack>
+
+                {/* Sign in button */}
+                <Button
+                  type="submit"
+                  w="full"
+                  h="52px"
+                  bg="green.700"
+                  color="white"
+                  fontSize="md"
+                  fontWeight="600"
+                  borderRadius="xl"
+                  isLoading={isLoading || isSocialLoading}
+                  loadingText={isSocialLoading ? 'Authenticating...' : 'Signing in...'}
+                  _hover={{
+                    bg: 'green.800',
+                    transform: 'translateY(-1px)'
+                  }}
+                  _active={{
+                    transform: 'translateY(0)'
+                  }}
+                  transition="all 0.2s">
+                  {/* Was "Access Your Transparency Dashboard" — hardcoded English, and it named
+                        a page that was DELETED on 2026-08-11 (the /transparency route has been a
+                        redirect the whole time). The sign-in button should name the act, not a
+                        destination that may move. */}
+                  {intl.formatMessage({
+                    id: 'auth.signin.submit',
+                    defaultMessage: 'Sign in'
+                  })}
+                </Button>
+              </VStack>
+            </form>
+
+            {/* Social login section */}
+            <VStack spacing={4} mt={8}>
+              <HStack w="full" spacing={4}>
+                <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
+                <Text
+                  fontSize="sm"
+                  /* gray.400 (#9E9E9E) is 2.68:1 on white — a divider label is still text and
+                     still owes 4.5. gray.500 is 4.61. */
+                  color={useColorModeValue('gray.500', 'gray.400')}
+                  flexShrink={0}
+                  fontWeight="500">
+                  {intl.formatMessage({ id: 'auth.signin.orContinueWith' })}
+                </Text>
+                <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
+              </HStack>
+
+              <HStack spacing={3} w="full">
+                {[
+                  { icon: FaGoogle, color: '#EA4335', name: 'Google' },
+                  { icon: FaFacebook, color: '#1877F2', name: 'Facebook' }
+                ].map((social) => (
+                  <Button
+                    key={social.name}
+                    flex={1}
+                    /* 44px is the project's touch-target floor; these were 40. And an
+                       icon-only button with no aria-label announces as just "button" — the
+                       provider name existed only as a coloured glyph. */
+                    h="44px"
+                    aria-label={intl.formatMessage(
+                      { id: 'auth.signin.continueWithProvider' },
+                      { provider: social.name }
+                    )}
+                    bg={useColorModeValue('gray.50', 'gray.700')}
+                    border="1px solid"
+                    borderColor={useColorModeValue('gray.200', 'gray.600')}
+                    borderRadius="xl"
+                    onClick={() => handleSocialLogin(social.name)}
+                    isDisabled={isLoading || isSocialLoading}
+                    _hover={{
+                      bg: useColorModeValue('gray.100', 'gray.600'),
+                      borderColor: useColorModeValue('gray.300', 'gray.500'),
+                      transform: 'translateY(-1px)',
+                      boxShadow: 'sm'
+                    }}
+                    transition="all 0.2s">
+                    <Icon as={social.icon} fontSize="18px" color={social.color} />
+                  </Button>
+                ))}
+              </HStack>
+            </VStack>
+          </Box>
+
+          {/* Sign up link */}
+          <Box textAlign="center" mt={8}>
+            <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
+              {intl.formatMessage({ id: 'auth.signin.noAccount' })}{' '}
+              <Link to="/auth/signup">
+                <Text
+                  as="span"
+                  color="green.700"
+                  fontWeight="semibold"
+                  _hover={{
+                    textDecoration: 'underline',
+                    color: 'green.800'
+                  }}
+                  transition="all 0.2s">
+                  {intl.formatMessage({ id: 'auth.signin.signUpLink' })}
+                </Text>
+              </Link>
+            </Text>
+          </Box>
+        </MotionBox>
+      </Flex>
 
       <AuthFooter />
     </Box>

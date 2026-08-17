@@ -1,0 +1,919 @@
+/**
+ * Guided OSP — generic module wizard runner (WS-2.4).
+ *
+ * Renders ANY module from its served definition: citation header, plain-language
+ * education blocks, the N/A attestation gate, one page per lettered sub-section with
+ * live branching (conditionEval — the tested twin of the backend evaluator), a review
+ * step, and Complete. Answers autosave on page advance as a dirty-key delta; the
+ * server is the validation authority (the client mirror only drives UX).
+ *
+ * Trazo imprint rules honored here: content arrives bilingual from the API and is
+ * rendered in the user's locale; chrome strings ride the i18n catalogs; components are
+ * StandardComponents/Chakra tokens; nothing is copied from any competitor rendering.
+ *
+ * Route: /admin/dashboard/farm/:farmId/osp/module/:moduleKey
+ */
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Badge,
+  Box,
+  Checkbox,
+  Flex,
+  HStack,
+  Input,
+  Progress,
+  Radio,
+  RadioGroup,
+  Select,
+  Stack,
+  Text,
+  Textarea,
+  useColorModeValue,
+  useToast,
+  VStack
+} from '@chakra-ui/react';
+import { FaCheckCircle, FaMagic, FaPaperclip } from 'react-icons/fa';
+import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
+import { useNavigate, useParams } from 'react-router-dom';
+
+import {
+  GuidanceNote,
+  StandardButton,
+  StandardCard,
+  StandardPage,
+  StandardPageLoading
+} from 'components/Design/StandardComponents';
+import {
+  answerValue,
+  missingRequired,
+  visiblePages,
+  visibleQuestions
+} from 'config/osp/conditionEval';
+import { pickText } from 'config/osp/types';
+import type {
+  AnswerValue,
+  ModuleAnswers,
+  ModuleDefinition,
+  ModuleQuestion
+} from 'config/osp/types';
+import { useGetOSPModuleQuery, useGetOSPsQuery, useSaveOSPModuleMutation } from 'store/api/ospApi';
+import type { RootState } from 'store/index';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
+import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
+import { selectWorkingOsp } from './selectWorkingOsp';
+
+/** Apply exclusive-option semantics client-side (server refuses conflicts anyway). */
+const toggleCheckbox = (
+  question: ModuleQuestion,
+  current: string[],
+  optionValue: string
+): string[] => {
+  const option = question.options.find((o) => o.value === optionValue);
+  const has = current.includes(optionValue);
+  if (has) return current.filter((v) => v !== optionValue);
+  if (option?.exclusive) return [optionValue];
+  const exclusives = new Set(question.options.filter((o) => o.exclusive).map((o) => o.value));
+  return [...current.filter((v) => !exclusives.has(v)), optionValue];
+};
+
+/**
+ * `isReadOnly` is the plan-is-locked state, and it should now never be true: a locked plan
+ * renders <LockedModuleDocument/> instead of this form (see the render branch below).
+ *
+ * It stays anyway, and stays wired to every control, on purpose. This is a compliance
+ * surface, and the repeated failure here has been a single gate that some later branch
+ * quietly stopped consulting — a flag proving nothing because the controls never read it.
+ * Not rendering the form is the guarantee; this is the second lock on the same door, and
+ * it costs nothing to leave on.
+ *
+ * Text inputs take `isReadOnly` rather than `isDisabled`, choice controls the reverse: a
+ * disabled input greys its own text and leaves the tab order, while a native <select>
+ * ignores the readOnly attribute entirely and would look locked while still accepting a
+ * change.
+ */
+const QuestionField = ({
+  question,
+  value,
+  locale,
+  showMissing,
+  isReadOnly,
+  onChange
+}: {
+  question: ModuleQuestion;
+  value: AnswerValue;
+  locale: string;
+  showMissing: boolean;
+  isReadOnly: boolean;
+  onChange: (value: AnswerValue) => void;
+}) => {
+  const intl = useIntl();
+  const label = pickText(question.label, locale);
+  const coaching = question.coaching ? pickText(question.coaching, locale) : null;
+  const missing = showMissing && question.required;
+
+  let control: React.ReactNode = null;
+  switch (question.kind) {
+    case 'info':
+      control = null;
+      break;
+    case 'upload':
+      control = (
+        <HStack
+          spacing={2}
+          p={3}
+          borderWidth="1px"
+          borderStyle="dashed"
+          borderRadius="md"
+          color="gray.500">
+          <Box as={FaPaperclip} />
+          <Text fontSize="sm">{intl.formatMessage({ id: 'osp.wizard.uploadComingSoon' })}</Text>
+        </HStack>
+      );
+      break;
+    case 'boolean':
+      control = (
+        <RadioGroup
+          value={value === true ? 'yes' : value === false ? 'no' : ''}
+          onChange={(v) => onChange(v === 'yes')}
+          isDisabled={isReadOnly}>
+          <Stack direction={{ base: 'column', smd: 'row' }} spacing={4}>
+            <Radio value="yes" minH="44px">
+              {intl.formatMessage({ id: 'osp.wizard.yes' })}
+            </Radio>
+            <Radio value="no" minH="44px">
+              {intl.formatMessage({ id: 'osp.wizard.no' })}
+            </Radio>
+          </Stack>
+        </RadioGroup>
+      );
+      break;
+    case 'radio':
+      control = (
+        <RadioGroup
+          value={(value as string) ?? ''}
+          onChange={(v) => onChange(v)}
+          isDisabled={isReadOnly}>
+          <Stack spacing={2}>
+            {question.options.map((option) => (
+              <Radio key={option.value} value={option.value} minH="44px" alignItems="flex-start">
+                <Text fontSize="sm">{pickText(option.label, locale)}</Text>
+              </Radio>
+            ))}
+          </Stack>
+        </RadioGroup>
+      );
+      break;
+    case 'checkbox_group': {
+      const current = Array.isArray(value) ? (value as string[]) : [];
+      control = (
+        <Stack spacing={2}>
+          {question.options.map((option) => (
+            <Checkbox
+              key={option.value}
+              isChecked={current.includes(option.value)}
+              onChange={() => onChange(toggleCheckbox(question, current, option.value))}
+              isDisabled={isReadOnly}
+              minH="44px"
+              alignItems="flex-start">
+              <Text fontSize="sm">{pickText(option.label, locale)}</Text>
+            </Checkbox>
+          ))}
+        </Stack>
+      );
+      break;
+    }
+    case 'select':
+      control = (
+        <Select
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value || null)}
+          isDisabled={isReadOnly}
+          placeholder={intl.formatMessage({ id: 'osp.wizard.selectPlaceholder' })}>
+          {question.options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {pickText(option.label, locale)}
+            </option>
+          ))}
+        </Select>
+      );
+      break;
+    case 'date':
+      control = (
+        <Input
+          type="date"
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value || null)}
+          // isDisabled, not isReadOnly: Chrome still opens the native date picker on a
+          // readonly date input, so readOnly here would look locked and edit anyway.
+          isDisabled={isReadOnly}
+          maxW="240px"
+        />
+      );
+      break;
+    case 'textarea':
+      control = (
+        <Textarea
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value || null)}
+          isReadOnly={isReadOnly}
+          rows={4}
+          maxLength={question.max_length ?? undefined}
+          placeholder={question.placeholder ? pickText(question.placeholder, locale) : undefined}
+        />
+      );
+      break;
+    default:
+      control = (
+        <Input
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value || null)}
+          isReadOnly={isReadOnly}
+          maxLength={question.max_length ?? undefined}
+          placeholder={question.placeholder ? pickText(question.placeholder, locale) : undefined}
+        />
+      );
+  }
+
+  return (
+    <Box data-testid={`osp-q-${question.key}`}>
+      <HStack spacing={2} align="flex-start" mb={coaching ? 1 : 2}>
+        <Text fontWeight="medium" fontSize="sm">
+          {label}
+          {question.required && question.kind !== 'info' ? ' *' : ''}
+        </Text>
+        {question.nop_cite ? (
+          <Badge variant="neutral" fontSize="11px" mt={0.5}>
+            {question.nop_cite}
+          </Badge>
+        ) : null}
+      </HStack>
+      {coaching ? (
+        <Text fontSize="xs" color="gray.600" mb={2}>
+          {coaching}
+        </Text>
+      ) : null}
+      {control}
+      {missing ? (
+        <Text fontSize="xs" color="red.500" mt={1}>
+          {intl.formatMessage({ id: 'osp.wizard.required' })}
+        </Text>
+      ) : null}
+    </Box>
+  );
+};
+
+/**
+ * An answer as a person reads it: option labels for choice kinds, Yes/No for booleans,
+ * the raw text otherwise. Empty string when there is nothing recorded — callers decide
+ * what to show in its place.
+ *
+ * Lifted out of the review step because the locked document needs the identical rendering:
+ * a farmer must not be shown one thing while filling the module in and a different thing
+ * when reading back what was filed.
+ *
+ * An option value with no matching option in the current definition falls back to the raw
+ * value rather than being dropped. The review step used to drop it (`find(...)?.label &&
+ * pickText(...)` yields undefined, and `.filter(Boolean)` removes it), which on a filed
+ * record is the worse failure: a definition edited after the plan was approved would erase
+ * an answer from the page while leaving it in the database.
+ */
+const displayAnswer = (
+  question: ModuleQuestion,
+  value: AnswerValue,
+  locale: string,
+  intl: ReturnType<typeof useIntl>
+): string => {
+  if (Array.isArray(value)) {
+    return value
+      .map((v) => {
+        const option = question.options.find((o) => o.value === v);
+        return option ? pickText(option.label, locale) || String(v) : String(v);
+      })
+      .filter(Boolean)
+      .join('; ');
+  }
+  if (typeof value === 'boolean') {
+    return intl.formatMessage({ id: value ? 'osp.wizard.yes' : 'osp.wizard.no' });
+  }
+  if (question.options.length) {
+    const option = question.options.find((o) => o.value === value);
+    return (option ? pickText(option.label, locale) : null) || String(value ?? '');
+  }
+  return String(value ?? '');
+};
+
+/**
+ * One label/value row. The shape the review step already used, now shared.
+ *
+ * `_last` drops the rule under the final row. Every row carried one, so each card closed
+ * with a divider separating its last answer from nothing — visible in the rendered page as
+ * a stray line above the card's bottom padding. A separator between two things is
+ * structure; a separator after the last thing is just a line.
+ */
+const AnswerRow = ({ label, value }: { label: string; value: string }) => {
+  const intl = useIntl();
+  return (
+    <Flex
+      justify="space-between"
+      gap={4}
+      borderBottomWidth="1px"
+      pb={2}
+      _last={{ borderBottomWidth: 0, pb: 0 }}
+      direction={{ base: 'column', smd: 'row' }}>
+      <Text fontSize="sm" color="gray.600" flex="1">
+        {label}
+      </Text>
+      <Text fontSize="sm" fontWeight="medium" flex="1">
+        {value || intl.formatMessage({ id: 'osp.wizard.unanswered' })}
+      </Text>
+    </Flex>
+  );
+};
+
+/**
+ * What a locked module looks like: the record, as a record.
+ *
+ * A locked plan used to render the ordinary wizard with every control disabled — two
+ * paged steps, a progress bar, and a column of greyed-out checkboxes where exactly one
+ * was ticked. Three things were wrong with that, and only the first is cosmetic:
+ *
+ *   1. Disabled Chakra controls sit near 2.7:1. The one piece of information on the
+ *      screen — which box is ticked — was rendered in the least legible way available.
+ *   2. It reads as a broken form, not a finished document. The explanation lived in a
+ *      banner at the top, so anyone who scrolled past it met a form that simply refused
+ *      to respond, with nothing on screen saying why.
+ *   3. Step 1 of 2, a progress bar, and a Continue button are the furniture of unfinished
+ *      work. This plan is finished; that is the entire point of it being locked.
+ *
+ * So: no steps, no progress, no controls. Section headings and answers, in the order the
+ * certifier reads them. The wizard's own review step already proved this shape works —
+ * this is that shape, grouped by section and given the whole page.
+ */
+const LockedModuleDocument = ({
+  definition,
+  answers,
+  notApplicable
+}: {
+  definition: ModuleDefinition;
+  answers: ModuleAnswers;
+  notApplicable: boolean;
+}) => {
+  const intl = useIntl();
+  const locale = intl.locale;
+  const pages = visiblePages(definition, answers);
+  const visible = visibleQuestions(definition, answers);
+
+  // An attested exclusion is the whole content of the module — there are no answers under
+  // it to list, and a disabled ticked checkbox was a strange way to state a fact.
+  if (notApplicable) {
+    return (
+      <StandardCard>
+        <HStack spacing={3} align="flex-start">
+          <Box as={FaCheckCircle} color="green.700" boxSize={5} mt={0.5} />
+          <VStack align="flex-start" spacing={1}>
+            <Text fontSize="sm" fontWeight="medium">
+              {definition.na_label
+                ? pickText(definition.na_label, locale)
+                : intl.formatMessage({ id: 'osp.wizard.naDefault' })}
+            </Text>
+            <Text fontSize="xs" color="gray.600">
+              {intl.formatMessage({ id: 'osp.wizard.naExplainer' })}
+            </Text>
+          </VStack>
+        </HStack>
+      </StandardCard>
+    );
+  }
+
+  return (
+    <VStack align="stretch" spacing={4}>
+      {pages.map((page) => {
+        const questions = page.questions.filter(
+          (q) => q.kind !== 'info' && visible.some(({ question }) => question.key === q.key)
+        );
+        if (!questions.length) return null;
+        return (
+          // The test id goes on a wrapper, NOT on StandardCard. StandardCard destructures a
+          // fixed prop list with no rest-spread, so `data-testid` on it reaches no DOM node
+          // — MEASURED in the browser: querySelectorAll('[data-testid^="osp-module-"]')
+          // returns [] on the live list page, where the same mistake has been silently
+          // disabling a hook since that card was written. A test id that renders nothing is
+          // worse than none: the next person writes a selector against it and it never matches.
+          <Box key={page.key} data-testid={`osp-locked-page-${page.key}`}>
+            <StandardCard>
+              <VStack align="stretch" spacing={3}>
+                {page.title ? (
+                  <Text fontWeight="semibold">{pickText(page.title, locale)}</Text>
+                ) : null}
+                {questions.map((question) => (
+                  <AnswerRow
+                    key={question.key}
+                    label={pickText(question.label, locale)}
+                    value={displayAnswer(
+                      question,
+                      answerValue(answers, question.key),
+                      locale,
+                      intl
+                    )}
+                  />
+                ))}
+              </VStack>
+            </StandardCard>
+          </Box>
+        );
+      })}
+    </VStack>
+  );
+};
+
+const OSPModuleWizard = () => {
+  const intl = useIntl();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const { farmId, moduleKey } = useParams();
+  const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
+  const companyId = currentCompany?.id != null ? String(currentCompany.id) : '';
+
+  const { data: osps } = useGetOSPsQuery(
+    { companyId, farmId: farmId || '' },
+    { skip: !companyId || !farmId }
+  );
+  // Not `osps[0]` — see selectWorkingOsp. This matters more here than on the list page:
+  // when the farmer forks a new version from the notice below, the query refetches and
+  // this has to start resolving to the new draft, which is what unlocks the page in place.
+  const workingOsp = selectWorkingOsp(osps);
+  const ospId = workingOsp?.id;
+  const ospIsDraft = workingOsp?.status === 'draft';
+  /**
+   * Read-only mode, stated positively.
+   *
+   * The render branch below keyed off `!ospIsDraft`, which is ALSO true when there is no
+   * working plan at all — an unresolved list, or a farm with no OSP reached by typing the
+   * URL. That branch would then have rendered the locked document with no notice above it
+   * and no fork button below: a page explaining nothing and offering nothing.
+   *
+   * Unreachable today, because `definition` is undefined without an `ospId` and the page
+   * returns the loader before it gets here. Unreachable by accident is not the same as
+   * correct, and this is a compliance surface where the difference between "locked" and
+   * "we do not know yet" should never rest on a negation.
+   */
+  const isLocked = Boolean(workingOsp) && !ospIsDraft;
+
+  const { data, isLoading } = useGetOSPModuleQuery(
+    { companyId, farmId: farmId || '', ospId: ospId ?? '', moduleKey: moduleKey || '' },
+    { skip: !companyId || !farmId || ospId == null || !moduleKey }
+  );
+  const [saveModule, { isLoading: saving }] = useSaveOSPModuleMutation();
+
+  const definition: ModuleDefinition | undefined = data?.definition;
+  const [answers, setAnswers] = useState<ModuleAnswers>({});
+  const [notApplicable, setNotApplicable] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [showMissing, setShowMissing] = useState(false);
+  const dirtyKeys = useRef<Set<string>>(new Set());
+  /**
+   * Hydrate once per (plan, module) — not once per mount.
+   *
+   * It used to be a bare `hydrated` boolean, which was fine while `ospId` could never
+   * change under a mounted page. Forking a new version from this page changes it: the
+   * module query refetches against the new plan and returns ITS answers, and a plain
+   * once-ever guard would have kept showing the old plan's state on top of the new
+   * plan's id. Today the fork clones the answers so the two agree and nothing would
+   * look wrong — which is exactly the kind of bug that ships and then surfaces the
+   * first time cloning stops being a straight copy.
+   */
+  const hydratedFor = useRef<string | null>(null);
+
+  useEffect(() => {
+    const key = `${ospId ?? ''}:${moduleKey ?? ''}`;
+    if (data && hydratedFor.current !== key) {
+      hydratedFor.current = key;
+      setAnswers(data.answers ?? {});
+      setNotApplicable(Boolean(data.response?.not_applicable));
+      setStepIndex(0);
+      setShowMissing(false);
+      dirtyKeys.current.clear();
+    }
+  }, [data, ospId, moduleKey]);
+
+  const pages = useMemo(
+    () => (definition ? visiblePages(definition, answers) : []),
+    [definition, answers]
+  );
+  const clampedStep = Math.min(stepIndex, Math.max(pages.length - 1, 0));
+  const onReview = stepIndex >= pages.length && !notApplicable;
+  const currentPage = onReview ? null : pages[clampedStep];
+
+  const missing = useMemo(
+    () => (definition ? missingRequired(definition, answers, notApplicable) : []),
+    [definition, answers, notApplicable]
+  );
+
+  /**
+   * What actually went wrong, in the farmer's words.
+   *
+   * This used to read `err.data.missing` and nothing else, so every failure that
+   * was NOT an unanswered-question list — a locked non-draft plan, a rejected
+   * answer, a 500 — showed "Could not save your answers" with an empty body and
+   * no way to act on it. Order matters: `missing` is rendered from the module's
+   * own question labels (the payload carries raw keys like `q_pest_methods`,
+   * which mean nothing to the reader), and anything else defers to the server's
+   * message, which is written for this audience.
+   */
+  const saveErrorDescription = (err: unknown): string => {
+    const payload = (err as { data?: { missing?: unknown } })?.data;
+    const missingKeys = Array.isArray(payload?.missing) ? (payload!.missing as string[]) : [];
+    if (missingKeys.length && definition) {
+      const questions = visibleQuestions(definition, answers);
+      const labels = missingKeys.map(
+        (key) =>
+          pickText(
+            questions.find(({ question }) => question.key === key)?.question.label ?? null,
+            intl.locale
+          ) || key
+      );
+      return intl.formatMessage(
+        { id: 'osp.wizard.saveFailedMissing' },
+        { fields: labels.join(', ') }
+      );
+    }
+    return (
+      apiErrorMessage(err, ['missing']) ??
+      intl.formatMessage({ id: 'osp.wizard.saveFailedGeneric' })
+    );
+  };
+
+  const flushDirty = async (extra: { not_applicable?: boolean; complete?: boolean } = {}) => {
+    if (!definition || ospId == null) return false;
+    const delta: Record<string, AnswerValue> = {};
+    dirtyKeys.current.forEach((key) => {
+      delta[key] = answerValue(answers, key);
+    });
+    const payload = {
+      ...(Object.keys(delta).length ? { answers: delta } : {}),
+      ...extra
+    };
+    if (!Object.keys(payload).length) return true;
+    try {
+      await saveModule({
+        companyId,
+        farmId: farmId || '',
+        ospId,
+        moduleKey: definition.key,
+        data: payload
+      }).unwrap();
+      dirtyKeys.current.clear();
+      return true;
+    } catch (err) {
+      toast({
+        title: intl.formatMessage({ id: 'osp.wizard.saveFailed' }),
+        description: saveErrorDescription(err),
+        status: 'error',
+        duration: 8000
+      });
+      return false;
+    }
+  };
+
+  const setAnswer = (key: string, value: AnswerValue) => {
+    dirtyKeys.current.add(key);
+    setAnswers((prev) => ({ ...prev, [key]: { value } }));
+  };
+
+  const suggestions = data?.suggestions ?? {};
+  const suggestionBg = useColorModeValue('green.50', 'rgba(74, 222, 128, 0.08)');
+  const suggestionBorder = useColorModeValue('green.200', 'green.700');
+
+  const isUnanswered = (value: AnswerValue): boolean =>
+    value === undefined ||
+    value === null ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0);
+
+  /** Human form of a suggested value: option labels for choice kinds, text otherwise. */
+  const suggestionDisplay = (question: ModuleQuestion, value: AnswerValue): string => {
+    if (Array.isArray(value)) {
+      return value
+        .map((v) => {
+          const opt = question.options.find((o) => o.value === v);
+          return opt ? pickText(opt.label, locale) : String(v);
+        })
+        .filter(Boolean)
+        .join('; ');
+    }
+    if (question.options.length) {
+      const opt = question.options.find((o) => o.value === value);
+      if (opt) return pickText(opt.label, locale) ?? String(value);
+    }
+    return String(value ?? '');
+  };
+
+  const handleNaToggle = async (checked: boolean) => {
+    setNotApplicable(checked);
+    if (ospId == null || !definition) return;
+    try {
+      await saveModule({
+        companyId,
+        farmId: farmId || '',
+        ospId,
+        moduleKey: definition.key,
+        data: { not_applicable: checked }
+      }).unwrap();
+    } catch (err) {
+      setNotApplicable(!checked);
+      toast({
+        title: intl.formatMessage({ id: 'osp.wizard.saveFailed' }),
+        description: saveErrorDescription(err),
+        status: 'error',
+        duration: 8000
+      });
+    }
+  };
+
+  const handleNext = async () => {
+    // Only reachable on a draft now — a locked plan renders a document with no steps to
+    // advance through. The button that used to say "Continue" here (a page-turn dressed as
+    // progress through a form nobody could fill in) is gone with it.
+    if (!(await flushDirty())) return;
+    setShowMissing(false);
+    setStepIndex((i) => i + 1);
+  };
+
+  const handleComplete = async () => {
+    if (missing.length) {
+      setShowMissing(true);
+      toast({
+        title: intl.formatMessage({ id: 'osp.wizard.missingTitle' }),
+        description: intl.formatMessage(
+          { id: 'osp.wizard.missingBody' },
+          { count: missing.length }
+        ),
+        status: 'warning',
+        duration: 6000
+      });
+      return;
+    }
+    if (!(await flushDirty({ not_applicable: notApplicable, complete: true }))) return;
+    toast({
+      title: intl.formatMessage({ id: 'osp.wizard.completedTitle' }),
+      status: 'success',
+      duration: 4000
+    });
+    navigate(`/admin/dashboard/farm/${farmId}/osp`);
+  };
+
+  if (isLoading || !definition) return <StandardPageLoading />;
+
+  const locale = intl.locale;
+  const title = `${definition.code ? `${definition.code} · ` : ''}${pickText(
+    definition.title,
+    locale
+  )}`;
+
+  return (
+    // Back navigation goes through StandardPage's own `showBackButton`/`onBack`, the same
+    // affordance Settings, Change Password, the Parcel Application wizard and the Education
+    // dashboard use. This page had rolled its own ghost text link INSIDE the body instead, so
+    // the one control every other page puts in the header sat below the header here, in a
+    // different shape and weight.
+    <StandardPage
+      title={title}
+      description={definition.nop_cites.join(' · ')}
+      showBackButton
+      onBack={() => navigate(`/admin/dashboard/farm/${farmId}/osp`)}
+      // A form/reading page: header and body share one centred column. The `maxW="3xl"` that used
+      // to live on the VStack below only narrowed the CONTENT, leaving it pinned to the left of a
+      // full-width area under a full-width header — a column of questions with a third of the
+      // screen empty beside it.
+      contentMaxW="4xl">
+      <VStack align="stretch" spacing={5}>
+        {/*
+          Named the state wrong for years: this said "This plan has been submitted" for
+          EVERY non-draft status, so an approved/active plan — the common case — was
+          described to the farmer as still sitting with the certifier. The phrase now
+          comes from the status itself and matches the wording the API uses when it
+          refuses the write, so the notice and the error toast tell one story.
+
+          Explanation only. The button it names is at the foot of the document, which is
+          also the right reading order here: this page exists to be read through, and the
+          action belongs after the record, not on top of it.
+        */}
+        {isLocked && workingOsp ? <OSPLockedNotice osp={workingOsp} /> : null}
+
+        {/*
+          Module education is static teaching copy, not a status — see GuidanceNote. It used
+          to render as `status="success" variant="left-accent"` with the checkmark swapped
+          out for an info glyph, which put Trazo's success green behind text that reports no
+          success and announced it in an assertive live region.
+        */}
+        {definition.education.map((block, i) => (
+          <GuidanceNote key={i}>{pickText(block, locale)}</GuidanceNote>
+        ))}
+
+        {isLocked ? (
+          <>
+            <LockedModuleDocument
+              definition={definition}
+              answers={answers}
+              notApplicable={notApplicable}
+            />
+            {/* Where "Complete module" used to sit greyed out. A farmer who read the whole
+                module to the bottom arrived at a disabled button and nothing else, while the
+                one action actually available to them was described — not offered — in a
+                banner they had long since scrolled past. */}
+            {workingOsp ? (
+              <Flex justify="flex-end">
+                <StartNewVersionButton
+                  osp={workingOsp}
+                  companyId={companyId}
+                  farmId={farmId || ''}
+                />
+              </Flex>
+            ) : null}
+          </>
+        ) : (
+          <>
+            {definition.allows_not_applicable ? (
+              <StandardCard>
+                <Checkbox
+                  isChecked={notApplicable}
+                  onChange={(e) => handleNaToggle(e.target.checked)}
+                  minH="44px"
+                  alignItems="flex-start">
+                  <Text fontSize="sm" fontWeight="medium">
+                    {definition.na_label
+                      ? pickText(definition.na_label, locale)
+                      : intl.formatMessage({ id: 'osp.wizard.naDefault' })}
+                  </Text>
+                </Checkbox>
+                {notApplicable ? (
+                  <Text fontSize="xs" color="gray.600" mt={2}>
+                    {intl.formatMessage({ id: 'osp.wizard.naExplainer' })}
+                  </Text>
+                ) : null}
+              </StandardCard>
+            ) : null}
+
+            {notApplicable ? (
+              <StandardButton minH="44px" onClick={handleComplete} isLoading={saving}>
+                {intl.formatMessage({ id: 'osp.wizard.completeNa' })}
+              </StandardButton>
+            ) : (
+              <>
+                <Box>
+                  <Progress
+                    value={
+                      pages.length
+                        ? ((onReview ? pages.length : clampedStep) / pages.length) * 100
+                        : 0
+                    }
+                    size="sm"
+                    borderRadius="md"
+                    colorScheme="green"
+                  />
+                  <Text fontSize="xs" color="gray.500" mt={1}>
+                    {onReview
+                      ? intl.formatMessage({ id: 'osp.wizard.reviewStep' })
+                      : intl.formatMessage(
+                          { id: 'osp.wizard.stepCount' },
+                          { current: clampedStep + 1, total: pages.length }
+                        )}
+                  </Text>
+                </Box>
+
+                {currentPage ? (
+                  <StandardCard>
+                    <VStack align="stretch" spacing={5}>
+                      {currentPage.title ? (
+                        <Text fontWeight="semibold">{pickText(currentPage.title, locale)}</Text>
+                      ) : null}
+                      {/*
+                    Same content class as the module-level education above — this file used to
+                    render it a third way (bare grey Text), so one page showed guidance in three
+                    different shapes. One component, both call sites.
+                  */}
+                      {currentPage.education.map((block, i) => (
+                        <GuidanceNote key={i}>{pickText(block, locale)}</GuidanceNote>
+                      ))}
+                      {currentPage.questions
+                        .filter((q) =>
+                          visibleQuestions(definition, answers).some(
+                            ({ question }) => question.key === q.key
+                          )
+                        )
+                        .map((question) => {
+                          const suggestion = suggestions[question.key];
+                          // No suggestions on a locked plan: "Use suggestion" writes an
+                          // answer, and the write is exactly what the server refuses.
+                          const showSuggestion =
+                            ospIsDraft &&
+                            Boolean(suggestion) &&
+                            isUnanswered(answerValue(answers, question.key));
+                          return (
+                            <Box key={question.key}>
+                              <QuestionField
+                                question={question}
+                                value={answerValue(answers, question.key)}
+                                locale={locale}
+                                showMissing={showMissing && missing.includes(question.key)}
+                                isReadOnly={!ospIsDraft}
+                                onChange={(value) => setAnswer(question.key, value)}
+                              />
+                              {showSuggestion && (
+                                <Box
+                                  mt={2}
+                                  p={2.5}
+                                  borderWidth="1px"
+                                  borderColor={suggestionBorder}
+                                  bg={suggestionBg}
+                                  borderRadius="md">
+                                  <HStack align="flex-start" spacing={2}>
+                                    <Box as={FaMagic} color="green.500" mt={0.5} flexShrink={0} />
+                                    <Box minW={0}>
+                                      <Text fontSize="sm">
+                                        <Text as="span" fontWeight="semibold">
+                                          {intl.formatMessage({
+                                            id: 'osp.wizard.suggestion.title'
+                                          })}
+                                        </Text>{' '}
+                                        {suggestionDisplay(question, suggestion.value)}
+                                      </Text>
+                                      <Text fontSize="xs" color="gray.500" mt={0.5}>
+                                        {suggestion.basis}
+                                      </Text>
+                                      <StandardButton
+                                        size="sm"
+                                        variant="outline"
+                                        mt={2}
+                                        minH="36px"
+                                        onClick={() => setAnswer(question.key, suggestion.value)}>
+                                        {intl.formatMessage({ id: 'osp.wizard.suggestion.use' })}
+                                      </StandardButton>
+                                    </Box>
+                                  </HStack>
+                                </Box>
+                              )}
+                            </Box>
+                          );
+                        })}
+                    </VStack>
+                  </StandardCard>
+                ) : (
+                  <StandardCard>
+                    <VStack align="stretch" spacing={4}>
+                      <HStack spacing={2}>
+                        <Box as={FaCheckCircle} color="green.500" />
+                        <Text fontWeight="semibold">
+                          {intl.formatMessage({ id: 'osp.wizard.reviewTitle' })}
+                        </Text>
+                      </HStack>
+                      {/* Same renderer the locked document uses. It was duplicated inline here,
+                      which is how the two came to disagree about a stale option value. */}
+                      {visibleQuestions(definition, answers)
+                        .filter(({ question }) => question.kind !== 'info')
+                        .map(({ question }) => (
+                          <AnswerRow
+                            key={question.key}
+                            label={pickText(question.label, locale)}
+                            value={displayAnswer(
+                              question,
+                              answerValue(answers, question.key),
+                              locale,
+                              intl
+                            )}
+                          />
+                        ))}
+                    </VStack>
+                  </StandardCard>
+                )}
+
+                <Flex justify="space-between" gap={3}>
+                  <StandardButton
+                    variant="outline"
+                    minH="44px"
+                    onClick={() => setStepIndex((i) => Math.max(i - 1, 0))}
+                    isDisabled={clampedStep === 0 && !onReview}>
+                    {intl.formatMessage({ id: 'osp.wizard.back' })}
+                  </StandardButton>
+                  {onReview ? (
+                    <StandardButton minH="44px" onClick={handleComplete} isLoading={saving}>
+                      {intl.formatMessage({ id: 'osp.wizard.complete' })}
+                    </StandardButton>
+                  ) : (
+                    <StandardButton minH="44px" onClick={handleNext} isLoading={saving}>
+                      {intl.formatMessage({ id: 'osp.wizard.next' })}
+                    </StandardButton>
+                  )}
+                </Flex>
+              </>
+            )}
+          </>
+        )}
+      </VStack>
+    </StandardPage>
+  );
+};
+
+export default OSPModuleWizard;

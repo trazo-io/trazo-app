@@ -276,7 +276,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
                 <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
                   {intl.formatMessage({ id: 'commercial.qualityScore' }, { score: Math.round((humanPercentage + engagementPercentage + uniquePercentage) / 3) })}
                 </Text>
-                <Text fontSize="xs" color="green.600">
+                <Text fontSize="xs" color="green.700">
                   {intl.formatMessage({ id: 'commercial.qualityScoreDescription' })}
                 </Text>
               </VStack>
@@ -288,7 +288,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
                 <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
                   {intl.formatMessage({ id: 'commercial.recommendation' })}
                 </Text>
-                <Text fontSize="xs" color="green.600">
+                <Text fontSize="xs" color="green.700">
                   {humanPercentage > 85
                     ? intl.formatMessage({ id: 'commercial.recommendationExcellent' })
                     : humanPercentage > 70
@@ -349,16 +349,21 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
   );
 };
 
-// Product tour
-import { useTour } from 'hooks/useTour';
-
+/**
+ * ⚠️ This view is ORPHANED. `farm/:farmId/commercial` was folded to `RedirectToFarmHome` in
+ * WS-7 (App.tsx) and nothing imports this file; its content lives on the Buyer Page.
+ *
+ * Its `useTour('commercial-dashboard')` call was removed 2026-08-16: that tour id was never
+ * registered in `src/tours/registry.ts`, so the hook ran on every render of a page nobody
+ * could reach, asking for a tour that did not exist. The `tour.commercial.*` strings went with
+ * it — they described scan-quality scores and consumer reviews, both retired.
+ * `tours/__tests__/tourWiring.test.ts` now fails on a `useTour` id with no definition.
+ */
 export default function CommercialView() {
   const intl = useIntl();
   const textColor = useColorModeValue('gray.700', 'white');
   const { farmId } = useParams();
 
-  // Commercial dashboard tour
-  useTour('commercial-dashboard');
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Capture URL filter params (supports both initial mount and in-page navigation)
@@ -881,7 +886,7 @@ export default function CommercialView() {
                     size={{ base: 'sm', md: 'md' }}
                     minW={{ base: 'auto', md: '150px' }}
                     w={{ base: 'full', md: 'auto' }}
-                    bg="green.500"
+                    bg="green.700"
                     color="white"
                     fontWeight="medium"
                     borderRadius="lg"

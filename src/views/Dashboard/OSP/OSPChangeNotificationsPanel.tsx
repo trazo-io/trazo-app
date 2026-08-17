@@ -26,14 +26,9 @@ import {
   Box,
   Button,
   Divider,
-  FormControl,
-  FormLabel,
   HStack,
-  Input,
-  Select,
   SimpleGrid,
   Text,
-  Textarea,
   useColorModeValue,
   useToast,
   VStack
@@ -41,7 +36,14 @@ import {
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardField,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import {
   useCreateOSPChangeNotificationMutation,
   useDeleteOSPChangeNotificationMutation,
@@ -74,8 +76,32 @@ const CATEGORY_KEYS: { value: OSPChangeCategory; defaultMessage: string }[] = [
   { value: 'field_removal', defaultMessage: 'Removed a field' },
   { value: 'new_retail_label', defaultMessage: 'New retail label' },
   { value: 'new_processing_handling', defaultMessage: 'New processing / handling' },
-  { value: 'practice_input_procedure_change', defaultMessage: 'Practice / input / procedure change' }
+  {
+    value: 'practice_input_procedure_change',
+    defaultMessage: 'Practice / input / procedure change'
+  }
 ];
+
+/**
+ * DRF returns `{field: ["message"]}` (or `{detail: "..."}`); RTK Query wraps it as
+ * `{status, data}`. Pull out the messages so a 400 explains itself.
+ */
+const describeApiError = (err: unknown): string | undefined => {
+  const data = (err as { data?: unknown })?.data;
+  if (typeof data === 'string') return data;
+  if (!data || typeof data !== 'object') return undefined;
+  const messages = Object.values(data as Record<string, unknown>)
+    .flatMap((value) => (Array.isArray(value) ? value : [value]))
+    .filter((value): value is string => typeof value === 'string');
+  return messages.length ? messages.join(' ') : undefined;
+};
+
+/** Local calendar date as YYYY-MM-DD — `toISOString()` is UTC and reads a day ahead in CA. */
+const localTodayIso = (): string => {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+};
 
 const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }) => {
   const intl = useIntl();
@@ -88,8 +114,7 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
     { skip: !companyId || !farmId || !osp }
   );
   const [createNotification, { isLoading: isSaving }] = useCreateOSPChangeNotificationMutation();
-  const [deleteNotification, { isLoading: isDeleting }] =
-    useDeleteOSPChangeNotificationMutation();
+  const [deleteNotification, { isLoading: isDeleting }] = useDeleteOSPChangeNotificationMutation();
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
 
   const [category, setCategory] = useState<OSPChangeCategory | ''>('');
@@ -99,6 +124,32 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
   const [docTiming, setDocTiming] = useState<OSPDocumentationTiming | ''>('');
 
   if (!osp) return null;
+
+  // § 205.400(f)(1) — the immediate-report category. Drives the urgency hint on the date field.
+  const isImmediate = category === 'prohibited_substance_application';
+
+  // ONE source of truth for "can this be recorded", named rather than boolean, so the disabled
+  // button and the line explaining it cannot drift apart.
+  // The date is deliberately NOT in here, even for (f)(1). A grower who discovers drift this
+  // morning must be able to record it before they have phoned the certifier; blocking that
+  // would make the most urgent category the only one that cannot be entered promptly. The
+  // backend allows it and the certifier packet raises the missing date as a [REVIEW] finding.
+  const missingRequired = [
+    !category && 'osp.changeNotifications.field.category',
+    !description.trim() && 'osp.changeNotifications.field.description'
+  ]
+    .filter((id): id is string => Boolean(id))
+    .map((id) =>
+      intl.formatMessage({
+        id,
+        defaultMessage:
+          id === 'osp.changeNotifications.field.category' ? 'Change category' : 'What changed?'
+      })
+    );
+
+  // Only explain the disabled button once they have started; on a pristine form the list is
+  // just the required markers restated as an accusation.
+  const isDirty = Boolean(category || description.trim() || dateNotified || method || docTiming);
 
   const resetForm = () => {
     setCategory('');
@@ -137,18 +188,9 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
   };
 
   const handleSubmit = async () => {
-    if (!category || !description.trim()) {
-      toast({
-        status: 'warning',
-        title: intl.formatMessage({
-          id: 'osp.changeNotifications.validation',
-          defaultMessage: 'Category and description are required.'
-        }),
-        duration: 4000,
-        isClosable: true
-      });
-      return;
-    }
+    // The button is disabled while anything is outstanding; this is the belt-and-braces path
+    // (keyboard submit, a future caller) rather than the primary feedback channel.
+    if (missingRequired.length > 0 || !category) return;
     const data: CreateOSPChangeNotificationData = {
       change_category: category,
       description: description.trim(),
@@ -168,21 +210,29 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
         isClosable: true
       });
       resetForm();
-    } catch {
+    } catch (err) {
+      // The backend refuses a blank date on an (f)(1) notification and any future date, and
+      // says which field and why. Swallowing that into a bare "Could not save" left the grower
+      // with an unexplained failure they had no way to act on.
       toast({
         status: 'error',
         title: intl.formatMessage({
           id: 'osp.changeNotifications.error',
           defaultMessage: 'Could not save the change notification.'
         }),
-        duration: 4000,
+        description: describeApiError(err),
+        duration: 8000,
         isClosable: true
       });
     }
   };
 
+  // No `mt` on StandardCard: it destructures a fixed prop list and never spreads the rest, so
+  // the `mt={4}` that used to be here was silently dropped — the inert-prop class. Spacing
+  // already comes from the preceding card's `mb`, so removing it changes no pixels; it removes
+  // a claim that was never true.
   return (
-    <StandardCard mt={4}>
+    <StandardCard>
       <Text fontWeight="bold" fontSize="sm">
         {intl.formatMessage({
           id: 'osp.changeNotifications.title',
@@ -214,10 +264,9 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
               borderRadius="md"
               bg={cn.is_immediate ? 'red.50' : 'gray.50'}
               borderLeft="3px solid"
-              borderLeftColor={cn.is_immediate ? 'red.400' : 'green.400'}
-            >
+              borderLeftColor={cn.is_immediate ? 'red.400' : 'green.400'}>
               <HStack spacing={2} mb={1} flexWrap="wrap">
-                <Badge colorScheme={cn.is_immediate ? 'red' : 'green'} fontSize="xx-small">
+                <Badge colorScheme={cn.is_immediate ? 'red' : 'green'} fontSize="11px">
                   {cn.cfr_reference}
                 </Badge>
                 <Text fontSize="xs" fontWeight="semibold">
@@ -230,8 +279,7 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                 )}
                 <Badge
                   colorScheme={cn.certifier_acknowledged_at ? 'green' : 'yellow'}
-                  fontSize="xx-small"
-                >
+                  fontSize="11px">
                   {cn.certifier_acknowledged_at
                     ? intl.formatMessage({
                         id: 'osp.changeNotifications.acked',
@@ -250,18 +298,13 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                         colorScheme="red"
                         variant="solid"
                         isLoading={isDeleting}
-                        onClick={() => handleDelete(cn.id)}
-                      >
+                        onClick={() => handleDelete(cn.id)}>
                         {intl.formatMessage({
                           id: 'osp.changeNotifications.withdrawConfirm',
                           defaultMessage: 'Withdraw'
                         })}
                       </Button>
-                      <Button
-                        size="xs"
-                        variant="ghost"
-                        onClick={() => setPendingDeleteId(null)}
-                      >
+                      <Button size="xs" variant="ghost" onClick={() => setPendingDeleteId(null)}>
                         {intl.formatMessage({
                           id: 'osp.changeNotifications.withdrawCancel',
                           defaultMessage: 'Cancel'
@@ -281,8 +324,7 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                           defaultMessage: 'Withdraw change notification: {description}'
                         },
                         { description: cn.description }
-                      )}
-                    >
+                      )}>
                       {intl.formatMessage({
                         id: 'osp.changeNotifications.withdraw',
                         defaultMessage: 'Withdraw'
@@ -302,22 +344,21 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
 
       {/* Create form */}
       <VStack align="stretch" spacing={3}>
-        <FormControl isRequired>
-          <FormLabel fontSize="xs">
-            {intl.formatMessage({
-              id: 'osp.changeNotifications.field.category',
-              defaultMessage: 'Change category'
-            })}
-          </FormLabel>
-          <Select
-            size="sm"
+        <StandardField
+          label={intl.formatMessage({
+            id: 'osp.changeNotifications.field.category',
+            defaultMessage: 'Change category'
+          })}
+          required>
+          <StandardSelect
             placeholder={intl.formatMessage({
               id: 'osp.changeNotifications.field.categoryPlaceholder',
               defaultMessage: 'Select a change category…'
             })}
             value={category}
-            onChange={(e) => setCategory(e.target.value as OSPChangeCategory)}
-          >
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setCategory(e.target.value as OSPChangeCategory)
+            }>
             {CATEGORY_KEYS.map((c) => (
               <option key={c.value} value={c.value}>
                 {intl.formatMessage({
@@ -326,60 +367,65 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                 })}
               </option>
             ))}
-          </Select>
-        </FormControl>
+          </StandardSelect>
+        </StandardField>
 
-        <FormControl isRequired>
-          <FormLabel fontSize="xs">
-            {intl.formatMessage({
-              id: 'osp.changeNotifications.field.description',
-              defaultMessage: 'What changed?'
-            })}
-          </FormLabel>
-          <Textarea
-            size="sm"
-            rows={2}
+        <StandardField
+          label={intl.formatMessage({
+            id: 'osp.changeNotifications.field.description',
+            defaultMessage: 'What changed?'
+          })}
+          required>
+          <StandardTextarea
+            rows={3}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
             placeholder={intl.formatMessage({
               id: 'osp.changeNotifications.field.descriptionPlaceholder',
               defaultMessage: 'e.g., Added 12-acre Block C to organic acreage'
             })}
           />
-        </FormControl>
+        </StandardField>
 
         <SimpleGrid columns={{ base: 1, smd: 3 }} spacing={3}>
-          <FormControl>
-            <FormLabel fontSize="xs">
-              {intl.formatMessage({
-                id: 'osp.changeNotifications.field.dateNotified',
-                defaultMessage: 'Date certifier notified'
-              })}
-            </FormLabel>
-            <Input
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.changeNotifications.field.dateNotified',
+              defaultMessage: 'Date certifier notified'
+            })}
+            helpText={
+              isImmediate
+                ? intl.formatMessage({
+                    id: 'osp.changeNotifications.field.dateNotifiedImmediate',
+                    defaultMessage:
+                      'Add the date once you have reported it — § 205.400(f)(1) requires immediate notification, and your certifier packet flags this row until the date is recorded.'
+                  })
+                : undefined
+            }>
+            <StandardInput
               type="date"
-              size="sm"
+              // A notification cannot have been made tomorrow, and a typo'd year silently
+              // reorders the packet's audit trail. Backend refuses it too.
+              max={localTodayIso()}
               value={dateNotified}
-              onChange={(e) => setDateNotified(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDateNotified(e.target.value)}
             />
-          </FormControl>
+          </StandardField>
 
-          <FormControl>
-            <FormLabel fontSize="xs">
-              {intl.formatMessage({
-                id: 'osp.changeNotifications.field.method',
-                defaultMessage: 'Method'
-              })}
-            </FormLabel>
-            <Select
-              size="sm"
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.changeNotifications.field.method',
+              defaultMessage: 'Method'
+            })}>
+            <StandardSelect
               placeholder={intl.formatMessage({
                 id: 'osp.changeNotifications.field.methodPlaceholder',
                 defaultMessage: 'Verbal or written…'
               })}
               value={method}
-              onChange={(e) => setMethod(e.target.value as OSPNotificationMethod)}
-            >
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setMethod(e.target.value as OSPNotificationMethod)
+              }>
               <option value="verbal">
                 {intl.formatMessage({
                   id: 'osp.changeNotifications.method.verbal',
@@ -392,25 +438,26 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                   defaultMessage: 'Written'
                 })}
               </option>
-            </Select>
-          </FormControl>
+            </StandardSelect>
+          </StandardField>
 
-          <FormControl>
-            <FormLabel fontSize="xs">
-              {intl.formatMessage({
-                id: 'osp.changeNotifications.field.docTiming',
-                defaultMessage: 'Supporting documentation'
-              })}
-            </FormLabel>
-            <Select
-              size="sm"
+          {/* Labelled for the field it actually is. "Supporting documentation" over a dropdown
+              of TIMINGS promised a file upload this panel does not offer, while a real
+              `supporting_document` FileField sits on the model with no writer. */}
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.changeNotifications.field.docTiming',
+              defaultMessage: 'Supporting documentation timing'
+            })}>
+            <StandardSelect
               placeholder={intl.formatMessage({
                 id: 'osp.changeNotifications.field.docTimingPlaceholder',
-                defaultMessage: 'When submitted…'
+                defaultMessage: 'When was it submitted?'
               })}
               value={docTiming}
-              onChange={(e) => setDocTiming(e.target.value as OSPDocumentationTiming)}
-            >
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setDocTiming(e.target.value as OSPDocumentationTiming)
+              }>
               <option value="submitted_at_notification">
                 {intl.formatMessage({
                   id: 'osp.changeNotifications.docTiming.submitted_at_notification',
@@ -423,23 +470,37 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                   defaultMessage: 'Deferred to annual update'
                 })}
               </option>
-            </Select>
-          </FormControl>
+            </StandardSelect>
+          </StandardField>
         </SimpleGrid>
 
-        <Button
-          size="sm"
-          colorScheme="green"
-          leftIcon={<FaPlus />}
-          alignSelf="flex-start"
-          isLoading={isSaving}
-          onClick={handleSubmit}
-        >
-          {intl.formatMessage({
-            id: 'osp.changeNotifications.submit',
-            defaultMessage: 'Record change notification'
-          })}
-        </Button>
+        {/* Name what is outstanding instead of failing on click. The old form kept the button
+            enabled and answered a click with a warning toast, which makes the grower hunt for
+            the field themselves. */}
+        <HStack spacing={3} flexWrap="wrap">
+          <StandardButton
+            size="sm"
+            leftIcon={<FaPlus />}
+            isLoading={isSaving}
+            isDisabled={missingRequired.length > 0}
+            onClick={handleSubmit}>
+            {intl.formatMessage({
+              id: 'osp.changeNotifications.submit',
+              defaultMessage: 'Record change notification'
+            })}
+          </StandardButton>
+          {missingRequired.length > 0 && isDirty && (
+            <Text fontSize="xs" color={subtextColor}>
+              {intl.formatMessage(
+                {
+                  id: 'osp.changeNotifications.blocked',
+                  defaultMessage: 'Still needed: {fields}'
+                },
+                { fields: missingRequired.join(', ') }
+              )}
+            </Text>
+          )}
+        </HStack>
       </VStack>
     </StandardCard>
   );

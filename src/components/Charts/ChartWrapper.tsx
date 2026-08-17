@@ -68,7 +68,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="value" fill="#059669" />
+              <Bar dataKey="value" fill="#2E7D32" />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -82,7 +82,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="#059669" strokeWidth={2} />
+              <Line type="monotone" dataKey="value" stroke="#2E7D32" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         );
@@ -95,7 +95,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="value" fill="#059669" />
+              <Bar dataKey="value" fill="#2E7D32" />
             </BarChart>
           </ResponsiveContainer>
         );

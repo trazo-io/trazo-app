@@ -16,6 +16,13 @@
  * Registry green ≠ form renders. The only thing that proves a farmer can actually type a
  * value is mounting the component and looking for the input. That is what this does.
  *
+ * 2026-08-15: the "label-namespace mismatch" this file used to work around is GONE for
+ * ProductionTab. 50 of its labels were hardcoded English strings, so they were invisible to
+ * the label probe AND rendered English on the Spanish dashboard. Every one now reads the
+ * REGISTRY's own `labelKey` where the field has one — meaning a field has ONE label, not a
+ * form label and a registry label that have to be kept in sync by hand. `equipment_hours`
+ * was the standing example and needed a divergence entry for four subtypes; it needs none.
+ *
  * WHEN THIS FAILS you have three honest options:
  *   1. The field was supposed to be collectable for that subtype — fix the form's gating.
  *   2. It is display-only for that subtype — narrow `visibleForSubtypes`, or drop `form`
@@ -26,7 +33,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 import { Provider } from 'react-redux';
@@ -38,7 +45,14 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 // light WITHOUT stubbing any of the JSX under test — the point of this guard is that
 // the real component's real markup is what gets inspected.
 vi.mock('store/api/historyApi', () => ({
-  useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false })
+  useGetCurrentHistoryQuery: () => ({ data: undefined, isLoading: false }),
+  // Past seed suppliers feed a <datalist> of SUGGESTIONS next to the supplier input.
+  // Stubbed empty: the input is a free-text field either way, and this guard is about
+  // whether the input renders, not what it suggests.
+  useGetSeedSuppliersQuery: () => ({ data: undefined, isLoading: false }),
+  // ChemicalTab's "my products" quick-pick. Stubbed empty for the same reason as the others:
+  // this guard inspects the real component's real markup, not what it suggests.
+  useGetRecentInputsQuery: () => ({ data: undefined, isLoading: false })
 }));
 
 // BlockIdField fetches the parcel to build its block picker. Stubbed for the same reason as
@@ -54,16 +68,44 @@ vi.mock('store/api/productApi', () => ({
 
 import { productionEventRegistry } from '../productionEvent';
 import { soilEventRegistry } from '../soilEvent';
+import { chemicalEventRegistry } from '../chemicalEvent';
+import { pestEventRegistry } from '../pestEvent';
+import { weatherEventRegistry } from '../weatherEvent';
+import { businessEventRegistry } from '../businessEvent';
+import { generalEventRegistry } from '../generalEvent';
 import enUS from '../../../i18n/lang/en-US.json';
 
 import ProductionTab from 'views/Dashboard/Dashboard/components/forms/ProductionTab';
 import SoilManagementTab from 'views/Dashboard/Dashboard/components/forms/SoilManagementTab';
+import ChemicalTab from 'views/Dashboard/Dashboard/components/forms/ChemicalTab-ENHANCED';
+import PestManagementTab from 'views/Dashboard/Dashboard/components/forms/PestManagementTab';
+import WeatherTab from 'views/Dashboard/Dashboard/components/forms/WeatherTab';
+import BusinessTab from 'views/Dashboard/Dashboard/components/forms/BusinessTab-SIMPLIFIED';
+import GeneralTab from 'views/Dashboard/Dashboard/components/forms/GeneralTab';
 
 const messages = enUS as unknown as Record<string, string>;
 
 const testStore = () =>
   configureStore({
-    reducer: { company: () => ({ currentCompany: { id: 1 } }) }
+    reducer: {
+      company: () => ({
+        currentCompany: {
+          id: 1,
+          // A CALIFORNIA establishment whose id matches the `farmId` in the route below.
+          //
+          // 🔴 Without this the store had no `establishments` at all, so `useFarm` returned
+          // null, `useFarmState` returned null, and every `farmState === 'CA'` block stayed
+          // unmounted. That silently hid the entire CA Pesticide Use Report group — operator
+          // ID, site ID and county, i.e. DPR-PML-017C boxes 3, 8 and 10 — from a guard whose
+          // whole job is proving those inputs exist. The sweep reported them "never rendered"
+          // when the truth was "the harness could not reach them", which is the worse of the
+          // two failures: it invents defects and hides real ones behind the same silence.
+          //
+          // CA specifically because it is the ICP state and carries the strictest surface.
+          establishments: [{ id: 1, name: 'Test Farm', state: 'CA', country: 'US' }]
+        }
+      })
+    }
   });
 
 /** Mount a form tab with a given subtype preselected and list the inputs it renders. */
@@ -89,6 +131,20 @@ const renderedFieldNames = (
       </MemoryRouter>
     </Provider>
   );
+  // Flush effects that run AFTER the first commit and change what renders.
+  //
+  // 🔴 MEASURED 2026-08-16. WeatherTab calls `mainInfoMethods.reset({...})` inside a mount
+  // effect; its whole "Weather Details & Measurements" section is gated on `watch('type')`,
+  // and reading the DOM straight after `render()` caught the tree BEFORE the reset-driven
+  // re-render. All eight weather subtypes reported their detail fields unreachable — while
+  // the database holds real rows carrying exactly those keys (lower_temperature on 25 rows,
+  // way_of_protection on 24, highest_temperature on 18). The form writes them fine; the probe
+  // was reading too early.
+  //
+  // That is the dangerous failure mode for a guard like this: it invents defects, and an
+  // invented defect spends real time and erodes trust in every true one beside it.
+  act(() => {});
+
   const names = new Set<string>();
   container.querySelectorAll('input, select, textarea').forEach((el) => {
     const n = (el as HTMLInputElement).name;
@@ -135,7 +191,9 @@ const COLLECTED_ELSEWHERE = new Set(['performed_by', 'date', 'name', 'observatio
 const FORM_INPUT_ALIASES: Record<string, string> = {
   amendment_amount_numeric: 'amendment_amount',
   amendment_amount_unit: 'amendment_unit',
-  working_depth: 'depth'
+  working_depth: 'depth',
+  // The tab names this input `production_method`; it lands in `extra_data.method`.
+  method: 'production_method'
 };
 
 /**
@@ -155,14 +213,37 @@ const KNOWN_DIVERGENCE: Record<string, string[]> = {
     'area_covered', // equipment cleaning is not an area operation
     'block_id',
     'growth_stage',
-    'transportation_distance',
-    'equipment_hours'
+    'transportation_distance'
   ],
+  // PL (planting) — added with the subtype 2026-08-15. Both entries are DETECTOR blind
+  // spots, not unreachable fields, and both are verified reachable by hand:
+  'production:PL': [
+    // Rendered, but as a repeating supplier/date/result/notes row group whose inputs carry
+    // PLACEHOLDERS rather than a label matching the registry labelKey, so the label-based
+    // reachability probe cannot see it. It is the NOP 205.204(a)(1) widget and it is very
+    // much on the form — ungated from `needsSeedSearch` on the same day.
+    'seed_search_attempts'
+  ],
+  // TR renders the SAME § 205.204 seed widget as PL (the form gates it on `PL || TR`), so it
+  // inherits the identical placeholder-based detector blind spot. Verified reachable by hand.
+  'production:TR': ['seed_search_attempts'],
+  // IR is not missing a fuel input — it deliberately REPLACES one. For irrigation on anything
+  // other than a diesel pump, ProductionTab renders an explanatory panel instead: energy is
+  // auto-calculated from water volume and water source using USDA NRCS pump efficiency
+  // (0.39 kg CO2/kWh, the figure in .claude/rules/carbon-methodology.md). The input appears
+  // once the grower selects Diesel, which makes it value-conditional in a way the registry
+  // cannot express with `visibleWhen` without weakening the check for the eleven subtypes
+  // where fuel IS unconditional.
+  'production:IR': ['fuel_consumed'],
+  // HA (harvest) — swept from 2026-08-15, and it needs NO divergence entry. Everything the
+  // registry declares on HA's form surface renders and is matched by the registry's own
+  // label key. Quality grade, grain moisture, harvest method and dry matter had been
+  // labelled with HARDCODED ENGLISH STRINGS: invisible to this probe AND showing English on
+  // the Spanish dashboard.
   'production:PH': [
     'block_id',
     'growth_stage',
     'transportation_distance',
-    'equipment_hours',
     // Quality metrics belong to the HARVEST event, not the packing shed pass.
     'harvest_quality_grade',
     'brix_level',
@@ -175,14 +256,12 @@ const KNOWN_DIVERGENCE: Record<string, string[]> = {
     'soil_moisture', // no input anywhere in SoilManagementTab
     'weather_conditions' // chemical/pest tabs collect this; the soil tab does not
   ],
-  // Soil PROPERTIES are field measurements. The tab hides them for tillage and grazing on
-  // purpose — "a sheep rotation or a tillage pass doesn't measure soil pH, and showing these
-  // empty fields invited fabricated readings" (comment in SoilManagementTab.jsx).
-  TI: ['soil_ph', 'organic_matter_percentage', 'soil_texture'],
+  // TI and GR no longer need soil-PROPERTY entries: `soil_ph`, `organic_matter_percentage`
+  // and `soil_texture` were narrowed in soilEvent.ts to the six subtypes that actually
+  // measure soil, which is what the header of this file calls the honest fix. The reason
+  // stands and now lives in the registry — "a sheep rotation or a tillage pass doesn't
+  // measure soil pH, and showing these empty fields invited fabricated readings".
   GR: [
-    'soil_ph',
-    'organic_matter_percentage',
-    'soil_texture',
     // Contract grazing burns no fuel on the block and runs no implement.
     'fuel_consumed',
     'fuel_type',
@@ -214,7 +293,8 @@ const expectedFormFields = (registry: { fields: unknown }, subtype: string) =>
     .map((f) => ({ name: f.name as string, labelKey: f.labelKey as string | undefined }));
 
 // Subtypes whose form sections are materially different from one another.
-const SOIL_SUBTYPES = ['ST', 'PA', 'CC', 'OM', 'TI', 'CO', 'GR'];
+// Completed 2026-08-16: HD, LA and NS were the last three unswept soil subtypes.
+const SOIL_SUBTYPES = ['ST', 'PA', 'CC', 'OM', 'TI', 'CO', 'GR', 'HD', 'LA', 'NS'];
 
 describe('Soil Management form actually renders every field the registry promises', () => {
   for (const subtype of SOIL_SUBTYPES) {
@@ -238,12 +318,40 @@ describe('Soil Management form actually renders every field the registry promise
 // cleaning, § 205.272) and PH (post-harvest handling, NOP 5026 / § 205.605(b)). Those are the
 // ones whose omissions land in a certifier packet.
 //
-// The remaining subtypes (PL/HA/IR/PR/MO) are NOT swept yet, and that is a stated limitation
+// PL added 2026-08-15. It is the § 205.204 record — seed status, the commercial-availability
+// search, the treatment-allowability basis, rootstock — and leaving it unswept cost real
+// findings: the registry declared `growth_stage` and `production_efficiency` on the Planting
+// FORM surface while ProductionTab gates both inputs away from PL, so the modal displayed
+// values a grower had no control to change. A label-namespace sweep would have flagged both.
+//
+// HA added 2026-08-15 with the harvest lot identity work. It is the § 205.103(b)(2)
+// trace-back record — the lot code that links a pick to its block and date and is what a
+// sales record cites — and it was the subtype where a registry `form` surface had the least
+// chance of being noticed as unreachable, because nothing swept it.
+//
+// The remaining subtypes (IR/PR/MO) are NOT swept yet, and that is a stated limitation
 // rather than a clean bill of health: ProductionTab labels its inputs from a different i18n
 // namespace than the registry ("Equipment Operating Hours" via quickAdd.* vs "Equipment Hours"
 // via events.common.*), so the label-based reachability signal produces noise rather than
 // findings. Reconcile those label keys and this list can grow.
-const PRODUCTION_SUBTYPES = ['EM', 'PH'];
+// Completed 2026-08-16. All 13 production subtypes are now swept; the label-namespace noise
+// that kept the list at four is gone (every ProductionTab label now reads the registry's own
+// labelKey), so the reason for holding the others back no longer exists.
+const PRODUCTION_SUBTYPES = [
+  'EM',
+  'PH',
+  'PL',
+  'HA',
+  'IR',
+  'PR',
+  'TR',
+  'CU',
+  'TH',
+  'PO',
+  'CM',
+  'FP',
+  'MO'
+];
 
 /**
  * Extra answers the sweep supplies so value-gated sections are open. These are not a fudge:
@@ -339,3 +447,117 @@ describe('NOP raw-manure interval is reachable where livestock deposit manure', 
     expect(rendered.has('manure_treatment')).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------------------
+// Chemical — 4 subtypes, 53 registry fields, and until 2026-08-16 ZERO render coverage.
+//
+// This is the highest-stakes tab in the product: input applications carry § 205.206(e)
+// (a listed substance is allowable only if its conditions are in the OSP), the § 205.601/602
+// National List classification, and the CA PUR export. A field the registry promises here and
+// the form does not render is a compliance record a grower believes they filed and did not.
+// ---------------------------------------------------------------------------------------
+const CHEMICAL_SUBTYPES = ['FE', 'PE', 'FU', 'HE'];
+
+describe('Chemical form actually renders every field the registry promises', () => {
+  for (const subtype of CHEMICAL_SUBTYPES) {
+    it(`renders all form-surface fields for subtype ${subtype}`, () => {
+      const rendered = renderedFieldNames(ChemicalTab as never, { type: subtype });
+      const skip = allowedMissing(`chemical:${subtype}`);
+
+      const missing = chemicalEventRegistry.fields
+        .filter((f) => f.surfaces?.form)
+        .filter((f) => !f.visibleForSubtypes || f.visibleForSubtypes.includes(subtype as never))
+        .filter((f) => !isValueConditional(f as unknown as Record<string, unknown>))
+        .filter((f) => !COLLECTED_ELSEWHERE.has(f.name))
+        .filter((f) => !skip.has(f.name))
+        .filter((f) => !isCollectable(rendered, f.name, f.labelKey))
+        .map((f) => f.name);
+
+      expect(
+        missing,
+        `Chemical subtype ${subtype}: the registry declares these on the 'form' surface but ` +
+          `the mounted ChemicalTab never renders an input for them.`
+      ).toEqual([]);
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------------------
+// The remaining four tabs. Until 2026-08-16 the sweep covered 2 of 7 tabs and 11 of 43
+// activity variants — so for 32 variants nobody had verified that the inputs the registry
+// promises are reachable at all. That is the gap behind "are we asking the right things for
+// each activity", and it is answerable mechanically rather than by re-reading forms.
+//
+// `subtypes: null` means the registry does not gate that tab by subtype; the sweep then runs
+// once with no seeded subtype, which is exactly how a farmer first sees the form.
+// ---------------------------------------------------------------------------------------
+const REMAINING_TABS = [
+  {
+    key: 'pest',
+    label: 'Pest Management',
+    Tab: PestManagementTab,
+    registry: pestEventRegistry,
+    // § 205.206 hierarchy: prevention (a), mechanical/physical (b), weed (c), disease (d),
+    // and only then a listed substance (e).
+    subtypes: ['IP', 'BR', 'TA', 'SC', 'TM', 'PI', 'CU']
+  },
+  {
+    key: 'weather',
+    label: 'Weather',
+    Tab: WeatherTab,
+    registry: weatherEventRegistry,
+    subtypes: ['FR', 'DR', 'HL', 'HT', 'TS', 'HW', 'HH', 'LH']
+  },
+  {
+    key: 'business',
+    label: 'Business',
+    Tab: BusinessTab,
+    registry: businessEventRegistry,
+    subtypes: ['CE'],
+    // BusinessTab gates its sections on `business_type` ('certification' / 'verification' /
+    // 'carbon_credits'), NOT on the registry's `CE` subtype code. Seeding only `type` left
+    // every conditional section closed and reported three inputs as missing that the tab
+    // plainly has. Conditional sections render only AFTER their trigger is set.
+    seed: { business_type: 'certification' }
+  },
+  {
+    key: 'general',
+    label: 'General',
+    Tab: GeneralTab,
+    registry: generalEventRegistry,
+    subtypes: null
+  }
+];
+
+for (const { key, label, Tab, registry, subtypes, seed } of REMAINING_TABS) {
+  describe(`${label} form actually renders every field the registry promises`, () => {
+    for (const subtype of subtypes ?? [null]) {
+      const name = subtype ?? 'default';
+      it(`renders all form-surface fields for ${name}`, () => {
+        const rendered = renderedFieldNames(Tab as never, {
+          ...(subtype ? { type: subtype } : {}),
+          ...(seed ?? {})
+        });
+        const skip = allowedMissing(`${key}:${name}`);
+
+        const missing = registry.fields
+          .filter((f) => f.surfaces?.form)
+          .filter(
+            (f) =>
+              !subtype || !f.visibleForSubtypes || f.visibleForSubtypes.includes(subtype as never)
+          )
+          .filter((f) => !isValueConditional(f as unknown as Record<string, unknown>))
+          .filter((f) => !COLLECTED_ELSEWHERE.has(f.name))
+          .filter((f) => !skip.has(f.name))
+          .filter((f) => !isCollectable(rendered, f.name, f.labelKey))
+          .map((f) => f.name);
+
+        expect(
+          missing,
+          `${label} ${name}: the registry declares these on the 'form' surface but the ` +
+            `mounted tab never renders an input for them.`
+        ).toEqual([]);
+      });
+    }
+  });
+}

@@ -15,6 +15,7 @@ import {
 import { S3Image, EmptyImageState } from 'components/Design';
 import Shimmer from 'components/Shimmer/Shimmer';
 
+import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
@@ -26,10 +27,15 @@ type CarouselCardProps = {
   id: number;
   image: string;
   name: string;
-  category: string;
+  category?: string;
   buttonText: string;
   avatars: string[];
   presignedUrl?: string;
+  /** Hectares from the API; rendered as acres (US-units rule). */
+  areaHa?: number | string;
+  /** parcel_application_status state: not_started | in_progress | complete */
+  applicationStatus?: string;
+  hasCurrentProduction?: boolean;
 };
 
 const CarouselCard = ({
@@ -39,7 +45,10 @@ const CarouselCard = ({
   category,
   buttonText,
   avatars,
-  presignedUrl
+  presignedUrl,
+  areaHa,
+  applicationStatus,
+  hasCurrentProduction = false
 }: CarouselCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -53,6 +62,7 @@ const CarouselCard = ({
   const surfaceBg = useColorModeValue('white', 'gray.800');
   const isMobile = useBreakpointValue({ base: true, md: false });
 
+  const intl = useIntl();
   const { farmId } = useParams();
   const navigate = useNavigate();
 
@@ -62,23 +72,14 @@ const CarouselCard = ({
   const isValidImage = image && !image.includes('BgMusicCard');
   const shouldShowPlaceholder = !isValidImage || (!isLocalhost && !presignedUrl);
 
-  // Debug logging to help identify image display issues
-  console.log(`🖼️ [CarouselCard] Image analysis for ${name}:`, {
-    image,
-    isLocalhost,
-    isValidImage,
-    presignedUrl,
-    shouldShowPlaceholder
-  });
-
   return (
     <Card
       p={0}
       w={{ base: '260px', smd: '280px', md: '310px' }}
       minW={{ base: '260px', smd: '280px', md: '310px' }}
       maxW={{ base: '260px', smd: '280px', md: '310px' }}
-      minH={{ base: '320px', md: '360px' }}
-      h={{ base: '320px', md: '360px' }}
+      minH={{ base: '310px', md: '360px' }}
+      h={{ base: '310px', md: '360px' }}
       className="trazo-card"
       cursor="pointer"
       flexShrink={0}
@@ -100,19 +101,24 @@ const CarouselCard = ({
       onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${id}`)}
     >
       <Flex direction="column" h="100%">
-        {/* Modern 4:3 aspect ratio image section */}
-        <Box w="100%" h={{ base: '140px', md: '180px' }} position="relative" overflow="hidden" borderTopRadius="20px">
+        {/* One band height whether or not a photo exists — two heights made the
+            carousel row ragged (2026-08-09 feedback). Photos render cover; the
+            empty state is a quiet brand-tinted fill, not a "No Image" notice. */}
+        <Box
+          w="100%"
+          h={{ base: '110px', md: '130px' }}
+          flexShrink={0}
+          position="relative"
+          overflow="hidden"
+          borderTopRadius="20px"
+        >
           {!imageLoaded && !shouldShowPlaceholder && (
-            <Shimmer
-              width="100%"
-              height="100%"
-              borderRadius="20px"
-            />
+            <Shimmer width="100%" height="100%" borderRadius="20px" />
           )}
 
           {/* Empty state or actual image */}
           {shouldShowPlaceholder ? (
-            <EmptyImageState variant="small" height="100%" borderRadius="20px" />
+            <EmptyImageState variant="small" height="100%" borderRadius="20px" showBorder={false} />
           ) : (
             <S3Image
               width="100%"
@@ -145,9 +151,10 @@ const CarouselCard = ({
           )}
         </Box>
 
-        {/* Modern content section with better hierarchy */}
+        {/* Content — the parcel's NAME leads (farmers think in parcel names);
+            the crop is a chip. The old order put the crop huge and truncated the
+            name into small caps. */}
         <Flex direction="column" flex="1" p={{ base: '12px', md: '20px' }}>
-          {/* Product/Category name - primary emphasis with proper sizing */}
           <Text
             fontSize={{ base: 'md', md: 'lg' }}
             color={textColor}
@@ -155,28 +162,73 @@ const CarouselCard = ({
             mb="4px"
             letterSpacing="-0.01em"
             lineHeight="1.3"
-            noOfLines={2}
-            minH={{ base: '40px', md: '48px' }}
+            noOfLines={1}
           >
-            {category}
+            {name}
           </Text>
 
-          {/* Parcel location/name with icon */}
-          <HStack spacing={1} mb="16px">
-            <Icon as={FiMapPin} boxSize="12px" color={tertiaryText} />
-            <Text
-              fontSize="xs"
-              color={tertiaryText}
-              fontWeight="500"
-              textTransform="uppercase"
-              letterSpacing="0.05em"
-              noOfLines={1}
-            >
-              {name}
-            </Text>
+          <HStack spacing={2} mb="10px" flexWrap="wrap" minH="22px">
+            {category && (
+              <Badge variant="subtle" fontSize="11px">
+                {category}
+              </Badge>
+            )}
+            {areaHa != null && areaHa !== '' && (
+              <HStack spacing={1}>
+                <Icon as={FiMapPin} boxSize="12px" color={tertiaryText} />
+                <Text fontSize="xs" color={tertiaryText} fontWeight="500">
+                  {intl.formatMessage(
+                    { id: 'parcel.card.acres' },
+                    { count: (Number(areaHa) * 2.47105).toFixed(1) }
+                  )}
+                </Text>
+              </HStack>
+            )}
           </HStack>
 
-          <Flex justifyContent="space-between" mt="auto" align="center">
+          {/* Load-bearing status row: the application chip is the renewal nudge
+              (click-through to the wizard); the season indicator says work is
+              live. ONE nowrap row — a wrapped chip added a row on some cards
+              and broke the fixed-height footer pin (2026-08-09). */}
+          <Flex mb="12px" minH="22px" align="center" justify="space-between" gap={2}>
+            {applicationStatus && applicationStatus !== 'complete' && (
+              <Badge
+                variant="warning"
+                fontSize="11px"
+                cursor="pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/admin/dashboard/farm/${farmId}/parcel/${id}/application`);
+                }}
+              >
+                {intl.formatMessage({
+                  id:
+                    applicationStatus === 'in_progress'
+                      ? 'parcel.card.appInProgress'
+                      : 'parcel.card.appNotStarted'
+                })}
+              </Badge>
+            )}
+            {applicationStatus === 'complete' && (
+              <Badge variant="brand" fontSize="11px">
+                {intl.formatMessage({ id: 'parcel.card.appComplete' })}
+              </Badge>
+            )}
+            {hasCurrentProduction && (
+              <HStack spacing={1.5} flexShrink={0}>
+                {/* Decorative: the "Active" label beside it carries the meaning, so this dot
+                    is a brand fill (green.500), not a status colour. green.400 was neither. */}
+                <Box w="7px" h="7px" borderRadius="full" bg="green.500" />
+                <Text fontSize="xs" color={tertiaryText} fontWeight="500">
+                  {intl.formatMessage({ id: 'parcel.card.active' })}
+                </Text>
+              </HStack>
+            )}
+          </Flex>
+
+          {/* Fixed footer height so VIEW PARCEL aligns across cards whether or
+              not the avatar group renders (avatars are taller than the link). */}
+          <Flex justifyContent="space-between" mt="auto" align="center" minH="32px">
             {/* Trazo standard button design - matching CardWithImage pattern */}
             <Button
               p="0px"
@@ -189,7 +241,7 @@ const CarouselCard = ({
             >
               <Text
                 fontSize="xs"
-                color="green.600"
+                color="green.700"
                 fontWeight="bold"
                 cursor="pointer"
                 transition="all .5s ease"

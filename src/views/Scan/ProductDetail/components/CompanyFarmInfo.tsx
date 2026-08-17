@@ -81,7 +81,11 @@ interface CompanyFarmInfoProps {
     name?: string;
     location?: string;
     rating?: number;
-    certifications?: string[] | string;
+    /** Structured certs from ConsumerCertificationSerializer — each carries the `status`
+     *  that decides whether it may be shown as third-party verified. Kept `unknown` because
+     *  a stale cached payload can still hold the retired free-text string; FarmModal narrows
+     *  and drops anything without a status rather than showing an unqualifiable claim. */
+    certifications?: unknown;
     establishedYear?: number;
     size?: string;
     type?: string;
@@ -745,6 +749,21 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
             employee_count: companyData.employee_count,
             total_establishments: companyData.total_establishments,
             total_parcels: companyData.total_parcels,
+            // ⚠️ DORMANT, and the same defect the farm block below was just fixed for: this
+            // maps certs down to bare names and splits a comma-string into chips, so a
+            // farmer-typed certification would render on a consumer surface with no
+            // indication that nobody verified it (FTC 16 CFR 260.6 / EU ECGT 2024/825).
+            //
+            // Left as-is only because it cannot fire today: the consumer transparency payload
+            // builds its `company` block WITHOUT a `certifications` key at all
+            // (history/transparency_views.py), so this is always `undefined`. `Company` does
+            // have a free-text `certifications` TextField, so the moment anyone adds it to
+            // that payload this goes live.
+            //
+            // 🔒 If you publish company certifications: send STRUCTURED certs carrying
+            // `status`, pass them through unflattened (as `establishmentData.certifications`
+            // below now is), and render them with a qualifier badge — see
+            // `displayableCertifications` in FarmModal.tsx. Do not simply populate the field.
             certifications: Array.isArray(companyData.certifications)
               ? companyData.certifications.map((cert: any) =>
                   typeof cert === 'object' && cert !== null
@@ -787,18 +806,15 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
             zip_code: establishmentData.zip_code,
             facebook: establishmentData.facebook,
             instagram: establishmentData.instagram,
-            certifications:
-              typeof establishmentData.certifications === 'string'
-                ? establishmentData.certifications
-                : Array.isArray(establishmentData.certifications)
-                ? establishmentData.certifications
-                    .map((cert: any) =>
-                      typeof cert === 'object' && cert !== null
-                        ? cert.display_name || cert.name || 'Certification'
-                        : cert
-                    )
-                    .join(', ')
-                : undefined,
+            // Passed through STRUCTURED. This used to map each cert down to
+            // `display_name` and `.join(', ')` — discarding `status`, the field that says
+            // whether a certification was matched against the USDA Organic Integrity
+            // Database or merely typed in by the farmer. Downstream, FarmModal then had no
+            // way to tell them apart and rendered every name as bare fact.
+            // Two flatteners in one pipeline: the backend `or establishment.certifications`
+            // fallback (removed 2026-08-12) and this one. Either alone was enough to strip
+            // the qualifier off a third-party certification claim.
+            certifications: establishmentData.certifications,
             about: establishmentData.about,
             main_activities: establishmentData.main_activities,
             location_highlights: establishmentData.location_highlights,

@@ -2,13 +2,22 @@
  * Operation-wide audit export trigger. Downloads ONE combined NOP dossier across every parcel ×
  * production for the establishment (vs one PDF per production). Backend:
  * GET /companies/{companyId}/establishments/{farmId}/operation-audit-export/?certification=…
+ *
+ * Readiness guard (2026-08-10): the backend deliberately never refuses this download — a
+ * not-ready operation gets its PDF stamped with a red "[NON-COMPLIANT DOSSIER — DO NOT SUBMIT
+ * TO CERTIFIER]" banner instead. Before this guard, nothing ON SCREEN said so: the certifier
+ * LINK card checks readiness and disables its button, but this card streamed the stamped PDF
+ * silently. Now the same readiness query paints a warning with the blocker titles first, and
+ * the download stays available — the farmer may legitimately want the stamped draft to see
+ * exactly what the certifier would.
  */
 import React, { useState } from 'react';
-import { Box, HStack, Text, useToast } from '@chakra-ui/react';
-import { FaFilePdf } from 'react-icons/fa';
+import { Box, HStack, Icon, Text, useToast } from '@chakra-ui/react';
+import { FaExclamationTriangle, FaFilePdf } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import { StandardButton, StandardCard, StandardSelect } from 'components/Design/StandardComponents';
+import { useGetOperationReadinessQuery } from 'store/api/certifierLinkApi';
 import { config } from 'config/environment';
 
 interface Props {
@@ -24,6 +33,12 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
   const [certification, setCertification] = useState('organic');
   const [isLoading, setIsLoading] = useState(false);
 
+  const { data: readiness } = useGetOperationReadinessQuery(
+    { companyId: companyId || '', farmId: farmId || '' },
+    { skip: !companyId || !farmId }
+  );
+  const blockers = readiness?.applicable ? readiness.blockers || [] : [];
+
   const handleDownload = async () => {
     if (!companyId || !farmId) return;
     setIsLoading(true);
@@ -36,7 +51,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
         let msg = intl.formatMessage({ id: 'app.exportFailed', defaultMessage: 'Export failed' });
         try {
           const err = await response.json();
-          msg = err?.error || err?.detail || msg;
+          msg = err?.detail || err?.error || msg;
         } catch {
           /* non-JSON error body */
         }
@@ -87,6 +102,38 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
           'One combined NOP records PDF across every parcel and production — for your annual inspection.'
       })}
     >
+      {blockers.length > 0 && (
+        <HStack
+          align="flex-start"
+          spacing={2}
+          mb={3}
+          p={3}
+          borderRadius="md"
+          borderWidth="1px"
+          borderColor="orange.200"
+          bg="orange.50"
+        >
+          <Icon as={FaExclamationTriangle} color="orange.500" mt="2px" flexShrink={0} />
+          <Box>
+            <Text fontSize="sm" fontWeight="semibold" color="orange.800">
+              {intl.formatMessage({
+                id: 'operationAudit.notReadyTitle',
+                defaultMessage: 'This dossier will be stamped "DO NOT SUBMIT"'
+              })}
+            </Text>
+            <Text fontSize="sm" color="orange.800">
+              {intl.formatMessage(
+                {
+                  id: 'operationAudit.notReadyDetail',
+                  defaultMessage:
+                    'Open items: {items}. You can still download it as a working draft — fix these before sending anything to your certifier.'
+                },
+                { items: blockers.map((b) => b.title).join(' · ') }
+              )}
+            </Text>
+          </Box>
+        </HStack>
+      )}
       <HStack
         gap={3}
         align={{ base: 'stretch', smd: 'flex-end' }}

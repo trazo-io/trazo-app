@@ -10,15 +10,14 @@ import {
   useToast,
   Icon,
   Flex,
-  Image,
   Button,
   InputGroup,
   InputLeftElement,
   InputRightElement,
   useColorModeValue,
   Checkbox,
-  Grid,
-  Progress
+  Stack,
+  Grid
 } from '@chakra-ui/react';
 import {
   FaGoogle,
@@ -40,7 +39,11 @@ import AuthFooter from 'components/Footer/AuthFooter';
 import { passwordValidator } from '../../../utils/passwordValidation';
 import { PERSON_NAME_PATTERN, PERSON_NAME_MAX_LENGTH } from '../../../utils/nameValidation';
 import { PasswordStrengthIndicator } from '../../../components/Forms/PasswordStrengthIndicator';
-import { useSignUpMutation, useResendVerificationEmailMutation, useSocialAuthMutation } from '../../../store/api/authApi';
+import {
+  useSignUpMutation,
+  useResendVerificationEmailMutation,
+  useSocialAuthMutation
+} from '../../../store/api/authApi';
 import { login as loginAction } from '../../../store/features/authSlice';
 import {
   handleGoogleSignIn,
@@ -369,1255 +372,1210 @@ const AppSignUp: React.FC = () => {
     }
   };
 
+  /*
+   * #FBFCFA is the LANDING's `--background` token (trazo-landing/app/globals.css). Shared ground
+   * across the marketing site and the app. Same treatment as AppSignIn.
+   */
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const cardBorder = useColorModeValue('gray.200', 'whiteAlpha.200');
+
+  /*
+   * 2026 auth layout: a quiet centered card. Same rebuild as AppSignIn, and this page needed it
+   * MORE — MEASURED at 51.9% green coverage against the landing's 4.3% (sign-in was 40.6%).
+   *
+   * One deliberate difference from sign-in: a signup visitor has NOT chosen yet, so a single
+   * trust line under the form is earned here where it was not on the login page. It is one line,
+   * not a 50% billboard — the pattern Linear/Vercel/Notion use. The three benefit bullets and the
+   * headline moved off; their i18n keys stay in both locale files for the landing/marketing copy.
+   */
   return (
-    <Box minH="100vh" display="flex" flexDirection="column">
-      <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} flex="1" minH="calc(100vh - 80px)">
-        {/* Left side - 2025 Premium App Design */}
-        <Box
-          bg="green.600"
-          display={{ base: 'none', lg: 'flex' }}
-          alignItems="center"
-          justifyContent="center"
-          position="relative"
-          overflow="hidden"
-        >
-          {/* Sophisticated gradient foundation */}
-          <Box
-            position="absolute"
-            top="0"
-            left="0"
-            right="0"
-            bottom="0"
-            bg="linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.02) 100%)"
-          />
-
-          {/* Subtle background floating element - positioned to not interfere */}
-          <Box
-            position="absolute"
-            top="15%"
-            right="5%"
-            w="160px"
-            h="100px"
-            bg="rgba(255,255,255,0.04)"
-            borderRadius="12px"
-            border="1px solid rgba(255,255,255,0.06)"
-            backdropFilter="blur(80px)"
-            transform="rotate(-8deg)"
-            zIndex={0}
-          />
-
-          {/* Bottom accent element */}
-          <Box
-            position="absolute"
-            bottom="20%"
-            left="8%"
-            w="60px"
-            h="60px"
-            bg="rgba(255,255,255,0.03)"
-            borderRadius="50%"
-            border="1px solid rgba(255,255,255,0.05)"
-            backdropFilter="blur(60px)"
-            zIndex={0}
-          />
-
-          {/* Minimal line accents */}
-          <Box
-            position="absolute"
-            top="0"
-            left="20%"
-            w="1px"
-            h="40%"
-            bg="linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)"
-            zIndex={0}
-          />
-
-          <Box
-            position="absolute"
-            bottom="35%"
-            left="0"
-            right="0"
-            h="1px"
-            bg="linear-gradient(to right, transparent 0%, rgba(255,255,255,0.10) 50%, transparent 100%)"
-            zIndex={0}
-          />
-
-          {/* Tiny accent dots */}
-          <Box
-            position="absolute"
-            top="25%"
-            left="20%"
-            w="2px"
-            h="2px"
-            bg="rgba(255,255,255,0.20)"
-            borderRadius="50%"
-            zIndex={0}
-          />
-
-          <Box
-            position="absolute"
-            bottom="45%"
-            right="15%"
-            w="3px"
-            h="3px"
-            bg="rgba(255,255,255,0.18)"
-            borderRadius="50%"
-            zIndex={0}
-          />
-
-          <VStack
-            spacing={8}
-            position="relative"
-            textAlign="center"
-            color="white"
-            px={12}
-            maxW="lg"
-            zIndex={10}
-          >
-            <VStack spacing={4}>
-              {/*
-                Compliance (.claude/rules/compliance.md): market positioning may be
-                described as "premium positioning through transparency" — never as a
-                pricing outcome. "earn what your products are worth" promised a price
-                result, which is the FTC 16 CFR 260.6 exposure the rule exists to avoid.
-              */}
-              <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                {intl.formatMessage({
-                  id: 'auth.signup.hero.headline',
-                  defaultMessage: "Great farms can't prove what makes them different."
-                })}
-              </Text>
-              <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                {intl.formatMessage({
-                  id: 'auth.signup.hero.subhead',
-                  defaultMessage:
-                    "Because buyers can't see how the food was grown. Trazo turns your records into proof buyers can check — documentation for your certifier, and a page they can scan."
-                })}
-              </Text>
-            </VStack>
-
-            <VStack spacing={4} pt={4}>
-              <Text fontSize="sm" opacity={0.9} fontWeight="500">
-                {intl.formatMessage({
-                  id: 'auth.signup.hero.trial',
-                  defaultMessage: 'Built for specialty crop farms. 14-day free trial.'
-                })}
-              </Text>
-              <VStack spacing={3}>
-                {[
-                  {
-                    id: 'auth.signup.benefit.quickRecord',
-                    defaultMessage: 'Record practices in under 2 minutes'
-                  },
-                  {
-                    id: 'auth.signup.benefit.qrAfterHarvest',
-                    defaultMessage: 'QR codes auto-generate after harvest'
-                  },
-                  {
-                    id: 'auth.signup.benefit.cropsReady',
-                    defaultMessage: '22 US crops pre-configured and ready'
-                  }
-                ].map((feature) => (
-                  <HStack key={feature.id} spacing={3}>
-                    <Box w={2} h={2} bg="white" borderRadius="50%" />
-                    <Text fontSize="sm" fontWeight="500" opacity={0.9}>
-                      {intl.formatMessage(feature)}
+    <Box flex="1" display="flex" flexDirection="column">
+      <Flex
+        flex="1"
+        align="center"
+        justify="center"
+        px={{ base: 4, sm: 6 }}
+        /* The navbar is in FLOW now (see layouts/Auth.tsx), so it occupies its own space —
+           this used to reserve room under a fixed logo and would now double-count. */
+        pt={{ base: 6, md: 10 }}
+        pb={{ base: 10, md: 16 }}>
+        <MotionBox
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          w="full"
+          /* Wider than sign-in's 440: this form has a two-column name row and the
+             create/join segmented control. */
+          maxW="520px"
+          bg={cardBg}
+          borderWidth="1px"
+          borderColor={cardBorder}
+          borderRadius="2xl"
+          boxShadow="0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -12px rgba(16, 24, 40, 0.12)"
+          px={{ base: 6, sm: 8 }}
+          py={{ base: 8, sm: 10 }}>
+          {/* 🚀 2025 UX Enhancement: Conditional rendering between signup form and verification */}
+          {!showVerification ? (
+            <>
+              {/* Header with smooth text transitions */}
+              <VStack spacing={4} mb={6}>
+                <VStack spacing={1}>
+                  <MotionBox
+                    key={joinExistingCompany ? 'join' : 'create'} // Forces re-render for animation
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}>
+                    <Text
+                      fontSize="xl"
+                      fontWeight="600"
+                      color={useColorModeValue('gray.900', 'white')}>
+                      {intl.formatMessage({
+                        id: joinExistingCompany
+                          ? 'auth.signup.title.join'
+                          : 'auth.signup.title.create'
+                      })}
                     </Text>
-                  </HStack>
-                ))}
-              </VStack>
-            </VStack>
-          </VStack>
-        </Box>
-
-        {/* Right side - Sign Up Form */}
-        <Flex
-          align="center"
-          justify="center"
-          bg={useColorModeValue('white', 'gray.900')}
-          px={{ base: 4, sm: 6, md: 8 }}
-          pt={{ base: '150px', md: '112px' }}
-          pb={8}
-          overflow="hidden"
-        >
-          <MotionBox
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            w="full"
-            maxW={{ base: '100%', md: '480px' }}
-            my={{ base: 4, lg: 8 }}
-          >
-            {/* 🚀 2025 UX Enhancement: Conditional rendering between signup form and verification */}
-            {!showVerification ? (
-              <>
-                {/* Header with smooth text transitions */}
-                <VStack spacing={4} mb={6}>
-                  <VStack spacing={1}>
-                    <MotionBox
-                      key={joinExistingCompany ? 'join' : 'create'} // Forces re-render for animation
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <Text
-                        fontSize="xl"
-                        fontWeight="600"
-                        color={useColorModeValue('gray.900', 'white')}
-                      >
-                        {joinExistingCompany ? 'Join Your Farm Team' : "Build Your Farm's Brand"}
-                      </Text>
-                    </MotionBox>
-                    <MotionBox
-                      key={joinExistingCompany ? 'join-sub' : 'create-sub'} // Forces re-render for animation
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
-                    >
-                      <Text
-                        fontSize="sm"
-                        color={useColorModeValue('gray.500', 'gray.400')}
-                        textAlign="center"
-                      >
-                        {joinExistingCompany
-                          ? 'Join your team on Trazo'
-                          : 'Start sharing your transparency story'}
-                      </Text>
-                    </MotionBox>
-                  </VStack>
+                  </MotionBox>
+                  <MotionBox
+                    key={joinExistingCompany ? 'join-sub' : 'create-sub'} // Forces re-render for animation
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}>
+                    <Text
+                      fontSize="sm"
+                      color={useColorModeValue('gray.500', 'gray.400')}
+                      textAlign="center">
+                      {intl.formatMessage({
+                        id: joinExistingCompany
+                          ? 'auth.signup.subtitle.join'
+                          : 'auth.signup.subtitle.create'
+                      })}
+                    </Text>
+                  </MotionBox>
                 </VStack>
+              </VStack>
 
-                {/* Main Form */}
-                <Box w="full">
-                  {error && (
-                    <Box
-                      bg="red.50"
-                      border="1px solid"
-                      borderColor="red.200"
-                      borderRadius="lg"
-                      p={4}
-                      mb={6}
-                    >
-                      <Text color="red.600" fontSize="sm">
-                        {error}
-                      </Text>
-                    </Box>
-                  )}
+              {/* Main Form */}
+              <Box w="full">
+                {error && (
+                  <Box
+                    bg="red.50"
+                    border="1px solid"
+                    borderColor="red.200"
+                    borderRadius="lg"
+                    p={4}
+                    mb={6}>
+                    <Text color="red.600" fontSize="sm">
+                      {error}
+                    </Text>
+                  </Box>
+                )}
 
-                  <form onSubmit={handleSubmit(onSubmit)}>
-                    <VStack spacing={4}>
-                      {/* Company Join Toggle with smooth animation */}
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <VStack spacing={4}>
+                    {/* Company Join Toggle with smooth animation */}
+                    <MotionBox
+                      w="full"
+                      initial={false}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.2 }}>
+                      {/*
+                        Stacks below `smd` (480px). MEASURED at 375: side by side, these labels
+                        need 127px and 131px inside a 119px button — "Create New Company"
+                        rendered as "reate New Compan". Shrinking the padding buys 8px, which is
+                        not enough for either, and truncating the two things a new user is
+                        choosing between is the worst option. Two full-width 44px rows read fine
+                        on a phone.
+                      */}
+                      <Stack
+                        direction={{ base: 'column', smd: 'row' }}
+                        spacing={{ base: 1, sm: 4 }}
+                        justify="center"
+                        bg={useColorModeValue('gray.50', 'gray.800')}
+                        borderRadius="xl"
+                        p={1}
+                        w="full">
+                        <Button
+                          size="sm"
+                          flex={1}
+                          variant={!joinExistingCompany ? 'solid' : 'ghost'}
+                          bg={!joinExistingCompany ? 'green.700' : 'transparent'}
+                          color={
+                            !joinExistingCompany
+                              ? 'white'
+                              : useColorModeValue('gray.600', 'gray.400')
+                          }
+                          _hover={{
+                            bg: !joinExistingCompany
+                              ? 'green.800'
+                              : useColorModeValue('gray.100', 'gray.700'),
+                            transform: 'translateY(-1px)'
+                          }}
+                          _active={{
+                            transform: 'translateY(0)'
+                          }}
+                          borderRadius="lg"
+                          fontSize={{ base: 'xs', sm: 'sm' }}
+                          fontWeight="600"
+                          px={{ base: 3, sm: 6 }}
+                          py={2}
+                          minH="44px"
+                          onClick={() => setJoinExistingCompany(false)}
+                          transition="all 0.2s"
+                          boxShadow={
+                            !joinExistingCompany ? '0 2px 8px rgba(46, 125, 50, 0.2)' : 'none'
+                          }>
+                          {intl.formatMessage({
+                            id: 'auth.signup.mode.createCompany',
+                            defaultMessage: 'Create New Company'
+                          })}
+                        </Button>
+                        <Button
+                          size="sm"
+                          flex={1}
+                          variant={joinExistingCompany ? 'solid' : 'ghost'}
+                          bg={joinExistingCompany ? 'green.700' : 'transparent'}
+                          color={
+                            joinExistingCompany
+                              ? 'white'
+                              : useColorModeValue('gray.600', 'gray.400')
+                          }
+                          _hover={{
+                            bg: joinExistingCompany
+                              ? 'green.800'
+                              : useColorModeValue('gray.100', 'gray.700'),
+                            transform: 'translateY(-1px)'
+                          }}
+                          _active={{
+                            transform: 'translateY(0)'
+                          }}
+                          borderRadius="lg"
+                          fontSize={{ base: 'xs', sm: 'sm' }}
+                          fontWeight="600"
+                          px={{ base: 3, sm: 6 }}
+                          py={2}
+                          minH="44px"
+                          onClick={() => setJoinExistingCompany(true)}
+                          transition="all 0.2s"
+                          boxShadow={
+                            joinExistingCompany ? '0 2px 8px rgba(46, 125, 50, 0.2)' : 'none'
+                          }>
+                          {intl.formatMessage({
+                            id: 'auth.signup.mode.joinCompany',
+                            defaultMessage: 'Join Existing Company'
+                          })}
+                        </Button>
+                      </Stack>
+                    </MotionBox>
+
+                    {/* Company Code Input (animated appearance when joining existing company) */}
+                    {joinExistingCompany && (
                       <MotionBox
                         w="full"
-                        initial={false}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <HStack
-                          spacing={{ base: 1, sm: 4 }}
-                          justify="center"
-                          bg={useColorModeValue('gray.50', 'gray.800')}
-                          borderRadius="xl"
-                          p={1}
-                          w="full"
-                        >
-                          <Button
-                            size="sm"
-                            flex={1}
-                            variant={!joinExistingCompany ? 'solid' : 'ghost'}
-                            bg={!joinExistingCompany ? 'green.500' : 'transparent'}
-                            color={
-                              !joinExistingCompany
-                                ? 'white'
-                                : useColorModeValue('gray.600', 'gray.400')
-                            }
-                            _hover={{
-                              bg: !joinExistingCompany
+                        initial={{ opacity: 0, height: 0, y: -10 }}
+                        animate={{ opacity: 1, height: 'auto', y: 0 }}
+                        exit={{ opacity: 0, height: 0, y: -10 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}>
+                        <Box w="full">
+                          <Text
+                            fontSize="sm"
+                            fontWeight="500"
+                            color={useColorModeValue('gray.700', 'gray.300')}
+                            mb={1}>
+                            Company Invitation Code
+                          </Text>
+                          <Box
+                            as="input"
+                            type="text"
+                            placeholder={intl.formatMessage({
+                              id: 'auth.signup.field.companyCode.placeholder',
+                              defaultMessage: 'Enter 6-character company code'
+                            })}
+                            w="full"
+                            h="44px"
+                            fontSize="sm"
+                            bg={useColorModeValue('gray.50', 'gray.900')}
+                            border="1px solid"
+                            borderColor={
+                              errors.company_code
+                                ? 'red.300'
+                                : focusedField === 'company_code'
                                 ? 'green.600'
-                                : useColorModeValue('gray.100', 'gray.700'),
-                              transform: 'translateY(-1px)'
-                            }}
-                            _active={{
-                              transform: 'translateY(0)'
-                            }}
-                            borderRadius="lg"
-                            fontSize={{ base: 'xs', sm: 'sm' }}
+                                : useColorModeValue('gray.200', 'gray.600')
+                            }
+                            borderRadius="xl"
+                            px={4}
+                            textTransform="uppercase"
+                            letterSpacing="wide"
+                            textAlign="center"
                             fontWeight="600"
-                            px={{ base: 3, sm: 6 }}
-                            py={2}
-                            minH="44px"
-                            onClick={() => setJoinExistingCompany(false)}
-                            transition="all 0.2s"
-                            boxShadow={
-                              !joinExistingCompany ? '0 2px 8px rgba(72, 187, 120, 0.2)' : 'none'
-                            }
-                          >
-                            {intl.formatMessage({ id: 'auth.signup.mode.createCompany', defaultMessage: 'Create New Company' })}
-                          </Button>
-                          <Button
-                            size="sm"
-                            flex={1}
-                            variant={joinExistingCompany ? 'solid' : 'ghost'}
-                            bg={joinExistingCompany ? 'green.500' : 'transparent'}
-                            color={
-                              joinExistingCompany
-                                ? 'white'
-                                : useColorModeValue('gray.600', 'gray.400')
-                            }
                             _hover={{
-                              bg: joinExistingCompany
-                                ? 'green.600'
-                                : useColorModeValue('gray.100', 'gray.700'),
-                              transform: 'translateY(-1px)'
+                              borderColor: errors.company_code
+                                ? 'red.300'
+                                : useColorModeValue('gray.300', 'gray.500')
                             }}
-                            _active={{
-                              transform: 'translateY(0)'
+                            _focus={{
+                              outline: 'none',
+                              borderColor: 'green.600',
+                              bg: useColorModeValue('white', 'gray.800'),
+                              boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
                             }}
-                            borderRadius="lg"
-                            fontSize={{ base: 'xs', sm: 'sm' }}
-                            fontWeight="600"
-                            px={{ base: 3, sm: 6 }}
-                            py={2}
-                            minH="44px"
-                            onClick={() => setJoinExistingCompany(true)}
                             transition="all 0.2s"
-                            boxShadow={
-                              joinExistingCompany ? '0 2px 8px rgba(72, 187, 120, 0.2)' : 'none'
-                            }
-                          >
-                            {intl.formatMessage({ id: 'auth.signup.mode.joinCompany', defaultMessage: 'Join Existing Company' })}
-                          </Button>
-                        </HStack>
-                      </MotionBox>
-
-                      {/* Company Code Input (animated appearance when joining existing company) */}
-                      {joinExistingCompany && (
-                        <MotionBox
-                          w="full"
-                          initial={{ opacity: 0, height: 0, y: -10 }}
-                          animate={{ opacity: 1, height: 'auto', y: 0 }}
-                          exit={{ opacity: 0, height: 0, y: -10 }}
-                          transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        >
-                          <Box w="full">
+                            {...registerField('company_code', {
+                              required: joinExistingCompany ? 'Company code is required' : false,
+                              minLength: joinExistingCompany
+                                ? {
+                                    value: 6,
+                                    message: intl.formatMessage({
+                                      id: 'auth.validation.companyCode.tooShort',
+                                      defaultMessage: 'Company code must be at least 6 characters'
+                                    })
+                                  }
+                                : undefined,
+                              maxLength: {
+                                value: 8,
+                                message: intl.formatMessage({
+                                  id: 'auth.validation.companyCode.tooLong',
+                                  defaultMessage: 'Company code must be 8 characters or less'
+                                })
+                              },
+                              pattern: joinExistingCompany
+                                ? {
+                                    value: /^[A-Z0-9]{6,8}$/,
+                                    message: intl.formatMessage({
+                                      id: 'auth.validation.companyCode.pattern',
+                                      defaultMessage:
+                                        'Company code must be 6-8 letters and numbers only'
+                                    })
+                                  }
+                                : undefined,
+                              validate: joinExistingCompany
+                                ? (value) => {
+                                    if (!value) return true;
+                                    // Check if contains only alphanumeric characters
+                                    if (!/^[A-Z0-9]+$/i.test(value)) {
+                                      return 'Company code can only contain letters and numbers';
+                                    }
+                                    return true;
+                                  }
+                                : undefined
+                            })}
+                            onFocus={() => setFocusedField('company_code')}
+                            onBlur={() => setFocusedField(null)}
+                            onChange={(e) => {
+                              // Transform to uppercase and filter out invalid characters
+                              const cleanValue = e.target.value
+                                .toUpperCase()
+                                .replace(/[^A-Z0-9]/g, '');
+                              // Update both the input value and the form state
+                              e.target.value = cleanValue;
+                              setValue('company_code', cleanValue, { shouldValidate: true });
+                            }}
+                          />
+                          {/* Company Code Validation Feedback */}
+                          {isValidatingCode && joinExistingCompany && (
                             <Text
-                              fontSize="sm"
-                              fontWeight="500"
-                              color={useColorModeValue('gray.700', 'gray.300')}
-                              mb={1}
-                            >
-                              Company Invitation Code
+                              fontSize="xs"
+                              color="blue.500"
+                              mt={1}
+                              display="flex"
+                              alignItems="center"
+                              gap={1}>
+                              <Box as="span" className="animate-spin" display="inline-block">
+                                ⟳
+                              </Box>
+                              Validating company code...
                             </Text>
-                            <Box
-                              as="input"
-                              type="text"
-                              placeholder={intl.formatMessage({ id: 'auth.signup.field.companyCode.placeholder', defaultMessage: 'Enter 6-character company code' })}
-                              w="full"
-                              h="44px"
-                              fontSize="sm"
-                              bg={useColorModeValue('gray.50', 'gray.900')}
-                              border="1px solid"
-                              borderColor={
-                                errors.company_code
-                                  ? 'red.300'
-                                  : focusedField === 'company_code'
-                                  ? 'green.500'
-                                  : useColorModeValue('gray.200', 'gray.600')
-                              }
-                              borderRadius="xl"
-                              px={4}
-                              textTransform="uppercase"
-                              letterSpacing="wide"
-                              textAlign="center"
-                              fontWeight="600"
-                              _hover={{
-                                borderColor: errors.company_code
-                                  ? 'red.300'
-                                  : useColorModeValue('gray.300', 'gray.500')
-                              }}
-                              _focus={{
-                                outline: 'none',
-                                borderColor: 'green.500',
-                                bg: useColorModeValue('white', 'gray.800'),
-                                boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                              }}
-                              transition="all 0.2s"
-                              {...registerField('company_code', {
-                                required: joinExistingCompany ? 'Company code is required' : false,
-                                minLength: joinExistingCompany
-                                  ? {
-                                      value: 6,
-                                      message: intl.formatMessage({ id: 'auth.validation.companyCode.tooShort', defaultMessage: 'Company code must be at least 6 characters' })
-                                    }
-                                  : undefined,
-                                maxLength: {
-                                  value: 8,
-                                  message: intl.formatMessage({ id: 'auth.validation.companyCode.tooLong', defaultMessage: 'Company code must be 8 characters or less' })
-                                },
-                                pattern: joinExistingCompany
-                                  ? {
-                                      value: /^[A-Z0-9]{6,8}$/,
-                                      message: intl.formatMessage({ id: 'auth.validation.companyCode.pattern', defaultMessage: 'Company code must be 6-8 letters and numbers only' })
-                                    }
-                                  : undefined,
-                                validate: joinExistingCompany
-                                  ? (value) => {
-                                      if (!value) return true;
-                                      // Check if contains only alphanumeric characters
-                                      if (!/^[A-Z0-9]+$/i.test(value)) {
-                                        return 'Company code can only contain letters and numbers';
-                                      }
-                                      return true;
-                                    }
-                                  : undefined
-                              })}
-                              onFocus={() => setFocusedField('company_code')}
-                              onBlur={() => setFocusedField(null)}
-                              onChange={(e) => {
-                                // Transform to uppercase and filter out invalid characters
-                                const cleanValue = e.target.value
-                                  .toUpperCase()
-                                  .replace(/[^A-Z0-9]/g, '');
-                                // Update both the input value and the form state
-                                e.target.value = cleanValue;
-                                setValue('company_code', cleanValue, { shouldValidate: true });
-                              }}
-                            />
-                            {/* Company Code Validation Feedback */}
-                            {isValidatingCode && joinExistingCompany && (
+                          )}
+                          {companyCode &&
+                            !errors.company_code &&
+                            !isValidatingCode &&
+                            joinExistingCompany && (
                               <Text
                                 fontSize="xs"
-                                color="blue.500"
+                                color="green.700"
                                 mt={1}
                                 display="flex"
                                 alignItems="center"
-                                gap={1}
-                              >
-                                <Box as="span" className="animate-spin" display="inline-block">
-                                  ⟳
-                                </Box>
-                                Validating company code...
+                                gap={1}>
+                                ✓ Code format is valid
                               </Text>
                             )}
-                            {companyCode &&
-                              !errors.company_code &&
-                              !isValidatingCode &&
-                              joinExistingCompany && (
-                                <Text
-                                  fontSize="xs"
-                                  color="green.500"
-                                  mt={1}
-                                  display="flex"
-                                  alignItems="center"
-                                  gap={1}
-                                >
-                                  ✓ Code format is valid
-                                </Text>
-                              )}
-                            {errors.company_code && (
-                              <Text fontSize="sm" color="red.500" mt={1}>
-                                {errors.company_code.message}
-                              </Text>
-                            )}
-                            <Text
-                              fontSize="xs"
-                              color={useColorModeValue('gray.500', 'gray.400')}
-                              mt={1}
-                            >
-                              Get this code from your company admin or team leader
-                            </Text>
-                          </Box>
-                        </MotionBox>
-                      )}
-
-                      {/* Name fields */}
-                      <Grid templateColumns="1fr 1fr" gap={3} w="full" sx={{ '& > *': { minWidth: 0 } }}>
-                        <Box>
-                          <Text
-                            fontSize="sm"
-                            fontWeight="500"
-                            color={useColorModeValue('gray.700', 'gray.300')}
-                            mb={1}
-                          >
-                            {intl.formatMessage({ id: 'auth.signup.field.firstName.label', defaultMessage: 'First Name' })}
-                          </Text>
-                          <Box
-                            as="input"
-                            type="text"
-                            placeholder={intl.formatMessage({ id: 'auth.signup.field.firstName.placeholder', defaultMessage: 'First name' })}
-                            w="full"
-                            h="44px"
-                            fontSize="sm"
-                            bg={useColorModeValue('gray.50', 'gray.900')}
-                            border="1px solid"
-                            borderColor={
-                              errors.first_name
-                                ? 'red.300'
-                                : focusedField === 'first_name'
-                                ? 'green.500'
-                                : useColorModeValue('gray.200', 'gray.600')
-                            }
-                            borderRadius="xl"
-                            px={4}
-                            _hover={{
-                              borderColor: errors.first_name
-                                ? 'red.300'
-                                : useColorModeValue('gray.300', 'gray.500')
-                            }}
-                            _focus={{
-                              outline: 'none',
-                              borderColor: 'green.500',
-                              bg: useColorModeValue('white', 'gray.800'),
-                              boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                            }}
-                            transition="all 0.2s"
-                            {...registerField('first_name', {
-                              required: intl.formatMessage({
-                                id: 'auth.validation.firstName.required',
-                                defaultMessage: 'First name is required'
-                              }),
-                              minLength: {
-                                value: 1,
-                                message: intl.formatMessage({
-                                  id: 'auth.validation.firstName.required',
-                                  defaultMessage: 'First name is required'
-                                })
-                              },
-                              maxLength: {
-                                value: PERSON_NAME_MAX_LENGTH,
-                                message: intl.formatMessage({
-                                  id: 'auth.validation.firstName.tooLong',
-                                  defaultMessage: 'First name is too long'
-                                })
-                              },
-                              pattern: {
-                                value: PERSON_NAME_PATTERN,
-                                message: intl.formatMessage({
-                                  id: 'auth.validation.firstName.pattern',
-                                  defaultMessage: "First name can't contain numbers or symbols"
-                                })
-                              }
-                            })}
-                            onFocus={() => setFocusedField('first_name')}
-                            onBlur={() => setFocusedField(null)}
-                          />
-                          {errors.first_name && (
+                          {errors.company_code && (
                             <Text fontSize="sm" color="red.500" mt={1}>
-                              {errors.first_name.message}
+                              {errors.company_code.message}
                             </Text>
                           )}
-                        </Box>
-
-                        <Box>
-                          <Text
-                            fontSize="sm"
-                            fontWeight="500"
-                            color={useColorModeValue('gray.700', 'gray.300')}
-                            mb={1}
-                          >
-                            {intl.formatMessage({ id: 'auth.signup.field.lastName.label', defaultMessage: 'Last Name' })}
-                          </Text>
-                          <Box
-                            as="input"
-                            type="text"
-                            placeholder={intl.formatMessage({ id: 'auth.signup.field.lastName.placeholder', defaultMessage: 'Last name' })}
-                            w="full"
-                            h="44px"
-                            fontSize="sm"
-                            bg={useColorModeValue('gray.50', 'gray.900')}
-                            border="1px solid"
-                            borderColor={
-                              errors.last_name
-                                ? 'red.300'
-                                : focusedField === 'last_name'
-                                ? 'green.500'
-                                : useColorModeValue('gray.200', 'gray.600')
-                            }
-                            borderRadius="xl"
-                            px={4}
-                            _hover={{
-                              borderColor: errors.last_name
-                                ? 'red.300'
-                                : useColorModeValue('gray.300', 'gray.500')
-                            }}
-                            _focus={{
-                              outline: 'none',
-                              borderColor: 'green.500',
-                              bg: useColorModeValue('white', 'gray.800'),
-                              boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                            }}
-                            transition="all 0.2s"
-                            {...registerField('last_name', {
-                              required: intl.formatMessage({
-                                id: 'auth.validation.lastName.required',
-                                defaultMessage: 'Last name is required'
-                              }),
-                              minLength: {
-                                value: 1,
-                                message: intl.formatMessage({
-                                  id: 'auth.validation.lastName.required',
-                                  defaultMessage: 'Last name is required'
-                                })
-                              },
-                              maxLength: {
-                                value: PERSON_NAME_MAX_LENGTH,
-                                message: intl.formatMessage({
-                                  id: 'auth.validation.lastName.tooLong',
-                                  defaultMessage: 'Last name is too long'
-                                })
-                              },
-                              pattern: {
-                                value: PERSON_NAME_PATTERN,
-                                message: intl.formatMessage({
-                                  id: 'auth.validation.lastName.pattern',
-                                  defaultMessage: "Last name can't contain numbers or symbols"
-                                })
-                              }
-                            })}
-                            onFocus={() => setFocusedField('last_name')}
-                            onBlur={() => setFocusedField(null)}
-                          />
-                          {errors.last_name && (
-                            <Text fontSize="sm" color="red.500" mt={1}>
-                              {errors.last_name.message}
-                            </Text>
-                          )}
-                        </Box>
-                      </Grid>
-
-                      {/* Email */}
-                      <Box w="full">
-                        <Text
-                          fontSize="sm"
-                          fontWeight="500"
-                          color={useColorModeValue('gray.700', 'gray.300')}
-                          mb={1}
-                        >
-                          {intl.formatMessage({ id: 'auth.signup.field.email.label', defaultMessage: 'Business Email' })}
-                        </Text>
-                        <InputGroup size="lg">
-                          <InputLeftElement pointerEvents="none">
-                            <Icon
-                              as={FaEnvelope}
-                              color={focusedField === 'email' ? 'green.500' : 'gray.400'}
-                              transition="all 0.2s"
-                            />
-                          </InputLeftElement>
-                          <Box
-                            as="input"
-                            type="email"
-                            placeholder={intl.formatMessage({ id: 'auth.signup.field.email.placeholder', defaultMessage: 'Enter business email address' })}
-                            pl="3rem"
-                            w="full"
-                            h="44px"
-                            fontSize="sm"
-                            bg={useColorModeValue('gray.50', 'gray.900')}
-                            border="1px solid"
-                            borderColor={
-                              errors.email
-                                ? 'red.300'
-                                : focusedField === 'email'
-                                ? 'green.500'
-                                : useColorModeValue('gray.200', 'gray.600')
-                            }
-                            borderRadius="xl"
-                            _hover={{
-                              borderColor: errors.email
-                                ? 'red.300'
-                                : useColorModeValue('gray.300', 'gray.500')
-                            }}
-                            _focus={{
-                              outline: 'none',
-                              borderColor: 'green.500',
-                              bg: useColorModeValue('white', 'gray.800'),
-                              boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                            }}
-                            transition="all 0.2s"
-                            {...registerField('email', {
-                              required: intl.formatMessage({ id: 'auth.validation.email.required', defaultMessage: 'Email is required' }),
-                              pattern: {
-                                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                message: intl.formatMessage({ id: 'auth.validation.email.invalid', defaultMessage: 'Enter a valid email address' })
-                              }
-                            })}
-                            onFocus={() => setFocusedField('email')}
-                            onBlur={() => setFocusedField(null)}
-                          />
-                        </InputGroup>
-                        {errors.email && (
-                          <Text fontSize="sm" color="red.500" mt={1}>
-                            {errors.email.message}
-                          </Text>
-                        )}
-                      </Box>
-
-                      {/* Password */}
-                      <Box w="full">
-                        <Text
-                          fontSize="sm"
-                          fontWeight="500"
-                          color={useColorModeValue('gray.700', 'gray.300')}
-                          mb={1}
-                        >
-                          {intl.formatMessage({ id: 'auth.signup.field.password.label', defaultMessage: 'Password' })}
-                        </Text>
-                        <InputGroup size="lg">
-                          <InputLeftElement pointerEvents="none">
-                            <Icon
-                              as={FaLock}
-                              color={focusedField === 'password' ? 'green.500' : 'gray.400'}
-                              transition="all 0.2s"
-                            />
-                          </InputLeftElement>
-                          <Box
-                            as="input"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder={intl.formatMessage({ id: 'auth.signup.field.password.placeholder', defaultMessage: 'Create secure password (8+ characters)' })}
-                            pl="3rem"
-                            pr="3rem"
-                            w="full"
-                            h="44px"
-                            fontSize="sm"
-                            bg={useColorModeValue('gray.50', 'gray.900')}
-                            border="1px solid"
-                            borderColor={
-                              errors.password
-                                ? 'red.300'
-                                : focusedField === 'password'
-                                ? 'green.500'
-                                : useColorModeValue('gray.200', 'gray.600')
-                            }
-                            borderRadius="xl"
-                            _hover={{
-                              borderColor: errors.password
-                                ? 'red.300'
-                                : useColorModeValue('gray.300', 'gray.500')
-                            }}
-                            _focus={{
-                              outline: 'none',
-                              borderColor: 'green.500',
-                              bg: useColorModeValue('white', 'gray.800'),
-                              boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                            }}
-                            transition="all 0.2s"
-                            {...registerField('password', {
-                              required: intl.formatMessage({ id: 'auth.validation.password.required', defaultMessage: 'Password is required' }),
-                              minLength: {
-                                value: 8,
-                                message: intl.formatMessage({ id: 'auth.validation.password.tooShort', defaultMessage: 'Password must be at least 8 characters' })
-                              },
-                              maxLength: {
-                                value: 32,
-                                message: intl.formatMessage({ id: 'auth.validation.password.tooLong', defaultMessage: 'Password must be under 32 characters' })
-                              }
-                            })}
-                            onFocus={() => setFocusedField('password')}
-                            onBlur={() => setFocusedField(null)}
-                          />
-                          <InputRightElement>
-                            <Button
-                              variant="ghost"
-                              onClick={() => setShowPassword(!showPassword)}
-                              size="sm"
-                              minW="44px"
-                              h="44px"
-                              aria-label={intl.formatMessage(
-                                showPassword
-                                  ? { id: 'auth.signup.field.password.hide', defaultMessage: 'Hide password' }
-                                  : { id: 'auth.signup.field.password.show', defaultMessage: 'Show password' }
-                              )}
-                              _hover={{ bg: 'transparent' }}
-                            >
-                              <Icon
-                                as={showPassword ? FaEyeSlash : FaEye}
-                                color={useColorModeValue('gray.400', 'gray.500')}
-                                _hover={{ color: useColorModeValue('gray.600', 'gray.300') }}
-                                transition="all 0.2s"
-                              />
-                            </Button>
-                          </InputRightElement>
-                        </InputGroup>
-
-                        <PasswordStrengthIndicator
-                          password={password || ''}
-                          userInfo={{
-                            email: email || undefined,
-                            firstName: firstName || undefined,
-                            lastName: lastName || undefined
-                          }}
-                          validation={passwordValidation}
-                        />
-
-                        {errors.password && (
-                          <Text fontSize="sm" color="red.500" mt={1}>
-                            {errors.password.message}
-                          </Text>
-                        )}
-                      </Box>
-
-                      {/* Confirm password */}
-                      <Box w="full">
-                        <Text
-                          fontSize="sm"
-                          fontWeight="500"
-                          color={useColorModeValue('gray.700', 'gray.300')}
-                          mb={1}
-                        >
-                          {intl.formatMessage({ id: 'auth.signup.field.confirmPassword.label', defaultMessage: 'Confirm Password' })}
-                        </Text>
-                        <InputGroup size="lg">
-                          <InputLeftElement pointerEvents="none">
-                            <Icon
-                              as={FaLock}
-                              color={focusedField === 'password2' ? 'green.500' : 'gray.400'}
-                              transition="all 0.2s"
-                            />
-                          </InputLeftElement>
-                          <Box
-                            as="input"
-                            type={showConfirmPassword ? 'text' : 'password'}
-                            placeholder={intl.formatMessage({ id: 'auth.signup.field.confirmPassword.placeholder', defaultMessage: 'Confirm your password' })}
-                            pl="3rem"
-                            pr="3rem"
-                            w="full"
-                            h="44px"
-                            fontSize="sm"
-                            bg={useColorModeValue('gray.50', 'gray.900')}
-                            border="1px solid"
-                            borderColor={
-                              errors.password2
-                                ? 'red.300'
-                                : password2 && password !== password2
-                                ? 'red.300'
-                                : focusedField === 'password2'
-                                ? 'green.500'
-                                : useColorModeValue('gray.200', 'gray.600')
-                            }
-                            borderRadius="xl"
-                            _hover={{
-                              borderColor: errors.password2
-                                ? 'red.300'
-                                : useColorModeValue('gray.300', 'gray.500')
-                            }}
-                            _focus={{
-                              outline: 'none',
-                              borderColor: 'green.500',
-                              bg: useColorModeValue('white', 'gray.800'),
-                              boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                            }}
-                            transition="all 0.2s"
-                            {...registerField('password2', {
-                              required: intl.formatMessage({ id: 'auth.validation.confirmPassword.required', defaultMessage: 'Please confirm your password' }),
-                              validate: (value: string) =>
-                                value === password || 'Passwords do not match'
-                            })}
-                            onFocus={() => setFocusedField('password2')}
-                            onBlur={() => setFocusedField(null)}
-                          />
-                          <InputRightElement>
-                            <Button
-                              variant="ghost"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              size="sm"
-                              minW="44px"
-                              h="44px"
-                              aria-label={intl.formatMessage(
-                                showConfirmPassword
-                                  ? { id: 'auth.signup.field.confirmPassword.hide', defaultMessage: 'Hide password' }
-                                  : { id: 'auth.signup.field.confirmPassword.show', defaultMessage: 'Show password' }
-                              )}
-                              _hover={{ bg: 'transparent' }}
-                            >
-                              <Icon
-                                as={showConfirmPassword ? FaEyeSlash : FaEye}
-                                color={useColorModeValue('gray.400', 'gray.500')}
-                                _hover={{ color: useColorModeValue('gray.600', 'gray.300') }}
-                                transition="all 0.2s"
-                              />
-                            </Button>
-                          </InputRightElement>
-                        </InputGroup>
-
-                        {/* Password Match Indicator */}
-                        {password2 && (
                           <Text
                             fontSize="xs"
-                            color={password === password2 ? 'green.500' : 'red.500'}
-                            mt={1}
-                          >
-                            {password === password2
-                              ? '✓ Passwords match'
-                              : '✗ Passwords do not match'}
+                            color={useColorModeValue('gray.500', 'gray.400')}
+                            mt={1}>
+                            Get this code from your company admin or team leader
                           </Text>
-                        )}
+                        </Box>
+                      </MotionBox>
+                    )}
 
-                        {errors.password2 && !password2 && (
-                          <Text fontSize="sm" color="red.500" mt={1}>
-                            {errors.password2.message}
-                          </Text>
-                        )}
-                      </Box>
-
-                      {/* Terms checkbox */}
-                      <Box w="full">
-                        <Checkbox
-                          size="md"
-                          colorScheme="green"
-                          spacing={3}
-                          {...registerField('acceptTerms', {
-                            required: intl.formatMessage({ id: 'auth.validation.terms.required', defaultMessage: 'You must accept the terms and conditions' })
+                    {/* Name fields */}
+                    <Grid
+                      templateColumns="1fr 1fr"
+                      gap={3}
+                      w="full"
+                      sx={{ '& > *': { minWidth: 0 } }}>
+                      <Box>
+                        <Text
+                          fontSize="sm"
+                          fontWeight="500"
+                          color={useColorModeValue('gray.700', 'gray.300')}
+                          mb={1}>
+                          {intl.formatMessage({
+                            id: 'auth.signup.field.firstName.label',
+                            defaultMessage: 'First Name'
                           })}
-                        >
-                          <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
-                            {intl.formatMessage(
-                              {
-                                id: 'auth.signup.terms.agree',
-                                defaultMessage: 'I agree to the {tos} and {privacy}'
-                              },
-                              {
-                                tos: (
-                                  <a
-                                    href="https://trazo.io/terms-conditions"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    <Text
-                                      as="span"
-                                      color="green.500"
-                                      fontWeight="medium"
-                                      _hover={{ textDecoration: 'underline' }}
-                                    >
-                                      {intl.formatMessage({
-                                        id: 'auth.signup.terms.tos',
-                                        defaultMessage: 'Terms of Service'
-                                      })}
-                                    </Text>
-                                  </a>
-                                ),
-                                privacy: (
-                                  <a
-                                    href="https://trazo.io/privacy-policy"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    <Text
-                                      as="span"
-                                      color="green.500"
-                                      fontWeight="medium"
-                                      _hover={{ textDecoration: 'underline' }}
-                                    >
-                                      {intl.formatMessage({
-                                        id: 'auth.signup.terms.privacy',
-                                        defaultMessage: 'Privacy Policy'
-                                      })}
-                                    </Text>
-                                  </a>
-                                )
-                              }
-                            )}
-                          </Text>
-                        </Checkbox>
-                        {errors.acceptTerms && (
-                          <Text fontSize="sm" color="red.500" mt={1}>
-                            {errors.acceptTerms.message}
-                          </Text>
-                        )}
-                      </Box>
-
-                      {/* Sign up button with enhanced loading states */}
-                      <Button
-                        type="submit"
-                        w="full"
-                        h="44px"
-                        bg="green.500"
-                        color="white"
-                        fontSize="sm"
-                        fontWeight="600"
-                        borderRadius="xl"
-                        isLoading={isLoading || isSocialLoading}
-                        loadingText={isSocialLoading ? 'Authenticating...' : 'Creating account...'}
-                        isDisabled={isValidatingCode || isSocialLoading}
-                        _hover={{
-                          bg: isLoading ? 'green.500' : 'green.600',
-                          transform: isLoading ? 'none' : 'translateY(-1px)'
-                        }}
-                        _active={{
-                          transform: isLoading ? 'none' : 'translateY(0)'
-                        }}
-                        _disabled={{
-                          bg: 'gray.300',
-                          color: 'gray.500',
-                          cursor: 'not-allowed',
-                          _hover: {
-                            bg: 'gray.300',
-                            transform: 'none'
-                          }
-                        }}
-                        transition="all 0.2s"
-                      >
-                        {isValidatingCode
-                          ? intl.formatMessage({
-                              id: 'auth.signup.cta.validating',
-                              defaultMessage: 'Validating...'
-                            })
-                          : joinExistingCompany
-                          ? intl.formatMessage({
-                              id: 'auth.signup.cta.joinCompany',
-                              defaultMessage: 'Join Company'
-                            })
-                          : intl.formatMessage({
-                              id: 'auth.signup.cta.createAccount',
-                              defaultMessage: 'Create Business Account'
-                            })}
-                      </Button>
-                    </VStack>
-                  </form>
-
-                  {/* Social signup section */}
-                  <VStack spacing={3} mt={6}>
-                    <HStack w="full" spacing={4}>
-                      <Divider borderColor={useColorModeValue('gray.300', 'gray.600')} />
-                      <Text
-                        fontSize="sm"
-                        color={useColorModeValue('gray.500', 'gray.400')}
-                        flexShrink={0}
-                        fontWeight="medium"
-                      >
-                        Or sign up with
-                      </Text>
-                      <Divider borderColor={useColorModeValue('gray.300', 'gray.600')} />
-                    </HStack>
-
-                    <HStack spacing={2} w="full">
-                      {[
-                        { icon: FaGoogle, color: '#EA4335', name: 'Google' },
-                        { icon: FaFacebook, color: '#1877F2', name: 'Facebook' }
-                      ].map((social) => (
-                        <Button
-                          key={social.name}
-                          flex={1}
-                          // 44px minimum touch target; icon-only buttons also need an
-                          // accessible name or they announce as just "button".
+                        </Text>
+                        <Box
+                          as="input"
+                          type="text"
+                          placeholder={intl.formatMessage({
+                            id: 'auth.signup.field.firstName.placeholder',
+                            defaultMessage: 'First name'
+                          })}
+                          w="full"
                           h="44px"
-                          aria-label={intl.formatMessage(
-                            {
-                              id: 'auth.signup.social.continueWith',
-                              defaultMessage: 'Continue with {provider}'
-                            },
-                            { provider: social.name }
-                          )}
-                          bg={useColorModeValue('white', 'gray.700')}
+                          fontSize="sm"
+                          bg={useColorModeValue('gray.50', 'gray.900')}
                           border="1px solid"
-                          borderColor={useColorModeValue('gray.300', 'gray.600')}
-                          borderRadius="lg"
-                          onClick={() => handleSocialLogin(social.name)}
-                          isDisabled={isLoading || isSocialLoading}
+                          borderColor={
+                            errors.first_name
+                              ? 'red.300'
+                              : focusedField === 'first_name'
+                              ? 'green.600'
+                              : useColorModeValue('gray.200', 'gray.600')
+                          }
+                          borderRadius="xl"
+                          px={4}
                           _hover={{
-                            bg: useColorModeValue('gray.50', 'gray.600'),
-                            borderColor: useColorModeValue('gray.400', 'gray.500')
+                            borderColor: errors.first_name
+                              ? 'red.300'
+                              : useColorModeValue('gray.300', 'gray.500')
+                          }}
+                          _focus={{
+                            outline: 'none',
+                            borderColor: 'green.600',
+                            bg: useColorModeValue('white', 'gray.800'),
+                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
                           }}
                           transition="all 0.2s"
-                        >
-                          <Icon as={social.icon} fontSize="18px" color={social.color} />
-                        </Button>
-                      ))}
-                    </HStack>
-                  </VStack>
-                </Box>
+                          {...registerField('first_name', {
+                            required: intl.formatMessage({
+                              id: 'auth.validation.firstName.required',
+                              defaultMessage: 'First name is required'
+                            }),
+                            minLength: {
+                              value: 1,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.firstName.required',
+                                defaultMessage: 'First name is required'
+                              })
+                            },
+                            maxLength: {
+                              value: PERSON_NAME_MAX_LENGTH,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.firstName.tooLong',
+                                defaultMessage: 'First name is too long'
+                              })
+                            },
+                            pattern: {
+                              value: PERSON_NAME_PATTERN,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.firstName.pattern',
+                                defaultMessage: "First name can't contain numbers or symbols"
+                              })
+                            }
+                          })}
+                          onFocus={() => setFocusedField('first_name')}
+                          onBlur={() => setFocusedField(null)}
+                        />
+                        {errors.first_name && (
+                          <Text fontSize="sm" color="red.500" mt={1}>
+                            {errors.first_name.message}
+                          </Text>
+                        )}
+                      </Box>
 
-                {/* Sign in link */}
-                <Box textAlign="center" mt={4}>
-                  <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
-                    Already have a business account?{' '}
-                    <Link to="/auth/signin">
+                      <Box>
+                        <Text
+                          fontSize="sm"
+                          fontWeight="500"
+                          color={useColorModeValue('gray.700', 'gray.300')}
+                          mb={1}>
+                          {intl.formatMessage({
+                            id: 'auth.signup.field.lastName.label',
+                            defaultMessage: 'Last Name'
+                          })}
+                        </Text>
+                        <Box
+                          as="input"
+                          type="text"
+                          placeholder={intl.formatMessage({
+                            id: 'auth.signup.field.lastName.placeholder',
+                            defaultMessage: 'Last name'
+                          })}
+                          w="full"
+                          h="44px"
+                          fontSize="sm"
+                          bg={useColorModeValue('gray.50', 'gray.900')}
+                          border="1px solid"
+                          borderColor={
+                            errors.last_name
+                              ? 'red.300'
+                              : focusedField === 'last_name'
+                              ? 'green.600'
+                              : useColorModeValue('gray.200', 'gray.600')
+                          }
+                          borderRadius="xl"
+                          px={4}
+                          _hover={{
+                            borderColor: errors.last_name
+                              ? 'red.300'
+                              : useColorModeValue('gray.300', 'gray.500')
+                          }}
+                          _focus={{
+                            outline: 'none',
+                            borderColor: 'green.600',
+                            bg: useColorModeValue('white', 'gray.800'),
+                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
+                          }}
+                          transition="all 0.2s"
+                          {...registerField('last_name', {
+                            required: intl.formatMessage({
+                              id: 'auth.validation.lastName.required',
+                              defaultMessage: 'Last name is required'
+                            }),
+                            minLength: {
+                              value: 1,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.lastName.required',
+                                defaultMessage: 'Last name is required'
+                              })
+                            },
+                            maxLength: {
+                              value: PERSON_NAME_MAX_LENGTH,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.lastName.tooLong',
+                                defaultMessage: 'Last name is too long'
+                              })
+                            },
+                            pattern: {
+                              value: PERSON_NAME_PATTERN,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.lastName.pattern',
+                                defaultMessage: "Last name can't contain numbers or symbols"
+                              })
+                            }
+                          })}
+                          onFocus={() => setFocusedField('last_name')}
+                          onBlur={() => setFocusedField(null)}
+                        />
+                        {errors.last_name && (
+                          <Text fontSize="sm" color="red.500" mt={1}>
+                            {errors.last_name.message}
+                          </Text>
+                        )}
+                      </Box>
+                    </Grid>
+
+                    {/* Email */}
+                    <Box w="full">
                       <Text
-                        as="span"
-                        color="green.600"
-                        fontWeight="semibold"
-                        _hover={{
-                          textDecoration: 'underline',
-                          color: 'green.700'
-                        }}
-                        transition="all 0.2s"
-                      >
-                        Sign in
+                        fontSize="sm"
+                        fontWeight="500"
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                        mb={1}>
+                        {intl.formatMessage({
+                          id: 'auth.signup.field.email.label',
+                          defaultMessage: 'Business Email'
+                        })}
                       </Text>
-                    </Link>
-                  </Text>
-                </Box>
-              </>
-            ) : (
-              /* 🚀 2025 UX Enhancement: Email Verification Panel */
-              <MotionBox
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4 }}
-                w="full"
-              >
-                {/* Back Button */}
-                <HStack w="full" justify="flex-start" mb={6}>
-                  <Button
-                    leftIcon={<Icon as={FaArrowLeft} />}
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleBackToSignup}
-                    color={useColorModeValue('gray.600', 'gray.400')}
-                    _hover={{ color: useColorModeValue('gray.800', 'white') }}
-                  >
-                    Back to signup
-                  </Button>
-                </HStack>
+                      <InputGroup size="lg">
+                        <InputLeftElement pointerEvents="none">
+                          <Icon
+                            as={FaEnvelope}
+                            color={focusedField === 'email' ? 'green.500' : 'gray.400'}
+                            transition="all 0.2s"
+                          />
+                        </InputLeftElement>
+                        <Box
+                          as="input"
+                          type="email"
+                          placeholder={intl.formatMessage({
+                            id: 'auth.signup.field.email.placeholder',
+                            defaultMessage: 'Enter business email address'
+                          })}
+                          pl="3rem"
+                          w="full"
+                          h="44px"
+                          fontSize="sm"
+                          bg={useColorModeValue('gray.50', 'gray.900')}
+                          border="1px solid"
+                          borderColor={
+                            errors.email
+                              ? 'red.300'
+                              : focusedField === 'email'
+                              ? 'green.600'
+                              : useColorModeValue('gray.200', 'gray.600')
+                          }
+                          borderRadius="xl"
+                          _hover={{
+                            borderColor: errors.email
+                              ? 'red.300'
+                              : useColorModeValue('gray.300', 'gray.500')
+                          }}
+                          _focus={{
+                            outline: 'none',
+                            borderColor: 'green.600',
+                            bg: useColorModeValue('white', 'gray.800'),
+                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
+                          }}
+                          transition="all 0.2s"
+                          {...registerField('email', {
+                            required: intl.formatMessage({
+                              id: 'auth.validation.email.required',
+                              defaultMessage: 'Email is required'
+                            }),
+                            pattern: {
+                              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.email.invalid',
+                                defaultMessage: 'Enter a valid email address'
+                              })
+                            }
+                          })}
+                          onFocus={() => setFocusedField('email')}
+                          onBlur={() => setFocusedField(null)}
+                        />
+                      </InputGroup>
+                      {errors.email && (
+                        <Text fontSize="sm" color="red.500" mt={1}>
+                          {errors.email.message}
+                        </Text>
+                      )}
+                    </Box>
 
-                {/* Progress Indicator */}
-                <HStack justify="center" spacing={4} mb={8}>
-                  <Box
-                    w="32px"
-                    h="32px"
-                    bg="green.500"
-                    borderRadius="50%"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <Icon as={FaCheckCircle} color="white" boxSize={4} />
-                  </Box>
-                  <Box h="2px" flex={1} bg="green.500" />
-                  <Box
-                    w="32px"
-                    h="32px"
-                    bg="green.100"
-                    border="2px solid"
-                    borderColor="green.500"
-                    borderRadius="50%"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <Text fontSize="xs" fontWeight="bold" color="green.600">
-                      2
-                    </Text>
-                  </Box>
-                  <Box h="2px" flex={1} bg={useColorModeValue('gray.300', 'gray.600')} />
-                  <Box
-                    w="32px"
-                    h="32px"
-                    bg={useColorModeValue('gray.100', 'gray.700')}
-                    border="2px solid"
-                    borderColor={useColorModeValue('gray.300', 'gray.600')}
-                    borderRadius="50%"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <Text
-                      fontSize="xs"
-                      fontWeight="bold"
-                      color={useColorModeValue('gray.500', 'gray.400')}
-                    >
-                      3
-                    </Text>
-                  </Box>
-                </HStack>
+                    {/* Password */}
+                    <Box w="full">
+                      <Text
+                        fontSize="sm"
+                        fontWeight="500"
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                        mb={1}>
+                        {intl.formatMessage({
+                          id: 'auth.signup.field.password.label',
+                          defaultMessage: 'Password'
+                        })}
+                      </Text>
+                      <InputGroup size="lg">
+                        <InputLeftElement pointerEvents="none">
+                          <Icon
+                            as={FaLock}
+                            color={focusedField === 'password' ? 'green.500' : 'gray.400'}
+                            transition="all 0.2s"
+                          />
+                        </InputLeftElement>
+                        <Box
+                          as="input"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder={intl.formatMessage({
+                            id: 'auth.signup.field.password.placeholder',
+                            defaultMessage: 'Create secure password (8+ characters)'
+                          })}
+                          pl="3rem"
+                          pr="3rem"
+                          w="full"
+                          h="44px"
+                          fontSize="sm"
+                          bg={useColorModeValue('gray.50', 'gray.900')}
+                          border="1px solid"
+                          borderColor={
+                            errors.password
+                              ? 'red.300'
+                              : focusedField === 'password'
+                              ? 'green.600'
+                              : useColorModeValue('gray.200', 'gray.600')
+                          }
+                          borderRadius="xl"
+                          _hover={{
+                            borderColor: errors.password
+                              ? 'red.300'
+                              : useColorModeValue('gray.300', 'gray.500')
+                          }}
+                          _focus={{
+                            outline: 'none',
+                            borderColor: 'green.600',
+                            bg: useColorModeValue('white', 'gray.800'),
+                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
+                          }}
+                          transition="all 0.2s"
+                          {...registerField('password', {
+                            required: intl.formatMessage({
+                              id: 'auth.validation.password.required',
+                              defaultMessage: 'Password is required'
+                            }),
+                            minLength: {
+                              value: 8,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.password.tooShort',
+                                defaultMessage: 'Password must be at least 8 characters'
+                              })
+                            },
+                            maxLength: {
+                              value: 32,
+                              message: intl.formatMessage({
+                                id: 'auth.validation.password.tooLong',
+                                defaultMessage: 'Password must be under 32 characters'
+                              })
+                            }
+                          })}
+                          onFocus={() => setFocusedField('password')}
+                          onBlur={() => setFocusedField(null)}
+                        />
+                        <InputRightElement>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setShowPassword(!showPassword)}
+                            size="sm"
+                            minW="44px"
+                            h="44px"
+                            aria-label={intl.formatMessage(
+                              showPassword
+                                ? {
+                                    id: 'auth.signup.field.password.hide',
+                                    defaultMessage: 'Hide password'
+                                  }
+                                : {
+                                    id: 'auth.signup.field.password.show',
+                                    defaultMessage: 'Show password'
+                                  }
+                            )}
+                            _hover={{ bg: 'transparent' }}>
+                            <Icon
+                              as={showPassword ? FaEyeSlash : FaEye}
+                              color={useColorModeValue('gray.400', 'gray.500')}
+                              _hover={{ color: useColorModeValue('gray.600', 'gray.300') }}
+                              transition="all 0.2s"
+                            />
+                          </Button>
+                        </InputRightElement>
+                      </InputGroup>
 
-                {/* Main Icon */}
-                <Box textAlign="center" mb={6}>
-                  <Box
-                    w="80px"
-                    h="80px"
-                    bg="green.50"
-                    borderRadius="50%"
-                    mx="auto"
-                    mb={4}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    <Icon as={FaEnvelope} color="green.500" boxSize={10} />
-                  </Box>
-                </Box>
+                      <PasswordStrengthIndicator
+                        password={password || ''}
+                        userInfo={{
+                          email: email || undefined,
+                          firstName: firstName || undefined,
+                          lastName: lastName || undefined
+                        }}
+                        validation={passwordValidation}
+                      />
 
-                {/* Main Content */}
-                <VStack spacing={4} mb={8} textAlign="center">
-                  <Text
-                    fontSize={{ base: 'xl', md: '2xl' }}
-                    fontWeight="bold"
-                    color={useColorModeValue('gray.800', 'white')}
-                  >
-                    Check your email
-                  </Text>
+                      {errors.password && (
+                        <Text fontSize="sm" color="red.500" mt={1}>
+                          {errors.password.message}
+                        </Text>
+                      )}
+                    </Box>
 
-                  <Text
-                    fontSize="md"
-                    color={useColorModeValue('gray.600', 'gray.300')}
-                    lineHeight="1.6"
-                    maxW="md"
-                  >
-                    {isCompanyJoin
-                      ? "We've sent a verification email to help you join the company team."
-                      : "We've sent a verification email to get you started."}
-                  </Text>
+                    {/* Confirm password */}
+                    <Box w="full">
+                      <Text
+                        fontSize="sm"
+                        fontWeight="500"
+                        color={useColorModeValue('gray.700', 'gray.300')}
+                        mb={1}>
+                        {intl.formatMessage({
+                          id: 'auth.signup.field.confirmPassword.label',
+                          defaultMessage: 'Confirm Password'
+                        })}
+                      </Text>
+                      <InputGroup size="lg">
+                        <InputLeftElement pointerEvents="none">
+                          <Icon
+                            as={FaLock}
+                            color={focusedField === 'password2' ? 'green.500' : 'gray.400'}
+                            transition="all 0.2s"
+                          />
+                        </InputLeftElement>
+                        <Box
+                          as="input"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          placeholder={intl.formatMessage({
+                            id: 'auth.signup.field.confirmPassword.placeholder',
+                            defaultMessage: 'Confirm your password'
+                          })}
+                          pl="3rem"
+                          pr="3rem"
+                          w="full"
+                          h="44px"
+                          fontSize="sm"
+                          bg={useColorModeValue('gray.50', 'gray.900')}
+                          border="1px solid"
+                          borderColor={
+                            errors.password2
+                              ? 'red.300'
+                              : password2 && password !== password2
+                              ? 'red.300'
+                              : focusedField === 'password2'
+                              ? 'green.600'
+                              : useColorModeValue('gray.200', 'gray.600')
+                          }
+                          borderRadius="xl"
+                          _hover={{
+                            borderColor: errors.password2
+                              ? 'red.300'
+                              : useColorModeValue('gray.300', 'gray.500')
+                          }}
+                          _focus={{
+                            outline: 'none',
+                            borderColor: 'green.600',
+                            bg: useColorModeValue('white', 'gray.800'),
+                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
+                          }}
+                          transition="all 0.2s"
+                          {...registerField('password2', {
+                            required: intl.formatMessage({
+                              id: 'auth.validation.confirmPassword.required',
+                              defaultMessage: 'Please confirm your password'
+                            }),
+                            validate: (value: string) =>
+                              value === password || 'Passwords do not match'
+                          })}
+                          onFocus={() => setFocusedField('password2')}
+                          onBlur={() => setFocusedField(null)}
+                        />
+                        <InputRightElement>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            size="sm"
+                            minW="44px"
+                            h="44px"
+                            aria-label={intl.formatMessage(
+                              showConfirmPassword
+                                ? {
+                                    id: 'auth.signup.field.confirmPassword.hide',
+                                    defaultMessage: 'Hide password'
+                                  }
+                                : {
+                                    id: 'auth.signup.field.confirmPassword.show',
+                                    defaultMessage: 'Show password'
+                                  }
+                            )}
+                            _hover={{ bg: 'transparent' }}>
+                            <Icon
+                              as={showConfirmPassword ? FaEyeSlash : FaEye}
+                              color={useColorModeValue('gray.400', 'gray.500')}
+                              _hover={{ color: useColorModeValue('gray.600', 'gray.300') }}
+                              transition="all 0.2s"
+                            />
+                          </Button>
+                        </InputRightElement>
+                      </InputGroup>
 
-                  {/* Email Display */}
-                  <Box
-                    bg={useColorModeValue('gray.50', 'gray.800')}
-                    borderRadius="lg"
-                    px={4}
-                    py={3}
-                    border="1px solid"
-                    borderColor={useColorModeValue('gray.200', 'gray.600')}
-                  >
+                      {/* Password Match Indicator */}
+                      {password2 && (
+                        <Text
+                          fontSize="xs"
+                          color={password === password2 ? 'green.700' : 'red.700'}
+                          mt={1}>
+                          {password === password2
+                            ? '✓ Passwords match'
+                            : '✗ Passwords do not match'}
+                        </Text>
+                      )}
+
+                      {errors.password2 && !password2 && (
+                        <Text fontSize="sm" color="red.500" mt={1}>
+                          {errors.password2.message}
+                        </Text>
+                      )}
+                    </Box>
+
+                    {/* Terms checkbox */}
+                    <Box w="full">
+                      <Checkbox
+                        size="md"
+                        colorScheme="green"
+                        spacing={3}
+                        {...registerField('acceptTerms', {
+                          required: intl.formatMessage({
+                            id: 'auth.validation.terms.required',
+                            defaultMessage: 'You must accept the terms and conditions'
+                          })
+                        })}>
+                        <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
+                          {intl.formatMessage(
+                            {
+                              id: 'auth.signup.terms.agree',
+                              defaultMessage: 'I agree to the {tos} and {privacy}'
+                            },
+                            {
+                              tos: (
+                                <a
+                                  href="https://trazo.io/terms-conditions"
+                                  target="_blank"
+                                  rel="noopener noreferrer">
+                                  <Text
+                                    as="span"
+                                    color="green.700"
+                                    fontWeight="medium"
+                                    _hover={{ textDecoration: 'underline' }}>
+                                    {intl.formatMessage({
+                                      id: 'auth.signup.terms.tos',
+                                      defaultMessage: 'Terms of Service'
+                                    })}
+                                  </Text>
+                                </a>
+                              ),
+                              privacy: (
+                                <a
+                                  href="https://trazo.io/privacy-policy"
+                                  target="_blank"
+                                  rel="noopener noreferrer">
+                                  <Text
+                                    as="span"
+                                    color="green.700"
+                                    fontWeight="medium"
+                                    _hover={{ textDecoration: 'underline' }}>
+                                    {intl.formatMessage({
+                                      id: 'auth.signup.terms.privacy',
+                                      defaultMessage: 'Privacy Policy'
+                                    })}
+                                  </Text>
+                                </a>
+                              )
+                            }
+                          )}
+                        </Text>
+                      </Checkbox>
+                      {errors.acceptTerms && (
+                        <Text fontSize="sm" color="red.500" mt={1}>
+                          {errors.acceptTerms.message}
+                        </Text>
+                      )}
+                    </Box>
+
+                    {/* Sign up button with enhanced loading states */}
+                    <Button
+                      type="submit"
+                      w="full"
+                      h="44px"
+                      bg="green.700"
+                      color="white"
+                      fontSize="sm"
+                      fontWeight="600"
+                      borderRadius="xl"
+                      isLoading={isLoading || isSocialLoading}
+                      loadingText={isSocialLoading ? 'Authenticating...' : 'Creating account...'}
+                      isDisabled={isValidatingCode || isSocialLoading}
+                      _hover={{
+                        bg: isLoading ? 'green.700' : 'green.800',
+                        transform: isLoading ? 'none' : 'translateY(-1px)'
+                      }}
+                      _active={{
+                        transform: isLoading ? 'none' : 'translateY(0)'
+                      }}
+                      _disabled={{
+                        bg: 'gray.300',
+                        color: 'gray.500',
+                        cursor: 'not-allowed',
+                        _hover: {
+                          bg: 'gray.300',
+                          transform: 'none'
+                        }
+                      }}
+                      transition="all 0.2s">
+                      {isValidatingCode
+                        ? intl.formatMessage({
+                            id: 'auth.signup.cta.validating',
+                            defaultMessage: 'Validating...'
+                          })
+                        : joinExistingCompany
+                        ? intl.formatMessage({
+                            id: 'auth.signup.cta.joinCompany',
+                            defaultMessage: 'Join Company'
+                          })
+                        : intl.formatMessage({
+                            id: 'auth.signup.cta.createAccount',
+                            defaultMessage: 'Create Business Account'
+                          })}
+                    </Button>
+                  </VStack>
+                </form>
+
+                {/* Social signup section */}
+                <VStack spacing={3} mt={6}>
+                  <HStack w="full" spacing={4}>
+                    <Divider borderColor={useColorModeValue('gray.300', 'gray.600')} />
                     <Text
                       fontSize="sm"
-                      fontWeight="semibold"
-                      color={useColorModeValue('gray.800', 'white')}
-                      fontFamily="mono"
-                    >
-                      {verificationEmail}
+                      color={useColorModeValue('gray.500', 'gray.400')}
+                      flexShrink={0}
+                      fontWeight="medium">
+                      Or sign up with
                     </Text>
-                  </Box>
+                    <Divider borderColor={useColorModeValue('gray.300', 'gray.600')} />
+                  </HStack>
 
-                  {/* Next Steps */}
-                  <Text
-                    fontSize="sm"
-                    color={useColorModeValue('gray.600', 'gray.300')}
-                    textAlign="center"
-                  >
-                    Click the link in the email to verify your account and{' '}
-                    {isCompanyJoin ? 'join the company' : 'complete your registration'}.
-                  </Text>
+                  <HStack spacing={2} w="full">
+                    {[
+                      { icon: FaGoogle, color: '#EA4335', name: 'Google' },
+                      { icon: FaFacebook, color: '#1877F2', name: 'Facebook' }
+                    ].map((social) => (
+                      <Button
+                        key={social.name}
+                        flex={1}
+                        // 44px minimum touch target; icon-only buttons also need an
+                        // accessible name or they announce as just "button".
+                        h="44px"
+                        aria-label={intl.formatMessage(
+                          {
+                            id: 'auth.signup.social.continueWith',
+                            defaultMessage: 'Continue with {provider}'
+                          },
+                          { provider: social.name }
+                        )}
+                        bg={useColorModeValue('white', 'gray.700')}
+                        border="1px solid"
+                        borderColor={useColorModeValue('gray.300', 'gray.600')}
+                        borderRadius="lg"
+                        onClick={() => handleSocialLogin(social.name)}
+                        isDisabled={isLoading || isSocialLoading}
+                        _hover={{
+                          bg: useColorModeValue('gray.50', 'gray.600'),
+                          borderColor: useColorModeValue('gray.400', 'gray.500')
+                        }}
+                        transition="all 0.2s">
+                        <Icon as={social.icon} fontSize="18px" color={social.color} />
+                      </Button>
+                    ))}
+                  </HStack>
                 </VStack>
+              </Box>
 
-                {/* Action Buttons */}
-                <VStack spacing={4}>
-                  <Button
-                    leftIcon={<Icon as={FaRedo} />}
-                    colorScheme="green"
-                    variant="outline"
-                    size="lg"
-                    onClick={handleResendEmail}
-                    isLoading={isResending}
-                    isDisabled={resendCooldown > 0}
-                    loadingText="Sending..."
-                    w="full"
-                  >
-                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend email'}
-                  </Button>
+              {/*
+                  The one trust line a SIGNUP page earns that a login page does not — the
+                  visitor has not chosen yet. One line, not a 50% billboard.
 
+                  It replaces "Built for specialty crop farms. 14-day free trial." Starter has
+                  been FREE FOREVER since 2026-08-13 (no trial, no clock, no cancellation —
+                  bounded by limits, never by time). That change swept plan data, both creation
+                  paths, expiry, the trial emails and the pricing copy; THIS page was a sixth
+                  surface it missed, and it is the first screen a new grower sees. It also
+                  directly contradicted the COG Pro migration promise, whose whole anti-lock-in
+                  answer is "Starter is free permanently, not a trial" — aimed at refugees from
+                  a product that dies 2026-12-31. Wording matches the landing hero.
+
+                  ⚠️ 2026-08-15: this line used to end "Export everything, anytime". That became
+                  FALSE the moment the certifier documents moved behind Compliance
+                  (`subscriptions/gating.py`) — and it was the first screen a new grower sees, so
+                  it promised on signup exactly what the farm profile would later refuse. Replaced
+                  with a claim that is true on Starter today: unlimited logging.
+
+                  ⚠️ OPEN GAP, not fixed here: Trazo has NO plain data-portability export. The
+                  only exports in the codebase are the three certifier artifacts, so "get your own
+                  records out" is currently only possible as an audit PDF/CSV — which is now paid.
+                  That is an anti-lock-in hole that predates the gate (it was equally true when
+                  every export was free-but-only-certifier-shaped), and it sits directly against
+                  the COG Pro migration promise. A free "download my records as CSV" belongs on
+                  Starter; until it exists, do not re-add an export claim to this line.
+                */}
+              <Box textAlign="center" mt={6}>
+                <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')}>
+                  {intl.formatMessage({ id: 'auth.signup.trust' })}
+                </Text>
+              </Box>
+
+              {/* Sign in link */}
+              <Box textAlign="center" mt={3}>
+                <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
+                  {intl.formatMessage({ id: 'auth.signup.haveAccount' })}{' '}
+                  <Link to="/auth/signin">
+                    <Text
+                      as="span"
+                      color="green.700"
+                      fontWeight="semibold"
+                      _hover={{
+                        textDecoration: 'underline',
+                        color: 'green.800'
+                      }}
+                      transition="all 0.2s">
+                      {intl.formatMessage({ id: 'auth.signup.signInLink' })}
+                    </Text>
+                  </Link>
+                </Text>
+              </Box>
+            </>
+          ) : (
+            /* 🚀 2025 UX Enhancement: Email Verification Panel */
+            <MotionBox
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4 }}
+              w="full">
+              {/* Back Button */}
+              <HStack w="full" justify="flex-start" mb={6}>
+                <Button
+                  leftIcon={<Icon as={FaArrowLeft} />}
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBackToSignup}
+                  color={useColorModeValue('gray.600', 'gray.400')}
+                  _hover={{ color: useColorModeValue('gray.800', 'white') }}>
+                  Back to signup
+                </Button>
+              </HStack>
+
+              {/* Progress Indicator */}
+              <HStack justify="center" spacing={4} mb={8}>
+                <Box
+                  w="32px"
+                  h="32px"
+                  bg="green.700"
+                  borderRadius="50%"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center">
+                  <Icon as={FaCheckCircle} color="white" boxSize={4} />
+                </Box>
+                <Box h="2px" flex={1} bg="green.700" />
+                <Box
+                  w="32px"
+                  h="32px"
+                  bg="green.100"
+                  border="2px solid"
+                  borderColor="green.700"
+                  borderRadius="50%"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center">
+                  <Text fontSize="xs" fontWeight="bold" color="green.700">
+                    2
+                  </Text>
+                </Box>
+                <Box h="2px" flex={1} bg={useColorModeValue('gray.300', 'gray.600')} />
+                <Box
+                  w="32px"
+                  h="32px"
+                  bg={useColorModeValue('gray.100', 'gray.700')}
+                  border="2px solid"
+                  borderColor={useColorModeValue('gray.300', 'gray.600')}
+                  borderRadius="50%"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center">
                   <Text
                     fontSize="xs"
-                    color={useColorModeValue('gray.500', 'gray.400')}
-                    textAlign="center"
-                  >
-                    Didn't receive the email? Check your spam folder or{' '}
-                    <Text as="span" color="green.500">
-                      contact support
-                    </Text>
+                    fontWeight="bold"
+                    /* gray.500 on the gray.100 step chip is 4.37:1 — under AA at 12px. */
+                    color={useColorModeValue('gray.600', 'gray.400')}>
+                    3
                   </Text>
-                </VStack>
-              </MotionBox>
-            )}
-          </MotionBox>
-        </Flex>
-      </Grid>
+                </Box>
+              </HStack>
+
+              {/* Main Icon */}
+              <Box textAlign="center" mb={6}>
+                <Box
+                  w="80px"
+                  h="80px"
+                  bg="green.50"
+                  borderRadius="50%"
+                  mx="auto"
+                  mb={4}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center">
+                  {/* 40px and the visual anchor of this state: green.500 on the green.50 disc is 2.70:1,
+                      green.700 is 4.86. */}
+                  <Icon as={FaEnvelope} color="green.700" boxSize={10} aria-hidden="true" />
+                </Box>
+              </Box>
+
+              {/* Main Content */}
+              <VStack spacing={4} mb={8} textAlign="center">
+                <Text
+                  fontSize={{ base: 'xl', md: '2xl' }}
+                  fontWeight="bold"
+                  color={useColorModeValue('gray.800', 'white')}>
+                  Check your email
+                </Text>
+
+                <Text
+                  fontSize="md"
+                  color={useColorModeValue('gray.600', 'gray.300')}
+                  lineHeight="1.6"
+                  maxW="md">
+                  {isCompanyJoin
+                    ? "We've sent a verification email to help you join the company team."
+                    : "We've sent a verification email to get you started."}
+                </Text>
+
+                {/* Email Display */}
+                <Box
+                  bg={useColorModeValue('gray.50', 'gray.800')}
+                  borderRadius="lg"
+                  px={4}
+                  py={3}
+                  border="1px solid"
+                  borderColor={useColorModeValue('gray.200', 'gray.600')}>
+                  <Text
+                    fontSize="sm"
+                    fontWeight="semibold"
+                    color={useColorModeValue('gray.800', 'white')}
+                    fontFamily="mono">
+                    {verificationEmail}
+                  </Text>
+                </Box>
+
+                {/* Next Steps */}
+                <Text
+                  fontSize="sm"
+                  color={useColorModeValue('gray.600', 'gray.300')}
+                  textAlign="center">
+                  Click the link in the email to verify your account and{' '}
+                  {isCompanyJoin ? 'join the company' : 'complete your registration'}.
+                </Text>
+              </VStack>
+
+              {/* Action Buttons */}
+              <VStack spacing={4}>
+                <Button
+                  leftIcon={<Icon as={FaRedo} />}
+                  colorScheme="green"
+                  variant="outline"
+                  size="lg"
+                  onClick={handleResendEmail}
+                  isLoading={isResending}
+                  isDisabled={resendCooldown > 0}
+                  loadingText="Sending..."
+                  w="full">
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend email'}
+                </Button>
+
+                <Text
+                  fontSize="xs"
+                  color={useColorModeValue('gray.500', 'gray.400')}
+                  textAlign="center">
+                  Didn't receive the email? Check your spam folder or{' '}
+                  <Text as="span" color="green.700">
+                    contact support
+                  </Text>
+                </Text>
+              </VStack>
+            </MotionBox>
+          )}
+        </MotionBox>
+      </Flex>
 
       <AuthFooter />
     </Box>

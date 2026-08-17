@@ -5,12 +5,9 @@ import {
   useColorModeValue,
   VStack,
   HStack,
-  Input,
   Select,
   Badge,
   Flex,
-  InputGroup,
-  InputLeftElement,
   Grid,
   Avatar,
   Icon,
@@ -25,10 +22,15 @@ import {
   ModalBody,
   useDisclosure
 } from '@chakra-ui/react';
-import { StandardPage, StandardCard, StandardButton } from 'components/Design/StandardComponents';
+import {
+  StandardPage,
+  StandardCard,
+  StandardButton,
+  StandardSearchInput
+} from 'components/Design/StandardComponents';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
-import { FiSearch, FiStar, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiStar, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
 import { useSelector } from 'react-redux';
 import { useGetFarmReviewsPaginatedQuery } from 'store/api/reviewApi';
@@ -140,28 +142,21 @@ const AllReviewsView = () => {
       title={intl.formatMessage({ id: 'commercial.allReviewsTitle' })}
       description={intl.formatMessage({ id: 'commercial.allReviewsDescription' })}
       showBackButton
-      onBack={handleBack}
-    >
+      onBack={handleBack}>
       {/* Filters Section */}
-      <StandardCard title={intl.formatMessage({ id: 'commercial.searchFilters' })} variant="outline" padding={{ base: 3, md: 4 }}>
+      <StandardCard
+        title={intl.formatMessage({ id: 'commercial.searchFilters' })}
+        variant="outline"
+        padding={{ base: 3, md: 4 }}>
         <VStack spacing={{ base: 3, md: 4 }}>
           <Box w="100%">
-            <InputGroup size="sm">
-              <InputLeftElement>
-                <FiSearch color="gray.500" />
-              </InputLeftElement>
-              <Input
-                placeholder={intl.formatMessage({ id: 'commercial.searchReviewsPlaceholder' })}
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                borderRadius="lg"
-                bg="white"
-                _focus={{
-                  borderColor: 'green.400',
-                  boxShadow: '0 0 0 1px rgb(72, 187, 120)'
-                }}
-              />
-            </InputGroup>
+            <StandardSearchInput
+              placeholder={intl.formatMessage({ id: 'commercial.searchReviewsPlaceholder' })}
+              value={filters.search}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleFilterChange('search', e.target.value)
+              }
+            />
           </Box>
 
           <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 4 }} w="100%">
@@ -175,8 +170,7 @@ const AllReviewsView = () => {
               _focus={{
                 borderColor: 'green.400',
                 boxShadow: '0 0 0 1px rgb(72, 187, 120)'
-              }}
-            >
+              }}>
               {uniqueProducts.map((product) => (
                 <option key={product.id} value={product.id}>
                   {product.name}
@@ -194,8 +188,7 @@ const AllReviewsView = () => {
               _focus={{
                 borderColor: 'green.400',
                 boxShadow: '0 0 0 1px rgb(72, 187, 120)'
-              }}
-            >
+              }}>
               <option value="5">⭐⭐⭐⭐⭐ (5)</option>
               <option value="4">⭐⭐⭐⭐ (4)</option>
               <option value="3">⭐⭐⭐ (3)</option>
@@ -216,8 +209,7 @@ const AllReviewsView = () => {
                 });
                 setCurrentPage(1);
               }}
-              size="sm"
-            >
+              size="sm">
               {intl.formatMessage({ id: 'commercial.clearFilters' })}
             </StandardButton>
           </SimpleGrid>
@@ -227,11 +219,14 @@ const AllReviewsView = () => {
       {/* Stats Section */}
       <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={{ base: 4, md: 6 }}>
         {/* Overall Stats */}
-        <StandardCard title={intl.formatMessage({ id: 'commercial.generalStats' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+        <StandardCard
+          title={intl.formatMessage({ id: 'commercial.generalStats' })}
+          variant="elevated"
+          padding={{ base: 3, md: 4 }}>
           <VStack spacing={{ base: 2, md: 4 }} align="stretch">
             <HStack justify="space-between">
               <VStack align="start" spacing={0}>
-                <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="green.600">
+                <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold" color="green.700">
                   {averageRating.toFixed(1)}
                 </Text>
                 <HStack spacing={0.5}>{renderStars(averageRating)}</HStack>
@@ -268,7 +263,10 @@ const AllReviewsView = () => {
         </StandardCard>
 
         {/* Rating Distribution */}
-        <StandardCard title={intl.formatMessage({ id: 'commercial.ratingDistribution' })} variant="elevated" padding={{ base: 3, md: 4 }}>
+        <StandardCard
+          title={intl.formatMessage({ id: 'commercial.ratingDistribution' })}
+          variant="elevated"
+          padding={{ base: 3, md: 4 }}>
           <VStack spacing={{ base: 2, md: 3 }} align="stretch">
             {ratingDistribution.map((item) => (
               <HStack key={item.rating} spacing={2}>
@@ -276,7 +274,12 @@ const AllReviewsView = () => {
                   <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="medium">
                     {item.rating}
                   </Text>
-                  <Icon as={BsStarFill} w={{ base: '10px', md: '12px' }} h={{ base: '10px', md: '12px' }} color="yellow.400" />
+                  <Icon
+                    as={BsStarFill}
+                    w={{ base: '10px', md: '12px' }}
+                    h={{ base: '10px', md: '12px' }}
+                    color="yellow.400"
+                  />
                 </HStack>
                 <Box flex={1} bg="gray.200" borderRadius="full" h={{ base: '6px', md: '8px' }}>
                   <Box
@@ -287,7 +290,11 @@ const AllReviewsView = () => {
                     transition="width 0.3s"
                   />
                 </Box>
-                <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" minW={{ base: '25px', md: '40px' }} textAlign="right">
+                <Text
+                  fontSize={{ base: 'xs', md: 'sm' }}
+                  color="gray.600"
+                  minW={{ base: '25px', md: '40px' }}
+                  textAlign="right">
                   {item.count}
                 </Text>
               </HStack>
@@ -297,7 +304,10 @@ const AllReviewsView = () => {
       </Grid>
 
       {/* Reviews List */}
-      <StandardCard title={intl.formatMessage({ id: 'commercial.reviewsCount' }, { count: totalCount })} variant="elevated" padding={{ base: 3, md: 4 }}>
+      <StandardCard
+        title={intl.formatMessage({ id: 'commercial.reviewsCount' }, { count: totalCount })}
+        variant="elevated"
+        padding={{ base: 3, md: 4 }}>
         <VStack spacing={{ base: 3, md: 6 }} align="stretch">
           {isLoading ? (
             <Flex justify="center" align="center" py={12}>
@@ -305,7 +315,9 @@ const AllReviewsView = () => {
             </Flex>
           ) : error ? (
             <Flex justify="center" align="center" py={12}>
-              <Text color="red.500">{intl.formatMessage({ id: 'commercial.errorLoadingReviews' })}</Text>
+              <Text color="red.500">
+                {intl.formatMessage({ id: 'commercial.errorLoadingReviews' })}
+              </Text>
             </Flex>
           ) : reviewsData.length > 0 ? (
             <>
@@ -318,16 +330,14 @@ const AllReviewsView = () => {
                   borderColor="gray.200"
                   bg="white"
                   _hover={{ boxShadow: 'md', borderColor: 'green.200' }}
-                  transition="all 0.2s"
-                >
+                  transition="all 0.2s">
                   <VStack spacing={{ base: 2, md: 4 }} align="stretch">
                     {/* Review Header */}
                     <Flex
                       justify="space-between"
                       align={{ base: 'flex-start', md: 'center' }}
                       direction={{ base: 'column', sm: 'row' }}
-                      gap={{ base: 2, md: 0 }}
-                    >
+                      gap={{ base: 2, md: 0 }}>
                       <HStack spacing={2}>
                         <Avatar
                           src={review.user_avatar || undefined}
@@ -342,8 +352,13 @@ const AllReviewsView = () => {
                         />
                         <VStack align="start" spacing={0} minW={0}>
                           <HStack spacing={1}>
-                            <Text fontSize={{ base: 'xs', md: 'md' }} fontWeight="semibold" color={textColor} noOfLines={1}>
-                              {review.user || intl.formatMessage({ id: 'commercial.anonymousUser' })}
+                            <Text
+                              fontSize={{ base: 'xs', md: 'md' }}
+                              fontWeight="semibold"
+                              color={textColor}
+                              noOfLines={1}>
+                              {review.user ||
+                                intl.formatMessage({ id: 'commercial.anonymousUser' })}
                             </Text>
                             {review.verified_purchase && (
                               <Badge colorScheme="green" fontSize="xs">
@@ -352,25 +367,37 @@ const AllReviewsView = () => {
                             )}
                           </HStack>
                           <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.500" noOfLines={1}>
-                            {review.date} • {review.location || intl.formatMessage({ id: 'commercial.unknownLocation' })}
+                            {review.date} •{' '}
+                            {review.location ||
+                              intl.formatMessage({ id: 'commercial.unknownLocation' })}
                           </Text>
                         </VStack>
                       </HStack>
-                      <VStack align={{ base: 'flex-start', sm: 'flex-end' }} spacing={0} flexShrink={0}>
+                      <VStack
+                        align={{ base: 'flex-start', sm: 'flex-end' }}
+                        spacing={0}
+                        flexShrink={0}>
                         <HStack spacing={0.5}>{renderStars(review.rating)}</HStack>
                         <Text fontSize="xs" color="gray.500">
-                          {intl.formatMessage({ id: 'commercial.helpfulCount' }, { count: review.helpful_count || 0 })}
+                          {intl.formatMessage(
+                            { id: 'commercial.helpfulCount' },
+                            { count: review.helpful_count || 0 }
+                          )}
                         </Text>
                       </VStack>
                     </Flex>
 
                     {/* Review Content */}
                     <VStack align="stretch" spacing={{ base: 1, md: 3 }}>
-                      <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="semibold" color={textColor}>
+                      <Text
+                        fontSize={{ base: 'sm', md: 'md' }}
+                        fontWeight="semibold"
+                        color={textColor}>
                         {review.headline || intl.formatMessage({ id: 'commercial.noTitle' })}
                       </Text>
                       <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" lineHeight="1.5">
-                        {review.written_review || intl.formatMessage({ id: 'commercial.noComments' })}
+                        {review.written_review ||
+                          intl.formatMessage({ id: 'commercial.noComments' })}
                       </Text>
 
                       {/* Review Images */}
@@ -385,11 +412,13 @@ const AllReviewsView = () => {
                               borderRadius="lg"
                               overflow="hidden"
                               transition="all 0.2s"
-                              _hover={{ transform: 'scale(1.05)', boxShadow: 'md' }}
-                            >
+                              _hover={{ transform: 'scale(1.05)', boxShadow: 'md' }}>
                               <Image
                                 src={imageUrl}
-                                alt={intl.formatMessage({ id: 'commercial.reviewImageAlt' }, { number: imgIndex + 1 })}
+                                alt={intl.formatMessage(
+                                  { id: 'commercial.reviewImageAlt' },
+                                  { number: imgIndex + 1 }
+                                )}
                                 w={{ base: '60px', md: '80px' }}
                                 h={{ base: '60px', md: '80px' }}
                                 objectFit="cover"
@@ -407,8 +436,7 @@ const AllReviewsView = () => {
                                   bg="blackAlpha.600"
                                   align="center"
                                   justify="center"
-                                  borderRadius="lg"
-                                >
+                                  borderRadius="lg">
                                   <Text color="white" fontWeight="bold" fontSize="xs">
                                     +{review.images.length - 4}
                                   </Text>
@@ -419,10 +447,24 @@ const AllReviewsView = () => {
                         </HStack>
                       )}
 
-                      <HStack spacing={{ base: 2, md: 4 }} fontSize="xs" color="gray.500" flexWrap="wrap">
-                        <Text>{intl.formatMessage({ id: 'commercial.productLabel' }, { name: review.product || 'N/A' })}</Text>
+                      <HStack
+                        spacing={{ base: 2, md: 4 }}
+                        fontSize="xs"
+                        color="gray.500"
+                        flexWrap="wrap">
+                        <Text>
+                          {intl.formatMessage(
+                            { id: 'commercial.productLabel' },
+                            { name: review.product || 'N/A' }
+                          )}
+                        </Text>
                         <Text>•</Text>
-                        <Text>{intl.formatMessage({ id: 'commercial.parcelLabel' }, { name: review.parcel || 'N/A' })}</Text>
+                        <Text>
+                          {intl.formatMessage(
+                            { id: 'commercial.parcelLabel' },
+                            { name: review.parcel || 'N/A' }
+                          )}
+                        </Text>
                       </HStack>
                     </VStack>
                   </VStack>
@@ -433,7 +475,10 @@ const AllReviewsView = () => {
               {totalPages > 1 && (
                 <Flex justify="space-between" align="center" w="100%" pt={4}>
                   <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
-                    {intl.formatMessage({ id: 'commercial.pageInfo' }, { current: currentPage, total: totalPages, count: totalCount })}
+                    {intl.formatMessage(
+                      { id: 'commercial.pageInfo' },
+                      { current: currentPage, total: totalPages, count: totalCount }
+                    )}
                   </Text>
                   <HStack spacing={2}>
                     <IconButton

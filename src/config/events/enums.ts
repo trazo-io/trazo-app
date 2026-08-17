@@ -241,6 +241,46 @@ export const HARVEST_QUALITY_GRADES: readonly EnumOption[] = [
   { value: 'processing', labelKey: 'events.harvestQuality.processing' }
 ] as const;
 
+// WS-4 (2026-08) — harvest-record completeness (§ 205.103(b)(2); § 205.202(c))
+export const AMOUNT_DETERMINATIONS: readonly EnumOption[] = [
+  { value: 'estimated', labelKey: 'events.amountDetermination.estimated' },
+  { value: 'scale_verified', labelKey: 'events.amountDetermination.scaleVerified' }
+] as const;
+
+export const HARVEST_DESTINATIONS: readonly EnumOption[] = [
+  { value: 'stored', labelKey: 'events.harvestDestination.stored' },
+  { value: 'sold_direct', labelKey: 'events.harvestDestination.soldDirect' },
+  { value: 'livestock_feed', labelKey: 'events.harvestDestination.livestockFeed' },
+  { value: 'other', labelKey: 'events.harvestDestination.other' }
+] as const;
+
+export const BUFFER_DISPOSITIONS: readonly EnumOption[] = [
+  { value: 'not_harvested', labelKey: 'events.bufferDisposition.notHarvested' },
+  { value: 'left_in_field', labelKey: 'events.bufferDisposition.leftInField' },
+  { value: 'sold_conventional', labelKey: 'events.bufferDisposition.soldConventional' },
+  {
+    value: 'fed_nonorganic_livestock',
+    labelKey: 'events.bufferDisposition.fedNonorganicLivestock'
+  },
+  { value: 'disposed', labelKey: 'events.bufferDisposition.disposed' },
+  { value: 'given_away', labelKey: 'events.bufferDisposition.givenAway' },
+  // Legacy value — superseded by sold_conventional but kept so stored rows render.
+  { value: 'harvested_conventional', labelKey: 'events.bufferDisposition.harvestedConventional' }
+] as const;
+
+export const APPLIED_SCOPES: readonly EnumOption[] = [
+  { value: 'all', labelKey: 'events.appliedScope.all' },
+  { value: 'part', labelKey: 'events.appliedScope.part' }
+] as const;
+
+/** What a cleanout event cleaned (§ 205.272(a) commingling prevention). */
+export const CLEANING_ASSET_CLASSES: readonly EnumOption[] = [
+  { value: 'equipment', labelKey: 'events.cleaningAssetClass.equipment' },
+  { value: 'harvest_bins', labelKey: 'events.cleaningAssetClass.harvestBins' },
+  { value: 'storage', labelKey: 'events.cleaningAssetClass.storage' },
+  { value: 'transport_vehicle', labelKey: 'events.cleaningAssetClass.transportVehicle' }
+] as const;
+
 // ============================================================================
 // AGRONOMIC / CROP
 // ============================================================================
@@ -263,6 +303,11 @@ export const GROWTH_STAGES: readonly EnumOption[] = [
 
 export const ORGANIC_APPROVED: readonly EnumOption[] = [
   { value: 'omri_listed', labelKey: 'events.organicApproved.omriListed' },
+  { value: 'wsda_listed', labelKey: 'events.organicApproved.wsdaListed' },
+  { value: 'nop_seal_on_label', labelKey: 'events.organicApproved.nopSeal' },
+  { value: 'certifier_approved', labelKey: 'events.organicApproved.certifierApproved' },
+  // Legacy values — retired from the picker 2026-08-15 (see common/field_registry.py), kept
+  // here so previously-saved rows render a label instead of a raw slug.
   { value: 'usda_nop_approved', labelKey: 'events.organicApproved.usdaNop' },
   { value: 'organic_equivalent', labelKey: 'events.organicApproved.organicEquivalent' },
   { value: 'not_organic', labelKey: 'events.organicApproved.notOrganic' },
@@ -357,12 +402,129 @@ export const MANURE_TREATMENTS: readonly EnumOption[] = [
   { value: 'processed_5006', labelKey: 'enums.manure_treatments.processed_5006' }
 ] as const;
 
+/** USDA manure form #9 "How Applied / Incorporated" — SoilManagementEvent (OM) */
+export const MANURE_APPLICATION_METHODS: readonly EnumOption[] = [
+  {
+    value: 'broadcast_incorporated',
+    labelKey: 'enums.manure_application_methods.broadcast_incorporated'
+  },
+  { value: 'broadcast_surface', labelKey: 'enums.manure_application_methods.broadcast_surface' },
+  { value: 'injected', labelKey: 'enums.manure_application_methods.injected' },
+  { value: 'banded', labelKey: 'enums.manure_application_methods.banded' },
+  { value: 'fertigation', labelKey: 'enums.manure_application_methods.fertigation' },
+  { value: 'top_dressed', labelKey: 'enums.manure_application_methods.top_dressed' },
+  { value: 'other', labelKey: 'enums.manure_application_methods.other' }
+] as const;
+
+/** USDA manure form #9 "Manure Type ... " — the animal in "Chicken, dry, on farm" */
+export const MANURE_ANIMAL_SOURCES: readonly EnumOption[] = [
+  { value: 'poultry', labelKey: 'enums.manure_animal_sources.poultry' },
+  { value: 'cattle', labelKey: 'enums.manure_animal_sources.cattle' },
+  { value: 'horse', labelKey: 'enums.manure_animal_sources.horse' },
+  { value: 'sheep_goat', labelKey: 'enums.manure_animal_sources.sheep_goat' },
+  { value: 'swine', labelKey: 'enums.manure_animal_sources.swine' },
+  { value: 'rabbit', labelKey: 'enums.manure_animal_sources.rabbit' },
+  { value: 'mixed', labelKey: 'enums.manure_animal_sources.mixed' },
+  { value: 'other', labelKey: 'enums.manure_animal_sources.other' }
+] as const;
+
+/** USDA manure form #9 "... Form ..." — the "dry" in "Chicken, dry, on farm" */
+export const MANURE_FORMS: readonly EnumOption[] = [
+  { value: 'dry', labelKey: 'enums.manure_forms.dry' },
+  { value: 'bedded_pack', labelKey: 'enums.manure_forms.bedded_pack' },
+  { value: 'slurry', labelKey: 'enums.manure_forms.slurry' },
+  { value: 'liquid', labelKey: 'enums.manure_forms.liquid' },
+  { value: 'pelletized', labelKey: 'enums.manure_forms.pelletized' }
+] as const;
+
+/** USDA manure form #9 "... and Source" — the "on farm" in "Chicken, dry, on farm" */
+export const MANURE_ORIGINS: readonly EnumOption[] = [
+  { value: 'on_farm', labelKey: 'enums.manure_origins.on_farm' },
+  { value: 'off_farm', labelKey: 'enums.manure_origins.off_farm' }
+] as const;
+
 /** Fertilizer nitrogen source — ChemicalEvent (NOP 5012 / 7 CFR 205.105(a)) */
 export const NITROGEN_SOURCES: readonly EnumOption[] = [
   { value: 'organic', labelKey: 'enums.nitrogen_sources.organic' },
   { value: 'mined_natural', labelKey: 'enums.nitrogen_sources.mined_natural' },
   { value: 'synthetic_prohibited', labelKey: 'enums.nitrogen_sources.synthetic_prohibited' },
   { value: 'unknown', labelKey: 'enums.nitrogen_sources.unknown' }
+] as const;
+
+/**
+ * Why an input was applied — ChemicalEvent.
+ *
+ * USDA's Input Material Application Record has a "Purpose / Reason for Use" column, and its
+ * footnote 5 says why it matters: "Some materials, for example, are allowed for pest management
+ * but not as a soil amendment." § 205.601 lists synthetics BY USE, so purpose is part of the
+ * allowability record rather than a nicety.
+ */
+export const APPLICATION_PURPOSES: readonly EnumOption[] = [
+  { value: 'soil_fertility', labelKey: 'enums.application_purposes.soil_fertility' },
+  {
+    value: 'micronutrient_deficiency',
+    labelKey: 'enums.application_purposes.micronutrient_deficiency'
+  },
+  { value: 'soil_amendment', labelKey: 'enums.application_purposes.soil_amendment' },
+  { value: 'ph_adjustment', labelKey: 'enums.application_purposes.ph_adjustment' },
+  { value: 'pest_management', labelKey: 'enums.application_purposes.pest_management' },
+  { value: 'disease_management', labelKey: 'enums.application_purposes.disease_management' },
+  { value: 'weed_management', labelKey: 'enums.application_purposes.weed_management' },
+  { value: 'plant_growth', labelKey: 'enums.application_purposes.plant_growth' },
+  { value: 'other', labelKey: 'enums.application_purposes.other' }
+] as const;
+
+/**
+ * Why a seed treatment is permitted — ProductionEvent.
+ *
+ * USDA's "Seed Records Part C" pairs every named treatment with a "Documentation of Allowed
+ * Status" column. Naming the treatment without its basis is the same "named but unjustified"
+ * shape as the 2026-08-09 OMRI leak. § 205.204(a)(2) + § 205.601.
+ */
+export const SEED_TREATMENT_BASES: readonly EnumOption[] = [
+  { value: 'untreated', labelKey: 'enums.seed_treatment_bases.untreated' },
+  { value: 'omri_listed', labelKey: 'enums.seed_treatment_bases.omri_listed' },
+  { value: 'national_list', labelKey: 'enums.seed_treatment_bases.national_list' },
+  { value: 'certifier_approved', labelKey: 'enums.seed_treatment_bases.certifier_approved' },
+  { value: 'organic_seed', labelKey: 'enums.seed_treatment_bases.organic_seed' },
+  { value: 'not_documented', labelKey: 'enums.seed_treatment_bases.not_documented' }
+] as const;
+
+/**
+ * How exclusion of GMO / excluded methods was established — ProductionEvent.
+ *
+ * The third leg of USDA Form 11's allowed-status triple: (a) on an allowed list,
+ * (b) no prohibited treatments, (c) non-GMO. 7 CFR 205.105(e) prohibits excluded methods
+ * outright — it is the one of the three that is unconditional rather than conditional.
+ *
+ * NOT a boolean. "Not asked" and "checked and could not verify" are different records, and a
+ * boolean collapses them into `false`, which reads on a certifier packet as a negative
+ * finding against a grower who was never asked.
+ *
+ * ⚠️ Producer/certifier surface only — never a consumer_card. "Non-GMO" is a marketing claim
+ * and every value here is self-reported.
+ */
+export const SEED_NON_GMO_STATUSES: readonly EnumOption[] = [
+  { value: 'supplier_attested', labelKey: 'enums.seed_non_gmo_statuses.supplier_attested' },
+  { value: 'seed_label', labelKey: 'enums.seed_non_gmo_statuses.seed_label' },
+  { value: 'organic_certified', labelKey: 'enums.seed_non_gmo_statuses.organic_certified' },
+  { value: 'not_verified', labelKey: 'enums.seed_non_gmo_statuses.not_verified' }
+] as const;
+
+/**
+ * Statutory ground for using non-organic seed — ProductionEvent.
+ *
+ * § 205.204(a)(1) permits non-organic seed only when an equivalent organic variety is not
+ * "commercially available", and § 205.2 defines that by three axes: appropriate FORM, QUALITY,
+ * or QUANTITY. USDA's "Seed Records Part B" asks for exactly those words. Free text cannot be
+ * reviewed against a three-part statutory test.
+ */
+export const SEED_NONAVAILABILITY_REASONS: readonly EnumOption[] = [
+  { value: 'none_offered', labelKey: 'enums.seed_nonavailability_reasons.none_offered' },
+  { value: 'form', labelKey: 'enums.seed_nonavailability_reasons.form' },
+  { value: 'quality', labelKey: 'enums.seed_nonavailability_reasons.quality' },
+  { value: 'quantity', labelKey: 'enums.seed_nonavailability_reasons.quantity' },
+  { value: 'other', labelKey: 'enums.seed_nonavailability_reasons.other' }
 ] as const;
 
 /** Contamination source — GeneralEvent (7 CFR 205.201(b)) */
@@ -405,6 +567,12 @@ export const ENUM_OPTIONS = {
   // Efficiency
   production_efficiency: PRODUCTION_EFFICIENCY,
   harvest_quality_grades: HARVEST_QUALITY_GRADES,
+  // WS-4 harvest-record completeness + input scope
+  amount_determinations: AMOUNT_DETERMINATIONS,
+  harvest_destinations: HARVEST_DESTINATIONS,
+  buffer_dispositions: BUFFER_DISPOSITIONS,
+  applied_scopes: APPLIED_SCOPES,
+  cleaning_asset_classes: CLEANING_ASSET_CLASSES,
   // Agronomic
   growth_stages: GROWTH_STAGES,
   // Compliance
@@ -418,7 +586,15 @@ export const ENUM_OPTIONS = {
   contamination_sources: CONTAMINATION_SOURCES,
   manure_harvest_intervals: MANURE_HARVEST_INTERVALS,
   manure_treatments: MANURE_TREATMENTS,
-  nitrogen_sources: NITROGEN_SOURCES
+  manure_application_methods: MANURE_APPLICATION_METHODS,
+  manure_animal_sources: MANURE_ANIMAL_SOURCES,
+  manure_forms: MANURE_FORMS,
+  manure_origins: MANURE_ORIGINS,
+  nitrogen_sources: NITROGEN_SOURCES,
+  application_purposes: APPLICATION_PURPOSES,
+  seed_treatment_bases: SEED_TREATMENT_BASES,
+  seed_nonavailability_reasons: SEED_NONAVAILABILITY_REASONS,
+  seed_non_gmo_statuses: SEED_NON_GMO_STATUSES
 } as const;
 
 export type EnumSourceKey = keyof typeof ENUM_OPTIONS;
@@ -428,8 +604,19 @@ export function getEnumOptions(key: EnumSourceKey): readonly EnumOption[] {
   return ENUM_OPTIONS[key];
 }
 
-/** Look up human label for a given enum value */
+/**
+ * Look up the i18n label key for a given enum value.
+ *
+ * Returns null — never throws — when the enumSource is not in ENUM_OPTIONS. Several field
+ * configs declare an `enumSource` whose catalogue lives elsewhere (chemical's
+ * subtype-conditional maps, for instance), and until 2026-08-15 nothing called this from the
+ * resolver, so an unknown key was harmless. Now that every enum on every display surface goes
+ * through here, an unindexed key would throw `Cannot read properties of undefined` while
+ * rendering an event card — a blank screen instead of a mislabelled value.
+ */
 export function getEnumLabel(key: EnumSourceKey, value: string): string | null {
-  const opt = ENUM_OPTIONS[key].find((o) => o.value === value);
+  const options = ENUM_OPTIONS[key] as readonly EnumOption[] | undefined;
+  if (!options) return null;
+  const opt = options.find((o) => o.value === value);
   return opt ? opt.labelKey : null;
 }

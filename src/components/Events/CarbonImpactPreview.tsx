@@ -10,10 +10,6 @@ import {
   StatLabel,
   StatNumber,
   StatHelpText,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
   useColorModeValue,
   Spinner,
   Progress,
@@ -25,6 +21,7 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+import { StandardAlert } from 'components/Design/StandardComponents';
 import { FaLeaf, FaDollarSign, FaLightbulb, FaCheckCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import {
@@ -219,16 +216,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                 </VStack>
               </HStack>
 
-              <Alert status="info" size="sm" borderRadius="md">
-                <AlertIcon boxSize={3} />
-                <Box>
-                  <AlertTitle fontSize="xs">Transparency Focus</AlertTitle>
-                  <AlertDescription fontSize="xs">
-                    This event will build your transparency score and appear in consumer QR stories.
-                    Carbon calculations will be updated when available.
-                  </AlertDescription>
-                </Box>
-              </Alert>
+              <StandardAlert
+                status="info"
+                title="Transparency Focus"
+                description="This event will build your transparency score and appear in consumer QR stories. Carbon calculations will be updated when available."
+              />
             </VStack>
           </CardBody>
         </Card>
@@ -344,15 +336,24 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                   </Text>
                 </VStack>
               </HStack>
-              <Alert status={isPollination ? 'success' : 'info'} size="sm" borderRadius="md">
-                <AlertIcon boxSize={3} />
-                <Box>
-                  <AlertTitle fontSize="xs">
-                    {isPollination ? 'Zero-Emission Biological Service' : 'Transparency Value'}
-                  </AlertTitle>
-                  <AlertDescription fontSize="xs">{transparencyMessage}</AlertDescription>
-                </Box>
-              </Alert>
+              {/*
+                Was a raw `<Alert status={isPollination ? 'success' : 'info'} size="sm">`.
+                Three things were wrong with it:
+                  - `status="success"` bought a green box for copy that reports no success —
+                    the same abuse removed from the OSP wizard. Zero emissions is a property
+                    of the event type, not an achievement.
+                  - `size="sm"` is not an Alert prop (Alert has status/variant only), so it
+                    was inert; the shrinking came from `<AlertIcon boxSize={3} />`.
+                  - AlertTitle/AlertDescription carry Chakra's `lineHeight: "6"` — an
+                    ABSOLUTE 24px. Against `fontSize="xs"` (12px) that is double leading,
+                    which is why this block rendered with gaping line spacing.
+                StandardAlert renders plain `Text`, so it escapes that line-height entirely.
+              */}
+              <StandardAlert
+                status="info"
+                title={isPollination ? 'Zero-Emission Biological Service' : 'Transparency Value'}
+                description={transparencyMessage}
+              />
             </VStack>
           </CardBody>
         </Card>
@@ -393,13 +394,15 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                   formData?.electricity_source ?? formData?.extra_data?.electricity_source;
                 if (elecSrc === 'solar' || elecSrc === 'wind') {
                   return (
-                    <Alert status="success" borderRadius="md" py={2}>
-                      <AlertIcon />
-                      <AlertDescription fontSize="xs">
-                        {elecSrc === 'solar' ? 'Solar' : 'Wind'}-powered pump — near-zero pump
-                        emissions. Only water delivery carbon is counted.
-                      </AlertDescription>
-                    </Alert>
+                    // status="info", not "success": this annotates how the calculation was
+                    // done, it does not report that anything succeeded. Same rule that took
+                    // the green off the OSP education blocks.
+                    <StandardAlert
+                      status="info"
+                      description={`${
+                        elecSrc === 'solar' ? 'Solar' : 'Wind'
+                      }-powered pump — near-zero pump emissions. Only water delivery carbon is counted.`}
+                    />
                   );
                 }
                 return null;
@@ -413,13 +416,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                   formData?.extra_data?.is_fertigation === true;
                 if (isFert) {
                   return (
-                    <Alert status="info" borderRadius="md" py={2}>
-                      <AlertIcon />
-                      <AlertDescription fontSize="xs">
-                        Fertigation mode — application fuel excluded from carbon calculation to
-                        avoid double-counting with your irrigation events.
-                      </AlertDescription>
-                    </Alert>
+                    <StandardAlert
+                      status="info"
+                      description="Fertigation mode — application fuel excluded from carbon calculation to avoid double-counting with your irrigation events."
+                    />
                   );
                 }
                 return null;
@@ -502,27 +502,25 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                   </HStack>
 
                   {calculation.recommendations.slice(0, 2).map((rec, index) => (
-                    <Alert key={index} status="info" size="sm" borderRadius="md">
-                      <AlertIcon boxSize={3} />
-                      <Box>
-                        <AlertTitle fontSize="xs">
-                          {rec.title || rec.message || 'USDA Best Practice'}
-                        </AlertTitle>
-                        <AlertDescription fontSize="xs">
-                          {rec.potential_savings && rec.carbon_reduction ? (
-                            <>
-                              Builds consumer trust • Save ${rec.potential_savings} • Reduce{' '}
-                              {rec.carbon_reduction.toFixed(1)} kg CO₂e
-                            </>
-                          ) : (
-                            <>
-                              Transparency Impact: {rec.impact || 'High'} • Source:{' '}
-                              {rec.source?.replace('EPA', 'USDA') || 'USDA'}
-                            </>
-                          )}
-                        </AlertDescription>
-                      </Box>
-                    </Alert>
+                    // Rich body, so it rides `children` rather than the string `description`.
+                    <StandardAlert
+                      key={index}
+                      status="info"
+                      title={rec.title || rec.message || 'USDA Best Practice'}>
+                      <Text fontSize="sm">
+                        {rec.potential_savings && rec.carbon_reduction ? (
+                          <>
+                            Builds consumer trust • Save ${rec.potential_savings} • Reduce{' '}
+                            {rec.carbon_reduction.toFixed(1)} kg CO₂e
+                          </>
+                        ) : (
+                          <>
+                            Transparency Impact: {rec.impact || 'High'} • Source:{' '}
+                            {rec.source?.replace('EPA', 'USDA') || 'USDA'}
+                          </>
+                        )}
+                      </Text>
+                    </StandardAlert>
                   ))}
 
                   {calculation.recommendations.length > 2 && (
@@ -544,8 +542,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                     color="blue.500"
                     cursor="pointer"
                     onClick={() => setShowDetails(!showDetails)}
-                    _hover={{ textDecoration: 'underline' }}
-                  >
+                    _hover={{ textDecoration: 'underline' }}>
                     {showDetails ? 'Hide' : 'Show'} USDA calculation details
                   </Text>
 
@@ -577,8 +574,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   bg="blue.50"
                                   borderRadius="md"
                                   borderWidth="1px"
-                                  borderColor="blue.200"
-                                >
+                                  borderColor="blue.200">
                                   <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
                                     Your Production Activity:
                                   </Text>
@@ -699,8 +695,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 bg="blue.50"
                                 borderRadius="md"
                                 borderWidth="1px"
-                                borderColor="blue.200"
-                              >
+                                borderColor="blue.200">
                                 <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
                                   Your Irrigation Activity:
                                 </Text>
@@ -748,8 +743,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 bg="blue.50"
                                 borderRadius="md"
                                 borderWidth="1px"
-                                borderColor="blue.200"
-                              >
+                                borderColor="blue.200">
                                 <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
                                   Your Soil Management Activity:
                                 </Text>
@@ -793,8 +787,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 bg="blue.50"
                                 borderRadius="md"
                                 borderWidth="1px"
-                                borderColor="blue.200"
-                              >
+                                borderColor="blue.200">
                                 <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
                                   Your Pest Management Activity:
                                 </Text>
@@ -832,11 +825,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                     <Text color="blue.600">Fuel Type:</Text>
                                     <Text color="blue.800" textTransform="capitalize">
                                       {calculation.breakdown.fuel_type === 'electric'
-                                        ? '⚡ Electric'
+                                        ? 'Electric'
                                         : calculation.breakdown.fuel_type === 'diesel'
-                                        ? '⛽ Diesel'
+                                        ? 'Diesel'
                                         : calculation.breakdown.fuel_type === 'gasoline'
-                                        ? '⛽ Gasoline'
+                                        ? 'Gasoline'
                                         : calculation.breakdown.fuel_type}
                                     </Text>
                                   </HStack>
@@ -864,13 +857,12 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         calculation.breakdown.production_efficiency === 'high'
                                           ? 'semibold'
                                           : 'normal'
-                                      }
-                                    >
+                                      }>
                                       {calculation.breakdown.production_efficiency === 'high'
-                                        ? '⚡ High Efficiency'
+                                        ? 'High Efficiency'
                                         : calculation.breakdown.production_efficiency === 'low'
-                                        ? '⚠️ Low Efficiency'
-                                        : '✓ Normal Efficiency'}
+                                        ? 'Low Efficiency'
+                                        : 'Normal Efficiency'}
                                     </Text>
                                   </HStack>
                                 )}
@@ -888,8 +880,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   bg="blue.50"
                                   borderRadius="md"
                                   borderWidth="1px"
-                                  borderColor="blue.200"
-                                >
+                                  borderColor="blue.200">
                                   <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
                                     Your Application:
                                   </Text>
@@ -985,19 +976,17 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   bg="green.50"
                                   borderRadius="md"
                                   borderWidth="1px"
-                                  borderColor="green.200"
-                                >
+                                  borderColor="green.200">
                                   <Text
                                     fontSize="xs"
                                     fontWeight="semibold"
                                     color="green.700"
-                                    mb={1}
-                                  >
+                                    mb={1}>
                                     Nutrient Content:
                                   </Text>
                                   {calculation.breakdown.npk_content.N > 0 && (
                                     <HStack justify="space-between" fontSize="xs">
-                                      <Text color="green.600">Nitrogen (N):</Text>
+                                      <Text color="green.700">Nitrogen (N):</Text>
                                       <Text color="green.800">
                                         {calculation.breakdown.nitrogen_kg?.toFixed(1) || 'N/A'} kg
                                         applied
@@ -1006,7 +995,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   )}
                                   {calculation.breakdown.npk_content.P > 0 && (
                                     <HStack justify="space-between" fontSize="xs">
-                                      <Text color="green.600">Phosphorus (P):</Text>
+                                      <Text color="green.700">Phosphorus (P):</Text>
                                       <Text color="green.800">
                                         {calculation.breakdown.phosphorus_kg?.toFixed(1) || 'N/A'}{' '}
                                         kg applied
@@ -1015,7 +1004,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   )}
                                   {calculation.breakdown.npk_content.K > 0 && (
                                     <HStack justify="space-between" fontSize="xs">
-                                      <Text color="green.600">Potassium (K):</Text>
+                                      <Text color="green.700">Potassium (K):</Text>
                                       <Text color="green.800">
                                         {calculation.breakdown.potassium_kg?.toFixed(1) || 'N/A'} kg
                                         applied
@@ -1031,8 +1020,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                               bg="orange.50"
                               borderRadius="md"
                               borderWidth="1px"
-                              borderColor="orange.200"
-                            >
+                              borderColor="orange.200">
                               <Text fontSize="xs" fontWeight="semibold" color="orange.700" mb={1}>
                                 Emissions Sources:
                               </Text>
@@ -1296,8 +1284,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             calculation.breakdown.area_emissions < 0
                                               ? 'green.600'
                                               : 'orange.600'
-                                          }
-                                        >
+                                          }>
                                           {calculation.breakdown.area_emissions < 0
                                             ? 'Carbon Sequestration Credit:'
                                             : 'Area-Based Emissions:'}
@@ -1307,8 +1294,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             calculation.breakdown.area_emissions < 0
                                               ? 'green.700'
                                               : 'orange.800'
-                                          }
-                                        >
+                                          }>
                                           {calculation.breakdown.area_emissions.toFixed(2)} kg CO₂e
                                         </Text>
                                       </HStack>
@@ -1319,8 +1305,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             ? 'green.600'
                                             : 'orange.600'
                                         }
-                                        pl={2}
-                                      >
+                                        pl={2}>
                                         • {calculation.breakdown.area_managed?.toFixed(1)}{' '}
                                         {calculation.breakdown.area_unit || 'acres'} ×{' '}
                                         {calculation.breakdown.emission_factor?.toFixed(2)} kg CO₂e/
@@ -1398,11 +1383,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   {calculation.breakdown.production_efficiency === 'high' && (
                                     <Text
                                       fontSize="xs"
-                                      color="green.600"
+                                      color="green.700"
                                       pl={2}
-                                      fontWeight="semibold"
-                                    >
-                                      ⚡ High efficiency operation reduces emissions
+                                      fontWeight="semibold">
+                                      High efficiency operation reduces emissions
                                     </Text>
                                   )}
                                 </VStack>
@@ -1441,21 +1425,19 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                                 <Text
                                                   color={isEcoFriendly ? 'green.600' : 'orange.800'}
                                                   fontWeight={isEcoFriendly ? 'semibold' : 'normal'}
-                                                  textTransform="capitalize"
-                                                >
+                                                  textTransform="capitalize">
                                                   {subtype.replace('_', ' ')}
-                                                  {isOrganic && ' 🌱'}
-                                                  {isBiological && ' 🦠'}
+                                                  {isOrganic && ''}
+                                                  {isBiological && ''}
                                                 </Text>
                                               </HStack>
                                               {calculation.breakdown.note && isEcoFriendly && (
                                                 <Text
                                                   fontSize="xs"
-                                                  color="green.600"
+                                                  color="green.700"
                                                   fontStyle="italic"
-                                                  pl={2}
-                                                >
-                                                  💡 {calculation.breakdown.note}
+                                                  pl={2}>
+                                                  {calculation.breakdown.note}
                                                 </Text>
                                               )}
                                             </>
@@ -1518,14 +1500,13 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                                 ? 'semibold'
                                                 : 'normal'
                                             }
-                                            textTransform="capitalize"
-                                          >
+                                            textTransform="capitalize">
                                             {calculation.breakdown.fertilizer_subtype ===
                                             'slow_release'
                                               ? 'Slow Release'
                                               : calculation.breakdown.fertilizer_subtype}
                                             {calculation.breakdown.fertilizer_subtype ===
-                                              'organic' && ' 🌱'}
+                                              'organic' && ''}
                                           </Text>
                                         </HStack>
                                         {calculation.breakdown.emission_factor_kg_co2_per_kg !=
@@ -1543,11 +1524,10 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         {calculation.breakdown.note && (
                                           <Text
                                             fontSize="xs"
-                                            color="green.600"
+                                            color="green.700"
                                             fontStyle="italic"
-                                            pl={2}
-                                          >
-                                            💡 {calculation.breakdown.note}
+                                            pl={2}>
+                                            {calculation.breakdown.note}
                                           </Text>
                                         )}
                                       </>
@@ -1587,7 +1567,8 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             line is suppressed to avoid unit mismatch. */}
                                         {calculation.breakdown.application_fuel_gallons > 0 &&
                                           (calculation.breakdown.epa_fuel_factor_unit == null ||
-                                            calculation.breakdown.epa_fuel_factor_unit === 'gal') && (
+                                            calculation.breakdown.epa_fuel_factor_unit ===
+                                              'gal') && (
                                             <Text fontSize="xs" color="orange.600" pl={2}>
                                               •{' '}
                                               {calculation.breakdown.application_fuel_gallons.toFixed(
@@ -1625,8 +1606,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                               bg="gray.50"
                               borderRadius="md"
                               borderWidth="1px"
-                              borderColor="gray.200"
-                            >
+                              borderColor="gray.200">
                               <HStack spacing={2}>
                                 <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
                                 <VStack spacing={0} align="start" flex={1}>

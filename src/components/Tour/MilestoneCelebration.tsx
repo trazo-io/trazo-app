@@ -21,8 +21,17 @@ interface MilestoneCelebrationProps {
   milestone: MilestoneDefinition;
   isOpen: boolean;
   onClose: () => void;
-  daysSinceSignup: number;
+  /** `null` = the client has no signup date (see useMilestones) — fall back to the later copy. */
+  daysSinceSignup: number | null;
 }
+
+/**
+ * Day 1–7 copy, but only when we actually know the account is that young. An unknown age is
+ * NOT a young account: the neutral later-stage wording is right for both, while "your journey
+ * has begun" is wrong for an established farm.
+ */
+const isEarlyStage = (daysSinceSignup: number | null): boolean =>
+  daysSinceSignup !== null && daysSinceSignup <= 7;
 
 /**
  * Modal celebration for major milestones (first production finished, first review).
@@ -38,11 +47,11 @@ export const MilestoneCelebrationModal: React.FC<MilestoneCelebrationProps> = ({
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.600', 'gray.400');
   const headingColor = useColorModeValue('gray.900', 'white');
-  const primaryColor = useColorModeValue('green.500', 'green.400');
-  const primaryHover = useColorModeValue('green.600', 'green.300');
+  const primaryColor = useColorModeValue('green.700', 'green.300');
+  const primaryHover = useColorModeValue('green.800', 'green.200');
   const accentBg = useColorModeValue('green.50', 'green.900');
 
-  const isEarly = daysSinceSignup <= 7;
+  const isEarly = isEarlyStage(daysSinceSignup);
   const titleKey = isEarly ? milestone.titleKeyEarly : milestone.titleKeyLate;
   const bodyKey = isEarly ? milestone.bodyKeyEarly : milestone.bodyKeyLate;
 
@@ -117,9 +126,9 @@ export function useMilestoneToast() {
 
   const showToast = (
     milestone: MilestoneDefinition,
-    daysSinceSignup: number
+    daysSinceSignup: number | null
   ) => {
-    const isEarly = daysSinceSignup <= 7;
+    const isEarly = isEarlyStage(daysSinceSignup);
     const titleKey = isEarly ? milestone.titleKeyEarly : milestone.titleKeyLate;
     const bodyKey = isEarly ? milestone.bodyKeyEarly : milestone.bodyKeyLate;
 

@@ -47,10 +47,14 @@ export const WRITER_ITEMS = [
   { id: 'upload-ofpp', dependsOn: undefined }
 ] as const;
 
+// `check-commercial` was here until 2026-08-11. The Commercial dashboard was cut in WS-7 and
+// `/commercial` folded to a redirect to farm home, so the item sent a read-only user to a page
+// that no longer exists and then marked itself complete for having visited the redirect target.
+// Its value (QR scans, comments) moved to the Buyer Page.
 const VIEWER_ITEMS = [
   'browse-parcels',
   'view-production',
-  'check-commercial',
+  'check-buyer-page',
   'explore-education'
 ] as const;
 
@@ -79,8 +83,11 @@ export function resolveWriterCompletion({
   const hasProductions =
     allParcels.some((p: any) => p.has_current_production === true) || productionList.length > 0;
 
-  // transparency_score > 0 implies events exist (the score is calculated from events)
-  const hasEvents = productionList.some((p) => p.transparency_score > 0);
+  // Count events directly. This used to read `transparency_score > 0` as a proxy — a live
+  // dependency on the metric that was retired from every UI surface 2026-08-11 and is now a
+  // backend-only KPI, and one the anti-gaming rules can legitimately hold at 0 for a season
+  // that DOES have events. `events_count` is on the same `carbon/productions-flat/` payload.
+  const hasEvents = productionList.some((p) => (p.events_count ?? 0) > 0);
   const hasFinished = productionList.some((p) => !!p.finish_date);
   const hasPublished = productionList.some((p) => p.published === true);
 
@@ -88,8 +95,21 @@ export function resolveWriterCompletion({
   // is generated per production, so a plan filed on a different farm does not unblock this
   // one's dossier.
   const currentEst = establishments.find((e: any) => e.id?.toString() === farmId);
-  const hasOsp = ((osps as any[]) || []).length > 0;
-  const hasOfpp = currentEst?.fraud_prevention_plan_uploaded === true;
+  // "File your Organic System Plan" — filed, not merely STARTED. This was `osps.length > 0`,
+  // so clicking "Start my OSP" (which POSTs an empty draft shell) ticked the item and moved the
+  // checklist to 6 of 7 while the OSP had 0 of 19 modules answered and the readiness card on the
+  // farm home still read "No Organic System Plan on file". Two surfaces, opposite claims, same
+  // instant — and the one that congratulated the grower was the wrong one. An empty draft is
+  // exactly what this item is asking them to go fill in.
+  const hasOsp = ((osps as any[]) || []).some(
+    (o: any) =>
+      o?.status === 'submitted' || o?.status === 'active' || (o?.section_completion ?? 0) >= 1
+  );
+  // ofpp_on_file = clean upload OR completed OSP module G2.0 (one backend
+  // truth); the raw upload flag alone left this item unchecked forever for
+  // farmers who authored the plan in the module.
+  const hasOfpp =
+    currentEst?.ofpp_on_file === true || currentEst?.fraud_prevention_plan_uploaded === true;
 
   return {
     'add-parcel': hasParcels,
@@ -150,18 +170,12 @@ export function useOnboardingChecklist() {
 
   // Build dynamic links
   const writerLinks = useMemo(() => {
-    const farmPath = farmId
-      ? `/admin/dashboard/farm/${farmId}`
-      : '/admin/dashboard';
-    const parcelPath = firstParcel
-      ? `${farmPath}/parcel/${firstParcel.id}`
-      : farmPath;
+    const farmPath = farmId ? `/admin/dashboard/farm/${farmId}` : '/admin/dashboard';
+    const parcelPath = firstParcel ? `${farmPath}/parcel/${firstParcel.id}` : farmPath;
 
     return {
       'add-parcel': `${farmPath}/parcel/add`,
-      'start-production': firstParcel
-        ? `${parcelPath}/production/add`
-        : farmPath,
+      'start-production': firstParcel ? `${parcelPath}/production/add` : farmPath,
       'document-event': parcelPath,
       'finish-production': parcelPath,
       'share-qr': parcelPath,
@@ -172,13 +186,11 @@ export function useOnboardingChecklist() {
   }, [farmId, firstParcel]);
 
   const viewerLinks = useMemo(() => {
-    const farmPath = farmId
-      ? `/admin/dashboard/farm/${farmId}`
-      : '/admin/dashboard';
+    const farmPath = farmId ? `/admin/dashboard/farm/${farmId}` : '/admin/dashboard';
     return {
       'browse-parcels': farmPath,
       'view-production': farmPath,
-      'check-commercial': `${farmPath}/commercial`,
+      'check-buyer-page': `${farmPath}/buyer`,
       'explore-education': '/admin/dashboard/education'
     };
   }, [farmId]);
@@ -209,18 +221,36 @@ export function useOnboardingChecklist() {
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allComplete = completedCount === totalCount;
 
+  /**
+   * ⚠️ THE 30-DAY EXPIRY IS NOT IN FORCE, and cannot be from here.
+   *
+   * Neither field exists on the payload: `RetrieveCompanySerializer` (company/serializers.py)
+   * ships no `created_at` and no `date_joined`, which is exactly why tsc flagged both reads.
+   * So `createdAt` is always undefined, the guard returns `true`, and the checklist's only
+   * real exits are "all items complete" and "dismissed". Documented rather than removed
+   * because the intended rule is sound — it needs a signup date on the API to work, and until
+   * then pretending it fires would be worse than saying it does not.
+   *
+   * Same missing field, same day: `useMilestones` used to read it and treat "unknown" as
+   * "signed up today".
+   */
   const isNewEnough = useMemo(() => {
-    const createdAt = company?.created_at || company?.date_joined;
+    const createdAt = (company as any)?.created_at || (company as any)?.date_joined;
     if (!createdAt) return true;
-    const daysSince =
-      (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    const daysSince = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24);
     return daysSince <= 30;
   }, [company]);
 
   // Don't show until: company + establishment exist, API data loaded, and company is new enough
   const hasCompany = !!company && !!company.id;
   const hasEstablishments = establishments.length > 0;
-  const isVisible = hasCompany && hasEstablishments && !checklistDismissed && !allComplete && isNewEnough && !isLoadingProductions;
+  const isVisible =
+    hasCompany &&
+    hasEstablishments &&
+    !checklistDismissed &&
+    !allComplete &&
+    isNewEnough &&
+    !isLoadingProductions;
 
   return {
     items,

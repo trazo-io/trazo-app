@@ -41,6 +41,10 @@ import {
   type CertifierAccessLink
 } from 'store/api/certifierLinkApi';
 import OperationReadinessPanel from './OperationReadinessPanel';
+import {
+  ComplianceExportsUpsell,
+  useComplianceExports
+} from 'components/Guards/ComplianceExportsGuard';
 
 interface Props {
   companyId: string;
@@ -113,6 +117,14 @@ const expiryVariant = (expiresAt?: string | null): 'neutral' | 'warning' | 'dang
 };
 
 const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => {
+  // Minting a link is a Compliance artifact; LISTING and REVOKING are not.
+  //
+  // The backend gates `perform_create` only (subscriptions/gating.py), deliberately: if a farm
+  // lapses to Starter it must still be able to see and withdraw links a certifier already holds,
+  // or lapsing strands live tokens the grower can neither view nor revoke. This card therefore
+  // stays mounted on Starter and only its CREATE half is replaced — hiding the whole card would
+  // honour the paywall and break the revocation path in the same stroke.
+  const canMintLinks = useComplianceExports();
   const intl = useIntl();
   const toast = useToast();
   const [label, setLabel] = useState('');
@@ -240,11 +252,13 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
           })}
         </Text>
 
-        {canWrite && (
+        {canWrite && canMintLinks && (
           <OperationReadinessPanel companyId={companyId} farmId={farmId} variant="preshare" />
         )}
 
-        {canWrite && (
+        {canWrite && !canMintLinks && <ComplianceExportsUpsell compact />}
+
+        {canWrite && canMintLinks && (
           <HStack flexDirection={{ base: 'column', smd: 'row' }} gap={2} align="stretch">
             <StandardInput
               size="sm"
@@ -309,7 +323,12 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
           </Text>
         )}
 
-        {!isLoading && activeLinks.length === 0 && (
+        {/* `canMintLinks` guards the empty state too. The copy is an INSTRUCTION — "Create one
+            when your certifier asks for records" — and on Starter it landed directly beneath the
+            note saying creation is part of Compliance, so the card told the farmer to do the one
+            thing it had just told them they could not. The upsell above already explains the
+            empty case; a second, contradictory sentence adds nothing. */}
+        {!isLoading && canMintLinks && activeLinks.length === 0 && (
           <Text fontSize="sm" color="gray.500">
             {intl.formatMessage({
               id: 'certifierLink.empty',
@@ -435,7 +454,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                       as="button"
                       type="button"
                       fontSize="xs"
-                      color="green.600"
+                      color="green.700"
                       fontWeight="medium"
                       onClick={() => setOpenLog(openLog === link.id ? null : link.id)}
                     >

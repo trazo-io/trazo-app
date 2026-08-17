@@ -57,7 +57,8 @@ import {
   FaCloudRain,
   FaClipboardList,
   FaTractor,
-  FaBug
+  FaBug,
+  FaMapMarkerAlt
 } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import { useDeleteEventMutation } from 'store/api/historyApi';
@@ -257,6 +258,20 @@ interface EventDetailsModalProps {
   onEventUpdated?: () => void;
   onEventDeleted?: () => void;
   isProductionFinished?: boolean;
+  /**
+   * Route ids used by Edit and Delete. They default to the CURRENT URL's params, which is
+   * right on the parcel timeline but wrong anywhere the route carries no `:parcelId` — the
+   * establishment Activities calendar spans every parcel, so `useParams()` there yields
+   * `undefined` and Edit would navigate to `/parcel/undefined/event/...`. Callers off the
+   * parcel route pass the ids the row already knows.
+   */
+  farmId?: string;
+  parcelId?: string;
+  /**
+   * Which block this event belongs to. Only worth rendering on a surface that spans more
+   * than one parcel; the parcel timeline already answers it with the page around it.
+   */
+  parcelName?: string;
 }
 
 // Helper functions
@@ -735,7 +750,10 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   members,
   onEventUpdated,
   onEventDeleted,
-  isProductionFinished = false
+  isProductionFinished = false,
+  farmId: farmIdProp,
+  parcelId: parcelIdProp,
+  parcelName
 }) => {
   const intl = useIntl();
   const navigate = useNavigate();
@@ -743,11 +761,14 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   const { canWrite } = useUserRole();
   const { currentCompany } = useSelector((state: RootState) => state.company);
 
-  // Get URL parameters
-  const { farmId, parcelId } = useParams<{
+  // Route ids: an explicit prop wins over the URL, so this modal works on surfaces whose
+  // route has no `:parcelId` (see the prop docs).
+  const { farmId: routeFarmId, parcelId: routeParcelId } = useParams<{
     farmId: string;
     parcelId: string;
   }>();
+  const farmId = farmIdProp ?? routeFarmId;
+  const parcelId = parcelIdProp ?? routeParcelId;
 
   // Theme colors
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -942,6 +963,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                         : new Date(event.date).toLocaleDateString()}
                     </Text>
                   </HStack>
+                  {parcelName && (
+                    <HStack spacing={2}>
+                      <Icon as={FaMapMarkerAlt} boxSize={4} />
+                      <Text>{parcelName}</Text>
+                    </HStack>
+                  )}
                   {operator && (
                     <HStack spacing={2}>
                       <Icon as={FaUser} boxSize={4} />
@@ -1009,7 +1036,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                               : 'This photo was not recognized as agricultural content.'}
                           </Text>
                           <Text color="gray.600" mt={1}>
-                            Replace it with a real field photo to improve your transparency score.
+                            {intl.formatMessage({ id: 'event.photoFlag.replaceWithFieldPhoto' })}
                           </Text>
                         </Box>
                       </Alert>
@@ -1137,16 +1164,23 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                           </Text>
                         </VStack>
                       </HStack>
+                      {/* Copy rewritten 2026-08-11. All four strings told the grower the event
+                          "builds your transparency score" — a number that no longer appears
+                          anywhere in the product, so the advice pointed at nothing. They were
+                          also hardcoded English on a translated screen. Reframed to what the
+                          record is actually for: the certifier reads it. */}
                       <Alert status="info" size="sm" borderRadius="md">
                         <AlertIcon boxSize={3} />
                         <Box>
-                          <AlertTitle fontSize="xs">Transparency Value</AlertTitle>
+                          <AlertTitle fontSize="xs">
+                            {intl.formatMessage({ id: 'event.recordValue.title' })}
+                          </AlertTitle>
                           <AlertDescription fontSize="xs">
                             {event.event_type === 7
-                              ? 'Business activities like certifications and audits build consumer trust. They generate no direct emissions but strengthen your transparency score.'
+                              ? intl.formatMessage({ id: 'event.recordValue.business' })
                               : event.event_type === 3
-                              ? 'General farm activities document agricultural practices. They generate no direct emissions but build your transparency score and enrich the consumer story.'
-                              : 'This event generates no direct emissions but builds your transparency score and enriches the consumer story.'}
+                              ? intl.formatMessage({ id: 'event.recordValue.general' })
+                              : intl.formatMessage({ id: 'event.recordValue.default' })}
                           </AlertDescription>
                         </Box>
                       </Alert>

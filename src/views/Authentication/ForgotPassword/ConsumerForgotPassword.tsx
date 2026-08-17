@@ -34,7 +34,7 @@ const ConsumerForgotPassword: React.FC = () => {
                   Reset Password
                 </Text>
                 <Text fontSize="sm" color="gray.500" maxW="sm" lineHeight="1.6">
-                  Agricultural Transparency Platform
+                  Organic farm recordkeeping
                 </Text>
               </VStack>
             </VStack>

@@ -160,11 +160,39 @@ the field's JSX in the appropriate section:
 </StandardField>
 ```
 
-### Step 7: Done!
+### Step 7: Decide whether the TEMPLATE flow should carry it
+
+Events created from a crop template do **not** go through the form or the serializers. They are
+built in `trazo-back/history/views.py::_create_single_template_event`, one hand-written kwarg
+list per event category.
+
+Until 2026-08-12 that meant a field could pass every step above — model, both serializers,
+migration, types, registry, form, packet — and still be **unreachable from the template flow**,
+which is the path most growers actually use. Measured then: **167 concrete fields across
+production / soil / chemical / pest could not be set from a template.** This document not
+mentioning that file is why nobody noticed.
+
+It is now generic: `_template_extra_fields()` passes through any key that is a concrete,
+editable, non-relation field of that exact model and is not already set explicitly. **So a new
+field needs no code here** — but you do need to decide two things:
+
+1. **Should a template pre-fill it?** Usually **no** for anything factual about the operation.
+   A template that sets `manure_animal_source="poultry"` writes "Chicken" into an audit file
+   for a grower who used cattle. Templates suggest *activities*; they must not assert *facts*.
+   (See the Smart Setup incident: a backdated glyphosate record attributed by name.)
+2. **Does it need a server-side default?** Every branch passes `backend_fields.get("x")`, so an
+   omitted key arrives as `None`. `_drop_nulls_over_model_defaults()` now hands NOT NULL columns
+   back to their model default — before it existed, one such column
+   (`transportation_unit`, null=False default="miles") failed the insert, and because
+   `_create_template_events` swallows per-event errors, **639 of 1029 seeded templates created
+   no event at all, silently.**
+
+### Step 8: Done!
 
 The field now appears on:
 - **Display surfaces** (modal, card, timeline, consumer QR) — automatically from registry
 - **Form surfaces** (create/edit) — via the JSX you added in Step 6
+- **Template-created events** — automatically, if a template carries the key (Step 7)
 
 ## Architecture: Why forms stay hand-crafted
 

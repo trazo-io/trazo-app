@@ -76,7 +76,7 @@ const Reviews = () => {
                   <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
                     {intl.formatMessage({ id: 'app.positiveReviews' })}
                   </Text>
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.600" fontWeight="semibold">
+                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="green.700" fontWeight="semibold">
                     {reviewsPercentage?.positive || 0}%
                   </Text>
                 </Flex>

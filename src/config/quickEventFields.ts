@@ -975,7 +975,7 @@ export const equipmentMaintenanceFields: QuickEventTypeConfig = {
       placeholderKey: 'app.inspectedByPlaceholder',
       showIf: (values: Record<string, unknown>) => values.equipment_operation_type === 'cleaning',
       advanced: true
-    },
+    }
     // Note: Observation field is handled by QuickAddEvent.tsx "Additional Observations" section
   ]
 };
@@ -1926,20 +1926,46 @@ export const organicSeedSourcingFields: QuickEventTypeConfig = {
   eventType: 'PL', // Planting subtype
   quickFields: [
     {
+      // 🔴 2026-08-15. This template was UNSAVEABLE. It defaulted `seeds_source` to
+      // 'certified_organic' — a value DELETED from the enum by migration 0152, because it is
+      // a regulatory status and not a source — so picking this accelerator and pressing save
+      // returned 400 {"seeds_source": ["\"certified_organic\" is not a valid choice."]}.
+      // 'untreated_conventional' was never a backend choice either. The status now lives in
+      // its own field below, which is where the certifier packet reads it from.
       name: 'seeds_source',
       type: 'select',
       labelKey: 'app.organicSeedSource',
       helpKey: 'app.organicSeedSourceHelp',
-      default: 'certified_organic',
+      default: 'commercial',
       required: true,
       options: [
-        { value: 'certified_organic', labelKey: 'app.seedSource.certifiedOrganic' },
-        { value: 'untreated_conventional', labelKey: 'app.seedSource.untreatedConventional' },
-        { value: 'farm_saved', labelKey: 'app.seedSource.farmSaved' }
+        { value: 'commercial', labelKey: 'app.seedSource.commercial' },
+        { value: 'local', labelKey: 'app.seedSource.local' },
+        { value: 'cooperative', labelKey: 'app.seedSource.cooperative' },
+        { value: 'farm_saved', labelKey: 'app.seedSource.farmSaved' },
+        { value: 'other', labelKey: 'app.seedSource.other' }
       ]
     },
     {
-      name: 'seed_supplier',
+      // The regulatory classification the OSP prefill and the packet actually read.
+      name: 'seed_certification_status',
+      type: 'select',
+      labelKey: 'app.seedCertificationStatus',
+      helpKey: 'app.seedCertificationStatusHelp',
+      default: 'certified_organic',
+      required: true,
+      options: [
+        { value: 'certified_organic', labelKey: 'app.seedCertStatus.certifiedOrganic' },
+        { value: 'transitional', labelKey: 'app.seedCertStatus.transitional' },
+        { value: 'non_organic_untreated', labelKey: 'app.seedCertStatus.nonOrganicUntreated' },
+        { value: 'non_organic_treated', labelKey: 'app.seedCertStatus.nonOrganicTreated' }
+      ]
+    },
+    {
+      // Was `seed_supplier`: not a model column and not in EXTRA_DATA_FIELDS, so DRF
+      // accepted the payload and silently discarded the value. The column is
+      // `seed_supplier_name`, which is what the packet's traceability table prints.
+      name: 'seed_supplier_name',
       type: 'text',
       labelKey: 'app.seedSupplier',
       helpKey: 'app.seedSupplierHelp',
@@ -1947,7 +1973,9 @@ export const organicSeedSourcingFields: QuickEventTypeConfig = {
       required: true
     },
     {
-      name: 'seed_variety',
+      // Was `seed_variety` — silently discarded for the same reason. The column on
+      // CommonEvent is `variety`.
+      name: 'variety',
       type: 'text',
       labelKey: 'app.seedVariety',
       helpKey: 'app.seedVarietyHelp',
@@ -1960,23 +1988,24 @@ export const organicSeedSourcingFields: QuickEventTypeConfig = {
       helpKey: 'app.seedLotNumberHelp',
       placeholderKey: 'app.seedLotNumberPlaceholder'
     },
+    // `organic_certificate_number` removed 2026-08-15: it has no model column and is not in
+    // the extra_data allow-list, so it was collected from the grower and thrown away. The
+    // supplier's organic certificate belongs with the supplier record, not on one planting.
     {
-      name: 'organic_certificate_number',
-      type: 'text',
-      labelKey: 'app.organicCertificateNumber',
-      helpKey: 'app.organicCertificateNumberHelp',
-      placeholderKey: 'app.organicCertificateNumberPlaceholder',
-      showIf: (values: Record<string, unknown>) => values.seeds_source === 'certified_organic'
-    },
-    {
-      name: 'treated_or_untreated',
+      // Was `treated_or_untreated` with values that matched no backend enum — discarded.
+      // `seed_treatment_allowed_basis` is the real column and carries the § 205.204(a)(2)
+      // allowability basis the certifier packet prints under "Allowed Because".
+      name: 'seed_treatment_allowed_basis',
       type: 'select',
       labelKey: 'app.seedTreatment',
       helpKey: 'app.seedTreatmentHelp',
       default: 'untreated',
       options: [
-        { value: 'untreated', labelKey: 'app.seedTreatment.untreated' },
-        { value: 'organically_treated', labelKey: 'app.seedTreatment.organicallyTreated' }
+        { value: 'untreated', labelKey: 'app.seedTreatmentBasis.untreated' },
+        { value: 'omri_listed', labelKey: 'app.seedTreatmentBasis.omriListed' },
+        { value: 'national_list', labelKey: 'app.seedTreatmentBasis.nationalList' },
+        { value: 'certifier_approved', labelKey: 'app.seedTreatmentBasis.certifierApproved' },
+        { value: 'organic_seed', labelKey: 'app.seedTreatmentBasis.organicSeed' }
       ]
     },
     // Area covered for carbon calculation

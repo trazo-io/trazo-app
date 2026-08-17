@@ -13,9 +13,10 @@ const ChangePassword: React.FC = () => {
       title="Security Settings"
       description="Manage your account security and password"
       showBackButton
+      contentMaxW="xl"
       onBack={() => navigate(-1)}
     >
-      <Box maxW="xl" mx="auto" py={8}>
+      <Box py={8}>
         {/* Security Header */}
         <Box mb={8} textAlign="center">
           <HStack justify="center" mb={4}>

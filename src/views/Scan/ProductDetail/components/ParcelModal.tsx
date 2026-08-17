@@ -85,7 +85,6 @@ const formatDisplayValue = (value: string | undefined | null): string => {
     .join(' ');
 };
 
-
 interface ParcelModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -130,7 +129,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
-  const accentColor = useColorModeValue('green.500', 'green.400');
+  const accentColor = useColorModeValue('green.700', 'green.300');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
   const iconBg = useColorModeValue('green.50', 'green.900');
   const currentProdBg = useColorModeValue('blue.50', 'blue.900');
@@ -165,8 +164,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
             fontSize="xs"
             px={2}
             py={1}
-            borderRadius="full"
-          >
+            borderRadius="full">
             {parcelData.area} {parcelData.areaUnit || 'hectares'}
           </Badge>
         </HStack>
@@ -213,9 +211,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                     defaultMessage: 'Completed Productions'
                   })}
                 </StatLabel>
-                <StatNumber color={accentColor}>
-                  {parcelData.productions_completed}
-                </StatNumber>
+                <StatNumber color={accentColor}>{parcelData.productions_completed}</StatNumber>
               </Stat>
             )}
             {parcelData.total_productions !== undefined && (
@@ -233,8 +229,10 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
               <Stat>
                 <StatLabel color="gray.500">
                   {intl.formatMessage({
+                    // "Establishment" is internal vocabulary and this is a SHOPPER-facing
+                    // modal — the label is "Farm". Key left alone (model name).
                     id: 'consumer.modal.establishment',
-                    defaultMessage: 'Establishment'
+                    defaultMessage: 'Farm'
                   })}
                 </StatLabel>
                 <StatNumber color={accentColor} fontSize="md">
@@ -294,12 +292,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
 
       {/* Current Production */}
       {parcelData.current_history && (
-        <Card
-          bg={currentProdBg}
-          borderRadius="lg"
-          border="1px"
-          borderColor="blue.200"
-        >
+        <Card bg={currentProdBg} borderRadius="lg" border="1px" borderColor="blue.200">
           <CardBody p={6}>
             <HStack mb={3}>
               <Icon as={FaSeedling} color="blue.500" />
@@ -330,8 +323,7 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
               <HStack>
                 <Icon as={FaCalendarAlt} color="blue.500" />
                 <Text color="blue.600" fontSize="sm">
-                  Started:{' '}
-                  {formatDateFromTimestamp(parcelData.current_history.start_date)}
+                  Started: {formatDateFromTimestamp(parcelData.current_history.start_date)}
                 </Text>
               </HStack>
             </VStack>
@@ -375,7 +367,10 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
                   <Icon as={FaMapMarkerAlt} color={accentColor} flexShrink={0} />
                   <Text color={textColor}>
                     <Text as="span" fontWeight="medium">
-                      {intl.formatMessage({ id: 'consumer.modal.locationColon', defaultMessage: 'Location:' })}
+                      {intl.formatMessage({
+                        id: 'consumer.modal.locationColon',
+                        defaultMessage: 'Location:'
+                      })}
                     </Text>{' '}
                     {parcelData.establishment.location}
                   </Text>
@@ -392,65 +387,63 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
           This information should only be available to authenticated users with proper permissions. */}
 
       {/* Production History Summary */}
-      {parcelData.productions_completed !== undefined &&
-        parcelData.productions_completed > 0 && (
-          <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-            <CardBody p={6}>
-              <Heading size="md" color={textColor} mb={4}>
-                <HStack>
-                  <Icon as={FaTree} color={accentColor} />
-                  <Text>
-                    {intl.formatMessage({
-                      id: 'consumer.modal.productionHistory',
-                      defaultMessage: 'Production History'
-                    })}
-                  </Text>
-                </HStack>
-              </Heading>
-              <VStack spacing={3} align="stretch">
+      {parcelData.productions_completed !== undefined && parcelData.productions_completed > 0 && (
+        <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+          <CardBody p={6}>
+            <Heading size="md" color={textColor} mb={4}>
+              <HStack>
+                <Icon as={FaTree} color={accentColor} />
+                <Text>
+                  {intl.formatMessage({
+                    id: 'consumer.modal.productionHistory',
+                    defaultMessage: 'Production History'
+                  })}
+                </Text>
+              </HStack>
+            </Heading>
+            <VStack spacing={3} align="stretch">
+              <HStack justify="space-between">
+                <Text color="gray.500">
+                  {intl.formatMessage({
+                    id: 'consumer.modal.completedProductionsThisYear',
+                    defaultMessage: 'Completed Productions This Year:'
+                  })}
+                </Text>
+                <Badge colorScheme="green" variant="subtle" px={3} py={1}>
+                  {parcelData.productions_completed}
+                </Badge>
+              </HStack>
+              {parcelData.total_productions !== undefined && (
                 <HStack justify="space-between">
                   <Text color="gray.500">
                     {intl.formatMessage({
-                      id: 'consumer.modal.completedProductionsThisYear',
-                      defaultMessage: 'Completed Productions This Year:'
+                      id: 'consumer.modal.totalProductionsColon',
+                      defaultMessage: 'Total Productions:'
                     })}
                   </Text>
-                  <Badge colorScheme="green" variant="subtle" px={3} py={1}>
-                    {parcelData.productions_completed}
+                  <Badge colorScheme="blue" variant="subtle" px={3} py={1}>
+                    {parcelData.total_productions}
                   </Badge>
                 </HStack>
-                {parcelData.total_productions !== undefined && (
-                  <HStack justify="space-between">
-                    <Text color="gray.500">
-                      {intl.formatMessage({
-                        id: 'consumer.modal.totalProductionsColon',
-                        defaultMessage: 'Total Productions:'
-                      })}
-                    </Text>
-                    <Badge colorScheme="blue" variant="subtle" px={3} py={1}>
-                      {parcelData.total_productions}
-                    </Badge>
-                  </HStack>
-                )}
-                <Progress
-                  value={
-                    (parcelData.productions_completed / (parcelData.total_productions || 1)) *
-                    100
-                  }
-                  colorScheme="green"
-                  size="sm"
-                  borderRadius="full"
-                />
-                <Text color="gray.500" fontSize="sm" textAlign="center">
-                  {intl.formatMessage({
-                    id: 'consumer.modal.productionActivityLevel',
-                    defaultMessage: 'Production Activity Level'
-                  })}
-                </Text>
-              </VStack>
-            </CardBody>
-          </Card>
-        )}
+              )}
+              <Progress
+                value={
+                  (parcelData.productions_completed / (parcelData.total_productions || 1)) * 100
+                }
+                colorScheme="green"
+                size="sm"
+                borderRadius="full"
+              />
+              <Text color="gray.500" fontSize="sm" textAlign="center">
+                {intl.formatMessage({
+                  id: 'consumer.modal.productionActivityLevel',
+                  defaultMessage: 'Production Activity Level'
+                })}
+              </Text>
+            </VStack>
+          </CardBody>
+        </Card>
+      )}
 
       {/* Images Gallery */}
       <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
@@ -483,15 +476,15 @@ export const ParcelModal: React.FC<ParcelModalProps> = ({ isOpen, onClose, parce
           bg={bgColor}
           borderTopRadius="2xl"
           maxH="82vh"
-          containerProps={{ style: { zIndex: 10000 } }}
-        >
+          containerProps={{ style: { zIndex: 10000 } }}>
           {/* Drag handle - swipe down to dismiss */}
           <Box
-            pt={3} pb={1}
-            display="flex" justifyContent="center"
+            pt={3}
+            pb={1}
+            display="flex"
+            justifyContent="center"
             cursor="grab"
-            {...swipeHandlers}
-          >
+            {...swipeHandlers}>
             <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
           </Box>
           <DrawerCloseButton top={4} />

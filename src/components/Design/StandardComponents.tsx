@@ -36,8 +36,14 @@ import {
   Image,
   CloseButton,
   Collapse,
-  useDisclosure
+  useDisclosure,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel
 } from '@chakra-ui/react';
+import type { ButtonProps } from '@chakra-ui/react';
 import { S3Image } from '../Media/S3Image';
 import { ReactNode, ReactElement, useState, useEffect, useCallback } from 'react';
 import {
@@ -51,7 +57,8 @@ import {
   FaCamera,
   FaTimes,
   FaTrash,
-  FaEye
+  FaEye,
+  FaSearch
 } from 'react-icons/fa';
 import { MdCheck, MdError, MdInfo, MdWarning } from 'react-icons/md';
 import { IconType } from 'react-icons';
@@ -65,11 +72,36 @@ import CardHeader from 'components/Card/CardHeader';
 interface StandardPageProps {
   children: ReactNode;
   title?: string;
-  description?: string;
+  /** ReactNode, not string: `intl.formatMessage` is typed as `string | ReactNode[]` (it can
+      return rich-text chunks), so every i18n'd page description reported TS2322 against a
+      `string`. FormLabel/Text render either. */
+  description?: ReactNode;
   showBackButton?: boolean;
   onBack?: () => void;
   rightAction?: ReactNode;
+  /**
+   * NARROWS the page's column. Omit it — every page shares `PAGE_MAX_W` below, applied to the
+   * header and the body together so they can never sit on different grids.
+   *
+   * Pass a narrower token only for a genuinely narrow page: a reading column (`3xl` FAQ) or a
+   * single-column form (`xl` change-password, `4xl` OSP module). Never pass a WIDER one — that
+   * re-creates the two-widths problem this exists to prevent, and never set `maxW` on your own
+   * content either (that is what left titles floating ~140px from their own cards).
+   */
+  contentMaxW?: string;
 }
+
+/**
+ * ONE column for every page. The hero, the back button and the body all use it, so a page
+ * can never end up with its title on a different grid from its content.
+ *
+ * 8xl = 1440px. MEASURED: an 1800px window leaves 1465px of content area once the sidebar
+ * and gutters are taken out, so the cap trims ~16px a side — effectively full width on a
+ * laptop. It only really bites on an ultrawide, which is the point: tables and card grids
+ * stop stretching. Override `contentMaxW` ONLY for a genuinely narrow page — a single-column
+ * form or a reading column — never to "make this one wider".
+ */
+const PAGE_MAX_W = '8xl';
 
 export const StandardPage = ({
   children,
@@ -77,9 +109,10 @@ export const StandardPage = ({
   description,
   showBackButton = false,
   onBack,
-  rightAction
+  rightAction,
+  contentMaxW
 }: StandardPageProps) => {
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
+  const bgColor = useColorModeValue('surface.canvas', 'gray.900');
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Determine if we need the full hero or just a minimal header
@@ -91,27 +124,42 @@ export const StandardPage = ({
       {/* Minimal Header - Just back button, aligned with content */}
       {needsMinimalHeader && (
         <Box
-          bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
+          bg="linear-gradient(135deg, #FAFAFA 0%, #F8F9FA 100%)"
           pt={{ base: '120px', md: '120px' }}
           pb="24px"
-          px={{ base: 3, md: 6 }}
-        >
-          <Button variant="outline" leftIcon={<FaChevronLeft />} onClick={onBack} size="sm">
-            Back
-          </Button>
+          // Third gutter in the same component, now the same as the hero's and the body's.
+          // The Container matches too, so on a page that constrains its content the Back
+          // button lands on that column instead of out at the window edge.
+          px={{ base: 3, md: 4 }}>
+          <Container maxW={contentMaxW || PAGE_MAX_W} mx="auto" px={0}>
+            <Button
+              variant="outline"
+              leftIcon={<FaChevronLeft />}
+              onClick={onBack}
+              size="sm"
+              minH="44px">
+              Back
+            </Button>
+          </Container>
         </Box>
       )}
 
       {/* Full Hero Header Section - With title */}
       {hasHeroContent && (
         <Box
-          bg="linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%)"
+          bg="linear-gradient(135deg, #FAFAFA 0%, #F8F9FA 100%)"
           pt={{ base: '120px', md: '120px' }}
           pb={{ base: '64px', md: '80px' }}
-          px={{ base: 3, md: 4 }}
-        >
-          <Container maxW="6xl" mx="auto">
-            <VStack spacing={4} textAlign={{ base: 'left', md: 'center' }}>
+          px={{ base: 3, md: 4 }}>
+          {/* The hero NEVER has a width of its own: it takes `contentMaxW`, so it is capped
+              exactly where the body is capped, and runs full width when the body does.
+              Defaulting this to '6xl' while the content below defaulted to unconstrained is
+              what put every page's title up to ~140px inside its own content — invisible at
+              1440 (the cap does not bite yet) and obvious on a 1800px screen.
+              px={0}: the gutter is the wrapping Box's padding and nothing else. Chakra's
+              Container adds 16px of its own by default, which the content Container zeroes. */}
+          <Container maxW={contentMaxW || PAGE_MAX_W} mx="auto" px={0}>
+            <VStack spacing={4} textAlign="left" align="stretch">
               {isMobile ? (
                 // Mobile: Compact left-aligned header
                 <VStack spacing={3} w="full" align="flex-start">
@@ -121,8 +169,8 @@ export const StandardPage = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={onBack}
                       size="sm"
-                      mb={1}
-                    >
+                      minH="44px"
+                      mb={1}>
                       Back
                     </Button>
                   )}
@@ -131,11 +179,10 @@ export const StandardPage = ({
                     <Heading
                       as="h1"
                       size="lg"
-                      color="green.600"
+                      color="green.700"
                       fontWeight="bold"
                       letterSpacing="-0.02em"
-                      w="full"
-                    >
+                      w="full">
                       {title}
                     </Heading>
                   )}
@@ -148,54 +195,61 @@ export const StandardPage = ({
                   {rightAction && <Box>{rightAction}</Box>}
                 </VStack>
               ) : (
-                // Desktop: Original horizontal layout
-                <Flex
-                  direction="row"
-                  align="center"
-                  gap={4}
-                  w="full"
-                  justify={showBackButton ? 'space-between' : 'center'}
-                >
+                // Desktop.
+                //
+                // LEFT-ALIGNED, not centred. The header used to centre its title and description
+                // while every page body underneath it is left-aligned, so each page opened with a
+                // large centred banner sitting on top of a left-aligned column — two different
+                // documents stacked. Centring also made the title's position depend on its
+                // neighbours: `flex={1}` between an optional Back button and an optional right
+                // action meant the same heading landed in a different place on two pages purely
+                // because one of them had an extra button.
+                //
+                // Back sits on its own row above the title (its target is "the page you came
+                // from", not the title), and the right action stays opposite the title.
+                <VStack spacing={3} w="full" align="stretch">
                   {showBackButton && (
-                    <Button
-                      variant="outline"
-                      leftIcon={<FaChevronLeft />}
-                      onClick={onBack}
-                      size="sm"
-                    >
-                      Back
-                    </Button>
+                    <Box>
+                      <Button
+                        variant="outline"
+                        leftIcon={<FaChevronLeft />}
+                        onClick={onBack}
+                        size="sm"
+                        minH="44px">
+                        Back
+                      </Button>
+                    </Box>
                   )}
 
-                  <VStack spacing={2} flex={1}>
-                    {title && (
-                      <Heading
-                        as="h1"
-                        size="2xl"
-                        color="green.600"
-                        fontWeight="bold"
-                        textAlign="center"
-                        letterSpacing="-0.02em"
-                      >
-                        {title}
-                      </Heading>
-                    )}
-                    {description && (
-                      <Text
-                        fontSize="lg"
-                        color="gray.600"
-                        fontWeight="normal"
-                        maxW="70%"
-                        lineHeight="1.7"
-                        textAlign="center"
-                      >
-                        {description}
-                      </Text>
-                    )}
-                  </VStack>
+                  <Flex direction="row" align="center" gap={4} w="full" justify="space-between">
+                    <VStack spacing={2} align="flex-start" flex={1} minW={0}>
+                      {title && (
+                        <Heading
+                          as="h1"
+                          size="2xl"
+                          color="green.700"
+                          fontWeight="bold"
+                          textAlign="left"
+                          letterSpacing="-0.02em">
+                          {title}
+                        </Heading>
+                      )}
+                      {description && (
+                        <Text
+                          fontSize="lg"
+                          color="gray.600"
+                          fontWeight="normal"
+                          maxW="70ch"
+                          lineHeight="1.7"
+                          textAlign="left">
+                          {description}
+                        </Text>
+                      )}
+                    </VStack>
 
-                  {rightAction && <Box>{rightAction}</Box>}
-                </Flex>
+                    {rightAction && <Box flexShrink={0}>{rightAction}</Box>}
+                  </Flex>
+                </VStack>
               )}
             </VStack>
           </Container>
@@ -208,12 +262,18 @@ export const StandardPage = ({
       {/* Main Content with Overlapping Card Design - Match producer app spacing */}
       <Box
         w="100%"
-        px={{ base: 2, md: 6 }}
+        // SAME gutter as the hero above (that Box uses `px={{ base: 3, md: 4 }}`). They used
+        // to differ by 8px, so a page's title and its content sat on two grids that almost
+        // lined up — the worst kind, since it reads as a mistake rather than a margin.
+        px={{ base: 3, md: 4 }}
         mt={needsMinimalHeader ? '16px' : hasHeroContent ? '-40px' : '0'}
         position="relative"
-        zIndex={10}
-      >
-        {children}
+        zIndex={10}>
+        {/* Only constrained when the page asks for it — see `contentMaxW`. Left unconstrained by
+            default so the wide table pages keep the full width they use today. */}
+        <Container maxW={contentMaxW || PAGE_MAX_W} mx="auto" px={0}>
+          {children}
+        </Container>
       </Box>
     </Box>
   );
@@ -246,7 +306,12 @@ interface StandardCardProps {
    * not drive-by changes.
    */
   variant?: 'elevated' | 'flat' | 'outline';
-  padding?: string | object;
+  /**
+   * Horizontal padding, forwarded to CardBody's `px`. Chakra spacing tokens are NUMBERS
+   * (`padding={3}` = 12px), which the old `string | object` type rejected — 6 callers were
+   * passing numbers against it, unnoticed because the typecheck gate does not run.
+   */
+  padding?: string | number | object;
   /**
    * Bottom margin. Defaults to 6 (24px) to preserve the spacing every existing
    * caller was built against. Pass 0 when the card sits inside a VStack that
@@ -295,8 +360,7 @@ export const StandardCard = ({
             justify="space-between"
             align={{ base: 'flex-start', md: 'center' }}
             gap={2}
-            w="100%"
-          >
+            w="100%">
             <VStack align="start" spacing={1} flexShrink={0}>
               {title && (
                 <Heading as="h3" size={{ base: 'sm', md: 'md' }} color="gray.700">
@@ -351,10 +415,11 @@ export const StandardStepper = ({
 
   // Adjust spacing and sizing based on number of steps
   const manySteps = steps.length > 6;
-  const spacing = manySteps ? { base: 2, md: 3 } : { base: 3, md: 6 };
+  const spacing = manySteps ? { base: 2, md: 3 } : { base: 2, md: 6 };
   const circleSize = manySteps ? { base: '32px', md: '40px' } : { base: '36px', md: '44px' };
   const iconSize = manySteps ? '16px' : '18px';
-  const titleFontSize = manySteps ? { base: '2xs', md: 'xs' } : { base: 'xs', md: 'sm' };
+  // 'xs' (12px) is the floor — '2xs' is 10px and below the project's minimum text size.
+  const titleFontSize = manySteps ? 'xs' : { base: 'xs', md: 'sm' };
 
   return (
     <StandardCard padding={{ base: 2, md: 6 }}>
@@ -362,13 +427,12 @@ export const StandardStepper = ({
         <HStack
           spacing={spacing}
           justify="center"
-          align="center"
+          align="flex-start"
           w={manySteps ? 'max-content' : '100%'}
           minW="100%"
           maxW={manySteps ? 'none' : '800px'}
           mx="auto"
-          px={{ base: 6, md: manySteps ? 4 : 0 }}
-        >
+          px={{ base: 2, md: manySteps ? 4 : 0 }}>
           {steps.map((step, index) => (
             <React.Fragment key={index}>
               <VStack
@@ -379,8 +443,7 @@ export const StandardStepper = ({
                 cursor={allowStepClick && index <= currentStep ? 'pointer' : 'default'}
                 onClick={() => allowStepClick && index <= currentStep && onStepClick?.(index)}
                 _hover={allowStepClick && index <= currentStep ? { opacity: 0.8 } : {}}
-                transition="all 0.3s ease"
-              >
+                transition="all 0.3s ease">
                 <Circle
                   size={circleSize}
                   bg={
@@ -394,8 +457,7 @@ export const StandardStepper = ({
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="bold"
                   boxShadow={index === currentStep ? 'lg' : 'md'}
-                  transition="all 0.3s"
-                >
+                  transition="all 0.3s">
                   {completedSteps.includes(index) || index < currentStep ? (
                     <Icon as={step.icon || FaCheckCircle} boxSize={iconSize} />
                   ) : (
@@ -403,17 +465,36 @@ export const StandardStepper = ({
                   )}
                 </Circle>
                 <VStack spacing={1} align="center">
+                  {/* A step label is wayfinding, not user data — never ellipsis it.
+                      "Event Deta…" tells the farmer less than the step number does.
+                      Pass an explicit `shortTitle` when a step name is too long for a
+                      phone column; it applies BELOW `md` only, so the full name still
+                      shows wherever there is room for it. NOTE: `maxW: 'auto'` is invalid
+                      CSS (only min-width takes `auto`), so the old responsive object
+                      silently left the 80px smd cap in force on desktop. Swapping the two
+                      spans by `display` rather than a breakpoint hook keeps it flash-free,
+                      and a `display: none` span is not announced, so no double-read. */}
                   <Text
                     fontSize={titleFontSize}
                     fontWeight="bold"
                     color={index <= currentStep ? 'green.500' : 'gray.500'}
                     textAlign="center"
                     lineHeight="1.2"
-                    noOfLines={1}
-                    maxW={manySteps ? '70px' : { base: '64px', smd: '80px', md: 'auto' }}
-                    isTruncated
-                  >
-                    {step.shortTitle || step.title}
+                    whiteSpace="normal"
+                    noOfLines={2}
+                    maxW={manySteps ? '80px' : { base: '84px', smd: '110px', md: 'none' }}>
+                    {step.shortTitle ? (
+                      <>
+                        <Box as="span" display={{ base: 'inline', md: 'none' }}>
+                          {step.shortTitle}
+                        </Box>
+                        <Box as="span" display={{ base: 'none', md: 'inline' }}>
+                          {step.title}
+                        </Box>
+                      </>
+                    ) : (
+                      step.title
+                    )}
                   </Text>
                   {step.description && !manySteps && (
                     <Text
@@ -421,29 +502,257 @@ export const StandardStepper = ({
                       color="gray.500"
                       textAlign="center"
                       display={{ base: 'none', md: 'block' }}
-                      lineHeight="1.2"
-                    >
+                      lineHeight="1.2">
                       {step.description}
                     </Text>
                   )}
                 </VStack>
               </VStack>
               {index < steps.length - 1 && (
-                <Box
-                  height="3px"
-                  flex={manySteps ? '0 0 40px' : '1'}
+                // Columns align at the top (see HStack align) so a two-line label can't
+                // shove its circle off the connector. The connector therefore carries the
+                // circle's own height and centres its rule inside it — margin offsets do
+                // not work here, Stack's `& > * ~ *` spacing rule outranks a child's mt.
+                // It must NOT take an equal `flex: 1` share on a phone: with 4 steps that
+                // gave the rules as much width as the labels and squeezed every column to
+                // 36px. The connector earns its stretch only once there is room for it.
+                <Flex
+                  flex={manySteps ? '0 0 40px' : { base: '0 1 16px', md: '1' }}
                   w={manySteps ? '40px' : 'auto'}
-                  bg={index < currentStep ? 'green.500' : 'gray.200'}
-                  borderRadius="full"
-                  mx={{ base: 1, md: 2 }}
-                  transition="all 0.3s"
-                />
+                  h={circleSize}
+                  align="center"
+                  mx={{ base: 0.5, md: 2 }}>
+                  <Box
+                    height="3px"
+                    w="100%"
+                    bg={index < currentStep ? 'green.500' : 'gray.200'}
+                    borderRadius="full"
+                    transition="all 0.3s"
+                  />
+                </Flex>
               )}
             </React.Fragment>
           ))}
         </HStack>
       </Box>
     </StandardCard>
+  );
+};
+
+// Section tabs — for a record whose parts are INDEPENDENT and saved as you go
+// (a certifier form's lettered sections), as opposed to StandardStepper, which promises a
+// linear order ending in one submit. Two rules this encodes:
+//   1. Selection is never signalled by colour alone (WCAG 1.4.1) — the active tab also
+//      carries a weight change and an underline, and Chakra sets aria-selected.
+//   2. A section-based record must answer "where am I NOT done" from the nav itself, so a
+//      tab shows its own completion, not just the document's.
+
+// Segmented control — pick ONE of a few views of the SAME content (calendar vs list, team
+// vs company). One track, the selected half lifted out in white. Distinct from
+// StandardSectionTabs, which navigates between DIFFERENT sections of a record.
+//
+// `aria-pressed` toggles rather than a radiogroup: a radiogroup promises arrow-key
+// navigation with a roving tabindex, and announcing a contract the widget does not honour
+// is worse than the plainer one that is exactly true.
+
+interface SegmentedOption<T extends string> {
+  key: T;
+  label: string;
+  /** Optional leading glyph. Decorative — the label already names the segment. */
+  icon?: IconType;
+}
+
+/**
+ * Generic over the key union so `onChange` hands back `'calendar' | 'list'`, not `string` —
+ * a `(key: string) => void` prop cannot take a `useState<'calendar' | 'list'>` setter, which
+ * forced one call site to cast and let the other pass an unsound setter unnoticed (the
+ * typecheck gate does not run — see frontend-typecheck-gate-dead).
+ */
+interface StandardSegmentedControlProps<T extends string> {
+  options: SegmentedOption<T>[];
+  /** Key of the active option. */
+  value: T;
+  onChange: (key: T) => void;
+  /** Names the group for screen readers, e.g. "View mode". */
+  ariaLabel: string;
+  /** Stretch the segments to fill the row below `smd` (a phone-width toolbar). */
+  stretchOnMobile?: boolean;
+}
+
+export const StandardSegmentedControl = <T extends string>({
+  options,
+  value,
+  onChange,
+  ariaLabel,
+  stretchOnMobile = true
+}: StandardSegmentedControlProps<T>) => (
+  <HStack
+    spacing={0}
+    role="group"
+    aria-label={ariaLabel}
+    bg="gray.100"
+    borderRadius="xl"
+    p="2px"
+    // The track must HUG its segments, otherwise it paints grey dead space across the rest
+    // of the row. It only spans the full width where the segments stretch to fill it.
+    w={{ base: stretchOnMobile ? 'full' : 'fit-content', smd: 'fit-content' }}
+    alignSelf={{ base: stretchOnMobile ? 'stretch' : 'flex-start', smd: 'center' }}
+    flexShrink={0}>
+    {options.map((option) => {
+      const isSelected = option.key === value;
+      return (
+        <Button
+          key={option.key}
+          aria-pressed={isSelected}
+          onClick={() => onChange(option.key)}
+          minH="44px"
+          flex={{ base: stretchOnMobile ? 1 : 'none', smd: 'none' }}
+          px={{ base: 3, md: 4 }}
+          size="sm"
+          borderRadius="lg"
+          fontWeight={isSelected ? 'semibold' : 'medium'}
+          color={isSelected ? 'green.700' : 'gray.600'}
+          bg={isSelected ? 'white' : 'transparent'}
+          boxShadow={isSelected ? 'sm' : 'none'}
+          _hover={{ bg: isSelected ? 'white' : 'gray.200' }}
+          leftIcon={option.icon ? <Icon as={option.icon} /> : undefined}>
+          {option.label}
+        </Button>
+      );
+    })}
+  </HStack>
+);
+
+export type SectionTabStatus = 'complete' | 'incomplete' | 'none';
+
+interface SectionTab {
+  key: string;
+  label: string;
+  /** 'none' = this section has nothing to satisfy, so it is never marked incomplete. */
+  status: SectionTabStatus;
+  /** Full-words status for screen readers — i18n belongs to the caller. */
+  statusLabel?: string;
+  /** Optional leading glyph. Decorative — the label already names the tab. */
+  icon?: IconType;
+}
+
+interface StandardSectionTabsProps {
+  tabs: SectionTab[];
+  activeIndex: number;
+  onChange: (index: number) => void;
+  /** Names the tablist for screen readers, e.g. "Application sections". */
+  ariaLabel: string;
+  children: ReactNode;
+}
+
+export const StandardSectionTabs = ({
+  tabs,
+  activeIndex,
+  onChange,
+  ariaLabel,
+  children
+}: StandardSectionTabsProps) => {
+  const listRef = React.useRef<HTMLDivElement>(null);
+  // Same keyboard focus ring `theme/components/button.js` settled on — Chakra's default
+  // `outline` token is blue and reads as a foreign control in a green app.
+  const focusRing = useColorModeValue('0 0 0 3px rgba(76, 175, 80, 0.6)', '0 0 0 3px #276749');
+
+  // Below `md` the row scrolls, and the selected tab is regularly outside it — landing on a
+  // section whose own tab is off-screen reads as "nothing is selected". Scroll the row
+  // itself rather than calling scrollIntoView, which would also yank the page vertically.
+  useEffect(() => {
+    const list = listRef.current;
+    const tab = list?.querySelectorAll<HTMLElement>('[role="tab"]')[activeIndex];
+    if (!list || !tab) return;
+    const gutter = 16;
+    // `?.` on BOTH steps: jsdom has no matchMedia at all, so the optional call returns
+    // undefined and reading `.matches` off it would throw in any test that renders this.
+    const behavior: ScrollBehavior = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+      ?.matches
+      ? 'auto'
+      : 'smooth';
+    if (tab.offsetLeft < list.scrollLeft) {
+      list.scrollTo({ left: Math.max(tab.offsetLeft - gutter, 0), behavior });
+    } else if (tab.offsetLeft + tab.offsetWidth > list.scrollLeft + list.clientWidth) {
+      list.scrollTo({
+        left: tab.offsetLeft + tab.offsetWidth - list.clientWidth + gutter,
+        behavior
+      });
+    }
+  }, [activeIndex, tabs.length]);
+
+  return (
+    // isLazy: only the selected panel mounts, so `children` is rendered once even though
+    // the panel list has to match the tab list for Chakra's index mapping.
+    <Tabs index={activeIndex} onChange={onChange} variant="unstyled" isLazy lazyBehavior="unmount">
+      <TabList
+        ref={listRef}
+        aria-label={ariaLabel}
+        overflowX="auto"
+        overflowY="hidden"
+        borderBottom="1px solid"
+        borderColor="gray.200"
+        sx={{
+          // A tab row that scrolls should not advertise it with a scrollbar on desktop.
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' }
+        }}>
+        {/* Selection compares INDEX, not key: `index` is what Chakra and `activeIndex`
+            actually agree on, so a repeated key can't light up two tabs or two panels. */}
+        {tabs.map((tab, index) => (
+          <Tab
+            key={tab.key}
+            flexShrink={0}
+            minH="44px"
+            px={{ base: 3, md: 4 }}
+            fontSize="sm"
+            fontWeight={index === activeIndex ? 'semibold' : 'medium'}
+            color={index === activeIndex ? 'green.600' : 'gray.600'}
+            borderBottom="2px solid"
+            borderColor={index === activeIndex ? 'green.500' : 'transparent'}
+            mb="-1px"
+            borderRadius="0"
+            transition="color 0.2s, border-color 0.2s"
+            _hover={{ color: 'green.600' }}
+            _focusVisible={{ boxShadow: focusRing, borderRadius: 'md' }}>
+            <HStack spacing={2}>
+              {tab.icon ? <Icon as={tab.icon} boxSize="14px" flexShrink={0} aria-hidden /> : null}
+              <Text as="span" whiteSpace="nowrap">
+                {tab.label}
+              </Text>
+              {/* One colour language: green = settled, amber = outstanding. The marker is
+                  never the only cue — `statusLabel` carries the same fact in words.
+                  flexShrink=0: the label is nowrap, so a squeezed row would otherwise eat
+                  the marker before it scrolls. */}
+              {tab.status === 'complete' && (
+                <Icon
+                  as={FaCheckCircle}
+                  color="green.500"
+                  boxSize="14px"
+                  flexShrink={0}
+                  aria-hidden
+                />
+              )}
+              {tab.status === 'incomplete' && (
+                <Circle size="8px" bg="orange.400" flexShrink={0} aria-hidden />
+              )}
+              {tab.statusLabel ? (
+                <Box as="span" srOnly>
+                  {tab.statusLabel}
+                </Box>
+              ) : null}
+            </HStack>
+          </Tab>
+        ))}
+      </TabList>
+      <TabPanels>
+        {tabs.map((tab, index) => (
+          <TabPanel key={tab.key} px={0} pt={5} pb={0}>
+            {index === activeIndex ? children : null}
+          </TabPanel>
+        ))}
+      </TabPanels>
+    </Tabs>
   );
 };
 
@@ -506,15 +815,13 @@ export const StandardSelectionGrid = ({
                 }
               : {}
           }
-          onClick={() => !disabled && onSelect(option.id)}
-        >
+          onClick={() => !disabled && onSelect(option.id)}>
           <VStack spacing={3} justify="center" height="100%">
             {option.icon && (
               <Circle
                 size="50px"
                 bg={`${option.color || 'green'}.100`}
-                color={`${option.color || 'green'}.600`}
-              >
+                color={`${option.color || 'green'}.600`}>
                 <Icon as={option.icon} boxSize={iconSize} />
               </Circle>
             )}
@@ -529,8 +836,7 @@ export const StandardSelectionGrid = ({
                   color="gray.600"
                   textAlign="center"
                   noOfLines={2}
-                  display={{ base: 'none', md: 'block' }}
-                >
+                  display={{ base: 'none', md: 'block' }}>
                   {option.description}
                 </Text>
               )}
@@ -591,8 +897,7 @@ export const StandardForm = ({
               isLoading={isLoading}
               loadingText="Saving..."
               size="lg"
-              px={8}
-            >
+              px={8}>
               {submitText}
             </Button>
           </HStack>
@@ -603,7 +908,12 @@ export const StandardForm = ({
 };
 
 interface StandardFieldProps {
-  label: string;
+  /** ReactNode, not string: several call sites pass a fragment so they can hang a Badge off
+      the label ("Crop Type [Read-Only]", "Parcel Area [Auto-Loaded]"). That already worked at
+      runtime — FormLabel renders whatever it is given — so the `string` type was just narrower
+      than the component, and every one of those call sites reported TS2322 into the masked
+      pile. */
+  label: ReactNode;
   required?: boolean;
   error?: string;
   helpText?: string;
@@ -676,6 +986,78 @@ export const StandardInput = React.forwardRef<HTMLInputElement, any>(
 );
 StandardInput.displayName = 'StandardInput';
 
+/**
+ * The app's ONE search field. Lifted verbatim out of `TrazoGlobalSearch` — 44px tall, `xl`
+ * radius, magnifier in a 44px left slot — because every page that rolled its own ended up
+ * with a bare `<Input>` that shared none of it (Activities had no icon, a different height
+ * and a different radius, sitting two rows under the real one).
+ *
+ * `rightHint` is the slot the global search puts `⌘K` in; leave it out elsewhere.
+ * Everything else forwards to the input, so `readOnly` + `onClick` still gives you the
+ * navbar's open-the-modal trigger.
+ *
+ * Sizing props go to the GROUP, not the input. `maxW` on the input left the group at its
+ * full flex width, so a 280px field sat at the left of a 725px invisible box — 446px short
+ * of the row's right edge — and `rightHint` would have pinned ⌘K to that box's edge instead
+ * of the field's.
+ */
+export const StandardSearchInput = React.forwardRef<HTMLInputElement, any>(
+  ({ rightHint, maxW, minW, w, width, flex, ...props }, ref) => {
+    const bg = useColorModeValue('white', 'gray.700');
+    const borderColor = useColorModeValue('gray.200', 'gray.600');
+    const hoverBorderColor = useColorModeValue('green.300', 'green.400');
+
+    return (
+      <InputGroup maxW={maxW} minW={minW} w={w ?? width} flex={flex}>
+        <InputLeftElement pointerEvents="none" h="44px" w="44px">
+          <Icon as={FaSearch} color="gray.500" boxSize="16px" />
+        </InputLeftElement>
+        <StandardInput
+          ref={ref}
+          // The field has no visible label — only the magnifier — so without this its
+          // accessible name falls back to the placeholder, which assistive tech is not
+          // required to expose. Callers can still override it.
+          aria-label={props['aria-label'] ?? props.placeholder}
+          bg={bg}
+          borderColor={borderColor}
+          _hover={{
+            borderColor: hoverBorderColor,
+            boxShadow: '0 0 0 1px var(--chakra-colors-green-300)'
+          }}
+          _focus={{
+            borderColor: 'green.500',
+            boxShadow: '0 0 0 2px rgba(72, 187, 120, 0.2)'
+          }}
+          h="44px"
+          fontSize="sm"
+          borderRadius="xl"
+          pl="44px"
+          pr={rightHint ? '64px' : 4}
+          w="full"
+          transition="all 0.2s ease"
+          {...props}
+        />
+        {rightHint ? (
+          <Text
+            position="absolute"
+            right="12px"
+            top="50%"
+            transform="translateY(-50%)"
+            pointerEvents="none"
+            fontSize="xs"
+            color="gray.400"
+            fontFamily="mono"
+            letterSpacing="0.5px"
+            zIndex={2}>
+            {rightHint}
+          </Text>
+        ) : null}
+      </InputGroup>
+    );
+  }
+);
+StandardSearchInput.displayName = 'StandardSearchInput';
+
 export const StandardTextarea = React.forwardRef<HTMLTextAreaElement, any>((props, ref) => (
   <Textarea
     ref={ref}
@@ -708,92 +1090,106 @@ StandardSelect.displayName = 'StandardSelect';
 // worked at runtime — the interface was just narrower than the component. Callers were
 // passing responsive widths, `size="xs"`, event-taking handlers and layout props and
 // eating a TS error for each one.
-interface StandardButtonProps {
+/**
+ * StandardButton spreads `...rest` straight onto Chakra's <Button>, so at runtime it already
+ * accepts every Button prop. The hand-maintained prop list did not say so, and every layout or
+ * polymorphic prop a caller reached for (`minH`, `flex`, `as`, `href`, `aria-label`) was a type
+ * error — 35 of the 52 new errors that accumulated while the typecheck gate went unrun.
+ *
+ * Extending ButtonProps makes the type match the behaviour. `variant` and `size` stay narrowed
+ * to Trazo's design tokens: the component maps those names onto Chakra colorScheme/variant
+ * pairs, so a raw Chakra value like "solid" is NOT a synonym — it falls through the map and
+ * silently renders unstyled, which is the inert-prop class already seen with Badge colorScheme
+ * and StandardCard variant.
+ */
+interface StandardButtonProps extends Omit<ButtonProps, 'variant' | 'size' | 'onClick' | 'type'> {
   children: ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'xs' | 'sm' | 'md' | 'lg';
-  isLoading?: boolean;
-  loadingText?: string;
-  leftIcon?: ReactElement;
-  rightIcon?: ReactElement;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   type?: 'button' | 'submit';
-  disabled?: boolean;
-  w?: string | object;
-  width?: string | object;
-  isDisabled?: boolean;
-  alignSelf?: string | object;
-  flexShrink?: number | string | object;
-  colorScheme?: string;
+  /** Present when rendered polymorphically as an anchor (`as="a"`). */
+  href?: string;
+  target?: string;
+  rel?: string;
 }
 
-export const StandardButton = ({
-  children,
-  variant = 'primary',
-  size = 'md',
-  isLoading = false,
-  loadingText,
-  leftIcon,
-  rightIcon,
-  onClick,
-  type = 'button',
-  disabled = false,
-  w,
-  width,
-  isDisabled,
-  ...rest
-}: StandardButtonProps) => {
-  const variants = {
-    primary: {
-      colorScheme: 'green',
-      variant: 'solid'
+/**
+ * forwardRef because Chakra's focus-management props take a real element ref — AlertDialog's
+ * `leastDestructiveRef` is the one in the finish-production dialog. Without it the ref silently
+ * never attached, so the dialog had no initial focus target and tsc reported the `ref` prop as
+ * not assignable (a masked error; the build never surfaces it).
+ */
+export const StandardButton = React.forwardRef<HTMLButtonElement, StandardButtonProps>(
+  (
+    {
+      children,
+      variant = 'primary',
+      size = 'md',
+      isLoading = false,
+      loadingText,
+      leftIcon,
+      rightIcon,
+      onClick,
+      type = 'button',
+      disabled = false,
+      w,
+      width,
+      isDisabled,
+      ...rest
     },
-    secondary: {
-      colorScheme: 'gray',
-      variant: 'solid'
-    },
-    outline: {
-      colorScheme: 'green',
-      variant: 'outline'
-    },
-    ghost: {
-      colorScheme: 'green',
-      variant: 'ghost'
-    }
-  };
+    ref
+  ) => {
+    const variants = {
+      primary: {
+        colorScheme: 'green',
+        variant: 'solid'
+      },
+      secondary: {
+        colorScheme: 'gray',
+        variant: 'solid'
+      },
+      outline: {
+        colorScheme: 'green',
+        variant: 'outline'
+      },
+      ghost: {
+        colorScheme: 'green',
+        variant: 'ghost'
+      }
+    };
 
-  return (
-    <Button
-      {...variants[variant]}
-      size={size}
-      isLoading={isLoading}
-      loadingText={loadingText}
-      leftIcon={leftIcon}
-      rightIcon={rightIcon}
-      onClick={onClick}
-      type={type}
-      isDisabled={disabled || isDisabled}
-      w={w}
-      width={width}
-      borderRadius="lg"
-      fontWeight="semibold"
-      minH="44px"
-      _focus={{ boxShadow: '0 0 0 3px rgba(46, 125, 50, 0.15)' }}
-      _hover={{
-        boxShadow: 'lg',
-        transform: 'translateY(-1px)',
-        _disabled: {
-          boxShadow: 'none',
-          transform: 'none'
-        }
-      }}
-      transition="all 0.2s ease"
-      {...rest}
-    >
-      {children}
-    </Button>
-  );
-};
+    return (
+      <Button
+        ref={ref}
+        {...variants[variant]}
+        size={size}
+        isLoading={isLoading}
+        loadingText={loadingText}
+        leftIcon={leftIcon}
+        rightIcon={rightIcon}
+        onClick={onClick}
+        type={type}
+        isDisabled={disabled || isDisabled}
+        w={w}
+        width={width}
+        borderRadius="lg"
+        fontWeight="semibold"
+        minH="44px"
+        _focus={{ boxShadow: '0 0 0 3px rgba(46, 125, 50, 0.15)' }}
+        // NO `_hover` here. A style prop REPLACES the theme variant's `_hover` object rather
+        // than merging into it, so this one used to delete the variant's hover BACKGROUND —
+        // the emitted rule was `{ box-shadow; transform }` with no colour, and every primary
+        // button in the app stayed exactly the same green while hovered. The lift now lives in
+        // the variants, next to the colour it belongs with.
+        transition="all 0.2s ease"
+        {...rest}>
+        {children}
+      </Button>
+    );
+  }
+);
+StandardButton.displayName = 'StandardButton';
 
 // Status & Feedback Components
 interface StandardAlertProps {
@@ -803,6 +1199,45 @@ interface StandardAlertProps {
   children?: ReactNode;
 }
 
+/**
+ * Semantic status -> the theme palette that actually exists.
+ *
+ * This used to interpolate the STATUS NAME straight into a colour token —
+ * `bg={`${status}.50`}` emitted "success.50", "info.50", "warning.50".
+ * `theme/styles.js` defines green / red / amber / blue and NO such scales, so Chakra
+ * passed the literal string through, the browser dropped the declaration as invalid,
+ * and BOTH `bg` and `borderLeftColor` were inert: every StandardAlert in the app has
+ * been rendering Chakra's stock left-accent, not the Trazo one. Same failure class as
+ * the inert `Badge colorScheme` — see `.claude/rules/frontend.md`.
+ *
+ * `warning` maps to `amber` deliberately. The theme defines amber and NOT orange, so
+ * Chakra's own status->orange default was reaching for a foreign palette.
+ */
+export const ALERT_PALETTE = {
+  success: 'green',
+  error: 'red',
+  warning: 'amber',
+  info: 'blue'
+} as const;
+
+/**
+ * Which step of that palette the icon and the 4px accent bar take.
+ *
+ * Chakra's stock `.500` does not pay the 3.0:1 WCAG 1.4.11 non-text floor against these
+ * `.50` grounds. MEASURED icon-on-ground, guarded in `theme/__tests__/alertContrast.test.ts`:
+ *   green.500 -> 2.70 ✗   green.700 -> 4.98 ✓
+ *   blue.500  -> 2.74 ✗   blue.700  -> 4.03 ✓
+ *   red.500   -> 3.22 ✓   red.700   -> 4.36 ✓  (red already cleared; 700 for consistency)
+ * The amber ramp tops out at #E65100, so warning is the one that needs the 900 step —
+ * every lower rung fails: 500 -> 2.03, 600 -> 2.23, 700 -> 2.55, 800 -> 2.90, 900 -> 3.57 ✓
+ */
+export const ALERT_ACCENT_SHADE = {
+  success: '700',
+  error: '700',
+  warning: '900',
+  info: '700'
+} as const;
+
 export const StandardAlert = ({ status, title, description, children }: StandardAlertProps) => {
   const icons = {
     success: MdCheck,
@@ -810,18 +1245,24 @@ export const StandardAlert = ({ status, title, description, children }: Standard
     warning: MdWarning,
     info: MdInfo
   };
+  const accent = `${ALERT_PALETTE[status]}.${ALERT_ACCENT_SHADE[status]}`;
 
   return (
     <Alert
       status={status}
       borderRadius="lg"
       variant="left-accent"
-      bg={`${status}.50`}
+      bg={`${ALERT_PALETTE[status]}.50`}
       borderLeft="4px solid"
       marginBottom={6}
-      borderLeftColor={`${status}.500`}
-    >
-      <AlertIcon as={icons[status]} />
+      borderLeftColor={accent}
+      // Chakra hardcodes `display:flex; alignItems:center` in the Alert component's own
+      // `__css`, so a two-line body leaves the icon floating against the SECOND line with
+      // nothing beside the first. Harmless on a one-line alert, wrong the moment a title
+      // and a description stack — which is most of the 34 call sites. Style props outrank
+      // `__css`, so this is the override.
+      alignItems="flex-start">
+      <AlertIcon as={icons[status]} color={accent} />
       <VStack align="start" spacing={1}>
         {title && (
           <Text fontWeight="semibold" fontSize="sm">
@@ -834,6 +1275,74 @@ export const StandardAlert = ({ status, title, description, children }: Standard
     </Alert>
   );
 };
+
+interface GuidanceNoteProps {
+  children: ReactNode;
+}
+
+/**
+ * The four tokens GuidanceNote paints with, exported because the component RENDERS FROM
+ * THIS OBJECT and `theme/__tests__/alertContrast.test.ts` ASSERTS AGAINST IT. That is the
+ * whole point: a guard that names its own colours proves nothing about the component
+ * (`expect(gray.500).not.toBe(green.500)` is true forever, whatever the JSX does). Reading
+ * the same object the component consumes is what makes the contrast floors and the
+ * no-status-hue rule actually enforceable.
+ *
+ * MEASURED on the `ground`: bar 4.41:1, icon 5.93:1, text 9.63:1.
+ */
+export const GUIDANCE_NOTE_TOKENS = {
+  ground: 'gray.50',
+  bar: 'gray.500',
+  icon: 'gray.600',
+  text: 'gray.700'
+} as const;
+
+/**
+ * A quiet, NEUTRAL aside for static teaching copy — the "here is what this section means"
+ * text that ships with a form, not something that just happened.
+ *
+ * Why this is not a StandardAlert:
+ *
+ * 1. SEMANTICS. `<Alert>` needs a status, and guidance has none. The OSP wizard reached
+ *    for `status="success"` purely to obtain a green box, then had to override the icon
+ *    (`<AlertIcon as={FaInfoCircle} />`) to hide the success checkmark it did not mean.
+ *    A component you must de-check to use honestly is the wrong component.
+ * 2. COLOUR. `.claude/rules/frontend.md`: status colour = meaning, never decoration.
+ *    Green means done/success everywhere else in the app, so tinting permanent help text
+ *    green tells the reader this part is complete. Nothing here is green, on purpose —
+ *    that is what keeps green worth reading elsewhere.
+ * 3. A11Y. `<Alert>` renders `role="alert"`, an ASSERTIVE live region. Module education
+ *    blocks are present on first paint and never change; announcing them as alerts
+ *    interrupts a screen reader for content that is simply part of the page.
+ *
+ * Grounds: `gray.50` over the page canvas reads as a tinted aside; over a white
+ * StandardCard it is 1.02:1, so the note degrades to bar + icon + text with no nested
+ * container. Both call sites want exactly one of those, so there is no variant prop.
+ * Bar `gray.500` = 4.41:1 on that ground, icon `gray.600` = 5.93:1 — both clear 3.0.
+ */
+export const GuidanceNote = ({ children }: GuidanceNoteProps) => (
+  <Flex
+    align="flex-start"
+    gap={3}
+    bg={GUIDANCE_NOTE_TOKENS.ground}
+    borderLeft="4px solid"
+    borderLeftColor={GUIDANCE_NOTE_TOKENS.bar}
+    borderRadius="md"
+    px={4}
+    py={3}>
+    <Icon
+      as={MdInfo}
+      color={GUIDANCE_NOTE_TOKENS.icon}
+      boxSize={5}
+      mt="1px"
+      flexShrink={0}
+      aria-hidden
+    />
+    <Text fontSize="sm" color={GUIDANCE_NOTE_TOKENS.text}>
+      {children}
+    </Text>
+  </Flex>
+);
 
 // Loading States
 
@@ -933,15 +1442,13 @@ export const SectionHeader = ({
       justify={{ base: 'flex-start', smd: 'space-between' }}
       align={{ base: 'flex-start', smd: 'center' }}
       gap={2}
-      mb={description ? 2 : 0}
-    >
+      mb={description ? 2 : 0}>
       {badge && (
         <Badge
           colorScheme={badgeColorScheme}
           fontSize="xs"
           flexShrink={0}
-          display={{ base: 'inline-flex', smd: 'none' }}
-        >
+          display={{ base: 'inline-flex', smd: 'none' }}>
           {badge}
         </Badge>
       )}
@@ -956,8 +1463,7 @@ export const SectionHeader = ({
           colorScheme={badgeColorScheme}
           fontSize="xs"
           flexShrink={0}
-          display={{ base: 'none', smd: 'inline-flex' }}
-        >
+          display={{ base: 'none', smd: 'inline-flex' }}>
           {badge}
         </Badge>
       )}
@@ -989,8 +1495,7 @@ export const SectionBox = ({ children, variant = 'default', borderColor, bg }: S
       border="1px"
       borderColor={borderColor || defaultBorderColor}
       borderRadius="lg"
-      bg={bg || defaultBg}
-    >
+      bg={bg || defaultBg}>
       {children}
     </Box>
   );
@@ -1034,8 +1539,7 @@ export const CollapsibleSection = ({
       borderColor={borderColor}
       borderRadius="lg"
       bg={bgColor}
-      overflow="hidden"
-    >
+      overflow="hidden">
       {/* Clickable Header */}
       <Box
         as="button"
@@ -1048,8 +1552,7 @@ export const CollapsibleSection = ({
         borderColor={borderColor}
         cursor="pointer"
         _hover={{ bg: variant === 'highlighted' ? 'green.100' : 'gray.100' }}
-        transition="all 0.2s"
-      >
+        transition="all 0.2s">
         <Flex justify="space-between" align="center">
           <HStack spacing={2}>
             {icon && <Icon as={icon} color={iconColor} boxSize={5} />}
@@ -1137,8 +1640,7 @@ export const ConsumerTooltip = ({
       fontSize="xs"
       hasArrow
       closeOnClick={false}
-      openDelay={300}
-    >
+      openDelay={300}>
       {children}
     </Tooltip>
   );
@@ -1265,7 +1767,7 @@ export const StandardMediaUpload = ({
   const bgColor = useColorModeValue('green.50', 'green.900');
   const textColor = useColorModeValue('gray.700', 'white');
   const hoverBgColor = useColorModeValue('green.25', 'green.800');
-  const successColor = useColorModeValue('green.500', 'green.300');
+  const successColor = useColorModeValue('green.700', 'green.300');
 
   // State for managing object URLs to prevent memory leaks
   const [fileObjectUrls, setFileObjectUrls] = useState<Map<File, string>>(new Map());
@@ -1349,8 +1851,7 @@ export const StandardMediaUpload = ({
             boxShadow="md"
             border="1px solid"
             borderColor="gray.200"
-            position="relative"
-          >
+            position="relative">
             <Image
               src={objectUrl}
               alt={file.name}
@@ -1396,8 +1897,7 @@ export const StandardMediaUpload = ({
         borderColor={borderColor}
         borderRadius="lg"
         bg="gray.50"
-        position="relative"
-      >
+        position="relative">
         <Icon as={FaCheckCircle} boxSize={6} color="green.500" mb={2} />
         <Text fontSize="xs" color={textColor} noOfLines={1} fontWeight="medium">
           {file.name}
@@ -1433,8 +1933,7 @@ export const StandardMediaUpload = ({
           boxShadow="md"
           border="2px solid"
           borderColor={successColor}
-          position="relative"
-        >
+          position="relative">
           <S3Image
             src={url}
             alt={`Uploaded image ${index + 1}`}
@@ -1452,8 +1951,7 @@ export const StandardMediaUpload = ({
             bg={successColor}
             color="white"
             borderRadius="full"
-            p={1}
-          >
+            p={1}>
             <Icon as={FaCheckCircle} boxSize={3} />
           </Box>
 
@@ -1548,8 +2046,7 @@ export const StandardMediaUpload = ({
                 : 'repeat(auto-fill, minmax(140px, 1fr))'
             }
             gap={3}
-            w="100%"
-          >
+            w="100%">
             {uploadedFiles.map((url, index) => renderUploadedImage(url, index))}
           </Grid>
         </Box>
@@ -1576,8 +2073,7 @@ export const StandardMediaUpload = ({
           boxShadow: disabled || isUploading ? 'none' : 'md'
         }}
         opacity={disabled ? 0.6 : 1}
-        {...getRootProps()}
-      >
+        {...getRootProps()}>
         <input {...getInputProps()} style={{ display: 'none' }} />
 
         {acceptedFiles.length > 0 ? (
@@ -1586,8 +2082,7 @@ export const StandardMediaUpload = ({
               <Circle
                 size="40px"
                 bg={isUploading ? 'blue.100' : 'green.100'}
-                color={isUploading ? 'blue.600' : 'green.600'}
-              >
+                color={isUploading ? 'blue.600' : 'green.600'}>
                 {isUploading ? <Spinner size="sm" /> : <Icon as={FaCheckCircle} boxSize={5} />}
               </Circle>
               <VStack spacing={0} align="start">
@@ -1612,8 +2107,7 @@ export const StandardMediaUpload = ({
                 gap={3}
                 w="100%"
                 maxW="500px"
-                mx="auto"
-              >
+                mx="auto">
                 {acceptedFiles
                   .slice(0, 3)
                   .map((file, index) => renderFilePreview(file, index, true))}
@@ -1624,8 +2118,7 @@ export const StandardMediaUpload = ({
                     borderRadius="lg"
                     bg="gray.100"
                     border="1px dashed"
-                    borderColor="gray.300"
-                  >
+                    borderColor="gray.300">
                     <Text fontSize="sm" color="gray.600" fontWeight="medium">
                       +{acceptedFiles.length - 3} more
                     </Text>
@@ -1644,8 +2137,7 @@ export const StandardMediaUpload = ({
                 fontSize={variantStyles.textSize}
                 color="gray.600"
                 fontWeight="semibold"
-                textAlign="center"
-              >
+                textAlign="center">
                 {placeholder || 'Drag & drop images here, or click to select'}
               </Text>
               <Text fontSize="sm" color="gray.500" textAlign="center">
@@ -1723,16 +2215,14 @@ export const DraftRestorationAlert = ({
       bg="blue.50"
       borderLeft="4px solid"
       borderLeftColor="blue.500"
-      mb={4}
-    >
+      mb={4}>
       <AlertIcon color="blue.500" />
       <Flex
         direction={{ base: 'column', md: 'row' }}
         justify="space-between"
         align={{ base: 'flex-start', md: 'center' }}
         flex={1}
-        gap={3}
-      >
+        gap={3}>
         <VStack align="flex-start" spacing={0}>
           <Text fontWeight="semibold" fontSize="sm" color="blue.700">
             {intl.formatMessage({
@@ -1798,5 +2288,87 @@ export const AutoSaveStatus = ({ lastSaved, isSaving }: AutoSaveStatusProps) => 
         </>
       ) : null}
     </HStack>
+  );
+};
+
+interface StandardPaginationProps {
+  /** 1-based. */
+  page: number;
+  /** Total number of items across all pages. */
+  total: number;
+  pageSize: number;
+  onChange: (page: number) => void;
+  /** Optional noun for the range label, e.g. "activities". Defaults to a generic count. */
+  itemLabel?: string;
+}
+
+/**
+ * Page control for the long lists (activities, productions, scans).
+ *
+ * These lists rendered every row they had — 166 seasons, hundreds of activities — so the page
+ * grew without bound, the browser laid out rows nobody scrolled to, and "how many are there?"
+ * had no answer short of scrolling to the end. Deliberately a pager and not infinite scroll:
+ * these are records a grower cross-checks against a certifier's questions, so a stable position
+ * ("page 3 of 12") and a total are the useful affordances.
+ *
+ * Renders nothing when everything fits on one page — a pager under a 4-row table is noise.
+ */
+export const StandardPagination = ({
+  page,
+  total,
+  pageSize,
+  onChange,
+  itemLabel
+}: StandardPaginationProps) => {
+  const intl = useIntl();
+  // A zero/negative pageSize would make `total / pageSize` Infinity or negative and hand the
+  // pager an unusable page count; floor it at 1 rather than render nonsense.
+  const size = Math.max(1, pageSize);
+  const pageCount = Math.max(1, Math.ceil(total / size));
+  if (total <= size) return null;
+
+  const first = (page - 1) * size + 1;
+  const last = Math.min(page * size, total);
+
+  return (
+    <Flex
+      align="center"
+      justify="space-between"
+      gap={3}
+      pt={3}
+      mt={2}
+      borderTopWidth="1px"
+      borderColor="gray.100"
+      flexWrap="wrap">
+      <Text fontSize="xs" color="gray.500">
+        {/* `.trim()` because `item` is optional: without a label the message ends in a dangling
+            space ("Showing 1–10 of 20 "). */}
+        {intl
+          .formatMessage({ id: 'pagination.range' }, { first, last, total, item: itemLabel ?? '' })
+          .toString()
+          .trim()}
+      </Text>
+      <HStack spacing={2}>
+        <Button
+          size="sm"
+          variant="outline"
+          leftIcon={<FaChevronLeft />}
+          onClick={() => onChange(Math.max(1, page - 1))}
+          isDisabled={page <= 1}>
+          {intl.formatMessage({ id: 'pagination.previous' })}
+        </Button>
+        <Text fontSize="xs" color="gray.600" whiteSpace="nowrap">
+          {intl.formatMessage({ id: 'pagination.pageOf' }, { page, pageCount })}
+        </Text>
+        <Button
+          size="sm"
+          variant="outline"
+          rightIcon={<FaChevronRight />}
+          onClick={() => onChange(Math.min(pageCount, page + 1))}
+          isDisabled={page >= pageCount}>
+          {intl.formatMessage({ id: 'pagination.next' })}
+        </Button>
+      </HStack>
+    </Flex>
   );
 };

@@ -124,8 +124,7 @@ const CarbonReportTab = ({ farmId }) => {
             <Select
               w="200px"
               value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-            >
+              onChange={(e) => setSelectedYear(Number(e.target.value))}>
               {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((year) => (
                 <option key={year} value={year}>
                   {year}
@@ -171,8 +170,7 @@ const CarbonReportTab = ({ farmId }) => {
                           variant="solid"
                           size="sm"
                           leftIcon={<DownloadIcon />}
-                          onClick={() => window.open(report.document, '_blank')}
-                        >
+                          onClick={() => window.open(report.document, '_blank')}>
                           Ver
                         </Button>
                       ) : (
@@ -250,8 +248,7 @@ const CarbonReportTab = ({ farmId }) => {
                   type="submit"
                   colorScheme="blue"
                   isLoading={generatingReport}
-                  loadingText="Generando..."
-                >
+                  loadingText="Generando...">
                   Generar Reporte
                 </Button>
               </Stack>

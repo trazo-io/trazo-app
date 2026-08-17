@@ -753,7 +753,7 @@ const SetupPassword: React.FC = () => {
                 <HStack spacing={3}>
                   <Icon
                     as={HiOfficeBuilding}
-                    color={useColorModeValue('green.600', 'green.400')}
+                    color={useColorModeValue('green.700', 'green.400')}
                     boxSize={5}
                   />
                   <VStack spacing={1} align="start" flex={1}>
@@ -1105,7 +1105,7 @@ const SetupPassword: React.FC = () => {
                     type="submit"
                     w="full"
                     h="52px"
-                    bg="green.500"
+                    bg="green.700"
                     color="white"
                     fontSize="md"
                     fontWeight="600"

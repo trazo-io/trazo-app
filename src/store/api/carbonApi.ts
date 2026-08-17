@@ -593,7 +593,7 @@ export interface CropTemplate {
   events_count: number;
   carbon_potential: number;
   avg_revenue: number;
-  setup_time_minutes: number;
+
   usage_count: number;
   carbon_benchmark: {
     emissions_range: string;

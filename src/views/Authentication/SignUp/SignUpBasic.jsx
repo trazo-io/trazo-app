@@ -43,7 +43,7 @@ const registerSchema = object({
 
 function SignUp() {
   const intl = useIntl();
-  const titleColor = useColorModeValue('green.500', 'green.400');
+  const titleColor = useColorModeValue('green.700', 'green.300');
   const textColor = useColorModeValue('gray.700', 'white');
   const bgColor = useColorModeValue('white', 'gray.700');
   const bgIcons = useColorModeValue('gray.50', 'rgba(255, 255, 255, 0.1)');
@@ -217,7 +217,7 @@ function SignUp() {
 
                       <Button
                         type="submit"
-                        bg="green.500"
+                        bg="green.700"
                         color="white"
                         size="lg"
                         fontSize="md"

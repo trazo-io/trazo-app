@@ -27,7 +27,8 @@ import {
   formatPercentage,
   formatTransportationDistance,
   formatYield,
-  formatConsumerTemperatureControl
+  formatConsumerTemperatureControl,
+  formatSeedSearchAttempts
 } from './formatters';
 
 type ProductionData = Record<string, unknown>;
@@ -196,6 +197,25 @@ const formatProtectionMethod = (v: unknown): string | null =>
 const formatFloorManagementType = (v: unknown): string | null =>
   lookupLabel(FLOOR_MANAGEMENT_LABELS, v);
 
+/**
+ * Did this buffer disposition put the crop into someone else's hands?
+ *
+ * § 205.202(c)'s proof obligation attaches only there. Accepts BOTH the raw enum value and the
+ * normalizer's display label — the registry runs after normalization, and a predicate that
+ * matched only the enum would silently hide the evidence fields on exactly the events that owe
+ * them (see `feedback_visiblewhen_post_normalizer`).
+ */
+export const BUFFER_ENTERS_COMMERCE = (value: unknown): boolean => {
+  const v = String(value || '').toLowerCase();
+  return (
+    v.includes('sold') ||
+    v.includes('conventional') ||
+    v.includes('livestock') ||
+    v.includes('given away') ||
+    v === 'given_away'
+  );
+};
+
 const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   // ---- Core identity (ALL subtypes) ----
   {
@@ -211,7 +231,11 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
+    // Mirrors ProductionTab's own gate, `!['EM','PO'].includes(productionType)`. Equipment
+    // cleaning and pollination are not AREA operations — a hive placement covers no acreage —
+    // so declaring area for them put a value on two modals that no input could set or clear.
     name: 'area_covered',
+    visibleForSubtypes: ['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'PH', 'CM', 'FP', 'MO'],
     labelKey: 'events.common.fields.areaCovered',
     valueType: 'number',
     unitField: 'area_unit',
@@ -244,6 +268,174 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       quick_form: 'immediate',
       consumer_card: 'immediate',
       consumer_timeline: 'immediate'
+    }
+  },
+
+  // ---- WS-4 harvest-record completeness (HA) — producer surfaces only.
+  // Certifier/audit data (§ 205.103(b)(2); § 205.202(c)); fails the consumer
+  // three-question test, so no consumer_card. ----
+  {
+    // Producer-facing only. The lot code is how a SALE is traced back to a pick
+    // (7 CFR 205.103(b)(2)) — it is an internal identifier for the operator and their
+    // certifier, and it is not a claim, so it does not go to consumers.
+    name: 'harvest_lot_code',
+    labelKey: 'events.production.fields.harvestLotCode',
+    valueType: 'string',
+    visibleForSubtypes: ['HA'],
+    surfaces: {
+      form: 'immediate',
+      modal: 'immediate',
+      card: 'secondary'
+    }
+  },
+  {
+    name: 'amount_determination',
+    labelKey: 'events.production.fields.amountDetermination',
+    valueType: 'enum',
+    enumSource: 'amount_determinations',
+    visibleForSubtypes: ['HA'],
+    surfaces: {
+      form: 'immediate',
+      modal: 'immediate'
+    }
+  },
+  {
+    name: 'harvest_date_end',
+    labelKey: 'events.production.fields.harvestDateEnd',
+    valueType: 'date',
+    visibleForSubtypes: ['HA'],
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  {
+    name: 'harvest_destination',
+    labelKey: 'events.production.fields.harvestDestination',
+    valueType: 'enum',
+    enumSource: 'harvest_destinations',
+    visibleForSubtypes: ['HA'],
+    surfaces: {
+      form: 'immediate',
+      modal: 'immediate'
+    }
+  },
+  {
+    name: 'buffer_disposition',
+    labelKey: 'events.production.fields.bufferDisposition',
+    valueType: 'enum',
+    enumSource: 'buffer_dispositions',
+    visibleForSubtypes: ['HA'],
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  {
+    // USDA's Buffer Crop Disposition Record: "Commercial quantities of crops require more
+    // formal documentation (delivery tags and nonorganic sales records) to show that the
+    // buffer crop has not been represented as organic." § 205.202(c).
+    //
+    // Shown only for dispositions that put the crop into someone else's hands. A crop disked
+    // under or left in the field cannot be mis-sold, and asking for paperwork there would be
+    // Trazo inventing a requirement.
+    //
+    // The normalizer may have swapped the raw enum for its display label before this runs
+    // (see storage_location below), so match on BOTH forms rather than the enum alone.
+    name: 'buffer_disposition_quantity',
+    labelKey: 'events.production.fields.bufferDispositionQuantity',
+    valueType: 'string',
+    visibleForSubtypes: ['HA'],
+    visibleWhen: (e) => BUFFER_ENTERS_COMMERCE(e.buffer_disposition),
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  {
+    name: 'buffer_disposition_evidence',
+    labelKey: 'events.production.fields.bufferDispositionEvidence',
+    valueType: 'string',
+    visibleForSubtypes: ['HA'],
+    visibleWhen: (e) => BUFFER_ENTERS_COMMERCE(e.buffer_disposition),
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  {
+    name: 'storage_location',
+    labelKey: 'events.production.fields.storageLocation',
+    valueType: 'string',
+    visibleForSubtypes: ['HA'],
+    // Normalizer may have swapped the raw enum for its display label, so accept both
+    // 'stored' and 'Stored on farm'.
+    visibleWhen: (e) =>
+      String(e.harvest_destination || '')
+        .toLowerCase()
+        .startsWith('stored'),
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  {
+    name: 'storage_temperature_f',
+    labelKey: 'events.production.fields.storageTemperatureF',
+    valueType: 'number',
+    visibleForSubtypes: ['HA'],
+    visibleWhen: (e) =>
+      String(e.harvest_destination || '')
+        .toLowerCase()
+        .startsWith('stored'),
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  {
+    name: 'harvest_contract_number',
+    labelKey: 'events.production.fields.harvestContractNumber',
+    valueType: 'string',
+    visibleForSubtypes: ['HA'],
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  // Whole-vs-part coverage (§ 205.103(b)(1)) — mirrors ChemicalEvent.applied_scope.
+  {
+    name: 'applied_scope',
+    labelKey: 'events.production.fields.appliedScope',
+    valueType: 'enum',
+    enumSource: 'applied_scopes',
+    // PL removed 2026-08-15: ProductionTab renders these ONLY inside its `productionType ===
+    // 'HA'` block, so declaring PL put a value on the Planting modal that no input could set
+    // or clear. `block_id` already answers "which part of the parcel" for a planting, and
+    // better. Registry narrowed to match the form, rather than widening the form to match it.
+    visibleForSubtypes: ['HA'],
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  {
+    name: 'applied_scope_detail',
+    labelKey: 'events.production.fields.appliedScopeDetail',
+    valueType: 'string',
+    // PL removed 2026-08-15: ProductionTab renders these ONLY inside its `productionType ===
+    // 'HA'` block, so declaring PL put a value on the Planting modal that no input could set
+    // or clear. `block_id` already answers "which part of the parcel" for a planting, and
+    // better. Registry narrowed to match the form, rather than widening the form to match it.
+    visibleForSubtypes: ['HA'],
+    // Accept the raw value AND its display label (normalizer may rewrite it).
+    visibleWhen: (e) => {
+      const v = String(e.applied_scope ?? '').toLowerCase();
+      return v === 'part' || v.includes('part of');
+    },
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
     }
   },
 
@@ -362,7 +554,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedsSource',
     valueType: 'enum',
     enumSource: 'seeds_sources',
-    visibleForSubtypes: ['PL'],
+    visibleForSubtypes: ['PL', 'TR'],
     surfaces: {
       card: 'immediate',
       modal: 'immediate',
@@ -372,12 +564,89 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
 
+  // ---- Perennial planting stock (PL/TR) — added 2026-08-15 ----
+  //
+  // These three had no field anywhere. `rootstock` was written by three seeders into
+  // extra_data and sat on the CONSUMER allow-list, so a shopper could be shown a rootstock
+  // the grower had no input to enter — and the certifier packet shipped a written disclosure
+  // that Trazo "does not yet structure rootstock records". For a California orchard,
+  // "40 Hass on Duke 7" is the sentence; only the variety half had a column.
+  {
+    // 7 CFR 205.105(e) — excluded methods. Producer/certifier only.
+    // ⚠️ NO consumer_card, by the same reasoning that withholds `seed_treatment_allowed_basis`:
+    // "non-GMO" is a marketing claim and every value here is the grower's own attestation.
+    // A self-reported claim of that shape on a public surface is the EU ECGT 2024/825 /
+    // FTC 16 CFR 260.6 exposure this codebase has already had six leaks of.
+    name: 'seed_non_gmo_status',
+    labelKey: 'events.production.fields.seedNonGmoStatus',
+    valueType: 'enum',
+    enumSource: 'seed_non_gmo_statuses',
+    visibleForSubtypes: ['PL', 'TR'],
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  {
+    // 7 CFR 205.204(a)(4) — perennial planting stock must be under continuous organic
+    // management for a year before its crop sells as organic. Producer/certifier only: it is
+    // an input to a compliance computation, not a fact a shopper can act on.
+    name: 'stock_organic_management_start',
+    labelKey: 'events.production.fields.stockOrganicManagementStart',
+    valueType: 'date',
+    visibleForSubtypes: ['PL', 'TR'],
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
+    }
+  },
+  {
+    name: 'rootstock',
+    labelKey: 'events.production.fields.rootstock',
+    valueType: 'string',
+    visibleForSubtypes: ['PL', 'TR'],
+    // Consumer-facing on purpose: it is a documented fact about what was planted, and the
+    // most interesting thing this activity can tell a shopper ("chosen for root-rot
+    // resistance"). Not a grade, not a vendor.
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'secondary'
+    }
+  },
+  {
+    name: 'plants_established',
+    labelKey: 'events.production.fields.plantsEstablished',
+    valueType: 'number',
+    visibleForSubtypes: ['PL', 'TR'],
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate'
+    }
+  },
+  {
+    name: 'plant_spacing',
+    labelKey: 'events.production.fields.plantSpacing',
+    valueType: 'string',
+    visibleForSubtypes: ['PL', 'TR'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+
   // ---- NOP Compliance: Seed Commercial Availability Search (NOP 5029) ----
   {
     name: 'seed_search_attempts',
     labelKey: 'events.production.fields.seedSearchAttempts',
     valueType: 'text',
-    visibleForSubtypes: ['PL'],
+    // Without this the resolver falls through to defaultFormatter's String(value) and the
+    // modal prints "[object Object],[object Object]" — this is a JSONField, not text.
+    formatter: formatSeedSearchAttempts,
+    // TR too: a transplant of non-organic nursery stock carries the same 205.204(a)(1)
+    // obligation, and the form has always shown the seed block for both subtypes.
+    visibleForSubtypes: ['PL', 'TR'],
     // NOP 5029 commercial-availability search log embeds contacted-supplier identities —
     // commercially sensitive, producer/certifier-only. NO consumer_card surface (P0 leak fix,
     // mirrors chemical supplier_name; backend also strips it from the public payload).
@@ -393,19 +662,34 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedCertificationStatus',
     valueType: 'enum',
     enumSource: 'seed_certification_statuses',
-    visibleForSubtypes: ['PL'],
+    visibleForSubtypes: ['PL', 'TR'],
+    // ⚠️ NO consumer_card, removed 2026-08-15. This is a grower DROPDOWN whose values are
+    // certification statuses, and on the card it rendered as a bare "Certified Organic" with
+    // no self-reported qualifier anywhere near it — a self-assigned certification-mark claim
+    // on an anonymous public surface. That is the same shape as `seed_treatment_allowed_basis`
+    // (one of whose values is `omri_listed`), which this file already withholds by name for
+    // exactly that reason, and the same class as the 2026-08-09 OMRI incident.
+    //
+    // It had in practice never reached the card — `eventDataNormalizer` was silently dropping
+    // it — so removing the declaration changes no pixel today. It is removed rather than left
+    // dormant because the normalizer now carries registry fields through automatically, which
+    // would have published it on the next render.
+    //
+    // The certified fact a shopper CAN rely on is the farm's third-party certification, which
+    // `transparency_views` publishes from structured USDA-OID-matched records. What was
+    // planted (variety, rootstock, count) stays on the card; who certified it does not come
+    // from a dropdown.
     surfaces: {
       card: 'secondary',
       modal: 'secondary',
-      form: 'immediate',
-      consumer_card: 'secondary'
+      form: 'immediate'
     }
   },
   {
     name: 'seed_supplier_name',
     labelKey: 'events.production.fields.seedSupplierName',
     valueType: 'text',
-    visibleForSubtypes: ['PL'],
+    visibleForSubtypes: ['PL', 'TR'],
     // Seed vendor identity — producer/certifier-only. NO consumer_card surface (P0 leak fix).
     surfaces: {
       modal: 'secondary',
@@ -416,7 +700,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'seed_purchase_date',
     labelKey: 'events.production.fields.seedPurchaseDate',
     valueType: 'date',
-    visibleForSubtypes: ['PL'],
+    visibleForSubtypes: ['PL', 'TR'],
     // Seed purchase record — producer/certifier-only. NO consumer_card surface (P0 leak fix).
     surfaces: {
       modal: 'details',
@@ -427,7 +711,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'seed_purchase_invoice',
     labelKey: 'events.production.fields.seedPurchaseInvoice',
     valueType: 'text',
-    visibleForSubtypes: ['PL'],
+    visibleForSubtypes: ['PL', 'TR'],
     // Seed invoice number — producer/certifier-only. NO consumer_card surface (P0 leak fix).
     surfaces: {
       modal: 'details',
@@ -438,7 +722,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'seed_lot_number',
     labelKey: 'events.production.fields.seedLotNumber',
     valueType: 'text',
-    visibleForSubtypes: ['PL'],
+    visibleForSubtypes: ['PL', 'TR'],
     surfaces: {
       modal: 'secondary',
       form: 'secondary'
@@ -448,11 +732,52 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'seed_treatment',
     labelKey: 'events.production.fields.seedTreatment',
     valueType: 'text',
-    visibleForSubtypes: ['PL'],
+    visibleForSubtypes: ['PL', 'TR'],
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
       consumer_card: 'secondary'
+    }
+  },
+  {
+    // USDA "Seed Records Part C" pairs every named treatment with a "Documentation of Allowed
+    // Status" column. § 205.204(a)(2) permits non-organic seed only on commercial-availability
+    // grounds, and any treatment applied must itself be an allowed substance (§ 205.601), so
+    // "neem oil coating" alone is unreviewable.
+    //
+    // ⚠️ NO consumer_card, deliberately. One of the values is `omri_listed`, and this field is
+    // a grower DROPDOWN — exactly the shape of the 2026-08-09 leak where an anonymous payload
+    // said "OMRI Listed" for an input with no catalog row. `may_claim_input_listing()` exists
+    // because a self-reported certification-mark claim must never reach a public surface. The
+    // treatment NAME is already consumer-visible above; its allowability basis is a certifier
+    // record.
+    name: 'seed_treatment_allowed_basis',
+    labelKey: 'events.production.fields.seedTreatmentAllowedBasis',
+    valueType: 'enum',
+    enumSource: 'seed_treatment_bases',
+    visibleForSubtypes: ['PL', 'TR'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    // § 205.204(a)(1) permits non-organic seed only when an equivalent organic variety is not
+    // "commercially available", and § 205.2 defines that by FORM, QUALITY or QUANTITY. USDA's
+    // Seed Records Part B asks for that reason in those words; `seed_search_attempts` records
+    // who was contacted and when, with the outcome as free text — which cannot be reviewed
+    // against a three-part statutory test.
+    //
+    // No consumer_card: the exemption ground is a certifier record, and a shopper cannot act
+    // on "insufficient quantity available".
+    name: 'seed_nonavailability_reason',
+    labelKey: 'events.production.fields.seedNonavailabilityReason',
+    valueType: 'enum',
+    enumSource: 'seed_nonavailability_reasons',
+    visibleForSubtypes: ['PL', 'TR'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
     }
   },
 
@@ -529,7 +854,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
-    // NOP irrigation/well water test (7 CFR 205.272 / 205.671) — CCOF water-quality
+    // Irrigation/well water test — NOT a Part 205 requirement. § 205.670(b)-(c) puts residue testing on the certifying agent; microbial ag-water testing is FSMA PSR 21 CFR 112 and/or a certifier contract term. — CCOF water-quality
     // record. Producer/certifier-only; NO consumer_card surface (backend keeps it out
     // of the public payload).
     name: 'water_test_date',
@@ -590,6 +915,22 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   // visibleWhen, every EM event would render empty cleaning rows on the consumer card
   // and modal — Bug Pattern #6 territory for the boolean default=False shared field.
   // Form keeps the cleaning section gated by ProductionTab.jsx on the same predicate.
+  {
+    name: 'cleaning_asset_class',
+    labelKey: 'events.production.fields.cleaningAssetClass',
+    valueType: 'enum',
+    enumSource: 'cleaning_asset_classes',
+    visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      // Same CL/Cleaning normalizer tolerance as the other cleaning_* fields.
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
+    },
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
   {
     name: 'cleaning_date',
     labelKey: 'events.production.fields.cleaningDate',
@@ -787,11 +1128,20 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // Bug Pattern #6 — BooleanField(default=False); gate on truthy + cleaning op.
     // Two-tier predicate (CL operation AND rinse_step_documented=true) so non-cleaning
     // EM events don't pollute, and Cleaning events without the rinse step don't ✗-spam.
+    // 🔴 2026-08-15: the CL check now applies only to EM.
+    //
+    // `equipment_operation_type` is an EQUIPMENT field — a post-harvest event never carries
+    // one — so requiring `op === 'cl'` made this field unreachable on PH, the subtype whose
+    // § 205.605(b) proviso it literally encodes ("followed by a rinse with potable water at
+    // or below the [MRDL]"). The two-tier guard still does its real job on EM: keep
+    // non-cleaning maintenance events from ✗-spamming the card.
     visibleWhen: (e) => {
-      const op = String(e.equipment_operation_type || '').toLowerCase();
-      const isCleaning = op === 'cl' || op === 'cleaning';
       const truthy = e.rinse_step_documented === true || e.rinse_step_documented === 'true';
-      return isCleaning && truthy;
+      if (!truthy) return false;
+      const subtype = String((e as any).production_type || e.type || '').toUpperCase();
+      if (subtype === 'PH') return true;
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
     },
     formatter: formatBoolean,
     consumerFormatter: () => 'Yes — equipment was rinsed after sanitising',
@@ -948,7 +1298,9 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
 
   // ---- Fuel & carbon (ALL subtypes, carbon-relevant) ----
   {
+    // PO excluded 2026-08-16 — see `fuel_type`. Same subtype list as the form's fuel section.
     name: 'fuel_consumed',
+    visibleForSubtypes: ['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM', 'PH', 'CM', 'FP', 'MO'],
     labelKey: 'events.common.fields.fuelConsumed',
     valueType: 'number',
     unitField: 'fuel_unit',
@@ -962,7 +1314,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
+    // PO excluded 2026-08-16: ProductionTab's fuel/equipment subtype list omits Pollination
+    // entirely. Placing hives burns no implement fuel on the block.
     name: 'fuel_type',
+    visibleForSubtypes: ['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM', 'PH', 'CM', 'FP', 'MO'],
     labelKey: 'events.common.fields.fuelType',
     valueType: 'enum',
     enumSource: 'fuel_types',
@@ -974,7 +1329,9 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     }
   },
   {
+    // PO excluded 2026-08-16 — see `fuel_type`. Hive placement runs no implement.
     name: 'equipment_hours',
+    visibleForSubtypes: ['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'EM', 'PH', 'CM', 'FP', 'MO'],
     labelKey: 'events.common.fields.equipmentHours',
     valueType: 'number',
     formatter: formatDurationHours,
@@ -1015,6 +1372,12 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // rating on a consumer surface is the category the 2026-06 score demotion removed
     // (EU ECGT 2024/825 / FTC 16 CFR 260.6). It stays on modal/form as a producer's own note.
     // equipmentEvent.ts already excluded its twin `operation_efficiency` for this reason.
+    //
+    // 🔴 2026-08-15: also gated to HA. ProductionTab renders the input only inside the
+    // harvest Transportation section and onSubmit sends `undefined` for every other subtype,
+    // so on a Planting event this was a value the modal displayed ("Production Efficiency:
+    // Normal") with no control anywhere to change or clear it.
+    visibleForSubtypes: ['HA'],
     surfaces: {
       modal: 'secondary',
       form: 'secondary'
@@ -1051,7 +1414,14 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // HA removed 2026-08-01: harvest cards already carry the STRUCTURED
     // `harvest_method` ("Hand Picking"), so this rendered a second, vaguer row
     // ("Operation Method: manual") saying the same thing.
-    visibleForSubtypes: ['PR', 'TR', 'CU', 'TH', 'CM'],
+    // MO added 2026-08-15: § 205.206(c)(1)(2)(5) name mulching, mowing and flame weeding as
+    // the organic weed controls, and a mowing event previously printed a BLANK method cell —
+    // `floor_management_type` has no packet consumer and `method` excluded MO.
+    // PL added 2026-08-15: the Planting teardown's remaining § 4 gap. COG Pro carries a
+    // Planting Method column and their real export in this DB reads "Hand planted"; without
+    // it Trazo could not record hand-planting at all, and the carbon path fell back to USDA
+    // MECHANICAL averages for an operation done with a shovel.
+    visibleForSubtypes: ['PL', 'PR', 'TR', 'CU', 'TH', 'CM', 'MO'],
     // Backend stores operation method in `extra_data.method`. The form-preview
     // path mirrors it to top-level via eventDataNormalizer, but the Event Details
     // modal reads raw API data (no normalizer in that path). Fall back to
@@ -1066,6 +1436,11 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       return humanizeEnumFallback(topLevel ?? fallback);
     },
     surfaces: {
+      // `form` declared 2026-08-15. The tab HAS collected this all along, under the input
+      // name `production_method` (it lands in `extra_data.method`) — the registry simply
+      // never said so, which kept the render-conformance sweep blind to it. Declaring it is
+      // what makes the PL gap this same sweep now guards against reappearing.
+      form: 'secondary',
       modal: 'immediate',
       consumer_card: 'immediate'
     }
@@ -1091,6 +1466,12 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     valueType: 'enum',
     enumSource: 'growth_stages',
     formatter: formatGrowthStage,
+    // 🔴 2026-08-15: this had no subtype gate at all, while ProductionTab hides the input for
+    // PL, TR and HA ("meaningless at planting", "always harvest_ready at harvest"). The
+    // registry therefore declared a `form` surface the form does not render, and a legacy
+    // value showed in the modal's Technical Details on a record with no input to change or
+    // clear it. The declaration now matches the form.
+    visibleForSubtypes: ['IR', 'PR', 'CU', 'TH', 'PH', 'CM', 'FP', 'MO', 'EM'],
     surfaces: { modal: 'details', form: 'secondary' }
   },
   {

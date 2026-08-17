@@ -36,7 +36,14 @@ import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
+import { SupervisorSignOff } from 'components/Forms/SupervisorSignOff';
 import { useIntl } from 'react-intl';
+import {
+  MANURE_ANIMAL_SOURCES,
+  MANURE_APPLICATION_METHODS,
+  MANURE_FORMS,
+  MANURE_ORIGINS
+} from 'config/events/enums';
 // Event Field Registry (Phase 5G — form integration)
 import { useFormFields } from 'src/hooks/useFormFields';
 import { useDefaultUnits } from 'src/hooks/useMeasurementSystem';
@@ -46,13 +53,13 @@ import { BlockIdField } from 'components/Fields/BlockIdField';
 // Phase 3: Fuel types with EPA-verified emission factors (matching ProductionTab pattern)
 // UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
 const FUEL_TYPES = [
-  { value: 'diesel', label: '⛽ Diesel', factor: '2.70 kg CO₂e/L' },
-  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.32 kg CO₂e/L' },
-  { value: 'natural_gas', label: '💨 Natural Gas', factor: '1.92 kg CO₂e/m³' },
-  { value: 'propane', label: '🔥 LPG / Propane', factor: '1.51 kg CO₂e/L' },
-  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' },
-  { value: 'biodiesel', label: '🌿 Biodiesel', factor: '2.31 kg CO₂e/L' },
-  { value: 'none', label: '🔧 No Fuel / Manual', factor: '0 kg CO₂e' }
+  { value: 'diesel', label: 'Diesel', factor: '2.70 kg CO₂e/L' },
+  { value: 'gasoline', label: 'Gasoline', factor: '2.32 kg CO₂e/L' },
+  { value: 'natural_gas', label: 'Natural Gas', factor: '1.92 kg CO₂e/m³' },
+  { value: 'propane', label: 'LPG / Propane', factor: '1.51 kg CO₂e/L' },
+  { value: 'electric', label: 'Electric', factor: '0.39 kg CO₂e/kWh' },
+  { value: 'biodiesel', label: 'Biodiesel', factor: '2.31 kg CO₂e/L' },
+  { value: 'none', label: 'No Fuel / Manual', factor: '0 kg CO₂e' }
 ];
 
 const formSchemaSoilManagement = object({
@@ -137,13 +144,24 @@ const formSchemaSoilManagement = object({
   // F24: complete the NOP 5021 compost record — feedstock + temperature-monitoring readings.
   compost_feedstock: string().optional(),
   compost_temperature_log: string().optional(),
+  compost_unit_id: string().optional(),
+  compost_temp_reading_method: string().optional(),
   manure_harvest_interval: string().optional(),
   manure_application_date: string().optional(),
+  manure_harvest_date_planned: string().optional(),
   // NOP 5006 — processed animal manure (interval-exempt when documented)
   manure_treatment: string().optional(),
+  manure_application_method: string().optional(),
+  manure_animal_source: string().optional(),
+  manure_form: string().optional(),
+  manure_origin: string().optional(),
   processed_manure_temp_f: string().optional(),
   processed_manure_attestation: string().optional(),
   observation: string().optional(),
+  // FSMA PSR § 112.161(b) sign-off. Soil amendments are part-112 records (§ 112.60).
+  reviewed: string().optional(), // 'true' / 'false' string for the Switch
+  reviewer_name: string().optional(),
+  review_date: string().optional(),
   // Phase 2: Universal CommonEvent fields (variety, block_id, growth_stage)
   variety: string().optional(),
   block_id: string().optional(),
@@ -433,12 +451,23 @@ const SoilManagementTab = forwardRef(
         compost_initial_cn_ratio: initialValues.compost_initial_cn_ratio || '',
         compost_feedstock: initialValues.compost_feedstock || '',
         compost_temperature_log: initialValues.compost_temperature_log || '',
+        compost_unit_id: initialValues.compost_unit_id || '',
+        compost_temp_reading_method: initialValues.compost_temp_reading_method || '',
         manure_harvest_interval: initialValues.manure_harvest_interval || '',
         manure_application_date: initialValues.manure_application_date || '',
+        manure_harvest_date_planned: initialValues.manure_harvest_date_planned || '',
         manure_treatment: initialValues.manure_treatment || '',
+        manure_application_method: initialValues.manure_application_method || '',
+        manure_animal_source: initialValues.manure_animal_source || '',
+        manure_form: initialValues.manure_form || '',
+        manure_origin: initialValues.manure_origin || '',
         processed_manure_temp_f: initialValues.processed_manure_temp_f || '',
         processed_manure_attestation: initialValues.processed_manure_attestation || '',
         observation: initialValues.observation || '',
+        reviewed:
+          initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
+        reviewer_name: initialValues.reviewer_name || '',
+        review_date: initialValues.review_date || '',
         // Phase 2: Universal CommonEvent fields
         variety: initialValues.variety || '',
         block_id: initialValues.block_id || '',
@@ -542,7 +571,7 @@ const SoilManagementTab = forwardRef(
         if (onDataChange && typeof onDataChange === 'function') {
           const currentValues = methods.getValues();
           console.log(
-            '🌱 SoilManagementTab carbon calculation triggered for:',
+            'SoilManagementTab carbon calculation triggered for:',
             Object.keys(currentValues)
           );
 
@@ -559,7 +588,7 @@ const SoilManagementTab = forwardRef(
               console.log('🌱 SoilManagementTab: ✅ Carbon calculation onDataChange called');
             } catch (error) {
               console.error(
-                '🌱 SoilManagementTab: ❌ Error in carbon calculation onDataChange:',
+                'SoilManagementTab: ❌ Error in carbon calculation onDataChange:',
                 error
               );
             }
@@ -598,10 +627,7 @@ const SoilManagementTab = forwardRef(
             onDataChange(currentValues);
             console.log('🌱 SoilManagementTab: ✅ Form data completeness onDataChange called');
           } catch (error) {
-            console.error(
-              '🌱 SoilManagementTab: ❌ Error in form completeness onDataChange:',
-              error
-            );
+            console.error('SoilManagementTab: ❌ Error in form completeness onDataChange:', error);
           }
         }
       }, 500);
@@ -666,6 +692,10 @@ const SoilManagementTab = forwardRef(
       // 🔍 Debug: Check if observation field is being captured
       console.log('🔍 [SoilManagement] Form submission data:', {
         observation: data.observation,
+        // Boolean on the model, 'true'/'false' string on the Switch — coerce at the boundary.
+        reviewed: data.reviewed === 'true' || data.reviewed === true,
+        reviewer_name: data.reviewer_name || null,
+        review_date: data.review_date || null,
         observationType: typeof data.observation,
         observationLength: data.observation?.length,
         allKeys: Object.keys(data)
@@ -750,11 +780,19 @@ const SoilManagementTab = forwardRef(
         ...tillageDepthData,
         // NOP DateField: backend rejects empty strings — convert to null
         manure_application_date: cleanedCoreData.manure_application_date || null,
+        manure_harvest_date_planned: cleanedCoreData.manure_harvest_date_planned || null,
         // Nitrogen content of the amendment — drives field N2O and the CA ILRP
         // total-nitrogen-applied figure. Empty must be null, not '' (DecimalField).
         amendment_nitrogen_percentage: cleanedCoreData.amendment_nitrogen_percentage || null,
         // NOP 5006 processed manure — coerce empties to null (DecimalField/choice)
         manure_treatment: cleanedCoreData.manure_treatment || null,
+        // USDA form #9 columns. null (not undefined) so a mis-picked value can be cleared,
+        // and GR-only fields clear themselves when the subtype rules them out.
+        manure_application_method:
+          cleanedCoreData.type === 'GR' ? null : cleanedCoreData.manure_application_method || null,
+        manure_animal_source: cleanedCoreData.manure_animal_source || null,
+        manure_form: cleanedCoreData.type === 'GR' ? null : cleanedCoreData.manure_form || null,
+        manure_origin: cleanedCoreData.type === 'GR' ? null : cleanedCoreData.manure_origin || null,
         processed_manure_temp_f: cleanedCoreData.processed_manure_temp_f || null,
         processed_manure_attestation: cleanedCoreData.processed_manure_attestation || null,
         // Map observation field to description (required by backend CommonEvent model)
@@ -884,12 +922,11 @@ const SoilManagementTab = forwardRef(
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleEnhancedSubmit)} noValidate style={{ width: '100%' }}>
           <Flex direction="column" w="100%">
-            <StandardAlert status="info" title="Soil Management & Transparency Documentation">
-              <Text fontSize="sm">
-                All fields marked with * are required for accurate carbon footprint calculations and
-                transparency documentation. Soil management practices help build consumer trust
-                through documented sustainable farming methods.
-              </Text>
+            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. */}
+            <StandardAlert
+              status="info"
+              title={intl.formatMessage({ id: 'events.callout.soil.title' })}>
+              <Text fontSize="sm">{intl.formatMessage({ id: 'events.callout.soil.body' })}</Text>
             </StandardAlert>
 
             {/* Forms are hand-crafted by design: the NOP section grouping below is what
@@ -905,7 +942,6 @@ const SoilManagementTab = forwardRef(
                   iconColor="green.600"
                   title="Soil Management Details"
                   badge="Carbon Calculation Required"
-                  badgeColorScheme="green"
                 />
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -914,8 +950,7 @@ const SoilManagementTab = forwardRef(
                       intl.formatMessage({ id: 'app.soilManagementType' }) || 'Soil Management Type'
                     }`}
                     required
-                    error={errors.type?.message}
-                  >
+                    error={errors.type?.message}>
                     <StandardSelect placeholder="Select soil management type" {...register('type')}>
                       <option value="ST">Soil Testing</option>
                       {/* F35 fix (2026-06): backend display for PA is "pH Adjustment"
@@ -939,8 +974,7 @@ const SoilManagementTab = forwardRef(
 
                   <StandardField
                     label="Event Name"
-                    helpText="Descriptive name for this soil management operation"
-                  >
+                    helpText="Descriptive name for this soil management operation">
                     <StandardInput
                       type="text"
                       placeholder="e.g., Spring Tillage - North Field"
@@ -954,8 +988,7 @@ const SoilManagementTab = forwardRef(
                     <StandardField
                       label={watch('type') === 'HD' ? 'Area Covered (optional)' : 'Area Covered'}
                       required={watch('type') !== 'HD'}
-                      error={errors.area_covered?.message}
-                    >
+                      error={errors.area_covered?.message}>
                       <HStack spacing={2}>
                         <StandardInput
                           flex={2}
@@ -1023,7 +1056,6 @@ const SoilManagementTab = forwardRef(
                     iconColor="green.600"
                     title="Fuel & Equipment Operations"
                     badge="Enhanced Carbon Accuracy"
-                    badgeColorScheme="green"
                     description="Document your equipment usage, fuel consumption, and operational details to build consumer trust through transparent farming practices."
                   />
 
@@ -1031,8 +1063,7 @@ const SoilManagementTab = forwardRef(
                     {/* Phase 3: Fuel Type Selector */}
                     <StandardField
                       label="Fuel Type"
-                      helpText="Select a fuel type only if powered equipment was used. Leave blank for hand/manual operations."
-                    >
+                      helpText="Select a fuel type only if powered equipment was used. Leave blank for hand/manual operations.">
                       <StandardSelect placeholder="Select fuel type..." {...register('fuel_type')}>
                         {FUEL_TYPES.map((type) => (
                           <option key={type.value} value={type.value}>
@@ -1050,8 +1081,7 @@ const SoilManagementTab = forwardRef(
                         watch('fuel_type') === 'electric'
                           ? 'Energy consumption for carbon emission calculation'
                           : 'Total fuel used for soil management equipment'
-                      }
-                    >
+                      }>
                       <HStack spacing={2}>
                         <StandardInput
                           flex={2}
@@ -1071,8 +1101,7 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label="Equipment Hours"
-                      helpText="Total equipment operating time"
-                    >
+                      helpText="Total equipment operating time">
                       <StandardInput
                         type="number"
                         step="0.1"
@@ -1083,8 +1112,7 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label="Production Efficiency"
-                      helpText="Equipment efficiency rating for carbon scoring"
-                    >
+                      helpText="Equipment efficiency rating for carbon scoring">
                       <StandardSelect {...register('production_efficiency')}>
                         <option value="">Select efficiency level</option>
                         <option value="high">High Efficiency</option>
@@ -1095,8 +1123,7 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label="Equipment Used"
-                      helpText="Equipment used for this operation"
-                    >
+                      helpText="Equipment used for this operation">
                       <StandardInput
                         type="text"
                         placeholder="e.g., tractor with disc harrow, soil auger"
@@ -1134,7 +1161,6 @@ const SoilManagementTab = forwardRef(
                     iconColor="green.600"
                     title="Soil Amendment Details"
                     badge="IPCC 2006 Carbon Calculation"
-                    badgeColorScheme="green"
                     description="Document lime or soil amendment application for accurate carbon emissions calculation using IPCC 2006 methodology."
                   />
 
@@ -1142,8 +1168,7 @@ const SoilManagementTab = forwardRef(
                     <StandardField label="Amendment Type" helpText="Type of soil amendment applied">
                       <StandardSelect
                         placeholder="Select amendment type"
-                        {...register('amendment_type')}
-                      >
+                        {...register('amendment_type')}>
                         <option value="limestone">Limestone (CaCO3) - 0.44 kg CO2/kg</option>
                         <option value="dolomite">Dolomite (CaMg(CO3)2) - 0.477 kg CO2/kg</option>
                         <option value="calcium_oxide">Quick Lime (CaO) - High reactivity</option>
@@ -1164,8 +1189,7 @@ const SoilManagementTab = forwardRef(
                         id: 'events.soil.amendmentProductNameHelp',
                         defaultMessage:
                           'Specific product (e.g., Malibu Compost Bu’s Blend) — required for the NOP/CCOF input record'
-                      })}
-                    >
+                      })}>
                       <StandardInput
                         placeholder={intl.formatMessage({
                           id: 'events.soil.amendmentProductNamePlaceholder',
@@ -1183,8 +1207,7 @@ const SoilManagementTab = forwardRef(
                       helpText={intl.formatMessage({
                         id: 'events.soil.amendmentManufacturerHelp',
                         defaultMessage: 'Manufacturer / supplier of the amendment'
-                      })}
-                    >
+                      })}>
                       <StandardInput
                         placeholder={intl.formatMessage({
                           id: 'events.soil.amendmentManufacturerPlaceholder',
@@ -1207,8 +1230,7 @@ const SoilManagementTab = forwardRef(
                           id: 'events.soil.coverCropSpeciesHelp',
                           defaultMessage:
                             'Species / mix sown (e.g., vetch + bell beans + oats) — for the NOP §205.203 cover-crop record'
-                        })}
-                      >
+                        })}>
                         <StandardInput
                           placeholder={intl.formatMessage({
                             id: 'events.soil.coverCropSpeciesPlaceholder',
@@ -1221,8 +1243,7 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label="Amendment Amount"
-                      helpText="Total quantity of amendment applied"
-                    >
+                      helpText="Total quantity of amendment applied">
                       <HStack spacing={2}>
                         <StandardInput
                           flex={2}
@@ -1244,8 +1265,7 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label="Application Depth"
-                      helpText="Depth of amendment incorporation"
-                    >
+                      helpText="Depth of amendment incorporation">
                       <HStack spacing={2}>
                         <StandardInput
                           flex={2}
@@ -1305,12 +1325,10 @@ const SoilManagementTab = forwardRef(
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField
                         label="Amendment Organic Approval"
-                        helpText="Organic certification status of this amendment (7 CFR 205.203(b))"
-                      >
+                        helpText="Organic certification status of this amendment (7 CFR 205.203(b))">
                         <StandardSelect
                           placeholder="Select organic approval status"
-                          {...register('amendment_organic_approved')}
-                        >
+                          {...register('amendment_organic_approved')}>
                           <option value="omri_listed">OMRI Listed - Organic certified</option>
                           <option value="usda_nop_approved">
                             USDA NOP Approved - National Organic Program
@@ -1343,8 +1361,7 @@ const SoilManagementTab = forwardRef(
                           id: 'events.soil.fields.amendmentNitrogenPercentageHelp',
                           defaultMessage:
                             'Use the "as is" column of the supplier analysis - the same wet basis as the tonnage above, NOT the dry-weight column (they differ by roughly 2x). Typical as-received: green-waste compost 0.5-1.2%, manure compost 0.6-1.8%.'
-                        })}
-                      >
+                        })}>
                         <StandardInput
                           type="number"
                           step="0.01"
@@ -1368,12 +1385,10 @@ const SoilManagementTab = forwardRef(
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
                         <StandardField
                           label="Compost Method"
-                          helpText="Determines required duration/turnings (7 CFR 205.203(c)(2))"
-                        >
+                          helpText="Determines required duration/turnings (7 CFR 205.203(c)(2))">
                           <StandardSelect
                             placeholder="Select method..."
-                            {...register('compost_method')}
-                          >
+                            {...register('compost_method')}>
                             <option value="windrow">Windrow (turned, open air)</option>
                             <option value="static_aerated">Static Aerated Pile</option>
                             <option value="in_vessel">In-Vessel</option>
@@ -1381,8 +1396,7 @@ const SoilManagementTab = forwardRef(
                         </StandardField>
                         <StandardField
                           label="Initial C:N Ratio"
-                          helpText="Carbon-to-nitrogen ratio at start — NOP requires 25:1–40:1"
-                        >
+                          helpText="Carbon-to-nitrogen ratio at start — NOP requires 25:1–40:1">
                           <StandardInput
                             type="number"
                             min="0"
@@ -1396,8 +1410,7 @@ const SoilManagementTab = forwardRef(
                       <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} mt={4}>
                         <StandardField
                           label="Peak Temperature (°F)"
-                          helpText="Highest temperature reached (131–170°F required)"
-                        >
+                          helpText="Highest temperature reached (131–170°F required)">
                           <StandardInput
                             type="number"
                             min="0"
@@ -1409,8 +1422,7 @@ const SoilManagementTab = forwardRef(
                         </StandardField>
                         <StandardField
                           label="Days at Temperature"
-                          helpText="Windrow: 15+ · Static/in-vessel: 3+"
-                        >
+                          helpText="Windrow: 15+ · Static/in-vessel: 3+">
                           <StandardInput
                             type="number"
                             min="0"
@@ -1422,8 +1434,7 @@ const SoilManagementTab = forwardRef(
                         </StandardField>
                         <StandardField
                           label="Number of Turnings"
-                          helpText="Windrow only: 5+ turnings"
-                        >
+                          helpText="Windrow only: 5+ turnings">
                           <StandardInput
                             type="number"
                             min="0"
@@ -1436,19 +1447,65 @@ const SoilManagementTab = forwardRef(
                       </SimpleGrid>
                       {/* F24: feedstock + temperature-monitoring readings complete the NOP 5021
                             record (a single peak temp is not a monitoring log). */}
+                      {/* Labels were hardcoded English on a translated screen; moved to intl
+                            2026-08-11 along with the two batch-identity fields below. */}
                       <StandardField
-                        label="Feedstock"
-                        helpText="What the compost is made of — NOP 5021 source record"
-                      >
+                        label={intl.formatMessage({
+                          id: 'events.soil.fields.compostFeedstock',
+                          defaultMessage: 'Feedstock'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.fields.compostFeedstockHelp',
+                          defaultMessage: 'What the compost is made of — NOP 5021 source record'
+                        })}>
                         <StandardInput
                           placeholder="e.g., horse manure + straw + green waste"
                           {...register('compost_feedstock')}
                         />
                       </StandardField>
+
+                      {/* USDA's Compost Production Record heads each sheet with the batch
+                            identity and how the temperature was taken. Without them a
+                            § 205.203(c)(2) log is unattributable: two piles and one series, and
+                            a reading with no depth or instrument cannot be reproduced. */}
                       <StandardField
-                        label="Temperature Monitoring Log"
-                        helpText="NOP 5021 readings — one per line (date · temp · turned?)"
-                      >
+                        label={intl.formatMessage({
+                          id: 'events.soil.fields.compostUnitId',
+                          defaultMessage: 'Pile / Windrow ID'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.fields.compostUnitIdHelp',
+                          defaultMessage: 'Which pile, windrow or vessel these readings belong to'
+                        })}>
+                        <StandardInput
+                          placeholder="e.g., Windrow 3"
+                          {...register('compost_unit_id')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.soil.fields.compostTempReadingMethod',
+                          defaultMessage: 'Temperature Reading Location & Method'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.fields.compostTempReadingMethodHelp',
+                          defaultMessage:
+                            'Where and how you take the reading — a surface reading and a core reading on the same pile disagree'
+                        })}>
+                        <StandardInput
+                          placeholder="e.g., probe at 36 in depth, mid-windrow"
+                          {...register('compost_temp_reading_method')}
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.soil.fields.compostTemperatureLog',
+                          defaultMessage: 'Temperature Monitoring Log'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'events.soil.fields.compostTemperatureLogHelp',
+                          defaultMessage: 'NOP 5021 readings — one per line (date · temp · turned?)'
+                        })}>
                         <StandardTextarea
                           rows={4}
                           placeholder={
@@ -1485,12 +1542,10 @@ const SoilManagementTab = forwardRef(
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
                         <StandardField
                           label="Manure Harvest Interval"
-                          helpText="Required wait period before harvest"
-                        >
+                          helpText="Required wait period before harvest">
                           <StandardSelect
                             placeholder="Select harvest interval"
-                            {...register('manure_harvest_interval')}
-                          >
+                            {...register('manure_harvest_interval')}>
                             <option value="120">
                               120 days — edible portion contacts soil (root crops, leafy greens)
                             </option>
@@ -1523,11 +1578,102 @@ const SoilManagementTab = forwardRef(
                                   id: 'events.soil.fields.manureApplicationDateHelp',
                                   defaultMessage: 'Used to calculate earliest safe harvest date'
                                 })
-                          }
-                        >
+                          }>
                           <StandardInput type="date" {...register('manure_application_date')} />
                         </StandardField>
+
+                        {/* USDA's crop documentation form records the estimated harvest date
+                            beside the actual one. The actual date is the harvest event, which
+                            already drives the § 205.203(c)(1) validator — this is the estimate,
+                            so an inspector can see whether the plan was sound when the manure
+                            went on rather than only how it turned out. */}
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.soil.fields.manureHarvestDatePlanned',
+                            defaultMessage: 'Planned Harvest Date'
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.soil.fields.manureHarvestDatePlannedHelp',
+                            defaultMessage:
+                              'The harvest date you expect when applying this manure. Recorded alongside the actual harvest so the 90/120-day interval can be checked against your plan.'
+                          })}>
+                          <StandardInput type="date" {...register('manure_harvest_date_planned')} />
+                        </StandardField>
                       </SimpleGrid>
+
+                      {/* USDA Manure Application / Food Crop Harvest Interval Record asks two
+                            columns Trazo had no home for: "How Applied / Incorporated"
+                            ("Manure spreader disk in") and "Manure Type, Form and Source"
+                            ("Chicken, dry, on farm"). USDA writes the second as one free-text
+                            column; three enums store the same thing and stay queryable.
+
+                            The animal is asked for GR too — knowing it was sheep vs cattle is
+                            real information. Method, form and origin are OM-only: grazed manure
+                            is not "applied", has no chosen form, and is on-farm by definition,
+                            so all three would be questions with one possible answer. */}
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.soil.fields.manureAnimalSource'
+                          })}>
+                          <StandardSelect
+                            placeholder={intl.formatMessage({ id: 'app.select' })}
+                            {...register('manure_animal_source')}>
+                            {MANURE_ANIMAL_SOURCES.map((o) => (
+                              <option key={o.value} value={o.value}>
+                                {intl.formatMessage({ id: o.labelKey })}
+                              </option>
+                            ))}
+                          </StandardSelect>
+                        </StandardField>
+
+                        {watch('type') !== 'GR' && (
+                          <StandardField
+                            label={intl.formatMessage({ id: 'events.soil.fields.manureForm' })}>
+                            <StandardSelect
+                              placeholder={intl.formatMessage({ id: 'app.select' })}
+                              {...register('manure_form')}>
+                              {MANURE_FORMS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {intl.formatMessage({ id: o.labelKey })}
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          </StandardField>
+                        )}
+                      </SimpleGrid>
+
+                      {watch('type') !== 'GR' && (
+                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.soil.fields.manureApplicationMethod'
+                            })}>
+                            <StandardSelect
+                              placeholder={intl.formatMessage({ id: 'app.select' })}
+                              {...register('manure_application_method')}>
+                              {MANURE_APPLICATION_METHODS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {intl.formatMessage({ id: o.labelKey })}
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          </StandardField>
+
+                          <StandardField
+                            label={intl.formatMessage({ id: 'events.soil.fields.manureOrigin' })}>
+                            <StandardSelect
+                              placeholder={intl.formatMessage({ id: 'app.select' })}
+                              {...register('manure_origin')}>
+                              {MANURE_ORIGINS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {intl.formatMessage({ id: o.labelKey })}
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          </StandardField>
+                        </SimpleGrid>
+                      )}
 
                       {/* NOP 5006 — processed animal manure. A third class between raw
                             (c)(1) and composted (c)(2): manure processed to reduce pathogens
@@ -1542,12 +1688,10 @@ const SoilManagementTab = forwardRef(
                           <StandardField
                             label="Manure Treatment (NOP 5006)"
                             helpText="Raw manure follows the 90/120-day interval. Composted (c)(2) and processed (NOP 5006) manure are interval-exempt when documented."
-                            mt={4}
-                          >
+                            mt={4}>
                             <StandardSelect
                               placeholder="Select manure treatment"
-                              {...register('manure_treatment')}
-                            >
+                              {...register('manure_treatment')}>
                               <option value="raw">
                                 Raw / uncomposted — 90/120-day interval applies
                               </option>
@@ -1563,8 +1707,7 @@ const SoilManagementTab = forwardRef(
                             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mt={4}>
                               <StandardField
                                 label="Processing Temperature (°F)"
-                                helpText="Peak temperature reached for pathogen reduction"
-                              >
+                                helpText="Peak temperature reached for pathogen reduction">
                                 <StandardInput
                                   type="number"
                                   step="0.1"
@@ -1574,8 +1717,7 @@ const SoilManagementTab = forwardRef(
                               </StandardField>
                               <StandardField
                                 label="Processing Attestation"
-                                helpText="OMRI / supplier documentation basis for the exemption"
-                              >
+                                helpText="OMRI / supplier documentation basis for the exemption">
                                 <StandardInput
                                   placeholder="e.g., OMRI-listed heat-processed poultry pellets, PFRP"
                                   {...register('processed_manure_attestation')}
@@ -1608,8 +1750,7 @@ const SoilManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <StandardField
                       label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
-                      helpText="pH affects nutrient availability"
-                    >
+                      helpText="pH affects nutrient availability">
                       <StandardInput
                         type="number"
                         min="0"
@@ -1625,8 +1766,7 @@ const SoilManagementTab = forwardRef(
                         intl.formatMessage({ id: 'app.organicMatterPercentage' }) ||
                         'Organic Matter (%)'
                       }
-                      helpText="Higher organic matter improves soil carbon"
-                    >
+                      helpText="Higher organic matter improves soil carbon">
                       <StandardInput
                         type="number"
                         min="0"
@@ -1639,12 +1779,10 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label="Soil Texture"
-                      helpText="Soil type affects carbon retention"
-                    >
+                      helpText="Soil type affects carbon retention">
                       <StandardSelect
                         placeholder="Select soil texture"
-                        {...register('soil_texture')}
-                      >
+                        {...register('soil_texture')}>
                         <option value="clay">Clay</option>
                         <option value="clay_loam">Clay Loam</option>
                         <option value="loam">Loam</option>
@@ -1684,12 +1822,10 @@ const SoilManagementTab = forwardRef(
                         label="Sample Type"
                         helpText="What was sent to the lab"
                         required
-                        error={errors.sample_matrix?.message}
-                      >
+                        error={errors.sample_matrix?.message}>
                         <StandardSelect
                           placeholder="Select what was sampled"
-                          {...register('sample_matrix')}
-                        >
+                          {...register('sample_matrix')}>
                           <option value="soil">Soil</option>
                           <option value="leaf">Leaf tissue</option>
                           <option value="petiole">Petiole</option>
@@ -1818,33 +1954,29 @@ const SoilManagementTab = forwardRef(
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField
                       label="Tillage Type"
-                      helpText="Primary tillage operation performed"
-                    >
+                      helpText="Primary tillage operation performed">
                       <StandardSelect
                         placeholder="Select tillage type"
-                        {...register('tillage_type')}
-                      >
+                        {...register('tillage_type')}>
                         <option value="conventional_plow">
-                          🚜 Conventional Plow - Deep inversion
+                          Conventional Plow - Deep inversion
                         </option>
-                        <option value="chisel_plow">⚡ Chisel Plow - Reduced tillage</option>
-                        <option value="disk_harrow">💿 Disk Harrow - Surface cultivation</option>
-                        <option value="no_till">🌱 No-Till - Direct seeding</option>
-                        <option value="strip_till">📏 Strip Till - Zonal tillage</option>
-                        <option value="minimum_till">🔄 Minimum Till - Conservation</option>
-                        <option value="subsoiling">🔧 Subsoiling - Deep loosening</option>
-                        <option value="cultivator">🌾 Cultivator - Shallow cultivation</option>
+                        <option value="chisel_plow">Chisel Plow - Reduced tillage</option>
+                        <option value="disk_harrow">Disk Harrow - Surface cultivation</option>
+                        <option value="no_till">No-Till - Direct seeding</option>
+                        <option value="strip_till">Strip Till - Zonal tillage</option>
+                        <option value="minimum_till">Minimum Till - Conservation</option>
+                        <option value="subsoiling">Subsoiling - Deep loosening</option>
+                        <option value="cultivator">Cultivator - Shallow cultivation</option>
                       </StandardSelect>
                     </StandardField>
 
                     <StandardField
                       label="Tillage Intensity"
-                      helpText="Intensity affects carbon emissions"
-                    >
+                      helpText="Intensity affects carbon emissions">
                       <StandardSelect
                         placeholder="Select intensity"
-                        {...register('tillage_intensity')}
-                      >
+                        {...register('tillage_intensity')}>
                         <option value="high">High - Heavy disturbance</option>
                         <option value="medium">Medium - Moderate disturbance</option>
                         <option value="low">Low - Minimal disturbance</option>
@@ -1854,32 +1986,28 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label="Tillage Direction"
-                      helpText="Direction affects soil erosion and carbon retention"
-                    >
+                      helpText="Direction affects soil erosion and carbon retention">
                       <StandardSelect
                         placeholder="Select direction"
-                        {...register('tillage_direction')}
-                      >
-                        <option value="across_slope">🏔️ Across Slope - Erosion control</option>
-                        <option value="up_down_slope">⬇️ Up/Down Slope - Standard</option>
-                        <option value="contour">🌀 Contour - Following natural lines</option>
-                        <option value="random">🔀 Random - Variable direction</option>
+                        {...register('tillage_direction')}>
+                        <option value="across_slope">Across Slope - Erosion control</option>
+                        <option value="up_down_slope">Up/Down Slope - Standard</option>
+                        <option value="contour">Contour - Following natural lines</option>
+                        <option value="random">Random - Variable direction</option>
                       </StandardSelect>
                     </StandardField>
 
                     <StandardField
                       label="Residue Management"
-                      helpText="Crop residue handling affects carbon sequestration"
-                    >
+                      helpText="Crop residue handling affects carbon sequestration">
                       <StandardSelect
                         placeholder="Select residue management"
-                        {...register('residue_management')}
-                      >
-                        <option value="incorporated">♻️ Incorporated - Mixed into soil</option>
-                        <option value="surface_left">🌾 Surface Left - Protective cover</option>
-                        <option value="removed">🚛 Removed - Harvested/burned</option>
-                        <option value="mulched">🍂 Mulched - Chopped in place</option>
-                        <option value="partial_removal">📏 Partial Removal - Mixed approach</option>
+                        {...register('residue_management')}>
+                        <option value="incorporated">Incorporated - Mixed into soil</option>
+                        <option value="surface_left">Surface Left - Protective cover</option>
+                        <option value="removed">Removed - Harvested/burned</option>
+                        <option value="mulched">Mulched - Chopped in place</option>
+                        <option value="partial_removal">Partial Removal - Mixed approach</option>
                       </StandardSelect>
                     </StandardField>
                   </SimpleGrid>
@@ -1902,7 +2030,6 @@ const SoilManagementTab = forwardRef(
                     iconColor="green.600"
                     title="Grazing Details"
                     badge="Soil Health Practice"
-                    badgeColorScheme="green"
                     description="Document grazing activities for cover crop management, weed control, and soil health."
                   />
 
@@ -1918,13 +2045,12 @@ const SoilManagementTab = forwardRef(
                           bg={isGrazingSummary ? 'blue.50' : 'gray.50'}
                           borderRadius="md"
                           border="1px solid"
-                          borderColor={isGrazingSummary ? 'blue.200' : 'gray.200'}
-                        >
+                          borderColor={isGrazingSummary ? 'blue.200' : 'gray.200'}>
                           <HStack justify="space-between" align="center">
                             <VStack align="start" spacing={0}>
                               <HStack>
                                 <Text fontWeight="semibold" fontSize="sm">
-                                  📊 Grazing Summary Mode
+                                  Grazing Summary Mode
                                 </Text>
                                 {isGrazingSummary && (
                                   <Badge colorScheme="blue" size="sm">
@@ -1964,20 +2090,17 @@ const SoilManagementTab = forwardRef(
                             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
                               <StandardField
                                 label="Period Start Date"
-                                helpText="When did this rotation begin?"
-                              >
+                                helpText="When did this rotation begin?">
                                 <StandardInput type="date" {...register('date_start')} />
                               </StandardField>
                               <StandardField
                                 label="Period End Date"
-                                helpText="When did this rotation end?"
-                              >
+                                helpText="When did this rotation end?">
                                 <StandardInput type="date" {...register('date_end')} />
                               </StandardField>
                               <StandardField
                                 label="Number of Grazing Passes"
-                                helpText="How many grazing passes/paddocks in this rotation"
-                              >
+                                helpText="How many grazing passes/paddocks in this rotation">
                                 <StandardInput
                                   type="number"
                                   min="1"
@@ -1987,8 +2110,7 @@ const SoilManagementTab = forwardRef(
                               </StandardField>
                               <StandardField
                                 label="Total Grazing Days"
-                                helpText="Combined grazing days across all passes"
-                              >
+                                helpText="Combined grazing days across all passes">
                                 <StandardInput
                                   type="number"
                                   min="1"
@@ -1998,8 +2120,7 @@ const SoilManagementTab = forwardRef(
                               </StandardField>
                               <StandardField
                                 label="Total Area Grazed"
-                                helpText="Combined area grazed across all passes"
-                              >
+                                helpText="Combined area grazed across all passes">
                                 <StandardInput
                                   type="number"
                                   placeholder="e.g., 20"
@@ -2017,8 +2138,7 @@ const SoilManagementTab = forwardRef(
                     <StandardField label="Animal Type" helpText="Type of animal used for grazing">
                       <StandardSelect
                         placeholder="Select animal type..."
-                        {...register('animal_type')}
-                      >
+                        {...register('animal_type')}>
                         <option value="sheep">Sheep</option>
                         <option value="goats">Goats</option>
                         <option value="cattle">Cattle</option>
@@ -2035,8 +2155,7 @@ const SoilManagementTab = forwardRef(
                     </StandardField>
                     <StandardField
                       label="Grazing Duration (Days)"
-                      helpText="How many days animals grazed"
-                    >
+                      helpText="How many days animals grazed">
                       <StandardInput
                         type="number"
                         placeholder="e.g., 14"
@@ -2045,12 +2164,10 @@ const SoilManagementTab = forwardRef(
                     </StandardField>
                     <StandardField
                       label="Grazing Purpose"
-                      helpText="Primary purpose of the grazing activity"
-                    >
+                      helpText="Primary purpose of the grazing activity">
                       <StandardSelect
                         placeholder="Select purpose..."
-                        {...register('grazing_purpose')}
-                      >
+                        {...register('grazing_purpose')}>
                         <option value="weed_control">Weed Control</option>
                         <option value="cover_crop">Cover Crop Termination</option>
                         <option value="soil_health">Soil Health</option>
@@ -2070,15 +2187,13 @@ const SoilManagementTab = forwardRef(
                     iconColor="green.600"
                     title="Habitat Development"
                     badge="Biodiversity Practice"
-                    badgeColorScheme="green"
                     description="Document planted/established habitat — hedgerows, insectary strips, native plantings, riparian buffers, or living groundcover. Add photos as evidence."
                   />
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField label="Habitat Type" helpText="What habitat was established">
                       <StandardSelect
                         placeholder="Select habitat type..."
-                        {...register('habitat_type')}
-                      >
+                        {...register('habitat_type')}>
                         <option value="hedgerow">Hedgerow (NRCS 422)</option>
                         <option value="insectary_strip">Insectary / Beneficial-Insect Strip</option>
                         <option value="native_planting">Native Planting</option>
@@ -2093,8 +2208,7 @@ const SoilManagementTab = forwardRef(
                     </StandardField>
                     <StandardField
                       label="Species Planted"
-                      helpText="Key species (free text, optional)"
-                    >
+                      helpText="Key species (free text, optional)">
                       <StandardInput
                         placeholder="e.g., native coyote brush, ceanothus, yarrow"
                         {...register('species_planted')}
@@ -2103,14 +2217,12 @@ const SoilManagementTab = forwardRef(
                   </SimpleGrid>
                   <StandardField
                     label="Established (optional)"
-                    helpText="When the habitat was first planted/established — an older hedgerow is a stronger consumer signal."
-                  >
+                    helpText="When the habitat was first planted/established — an older hedgerow is a stronger consumer signal.">
                     <StandardInput type="date" {...register('habitat_install_date')} />
                   </StandardField>
                   <StandardField
                     label="Wildlife Observed (optional)"
-                    helpText="Note any beneficial insects, birds, or wildlife you've seen here. Photos are the best evidence."
-                  >
+                    helpText="Note any beneficial insects, birds, or wildlife you've seen here. Photos are the best evidence.">
                     <StandardTextarea
                       placeholder="e.g., abundant lady beetles and lacewings; songbirds and a resident hawk"
                       {...register('wildlife_observed')}
@@ -2127,15 +2239,13 @@ const SoilManagementTab = forwardRef(
                     iconColor="green.600"
                     title="Nesting / Shelter Structures"
                     badge="Biodiversity Practice"
-                    badgeColorScheme="green"
                     description="Document installed wildlife structures — barn-owl & songbird boxes, raptor perches, native-bee blocks, bat boxes, insect hotels, beetle banks. Add photos as evidence."
                   />
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField label="Structure Type" helpText="What was installed">
                       <StandardSelect
                         placeholder="Select structure type..."
-                        {...register('habitat_type')}
-                      >
+                        {...register('habitat_type')}>
                         <option value="barn_owl_box">Barn-Owl Box</option>
                         <option value="raptor_perch">Raptor Perch</option>
                         <option value="songbird_box">Songbird Box</option>
@@ -2157,14 +2267,12 @@ const SoilManagementTab = forwardRef(
                   </SimpleGrid>
                   <StandardField
                     label="Installed (optional)"
-                    helpText="When the structures were installed."
-                  >
+                    helpText="When the structures were installed.">
                     <StandardInput type="date" {...register('habitat_install_date')} />
                   </StandardField>
                   <StandardField
                     label="Placement / Occupancy Notes (optional)"
-                    helpText="Mounting, orientation, or whether occupied"
-                  >
+                    helpText="Mounting, orientation, or whether occupied">
                     <StandardInput
                       placeholder="e.g., 12 ft poles on field margins; 4 of 6 boxes occupied"
                       {...register('structure_notes')}
@@ -2172,8 +2280,7 @@ const SoilManagementTab = forwardRef(
                   </StandardField>
                   <StandardField
                     label="Wildlife Observed (optional)"
-                    helpText="Note any wildlife using the structures. Photos are the best evidence."
-                  >
+                    helpText="Note any wildlife using the structures. Photos are the best evidence.">
                     <StandardTextarea
                       placeholder="e.g., barn owls nesting; reduced rodent pressure"
                       {...register('wildlife_observed')}
@@ -2197,8 +2304,7 @@ const SoilManagementTab = forwardRef(
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                   <StandardField
                     label={intl.formatMessage({ id: 'fieldDetails.variety' })}
-                    helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}
-                  >
+                    helpText={intl.formatMessage({ id: 'fieldDetails.varietyHelp' })}>
                     <Controller
                       name="variety"
                       control={methods.control}
@@ -2217,8 +2323,7 @@ const SoilManagementTab = forwardRef(
 
                   <StandardField
                     label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}
-                    helpText={intl.formatMessage({ id: 'fieldDetails.growthStageHelp' })}
-                  >
+                    helpText={intl.formatMessage({ id: 'fieldDetails.growthStageHelp' })}>
                     <Controller
                       name="growth_stage"
                       control={methods.control}
@@ -2261,18 +2366,18 @@ const SoilManagementTab = forwardRef(
                   iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
                   badge="Consumer Transparency"
-                  badgeColorScheme="green"
                 />
                 <StandardField
                   label="Observations & Notes"
-                  helpText="Share details about your soil management approach that help consumers understand your sustainable farming practices"
-                >
+                  helpText="Share details about your soil management approach that help consumers understand your sustainable farming practices">
                   <StandardTextarea
                     placeholder="Optional: Describe your soil management approach, goals for soil health, organic practices used, sustainability goals, etc. These details help consumers understand your farming methods."
                     rows={4}
                     {...register('observation')}
                   />
                 </StandardField>
+
+                <SupervisorSignOff control={methods.control} />
               </SectionBox>
             </>
 
@@ -2291,16 +2396,14 @@ const SoilManagementTab = forwardRef(
                     variant="outline"
                     onClick={onPrev}
                     leftIcon={<FaChevronLeft />}
-                    size="lg"
-                  >
+                    size="lg">
                     {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
                   </StandardButton>
                   <StandardButton
                     variant="primary"
                     type="submit"
                     rightIcon={<FaChevronRight />}
-                    size="lg"
-                  >
+                    size="lg">
                     {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                   </StandardButton>
                 </HStack>

@@ -13,7 +13,8 @@ import {
   useBreakpointValue,
   HStack,
   VStack,
-  Center
+  Center,
+  Tooltip
 } from '@chakra-ui/react';
 import { S3Image } from 'components/Design';
 import { useBatchS3Images } from 'hooks/useBatchS3Images';
@@ -53,7 +54,7 @@ import SmartUsageCard from './components/SmartUsageCard';
 import CardWithImage from 'components/Card/CardWithImage';
 import Shimmer from 'components/Shimmer/Shimmer';
 import CarouselHorizontal from 'components/Carousel/CarouselHorizontal';
-import { FaPlus, FaLeaf, FaWifi } from 'react-icons/fa';
+import { FaPlus, FaLeaf, FaWifi, FaLock } from 'react-icons/fa';
 import LineChart from 'components/Charts/LineChart';
 import MiniStatistics from './components/MiniStatistics';
 import SalesOverview from './components/SalesOverview';
@@ -76,7 +77,10 @@ import { useTourScenario } from 'hooks/useTourScenario';
  * account created for October showed it on the first screen after login.
  */
 const formatFarmLocation = (farm: { city?: string; zone?: string; state?: string }): string =>
-  [farm?.city || farm?.zone, farm?.state].map((p) => (p || '').trim()).filter(Boolean).join(', ');
+  [farm?.city || farm?.zone, farm?.state]
+    .map((p) => (p || '').trim())
+    .filter(Boolean)
+    .join(', ');
 // // import BatchTestComponent from 'components/Debug/BatchTestComponent'; // DEBUG: Remove for production
 
 export default function DashboardView() {
@@ -186,18 +190,74 @@ export default function DashboardView() {
 
   // Subscription limits check for establishment creation
   const company = useSelector((state) => state.company?.currentCompany);
-  const canCreateEstablishment = useMemo(() => {
-    if (!company) return false;
+  const farmCapacity = useMemo(() => {
+    if (!company) return { allowed: false, limit: null as number | null, atLimit: false };
 
-    const plan = company.subscription_plan || company.subscription?.plan;
-    if (!plan?.features) return false;
+    // `effective_limits` FIRST — base plan features PLUS purchased add-ons.
+    //
+    // Reading `plan.features.max_establishments` alone ignores the Extra Farm add-on
+    // entirely, so a grower who had just PAID for a second farm still met a disabled "Add
+    // farm" button. The backend gate (`Company.can_create_establishment`) has always added
+    // the add-on quantity, so the two disagreed and the UI was the stricter of the two —
+    // the worst direction for a purchase to fail in.
+    const subscription = company.subscription;
+    const plan = company.subscription_plan || subscription?.plan;
+    const limit =
+      subscription?.effective_limits?.max_establishments ?? plan?.features?.max_establishments;
+    if (limit == null) return { allowed: false, limit: null, atLimit: false };
 
-    const maxEstablishments = plan.features.max_establishments || 0;
-    const currentEstablishments = company.establishments?.length || 0;
-
-    // Check if unlimited (-1) or under limit
-    return maxEstablishments === -1 || currentEstablishments < maxEstablishments;
+    const current = company.establishments?.length || 0;
+    const allowed = limit === -1 || current < limit;
+    // At the limit is a DIFFERENT state from "no plan loaded yet". Only the first one has
+    // an answer to offer, so only the first one gets the explanatory tile.
+    return { allowed, limit, atLimit: !allowed && limit !== -1 };
   }, [company]);
+
+  const canCreateEstablishment = farmCapacity.allowed;
+
+  /**
+   * The tile shown in place of "+ New" once the farm limit is reached.
+   *
+   * Previously the button simply vanished. A grower who wanted a second farm got no
+   * affordance, no reason and no route — and Extra Farm, the ONE add-on Trazo sells, had
+   * nowhere in the product that pointed at it from the moment it was needed. A limit the
+   * user cannot see is indistinguishable from a broken page.
+   *
+   * The price is deliberately not quoted here. It lives on the subscription page, which is
+   * the one place that reads it from the API; repeating it in a tooltip is how a stale
+   * number ends up in the UI the next time it changes.
+   */
+  const renderFarmLimitTile = (width: any, height: any) => (
+    <Tooltip
+      label={intl.formatMessage({ id: 'app.farmLimitReachedHelp' }, { limit: farmCapacity.limit })}
+      placement="top"
+      hasArrow>
+      <Button
+        p="0px"
+        w={width}
+        h={height}
+        minW={width}
+        flexShrink={0}
+        bg="transparent"
+        color="gray.600"
+        borderRadius="xl"
+        border="2px dashed"
+        borderColor="gray.300"
+        _hover={{ bg: 'gray.50', borderColor: 'gray.400' }}
+        aria-label={intl.formatMessage(
+          { id: 'app.farmLimitReachedHelp' },
+          { limit: farmCapacity.limit }
+        )}
+        onClick={() => navigate('/admin/dashboard/subscription')}>
+        <Flex direction="column" align="center" justify="center" gap={0.5}>
+          <Icon as={FaLock} color="gray.600" fontSize={{ base: '12px', md: '16px' }} />
+          <Text fontSize="xs" fontWeight="medium" color="gray.600" textAlign="center">
+            {intl.formatMessage({ id: 'app.farmLimitReached' })}
+          </Text>
+        </Flex>
+      </Button>
+    </Tooltip>
+  );
 
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -416,8 +476,7 @@ export default function DashboardView() {
       pt={{ base: '120px', md: '75px' }}
       px={{ base: 1, md: 6 }}
       pb={{ base: 8, md: 8 }}
-      minH="100vh"
-    >
+      minH="100vh">
       {/* Enhanced Trial Status Banner */}
       <TrialStatusBanner />
 
@@ -426,12 +485,11 @@ export default function DashboardView() {
         <Box
           bg="green.50"
           borderLeftWidth="4px"
-          borderLeftColor="green.500"
+          borderLeftColor="green.700"
           p={4}
           mb={4}
           borderRadius="md"
-          position="relative"
-        >
+          position="relative">
           <Flex justify="space-between" align="center">
             <Box>
               <Text fontSize="lg" fontWeight="bold" color="green.800" mb={2}>
@@ -448,10 +506,9 @@ export default function DashboardView() {
             <Button
               size="sm"
               variant="ghost"
-              color="green.600"
+              color="green.700"
               onClick={() => setWelcomeBannerVisible(false)}
-              _hover={{ bg: 'green.100' }}
-            >
+              _hover={{ bg: 'green.100' }}>
               ✕
             </Button>
           </Flex>
@@ -462,8 +519,7 @@ export default function DashboardView() {
         <Flex
           direction={{ base: 'column', xl: 'row' }}
           gap={{ base: 4, md: 4, lg: 5, xl: 6 }}
-          align="flex-start"
-        >
+          align="flex-start">
           <Box flex="2" w="100%" pt={{ base: 3, md: 4, lg: 6, xl: 0 }}>
             <VStack spacing={3} align="stretch">
               {/* Mobile: Simple Horizontal Scrollable Layout */}
@@ -483,8 +539,7 @@ export default function DashboardView() {
                       scrollbarWidth: 'none',
                       msOverflowStyle: 'none',
                       WebkitOverflowScrolling: 'touch'
-                    }}
-                  >
+                    }}>
                     <HStack spacing={3} py={2} px={1} w="max-content">
                       {establishments ? (
                         <>
@@ -492,12 +547,11 @@ export default function DashboardView() {
                             <NavLink
                               key={prop.id}
                               to={`/admin/dashboard/farm/${prop.id}`}
-                              style={{ textDecoration: 'none' }}
-                            >
+                              style={{ textDecoration: 'none' }}>
                               <Card
                                 p={4}
                                 cursor="pointer"
-                                bg={prop.id === establishment?.id ? 'green.500' : cardBg}
+                                bg={prop.id === establishment?.id ? 'green.700' : cardBg}
                                 h={cardHeight}
                                 w={cardWidth}
                                 minW={cardWidth}
@@ -510,19 +564,17 @@ export default function DashboardView() {
                                   transform: 'translateY(-2px)',
                                   boxShadow: 'lg',
                                   transition: 'all 0.2s'
-                                }}
-                              >
+                                }}>
                                 <Flex align="center" gap={4} h="full" px={2}>
                                   <Box
-                                    bg={prop.id === establishment?.id ? 'white' : 'green.500'}
+                                    bg={prop.id === establishment?.id ? 'white' : 'green.700'}
                                     p={{ base: 3, md: 2 }}
                                     borderRadius="lg"
-                                    flexShrink={0}
-                                  >
+                                    flexShrink={0}>
                                     <HomeIcon
                                       h={{ base: '22px', md: '24px' }}
                                       w={{ base: '22px', md: '24px' }}
-                                      color={prop.id === establishment?.id ? 'green.500' : 'white'}
+                                      color={prop.id === establishment?.id ? 'green.700' : 'white'}
                                     />
                                   </Box>
                                   <Box flex="1" overflow="hidden">
@@ -532,8 +584,7 @@ export default function DashboardView() {
                                       color={prop.id === establishment?.id ? 'white' : textColor}
                                       noOfLines={2}
                                       lineHeight="1.3"
-                                      title={prop.name}
-                                    >
+                                      title={prop.name}>
                                       {prop.name}
                                     </Text>
                                     <Text
@@ -543,8 +594,7 @@ export default function DashboardView() {
                                       }
                                       noOfLines={1}
                                       mt={1}
-                                      title={formatFarmLocation(prop)}
-                                    >
+                                      title={formatFarmLocation(prop)}>
                                       {formatFarmLocation(prop)}
                                     </Text>
                                   </Box>
@@ -552,6 +602,9 @@ export default function DashboardView() {
                               </Card>
                             </NavLink>
                           ))}
+                          {canWrite &&
+                            farmCapacity.atLimit &&
+                            renderFarmLimitTile({ base: '60px', md: '100px' }, cardHeight)}
                           {canWrite && canCreateEstablishment && (
                             <Button
                               p="0px"
@@ -560,21 +613,24 @@ export default function DashboardView() {
                               minW={{ base: '60px', md: '100px' }}
                               flexShrink={0}
                               bg="transparent"
-                              color="green.500"
+                              color="green.700"
                               borderRadius="xl"
                               border="2px dashed"
                               borderColor="gray.200"
                               _hover={{
                                 bg: 'green.50',
-                                borderColor: 'green.500',
+                                borderColor: 'green.600',
                                 transform: 'translateY(-2px)',
                                 boxShadow: 'lg'
                               }}
-                              onClick={toggleAddEstablishment}
-                            >
+                              onClick={toggleAddEstablishment}>
                               <Flex direction="column" align="center" justify="center" gap={0.5}>
-                                <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
-                                <Text fontSize="xs" fontWeight="medium" color="green.600">
+                                <Icon
+                                  as={FaPlus}
+                                  color="green.700"
+                                  fontSize={{ base: '14px', md: '20px' }}
+                                />
+                                <Text fontSize="xs" fontWeight="medium" color="green.700">
                                   {intl.formatMessage({ id: 'app.new' })}
                                 </Text>
                               </Flex>
@@ -590,7 +646,7 @@ export default function DashboardView() {
                     <Box w="100%" h="3px" bg="gray.200" borderRadius="full" position="relative">
                       <Box
                         h="full"
-                        bg="green.500"
+                        bg="green.700"
                         borderRadius="full"
                         w={`${scrollProgress * 100}%`}
                         position="absolute"
@@ -607,20 +663,18 @@ export default function DashboardView() {
                   templateColumns={{
                     md: 'repeat(auto-fill, minmax(240px, 1fr))'
                   }}
-                  gap={4}
-                >
+                  gap={4}>
                   {establishments ? (
                     <>
                       {establishments.map((prop) => (
                         <NavLink
                           key={prop.id}
                           to={`/admin/dashboard/farm/${prop.id}`}
-                          style={{ textDecoration: 'none' }}
-                        >
+                          style={{ textDecoration: 'none' }}>
                           <Card
                             p={4}
                             cursor="pointer"
-                            bg={prop.id === establishment?.id ? 'green.500' : cardBg}
+                            bg={prop.id === establishment?.id ? 'green.700' : cardBg}
                             h="90px"
                             minH="90px"
                             maxH="90px"
@@ -631,19 +685,17 @@ export default function DashboardView() {
                               transform: 'translateY(-2px)',
                               boxShadow: 'lg',
                               transition: 'all 0.2s'
-                            }}
-                          >
+                            }}>
                             <Flex align="center" gap={3} h="full">
                               <Box
-                                bg={prop.id === establishment?.id ? 'white' : 'green.500'}
+                                bg={prop.id === establishment?.id ? 'white' : 'green.700'}
                                 p={2}
                                 borderRadius="md"
-                                flexShrink={0}
-                              >
+                                flexShrink={0}>
                                 <HomeIcon
                                   h="24px"
                                   w="24px"
-                                  color={prop.id === establishment?.id ? 'green.500' : 'white'}
+                                  color={prop.id === establishment?.id ? 'green.700' : 'white'}
                                 />
                               </Box>
                               <Box flex="1" overflow="hidden">
@@ -652,16 +704,14 @@ export default function DashboardView() {
                                   fontSize="md"
                                   color={prop.id === establishment?.id ? 'white' : textColor}
                                   noOfLines={1}
-                                  title={prop.name}
-                                >
+                                  title={prop.name}>
                                   {prop.name}
                                 </Text>
                                 <Text
                                   fontSize="sm"
                                   color={prop.id === establishment?.id ? 'green.100' : 'gray.500'}
                                   noOfLines={1}
-                                  title={formatFarmLocation(prop)}
-                                >
+                                  title={formatFarmLocation(prop)}>
                                   {formatFarmLocation(prop)}
                                 </Text>
                               </Box>
@@ -669,27 +719,39 @@ export default function DashboardView() {
                           </Card>
                         </NavLink>
                       ))}
+                      {canWrite &&
+                        farmCapacity.atLimit &&
+                        renderFarmLimitTile(
+                          { base: '60px', md: '77px' },
+                          {
+                            base: '70px',
+                            md: '90px'
+                          }
+                        )}
                       {canWrite && canCreateEstablishment && (
                         <Button
                           p="0px"
                           w={{ base: '60px', md: '77px' }}
                           h={{ base: '70px', md: '90px' }}
                           bg="transparent"
-                          color="green.500"
+                          color="green.700"
                           borderRadius="xl"
                           border="2px dashed"
                           borderColor="gray.200"
                           _hover={{
                             bg: 'green.50',
-                            borderColor: 'green.500',
+                            borderColor: 'green.600',
                             transform: 'translateY(-2px)',
                             boxShadow: 'lg'
                           }}
-                          onClick={toggleAddEstablishment}
-                        >
+                          onClick={toggleAddEstablishment}>
                           <Flex direction="column" align="center" justify="center" gap={0.5}>
-                            <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
-                            <Text fontSize="xs" fontWeight="medium" color="green.600">
+                            <Icon
+                              as={FaPlus}
+                              color="green.700"
+                              fontSize={{ base: '14px', md: '20px' }}
+                            />
+                            <Text fontSize="xs" fontWeight="medium" color="green.700">
                               {intl.formatMessage({ id: 'app.new' }) || 'New'}
                             </Text>
                           </Flex>
@@ -709,12 +771,32 @@ export default function DashboardView() {
         </Flex>
       </Box>
 
+      {/* Page order, top to bottom: DEADLINES → READINESS → identity/share → RECORDS.
+          Dates the certifier sets, then what is outstanding against those records — FIRST,
+          above the farm-profile and QR-share cards (moved 2026-08-11: those two occupied the
+          hero position while the renewal question a farmer opens the app with sat below the
+          fold; the code comment claimed this order but the render didn't follow it).
+          The transparency score is deliberately absent from this page as of 2026-08-04 — it
+          is Trazo's own completeness metric with no external deadline. Everything at the top
+          here has a real external clock: § 205.406 annual updates, certificate expiries,
+          CDFA renewals. The score was retired from producer UI outright on 2026-08-11. */}
+      {establishment?.id && activeCompany?.id && (
+        <Box width="100%" mt={{ base: 4, md: 6 }}>
+          <CertifierDeadlinesStrip companyId={activeCompany.id} farmId={establishment.id} />
+        </Box>
+      )}
+
+      {establishment?.id && activeCompany?.id && (
+        <Box width="100%" mt={{ base: 4, md: 6 }} data-tour="certifier-readiness">
+          <CertifierReadinessCard companyId={activeCompany.id} farmId={establishment.id} />
+        </Box>
+      )}
+
       <Grid
         templateColumns={{ base: '1fr', md: '1fr', lg: '1.8fr 1.2fr' }}
         templateRows={{ base: 'auto', md: '1fr auto', lg: '1fr' }}
         my={{ base: 6, md: 6 }}
-        gap={{ base: 4, md: 6 }}
-      >
+        gap={{ base: 4, md: 6 }}>
         {establishment ? (
           <CardWithImage
             title={intl.formatMessage({ id: 'app.establishmentProfile' })}
@@ -755,22 +837,22 @@ export default function DashboardView() {
 
         {establishment ? (
           <Box data-tour="smart-usage-card">
-          <SmartUsageCard
-            // Required props for backend API call
-            companyId={activeCompany?.id}
-            farmId={establishment.id}
-            // Smart action handlers
-            onViewAnalytics={() =>
-              navigate(`/admin/dashboard/farm/${establishment.id}/commercial`)
-            }
-            onUpgradeSubscription={() => navigate('/admin/dashboard/pricing')}
-            onOptimizeCarbon={() =>
-              navigate(`/admin/dashboard/farm/${establishment.id}/productions`)
-            }
-            onShareTransparency={() =>
-              navigate(`/admin/dashboard/farm/${establishment.id}/commercial`)
-            }
-          />
+            <SmartUsageCard
+              // Required props for backend API call
+              companyId={activeCompany?.id}
+              farmId={establishment.id}
+              // Smart action handlers
+              onViewAnalytics={() => navigate(`/admin/dashboard/farm/${establishment.id}/buyer`)}
+              onUpgradeSubscription={() => navigate('/admin/dashboard/pricing')}
+              // "growth" = log more events; /productions was never a route (dead
+              // link found 2026-08-11) — the Activities page is where logging lives.
+              onOptimizeCarbon={() =>
+                navigate(`/admin/dashboard/farm/${establishment.id}/activities`)
+              }
+              onShareTransparency={() =>
+                navigate(`/admin/dashboard/farm/${establishment.id}/buyer`)
+              }
+            />
           </Box>
         ) : (
           <Card minH="290px" bg={cardBg}>
@@ -779,31 +861,12 @@ export default function DashboardView() {
         )}
       </Grid>
 
-      {/* Page order, top to bottom: DEADLINES → READINESS → RECORDS.
-          Dates the certifier sets, then what is outstanding against those records, then the
-          counts. The transparency score is deliberately absent from this page as of
-          2026-08-04 — it is Trazo's own completeness metric, measured against a baseline Trazo
-          authored, with no external deadline and no audience beyond its own page. It lives at
-          /admin/dashboard/farm/:farmId/transparency. Everything above it here has a real
-          external clock: § 205.406 annual updates, certificate expiries, CDFA renewals. */}
-      {establishment?.id && activeCompany?.id && (
-        <Box width="100%" mb={{ base: 4, md: 6 }}>
-          <CertifierDeadlinesStrip companyId={activeCompany.id} farmId={establishment.id} />
-        </Box>
-      )}
-
-      {establishment?.id && activeCompany?.id && (
-        <Box width="100%" mb={{ base: 4, md: 6 }} data-tour="certifier-readiness">
-          <CertifierReadinessCard companyId={activeCompany.id} farmId={establishment.id} />
-        </Box>
-      )}
-
       {/* Single Transparency Overview Card for selected establishment */}
-      {establishment?.id && (
+      {/* {establishment?.id && (
         <Box width="100%" mb={{ base: 4, md: 6 }} data-tour="transparency-summary">
           <TransparencySummaryCard farmId={establishment.id} />
         </Box>
-      )}
+      )} */}
 
       <Box data-tour="parcels-carousel">
         <CarouselHorizontal

@@ -251,13 +251,13 @@ const parcelSchema = object({
     object({
       direction: string().optional(),
       adjoining_land_use: string().optional(),
-      buffer_width_m: number().optional(),
+      buffer_width_ft: number().optional(),
       drift_risk: string().optional(),
       prevention: string().optional(),
       // CCOF OSP Sections D & E
-      adjacent_organic: boolean().optional(),
+      adjacent_is_organic: boolean().optional(),
       buffer_type: string().optional(),
-      crop_in_buffer: string().optional(),
+      crop_grown_in_buffer: string().optional(),
       // § 205.400(f)(1) drift-notification readiness
       neighbor_notified: boolean().optional(),
       neighbor_notification_date: string().optional()
@@ -405,12 +405,12 @@ interface ParcelFormData {
   buffer_zones?: Array<{
     direction?: string;
     adjoining_land_use?: string;
-    buffer_width_m?: number;
+    buffer_width_ft?: number;
     drift_risk?: string;
     prevention?: string;
-    adjacent_organic?: boolean;
+    adjacent_is_organic?: boolean;
     buffer_type?: string;
-    crop_in_buffer?: string;
+    crop_grown_in_buffer?: string;
     neighbor_notified?: boolean;
     neighbor_notification_date?: string;
   }>;
@@ -1016,8 +1016,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
         establishmentName ? ` in ${establishmentName}` : ''
       }`}
       showBackButton
-      onBack={onCancel}
-    >
+      onBack={onCancel}>
       {/* Modern Progress Stepper */}
       <StandardStepper
         steps={steps}
@@ -1039,15 +1038,17 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     label="Parcel Name"
                     required
                     error={errors.name?.message}
-                    helpText="Unique name for this parcel"
-                  >
+                    helpText="Unique name for this parcel">
                     <Input
                       {...methods.register('name')}
                       placeholder="e.g., North Field, Block A"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
                       size="lg"
                     />
                   </StandardField>
@@ -1063,8 +1064,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     label="Area (hectares)"
                     required
                     error={errors.area?.message}
-                    helpText="Total area in hectares - carbon calculations require metric units"
-                  >
+                    helpText="Total area in hectares - carbon calculations require metric units">
                     <Controller
                       name="area"
                       control={methods.control}
@@ -1074,8 +1074,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           onChange={(_, num) => field.onChange(num || 0)}
                           min={0.001}
                           step={0.1}
-                          precision={3}
-                        >
+                          precision={3}>
                           <NumberInputField
                             borderRadius="lg"
                             placeholder="e.g., 10.5 hectares (25.9 acres)"
@@ -1105,8 +1104,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}
-                  >
+                    disabled={!isStepComplete(0)}>
                     Continue to Location
                   </StandardButton>
                 </HStack>
@@ -1174,17 +1172,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                         gestureHandling: 'cooperative',
                         clickableIcons: false, // Prevent poi clicks from interfering
                         mapTypeId: 'satellite' // Better for agricultural land visualization
-                      }}
-                    >
+                      }}>
                       {getPolygonLength() > 2 && (
                         <Polygon
                           path={polygon}
                           onLoad={onLoadPolygon}
                           onUnmount={onUnmount}
                           options={{
-                            fillColor: isValidPolygon() ? '#22C55E' : '#F59E0B', // Green when valid, orange when incomplete
+                            fillColor: isValidPolygon() ? '#4CAF50' : '#FF9800', // green.500 / amber.500 (the THEME has no `orange` palette — `orange.*` resolves to Chakra's)
                             fillOpacity: 0.25,
-                            strokeColor: isValidPolygon() ? '#16A34A' : '#D97706',
+                            strokeColor: isValidPolygon() ? '#4CAF50' : '#FB8C00',
                             strokeOpacity: 1,
                             strokeWeight: 2,
                             editable: true,
@@ -1204,7 +1201,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                             icon={{
                               path: google.maps.SymbolPath.CIRCLE,
                               scale: 8,
-                              fillColor: isValidPolygon() ? '#16A34A' : '#D97706',
+                              fillColor: isValidPolygon() ? '#4CAF50' : '#FB8C00',
                               fillOpacity: 1,
                               strokeColor: '#FFFFFF',
                               strokeWeight: 2
@@ -1246,8 +1243,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           size="sm"
                           variant="outline"
                           leftIcon={<FaTrash />}
-                          onClick={() => setPolygon([])}
-                        >
+                          onClick={() => setPolygon([])}>
                           Clear Points
                         </StandardButton>
                       )}
@@ -1260,8 +1256,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Basic Info
                   </StandardButton>
 
@@ -1272,8 +1267,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(1)}
-                    >
+                      disabled={!isStepComplete(1)}>
                       Continue to Description
                     </StandardButton>
                   </HStack>
@@ -1286,23 +1280,24 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
           {currentStep === 2 && (
             <StandardCard
               title="Parcel Description"
-              subtitle="Detailed information about the parcel"
-            >
+              subtitle="Detailed information about the parcel">
               <VStack spacing={6} align="stretch">
                 {/* Description */}
                 <StandardField
                   label="Description"
                   required
                   error={errors.description?.message}
-                  helpText="Describe the parcel, its characteristics, soil type, drainage, etc."
-                >
+                  helpText="Describe the parcel, its characteristics, soil type, drainage, etc.">
                   <Textarea
                     {...methods.register('description')}
                     placeholder="Describe the parcel including soil type, drainage, topography, existing vegetation, and any other relevant characteristics..."
                     borderRadius="lg"
                     borderColor="gray.300"
                     _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                    _focus={{
+                      borderColor: 'green.500',
+                      boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                    }}
                     size="lg"
                     minH="120px"
                   />
@@ -1317,15 +1312,17 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Soil Type"
                     error={errors.soil_type?.message}
-                    helpText="Type of soil in this parcel"
-                  >
+                    helpText="Type of soil in this parcel">
                     <Input
                       {...methods.register('soil_type')}
                       placeholder="e.g., Clay, Sandy loam, Silty clay"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
                       size="lg"
                     />
                   </StandardField>
@@ -1335,33 +1332,36 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Unique Code"
                     error={errors.unique_code?.message}
-                    helpText="Internal parcel identifier or code"
-                  >
+                    helpText="Internal parcel identifier or code">
                     <Input
                       {...methods.register('unique_code')}
                       placeholder="e.g., P001, NorthField-A"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
                       size="lg"
                     />
                   </StandardField>
-
                 </SimpleGrid>
 
                 <StandardField
                   label="Address"
                   error={errors.address?.message}
-                  helpText="Specific address or location reference"
-                >
+                  helpText="Specific address or location reference">
                   <Input
                     {...methods.register('address')}
                     placeholder="e.g., 123 Farm Road, North Section"
                     borderRadius="lg"
                     borderColor="gray.300"
                     _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                    _focus={{
+                      borderColor: 'green.500',
+                      boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                    }}
                     size="lg"
                   />
                 </StandardField>
@@ -1375,15 +1375,17 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Contact Person"
                     error={errors.contact_person?.message}
-                    helpText="Person responsible for this parcel"
-                  >
+                    helpText="Person responsible for this parcel">
                     <Input
                       {...methods.register('contact_person')}
                       placeholder="e.g., John Smith"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
                       size="lg"
                     />
                   </StandardField>
@@ -1391,8 +1393,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Contact Email"
                     error={errors.contact_email?.message}
-                    helpText="Contact email for this parcel"
-                  >
+                    helpText="Contact email for this parcel">
                     <Input
                       {...methods.register('contact_email')}
                       type="email"
@@ -1400,7 +1401,10 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
                       size="lg"
                     />
                   </StandardField>
@@ -1424,8 +1428,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                       helpText={intl.formatMessage({
                         id: 'parcel.fields.apnHelp',
                         defaultMessage: 'CCOF Parcel Application identifier'
-                      })}
-                    >
+                      })}>
                       <Input
                         {...register('apn')}
                         placeholder={intl.formatMessage({
@@ -1442,8 +1445,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                       helpText={intl.formatMessage({
                         id: 'parcel.fields.strHelp',
                         defaultMessage: 'PLSS legal description (CCOF Parcel Application)'
-                      })}
-                    >
+                      })}>
                       <Input
                         {...register('section_township_range')}
                         placeholder={intl.formatMessage({
@@ -1456,16 +1458,14 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                       label={intl.formatMessage({
                         id: 'parcel.fields.dateBeganManaging',
                         defaultMessage: 'Date Began Managing'
-                      })}
-                    >
+                      })}>
                       <Input type="date" {...register('date_began_managing')} />
                     </StandardField>
                     <StandardField
                       label={intl.formatMessage({
                         id: 'parcel.fields.treatedLumberDesc',
                         defaultMessage: 'Treated Lumber Description (if any)'
-                      })}
-                    >
+                      })}>
                       <Input
                         {...register('treated_lumber_description')}
                         placeholder={intl.formatMessage({
@@ -1478,8 +1478,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                       label={intl.formatMessage({
                         id: 'parcel.fields.treatedLumberInstallDate',
                         defaultMessage: 'Treated Lumber Install Date'
-                      })}
-                    >
+                      })}>
                       <Input type="date" {...register('treated_lumber_install_date')} />
                     </StandardField>
                     <FormControl display="flex" alignItems="center">
@@ -1500,14 +1499,14 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     <Icon as={FaShieldAlt} mr={2} color="green.500" />
                     {intl.formatMessage({
                       id: 'parcel.buffer.title',
-                      defaultMessage: 'Buffer Zones & Adjoining Land (7 CFR 205.202(c))',
+                      defaultMessage: 'Buffer Zones & Adjoining Land (7 CFR 205.202(c))'
                     })}
                   </Text>
                   <Text fontSize="sm" color="gray.500" mb={3}>
                     {intl.formatMessage({
                       id: 'parcel.buffer.description',
                       defaultMessage:
-                        'Record what borders each side of the parcel and the drift-prevention measure. Leave a side blank if it does not apply.',
+                        'Record what borders each side of the parcel and the drift-prevention measure. Leave a side blank if it does not apply.'
                     })}
                   </Text>
                   <VStack spacing={3} align="stretch">
@@ -1519,26 +1518,24 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           p={3}
                           borderWidth="1px"
                           borderColor="gray.200"
-                          borderRadius="md"
-                        >
+                          borderRadius="md">
                           <Text fontSize="sm" fontWeight="semibold" mb={2}>
                             {intl.formatMessage({
                               id: `parcel.buffer.direction.${dir.toLowerCase()}`,
-                              defaultMessage: dir,
+                              defaultMessage: dir
                             })}
                           </Text>
                           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                             <StandardField
                               label={intl.formatMessage({
                                 id: 'parcel.buffer.adjoiningLandUse',
-                                defaultMessage: 'Adjoining Land Use',
+                                defaultMessage: 'Adjoining Land Use'
                               })}
                               helpText={intl.formatMessage({
                                 id: 'parcel.buffer.adjoiningLandUseHelp',
                                 defaultMessage:
-                                  'What borders this side (e.g., conventional orchard, road)',
-                              })}
-                            >
+                                  'What borders this side (e.g., conventional orchard, road)'
+                              })}>
                               <Input
                                 value={(row.adjoining_land_use as string) || ''}
                                 onChange={(e) =>
@@ -1546,67 +1543,64 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                                 }
                                 placeholder={intl.formatMessage({
                                   id: 'parcel.buffer.adjoiningLandUsePlaceholder',
-                                  defaultMessage: 'e.g., Conventional walnut orchard',
+                                  defaultMessage: 'e.g., Conventional walnut orchard'
                                 })}
                               />
                             </StandardField>
                             <StandardField
                               label={intl.formatMessage({
                                 id: 'parcel.buffer.width',
-                                defaultMessage: 'Buffer Width (m)',
-                              })}
-                            >
+                                defaultMessage: 'Buffer Width (ft)'
+                              })}>
                               <Input
                                 type="number"
                                 min={0}
                                 value={
-                                  row.buffer_width_m === undefined || row.buffer_width_m === null
+                                  row.buffer_width_ft === undefined || row.buffer_width_ft === null
                                     ? ''
-                                    : (row.buffer_width_m as number)
+                                    : (row.buffer_width_ft as number)
                                 }
                                 onChange={(e) =>
                                   setBufferField(
                                     dir,
-                                    'buffer_width_m',
+                                    'buffer_width_ft',
                                     e.target.value === '' ? undefined : Number(e.target.value)
                                   )
                                 }
                                 placeholder={intl.formatMessage({
                                   id: 'parcel.buffer.widthPlaceholder',
-                                  defaultMessage: 'e.g., 8',
+                                  defaultMessage: 'e.g., 25'
                                 })}
                               />
                             </StandardField>
                             <StandardField
                               label={intl.formatMessage({
                                 id: 'parcel.buffer.driftRisk',
-                                defaultMessage: 'Drift Risk',
-                              })}
-                            >
+                                defaultMessage: 'Drift Risk'
+                              })}>
                               <Select
                                 value={(row.drift_risk as string) || ''}
                                 onChange={(e) => setBufferField(dir, 'drift_risk', e.target.value)}
                                 placeholder={intl.formatMessage({
                                   id: 'parcel.buffer.driftRiskPlaceholder',
-                                  defaultMessage: 'Select risk',
-                                })}
-                              >
+                                  defaultMessage: 'Select risk'
+                                })}>
                                 <option value="low">
                                   {intl.formatMessage({
                                     id: 'parcel.buffer.driftRisk.low',
-                                    defaultMessage: 'Low',
+                                    defaultMessage: 'Low'
                                   })}
                                 </option>
                                 <option value="medium">
                                   {intl.formatMessage({
                                     id: 'parcel.buffer.driftRisk.medium',
-                                    defaultMessage: 'Medium',
+                                    defaultMessage: 'Medium'
                                   })}
                                 </option>
                                 <option value="high">
                                   {intl.formatMessage({
                                     id: 'parcel.buffer.driftRisk.high',
-                                    defaultMessage: 'High',
+                                    defaultMessage: 'High'
                                   })}
                                 </option>
                               </Select>
@@ -1614,75 +1608,66 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                             <StandardField
                               label={intl.formatMessage({
                                 id: 'parcel.buffer.prevention',
-                                defaultMessage: 'Prevention Measure',
-                              })}
-                            >
+                                defaultMessage: 'Prevention Measure'
+                              })}>
                               <Input
                                 value={(row.prevention as string) || ''}
-                                onChange={(e) =>
-                                  setBufferField(dir, 'prevention', e.target.value)
-                                }
+                                onChange={(e) => setBufferField(dir, 'prevention', e.target.value)}
                                 placeholder={intl.formatMessage({
                                   id: 'parcel.buffer.preventionPlaceholder',
-                                  defaultMessage: 'e.g., 8 m hedgerow + neighbor letter',
+                                  defaultMessage: 'e.g., 8 m hedgerow + neighbor letter'
                                 })}
                               />
                             </StandardField>
                             <StandardField
                               label={intl.formatMessage({
                                 id: 'parcel.buffer.bufferType',
-                                defaultMessage: 'Buffer Type',
+                                defaultMessage: 'Buffer Type'
                               })}
                               helpText={intl.formatMessage({
                                 id: 'parcel.buffer.bufferTypeHelp',
-                                defaultMessage:
-                                  'Physical barrier on this side (CCOF OSP Section E)',
-                              })}
-                            >
+                                defaultMessage: 'Physical barrier on this side (CCOF OSP Section E)'
+                              })}>
                               <Input
                                 value={(row.buffer_type as string) || ''}
-                                onChange={(e) =>
-                                  setBufferField(dir, 'buffer_type', e.target.value)
-                                }
+                                onChange={(e) => setBufferField(dir, 'buffer_type', e.target.value)}
                                 placeholder={intl.formatMessage({
                                   id: 'parcel.buffer.bufferTypePlaceholder',
-                                  defaultMessage: 'e.g., Hedgerow, road, fallow strip',
+                                  defaultMessage: 'e.g., Hedgerow, road, fallow strip'
                                 })}
                               />
                             </StandardField>
                             <StandardField
                               label={intl.formatMessage({
                                 id: 'parcel.buffer.cropInBuffer',
-                                defaultMessage: 'Crop in Buffer',
+                                defaultMessage: 'Crop in Buffer'
                               })}
                               helpText={intl.formatMessage({
                                 id: 'parcel.buffer.cropInBufferHelp',
                                 defaultMessage:
-                                  'Anything grown in the strip — never sold as organic (CCOF OSP Section E)',
-                              })}
-                            >
+                                  'Anything grown in the strip — never sold as organic (CCOF OSP Section E)'
+                              })}>
                               <Input
-                                value={(row.crop_in_buffer as string) || ''}
+                                value={(row.crop_grown_in_buffer as string) || ''}
                                 onChange={(e) =>
-                                  setBufferField(dir, 'crop_in_buffer', e.target.value)
+                                  setBufferField(dir, 'crop_grown_in_buffer', e.target.value)
                                 }
                                 placeholder={intl.formatMessage({
                                   id: 'parcel.buffer.cropInBufferPlaceholder',
-                                  defaultMessage: 'e.g., None / unharvested cover',
+                                  defaultMessage: 'e.g., None / unharvested cover'
                                 })}
                               />
                             </StandardField>
                             <Checkbox
-                              isChecked={Boolean(row.adjacent_organic)}
+                              isChecked={Boolean(row.adjacent_is_organic)}
                               onChange={(e) =>
-                                setBufferField(dir, 'adjacent_organic', e.target.checked)
+                                setBufferField(dir, 'adjacent_is_organic', e.target.checked)
                               }
-                              colorScheme="green"
-                            >
+                              colorScheme="green">
                               {intl.formatMessage({
                                 id: 'parcel.buffer.adjacentOrganic',
                                 defaultMessage:
-                                  'Adjoining land is also certified organic (no buffer required)',
+                                  'Adjoining land is also certified organic (no buffer required)'
                               })}
                             </Checkbox>
                             <Checkbox
@@ -1690,21 +1675,19 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                               onChange={(e) =>
                                 setBufferField(dir, 'neighbor_notified', e.target.checked)
                               }
-                              colorScheme="green"
-                            >
+                              colorScheme="green">
                               {intl.formatMessage({
                                 id: 'parcel.buffer.neighborNotified',
                                 defaultMessage:
-                                  'Annual drift-notification letter sent to this neighbor (§ 205.400(f)(1))',
+                                  'Annual drift-notification letter sent to this neighbor (§ 205.400(f)(1))'
                               })}
                             </Checkbox>
                             {Boolean(row.neighbor_notified) && (
                               <StandardField
                                 label={intl.formatMessage({
                                   id: 'parcel.buffer.neighborNotificationDate',
-                                  defaultMessage: 'Notification Date',
-                                })}
-                              >
+                                  defaultMessage: 'Notification Date'
+                                })}>
                                 <Input
                                   type="date"
                                   value={(row.neighbor_notification_date as string) || ''}
@@ -1730,8 +1713,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Location
                   </StandardButton>
 
@@ -1742,8 +1724,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(2)}
-                    >
+                      disabled={!isStepComplete(2)}>
                       Continue to Soil Health
                     </StandardButton>
                   </HStack>
@@ -1756,8 +1737,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
           {currentStep === 3 && (
             <StandardCard
               title="Soil Health Management"
-              subtitle="Soil composition, nutrients, and testing information"
-            >
+              subtitle="Soil composition, nutrients, and testing information">
               <VStack spacing={6} align="stretch">
                 {/* Soil Testing Information */}
                 <Text fontSize="lg" fontWeight="semibold" color="gray.700" mb={2}>
@@ -1769,8 +1749,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Soil pH"
                     helpText="pH level (0-14, optimal: 6.0-7.0)"
-                    error={errors.soil_ph?.message}
-                  >
+                    error={errors.soil_ph?.message}>
                     <Controller
                       name="soil_ph"
                       control={methods.control}
@@ -1781,14 +1760,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           min={0}
                           max={14}
                           step={0.1}
-                          precision={1}
-                        >
+                          precision={1}>
                           <NumberInputField
                             placeholder="e.g., 6.5"
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -1802,8 +1783,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Organic Matter %"
                     helpText="Percentage of organic matter (0-100%)"
-                    error={errors.soil_organic_matter?.message}
-                  >
+                    error={errors.soil_organic_matter?.message}>
                     <Controller
                       name="soil_organic_matter"
                       control={methods.control}
@@ -1814,14 +1794,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           min={0}
                           max={100}
                           step={0.1}
-                          precision={1}
-                        >
+                          precision={1}>
                           <NumberInputField
                             placeholder="e.g., 3.5"
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -1835,15 +1817,17 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Last Soil Test Date"
                     helpText="When was the last soil test conducted?"
-                    error={errors.last_soil_test_date?.message}
-                  >
+                    error={errors.last_soil_test_date?.message}>
                     <Input
                       {...methods.register('last_soil_test_date')}
                       type="date"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
                       size="lg"
                     />
                   </StandardField>
@@ -1859,8 +1843,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Nitrogen (N)"
                     helpText="Available nitrogen in ppm"
-                    error={errors.soil_nitrogen?.message}
-                  >
+                    error={errors.soil_nitrogen?.message}>
                     <Controller
                       name="soil_nitrogen"
                       control={methods.control}
@@ -1869,14 +1852,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           value={field.value || ''}
                           onChange={(_, num) => field.onChange(num)}
                           min={0}
-                          step={1}
-                        >
+                          step={1}>
                           <NumberInputField
                             placeholder="e.g., 25"
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -1890,8 +1875,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Phosphorus (P)"
                     helpText="Available phosphorus in ppm"
-                    error={errors.soil_phosphorus?.message}
-                  >
+                    error={errors.soil_phosphorus?.message}>
                     <Controller
                       name="soil_phosphorus"
                       control={methods.control}
@@ -1900,14 +1884,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           value={field.value || ''}
                           onChange={(_, num) => field.onChange(num)}
                           min={0}
-                          step={1}
-                        >
+                          step={1}>
                           <NumberInputField
                             placeholder="e.g., 45"
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -1921,8 +1907,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Potassium (K)"
                     helpText="Available potassium in ppm"
-                    error={errors.soil_potassium?.message}
-                  >
+                    error={errors.soil_potassium?.message}>
                     <Controller
                       name="soil_potassium"
                       control={methods.control}
@@ -1931,14 +1916,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           value={field.value || ''}
                           onChange={(_, num) => field.onChange(num)}
                           min={0}
-                          step={1}
-                        >
+                          step={1}>
                           <NumberInputField
                             placeholder="e.g., 180"
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -1960,17 +1947,18 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Soil Compaction Level"
                     helpText="Assessment of soil compaction"
-                    error={errors.soil_compaction_level?.message}
-                  >
+                    error={errors.soil_compaction_level?.message}>
                     <Select
                       {...methods.register('soil_compaction_level')}
                       placeholder="Select compaction level"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                    >
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
+                      size="lg">
                       <option value="low">Low - No significant compaction</option>
                       <option value="moderate">Moderate - Some compaction present</option>
                       <option value="high">High - Significant compaction issues</option>
@@ -1981,17 +1969,18 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Erosion Risk"
                     helpText="Assessment of erosion susceptibility"
-                    error={errors.erosion_risk?.message}
-                  >
+                    error={errors.erosion_risk?.message}>
                     <Select
                       {...methods.register('erosion_risk')}
                       placeholder="Select erosion risk"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                    >
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
+                      size="lg">
                       <option value="low">Low - Stable soil, minimal risk</option>
                       <option value="moderate">Moderate - Some erosion potential</option>
                       <option value="high">High - Significant erosion risk</option>
@@ -2003,15 +1992,17 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                 <StandardField
                   label="Soil Improvement Notes"
                   helpText="Notes on soil improvement needs and recommendations"
-                  error={errors.soil_improvement_notes?.message}
-                >
+                  error={errors.soil_improvement_notes?.message}>
                   <Textarea
                     {...methods.register('soil_improvement_notes')}
                     placeholder="Describe any soil improvement needs, fertilization plans, or recommendations from soil tests..."
                     borderRadius="lg"
                     borderColor="gray.300"
                     _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                    _focus={{
+                      borderColor: 'green.500',
+                      boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                    }}
                     size="lg"
                     minH="100px"
                   />
@@ -2022,8 +2013,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Description
                   </StandardButton>
 
@@ -2034,8 +2024,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(3)}
-                    >
+                      disabled={!isStepComplete(3)}>
                       Continue to Water Management
                     </StandardButton>
                   </HStack>
@@ -2048,8 +2037,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
           {currentStep === 4 && (
             <StandardCard
               title="Water Rights and Management"
-              subtitle="Water sources, allocation, and conservation practices"
-            >
+              subtitle="Water sources, allocation, and conservation practices">
               <VStack spacing={6} align="stretch">
                 {/* Water Source & Rights */}
                 <Text fontSize="lg" fontWeight="semibold" color="gray.700" mb={2}>
@@ -2061,17 +2049,18 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Water Source Type"
                     helpText="Primary source of irrigation water"
-                    error={errors.water_source_type?.message}
-                  >
+                    error={errors.water_source_type?.message}>
                     <Select
                       {...methods.register('water_source_type')}
                       placeholder="Select water source"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                    >
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
+                      size="lg">
                       <option value="well">Well/Groundwater</option>
                       <option value="surface">Surface Water (river, lake)</option>
                       <option value="municipal">Municipal/District Water</option>
@@ -2085,8 +2074,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Water Allocation (acre-feet/year)"
                     helpText="Annual water allocation or usage rights"
-                    error={errors.water_allocation_acre_feet?.message}
-                  >
+                    error={errors.water_allocation_acre_feet?.message}>
                     <Controller
                       name="water_allocation_acre_feet"
                       control={methods.control}
@@ -2096,14 +2084,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           onChange={(_, num) => field.onChange(num)}
                           min={0}
                           step={0.1}
-                          precision={2}
-                        >
+                          precision={2}>
                           <NumberInputField
                             placeholder="e.g., 25.5"
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -2118,15 +2108,17 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                 <StandardField
                   label="Water Rights Documentation"
                   helpText="Description of water rights, permits, or agreements"
-                  error={errors.water_rights_docs?.message}
-                >
+                  error={errors.water_rights_docs?.message}>
                   <Textarea
                     {...methods.register('water_rights_docs')}
                     placeholder="Describe water rights, permit numbers, irrigation district agreements, or other relevant documentation..."
                     borderRadius="lg"
                     borderColor="gray.300"
                     _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                    _focus={{
+                      borderColor: 'green.500',
+                      boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                    }}
                     size="lg"
                     minH="80px"
                   />
@@ -2142,8 +2134,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Water pH"
                     helpText="pH level of irrigation water (0-14)"
-                    error={errors.water_quality_ph?.message}
-                  >
+                    error={errors.water_quality_ph?.message}>
                     <Controller
                       name="water_quality_ph"
                       control={methods.control}
@@ -2154,14 +2145,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           min={0}
                           max={14}
                           step={0.1}
-                          precision={1}
-                        >
+                          precision={1}>
                           <NumberInputField
                             placeholder="e.g., 7.2"
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -2175,8 +2168,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="TDS (ppm)"
                     helpText="Total Dissolved Solids"
-                    error={errors.water_quality_tds?.message}
-                  >
+                    error={errors.water_quality_tds?.message}>
                     <Controller
                       name="water_quality_tds"
                       control={methods.control}
@@ -2185,14 +2177,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           value={field.value || ''}
                           onChange={(_, num) => field.onChange(num)}
                           min={0}
-                          step={1}
-                        >
+                          step={1}>
                           <NumberInputField
                             placeholder="e.g., 450"
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -2206,8 +2200,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Irrigation Efficiency %"
                     helpText="System efficiency percentage (0-100%)"
-                    error={errors.irrigation_efficiency?.message}
-                  >
+                    error={errors.irrigation_efficiency?.message}>
                     <Controller
                       name="irrigation_efficiency"
                       control={methods.control}
@@ -2217,14 +2210,16 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                           onChange={(_, num) => field.onChange(num)}
                           min={0}
                           max={100}
-                          step={1}
-                        >
+                          step={1}>
                           <NumberInputField
                             placeholder="e.g., 85"
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                           />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -2246,17 +2241,18 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Drainage Characteristics"
                     helpText="Soil drainage and water retention"
-                    error={errors.drainage_characteristics?.message}
-                  >
+                    error={errors.drainage_characteristics?.message}>
                     <Select
                       {...methods.register('drainage_characteristics')}
                       placeholder="Select drainage type"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                    >
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
+                      size="lg">
                       <option value="excellent">Excellent - Fast drainage</option>
                       <option value="good">Good - Moderate drainage</option>
                       <option value="fair">Fair - Slow drainage</option>
@@ -2268,17 +2264,18 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardField
                     label="Seasonal Water Availability"
                     helpText="Water availability throughout the year"
-                    error={errors.seasonal_water_availability?.message}
-                  >
+                    error={errors.seasonal_water_availability?.message}>
                     <Select
                       {...methods.register('seasonal_water_availability')}
                       placeholder="Select availability"
                       borderRadius="lg"
                       borderColor="gray.300"
                       _hover={{ borderColor: 'green.400' }}
-                      _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
-                      size="lg"
-                    >
+                      _focus={{
+                        borderColor: 'green.500',
+                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                      }}
+                      size="lg">
                       <option value="year_round">Year-round availability</option>
                       <option value="seasonal">Seasonal restrictions</option>
                       <option value="summer_limited">Limited in summer</option>
@@ -2291,15 +2288,17 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                 <StandardField
                   label="Water Conservation Practices"
                   helpText="Describe water conservation methods in use"
-                  error={errors.water_conservation_practices?.message}
-                >
+                  error={errors.water_conservation_practices?.message}>
                   <Textarea
                     {...methods.register('water_conservation_practices')}
                     placeholder="Describe drip irrigation, mulching, soil moisture monitoring, deficit irrigation, or other water conservation practices..."
                     borderRadius="lg"
                     borderColor="gray.300"
                     _hover={{ borderColor: 'green.400' }}
-                    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
+                    _focus={{
+                      borderColor: 'green.500',
+                      boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                    }}
                     size="lg"
                     minH="100px"
                   />
@@ -2310,8 +2309,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Soil Health
                   </StandardButton>
 
@@ -2322,8 +2320,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(4)}
-                    >
+                      disabled={!isStepComplete(4)}>
                       Continue to Conservation
                     </StandardButton>
                   </HStack>
@@ -2336,14 +2333,12 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
           {currentStep === 5 && (
             <StandardCard
               title="Certification & Media"
-              subtitle="Upload images and set certification status"
-            >
+              subtitle="Upload images and set certification status">
               <VStack spacing={6} align="stretch">
                 {/* 2025 Modern Image Upload */}
                 <StandardField
                   label="Parcel Images"
-                  helpText="Upload up to 5 high-quality images (JPG, PNG, GIF, WEBP - max 5MB each)"
-                >
+                  helpText="Upload up to 5 high-quality images (JPG, PNG, GIF, WEBP - max 5MB each)">
                   <TrazoImageUpload
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
@@ -2353,14 +2348,12 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                   />
                 </StandardField>
 
-
                 {/* Navigation */}
                 <HStack spacing={3} justify="space-between" pt={4}>
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Agricultural Details
                   </StandardButton>
 
@@ -2372,8 +2365,7 @@ export const StandardParcelForm: React.FC<StandardParcelFormProps> = ({
                       type="submit"
                       isLoading={isLoading}
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
-                      leftIcon={<FaCheckCircle />}
-                    >
+                      leftIcon={<FaCheckCircle />}>
                       {isEdit ? 'Update Parcel' : 'Create Parcel'}
                     </StandardButton>
                   </HStack>

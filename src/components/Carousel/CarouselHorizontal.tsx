@@ -24,6 +24,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
 import CarouselCard from './CarouselCard';
+import { QuickAddParcelModal } from 'components/Parcels/QuickAddParcelModal';
 import { canCreateMore, getLimit } from 'utils/subscriptionLimits';
 import { FaPlus, FaSeedling } from 'react-icons/fa';
 // Assets
@@ -139,12 +140,13 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
   // features, ignoring purchased add-ons, so a customer the API allows 5 parcels lost the button
   // at 2 while AddParcel.tsx (which reads effective_limits) disagreed.
   const company = useSelector((state) => state.company?.currentCompany);
+  // WS-5 parcel quick-add: "+ New" opens the two-field dialog; the full form
+  // stays one link away inside it.
+  const quickAdd = useDisclosure();
   const canCreateParcel = useMemo(() => {
     if (!company || !farmId) return false;
 
-    const establishment = company.establishments?.find(
-      (e) => String(e.id) === String(farmId)
-    );
+    const establishment = company.establishments?.find((e) => String(e.id) === String(farmId));
     const establishmentParcels = establishment?.parcels?.length || 0;
 
     if (getLimit(company, 'max_parcels_per_establishment') !== undefined) {
@@ -224,13 +226,11 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                 transform: 'translateY(-2px)',
                 boxShadow: 'lg'
               }}
-              onClick={() =>
-                navigate(`/admin/dashboard/farm/${farmId}/parcel/add`)
-              }
+              onClick={quickAdd.onOpen}
             >
               <Flex direction="column" align="center" justify="center" gap={0.5}>
                 <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
-                <Text fontSize="xs" fontWeight="medium" color="green.600">
+                <Text fontSize="xs" fontWeight="medium" color="green.700">
                   {intl.formatMessage({ id: 'app.new' }) || 'New'}
                 </Text>
               </Flex>
@@ -270,9 +270,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                       id={parcel.id}
                       image={parcel.image || BgMusicCard}
                       name={parcel.name}
-                      category={
-                        parcel.product || intl.formatMessage({ id: 'app.noCurrentProduction' })
-                      }
+                      category={parcel.product || undefined}
                       buttonText={intl.formatMessage({ id: 'app.viewParcel' }).toUpperCase()}
                       avatars={
                         parcel.members
@@ -287,6 +285,9 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                           .filter(Boolean) || []
                       }
                       presignedUrl={parcel.image ? presignedUrls[parcel.image] : undefined}
+                      areaHa={parcel.area}
+                      applicationStatus={parcel.application_status}
+                      hasCurrentProduction={parcel.has_current_production === true}
                     />
                   </Box>
                 ))}
@@ -325,6 +326,15 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
           </VStack>
         )}
       </CardBody>
+
+      {company?.id && farmId && (
+        <QuickAddParcelModal
+          isOpen={quickAdd.isOpen}
+          onClose={quickAdd.onClose}
+          companyId={company.id}
+          farmId={farmId}
+        />
+      )}
     </Card>
   );
 };

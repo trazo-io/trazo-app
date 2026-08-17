@@ -161,7 +161,9 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     surfaces: { modal: 'details' }
   },
 
-  // ---- NOP Compliance: Contamination Incident Reporting (7 CFR 205.201(b)) ----
+  // ---- Contamination Incident Reporting — § 205.400(f)(1) + § 205.272 ----
+  // Corrected 2026-08-15: § 205.201(b) is the "substitute another government plan for the
+  // OSP" clause, not a contamination provision.
   // All contamination fields share the same visibility gate: they only render when
   // `is_contamination_incident` is true. Django defaults `is_contamination_incident`
   // and `certifier_notified` to False (not null), so without this gate every

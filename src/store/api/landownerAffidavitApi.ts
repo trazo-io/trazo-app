@@ -11,6 +11,11 @@ export interface YearHistoryRow {
   land_use?: string;
   inputs?: string;
   applied_by?: string;
+  /** USDA Land Use History Verification asks Material / Manufacturer / Date Applied as
+   *  separate columns. `inputs` answers neither of the last two, and a 36-month eligibility
+   *  determination turns on the date. Optional: rows already on file predate them. */
+  manufacturer?: string;
+  date_applied?: string;
 }
 
 export interface LandownerAffidavit {
@@ -34,6 +39,14 @@ export interface LandownerAffidavit {
   previous_manager_signed_date?: string | null;
   landowner_signed_date?: string | null;
   notes?: string | null;
+  /** USDA's "☐ No materials applied" checkbox. TRI-STATE and deliberately nullable:
+   *  true = the signer declared none, false = materials are listed, null/undefined = never
+   *  answered. An empty `yearly_history` is the third case, NOT the first — rendering it as
+   *  a declaration would manufacture the § 205.202(b) attestation eligibility rests on. */
+  no_materials_applied?: boolean | null;
+  management_period_start?: string | null;
+  management_period_end?: string | null;
+  parcel_legal_description?: string | null;
 }
 
 interface Scope {

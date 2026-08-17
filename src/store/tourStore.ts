@@ -90,11 +90,21 @@ export const useTourStore = create<TourStoreState>()(
           }
         })),
 
-      setStepIndex: (index: number) =>
-        set({ activeStepIndex: index }),
+      /**
+       * Stand the tour down without recording anything.
+       *
+       * Distinct from `skipTour` (the user said no — never offer it again) and
+       * `completeTour` (they saw it). This is "we could not show it": every target was
+       * missing from the DOM. Before this existed, TourProvider bailed out of that case
+       * while leaving `activeTourId` set, so `useTour`'s `isBusy` check treated a tour that
+       * was never drawn as one currently running, and no other tour could start for the rest
+       * of the session.
+       */
+      endTour: () => set({ activeTourId: null, activeStepIndex: 0 }),
 
-      dismissChecklist: () =>
-        set({ checklistDismissed: true }),
+      setStepIndex: (index: number) => set({ activeStepIndex: index }),
+
+      dismissChecklist: () => set({ checklistDismissed: true }),
 
       celebrateMilestone: (milestoneId: string) =>
         set((state) => ({
@@ -112,8 +122,7 @@ export const useTourStore = create<TourStoreState>()(
           }
         })),
 
-      clearRestartFlag: () =>
-        set({ restartRequested: false }),
+      clearRestartFlag: () => set({ restartRequested: false }),
 
       resetAllTours: () =>
         set({

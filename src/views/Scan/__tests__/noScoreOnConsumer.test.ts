@@ -16,10 +16,17 @@
  * is now derived from what the consumer routes actually import, transitively.
  */
 import { describe, it, expect } from 'vitest';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 
-const SRC = join(__dirname, '..', '..', '..');
+// The graph walk is shared with the producer guard (`views/Dashboard/__tests__`). Keeping ONE
+// copy is deliberate — see that module's header.
+import {
+  SRC,
+  collectSourceFiles,
+  reachableFrom,
+  stripComments
+} from '../../../test-utils/importGraph';
 
 /**
  * Authenticated consumer surfaces — routed under the `consumer.*` subdomain (see App.tsx's
@@ -66,91 +73,6 @@ const ALWAYS_SCAN = [
   join('views', 'Scan', 'ProductDetail', 'components', 'UltraMobileProductionJourney.tsx')
 ];
 
-const SOURCE_EXT = /\.(ts|tsx)$/;
-
-function collectSourceFiles(dir: string): string[] {
-  const out: string[] = [];
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
-    if (statSync(full).isDirectory()) {
-      if (entry === '__tests__' || entry === 'node_modules') continue;
-      out.push(...collectSourceFiles(full));
-    } else if (SOURCE_EXT.test(entry)) {
-      out.push(full);
-    }
-  }
-  return out;
-}
-
-/** Resolve an import specifier to a file inside src, or null if it is external. */
-function resolveImport(specifier: string, fromFile: string): string | null {
-  // Path aliases configured in vitest.config.ts / tsconfig.
-  const aliases: Record<string, string> = {
-    '@/': join(SRC, ''),
-    'components/': join(SRC, 'components'),
-    'views/': join(SRC, 'views'),
-    'utils/': join(SRC, 'utils'),
-    'hooks/': join(SRC, 'hooks'),
-    'store/': join(SRC, 'store'),
-    'config/': join(SRC, 'config')
-  };
-
-  let base: string | null = null;
-  if (specifier.startsWith('.')) {
-    base = resolve(dirname(fromFile), specifier);
-  } else if (specifier.startsWith('src/')) {
-    base = join(SRC, specifier.slice('src/'.length));
-  } else {
-    for (const [prefix, target] of Object.entries(aliases)) {
-      if (specifier.startsWith(prefix)) {
-        base = join(target, specifier.slice(prefix.length));
-        break;
-      }
-    }
-  }
-  if (!base) return null; // node_modules / bare package
-
-  for (const candidate of [
-    base,
-    `${base}.ts`,
-    `${base}.tsx`,
-    join(base, 'index.ts'),
-    join(base, 'index.tsx')
-  ]) {
-    if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
-  }
-  return null;
-}
-
-/**
- * Every src file reachable from `roots`, following imports transitively.
- * Roots may be directories or individual files — the producer set is built by filtering
- * files out of a directory listing, so it arrives as a file list.
- */
-function reachableFrom(roots: string[]): Set<string> {
-  const seen = new Set<string>();
-  const queue = roots.flatMap((root) =>
-    statSync(root).isDirectory() ? collectSourceFiles(root) : [root]
-  );
-  // `import x from '…'`, `import '…'`, and `import('…')`.
-  const importPattern = /(?:from\s*|import\s*\(?\s*)['"]([^'"]+)['"]/g;
-
-  while (queue.length) {
-    const file = queue.pop()!;
-    if (seen.has(file)) continue;
-    seen.add(file);
-
-    const source = readFileSync(file, 'utf8');
-    for (const match of source.matchAll(importPattern)) {
-      const target = resolveImport(match[1], file);
-      // Only follow into the app's own component/util layers; the store and generated API
-      // types carry no rendered copy and would balloon the graph.
-      if (target && !seen.has(target) && SOURCE_EXT.test(target)) queue.push(target);
-    }
-  }
-  return seen;
-}
-
 /**
  * Files that render ONLY on a consumer surface.
  *
@@ -192,21 +114,6 @@ function consumerOnlyFiles(): string[] {
     if (!scanned.includes(abs)) scanned.push(abs);
   }
   return scanned;
-}
-
-/**
- * Strip comments so the explanatory notes left at each removal site — which necessarily
- * quote the banned strings — do not trip the guard.
- */
-function stripComments(source: string): string {
-  return (
-    source
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      // Line comments, including TRAILING ones. The `[^:]` guard keeps `https://` intact —
-      // an earlier version only stripped comments at line start, so a trailing
-      // "// 100% trust" note was reported as a rendered "/100" grade.
-      .replace(/(^|[^:])\/\/.*$/gm, '$1')
-  );
 }
 
 const BANNED = [

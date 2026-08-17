@@ -28,8 +28,8 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 
-import { HStack, Icon, Text, VStack, useColorModeValue } from '@chakra-ui/react';
-import { FaChevronRight, FaRegCalendarAlt } from 'react-icons/fa';
+import { Heading, HStack, Icon, Text, VStack, useColorModeValue } from '@chakra-ui/react';
+import { FaCalendarAlt, FaChevronRight } from 'react-icons/fa';
 
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -124,6 +124,10 @@ const CertifierDeadlinesStrip: React.FC<{
   // AND the CDFA registration (with its renewal date); certificates live on the farm profile,
   // alongside the certifier-link and dossier actions.
   const ospHref = `/admin/dashboard/farm/${farmId}/osp`;
+  // The § 205.406 annual-update card lives on the narrative/lifecycle page, not
+  // the module list — send the two annual-update rows straight to it
+  // (2026-08-10: the generic /osp link left farmers hunting for the filing).
+  const annualUpdateHref = `/admin/dashboard/farm/${farmId}/osp/narratives`;
   const profileHref = `/admin/dashboard/farm/${farmId}/profile`;
 
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -136,7 +140,10 @@ const CertifierDeadlinesStrip: React.FC<{
   // dates being PRESENT, so an unloaded query simply contributes no rows and claims nothing.
   const { data: certifications } = useGetCertificationsQuery(scope, skip);
   const { data: registrations } = useGetStateOrganicRegistrationsQuery(scope, skip);
-  const { data: annualUpdates, isSuccess: updatesLoaded } = useGetOSPAnnualUpdatesQuery(scope, skip);
+  const { data: annualUpdates, isSuccess: updatesLoaded } = useGetOSPAnnualUpdatesQuery(
+    scope,
+    skip
+  );
 
   // A conventional operation is not on the NOP calendar and must not be shown organic
   // deadlines it was never subject to.
@@ -163,7 +170,7 @@ const CertifierDeadlinesStrip: React.FC<{
       label: intl.formatMessage({ id: 'deadlines.ospAnnualUpdate' }, { year: currentYear }),
       detail: intl.formatMessage({ id: 'deadlines.ospAnnualUpdateNotFiled' }),
       urgency: 'overdue',
-      href: ospHref
+      href: annualUpdateHref
     });
   } else if (updateThisYear && !updateThisYear.submitted_at) {
     deadlines.push({
@@ -171,7 +178,7 @@ const CertifierDeadlinesStrip: React.FC<{
       label: intl.formatMessage({ id: 'deadlines.ospAnnualUpdate' }, { year: currentYear }),
       detail: intl.formatMessage({ id: 'deadlines.ospAnnualUpdateDraft' }),
       urgency: 'soon',
-      href: ospHref
+      href: annualUpdateHref
     });
   }
 
@@ -212,12 +219,13 @@ const CertifierDeadlinesStrip: React.FC<{
       key: `state-reg-${reg.id}`,
       // `program_name` is optional and `state` can be blank, which produced a label of just
       // " renewal" with a leading space. Fall back to a generic but complete phrase.
-      label: reg.program_name || reg.state
-        ? intl.formatMessage(
-            { id: 'deadlines.stateRegistrationRenewal' },
-            { program: reg.program_name || reg.state }
-          )
-        : intl.formatMessage({ id: 'deadlines.stateRegistrationRenewalGeneric' }),
+      label:
+        reg.program_name || reg.state
+          ? intl.formatMessage(
+              { id: 'deadlines.stateRegistrationRenewal' },
+              { program: reg.program_name || reg.state }
+            )
+          : intl.formatMessage({ id: 'deadlines.stateRegistrationRenewalGeneric' }),
       detail: describeDelta(days, intl),
       urgency: days < 0 ? 'overdue' : 'soon',
       href: ospHref
@@ -235,11 +243,46 @@ const CertifierDeadlinesStrip: React.FC<{
     <Card>
       <CardBody>
         <VStack align="stretch" spacing={3} w="100%">
-          <HStack spacing={2}>
-            <Icon as={FaRegCalendarAlt} color={mutedColor} boxSize={4} />
-            <Text fontSize="xs" fontWeight="bold" color={mutedColor} textTransform="uppercase">
+          {/* A card TITLE, not an eyebrow (2026-08-15).
+              This rendered as 12px uppercase bold grey while its sibling card directly below —
+              "Before your certifier packet" — rendered a sentence-case `Heading`. Two peer cards
+              in one column announcing themselves in two different registers read as two different
+              KINDS of thing, and the smaller one reads as a subheading of the page rather than
+              the head of its own card.
+
+              Aligned to `StandardCard`'s header pattern — `Heading as="h3"`, `color="gray.700"`,
+              icon at `boxSize={5}` — but NOT its responsive size; see the note on the Heading
+              below for why 16px is right on this particular page. Hand-rolling a card header
+              instead of using StandardCard is a defect this codebase has already fixed once (see
+              the ProfileFarm file header); matched here rather than converting the card wholesale
+              because the protected dashboard CSS forces its own padding and background onto
+              `Card` with `!important`.
+
+              `Heading` also restores the semantics: the old `Text` put nothing in the heading
+              outline, so a screen-reader user got a card with no name. */}
+          <HStack spacing={3} align="center">
+            {/* SOLID weight. Font Awesome ships Regular (outline) and Solid as separate sets, and
+                the outline calendar was the ONLY `FaReg*` icon anywhere in the dashboard tree —
+                so the one card with a hollow header icon sat directly above a card with a filled
+                clipboard. Same family, two weights, reads as two icon sets. */}
+            <Icon as={FaCalendarAlt} color="gray.700" boxSize={5} />
+            {/* `size="sm"` (16px), NOT StandardCard's `{ base: 'sm', md: 'md' }`.
+                MEASURED against the page: `md` renders 20px, which made these two card titles the
+                largest text on the dashboard — larger than the farm name that is the page's own
+                subject, and 6px above the 14px item titles inside the card. StandardCard's scale
+                assumes a `StandardPage` hero H1 above it; this dashboard has no such H1, so the
+                cards ARE the top level and inherited that weight instead of sitting under it —
+                the same inverted hierarchy StandardSection's own comment documents. 16px also
+                matches CarbonSummaryCard, the third card in this column.
+
+                `fontWeight="600"` overrides Chakra's `Heading` default of 700. At 700 these titles
+                tied with the farm-name chip — the page's own subject — and sat only 2px and one
+                weight step above the 14px/600 item titles inside the card, so the header read
+                heavier than its own hierarchy warranted. 600 also matches CarbonSummaryCard,
+                which already set it explicitly. */}
+            <Heading as="h3" size="sm" fontWeight="600" color="gray.700">
               {intl.formatMessage({ id: 'deadlines.title' })}
-            </Text>
+            </Heading>
           </HStack>
 
           <VStack align="stretch" spacing={2}>
@@ -261,8 +304,7 @@ const CertifierDeadlinesStrip: React.FC<{
                 borderBottomColor={borderColor}
                 pl={3}
                 pb={2}
-                _hover={{ bg: hoverBg }}
-              >
+                _hover={{ bg: hoverBg }}>
                 <Text fontSize="sm" color={textColor} fontWeight="medium">
                   {d.label}
                 </Text>
@@ -271,8 +313,7 @@ const CertifierDeadlinesStrip: React.FC<{
                     fontSize="xs"
                     fontWeight="semibold"
                     color={d.urgency === 'overdue' ? 'red.500' : 'orange.500'}
-                    whiteSpace="nowrap"
-                  >
+                    whiteSpace="nowrap">
                     {d.detail}
                   </Text>
                   <Icon as={FaChevronRight} color={mutedColor} boxSize={2.5} />

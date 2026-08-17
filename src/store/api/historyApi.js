@@ -111,7 +111,8 @@ export const historyApi = baseApi.injectEndpoints({
     createEvent: build.mutation({
       query: ({ companyId, farmId, ...eventData }) => {
         // Filter out album since images are handled via pre-signed URLs
-        const { album, ...cleanEventData } = eventData;
+        // eslint-disable-next-line no-unused-vars -- destructured only to omit it
+        const { album: _album, ...cleanEventData } = eventData;
 
         return {
           url: EVENT_CREATE_URL(companyId, farmId),
@@ -125,7 +126,8 @@ export const historyApi = baseApi.injectEndpoints({
     updateEvent: build.mutation({
       query: ({ companyId, farmId, eventId, eventType, ...eventData }) => {
         // Filter out album since images are handled via pre-signed URLs
-        const { album, ...cleanEventData } = eventData;
+        // eslint-disable-next-line no-unused-vars -- destructured only to omit it
+        const { album: _album, ...cleanEventData } = eventData;
 
         return {
           url: EVENT_URL(companyId, farmId, eventId, eventType),
@@ -206,17 +208,7 @@ export const historyApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result, error, farmId) =>
-        result ? [{ type: 'History', farmId }] : []
-    }),
-    getProductionsByFarm: build.query({
-      query: ({ farmId }) => ({
-        url: `/history/productions/?establishment=${farmId}`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: (result, error, farmId) =>
-        result ? [{ type: 'Productions', id: farmId }] : []
+      providesTags: (result, error, farmId) => (result ? [{ type: 'History', farmId }] : [])
     }),
     createScan: build.mutation({
       query: ({
@@ -266,9 +258,33 @@ export const historyApi = baseApi.injectEndpoints({
       providesTags: (result) => (result ? ['Event'] : [])
     }),
     // Sales records per production lot (SOE traceback) — owner-gated, never public
+    // USDA Form 10 Part A is a PERSISTENT supplier list — its purpose is to be referenced
+    // again next season, which a free-text string retyped per event cannot do. Derived from
+    // the farm's own prior records rather than a curated entity; see the endpoint docstring
+    // for the trade-off.
+    getSeedSuppliers: build.query({
+      query: ({ establishmentId }) => ({
+        url: `histories/seed-suppliers/?establishment_id=${establishmentId}`,
+        method: 'GET',
+        credentials: 'include'
+      })
+    }),
     getSalesRecords: build.query({
       query: ({ productionId }) => ({
         url: `sales_records/?production_id=${productionId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (result, error, { productionId }) => [
+        { type: 'SalesRecords', id: productionId }
+      ]
+    }),
+    // Owner-gated. The lot code is not on the public history payload by design — it links a
+    // buyer to a block and a date (§ 205.103(b)(2)), which is a record for the operator and
+    // their certifier, not a consumer claim.
+    getHarvestLots: build.query({
+      query: ({ productionId }) => ({
+        url: `sales_records/harvest_lots/?production_id=${productionId}`,
         method: 'GET',
         credentials: 'include'
       }),
@@ -317,12 +333,13 @@ export const {
   useGetScansByFarmQuery,
   useGetUserProductionScansQuery,
   useGetUserReviewsQuery,
-  useGetProductionsByFarmQuery,
   useGetFarmScansPaginatedQuery,
   useCreateScanMutation,
   useClaimScansMutation,
   useGetRecentInputsQuery,
+  useGetSeedSuppliersQuery,
   useGetSalesRecordsQuery,
+  useGetHarvestLotsQuery,
   useCreateSalesRecordMutation,
   useDeleteSalesRecordMutation
 } = historyApi;
@@ -330,7 +347,5 @@ export const {
 // Backward-compat aliases for renamed hooks
 /** @deprecated Use useGetScansByFarmQuery instead */
 export const useGetScansByEstablishmentQuery = useGetScansByFarmQuery;
-/** @deprecated Use useGetProductionsByFarmQuery instead */
-export const useGetProductionsByEstablishmentQuery = useGetProductionsByFarmQuery;
 /** @deprecated Use useGetFarmScansPaginatedQuery instead */
 export const useGetEstablishmentScansPaginatedQuery = useGetFarmScansPaginatedQuery;

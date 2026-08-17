@@ -63,8 +63,12 @@ export const companySlice = createSlice({
       }
     },
     setFarmParcel: (
+      // `string | number`, because the reducer below already normalises with
+      // `.toString()` on both sides of every comparison. Establishment ids arrive as
+      // numbers from the API and as strings from route params, and callers hold
+      // `farmId: string | number`; declaring `string` here was narrower than the code.
       state,
-      action: PayloadAction<{ farmId: string; parcel: any }>
+      action: PayloadAction<{ farmId: string | number; parcel: any }>
     ) => {
       const { farmId, parcel } = action.payload;
       console.log('🔄 Redux setFarmParcel: Adding parcel', {

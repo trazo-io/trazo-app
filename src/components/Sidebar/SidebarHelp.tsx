@@ -15,7 +15,7 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
   const textColor = useColorModeValue('gray.700', 'white');
   const subtextColor = useColorModeValue('gray.500', 'gray.400');
   const iconBg = useColorModeValue('green.50', 'green.900');
-  const iconColor = useColorModeValue('green.500', 'green.400');
+  const iconColor = useColorModeValue('green.700', 'green.300');
 
   const isExpanded = sidebarWidth === 275 || !sidebarWidth;
 
@@ -76,13 +76,13 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
             rightIcon={<Icon as={FaExternalLinkAlt} w="12px" h="12px" />}
             fontSize="xs"
             fontWeight="semibold"
-            bg="green.500"
+            bg="green.700"
             color="white"
             border="none"
             transition="all 0.2s ease"
             sx={{
               '&:hover': {
-                backgroundColor: 'green.600 !important',
+                backgroundColor: 'green.800 !important',
                 color: 'white !important',
                 opacity: '1 !important',
                 visibility: 'visible !important',
@@ -91,14 +91,14 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
                 textDecoration: 'none !important'
               },
               '&:focus': {
-                backgroundColor: 'green.600 !important',
+                backgroundColor: 'green.800 !important',
                 color: 'white !important',
                 opacity: '1 !important',
                 visibility: 'visible !important',
-                boxShadow: '0 0 0 3px rgba(72, 187, 120, 0.6)'
+                boxShadow: '0 0 0 3px rgba(76, 175, 80, 0.6)'
               },
               '&:active': {
-                backgroundColor: 'green.700 !important',
+                backgroundColor: 'green.900 !important',
                 color: 'white !important',
                 opacity: '1 !important',
                 visibility: 'visible !important'

@@ -131,10 +131,10 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
   const hoverBorderColor = useColorModeValue('green.400', 'green.300');
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
-  const accentColor = useColorModeValue('green.500', 'green.400');
+  const accentColor = useColorModeValue('green.700', 'green.300');
   const uploadBg = useColorModeValue('gray.50', 'gray.700');
   const uploadHoverBg = useColorModeValue('gray.100', 'gray.600');
-  const successColor = useColorModeValue('green.500', 'green.400');
+  const successColor = useColorModeValue('green.700', 'green.300');
   const errorColor = useColorModeValue('red.500', 'red.400');
 
   // Responsive values
@@ -730,7 +730,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
                   color="white"
                   leftIcon={<FaPlus />}
                   onClick={openFilePicker}
-                  _hover={{ bg: useColorModeValue('green.600', 'green.500') }}
+                  _hover={{ bg: useColorModeValue('green.800', 'green.200') }}
                   borderRadius="xl"
                 >
                   {intl.formatMessage({
@@ -1015,7 +1015,7 @@ export const TrazoImageUpload: React.FC<TrazoImageUploadProps> = ({
               Uploading {uploadingFiles.filter((f) => f.status === 'uploading').length} of{' '}
               {uploadingFiles.length}...
             </Text>
-            <Text fontSize="sm" color="green.600" fontWeight="semibold">
+            <Text fontSize="sm" color="green.700" fontWeight="semibold">
               {Math.round(
                 uploadingFiles.reduce((acc, f) => acc + f.progress, 0) / uploadingFiles.length
               )}

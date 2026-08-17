@@ -51,19 +51,19 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, type = 'text' }) 
     switch (type) {
       case 'link':
         return (
-          <Link href={value as string} isExternal color="green.600" fontWeight="medium">
+          <Link href={value as string} isExternal color="green.700" fontWeight="medium">
             {value}
           </Link>
         );
       case 'email':
         return (
-          <Link href={`mailto:${value}`} color="green.600" fontWeight="medium">
+          <Link href={`mailto:${value}`} color="green.700" fontWeight="medium">
             {value}
           </Link>
         );
       case 'phone':
         return (
-          <Link href={`tel:${value}`} color="green.600" fontWeight="medium">
+          <Link href={`tel:${value}`} color="green.700" fontWeight="medium">
             {value}
           </Link>
         );
@@ -264,7 +264,7 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
             size="2xl"
             src={currentCompany.logo || currentCompany.image}
             name={currentCompany.name}
-            bg="green.500"
+            bg="green.700"
             color="white"
             icon={<Icon as={FaBuilding} boxSize={10} />}
           />

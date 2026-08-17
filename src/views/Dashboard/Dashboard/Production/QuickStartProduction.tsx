@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from 'store/index';
 import {
   Box,
-  Button,
   VStack,
   HStack,
   Heading,
@@ -12,26 +11,10 @@ import {
   GridItem,
   Icon,
   Badge,
-  Alert,
-  AlertIcon,
   useToast,
-  Divider,
-  List,
-  ListItem,
-  ListIcon,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
   Input,
   InputGroup,
   InputLeftElement,
-  Select,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   Switch,
   useColorModeValue,
   useDisclosure
@@ -40,14 +23,9 @@ import {
   FaRocket,
   FaSeedling,
   FaLeaf,
-  FaClock,
   FaChartLine,
   FaCheckCircle,
-  FaCalendarAlt,
-  FaMapMarkerAlt,
   FaEdit,
-  FaPlus,
-  FaMinus,
   FaArrowRight,
   FaSearch
 } from 'react-icons/fa';
@@ -70,12 +48,14 @@ import {
   StandardInput,
   StandardSelect,
   StandardTextarea,
+  StandardAlert,
   ResponsiveModal
 } from 'components/Design';
 import { PlanLimitAlert } from 'components/Subscription/PlanLimitAlert';
-import { getEventTypeMapping, getEventDataForType } from 'utils/eventTypeMapping';
 import { useIntl, FormattedMessage } from 'react-intl';
-import { useDefaultUnits } from 'src/hooks/useMeasurementSystem';
+// `hooks/*`, not `src/hooks/*` — see the note on the same import in
+// components/Forms/StandardFinishProductionForm.tsx.
+import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 
 // Utility function for formatting carbon values with appropriate precision
 const formatCarbonValue = (value: number): string => {
@@ -89,13 +69,29 @@ const formatCarbonValue = (value: number): string => {
 
 // Form validation schema
 const productionSchema = object({
-  name: string().min(1, 'Production name is required'),
+  // 150 is History.name's max_length. It had no bound at all here, so an over-length name
+  // reached the database and came back as a 500 rather than a field error. (Note the 30-char
+  // cap inside generateProductionName is that helper's own formatting rule, not the column's.)
+  name: string().min(1, 'Production name is required').max(150, 'Production name is too long'),
   start_date: string().min(1, 'Start date is required'),
   expected_harvest: string().optional(),
   description: string().optional(),
   production_method: string().optional(),
   type: string().min(1, 'Production type is required'),
   crop_type_id: string().min(1, 'Crop type is required')
+}).superRefine((data, ctx) => {
+  // A season cannot be expected to end before it starts. The backend accepts both dates
+  // independently (start_production parses each on its own), and finish-time validation only
+  // catches it much later — `_validate_finalization_fields` refuses a finish_date before
+  // start_date, by which point the grower has lived with a wrong harvest window all season.
+  if (!data.expected_harvest || !data.start_date) return;
+  if (data.expected_harvest < data.start_date) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['expected_harvest'],
+      message: 'Expected harvest cannot be before the start date'
+    });
+  }
 });
 
 interface ProductionFormData {
@@ -240,8 +236,7 @@ const CropTypeSearchPicker: React.FC<CropTypeSearchPickerProps> = ({
           e.preventDefault();
           handleSelect(cropType);
         }}
-        onMouseEnter={() => setHighlightIndex(index)}
-      >
+        onMouseEnter={() => setHighlightIndex(index)}>
         <Text fontSize="md" color="gray.700">
           {cropType.name}
         </Text>
@@ -259,8 +254,7 @@ const CropTypeSearchPicker: React.FC<CropTypeSearchPickerProps> = ({
       fontWeight="semibold"
       color="gray.500"
       textTransform="uppercase"
-      letterSpacing="wide"
-    >
+      letterSpacing="wide">
       {intl.formatMessage({ id: messageId })}
     </Text>
   );
@@ -306,8 +300,7 @@ const CropTypeSearchPicker: React.FC<CropTypeSearchPickerProps> = ({
           borderRadius="lg"
           boxShadow="lg"
           zIndex={20}
-          py={1}
-        >
+          py={1}>
           {flatOptions.length === 0 ? (
             <Text px={4} py={3} fontSize="sm" color="gray.500">
               {intl.formatMessage(
@@ -332,6 +325,42 @@ const CropTypeSearchPicker: React.FC<CropTypeSearchPickerProps> = ({
     </Box>
   );
 };
+
+/**
+ * The production-method vocabulary — MUST stay identical to
+ * `History.PRODUCTION_METHOD_CHOICES` (trazo-back/history/models.py).
+ *
+ * This list used to be four hardcoded <option> tags, and they did not match the model:
+ *
+ *  • "sustainable" was offered here and is NOT a model choice. `start_production`
+ *    (history/views.py) assigns `production_method` straight onto the model with no
+ *    serializer and no full_clean(), so Django stored it anyway — leaving a value in a
+ *    `choices` column that `get_production_method_display()` can only echo back raw.
+ *    It is also exactly the kind of unqualified general-environmental-benefit claim FTC
+ *    Green Guides 16 CFR 260.6 treats as deceptive, so it is removed rather than added
+ *    to the model.
+ *  • integrated / biodynamic / hydroponic / no_till are valid model choices that the
+ *    select could not render. That mattered beyond the missing options: the template
+ *    effect below maps a template's `system_type` onto this field and can set
+ *    'integrated' or 'no_till' — values with no matching <option>, so the control went
+ *    blank. The file already documents this trap for the FARM-inheritance path; the
+ *    template path had it too.
+ *
+ * Labels are the model's own display strings verbatim, so the form and the certifier
+ * packet name the same thing the same way.
+ *
+ * Guarded by trazo-back/history/tests/test_production_method_vocabulary.py, which reads
+ * this array out of this file — same cross-repo pattern as the sale/harvest unit lists.
+ */
+export const PRODUCTION_METHOD_CHOICES = [
+  { value: 'conventional', label: 'Conventional' },
+  { value: 'organic', label: 'Organic' },
+  { value: 'regenerative', label: 'Regenerative' },
+  { value: 'integrated', label: 'Integrated Pest Management' },
+  { value: 'biodynamic', label: 'Biodynamic' },
+  { value: 'hydroponic', label: 'Hydroponic' },
+  { value: 'no_till', label: 'No-Till' }
+] as const;
 
 /** Production methods under which a prohibited synthetic input must never be pre-enabled. */
 const ORGANIC_PRODUCTION_METHODS = ['organic', 'regenerative'];
@@ -385,14 +414,16 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     onClose: onTemplateClose
   } = useDisclosure();
 
-  // Production creation tour
-  useTour('production-first', { enabled: !isEdit });
-
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [customEvents, setCustomEvents] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedCropTypeId, setSelectedCropTypeId] = useState<string | null>(null);
+
+  // Production creation tour — two steps, both present the moment the page opens.
+  // (It used to declare a third, pointing at the pre-configured events list further down;
+  // that list does not exist until a template has been applied. See src/tours/productionTour.ts.)
+  useTour('production-first', { enabled: !isEdit });
 
   // Get parcel data from Redux store
   const currentParcel = useSelector((state: RootState) => state.product?.currentParcel);
@@ -420,21 +451,15 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     }
   }, [currentParcel?.area]);
 
-  // Debug logging (remove in production)
-  useEffect(() => {
-    console.log('QuickStartProduction - Current parcel:', currentParcel);
-    console.log('QuickStartProduction - Fetched parcel data:', parcelData);
-  }, [currentParcel, parcelData]);
-
-  // ✅ NEW: State for USDA-based carbon calculations
-  // IMPORTANT: Area from Redux parcel data, fallback to user input or 10 hectares
+  // Parcel area, mirrored from the parcel record for display only. Never submitted — see the
+  // note on the read-only field that renders it.
   const [areaInput, setAreaInput] = useState<number>(10);
 
   // Parcel.area is STORED in hectares (carbon maths depends on it) but was also DISPLAYED
   // in hectares on a US-only product, so a grower who entered 42.5 acres on the parcel form
   // — which already converts — then saw "17.1992 hectares" here and had to convert back to
   // recognise their own block. Storage is unchanged; only the read-out is localised.
-  const areaUnits = useDefaultUnits();
+  const areaUnits = useDefaultUnits(farmId);
   const ACRES_PER_HECTARE = 2.47105;
   const areaLabel =
     areaUnits.system === 'imperial'
@@ -466,10 +491,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   const { data: templatesData, isLoading: isLoadingTemplates } = useGetCropTemplatesQuery(
     selectedCropTypeId ? { crop_type: selectedCropTypeId } : undefined
   );
-  const { data: templateDetail, isLoading: isLoadingDetail } = useGetCropTemplateDetailQuery(
-    selectedTemplateId!,
-    { skip: !selectedTemplateId }
-  );
+  const { data: templateDetail } = useGetCropTemplateDetailQuery(selectedTemplateId!, {
+    skip: !selectedTemplateId
+  });
   const [startProduction] = useStartProductionMutation();
   const [updateProduction, { isLoading: isUpdating }] = useUpdateProductionMutation();
 
@@ -482,20 +506,18 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     skip: !isEdit || !productionId
   });
 
+  // Crop immutability applies to a crop the production actually HAS in the DB.
+  // A NULL crop (white-glove COG Pro import targets are created by hand without
+  // one) is a repairable gap, not a change — the picker unlocks exactly once.
+  // Keyed on productionData, never the form value: edit hydration fuzzy-guesses
+  // a crop from the production NAME for display, and a guess must not lock.
+  const cropIsLocked = isEdit && Boolean((productionData as any)?.crop_type);
+
   const {
     data: cropTypesData,
     error: cropTypesError,
     isLoading: isLoadingCropTypes
   } = useGetCropTypesDropdownQuery();
-
-  // Debug logging for crop types
-  React.useEffect(() => {
-    console.log('🌾 Crop Types Debug:', {
-      data: cropTypesData,
-      error: cropTypesError,
-      isLoading: isLoadingCropTypes
-    });
-  }, [cropTypesData, cropTypesError, isLoadingCropTypes]);
 
   // Previously-used crops for this farm (derived from parcels' current production
   // crop names already in the Redux company state — no extra fetch needed)
@@ -562,7 +584,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
    * actually represent; anything else keeps the "conventional" default.
    */
   const PRODUCTION_METHOD_OPTIONS = useMemo(
-    () => ['conventional', 'organic', 'regenerative', 'sustainable'],
+    () => PRODUCTION_METHOD_CHOICES.map((c) => c.value) as readonly string[],
     []
   );
 
@@ -585,9 +607,6 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   // Populate form with existing production data when in edit mode
   useEffect(() => {
     if (isEdit && productionData && cropTypesData) {
-      console.log('QuickStartProduction - Populating form with production data:', productionData);
-      console.log('QuickStartProduction - Available crop types:', cropTypesData);
-
       // Find matching crop type - check multiple possible data structures
       // productionData.crop_type could be: number ID, string ID, object with id/name, or the product object
       let matchingCropType = null;
@@ -626,8 +645,6 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             ct.name.toLowerCase().includes(prodNameLower.split(' ')[0])
         );
       }
-
-      console.log('QuickStartProduction - Matched crop type:', matchingCropType);
 
       const productionMethod = productionData.production_method || 'conventional';
 
@@ -730,7 +747,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   );
 
   const cardBg = useColorModeValue('white', 'gray.700');
-  const selectedCardBg = useColorModeValue('blue.50', 'blue.900');
+  const selectedCardBg = useColorModeValue('green.50', 'green.900');
   const cardBorderColor = useColorModeValue('gray.200', 'gray.600');
 
   // Templates are OPT-IN: choosing a crop must not apply one.
@@ -769,13 +786,6 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       // RTK Query will automatically refetch when selectedCropTypeId changes
     }
   }, [watchedCropTypeId, selectedCropTypeId]);
-
-  // Update area input when parcel data changes
-  useEffect(() => {
-    if (currentParcel?.area) {
-      setAreaInput(currentParcel.area);
-    }
-  }, [currentParcel?.area]);
 
   // Auto-fill form when template is selected.
   //
@@ -909,8 +919,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     onTemplateClose();
 
     toast({
-      title: 'Template Selected! 🚀',
-      description: `${template.name} template will accelerate your production setup.`,
+      title: intl.formatMessage({ id: 'quickStart.toast.templateSelected' }),
+      description: intl.formatMessage(
+        { id: 'quickStart.toast.templateSelectedDescription' },
+        { name: template.name }
+      ),
       status: 'success',
       duration: 4000,
       isClosable: true
@@ -959,16 +972,13 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     try {
       setIsCreating(true);
 
-      // Find the selected crop type to get its slug for the backend
-      const selectedCropType = cropTypesData?.find((ct) => ct.id.toString() === data.crop_type_id);
-
       // Ensure we have a valid crop type ID
       if (!data.crop_type_id) {
         toast({
-          title: 'Missing Crop Type',
-          description: `Please select a crop type before ${
-            isEdit ? 'updating' : 'creating'
-          } the production.`,
+          title: intl.formatMessage({ id: 'quickStart.toast.missingCropTitle' }),
+          description: intl.formatMessage({
+            id: isEdit ? 'quickStart.toast.missingCropUpdate' : 'quickStart.toast.missingCropCreate'
+          }),
           status: 'error',
           duration: 5000,
           isClosable: true
@@ -982,20 +992,25 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           historyId: productionId,
           name: data.name,
           start_date: data.start_date,
-          expected_harvest: data.expected_harvest,
+          // '' fails DRF DateTimeField validation outright — every edit of a
+          // production without an expected harvest 400'd on this. null clears.
+          expected_harvest: data.expected_harvest || null,
           description: data.description || '',
           production_method: data.production_method,
           type: data.type,
-          crop_type: parseInt(data.crop_type_id)
+          // Repair-only: the server refuses crop changes; send the crop solely
+          // when the production has none yet.
+          ...(cropIsLocked ? {} : { crop_type_id: parseInt(data.crop_type_id) })
         };
-
-        console.log('QuickStartProduction - Updating production with payload:', updatePayload);
 
         await updateProduction(updatePayload).unwrap();
 
         toast({
-          title: 'Production Updated Successfully! ✅',
-          description: `${data.name} has been updated.`,
+          title: intl.formatMessage({ id: 'quickStart.toast.updatedTitle' }),
+          description: intl.formatMessage(
+            { id: 'quickStart.toast.updatedDescription' },
+            { name: data.name }
+          ),
           status: 'success',
           duration: 5000,
           isClosable: true
@@ -1032,7 +1047,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       console.error(`Error ${isEdit ? 'updating' : 'creating'} production:`, error);
 
       // Parse error — backend uses {"error": "msg"} format, but also handle DRF {"field": ["msgs"]}
-      let description = `Failed to ${isEdit ? 'update' : 'create'} production. Please try again.`;
+      let description = intl.formatMessage({
+        id: isEdit
+          ? 'quickStart.toast.errorUpdatingFallback'
+          : 'quickStart.toast.errorCreatingFallback'
+      });
       if (error?.data) {
         if (typeof error.data.detail === 'string') {
           description = error.data.detail;
@@ -1054,7 +1073,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       }
 
       toast({
-        title: `Error ${isEdit ? 'Updating' : 'Creating'} Production`,
+        title: intl.formatMessage({
+          id: isEdit ? 'quickStart.toast.errorUpdating' : 'quickStart.toast.errorCreating'
+        }),
         description,
         status: 'error',
         duration: 6000,
@@ -1089,18 +1110,18 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   // Show error state for edit mode
   if (isEdit && isProductionError) {
     return (
-      <StandardPage title="Edit Production" showBackButton>
+      <StandardPage title={intl.formatMessage({ id: 'quickStart.page.titleEdit' })} showBackButton>
         <VStack py={8} spacing={4}>
           <Text color="red.500" fontWeight="bold">
-            Error loading production data
+            {intl.formatMessage({ id: 'quickStart.error.loadTitle' })}
           </Text>
-          <Text color="gray.600">Production ID: {productionId}</Text>
-          <Button
-            colorScheme="green"
-            onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-          >
-            Go Back
-          </Button>
+          <Text color="gray.600">
+            {intl.formatMessage({ id: 'quickStart.error.productionId' }, { id: productionId })}
+          </Text>
+          <StandardButton
+            onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
+            {intl.formatMessage({ id: 'quickStart.error.goBack' })}
+          </StandardButton>
         </VStack>
       </StandardPage>
     );
@@ -1109,19 +1130,26 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   return (
     <WriteAccessGuard>
       <StandardPage
-        title={isEdit ? 'Edit Production' : 'Quick Start Production'}
+        title={intl.formatMessage({
+          id: isEdit ? 'quickStart.page.titleEdit' : 'quickStart.page.title'
+        })}
         description={
           isEdit
-            ? `Update production details${
-                productionData?.name ? ` for ${productionData.name}` : ''
-              }`
-            : `Start a new production cycle${
-                parcelName ? ` for ${parcelName}` : ''
-              } with smart templates`
+            ? productionData?.name
+              ? intl.formatMessage(
+                  { id: 'quickStart.page.descriptionEditNamed' },
+                  { name: productionData.name }
+                )
+              : intl.formatMessage({ id: 'quickStart.page.descriptionEdit' })
+            : parcelName
+            ? intl.formatMessage(
+                { id: 'quickStart.page.descriptionForParcel' },
+                { parcel: parcelName }
+              )
+            : intl.formatMessage({ id: 'quickStart.page.description' })
         }
         showBackButton
-        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-      >
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
         <form onSubmit={handleSubmit(onSubmit)}>
           <VStack spacing={8} align="stretch">
             {/* Pre-flight plan limit warning (form stays usable; backend enforces) */}
@@ -1135,10 +1163,14 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             {/* Template Selection Section - Only show in create mode */}
             {!isEdit && (
               <Box data-tour="template-events">
+                {/* "reduce setup time by 37+ minutes" removed from the subtitle. The comment
+                    further down this file records deleting exactly that figure as unsourced —
+                    it survived here, in the card subtitle, which is the most prominent place
+                    it appeared. No measurement behind it, and no real users to have measured
+                    it from. */}
                 <StandardCard
-                  title="Smart Setup Templates"
-                  subtitle="Choose a pre-configured template to reduce setup time by 37+ minutes"
-                >
+                  title={intl.formatMessage({ id: 'quickStart.templates.title' })}
+                  subtitle={intl.formatMessage({ id: 'quickStart.templates.subtitle' })}>
                   <VStack spacing={6} align="stretch">
                     {/* Current Template Display */}
                     {selectedTemplate ? (
@@ -1147,8 +1179,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         bg="green.50"
                         borderRadius="lg"
                         borderWidth="2px"
-                        borderColor="green.200"
-                      >
+                        borderColor="green.200">
                         <HStack spacing={3}>
                           <Icon
                             as={getCropIcon(selectedTemplate.crop_type)}
@@ -1158,98 +1189,118 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                           <VStack align="start" spacing={1} flex={1}>
                             <HStack>
                               <Text fontSize="lg" fontWeight="bold" color="green.700">
-                                {selectedTemplate.name} Template Selected
+                                {intl.formatMessage(
+                                  { id: 'quickStart.templates.selected' },
+                                  { name: selectedTemplate.name }
+                                )}
                               </Text>
                               <Badge colorScheme="green" variant="solid">
-                                Smart Setup
+                                {intl.formatMessage({
+                                  id: 'quickStart.templates.badge.smartSetup'
+                                })}
                               </Badge>
                             </HStack>
-                            <Text fontSize="sm" color="green.600">
-                              ⏱️ Setup time reduced by 37 minutes • 📅{' '}
-                              {selectedTemplate.events_count || customEvents.length} events
-                              configured • 💰 EPA/USDA-sourced carbon calculation will be applied
+                            {/* "Setup time reduced by 37 minutes" removed: that figure appeared
+                                exactly once in the whole codebase — no source, no calculation, no
+                                backend value behind it. An unsourced statistic shown to a user is
+                                the first thing .claude/rules/compliance.md rules out, and with no
+                                real users yet there is nothing it could have been measured from.
+                                The two remaining clauses are both facts we actually hold. */}
+                            <Text fontSize="sm" color="green.700">
+                              {intl.formatMessage(
+                                { id: 'quickStart.templates.eventsConfigured' },
+                                { count: selectedTemplate.events_count || customEvents.length }
+                              )}
                             </Text>
                             <HStack spacing={2} mt={1}>
                               {selectedTemplate?.system_type === 'organic' ? (
                                 <>
-                                  <Badge colorScheme="green" variant="subtle" fontSize="xs">
+                                  <Badge variant="subtle" fontSize="xs">
                                     {intl.formatMessage({ id: 'template.badge.auditReady' })}
                                   </Badge>
-                                  <Badge colorScheme="orange" variant="subtle" fontSize="xs">
+                                  <Badge variant="subtle" fontSize="xs">
                                     {intl.formatMessage({ id: 'template.badge.nopReady' })}
                                   </Badge>
                                 </>
                               ) : (
                                 <>
-                                  <Badge colorScheme="blue" variant="subtle" fontSize="xs">
+                                  <Badge variant="subtle" fontSize="xs">
                                     {intl.formatMessage({ id: 'template.badge.epaSourced' })}
                                   </Badge>
-                                  <Badge colorScheme="purple" variant="subtle" fontSize="xs">
+                                  <Badge variant="subtle" fontSize="xs">
                                     {intl.formatMessage({ id: 'template.badge.transparencyReady' })}
                                   </Badge>
                                 </>
                               )}
                             </HStack>
                           </VStack>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            colorScheme="green"
-                            onClick={onTemplateOpen}
-                          >
-                            Change Template
-                          </Button>
+                          <StandardButton size="sm" variant="outline" onClick={onTemplateOpen}>
+                            {intl.formatMessage({ id: 'quickStart.templates.change' })}
+                          </StandardButton>
                         </HStack>
                       </Box>
                     ) : (
                       <Box
                         p={4}
-                        bg="blue.50"
+                        bg="green.50"
                         borderRadius="lg"
                         borderWidth="2px"
-                        borderColor="blue.200"
+                        borderColor="green.200"
                         cursor="pointer"
                         transition="all 0.2s"
-                        _hover={{ bg: 'blue.100', borderColor: 'blue.300' }}
+                        _hover={{ bg: 'green.100', borderColor: 'green.300' }}
                         onClick={selectedCropTypeId ? onTemplateOpen : undefined}
-                        opacity={selectedCropTypeId ? 1 : 0.6}
-                      >
+                        opacity={selectedCropTypeId ? 1 : 0.6}>
                         <HStack spacing={3}>
-                          <Icon as={FaRocket} color="blue.500" boxSize={6} />
+                          <Icon as={FaRocket} color="green.500" boxSize={6} />
                           <VStack align="start" spacing={1} flex={1}>
-                            <Text fontSize="lg" fontWeight="bold" color="blue.700">
-                              {selectedCropTypeId
-                                ? 'Select a Smart Template'
-                                : 'Select Crop Type First'}
+                            <Text fontSize="lg" fontWeight="bold" color="green.700">
+                              {intl.formatMessage({
+                                id: selectedCropTypeId
+                                  ? 'quickStart.templates.selectPrompt'
+                                  : 'quickStart.templates.selectCropFirst'
+                              })}
                             </Text>
-                            <Text fontSize="sm" color="blue.600">
+                            <Text fontSize="sm" color="green.700">
                               {selectedCropTypeId
-                                ? `🚀 ${filteredTemplates.length} template${
-                                    filteredTemplates.length !== 1 ? 's' : ''
-                                  } available for your crop type`
-                                : '🌱 Choose your crop type above to see available templates'}
+                                ? intl.formatMessage(
+                                    { id: 'quickStart.templates.availableCount' },
+                                    { count: filteredTemplates.length }
+                                  )
+                                : intl.formatMessage({
+                                    id: 'quickStart.templates.chooseCropAbove'
+                                  })}
                             </Text>
                             <HStack spacing={2} mt={1}>
                               {selectedCropTypeId ? (
                                 <>
-                                  <Badge colorScheme="green" variant="subtle" fontSize="xs">
-                                    {filteredTemplates.length} Templates
+                                  <Badge variant="subtle" fontSize="xs">
+                                    {intl.formatMessage(
+                                      { id: 'quickStart.templates.badge.count' },
+                                      { count: filteredTemplates.length }
+                                    )}
                                   </Badge>
-                                  <Badge colorScheme="purple" variant="subtle" fontSize="xs">
-                                    Farm Documented
+                                  <Badge variant="subtle" fontSize="xs">
+                                    {intl.formatMessage({
+                                      id: 'quickStart.templates.badge.farmDocumented'
+                                    })}
                                   </Badge>
-                                  <Badge colorScheme="orange" variant="subtle" fontSize="xs">
-                                    QR Ready
+                                  <Badge variant="subtle" fontSize="xs">
+                                    {intl.formatMessage({
+                                      id: 'quickStart.templates.badge.qrReady'
+                                    })}
                                   </Badge>
                                 </>
                               ) : (
                                 <Badge colorScheme="gray" variant="subtle" fontSize="xs">
-                                  Select crop type to continue
+                                  {intl.formatMessage({
+                                    id: 'quickStart.templates.badge.selectCrop'
+                                  })}
                                 </Badge>
                               )}
                             </HStack>
                           </VStack>
-                          {selectedCropTypeId && <Icon as={FaArrowRight} color="blue.400" />}
+                          {selectedCropTypeId && <Icon as={FaArrowRight} color="green.500" />}
                         </HStack>
                       </Box>
                     )}
@@ -1259,7 +1310,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             )}
 
             {/* Production Details Form */}
-            <StandardCard title="Production Details" subtitle="Configure your production cycle">
+            <StandardCard
+              title={intl.formatMessage({ id: 'quickStart.details.title' })}
+              subtitle={intl.formatMessage({ id: 'quickStart.details.subtitle' })}>
               <VStack spacing={6} align="stretch">
                 <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={6}>
                   {/* Crop Type Selection - First field */}
@@ -1267,40 +1320,45 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     <StandardField
                       label={
                         <>
-                          Crop Type
-                          {isEdit && (
+                          {intl.formatMessage({ id: 'quickStart.field.cropType' })}
+                          {cropIsLocked && (
                             <Badge ml={2} colorScheme="gray" variant="subtle">
-                              Read-Only
+                              {intl.formatMessage({ id: 'quickStart.field.cropType.readOnly' })}
                             </Badge>
                           )}
                         </>
                       }
-                      required={!isEdit}
+                      required={!cropIsLocked}
                       error={errors.crop_type_id?.message}
                       helpText={
-                        isEdit
-                          ? 'Crop type cannot be changed after production is created. To change crop type, create a new production.'
+                        cropIsLocked
+                          ? intl.formatMessage({ id: 'quickStart.field.cropType.lockedHelp' })
+                          : isEdit
+                          ? intl.formatMessage({ id: 'quickStart.field.cropType.repairHelp' })
                           : undefined
-                      }
-                    >
-                      {/* Debug Info - only in create mode */}
-                      {!isEdit && isLoadingCropTypes && (
-                        <Text fontSize="sm" color="blue.500" mb={2}>
-                          Loading crop types...
+                      }>
+                      {/*
+                        These three lines were labelled "Debug Info" and shipped as such: one
+                        dumped the raw RTK Query error object at the farmer via
+                        JSON.stringify, and one told them the app "Expected 6 crop types from
+                        database" — an internal assertion, and a stale one (the seeder defines
+                        32). Both are now operator-readable statements of what to do next.
+                      */}
+                      {!cropIsLocked && isLoadingCropTypes && (
+                        <Text fontSize="sm" color="gray.600" mb={2}>
+                          {intl.formatMessage({ id: 'production.cropTypes.loading' })}
                         </Text>
                       )}
-                      {!isEdit && cropTypesError && (
-                        <Text fontSize="sm" color="red.500" mb={2}>
-                          Error loading crop types: {JSON.stringify(cropTypesError)}
-                        </Text>
-                      )}
-                      {!isEdit &&
-                        !isLoadingCropTypes &&
-                        !cropTypesError &&
-                        (!cropTypesData || cropTypesData.length === 0) && (
-                          <Text fontSize="sm" color="orange.500" mb={2}>
-                            No crop types available. Expected 6 crop types from database.
-                          </Text>
+                      {!cropIsLocked &&
+                        (cropTypesError ||
+                          (!isLoadingCropTypes &&
+                            (!cropTypesData || cropTypesData.length === 0))) && (
+                          <StandardAlert
+                            status="error"
+                            description={intl.formatMessage({
+                              id: 'production.cropTypes.unavailable'
+                            })}
+                          />
                         )}
                       <Controller
                         name="crop_type_id"
@@ -1309,53 +1367,50 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                           <CropTypeSearchPicker
                             value={field.value}
                             onSelect={(cropTypeId) => {
-                              if (!isEdit) {
+                              if (!cropIsLocked) {
                                 field.onChange(cropTypeId);
                                 setSelectedCropTypeId(cropTypeId);
                               }
                             }}
                             cropTypes={cropTypesData || []}
                             recentIds={recentCropTypeIds}
-                            isDisabled={isEdit}
+                            isDisabled={cropIsLocked}
                           />
                         )}
                       />
-                      {selectedCropTypeId && cropTypesData && (
-                        <Box mt={2} p={3} bg="green.50" borderRadius="md">
-                          {(() => {
-                            const selectedCropType = cropTypesData.find(
-                              (ct) => ct.id.toString() === selectedCropTypeId
-                            );
-                            return selectedCropType ? (
-                              <VStack align="start" spacing={1}>
-                                <Text fontSize="sm" fontWeight="medium" color="green.700">
-                                  {selectedCropType.description}
-                                </Text>
-                                <HStack spacing={4} fontSize="xs" color="green.600">
-                                  <Text>
-                                    <Text as="span" fontWeight="medium">
-                                      Emissions:
-                                    </Text>{' '}
-                                    {selectedCropType.emissions_per_hectare} kg CO2e/ha
-                                  </Text>
-                                </HStack>
-                              </VStack>
-                            ) : null;
-                          })()}
-                        </Box>
-                      )}
+                      {/*
+                        The green "crop details" box that used to sit here rendered
+                        `selectedCropType.description` and
+                        `{selectedCropType.emissions_per_hectare} kg CO2e/ha`. This picker is
+                        fed by /carbon/crop-types/dropdown/, whose serializer
+                        (CropTypeDropdownSerializer) returns exactly id, name, category, slug —
+                        so the description was always blank and every farmer who picked a crop
+                        was shown the literal string "Emissions: undefined kg CO2e/ha".
+
+                        Not restored by widening the endpoint, either: emissions_per_hectare is
+                        a generic crop-type benchmark, and printing it under this farm's crop
+                        selection reads as a figure for THIS block. It is also where the
+                        `green.600` body text lived — a boundary colour at 4.12:1, below the
+                        4.5 glyphs owe.
+                      */}
                     </StandardField>
                   </GridItem>
 
                   <GridItem>
-                    <StandardField label="Production Name" required error={errors.name?.message}>
+                    <StandardField
+                      label={intl.formatMessage({ id: 'quickStart.field.name' })}
+                      required
+                      error={errors.name?.message}>
                       <Controller
                         name="name"
                         control={control}
                         render={({ field }) => (
                           <StandardInput
                             {...field}
-                            placeholder="e.g., Spring 2024 Orange Harvest"
+                            maxLength={150}
+                            placeholder={intl.formatMessage({
+                              id: 'quickStart.field.name.placeholder'
+                            })}
                           />
                         )}
                       />
@@ -1363,7 +1418,10 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   </GridItem>
 
                   <GridItem>
-                    <StandardField label="Start Date" required error={errors.start_date?.message}>
+                    <StandardField
+                      label={intl.formatMessage({ id: 'quickStart.field.startDate' })}
+                      required
+                      error={errors.start_date?.message}>
                       <Controller
                         name="start_date"
                         control={control}
@@ -1373,7 +1431,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   </GridItem>
 
                   <GridItem>
-                    <StandardField label="Expected Harvest Date">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'quickStart.field.expectedHarvest' })}
+                      error={errors.expected_harvest?.message}>
                       <Controller
                         name="expected_harvest"
                         control={control}
@@ -1383,14 +1443,22 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   </GridItem>
 
                   <GridItem>
-                    <StandardField label="Production Type" required>
+                    <StandardField
+                      label={intl.formatMessage({ id: 'quickStart.field.productionType' })}
+                      required>
                       <Controller
                         name="type"
                         control={control}
                         render={({ field }) => (
                           <StandardSelect {...field}>
-                            <option value="OR">Orchard (Perennial Crops)</option>
-                            <option value="GA">Garden (Annual Crops)</option>
+                            <option value="OR">
+                              {intl.formatMessage({
+                                id: 'quickStart.field.productionType.orchard'
+                              })}
+                            </option>
+                            <option value="GA">
+                              {intl.formatMessage({ id: 'quickStart.field.productionType.garden' })}
+                            </option>
                           </StandardSelect>
                         )}
                       />
@@ -1398,16 +1466,18 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   </GridItem>
 
                   <GridItem>
-                    <StandardField label="Production Method">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'quickStart.field.productionMethod' })}>
                       <Controller
                         name="production_method"
                         control={control}
                         render={({ field }) => (
                           <StandardSelect {...field}>
-                            <option value="conventional">Conventional</option>
-                            <option value="organic">Organic</option>
-                            <option value="regenerative">Regenerative</option>
-                            <option value="sustainable">Sustainable</option>
+                            {PRODUCTION_METHOD_CHOICES.map(({ value, label }) => (
+                              <option key={value} value={value}>
+                                {label}
+                              </option>
+                            ))}
                           </StandardSelect>
                         )}
                       />
@@ -1421,57 +1491,56 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                           {areaLabel}
                           {currentParcel?.area && (
                             <Badge ml={2} colorScheme="green" variant="subtle">
-                              Auto-Loaded
+                              {intl.formatMessage({ id: 'quickStart.field.area.badgeAutoLoaded' })}
                             </Badge>
                           )}
                         </>
                       }
                       helpText={
                         currentParcel?.area
-                          ? 'Area from parcel data (read-only). To change, edit the parcel settings.'
-                          : 'Used for carbon footprint calculations. Default: 10 hectares'
-                      }
-                    >
-                      {currentParcel?.area ? (
-                        <StandardInput
-                          value={areaDisplayValue}
-                          isReadOnly
-                          bg="gray.50"
-                          cursor="not-allowed"
-                        />
-                      ) : (
-                        <NumberInput
-                          value={areaInput}
-                          onChange={(valueString) => setAreaInput(Number(valueString) || 10)}
-                          min={0.1}
-                          max={10000}
-                          step={0.1}
-                          size="lg"
-                        >
-                          <NumberInputField
-                            borderRadius="lg"
-                            placeholder="Enter parcel area in hectares"
-                          />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
-                      )}
+                          ? intl.formatMessage({ id: 'quickStart.field.area.helpLoaded' })
+                          : intl.formatMessage({ id: 'quickStart.field.area.helpUnset' })
+                      }>
+                      {/*
+                        The empty state used to be an editable NumberInput, and it was a lie:
+                        `areaInput` fed nothing but the read-out beside it. It was never added
+                        to the create or update payload and never reached a carbon
+                        calculation, so a farmer could type their real acreage, watch the
+                        number change, submit, and have it silently discarded. Its placeholder
+                        also said "in hectares" while the label above said "(acres)" for every
+                        US farm — so the one number they could type was in the wrong unit too.
+
+                        Area is the PARCEL's fact and the parcel form already owns it (and
+                        already converts acres → the hectares storage layer). One editor per
+                        fact: this field reports, it does not collect.
+                      */}
+                      <StandardInput
+                        value={
+                          currentParcel?.area
+                            ? areaDisplayValue
+                            : intl.formatMessage({ id: 'quickStart.field.area.notSet' })
+                        }
+                        isReadOnly
+                        bg="gray.50"
+                        cursor="not-allowed"
+                      />
                     </StandardField>
                   </GridItem>
 
                   {/* NOTE: Irrigation Method removed - already captured at establishment level */}
 
                   <GridItem colSpan={{ base: 1, md: 2 }}>
-                    <StandardField label="Description">
+                    <StandardField
+                      label={intl.formatMessage({ id: 'quickStart.field.description' })}>
                       <Controller
                         name="description"
                         control={control}
                         render={({ field }) => (
                           <StandardTextarea
                             {...field}
-                            placeholder="Describe this production cycle, goals, and special considerations..."
+                            placeholder={intl.formatMessage({
+                              id: 'quickStart.field.description.placeholder'
+                            })}
                             rows={3}
                           />
                         )}
@@ -1485,17 +1554,17 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   <HStack spacing={3} justify="flex-end" pt={4}>
                     <StandardButton
                       variant="outline"
-                      onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-                    >
+                      onClick={() =>
+                        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
+                      }>
                       Cancel
                     </StandardButton>
                     <StandardButton
                       type="submit"
                       isLoading={isUpdating}
-                      loadingText="Updating Production..."
-                      leftIcon={<FaCheckCircle />}
-                    >
-                      Update Production
+                      loadingText={intl.formatMessage({ id: 'quickStart.action.updating' })}
+                      leftIcon={<FaCheckCircle />}>
+                      {intl.formatMessage({ id: 'quickStart.action.update' })}
                     </StandardButton>
                   </HStack>
                 )}
@@ -1507,28 +1576,29 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
               <HStack spacing={3} justify="flex-end" pt={4}>
                 <StandardButton
                   variant="outline"
-                  onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-                >
+                  onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
                   Cancel
                 </StandardButton>
                 <StandardButton
                   type="submit"
                   isLoading={isCreating}
-                  loadingText="Creating Production..."
-                  leftIcon={<FaRocket />}
-                >
-                  Start Production
+                  loadingText={intl.formatMessage({ id: 'quickStart.action.creating' })}
+                  leftIcon={<FaRocket />}>
+                  {intl.formatMessage({ id: 'quickStart.action.start' })}
                 </StandardButton>
               </HStack>
             )}
 
-            {/* Pre-configured Events - Only show in create mode */}
+            {/* Pre-configured Events - Only show in create mode.
+                No `data-tour` here any more: this block appears only AFTER a template has been
+                applied, so a tour step pointing at it could never run at the same time as the
+                two steps that matter on arrival (crop, templates). It explains itself with the
+                helper note below. See src/tours/productionTour.ts. */}
             {!isEdit && customEvents.length > 0 && (
-              <Box data-tour="transparency-score-preview">
+              <Box>
                 <StandardCard
-                  title="Pre-configured Events"
-                  subtitle={intl.formatMessage({ id: 'production.template.eventsSubtitle' })}
-                >
+                  title={intl.formatMessage({ id: 'quickStart.events.title' })}
+                  subtitle={intl.formatMessage({ id: 'production.template.eventsSubtitle' })}>
                   {/* Helper note */}
                   <Box
                     p={3}
@@ -1536,8 +1606,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     bg="green.50"
                     borderRadius="md"
                     border="1px solid"
-                    borderColor="green.100"
-                  >
+                    borderColor="green.100">
                     <Text fontSize="xs" color="green.700">
                       {intl.formatMessage({ id: 'production.template.eventsHelperNote' })}
                     </Text>
@@ -1546,8 +1615,13 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   {/* Master Switch Controls */}
                   <HStack justify="space-between" mb={4} p={3} bg="gray.50" borderRadius="md">
                     <Text fontSize="sm" color="gray.600">
-                      {customEvents.filter((event) => event.enabled).length} of{' '}
-                      {customEvents.length} events selected
+                      {intl.formatMessage(
+                        { id: 'quickStart.events.selectedCount' },
+                        {
+                          selected: customEvents.filter((event) => event.enabled).length,
+                          total: customEvents.length
+                        }
+                      )}
                     </Text>
                     <HStack spacing={3}>
                       <Switch
@@ -1557,7 +1631,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         size="md"
                       />
                       <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                        {allSelectableEventsEnabled ? 'Unselect All' : 'Select All'}
+                        {intl.formatMessage({
+                          id: allSelectableEventsEnabled
+                            ? 'quickStart.events.unselectAll'
+                            : 'quickStart.events.selectAll'
+                        })}
                       </Text>
                     </HStack>
                   </HStack>
@@ -1570,8 +1648,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         borderRadius="md"
                         borderWidth="1px"
                         borderColor={event.enabled ? 'gray.200' : 'gray.300'}
-                        opacity={event.enabled ? 1 : 0.6}
-                      >
+                        opacity={event.enabled ? 1 : 0.6}>
                         <HStack justify="space-between" mb={2}>
                           <HStack>
                             <Switch
@@ -1589,10 +1666,10 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                           <VStack align="end" spacing={0}>
                             {event.excludeFromCarbonCalculation ? (
                               <Text fontSize="sm" fontWeight="bold" color="gray.500">
-                                No Carbon Calc
+                                {intl.formatMessage({ id: 'quickStart.events.noCarbonCalc' })}
                               </Text>
                             ) : carbonPreviews[event.id] ? (
-                              <Text fontSize="sm" fontWeight="bold" color="green.600">
+                              <Text fontSize="sm" fontWeight="bold" color="green.700">
                                 {formatCarbonValue(carbonPreviews[event.id].estimated_carbon)} kg
                                 CO2e
                                 <Text fontSize="xs" color="gray.500">
@@ -1615,9 +1692,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                           </VStack>
                         </HStack>
                         {event.efficiency_tips && (
-                          <Box mt={2} p={2} bg="blue.50" borderRadius="sm">
-                            <Text fontSize="xs" fontWeight="medium" color="blue.600" mb={1}>
-                              Efficiency Tips:
+                          <Box mt={2} p={2} bg="gray.50" borderRadius="sm">
+                            <Text fontSize="xs" fontWeight="medium" color="gray.700" mb={1}>
+                              {intl.formatMessage({ id: 'quickStart.events.efficiencyTips' })}
                             </Text>
                             <Text fontSize="xs" color="gray.600">
                               <Icon as={FaCheckCircle} color="green.400" mr={1} />
@@ -1633,17 +1710,17 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   <HStack spacing={3} justify="flex-end" pt={4}>
                     <StandardButton
                       variant="outline"
-                      onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-                    >
+                      onClick={() =>
+                        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
+                      }>
                       Cancel
                     </StandardButton>
                     <StandardButton
                       type="submit"
                       isLoading={isCreating || isUpdating}
-                      loadingText="Creating Production..."
-                      leftIcon={<FaRocket />}
-                    >
-                      Start Production
+                      loadingText={intl.formatMessage({ id: 'quickStart.action.creating' })}
+                      leftIcon={<FaRocket />}>
+                      {intl.formatMessage({ id: 'quickStart.action.start' })}
                     </StandardButton>
                   </HStack>
                 </StandardCard>
@@ -1660,7 +1737,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           header={
             <VStack align="start" spacing={2}>
               <HStack>
-                <Icon as={FaRocket} color="blue.500" />
+                <Icon as={FaRocket} color="green.500" />
                 <Heading size={{ base: 'md', md: 'lg' }}>
                   {intl.formatMessage({ id: 'production.templateModal.title' })}
                 </Heading>
@@ -1673,7 +1750,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                       crop: selectedCropName,
                       count: filteredTemplates.length,
                       highlight: (chunks: React.ReactNode) => (
-                        <Text as="span" fontWeight="semibold" color="green.600">
+                        <Text as="span" fontWeight="semibold" color="green.700">
                           {chunks}
                         </Text>
                       )
@@ -1686,11 +1763,10 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             </VStack>
           }
           footer={
-            <Button variant="ghost" onClick={onTemplateClose}>
+            <StandardButton variant="ghost" onClick={onTemplateClose}>
               {intl.formatMessage({ id: 'app.cancel' })}
-            </Button>
-          }
-        >
+            </StandardButton>
+          }>
           {filteredTemplates.length > 0 ? (
             <Grid templateColumns="repeat(auto-fit, minmax(min(320px, 100%), 1fr))" gap={6}>
               {filteredTemplates.map((template) => {
@@ -1705,7 +1781,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     p={4}
                     borderWidth="1px"
                     borderRadius="15px"
-                    borderColor={isSelected ? 'blue.300' : cardBorderColor}
+                    borderColor={isSelected ? 'green.700' : cardBorderColor}
                     bg={isSelected ? selectedCardBg : cardBg}
                     cursor="pointer"
                     transition="all 0.2s"
@@ -1717,7 +1793,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     // keyboard user tabbing the list would have no idea where they are.
                     _focusVisible={{
                       outline: '2px solid',
-                      outlineColor: 'blue.500',
+                      outlineColor: 'green.600',
                       outlineOffset: '2px'
                     }}
                     onClick={() => handleTemplateSelect(template)}
@@ -1726,8 +1802,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         e.preventDefault();
                         handleTemplateSelect(template);
                       }
-                    }}
-                  >
+                    }}>
                     <HStack justify="space-between" align="start" mb={3} spacing={3}>
                       <HStack align="start" spacing={2} minW={0}>
                         <Icon as={CropIcon} color="green.500" boxSize={5} mt={1} flexShrink={0} />
@@ -1740,7 +1815,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                           </Text>
                         </VStack>
                       </HStack>
-                      <Badge colorScheme="blue" variant="subtle" flexShrink={0}>
+                      <Badge variant="subtle" flexShrink={0}>
                         {intl.formatMessage(
                           { id: 'production.templateModal.eventsCount' },
                           { count: template.events_count }
@@ -1750,21 +1825,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     <Text fontSize="sm" color="gray.700" mb={4} noOfLines={2}>
                       {template.description}
                     </Text>
-                    <Grid templateColumns="repeat(2, 1fr)" gap={3}>
-                      <VStack align="start" spacing={1}>
-                        <HStack>
-                          <Icon as={FaClock} color="blue.500" boxSize={3} />
-                          <Text fontSize="xs" fontWeight="medium">
-                            {intl.formatMessage({ id: 'production.templateModal.setupTime' })}
-                          </Text>
-                        </HStack>
-                        <Text fontSize="sm" fontWeight="bold">
-                          {intl.formatMessage(
-                            { id: 'production.templateModal.setupMinutes' },
-                            { minutes: template.setup_time_minutes }
-                          )}
-                        </Text>
-                      </VStack>
+                    {/* The "Setup Time: 8 minutes" tile that used to sit here is gone. The 8
+                        was a hardcoded literal in carbon/views.py, identical for every crop
+                        and never measured — see the note at its removal site. What is left is
+                        the one claim on this card we can actually stand behind. */}
+                    <Grid templateColumns="1fr" gap={3}>
                       <VStack align="start" spacing={1}>
                         <HStack>
                           <Icon as={FaChartLine} color="green.500" boxSize={3} />
@@ -1801,14 +1866,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     : intl.formatMessage({ id: 'production.templateModal.emptyNoCrop' })}
                 </Text>
               </VStack>
-              <Button
-                variant="outline"
-                colorScheme="blue"
-                onClick={onTemplateClose}
-                leftIcon={<FaEdit />}
-              >
+              <StandardButton variant="outline" onClick={onTemplateClose} leftIcon={<FaEdit />}>
                 {intl.formatMessage({ id: 'production.templateModal.continueWithout' })}
-              </Button>
+              </StandardButton>
             </VStack>
           )}
         </ResponsiveModal>

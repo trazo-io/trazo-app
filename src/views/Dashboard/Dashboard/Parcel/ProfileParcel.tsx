@@ -21,7 +21,9 @@
  * Removed in the rebuild:
  *  - the transparency SCORE badge (rendered twice, mobile + desktop). Cut from the farm home
  *    2026-08-04 and from the Production quick-stats per §10.4 as "the 4th duplicate of one
- *    number". Its home is /transparency ("Farm Records").
+ *    number". This note used to add "its home is /transparency" — that page was never routed,
+ *    and on 2026-08-11 the score was retired from producer UI entirely. It has no home now;
+ *    it is a backend KPI. See `.claude/rules/transparency-first.md`.
  *  - "Quick Stats" — area and crop, both duplicated by the Basic Information card below.
  *  - the initials Avatar and the duplicated mobile/desktop identity layouts.
  *  - "Share", which called navigator.share on `window.location.href` — an authenticated
@@ -80,6 +82,7 @@ import { InfoRow, FieldGroup, PageHeaderMeta } from 'components/Design/ProfileFi
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
 import FieldHistorySection from './FieldHistorySection';
+import AdjoiningLandSection from './AdjoiningLandSection';
 import LandownerAffidavitSection from './LandownerAffidavitSection';
 import ParcelComplianceCard from './ParcelComplianceCard';
 import { formatAreaWithBothUnits } from '../../../../utils/areaUnits';
@@ -220,8 +223,7 @@ function ProfileParcel(): React.ReactElement {
     return (
       <StandardPage
         showBackButton
-        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-      >
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
         <StandardPageLoading />
       </StandardPage>
     );
@@ -250,8 +252,7 @@ function ProfileParcel(): React.ReactElement {
     return (
       <StandardPage
         showBackButton
-        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-      >
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
         <Box py={20} textAlign="center">
           <Text color="red.500">
             {intl.formatMessage({
@@ -310,9 +311,8 @@ function ProfileParcel(): React.ReactElement {
   return (
     <StandardPage
       showBackButton
-      onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}
-    >
-      <VStack gap={{ base: 5, md: 8 }} w="100%" maxW="6xl" mx="auto" align="stretch">
+      onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
+      <VStack gap={{ base: 5, md: 8 }} w="100%" align="stretch">
         {/* Boundary nudge — an action, so it stays above everything */}
         {showBoundaryNudge && (
           <Box
@@ -321,13 +321,11 @@ function ProfileParcel(): React.ReactElement {
             bg="blue.50"
             border="1px solid"
             borderColor="blue.200"
-            borderRadius="xl"
-          >
+            borderRadius="xl">
             <Flex
               direction={{ base: 'column', md: 'row' }}
               align={{ base: 'stretch', md: 'center' }}
-              gap={3}
-            >
+              gap={3}>
               <HStack gap={2} flex="1" align="flex-start">
                 <Icon as={FaMapMarkedAlt} color="blue.500" boxSize={4} mt={0.5} flexShrink={0} />
                 <Text fontSize="sm" color="blue.800">
@@ -340,8 +338,7 @@ function ProfileParcel(): React.ReactElement {
                   size="sm"
                   onClick={() =>
                     navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`)
-                  }
-                >
+                  }>
                   {intl.formatMessage({ id: 'parcel.skipBoundary.nudgeAction' })}
                 </StandardButton>
                 <CloseButton
@@ -425,8 +422,7 @@ function ProfileParcel(): React.ReactElement {
                   navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`)
                 }
                 flexShrink={0}
-                w="auto"
-              >
+                w="auto">
                 {intl.formatMessage({ id: 'app.edit' })}
               </StandardButton>
             )}
@@ -465,8 +461,7 @@ function ProfileParcel(): React.ReactElement {
             id: 'parcel.section.organicComplianceHelp',
             defaultMessage:
               'The land records your certifier reviews for this field — use history, boundaries and prior management.'
-          })}
-        >
+          })}>
           <VStack align="stretch" gap={4} w="100%">
             {parcelId && <FieldHistorySection parcelId={parcelId} canWrite={canWrite} />}
 
@@ -482,6 +477,18 @@ function ProfileParcel(): React.ReactElement {
 
             {parcelId && currentCompany?.id && farmId && (
               <LandownerAffidavitSection
+                companyId={currentCompany.id}
+                farmId={farmId}
+                parcelId={parcelId}
+                canWrite={canWrite}
+              />
+            )}
+
+            {/* USDA form #25. Sits beside the landowner affidavit because both are
+                third-party attestations about this parcel, but they have different signers:
+                prior manager vs neighbour. */}
+            {parcelId && currentCompany?.id && farmId && (
+              <AdjoiningLandSection
                 companyId={currentCompany.id}
                 farmId={farmId}
                 parcelId={parcelId}
@@ -509,8 +516,7 @@ function ProfileParcel(): React.ReactElement {
           title={intl.formatMessage({
             id: 'parcel.section.details',
             defaultMessage: 'Parcel details'
-          })}
-        >
+          })}>
           <StandardCard variant="outline" padding={{ base: 3, md: 4 }} mb={0}>
             <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
               <FieldGroup label={intl.formatMessage({ id: 'parcel.basicInformation' })}>
@@ -706,20 +712,14 @@ function ProfileParcel(): React.ReactElement {
                 </FieldGroup>
               )}
 
+              {/* A "View transparency details" button lived here and navigated to
+                  `/admin/dashboard/farm/:farmId/transparency`. That route has been
+                  `RedirectToFarmHome` since the transparency dashboard was unrouted, so the
+                  button bounced the grower to farm home — whose own code comment then pointed
+                  them back at the transparency page they had just tried to open. Removed
+                  2026-08-11 along with that page. */}
               {(currentCompany?.name || establishment?.name) && (
-                <FieldGroup
-                  label={intl.formatMessage({ id: 'parcel.companyAndEstablishment' })}
-                  action={
-                    <StandardButton
-                      variant="ghost"
-                      size="sm"
-                      leftIcon={<Icon as={FaChartLine} />}
-                      onClick={() => navigate(`/admin/dashboard/farm/${farmId}/transparency`)}
-                    >
-                      {intl.formatMessage({ id: 'parcel.viewTransparencyDetails' })}
-                    </StandardButton>
-                  }
-                >
+                <FieldGroup label={intl.formatMessage({ id: 'parcel.companyAndEstablishment' })}>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
                     <InfoRow
                       icon={FaBuilding}

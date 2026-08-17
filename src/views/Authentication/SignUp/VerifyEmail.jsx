@@ -10,7 +10,7 @@ import { useVerifyEmailMutation } from 'store/api/authApi';
 
 function SignUp() {
   const textColor = useColorModeValue('gray.700', 'white');
-  const titleColor = useColorModeValue('green.500', 'green.400');
+  const titleColor = useColorModeValue('green.700', 'green.300');
   const bgColor = useColorModeValue('white', 'gray.700');
 
   const [isLoadingVerification, setIsLoadingVerification] = useState(true);

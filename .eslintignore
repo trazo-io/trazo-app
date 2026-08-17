@@ -1,1 +1,13 @@
+# Build output. `dist/` is ~20 MB of bundled/minified JS; linting it made `npm run lint`
+# take upwards of eight minutes, which is a large part of why the script went unrun and
+# eight real errors in src/ accumulated unnoticed. ESLint ignores node_modules by default;
+# it does NOT ignore build output.
+dist/
+build/
+coverage/
+
+# Generated
+src/types/api.generated.ts
+
+# Translation catalogues — data, not code.
 src/i18n/lang/*.json

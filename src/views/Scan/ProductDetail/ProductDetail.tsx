@@ -189,8 +189,7 @@ const EducationModal = ({
           bg={bgColor}
           borderTopRadius="2xl"
           maxH="82vh"
-          containerProps={{ style: { zIndex: 10000 } }}
-        >
+          containerProps={{ style: { zIndex: 10000 } }}>
           <Box pt={3} pb={1} display="flex" justifyContent="center">
             <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
           </Box>
@@ -339,8 +338,32 @@ function ProductDetail() {
   );
 
   // === PAGE-VIEW SCAN TRACKING ===
-  // Records a scan when the user accepts analytics consent (GDPR-compliant).
-  // Only fires once per page load. No scan is recorded if user declines.
+  //
+  // EVERY page view is counted, once. What the scan CARRIES depends on consent.
+  //
+  // 2026-08-12: this used to fire only after the shopper accepted the analytics banner, so a
+  // scan that was never followed by a click on "Accept" did not exist. `getConsentStatus()`
+  // returns 'unknown' until the banner is actioned, and most people never action a cookie
+  // banner — meaning the "QR scans" figure on the Buyer Page, the number that shows a farmer
+  // their public page is working, was counting only the minority who opted in.
+  //
+  // The backend has counted these all along: `PublicHistoryScanViewSet.create` has an explicit
+  // `anonymous_mode` branch — the row is written with empty session/IP/user-agent hashes, no
+  // geolocation and `consent_given=False`. Its own comment records that returning 428 for these
+  // was "undercounting QR engagement". That branch was unreachable from the only surface that
+  // matters, because this effect never sent the request.
+  //
+  // With no consent we send ONLY `production_id`. `time_on_page`, `screen` and the consent
+  // timestamp are behavioural/device data and are withheld — an anonymous tally with no
+  // identifiers is not personal-data processing, which is exactly what makes counting it lawful
+  // without consent (GDPR Art. 4(1); ePrivacy Art. 5(3) covers device storage/access, and this
+  // stores nothing on the device).
+  //
+  // Recorded ONCE, and deliberately not re-recorded if consent arrives later in the visit:
+  // `anonymous_mode` skips deduplication (there is no identity to dedup against), so a second
+  // request would be a second row — the undercount traded for an overcount. The cost is that a
+  // shopper who accepts after the page loads is counted without a location; the Buyer Page
+  // already explains an em dash there as "scanned without analytics consent".
   const [createScan] = useCreateScanMutation();
   const [pageViewRecorded, setPageViewRecorded] = useState(false);
   const pageLoadTime = useState(() => Date.now())[0];
@@ -348,42 +371,32 @@ function ProductDetail() {
   useEffect(() => {
     if (!productionId || pageViewRecorded) return;
 
-    const recordPageViewScan = () => {
-      setPageViewRecorded(true);
-      createScan({
-        production_id: productionId,
-        explicit_consent: true,
-        consent_timestamp: new Date().toISOString(),
-        time_on_page: (Date.now() - pageLoadTime) / 1000,
-        screen: `${window.screen.width}x${window.screen.height}`
-      })
-        .unwrap()
-        .then((result) => {
-          if (result?.claim_token && !isAuthenticated) {
-            addPendingScanToken(result.claim_token);
+    setPageViewRecorded(true);
+
+    const consented = hasAnalyticsConsent();
+    createScan({
+      production_id: productionId,
+      // Truthful. The backend does not trust this field either way — `process_scan_consent`
+      // reads the httpOnly cookie and ignores the body — but sending a hardcoded `true` from a
+      // page where nobody had consented was a lie in the wire log.
+      ...(consented
+        ? {
+            explicit_consent: true,
+            consent_timestamp: new Date().toISOString(),
+            time_on_page: (Date.now() - pageLoadTime) / 1000,
+            screen: `${window.screen.width}x${window.screen.height}`
           }
-        })
-        .catch(() => {
-          // Best-effort — don't block the page if scan tracking fails
-        });
-    };
-
-    // If consent was already granted (returning visitor), record immediately
-    if (hasAnalyticsConsent()) {
-      recordPageViewScan();
-      return;
-    }
-
-    // Listen for consent being granted during this visit
-    const handleConsentChanged = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.consent) {
-        recordPageViewScan();
-      }
-    };
-
-    window.addEventListener('trazo-consent-changed', handleConsentChanged);
-    return () => window.removeEventListener('trazo-consent-changed', handleConsentChanged);
+        : {})
+    })
+      .unwrap()
+      .then((result) => {
+        if (result?.claim_token && !isAuthenticated) {
+          addPendingScanToken(result.claim_token);
+        }
+      })
+      .catch(() => {
+        // Best-effort — don't block the page if scan tracking fails
+      });
   }, [productionId, pageViewRecorded, createScan, pageLoadTime, isAuthenticated]);
 
   // === JSON-LD STRUCTURED DATA (schema.org Product) ===
@@ -653,8 +666,7 @@ function ProductDetail() {
         alignSelf="center"
         justifySelf="center"
         overflow="hidden"
-        w="100%"
-      >
+        w="100%">
         <HeroShimmer />
         {/* Main content with shimmer layout */}
         <Container maxW="container.xl" py={8} centerContent>
@@ -897,8 +909,7 @@ function ProductDetail() {
                       borderRadius="xl"
                       border="1px solid"
                       borderColor="gray.200"
-                      p={{ base: 4, smd: 6 }}
-                    >
+                      p={{ base: 4, smd: 6 }}>
                       <HStack spacing={3} align="flex-start">
                         <Circle size="36px" bg="green.50" flexShrink={0}>
                           <Icon as={FaLeaf} color="green.500" boxSize={4} />
@@ -925,8 +936,7 @@ function ProductDetail() {
                     borderRadius="xl"
                     border="1px solid"
                     borderColor="gray.200"
-                    p={{ base: 4, smd: 6 }}
-                  >
+                    p={{ base: 4, smd: 6 }}>
                     <HStack spacing={{ base: 3, smd: 4 }} align="flex-start">
                       <Avatar
                         src={farmPhotoUrl}
@@ -952,8 +962,7 @@ function ProductDetail() {
                           color="gray.600"
                           fontSize={{ base: 'sm', smd: 'md' }}
                           fontStyle="italic"
-                          pt={1}
-                        >
+                          pt={1}>
                           “{truncateAtWord(storyText)}”
                         </Text>
                       </VStack>
@@ -1011,8 +1020,7 @@ function ProductDetail() {
                     border="1px solid"
                     borderColor="gray.200"
                     overflow="hidden"
-                    p={{ base: 4, smd: 6 }}
-                  >
+                    p={{ base: 4, smd: 6 }}>
                     <VStack spacing={4} align="stretch">
                       <HStack spacing={3}>
                         <Flex
@@ -1021,8 +1029,7 @@ function ProductDetail() {
                           borderRadius="lg"
                           bg="green.50"
                           align="center"
-                          justify="center"
-                        >
+                          justify="center">
                           <Icon as={FaCertificate} color="green.500" boxSize={5} />
                         </Flex>
                         <VStack align="start" spacing={0}>
@@ -1030,8 +1037,7 @@ function ProductDetail() {
                             as="h2"
                             fontWeight="bold"
                             fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
-                            color="gray.800"
-                          >
+                            color="gray.800">
                             {intl.formatMessage({ id: 'certification.manage.title' })}
                           </Text>
                           <Text fontSize="xs" color="gray.500">
@@ -1287,8 +1293,7 @@ function ProductDetail() {
                 borderColor="gray.200"
                 p={{ base: 4, smd: 6 }}
                 shadow="sm"
-                mb={6}
-              >
+                mb={6}>
                 <VStack align="start" spacing={4}>
                   <HStack spacing={3}>
                     <Flex
@@ -1297,8 +1302,7 @@ function ProductDetail() {
                       borderRadius="lg"
                       bg="green.50"
                       align="center"
-                      justify="center"
-                    >
+                      justify="center">
                       <Icon as={FaTractor} color="green.500" boxSize={5} />
                     </Flex>
                     <VStack align="start" spacing={0}>
@@ -1306,8 +1310,7 @@ function ProductDetail() {
                         as="h2"
                         fontWeight="bold"
                         fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
-                        color="gray.800"
-                      >
+                        color="gray.800">
                         {intl.formatMessage({ id: 'consumer.howGrown.title' })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
@@ -1392,8 +1395,7 @@ function ProductDetail() {
                   border="1px solid"
                   borderColor="gray.200"
                   p={{ base: 4, smd: 6 }}
-                  mb={6}
-                >
+                  mb={6}>
                   <StandardImageGallery
                     images={completeData.images}
                     title={intl.formatMessage({
@@ -1417,8 +1419,7 @@ function ProductDetail() {
                   borderColor="gray.200"
                   p={{ base: 4, smd: 5 }}
                   mb={6}
-                  textAlign="center"
-                >
+                  textAlign="center">
                   <Text fontSize="sm" color="gray.500">
                     {intl.formatMessage({
                       id: 'consumer.detail.noPhotos',
@@ -1619,6 +1620,7 @@ function ProductDetail() {
                       return (
                         <UltraMobileProductionJourney
                           events={timelineEvents}
+                          audience="consumer"
                           transparencyScore={getDisplayTransparencyScore()}
                           productionBlockchain={(completeData as any)?.blockchain_verification}
                           productionId={productionId || undefined}
@@ -1670,8 +1672,7 @@ function ProductDetail() {
                 border="1px solid"
                 borderColor="gray.200"
                 p={{ base: 4, smd: 6 }}
-                textAlign="center"
-              >
+                textAlign="center">
                 <VStack spacing={4}>
                   <HStack spacing={3} justify="center">
                     <Icon as={FaTractor} color="green.500" boxSize={6} />
@@ -1699,8 +1700,7 @@ function ProductDetail() {
                     fontSize="xs"
                     color="gray.500"
                     flexWrap="wrap"
-                    justify="center"
-                  >
+                    justify="center">
                     <HStack spacing={1}>
                       <Icon as={FaUsers} boxSize={3} />
                       <Text>

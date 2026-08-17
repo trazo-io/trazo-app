@@ -1,4 +1,3 @@
-import { createApi } from '@reduxjs/toolkit/query/react';
 import baseApi from './baseApi';
 
 const invitationApi = baseApi.injectEndpoints({

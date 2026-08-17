@@ -567,7 +567,7 @@ const AcceptInvitation: React.FC = () => {
                     lineHeight="1.5"
                   >
                     Join as a{' '}
-                    <Text as="span" fontWeight="600" color="green.600">
+                    <Text as="span" fontWeight="600" color="green.700">
                       {invitationDetails.role_display || invitationDetails.role}
                     </Text>{' '}
                     and start building sustainable solutions
@@ -581,7 +581,7 @@ const AcceptInvitation: React.FC = () => {
               <Button
                 w="full"
                 h="52px"
-                bg="green.500"
+                bg="green.700"
                 color="white"
                 fontSize="md"
                 fontWeight="600"

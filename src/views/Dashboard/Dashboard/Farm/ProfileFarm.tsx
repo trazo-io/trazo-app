@@ -94,6 +94,8 @@ import OperationAuditExportButton from './OperationAuditExportButton';
 import PURExportModal from 'components/PURExport/PURExportModal';
 import { normalizeState } from 'utils/usStates';
 import CertifierLinkCard from 'components/Certifications/CertifierLinkCard';
+import { ComplianceExportsGuard } from 'components/Guards/ComplianceExportsGuard';
+import { useTour } from 'hooks/useTour';
 
 // Type definitions
 interface RootState {
@@ -125,6 +127,11 @@ function ProfileFarm() {
   const { farmId } = useParams();
 
   const currentCompany = useSelector((state: RootState) => state.company.currentCompany);
+
+  // Certifications + the fraud-prevention plan. Writers only: both steps describe filing
+  // something, and the checklist's "Upload your Fraud Prevention Plan" item lands here.
+  useTour('farm-profile', { enabled: canWrite });
+
   const [editFarm, { isLoading: isSavingOfpp }] = useEditFarmMutation();
   const [ofppEditMode, setOfppEditMode] = useState(false);
   const [ofppResponsible, setOfppResponsible] = useState('');
@@ -322,7 +329,7 @@ function ProfileFarm() {
 
   return (
     <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
-      <VStack gap={{ base: 5, md: 8 }} w="100%" maxW="6xl" mx="auto" align="stretch">
+      <VStack gap={{ base: 5, md: 8 }} w="100%" align="stretch">
         {/* ── PAGE HEADER — deliberately not a card ─────────────────────────────────
             The old identity card wrapped an initials Avatar (which rendered "C(" for
             "Coastal Valleys Farm (DEMO)"), duplicated its entire layout for mobile and
@@ -456,7 +463,24 @@ function ProfileFarm() {
               'Share your records or generate the packet your certifier asks for at renewal.'
           })}
         >
+          {/* The Starter/Compliance boundary, drawn once for the whole section instead of on
+              each button — so a farmer sees a state of the page rather than two controls that
+              fail on click, and a third artifact added below inherits it automatically.
+              (Backend gate: `subscriptions/gating.py`.)
+
+              The certifier-link card sits OUTSIDE the guard; only the export group is inside.
+              Everything else on the farm profile stays available on Starter.
+
+              ONE parent stack, and spacing comes from its `gap` — never a margin on a child the
+              guard may replace. The first cut put `mt={4}` on the inner VStack, which is exactly
+              what the guard swaps out on Starter, so the upsell butted against the card above it
+              with a 0px gap on the free tier and 16px on the paid one. Parent gap is this page's
+              documented mechanism (see the file header). */}
           <VStack align="stretch" gap={4} w="100%">
+            {/* OUTSIDE the guard on purpose. The backend gates only link CREATION — a farm that
+                lapses to Starter must still be able to see and REVOKE links its certifier already
+                holds, or lapsing strands live tokens the grower cannot withdraw. The card gates
+                its own create half. */}
             {currentCompany?.id && farmId && (
               <CertifierLinkCard
                 companyId={String(currentCompany.id)}
@@ -465,45 +489,49 @@ function ProfileFarm() {
               />
             )}
 
-            <OperationAuditExportButton companyId={currentCompany?.id} farmId={farmId} />
+            <ComplianceExportsGuard>
+              <VStack align="stretch" gap={4} w="100%">
+                <OperationAuditExportButton companyId={currentCompany?.id} farmId={farmId} />
 
-            {/* CA-only: the PUR is a California filing (3 CCR 6626) and the export embeds CA
-                county codes, so offering it to an out-of-state farm produced a CSV titled
-                "California Pesticide Use Report" naming a non-CA county. The backend 404s
-                for non-CA farms; this keeps the button off the page too. */}
-            {canWrite && isCalifornia && (
-              <StandardCard
-                title={intl.formatMessage({ id: 'app.pur.complianceReports' })}
-                variant="elevated"
-                padding={{ base: 3, md: 4 }}
-                mb={0}
-              >
-                <HStack
-                  justify="space-between"
-                  align={{ base: 'flex-start', smd: 'center' }}
-                  flexDirection={{ base: 'column', smd: 'row' }}
-                  gap={3}
-                >
-                  <VStack align="flex-start" gap={0.5}>
-                    <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-                      {intl.formatMessage({ id: 'app.pur.title' })}
-                    </Text>
-                    <Text fontSize="xs" color="gray.500">
-                      {intl.formatMessage({ id: 'app.pur.cardSubtitle' })}
-                    </Text>
-                  </VStack>
-                  <StandardButton
-                    variant="outline"
-                    size="sm"
-                    leftIcon={<Icon as={FaFileAlt} />}
-                    onClick={() => setPurModalOpen(true)}
-                    w={{ base: 'full', smd: 'auto' }}
+                {/* CA-only: the PUR is a California filing (3 CCR 6626) and the export embeds CA
+                    county codes, so offering it to an out-of-state farm produced a CSV titled
+                    "California Pesticide Use Report" naming a non-CA county. The backend 404s
+                    for non-CA farms; this keeps the button off the page too. */}
+                {canWrite && isCalifornia && (
+                  <StandardCard
+                    title={intl.formatMessage({ id: 'app.pur.complianceReports' })}
+                    variant="elevated"
+                    padding={{ base: 3, md: 4 }}
+                    mb={0}
                   >
-                    {intl.formatMessage({ id: 'app.pur.generate' })}
-                  </StandardButton>
-                </HStack>
-              </StandardCard>
-            )}
+                    <HStack
+                      justify="space-between"
+                      align={{ base: 'flex-start', smd: 'center' }}
+                      flexDirection={{ base: 'column', smd: 'row' }}
+                      gap={3}
+                    >
+                      <VStack align="flex-start" gap={0.5}>
+                        <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                          {intl.formatMessage({ id: 'app.pur.title' })}
+                        </Text>
+                        <Text fontSize="xs" color="gray.500">
+                          {intl.formatMessage({ id: 'app.pur.cardSubtitle' })}
+                        </Text>
+                      </VStack>
+                      <StandardButton
+                        variant="outline"
+                        size="sm"
+                        leftIcon={<Icon as={FaFileAlt} />}
+                        onClick={() => setPurModalOpen(true)}
+                        w={{ base: 'full', smd: 'auto' }}
+                      >
+                        {intl.formatMessage({ id: 'app.pur.generate' })}
+                      </StandardButton>
+                    </HStack>
+                  </StandardCard>
+                )}
+              </VStack>
+            </ComplianceExportsGuard>
           </VStack>
         </StandardSection>
 
@@ -584,19 +612,29 @@ function ProfileFarm() {
                     }
                   >
                     <VStack gap={4} align="stretch">
+                      {/* Three states, not two (2026-08-10): a suspicious
+                          filename (invoice/receipt heuristic) previously showed
+                          GREEN "Plan Uploaded" while the audit export refused
+                          the same file. */}
                       <HStack gap={3} align="center">
                         <Icon
                           as={FaShieldAlt}
                           color={
-                            establishmentData.fraud_prevention_plan_uploaded
-                              ? 'green.500'
-                              : 'yellow.500'
+                            establishmentData.ofpp_filename_suspicious
+                              ? 'orange.500'
+                              : establishmentData.fraud_prevention_plan_uploaded
+                                ? 'green.500'
+                                : 'yellow.500'
                           }
                           boxSize={5}
                         />
                         <Badge
                           colorScheme={
-                            establishmentData.fraud_prevention_plan_uploaded ? 'green' : 'yellow'
+                            establishmentData.ofpp_filename_suspicious
+                              ? 'orange'
+                              : establishmentData.fraud_prevention_plan_uploaded
+                                ? 'green'
+                                : 'yellow'
                           }
                           variant="subtle"
                           px={3}
@@ -604,11 +642,18 @@ function ProfileFarm() {
                           borderRadius="full"
                           fontSize={{ base: 'xs', md: 'sm' }}
                         >
-                          {establishmentData.fraud_prevention_plan_uploaded
-                            ? intl.formatMessage({ id: 'farm.soe.planUploaded' })
-                            : intl.formatMessage({ id: 'farm.soe.planMissing' })}
+                          {establishmentData.ofpp_filename_suspicious
+                            ? intl.formatMessage({ id: 'farm.soe.planSuspicious' })
+                            : establishmentData.fraud_prevention_plan_uploaded
+                              ? intl.formatMessage({ id: 'farm.soe.planUploaded' })
+                              : intl.formatMessage({ id: 'farm.soe.planMissing' })}
                         </Badge>
                       </HStack>
+                      {establishmentData.ofpp_filename_suspicious && (
+                        <Text fontSize="sm" color="orange.700">
+                          {intl.formatMessage({ id: 'farm.soe.planSuspiciousDetail' })}
+                        </Text>
+                      )}
 
                       {/* View mode */}
                       {!ofppEditMode && (
@@ -676,7 +721,7 @@ function ProfileFarm() {
                             <Link
                               href={establishmentData.fraud_prevention_plan_document}
                               isExternal
-                              color="green.600"
+                              color="green.700"
                               fontWeight="medium"
                               fontSize="sm"
                             >

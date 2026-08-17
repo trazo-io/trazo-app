@@ -71,7 +71,7 @@ export const InfoRow: React.FC<InfoRowProps> = ({
           <Link
             href={value as string}
             isExternal
-            color="green.600"
+            color="green.700"
             fontWeight="medium"
             fontSize={{ base: 'sm', md: 'md' }}
           >
@@ -82,7 +82,7 @@ export const InfoRow: React.FC<InfoRowProps> = ({
         return (
           <Link
             href={`mailto:${value}`}
-            color="green.600"
+            color="green.700"
             fontWeight="medium"
             fontSize={{ base: 'sm', md: 'md' }}
           >
@@ -93,7 +93,7 @@ export const InfoRow: React.FC<InfoRowProps> = ({
         return (
           <Link
             href={`tel:${value}`}
-            color="green.600"
+            color="green.700"
             fontWeight="medium"
             fontSize={{ base: 'sm', md: 'md' }}
           >

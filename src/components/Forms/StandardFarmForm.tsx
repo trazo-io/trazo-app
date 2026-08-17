@@ -1,3 +1,20 @@
+/**
+ * 2026-08-10 onboarding trim — removed June-era marketing/transparency asks.
+ *
+ * - "Sustainability & Conservation Practices" input CUT: it wrote
+ *   `sustainability_practices`, a self-reported-claim field killed on the wire
+ *   2026-08-07 (see consumerVisibility.ts). Nothing live reads it anymore.
+ * - Certifications free-text entry stays CUT (guidance box only): the legacy
+ *   comma-string is a data-migration source (certifications/constants.py
+ *   LEGACY_TEXT_MAP); structured records live in CertificationManager.
+ * - Schema/payload no longer carry never-collected round-trip fields (about,
+ *   main_activities, location_highlights, employee_count, climate_zone,
+ *   conservation_practices, email/phone/contact_*, country). AddFarm PATCHes,
+ *   so omission preserves any existing DB values.
+ * - Kept water/soil/irrigation inputs (live readers: ProfileFarm + consumer QR
+ *   page) but reframed their copy from consumer-trust marketing to operational
+ *   recordkeeping language.
+ */
 import React, { useState, useEffect } from 'react';
 import {
   VStack,
@@ -119,14 +136,7 @@ const establishmentSchema = object({
   name: string({ required_error: 'Farm name is required' })
     .min(1, 'Farm name is required')
     .max(100, 'Farm name must be 100 characters or less'),
-  email: string()
-    .refine((val) => !val || val.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
-      message: 'Invalid email format'
-    })
-    .optional(),
-  phone: string().optional(),
   address: string().optional(),
-  country: string().optional(),
   state: string({ required_error: 'State is required for regional agricultural context' }).min(
     1,
     'State is required for regional agricultural context'
@@ -135,21 +145,15 @@ const establishmentSchema = object({
   zone: string().optional(),
   zipCode: string().optional(),
   description: string().optional(),
-  about: string().optional(),
-  main_activities: string().optional(),
-  location_highlights: string().optional(),
   custom_message: string().optional(),
   establishmentType: string().optional(),
   farmingMethod: string().optional(),
   totalAcreage: number().min(0, 'Acreage must be positive').optional(),
   cropsGrown: array(string()).optional(),
-  certifications: array(string()).optional(),
-  employeeCount: number().optional(),
   yearEstablished: number()
     .min(1800, 'Invalid year')
     .max(new Date().getFullYear(), 'Year cannot be in the future')
     .optional(),
-  sustainabilityPractices: array(string()).optional(),
   isActive: boolean().default(true),
   type: string().optional(),
   latitude: number()
@@ -160,55 +164,35 @@ const establishmentSchema = object({
     .min(-180, 'Longitude must be between -180 and 180')
     .max(180, 'Longitude must be between -180 and 180')
     .optional(),
-  // Additional contact fields for backend compatibility
-  contact_person: string().optional(),
-  contact_phone: string().optional(),
-  contact_email: string().optional(),
   images: array(string()).optional(),
-  // New operational agricultural fields
+  // Operational agricultural fields
   waterSources: array(string()).optional(),
-  climateZone: string().optional(),
   soilHealthPractices: array(string()).optional(),
-  conservationPractices: array(string()).optional(),
   irrigationMethods: array(string()).optional()
 });
 
 interface EstablishmentFormData {
   name: string;
-  email?: string;
-  phone?: string;
   address?: string;
-  country?: string;
   state?: string;
   city?: string;
   zone?: string;
   zipCode?: string;
   description?: string;
-  about?: string;
-  main_activities?: string;
-  location_highlights?: string;
   custom_message?: string;
   establishmentType?: string;
   farmingMethod?: string;
   totalAcreage?: number;
   cropsGrown?: string[];
-  certifications?: string[];
-  employeeCount?: number;
   yearEstablished?: number;
-  sustainabilityPractices?: string[];
   isActive: boolean;
   type?: string;
   latitude?: number;
   longitude?: number;
-  contact_person?: string;
-  contact_phone?: string;
-  contact_email?: string;
   images?: string[];
-  // New operational agricultural fields
+  // Operational agricultural fields
   waterSources?: string[];
-  climateZone?: string;
   soilHealthPractices?: string[];
-  conservationPractices?: string[];
   irrigationMethods?: string[];
 }
 
@@ -231,9 +215,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [newCrop, setNewCrop] = useState('');
-  const [newCertification, setNewCertification] = useState('');
-  const [newPractice, setNewPractice] = useState('');
-  // New operational field states
+  // Operational field states
   const [newWaterSource, setNewWaterSource] = useState('');
   const [newSoilHealthPractice, setNewSoilHealthPractice] = useState('');
   const [newIrrigationMethod, setNewIrrigationMethod] = useState('');
@@ -257,14 +239,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
     defaultValues: {
       isActive: true,
       cropsGrown: [],
-      certifications: [],
-      sustainabilityPractices: [],
-      employeeCount: 0,
       totalAcreage: 0,
-      // New operational field defaults
+      // Operational field defaults
       waterSources: [],
       soilHealthPractices: [],
-      conservationPractices: [],
       irrigationMethods: [],
       ...initialData
     }
@@ -426,39 +404,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
     );
   };
 
-  const addCertification = () => {
-    if (newCertification.trim()) {
-      const currentCerts = watch('certifications') || [];
-      setValue('certifications', [...currentCerts, newCertification.trim()]);
-      setNewCertification('');
-    }
-  };
-
-  const removeCertification = (index: number) => {
-    const currentCerts = watch('certifications') || [];
-    setValue(
-      'certifications',
-      currentCerts.filter((_, i) => i !== index)
-    );
-  };
-
-  const addPractice = () => {
-    if (newPractice.trim()) {
-      const currentPractices = watch('sustainabilityPractices') || [];
-      setValue('sustainabilityPractices', [...currentPractices, newPractice.trim()]);
-      setNewPractice('');
-    }
-  };
-
-  const removePractice = (index: number) => {
-    const currentPractices = watch('sustainabilityPractices') || [];
-    setValue(
-      'sustainabilityPractices',
-      currentPractices.filter((_, i) => i !== index)
-    );
-  };
-
-  // New operational field helpers
+  // Operational field helpers
   const addWaterSource = () => {
     if (newWaterSource.trim()) {
       const currentSources = watch('waterSources') || [];
@@ -551,7 +497,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
         // zipCode/latitude/longitude live on this step too — omitting them meant an
         // out-of-range coordinate sailed past Next and only failed (silently) at
         // final submit, on a step the farmer could no longer see.
-        return ['address', 'city', 'state', 'country', 'zipCode', 'latitude', 'longitude'];
+        return ['address', 'city', 'state', 'zipCode', 'latitude', 'longitude'];
       case 2:
         return ['description'];
       case 3:
@@ -606,7 +552,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                          _focus={{
+                            borderColor: 'green.500',
+                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                          }}
                           size="lg"
                         />
                       )}
@@ -628,7 +577,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                          _focus={{
+                            borderColor: 'green.500',
+                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                          }}
                           size="lg"
                         >
                           <option value="crop_farm">Crop Farm</option>
@@ -661,7 +613,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                        _focus={{
+                          borderColor: 'green.500',
+                          boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                        }}
                         minH="120px"
                         resize="vertical"
                       />
@@ -730,7 +685,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                        _focus={{
+                          borderColor: 'green.500',
+                          boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                        }}
                         size="lg"
                       />
                     )}
@@ -750,7 +708,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                          _focus={{
+                            borderColor: 'green.500',
+                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                          }}
                           size="lg"
                         />
                       )}
@@ -773,7 +734,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                          _focus={{
+                            borderColor: 'green.500',
+                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                          }}
                           size="lg"
                         >
                           {US_STATES.map((state) => (
@@ -800,7 +764,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                          _focus={{
+                            borderColor: 'green.500',
+                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                          }}
                           size="lg"
                         />
                       )}
@@ -824,7 +791,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                        _focus={{
+                          borderColor: 'green.500',
+                          boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                        }}
                         size="lg"
                       />
                     )}
@@ -894,7 +864,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                             size="lg"
                           />
                         )}
@@ -953,7 +926,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                             size="lg"
                           />
                         )}
@@ -965,7 +941,12 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 {/* Mobile-First Navigation */}
                 <Box pt={4}>
                   {/* Mobile Layout */}
-                  <HStack spacing={3} justify="space-between" w="100%" display={{ base: 'flex', md: 'none' }}>
+                  <HStack
+                    spacing={3}
+                    justify="space-between"
+                    w="100%"
+                    display={{ base: 'flex', md: 'none' }}
+                  >
                     <StandardButton
                       variant="outline"
                       size="md"
@@ -1044,7 +1025,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           borderRadius="lg"
                           borderColor="gray.300"
                           _hover={{ borderColor: 'green.400' }}
-                          _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                          _focus={{
+                            borderColor: 'green.500',
+                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                          }}
                           size="lg"
                         >
                           <option value="conventional">Conventional</option>
@@ -1145,7 +1129,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                             size="lg"
                           />
                           <StandardButton
@@ -1166,72 +1153,6 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             {field.value.map((crop, index) => (
                               <Tag key={index} size="md" variant="solid" colorScheme="green">
                                 <TagLabel>{crop}</TagLabel>
-                                <TagCloseButton
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    field.onChange(field.value.filter((_, i) => i !== index));
-                                  }}
-                                />
-                              </Tag>
-                            ))}
-                          </HStack>
-                        ) : null}
-                      </VStack>
-                    )}
-                  />
-                </StandardField>
-
-                {/* Sustainability & Conservation Practices */}
-                <StandardField
-                  label="Sustainability & Conservation Practices"
-                  helpText="Environmental practices you follow - this builds consumer trust and differentiates your farm"
-                >
-                  <Controller
-                    name="sustainabilityPractices"
-                    control={methods.control}
-                    render={({ field }) => (
-                      <VStack align="stretch" spacing={3}>
-                        <HStack>
-                          <Input
-                            value={newPractice}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              setNewPractice(e.target.value);
-                            }}
-                            placeholder="e.g., Cover cropping, Water conservation, Buffer strips, Solar power, Contour farming"
-                            onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                if (newPractice.trim()) {
-                                  field.onChange([...(field.value || []), newPractice.trim()]);
-                                  setNewPractice('');
-                                }
-                              }
-                            }}
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
-                            size="lg"
-                          />
-                          <StandardButton
-                            onClick={(e) => {
-                              e.preventDefault();
-                              if (newPractice.trim()) {
-                                field.onChange([...(field.value || []), newPractice.trim()]);
-                                setNewPractice('');
-                              }
-                            }}
-                            leftIcon={<FaPlus />}
-                            size="sm"
-                          >
-                            Add
-                          </StandardButton>
-                        </HStack>
-                        {field.value?.length ? (
-                          <HStack spacing={2} flexWrap="wrap">
-                            {field.value.map((practice, index) => (
-                              <Tag key={index} size="md" variant="solid" colorScheme="orange">
-                                <TagLabel>{practice}</TagLabel>
                                 <TagCloseButton
                                   onClick={(e) => {
                                     e.preventDefault();
@@ -1268,19 +1189,29 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   </Box>
                 </StandardField>
 
-                {/* Sustainability & Resources */}
+                {/* Water & Soil — operational facts shown on the farm profile */}
                 <Text fontSize="lg" fontWeight="semibold" color="gray.700" mt={6} mb={2}>
-                  Sustainability & Resources
+                  {intl.formatMessage({
+                    id: 'farm.form.waterSoil.title',
+                    defaultMessage: 'Water & Soil'
+                  })}
                 </Text>
                 <Text fontSize="sm" color="gray.600" mb={4}>
-                  Share how you manage water and soil - consumers value farms with sustainable
-                  practices.
+                  {intl.formatMessage({
+                    id: 'farm.form.waterSoil.subtitle',
+                    defaultMessage:
+                      'Operational details about your water, soil, and irrigation. Shown on your farm profile.'
+                  })}
                 </Text>
 
-                {/* Water Sources - Critical sustainability indicator per agricultural expert */}
+                {/* Water Sources */}
                 <StandardField
                   label="Water Sources"
-                  helpText="Water sustainability is a key consumer concern - show your responsible water practices"
+                  helpText={intl.formatMessage({
+                    id: 'farm.form.waterSources.helpText',
+                    defaultMessage:
+                      'Where your operation gets its water (e.g., well, irrigation district, surface water)'
+                  })}
                 >
                   <Controller
                     name="waterSources"
@@ -1303,7 +1234,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                             size="lg"
                           />
                           <StandardButton onClick={addWaterSource} leftIcon={<FaPlus />} size="sm">
@@ -1325,10 +1259,14 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   />
                 </StandardField>
 
-                {/* Soil Health Practices - Expert recommended replacement for technical Soil Types */}
+                {/* Soil Health Practices — stored in the legacy `soil_types` column */}
                 <StandardField
                   label="Soil Health Practices"
-                  helpText="Practices you use to maintain and improve soil health - builds consumer trust"
+                  helpText={intl.formatMessage({
+                    id: 'farm.form.soilHealthPractices.helpText',
+                    defaultMessage:
+                      'Practices you use to maintain and improve soil health (e.g., cover cropping, compost)'
+                  })}
                 >
                   <Controller
                     name="soilHealthPractices"
@@ -1351,7 +1289,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                             size="lg"
                           />
                           <StandardButton
@@ -1377,10 +1318,13 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   />
                 </StandardField>
 
-                {/* Irrigation Methods - Consumer-understood sustainability indicator */}
+                {/* Irrigation Methods */}
                 <StandardField
                   label="Irrigation Methods"
-                  helpText="Efficient irrigation shows environmental stewardship - consumers value water-conscious farming"
+                  helpText={intl.formatMessage({
+                    id: 'farm.form.irrigationMethods.helpText',
+                    defaultMessage: 'Irrigation systems used on your operation'
+                  })}
                 >
                   <Controller
                     name="irrigationMethods"
@@ -1403,7 +1347,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderRadius="lg"
                             borderColor="gray.300"
                             _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                            _focus={{
+                              borderColor: 'green.500',
+                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                            }}
                             size="lg"
                           />
                           <StandardButton
@@ -1441,11 +1388,18 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     render={({ field }) => (
                       <Textarea
                         {...field}
-                        placeholder="Thank you for choosing our farm! We're proud to share our sustainable practices with you..."
+                        placeholder={intl.formatMessage({
+                          id: 'farm.form.customMessage.placeholder',
+                          defaultMessage:
+                            'Thank you for choosing our farm! We are happy to answer questions about how we grow...'
+                        })}
                         borderRadius="lg"
                         borderColor="gray.300"
                         _hover={{ borderColor: 'green.400' }}
-                        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-500)' }}
+                        _focus={{
+                          borderColor: 'green.500',
+                          boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
+                        }}
                         minH="100px"
                         resize="vertical"
                       />
@@ -1456,7 +1410,12 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 {/* Mobile-First Navigation */}
                 <Box pt={4}>
                   {/* Mobile Layout */}
-                  <HStack spacing={3} justify="space-between" w="100%" display={{ base: 'flex', md: 'none' }}>
+                  <HStack
+                    spacing={3}
+                    justify="space-between"
+                    w="100%"
+                    display={{ base: 'flex', md: 'none' }}
+                  >
                     <StandardButton
                       variant="outline"
                       size="md"
@@ -1513,10 +1472,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
           {/* Step 3: Media */}
           {currentStep === 3 && (
-            <StandardCard
-              title="Farm Images"
-              subtitle="Upload images to showcase your farm"
-            >
+            <StandardCard title="Farm Images" subtitle="Upload images to showcase your farm">
               <VStack spacing={8} align="stretch">
                 {/* 2025 Modern Image Upload */}
                 <StandardField
@@ -1535,7 +1491,12 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 {/* Mobile-First Navigation */}
                 <Box pt={4}>
                   {/* Mobile Layout */}
-                  <HStack spacing={3} justify="space-between" w="100%" display={{ base: 'flex', md: 'none' }}>
+                  <HStack
+                    spacing={3}
+                    justify="space-between"
+                    w="100%"
+                    display={{ base: 'flex', md: 'none' }}
+                  >
                     <StandardButton
                       variant="outline"
                       size="md"

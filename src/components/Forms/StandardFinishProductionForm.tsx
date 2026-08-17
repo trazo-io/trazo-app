@@ -2,14 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   VStack,
   HStack,
+  Stack,
   Box,
   Text,
   Icon,
   Badge,
   useToast,
   useDisclosure,
-  Input,
-  Select,
   AlertDialog,
   AlertDialogOverlay,
   AlertDialogContent,
@@ -20,6 +19,8 @@ import {
 import {
   StandardPage,
   StandardField,
+  StandardInput,
+  StandardSelect,
   StandardTextarea,
   StandardButton,
   StandardAlert,
@@ -42,7 +43,10 @@ import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useIntl } from 'react-intl';
-import { useDefaultUnits } from 'src/hooks/useMeasurementSystem';
+// `hooks/*`, not `src/hooks/*`: vite resolves the latter through a `src` alias but tsconfig
+// `paths` has no `src/*` entry, so tsc could not see the module and reported TS2307 — an error
+// the build never surfaces (see frontend-typecheck-gate-dead). `hooks/*` resolves in both.
+import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 
 // Unit options for production amount
 const UNIT_OPTIONS = [
@@ -105,12 +109,21 @@ interface StandardFinishProductionFormProps {
     data: FinishProductionFormData & { uploaded_image_urls: string[]; images: string[] }
   ) => void;
   onCancel: () => void;
-  initialData?: Partial<FinishProductionFormData>;
+  /** Prefill values, in the form's own string-shaped state — NOT the zod OUTPUT type.
+      `FinishProductionFormData` has `production_amount: number` because the schema
+      transforms it, but everything here is fed straight into HTML inputs and is read
+      back with `.toString()`. Typing it as the output shape was simply wrong, and it
+      is what made the caller's prefill unassignable. */
+  initialData?: Partial<FormStateData>;
   isLoading?: boolean;
   isEdit?: boolean;
   productName?: string;
   parcelName?: string;
   farmName?: string;
+  /** The farm this production belongs to. Drives the unit default: without it
+      useDefaultUnits falls back to establishments[0], so a multi-farm company got
+      farm #1's measurement system on every farm. */
+  establishmentId?: string | number | null;
   /** Real transparency score (0-100) for the live consumer preview. */
   previewScore?: number;
   /** Harvest date ISO string for the live consumer preview. */
@@ -131,13 +144,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   productName = '',
   parcelName = '',
   farmName = '',
+  establishmentId,
   previewScore,
   harvestDate,
   fallbackImageUrl
 }) => {
-  // DEBUG log on component mount
-  console.log('📦 StandardFinishProductionForm v2.0 rendered');
-
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [savedFormData, setSavedFormData] = useState<Partial<FormStateData>>({});
@@ -145,7 +156,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   // US-first unit default — see useMeasurementSystem. Walnuts, almonds and citrus are
   // sold by the pound in the US, but this form defaulted the FINAL production amount
   // (the number that reaches the consumer QR page and the certifier packet) to kg.
-  const defaultUnits = useDefaultUnits();
+  const defaultUnits = useDefaultUnits(establishmentId);
   const toast = useToast();
 
   // Confirmation dialog for finishing production (immutability warning)
@@ -156,13 +167,13 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   // Define steps for the finish production process
   const steps = [
     {
-      title: 'Production Info',
-      description: 'Final details',
+      title: intl.formatMessage({ id: 'finishProduction.step.info.title' }),
+      description: intl.formatMessage({ id: 'finishProduction.step.info.description' }),
       icon: MdInventory
     },
     {
-      title: 'Media Upload',
-      description: 'Documentation',
+      title: intl.formatMessage({ id: 'finishProduction.step.media.title' }),
+      description: intl.formatMessage({ id: 'finishProduction.step.media.description' }),
       icon: FaCamera
     }
   ];
@@ -191,9 +202,20 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     formState: { errors }
   } = methods;
 
-  // Update form when initialData changes
+  // Hydrate from the harvest prefill EXACTLY ONCE.
+  //
+  // `reset()` here replaces every field, including the ones the prefill has nothing to say
+  // about (lot number, completion date, observations). Re-running it after the farmer has
+  // started typing is destructive, and `initialData` arrives asynchronously — it is undefined
+  // on first render and only becomes an object once the production query settles — so the
+  // effect cannot simply be pinned to mount. The latch fires on the first TRUTHY prefill and
+  // never again, which is the whole contract: a suggestion is offered once, and after that the
+  // form belongs to the operator. (The parent also memoises the prefill; this is the half that
+  // survives a genuine refetch.)
+  const hasHydratedRef = useRef(false);
   useEffect(() => {
-    if (initialData) {
+    if (initialData && !hasHydratedRef.current) {
+      hasHydratedRef.current = true;
       const formDefaults: FormStateData = {
         production_amount: initialData.production_amount?.toString() || '',
         production_unit: initialData.production_unit || defaultUnits.mass,
@@ -241,13 +263,12 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
         images: uploadedImageUrls
       };
 
-      console.log('📦 Final data to submit:', finalData);
       onSubmit(finalData);
     } catch (error) {
       console.error('❌ Submit error:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to prepare production data. Please try again.',
+        title: intl.formatMessage({ id: 'finishProduction.error.prepareTitle' }),
+        description: intl.formatMessage({ id: 'finishProduction.error.prepareDescription' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -276,8 +297,8 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     } catch (validationError) {
       console.error('❌ Data validation failed:', validationError);
       toast({
-        title: 'Validation Error',
-        description: 'Please check all required fields are filled correctly.',
+        title: intl.formatMessage({ id: 'finishProduction.error.validationTitle' }),
+        description: intl.formatMessage({ id: 'finishProduction.error.validationDescription' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -355,7 +376,9 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
   return (
     <StandardPage
-      title={isEdit ? 'Edit Production Completion' : 'Finish Production'}
+      title={intl.formatMessage({
+        id: isEdit ? 'finishProduction.page.titleEdit' : 'finishProduction.page.title'
+      })}
       description={`${isEdit ? 'Update' : 'Complete'} the production cycle${
         productName ? ` for ${productName}` : ''
       }${parcelName ? ` in ${parcelName}` : ''}`}
@@ -365,11 +388,12 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
         <Badge colorScheme="green" variant="subtle" px={3} py={1} borderRadius="full">
           <HStack spacing={1}>
             <Icon as={FaLeaf} boxSize={3} />
-            <Text fontSize="sm">Final Step</Text>
+            <Text fontSize="sm">
+              {intl.formatMessage({ id: 'finishProduction.badge.finalStep' })}
+            </Text>
           </HStack>
         </Badge>
-      }
-    >
+      }>
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmitForm)}>
           <VStack spacing={8} align="stretch">
@@ -392,12 +416,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                   border="1px solid"
                   borderColor="gray.200"
                   overflow="hidden"
-                  shadow="sm"
-                >
+                  shadow="sm">
                   {/* Parent Header - matching Event Details style */}
                   <Box px={6} py={5} borderBottom="1px solid" borderColor="gray.100">
                     <Text fontSize="lg" fontWeight="semibold" color="gray.800">
-                      Production Information
+                      {intl.formatMessage({ id: 'finishProduction.card.title' })}
                     </Text>
                   </Box>
 
@@ -408,108 +431,97 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                       <SectionHeader
                         icon={FaBoxes}
                         iconColor="green.500"
-                        title="Harvest Output"
-                        badge="Required"
+                        title={intl.formatMessage({ id: 'finishProduction.section.harvestOutput' })}
+                        badge={intl.formatMessage({ id: 'finishProduction.badge.required' })}
                         badgeColorScheme="green"
                       />
                       <VStack spacing={4} align="stretch">
                         {/* Production Amount with Unit Selector */}
-                        <HStack spacing={4} align="flex-start">
-                          <Box flex={2}>
+                        <Stack
+                          direction={{ base: 'column', smd: 'row' }}
+                          spacing={4}
+                          align="flex-start">
+                          <Box flex={2} w="full">
                             <StandardField
-                              label={
-                                intl.formatMessage({ id: 'app.productionAmount' }) ||
-                                'Production Amount'
-                              }
+                              label={intl.formatMessage({ id: 'app.productionAmount' })}
                               error={errors.production_amount?.message}
-                              helpText="Total volume or quantity harvested"
-                              required
-                            >
-                              <Input
+                              helpText={intl.formatMessage({ id: 'finishProduction.amount.help' })}
+                              required>
+                              <StandardInput
                                 {...methods.register('production_amount')}
-                                placeholder="Enter amount harvested"
+                                placeholder={intl.formatMessage({
+                                  id: 'finishProduction.amount.placeholder'
+                                })}
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                borderRadius="lg"
-                                borderColor="gray.300"
-                                _hover={{ borderColor: 'green.400' }}
-                                _focus={{
-                                  borderColor: 'green.500',
-                                  boxShadow: '0 0 0 1px #38A169'
-                                }}
                                 size="lg"
                               />
                             </StandardField>
                           </Box>
                           <Box flex={1}>
+                            {/*
+                              The harvest unit is one half of the § 205.103(b)(2) mass
+                              balance; SalesRecord.quantity_unit is the other. The audit
+                              export prints the Balance line and the "sold exceeds harvest"
+                              flag ONLY when the two strings are equal — when they differ the
+                              reconciliation silently vanishes from the packet with nothing
+                              printed to say it had. Both dropdowns are declared from
+                              History.UNIT_CHOICES (guarded cross-repo), so the vocabularies
+                              cannot drift; what the farmer still controls is picking the same
+                              one twice, which is what this line is for.
+                            */}
                             <StandardField
-                              label="Unit"
+                              label={intl.formatMessage({ id: 'finishProduction.unit.label' })}
                               error={errors.production_unit?.message}
-                              required
-                            >
+                              helpText={intl.formatMessage({ id: 'finishProduction.unit.help' })}
+                              required>
                               <Controller
                                 name="production_unit"
                                 control={control}
                                 render={({ field }) => (
-                                  <Select
-                                    {...field}
-                                    borderRadius="lg"
-                                    borderColor="gray.300"
-                                    _hover={{ borderColor: 'green.400' }}
-                                    _focus={{
-                                      borderColor: 'green.500',
-                                      boxShadow: '0 0 0 1px #38A169'
-                                    }}
-                                    size="lg"
-                                  >
+                                  <StandardSelect {...field} size="lg">
                                     {UNIT_OPTIONS.map((option) => (
                                       <option key={option.value} value={option.value}>
                                         {option.label}
                                       </option>
                                     ))}
-                                  </Select>
+                                  </StandardSelect>
                                 )}
                               />
                             </StandardField>
                           </Box>
-                        </HStack>
+                        </Stack>
 
                         {/* Lot Number */}
                         <StandardField
-                          label={intl.formatMessage({ id: 'app.lotNumber' }) || 'Lot Number'}
+                          label={intl.formatMessage({ id: 'app.lotNumber' })}
                           error={errors.lot_id?.message}
-                          helpText="Unique identifier for this batch"
-                          required
-                        >
-                          <Input
+                          helpText={intl.formatMessage({ id: 'finishProduction.lot.help' })}
+                          required>
+                          <StandardInput
                             {...methods.register('lot_id')}
-                            placeholder="Enter lot number"
+                            placeholder={intl.formatMessage({
+                              id: 'finishProduction.lot.placeholder'
+                            })}
                             type="text"
                             maxLength={50}
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
                             size="lg"
                           />
                         </StandardField>
 
                         {/* Finish Date */}
                         <StandardField
-                          label={intl.formatMessage({ id: 'app.finishDate' }) || 'Completion Date'}
+                          label={intl.formatMessage({ id: 'app.finishDate' })}
                           error={errors.finish_date?.message}
-                          helpText="When was this production cycle completed?"
-                          required
-                        >
-                          <Input
+                          helpText={intl.formatMessage({ id: 'finishProduction.finishDate.help' })}
+                          required>
+                          <StandardInput
                             {...methods.register('finish_date')}
-                            placeholder="Select completion date and time"
+                            placeholder={intl.formatMessage({
+                              id: 'finishProduction.finishDate.placeholder'
+                            })}
                             type="datetime-local"
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px #38A169' }}
                             size="lg"
                           />
                         </StandardField>
@@ -520,77 +532,79 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                     <SectionBox variant="highlighted">
                       <SectionHeader
                         icon={FaClipboardCheck}
-                        iconColor="purple.500"
-                        title="Quality & Harvest Details"
-                        badge="Optional"
-                        badgeColorScheme="purple"
+                        iconColor="green.500"
+                        title={intl.formatMessage({
+                          id: 'finishProduction.section.qualityHarvest'
+                        })}
+                        badge={intl.formatMessage({ id: 'finishProduction.badge.optional' })}
+                        badgeColorScheme="gray"
                       />
+                      {/*
+                        This said "helps consumers understand your product better". It does
+                        not: neither `quality_grade` nor `harvest_method` is in
+                        PublicHistorySerializer.fields, so neither reaches a consumer at all.
+                        Both print in the CERTIFIER packet (audit_export_service, Production
+                        Summary), next to Lot ID and yield. Naming the real destination is the
+                        whole "one entry, two outputs" story on the one screen that collects
+                        the packet's harvest payload — and a self-declared "Premium Grade" on
+                        a consumer surface would be a self-reported trust signal anyway.
+                      */}
                       <Text fontSize="sm" color="gray.600" mb={4}>
-                        This information helps consumers understand your product better
+                        Printed in your certifier packet alongside the lot number and yield. Not
+                        shown to consumers.
                       </Text>
                       <VStack spacing={4} align="stretch">
-                        <HStack spacing={4} align="flex-start">
-                          <Box flex={1}>
+                        <Stack
+                          direction={{ base: 'column', smd: 'row' }}
+                          spacing={4}
+                          align="flex-start">
+                          <Box flex={1} w="full">
                             <StandardField
-                              label="Quality Grade"
-                              helpText="Quality classification of harvest"
-                            >
+                              label={intl.formatMessage({
+                                id: 'finishProduction.qualityGrade.label'
+                              })}
+                              helpText={intl.formatMessage({
+                                id: 'finishProduction.qualityGrade.help'
+                              })}>
                               <Controller
                                 name="quality_grade"
                                 control={control}
                                 render={({ field }) => (
-                                  <Select
-                                    {...field}
-                                    borderRadius="lg"
-                                    borderColor="gray.300"
-                                    _hover={{ borderColor: 'green.400' }}
-                                    _focus={{
-                                      borderColor: 'green.500',
-                                      boxShadow: '0 0 0 1px #38A169'
-                                    }}
-                                    size="lg"
-                                  >
+                                  <StandardSelect {...field} size="lg">
                                     {QUALITY_GRADE_OPTIONS.map((option) => (
                                       <option key={option.value} value={option.value}>
                                         {option.label}
                                       </option>
                                     ))}
-                                  </Select>
+                                  </StandardSelect>
                                 )}
                               />
                             </StandardField>
                           </Box>
-                          <Box flex={1}>
+                          <Box flex={1} w="full">
                             <StandardField
-                              label="Harvest Method"
-                              helpText="How was the crop harvested?"
-                            >
+                              label={intl.formatMessage({
+                                id: 'finishProduction.harvestMethod.label'
+                              })}
+                              helpText={intl.formatMessage({
+                                id: 'finishProduction.harvestMethod.help'
+                              })}>
                               <Controller
                                 name="harvest_method"
                                 control={control}
                                 render={({ field }) => (
-                                  <Select
-                                    {...field}
-                                    borderRadius="lg"
-                                    borderColor="gray.300"
-                                    _hover={{ borderColor: 'green.400' }}
-                                    _focus={{
-                                      borderColor: 'green.500',
-                                      boxShadow: '0 0 0 1px #38A169'
-                                    }}
-                                    size="lg"
-                                  >
+                                  <StandardSelect {...field} size="lg">
                                     {HARVEST_METHOD_OPTIONS.map((option) => (
                                       <option key={option.value} value={option.value}>
                                         {option.label}
                                       </option>
                                     ))}
-                                  </Select>
+                                  </StandardSelect>
                                 )}
                               />
                             </StandardField>
                           </Box>
-                        </HStack>
+                        </Stack>
                       </VStack>
                     </SectionBox>
 
@@ -598,19 +612,20 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                     <SectionBox variant="default">
                       <SectionHeader
                         icon={MdDescription}
-                        iconColor="blue.500"
-                        title="Notes & Observations"
-                        badge="Optional"
+                        iconColor="green.500"
+                        title={intl.formatMessage({ id: 'finishProduction.section.notes' })}
+                        badge={intl.formatMessage({ id: 'finishProduction.badge.optional' })}
                         badgeColorScheme="gray"
                       />
                       <StandardField
-                        label={intl.formatMessage({ id: 'app.observations' }) || 'Observations'}
+                        label={intl.formatMessage({ id: 'app.observations' })}
                         error={errors.observation?.message}
-                        helpText="Additional notes about this production cycle"
-                      >
+                        helpText={intl.formatMessage({ id: 'finishProduction.observation.help' })}>
                         <StandardTextarea
                           {...methods.register('observation')}
-                          placeholder="Enter any observations or notes about the harvest..."
+                          placeholder={intl.formatMessage({
+                            id: 'finishProduction.observation.placeholder'
+                          })}
                           rows={4}
                         />
                       </StandardField>
@@ -621,11 +636,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                 {/* Step Navigation */}
                 <HStack spacing={4} justify="flex-end" pt={4}>
                   <StandardButton variant="outline" onClick={onCancel} disabled={isLoading}>
-                    Cancel
+                    {intl.formatMessage({ id: 'app.cancel' })}
                   </StandardButton>
 
                   <StandardButton onClick={nextStep} disabled={!isStep0Valid}>
-                    Continue to Media
+                    {intl.formatMessage({ id: 'finishProduction.nav.continue' })}
                   </StandardButton>
                 </HStack>
               </VStack>
@@ -636,33 +651,26 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
               <SectionBox variant="default">
                 <SectionHeader
                   icon={FaCamera}
-                  iconColor="orange.500"
-                  title="Production photos"
-                  badge="Optional"
-                  badgeColorScheme="orange"
+                  iconColor="green.500"
+                  title={intl.formatMessage({ id: 'finishProduction.section.photos' })}
+                  badge={intl.formatMessage({ id: 'finishProduction.badge.optional' })}
+                  badgeColorScheme="gray"
                 />
                 <Text fontSize="sm" color="gray.600" mb={1}>
-                  Upload up to 5 photos. The first is shown as the cover on the public consumer QR
-                  page.
+                  {intl.formatMessage({ id: 'finishProduction.photos.help' })}
                 </Text>
                 <Text fontSize="xs" color="gray.500" mb={5}>
-                  No upload? We&apos;ll auto-pick the first photo from your timeline events. Upload
-                  here for full control.
+                  {intl.formatMessage({ id: 'finishProduction.photos.fallbackNote' })}
                 </Text>
                 <VStack spacing={6} align="stretch">
                   <Box
                     display="grid"
                     gap={8}
                     alignItems="start"
-                    gridTemplateColumns={{ base: '1fr', lg: '1fr 320px' }}
-                  >
+                    gridTemplateColumns={{ base: '1fr', lg: '1fr 320px' }}>
                     {/* Upload column — gets the wider track since this is
                         the active task surface. */}
-                    <StandardField
-                      label={
-                        intl.formatMessage({ id: 'app.productionImages' }) || 'Production photos'
-                      }
-                    >
+                    <StandardField label={intl.formatMessage({ id: 'app.productionImages' })}>
                       <TrazoImageUpload
                         maxFiles={5}
                         maxSize={5 * 1024 * 1024}
@@ -680,8 +688,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                     <Box
                       position={{ base: 'static', lg: 'sticky' }}
                       top={{ lg: 6 }}
-                      alignSelf="start"
-                    >
+                      alignSelf="start">
                       <HeroPreviewCard
                         imageUrl={uploadedImageUrls[0]}
                         imageCount={uploadedImageUrls.length}
@@ -697,24 +704,25 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                   {uploadedImageUrls.length >= 5 && (
                     <StandardAlert
                       status="info"
-                      title="Upload Limit Reached"
-                      description="Maximum of 5 images allowed. Remove an image to add a new one."
+                      title={intl.formatMessage({ id: 'finishProduction.photos.limitTitle' })}
+                      description={intl.formatMessage({
+                        id: 'finishProduction.photos.limitDescription'
+                      })}
                     />
                   )}
 
                   {/* Step Navigation */}
                   <HStack spacing={4} justify="space-between" pt={4}>
                     <StandardButton variant="outline" onClick={previousStep}>
-                      Back to Production Info
+                      {intl.formatMessage({ id: 'finishProduction.nav.back' })}
                     </StandardButton>
 
                     <StandardButton
                       isLoading={isLoading}
-                      loadingText="Finishing Production..."
+                      loadingText={intl.formatMessage({ id: 'finishProduction.loading' })}
                       onClick={handleManualSubmit}
-                      size="lg"
-                    >
-                      {intl.formatMessage({ id: 'app.finishProduction' }) || 'Finish Production'}
+                      size="lg">
+                      {intl.formatMessage({ id: 'app.finishProduction' })}
                     </StandardButton>
                   </HStack>
                 </VStack>
@@ -729,8 +737,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
         isOpen={isConfirmOpen}
         leastDestructiveRef={confirmCancelRef}
         onClose={onConfirmClose}
-        isCentered
-      >
+        isCentered>
         <AlertDialogOverlay bg="blackAlpha.300" backdropFilter="blur(10px)">
           <AlertDialogContent borderRadius="xl" p={2} mx={4}>
             <AlertDialogHeader fontSize="lg" fontWeight="bold" pb={4}>
@@ -738,25 +745,24 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                 <Box p={2} borderRadius="lg" bg="orange.50">
                   <Icon as={FaExclamationTriangle} boxSize={5} color="orange.500" />
                 </Box>
-                <Text>Finish Production</Text>
+                <Text>{intl.formatMessage({ id: 'finishProduction.page.title' })}</Text>
               </HStack>
             </AlertDialogHeader>
 
             <AlertDialogBody pb={6}>
               <VStack align="start" spacing={3}>
                 <Text color="gray.600">
-                  Are you sure you want to finish this production? This action is permanent and
-                  cannot be undone.
+                  {intl.formatMessage({ id: 'finishProduction.confirm.intro' })}
                 </Text>
                 <Box p={3} bg="orange.50" borderRadius="lg" w="full">
                   <Text fontSize="sm" color="orange.700" fontWeight="medium">
-                    Once you finish this production:
+                    {intl.formatMessage({ id: 'finishProduction.confirm.heading' })}
                   </Text>
                   <VStack align="start" spacing={1} mt={2} fontSize="sm" color="orange.600">
                     <HStack spacing={2}>
                       <Icon as={FaLock} boxSize={3} />
                       <Text>
-                        All events will be permanently locked and cannot be edited or deleted
+                        {intl.formatMessage({ id: 'finishProduction.confirm.lockEvents' })}
                       </Text>
                     </HStack>
                     <HStack spacing={2}>
@@ -768,19 +774,32 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                         must not imply every finalized production gets it.
                       */}
                       <Text>
-                        A tamper-evident fingerprint of this record is stored (blockchain recording
-                        is an optional add-on)
+                        {intl.formatMessage({ id: 'finishProduction.confirm.fingerprint' })}
                       </Text>
                     </HStack>
                     <HStack spacing={2}>
                       <Icon as={FaLock} boxSize={3} />
-                      <Text>The production will become visible to consumers via QR code</Text>
+                      <Text>
+                        {intl.formatMessage({ id: 'finishProduction.confirm.consumerQr' })}
+                      </Text>
+                    </HStack>
+                    {/*
+                      The other output. This dialog listed three consequences and all three
+                      were consumer- or blockchain-facing, on the screen that finalises the
+                      lot number, yield, grade and harvest method the certifier packet is
+                      built from — the half of "one entry, two outputs" that Compliance is
+                      actually sold on went unmentioned at the moment of commitment.
+                    */}
+                    <HStack spacing={2}>
+                      <Icon as={FaLock} boxSize={3} />
+                      <Text>
+                        {intl.formatMessage({ id: 'finishProduction.confirm.certifierPacket' })}
+                      </Text>
                     </HStack>
                   </VStack>
                 </Box>
                 <Text fontSize="xs" color="gray.500">
-                  Please review all events carefully before proceeding. This ensures the integrity
-                  of your transparency data for consumer trust.
+                  {intl.formatMessage({ id: 'finishProduction.confirm.footnote' })}
                 </Text>
               </VStack>
             </AlertDialogBody>
@@ -788,14 +807,13 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
             <AlertDialogFooter pt={4}>
               <HStack spacing={3} w="full" justify="flex-end">
                 <StandardButton ref={confirmCancelRef} variant="outline" onClick={onConfirmClose}>
-                  Review Events
+                  {intl.formatMessage({ id: 'finishProduction.confirm.review' })}
                 </StandardButton>
                 <StandardButton
                   onClick={handleConfirmFinish}
                   isLoading={isLoading}
-                  loadingText="Finishing..."
-                >
-                  Confirm & Finish Production
+                  loadingText={intl.formatMessage({ id: 'finishProduction.confirm.loading' })}>
+                  {intl.formatMessage({ id: 'finishProduction.confirm.submit' })}
                 </StandardButton>
               </HStack>
             </AlertDialogFooter>

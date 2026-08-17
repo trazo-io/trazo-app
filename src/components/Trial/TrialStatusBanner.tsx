@@ -63,28 +63,28 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
   // Don't show banner if user has active paid subscription
   if (hasActiveSubscription) return null;
 
-  // Check if subscription is in trialing status
-  const isTrialingSubscription =
-    company.subscription && company.subscription.status === 'trialing';
+  // Only a REAL trial gets a countdown.
+  //
+  // 2026-08-13: this used to fall back to `company.created_at + 14 days` whenever a company had
+  // no trialing subscription — inventing "Your trial expires in N days" for a company that has
+  // no trial at all. Starter is now free forever, so nothing self-serve is ever `trialing`, and
+  // that fallback could only ever have shown a countdown to an event that will not happen. The
+  // banner now renders solely from a subscription that genuinely is trialing with a real
+  // `trial_end`, which keeps it correct if a future paid plan reintroduces a trial.
+  const trialEndRaw =
+    company.subscription && company.subscription.status === 'trialing'
+      ? company.subscription.trial_end
+      : null;
+  if (!trialEndRaw) return null;
 
-  // Calculate trial status from subscription trial_end or fallback to created_at
-  let daysRemaining: number;
+  const trialEnd = new Date(trialEndRaw);
+  if (Number.isNaN(trialEnd.getTime())) return null;
+
   const now = new Date();
-
-  if (isTrialingSubscription && company.subscription.trial_end) {
-    const trialEnd = new Date(company.subscription.trial_end);
-    daysRemaining = Math.max(
-      0,
-      Math.ceil((trialEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
-    );
-  } else {
-    const companyCreatedDate = new Date(company.created_at || company.date_joined);
-    const totalTrialDays = 14;
-    const daysElapsed = Math.floor(
-      (now.getTime() - companyCreatedDate.getTime()) / (24 * 60 * 60 * 1000)
-    );
-    daysRemaining = Math.max(0, totalTrialDays - daysElapsed);
-  }
+  const daysRemaining = Math.max(
+    0,
+    Math.ceil((trialEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+  );
 
   const totalTrialDays = 14;
   const trialProgress = Math.min(100, ((totalTrialDays - daysRemaining) / totalTrialDays) * 100);

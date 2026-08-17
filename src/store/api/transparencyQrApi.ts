@@ -22,17 +22,32 @@ export interface TransparencyQuickView {
 
 // STANDARD LOAD (10 seconds) - Core transparency details
 export interface TransparencyStandardView {
+  /**
+   * Anonymous callers receive FACTS about the farm and nothing Trazo authored to measure it
+   * against. `completeness_score`, `expected_events`, and the per-category `expected_count` /
+   * `completeness_percentage` / `status` were removed from the public payload on 2026-08-11:
+   * publishing a numerator with its denominator republishes the self-assigned grade that
+   * EU ECGT 2024/825 bans, whatever the field is called.
+   *
+   * They are still served to the authenticated OWNER (the producer dashboard KPI), which is
+   * why they remain here as OPTIONAL rather than deleted — this interface covers both callers.
+   * Anything reading them must handle undefined; `TrustSummaryHeader` already does, and falls
+   * back from "12 of 13" to "12 events" when the denominator is absent.
+   */
   transparency_details: {
-    completeness_score: number;
+    completeness_score?: number;
     actual_events: number;
-    expected_events: number;
+    expected_events?: number;
     farming_approach: 'organic' | 'conventional' | 'biodynamic';
     category_breakdown: {
       [category: string]: {
         actual_count: number;
-        expected_count: number;
-        completeness_percentage: number;
-        status: 'excellent' | 'good' | 'partial' | 'limited';
+        /** Farmer-uploaded photographs. "Documented", never "verified" — nobody checked them. */
+        photo_documented_count?: number;
+        photo_documentation_rate?: number;
+        expected_count?: number;
+        completeness_percentage?: number;
+        status?: 'excellent' | 'good' | 'partial' | 'limited';
       };
     };
   };
@@ -256,7 +271,10 @@ export default transparencyQrApi;
 // `history/transparency_views.py`), but these helpers survived here with zero call sites — one
 // import away from putting it back. Dead code in the consumer module is not harmless.
 //
-// The score is a producer-dashboard metric only. It lives at /admin/dashboard/farm/:id/transparency.
+// The score is a backend metric only. It had no producer screen even when this note claimed one
+// (/admin/dashboard/farm/:id/transparency was always a redirect), and as of 2026-08-11 it has no
+// producer surface at all — the last two, the parcel card's "avg score" and per-season "%", were
+// retired with that page.
 // Consumers get facts: documented-practice counts, photos, third-party certifications, timeline.
 // Do not reintroduce a grade, badge, tier, or threshold on any consumer path.
 //

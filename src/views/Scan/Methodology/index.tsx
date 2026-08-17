@@ -207,7 +207,7 @@ const MethodologyPage: React.FC = () => {
               For details on what we collect and how it is used, see our{' '}
               <Link
                 href={`${LANDING_URL}/privacy-policy`}
-                color="green.600"
+                color="green.700"
                 isExternal
                 _hover={{ color: 'green.500' }}
               >
@@ -223,7 +223,7 @@ const MethodologyPage: React.FC = () => {
           <Box>
             <Text fontSize="sm" color="gray.600" lineHeight="1.7">
               Questions?{' '}
-              <Link href="mailto:support@trazo.io" color="green.600" _hover={{ color: 'green.500' }}>
+              <Link href="mailto:support@trazo.io" color="green.700" _hover={{ color: 'green.500' }}>
                 support@trazo.io
               </Link>
             </Text>

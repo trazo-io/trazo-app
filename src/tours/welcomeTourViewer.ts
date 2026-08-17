@@ -3,13 +3,14 @@ import { registerTour } from './registry';
 
 /**
  * Scenario C/D: Viewer — read-only user (invited or code-join).
- * 3 steps focused on browsing: Farms → Parcels → Navigation. No creation CTAs.
+ * 4 steps focused on browsing: Farms → renewal readiness → Parcels → Navigation.
+ * No creation CTAs. Version 3 — see the note in welcomeTourFresh.
  */
 const welcomeTourViewer: TourDefinition = {
   id: 'welcome-viewer',
   scenario: 'viewer',
   priority: 1,
-  version: 2,
+  version: 3,
   trigger: { type: 'first-visit', page: '/admin/dashboard' },
   steps: [
     {
@@ -20,16 +21,23 @@ const welcomeTourViewer: TourDefinition = {
       disableBeacon: true
     },
     {
-      target: '[data-tour="parcels-carousel"]',
+      target: '[data-tour="certifier-readiness"]',
       titleKey: 'tour.welcomeViewer.step2.title',
       contentKey: 'tour.welcomeViewer.step2.content',
       placement: 'top',
       disableBeacon: true
     },
     {
-      target: '[data-tour="sidebar-nav"]',
+      target: '[data-tour="parcels-carousel"]',
       titleKey: 'tour.welcomeViewer.step3.title',
       contentKey: 'tour.welcomeViewer.step3.content',
+      placement: 'top',
+      disableBeacon: true
+    },
+    {
+      target: '[data-tour="sidebar-nav"]',
+      titleKey: 'tour.welcomeViewer.step4.title',
+      contentKey: 'tour.welcomeViewer.step4.content',
       placement: 'bottom',
       disableBeacon: true
     }

@@ -1,9 +1,8 @@
-import { BsFillClipboardCheckFill } from 'react-icons/bs';
 import { HomeIcon } from 'components/Icons/Icons';
 import { Route } from 'types/common';
 import { useIntl } from 'react-intl';
 import { FaChartBar, FaCreditCard, FaGraduationCap } from 'react-icons/fa';
-import { FaLeaf, FaFileAlt } from 'react-icons/fa';
+import { FaCalendarAlt, FaFileAlt, FaFolderOpen, FaStore } from 'react-icons/fa';
 
 // const intl = useIntl();
 
@@ -21,26 +20,15 @@ const dashRoutes: Route[] = [
     regex: /^\/admin\/dashboard\/farm\/[0-9]+(\/parcel\/[0-9]+)?$/
   },
   {
-    id: 'transparencyDashboard',
-    name: 'Transparency',
-    path: '/dashboard/farm/:farmId/transparency',
-    icon: <FaLeaf color="inherit" />,
-    authIcon: <FaLeaf color="inherit" />,
+    id: 'activities',
+    name: 'Activities',
+    path: '/dashboard/farm/:farmId/activities',
+    icon: <FaCalendarAlt color="inherit" />,
+    authIcon: <FaCalendarAlt color="inherit" />,
     layout: '/admin',
     collapse: true,
-    isTransparencyDashboard: true,
-    regex: /^\/admin\/dashboard\/farm\/[0-9]+\/transparency$/
-  },
-  {
-    id: 'commercialInfo',
-    name: 'Commercial Info',
-    path: '/dashboard/farm',
-    icon: <BsFillClipboardCheckFill color="inherit" />,
-    authIcon: <BsFillClipboardCheckFill color="inherit" />,
-    layout: '/admin',
-    collapse: true,
-    isCommercial: true,
-    regex: /^\/admin\/dashboard\/farm\/[0-9]+\/commercial$/
+    isActivities: true,
+    regex: /^\/admin\/dashboard\/farm\/[0-9]+\/activities$/
   },
   {
     id: 'organicSystemPlan',
@@ -52,6 +40,28 @@ const dashRoutes: Route[] = [
     collapse: true,
     isOrganicSystemPlan: true,
     regex: /^\/admin\/dashboard\/farm\/[0-9]+\/osp$/
+  },
+  {
+    id: 'documents',
+    name: 'Documents',
+    path: '/dashboard/farm/:farmId/documents',
+    icon: <FaFolderOpen color="inherit" />,
+    authIcon: <FaFolderOpen color="inherit" />,
+    layout: '/admin',
+    collapse: true,
+    isDocuments: true,
+    regex: /^\/admin\/dashboard\/farm\/[0-9]+\/documents$/
+  },
+  {
+    id: 'buyer',
+    name: 'Buyer Page',
+    path: '/dashboard/farm/:farmId/buyer',
+    icon: <FaStore color="inherit" />,
+    authIcon: <FaStore color="inherit" />,
+    layout: '/admin',
+    collapse: true,
+    isBuyer: true,
+    regex: /^\/admin\/dashboard\/farm\/[0-9]+\/buyer$/
   },
   {
     id: 'subscription',

@@ -41,6 +41,9 @@ import {
 // Organic approval labels — acronyms must be properly capitalized (OMRI, USDA, NOP)
 const ORGANIC_APPROVED_LABELS: Record<string, string> = {
   omri_listed: 'OMRI Listed',
+  wsda_listed: 'WSDA Listed',
+  nop_seal_on_label: 'NOP seal on label',
+  certifier_approved: 'Certifier-approved',
   usda_nop_approved: 'USDA NOP Approved',
   organic_equivalent: 'Organic Equivalent',
   not_organic: 'Not Organic',
@@ -58,6 +61,11 @@ const ORGANIC_APPROVED_LABELS: Record<string, string> = {
 // material omission on a page whose entire premise is documentation.
 const CONSUMER_ORGANIC_APPROVED_LABELS: Record<string, string> = {
   omri_listed: 'Yes, OMRI Listed',
+  // 2026-08-15 — the lawful bases added with the rebuilt enum. Phrasing stays a plain
+  // answer to the question; the server is the only thing that may upgrade a listing claim.
+  wsda_listed: 'Yes, WSDA Listed',
+  nop_seal_on_label: 'Yes, NOP seal on the label',
+  certifier_approved: 'Yes, approved by the farm\u2019s certifier',
   usda_nop_approved: 'Yes, USDA NOP approved',
   organic_equivalent: 'Yes, organic-equivalent',
   transitional: 'Transitional, farm is converting to organic',
@@ -369,6 +377,26 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     surfaces: { form: 'immediate' }
   },
   {
+    // USDA Input Material Application Record, "Purpose / Reason for Use". Its footnote 5:
+    // "Some materials, for example, are allowed for pest management but not as a soil
+    // amendment." § 205.601 lists synthetics BY USE, so the purpose is part of the
+    // allowability record.
+    //
+    // Visible for ALL subtypes, not just FE. `target_pest_disease` already carries the
+    // specific target for PE/FU/HE, but the § 205.601 use category is a different fact —
+    // "aphids" is not the same answer as "insecticide use". FE had no purpose field at all.
+    name: 'application_purpose',
+    labelKey: 'events.chemical.fields.applicationPurpose',
+    valueType: 'enum',
+    enumSource: 'application_purposes',
+    surfaces: {
+      modal: 'secondary',
+      form: 'immediate'
+      // Producer/certifier record. A shopper cannot act on "soil fertility", so it fails the
+      // three-question test in ADDING_FIELDS.md and stays off consumer_card.
+    }
+  },
+  {
     // NOP 5012 — liquid/soluble fertilizer nitrogen source (certifier detail).
     name: 'nitrogen_source',
     labelKey: 'events.chemical.fields.nitrogenSource',
@@ -606,6 +634,37 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'secondary'
+    }
+  },
+
+  // WS-4 — § 205.103(b)(2): records must be auditable, which for an application means WHERE it went.
+  // (b)(1) is "adapted to the particular business" and says nothing about location — the
+  // location expectation is (b)(2) audit sufficiency plus USDA's Input Material Application
+  // Record, whose column 2 is "Location and Crop". Corrected 2026-08-15.. Producer/
+  // certifier data (PUR site-level reporting); no consumer_card.
+  {
+    name: 'applied_scope',
+    labelKey: 'events.chemical.fields.appliedScope',
+    valueType: 'enum',
+    enumSource: 'applied_scopes',
+    surfaces: {
+      form: 'immediate',
+      modal: 'immediate'
+    }
+  },
+  {
+    name: 'applied_scope_detail',
+    labelKey: 'events.chemical.fields.appliedScopeDetail',
+    valueType: 'string',
+    // The normalizer can rewrite enum values into display labels before this
+    // predicate runs, so accept the raw value AND its label forms.
+    visibleWhen: (event) => {
+      const v = String((event as Record<string, unknown>).applied_scope ?? '').toLowerCase();
+      return v === 'part' || v.includes('part of');
+    },
+    surfaces: {
+      form: 'immediate',
+      modal: 'immediate'
     }
   },
 

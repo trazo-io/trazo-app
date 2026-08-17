@@ -115,7 +115,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   const bgColor = useColorModeValue('white', 'gray.800');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
-  const successColor = useColorModeValue('green.600', 'green.400');
+  const successColor = useColorModeValue('green.700', 'green.400');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 

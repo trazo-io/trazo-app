@@ -46,6 +46,8 @@ type AuthNavbarProps = {
   secondary: boolean;
   logo: string;
   forceDefaultLogo?: boolean;
+  /** Strip the floating pill chrome — auth pages only. See the `plain` block below. */
+  plain?: boolean;
 };
 
 export default function AuthNavbar(props: AuthNavbarProps) {
@@ -127,7 +129,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     onClose: onCloseEcommerce
   } = useDisclosure();
   const textColor = useColorModeValue('gray.700', '#fff');
-  const { logo, logoText, secondary, forceDefaultLogo, ...rest } = props;
+  const { logo, logoText, secondary, forceDefaultLogo, plain, ...rest } = props;
 
   let authObject = {};
   routes.forEach((route) => {
@@ -204,6 +206,34 @@ export default function AuthNavbar(props: AuthNavbarProps) {
     navbarPosition = 'absolute';
   }
 
+  /*
+   * `plain` — the auth layout's logo, with no chrome around it.
+   *
+   * The default here is a 1044px translucent pill (82%-white gradient + a 1.5px white border +
+   * a drop shadow), inherited from the Creative Tim template. It is centred on the VIEWPORT,
+   * which on the old split sign-in meant it started inside the green panel and ran across the
+   * seam into the white half — the translucent slab straddling both halves in the 2026-08-14
+   * screenshot. The quiet centered-card auth pages want the logo and nothing else, so this
+   * strips the pill and lets the page's own canvas show through.
+   *
+   * It also drops `position: fixed`. Removing the chrome alone was not enough — a pinned logo
+   * with nothing painted behind it lets the page scroll straight THROUGH it. MEASURED at
+   * 1440x800 on /auth/signup: content collided with the logo at 11 of 16 scroll positions.
+   * A fixed header earns its place by keeping NAVIGATION reachable during a long scroll; an
+   * auth page has no navigation, so the logo belongs in the flow and should scroll away.
+   *
+   * Deliberately opt-IN: `ConsumerProductLayout` also renders this navbar, and its frosted
+   * pill over hero photos is a separate, wanted design.
+   */
+  if (props.plain === true) {
+    navbarBg = 'none';
+    navbarBorder = 'none';
+    navbarShadow = 'none';
+    navbarFilter = 'none';
+    navbarBackdrop = 'none';
+    navbarPosition = 'static';
+  }
+
   // 2026 frosted-glass navbar over hero photos on consumer-subdomain pages.
   // Apple/Linear/Stripe pattern: backdrop-blur + low-opacity bg makes the
   // navbar feel like a glass overlay on the underlying photo, instead of a
@@ -274,8 +304,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
                 ps="36px"
                 py="0px"
                 _hover={{ boxShadow: 'none', bg: 'none' }}
-                borderRadius="12px"
-              >
+                borderRadius="12px">
                 <Text color="gray.400" fontSize="sm" fontWeight="normal">
                   {link.name}
                 </Text>
@@ -297,8 +326,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
             ps="36px"
             py="0px"
             _hover={{ boxShadow: 'none', bg: 'none' }}
-            borderRadius="12px"
-          >
+            borderRadius="12px">
             <Text color="gray.400" fontSize="sm" fontWeight="normal">
               {link.name}
             </Text>
@@ -331,8 +359,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
               ps="36px"
               py="0px"
               _hover={{ boxShadow: 'none', bg: 'none' }}
-              borderRadius="12px"
-            >
+              borderRadius="12px">
               <Text color="gray.400" fontSize="sm" fontWeight="normal">
                 {link.name}
               </Text>
@@ -384,8 +411,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
                 ps="36px"
                 py="0px"
                 _hover={{ boxShadow: 'none', bg: 'none' }}
-                borderRadius="12px"
-              >
+                borderRadius="12px">
                 <Text color="gray.400" fontSize="sm" fontWeight="normal">
                   {link.name}
                 </Text>
@@ -408,8 +434,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
       fontWeight="bold"
       justifyContent="center"
       alignItems="center"
-      color={mainText}
-    >
+      color={mainText}>
       <Image
         src={isConsumer && !forceDefaultLogo ? logoTrazoConsumer : logoTrazo}
         alt="trazo logo"
@@ -423,10 +448,17 @@ export default function AuthNavbar(props: AuthNavbarProps) {
   return (
     <Flex
       position={navbarPosition}
-      top={navbarTop}
-      left="50%"
+      /* `plain` is in flow, so it centres with mx="auto" and a fit-to-content width. top/left
+         are inert under `position: static`, but `transform` is NOT — leaving the -50% would
+         yank the logo half its own width to the left. */
+      top={plain ? undefined : navbarTop}
+      left={plain ? undefined : '50%'}
       transform={
-        isConsumer && hiddenOnScroll ? 'translate(-50%, -150px)' : 'translate(-50%, 0px)'
+        plain
+          ? undefined
+          : isConsumer && hiddenOnScroll
+          ? 'translate(-50%, -150px)'
+          : 'translate(-50%, 0px)'
       }
       transition="transform 0.25s ease"
       background={navbarBg}
@@ -438,14 +470,24 @@ export default function AuthNavbar(props: AuthNavbarProps) {
       px="16px"
       py={navbarPy}
       mx="auto"
-      width="1044px"
+      /* The 1044px is the PILL's width. With `plain` there is no pill, so a fixed width just
+         parks the left-aligned logo 450px off-centre from the page it sits above — which is
+         exactly what it did on the first render of the centered-card sign-in. Shrink to fit
+         and the `translateX(-50%)` above centres the logo itself. */
+      width={plain ? 'auto' : '1044px'}
       maxW="90%"
       alignItems="center"
-      zIndex={1000}
-    >
-      <Flex w="100%" justifyContent={{ sm: 'start', lg: 'space-between' }}>
+      zIndex={1000}>
+      <Flex w="100%" justifyContent={plain ? 'center' : { sm: 'start', lg: 'space-between' }}>
         {brand}
-        <Box ms={{ base: 'auto', lg: '0px' }} display={{ lg: 'none' }}>
+        {/*
+          `ms="auto"` on this box is a spacer that pushes the mobile menu to the right edge. It
+          keeps doing that even when the box renders NOTHING — which is always on the auth
+          pages, since its contents require `isAuthenticated`. MEASURED at 375px: a 0-width div
+          with a 132.6px auto margin, eating the free space and dragging the "centred" logo 67px
+          off centre. `justifyContent: center` cannot win against an auto margin.
+        */}
+        <Box ms={{ base: 'auto', lg: '0px' }} display={plain ? 'none' : { lg: 'none' }}>
           {subdomain && isLoadingAuth === false && isAuthenticated && (
             <>
               <IconButton
@@ -482,8 +524,7 @@ export default function AuthNavbar(props: AuthNavbarProps) {
                 color={navbarIcon}
                 variant="transparent-with-icon"
                 leftIcon={<RiLogoutBoxRLine color={navbarIcon} w="22px" h="22px" me="0px" />}
-                onClick={handleLogout}
-              >
+                onClick={handleLogout}>
                 <Text display={{ sm: 'none', md: 'flex' }}>
                   {intl.formatMessage({ id: 'app.signOut' })}
                 </Text>

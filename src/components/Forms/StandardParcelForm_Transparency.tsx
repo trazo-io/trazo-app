@@ -254,9 +254,12 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   });
 
   // 🎯 SIMPLIFIED 4-STEP TRANSPARENCY STRUCTURE
+  // `shortTitle` is what a phone column shows (below `md`); `title` still shows wherever
+  // there is room. Without it these two wrap past the two-line clamp and lose words.
   const steps = [
     {
       title: 'Parcel Identity',
+      shortTitle: 'Identity',
       description: 'Name & area',
       icon: FaBuilding,
       required: true
@@ -275,6 +278,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     },
     {
       title: 'Visual Documentation',
+      shortTitle: 'Photos',
       description: 'Images & certification',
       icon: FaCamera,
       required: false
@@ -537,8 +541,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
         establishmentName ? ` in ${establishmentName}` : ''
       }`}
       showBackButton
-      onBack={onCancel}
-    >
+      onBack={onCancel}>
       {/* Optional pre-flight alert (e.g., subscription limit warning) */}
       {preFormAlert}
 
@@ -562,8 +565,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     label="Parcel Name"
                     required
                     error={errors.name?.message}
-                    helpText="Consumer-friendly name for this parcel"
-                  >
+                    helpText="Consumer-friendly name for this parcel">
                     <Input
                       {...methods.register('name')}
                       placeholder="e.g., North Avocado Grove, Organic Block A"
@@ -597,8 +599,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       id: 'parcel.areaAcresHelp',
                       defaultMessage:
                         'Total planted area in acres. We store hectares for carbon math.'
-                    })}
-                  >
+                    })}>
                     <Controller
                       name="area"
                       control={methods.control}
@@ -616,8 +617,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                               }
                               min={0}
                               step={1}
-                              precision={2}
-                            >
+                              precision={2}>
                               <NumberInputField
                                 borderRadius="lg"
                                 // 44px touch target: this is a required field a farmer
@@ -721,17 +721,16 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                         gestureHandling: 'cooperative',
                         clickableIcons: false,
                         mapTypeId: 'satellite'
-                      }}
-                    >
+                      }}>
                       {getPolygonLength() > 2 && (
                         <Polygon
                           path={polygon}
                           onLoad={onLoadPolygon}
                           onUnmount={onUnmount}
                           options={{
-                            fillColor: isValidPolygon() ? '#22C55E' : '#F59E0B',
+                            fillColor: isValidPolygon() ? '#4CAF50' : '#FF9800',
                             fillOpacity: 0.25,
-                            strokeColor: isValidPolygon() ? '#16A34A' : '#D97706',
+                            strokeColor: isValidPolygon() ? '#4CAF50' : '#FB8C00',
                             strokeOpacity: 1,
                             strokeWeight: 2,
                             editable: true,
@@ -750,7 +749,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                             icon={{
                               path: google.maps.SymbolPath.CIRCLE,
                               scale: 8,
-                              fillColor: isValidPolygon() ? '#16A34A' : '#D97706',
+                              fillColor: isValidPolygon() ? '#4CAF50' : '#FB8C00',
                               fillOpacity: 1,
                               strokeColor: '#FFFFFF',
                               strokeWeight: 2
@@ -789,8 +788,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                           size="sm"
                           variant="outline"
                           leftIcon={<FaTrash />}
-                          onClick={() => setPolygon([])}
-                        >
+                          onClick={() => setPolygon([])}>
                           Clear Points
                         </StandardButton>
                       )}
@@ -821,8 +819,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Identity
                   </StandardButton>
 
@@ -853,15 +850,13 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                points. So the field stays; only the framing changes. */
             <StandardCard
               title="Parcel description"
-              subtitle="What this block is, in your own words"
-            >
+              subtitle="What this block is, in your own words">
               <VStack spacing={6} align="stretch">
                 <StandardField
                   label="Describe this parcel"
                   required
                   error={errors.transparency_description?.message}
-                  helpText="Crop, plantings, irrigation, anything that distinguishes this block from your others. 100+ characters recommended."
-                >
+                  helpText="Crop, plantings, irrigation, anything that distinguishes this block from your others. 100+ characters recommended.">
                   <Textarea
                     {...methods.register('transparency_description')}
                     placeholder="e.g., 12.5-acre Hass avocado block on the east slope, planted 2011 on Dusa rootstock. Drip irrigation from the deep well, cover cropped between rows over winter..."
@@ -886,8 +881,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardField
                     label="Soil & conservation practices"
                     error={errors.sustainability_practices?.message}
-                    helpText="Cover cropping, compost, buffer plantings — the practices your certifier asks about under 7 CFR 205.203."
-                  >
+                    helpText="Cover cropping, compost, buffer plantings — the practices your certifier asks about under 7 CFR 205.203.">
                     <Textarea
                       {...methods.register('sustainability_practices')}
                       placeholder="e.g., Water conservation through drip irrigation, soil health improvement through cover crops, biodiversity support through native plant borders..."
@@ -914,8 +908,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Location
                   </StandardButton>
 
@@ -936,13 +929,11 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
           {currentStep === 3 && (
             <StandardCard
               title="Visual Documentation"
-              subtitle="Build trust through images and certification"
-            >
+              subtitle="Build trust through images and certification">
               <VStack spacing={6} align="stretch">
                 <StandardField
                   label="Parcel Images"
-                  helpText="Upload high-quality images that show consumers the practices in action (3+ images recommended for full points)"
-                >
+                  helpText="Upload high-quality images that show consumers the practices in action (3+ images recommended for full points)">
                   <TrazoImageUpload
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
@@ -962,8 +953,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to description
                   </StandardButton>
 
@@ -975,8 +965,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       type="submit"
                       isLoading={isLoading}
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
-                      leftIcon={<FaCheckCircle />}
-                    >
+                      leftIcon={<FaCheckCircle />}>
                       {isEdit ? 'Update Parcel' : 'Create Parcel'}
                     </StandardButton>
                   </HStack>

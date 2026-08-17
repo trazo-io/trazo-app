@@ -27,6 +27,7 @@ import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
+import { SupervisorSignOff } from 'components/Forms/SupervisorSignOff';
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -49,13 +50,13 @@ import { BlockIdField } from 'components/Fields/BlockIdField';
 // Sprint 3 Epic 3.1: Fuel types with EPA-verified emission factors (aligned with Production/Soil forms)
 // UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
 const FUEL_TYPES = [
-  { value: 'diesel', label: '⛽ Diesel', factor: '2.70 kg CO₂e/L' },
-  { value: 'gasoline', label: '⛽ Gasoline', factor: '2.32 kg CO₂e/L' },
-  { value: 'natural_gas', label: '💨 Natural Gas', factor: '1.92 kg CO₂e/m³' },
-  { value: 'propane', label: '🔥 LPG / Propane', factor: '1.51 kg CO₂e/L' },
-  { value: 'electric', label: '⚡ Electric', factor: '0.39 kg CO₂e/kWh' },
-  { value: 'biodiesel', label: '🌿 Biodiesel', factor: '2.31 kg CO₂e/L' },
-  { value: 'none', label: '🔧 No Fuel / Manual', factor: '0 kg CO₂e' }
+  { value: 'diesel', label: 'Diesel', factor: '2.70 kg CO₂e/L' },
+  { value: 'gasoline', label: 'Gasoline', factor: '2.32 kg CO₂e/L' },
+  { value: 'natural_gas', label: 'Natural Gas', factor: '1.92 kg CO₂e/m³' },
+  { value: 'propane', label: 'LPG / Propane', factor: '1.51 kg CO₂e/L' },
+  { value: 'electric', label: 'Electric', factor: '0.39 kg CO₂e/kWh' },
+  { value: 'biodiesel', label: 'Biodiesel', factor: '2.31 kg CO₂e/L' },
+  { value: 'none', label: 'No Fuel / Manual', factor: '0 kg CO₂e' }
 ];
 
 const pestSchema = object({
@@ -107,6 +108,12 @@ const pestSchema = object({
   action_threshold_met: string().optional(), // Changed to string for StandardSelect
   ipm_strategy: string().optional(),
   observation: string().optional(),
+  // FSMA PSR § 112.161(b) sign-off. Harvest/packing (§ 112.140) and animal-intrusion
+  // monitoring (§ 112.83) are part-112 records. `reviewed` rides the `...data` spread as a
+  // 'true'/'false' STRING, so it is coerced to a real boolean just below.
+  reviewed: string().optional(),
+  reviewer_name: string().optional(),
+  review_date: string().optional(),
   // Sprint 3 Epic 3.2: Consumer Trust Fields for transparency
   beneficial_insects_used: string().optional(), // Whether beneficial insects are being used
   chemical_free_period_days: string().optional(), // Days since last chemical application
@@ -209,6 +216,10 @@ const PestManagementTab = forwardRef(
         action_threshold_met: initialValues.action_threshold_met?.toString() || '',
         ipm_strategy: initialValues.ipm_strategy || '',
         observation: initialValues.observation || '',
+        reviewed:
+          initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
+        reviewer_name: initialValues.reviewer_name || '',
+        review_date: initialValues.review_date || '',
         // Sprint 3 Epic 3.2: Consumer Trust Fields
         beneficial_insects_used: initialValues.beneficial_insects_used || '',
         chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || '',
@@ -304,6 +315,10 @@ const PestManagementTab = forwardRef(
           action_threshold_met: initialValues.action_threshold_met?.toString() || '',
           ipm_strategy: initialValues.ipm_strategy || '',
           observation: initialValues.observation || '',
+          reviewed:
+            initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
+          reviewer_name: initialValues.reviewer_name || '',
+          review_date: initialValues.review_date || '',
           // Sprint 3 Epic 3.2: Consumer Trust Fields
           beneficial_insects_used: initialValues.beneficial_insects_used || '',
           chemical_free_period_days: initialValues.chemical_free_period_days?.toString() || '',
@@ -414,6 +429,12 @@ const PestManagementTab = forwardRef(
       // Convert string numbers to proper format
       const processedData = {
         ...data,
+        // The Switch stores 'true'/'false' strings; the model field is a BooleanField.
+        // Coerced explicitly rather than trusting DRF's string parsing, and to match the
+        // Chemical and Soil tabs.
+        reviewed: data.reviewed === 'true' || data.reviewed === true,
+        reviewer_name: data.reviewer_name || null,
+        review_date: data.review_date || null,
         // REMOVED: observation → description mapping now handled universally in cleanEventData
         trap_count: data.trap_count ? parseInt(data.trap_count) : null,
         pest_catch_count: data.pest_catch_count ? parseInt(data.pest_catch_count) : null,
@@ -488,19 +509,11 @@ const PestManagementTab = forwardRef(
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <VStack spacing={6} align="stretch">
-            {/* Transparency Focus Alert */}
-            <StandardAlert status="info" title="Pest Management & Transparency Documentation">
-              <HStack spacing={2} mb={2}>
-                <Icon as={FaBug} color="green.500" />
-                <Text fontSize="sm" fontWeight="bold">
-                  Integrated Pest Management Transparency
-                </Text>
-              </HStack>
-              <Text fontSize="sm">
-                Document your IPM practices to build consumer trust through transparent sustainable
-                pest management. This helps consumers understand your commitment to environmentally
-                responsible farming methods.
-              </Text>
+            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. */}
+            <StandardAlert
+              status="info"
+              title={intl.formatMessage({ id: 'events.callout.pest.title' })}>
+              <Text fontSize="sm">{intl.formatMessage({ id: 'events.callout.pest.body' })}</Text>
             </StandardAlert>
 
             {/* Forms are hand-crafted by design: the NOP section grouping below is what
@@ -516,7 +529,6 @@ const PestManagementTab = forwardRef(
                   iconColor="green.600"
                   title="Pest Management Event Information"
                   badge="Transparency Tracking"
-                  badgeColorScheme="green"
                 />
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -589,7 +601,6 @@ const PestManagementTab = forwardRef(
                       defaultMessage: 'Preventive Cultural Practice'
                     })}
                     badge="7 CFR 205.206(a)"
-                    badgeColorScheme="green"
                     description={intl.formatMessage({
                       id: 'events.pest.sections.culturalControlHelp',
                       defaultMessage:
@@ -639,7 +650,7 @@ const PestManagementTab = forwardRef(
                     <VStack align="start" spacing={0}>
                       <HStack>
                         <Text fontWeight="semibold" fontSize="sm">
-                          📊 Scouting Summary Mode
+                          Scouting Summary Mode
                         </Text>
                         {isSummaryMode && (
                           <Badge colorScheme="blue" size="sm">
@@ -883,7 +894,6 @@ const PestManagementTab = forwardRef(
                     iconColor="green.600"
                     title="Field Area & Context"
                     badge="Carbon Calculation Required"
-                    badgeColorScheme="green"
                   />
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -919,7 +929,6 @@ const PestManagementTab = forwardRef(
                     iconColor="green.600"
                     title="Fuel Consumption & Equipment Data"
                     badge="Enhanced Carbon Accuracy"
-                    badgeColorScheme="green"
                     description="Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. These details help consumers understand the real operational impact of your production operations."
                   />
 
@@ -1004,7 +1013,6 @@ const PestManagementTab = forwardRef(
                   iconColor="green.600"
                   title="Agricultural Context & Conditions"
                   badge="IPM Decision Support"
-                  badgeColorScheme="green"
                 />
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -1056,7 +1064,6 @@ const PestManagementTab = forwardRef(
                     iconColor="green.600"
                     title="Pest Management Details"
                     badge="IPM Documentation"
-                    badgeColorScheme="green"
                   />
 
                   {/* Universal Pest Context Fields - All Types */}
@@ -1343,7 +1350,6 @@ const PestManagementTab = forwardRef(
                   iconColor="green.600"
                   title="IPM Documentation (7 CFR 205.206)"
                   badge="Organic Compliance"
-                  badgeColorScheme="green"
                   description="The certifier export checks these two records on every pest event, whatever its type."
                 />
                 <StandardField
@@ -1385,7 +1391,6 @@ const PestManagementTab = forwardRef(
                   iconColor="green.500"
                   title="Consumer Trust & Transparency"
                   badge="Builds Consumer Trust"
-                  badgeColorScheme="green"
                   description="Document your sustainable pest management practices to help consumers understand your commitment to environmentally responsible farming."
                 />
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -1430,7 +1435,6 @@ const PestManagementTab = forwardRef(
                     iconColor="green.600"
                     title="NOP Pest Identification & Threshold Traceability"
                     badge="Organic Compliance"
-                    badgeColorScheme="green"
                     description="Required documentation for NOP organic certification: pest identification verification and action threshold rationale (7 CFR 205.206)."
                   />
 
@@ -1516,7 +1520,6 @@ const PestManagementTab = forwardRef(
                   iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
                   badge="Consumer Transparency"
-                  badgeColorScheme="green"
                 />
 
                 <StandardField
@@ -1528,6 +1531,8 @@ const PestManagementTab = forwardRef(
                     rows={4}
                   />
                 </StandardField>
+
+                <SupervisorSignOff control={methods.control} />
               </SectionBox>
             </>
 

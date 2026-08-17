@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Box,
   HStack,
@@ -18,6 +19,7 @@ import {
   NumberInput,
   NumberInputField,
   Input,
+  IconButton,
   useToast
 } from '@chakra-ui/react';
 import { FaHistory, FaPlus, FaTrash, FaInfoCircle, FaEdit } from 'react-icons/fa';
@@ -29,13 +31,27 @@ import {
   useUpdateParcelCropHistoryMutation
 } from 'store/api/productApi';
 
+interface SubstanceApplicationRow {
+  material?: string;
+  manufacturer?: string;
+  application_dates?: string;
+}
+
 interface ParcelCropHistoryEntry {
   id: number;
   parcel: number;
   year: number;
   crop_grown: string;
+  cover_crop?: string;
+  /** Split field: one crop on rows 1-40, another on 41-80, same year. The model added this
+   *  and the unique constraint depends on it, but no form wrote it until 2026-08-13. */
+  block_id?: string;
   production_method: string;
   substances_applied: string;
+  /** USDA Field History form #1: per-material rows. Complements the prose blob above;
+   *  never derived from it — splitting prose means guessing a manufacturer. */
+  substance_applications?: SubstanceApplicationRow[];
+  last_prohibited_substance?: string | null;
   date_last_prohibited: string | null;
   notes: string;
   created_at: string;
@@ -68,12 +84,20 @@ const currentYear = new Date().getFullYear();
 const emptyForm = {
   year: currentYear - 1,
   crop_grown: '',
+  cover_crop: '',
+  block_id: '',
   production_method: '',
   substances_applied: '',
+  // "Name and Application Date of Last Prohibited Input" — USDA asks it for EVERY field,
+  // and until 2026-08-12 it was capturable nowhere in the app.
+  last_prohibited_substance: '',
+  date_last_prohibited: '',
+  substance_applications: [] as SubstanceApplicationRow[],
   notes: ''
 };
 
 const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, canWrite }) => {
+  const intl = useIntl();
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -88,7 +112,6 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
   const [deleteEntry, { isLoading: isDeleting }] = useDeleteParcelCropHistoryMutation();
 
   const entries = historyEntries as ParcelCropHistoryEntry[];
-  const existingYears = entries.map((e) => e.year);
   const isSaving = isCreating || isUpdating;
 
   const openCreate = () => {
@@ -102,8 +125,15 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
     setForm({
       year: entry.year,
       crop_grown: entry.crop_grown,
+      cover_crop: entry.cover_crop || '',
+      block_id: entry.block_id || '',
       production_method: entry.production_method || '',
       substances_applied: entry.substances_applied || '',
+      last_prohibited_substance: entry.last_prohibited_substance || '',
+      date_last_prohibited: entry.date_last_prohibited || '',
+      substance_applications: Array.isArray(entry.substance_applications)
+        ? entry.substance_applications
+        : [],
       notes: entry.notes || ''
     });
     setShowForm(true);
@@ -137,11 +167,27 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
         toast({ title: detail, status: 'error', duration: 4000 });
       }
     } else {
-      // Create new — check duplicate year
-      if (existingYears.includes(form.year)) {
+      // Create new. This guard used to reject any repeated year outright, which made the
+      // split field that `block_id` exists for impossible to enter — the second crop was
+      // refused client-side before it ever reached the server.
+      //
+      // The check mirrors the DB constraint EXACTLY: (parcel, year, crop_grown, block_id).
+      // Dropping crop_grown from it would block succession planting — two different crops in
+      // the same block in the same year — which Postgres accepts. A client guard stricter
+      // than the constraint it mirrors rejects valid records and looks like a bug in the
+      // database.
+      const duplicate = entries.some(
+        (e) =>
+          e.year === form.year &&
+          (e.crop_grown || '').trim().toLowerCase() === form.crop_grown.trim().toLowerCase() &&
+          (e.block_id || '').trim() === form.block_id.trim()
+      );
+      if (duplicate) {
         toast({
-          title: `Year ${form.year} already has an entry for this parcel.`,
-          description: 'Each parcel can have one entry per year. Choose a different year.',
+          title: `${form.crop_grown} is already recorded for ${form.year} on this parcel.`,
+          description: form.block_id
+            ? `Block "${form.block_id}" already has this crop for ${form.year}.`
+            : 'To record a split field, give each crop a different Block / Rows value.',
           status: 'warning',
           duration: 5000
         });
@@ -174,8 +220,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
       size="sm"
       variant="outline"
       leftIcon={<Icon as={FaPlus} />}
-      onClick={openCreate}
-    >
+      onClick={openCreate}>
       Add Year
     </StandardButton>
   ) : undefined;
@@ -196,8 +241,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
               py={0.5}
               borderRadius="full"
               fontSize="xs"
-              display={{ base: 'none', smd: 'inline-flex' }}
-            >
+              display={{ base: 'none', smd: 'inline-flex' }}>
               <HStack spacing={1}>
                 <Icon as={FaInfoCircle} boxSize={2.5} />
                 <Text>Required: 7 CFR 205.202</Text>
@@ -207,8 +251,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
         }
         variant="elevated"
         padding={{ base: 3, md: 4 }}
-        headerAction={headerAction}
-      >
+        headerAction={headerAction}>
         <VStack spacing={4} align="stretch">
           {/* Inline add/edit form */}
           {showForm && (
@@ -217,9 +260,8 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
               bg="green.50"
               borderRadius="lg"
               border="1px solid"
-              borderColor="green.200"
-            >
-              <Text fontSize="xs" fontWeight="bold" color="green.600" mb={2}>
+              borderColor="green.200">
+              <Text fontSize="xs" fontWeight="bold" color="green.700" mb={2}>
                 {editingId ? 'EDITING ENTRY' : 'NEW ENTRY'}
               </Text>
               <VStack spacing={3} align="stretch">
@@ -233,8 +275,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                       max={currentYear}
                       value={form.year}
                       onChange={(val) => setForm((f) => ({ ...f, year: Number(val) }))}
-                      size="sm"
-                    >
+                      size="sm">
                       <NumberInputField borderRadius="md" />
                     </NumberInput>
                   </Box>
@@ -252,6 +293,40 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                   </Box>
                   <Box flex={1} minW="140px">
                     <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      COVER CROP (OPTIONAL)
+                    </Text>
+                    <Input
+                      size="sm"
+                      borderRadius="md"
+                      placeholder="e.g. Bell beans + oats alley cover"
+                      value={form.cover_crop}
+                      onChange={(e) => setForm((f) => ({ ...f, cover_crop: e.target.value }))}
+                    />
+                  </Box>
+                  {/* Split field. The model carries block_id specifically so two crops in one
+                      year on one parcel can be recorded honestly, and the unique constraint is
+                      (parcel, year, block_id) — but no form wrote it, so a split field could
+                      not be entered at all: the second row collided with the first. */}
+                  <Box flex={1} minW="140px">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.blockId',
+                        defaultMessage: 'BLOCK / ROWS (OPTIONAL)'
+                      })}
+                    </Text>
+                    <Input
+                      size="sm"
+                      borderRadius="md"
+                      placeholder={intl.formatMessage({
+                        id: 'parcel.fieldHistory.blockIdPlaceholder',
+                        defaultMessage: 'e.g. Rows 1-40 — only if the field was split'
+                      })}
+                      value={form.block_id}
+                      onChange={(e) => setForm((f) => ({ ...f, block_id: e.target.value }))}
+                    />
+                  </Box>
+                  <Box flex={1} minW="140px">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
                       METHOD
                     </Text>
                     <Select
@@ -261,8 +336,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                       onChange={(e) =>
                         setForm((f) => ({ ...f, production_method: e.target.value }))
                       }
-                      placeholder="Select method"
-                    >
+                      placeholder="Select method">
                       {PRODUCTION_METHODS.map((m) => (
                         <option key={m.value} value={m.value}>
                           {m.label}
@@ -284,6 +358,152 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                     onChange={(e) => setForm((f) => ({ ...f, substances_applied: e.target.value }))}
                   />
                 </Box>
+                {/* USDA's Field History form asks for the last prohibited input by NAME and
+                    DATE, for every field including already-organic ones. Both columns existed
+                    on the model and neither was capturable anywhere in the app, so the
+                    certifier packet could only ever print a dash. */}
+                <HStack spacing={3} align="flex-end">
+                  <Box flex="1">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.lastProhibitedSubstance',
+                        defaultMessage: 'LAST PROHIBITED INPUT'
+                      })}
+                    </Text>
+                    <Input
+                      size="sm"
+                      borderRadius="md"
+                      placeholder={intl.formatMessage({
+                        id: 'parcel.fieldHistory.lastProhibitedSubstancePlaceholder',
+                        defaultMessage: 'e.g. Glyphosate'
+                      })}
+                      value={form.last_prohibited_substance}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, last_prohibited_substance: e.target.value }))
+                      }
+                    />
+                  </Box>
+                  <Box flex="1">
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.dateLastProhibited',
+                        defaultMessage: 'DATE APPLIED'
+                      })}
+                    </Text>
+                    <Input
+                      size="sm"
+                      type="date"
+                      borderRadius="md"
+                      value={form.date_last_prohibited}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, date_last_prohibited: e.target.value }))
+                      }
+                    />
+                  </Box>
+                </HStack>
+
+                {/* USDA asks Material / Manufacturer / Application Date(s) as three columns.
+                    The prose box above stays as the operator's own summary and is never
+                    parsed into these rows. */}
+                <Box>
+                  <HStack justify="space-between" mb={1}>
+                    <Text fontSize="xs" color="gray.500" fontWeight="semibold">
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.materialRows',
+                        defaultMessage: 'MATERIALS — BRAND, MANUFACTURER, DATE(S)'
+                      })}
+                    </Text>
+                    <StandardButton
+                      size="xs"
+                      variant="ghost"
+                      onClick={() =>
+                        setForm((f) => ({
+                          ...f,
+                          substance_applications: [
+                            ...f.substance_applications,
+                            { material: '', manufacturer: '', application_dates: '' }
+                          ]
+                        }))
+                      }>
+                      {intl.formatMessage({
+                        id: 'parcel.fieldHistory.addMaterial',
+                        defaultMessage: '+ Add material'
+                      })}
+                    </StandardButton>
+                  </HStack>
+                  <VStack align="stretch" spacing={2}>
+                    {form.substance_applications.map((row, idx) => (
+                      <HStack key={idx} spacing={2}>
+                        <Input
+                          size="sm"
+                          placeholder={intl.formatMessage({
+                            id: 'parcel.fieldHistory.material',
+                            defaultMessage: 'Product brand name'
+                          })}
+                          value={row.material || ''}
+                          onChange={(e) =>
+                            setForm((f) => {
+                              const rows = [...f.substance_applications];
+                              rows[idx] = { ...rows[idx], material: e.target.value };
+                              return { ...f, substance_applications: rows };
+                            })
+                          }
+                        />
+                        <Input
+                          size="sm"
+                          placeholder={intl.formatMessage({
+                            id: 'parcel.fieldHistory.manufacturer',
+                            defaultMessage: 'Manufacturer'
+                          })}
+                          value={row.manufacturer || ''}
+                          onChange={(e) =>
+                            setForm((f) => {
+                              const rows = [...f.substance_applications];
+                              rows[idx] = { ...rows[idx], manufacturer: e.target.value };
+                              return { ...f, substance_applications: rows };
+                            })
+                          }
+                        />
+                        <Input
+                          size="sm"
+                          // Free text, not a date input: USDA's column is "Date(s)" and
+                          // growers write "3/14 and 6/2". One date picker would either drop
+                          // applications or invent precision.
+                          placeholder={intl.formatMessage({
+                            id: 'parcel.fieldHistory.applicationDates',
+                            defaultMessage: 'Application date(s)'
+                          })}
+                          value={row.application_dates || ''}
+                          onChange={(e) =>
+                            setForm((f) => {
+                              const rows = [...f.substance_applications];
+                              rows[idx] = { ...rows[idx], application_dates: e.target.value };
+                              return { ...f, substance_applications: rows };
+                            })
+                          }
+                        />
+                        <IconButton
+                          aria-label={intl.formatMessage({
+                            id: 'parcel.fieldHistory.removeMaterial',
+                            defaultMessage: 'Remove material'
+                          })}
+                          size="sm"
+                          variant="ghost"
+                          icon={<FaTrash />}
+                          onClick={() =>
+                            setForm((f) => ({
+                              ...f,
+                              substance_applications: f.substance_applications.filter(
+                                (_, i) => i !== idx
+                              )
+                            }))
+                          }
+                        />
+                      </HStack>
+                    ))}
+                  </VStack>
+                </Box>
+
                 <Box>
                   <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
                     NOTES (optional)
@@ -321,8 +541,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
               bg="gray.50"
               borderRadius="lg"
               border="1px dashed"
-              borderColor="gray.300"
-            >
+              borderColor="gray.300">
               <Icon as={FaHistory} boxSize={8} color="gray.300" mb={2} />
               <Text fontSize="sm" color="gray.500">
                 No field history recorded. Add crop rotation data for your organic audit.
@@ -356,29 +575,31 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         cursor: canWrite ? 'pointer' : 'default'
                       }}
                       bg={editingId === entry.id ? 'green.50' : undefined}
-                      onClick={() => canWrite && openEdit(entry)}
-                    >
+                      onClick={() => canWrite && openEdit(entry)}>
                       <Td
                         fontSize={{ base: 'xs', md: 'sm' }}
                         fontWeight="semibold"
-                        color="gray.800"
-                      >
+                        color="gray.800">
                         {entry.year}
                       </Td>
                       <Td fontSize={{ base: 'xs', md: 'sm' }} color="gray.700">
                         {entry.crop_grown}
+                        {entry.cover_crop ? (
+                          <Text as="span" fontSize="xs" color="gray.500">
+                            {' '}
+                            + cover: {entry.cover_crop}
+                          </Text>
+                        ) : null}
                       </Td>
                       <Td
                         fontSize={{ base: 'xs', md: 'sm' }}
-                        display={{ base: 'none', md: 'table-cell' }}
-                      >
+                        display={{ base: 'none', md: 'table-cell' }}>
                         <Badge
                           colorScheme={METHOD_COLORS[entry.production_method] || 'blue'}
                           variant="subtle"
                           fontSize="xs"
                           px={2}
-                          borderRadius="full"
-                        >
+                          borderRadius="full">
                           {PRODUCTION_METHODS.find((m) => m.value === entry.production_method)
                             ?.label ?? entry.production_method}
                         </Badge>
@@ -388,8 +609,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         color="gray.600"
                         display={{ base: 'none', md: 'table-cell' }}
                         maxW="180px"
-                        isTruncated
-                      >
+                        isTruncated>
                         {entry.substances_applied || '—'}
                       </Td>
                       <Td
@@ -397,8 +617,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         color="gray.600"
                         display={{ base: 'none', lg: 'table-cell' }}
                         maxW="200px"
-                        isTruncated
-                      >
+                        isTruncated>
                         {entry.notes || '—'}
                       </Td>
                       {canWrite && (
@@ -411,8 +630,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                               onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
                                 openEdit(entry);
-                              }}
-                            >
+                              }}>
                               <Icon as={FaEdit} boxSize={3} />
                             </StandardButton>
                             <StandardButton
@@ -424,8 +642,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                               onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation();
                                 handleDelete(entry.id);
-                              }}
-                            >
+                              }}>
                               <Icon as={FaTrash} boxSize={3} />
                             </StandardButton>
                           </HStack>

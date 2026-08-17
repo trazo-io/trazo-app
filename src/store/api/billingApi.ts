@@ -32,9 +32,35 @@ export interface Subscription {
   cancel_at_period_end: boolean;
   used_productions: number;
   used_storage_gb: number;
+  storage_breakdown: StorageBreakdown;
   scan_count: number;
   trial_end: string | null;
   usage_warnings: UsageWarning[];
+}
+
+/**
+ * Storage is one number to the quota and two things to the farmer.
+ *
+ * `used_storage_gb` is the TOTAL and it is what the limit is displayed against, but only
+ * `media_gb` is enforced — photo uploads are refused at the ceiling, documents never are.
+ * `enforced_category` is the backend saying which half bites, so the UI never has to
+ * hardcode that policy (see `subscriptions/storage_accounting.py`).
+ */
+export interface StorageBreakdown {
+  media_gb: number;
+  documents_gb: number;
+  total_gb: number;
+  /**
+   * Raw bytes, so each line can pick its own unit.
+   *
+   * GB to 2dp is right for the meter (the limit is in GB) and wrong for the documents line:
+   * a real certifier shelf of 21 artifacts weighs under a megabyte and prints as "0.00 GB",
+   * which is correct and reads as a broken meter. Photos meanwhile run to gigabytes.
+   */
+  media_bytes: number;
+  documents_bytes: number;
+  total_bytes: number;
+  enforced_category: 'media' | 'documents';
 }
 
 export interface Plan {
@@ -54,6 +80,9 @@ export interface AddOn {
   slug: string;
   description: string;
   price: number;
+  /** Required. A price with no period is not a price — Extra Farm rendered a bare "$30.00"
+   *  next to a plan labelled "/Yearly" for months because this did not reach the client. */
+  interval: 'monthly' | 'yearly';
   is_active: boolean;
 }
 
@@ -277,7 +306,6 @@ export const billingApi = baseApi.injectEndpoints({
         interval?: string;
         newCompany?: boolean;
         trialDays?: number;
-        addonType?: string;
         quantity?: number;
         mode?: 'subscription' | 'payment' | 'setup';
         // Also accept snake_case versions directly
@@ -287,7 +315,6 @@ export const billingApi = baseApi.injectEndpoints({
         cancel_url?: string;
         new_company?: boolean;
         trial_days?: number;
-        addon_type?: string;
       }
     >({
       query: (data) => ({
@@ -302,7 +329,8 @@ export const billingApi = baseApi.injectEndpoints({
           interval: data.interval,
           new_company: data.new_company !== undefined ? data.new_company : data.newCompany,
           trial_days: data.trial_days !== undefined ? data.trial_days : data.trialDays,
-          addon_type: data.addon_type || data.addonType,
+          // No `addon_type`. Add-ons are attached to the EXISTING subscription through the
+          // `addAddon` mutation; sending it here now returns 410 USE_ADD_ADDON_ENDPOINT.
           quantity: data.quantity,
           mode: data.mode
         },

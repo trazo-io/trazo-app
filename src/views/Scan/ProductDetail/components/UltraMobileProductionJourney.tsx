@@ -94,10 +94,16 @@ const BuyerDocRequestCTA = React.lazy(
   () => import('components/BuyerDocRequest/BuyerDocRequestCTA')
 );
 
-// The consumer route (/production/:productionId) carries the production
-// PUBLIC UUID; the farmer dashboard route reuses the same param name for the
-// internal numeric id. The buyer-docs endpoint only accepts the public UUID,
-// so gate rendering on UUID shape.
+// The buyer-docs endpoint only accepts the production PUBLIC UUID, so the id
+// handed to the CTA still has to be shape-checked.
+//
+// ⚠️ UUID shape is NOT an audience test and never was. This guard used to be
+// the ONLY thing keeping the buyer surfaces off the producer dashboard, on the
+// belief that "the farmer dashboard route reuses the same param name for the
+// internal numeric id". It does not: HistoryCard navigates to
+// /admin/dashboard/farm/:farmId/parcel/:parcelId/production/<public_id>, so the
+// regex passed and both buyer CTAs rendered inside the producer's own
+// Production Profile. Audience is now an explicit prop — see `audience` below.
 const PUBLIC_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface AlbumImage {
@@ -165,6 +171,19 @@ interface TimelineEvent {
 
 interface UltraMobileProductionJourneyProps {
   events: TimelineEvent[];
+  /**
+   * WHO is reading this journey. REQUIRED — no default, because a default is
+   * what silently put the buyer CTAs on the farmer's own dashboard.
+   *
+   * - `'consumer'` — the public product page (consumer.<host>/production/:uuid).
+   *   Buyer-facing conversion surfaces render.
+   * - `'producer'` — the farmer's Production Profile, which mounts this
+   *   component as a PREVIEW of the consumer journey. Surfaces that address a
+   *   visiting buyer ("Buyer or retailer? …", the doc-request form) are
+   *   suppressed: the farm is not its own buyer, and the producer's way to
+   *   reach a buyer is the "Copy buyer link" action on ProfileProduction.
+   */
+  audience: 'consumer' | 'producer';
   productionId?: string;
   transparencyScore?: number;
   /** Production-level blockchain verification data */
@@ -191,6 +210,7 @@ interface UltraMobileProductionJourneyProps {
 
 export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourneyProps> = ({
   events,
+  audience,
   productionId,
   // transparencyScore prop retained in the interface (parent still passes it)
   // but no longer rendered — the numeric score left the stats strip 2026-06.
@@ -627,12 +647,16 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   const [searchParams, setSearchParams] = useSearchParams();
   const isProofView = searchParams.get('view') === 'proof';
 
+  // Buyer-facing surfaces exist for a visitor of the PUBLIC record, not for the
+  // farm looking at its own production.
+  const isConsumerAudience = audience === 'consumer';
+
   // Production public UUID for the buyer-docs CTA: prefer the prop, fall back
   // to the route param (the parent consumer page doesn't pass the prop).
   const { productionId: routeProductionId } = useParams();
   const resolvedProductionId = productionId || routeProductionId;
   const buyerDocProductionId =
-    resolvedProductionId && PUBLIC_UUID_RE.test(resolvedProductionId)
+    isConsumerAudience && resolvedProductionId && PUBLIC_UUID_RE.test(resolvedProductionId)
       ? resolvedProductionId
       : undefined;
   const openProofView = useCallback(
@@ -1109,13 +1133,12 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
             borderRadius="xl"
             borderWidth="1px"
             borderColor="gray.200"
-            p={{ base: 4, md: 5 }}
-          >
+            p={{ base: 4, md: 5 }}>
             <VStack spacing={3} w="full" minW={0}>
               <HStack w="full" justify="space-between" align="start">
                 <CardHeader pb={6}>
                   <HStack spacing={3}>
-                    <Circle size="40px" bg="green.500" color="white">
+                    <Circle size="40px" bg="green.700" color="white">
                       <Icon as={MdTimeline} aria-hidden="true" boxSize={5} />
                     </Circle>
                     <VStack spacing={0} align="start">
@@ -1142,8 +1165,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   px={3}
                   py={1}
                   borderRadius="full"
-                  fontWeight="600"
-                >
+                  fontWeight="600">
                   <HStack spacing={1}>
                     <Icon as={MdVerified} aria-hidden="true" boxSize={3} />
                     <Text>
@@ -1174,8 +1196,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     bg={useColorModeValue('gray.200', 'gray.600')}
                     alignSelf="center"
                   />
-                }
-              >
+                }>
                 <VStack
                   spacing={0.5}
                   flex={1}
@@ -1189,13 +1210,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         '{count, plural, one {# event documented} other {# events documented}}'
                     },
                     { count: filteredEvents.length }
-                  )}
-                >
+                  )}>
                   <Text
                     fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                     fontWeight="bold"
-                    color={textColor}
-                  >
+                    color={textColor}>
                     {filteredEvents.length}
                   </Text>
                   <Text fontSize="xs" color={mutedColor} fontWeight="500" lineHeight="1.2">
@@ -1239,13 +1258,11 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           defaultMessage: '{percent}% of events with photos'
                         },
                         { percent: photoPercent }
-                      )}
-                    >
+                      )}>
                       <Text
                         fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                         fontWeight="bold"
-                        color={textColor}
-                      >
+                        color={textColor}>
                         {photoPercent}%
                       </Text>
                       <PhotoDocumentationTooltip>
@@ -1254,8 +1271,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           color={mutedColor}
                           textAlign="center"
                           fontWeight="500"
-                          lineHeight="1.2"
-                        >
+                          lineHeight="1.2">
                           {intl.formatMessage({
                             id: 'transparency.withPhotos',
                             defaultMessage: 'With Photos'
@@ -1368,8 +1384,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         fontWeight="medium"
                         px={3}
                         py={2}
-                        h="32px"
-                      >
+                        h="32px">
                         {displayName} {eventCount > 0 && `(${eventCount})`}
                       </Button>
                     );
@@ -1403,8 +1418,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       borderRadius="xl"
                       px={{ base: 3, md: 4 }}
                       py={3}
-                      mb={2}
-                    >
+                      mb={2}>
                       <HStack justify="space-between" align="start">
                         <HStack spacing={3} align="center">
                           <Circle size="36px" bg={`${ch.colorScheme}.50`} flexShrink={0}>
@@ -1445,8 +1459,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                               colorScheme="green"
                               fontSize="xs"
                               borderRadius="full"
-                              px={2}
-                            >
+                              px={2}>
                               {intl.formatMessage(
                                 {
                                   id: 'consumer.journey.photoBadge',
@@ -1463,8 +1476,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                               colorScheme="green"
                               fontSize="xs"
                               borderRadius="full"
-                              px={2}
-                            >
+                              px={2}>
                               {intl.formatMessage({
                                 id: 'consumer.journey.allInputsOrganic',
                                 defaultMessage: 'All inputs organic-approved'
@@ -1505,8 +1517,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                         size="xs"
                         variant="link"
                         colorScheme="green"
-                        onClick={() => openProofView(ch.key)}
-                      >
+                        onClick={() => openProofView(ch.key)}>
                         {/* Names the destination (2026-08-02). "+2 more in the full record"
                             reads like an inline expander, but it switches to the full-record
                             view filtered to this chapter — so the label now says the chapter
@@ -1530,8 +1541,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 variant="outline"
                 colorScheme="green"
                 size="sm"
-                onClick={() => openProofView()}
-              >
+                onClick={() => openProofView()}>
                 {intl.formatMessage(
                   {
                     id: 'consumer.journey.viewFullRecord',
@@ -1544,20 +1554,23 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
               {/* Buyer-framed entry — the BuyerDocRequest CTA lives in the proof view, so a
                   wholesale buyer landing on the story view needs an explicit door to it
-                  (2026-06 audit P2-8). Same openProofView() switch, different framing. */}
-              <Button
-                variant="link"
-                size="xs"
-                colorScheme="gray"
-                fontWeight="normal"
-                onClick={() => openProofView()}
-              >
-                {intl.formatMessage({
-                  id: 'consumer.journey.buyerEntry',
-                  defaultMessage:
-                    'Buyer or retailer? See the full sourcing record & request documents →'
-                })}
-              </Button>
+                  (2026-06 audit P2-8). Same openProofView() switch, different framing.
+                  Consumer audience only: on the producer's own Production Profile it
+                  addressed the farm as if it were its own buyer. */}
+              {isConsumerAudience && (
+                <Button
+                  variant="link"
+                  size="xs"
+                  colorScheme="gray"
+                  fontWeight="normal"
+                  onClick={() => openProofView()}>
+                  {intl.formatMessage({
+                    id: 'consumer.journey.buyerEntry',
+                    defaultMessage:
+                      'Buyer or retailer? See the full sourcing record & request documents →'
+                  })}
+                </Button>
+              )}
             </VStack>
           )}
 
@@ -1576,8 +1589,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                     size="xs"
                     variant="link"
                     colorScheme="gray"
-                    onClick={() => openProofView()}
-                  >
+                    onClick={() => openProofView()}>
                     {intl.formatMessage(
                       {
                         id: 'consumer.journey.viewAllEvents',
@@ -1656,8 +1668,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                           onClick={() => toggleGroup(item.type)}
                           _hover={{ borderColor: config.color, shadow: 'md' }}
                           transition="all 0.2s"
-                          shadow={isExpanded ? 'sm' : 'none'}
-                        >
+                          shadow={isExpanded ? 'sm' : 'none'}>
                           <Box p={4}>
                             {/* Row 1: Icon + Title + Date Range + Chevron */}
                             <HStack spacing={3}>
@@ -1679,8 +1690,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                   <Badge
                                     colorScheme={config.categoryColor}
                                     fontSize="xs"
-                                    borderRadius="full"
-                                  >
+                                    borderRadius="full">
                                     {item.dateRange}
                                   </Badge>
                                 </HStack>
@@ -1722,8 +1732,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                   fontSize="xs"
                                   borderRadius="full"
                                   px={2}
-                                  py={0.5}
-                                >
+                                  py={0.5}>
                                   <HStack spacing={1}>
                                     <Icon as={MdVerified} boxSize={2.5} />
                                     <Text>
@@ -1771,8 +1780,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                             pl={{ base: 2, md: 3 }}
                             borderLeft="3px solid"
                             borderColor={config.color}
-                            align="stretch"
-                          >
+                            align="stretch">
                             {item.events.map((event, eventIndex) => {
                               const enhancedEvent = buildEnhancedEvent(event);
                               return (
@@ -1824,8 +1832,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                 colorScheme="green"
                 onClick={handleToggleShowAll}
                 rightIcon={showAll ? <FaChevronUp /> : <FaChevronDown />}
-                aria-expanded={showAll}
-              >
+                aria-expanded={showAll}>
                 {showAll
                   ? intl.formatMessage({
                       id: 'consumer.journey.showLess',

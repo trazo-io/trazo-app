@@ -58,7 +58,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   const cardBg = useColorModeValue('green.50', 'green.900');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
-  const accentColor = useColorModeValue('green.500', 'green.400');
+  const accentColor = useColorModeValue('green.700', 'green.300');
 
   // Self-graded transparency score removed from the consumer surface (2026-06 claim-safety):
   // a self-assigned "% documented / Fully Documented" verdict shown to shoppers is the
@@ -132,7 +132,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             >
               <HStack mb={2}>
                 <Icon as={FaRecycle} color="green.500" boxSize={5} />
-                <Text fontSize="md" fontWeight="bold" color="green.600">
+                <Text fontSize="md" fontWeight="bold" color="green.700">
                   {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsTitle' })}
                 </Text>
                 <Badge colorScheme="green" variant="subtle">
@@ -270,7 +270,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               to="/methodology#carbon"
               fontSize="sm"
               fontWeight="medium"
-              color="green.600"
+              color="green.700"
               _hover={{ color: 'green.500' }}
               display="inline-flex"
               alignItems="center"

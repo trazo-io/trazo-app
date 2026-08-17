@@ -46,52 +46,52 @@ const CONTAMINATION_SOURCE_OPTIONS = [
 const OTHER_FARM_ACTIVITY_TYPES = [
   {
     value: 'maintenance',
-    label: '🔧 Farm Maintenance',
+    label: 'Farm Maintenance',
     description: 'Facility repairs, cleaning, organization'
   },
   {
     value: 'planning',
-    label: '📋 Planning Activity',
+    label: 'Planning Activity',
     description: 'Crop planning, scheduling, strategy meetings'
   },
   {
     value: 'training',
-    label: '📚 Training/Education',
+    label: 'Training/Education',
     description: 'Staff training, certifications, learning'
   },
   {
     value: 'documentation',
-    label: '📝 Record Keeping',
+    label: 'Record Keeping',
     description: 'Documentation, filing, data entry'
   },
   {
     value: 'inspection',
-    label: '🔍 Inspection/Audit',
+    label: 'Inspection/Audit',
     description: 'Quality checks, audits, compliance reviews'
   },
   {
     value: 'meeting',
-    label: '👥 Team Meeting',
+    label: 'Team Meeting',
     description: 'Staff coordination, planning sessions'
   },
   {
     value: 'community',
-    label: '🤝 Community Engagement',
+    label: 'Community Engagement',
     description: 'Farm tours, community events, outreach'
   },
   {
     value: 'precision_ag',
-    label: '🛰️ Precision Agriculture',
+    label: 'Precision Agriculture',
     description: 'Drone surveys, sensor readings, GPS mapping'
   },
   {
     value: 'emergency',
-    label: '⚠️ Emergency/Storm Response',
+    label: 'Emergency/Storm Response',
     description: 'Storm cleanup, damage repair, emergency actions'
   },
   {
     value: 'other',
-    label: '📌 Other Activity',
+    label: 'Other Activity',
     description: 'Activities not covered by other categories'
   }
 ];
@@ -324,26 +324,11 @@ const GeneralTab = forwardRef(
         <form onSubmit={mainInfoSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <VStack spacing={6} align="stretch">
             {/* Sprint 2: Renamed to "Other Farm Activities" with better guidance */}
+            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. */}
             <StandardAlert
               status="info"
-              title={intl.formatMessage({
-                id: 'events.general.sections.otherFarmActivitiesTransparencyDocumentation',
-                defaultMessage: 'Other Farm Activities & Transparency Documentation'
-              })}
-            >
-              <HStack spacing={2} mb={2}>
-                <Icon as={FaClipboardList} color="blue.500" />
-                <Text fontSize="sm" fontWeight="bold">
-                  When to use this category:
-                </Text>
-              </HStack>
-              <Text fontSize="sm">
-                Use "Other Farm Activities" for activities that don't fit in specialized event types
-                like Production, Chemical Application, Soil Management, etc. Examples include:
-                administrative tasks, team meetings, farm tours, facility maintenance, record
-                keeping, and community engagement. These activities contribute to your farm's
-                transparency story.
-              </Text>
+              title={intl.formatMessage({ id: 'events.callout.general.title' })}>
+              <Text fontSize="sm">{intl.formatMessage({ id: 'events.callout.general.body' })}</Text>
             </StandardAlert>
 
             {/* Forms are hand-crafted by design: the NOP section grouping below is what
@@ -364,7 +349,6 @@ const GeneralTab = forwardRef(
                     defaultMessage: 'Other Farm Activity Information'
                   })}
                   badge="Activity Tracking"
-                  badgeColorScheme="green"
                 />
                 <VStack spacing={4} align="stretch">
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -378,8 +362,7 @@ const GeneralTab = forwardRef(
                       helpText={intl.formatMessage({
                         id: 'events.general.help.whatTypeOfFarmActivity',
                         defaultMessage: 'What type of farm activity?'
-                      })}
-                    >
+                      })}>
                       <Controller
                         name="type"
                         control={mainInfoMethods.control}
@@ -389,8 +372,7 @@ const GeneralTab = forwardRef(
                             placeholder={intl.formatMessage({
                               id: 'events.general.placeholders.selectActivityType',
                               defaultMessage: 'Select activity type...'
-                            })}
-                          >
+                            })}>
                             {OTHER_FARM_ACTIVITY_TYPES.map((type) => (
                               <option key={type.value} value={type.value}>
                                 {type.label}
@@ -411,8 +393,7 @@ const GeneralTab = forwardRef(
                       helpText={intl.formatMessage({
                         id: 'events.general.help.briefDescriptiveNameForThisActivity',
                         defaultMessage: 'Brief descriptive name for this activity'
-                      })}
-                    >
+                      })}>
                       <Controller
                         name="name"
                         control={mainInfoMethods.control}
@@ -451,8 +432,7 @@ const GeneralTab = forwardRef(
                       helpText={intl.formatMessage({
                         id: 'events.general.help.approximateTimeSpentOnThisActivity',
                         defaultMessage: 'Approximate time spent on this activity'
-                      })}
-                    >
+                      })}>
                       <Controller
                         name="duration_hours"
                         control={mainInfoMethods.control}
@@ -476,8 +456,7 @@ const GeneralTab = forwardRef(
                       helpText={intl.formatMessage({
                         id: 'events.general.help.numberOfPeopleWhoParticipated',
                         defaultMessage: 'Number of people who participated'
-                      })}
-                    >
+                      })}>
                       <Controller
                         name="participants"
                         control={mainInfoMethods.control}
@@ -500,7 +479,6 @@ const GeneralTab = forwardRef(
                     defaultMessage: "Farmer's Field Notes & Consumer Transparency"
                   })}
                   badge="Consumer Transparency"
-                  badgeColorScheme="green"
                 />
                 <StandardField
                   label={intl.formatMessage({
@@ -512,8 +490,7 @@ const GeneralTab = forwardRef(
                     id: 'events.general.help.shareDetailsAboutThisActivityThatHelpConsume',
                     defaultMessage:
                       'Share details about this activity that help consumers understand your farming operations'
-                  })}
-                >
+                  })}>
                   <Controller
                     name="observation"
                     control={mainInfoMethods.control}
@@ -561,8 +538,7 @@ const GeneralTab = forwardRef(
                     bg="orange.50"
                     borderRadius="md"
                     border="1px solid"
-                    borderColor="orange.200"
-                  >
+                    borderColor="orange.200">
                     <Box>
                       <HStack spacing={2} mb={1}>
                         <Icon as={FaExclamationTriangle} color="orange.500" />
@@ -602,8 +578,7 @@ const GeneralTab = forwardRef(
                           helpText={intl.formatMessage({
                             id: 'events.general.help.originOfTheProhibitedSubstanceContact',
                             defaultMessage: 'Origin of the prohibited-substance contact'
-                          })}
-                        >
+                          })}>
                           <Controller
                             name="contamination_source"
                             control={mainInfoMethods.control}
@@ -613,8 +588,7 @@ const GeneralTab = forwardRef(
                                 placeholder={intl.formatMessage({
                                   id: 'events.general.placeholders.selectSource',
                                   defaultMessage: 'Select source...'
-                                })}
-                              >
+                                })}>
                                 {CONTAMINATION_SOURCE_OPTIONS.map((opt) => (
                                   <option key={opt.value} value={opt.value}>
                                     {opt.label}
@@ -634,8 +608,7 @@ const GeneralTab = forwardRef(
                           helpText={intl.formatMessage({
                             id: 'events.general.help.approximateAcreageImpacted',
                             defaultMessage: 'Approximate acreage impacted'
-                          })}
-                        >
+                          })}>
                           <Controller
                             name="contamination_affected_area"
                             control={mainInfoMethods.control}
@@ -662,8 +635,7 @@ const GeneralTab = forwardRef(
                           id: 'events.general.help.documentWhatWasDoneToRemediateBufferQuaranti',
                           defaultMessage:
                             'Document what was done to remediate (buffer, quarantine, sampling, etc.)'
-                        })}
-                      >
+                        })}>
                         <Controller
                           name="corrective_action_taken"
                           control={mainInfoMethods.control}
@@ -691,8 +663,7 @@ const GeneralTab = forwardRef(
                           helpText={intl.formatMessage({
                             id: 'events.general.help.dateTheCorrectiveActionWasCompleted',
                             defaultMessage: 'Date the corrective action was completed'
-                          })}
-                        >
+                          })}>
                           <Controller
                             name="corrective_action_date"
                             control={mainInfoMethods.control}
@@ -707,8 +678,7 @@ const GeneralTab = forwardRef(
                         bg="blue.50"
                         borderRadius="md"
                         border="1px solid"
-                        borderColor="blue.200"
-                      >
+                        borderColor="blue.200">
                         <Box>
                           <Text fontSize="sm" fontWeight="bold">
                             Certifier Notified?
@@ -742,8 +712,7 @@ const GeneralTab = forwardRef(
                             helpText={intl.formatMessage({
                               id: 'events.general.help.dateTheCertifierWasNotified',
                               defaultMessage: 'Date the certifier was notified'
-                            })}
-                          >
+                            })}>
                             <Controller
                               name="certifier_notification_date"
                               control={mainInfoMethods.control}
@@ -774,16 +743,14 @@ const GeneralTab = forwardRef(
                     variant="outline"
                     onClick={onPrev}
                     leftIcon={<FaChevronLeft />}
-                    size="lg"
-                  >
+                    size="lg">
                     {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
                   </StandardButton>
                   <StandardButton
                     variant="primary"
                     type="submit"
                     rightIcon={<FaChevronRight />}
-                    size="lg"
-                  >
+                    size="lg">
                     {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                   </StandardButton>
                 </HStack>

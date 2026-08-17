@@ -28,8 +28,10 @@ export default function Footer() {
         textAlign={{ base: 'center', xl: 'start' }}
         fontSize="sm"
       >
-        &copy; {new Date().getFullYear()} Trazo&trade;. Agricultural Transparency
-        Platform.
+        {/* Was the hardcoded English "Agricultural Transparency Platform." — pre-pivot
+            positioning (the product is organic recordkeeping since the October realign), and it
+            rendered untranslated on every dashboard page beside four translated links. */}
+        {intl.formatMessage({ id: 'app.footerCopyright' }, { year: new Date().getFullYear() })}
       </Text>
       <Flex
         gap={{ base: '16px', md: '32px' }}

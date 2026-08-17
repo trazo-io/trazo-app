@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 import { SearchIcon, CloseIcon } from '@chakra-ui/icons';
 import { FaBuilding, FaMap, FaArrowRight, FaLeaf } from 'react-icons/fa';
-import { StandardInput } from 'components/Design/StandardComponents';
+import { StandardInput, StandardSearchInput } from 'components/Design/StandardComponents';
 import { useGlobalSearch } from 'hooks/useGlobalSearch';
 import { useNavigate } from 'react-router-dom';
 
@@ -82,10 +82,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
   const modalSize = useBreakpointValue({ base: 'full', xl: 'xl' });
 
   // Color scheme
-  const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const hoverBorderColor = useColorModeValue('green.400', 'green.300');
-  const focusBorderColor = useColorModeValue('green.500', 'green.400');
   const modalBg = useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(26, 32, 44, 0.95)');
   const overlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.500');
 
@@ -216,55 +213,19 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
           flex="1"
           maxW={{ md: 'none', lg: 'none', xl: '320px' }}
         >
-          <InputGroup>
-            <InputLeftElement
-              pointerEvents="none"
-              h="44px"
-              w="44px"
-              children={<SearchIcon color="gray.500" boxSize={4} />}
-            />
-            <StandardInput
-              ref={inputRef}
-              placeholder="Search"
-              value=""
-              onFocus={handleInputFocus}
-              onClick={handleInputFocus}
-              readOnly
-              cursor="pointer"
-              bg={bgColor}
-              borderColor={borderColor}
-              _hover={{
-                borderColor: hoverBorderColor,
-                boxShadow: '0 0 0 1px ' + hoverBorderColor
-              }}
-              _focus={{
-                borderColor: focusBorderColor,
-                boxShadow: '0 0 0 2px rgba(72, 187, 120, 0.2)'
-              }}
-              h="44px"
-              fontSize="sm"
-              borderRadius="xl"
-              pl="44px"
-              pr={{ md: '80px' }}
-              w="full"
-              transition="all 0.2s ease"
-            />
-            {/* Subtle keyboard shortcut hint - Desktop only */}
-            <Text
-              position="absolute"
-              right="12px"
-              top="50%"
-              transform="translateY(-50%)"
-              pointerEvents="none"
-              display={{ base: 'none', xl: 'block' }}
-              fontSize="xs"
-              color="gray.400"
-              fontFamily="mono"
-              letterSpacing="0.5px"
-            >
-              {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
-            </Text>
-          </InputGroup>
+          {/* This input's shape IS the app's search shape — it now comes from
+              StandardSearchInput so a page that needs a search field cannot quietly ship a
+              different one (Activities had a bare Input with no icon and another height). */}
+          <StandardSearchInput
+            ref={inputRef}
+            placeholder="Search"
+            value=""
+            onFocus={handleInputFocus}
+            onClick={handleInputFocus}
+            readOnly
+            cursor="pointer"
+            rightHint={navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
+          />
         </Box>
       )}
 

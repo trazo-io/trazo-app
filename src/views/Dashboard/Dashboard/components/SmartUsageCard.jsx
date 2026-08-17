@@ -30,11 +30,7 @@ import {
 } from '@chakra-ui/react';
 
 import { BsShield, BsLightning } from 'react-icons/bs';
-import {
-  FaChartLine,
-  FaCrown,
-  FaLeaf
-} from 'react-icons/fa';
+import { FaChartLine, FaCrown, FaLeaf } from 'react-icons/fa';
 import { MdTrendingUp } from 'react-icons/md';
 import Card from 'components/Card/Card';
 import React from 'react';
@@ -69,9 +65,9 @@ const SmartUsageCard = ({
   const cardBg = useColorModeValue('white', 'gray.700');
   const textColor = useColorModeValue('gray.700', 'white');
   const subtitleColor = useColorModeValue('gray.500', 'gray.300');
-  const accentColor = useColorModeValue('green.500', 'green.400');
-  const successColor = useColorModeValue('green.500', 'green.400');
-  const premiumColor = useColorModeValue('green.600', 'green.500');
+  const accentColor = useColorModeValue('green.700', 'green.300');
+  const successColor = useColorModeValue('green.700', 'green.300');
+  const premiumColor = useColorModeValue('green.700', 'green.400');
   const gradientBg = useColorModeValue(
     'linear(to-r, green.50, blue.50)',
     'linear(to-r, green.900, blue.900)'
@@ -180,8 +176,10 @@ const SmartUsageCard = ({
   // the same verdict as a number — all three measure the farm against a baseline Trazo authored,
   // which is the artefact an organic watchdog treats as a self-created sustainability label.
   //
-  // Farm home now reports counts. The score keeps one home, on the transparency page, where a
-  // farmer goes deliberately to see what is missing.
+  // Farm home now reports counts. This note used to end "the score keeps one home, on the
+  // transparency page" — that page was never actually routed, so the one home never existed. On
+  // 2026-08-11 the last producer-facing score (the parcel card's "avg score" and per-season "%")
+  // was retired too, and the transparency page was deleted. The score is now backend-only.
   //
   // Precisely what remains: `metrics.transparency_tier` is no longer read at all.
   // `metrics.transparency_score` IS still read — but only inside `getSmartInsights()` above, as a
@@ -296,7 +294,13 @@ const SmartUsageCard = ({
                 {qrScanGrowth > 0 && (
                   <HStack spacing={1} justify="center">
                     <Icon as={MdTrendingUp} w={2.5} h={2.5} />
-                    <Text>{Math.round(qrScanGrowth)}%</Text>
+                    {/* A bare green "92%" read as a score. Name the fact. */}
+                    <Text>
+                      {intl.formatMessage(
+                        { id: 'dashboard.scanGrowth' },
+                        { percent: Math.round(qrScanGrowth) }
+                      )}
+                    </Text>
                   </HStack>
                 )}
               </StatHelpText>
@@ -306,9 +310,10 @@ const SmartUsageCard = ({
           {/* Finished seasons — a COUNT, not a score.
               This tile used to show the transparency percentage, which made farm home render
               the same number five times (here, three ways inside TransparencySummaryCard, and
-              its progress bar). The score now lives only on
-              /admin/dashboard/farm/:farmId/transparency. `scored_productions` is the honest
-              fact underneath it: how many seasons have been closed out and published. */}
+              its progress bar). `scored_productions` is the honest fact underneath it: how many
+              seasons have been closed out and published. (This note used to add "the score now
+              lives only on /admin/dashboard/farm/:farmId/transparency" — that page was never
+              routed and was deleted 2026-08-11; the score has no producer surface at all.) */}
           <Tooltip label={intl.formatMessage({ id: 'dashboard.tooltipFinishedSeasons' })} hasArrow>
             <Stat textAlign="center" bg={statBg} p={1} borderRadius="md">
               <StatLabel fontSize="xs" color={subtitleColor}>
@@ -352,7 +357,10 @@ const SmartUsageCard = ({
                 <HStack spacing={1} justify="center">
                   <Icon as={FaLeaf} color={accentColor} w={2.5} h={2.5} />
                   <Text color={subtitleColor}>
-                    {intl.formatMessage({ id: 'dashboard.acrossProductions' }, { count: totalProductions })}
+                    {intl.formatMessage(
+                      { id: 'dashboard.acrossProductions' },
+                      { count: totalProductions }
+                    )}
                   </Text>
                 </HStack>
               </StatHelpText>
@@ -384,12 +392,15 @@ const SmartUsageCard = ({
                     placement="top"
                   >
                     <Text fontSize="sm" fontWeight="700" color={textColor} cursor="help">
-                      {monthlyQRScans.toLocaleString()} {intl.formatMessage({ id: 'dashboard.qrScans' })}
+                      {monthlyQRScans.toLocaleString()}{' '}
+                      {intl.formatMessage({ id: 'dashboard.qrScans' })}
                     </Text>
                   </Tooltip>
-                  <Text fontSize="xs" color={subtitleColor}>
-                    {marketReach} {intl.formatMessage({ id: 'dashboard.uniqueConsumers' })}
-                  </Text>
+                  {/* The "{marketReach} unique visitor(s)" line that stood here printed the SAME
+                      number as the stat above it under a second name — the card said "Consumer
+                      Reach 1" and "1 unique visitor" in one viewport, both `metrics.consumer_reach`.
+                      One fact, one place: the stat above is now labelled "Unique visitors" and this
+                      row carries only the scan count, which is a genuinely different number. */}
                 </HStack>
               </Box>
             </HStack>

@@ -235,8 +235,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
                 '70%': { transform: 'scale(1.05)', boxShadow: '0 0 0 10px rgba(72, 187, 120, 0)' },
                 '100%': { transform: 'scale(1)', boxShadow: '0 0 0 0 rgba(72, 187, 120, 0)' }
               }
-            }}
-          >
+            }}>
             <Icon as={FiCheck} color="white" boxSize={10} />
           </Box>
           <VStack spacing={4}>
@@ -274,7 +273,13 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
   // Render manual code entry
   return (
     <Flex minH="calc(100vh - 80px)" align="center" justify="center" bg="gray.50" px={4}>
-      <Box maxW={{ base: '100%', md: '400px' }} w="full" bg="white" borderRadius="xl" boxShadow="lg" p={{ base: 5, md: 8 }}>
+      <Box
+        maxW={{ base: '100%', md: '400px' }}
+        w="full"
+        bg="white"
+        borderRadius="xl"
+        boxShadow="lg"
+        p={{ base: 5, md: 8 }}>
         <VStack spacing={6} textAlign="center">
           {/* Header */}
           <Box
@@ -284,8 +289,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
             borderRadius="full"
             display="flex"
             alignItems="center"
-            justifyContent="center"
-          >
+            justifyContent="center">
             <Icon as={step === 'error' ? FiAlertCircle : FiMail} color="white" boxSize={8} />
           </Box>
 
@@ -301,8 +305,8 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
                 : `We sent a verification code to ${email}. Enter the 6-digit code below.`}
             </Text>
             {isCompanyJoin && step !== 'error' && (
-              <Text fontSize="xs" color="green.600" textAlign="center" mt={2} px={4}>
-                🎉 After verification, you'll have immediate access to your team's dashboard and
+              <Text fontSize="xs" color="green.700" textAlign="center" mt={2} px={4}>
+                After verification, you'll have immediate access to your team's dashboard and
                 projects.
               </Text>
             )}
@@ -319,8 +323,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
                   onComplete={handleCodeSubmit}
                   placeholder="_"
                   focusBorderColor={primaryColor}
-                  errorBorderColor="red.300"
-                >
+                  errorBorderColor="red.300">
                   {[...Array(6)].map((_, index) => (
                     <PinInputField
                       key={index}
@@ -359,8 +362,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
                   transform: 'translateY(-1px)',
                   boxShadow: 'lg'
                 }}
-                _active={{ transform: 'translateY(0)' }}
-              >
+                _active={{ transform: 'translateY(0)' }}>
                 Verify Email
               </Button>
             </VStack>
@@ -381,8 +383,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
               isLoading={isResending}
               loadingText="Sending..."
               onClick={handleResendEmail}
-              leftIcon={<Icon as={FiRefreshCw} />}
-            >
+              leftIcon={<Icon as={FiRefreshCw} />}>
               {canResend ? 'Resend code' : `Resend in ${resendCooldown}s`}
             </Button>
           </VStack>
@@ -393,8 +394,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
             fontSize="sm"
             fontWeight="500"
             onClick={() => navigate('/auth/signin')}
-            _hover={{ color: primaryColor }}
-          >
+            _hover={{ color: primaryColor }}>
             Back to Sign In
           </Link>
         </VStack>

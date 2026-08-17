@@ -54,17 +54,48 @@ const CardWithImage = ({
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const textColor = useColorModeValue('gray.700', 'white');
+  const mutedColor = useColorModeValue('gray.500', 'gray.400');
+
+  /**
+   * `description`, `city`, `state` and `zone` were declared, passed in by every call site, and
+   * rendered NOWHERE — the farm-profile card printed its title, its name and a Read more link
+   * over a blank 45% column (found 2026-08-15 while re-shooting the landing screenshot). The
+   * props were already the contract; this only honours them.
+   */
+  const location = [city, zone, state].filter(Boolean).join(', ');
+
+  const identity = (
+    <>
+      {location && (
+        <Text fontSize="sm" color={mutedColor} fontWeight="400" mt={1}>
+          {location}
+        </Text>
+      )}
+      {description && (
+        <Text fontSize="sm" color={mutedColor} lineHeight="1.6" mt={3} noOfLines={4}>
+          {description}
+        </Text>
+      )}
+    </>
+  );
 
   return (
     <Card
       minH={{ base: '220px', sm: '240px', md: '270px', lg: '290px' }}
-      height={fillHeight ? '100%' : { base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }}
-      maxHeight={fillHeight ? 'none' : { base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }}
+      height={
+        fillHeight
+          ? '100%'
+          : { base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }
+      }
+      maxHeight={
+        fillHeight
+          ? 'none'
+          : { base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }
+      }
       p="0"
       overflow="hidden"
       className="trazo-card"
-      {...rest}
-    >
+      {...rest}>
       {/* Mobile: Clean text-only layout */}
       <Flex display={{ base: 'flex', xl: 'none' }} direction="column" h="100%" w="100%">
         <Flex direction="column" p="16px" flex="1">
@@ -76,6 +107,7 @@ const CardWithImage = ({
             <Text fontSize="sm" color="gray.500" fontWeight="400">
               {name}
             </Text>
+            {identity}
           </Box>
 
           <Spacer />
@@ -86,16 +118,14 @@ const CardWithImage = ({
               p="0px"
               variant="no-hover"
               bg="transparent"
-              onClick={() => navigate(readMoreLink)}
-            >
+              onClick={() => navigate(readMoreLink)}>
               <Text
                 fontSize="sm"
                 color={textColor}
                 fontWeight="bold"
                 cursor="pointer"
                 transition="all .5s ease"
-                _hover={{ me: '4px' }}
-              >
+                _hover={{ me: '4px' }}>
                 {intl.formatMessage({ id: 'app.readMore' })}
               </Text>
               <Icon
@@ -124,6 +154,7 @@ const CardWithImage = ({
             <Text fontSize="sm" color="gray.500" fontWeight="400">
               {name}
             </Text>
+            {identity}
           </Box>
           <Spacer />
           <Flex align="center">
@@ -131,16 +162,14 @@ const CardWithImage = ({
               p="0px"
               variant="no-hover"
               bg="transparent"
-              onClick={() => navigate(readMoreLink)}
-            >
+              onClick={() => navigate(readMoreLink)}>
               <Text
                 fontSize="sm"
                 color={textColor}
                 fontWeight="bold"
                 cursor="pointer"
                 transition="all .5s ease"
-                _hover={{ me: '4px' }}
-              >
+                _hover={{ me: '4px' }}>
                 {intl.formatMessage({ id: 'app.readMore' })}
               </Text>
               <Icon
@@ -170,8 +199,7 @@ const CardWithImage = ({
                 width="100%"
                 height="100%"
                 opacity={imageLoaded ? 1 : 0}
-                transition="opacity 0.3s ease-in-out"
-              >
+                transition="opacity 0.3s ease-in-out">
                 {React.cloneElement(image as React.ReactElement, {
                   onLoad: () => setImageLoaded(true)
                 })}

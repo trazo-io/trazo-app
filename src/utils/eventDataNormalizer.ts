@@ -22,6 +22,23 @@ import {
 } from '../types/standardizedEvents';
 import { getFieldMapping, getStandardizedFieldName } from './eventFieldMapping';
 import { getConsumerEventDescription } from './eventDescriptions';
+import { productionEventRegistry } from 'src/config/events/productionEvent';
+
+/**
+ * Keys the production normalizer OWNS: it rewrites, renames or re-labels them rather than
+ * copying them through. The registry-driven carry-over must leave these alone, or it would
+ * restore the raw value on top of the normalized one.
+ */
+const NORMALIZER_OWNED_KEYS: ReadonlySet<string> = new Set([
+  'name', // -> production_name
+  'type', // -> production_type
+  'method',
+  'harvest_method',
+  'equipment_type',
+  'equipment_operation_type',
+  'observation',
+  'description'
+]);
 
 /**
  * Convert technical fuel type codes to display names
@@ -839,6 +856,23 @@ function normalizeProductionEventData(
     if (rawData.seed_treatment) {
       (productionData as any).seed_treatment = rawData.seed_treatment;
     }
+    // Perennial planting stock (PL/TR) — 2026-08-15.
+    //
+    // This block is a hand-written copy list, so a new column is invisible to every consumer
+    // of the normalized event until it is named here. `rootstock` rendered on the consumer
+    // card before this line existed ONLY because it also rides `extra_data` (it was an
+    // extra_data key for months before it had a column); `plants_established` and
+    // `plant_spacing` have no such twin and were silently dropped between the API payload and
+    // the card. Registry green + serializer green still equals nothing rendered.
+    if (rawData.rootstock) {
+      (productionData as any).rootstock = rawData.rootstock;
+    }
+    if (rawData.plants_established !== undefined && rawData.plants_established !== null) {
+      (productionData as any).plants_established = rawData.plants_established;
+    }
+    if (rawData.plant_spacing) {
+      (productionData as any).plant_spacing = rawData.plant_spacing;
+    }
     if (rawData.water_source) {
       (productionData as any).water_source = rawData.water_source;
     }
@@ -1299,6 +1333,53 @@ function normalizeProductionEventData(
         (productionData as any).operation_efficiency = rawData.operation_efficiency;
       }
     }
+  }
+
+  // 🔴 2026-08-15 — carry over every field the EVENT REGISTRY declares for this event.
+
+  //
+
+  // `productionData` starts as {} and is filled by the hand-written copy list above, so a
+
+  // column that nobody remembered to name here is silently dropped between the API payload
+
+  // and every consumer of the normalized event. Measured on the live consumer card: the
+
+  // payload carried `plants_established: 28` and `seed_certification_status:
+
+  // "certified_organic"`, the registry declared both on the consumer_card surface, and
+
+  // NEITHER reached the card — while `rootstock` did, purely because it also happens to sit
+
+  // in `extra_data`, which the resolver falls back to. Registry green + serializer green
+
+  // still equalled nothing rendered.
+
+  //
+
+  // Driving this off the registry rather than adding three more lines closes the class: a
+
+  // field declared on a display surface is, by definition, one this normalizer must not eat.
+
+  // Explicit copies above still win — this only fills what they left behind.
+
+  for (const field of productionEventRegistry.fields) {
+    // Never touch a key this normalizer deliberately TRANSFORMS rather than copies. The
+    // registry names the raw column; the normalizer may have rewritten it into a display form
+    // ("150" + unit -> "150 L"), renamed it (`name` -> `production_name`) or mapped a code to
+    // a label ("FC" -> "Fuel Consumption"). Copying the raw value back over that would quietly
+    // undo the normalization the rest of the app depends on.
+    if (NORMALIZER_OWNED_KEYS.has(field.name)) continue;
+
+    const key = field.name as keyof typeof productionData;
+
+    if ((productionData as Record<string, unknown>)[key as string] !== undefined) continue;
+
+    const value = (rawData as Record<string, unknown>)[field.name];
+
+    if (value === undefined || value === null || value === '') continue;
+
+    (productionData as Record<string, unknown>)[field.name] = value;
   }
 
   return productionData;

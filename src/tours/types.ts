@@ -117,6 +117,8 @@ export interface TourStoreState {
   startTour: (tourId: string) => void;
   completeTour: (tourId: string, version: number) => void;
   skipTour: (tourId: string) => void;
+  /** Clear the active tour without marking it completed or skipped (no target was renderable). */
+  endTour: () => void;
   setStepIndex: (index: number) => void;
   dismissChecklist: () => void;
   celebrateMilestone: (milestoneId: string) => void;

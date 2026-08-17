@@ -283,7 +283,7 @@ const WEATHER_FIELDS: readonly FieldConfig<unknown, WeatherData>[] = [
     // and agronomically meaningful for production/soil/pest work; a weather observation, a
     // business transaction and a general note are not block-scoped in the same way.
     surfaces: { modal: 'details' }
-  },
+  }
 ];
 
 export const weatherEventRegistry: EventRegistryEntry<WeatherSubtype, WeatherData> = {

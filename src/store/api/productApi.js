@@ -55,6 +55,11 @@ export const productApi = baseApi.injectEndpoints({
           'treated_lumber_present',
           parcelData.treated_lumber_present ? 'true' : 'false'
         );
+        if (parcelData.container_production !== undefined)
+          formData.append(
+            'container_production',
+            parcelData.container_production ? 'true' : 'false'
+          );
         if (parcelData.treated_lumber_description)
           formData.append('treated_lumber_description', parcelData.treated_lumber_description);
         if (parcelData.treated_lumber_install_date)
@@ -149,22 +154,15 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('certified', parcelData.certified || false);
         formData.append('polygon', JSON.stringify(parcelData.polygon || []));
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
-        if (parcelData.buffer_zones && parcelData.buffer_zones.length > 0) {
-          formData.append('buffer_zones', JSON.stringify(parcelData.buffer_zones));
-        }
-        if (parcelData.apn) formData.append('apn', parcelData.apn);
-        if (parcelData.section_township_range)
-          formData.append('section_township_range', parcelData.section_township_range);
-        if (parcelData.date_began_managing)
-          formData.append('date_began_managing', parcelData.date_began_managing);
-        formData.append(
-          'treated_lumber_present',
-          parcelData.treated_lumber_present ? 'true' : 'false'
-        );
-        if (parcelData.treated_lumber_description)
-          formData.append('treated_lumber_description', parcelData.treated_lumber_description);
-        if (parcelData.treated_lumber_install_date)
-          formData.append('treated_lumber_install_date', parcelData.treated_lumber_install_date);
+        // §205.202 facts (buffer_zones, apn, section_township_range,
+        // date_began_managing, treated_lumber_*, container_production) are
+        // DELIBERATELY not sent on update. The Parcel Application wizard is
+        // their single editor (PUT …/application/). This mutation used to
+        // re-send them from the edit form's stale copy — including an
+        // UNCONDITIONAL treated_lumber_present default of 'false' and a
+        // buffer filter upstream that deleted wizard rows without an
+        // adjoining-land use — the same clobber class as the 2026-08-09
+        // ParcelComplianceCard incident.
 
         // ✅ Contact & Identification Fields - Send ALL fields
         if (parcelData.soil_type) {
@@ -251,26 +249,17 @@ export const productApi = baseApi.injectEndpoints({
     // map geometry + contacts. The viewset's partial_update (partial=True) only touches
     // the fields present here, so nothing else is disturbed.
     updateParcelCompliance: build.mutation({
+      // PUMP-PLANT FIELDS ONLY. This mutation used to always-send buffer_zones/apn/
+      // treated-lumber "so they could be cleared" — which meant any pump-test save
+      // REPLACED the § 205.202 facts with this card's stale copy (the 2026-08-09
+      // buffer data-loss class). Those facts are owned by the Parcel Application
+      // wizard now; this mutation must never carry them again.
       query: ({ companyId, farmId, parcelId, compliance }) => {
         const fd = new FormData();
-        // Always send buffer_zones + treated_lumber_present so they can be cleared/toggled.
-        fd.append('buffer_zones', JSON.stringify(compliance.buffer_zones || []));
-        fd.append('treated_lumber_present', compliance.treated_lumber_present ? 'true' : 'false');
-        // CharFields (blank=True) — send even when empty so a cleared value persists.
-        fd.append('apn', compliance.apn ?? '');
-        fd.append('section_township_range', compliance.section_township_range ?? '');
-        fd.append('treated_lumber_description', compliance.treated_lumber_description ?? '');
-        // DateFields — omit when empty (DRF rejects "" for a date).
-        if (compliance.date_began_managing) {
-          fd.append('date_began_managing', compliance.date_began_managing);
-        }
-        if (compliance.treated_lumber_install_date) {
-          fd.append('treated_lumber_install_date', compliance.treated_lumber_install_date);
-        }
-        // §E-6 pumping plant. Sent even when empty — unlike the dates above, the serializer
-        // coerces "" -> None for these (CreateParcelSerializer._BLANKABLE_PUMP_FIELDS), so a
-        // stale pump test can actually be CLEARED. An out-of-date efficiency is weaker
-        // evidence than none, so clearing has to be possible.
+        // §E-6 pumping plant. Sent even when empty — the serializer coerces "" -> None
+        // for these (CreateParcelSerializer._BLANKABLE_PUMP_FIELDS), so a stale pump
+        // test can actually be CLEARED. An out-of-date efficiency is weaker evidence
+        // than none, so clearing has to be possible.
         fd.append('pump_efficiency_pct', compliance.pump_efficiency_pct ?? '');
         fd.append('system_pressure_psi', compliance.system_pressure_psi ?? '');
         fd.append('pump_test_date', compliance.pump_test_date ?? '');

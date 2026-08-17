@@ -89,6 +89,7 @@ export const useGetEstablishmentProductReputationQuery = useGetFarmProductReputa
 /** @deprecated Use useGetFarmLastReviewsQuery instead */
 export const useGetEstablishmentLastReviewsQuery = useGetFarmLastReviewsQuery;
 /** @deprecated Use useGetFarmProductReputationPercentageQuery instead */
-export const useGetEstablishmentProductReputationPercentageQuery = useGetFarmProductReputationPercentageQuery;
+export const useGetEstablishmentProductReputationPercentageQuery =
+  useGetFarmProductReputationPercentageQuery;
 /** @deprecated Use useGetFarmReviewsPaginatedQuery instead */
 export const useGetEstablishmentReviewsPaginatedQuery = useGetFarmReviewsPaginatedQuery;

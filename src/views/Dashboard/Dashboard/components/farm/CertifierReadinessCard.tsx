@@ -18,12 +18,17 @@
  *
  * Why this leads the dashboard rather than the transparency score: the score is Trazo's own
  * completeness metric, measured against a baseline Trazo authored, with no external deadline
- * and no audience outside its own page. An outstanding § 205.406 filing has both. As of
- * 2026-08-04 the score is not on the farm dashboard at all; it lives at
- * /admin/dashboard/farm/:farmId/transparency.
+ * and no audience outside its own page. An outstanding § 205.406 filing has both. The score came
+ * off the farm dashboard 2026-08-04 and off every remaining producer surface 2026-08-11 — the
+ * "/admin/dashboard/farm/:farmId/transparency" page this note used to point at was never routed
+ * and has been deleted. The score is backend-only now.
  *
  * Deliberately NOT a compliance verdict — every string says what is missing from the RECORD.
  * The certifying agent decides compliance; wording here must never imply Trazo does.
+ *
+ * `compact` HAS NO CALL SITES as of 2026-08-11. Its only consumer was the transparency page,
+ * deleted that day. The branch is left in place rather than ripped out mid-sweep — if nothing
+ * adopts it, delete it and the `compact` prop together.
  *
  * `compact` (added 2026-08-04, for the /transparency page reframe): header + count + the single
  * highest-priority open item + a link back to this same card on farm home. Deliberately does NOT
@@ -48,7 +53,12 @@ import {
   VStack,
   useColorModeValue
 } from '@chakra-ui/react';
-import { FaClipboardCheck, FaExclamationCircle, FaInfoCircle } from 'react-icons/fa';
+import {
+  FaClipboardCheck,
+  FaClipboardList,
+  FaExclamationCircle,
+  FaInfoCircle
+} from 'react-icons/fa';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import {
@@ -59,12 +69,39 @@ import { useGetOperationReadinessQuery, type ReadinessItem } from 'store/api/cer
 
 const MAX_VISIBLE_FINDINGS = 5;
 
-/** FAIL = a required record appears missing; REVIEW = present but needs attention. */
+/**
+ * FAIL = a required record appears missing; REVIEW = present but needs attention.
+ *
+ * `badgeVariant`, not `colorScheme`. `theme/components/badge.js` gives Badge a `defaultProps.variant`
+ * of `brand` and every variant there hardcodes its own colours, so `colorScheme` is inert — a
+ * `<Badge colorScheme="red" variant="subtle">` computed to green.800 on green.100 and shipped the
+ * word "Missing" in the SUCCESS palette, next to a red icon and a red rule, on the farm home
+ * headline. The theme file says so in its own header; this card read past it. Verified by computed
+ * style, per the house rule that a Chakra prop's presence proves nothing about the pixels.
+ */
 function statusStyle(status: CertifierReadinessFinding['status']) {
   return status === 'FAIL'
-    ? { colorScheme: 'red', icon: FaExclamationCircle, iconColor: 'red.500' }
-    : { colorScheme: 'orange', icon: FaInfoCircle, iconColor: 'orange.400' };
+    ? {
+        badgeVariant: 'danger',
+        accent: 'red',
+        icon: FaExclamationCircle,
+        iconColor: 'red.500'
+      }
+    : {
+        badgeVariant: 'warning',
+        accent: 'orange',
+        icon: FaInfoCircle,
+        iconColor: 'orange.400'
+      };
 }
+
+/** Editor that clears each operation-readiness finding, by finding key. */
+const FINDING_ROUTES: Record<string, (farmId: string | number) => string> = {
+  ofpp: (farmId) => `/admin/dashboard/farm/${farmId}/profile`,
+  osp: (farmId) => `/admin/dashboard/farm/${farmId}/osp`,
+  attestation_support: (farmId) => `/admin/dashboard/farm/${farmId}/osp`,
+  records: (farmId) => `/admin/dashboard/farm/${farmId}`
+};
 
 export default function CertifierReadinessCard({
   companyId,
@@ -77,7 +114,8 @@ export default function CertifierReadinessCard({
   compact?: boolean;
 }) {
   const intl = useIntl();
-  const titleColor = useColorModeValue('green.600', 'green.400');
+  const titleColor = useColorModeValue('green.700', 'green.400');
+  const headingNeutral = useColorModeValue('gray.700', 'gray.200');
   const textColor = useColorModeValue('gray.700', 'gray.300');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
   const rowBg = useColorModeValue('gray.50', 'gray.700');
@@ -98,8 +136,9 @@ export default function CertifierReadinessCard({
     { skip: !companyId || !farmId }
   );
 
-  const operationItems: ReadinessItem[] =
-    operation?.applicable ? [...operation.blockers, ...operation.warnings] : [];
+  const operationItems: ReadinessItem[] = operation?.applicable
+    ? [...operation.blockers, ...operation.warnings]
+    : [];
   const hasOperationBlockers = Boolean(operation?.applicable && operation.blockers.length > 0);
 
   // Same rule as ConsumerEngagementRoiCard: the dashboard must not break if this endpoint fails —
@@ -153,7 +192,7 @@ export default function CertifierReadinessCard({
           <HStack spacing={3} align="start" w="100%">
             <Icon as={FaClipboardCheck} color={titleColor} boxSize={5} mt={1} />
             <VStack align="start" spacing={0}>
-              <Heading as="h3" size="sm" color={titleColor}>
+              <Heading as="h3" size="sm" fontWeight="600" color={titleColor}>
                 {intl.formatMessage({ id: 'certifierReadiness.title' })}
               </Heading>
               <Text fontSize="sm" color={mutedColor}>
@@ -190,10 +229,28 @@ export default function CertifierReadinessCard({
         <CardBody>
           <VStack align="stretch" spacing={3} w="100%">
             <HStack spacing={3} align="start">
-              <Icon as={FaClipboardCheck} color={titleColor} boxSize={5} mt={1} />
+              <Icon
+                as={totalOpen ? FaClipboardList : FaClipboardCheck}
+                color={totalOpen ? mutedColor : titleColor}
+                boxSize={5}
+                mt={1}
+              />
               <VStack align="start" spacing={0} flex={1}>
-                <Heading as="h3" size="sm" color={titleColor}>
-                  {intl.formatMessage({ id: 'certifierReadiness.title' })}
+                {/* Peers announce themselves identically: same element (`Heading as="h3"`), same
+                  size (`sm` = 16px) as the deadlines card above and CarbonSummaryCard below.
+                  NOT StandardCard's `{ base: 'sm', md: 'md' }` — 20px made the card titles the
+                  biggest text on a dashboard that has no page H1 for them to sit under.
+                  `fontWeight="600"` overrides Chakra `Heading`'s default 700, which tied these
+                  titles with the farm-name chip and read heavy against the 14px/600 item titles
+                  below them. All three cards in this column now agree on 16px/600. */}
+                <Heading
+                  as="h3"
+                  size="sm"
+                  fontWeight="600"
+                  color={totalOpen ? headingNeutral : titleColor}>
+                  {intl.formatMessage({
+                    id: totalOpen ? 'certifierReadiness.titleOpen' : 'certifierReadiness.title'
+                  })}
                 </Heading>
               </VStack>
               <Text fontSize="xl" fontWeight="bold" color={totalOpen ? 'orange.500' : titleColor}>
@@ -209,8 +266,7 @@ export default function CertifierReadinessCard({
                 borderLeft="4px solid"
                 borderLeftColor={topIsUrgent ? 'red.400' : 'orange.400'}
                 borderRadius="md"
-                p={3}
-              >
+                p={3}>
                 <HStack spacing={2} align="start">
                   <Icon
                     as={topIsUrgent ? FaExclamationCircle : FaInfoCircle}
@@ -235,8 +291,7 @@ export default function CertifierReadinessCard({
               to={`/admin/dashboard/farm/${farmId}`}
               fontSize="xs"
               fontWeight="semibold"
-              color={titleColor}
-            >
+              color={titleColor}>
               {intl.formatMessage({
                 id:
                   totalOpen > 1
@@ -254,11 +309,27 @@ export default function CertifierReadinessCard({
     <Card>
       <CardBody>
         <VStack align="stretch" spacing={4} w="100%">
+          {/* The heading is a STATE, not a fixed label. "Ready for your certifier" sat in green,
+              under a green check, directly above five rows reading Missing / Needs attention — the
+              card congratulating the grower on work it was in the same breath telling them to do.
+              A farm with open items gets the neutral framing; the green all-clear heading is
+              earned by `totalOpen === 0` and nothing else. */}
           <HStack spacing={3} align="start">
-            <Icon as={FaClipboardCheck} color={titleColor} boxSize={5} mt={1} />
+            <Icon
+              as={totalOpen ? FaClipboardList : FaClipboardCheck}
+              color={totalOpen ? mutedColor : titleColor}
+              boxSize={5}
+              mt={1}
+            />
             <VStack align="start" spacing={0} flex={1}>
-              <Heading as="h3" size="sm" color={titleColor}>
-                {intl.formatMessage({ id: 'certifierReadiness.title' })}
+              <Heading
+                as="h3"
+                size="sm"
+                fontWeight="600"
+                color={totalOpen ? headingNeutral : titleColor}>
+                {intl.formatMessage({
+                  id: totalOpen ? 'certifierReadiness.titleOpen' : 'certifierReadiness.title'
+                })}
               </Heading>
               {data?.production && (
                 <Text fontSize="xs" color={mutedColor}>
@@ -274,9 +345,23 @@ export default function CertifierReadinessCard({
                 </Text>
               )}
             </VStack>
-            <Text fontSize="2xl" fontWeight="bold" color={totalOpen ? 'orange.500' : titleColor}>
-              {totalOpen}
-            </Text>
+            {/* A bare 24px numeral next to "15 record checks" is a riddle: is it done, open, or a
+                grade? Label it. Right-aligned so the number still reads as the card's tally. */}
+            <VStack spacing={0} align="end" flexShrink={0}>
+              <Text
+                fontSize="2xl"
+                fontWeight="bold"
+                lineHeight="1.1"
+                color={totalOpen ? 'orange.500' : titleColor}>
+                {totalOpen}
+              </Text>
+              <Text fontSize="xs" color={mutedColor}>
+                {intl.formatMessage(
+                  { id: 'certifierReadiness.openCountLabel' },
+                  { count: totalOpen }
+                )}
+              </Text>
+            </VStack>
           </HStack>
 
           {/* OPERATION scope first — these block certifier sharing outright, so they outrank
@@ -288,7 +373,7 @@ export default function CertifierReadinessCard({
                   {intl.formatMessage({ id: 'certifierReadiness.operationScope' })}
                 </Text>
                 {hasOperationBlockers && (
-                  <Badge colorScheme="red" variant="subtle" fontSize="xs" borderRadius="full">
+                  <Badge variant="danger" fontSize="xs" borderRadius="full">
                     {intl.formatMessage({ id: 'certifierReadiness.sharingBlocked' })}
                   </Badge>
                 )}
@@ -302,8 +387,7 @@ export default function CertifierReadinessCard({
                   borderLeft="4px solid"
                   borderLeftColor={item.status === 'blocker' ? 'red.400' : 'orange.400'}
                   borderRadius="md"
-                  p={3}
-                >
+                  p={3}>
                   <HStack spacing={2} align="start">
                     <Icon
                       as={item.status === 'blocker' ? FaExclamationCircle : FaInfoCircle}
@@ -325,6 +409,20 @@ export default function CertifierReadinessCard({
                         <Text fontSize="xs" color="green.700" fontWeight="medium">
                           {item.fix}
                         </Text>
+                      )}
+                      {/* A finding must be a task, not a puzzle: route the
+                          farmer to the editor that clears it (2026-08-10 —
+                          fix text alone made them map prose to navigation). */}
+                      {FINDING_ROUTES[item.key] && (
+                        <Link
+                          as={RouterLink}
+                          to={FINDING_ROUTES[item.key](farmId)}
+                          fontSize="xs"
+                          fontWeight="semibold"
+                          color="green.700"
+                          textDecoration="underline">
+                          {intl.formatMessage({ id: 'certifierReadiness.fixNow' })} →
+                        </Link>
                       )}
                     </VStack>
                   </HStack>
@@ -348,7 +446,12 @@ export default function CertifierReadinessCard({
               A clean season under a blocked operation gets a plain line instead. */}
           {!data?.production ? null : findings.length === 0 ? (
             totalOpen === 0 ? (
-              <Box bg={clearBg} border="1px solid" borderColor={clearBorder} borderRadius="lg" p={4}>
+              <Box
+                bg={clearBg}
+                border="1px solid"
+                borderColor={clearBorder}
+                borderRadius="lg"
+                p={4}>
                 <Text fontSize="sm" fontWeight="semibold" color={titleColor}>
                   {intl.formatMessage({ id: 'certifierReadiness.allClearTitle' })}
                 </Text>
@@ -378,23 +481,23 @@ export default function CertifierReadinessCard({
                     border="1px solid"
                     borderColor={rowBorder}
                     borderLeft="4px solid"
-                    borderLeftColor={`${style.colorScheme}.400`}
+                    borderLeftColor={`${style.accent}.400`}
                     borderRadius="md"
-                    p={3}
-                  >
+                    p={3}>
                     <HStack spacing={2} align="start">
-                      <Icon as={style.icon} color={style.iconColor} boxSize={4} mt={0.5} flexShrink={0} />
+                      <Icon
+                        as={style.icon}
+                        color={style.iconColor}
+                        boxSize={4}
+                        mt={0.5}
+                        flexShrink={0}
+                      />
                       <VStack align="start" spacing={1} flex={1} minW={0}>
                         <HStack spacing={2} flexWrap="wrap">
                           <Text fontSize="sm" fontWeight="semibold" color={textColor}>
                             {finding.label}
                           </Text>
-                          <Badge
-                            colorScheme={style.colorScheme}
-                            variant="subtle"
-                            fontSize="xs"
-                            borderRadius="full"
-                          >
+                          <Badge variant={style.badgeVariant} fontSize="xs" borderRadius="full">
                             {intl.formatMessage({
                               id:
                                 finding.status === 'FAIL'
@@ -439,8 +542,7 @@ export default function CertifierReadinessCard({
               to={`/admin/dashboard/farm/${farmId}/profile`}
               fontSize="xs"
               fontWeight="semibold"
-              color={titleColor}
-            >
+              color={titleColor}>
               {intl.formatMessage({ id: 'certifierReadiness.shareAndDossier' })}
             </Link>
             <Link
@@ -448,8 +550,7 @@ export default function CertifierReadinessCard({
               to={`/admin/dashboard/farm/${farmId}/osp`}
               fontSize="xs"
               fontWeight="semibold"
-              color={titleColor}
-            >
+              color={titleColor}>
               {intl.formatMessage({ id: 'certifierReadiness.goToOsp' })}
             </Link>
           </HStack>

@@ -204,7 +204,7 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
                   href="https://www.ams.usda.gov/rules-regulations/organic"
                   isExternal
                   fontSize="xs"
-                  color="green.600"
+                  color="green.700"
                   mt={1}
                   display="inline-block"
                 >

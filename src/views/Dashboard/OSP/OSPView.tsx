@@ -62,7 +62,6 @@ import {
   useCreateOSPMutation,
   useGetOSPQuery,
   useGetOSPsQuery,
-  useNewOSPVersionMutation,
   useSubmitOSPMutation,
   useUpdateOSPMutation
 } from 'store/api/ospApi';
@@ -75,6 +74,7 @@ import {
   emptySections
 } from 'types/osp';
 import OSPActivateModal from './OSPActivateModal';
+import { StartNewVersionButton } from './OSPLockedNotice';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
 import OSPChangeNotificationsPanel from './OSPChangeNotificationsPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
@@ -414,7 +414,9 @@ const OSPView: React.FC = () => {
   const [createOSP, { isLoading: creating }] = useCreateOSPMutation();
   const [updateOSP, { isLoading: saving }] = useUpdateOSPMutation();
   const [submitOSP, { isLoading: submitting }] = useSubmitOSPMutation();
-  const [newVersion, { isLoading: forking }] = useNewOSPVersionMutation();
+  // Forking lives in <StartNewVersionButton/> — the shared control the guided module
+  // pages use, so all three surfaces get the same label, the same confirmation and the
+  // same translated toast.
 
   // Activation runs inside <OSPActivateModal/> (collects certifier approval
   // evidence via multipart upload). Kept as boolean state so the button can be
@@ -540,33 +542,6 @@ const OSPView: React.FC = () => {
     setActivateModalOpen(true);
   };
 
-  const handleNewVersion = async () => {
-    if (!companyId || !farmId || !editableOsp) return;
-    try {
-      const fresh = await newVersion({
-        companyId,
-        farmId,
-        ospId: editableOsp.id
-      }).unwrap();
-      // Focus the new draft explicitly — the prior active OSP still exists and
-      // would otherwise win the default "newest" selection.
-      setSelectedOspId(fresh.id);
-      setEditableOsp(fresh);
-      setDirty(false);
-      toast({
-        status: 'success',
-        title: intl.formatMessage({ id: 'osp.action.newVersion' }),
-        description: `v${fresh.version_number} draft created.`
-      });
-    } catch (err: any) {
-      toast({
-        status: 'error',
-        title: intl.formatMessage({ id: 'osp.error.newVersion' }),
-        description: String(err?.data || err)
-      });
-    }
-  };
-
   // --- Render -------------------------------------------------------------
   if (listLoading) return <StandardPageLoading />;
 
@@ -595,8 +570,7 @@ const OSPView: React.FC = () => {
     return (
       <StandardPage
         title={intl.formatMessage({ id: 'osp.title' })}
-        description={intl.formatMessage({ id: 'osp.subtitle' })}
-      >
+        description={intl.formatMessage({ id: 'osp.subtitle' })}>
         <StandardCard>
           <VStack spacing={4} py={8} px={4} bg={emptyBg} borderRadius="md">
             <Icon as={FaLeaf} boxSize={10} color="green.500" />
@@ -610,8 +584,7 @@ const OSPView: React.FC = () => {
               leftIcon={<FaPlus />}
               colorScheme="green"
               onClick={handleCreate}
-              isLoading={creating}
-            >
+              isLoading={creating}>
               {intl.formatMessage({ id: 'osp.action.create' })}
             </StandardButton>
           </VStack>
@@ -709,8 +682,7 @@ const OSPView: React.FC = () => {
   return (
     <StandardPage
       title={intl.formatMessage({ id: 'osp.title' })}
-      description={intl.formatMessage({ id: 'osp.subtitle' })}
-    >
+      description={intl.formatMessage({ id: 'osp.subtitle' })}>
       {/* Header card — status + progress + actions */}
       <StandardCard mb={4}>
         <VStack align="stretch" spacing={3}>
@@ -739,8 +711,7 @@ const OSPView: React.FC = () => {
                   size="sm"
                   onClick={handleSave}
                   isLoading={saving}
-                  isDisabled={!dirty}
-                >
+                  isDisabled={!dirty}>
                   {intl.formatMessage({ id: 'osp.action.save' })}
                 </StandardButton>
               )}
@@ -749,8 +720,7 @@ const OSPView: React.FC = () => {
                   variant="secondary"
                   size="sm"
                   onClick={handleSubmit}
-                  isLoading={submitting}
-                >
+                  isLoading={submitting}>
                   {intl.formatMessage({ id: 'osp.action.submit' })}
                 </StandardButton>
               )}
@@ -759,15 +729,29 @@ const OSPView: React.FC = () => {
                   {intl.formatMessage({ id: 'osp.action.activate' })}
                 </StandardButton>
               )}
-              {editableOsp.status === 'active' && (
-                <StandardButton
+              {/* Submitted too: a farmer who spots a mistake after submitting
+                  starts the corrected next version (backend allows any status).
+
+                  Shared with the guided module pages. It used to be this page's own
+                  button, its own label and its own un-confirmed handler — three
+                  surfaces offering the same action three different ways, and this one
+                  toasted a hardcoded English "v3 draft created." straight past the
+                  catalogs. `onForked` carries this page's explicit selection model,
+                  which is the one thing the guided pages do not need. */}
+              {(editableOsp.status === 'active' || editableOsp.status === 'submitted') && (
+                <StartNewVersionButton
+                  osp={editableOsp}
+                  companyId={String(companyId ?? '')}
+                  farmId={farmId || ''}
                   variant="secondary"
-                  size="sm"
-                  onClick={handleNewVersion}
-                  isLoading={forking}
-                >
-                  {intl.formatMessage({ id: 'osp.action.newVersion' })}
-                </StandardButton>
+                  onForked={(fresh) => {
+                    // The prior plan still exists and would otherwise win the default
+                    // "newest" selection, so focus the new draft explicitly.
+                    setSelectedOspId(fresh.id);
+                    setEditableOsp(fresh);
+                    setDirty(false);
+                  }}
+                />
               )}
             </HStack>
           </HStack>
@@ -793,15 +777,13 @@ const OSPView: React.FC = () => {
                     label={intl.formatMessage(
                       { id: 'osp.completion.registryGapTooltip' },
                       { count: unreferencedCount }
-                    )}
-                  >
+                    )}>
                     <Badge
                       colorScheme="orange"
                       variant="subtle"
                       fontSize="xs"
                       textTransform="none"
-                      cursor="help"
-                    >
+                      cursor="help">
                       <HStack spacing={1}>
                         <Icon as={FaExclamationTriangle} boxSize={2.5} />
                         <Text as="span">
@@ -834,8 +816,7 @@ const OSPView: React.FC = () => {
               borderColor="blue.200"
               borderRadius="md"
               bg={submissionBg}
-              flexWrap="wrap"
-            >
+              flexWrap="wrap">
               <Icon as={FaFileAlt} color="blue.600" />
               <VStack align="start" spacing={0} flex={1} minW="180px">
                 <Text fontSize="sm" fontWeight="semibold">
@@ -850,8 +831,7 @@ const OSPView: React.FC = () => {
                 download
                 target="_blank"
                 rel="noopener noreferrer"
-                _hover={{ textDecoration: 'none' }}
-              >
+                _hover={{ textDecoration: 'none' }}>
                 <StandardButton variant="secondary" size="sm" leftIcon={<FaDownload />}>
                   {intl.formatMessage({ id: 'osp.submissionPdf.download' })}
                 </StandardButton>
@@ -871,9 +851,7 @@ const OSPView: React.FC = () => {
         {!isEditable && (
           <Alert status="info" borderRadius="md" mb={3} fontSize="sm" alignItems="flex-start">
             <AlertIcon />
-            <Text>
-              {intl.formatMessage({ id: 'osp.sectionsLocked' })}
-            </Text>
+            <Text>{intl.formatMessage({ id: 'osp.sectionsLocked' })}</Text>
           </Alert>
         )}
         {parcelSummary && (
@@ -883,8 +861,7 @@ const OSPView: React.FC = () => {
             borderWidth="1px"
             borderRadius="md"
             borderColor="gray.200"
-            bg={lockedBg}
-          >
+            bg={lockedBg}>
             <Text fontSize="xs" color={subtextColor}>
               <b>
                 {intl.formatMessage(
@@ -895,9 +872,7 @@ const OSPView: React.FC = () => {
                   }
                 )}
               </b>{' '}
-              {parcelSummary.parcels
-                .map((p) => `${p.name} ${p.acres.toFixed(1)}`)
-                .join(' · ')}
+              {parcelSummary.parcels.map((p) => `${p.name} ${p.acres.toFixed(1)}`).join(' · ')}
             </Text>
             <Text fontSize="xs" color={subtextColor} mt={1}>
               {intl.formatMessage({ id: 'osp.parcelReferenceHelp' })}
@@ -925,8 +900,7 @@ const OSPView: React.FC = () => {
                     justify="space-between"
                     textAlign="left"
                     flexWrap="wrap"
-                    gap={2}
-                  >
+                    gap={2}>
                     <HStack spacing={2}>
                       <Icon as={iconAs} color={iconColor} />
                       <Stack spacing={0}>
@@ -948,15 +922,13 @@ const OSPView: React.FC = () => {
                           label={intl.formatMessage(
                             { id: 'osp.completion.registryGapTooltip' },
                             { count: unreferencedCount }
-                          )}
-                        >
+                          )}>
                           <Badge
                             colorScheme="orange"
                             variant="subtle"
                             fontSize="xs"
                             textTransform="none"
-                            cursor="help"
-                          >
+                            cursor="help">
                             <HStack spacing={1}>
                               <Icon as={FaExclamationTriangle} boxSize={2.5} />
                               <Text as="span">
@@ -970,8 +942,7 @@ const OSPView: React.FC = () => {
                         colorScheme={status.badgeColor}
                         variant="subtle"
                         fontSize="xs"
-                        textTransform="none"
-                      >
+                        textTransform="none">
                         {intl.formatMessage(
                           { id: `osp.section.status.${status.tier}` },
                           { chars: status.charCount, floor: OSP_MATERIAL_FLOOR }
@@ -1089,8 +1060,7 @@ const OSPView: React.FC = () => {
                     }
                     setSelectedOspId(s.id);
                   }}
-                  aria-pressed={isSelected}
-                >
+                  aria-pressed={isSelected}>
                   <VStack align="start" spacing={0}>
                     <Text fontSize="sm" fontWeight="semibold">
                       v{s.version_number}

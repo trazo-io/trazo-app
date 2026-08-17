@@ -61,10 +61,7 @@ const TransparencySummaryCard = ({ farmId }) => {
     isLoading: isLoadingCarbon,
     isFetching: isFetchingCarbon,
     isError: isErrorCarbon
-  } = useGetCarbonFootprintSummaryQuery(
-    { farmId, year },
-    { refetchOnMountOrArgChange: true }
-  );
+  } = useGetCarbonFootprintSummaryQuery({ farmId, year }, { refetchOnMountOrArgChange: true });
 
   // `data` (comprehensiveData || carbonData) was removed with the client-side transparency
   // fallback formula that was its only consumer. Each remaining reader picks its source
@@ -84,8 +81,9 @@ const TransparencySummaryCard = ({ farmId }) => {
   // (TransparencyCalculator.EXPECTED_EVENTS). It has no external deadline and no buyer asking
   // for it, so it is a poor headline for a certified grower whose actual pressure is the
   // annual inspection. Farm home now leads with what a certifier would query
-  // (CertifierReadinessCard) and states facts here. The score keeps its own page:
-  // /admin/dashboard/farm/:farmId/transparency.
+  // (CertifierReadinessCard) and states facts here. This note used to end "the score keeps its
+  // own page: /admin/dashboard/farm/:farmId/transparency" — that page was never routed and was
+  // deleted 2026-08-11. The score has no producer surface; it is a backend KPI.
   //
   // Do not reintroduce a score, tier badge, grade, or progress bar on this card.
 
@@ -103,7 +101,6 @@ const TransparencySummaryCard = ({ farmId }) => {
     // Use comprehensive dashboard data if available (nested structure)
     const compData = comprehensiveData?.comprehensive_data;
     if (compData?.total_photos !== undefined) {
-
       return compData.total_photos;
     }
 
@@ -202,8 +199,7 @@ const TransparencySummaryCard = ({ farmId }) => {
             size="sm"
             colorScheme="red"
             variant="outline"
-            onClick={() => window.location.reload()}
-          >
+            onClick={() => window.location.reload()}>
             {intl.formatMessage({ id: 'app.retry' })}
           </Button>
         </VStack>
@@ -217,8 +213,7 @@ const TransparencySummaryCard = ({ farmId }) => {
       p={{ base: 4, md: 6 }}
       borderRadius="xl"
       className="trazo-card"
-      boxShadow="md"
-    >
+      boxShadow="md">
       <CardHeader p={0} mb={{ base: 4, md: 4 }}>
         <Flex direction="column">
           <HStack spacing={2} align="center">
@@ -247,17 +242,16 @@ const TransparencySummaryCard = ({ farmId }) => {
             bg={{ base: 'blue.50', md: 'transparent' }}
             borderRadius={{ base: 'lg', md: 'none' }}
             border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'blue.200', md: 'transparent' }}
-          >
+            borderColor={{ base: 'blue.200', md: 'transparent' }}>
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 {intl.formatMessage({ id: 'dashboard.documentedEvents' })}
               </StatLabel>
-              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="blue.500" fontWeight="bold">
+              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="green.700" fontWeight="bold">
                 {getEventCount()}
               </StatNumber>
               <StatHelpText fontSize="xs" mt={1}>
-{intl.formatMessage({ id: 'dashboard.registeredActivities' })}
+                {intl.formatMessage({ id: 'dashboard.registeredActivities' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -267,17 +261,16 @@ const TransparencySummaryCard = ({ farmId }) => {
             bg={{ base: 'orange.50', md: 'transparent' }}
             borderRadius={{ base: 'lg', md: 'none' }}
             border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'orange.200', md: 'transparent' }}
-          >
+            borderColor={{ base: 'orange.200', md: 'transparent' }}>
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 {intl.formatMessage({ id: 'dashboard.documentedPhotos' })}
               </StatLabel>
-              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="orange.500" fontWeight="bold">
+              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="green.700" fontWeight="bold">
                 {getPhotoCount()}
               </StatNumber>
               <StatHelpText fontSize="xs" mt={1}>
-{intl.formatMessage({ id: 'dashboard.visualEvidence' })}
+                {intl.formatMessage({ id: 'dashboard.visualEvidence' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -287,17 +280,16 @@ const TransparencySummaryCard = ({ farmId }) => {
             bg={{ base: 'teal.50', md: 'transparent' }}
             borderRadius={{ base: 'lg', md: 'none' }}
             border={{ base: '1px solid', md: 'none' }}
-            borderColor={{ base: 'teal.200', md: 'transparent' }}
-          >
+            borderColor={{ base: 'teal.200', md: 'transparent' }}>
             <Stat>
               <StatLabel fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" mb={1}>
                 {intl.formatMessage({ id: 'dashboard.activeProductions' })}
               </StatLabel>
-              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="teal.500" fontWeight="bold">
+              <StatNumber fontSize={{ base: 'md', md: 'lg' }} color="green.700" fontWeight="bold">
                 {getActiveProductionsCount()}
               </StatNumber>
               <StatHelpText fontSize="xs" mt={1}>
-{intl.formatMessage({ id: 'dashboard.transparencyCycles' })}
+                {intl.formatMessage({ id: 'dashboard.transparencyCycles' })}
               </StatHelpText>
             </Stat>
           </Box>
@@ -312,7 +304,17 @@ const TransparencySummaryCard = ({ farmId }) => {
         <Accordion allowToggle mt={{ base: 3, md: 4 }}>
           <AccordionItem border="none">
             <AccordionButton px={0} _hover={{ bg: 'transparent' }}>
-              <Heading size="sm" color="gray.600" fontWeight="600" flex="1" textAlign="left">
+              {/* `as="h3"` to match the two certifier cards above it. Chakra's `Heading` defaults to
+                  h2, so this peer card sat one level HIGHER in the document outline than its
+                  neighbours — a screen-reader user walking headings got the three cards reported
+                  as h2, h3, h3. Purely semantic; nothing changes visually. 2026-08-15. */}
+              <Heading
+                as="h3"
+                size="sm"
+                color="gray.600"
+                fontWeight="600"
+                flex="1"
+                textAlign="left">
                 {intl.formatMessage({ id: 'dashboard.environmentalImpactLabel' })}
               </Heading>
               <AccordionIcon color="gray.500" />
@@ -361,7 +363,6 @@ const TransparencySummaryCard = ({ farmId }) => {
             </AccordionPanel>
           </AccordionItem>
         </Accordion>
-
       </CardBody>
     </Card>
   );

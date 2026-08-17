@@ -54,23 +54,49 @@ export const globalStyles = {
   colors: {
     // Trazo Primary Color System
     trazo: {
-      forest: '#2E7D32', // Primary brand color - premium forest green
-      emerald: '#059669', // Growth and sustainability
-      deep: '#1B5E20', // Professional enterprise
-      light: '#81C784' // Light accent
+      forest: '#2E7D32', // Primary brand color - premium forest green (= green.700)
+      // ⛔ DEPRECATED — do not reach for this. #059669 is TAILWIND's emerald-600, a foreign
+      // accent that never belonged to the Trazo ramp; it had leaked into the chart bars and
+      // into three auth focus rings as `rgba(5, 150, 105, .1)`. Nothing reads it now. Use
+      // green.700 (#2E7D32). See `.claude/rules/frontend.md` → "Colors — Theme Tokens Only".
+      emerald: '#059669',
+      deep: '#1B5E20', // Professional enterprise (= green.800)
+      light: '#81C784' // Light accent (= green.400)
     },
-    // Trazo Professional Clean Green Scale - 2025
+    /**
+     * Trazo green scale. Hue 122-124°, i.e. the same hue family as the logo mark (#007E00,
+     * hue 120°) — the logo is simply a far more saturated cut of it (S 100% vs S 39-46%), which
+     * is why the wordmark and the UI read as one colour despite not sharing a hex.
+     *
+     * WHICH ONE, is not a matter of taste — the ratios against white are MEASURED:
+     *   500 = 2.78  ⛔ brand/decorative fill ONLY. Never white ON it, never it AS text.
+     *   600 = 4.12  ✓ non-text boundaries (borders, focus rings). Under the 4.5 text floor.
+     *   700 = 5.13  ✓ THE default: text on white, filled surfaces under white text, icons
+     *                 that carry meaning, primary buttons.
+     *   800 = 7.87 / 900 = 12.41  ✓ hover and active.
+     * Full rationale, and the reason this keeps regressing, in `.claude/rules/frontend.md`.
+     */
     green: {
-      50: '#F8FDF9', // Ultra light sage
-      100: '#E8F5E8', // Very light sage background
-      200: '#C8E6C8', // Light sage
+      50: '#F8FDF9', // Ultra light sage — tinted panel ground
+      100: '#E8F5E8', // Very light sage — 4.56:1 as a subtitle ON green.700
+      200: '#C8E6C8', // Light sage — watermarks only (1.35:1 on white)
       300: '#A5D6A5', // Soft sage accent
       400: '#81C784', // Modern sage green
-      500: '#4CAF50', // Clean professional green (PRIMARY)
-      600: '#388E3C', // Deeper professional green
-      700: '#2E7D32', // Forest green
-      800: '#1B5E20', // Dark forest
-      900: '#0D3D0F' // Deepest forest
+      500: '#4CAF50', // Brand green. NOT "primary" — see the ratios above
+      600: '#388E3C', // Boundaries: borders, focus rings, dividers
+      700: '#2E7D32', // Forest green — the working default for anything carrying content
+      800: '#1B5E20', // Dark forest — hover
+      900: '#0D3D0F' // Deepest forest — active/pressed
+    },
+    /**
+     * Page canvas. gray.50 (#FAFAFA) measures 1.04:1 against a white card — the card was
+     * separated from the page by its border and shadow alone, with the fill doing nothing.
+     * #F4F5F7 is 1.09:1: still quiet, but the cards now read as raised surfaces.
+     * Semantic on purpose — pages ask for `surface.canvas`, not a grey step.
+     */
+    surface: {
+      canvas: '#F4F5F7',
+      card: '#FFFFFF'
     },
     // Professional Neutral Scale
     gray: {

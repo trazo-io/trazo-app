@@ -1,3 +1,27 @@
+/**
+ * 2026-08-10 onboarding trim — this form now sends ONLY what it collects.
+ *
+ * Removed from the payload (June-era marketing/transparency fields; PATCH omission
+ * preserves any existing DB values, nothing is wiped):
+ * - `sustainability_practices`: self-reported-claim field, killed end-to-end on the
+ *   wire 2026-08-07 (see consumerVisibility.ts). Never send it from this form again.
+ * - `certifications` (comma-joined string): legacy data-migration source only
+ *   (certifications/constants.py LEGACY_TEXT_MAP). Certifications are managed as
+ *   structured records via CertificationManager on the farm profile.
+ * - `conservation_practices`: was hardcoded to "[]", actively wiping DB data on
+ *   every edit. Wire-killed 2026-08-07.
+ * - `climate_zone`, `employee_count`: wire-killed 2026-08-07, no input in this form.
+ * - `about`, `main_activities`, `location_highlights`: prose fields with no input in
+ *   this form (round-trip only); display-only legacy data on ProfileFarm.
+ * - `email`, `phone`, `country`, `contact_person`, `contact_phone`, `contact_email`:
+ *   no inputs in this form; a form should not send fields it never asks for.
+ *
+ * Kept: identity/location/operations fields with live readers (ProfileFarm and the
+ * consumer QR page per CONSUMER_VISIBLE_FARM_FIELDS): name, description, address,
+ * city, zone, state, zip, coordinates, establishment_type, farming_method,
+ * total_acreage, year_established, crops_grown, water_sources, soil_types
+ * (soil-health practices), irrigation_methods, custom_message, images.
+ */
 import React, { useEffect } from 'react';
 import { Box, CircularProgress, Flex, Text, useColorModeValue, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
@@ -6,11 +30,7 @@ import { StandardFarmForm } from '../../../../components/Forms/StandardFarmForm'
 import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 import subscriptionToastHelper from '../../../../utils/toast/SubscriptionToastHelper';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  useCreateFarmMutation,
-  useEditFarmMutation,
-  useGetFarmQuery
-} from 'store/api/companyApi';
+import { useCreateFarmMutation, useEditFarmMutation, useGetFarmQuery } from 'store/api/companyApi';
 import { addCompanyFarm } from 'store/features/companySlice';
 
 interface Props {
@@ -56,44 +76,26 @@ function AddFarm({ isEdit = false }: Props) {
         // Handle edit mode
         const establishmentUpdateData = {
           name: data.name,
-          email: data.email || '',
-          phone: data.phone || '',
           address: data.address || '',
           city: data.city || '',
           zone: data.zone || '',
           state: data.state || '',
-          country: data.country || '',
           zip_code: data.zipCode || '',
           description: data.description || '',
-          about: data.about || '',
-          main_activities: data.main_activities || '',
-          location_highlights: data.location_highlights || '',
           custom_message: data.custom_message || '',
           establishment_type: data.establishmentType || '',
           farming_method: data.farmingMethod || '',
           total_acreage: data.totalAcreage || 0,
-          employee_count: data.employeeCount || 0,
           year_established: data.yearEstablished || null,
           is_active: data.isActive !== undefined ? data.isActive : true,
           type: data.type || data.establishmentType || '',
           latitude: data.latitude !== undefined ? data.latitude : null,
           longitude: data.longitude !== undefined ? data.longitude : null,
           crops_grown: JSON.stringify(data.cropsGrown || []),
-          certifications: Array.isArray(data.certifications)
-            ? data.certifications.join(', ')
-            : data.certifications || '',
-          sustainability_practices: JSON.stringify(data.sustainabilityPractices || []),
-          // Operational fields - updated for transparency-first approach
-          // climate_zone removed from UI but kept for backward compatibility
-          climate_zone: data.climateZone || '',
           water_sources: JSON.stringify(data.waterSources || []),
+          // `soil_types` is a legacy column name; it holds soil-health PRACTICES
           soil_types: JSON.stringify(data.soilHealthPractices || []),
-          // conservation_practices merged into sustainability_practices
-          conservation_practices: JSON.stringify([]),
           irrigation_methods: JSON.stringify(data.irrigationMethods || []),
-          contact_person: data.contact_person || '',
-          contact_phone: data.contact_phone || data.phone || '',
-          contact_email: data.contact_email || data.email || '',
           // Image upload fields - only include if there are changes
           ...(data.uploaded_image_urls &&
             data.uploaded_image_urls.length > 0 && {
@@ -124,44 +126,26 @@ function AddFarm({ isEdit = false }: Props) {
         // Handle create mode
         const establishmentData = {
           name: data.name,
-          email: data.email || '',
-          phone: data.phone || '',
           address: data.address || '',
           city: data.city || '',
           zone: data.zone || '',
           state: data.state || '',
-          country: data.country || '',
           zip_code: data.zipCode || '',
           description: data.description || '',
-          about: data.about || '',
-          main_activities: data.main_activities || '',
-          location_highlights: data.location_highlights || '',
           custom_message: data.custom_message || '',
           establishment_type: data.establishmentType || '',
           farming_method: data.farmingMethod || '',
           total_acreage: data.totalAcreage || 0,
-          employee_count: data.employeeCount || 0,
           year_established: data.yearEstablished || null,
           is_active: data.isActive !== undefined ? data.isActive : true,
           type: data.type || data.establishmentType || '',
           latitude: data.latitude !== undefined ? data.latitude : null,
           longitude: data.longitude !== undefined ? data.longitude : null,
           crops_grown: JSON.stringify(data.cropsGrown || []),
-          certifications: Array.isArray(data.certifications)
-            ? data.certifications.join(', ')
-            : data.certifications || '',
-          sustainability_practices: JSON.stringify(data.sustainabilityPractices || []),
-          // Operational fields - updated for transparency-first approach
-          // climate_zone removed from UI but kept for backward compatibility
-          climate_zone: data.climateZone || '',
           water_sources: JSON.stringify(data.waterSources || []),
+          // `soil_types` is a legacy column name; it holds soil-health PRACTICES
           soil_types: JSON.stringify(data.soilHealthPractices || []),
-          // conservation_practices merged into sustainability_practices
-          conservation_practices: JSON.stringify([]),
           irrigation_methods: JSON.stringify(data.irrigationMethods || []),
-          contact_person: data.contact_person || '',
-          contact_phone: data.contact_phone || data.phone || '',
-          contact_email: data.contact_email || data.email || '',
           company: currentCompany.id,
           // Image upload fields - only include if there are uploaded images
           ...(data.uploaded_image_urls &&
@@ -257,23 +241,16 @@ function AddFarm({ isEdit = false }: Props) {
 
     return {
       name: establishmentData.name || '',
-      email: establishmentData.email || '',
-      phone: establishmentData.phone || '',
       address: establishmentData.address || '',
       city: establishmentData.city || '',
       zone: establishmentData.zone || '',
       state: establishmentData.state || '',
-      country: establishmentData.country || '',
       zipCode: establishmentData.zip_code || '',
       description: establishmentData.description || '',
-      about: establishmentData.about || '',
-      main_activities: establishmentData.main_activities || '',
-      location_highlights: establishmentData.location_highlights || '',
       custom_message: establishmentData.custom_message || '',
       establishmentType: establishmentData.establishment_type || establishmentData.type || '',
       farmingMethod: establishmentData.farming_method || '',
       totalAcreage: establishmentData.total_acreage || 0,
-      employeeCount: establishmentData.employee_count || 0,
       yearEstablished: establishmentData.year_established || undefined,
       isActive: establishmentData.is_active !== false,
       type: establishmentData.type || '',
@@ -292,49 +269,6 @@ function AddFarm({ isEdit = false }: Props) {
         }
         return [];
       })(),
-      certifications: establishmentData.certifications
-        ? typeof establishmentData.certifications === 'string'
-          ? establishmentData.certifications
-              .split(',')
-              .map((cert: string) => cert.trim())
-              .filter(Boolean)
-          : Array.isArray(establishmentData.certifications)
-          ? establishmentData.certifications
-          : []
-        : [],
-      // sustainabilityPractices now includes merged conservation_practices for backward compatibility
-      sustainabilityPractices: (() => {
-        let practices: string[] = [];
-
-        // Get sustainability practices
-        if (Array.isArray(establishmentData.sustainability_practices)) {
-          practices = [...establishmentData.sustainability_practices];
-        } else if (typeof establishmentData.sustainability_practices === 'string') {
-          try {
-            practices = JSON.parse(establishmentData.sustainability_practices);
-          } catch {
-            practices = [];
-          }
-        }
-
-        // Merge in old conservation_practices for backward compatibility
-        let conservationPractices: string[] = [];
-        if (Array.isArray(establishmentData.conservation_practices)) {
-          conservationPractices = establishmentData.conservation_practices;
-        } else if (typeof establishmentData.conservation_practices === 'string') {
-          try {
-            conservationPractices = JSON.parse(establishmentData.conservation_practices);
-          } catch {
-            conservationPractices = [];
-          }
-        }
-
-        // Merge without duplicates
-        const merged = [...new Set([...practices, ...conservationPractices])];
-        return merged;
-      })(),
-      // Add missing operational fields for EDIT data loading
-      climateZone: establishmentData.climate_zone || '',
       waterSources: (() => {
         if (Array.isArray(establishmentData.water_sources)) {
           return establishmentData.water_sources;
@@ -361,9 +295,6 @@ function AddFarm({ isEdit = false }: Props) {
         }
         return [];
       })(),
-      // conservationPractices merged into sustainabilityPractices - keep empty for form
-      // Old conservation data is handled by merging into sustainabilityPractices above
-      conservationPractices: [],
       irrigationMethods: (() => {
         if (Array.isArray(establishmentData.irrigation_methods)) {
           return establishmentData.irrigation_methods;
@@ -377,9 +308,6 @@ function AddFarm({ isEdit = false }: Props) {
         }
         return [];
       })(),
-      contact_person: establishmentData.contact_person || '',
-      contact_phone: establishmentData.contact_phone || '',
-      contact_email: establishmentData.contact_email || '',
       // Images field for edit mode
       images: establishmentData.images || establishmentData.album?.images || []
     };

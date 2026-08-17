@@ -11,7 +11,7 @@ import {
   Collapse
 } from '@chakra-ui/react';
 import { FiCheck, FiChevronDown, FiChevronUp, FiX } from 'react-icons/fi';
-import { FormattedMessage } from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useOnboardingChecklist } from '../../hooks/useOnboardingChecklist';
 import { useTourStore } from '../../store/tourStore';
@@ -56,7 +56,18 @@ const OnboardingChecklist: React.FC = () => {
     dismiss
   } = useOnboardingChecklist();
 
-  const [isExpanded, setIsExpanded] = useState(true);
+  // Expanded by default on desktop, COLLAPSED on phones. At 375px the expanded panel is 300px
+  // wide and ~370px tall — 80% of the width and 45% of the height of the viewport — and it is
+  // `position: fixed`, so on every non-wizard page it sat on top of the content the grower came
+  // for (measured on /osp: it covered the first module card outright). Collapsed it is just its
+  // own header bar, still present and still one tap from opening. Read once, from the initial
+  // width: this is a default, not a responsive style, and re-collapsing a panel the user opened
+  // because they rotated the phone would be worse than the overlap.
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return true;
+    return !window.matchMedia('(max-width: 767px)').matches;
+  });
+  const intl = useIntl();
   const navigate = useNavigate();
   const location = useLocation();
   const trackPageVisit = useTourStore((s) => s.trackPageVisit);
@@ -66,7 +77,7 @@ const OnboardingChecklist: React.FC = () => {
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.600', 'gray.400');
   const headingColor = useColorModeValue('gray.800', 'white');
-  const checkColor = useColorModeValue('green.500', 'green.400');
+  const checkColor = useColorModeValue('green.700', 'green.300');
   const itemBg = useColorModeValue('gray.50', 'gray.700');
   const itemHoverBg = useColorModeValue('gray.100', 'gray.600');
   // Hoisted (was called inline in JSX after the early return below — varied the
@@ -112,7 +123,10 @@ const OnboardingChecklist: React.FC = () => {
         </VStack>
         <HStack spacing={1}>
           <IconButton
-            aria-label="Dismiss checklist"
+            // Was the hardcoded English string "Dismiss checklist" on a widget whose every
+            // other word is translated — and `tour.checklist.dismiss` already existed in both
+            // locales, unused. Found by the orphan-key arm of tours/__tests__/tourWiring.
+            aria-label={intl.formatMessage({ id: 'tour.checklist.dismiss' })}
             icon={<FiX />}
             variant="ghost"
             size="xs"
@@ -144,9 +158,23 @@ const OnboardingChecklist: React.FC = () => {
       <Collapse in={isExpanded}>
         <VStack spacing={0} py={2} px={2}>
           {items.map((item) => {
-            const isBlocked =
-              item.dependsOn &&
-              !items.find((i) => i.id === item.dependsOn)?.completed;
+            const dependency = item.dependsOn
+              ? items.find((i) => i.id === item.dependsOn)
+              : undefined;
+            const isBlocked = !!dependency && !dependency.completed;
+            /**
+             * A blocked item was dimmed to 50% and inert with nothing saying why — the same
+             * "a disabled control is a bug report you never receive" pattern the onboarding
+             * wizards were fixed for on 2026-07-31. `tour.checklist.completeDependency`
+             * shipped in both locales for exactly this and had never been rendered.
+             */
+            const blockedReason =
+              isBlocked && dependency
+                ? intl.formatMessage(
+                    { id: 'tour.checklist.completeDependency' },
+                    { dependency: intl.formatMessage({ id: dependency.labelKey }) }
+                  )
+                : undefined;
 
             return (
               <HStack
@@ -156,6 +184,12 @@ const OnboardingChecklist: React.FC = () => {
                 py={2.5}
                 borderRadius="lg"
                 cursor={isBlocked ? 'default' : 'pointer'}
+                // `title` only. The row is a plain div (role=generic), where `aria-label` and
+                // `aria-disabled` are not allowed and are dropped by the a11y tree — my first
+                // pass set both, which would have read as coverage while announcing nothing.
+                // `title` becomes the accessible description on any element. The row being a
+                // click target with no role/tabindex at all is older, wider debt.
+                title={blockedReason}
                 opacity={isBlocked ? 0.5 : 1}
                 _hover={!isBlocked ? { bg: itemHoverBg } : undefined}
                 transition="all 0.15s"

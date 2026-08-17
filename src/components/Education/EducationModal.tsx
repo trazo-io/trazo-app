@@ -121,7 +121,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
-  const accentColor = useColorModeValue('green.500', 'green.400');
+  const accentColor = useColorModeValue('green.700', 'green.300');
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   const {
@@ -323,7 +323,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
           <Badge colorScheme="green">{content.confidence_level}%</Badge>
         </HStack>
         <Progress value={content.confidence_level} colorScheme="green" size="sm" />
-        <Text fontSize="xs" color="green.600" mt={1}>
+        <Text fontSize="xs" color="green.700" mt={1}>
           Based on USDA standards and peer-reviewed research
         </Text>
       </Box>

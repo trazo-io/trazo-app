@@ -266,10 +266,7 @@ const companyApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
-    getCarbonReports: build.query<
-      any[],
-      { farmId: number; year?: number; reportType?: string }
-    >({
+    getCarbonReports: build.query<any[], { farmId: number; year?: number; reportType?: string }>({
       query: ({ farmId, year, reportType }) => {
         let url = `/carbon/reports/?establishment=${farmId}`;
         if (year) url += `&year=${year}`;
@@ -352,16 +349,13 @@ const companyApi = baseApi.injectEndpoints({
         'CarbonSummary'
       ]
     }),
-    // Public endpoint for consumer-facing farm view
-    getPublicFarm: build.query({
-      query: (farmId: string) => ({
-        url: `companies/public/establishments/${farmId}/`,
-        method: 'GET'
-      }),
-      providesTags: (result, error, farmId) => [
-        { type: 'Farm', id: farmId }
-      ]
-    }),
+    // `getPublicFarm` REMOVED 2026-08-12 along with its backend endpoint
+    // (companies/public/establishments/<pk>/). That endpoint had NO permission class and served
+    // street address, exact lat/lon, ZIP, farm email and phone, `farming_method`,
+    // `sustainability_practices` and the free-text `certifications` string to anyone with the
+    // URL. It had zero call sites here — the hook and its `useGetPublicEstablishmentQuery` alias
+    // were exported and never used. The consumer farm view is served by the transparency
+    // endpoint, which is gated by claim_authority.py.
     // Enhanced Production Start - Create new production with crop selection and blockchain
     startProduction: build.mutation<
       any,
@@ -473,7 +467,6 @@ export const {
   useGenerateCarbonReportMutation,
   useGetProductionsByFarmQuery,
   useGetCarbonEntriesQuery,
-  useGetPublicFarmQuery,
   useStartProductionMutation,
   useGetCropTypesQuery,
   useGetCropTypesDropdownQuery,
@@ -498,5 +491,5 @@ export const useUpdateEstablishmentCarbonFootprintMutation = useUpdateFarmCarbon
 export const useDeleteEstablishmentCarbonFootprintMutation = useDeleteFarmCarbonFootprintMutation;
 /** @deprecated Use useGetProductionsByFarmQuery instead */
 export const useGetProductionsByEstablishmentQuery = useGetProductionsByFarmQuery;
-/** @deprecated Use useGetPublicFarmQuery instead */
-export const useGetPublicEstablishmentQuery = useGetPublicFarmQuery;
+// `useGetPublicEstablishmentQuery` (alias of `useGetPublicFarmQuery`) removed 2026-08-12 with the
+// endpoint it called — see the note where getPublicFarm was defined.

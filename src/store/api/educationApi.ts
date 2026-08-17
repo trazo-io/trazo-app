@@ -82,11 +82,30 @@ export interface EducationBookmark {
   updated_at: string;
 }
 
+/** Mirrors FarmerQuestion.QUESTION_CATEGORIES in trazo-back/education/models.py:180. */
+export type FarmerQuestionCategory =
+  | 'records'
+  | 'quick_add'
+  | 'osp_renewal'
+  | 'consumer_page'
+  | 'setup';
+
 export interface FarmerQuestionAnswer {
   id: number;
   question: string;
   answer: string;
-  category: EducationCategory;
+  /**
+   * A slug, NOT the EducationCategory object. `FarmerQuestion.category` is a CharField with
+   * choices on the backend (education/models.py:190) and FarmerQuestionAnswerSerializer emits
+   * it directly; only EducationCourse.category is a real FK to EducationCategory.
+   *
+   * Typing it as the object made every correct use in EducationFAQ.tsx an error — indexing a
+   * label map by it, comparing it to the selected filter, using it as a React key — 7 of the
+   * errors that accumulated while the typecheck gate went unrun. The component was right and
+   * the type was wrong; had anyone "fixed" the component to satisfy this type, the chips
+   * would have rendered [object Object].
+   */
+  category: FarmerQuestionCategory;
   is_featured: boolean;
   tags: string[];
   view_count: number;

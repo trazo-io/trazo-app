@@ -95,7 +95,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
-  const accentColor = useColorModeValue('green.500', 'green.400');
+  const accentColor = useColorModeValue('green.700', 'green.300');
   const warningColor = useColorModeValue('orange.500', 'orange.400');
 
   const {
@@ -403,7 +403,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
                         size="sm"
                         w="full"
                       />
-                      <Text fontSize="xs" color="green.600">
+                      <Text fontSize="xs" color="green.700">
                         {indicator.usda_score}/{indicator.max_score}
                       </Text>
                     </VStack>

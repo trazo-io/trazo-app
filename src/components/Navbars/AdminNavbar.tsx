@@ -279,7 +279,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
               <BreadcrumbItem color={mainText}>
                 <BreadcrumbLink
                   onClick={parcelId ? handleEstablishmentClick : undefined}
-                  color={!parcelId ? 'green.600' : mainText}
+                  color={!parcelId ? 'green.700' : mainText}
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="500"
                   title={currentEstablishment.name}
@@ -293,7 +293,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                   _hover={
                     parcelId
                       ? {
-                          color: 'green.600',
+                          color: 'green.700',
                           textDecoration: 'none',
                           cursor: 'pointer',
                           transform: 'translateY(-0.5px)',
@@ -313,7 +313,7 @@ export default function AdminNavbar(props: AdminNavbarProps) {
             {currentParcel && (
               <BreadcrumbItem color={mainText}>
                 <BreadcrumbLink
-                  color="green.600"
+                  color="green.700"
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="600"
                   title={currentParcel.name}

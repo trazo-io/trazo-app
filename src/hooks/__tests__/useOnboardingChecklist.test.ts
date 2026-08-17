@@ -65,7 +65,7 @@ describe('writer checklist shape', () => {
 describe('resolveWriterCompletion — certifier prerequisites', () => {
   const seasonDone = {
     establishments: [farm()],
-    productions: [{ transparency_score: 74, finish_date: '2025-11-12', published: true }],
+    productions: [{ events_count: 12, finish_date: '2025-11-12', published: true }],
     farmId: FARM
   };
 
@@ -76,9 +76,48 @@ describe('resolveWriterCompletion — certifier prerequisites', () => {
     expect(done['upload-ofpp']).toBe(false);
   });
 
-  it('marks the OSP complete once one exists for the farm', () => {
-    const done = resolveWriterCompletion({ ...seasonDone, osps: [{ id: 45, version_number: 1 }] });
-    expect(done['file-osp']).toBe(true);
+  it('an empty draft OSP shell does NOT mark the item filed', () => {
+    // "Start my OSP" POSTs a draft with no answers. Ticking the item there told the grower the
+    // plan was filed while the readiness card on farm home simultaneously read "No Organic
+    // System Plan on file" — and the OSP page read "0 of 19 farm-wide modules complete".
+    const done = resolveWriterCompletion({
+      ...seasonDone,
+      osps: [{ id: 45, version_number: 1, status: 'draft', section_completion: 0 }]
+    });
+    expect(done['file-osp']).toBe(false);
+  });
+
+  it('marks the OSP filed once it is submitted, active, or fully sectioned', () => {
+    for (const osp of [
+      { id: 45, status: 'submitted', section_completion: 0.5 },
+      { id: 45, status: 'active', section_completion: 1 },
+      { id: 45, status: 'draft', section_completion: 1 }
+    ]) {
+      expect(
+        resolveWriterCompletion({ ...seasonDone, osps: [osp] })['file-osp'],
+        JSON.stringify(osp)
+      ).toBe(true);
+    }
+  });
+
+  it('counts events directly, not via the retired transparency score', () => {
+    // The score is backend-only since 2026-08-11, and anti-gaming can hold it at 0 for a season
+    // that genuinely has events — so a score proxy under-reports real documentation work.
+    expect(
+      resolveWriterCompletion({
+        establishments: [farm()],
+        productions: [{ events_count: 2, transparency_score: 0 }],
+        farmId: FARM
+      })['document-event']
+    ).toBe(true);
+
+    expect(
+      resolveWriterCompletion({
+        establishments: [farm()],
+        productions: [{ events_count: 0, transparency_score: 88 }],
+        farmId: FARM
+      })['document-event']
+    ).toBe(false);
   });
 
   it('marks the OFPP complete only on an affirmative flag', () => {

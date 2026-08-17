@@ -11,6 +11,8 @@
  *   // Returns: { hero: [...], immediate: [...], secondary: [...], details: [...] }
  */
 
+import { getEnumLabel } from './enums';
+import type { EnumSourceKey } from './enums';
 import { defaultFormatter } from './formatters';
 import type {
   AnySubtype,
@@ -149,11 +151,18 @@ export function isFieldOnSurface(
  *     'chemical', 'FE', 'modal', event
  *   );
  */
+/**
+ * Translate an i18n message id. Supplied by `useEventFields` (which has `useIntl`), so the
+ * resolver stays a pure module with no React dependency.
+ */
+export type TranslateFn = (id: string) => string | null;
+
 export function getFieldsForSurface(
   eventType: EventTypeName | EventTypeCode,
   subtype: AnySubtype | undefined,
   surface: DisplaySurface,
-  event: Record<string, unknown>
+  event: Record<string, unknown>,
+  translate?: TranslateFn
 ): ResolvedFieldSet {
   const entry = getRegistryEntry(eventType);
   if (!entry) {
@@ -203,10 +212,29 @@ export function getFieldsForSurface(
     if (field.valueType === 'enum' && typeof rawValue === 'string' && activeFormatter) {
       formattedValue = activeFormatter(rawValue, event);
     } else if (field.valueType === 'enum' && typeof rawValue === 'string') {
-      formattedValue = rawValue
-        .split('_')
-        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
+      // 🔴 2026-08-15: this branch used to ONLY de-underscore-and-capitalise, because
+      // `enumSource` was never read here — its sole consumer was RegistryFormField, i.e. the
+      // <option> elements. So every enum that did not declare a bespoke `formatter` rendered
+      // as a slug on the detail modal and the consumer card:
+      //
+      //   seed_certification_status "non_organic_untreated" -> "Non Organic Untreated"
+      //   seed_nonavailability_reason "quantity"            -> "Quantity"
+      //   seeds_source "farm_saved"                          -> "Farm Saved"
+      //
+      // The authored labels existed and were translated in BOTH locales the whole time; they
+      // simply never reached a display surface. "Seed Nonavailability Reason: Quantity" is the
+      // sharpest case — the entire point of that field is to state a statutory ground under
+      // § 205.2 (form / quality / quantity), and the bare word states none of it.
+      const labelKey = field.enumSource
+        ? getEnumLabel(field.enumSource as EnumSourceKey, rawValue)
+        : null;
+      const translated = labelKey && translate ? translate(labelKey) : null;
+      formattedValue =
+        translated ||
+        rawValue
+          .split('_')
+          .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
     } else if (activeFormatter) {
       formattedValue = activeFormatter(rawValue, event);
     } else {

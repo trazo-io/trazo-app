@@ -150,7 +150,9 @@ const validateNPKFormat = (input: string): ConcentrationValidationResult => {
     suggestions.push('Very low NPK total - verify this is correct');
   }
   if (nitrogen === 0 && phosphorus === 0 && potassium === 0) {
-    suggestions.push('NPK is 0-0-0. This is correct for micronutrient fertilizers (zinc, boron, etc.)');
+    suggestions.push(
+      'NPK is 0-0-0. This is correct for micronutrient fertilizers (zinc, boron, etc.)'
+    );
   }
 
   return {
@@ -287,8 +289,7 @@ export const ConcentrationFeedback: React.FC<ConcentrationFeedbackProps> = ({
         <Text
           fontSize="sm"
           fontWeight="medium"
-          color={validation.isValid ? 'green.700' : 'red.700'}
-        >
+          color={validation.isValid ? 'green.700' : 'red.700'}>
           {validation.isValid ? 'Valid format' : 'Invalid format'}
         </Text>
         <Badge
@@ -299,8 +300,7 @@ export const ConcentrationFeedback: React.FC<ConcentrationFeedbackProps> = ({
               : validation.format === 'percentage'
               ? 'blue'
               : 'gray'
-          }
-        >
+          }>
           {validation.format === 'npk'
             ? 'NPK Format'
             : validation.format === 'percentage'
@@ -385,13 +385,13 @@ const getFormatGuidance = (chemicalType: string): string => {
 
   switch (chemicalType) {
     case 'FE':
-      return '🌱 Fertilizer: Use NPK format (e.g., "10-10-10", "16-16-16")';
+      return 'Fertilizer: Use NPK format (e.g., "10-10-10", "16-16-16")';
     case 'PE':
-      return '🐛 Pesticide: Use percentage (e.g., "2.5%", "70%") or EC format (e.g., "2.08 EC")';
+      return 'Pesticide: Use percentage (e.g., "2.5%", "70%") or EC format (e.g., "2.08 EC")';
     case 'HE':
-      return '🌿 Herbicide: Use percentage (e.g., "40%", "5%") or EC format (e.g., "3.2 EC")';
+      return 'Herbicide: Use percentage (e.g., "40%", "5%") or EC format (e.g., "3.2 EC")';
     case 'FU':
-      return '🍄 Fungicide: Use percentage (e.g., "80%", "1.5%") or EC format (e.g., "4.0 EC")';
+      return 'Fungicide: Use percentage (e.g., "80%", "1.5%") or EC format (e.g., "4.0 EC")';
     default:
       return 'Select chemical type to see format requirements';
   }

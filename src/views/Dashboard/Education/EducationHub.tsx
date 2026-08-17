@@ -10,31 +10,27 @@ import {
   Icon,
   SimpleGrid,
   useColorModeValue,
-  useBreakpointValue,
-  Input,
-  InputGroup,
-  InputLeftElement
+  useBreakpointValue
 } from '@chakra-ui/react';
 import {
   FaBook,
-  FaSearch,
   FaChevronRight,
   FaQrcode,
-  FaChartLine,
   FaRocket,
   FaTractor,
-  FaShieldAlt,
   FaPlayCircle,
   FaCamera,
   FaTrophy,
   FaUsers,
-  FaCrown,
-  FaCogs,
   FaCalculator,
-  FaLeaf
+  FaLeaf,
+  FaClipboardList,
+  FaCalendarAlt,
+  FaClipboardCheck,
+  FaMapMarkedAlt
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
-import { StandardPage } from 'components/Design/StandardComponents';
+import { StandardPage, StandardSearchInput } from 'components/Design/StandardComponents';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
@@ -75,13 +71,11 @@ const EducationHub: React.FC = () => {
       icon: FaTractor,
       category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' })
     },
-    {
-      id: 'transparency-score',
-      title: intl.formatMessage({ id: 'education.topicTransparencyScoreTitle' }),
-      description: intl.formatMessage({ id: 'education.topicTransparencyScoreDesc' }),
-      icon: FaChartLine,
-      category: intl.formatMessage({ id: 'education.categoryTransparencySystem' })
-    },
+    // 'transparency-score' topic removed 2026-08-09: the numeric score renders
+    // NOWHERE anymore (farm/transparency route redirects home; the journey strip
+    // dropped it 2026-06). Education must not teach the mechanics of an invisible
+    // number — completeness guidance lives in 'score-optimization' (retitled
+    // "Building a Complete Season Record") and the readiness card itself.
     {
       id: 'qr-codes',
       title: intl.formatMessage({ id: 'education.topicQrCodesTitle' }),
@@ -89,13 +83,9 @@ const EducationHub: React.FC = () => {
       icon: FaQrcode,
       category: intl.formatMessage({ id: 'education.categoryConsumerEngagement' })
     },
-    {
-      id: 'blockchain',
-      title: intl.formatMessage({ id: 'education.topicBlockchainTitle' }),
-      description: intl.formatMessage({ id: 'education.topicBlockchainDesc' }),
-      icon: FaShieldAlt,
-      category: intl.formatMessage({ id: 'education.categoryVerificationSystem' })
-    },
+    // 'blockchain' topic removed 2026-08-09: it taught the withdrawn $15/mo consumer
+    // add-on as a current feature (BLOCKCHAIN_ENABLED defaults False; no consumer badge
+    // exists). See blockchain-disabled-2026-08-06.
     {
       id: 'carbon-data',
       title: intl.formatMessage({ id: 'education.topicCarbonDataTitle' }),
@@ -129,7 +119,7 @@ const EducationHub: React.FC = () => {
       title: intl.formatMessage({ id: 'education.topicScoreOptimizationTitle' }),
       description: intl.formatMessage({ id: 'education.topicScoreOptimizationDesc' }),
       icon: FaTrophy,
-      category: intl.formatMessage({ id: 'education.categoryTransparencySystem' })
+      category: intl.formatMessage({ id: 'education.categoryCompliance' })
     },
     {
       id: 'consumer-engagement',
@@ -138,19 +128,39 @@ const EducationHub: React.FC = () => {
       icon: FaUsers,
       category: intl.formatMessage({ id: 'education.categoryConsumerEngagement' })
     },
+    // 'subscription-features' removed 2026-08-09: it taught the dead
+    // Starter/Standard/Corporate tier model. Current pricing lives on the
+    // Subscription page — education must not duplicate it (stale duplication is
+    // how a farmer learned a pricing model that no longer exists).
+    // 'advanced-features' removed 2026-08-09: card had no matching topic —
+    // every click landed on "Topic Not Found".
     {
-      id: 'subscription-features',
-      title: intl.formatMessage({ id: 'education.topicSubscriptionFeaturesTitle' }),
-      description: intl.formatMessage({ id: 'education.topicSubscriptionFeaturesDesc' }),
-      icon: FaCrown,
-      category: intl.formatMessage({ id: 'education.categoryBusinessGrowth' })
+      id: 'organic-system-plan',
+      title: intl.formatMessage({ id: 'education.topicOrganicSystemPlanTitle' }),
+      description: intl.formatMessage({ id: 'education.topicOrganicSystemPlanDesc' }),
+      icon: FaClipboardList,
+      category: intl.formatMessage({ id: 'education.categoryCompliance' })
     },
     {
-      id: 'advanced-features',
-      title: intl.formatMessage({ id: 'education.topicAdvancedFeaturesTitle' }),
-      description: intl.formatMessage({ id: 'education.topicAdvancedFeaturesDesc' }),
-      icon: FaCogs,
-      category: intl.formatMessage({ id: 'education.categoryAdvancedFeatures' })
+      id: 'renewal-season',
+      title: intl.formatMessage({ id: 'education.topicRenewalSeasonTitle' }),
+      description: intl.formatMessage({ id: 'education.topicRenewalSeasonDesc' }),
+      icon: FaCalendarAlt,
+      category: intl.formatMessage({ id: 'education.categoryCompliance' })
+    },
+    {
+      id: 'inspection-prep',
+      title: intl.formatMessage({ id: 'education.topicInspectionPrepTitle' }),
+      description: intl.formatMessage({ id: 'education.topicInspectionPrepDesc' }),
+      icon: FaClipboardCheck,
+      category: intl.formatMessage({ id: 'education.categoryCompliance' })
+    },
+    {
+      id: 'buffer-zones',
+      title: intl.formatMessage({ id: 'education.topicBufferZonesTitle' }),
+      description: intl.formatMessage({ id: 'education.topicBufferZonesDesc' }),
+      icon: FaMapMarkedAlt,
+      category: intl.formatMessage({ id: 'education.categoryCompliance' })
     }
   ];
 
@@ -170,24 +180,16 @@ const EducationHub: React.FC = () => {
     <StandardPage
       title={intl.formatMessage({ id: 'education.pageTitle' })}
       description={intl.formatMessage({ id: 'education.pageDescription' })}
-      showBackButton
-      onBack={() => navigate(-1)}
-    >
-      <VStack spacing={6} w="full" maxW="6xl" mx="auto">
-        {/* Search */}
-        <Box maxW="md" w="full">
-          <InputGroup>
-            <InputLeftElement>
-              <Icon as={FaSearch} color="gray.400" />
-            </InputLeftElement>
-            <Input
-              placeholder={intl.formatMessage({ id: 'education.searchPlaceholder' })}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              bg={cardBg}
-            />
-          </InputGroup>
-        </Box>
+>
+      <VStack spacing={6} w="full" align="stretch">
+        {/* Search — the app's one search field (same control as the navbar and Documents),
+            left-aligned on the content column rather than floating centre-stage. */}
+        <StandardSearchInput
+          placeholder={intl.formatMessage({ id: 'education.searchPlaceholder' })}
+          value={searchTerm}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+          maxW={{ base: 'full', smd: '360px' }}
+        />
 
         {/* Documentation Topics */}
         <SimpleGrid columns={columns} spacing={6} w="full">
@@ -196,8 +198,8 @@ const EducationHub: React.FC = () => {
               <CardBody p={6}>
                 <VStack spacing={4} align="start">
                   <HStack>
-                    <Icon as={topic.icon} boxSize={6} color="green.500" />
-                    <Text fontSize="sm" color="green.500" fontWeight="medium">
+                    <Icon as={topic.icon} boxSize={6} color="green.700" />
+                    <Text fontSize="sm" color="green.700" fontWeight="medium">
                       {topic.category}
                     </Text>
                   </HStack>
@@ -230,9 +232,39 @@ const EducationHub: React.FC = () => {
         {filteredTopics.length === 0 && (
           <Box textAlign="center" py={12}>
             <Icon as={FaBook} boxSize={12} color="gray.300" mb={4} />
-            <Text color={textColor}>{intl.formatMessage({ id: 'education.noResultsFound' }, { searchTerm })}</Text>
+            <Text color={textColor}>
+              {intl.formatMessage({ id: 'education.noResultsFound' }, { searchTerm })}
+            </Text>
           </Box>
         )}
+
+        {/* FAQ entry — the /education/faq route existed with no inbound link anywhere. */}
+        <Card bg={cardBg} w="full">
+          <CardBody p={6}>
+            <HStack justify="space-between" flexWrap="wrap" gap={3}>
+              <HStack spacing={3}>
+                <Icon as={FaBook} boxSize={6} color="green.700" />
+                <VStack spacing={0} align="start">
+                  <Heading size="sm" color={headingColor}>
+                    {intl.formatMessage({ id: 'education.faqCardTitle' })}
+                  </Heading>
+                  <Text color={textColor} fontSize="sm">
+                    {intl.formatMessage({ id: 'education.faqCardDesc' })}
+                  </Text>
+                </VStack>
+              </HStack>
+              <Button
+                rightIcon={<FaChevronRight />}
+                variant="outline"
+                colorScheme="green"
+                size="sm"
+                onClick={() => navigate('/admin/dashboard/education/faq')}
+              >
+                {intl.formatMessage({ id: 'education.faqCardCta' })}
+              </Button>
+            </HStack>
+          </CardBody>
+        </Card>
       </VStack>
     </StandardPage>
   );

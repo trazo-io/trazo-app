@@ -68,6 +68,7 @@ const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const setStepIndex = useTourStore((s) => s.setStepIndex);
   const completeTour = useTourStore((s) => s.completeTour);
   const skipTour = useTourStore((s) => s.skipTour);
+  const endTour = useTourStore((s) => s.endTour);
 
   const intl = useIntl();
   const driverRef = useRef<Driver | null>(null);
@@ -174,8 +175,14 @@ const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       return !!el;
     });
 
-    // No visible targets — skip tour silently
-    if (visibleSteps.length === 0) return;
+    // No visible targets — stand down, but do NOT record the tour as seen. Leaving
+    // `activeTourId` set here (the behaviour until 2026-08-16) made `useTour`'s `isBusy`
+    // guard true for every other tour for the rest of the session, so one page that had not
+    // finished loading silently disabled the whole system.
+    if (visibleSteps.length === 0) {
+      endTour();
+      return;
+    }
     visibleStepCountRef.current = visibleSteps.length;
 
     const steps: DriveStep[] = visibleSteps.map((step) => ({

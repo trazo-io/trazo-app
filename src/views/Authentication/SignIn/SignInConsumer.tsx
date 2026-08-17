@@ -33,7 +33,7 @@ const loginSchema = object({
 
 export default function SignInConsumer() {
   const dispatch = useDispatch();
-  const titleColor = useColorModeValue('green.500', 'green.400');
+  const titleColor = useColorModeValue('green.700', 'green.300');
   const textColor = useColorModeValue('gray.400', 'white');
 
   const methods = useForm({
@@ -180,7 +180,7 @@ export default function SignInConsumer() {
                   </FormControl>
                   <Button
                     type="submit"
-                    bg="green.500"
+                    bg="green.700"
                     color="white"
                     w="100%"
                     h="44px"

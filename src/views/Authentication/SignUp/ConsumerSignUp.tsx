@@ -32,6 +32,7 @@ import {
 } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useDispatch } from 'react-redux';
+import { useIntl } from 'react-intl';
 import AuthFooter from 'components/Footer/AuthFooter';
 import { passwordValidator } from '../../../utils/passwordValidation';
 import { PERSON_NAME_PATTERN, PERSON_NAME_MAX_LENGTH } from '../../../utils/nameValidation';
@@ -62,6 +63,7 @@ interface SignUpFormData {
 }
 
 const ConsumerSignUp: React.FC = () => {
+  const intl = useIntl();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const toast = useToast();
@@ -342,30 +344,32 @@ const ConsumerSignUp: React.FC = () => {
           >
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
-                Know How Your Food Was Grown
+                {intl.formatMessage({ id: 'consumerSignup.heroTitle' })}
               </Text>
               <Text fontSize="lg" opacity={0.9} fontWeight="400" lineHeight="1.6">
-                Create a free account to discover how your food was grown, connect with transparent
-                farmers, and make informed choices about your food
+                {intl.formatMessage({ id: 'consumerSignup.heroSubtitle' })}
               </Text>
             </VStack>
 
+            {/* Claim-safe bullets. The old list said "Verified Farming Data" (nothing here
+                is third-party verified — records are farmer-reported) and "Transparency
+                Tracking" (retired framing), and closed with "Join thousands" — a fabricated
+                user count. Consumer surfaces state facts only. */}
             <VStack spacing={4} pt={4}>
               <VStack spacing={3}>
-                {['Free Forever', 'Verified Farming Data', 'Transparency Tracking'].map(
-                  (feature, index) => (
-                    <HStack key={index} spacing={3}>
-                      <Box w={2} h={2} bg="white" borderRadius="50%" />
-                      <Text fontSize="sm" fontWeight="500" opacity={0.9}>
-                        {feature}
-                      </Text>
-                    </HStack>
-                  )
-                )}
+                {[
+                  'consumerSignup.bulletFree',
+                  'consumerSignup.bulletRecords',
+                  'consumerSignup.bulletScan'
+                ].map((featureId) => (
+                  <HStack key={featureId} spacing={3}>
+                    <Box w={2} h={2} bg="white" borderRadius="50%" />
+                    <Text fontSize="sm" fontWeight="500" opacity={0.9}>
+                      {intl.formatMessage({ id: featureId })}
+                    </Text>
+                  </HStack>
+                ))}
               </VStack>
-              <Text fontSize="sm" opacity={0.8} fontWeight="500" mt={2}>
-                Join thousands making sustainable food choices
-              </Text>
             </VStack>
           </VStack>
         </Box>

@@ -1,6 +1,7 @@
 // Chakra imports
 import {
   Box,
+  Button,
   Flex,
   Icon,
   Text,
@@ -27,6 +28,7 @@ import {
   FaBug,
   FaEye,
   FaCalendarAlt,
+  FaMicrophone,
   FaTasks,
   FaCloudRain,
   FaFlask,
@@ -89,6 +91,12 @@ import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsB
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
+import { verbForKey } from 'config/activityVerbs';
+import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
+import { ResponsiveModal } from 'components/Design/ResponsiveModal';
+import { VoiceEventCapture } from 'components/Events/VoiceEventCapture';
+import { mapVoiceDataToFieldValues, mapVoiceTypeToTemplate } from 'utils/voiceDataMapper';
+import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
 
 // Enhanced form schemas with better validation
 // Sprint 1 Epic 1.4: Added performed_by for USDA GAP traceability compliance
@@ -176,6 +184,20 @@ const steps = [
   { title: 'Photos', description: 'Documentation (optional)' }
 ];
 
+// Save-time record-completeness nudge (chemical events only). The backend echoes
+// `completeness_gaps` — machine keys from history/services/record_completeness.py
+// (§ 205.103(b)(2) / § 205.206(a)) still blank on the saved row. Keys, not labels,
+// cross the wire; the human wording is owned here via i18n.
+const COMPLETENESS_GAP_LABELS = {
+  commercial_name: { id: 'app.completenessGap.commercialName', defaultMessage: 'Product name' },
+  volume: { id: 'app.completenessGap.volume', defaultMessage: 'Amount applied' },
+  area: { id: 'app.completenessGap.area', defaultMessage: 'Area treated' },
+  target_pest_disease: {
+    id: 'app.completenessGap.targetPestDisease',
+    defaultMessage: 'Target pest/disease'
+  }
+};
+
 function NewEvent({ isEdit = false, eventId = null }) {
   const intl = useIntl();
   const toast = useToast();
@@ -206,6 +228,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Get event type from URL parameters when editing
   const eventTypeFromUrl = searchParams.get('event_type');
 
+  // WS-4b entry convergence: arriving from a verb entry point (Activities picker,
+  // parcel Add Event menu) carries ?event_type=&verb= — the type is already known, so
+  // the chooser must not render again, the page titles itself by the verb, and the
+  // verb's production subtype (config/activityVerbs) seeds the form. With no preset,
+  // create mode shows the same verb grid instead of backend categories.
+  const verbFromUrl = searchParams.get('verb');
+  const typePresetFromVerb = !isEdit && verbFromUrl != null && eventTypeFromUrl != null;
+
   // Theme colors
   const textColor = useColorModeValue('gray.700', 'white');
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -217,7 +247,27 @@ function NewEvent({ isEdit = false, eventId = null }) {
   );
   const [carbonCalculation, setCarbonCalculation] = useState(null);
   const [isCalculatingCarbon, setIsCalculatingCarbon] = useState(false);
-  const [eventFormData, setEventFormData] = useState({});
+  // WS-4b: when a verb pre-answers the production subtype (planting→PL, harvest→HA…),
+  // seed it so ProductionTab opens on the right type instead of the PL default.
+  const [eventFormData, setEventFormData] = useState(() => {
+    const presetVerb = typePresetFromVerb ? verbForKey(verbFromUrl) : undefined;
+    return presetVerb?.subtype ? { type: presetVerb.subtype } : {};
+  });
+  // Verb picked in-page (no URL preset) — drives title + tile selection state.
+  const [pickedVerbKey, setPickedVerbKey] = useState(null);
+
+  // WS-4c: voice accelerator on the details step (ported from QuickAddEvent).
+  // voiceSeq keys the tab components — ChemicalTab resets from initialValues only
+  // once (hasInitialized guard), so a voice merge remounts the tab to re-read the
+  // merged eventFormData. onDataChange keeps eventFormData live, so nothing the
+  // farmer already typed is lost by the remount.
+  const [showVoiceCapture, setShowVoiceCapture] = useState(false);
+  const [voiceBanner, setVoiceBanner] = useState(null);
+  const [voiceSeq, setVoiceSeq] = useState(0);
+  // WS-4 template accelerator: picking a template is an explicit practice choice —
+  // its defaults (minus *_unit keys; the tab's US units win) prefill the form.
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [appliedTemplateKey, setAppliedTemplateKey] = useState(null);
   const [shouldShowCarbonTips, setShouldShowCarbonTips] = useState(false);
 
   // Preview modal state
@@ -970,6 +1020,47 @@ function NewEvent({ isEdit = false, eventId = null }) {
   }, [activeStep, mainInfoMethods, basicMethods, acceptedFiles.length]); // FIXED: Removed eventFormData to prevent infinite loop
 
   // Handle event type change
+  // WS-4c: voice result → merge ONLY the AI-detected fields into the form.
+  // The mapper's template DEFAULTS stay out — in the wizard the farmer sees and
+  // confirms every field, and defaults they never said would be silent data
+  // (suggest → confirm red line). Keys are backend field names, so they merge
+  // straight into eventFormData and the tabs re-read them on remount.
+  const handleVoiceEventDetected = (eventData) => {
+    const mapping = mapVoiceTypeToTemplate(eventData.type);
+    const result = mapVoiceDataToFieldValues(eventData, mapping.templateId);
+    const detected = {};
+    result.overriddenFields.forEach((key) => {
+      detected[key] = result.values[key];
+    });
+    setEventFormData((prev) => ({ ...prev, ...detected }));
+    setVoiceBanner({
+      transcript: eventData.original_transcript || eventData.description || '',
+      count: result.overriddenFields.length
+    });
+    setShowVoiceCapture(false);
+    setVoiceSeq((s) => s + 1);
+  };
+
+  // WS-4 template accelerator: merge subtype + template defaults, remount the tab
+  // (same voiceSeq mechanism — ChemicalTab only reads initialValues on mount).
+  const handleTemplateSelect = (tpl) => {
+    setEventFormData((prev) => ({ ...prev, ...templatePrefillValues(tpl) }));
+    setAppliedTemplateKey(tpl.nameKey);
+    setShowTemplatePicker(false);
+    setVoiceSeq((s) => s + 1);
+  };
+
+  // WS-4b: verb tile click — routes to the backend type and pre-answers the
+  // production subtype where the verb implies it (same clearing rules as a
+  // raw type change, then the subtype seed on top).
+  const handleVerbSelect = (verb) => {
+    handleEventTypeChange(verb.eventType);
+    setPickedVerbKey(verb.key);
+    if (verb.subtype) {
+      setEventFormData((prev) => ({ ...prev, type: verb.subtype }));
+    }
+  };
+
   const handleEventTypeChange = (eventTypeId) => {
     setActiveEventType(eventTypeId);
 
@@ -1229,6 +1320,34 @@ function NewEvent({ isEdit = false, eventId = null }) {
           return true;
         };
 
+        // Write the notes box onto the payload.
+        //
+        // 🔴 2026-08-15. This used to be `finalKey = 'description'` — a RENAME, repeated in
+        // six branches — and it caused two separate bugs:
+        //
+        //  1. DATA LOSS on edit. The notes box is prefilled from `observation` only (by
+        //     design: `description` on a legacy row may be AI-template output, and seeding
+        //     the box from it would promote machine copy into the quoted farmer voice on the
+        //     consumer page). So a row whose text lives in `description` opens with an empty
+        //     box, and the rename posted that empty string straight back over the stored
+        //     description. Measured: opening a Planting event and pressing Update without
+        //     touching anything replaced "Replanted 40 Hass on Duke 7 rootstock, rows 1-12,
+        //     east buffer." with "Production activity: Planting".
+        //  2. `observation` WAS NEVER STORED. Because it was renamed rather than copied, no
+        //     event created through this form ever wrote the column — so ConsumerEventCard's
+        //     "Farmer's Field Notes" block, which quotes `observation`, could never render
+        //     for a form-created event.
+        //
+        // Both are fixed by copying instead of renaming, and by refusing to blank a stored
+        // description with an empty box. The backend carries the same guard
+        // (ensure_event_description) so an API client cannot reintroduce case 1.
+        const applyNotesField = (target, value) => {
+          target.observation = value;
+          if (String(value ?? '').trim() || !isEdit) {
+            target.description = value;
+          }
+        };
+
         // UNIVERSAL FIELD MAPPING - BEST PRACTICE IMPLEMENTATION
         // Map event type to human-readable name for logging
         const eventTypeNames = {
@@ -1256,9 +1375,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
             if (shouldIncludeField(key, value) && !systemFields.includes(key)) {
               let finalKey = key;
 
-              // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
               if (key === 'observation') {
-                finalKey = 'description';
+                applyNotesField(cleaned, value);
+                return;
               }
 
               cleaned[finalKey] = value;
@@ -1283,9 +1402,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                 finalKey = 'equipment_hours';
               }
 
-              // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
               if (key === 'observation') {
-                finalKey = 'description';
+                applyNotesField(cleaned, value);
+                return;
               }
 
               cleaned[finalKey] = value;
@@ -1312,9 +1431,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                 finalKey = 'depth_unit';
               }
 
-              // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
               if (key === 'observation') {
-                finalKey = 'description';
+                applyNotesField(cleaned, value);
+                return;
               }
 
               cleaned[finalKey] = value;
@@ -1364,7 +1483,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
               if (key === 'type') finalKey = 'activity_type';
               if (key === 'duration_hours') finalKey = 'duration';
               if (key === 'participants') finalKey = 'people_involved';
-              if (key === 'observation') finalKey = 'description';
+              if (key === 'observation') {
+                applyNotesField(cleaned, value);
+                return;
+              }
 
               cleaned[finalKey] = value;
             }
@@ -1381,9 +1503,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
             if (shouldIncludeField(key, value)) {
               let finalKey = key;
 
-              // UNIVERSAL FIX: Map observation to description (required by CommonEvent model)
               if (key === 'observation') {
-                finalKey = 'description';
+                applyNotesField(cleaned, value);
+                return;
               }
 
               cleaned[finalKey] = value;
@@ -1431,10 +1553,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
               finalKey = 'equipment_hours';
             }
 
-            // CRITICAL FIX: Map observation to description for Chemical events
-            // CommonEvent model requires 'description' field, but form sends 'observation'
             if (key === 'observation') {
-              finalKey = 'description';
+              applyNotesField(cleaned, value);
+              return;
             }
 
             // CRITICAL FIX: Ensure extra_data is always a valid JSON object, not an array
@@ -1498,9 +1619,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
         finalEventData.observation = farmerNote;
       }
 
+      let savedEvent;
       if (isEdit) {
         // Update existing event
-        await updateEvent({
+        savedEvent = await updateEvent({
           companyId: currentCompany.id,
           farmId: parseInt(farmId || '0'),
           eventId: parseInt(eventId || '0'),
@@ -1520,7 +1642,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         });
       } else {
         // Create new event
-        await createEvent({
+        savedEvent = await createEvent({
           companyId: currentCompany.id,
           farmId: parseInt(farmId || '0'),
           ...finalEventData
@@ -1533,6 +1655,30 @@ function NewEvent({ isEdit = false, eventId = null }) {
             'Event created successfully with complete data for carbon calculation',
           status: 'success',
           duration: 5000,
+          isClosable: true
+        });
+      }
+
+      // Non-blocking nudge: the record IS saved (a farmer logs what they know standing in the
+      // orchard), but surface what a certifier will still ask for so it can be filled in later.
+      const completenessGaps = Array.isArray(savedEvent?.completeness_gaps)
+        ? savedEvent.completeness_gaps
+        : [];
+      if (completenessGaps.length > 0) {
+        const gapNames = completenessGaps
+          .map((key) =>
+            COMPLETENESS_GAP_LABELS[key] ? intl.formatMessage(COMPLETENESS_GAP_LABELS[key]) : key
+          )
+          .join(', ');
+        toast({
+          title:
+            intl.formatMessage({
+              id: 'app.completenessGapsSavedTitle',
+              defaultMessage: 'Saved — a certifier will also want:'
+            }) || 'Saved — a certifier will also want:',
+          description: gapNames,
+          status: 'warning',
+          duration: 8000,
           isClosable: true
         });
       }
@@ -1614,6 +1760,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
       title={
         isEdit
           ? intl.formatMessage({ id: 'app.editEvent' }) || 'Edit Event'
+          : typePresetFromVerb || pickedVerbKey
+          ? intl.formatMessage(
+              { id: 'activities.logTitle' },
+              {
+                verb: intl.formatMessage({
+                  id: `activities.verb.${typePresetFromVerb ? verbFromUrl : pickedVerbKey}`
+                })
+              }
+            )
           : intl.formatMessage({ id: 'app.createNewEvent' }) || 'Add Event'
       }
       description={
@@ -1634,8 +1789,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
             </Text>
           </HStack>
         </Badge>
-      }
-    >
+      }>
       {/* 2025 UX: Enhanced loading state with progress indication */}
       {isEdit && isLoadingEvent && (
         <StandardCard>
@@ -1690,16 +1844,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
           <Flex
             direction={{ base: 'column', lg: 'row-reverse' }}
             gap={{ base: 4, lg: 8 }}
-            align="flex-start"
-          >
+            align="flex-start">
             {/* Carbon Impact Sidebar */}
             <Box
               flex={{ base: 'none', lg: '0 0 370px', xl1: '0 0 450px' }}
               w={{ base: '100%', lg: '370px', xl1: '450px' }}
               position={{ lg: 'sticky' }}
               top="80px"
-              alignSelf="flex-start"
-            >
+              alignSelf="flex-start">
               {!carbonCalculation && !isCalculatingCarbon && !isCalculating && activeStep === 0 ? (
                 <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                   <CardBody>
@@ -1750,8 +1902,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               : carbonCalculation.efficiency_score >= 50
                               ? 'Moderate'
                               : 'Needs improvement'
-                          } efficiency rating.`}
-                        >
+                          } efficiency rating.`}>
                           {carbonCalculation.efficiency_score}/100
                         </Badge>
                       )}
@@ -1907,8 +2058,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
             <Box
               flex={{ base: 'none', lg: '1' }}
               w={{ base: '100%', lg: 'auto' }}
-              minW={{ lg: '0' }}
-            >
+              minW={{ lg: '0' }}>
               {activeStep === 0 && (
                 <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                   <CardHeader pb={2}>
@@ -1921,120 +2071,150 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     <FormProvider {...basicMethods}>
                       <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)} noValidate>
                         <VStack spacing={{ base: 5, md: 6 }} align="stretch">
-                          {/* Event Type Selection Section */}
-                          <SectionBox>
-                            <SectionHeader
-                              icon={FaTasks}
-                              iconColor="green.500"
-                              title={intl.formatMessage({
-                                id: 'events.wizard.eventType',
-                                defaultMessage: 'Event Type'
-                              })}
-                              badge="Required"
-                              badgeColorScheme="green"
-                              description="Select the type of agricultural activity you want to document"
-                            />
-                            {isEdit && (
-                              <Alert status="warning" borderRadius="md" mb={4}>
-                                <AlertIcon />
-                                <Text fontSize="sm">
-                                  {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' }) ||
-                                    'Event type cannot be changed after creation for data integrity reasons.'}
-                                </Text>
-                              </Alert>
-                            )}
-                            <Grid
-                              templateColumns={{
-                                base: 'repeat(2, 1fr)',
-                                md: 'repeat(3, 1fr)',
-                                lg: 'repeat(3, 1fr)',
-                                '2xl': 'repeat(4, 1fr)'
-                              }}
-                              gap={{ base: 2, md: 3, lg: 4 }}
-                              width="100%"
-                            >
-                              {/* Sprint 2 Epic 2.1: Equipment removed from event types - now a Production subtype */}
-                              {eventTypeConfig.map((eventType) => (
-                                <Box
-                                  key={eventType.id}
-                                  as="button"
-                                  type="button"
-                                  onClick={() => !isEdit && handleEventTypeChange(eventType.id)}
-                                  disabled={isEdit}
-                                  cursor={isEdit ? 'not-allowed' : 'pointer'}
-                                  opacity={isEdit && activeEventType !== eventType.id ? 0.4 : 1}
-                                  bg={
-                                    activeEventType === eventType.id
-                                      ? `${eventType.color}.500`
-                                      : 'white'
-                                  }
-                                  color={activeEventType === eventType.id ? 'white' : 'gray.700'}
-                                  borderWidth="2px"
-                                  borderColor={
-                                    activeEventType === eventType.id
-                                      ? `${eventType.color}.500`
-                                      : 'gray.200'
-                                  }
-                                  borderRadius={{ base: 'lg', md: 'xl' }}
-                                  p={{ base: 3, md: 4 }}
-                                  minH={{ base: '90px', md: '130px' }}
-                                  minW={0}
-                                  display="flex"
-                                  flexDirection="column"
-                                  justifyContent="center"
-                                  alignItems="center"
-                                  gap={2}
-                                  transition="all 0.2s ease"
-                                  _hover={
-                                    !isEdit
-                                      ? {
-                                          transform: 'translateY(-2px)',
-                                          boxShadow: 'lg',
-                                          borderColor: `${eventType.color}.400`
-                                        }
-                                      : {}
-                                  }
-                                  _focus={{
-                                    outline: 'none',
-                                    boxShadow: `0 0 0 3px var(--chakra-colors-${eventType.color}-200)`
+                          {/* Event Type Selection Section — hidden when the verb
+                              entry already answered it (typePresetFromVerb). */}
+                          {!typePresetFromVerb && (
+                            <SectionBox>
+                              <SectionHeader
+                                icon={FaTasks}
+                                iconColor="green.500"
+                                title={
+                                  isEdit
+                                    ? intl.formatMessage({
+                                        id: 'events.wizard.eventType',
+                                        defaultMessage: 'Event Type'
+                                      })
+                                    : intl.formatMessage({
+                                        id: 'activities.pickVerb',
+                                        defaultMessage: 'What did you do?'
+                                      })
+                                }
+                                badge="Required"
+                                description={
+                                  isEdit
+                                    ? intl.formatMessage({
+                                        id: 'events.wizard.eventTypeHint',
+                                        defaultMessage:
+                                          'Select the type of agricultural activity you want to document'
+                                      })
+                                    : intl.formatMessage({
+                                        id: 'activities.pickVerbHint',
+                                        defaultMessage: 'Pick the activity you want to log'
+                                      })
+                                }
+                              />
+                              {isEdit && (
+                                <Alert status="warning" borderRadius="md" mb={4}>
+                                  <AlertIcon />
+                                  <Text fontSize="sm">
+                                    {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' }) ||
+                                      'Event type cannot be changed after creation for data integrity reasons.'}
+                                  </Text>
+                                </Alert>
+                              )}
+                              {/* WS-4b: create mode shows the SHARED farmer-verb grid
+                                  (components/Events/VerbPickerGrid — same tiles as the
+                                  Activities page and parcel Add Event modal); the backend
+                                  category grid remains only for edit mode, where the type
+                                  is locked anyway. */}
+                              {!isEdit ? (
+                                <VerbPickerGrid
+                                  onSelect={handleVerbSelect}
+                                  selectedKey={pickedVerbKey}
+                                />
+                              ) : (
+                                <Grid
+                                  templateColumns={{
+                                    base: 'repeat(2, 1fr)',
+                                    md: 'repeat(3, 1fr)',
+                                    lg: 'repeat(3, 1fr)',
+                                    '2xl': 'repeat(4, 1fr)'
                                   }}
-                                  aria-label={`Select ${eventType.label} event type. ${eventType.description}`}
-                                  aria-pressed={activeEventType === eventType.id}
-                                  role="button"
-                                  tabIndex={isEdit ? -1 : 0}
-                                >
-                                  <Icon
-                                    as={eventType.icon}
-                                    boxSize={{ base: 5, md: 6 }}
-                                    color={
-                                      activeEventType === eventType.id
-                                        ? 'white'
-                                        : `${eventType.color}.500`
-                                    }
-                                  />
-                                  <VStack spacing={0.5} width="100%">
-                                    <Text
-                                      fontSize={{ base: 'xs', md: 'sm' }}
-                                      fontWeight="semibold"
-                                      textAlign="center"
-                                    >
-                                      {eventType.label}
-                                    </Text>
-                                    <Text
-                                      fontSize="xs"
-                                      opacity={activeEventType === eventType.id ? 0.9 : 0.7}
-                                      textAlign="center"
-                                      lineHeight="1.2"
-                                      noOfLines={2}
-                                      display={{ base: 'none', md: 'block' }}
-                                    >
-                                      {eventType.description}
-                                    </Text>
-                                  </VStack>
-                                </Box>
-                              ))}
-                            </Grid>
-                          </SectionBox>
+                                  gap={{ base: 2, md: 3, lg: 4 }}
+                                  width="100%">
+                                  {/* Sprint 2 Epic 2.1: Equipment removed from event types - now a Production subtype */}
+                                  {eventTypeConfig.map((eventType) => (
+                                    <Box
+                                      key={eventType.id}
+                                      as="button"
+                                      type="button"
+                                      onClick={() => !isEdit && handleEventTypeChange(eventType.id)}
+                                      disabled={isEdit}
+                                      cursor={isEdit ? 'not-allowed' : 'pointer'}
+                                      opacity={isEdit && activeEventType !== eventType.id ? 0.4 : 1}
+                                      bg={
+                                        activeEventType === eventType.id
+                                          ? `${eventType.color}.500`
+                                          : 'white'
+                                      }
+                                      color={
+                                        activeEventType === eventType.id ? 'white' : 'gray.700'
+                                      }
+                                      borderWidth="2px"
+                                      borderColor={
+                                        activeEventType === eventType.id
+                                          ? `${eventType.color}.500`
+                                          : 'gray.200'
+                                      }
+                                      borderRadius={{ base: 'lg', md: 'xl' }}
+                                      p={{ base: 3, md: 4 }}
+                                      minH={{ base: '90px', md: '130px' }}
+                                      minW={0}
+                                      display="flex"
+                                      flexDirection="column"
+                                      justifyContent="center"
+                                      alignItems="center"
+                                      gap={2}
+                                      transition="all 0.2s ease"
+                                      _hover={
+                                        !isEdit
+                                          ? {
+                                              transform: 'translateY(-2px)',
+                                              boxShadow: 'lg',
+                                              borderColor: `${eventType.color}.400`
+                                            }
+                                          : {}
+                                      }
+                                      _focus={{
+                                        outline: 'none',
+                                        boxShadow: `0 0 0 3px var(--chakra-colors-${eventType.color}-200)`
+                                      }}
+                                      aria-label={`Select ${eventType.label} event type. ${eventType.description}`}
+                                      aria-pressed={activeEventType === eventType.id}
+                                      role="button"
+                                      tabIndex={isEdit ? -1 : 0}>
+                                      <Icon
+                                        as={eventType.icon}
+                                        boxSize={{ base: 5, md: 6 }}
+                                        color={
+                                          activeEventType === eventType.id
+                                            ? 'white'
+                                            : `${eventType.color}.500`
+                                        }
+                                      />
+                                      <VStack spacing={0.5} width="100%">
+                                        <Text
+                                          fontSize={{ base: 'xs', md: 'sm' }}
+                                          fontWeight="semibold"
+                                          textAlign="center">
+                                          {eventType.label}
+                                        </Text>
+                                        <Text
+                                          fontSize="xs"
+                                          opacity={activeEventType === eventType.id ? 0.9 : 0.7}
+                                          textAlign="center"
+                                          lineHeight="1.2"
+                                          noOfLines={2}
+                                          display={{ base: 'none', md: 'block' }}>
+                                          {eventType.description}
+                                        </Text>
+                                      </VStack>
+                                    </Box>
+                                  ))}
+                                </Grid>
+                              )}
+                            </SectionBox>
+                          )}
 
                           {/* Event Timing & Traceability Section */}
                           <SectionBox>
@@ -2062,8 +2242,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   defaultMessage:
                                     'Select the exact date and time when this activity was performed'
                                 })}
-                                error={basicMethods.formState.errors.date?.message}
-                              >
+                                error={basicMethods.formState.errors.date?.message}>
                                 <StandardInput
                                   type="datetime-local"
                                   {...basicMethods.register('date')}
@@ -2082,8 +2261,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     'Name of person who performed this activity (optional, helps with traceability)'
                                 })}
                                 required={false}
-                                error={basicMethods.formState.errors.performed_by?.message}
-                              >
+                                error={basicMethods.formState.errors.performed_by?.message}>
                                 <StandardInput
                                   placeholder={
                                     activeEventType === 0
@@ -2103,8 +2281,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 variant="primary"
                                 type="submit"
                                 rightIcon={<FaChevronRight />}
-                                size="lg"
-                              >
+                                size="lg">
                                 {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                               </StandardButton>
                             </HStack>
@@ -2124,8 +2301,101 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     </Text>
                   </CardHeader>
                   <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
+                    {/* WS-4c: voice accelerator — every entry path gets it, not just Quick */}
+                    {!isEdit && activeEventType !== 0 && (
+                      <Box mb={4}>
+                        {showVoiceCapture ? (
+                          <VoiceEventCapture
+                            onEventDetected={handleVoiceEventDetected}
+                            isActive={true}
+                            cropType="general"
+                            autoStart={true}
+                            onClose={() => setShowVoiceCapture(false)}
+                          />
+                        ) : (
+                          <HStack spacing={3}>
+                            <Button
+                              leftIcon={<Icon as={FaMicrophone} />}
+                              variant="outline"
+                              colorScheme="green"
+                              size="sm"
+                              minH="44px"
+                              onClick={() => setShowVoiceCapture(true)}>
+                              {intl.formatMessage({ id: 'events.voice.fillByVoice' })}
+                            </Button>
+                            {templatesForEventType(activeEventType).length > 0 && (
+                              <Button
+                                leftIcon={<Icon as={FaClipboardList} />}
+                                variant="outline"
+                                colorScheme="green"
+                                size="sm"
+                                minH="44px"
+                                onClick={() => setShowTemplatePicker(true)}>
+                                {intl.formatMessage({ id: 'events.template.use' })}
+                              </Button>
+                            )}
+                          </HStack>
+                        )}
+                        {appliedTemplateKey && !showVoiceCapture && (
+                          <Box
+                            mt={3}
+                            p={3}
+                            bg="green.50"
+                            borderWidth="1px"
+                            borderColor="green.200"
+                            borderRadius="md">
+                            <HStack justify="space-between">
+                              <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                                {intl.formatMessage(
+                                  { id: 'events.template.applied' },
+                                  { name: intl.formatMessage({ id: appliedTemplateKey }) }
+                                )}
+                              </Text>
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                onClick={() => setAppliedTemplateKey(null)}>
+                                ✕
+                              </Button>
+                            </HStack>
+                          </Box>
+                        )}
+                        {voiceBanner && !showVoiceCapture && (
+                          <Box
+                            mt={3}
+                            p={3}
+                            bg="green.50"
+                            borderWidth="1px"
+                            borderColor="green.200"
+                            borderRadius="md">
+                            <HStack justify="space-between" align="start">
+                              <VStack align="start" spacing={1} flex={1}>
+                                <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                                  {intl.formatMessage(
+                                    { id: 'events.voice.applied' },
+                                    { count: voiceBanner.count }
+                                  )}
+                                </Text>
+                                {voiceBanner.transcript ? (
+                                  <Text fontSize="xs" color="gray.600" noOfLines={2}>
+                                    “{voiceBanner.transcript}”
+                                  </Text>
+                                ) : null}
+                              </VStack>
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                onClick={() => setVoiceBanner(null)}>
+                                ✕
+                              </Button>
+                            </HStack>
+                          </Box>
+                        )}
+                      </Box>
+                    )}
                     {activeEventType === 0 && (
                       <WeatherTab
+                        key={`w-${voiceSeq}`}
                         ref={weatherTabRef}
                         onSubmitHandler={onSubmitMainInfo}
                         onDataChange={onDataChange}
@@ -2136,6 +2406,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     )}
                     {activeEventType === 1 && (
                       <ProductionTab
+                        key={`p-${voiceSeq}`}
                         ref={productionTabRef}
                         onSubmitHandler={onSubmitMainInfo}
                         onDataChange={onDataChange}
@@ -2146,6 +2417,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     )}
                     {activeEventType === 2 && (
                       <ChemicalTab
+                        key={`c-${voiceSeq}`}
                         ref={chemicalTabRef}
                         onSubmitHandler={onSubmitMainInfo}
                         onDataChange={onDataChange}
@@ -2156,6 +2428,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     )}
                     {activeEventType === 3 && (
                       <GeneralTab
+                        key={`g-${voiceSeq}`}
                         ref={generalTabRef}
                         onSubmitHandler={onSubmitMainInfo}
                         onDataChange={onDataChange}
@@ -2167,6 +2440,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     {/* Sprint 2 Epic 2.1: Equipment (activeEventType === 4) REMOVED - merged into Production */}
                     {activeEventType === 5 && (
                       <SoilManagementTab
+                        key={`s-${voiceSeq}`}
                         ref={soilManagementTabRef}
                         onSubmitHandler={onSubmitMainInfo}
                         onDataChange={onDataChange}
@@ -2177,6 +2451,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     )}
                     {activeEventType === 6 && (
                       <PestManagementTab
+                        key={`pm-${voiceSeq}`}
                         ref={pestManagementTabRef}
                         onSubmitHandler={onSubmitMainInfo}
                         onDataChange={onDataChange}
@@ -2187,6 +2462,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     )}
                     {activeEventType === 7 && (
                       <BusinessTab
+                        key={`b-${voiceSeq}`}
                         ref={businessTabRef}
                         onSubmitHandler={onSubmitMainInfo}
                         onDataChange={onDataChange}
@@ -2202,32 +2478,28 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         direction={{ base: 'column', md: 'row' }}
                         justify="space-between"
                         align={{ base: 'stretch', md: 'center' }}
-                        gap={3}
-                      >
+                        gap={3}>
                         <StandardButton
                           variant="outline"
                           onClick={goToPreviousStep}
                           leftIcon={<FaChevronLeft />}
                           size={{ base: 'md', md: 'lg' }}
                           order={{ base: 3, md: 1 }}
-                          w={{ base: '100%', md: 'auto' }}
-                        >
+                          w={{ base: '100%', md: 'auto' }}>
                           {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
                         </StandardButton>
                         <Flex
                           direction={{ base: 'row', md: 'row' }}
                           gap={3}
                           order={{ base: 1, md: 2 }}
-                          w={{ base: '100%', md: 'auto' }}
-                        >
+                          w={{ base: '100%', md: 'auto' }}>
                           <StandardButton
                             variant="outline"
                             colorScheme="blue"
                             onClick={handleOpenPreview}
                             leftIcon={<FaEye />}
                             size={{ base: 'md', md: 'lg' }}
-                            flex={{ base: 1, md: 'none' }}
-                          >
+                            flex={{ base: 1, md: 'none' }}>
                             Preview
                           </StandardButton>
                           <StandardButton
@@ -2279,8 +2551,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             }}
                             rightIcon={<FaChevronRight />}
                             size={{ base: 'md', md: 'lg' }}
-                            flex={{ base: 1, md: 'none' }}
-                          >
+                            flex={{ base: 1, md: 'none' }}>
                             {intl.formatMessage({ id: 'app.continue' }) || 'Continue'}
                           </StandardButton>
                         </Flex>
@@ -2312,8 +2583,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         helpText={intl.formatMessage({
                           id: 'events.wizard.photosHelp',
                           defaultMessage: 'Upload photos documenting this agricultural event'
-                        })}
-                      >
+                        })}>
                         <TrazoImageUpload
                           maxFiles={5}
                           maxSize={10 * 1024 * 1024} // 10MB
@@ -2361,32 +2631,28 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           direction={{ base: 'column', md: 'row' }}
                           justify="space-between"
                           align={{ base: 'stretch', md: 'center' }}
-                          gap={3}
-                        >
+                          gap={3}>
                           <StandardButton
                             variant="outline"
                             onClick={goToPreviousStep}
                             leftIcon={<FaChevronLeft />}
                             size={{ base: 'md', md: 'lg' }}
                             order={{ base: 3, md: 1 }}
-                            w={{ base: '100%', md: 'auto' }}
-                          >
+                            w={{ base: '100%', md: 'auto' }}>
                             {intl.formatMessage({ id: 'app.previous' }) || 'Previous'}
                           </StandardButton>
                           <Flex
                             direction={{ base: 'row', md: 'row' }}
                             gap={3}
                             order={{ base: 1, md: 2 }}
-                            w={{ base: '100%', md: 'auto' }}
-                          >
+                            w={{ base: '100%', md: 'auto' }}>
                             <StandardButton
                               variant="outline"
                               colorScheme="blue"
                               onClick={handleOpenPreview}
                               leftIcon={<FaEye />}
                               size={{ base: 'md', md: 'lg' }}
-                              flex={{ base: 1, md: 'none' }}
-                            >
+                              flex={{ base: 1, md: 'none' }}>
                               Preview
                             </StandardButton>
                             <StandardButton
@@ -2400,8 +2666,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               }
                               rightIcon={<FaCheckCircle />}
                               size={{ base: 'md', md: 'lg' }}
-                              flex={{ base: 1, md: 'none' }}
-                            >
+                              flex={{ base: 1, md: 'none' }}>
                               {isEdit
                                 ? intl.formatMessage({ id: 'app.updateEvent' }) || 'Update'
                                 : intl.formatMessage({ id: 'app.createEvent' }) || 'Create'}
@@ -2427,6 +2692,30 @@ function NewEvent({ isEdit = false, eventId = null }) {
           formData={previewFormData}
         />
       )}
+
+      {/* WS-4 template accelerator picker */}
+      <ResponsiveModal
+        isOpen={showTemplatePicker}
+        onClose={() => setShowTemplatePicker(false)}
+        size="md"
+        header={
+          <Text fontSize="lg" fontWeight="semibold">
+            {intl.formatMessage({ id: 'events.template.pickTitle' })}
+          </Text>
+        }>
+        <VStack align="stretch" spacing={2}>
+          {templatesForEventType(activeEventType).map((tpl) => (
+            <StandardButton
+              key={tpl.id}
+              variant="outline"
+              minH="44px"
+              justifyContent="flex-start"
+              onClick={() => handleTemplateSelect(tpl)}>
+              {intl.formatMessage({ id: tpl.nameKey })}
+            </StandardButton>
+          ))}
+        </VStack>
+      </ResponsiveModal>
     </StandardPage>
   );
 }

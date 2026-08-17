@@ -39,7 +39,7 @@ function SignIn() {
   const dispatch = useDispatch();
   const intl = useIntl();
   // Chakra color mode
-  const titleColor = useColorModeValue('green.500', 'green.400');
+  const titleColor = useColorModeValue('green.700', 'green.300');
   const textColor = useColorModeValue('gray.400', 'white');
 
   const methods = useForm({

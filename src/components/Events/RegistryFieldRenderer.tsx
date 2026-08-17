@@ -29,6 +29,7 @@ import {
   VStack
 } from '@chakra-ui/react';
 import { FaChevronDown, FaChevronUp, FaExclamationTriangle, FaShieldAlt } from 'react-icons/fa';
+import { useIntl } from 'react-intl';
 
 import type { PriorityTier, ResolvedField, ResolvedFieldSet } from 'src/config/events';
 
@@ -39,11 +40,23 @@ import type { PriorityTier, ResolvedField, ResolvedFieldSet } from 'src/config/e
 /**
  * Resolve a labelKey to a display label.
  *
- * For Phase 5 MVP, this uses simple camelCase → Title Case conversion.
- * TODO: Replace with intl.formatMessage({ id: labelKey }) once i18n keys
- * are added to en-US.json and es.json translation files.
+ * 🔴 2026-08-15: the TODO below ("Replace with intl.formatMessage once i18n keys are added")
+ * was stale — the keys had long since been added, in BOTH locales, and
+ * registryLabelKeysExist.test.ts already guarded their presence. Nothing guarded that the
+ * renderer USED them, so every label on the detail modal was a de-camelCased key segment,
+ * in English, on the Spanish app:
+ *
+ *   events.production.fields.seedSearchAttempts -> "Seed Search Attempts"
+ *                                       authored: "Organic Seed Search Documentation"
+ *   events.production.fields.appliedScopeDetail -> "Applied Scope Detail"
+ *                                       authored: "Which Rows / Blocks / Area"
+ *   events.common.fields.blockId                -> "Block Id"
+ *                                       authored: "Block / Section ID"
+ *
+ * The camelCase conversion stays as the fallback for a key with no message, so a field added
+ * without a translation degrades to today's behaviour instead of rendering a raw dotted id.
  */
-function resolveLabel(labelKey: string): string {
+function humanizeLabelKey(labelKey: string): string {
   // Extract the last segment: 'events.chemical.fields.commercialName' → 'commercialName'
   const lastSegment = labelKey.split('.').pop() || labelKey;
   // camelCase → Title Case: 'commercialName' → 'Commercial Name'
@@ -51,6 +64,20 @@ function resolveLabel(labelKey: string): string {
     .replace(/([A-Z])/g, ' $1')
     .replace(/^./, (s) => s.toUpperCase())
     .trim();
+}
+
+/** Translate a registry labelKey, falling back to a humanized key segment. */
+function useLabelResolver(): (labelKey: string) => string {
+  const intl = useIntl();
+  return React.useCallback(
+    (labelKey: string) => {
+      if (!labelKey) return '';
+      const translated = intl.formatMessage({ id: labelKey });
+      // react-intl echoes the id back when the message is missing.
+      return translated && translated !== labelKey ? translated : humanizeLabelKey(labelKey);
+    },
+    [intl]
+  );
 }
 
 // ============================================================================
@@ -66,6 +93,7 @@ interface FieldItemProps {
 
 const FieldItem: React.FC<FieldItemProps> = ({ field, cardBg, textColor, compact }) => {
   const badgeColor = useColorModeValue('orange.100', 'orange.800');
+  const resolveLabel = useLabelResolver();
 
   return (
     <Box p={compact ? 2 : 4} bg={cardBg} borderRadius="lg">
@@ -76,10 +104,9 @@ const FieldItem: React.FC<FieldItemProps> = ({ field, cardBg, textColor, compact
         {field.requiresVerificationBadge && (
           <Badge
             colorScheme="orange"
-            fontSize="2xs"
+            fontSize="11px"
             bg={badgeColor}
-            title="Self-reported — not independently verified"
-          >
+            title="Self-reported — not independently verified">
             <HStack spacing={1}>
               <Icon as={FaShieldAlt} boxSize="8px" />
               <Text>Self-reported</Text>
@@ -89,10 +116,9 @@ const FieldItem: React.FC<FieldItemProps> = ({ field, cardBg, textColor, compact
         {field.isCarbonRelevant && (
           <Badge
             colorScheme="green"
-            fontSize="2xs"
+            fontSize="11px"
             variant="subtle"
-            title="Affects carbon calculations"
-          >
+            title="Affects carbon calculations">
             CO₂
           </Badge>
         )}
@@ -150,8 +176,7 @@ const FieldSection: React.FC<FieldSectionProps> = ({
           mb={3}
           cursor={collapsible ? 'pointer' : 'default'}
           onClick={collapsible ? onToggle : undefined}
-          _hover={collapsible ? { opacity: 0.8 } : undefined}
-        >
+          _hover={collapsible ? { opacity: 0.8 } : undefined}>
           <Text fontSize="md" fontWeight="semibold" color={textColor}>
             {title}
           </Text>

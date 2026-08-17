@@ -3,10 +3,7 @@ import {
   SIGNUP_URL,
   USER_DATA_URL,
   VERIFY_EMAIL_URL,
-  SOCIAL_AUTH_URL,
-  PASSWORD_CHANGE_URL,
-  PASSWORD_RESET_REQUEST_URL,
-  PASSWORD_RESET_CONFIRM_URL
+  SOCIAL_AUTH_URL
 } from '../../config';
 
 import baseApi from './baseApi';

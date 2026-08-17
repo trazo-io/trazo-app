@@ -371,6 +371,44 @@ export const defaultFormatter: FieldFormatter = (value) => {
 };
 
 /**
+ * NOP 5029 / 7 CFR 205.204(a)(1) commercial-availability search rows.
+ *
+ * 🔴 2026-08-15: `seed_search_attempts` is a JSON list of
+ * `{supplier_name, date_contacted, result, notes}`, but the field was declared
+ * `valueType: 'text'` with no formatter — so the resolver fell through to
+ * `defaultFormatter`, whose last line is `String(value)`. The producer's own detail modal
+ * rendered the grower's § 205.204(a)(1) diligence as, verbatim:
+ *
+ *     Seed Search Attempts    [object Object],[object Object],[object Object]
+ *
+ * on the one screen they would open to check the record before an inspection.
+ *
+ * Summarised rather than tabulated because a modal row is a single line: the supplier names
+ * are what identify the search, and the full table (with dates, results and notes) is what
+ * the certifier packet prints.
+ */
+export const formatSeedSearchAttempts: FieldFormatter<unknown> = (value) => {
+  if (!Array.isArray(value) || value.length === 0) return null;
+
+  const suppliers = value
+    .map((row) => {
+      if (!row || typeof row !== 'object') return null;
+      const r = row as Record<string, unknown>;
+      // `supplier` is the pre-2026-08-15 key; rows written before migration 0205 still carry it.
+      const name = (r.supplier_name ?? r.supplier ?? '') as string;
+      return typeof name === 'string' && name.trim() ? name.trim() : null;
+    })
+    .filter((n): n is string => Boolean(n));
+
+  if (suppliers.length === 0) {
+    // Rows exist but name nobody — that is the shape a certifier reads as an unsupported
+    // exemption, so say so rather than printing a bare count.
+    return `${value.length} search ${value.length === 1 ? 'record' : 'records'}, no supplier named`;
+  }
+  return `${suppliers.length} contacted: ${suppliers.join(', ')}`;
+};
+
+/**
  * Drop a trailing scientific binomial from a pest or disease name, for consumer surfaces only.
  *
  * WHY (2026-08-02): live cards read "Citrus leafminer (Phyllocnistis citrella)" and "Persea
@@ -433,4 +471,47 @@ export const formatConsumerTemperatureControl: FieldFormatter<boolean | string> 
   if (value === null || value === undefined || value === '') return null;
   const yes = value === true || value === 'true' || value === 'Yes' || value === 'yes';
   return yes ? 'Yes, kept cool after picking' : 'Not recorded as temperature-controlled';
+};
+
+/**
+ * Organic-approval status, as a shopper may safely read it.
+ *
+ * WHY (2026-08-09): three consumer surfaces rendered the grower's `organic_approved` dropdown
+ * as the words "OMRI Listed" — the chemical chip, the soil `amendment_organic_approved` row,
+ * and the pest `beneficial_organic_approved` row, the last of which printed
+ * "OMRI / Organic-approved" from a bare `yes`. OMRI is a real third-party listing program, so
+ * naming it on the strength of a self-report is an unearned certification claim
+ * (FTC 16 CFR 260.6; EU ECGT 2024/825), not loose wording.
+ *
+ * The client cannot resolve the OMRI or National List catalogs, so it can never confirm a
+ * listing; only the server can (`claim_authority.may_claim_input_listing`). This formatter is
+ * therefore deliberately incapable of emitting a certifier's name. The grower's record is
+ * still shown in full — attributed to the grower, which is what it is.
+ */
+const CONSUMER_ORGANIC_STATUS: Record<string, string> = {
+  omri_listed: 'Yes — the grower recorded this as approved for organic use',
+  // 2026-08-15 — the three lawful verification bases added when the enum was rebuilt on
+  // USDA's Input Material Application Record. Wording stays GROWER-REPORTED for all of them:
+  // the basis is the grower's answer, not a third-party attestation Trazo has checked. Only
+  // the server (claim_authority, which holds the catalog FKs) may upgrade that.
+  wsda_listed: 'Yes — the grower recorded this as approved for organic use',
+  nop_seal_on_label: 'Yes — the grower recorded this as approved for organic use',
+  certifier_approved: 'Yes — the grower recorded their certifier approved this input',
+  usda_nop_approved: 'Yes — the grower recorded this as approved for organic use',
+  organic_equivalent: 'Yes — the grower recorded this as organic-equivalent',
+  organic_certified: 'Yes — the grower recorded this as approved for organic use',
+  yes: 'Yes — the grower recorded this as approved for organic use',
+  transitional: 'Transitional — the farm is converting to organic',
+  not_organic: 'No, conventional input',
+  no: 'No, conventional input',
+  unknown: 'The grower did not record an approval status',
+  // Not an answer to the question; render nothing rather than "Not Applicable".
+  not_applicable: ''
+};
+
+export const formatConsumerOrganicStatus: FieldFormatter<string> = (value) => {
+  if (typeof value !== 'string' || value === '') return null;
+  const label = CONSUMER_ORGANIC_STATUS[value.toLowerCase()];
+  if (label === '') return null;
+  return label ?? null;
 };

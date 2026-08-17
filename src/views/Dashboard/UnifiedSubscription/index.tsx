@@ -61,7 +61,7 @@ import {
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
-import { StandardPage } from 'components/Design/StandardComponents';
+import { StandardCard, StandardPage } from 'components/Design/StandardComponents';
 import {
   FaBuilding,
   FaMapMarkedAlt,
@@ -95,14 +95,11 @@ import { Company } from 'types/company';
 import { useGetCompanyQuery, useUpdateCompanyMutation } from 'store/api/companyApi';
 import {
   useGetBillingDashboardQuery,
-  useGetBlockchainSubscriptionStatusQuery,
-  useLazyGetBlockchainSubscriptionStatusQuery,
   useCancelSubscriptionMutation,
   useReactivateSubscriptionMutation,
   useAddAddonMutation,
   useSetDefaultPaymentMethodMutation,
-  useCreateCheckoutSessionMutation,
-  useSubscribeBlockchainMutation
+  useCreateCheckoutSessionMutation
 } from 'store/api/billingApi';
 import { setCompany } from 'store/features/companySlice';
 import { MastercardIcon, VisaIcon, PayPalIcon } from 'components/Icons/Icons';
@@ -127,6 +124,24 @@ const formatPrice = (price: number | null | undefined, quantity: number = 1): st
   const total = numPrice * Math.max(quantity, 0);
   return `$${total.toFixed(2)}`;
 };
+
+/**
+ * The billing period an add-on actually charges on, from the add-on itself.
+ *
+ * `AddOn.interval` only started reaching the client on 2026-08-14. Before that the period lived
+ * in Stripe alone and the UI printed a bare "$30.00" beside a plan labelled "/Yearly", so nothing
+ * on screen distinguished $30 a month from $30 a year — and the real answer, monthly against an
+ * annual plan, was the defect that made a second farm cost more than the first. Defaults to
+ * yearly, matching the model default, so an older cached payload cannot silently claim "per
+ * month" about a yearly charge.
+ */
+const addonPeriodLabel = (
+  addon: { interval?: string },
+  intl: { formatMessage: (d: any) => string }
+): string =>
+  intl.formatMessage({
+    id: addon?.interval === 'monthly' ? 'app.addon.perMonth' : 'app.addon.perYear'
+  });
 
 const getDaysRemaining = (trialEndDate: string | Date | null | undefined): number => {
   if (!trialEndDate) return 0;
@@ -178,6 +193,9 @@ function UnifiedSubscriptionDashboard() {
   const tabBg = useColorModeValue('gray.50', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
 
+  // Controlled so the tab bar and its panels share one source of truth (and so a future
+  // deep-link like ?tab=billing has something to set).
+  const [tabIndex, setTabIndex] = useState(0);
   const [selectedAddon, setSelectedAddon] = useState<any>(null);
   const [addonQuantity, setAddonQuantity] = useState(1);
   const [showAddons, setShowAddons] = useState(false);
@@ -219,10 +237,6 @@ function UnifiedSubscriptionDashboard() {
     refetchOnMountOrArgChange: true
   });
 
-  const { data: blockchainStatus, refetch: refetchBlockchainStatus } =
-    useGetBlockchainSubscriptionStatusQuery({});
-  const [syncBlockchainStatus] = useLazyGetBlockchainSubscriptionStatusQuery();
-
   // Mutations
   const [cancelSubscription, { isLoading: isCancellingSubscription }] =
     useCancelSubscriptionMutation();
@@ -232,8 +246,6 @@ function UnifiedSubscriptionDashboard() {
   const [setDefaultPaymentMethod] = useSetDefaultPaymentMethodMutation();
   const [createCheckoutSession, { isLoading: isCreatingCheckoutSession }] =
     useCreateCheckoutSessionMutation();
-  const [subscribeBlockchain, { isLoading: isSubscribingBlockchain }] =
-    useSubscribeBlockchainMutation();
   const [updateCompany, { isLoading: isUpdatingBilling }] = useUpdateCompanyMutation();
 
   // Extract data
@@ -245,6 +257,16 @@ function UnifiedSubscriptionDashboard() {
   // Use effective_limits (base plan + add-ons) when available, fall back to base features
   const features = subscription?.effective_limits || plan?.features || {};
   const isTrial = subscription?.status === 'trialing';
+  // Pilot = Compliance comped by agreement (provision_pilot), not a billed plan. Two sharp
+  // edges if rendered as one: the red Cancel button (canceling nulls `subscription_plan`
+  // and 403s every creation in the app — one click locks a pilot farm out mid-season) and
+  // "Next Billing Date", which for a pilot is actually their certifier renewal anchor.
+  const isPilot = (plan as any)?.slug === 'pilot' || (plan as any)?.features?.is_pilot === true;
+  // Starter is FREE FOREVER (2026-08-13) — no trial, no renewal, no billing date. Its
+  // subscription carries `current_period_end = null` on purpose, so the billing grid below would
+  // otherwise print "Next billing date: -" and "Current period: 13/08/2026 - -", which reads as
+  // missing data on the one plan whose selling point is that nothing is ever due.
+  const isFreeForever = (plan as any)?.slug === 'starter';
   const addons = dashboardData?.addons || [];
   const paymentMethods = dashboardData?.paymentMethods || [];
   const invoices = dashboardData?.invoices || [];
@@ -254,9 +276,6 @@ function UnifiedSubscriptionDashboard() {
   // Handle refresh from URL params
   const queryParams = new URLSearchParams(location.search);
   const fromAddon = queryParams.get('from_addon') === 'true';
-  const fromBlockchainSubscription = queryParams.get('blockchain_subscription') === 'success';
-  const blockchainSessionId = queryParams.get('session_id') || '';
-
   const handleRefreshData = useCallback(async () => {
     try {
       const result = await refetchCompany();
@@ -296,55 +315,10 @@ function UnifiedSubscriptionDashboard() {
     }
   }, [fromAddon, handleRefreshData, navigate, toast, intl, location.pathname]);
 
-  // Auto-sync blockchain status after successful subscription
-  useEffect(() => {
-    if (fromBlockchainSubscription) {
-      // Call sync endpoint to validate with Stripe and update database
-      const syncStatus = async () => {
-        try {
-          // First sync with Stripe to update the database
-          // Pass the session_id if available for direct validation
-          const syncResult = await syncBlockchainStatus({
-            sync: true,
-            session_id: blockchainSessionId || undefined
-          });
-          console.log('Blockchain sync result:', syncResult);
-
-          // Wait a moment for database to update
-          await new Promise((resolve) => setTimeout(resolve, 500));
-
-          // Refetch the status to update UI
-          const refetchResult = await refetchBlockchainStatus();
-          console.log('Blockchain refetch result:', refetchResult);
-
-          toast({
-            title: intl.formatMessage({ id: 'app.blockchainSubscriptionSuccessful' }),
-            description: intl.formatMessage({ id: 'app.blockchainSubscriptionSuccessDescription' }),
-            status: 'success',
-            duration: 5000,
-            isClosable: true
-          });
-
-          // Clear the URL params AFTER sync completes
-          navigate(location.pathname, { replace: true });
-        } catch (error) {
-          console.error('Error syncing blockchain status:', error);
-          // Still clear URL params on error
-          navigate(location.pathname, { replace: true });
-        }
-      };
-      syncStatus();
-    }
-  }, [
-    fromBlockchainSubscription,
-    blockchainSessionId,
-    syncBlockchainStatus,
-    refetchBlockchainStatus,
-    navigate,
-    toast,
-    intl,
-    location.pathname
-  ]);
+  // Blockchain subscribe/sync machinery removed 2026-08-12. The add-on was withdrawn
+  // 2026-08-03 and its visible card removed 2026-08-06, but the mutation, status queries,
+  // and the post-checkout sync effect survived — dead paths selling a product Trazo no
+  // longer offers. The AddOn row stays inactive backend-side; nothing here references it.
 
   // Usage Metrics Calculation
   const countTotalParcels = (): number => {
@@ -436,7 +410,7 @@ function UnifiedSubscriptionDashboard() {
       name: 'app.establishments',
       used: Math.max(0, activeCompany?.establishments?.length || 0),
       limit: formatLimit(features?.max_establishments ?? 0),
-      colorScheme: 'blue'
+      colorScheme: 'green'
     },
     {
       icon: FaMapMarkedAlt,
@@ -450,14 +424,14 @@ function UnifiedSubscriptionDashboard() {
       name: 'app.productions',
       used: Math.max(0, subscription?.used_productions || 0),
       limit: formatLimit(features?.max_productions_per_year ?? 0),
-      colorScheme: 'orange'
+      colorScheme: 'green'
     },
     {
       icon: FaQrcode,
       name: 'app.scans',
       used: Math.max(0, subscription?.scan_count || 0),
       limit: formatLimit(features?.monthly_scan_limit ?? 0),
-      colorScheme: 'purple'
+      colorScheme: 'green'
     },
     {
       icon: FaDatabase,
@@ -465,7 +439,7 @@ function UnifiedSubscriptionDashboard() {
       used: Math.max(0, Number(subscription?.used_storage_gb) || 0),
       limit: formatLimit(features?.storage_limit_gb ?? 0),
       unit: 'GB',
-      colorScheme: 'cyan'
+      colorScheme: 'green'
     }
   ];
 
@@ -523,7 +497,7 @@ function UnifiedSubscriptionDashboard() {
       return;
     }
     setSelectedAddon(addon);
-    setAddonQuantity(addon.slug === 'blockchain-verification' ? 1 : 1);
+    setAddonQuantity(1);
     onOpen();
   };
 
@@ -675,48 +649,13 @@ function UnifiedSubscriptionDashboard() {
     }
   }, [activeCompany, billingForm, updateCompany, toast, intl, onBillingEditClose, refetchCompany]);
 
-  const handleSubscribeBlockchain = useCallback(async () => {
-    if (!config.PAYMENTS_ENABLED) {
-      setEarlyAccessPlanName('Blockchain Verification');
-      onEarlyAccessOpen();
-      return;
-    }
-
-    if (!hasSubscription) {
-      toast({
-        title: intl.formatMessage({ id: 'app.subscriptionRequired' }),
-        description: intl.formatMessage({ id: 'subscription.needActiveForBlockchain' }),
-        status: 'warning',
-        duration: 5000,
-        isClosable: true
-      });
-      return;
-    }
-
-    try {
-      const response = await subscribeBlockchain().unwrap();
-      if (response.checkout_url) {
-        window.location.href = response.checkout_url;
-      }
-    } catch (error) {
-      toast({
-        title: intl.formatMessage({ id: 'app.error' }),
-        description: intl.formatMessage({ id: 'app.errorCreatingCheckout' }),
-        status: 'error',
-        duration: 5000,
-        isClosable: true
-      });
-    }
-  }, [subscribeBlockchain, hasSubscription, toast, intl, onEarlyAccessOpen]);
-
   const isLoading =
     isDashboardLoading ||
     isRefreshing ||
     isCancellingSubscription ||
     isReactivatingSubscription ||
     isAddingAddon ||
-    isCreatingCheckoutSession ||
-    isSubscribingBlockchain;
+    isCreatingCheckoutSession;
 
   // Return null while loading - this keeps the app-level loading visible
   // and prevents any intermediate states from flashing
@@ -728,13 +667,10 @@ function UnifiedSubscriptionDashboard() {
     return (
       <StandardPage
         title={intl.formatMessage({ id: 'app.subscription' })}
-        description={intl.formatMessage({ id: 'app.noActiveSubscription' })}
-        showBackButton
-        onBack={() => navigate(-1)}
-      >
-        <Card>
-          <CardBody textAlign="center" py={10}>
-            <Icon as={FaInfoCircle} boxSize={12} color="blue.500" mb={4} />
+        description={intl.formatMessage({ id: 'app.noActiveSubscription' })}>
+        <StandardCard mb={0}>
+          <Box textAlign="center" py={4}>
+            <Icon as={FaInfoCircle} boxSize={12} color="green.500" mb={4} />
             <Text fontSize="xl" fontWeight="bold" mb={4}>
               {intl.formatMessage({ id: 'app.noActiveSubscription' })}
             </Text>
@@ -744,12 +680,11 @@ function UnifiedSubscriptionDashboard() {
             <Button
               colorScheme="green"
               size="lg"
-              onClick={() => navigate('/admin/dashboard/pricing')}
-            >
+              onClick={() => navigate('/admin/dashboard/pricing')}>
               {intl.formatMessage({ id: 'app.viewPlans' })}
             </Button>
-          </CardBody>
-        </Card>
+          </Box>
+        </StandardCard>
       </StandardPage>
     );
   }
@@ -758,24 +693,23 @@ function UnifiedSubscriptionDashboard() {
     <StandardPage
       title={intl.formatMessage({ id: 'app.subscription' })}
       description={intl.formatMessage({ id: 'app.manageYourSubscriptionAndTrackUsage' })}
-      showBackButton
-      onBack={() => navigate(-1)}
-      headerAction={
+      // `headerAction` is StandardCard's prop — StandardPage takes `rightAction`, so this
+      // Refresh button was silently dropped and had never rendered on this page.
+      rightAction={
         <Button
           leftIcon={<FaSync />}
           colorScheme="green"
           variant="outline"
           size="sm"
+          minH="44px"
           isLoading={isLoading}
           onClick={() => {
             refetchDashboard();
             handleRefreshData();
-          }}
-        >
+          }}>
           {intl.formatMessage({ id: 'app.refresh' })}
         </Button>
-      }
-    >
+      }>
       <VStack spacing={6} align="stretch">
         {/* Trial Banner */}
         {isTrial && (
@@ -784,8 +718,7 @@ function UnifiedSubscriptionDashboard() {
             borderLeftWidth="4px"
             borderLeftColor="green.500"
             overflow="hidden"
-            position="relative"
-          >
+            position="relative">
             <Box
               position="absolute"
               bottom={0}
@@ -798,8 +731,7 @@ function UnifiedSubscriptionDashboard() {
               <Flex
                 direction={{ base: 'column', md: 'row' }}
                 justify="space-between"
-                align={{ base: 'start', md: 'center' }}
-              >
+                align={{ base: 'start', md: 'center' }}>
                 <Box mb={{ base: 3, md: 0 }}>
                   <Text fontSize="lg" fontWeight="bold" color="green.700" mb={2}>
                     {intl.formatMessage({ id: 'app.trialActive' })}
@@ -821,9 +753,9 @@ function UnifiedSubscriptionDashboard() {
                 <Button
                   colorScheme="green"
                   size="md"
+                  minH="44px"
                   onClick={() => navigate('/admin/dashboard/pricing')}
-                  rightIcon={<Icon as={FaCrown} />}
-                >
+                  rightIcon={<Icon as={FaCrown} />}>
                   {intl.formatMessage({ id: 'app.upgradeNow' })}
                 </Button>
               </Flex>
@@ -834,49 +766,74 @@ function UnifiedSubscriptionDashboard() {
         {/* Main Content with Tabs */}
         <Card bg={cardBg} borderColor={borderColor}>
           <CardBody p={0}>
-            <Tabs variant="enclosed" colorScheme="blue">
+            <Tabs variant="unstyled" index={tabIndex} onChange={setTabIndex}>
               <TabList
                 px={{ base: 2, md: 6 }}
                 pt={{ base: 3, md: 6 }}
-                borderBottom="1px"
-                borderColor={borderColor}
-              >
+                borderBottom="1px solid"
+                borderColor="gray.200"
+                overflowX="auto"
+                sx={{ scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
                 <Tab
-                  fontSize={{ base: 'xs', md: 'md' }}
+                  fontSize={{ base: 'xs', md: 'sm' }}
                   whiteSpace="nowrap"
-                  px={{ base: 2, md: 4 }}
+                  minH="44px"
+                  flexShrink={0}
+                  px={{ base: 3, md: 4 }}
+                  fontWeight="medium"
+                  color="gray.600"
+                  borderBottom="2px solid"
+                  borderColor="transparent"
+                  mb="-1px"
+                  borderRadius="0"
+                  _hover={{ color: 'green.600' }}
                   _selected={{
-                    color: 'blue.600',
-                    borderColor: 'blue.600',
+                    color: 'green.600',
+                    borderColor: 'green.500',
                     fontWeight: 'semibold'
-                  }}
-                >
+                  }}>
                   <Icon as={FaChartBar} mr={{ base: 1, md: 2 }} boxSize={{ base: 3, md: 4 }} />
                   {intl.formatMessage({ id: 'app.overview' })}
                 </Tab>
                 <Tab
-                  fontSize={{ base: 'xs', md: 'md' }}
+                  fontSize={{ base: 'xs', md: 'sm' }}
                   whiteSpace="nowrap"
-                  px={{ base: 2, md: 4 }}
+                  minH="44px"
+                  flexShrink={0}
+                  px={{ base: 3, md: 4 }}
+                  fontWeight="medium"
+                  color="gray.600"
+                  borderBottom="2px solid"
+                  borderColor="transparent"
+                  mb="-1px"
+                  borderRadius="0"
+                  _hover={{ color: 'green.600' }}
                   _selected={{
-                    color: 'blue.600',
-                    borderColor: 'blue.600',
+                    color: 'green.600',
+                    borderColor: 'green.500',
                     fontWeight: 'semibold'
-                  }}
-                >
+                  }}>
                   <Icon as={FaCreditCard} mr={{ base: 1, md: 2 }} boxSize={{ base: 3, md: 4 }} />
                   {intl.formatMessage({ id: 'app.billing' })}
                 </Tab>
                 <Tab
-                  fontSize={{ base: 'xs', md: 'md' }}
+                  fontSize={{ base: 'xs', md: 'sm' }}
                   whiteSpace="nowrap"
-                  px={{ base: 2, md: 4 }}
+                  minH="44px"
+                  flexShrink={0}
+                  px={{ base: 3, md: 4 }}
+                  fontWeight="medium"
+                  color="gray.600"
+                  borderBottom="2px solid"
+                  borderColor="transparent"
+                  mb="-1px"
+                  borderRadius="0"
+                  _hover={{ color: 'green.600' }}
                   _selected={{
-                    color: 'blue.600',
-                    borderColor: 'blue.600',
+                    color: 'green.600',
+                    borderColor: 'green.500',
                     fontWeight: 'semibold'
-                  }}
-                >
+                  }}>
                   <Icon
                     as={FaFileInvoiceDollar}
                     mr={{ base: 1, md: 2 }}
@@ -895,118 +852,156 @@ function UnifiedSubscriptionDashboard() {
                       <Text fontSize="lg" fontWeight="bold" mb={4}>
                         {intl.formatMessage({ id: 'app.currentPlan' })}
                       </Text>
-                      <Card bg={tabBg} borderWidth="1px" borderColor={borderColor}>
-                        <CardBody>
-                          <Flex
-                            direction={{ base: 'column', md: 'row' }}
-                            justify="space-between"
-                            align={{ base: 'stretch', md: 'start' }}
-                            mb={4}
-                            gap={3}
-                          >
-                            <Box>
-                              <Flex wrap="wrap" align="center" gap={2} mb={2}>
-                                <Text
-                                  fontSize={{ base: 'xl', md: '2xl' }}
-                                  fontWeight="bold"
-                                  color={textColor}
-                                  whiteSpace="nowrap"
-                                >
-                                  {plan?.name}
-                                </Text>
-                                <Badge
-                                  colorScheme={
-                                    subscription?.status === 'active' ||
-                                    subscription?.status === 'trialing'
-                                      ? 'green'
-                                      : subscription?.status === 'canceled'
-                                      ? 'red'
-                                      : 'gray'
-                                  }
-                                  fontSize="sm"
-                                  px={2}
-                                  py={1}
-                                >
-                                  {intl.formatMessage({
-                                    id: `subscription.status${
-                                      (subscription?.status || 'unknown').charAt(0).toUpperCase() +
-                                      (subscription?.status || 'unknown').slice(1)
-                                    }`
-                                  })}
-                                </Badge>
-                              </Flex>
+                      <StandardCard variant="outline" mb={0}>
+                        <Flex
+                          direction={{ base: 'column', md: 'row' }}
+                          justify="space-between"
+                          align={{ base: 'stretch', md: 'start' }}
+                          mb={4}
+                          gap={3}>
+                          <Box>
+                            <Flex wrap="wrap" align="center" gap={2} mb={2}>
+                              <Text
+                                fontSize={{ base: 'xl', md: '2xl' }}
+                                fontWeight="bold"
+                                color={textColor}
+                                whiteSpace="nowrap">
+                                {plan?.name}
+                              </Text>
+                              <Badge
+                                colorScheme={
+                                  subscription?.status === 'active' ||
+                                  subscription?.status === 'trialing'
+                                    ? 'green'
+                                    : subscription?.status === 'canceled'
+                                    ? 'red'
+                                    : 'gray'
+                                }
+                                fontSize="sm"
+                                px={2}
+                                py={1}>
+                                {intl.formatMessage({
+                                  id: `subscription.status${
+                                    (subscription?.status || 'unknown').charAt(0).toUpperCase() +
+                                    (subscription?.status || 'unknown').slice(1)
+                                  }`
+                                })}
+                              </Badge>
+                            </Flex>
+                            {isPilot ? (
                               <Text
                                 fontSize={{ base: '2xl', md: '3xl' }}
                                 fontWeight="bold"
-                                color="blue.600"
-                              >
-                                ${plan?.price}
-                                <Text
-                                  as="span"
-                                  fontSize={{ base: 'md', md: 'lg' }}
-                                  color="gray.500"
-                                  fontWeight="normal"
-                                >
-                                  /{intl.formatMessage({ id: `app.${plan?.interval}` })}
-                                </Text>
+                                color="green.700">
+                                {intl.formatMessage({ id: 'subscription.pilotComplimentary' })}
                               </Text>
-                            </Box>
-                            <HStack spacing={2} justify={{ base: 'flex-start', md: 'flex-end' }}>
-                              {subscription?.cancel_at_period_end ? (
+                            ) : (
+                              <Text
+                                fontSize={{ base: '2xl', md: '3xl' }}
+                                fontWeight="bold"
+                                color="green.700">
+                                ${plan?.price}
+                                {/* No interval on a free-forever plan: "$0.00/Monthly" states a
+                                    billing cadence for something that never bills, and sits two
+                                    lines above the copy promising no billing date. The Plan row
+                                    keeps `interval="monthly"` for schema reasons; that is a
+                                    storage detail, not a fact about the customer. */}
+                                {!isFreeForever && (
+                                  <Text
+                                    as="span"
+                                    fontSize={{ base: 'md', md: 'lg' }}
+                                    color="gray.500"
+                                    fontWeight="normal">
+                                    /{intl.formatMessage({ id: `app.${plan?.interval}` })}
+                                  </Text>
+                                )}
+                              </Text>
+                            )}
+                          </Box>
+                          <HStack spacing={2} justify={{ base: 'flex-start', md: 'flex-end' }}>
+                            {subscription?.cancel_at_period_end ? (
+                              <Button
+                                size="sm"
+                                onClick={handleReactivateSubscription}
+                                isLoading={isReactivatingSubscription}>
+                                {intl.formatMessage({ id: 'app.reactivate' })}
+                              </Button>
+                            ) : (
+                              <>
                                 <Button
                                   size="sm"
-                                  colorScheme="blue"
-                                  onClick={handleReactivateSubscription}
-                                  isLoading={isReactivatingSubscription}
-                                >
-                                  {intl.formatMessage({ id: 'app.reactivate' })}
+                                  minH="44px"
+                                  variant="outline"
+                                  onClick={() => navigate('/admin/dashboard/pricing')}>
+                                  {intl.formatMessage({ id: 'app.changePlan' })}
                                 </Button>
-                              ) : (
-                                <>
+                                {/* A pilot has nothing to cancel — and canceling would null
+                                    the plan and 403 the whole app. Ending a pilot is a
+                                    conversation, per the pilot agreement.
+
+                                    Starter is hidden for the same reason and it is worse there:
+                                    it is the FREE FOREVER tier, so there is no charge to stop
+                                    and no reason to offer the button — but one click still nulls
+                                    `subscription_plan` and 403s every creation, locking a farmer
+                                    out of their own records. Downgrading to free is "Change
+                                    Plan"; leaving Trazo is account deletion, not this. */}
+                                {!isPilot && !isFreeForever && (
                                   <Button
                                     size="sm"
-                                    colorScheme="blue"
-                                    variant="outline"
-                                    onClick={() => navigate('/admin/dashboard/pricing')}
-                                  >
-                                    {intl.formatMessage({ id: 'app.changePlan' })}
-                                  </Button>
-                                  <Button
-                                    size="sm"
+                                    minH="44px"
                                     colorScheme="red"
                                     variant="ghost"
                                     onClick={onCancelOpen}
-                                    isLoading={isCancellingSubscription}
-                                  >
+                                    isLoading={isCancellingSubscription}>
                                     {intl.formatMessage({ id: 'app.cancel' })}
                                   </Button>
-                                </>
-                              )}
-                            </HStack>
-                          </Flex>
-
-                          {subscription?.cancel_at_period_end && (
-                            <Alert status="warning" borderRadius="md" mb={4}>
-                              <AlertIcon />
-                              <Text fontSize="sm">
-                                {intl.formatMessage({ id: 'app.subscriptionWillCancel' })}{' '}
-                                {formatDate(subscription?.current_period_end)}
-                              </Text>
-                            </Alert>
-                          )}
-
-                          {subscription?.pending_plan && (
-                            <Alert status="info" borderRadius="md" mb={4}>
-                              <AlertIcon />
-                              <Text fontSize="sm">
-                                {intl.formatMessage(
-                                  { id: 'app.pendingDowngradeTo' },
-                                  { planName: subscription.pending_plan.name }
                                 )}
-                              </Text>
-                            </Alert>
-                          )}
+                              </>
+                            )}
+                          </HStack>
+                        </Flex>
 
+                        {isPilot && (
+                          <Alert status="info" borderRadius="md" mb={4} variant="left-accent">
+                            <AlertIcon />
+                            <Text fontSize="sm">
+                              {intl.formatMessage({ id: 'subscription.pilotNoBilling' })}
+                            </Text>
+                          </Alert>
+                        )}
+
+                        {subscription?.cancel_at_period_end && (
+                          <Alert status="warning" borderRadius="md" mb={4}>
+                            <AlertIcon />
+                            <Text fontSize="sm">
+                              {intl.formatMessage({ id: 'app.subscriptionWillCancel' })}{' '}
+                              {formatDate(subscription?.current_period_end)}
+                            </Text>
+                          </Alert>
+                        )}
+
+                        {subscription?.pending_plan && (
+                          <Alert status="info" borderRadius="md" mb={4}>
+                            <AlertIcon />
+                            <Text fontSize="sm">
+                              {intl.formatMessage(
+                                { id: 'app.pendingDowngradeTo' },
+                                { planName: subscription.pending_plan.name }
+                              )}
+                            </Text>
+                          </Alert>
+                        )}
+
+                        {isFreeForever ? (
+                          <Box>
+                            <Text color="gray.500" fontSize="sm">
+                              {intl.formatMessage({ id: 'subscription.billing' })}
+                            </Text>
+                            <Text fontWeight="medium">
+                              {intl.formatMessage({ id: 'subscription.freeForeverNoBilling' })}
+                            </Text>
+                          </Box>
+                        ) : (
                           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                             <Box>
                               <Text color="gray.500" fontSize="sm">
@@ -1019,15 +1014,19 @@ function UnifiedSubscriptionDashboard() {
                             </Box>
                             <Box>
                               <Text color="gray.500" fontSize="sm">
-                                {intl.formatMessage({ id: 'app.nextBillingDate' })}
+                                {/* For a pilot, current_period_end is the certifier renewal
+                                    anchor set by provision_pilot — recorded, never billed. */}
+                                {intl.formatMessage({
+                                  id: isPilot ? 'subscription.pilotThrough' : 'app.nextBillingDate'
+                                })}
                               </Text>
                               <Text fontWeight="medium">
                                 {formatDate(subscription?.current_period_end)}
                               </Text>
                             </Box>
                           </SimpleGrid>
-                        </CardBody>
-                      </Card>
+                        )}
+                      </StandardCard>
                     </Box>
 
                     {/* Usage Warnings */}
@@ -1038,12 +1037,23 @@ function UnifiedSubscriptionDashboard() {
                             key={warning.metric}
                             status={warning.level === 'critical' ? 'error' : 'warning'}
                             borderRadius="md"
-                            variant="left-accent"
-                          >
+                            variant="left-accent">
                             <AlertIcon />
                             <Box flex="1">
                               <AlertTitle fontSize="sm">
-                                {warning.label}:{' '}
+                                {/* Localised from `warning.metric`, not printed from
+                                    `warning.label`. The label is an English string built in
+                                    `SubscriptionSerializer.get_usage_warnings` ("Photo storage
+                                    (GB)", "QR scans this month"), so a Spanish-locale farmer
+                                    read an English alert. The metric key is stable and is
+                                    already the React key; the raw label stays as the fallback
+                                    so a metric added backend-side degrades to English rather
+                                    than to a missing-translation blank. */}
+                                {intl.formatMessage({
+                                  id: `app.usageMetric.${warning.metric}`,
+                                  defaultMessage: warning.label
+                                })}
+                                :{' '}
                                 {intl.formatMessage(
                                   { id: 'app.usagePercentUsed' },
                                   { percentage: warning.percentage }
@@ -1060,11 +1070,12 @@ function UnifiedSubscriptionDashboard() {
                               </AlertDescription>
                             </Box>
                             <Button
-                              size="xs"
+                              size="sm"
+                              minH="44px"
+                              flexShrink={0}
                               colorScheme={warning.level === 'critical' ? 'red' : 'orange'}
                               variant="outline"
-                              onClick={() => navigate('/admin/dashboard/pricing')}
-                            >
+                              onClick={() => navigate('/admin/dashboard/pricing')}>
                               {intl.formatMessage({ id: 'app.usageWarningUpgrade' })}
                             </Button>
                           </Alert>
@@ -1083,6 +1094,16 @@ function UnifiedSubscriptionDashboard() {
                           const percentage = isUnlimited
                             ? 0
                             : Math.round((metric.used / Math.max(metric.limit, 1)) * 100);
+                          // Utilisation, not identity: green until it matters, amber as the
+                          // limit approaches, red once it is reached. `metric.colorScheme` is
+                          // the fallback for the unlimited case.
+                          const usageScheme = isUnlimited
+                            ? metric.colorScheme
+                            : percentage >= 100
+                            ? 'red'
+                            : percentage >= 80
+                            ? 'orange'
+                            : 'green';
 
                           // Enhanced Parcels card with hierarchical breakdown
                           if (metric.name === 'app.parcels') {
@@ -1100,15 +1121,14 @@ function UnifiedSubscriptionDashboard() {
                                 borderColor={hasEstablishmentsAtLimit ? 'orange.200' : borderColor}
                                 bg={cardBg}
                                 _hover={{ boxShadow: 'md' }}
-                                gridColumn={{ base: 'span 1', lg: 'span 2' }}
-                              >
+                                gridColumn={{ base: 'span 1', lg: 'span 2' }}>
                                 <CardBody>
                                   <Flex align="center" mb={3}>
                                     <Icon
                                       as={metric.icon}
                                       mr={3}
                                       boxSize={5}
-                                      color={`${metric.colorScheme}.500`}
+                                      color={`${usageScheme}.700`}
                                     />
                                     <Text fontWeight="medium">
                                       {intl.formatMessage({ id: metric.name })}
@@ -1121,8 +1141,7 @@ function UnifiedSubscriptionDashboard() {
                                             count: capacityInfo.establishmentsAtLimit.length
                                           }
                                         )}
-                                        placement="top"
-                                      >
+                                        placement="top">
                                         <Badge ml={2} colorScheme="orange" fontSize="xs">
                                           <Icon as={FaExclamationTriangle} mr={1} />
                                           {capacityInfo.establishmentsAtLimit.length}{' '}
@@ -1155,7 +1174,7 @@ function UnifiedSubscriptionDashboard() {
                                   <Progress
                                     value={isUnlimited ? 0 : percentage}
                                     size="sm"
-                                    colorScheme={metric.colorScheme}
+                                    colorScheme={usageScheme}
                                     borderRadius="full"
                                     mb={4}
                                   />
@@ -1167,14 +1186,12 @@ function UnifiedSubscriptionDashboard() {
                                     borderRadius="lg"
                                     mb={4}
                                     borderWidth="1px"
-                                    borderColor="gray.200"
-                                  >
+                                    borderColor="gray.200">
                                     <Text
                                       fontSize="sm"
                                       fontWeight="semibold"
                                       color="gray.700"
-                                      mb={2}
-                                    >
+                                      mb={2}>
                                       {intl.formatMessage({ id: 'app.limitStructure' })}
                                     </Text>
                                     <VStack align="start" spacing={1}>
@@ -1192,7 +1209,7 @@ function UnifiedSubscriptionDashboard() {
                                         </Text>
                                       </HStack>
                                       <HStack>
-                                        <Icon as={FaBuilding} color="blue.500" boxSize={3} />
+                                        <Icon as={FaBuilding} color="green.500" boxSize={3} />
                                         <Text fontSize="sm" color="gray.600">
                                           {isUnlimitedEst
                                             ? intl.formatMessage({
@@ -1222,8 +1239,7 @@ function UnifiedSubscriptionDashboard() {
                                         fontSize="sm"
                                         fontWeight="semibold"
                                         color="gray.700"
-                                        mb={2}
-                                      >
+                                        mb={2}>
                                         {intl.formatMessage({ id: 'app.currentDistribution' })}
                                       </Text>
                                       <VStack align="stretch" spacing={2}>
@@ -1243,8 +1259,7 @@ function UnifiedSubscriptionDashboard() {
                                               borderColor={
                                                 est.isAtLimit ? 'orange.200' : 'gray.200'
                                               }
-                                              bg={est.isAtLimit ? 'orange.50' : 'white'}
-                                            >
+                                              bg={est.isAtLimit ? 'orange.50' : 'white'}>
                                               <Flex justify="space-between" align="center" mb={1}>
                                                 <HStack>
                                                   <Icon
@@ -1326,21 +1341,84 @@ function UnifiedSubscriptionDashboard() {
                             );
                           }
 
-                          // Standard metric card for other metrics
-                          return (
-                            <Card
-                              key={metric.name}
-                              borderColor={borderColor}
-                              bg={cardBg}
-                              _hover={{ boxShadow: 'md' }}
-                            >
-                              <CardBody>
+                          // Storage card — one bar, two segments.
+                          //
+                          // Storage is a single number to the quota and two different things
+                          // to the farmer: photos can be pruned, generated documents cannot
+                          // be deleted at all. Showing only the total made the bar
+                          // unactionable, and it was WRONG until the DMS started being
+                          // counted at all — the whole document shelf was invisible to it.
+                          //
+                          // Only the photo half is enforced. Saying that out loud matters
+                          // more than the split: a farmer who reads "18 of 25 GB" and assumes
+                          // their certificate upload is about to fail will stop uploading
+                          // certificates, which is the opposite of what the product needs.
+                          if (metric.name === 'app.storage') {
+                            const breakdown = subscription?.storage_breakdown;
+                            const mediaBytes = Math.max(0, Number(breakdown?.media_bytes) || 0);
+                            const documentsBytes = Math.max(
+                              0,
+                              Number(breakdown?.documents_bytes) || 0
+                            );
+                            // Percentages come from BYTES, not from the GB figures. Dividing
+                            // two already-rounded numbers rounds twice, and at this scale the
+                            // second rounding is the whole value.
+                            const limitBytes = isUnlimited
+                              ? 0
+                              : Math.max(metric.limit, 0) * 1024 ** 3;
+                            // Utilisation is scored on the ENFORCED half. Turning the bar red
+                            // because of documents would warn about a wall that does not exist.
+                            const mediaPct =
+                              limitBytes <= 0
+                                ? 0
+                                : Math.min(100, Math.round((mediaBytes / limitBytes) * 100));
+                            const documentsPct =
+                              limitBytes <= 0
+                                ? 0
+                                : Math.min(
+                                    100 - mediaPct,
+                                    Math.round((documentsBytes / limitBytes) * 100)
+                                  );
+                            const mediaScheme = isUnlimited
+                              ? 'green'
+                              : mediaPct >= 100
+                              ? 'red'
+                              : mediaPct >= 80
+                              ? 'orange'
+                              : 'green';
+
+                            // Each legend line picks its OWN unit from raw bytes.
+                            //
+                            // The two categories live at different scales. MEASURED on Blue
+                            // Oak Orchards: 21 real certifier documents — audit dossier, PUR
+                            // export, two OSP packets, module PDFs, workbook, snapshot, lot
+                            // tags — weigh 0.95 MB in total. Printed as GB to 2dp that is
+                            // "Documents 0.00 GB" sitting beside a list of 21 files: correct,
+                            // and indistinguishable from a meter that is not working. Photos
+                            // meanwhile run to gigabytes and want GB.
+                            const fmtBytes = (bytes: number) => {
+                              if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(2)} GB`;
+                              if (bytes >= 1024 ** 2) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+                              if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+                              return `${bytes} B`;
+                            };
+
+                            // "0% used" beside a non-zero number is the same failure one line
+                            // up: true, and it reads as nothing being counted.
+                            const usedPct = mediaPct + documentsPct;
+                            const usedPctLabel =
+                              usedPct === 0 && mediaBytes + documentsBytes > 0
+                                ? '<1'
+                                : `${usedPct}`;
+
+                            return (
+                              <StandardCard key={metric.name} variant="outline" mb={0}>
                                 <Flex align="center" mb={3}>
                                   <Icon
                                     as={metric.icon}
                                     mr={3}
                                     boxSize={5}
-                                    color={`${metric.colorScheme}.500`}
+                                    color={`${mediaScheme}.700`}
                                   />
                                   <Text fontWeight="medium">
                                     {intl.formatMessage({ id: metric.name })}
@@ -1348,7 +1426,7 @@ function UnifiedSubscriptionDashboard() {
                                 </Flex>
                                 <Stat mb={2}>
                                   <StatNumber fontSize="xl">
-                                    {metric.used}
+                                    {metric.used.toFixed(2)}
                                     <Text as="span" fontSize="md" color="gray.500">
                                       /
                                       {isUnlimited
@@ -1360,17 +1438,110 @@ function UnifiedSubscriptionDashboard() {
                                   <StatHelpText mb={0}>
                                     {isUnlimited
                                       ? intl.formatMessage({ id: 'app.unlimited' })
-                                      : `${percentage}% ${intl.formatMessage({ id: 'app.used' })}`}
+                                      : `${usedPctLabel}% ${intl.formatMessage({
+                                          id: 'app.used'
+                                        })}`}
                                   </StatHelpText>
                                 </Stat>
-                                <Progress
-                                  value={isUnlimited ? 0 : percentage}
-                                  size="sm"
-                                  colorScheme={metric.colorScheme}
+
+                                {/* Segmented track. Chakra's Progress renders one value, so
+                                    the two segments are laid out directly. */}
+                                <Flex
+                                  h="8px"
+                                  w="full"
+                                  bg="gray.100"
                                   borderRadius="full"
+                                  overflow="hidden"
+                                  mb={3}
+                                  role="img"
+                                  aria-label={intl.formatMessage(
+                                    { id: 'app.storageBreakdownLabel' },
+                                    {
+                                      photos: fmtBytes(mediaBytes),
+                                      documents: fmtBytes(documentsBytes)
+                                    }
+                                  )}>
+                                  <Box w={`${mediaPct}%`} bg={`${mediaScheme}.500`} h="full" />
+                                  <Box w={`${documentsPct}%`} bg="gray.400" h="full" />
+                                </Flex>
+
+                                {/* Legend. Segment order matches the bar; the colour is never
+                                    the only carrier — each row is labelled. */}
+                                <VStack align="stretch" spacing={1} mb={3}>
+                                  <Flex align="center" justify="space-between">
+                                    <HStack spacing={2}>
+                                      <Box
+                                        w="8px"
+                                        h="8px"
+                                        borderRadius="full"
+                                        bg={`${mediaScheme}.500`}
+                                      />
+                                      <Text fontSize="sm" color="gray.700">
+                                        {intl.formatMessage({ id: 'app.storagePhotos' })}
+                                      </Text>
+                                    </HStack>
+                                    <Text fontSize="sm" color="gray.700">
+                                      {fmtBytes(mediaBytes)}
+                                    </Text>
+                                  </Flex>
+                                  <Flex align="center" justify="space-between">
+                                    <HStack spacing={2}>
+                                      <Box w="8px" h="8px" borderRadius="full" bg="gray.400" />
+                                      <Text fontSize="sm" color="gray.700">
+                                        {intl.formatMessage({ id: 'app.storageDocuments' })}
+                                      </Text>
+                                    </HStack>
+                                    <Text fontSize="sm" color="gray.700">
+                                      {fmtBytes(documentsBytes)}
+                                    </Text>
+                                  </Flex>
+                                </VStack>
+
+                                <Text fontSize="xs" color="gray.600">
+                                  {intl.formatMessage({ id: 'app.storageDocumentsNeverBlocked' })}
+                                </Text>
+                              </StandardCard>
+                            );
+                          }
+
+                          // Standard metric card for other metrics
+                          return (
+                            <StandardCard key={metric.name} variant="outline" mb={0}>
+                              <Flex align="center" mb={3}>
+                                <Icon
+                                  as={metric.icon}
+                                  mr={3}
+                                  boxSize={5}
+                                  color={`${usageScheme}.700`}
                                 />
-                              </CardBody>
-                            </Card>
+                                <Text fontWeight="medium">
+                                  {intl.formatMessage({ id: metric.name })}
+                                </Text>
+                              </Flex>
+                              <Stat mb={2}>
+                                <StatNumber fontSize="xl">
+                                  {metric.used}
+                                  <Text as="span" fontSize="md" color="gray.500">
+                                    /
+                                    {isUnlimited
+                                      ? intl.formatMessage({ id: 'app.unlimited' })
+                                      : metric.limit}{' '}
+                                    {metric.unit}
+                                  </Text>
+                                </StatNumber>
+                                <StatHelpText mb={0}>
+                                  {isUnlimited
+                                    ? intl.formatMessage({ id: 'app.unlimited' })
+                                    : `${percentage}% ${intl.formatMessage({ id: 'app.used' })}`}
+                                </StatHelpText>
+                              </Stat>
+                              <Progress
+                                value={isUnlimited ? 0 : percentage}
+                                size="sm"
+                                colorScheme={usageScheme}
+                                borderRadius="full"
+                              />
+                            </StandardCard>
                           );
                         })}
                       </SimpleGrid>
@@ -1382,38 +1553,43 @@ function UnifiedSubscriptionDashboard() {
                         {intl.formatMessage({ id: 'app.planFeatures' })}
                       </Text>
                       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        {/* Was "Transparency Tracking ... documentation and verification" —
+                            pivot-era framing, and "verification" is the unsafe verb
+                            (verification-language rules). The plan's actual value is the
+                            recordkeeping artifacts. */}
                         <Card borderWidth="1px" borderColor="green.200" bg="green.50">
                           <CardBody>
                             <Flex align="center" mb={3}>
-                              <Icon as={FaLeaf} mr={3} boxSize={5} color="green.500" />
+                              <Icon as={FaShieldAlt} mr={3} boxSize={5} color="green.500" />
                               <Text fontWeight="bold" color="green.700">
-                                {intl.formatMessage({ id: 'app.transparencyTracking' })}
+                                {intl.formatMessage({ id: 'subscription.featureRecordkeeping' })}
                               </Text>
                             </Flex>
                             <Text
                               fontSize="lg"
                               fontWeight="bold"
-                              color="green.600"
+                              color="green.700"
                               mb={1}
-                              textTransform="capitalize"
-                            >
+                              textTransform="capitalize">
                               {intl.formatMessage({ id: 'app.included' })}
                             </Text>
                             <Text fontSize="sm" color="gray.600">
-                              {intl.formatMessage({ id: 'app.transparencyTrackingDescription' })}
+                              {intl.formatMessage({
+                                id: 'subscription.featureRecordkeepingDescription'
+                              })}
                             </Text>
                           </CardBody>
                         </Card>
 
-                        <Card borderWidth="1px" borderColor="purple.200" bg="purple.50">
+                        <Card borderWidth="1px" borderColor="green.200" bg="green.50">
                           <CardBody>
                             <Flex align="center" mb={3}>
-                              <Icon as={FaHeadset} mr={3} boxSize={5} color="purple.500" />
-                              <Text fontWeight="bold" color="purple.700">
+                              <Icon as={FaHeadset} mr={3} boxSize={5} color="green.700" />
+                              <Text fontWeight="bold" color="green.800">
                                 {intl.formatMessage({ id: 'app.supportResponse' })}
                               </Text>
                             </Flex>
-                            <Text fontSize="2xl" fontWeight="bold" color="purple.600" mb={1}>
+                            <Text fontSize="2xl" fontWeight="bold" color="green.700" mb={1}>
                               {features?.support_response_time || 48}h
                             </Text>
                             <Text fontSize="sm" color="gray.600">
@@ -1425,8 +1601,7 @@ function UnifiedSubscriptionDashboard() {
                         <Card
                           borderWidth="1px"
                           borderColor={features?.priority_support ? 'orange.200' : 'gray.200'}
-                          bg={features?.priority_support ? 'orange.50' : 'gray.50'}
-                        >
+                          bg={features?.priority_support ? 'orange.50' : 'gray.50'}>
                           <CardBody>
                             <Flex align="center" mb={3}>
                               <Icon
@@ -1437,8 +1612,7 @@ function UnifiedSubscriptionDashboard() {
                               />
                               <Text
                                 fontWeight="bold"
-                                color={features?.priority_support ? 'orange.700' : 'gray.600'}
-                              >
+                                color={features?.priority_support ? 'orange.700' : 'gray.600'}>
                                 {intl.formatMessage({ id: 'app.prioritySupport' })}
                               </Text>
                             </Flex>
@@ -1446,8 +1620,7 @@ function UnifiedSubscriptionDashboard() {
                               fontSize="lg"
                               fontWeight="bold"
                               color={features?.priority_support ? 'orange.600' : 'gray.500'}
-                              mb={1}
-                            >
+                              mb={1}>
                               {features?.priority_support
                                 ? intl.formatMessage({ id: 'app.included' })
                                 : intl.formatMessage({ id: 'app.notIncluded' })}
@@ -1486,56 +1659,47 @@ function UnifiedSubscriptionDashboard() {
                               </Text>
                               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                                 {subscription.addons.map((addonItem: any) => (
-                                  <Card key={addonItem.id} size="sm">
-                                    <CardBody>
-                                      <Flex justify="space-between" align="center">
-                                        <Box>
-                                          <Text fontWeight="medium">{addonItem.addon?.name}</Text>
-                                          <Text fontSize="sm" color="gray.600">
-                                            {intl.formatMessage(
-                                              { id: 'subscription.addonQuantity' },
-                                              { quantity: addonItem.quantity }
-                                            )}
-                                          </Text>
-                                        </Box>
-                                        <Badge colorScheme="green" fontSize="md">
-                                          {formatPrice(addonItem.addon?.price, addonItem.quantity)}
-                                        </Badge>
-                                      </Flex>
-                                    </CardBody>
-                                  </Card>
+                                  <StandardCard
+                                    key={addonItem.id}
+                                    variant="outline"
+                                    mb={0}
+                                    padding={3}>
+                                    <Flex justify="space-between" align="center">
+                                      <Box>
+                                        <Text fontWeight="medium">{addonItem.addon?.name}</Text>
+                                        <Text fontSize="sm" color="gray.600">
+                                          {intl.formatMessage(
+                                            { id: 'subscription.addonQuantity' },
+                                            { quantity: addonItem.quantity }
+                                          )}
+                                        </Text>
+                                      </Box>
+                                      <Badge colorScheme="green" fontSize="md">
+                                        {formatPrice(addonItem.addon?.price, addonItem.quantity)}{' '}
+                                        {addonPeriodLabel(addonItem.addon || {}, intl)}
+                                      </Badge>
+                                    </Flex>
+                                  </StandardCard>
                                 ))}
                               </SimpleGrid>
                             </Box>
                           )}
 
-                        {/* Available Add-ons - Filter out Blockchain if already subscribed */}
+                        {/* Available Add-ons (the API only serves active rows) */}
                         <Box>
                           <Text fontWeight="medium" mb={2}>
                             {intl.formatMessage({ id: 'app.availableAddons' })}
                           </Text>
                           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
                             {addons
-                              .filter((addon: any) => {
-                                // Basic validation
-                                if (!addon || !addon.id || !addon.name || !addon.price) {
-                                  return false;
-                                }
-                                // Hide Blockchain Verification if already subscribed
-                                const isBlockchainAddon =
-                                  addon.slug === 'blockchain-verification' ||
-                                  addon.name.toLowerCase().includes('blockchain');
-                                if (isBlockchainAddon && blockchainStatus?.blockchainSubscribed) {
-                                  return false;
-                                }
-                                return true;
-                              })
+                              .filter(
+                                (addon: any) => addon && addon.id && addon.name && addon.price
+                              )
                               .map((addon: any) => (
                                 <Card
                                   key={addon.id}
                                   size="sm"
-                                  _hover={{ boxShadow: 'md', borderColor: 'blue.300' }}
-                                >
+                                  _hover={{ boxShadow: 'md', borderColor: 'green.300' }}>
                                   <CardBody>
                                     <Flex justify="space-between" align="start">
                                       <Box flex="1">
@@ -1543,15 +1707,23 @@ function UnifiedSubscriptionDashboard() {
                                         <Text fontSize="sm" color="gray.600" mb={2}>
                                           {addon.description}
                                         </Text>
-                                        <Badge colorScheme="blue">{formatPrice(addon.price)}</Badge>
+                                        {/* The period comes from the add-on's own `interval`,
+                                            never a hardcoded "per month". It used to be
+                                            hardcoded because every add-on billed monthly; Extra
+                                            Farm is now $149/YEAR (it was $30/mo — $360/yr against
+                                            a $249/yr plan, so farm #2 cost more than farm #1),
+                                            and a fixed suffix would have printed the new price
+                                            under the old period. */}
+                                        <Badge variant="neutral">
+                                          {formatPrice(addon.price)} {addonPeriodLabel(addon, intl)}
+                                        </Badge>
                                       </Box>
                                       <Button
                                         size="sm"
-                                        colorScheme="blue"
+                                        minH="44px"
                                         variant="outline"
                                         ml={3}
-                                        onClick={() => handleOpenAddonModal(addon)}
-                                      >
+                                        onClick={() => handleOpenAddonModal(addon)}>
                                         <FaPlus />
                                       </Button>
                                     </Flex>
@@ -1576,11 +1748,10 @@ function UnifiedSubscriptionDashboard() {
                         </Text>
                         <Button
                           size="sm"
+                          minH="44px"
                           leftIcon={<FaPlus />}
-                          colorScheme="blue"
                           isLoading={isCreatingCheckoutSession}
-                          onClick={handleAddPaymentMethod}
-                        >
+                          onClick={handleAddPaymentMethod}>
                           {intl.formatMessage({ id: 'app.addPaymentMethod' })}
                         </Button>
                       </Flex>
@@ -1588,113 +1759,105 @@ function UnifiedSubscriptionDashboard() {
                       {paymentMethods.length > 0 ? (
                         <Stack spacing={3}>
                           {paymentMethods.map((method: any, index: number) => (
-                            <Card key={index} size="sm">
-                              <CardBody>
-                                <Flex justify="space-between" align="center">
-                                  <Flex align="center">
-                                    <Box
-                                      w="40px"
-                                      h="40px"
-                                      borderRadius="md"
-                                      bg="gray.100"
-                                      display="flex"
-                                      alignItems="center"
-                                      justifyContent="center"
-                                      mr={3}
-                                    >
-                                      {method.card_brand === 'visa' ? (
-                                        <VisaIcon w="70%" h="70%" />
-                                      ) : method.card_brand === 'mastercard' ? (
-                                        <MastercardIcon w="70%" h="70%" />
-                                      ) : (
-                                        <Icon as={FaWallet} w="60%" h="60%" />
+                            <StandardCard key={index} variant="outline" mb={0} padding={3}>
+                              <Flex justify="space-between" align="center">
+                                <Flex align="center">
+                                  <Box
+                                    w="40px"
+                                    h="40px"
+                                    borderRadius="md"
+                                    bg="gray.100"
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    mr={3}>
+                                    {method.card_brand === 'visa' ? (
+                                      <VisaIcon w="70%" h="70%" />
+                                    ) : method.card_brand === 'mastercard' ? (
+                                      <MastercardIcon w="70%" h="70%" />
+                                    ) : (
+                                      <Icon as={FaWallet} w="60%" h="60%" />
+                                    )}
+                                  </Box>
+                                  <Box>
+                                    <Text fontWeight="medium">
+                                      {method.card_brand.charAt(0).toUpperCase() +
+                                        method.card_brand.slice(1)}
+                                      {method.is_default && (
+                                        <Badge ml={2} colorScheme="green" fontSize="xs">
+                                          {intl.formatMessage({
+                                            id: 'subscription.defaultBadge'
+                                          })}
+                                        </Badge>
                                       )}
-                                    </Box>
-                                    <Box>
-                                      <Text fontWeight="medium">
-                                        {method.card_brand.charAt(0).toUpperCase() +
-                                          method.card_brand.slice(1)}
-                                        {method.is_default && (
-                                          <Badge ml={2} colorScheme="green" fontSize="xs">
-                                            {intl.formatMessage({
-                                              id: 'subscription.defaultBadge'
-                                            })}
-                                          </Badge>
-                                        )}
-                                      </Text>
-                                      <Text fontSize="sm" color="gray.600">
-                                        {intl.formatMessage(
-                                          { id: 'subscription.cardExpiry' },
-                                          {
-                                            last4: method.last_4,
-                                            expMonth: method.exp_month,
-                                            expYear: method.exp_year
-                                          }
-                                        )}
-                                        {(() => {
-                                          const now = new Date();
-                                          const expDate = new Date(
-                                            method.exp_year,
-                                            method.exp_month
+                                    </Text>
+                                    <Text fontSize="sm" color="gray.600">
+                                      {intl.formatMessage(
+                                        { id: 'subscription.cardExpiry' },
+                                        {
+                                          last4: method.last_4,
+                                          expMonth: method.exp_month,
+                                          expYear: method.exp_year
+                                        }
+                                      )}
+                                      {(() => {
+                                        const now = new Date();
+                                        const expDate = new Date(method.exp_year, method.exp_month);
+                                        const threeMonths = new Date(
+                                          now.getFullYear(),
+                                          now.getMonth() + 3
+                                        );
+                                        if (expDate <= now) {
+                                          return (
+                                            <Badge ml={2} colorScheme="red" fontSize="xs">
+                                              {intl.formatMessage({
+                                                id: 'subscription.cardExpired'
+                                              })}
+                                            </Badge>
                                           );
-                                          const threeMonths = new Date(
-                                            now.getFullYear(),
-                                            now.getMonth() + 3
+                                        } else if (expDate <= threeMonths) {
+                                          return (
+                                            <Badge ml={2} colorScheme="orange" fontSize="xs">
+                                              {intl.formatMessage({
+                                                id: 'subscription.cardExpiringSoon'
+                                              })}
+                                            </Badge>
                                           );
-                                          if (expDate <= now) {
-                                            return (
-                                              <Badge ml={2} colorScheme="red" fontSize="xs">
-                                                {intl.formatMessage({
-                                                  id: 'subscription.cardExpired'
-                                                })}
-                                              </Badge>
-                                            );
-                                          } else if (expDate <= threeMonths) {
-                                            return (
-                                              <Badge ml={2} colorScheme="orange" fontSize="xs">
-                                                {intl.formatMessage({
-                                                  id: 'subscription.cardExpiringSoon'
-                                                })}
-                                              </Badge>
-                                            );
-                                          }
-                                          return null;
-                                        })()}
-                                      </Text>
-                                    </Box>
-                                  </Flex>
-                                  {!method.is_default && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      colorScheme="blue"
-                                      onClick={() => handleSetDefaultPaymentMethod(method.id)}
-                                    >
-                                      {intl.formatMessage({ id: 'subscription.setDefault' })}
-                                    </Button>
-                                  )}
+                                        }
+                                        return null;
+                                      })()}
+                                    </Text>
+                                  </Box>
                                 </Flex>
-                              </CardBody>
-                            </Card>
+                                {!method.is_default && (
+                                  <Button
+                                    size="sm"
+                                    minH="44px"
+                                    variant="ghost"
+                                    onClick={() => handleSetDefaultPaymentMethod(method.id)}>
+                                    {intl.formatMessage({ id: 'subscription.setDefault' })}
+                                  </Button>
+                                )}
+                              </Flex>
+                            </StandardCard>
                           ))}
                         </Stack>
                       ) : (
-                        <Card>
-                          <CardBody textAlign="center" py={8}>
+                        <StandardCard mb={0}>
+                          <Box textAlign="center" py={2}>
                             <Icon as={FaCreditCard} boxSize={10} color="gray.300" mb={3} />
                             <Text color="gray.500" mb={4}>
                               {intl.formatMessage({ id: 'app.noPaymentMethods' })}
                             </Text>
                             <Button
-                              colorScheme="blue"
+                              minH="44px"
                               leftIcon={<FaPlus />}
                               isLoading={isCreatingCheckoutSession}
-                              onClick={handleAddPaymentMethod}
-                            >
+                              onClick={handleAddPaymentMethod}>
                               {intl.formatMessage({ id: 'app.addPaymentMethod' })}
                             </Button>
-                          </CardBody>
-                        </Card>
+                          </Box>
+                        </StandardCard>
                       )}
                     </Box>
 
@@ -1706,50 +1869,47 @@ function UnifiedSubscriptionDashboard() {
                         </Text>
                         <Button
                           size="sm"
+                          minH="44px"
                           leftIcon={<FaEdit />}
                           variant="ghost"
-                          colorScheme="blue"
-                          onClick={handleOpenBillingEdit}
-                        >
+                          onClick={handleOpenBillingEdit}>
                           {intl.formatMessage({ id: 'subscription.editBillingInfo' })}
                         </Button>
                       </Flex>
-                      <Card>
-                        <CardBody>
-                          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                            <Box>
-                              <Text color="gray.500" fontSize="sm">
-                                {intl.formatMessage({ id: 'subscription.companyName' })}
-                              </Text>
-                              <Text fontWeight="medium">{activeCompany?.name}</Text>
-                            </Box>
-                            <Box>
-                              <Text color="gray.500" fontSize="sm">
-                                {intl.formatMessage({ id: 'subscription.email' })}
-                              </Text>
-                              <Text fontWeight="medium">
-                                {(activeCompany as any)?.contact_email || '-'}
-                              </Text>
-                            </Box>
-                            <Box>
-                              <Text color="gray.500" fontSize="sm">
-                                {intl.formatMessage({ id: 'subscription.phone' })}
-                              </Text>
-                              <Text fontWeight="medium">
-                                {(activeCompany as any)?.contact_phone || '-'}
-                              </Text>
-                            </Box>
-                            <Box>
-                              <Text color="gray.500" fontSize="sm">
-                                {intl.formatMessage({ id: 'subscription.taxId' })}
-                              </Text>
-                              <Text fontWeight="medium">
-                                {(activeCompany as any)?.fiscal_id || '-'}
-                              </Text>
-                            </Box>
-                          </SimpleGrid>
-                        </CardBody>
-                      </Card>
+                      <StandardCard mb={0}>
+                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                          <Box>
+                            <Text color="gray.500" fontSize="sm">
+                              {intl.formatMessage({ id: 'subscription.companyName' })}
+                            </Text>
+                            <Text fontWeight="medium">{activeCompany?.name}</Text>
+                          </Box>
+                          <Box>
+                            <Text color="gray.500" fontSize="sm">
+                              {intl.formatMessage({ id: 'subscription.email' })}
+                            </Text>
+                            <Text fontWeight="medium">
+                              {(activeCompany as any)?.contact_email || '-'}
+                            </Text>
+                          </Box>
+                          <Box>
+                            <Text color="gray.500" fontSize="sm">
+                              {intl.formatMessage({ id: 'subscription.phone' })}
+                            </Text>
+                            <Text fontWeight="medium">
+                              {(activeCompany as any)?.contact_phone || '-'}
+                            </Text>
+                          </Box>
+                          <Box>
+                            <Text color="gray.500" fontSize="sm">
+                              {intl.formatMessage({ id: 'subscription.taxId' })}
+                            </Text>
+                            <Text fontWeight="medium">
+                              {(activeCompany as any)?.fiscal_id || '-'}
+                            </Text>
+                          </Box>
+                        </SimpleGrid>
+                      </StandardCard>
                     </Box>
                   </VStack>
                 </TabPanel>
@@ -1764,65 +1924,61 @@ function UnifiedSubscriptionDashboard() {
                     {invoices.length > 0 ? (
                       <Stack spacing={3}>
                         {invoices.map((invoice: any, index: number) => (
-                          <Card key={index} size="sm">
-                            <CardBody>
-                              <Flex justify="space-between" align="center">
-                                <Box>
-                                  <Text fontWeight="medium">
-                                    {intl.formatMessage(
-                                      { id: 'subscription.invoiceLabel' },
-                                      { number: invoice.number || invoice.id }
-                                    )}
-                                  </Text>
-                                  <Text fontSize="sm" color="gray.600">
-                                    {formatDate(invoice.created_at || invoice.invoice_date)} ·{' '}
-                                    {formatPrice(invoice.amount)}
-                                  </Text>
-                                </Box>
-                                <HStack>
-                                  <Badge
-                                    colorScheme={
-                                      invoice.status === 'paid'
-                                        ? 'green'
-                                        : invoice.status === 'open'
-                                        ? 'yellow'
-                                        : invoice.status === 'uncollectible' ||
-                                          invoice.status === 'void'
-                                        ? 'red'
-                                        : 'gray'
-                                    }
-                                    fontSize="xs"
-                                  >
-                                    {invoice.status}
-                                  </Badge>
-                                  {invoice.invoice_pdf && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      colorScheme="blue"
-                                      rightIcon={<FaExternalLinkAlt />}
-                                      as="a"
-                                      href={invoice.invoice_pdf}
-                                      target="_blank"
-                                    >
-                                      {intl.formatMessage({ id: 'subscription.download' })}
-                                    </Button>
+                          <StandardCard key={index} variant="outline" mb={0} padding={3}>
+                            <Flex justify="space-between" align="center">
+                              <Box>
+                                <Text fontWeight="medium">
+                                  {intl.formatMessage(
+                                    { id: 'subscription.invoiceLabel' },
+                                    { number: invoice.number || invoice.id }
                                   )}
-                                </HStack>
-                              </Flex>
-                            </CardBody>
-                          </Card>
+                                </Text>
+                                <Text fontSize="sm" color="gray.600">
+                                  {formatDate(invoice.created_at || invoice.invoice_date)} ·{' '}
+                                  {formatPrice(invoice.amount)}
+                                </Text>
+                              </Box>
+                              <HStack>
+                                <Badge
+                                  colorScheme={
+                                    invoice.status === 'paid'
+                                      ? 'green'
+                                      : invoice.status === 'open'
+                                      ? 'yellow'
+                                      : invoice.status === 'uncollectible' ||
+                                        invoice.status === 'void'
+                                      ? 'red'
+                                      : 'gray'
+                                  }
+                                  fontSize="xs">
+                                  {invoice.status}
+                                </Badge>
+                                {invoice.invoice_pdf && (
+                                  <Button
+                                    size="sm"
+                                    minH="44px"
+                                    variant="ghost"
+                                    rightIcon={<FaExternalLinkAlt />}
+                                    as="a"
+                                    href={invoice.invoice_pdf}
+                                    target="_blank">
+                                    {intl.formatMessage({ id: 'subscription.download' })}
+                                  </Button>
+                                )}
+                              </HStack>
+                            </Flex>
+                          </StandardCard>
                         ))}
                       </Stack>
                     ) : (
-                      <Card>
-                        <CardBody textAlign="center" py={8}>
+                      <StandardCard mb={0}>
+                        <Box textAlign="center" py={2}>
                           <Icon as={FaFileInvoiceDollar} boxSize={10} color="gray.300" mb={3} />
                           <Text color="gray.500">
                             {intl.formatMessage({ id: 'app.noInvoicesYet' })}
                           </Text>
-                        </CardBody>
-                      </Card>
+                        </Box>
+                      </StandardCard>
                     )}
                   </VStack>
                 </TabPanel>
@@ -1838,8 +1994,7 @@ function UnifiedSubscriptionDashboard() {
         onClose={onBillingEditClose}
         isCentered
         size="md"
-        scrollBehavior="inside"
-      >
+        scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent borderRadius="xl" maxH="90vh" mx={4}>
           <ModalHeader>{intl.formatMessage({ id: 'subscription.editBillingInfo' })}</ModalHeader>
@@ -1891,8 +2046,7 @@ function UnifiedSubscriptionDashboard() {
             <Button
               colorScheme="green"
               onClick={handleSaveBillingInfo}
-              isLoading={isUpdatingBilling}
-            >
+              isLoading={isUpdatingBilling}>
               {intl.formatMessage({ id: 'app.save' })}
             </Button>
           </ModalFooter>
@@ -1905,8 +2059,7 @@ function UnifiedSubscriptionDashboard() {
         onClose={onEarlyAccessClose}
         isCentered
         size="md"
-        scrollBehavior="inside"
-      >
+        scrollBehavior="inside">
         <ModalOverlay />
         <ModalContent borderRadius="xl" maxH="90vh" mx={4}>
           <ModalHeader pb={2}>
@@ -1928,8 +2081,7 @@ function UnifiedSubscriptionDashboard() {
                 p={4}
                 borderRadius="lg"
                 borderLeft="4px solid"
-                borderLeftColor="green.400"
-              >
+                borderLeftColor="green.400">
                 <Text fontSize="sm" color="green.700" fontWeight="medium">
                   {intl.formatMessage({ id: 'app.earlyAccess.foundingMember' })}
                 </Text>
@@ -1955,8 +2107,7 @@ function UnifiedSubscriptionDashboard() {
                   'mailto:oscar@trazo.io?subject=Early Access - ' +
                   (earlyAccessPlanName || 'Trazo');
               }}
-              leftIcon={<Icon as={FaEnvelope} />}
-            >
+              leftIcon={<Icon as={FaEnvelope} />}>
               {intl.formatMessage({ id: 'app.earlyAccess.contactUs' })}
             </Button>
             <Button
@@ -1966,8 +2117,7 @@ function UnifiedSubscriptionDashboard() {
                 onEarlyAccessClose();
                 navigate('/admin/dashboard');
               }}
-              leftIcon={<Icon as={FaRocket} />}
-            >
+              leftIcon={<Icon as={FaRocket} />}>
               {intl.formatMessage({ id: 'app.goToDashboard' })}
             </Button>
           </ModalFooter>
@@ -1989,51 +2139,49 @@ function UnifiedSubscriptionDashboard() {
                   </Text>
                   <Text color="gray.600">{selectedAddon.description}</Text>
                   {selectedAddon.slug === 'extra-storage' && (
-                    <Text color="green.600" fontSize="sm" mt={1} fontWeight="medium">
+                    <Text color="green.700" fontSize="sm" mt={1} fontWeight="medium">
                       {intl.formatMessage({ id: 'subscription.addonStorageUnit' })}
                     </Text>
                   )}
                   {selectedAddon.slug === 'extra-establishment' && (
-                    <Text color="green.600" fontSize="sm" mt={1} fontWeight="medium">
+                    <Text color="green.700" fontSize="sm" mt={1} fontWeight="medium">
                       {intl.formatMessage({ id: 'subscription.addonEstablishmentUnit' })}
                     </Text>
                   )}
                   {selectedAddon.slug === 'extra-parcel' && (
-                    <Text color="green.600" fontSize="sm" mt={1} fontWeight="medium">
+                    <Text color="green.700" fontSize="sm" mt={1} fontWeight="medium">
                       {intl.formatMessage({ id: 'subscription.addonParcelUnit' })}
                     </Text>
                   )}
                   {selectedAddon.slug === 'extra-production' && (
-                    <Text color="green.600" fontSize="sm" mt={1} fontWeight="medium">
+                    <Text color="green.700" fontSize="sm" mt={1} fontWeight="medium">
                       {intl.formatMessage({ id: 'subscription.addonProductionUnit' })}
                     </Text>
                   )}
                 </Box>
-                {selectedAddon.slug !== 'blockchain-verification' && (
-                  <Box>
-                    <Text mb={2}>{intl.formatMessage({ id: 'app.quantity' })}</Text>
-                    <NumberInput
-                      value={addonQuantity}
-                      min={1}
-                      max={100}
-                      onChange={(valueString) => setAddonQuantity(parseInt(valueString) || 1)}
-                    >
-                      <NumberInputField />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
-                  </Box>
-                )}
+                <Box>
+                  <Text mb={2}>{intl.formatMessage({ id: 'app.quantity' })}</Text>
+                  <NumberInput
+                    value={addonQuantity}
+                    min={1}
+                    max={100}
+                    onChange={(valueString) => setAddonQuantity(parseInt(valueString) || 1)}>
+                    <NumberInputField />
+                    <NumberInputStepper>
+                      <NumberIncrementStepper />
+                      <NumberDecrementStepper />
+                    </NumberInputStepper>
+                  </NumberInput>
+                </Box>
                 <Box>
                   <Text color="gray.600" fontSize="sm">
                     {intl.formatMessage({ id: 'app.unitPrice' })}:{' '}
-                    {formatPrice(selectedAddon.price)}
+                    {formatPrice(selectedAddon.price)} {addonPeriodLabel(selectedAddon, intl)}
                   </Text>
                   <Text fontWeight="bold" fontSize="lg">
                     {intl.formatMessage({ id: 'app.total' })}:{' '}
-                    {formatPrice(selectedAddon.price, addonQuantity)}
+                    {formatPrice(selectedAddon.price, addonQuantity)}{' '}
+                    {addonPeriodLabel(selectedAddon, intl)}
                   </Text>
                 </Box>
               </VStack>
@@ -2071,8 +2219,7 @@ function UnifiedSubscriptionDashboard() {
                   handleCancelSubscription();
                 }}
                 ml={3}
-                isLoading={isCancellingSubscription}
-              >
+                isLoading={isCancellingSubscription}>
                 {intl.formatMessage({ id: 'app.confirmCancellation' })}
               </Button>
             </AlertDialogFooter>

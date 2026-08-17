@@ -17,7 +17,7 @@ function lazyWithRetry(importFn: () => Promise<any>) {
     })
   );
 }
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 // Remove ChakraProvider and CSSReset imports since they're now in index.tsx
 // import { ChakraProvider, CSSReset } from '@chakra-ui/react';
 // import theme from 'theme/theme';
@@ -27,6 +27,21 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 const AddFarm = lazyWithRetry(() => import('views/Dashboard/Dashboard/Farm/AddFarm'));
 const AddParcel = lazyWithRetry(() => import('views/Dashboard/Dashboard/Parcel/AddParcel'));
+const BuyerPage = lazyWithRetry(() => import('views/Dashboard/Buyer'));
+
+// WS-7: legacy analytics routes fold — old bookmarks land on the surfaces that
+// absorbed them instead of 404ing.
+const RedirectToFarmHome = () => {
+  const { farmId } = useParams();
+  return <Navigate to={`/admin/dashboard/farm/${farmId}`} replace />;
+};
+const RedirectToBuyer = () => {
+  const { farmId } = useParams();
+  return <Navigate to={`/admin/dashboard/farm/${farmId}/buyer`} replace />;
+};
+const ParcelApplicationWizard = lazyWithRetry(
+  () => import('views/Dashboard/Parcel/ParcelApplicationWizard')
+);
 // import AdvancedAnalyticsDemo from 'views/AdvancedAnalyticsDemo';
 import AdminLayout from 'layouts/Admin';
 import AuthLayout from 'layouts/Auth';
@@ -34,9 +49,12 @@ import ConsumerProductLayout from 'components/Layout/ConsumerProductLayout';
 //@ts-ignore
 import Authenticated from './utils/protections/Authenticated';
 const OSPView = lazyWithRetry(() => import('views/Dashboard/OSP/OSPView'));
+const OSPModuleListPage = lazyWithRetry(() => import('views/Dashboard/OSP/OSPModuleListPage'));
+const OSPModuleWizard = lazyWithRetry(() => import('views/Dashboard/OSP/OSPModuleWizard'));
+const DocumentsPage = lazyWithRetry(() => import('views/Dashboard/Documents'));
+const ActivitiesPage = lazyWithRetry(() => import('views/Dashboard/Activities'));
 //@ts-ignore
 import CheckAuth from './utils/protections/CheckAuth';
-const CommercialView = lazyWithRetry(() => import('views/Dashboard/Commercial'));
 // Lazy load dashboard for mobile performance
 const DashboardView = lazyWithRetry(() => import('views/Dashboard/Dashboard'));
 const FinishProduction = lazyWithRetry(
@@ -105,8 +123,6 @@ const ConsumerEducationDashboard = lazyWithRetry(
 );
 
 const CarbonJourney = lazyWithRetry(() => import('views/Dashboard/CarbonJourney'));
-const AllScansJourney = lazyWithRetry(() => import('views/Dashboard/CarbonJourney/AllScans'));
-const AllReviewsJourney = lazyWithRetry(() => import('views/Dashboard/CarbonJourney/AllReviews'));
 const ConsumerProfile = lazyWithRetry(() => import('views/Dashboard/ConsumerProfile'));
 import { routeConfig } from './routes/config';
 import SubscriptionRequired from './utils/protections/SubscriptionRequired';
@@ -118,17 +134,12 @@ const UnifiedSubscriptionDashboard = lazyWithRetry(
   () => import('views/Dashboard/UnifiedSubscription')
 );
 import NoSubscriptionRedirect from './utils/protections/NoSubscriptionRedirect';
-const ModernCarbonDashboard = lazyWithRetry(
-  () => import('views/Dashboard/Dashboard/Farm/ModernCarbonDashboard')
-);
 import { usePointsStore } from './store/pointsStore';
 const ProducerEducationDashboard = lazyWithRetry(() => import('views/Dashboard/Education'));
 const EducationTopicDetail = lazyWithRetry(
   () => import('views/Dashboard/Education/EducationTopicDetail')
 );
 const EducationFAQ = lazyWithRetry(() => import('views/Dashboard/Education/EducationFAQ'));
-const AllScansView = lazyWithRetry(() => import('views/Dashboard/Commercial/AllScans'));
-const AllReviewsView = lazyWithRetry(() => import('views/Dashboard/Commercial/AllReviews'));
 import { useGetCsrfTokenQuery } from './store/api/baseApi';
 const GoogleAuthCallback = lazyWithRetry(() => import('views/Authentication/GoogleAuthCallback'));
 const CertifierReview = lazyWithRetry(() => import('views/CertifierReview/CertifierReview'));
@@ -185,8 +196,7 @@ const ErrorFallback = ({
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center'
-      }}
-    >
+      }}>
       <div
         aria-hidden="true"
         style={{
@@ -198,8 +208,7 @@ const ErrorFallback = ({
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '20px'
-        }}
-      >
+        }}>
         <svg
           width="28"
           height="28"
@@ -208,8 +217,7 @@ const ErrorFallback = ({
           stroke="#2E7D32"
           strokeWidth="2"
           strokeLinecap="round"
-          strokeLinejoin="round"
-        >
+          strokeLinejoin="round">
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -232,8 +240,7 @@ const ErrorFallback = ({
           cursor: 'pointer',
           fontWeight: 600,
           fontSize: '15px'
-        }}
-      >
+        }}>
         Try again
       </button>
       <p style={{ marginTop: '24px', color: '#a0aec0', fontSize: '12px' }}>
@@ -330,14 +337,13 @@ const App = () => {
         <Route element={<CheckAuth />}>
           {/* Public Routes */}
           <Route element={<NotAuthenticated />}>
-            <Route element={<AuthLayout />}>
+            {/* `plainNav` — the 2026 centered-card shell (logo in flow, shared canvas, flex
+                column). Scoped to the four pages actually redesigned for it. `/pricing` and
+                `/invitation/*` mount this same layout and still expect the fixed navbar. */}
+            <Route element={<AuthLayout plainNav />}>
               <Route path={config?.auth.path}>
                 <Route path="signin" element={config?.auth.signin && <config.auth.signin />} />
                 <Route path="signup" element={config?.auth.signup && <config.auth.signup />} />
-                <Route
-                  path="verifyemail"
-                  element={config?.auth.verifyEmail && <config.auth.verifyEmail />}
-                />
                 <Route
                   path="forgot-password"
                   element={config?.auth.forgotPassword && <config.auth.forgotPassword />}
@@ -345,6 +351,18 @@ const App = () => {
                 <Route
                   path="reset-password"
                   element={config?.auth.resetPassword && <config.auth.resetPassword />}
+                />
+              </Route>
+            </Route>
+            {/* verifyemail deliberately stays on the DEFAULT shell: it was never converted, and
+                it is built for the fixed navbar — `mt="8.5rem"` exists purely to clear it, and
+                its root carries `alignSelf="center"`, which is inert under a block parent but
+                shrink-wraps the page under a flex-column one. Convert the page, then move it. */}
+            <Route element={<AuthLayout />}>
+              <Route path={config?.auth.path}>
+                <Route
+                  path="verifyemail"
+                  element={config?.auth.verifyEmail && <config.auth.verifyEmail />}
                 />
               </Route>
             </Route>
@@ -397,7 +415,6 @@ const App = () => {
                   <Route path="farm/add" element={<AddFarm />} />
                   <Route
                     path="farm/:farmId"
-                    exact
                     element={
                       <NoSubscriptionRedirect>
                         <Suspense>
@@ -406,62 +423,59 @@ const App = () => {
                       </NoSubscriptionRedirect>
                     }
                   />
-                  <Route path="farm/:farmId/change" exact element={<AddFarm isEdit={true} />} />
-                  <Route path="farm/:farmId/profile" exact element={<ProfileFarm />} />
-                  <Route path="farm/:farmId/parcel/add" exact element={<AddParcel />} />
-                  <Route path="farm/:farmId/parcel/:parcelId" exact element={<ParcelView />} />
+                  <Route path="farm/:farmId/change" element={<AddFarm isEdit={true} />} />
+                  <Route path="farm/:farmId/profile" element={<ProfileFarm />} />
+                  <Route path="farm/:farmId/parcel/add" element={<AddParcel />} />
+                  <Route path="farm/:farmId/parcel/:parcelId" element={<ParcelView />} />
                   <Route
                     path="farm/:farmId/parcel/:parcelId/change"
-                    exact
                     element={<AddParcel isEdit={true} />}
                   />
                   <Route
-                    path="farm/:farmId/parcel/:parcelId/profile"
-                    exact
-                    element={<ProfileParcel />}
+                    path="farm/:farmId/parcel/:parcelId/application"
+                    element={<ParcelApplicationWizard />}
                   />
-                  <Route
-                    path="farm/:farmId/parcel/:parcelId/event/add"
-                    exact
-                    element={<UpdateEvent />}
-                  />
+                  <Route path="farm/:farmId/buyer" element={<BuyerPage />} />
+                  <Route path="farm/:farmId/parcel/:parcelId/profile" element={<ProfileParcel />} />
+                  <Route path="farm/:farmId/parcel/:parcelId/event/add" element={<UpdateEvent />} />
                   {/* <Route
                   path="farm/:farmId/parcel/:parcelId/event/:eventId"
-                  exact
                   element={<DetailEvent />}
                 /> */}
                   <Route
                     path="farm/:farmId/parcel/:parcelId/event/:eventId/change"
-                    exact
                     element={<UpdateEvent isEdit={true} />}
                   />
                   <Route
                     path="farm/:farmId/parcel/:parcelId/production/add"
-                    exact
                     element={<QuickStartProduction />}
                   />
                   <Route
                     path="farm/:farmId/parcel/:parcelId/production/:productionId"
-                    exact
                     element={<ProfileProduction />}
                   />
                   <Route
                     path="farm/:farmId/parcel/:parcelId/production/:productionId/change"
-                    exact
                     element={<QuickStartProduction isEdit={true} />}
                   />
                   <Route
                     path="farm/:farmId/parcel/:parcelId/production/:productionId/finish"
-                    exact
                     element={<FinishProduction />}
                   />
-                  <Route path="farm/:farmId/osp" exact element={<OSPView />} />
-                  <Route path="farm/:farmId/commercial" exact element={<CommercialView />} />
-                  <Route path="farm/:farmId/scans" exact element={<AllScansView />} />
-                  <Route path="farm/:farmId/reviews" exact element={<AllReviewsView />} />
+                  {/* Guided OSP (WS-2.4): module list is the landing; the six-section
+                      narrative editor is demoted to /osp/narratives. */}
+                  <Route path="farm/:farmId/osp" element={<OSPModuleListPage />} />
+                  <Route path="farm/:farmId/osp/module/:moduleKey" element={<OSPModuleWizard />} />
+                  <Route path="farm/:farmId/osp/narratives" element={<OSPView />} />
+                  <Route path="farm/:farmId/documents" element={<DocumentsPage />} />
+                  <Route path="farm/:farmId/activities" element={<ActivitiesPage />} />
+                  {/* WS-7 October cuts: commercial/scans/reviews fold into the farm
+                      home + Buyer Page; routes stay as redirects so old links land well. */}
+                  <Route path="farm/:farmId/commercial" element={<RedirectToFarmHome />} />
+                  <Route path="farm/:farmId/scans" element={<RedirectToBuyer />} />
+                  <Route path="farm/:farmId/reviews" element={<RedirectToFarmHome />} />
                   <Route
                     path="settings"
-                    exact
                     element={
                       <AdminGuard>
                         <SettingsView />
@@ -470,22 +484,13 @@ const App = () => {
                   />
                   <Route
                     path="settings/change-password"
-                    exact
                     element={
                       <AdminGuard>
                         <ChangePassword />
                       </AdminGuard>
                     }
                   />
-                  <Route
-                    path="farm/:farmId/transparency"
-                    exact
-                    element={
-                      <NoSubscriptionRedirect>
-                        <ModernCarbonDashboard />
-                      </NoSubscriptionRedirect>
-                    }
-                  />
+                  <Route path="farm/:farmId/transparency" element={<RedirectToFarmHome />} />
                   <Route path="education" element={<ProducerEducationDashboard />} />
                   <Route path="education/topic/:topicId" element={<EducationTopicDetail />} />
                   <Route path="education/faq" element={<EducationFAQ />} />
@@ -522,16 +527,24 @@ const App = () => {
                     <RedirectGuard>
                       <AdminConsumerLayout />
                     </RedirectGuard>
-                  }
-                >
+                  }>
                   {/* Consumer routes */}
                   <Route index element={<Navigate to="impact" replace />} />
                   <Route path="impact" element={<ImpactDashboard />} />
                   <Route path="education" element={<ConsumerEducationDashboard />} />
 
                   <Route path="journey" element={<CarbonJourney />} />
-                  <Route path="journey/scans" element={<AllScansJourney />} />
-                  <Route path="journey/reviews" element={<AllReviewsJourney />} />
+                  {/* WS-7: journey scan/review subpages cut; consumer-subtree buttons
+                      still point here until the November demolition — bounce home. */}
+                  <Route
+                    path="journey/scans"
+                    element={<Navigate to="/admin/dashboard/journey" replace />}
+                  />
+                  <Route
+                    path="journey/reviews"
+                    element={<Navigate to="/admin/dashboard/journey" replace />}
+                  />
+
                   <Route path="profile" element={<ConsumerProfile />} />
                   <Route path="settings" element={<ConsumerChangePassword />} />
                   <Route

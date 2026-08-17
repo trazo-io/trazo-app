@@ -97,7 +97,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
-  const accentColor = useColorModeValue('green.500', 'green.400');
+  const accentColor = useColorModeValue('green.700', 'green.300');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
   const iconBg = useColorModeValue('green.50', 'green.900');
   const isMobile = useBreakpointValue({ base: true, md: false });
@@ -123,8 +123,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
             fontSize="xs"
             px={2}
             py={1}
-            borderRadius="full"
-          >
+            borderRadius="full">
             {companyData.subscription_plan.name} Plan
           </Badge>
         )}
@@ -173,13 +172,12 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
             <Stat>
               <StatLabel color="gray.500">
                 {intl.formatMessage({
+                  // Shopper-facing count of farms. "Establishments" is internal vocabulary.
                   id: 'consumer.modal.establishments',
-                  defaultMessage: 'Establishments'
+                  defaultMessage: 'Farms'
                 })}
               </StatLabel>
-              <StatNumber color={accentColor}>
-                {companyData.total_establishments || 0}
-              </StatNumber>
+              <StatNumber color={accentColor}>{companyData.total_establishments || 0}</StatNumber>
             </Stat>
             <Stat>
               <StatLabel color="gray.500">
@@ -193,7 +191,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
             {companyData.employee_count && (
               <Stat>
                 <StatLabel color="gray.500">
-                  {intl.formatMessage({ id: 'consumer.modal.employees', defaultMessage: 'Employees' })}
+                  {intl.formatMessage({
+                    id: 'consumer.modal.employees',
+                    defaultMessage: 'Employees'
+                  })}
                 </StatLabel>
                 <StatNumber color={accentColor}>{companyData.employee_count}</StatNumber>
               </Stat>
@@ -243,7 +244,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
               <HStack spacing={3}>
                 <Icon as={FaEnvelope} color={accentColor} flexShrink={0} />
                 <Text color="gray.500" fontSize="sm">
-                  {intl.formatMessage({ id: 'consumer.modal.contactColon', defaultMessage: 'Contact:' })}
+                  {intl.formatMessage({
+                    id: 'consumer.modal.contactColon',
+                    defaultMessage: 'Contact:'
+                  })}
                 </Text>
                 <Link href={`mailto:${companyData.contact_email}`} color={textColor}>
                   {companyData.contact_email}
@@ -257,8 +261,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
                   href={companyData.website}
                   isExternal
                   color={textColor}
-                  _hover={{ color: accentColor }}
-                >
+                  _hover={{ color: accentColor }}>
                   {companyData.website}
                   <Icon as={FaExternalLinkAlt} ml={2} boxSize={3} />
                 </Link>
@@ -273,7 +276,10 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
         <Card bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
           <CardBody p={6}>
             <Heading size="md" color={textColor} mb={4}>
-              {intl.formatMessage({ id: 'consumer.modal.socialMedia', defaultMessage: 'Social Media' })}
+              {intl.formatMessage({
+                id: 'consumer.modal.socialMedia',
+                defaultMessage: 'Social Media'
+              })}
             </Heading>
             <HStack spacing={4}>
               {companyData.facebook && (
@@ -284,8 +290,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
                   leftIcon={<FaFacebook />}
                   colorScheme="facebook"
                   variant="outline"
-                  size="sm"
-                >
+                  size="sm">
                   Facebook
                 </Button>
               )}
@@ -297,8 +302,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
                   leftIcon={<FaInstagram />}
                   colorScheme="pink"
                   variant="outline"
-                  size="sm"
-                >
+                  size="sm">
                   Instagram
                 </Button>
               )}
@@ -340,8 +344,7 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
                     px={3}
                     py={2}
                     borderRadius="md"
-                    fontSize="sm"
-                  >
+                    fontSize="sm">
                     {typeof cert === 'object' && cert !== null
                       ? (cert as any).display_name || (cert as any).name || 'Certification'
                       : cert}
@@ -464,15 +467,15 @@ export const CompanyModal: React.FC<CompanyModalProps> = ({ isOpen, onClose, com
           bg={bgColor}
           borderTopRadius="2xl"
           maxH="82vh"
-          containerProps={{ style: { zIndex: 10000 } }}
-        >
+          containerProps={{ style: { zIndex: 10000 } }}>
           {/* Drag handle - swipe down to dismiss */}
           <Box
-            pt={3} pb={1}
-            display="flex" justifyContent="center"
+            pt={3}
+            pb={1}
+            display="flex"
+            justifyContent="center"
             cursor="grab"
-            {...swipeHandlers}
-          >
+            {...swipeHandlers}>
             <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
           </Box>
           <DrawerCloseButton top={4} />

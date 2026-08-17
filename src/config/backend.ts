@@ -22,6 +22,8 @@ export const PARCEL_URL = (companyId: string, farmId: string, parcelId: string |
   parcelId
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/`;
+export const PARCEL_APPLICATION_URL = (companyId: string, farmId: string, parcelId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/application/`;
 export const PARCEL_UPDATE_URL = (companyId: string, farmId: string, parcelId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/parcels/${parcelId}/update_parcel/`;
 export const FARM_PRODUCTS_URL = (companyId: string, farmId: string) =>
@@ -139,6 +141,18 @@ export const LANDOWNER_AFFIDAVIT_URL = (
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/affidavits/${affidavitId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/affidavits/`;
 
+// Neighbour-signed adjoining-land attestation (USDA form #25, 7 CFR 205.202(c)).
+// Separate route from `affidavits/` because it is a different document with a different
+// signer: the landowner affidavit is the PRIOR MANAGER, this one is the NEIGHBOUR.
+export const ADJOINING_LAND_URL = (
+  companyId: string,
+  farmId: string,
+  affidavitId?: string | number
+) =>
+  affidavitId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/adjoining-land/${affidavitId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/adjoining-land/`;
+
 export const OSP_SUBMIT_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/submit/`;
 
@@ -157,6 +171,51 @@ export const OSP_ACTIVATE_URL = (companyId: string, farmId: string, ospId: strin
 
 export const OSP_NEW_VERSION_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/new-version/`;
+
+// Activity feed — WS-4
+export const ACTIVITY_FEED_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/activity-feed/`;
+
+// Documents / DMS — WS-3
+export const DOCUMENTS_URL = (companyId: string, farmId: string, docId?: string | number) =>
+  docId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/documents/${docId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/documents/`;
+
+export const DOCUMENT_DOWNLOAD_URL = (companyId: string, farmId: string, docId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/documents/${docId}/download/`;
+
+// WS-2.5/2.6 — per-module PDF + renewal packet (anchor downloads: wrap with
+// config.getApiUrl(), these are relative like every other builder here)
+export const OSP_MODULE_PDF_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number,
+  moduleKey: string,
+  parcelId?: string | number
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/module-pdf/?module=${moduleKey}` +
+  (parcelId != null ? `&parcel=${parcelId}` : '');
+export const OSP_PACKET_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/packet/`;
+
+// Guided OSP modules — WS-2.4 (questionnaire definitions + per-module answers)
+export const OSP_MODULE_DEFINITIONS_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) => `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/module-definitions/`;
+
+export const OSP_MODULES_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/modules/`;
+
+export const OSP_MODULE_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number,
+  moduleKey: string
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/modules/${moduleKey}/`;
 
 export const OSP_ADD_APPROVED_INPUT_URL = (
   companyId: string,
@@ -181,11 +240,8 @@ export const OSP_CHANGE_NOTIFICATIONS_URL = (
 
 // Common OSP § 11 "Records Maintained" (7 CFR 205.103). GET evidence + POST the operator's
 // own confirmation. Evidence alone never ticks a box — see services/common_osp_records.py.
-export const OSP_RECORD_TYPES_URL = (
-  companyId: string,
-  farmId: string,
-  ospId: string | number
-) => `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/record-types/`;
+export const OSP_RECORD_TYPES_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/record-types/`;
 
 // Common OSP required attachments (Field & Crop Information, Crop/Livestock Product List,
 // Materials List, Supplier List). No `workbook` param returns a summary; with it, downloads xlsx.

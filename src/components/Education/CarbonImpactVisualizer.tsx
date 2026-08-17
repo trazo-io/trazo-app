@@ -97,8 +97,8 @@ const CarbonImpactVisualizer: React.FC<CarbonImpactVisualizerProps> = ({
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
-  const accentColor = useColorModeValue('green.500', 'green.400');
-  const positiveColor = useColorModeValue('green.500', 'green.400');
+  const accentColor = useColorModeValue('green.700', 'green.300');
+  const positiveColor = useColorModeValue('green.700', 'green.300');
   const negativeColor = useColorModeValue('red.500', 'red.400');
 
   const {
