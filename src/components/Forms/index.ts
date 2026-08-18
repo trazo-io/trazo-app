@@ -1,6 +1,5 @@
 // Forms Export Index
 export { StandardProductionForm } from './StandardProductionForm';
-export { StandardParcelForm } from './StandardParcelForm';
 export { StandardParcelFormTransparency } from './StandardParcelForm_Transparency';
 export { StandardFinishProductionForm } from './StandardFinishProductionForm';
 

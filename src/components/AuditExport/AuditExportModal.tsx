@@ -151,8 +151,7 @@ const CertRadioCard: React.FC<CertRadioCardProps> = ({ option, isSelected }) => 
       transition="all 0.15s"
       _hover={{ borderColor: isSelected ? 'green.500' : 'green.300' }}
       minH="44px"
-      display="block"
-    >
+      display="block">
       <Radio value={option.value} colorScheme="green" size="md" w="full" alignItems="flex-start">
         <HStack spacing={3} align="flex-start" ml={1}>
           <Icon
@@ -167,8 +166,7 @@ const CertRadioCard: React.FC<CertRadioCardProps> = ({ option, isSelected }) => 
               fontSize="sm"
               fontWeight={isSelected ? 'semibold' : 'medium'}
               color={isSelected ? 'green.700' : titleColor}
-              lineHeight="1.3"
-            >
+              lineHeight="1.3">
               {intl.formatMessage({ id: option.labelKey })}
             </Text>
             <Text fontSize="xs" color={subtitleColor} lineHeight="1.4">
@@ -295,22 +293,19 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
       onClose={handleClose}
       size={{ base: 'full', smd: 'md' }}
       isCentered
-      scrollBehavior="inside"
-    >
+      scrollBehavior="inside">
       <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
       <ModalContent
         borderRadius={{ base: 'none', smd: '2xl' }}
         mx={{ base: 0, smd: 4 }}
-        my={{ base: 0, smd: 'auto' }}
-      >
+        my={{ base: 0, smd: 'auto' }}>
         <ModalHeader
           pb={3}
           fontSize={{ base: 'md', md: 'lg' }}
           fontWeight="bold"
           color={labelColor}
           borderBottom="1px solid"
-          borderColor={sectionBorder}
-        >
+          borderColor={sectionBorder}>
           <HStack spacing={2}>
             <Icon as={FiDownload} color="green.500" boxSize={5} />
             <Text>{intl.formatMessage({ id: 'app.exportAuditTitle' })}</Text>
@@ -328,14 +323,12 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
                 textTransform="uppercase"
                 color="gray.500"
                 mb={3}
-                letterSpacing="0.05em"
-              >
+                letterSpacing="0.05em">
                 {intl.formatMessage({ id: 'app.exportCertificationType' })}
               </Text>
               <RadioGroup
                 value={certification}
-                onChange={(val) => setCertification(val as CertificationKey)}
-              >
+                onChange={(val) => setCertification(val as CertificationKey)}>
                 <VStack spacing={4} align="stretch">
                   {/* Combined report — stands alone on top */}
                   <CertRadioCard
@@ -352,8 +345,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
                         textTransform="uppercase"
                         color={groupLabelColor}
                         mb={2}
-                        letterSpacing="0.06em"
-                      >
+                        letterSpacing="0.06em">
                         {intl.formatMessage({ id: group.titleKey })}
                       </Text>
                       <VStack spacing={2} align="stretch">
@@ -381,8 +373,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
                 textTransform="uppercase"
                 color="gray.500"
                 mb={3}
-                letterSpacing="0.05em"
-              >
+                letterSpacing="0.05em">
                 {intl.formatMessage({ id: 'app.exportFormat' })}
               </Text>
               <RadioGroup value={format} onChange={(val) => setFormat(val as FormatKey)}>
@@ -402,8 +393,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
                       _hover={{ borderColor: 'green.300' }}
                       minH="60px"
                       display="flex"
-                      alignItems="center"
-                    >
+                      alignItems="center">
                       <Radio value={opt.value} colorScheme="green" size="md" w="full">
                         <HStack spacing={2} ml={1}>
                           <Icon
@@ -414,8 +404,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
                           <Text
                             fontSize="sm"
                             fontWeight={format === opt.value ? 'semibold' : 'normal'}
-                            color={format === opt.value ? 'green.700' : radioLabelColor}
-                          >
+                            color={format === opt.value ? 'green.700' : radioLabelColor}>
                             {intl.formatMessage({ id: opt.labelKey })}
                           </Text>
                         </HStack>
@@ -440,15 +429,13 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
           borderColor={sectionBorder}
           gap={3}
           flexDirection={{ base: 'column', smd: 'row' }}
-          pt={4}
-        >
+          pt={4}>
           <StandardButton
             variant="outline"
             size="md"
             onClick={handleClose}
             isDisabled={isLoading}
-            w={{ base: 'full', smd: 'auto' }}
-          >
+            w={{ base: 'full', smd: 'auto' }}>
             {intl.formatMessage({ id: 'app.cancel' })}
           </StandardButton>
           <StandardButton
@@ -458,8 +445,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
             onClick={handleDownload}
             isLoading={isLoading}
             loadingText={intl.formatMessage({ id: 'app.exportDownloading' })}
-            w={{ base: 'full', smd: 'auto' }}
-          >
+            w={{ base: 'full', smd: 'auto' }}>
             {intl.formatMessage({ id: 'app.exportDownload' })}
           </StandardButton>
         </ModalFooter>

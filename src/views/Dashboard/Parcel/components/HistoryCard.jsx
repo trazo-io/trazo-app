@@ -198,8 +198,7 @@ const HistoryCard = ({ amount }) => {
       transition="all 0.3s ease"
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
       className="trazo-card"
-      data-tour="productions-history"
-    >
+      data-tour="productions-history">
       <CardHeader px={{ base: 4, md: 6 }} py={5}>
         <Flex direction="column" w="100%">
           {/* Header with divider */}
@@ -216,8 +215,7 @@ const HistoryCard = ({ amount }) => {
                   fontSize={{ base: 'md', md: 'lg' }}
                   color={textColor}
                   fontWeight="600"
-                  whiteSpace="nowrap"
-                >
+                  whiteSpace="nowrap">
                   {intl.formatMessage({ id: 'app.productions' })}
                 </Text>
               </Flex>
@@ -227,8 +225,7 @@ const HistoryCard = ({ amount }) => {
                   <Menu>
                     <Tooltip
                       label={intl.formatMessage({ id: 'parcel.filterProductions' })}
-                      placement="top"
-                    >
+                      placement="top">
                       <Box position="relative" display="inline-block">
                         <MenuButton
                           as={IconButton}
@@ -263,8 +260,7 @@ const HistoryCard = ({ amount }) => {
                         fontSize="xs"
                         fontWeight="600"
                         color="gray.500"
-                        textTransform="uppercase"
-                      >
+                        textTransform="uppercase">
                         {intl.formatMessage({ id: 'parcel.filterStatus' })}
                       </Text>
                       <MenuDivider />
@@ -272,24 +268,21 @@ const HistoryCard = ({ amount }) => {
                         fontSize="sm"
                         onClick={() => setStatusFilter('all')}
                         fontWeight={statusFilter === 'all' ? '600' : '400'}
-                        color={statusFilter === 'all' ? 'green.700' : 'gray.600'}
-                      >
+                        color={statusFilter === 'all' ? 'green.700' : 'gray.600'}>
                         {intl.formatMessage({ id: 'parcel.filterAll' })}
                       </MenuItem>
                       <MenuItem
                         fontSize="sm"
                         onClick={() => setStatusFilter('ongoing')}
                         fontWeight={statusFilter === 'ongoing' ? '600' : '400'}
-                        color={statusFilter === 'ongoing' ? 'green.700' : 'gray.600'}
-                      >
+                        color={statusFilter === 'ongoing' ? 'green.700' : 'gray.600'}>
                         {intl.formatMessage({ id: 'parcel.filterOngoing' })}
                       </MenuItem>
                       <MenuItem
                         fontSize="sm"
                         onClick={() => setStatusFilter('completed')}
                         fontWeight={statusFilter === 'completed' ? '600' : '400'}
-                        color={statusFilter === 'completed' ? 'green.700' : 'gray.600'}
-                      >
+                        color={statusFilter === 'completed' ? 'green.700' : 'gray.600'}>
                         {intl.formatMessage({ id: 'parcel.filterCompleted' })}
                       </MenuItem>
                     </MenuList>
@@ -299,8 +292,7 @@ const HistoryCard = ({ amount }) => {
                   <Menu>
                     <Tooltip
                       label={intl.formatMessage({ id: 'parcel.sortProductions' })}
-                      placement="top"
-                    >
+                      placement="top">
                       <Box position="relative" display="inline-block">
                         <MenuButton
                           as={IconButton}
@@ -335,8 +327,7 @@ const HistoryCard = ({ amount }) => {
                         fontSize="xs"
                         fontWeight="600"
                         color="gray.500"
-                        textTransform="uppercase"
-                      >
+                        textTransform="uppercase">
                         {intl.formatMessage({ id: 'parcel.sortBy' })}
                       </Text>
                       <MenuDivider />
@@ -344,24 +335,21 @@ const HistoryCard = ({ amount }) => {
                         fontSize="sm"
                         onClick={() => setSortBy('default')}
                         fontWeight={sortBy === 'default' ? '600' : '400'}
-                        color={sortBy === 'default' ? 'green.700' : 'gray.600'}
-                      >
+                        color={sortBy === 'default' ? 'green.700' : 'gray.600'}>
                         {intl.formatMessage({ id: 'parcel.sortDefault' })}
                       </MenuItem>
                       <MenuItem
                         fontSize="sm"
                         onClick={() => setSortBy('newest')}
                         fontWeight={sortBy === 'newest' ? '600' : '400'}
-                        color={sortBy === 'newest' ? 'green.700' : 'gray.600'}
-                      >
+                        color={sortBy === 'newest' ? 'green.700' : 'gray.600'}>
                         {intl.formatMessage({ id: 'parcel.sortNewest' })}
                       </MenuItem>
                       <MenuItem
                         fontSize="sm"
                         onClick={() => setSortBy('oldest')}
                         fontWeight={sortBy === 'oldest' ? '600' : '400'}
-                        color={sortBy === 'oldest' ? 'green.700' : 'gray.600'}
-                      >
+                        color={sortBy === 'oldest' ? 'green.700' : 'gray.600'}>
                         {intl.formatMessage({ id: 'parcel.sortOldest' })}
                       </MenuItem>
                       {/* "Highest score" / "Lowest score" removed 2026-08-11 with the score
@@ -408,8 +396,7 @@ const HistoryCard = ({ amount }) => {
                 }
                 onClick={() =>
                   navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`)
-                }
-              >
+                }>
                 {isMobile
                   ? intl.formatMessage({ id: 'app.new' })
                   : intl.formatMessage({ id: 'parcel.newProduction' })}
@@ -433,8 +420,7 @@ const HistoryCard = ({ amount }) => {
               spacing={0}
               justify="space-between"
               pt={4}
-              gap={{ base: 1, smd: 4 }}
-            >
+              gap={{ base: 1, smd: 4 }}>
               <VStack spacing={1} flex="1" minW={0}>
                 <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="green.700">
                   {productionStats.completed}
@@ -444,8 +430,7 @@ const HistoryCard = ({ amount }) => {
                   color="gray.500"
                   fontWeight="medium"
                   textAlign="center"
-                  whiteSpace="nowrap"
-                >
+                  whiteSpace="nowrap">
                   {intl.formatMessage({ id: 'parcel.completed' })}
                 </Text>
               </VStack>
@@ -459,8 +444,7 @@ const HistoryCard = ({ amount }) => {
                   color="gray.500"
                   fontWeight="medium"
                   textAlign="center"
-                  whiteSpace="nowrap"
-                >
+                  whiteSpace="nowrap">
                   {intl.formatMessage({ id: 'parcel.ongoing' })}
                 </Text>
               </VStack>
@@ -474,8 +458,7 @@ const HistoryCard = ({ amount }) => {
                   color="gray.500"
                   fontWeight="medium"
                   textAlign="center"
-                  whiteSpace="nowrap"
-                >
+                  whiteSpace="nowrap">
                   {isMobile
                     ? intl.formatMessage({ id: 'parcel.eventsLabel' })
                     : intl.formatMessage({ id: 'parcel.eventsDocumented' })}
@@ -515,8 +498,7 @@ const HistoryCard = ({ amount }) => {
                       bg: 'gray.600'
                     }
                   }
-                }}
-              >
+                }}>
                 <VStack spacing={4} align="stretch" w="100%" py={3} pb={6}>
                   {(() => {
                     // Group productions by status for separator logic
@@ -658,8 +640,7 @@ const HistoryCard = ({ amount }) => {
                                     );
                                   }
                                 }}
-                                className="trazo-card"
-                              >
+                                className="trazo-card">
                                 <CardBody p={4}>
                                   <VStack align="stretch" spacing={3}>
                                     {/* Header Row - Production Info and Status */}
@@ -667,8 +648,7 @@ const HistoryCard = ({ amount }) => {
                                       justify="space-between"
                                       align="flex-start"
                                       gap={2}
-                                      wrap={{ base: 'wrap', smd: 'nowrap' }}
-                                    >
+                                      wrap={{ base: 'wrap', smd: 'nowrap' }}>
                                       <HStack spacing={3} flex={1} minW={0}>
                                         <Box
                                           p={2}
@@ -676,8 +656,7 @@ const HistoryCard = ({ amount }) => {
                                           borderRadius="lg"
                                           border="1px solid"
                                           borderColor={isCompleted ? 'green.200' : 'blue.200'}
-                                          flexShrink={0}
-                                        >
+                                          flexShrink={0}>
                                           <Icon
                                             as={isCompleted ? FaChartLine : FaClock}
                                             color={isCompleted ? 'green.700' : 'orange.800'}
@@ -689,8 +668,7 @@ const HistoryCard = ({ amount }) => {
                                             fontSize="sm"
                                             fontWeight="600"
                                             color={textColor}
-                                            noOfLines={2}
-                                          >
+                                            noOfLines={2}>
                                             {production.name ||
                                               `${production.product || 'Organic'} Production ${
                                                 production.id
@@ -712,8 +690,7 @@ const HistoryCard = ({ amount }) => {
                                               py={1}
                                               textTransform="uppercase"
                                               letterSpacing="wide"
-                                              flexShrink={0}
-                                            >
+                                              flexShrink={0}>
                                               {isCompleted
                                                 ? intl.formatMessage({
                                                     id: 'parcel.statusComplete'
@@ -726,8 +703,7 @@ const HistoryCard = ({ amount }) => {
                                               fontSize="xs"
                                               color="gray.500"
                                               fontWeight="medium"
-                                              whiteSpace="nowrap"
-                                            >
+                                              whiteSpace="nowrap">
                                               {formatDateRange(
                                                 production.start_date,
                                                 production.finish_date
@@ -849,15 +825,13 @@ const HistoryCard = ({ amount }) => {
                                       wrap="wrap"
                                       justify="space-between"
                                       align="center"
-                                      gap={2}
-                                    >
+                                      gap={2}>
                                       <HStack spacing={1} minW={0} flex={1}>
                                         <Text
                                           fontSize="xs"
                                           color="gray.500"
                                           fontWeight="medium"
-                                          whiteSpace="nowrap"
-                                        >
+                                          whiteSpace="nowrap">
                                           {intl.formatMessage({ id: 'parcel.productLabel' })}
                                         </Text>
                                         <Text
@@ -865,8 +839,7 @@ const HistoryCard = ({ amount }) => {
                                           color="gray.700"
                                           fontWeight="600"
                                           noOfLines={1}
-                                          minW={0}
-                                        >
+                                          minW={0}>
                                           {production.product || 'Agricultural Product'}
                                         </Text>
                                       </HStack>
@@ -885,8 +858,7 @@ const HistoryCard = ({ amount }) => {
                                           fontSize="xs"
                                           color="gray.500"
                                           fontWeight="medium"
-                                          whiteSpace="nowrap"
-                                        >
+                                          whiteSpace="nowrap">
                                           {intl.formatMessage({ id: 'parcel.recordsLabel' })}
                                         </Text>
                                         <Text fontSize="xs" color="gray.700" fontWeight="600">
@@ -941,8 +913,7 @@ const HistoryCard = ({ amount }) => {
                                               fontSize="xs"
                                               color={present ? 'gray.700' : 'gray.500'}
                                               fontWeight={present ? '500' : '400'}
-                                              noOfLines={1}
-                                            >
+                                              noOfLines={1}>
                                               {label}
                                             </Text>
                                           </HStack>
@@ -994,8 +965,7 @@ const HistoryCard = ({ amount }) => {
                   onClick={() => {
                     setStatusFilter('all');
                     setSortBy('default');
-                  }}
-                >
+                  }}>
                   {intl.formatMessage({ id: 'parcel.clearFilters' })}
                 </Button>
               </VStack>

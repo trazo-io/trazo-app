@@ -33,8 +33,7 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
       _hover={{
         boxShadow: 'xl',
         transform: 'translateY(-1px)'
-      }}
-    >
+      }}>
       <VStack spacing={3} align="stretch">
         {/* Icon and Title */}
         <HStack spacing={3} align="center">
@@ -45,8 +44,7 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
             borderRadius="lg"
             align="center"
             justify="center"
-            flexShrink={0}
-          >
+            flexShrink={0}>
             <Icon as={QuestionIcon} color={iconColor} w="20px" h="20px" />
           </Flex>
 
@@ -103,8 +101,7 @@ const SidebarHelp = ({ sidebarWidth }: { sidebarWidth: number }) => {
                 opacity: '1 !important',
                 visibility: 'visible !important'
               }
-            }}
-          >
+            }}>
             {intl.formatMessage({ id: 'app.documentation' })}
           </Button>
         )}

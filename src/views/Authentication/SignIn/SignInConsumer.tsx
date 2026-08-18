@@ -111,21 +111,18 @@ export default function SignInConsumer() {
         mx="auto"
         justifyContent="space-between"
         mb="30px"
-        pt={{ base: '150px', sm: '150px', md: '0px' }}
-      >
+        pt={{ base: '150px', sm: '150px', md: '0px' }}>
         <Flex
           alignItems="center"
           justifyContent="start"
           style={{ userSelect: 'none' }}
-          w={{ base: '100%', md: '50%', lg: '42%' }}
-        >
+          w={{ base: '100%', md: '50%', lg: '42%' }}>
           <Flex
             direction="column"
             w="100%"
             background="transparent"
             p="48px"
-            mt={{ md: '150px', lg: '80px' }}
-          >
+            mt={{ md: '150px', lg: '80px' }}>
             <Heading color={titleColor} fontSize="32px" mb="10px">
               See exactly how your food was grown
             </Heading>
@@ -196,8 +193,7 @@ export default function SignInConsumer() {
                     _active={{
                       bg: 'green.700'
                     }}
-                    isLoading={isLoading}
-                  >
+                    isLoading={isLoading}>
                     Sign In
                   </Button>
                 </FormControl>
@@ -208,8 +204,7 @@ export default function SignInConsumer() {
               justifyContent="center"
               alignItems="center"
               maxW="100%"
-              mt="0px"
-            >
+              mt="0px">
               <Text color={textColor} fontWeight="medium">
                 Don't have an account?
                 <Link
@@ -217,8 +212,7 @@ export default function SignInConsumer() {
                   as="span"
                   ms="5px"
                   fontWeight="bold"
-                  onClick={() => navigate('/auth/signup')}
-                >
+                  onClick={() => navigate('/auth/signup')}>
                   Sign Up
                 </Link>
               </Text>
@@ -236,8 +230,7 @@ export default function SignInConsumer() {
             xl: '40vw'
           }}
           position="absolute"
-          right="0px"
-        >
+          right="0px">
           <Box
             bgImage={consumerSignInImage}
             w="100%"
@@ -245,8 +238,7 @@ export default function SignInConsumer() {
             bgSize="cover"
             bgPosition="center"
             position="absolute"
-            borderBottomLeftRadius="20px"
-          ></Box>
+            borderBottomLeftRadius="20px"></Box>
         </Box>
       </Flex>
     </Flex>

@@ -98,8 +98,7 @@ const CarouselCard = ({
         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
       }}
       transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
-      onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${id}`)}
-    >
+      onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${id}`)}>
       <Flex direction="column" h="100%">
         {/* One band height whether or not a photo exists — two heights made the
             carousel row ragged (2026-08-09 feedback). Photos render cover; the
@@ -110,8 +109,7 @@ const CarouselCard = ({
           flexShrink={0}
           position="relative"
           overflow="hidden"
-          borderTopRadius="20px"
-        >
+          borderTopRadius="20px">
           {!imageLoaded && !shouldShowPlaceholder && (
             <Shimmer width="100%" height="100%" borderRadius="20px" />
           )}
@@ -162,8 +160,7 @@ const CarouselCard = ({
             mb="4px"
             letterSpacing="-0.01em"
             lineHeight="1.3"
-            noOfLines={1}
-          >
+            noOfLines={1}>
             {name}
           </Text>
 
@@ -199,8 +196,7 @@ const CarouselCard = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/admin/dashboard/farm/${farmId}/parcel/${id}/application`);
-                }}
-              >
+                }}>
                 {intl.formatMessage({
                   id:
                     applicationStatus === 'in_progress'
@@ -237,16 +233,14 @@ const CarouselCard = ({
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/admin/dashboard/farm/${farmId}/parcel/${id}`);
-              }}
-            >
+              }}>
               <Text
                 fontSize="xs"
                 color="green.700"
                 fontWeight="bold"
                 cursor="pointer"
                 transition="all .5s ease"
-                _hover={{ me: '4px' }}
-              >
+                _hover={{ me: '4px' }}>
                 {buttonText || 'VIEW PARCEL'}
               </Text>
               <Icon

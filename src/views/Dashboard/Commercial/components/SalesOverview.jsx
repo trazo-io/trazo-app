@@ -22,8 +22,7 @@ const SalesOverview = ({ title, percentage, chart, period = '2024' }) => {
           borderRadius="lg"
           bg={isPositive ? 'green.50' : 'red.50'}
           border="1px solid"
-          borderColor={isPositive ? 'green.200' : 'red.200'}
-        >
+          borderColor={isPositive ? 'green.200' : 'red.200'}>
           <Icon
             as={isPositive ? FiTrendingUp : FiTrendingDown}
             color={isPositive ? 'green.600' : 'red.600'}
@@ -55,14 +54,15 @@ const SalesOverview = ({ title, percentage, chart, period = '2024' }) => {
           borderRadius="md"
           bg="gray.50"
           border="1px solid"
-          borderColor="gray.200"
-        >
+          borderColor="gray.200">
           {chart || (
             <Flex justify="center" align="center" h="100%" direction="column" color="gray.500">
               <Text fontSize="md" fontWeight="medium">
                 {intl.formatMessage({ id: 'commercial.chartNotAvailable' })}
               </Text>
-              <Text fontSize="sm">{intl.formatMessage({ id: 'commercial.dataWillShowWhenAvailable' })}</Text>
+              <Text fontSize="sm">
+                {intl.formatMessage({ id: 'commercial.dataWillShowWhenAvailable' })}
+              </Text>
             </Flex>
           )}
         </Box>

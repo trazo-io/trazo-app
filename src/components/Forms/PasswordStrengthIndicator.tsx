@@ -24,7 +24,12 @@ const Requirement: React.FC<RequirementProps> = ({ met, label }) => {
 
   return (
     <HStack spacing={2} align="center">
-      <Box as={met ? FaCheck : FaTimes} color={met ? metColor : unmetColor} boxSize="10px" flexShrink={0} />
+      <Box
+        as={met ? FaCheck : FaTimes}
+        color={met ? metColor : unmetColor}
+        boxSize="10px"
+        flexShrink={0}
+      />
       <Text fontSize="xs" color={met ? metColor : unmetColor} lineHeight="1.3">
         {label}
       </Text>
@@ -44,13 +49,14 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
 
   return (
     <Box w="full" mt={2}>
-      <Progress value={score} size="sm" borderRadius="full" bg="gray.200" colorScheme={colorScheme} />
-      <Text
-        fontSize="xs"
-        color={useColorModeValue('gray.500', 'gray.400')}
-        mt={1}
-        mb={2}
-      >
+      <Progress
+        value={score}
+        size="sm"
+        borderRadius="full"
+        bg="gray.200"
+        colorScheme={colorScheme}
+      />
+      <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mt={1} mb={2}>
         Password strength: {label}
       </Text>
 
@@ -60,8 +66,7 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
         py={2}
         borderRadius="lg"
         borderWidth="1px"
-        borderColor={useColorModeValue('gray.200', 'gray.600')}
-      >
+        borderColor={useColorModeValue('gray.200', 'gray.600')}>
         <Requirement
           met={password.length >= DEFAULT_REQUIREMENTS.minLength}
           label={`At least ${DEFAULT_REQUIREMENTS.minLength} characters`}

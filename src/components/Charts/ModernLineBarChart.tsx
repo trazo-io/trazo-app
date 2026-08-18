@@ -56,8 +56,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
           borderRadius="lg"
           border="1px solid"
           borderColor={tooltipBorder}
-          boxShadow="lg"
-        >
+          boxShadow="lg">
           <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
             {label}
           </Text>
@@ -65,8 +64,7 @@ const ModernLineBarChart: React.FC<ModernLineBarChartProps> = ({
             <Text
               key={index}
               fontSize="xs"
-              color={entry.name === lineLabel ? 'green.500' : 'blue.500'}
-            >
+              color={entry.name === lineLabel ? 'green.500' : 'blue.500'}>
               {entry.name}: {entry.value}
             </Text>
           ))}

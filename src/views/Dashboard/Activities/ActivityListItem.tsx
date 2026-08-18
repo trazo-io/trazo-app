@@ -16,17 +16,11 @@ import type { IntlShape } from 'react-intl';
 import { activitySummary, activityTitle } from 'config/events/narrative';
 import type { ActivityRow } from 'store/api/activityFeedApi';
 
-/** Badge variant per event_type. Status colour = meaning: inputs warn, pest is danger. */
-export const TYPE_BADGE: Record<number, string> = {
-  0: 'subtle',
-  1: 'brand',
-  2: 'warning',
-  3: 'neutral',
-  4: 'neutral',
-  5: 'subtle',
-  6: 'danger',
-  7: 'neutral'
-};
+// Moved to `config/events/eventTypeAppearance` so `EventDetailsModal` can share it without a
+// shared component importing out of a route folder. Re-exported because this file's two
+// existing consumers (index.tsx, and this component) already name it here.
+export { TYPE_BADGE } from 'config/events/eventTypeAppearance';
+import { TYPE_BADGE } from 'config/events/eventTypeAppearance';
 
 interface ActivityListItemProps {
   row: ActivityRow;

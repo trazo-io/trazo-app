@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { maskPerformerName, withUSUnits, formatHarvestQuantity } from '../consumerDisplay';
+import {
+  maskPerformerName,
+  withUSUnits,
+  formatHarvestQuantity,
+  toConsumerVisibleEvent,
+  CERTIFIER_ONLY_EVENT_FIELDS
+} from '../consumerDisplay';
 
 describe('maskPerformerName', () => {
   it('masks a full name to initials', () => {
@@ -141,5 +147,57 @@ describe('formatHarvestQuantity — locale (added 2026-08-01)', () => {
 
   it('converts a tonne-denominated amount too', () => {
     expect(formatHarvestQuantity(135, 'tonnes', 'en-US')).toEqual({ value: '149', unit: 'tons' });
+  });
+});
+
+/**
+ * The strip itself, not just the list.
+ *
+ * `history/tests/test_certifier_only_list_parity.py` proves the backend tuple and this
+ * mirror agree — it parses the array as TEXT and compares names. It cannot prove
+ * `toConsumerVisibleEvent` actually removes them, so a key could sit in the list while the
+ * function that reads it drifted, and the parity test would still be green.
+ *
+ * That matters here because this function backs one specific promise: EventPreviewModal is
+ * headed "How consumers will see this event" and renders raw wizard form data. Anything it
+ * leaves in is a field the grower believes shoppers receive.
+ */
+describe('toConsumerVisibleEvent', () => {
+  it('strips photo_content_flag — moderation state about the farmer', () => {
+    // Added to the mirror 2026-08-17. The backend stripped it from the public payload on
+    // 2026-08-03 and the mirror was missed; the parity test had been failing ever since.
+    // Showing Trazo's own anti-gaming verdict inside a preview labelled "how consumers will
+    // see this" tells a grower that shoppers are being shown an accusation against them.
+    const stripped = toConsumerVisibleEvent({
+      description: 'Compost application',
+      photo_content_flag: 'ai_generated'
+    });
+    expect(stripped).not.toHaveProperty('photo_content_flag');
+    expect(stripped.description).toBe('Compost application');
+  });
+
+  it('removes every field the mirror declares', () => {
+    const event = Object.fromEntries(
+      CERTIFIER_ONLY_EVENT_FIELDS.map((field) => [field, 'present'])
+    );
+    const stripped = toConsumerVisibleEvent({ ...event, description: 'kept' });
+    for (const field of CERTIFIER_ONLY_EVENT_FIELDS) {
+      expect(stripped, `${field} survived the strip`).not.toHaveProperty(field);
+    }
+    expect(stripped.description).toBe('kept');
+  });
+
+  it('does not mutate the event it was given', () => {
+    // The producer's own detail modal renders `photo_content_flag` as a "replace with a field
+    // photo" warning, reading the same event object. A mutating strip would erase the warning
+    // from the surface that is supposed to show it.
+    const original = { description: 'Spray', rei_hours: 12, photo_content_flag: 'stock_photo' };
+    toConsumerVisibleEvent(original);
+    expect(original.rei_hours).toBe(12);
+    expect(original.photo_content_flag).toBe('stock_photo');
+  });
+
+  it('passes through non-objects untouched', () => {
+    expect(toConsumerVisibleEvent(null as never)).toBeNull();
   });
 });

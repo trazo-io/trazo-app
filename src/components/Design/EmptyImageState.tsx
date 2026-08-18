@@ -164,8 +164,7 @@ export const EmptyImageState: React.FC<EmptyImageStateProps> = ({
       p={config.containerPadding}
       minH={height ? undefined : 'inherit'}
       role="img"
-      aria-label={displayPrimaryText || 'No photo'}
-    >
+      aria-label={displayPrimaryText || 'No photo'}>
       {variant === 'large' ? (
         <VStack spacing={config.spacing} textAlign="center">
           <Circle
@@ -173,8 +172,7 @@ export const EmptyImageState: React.FC<EmptyImageStateProps> = ({
             bg={circleBgColor}
             color={largeIconColor}
             flexShrink={0}
-            boxShadow="sm"
-          >
+            boxShadow="sm">
             <Icon as={icon} boxSize={config.iconSize} />
           </Circle>
           <VStack spacing={1} w="100%">
@@ -182,8 +180,7 @@ export const EmptyImageState: React.FC<EmptyImageStateProps> = ({
               fontSize={config.primaryFontSize}
               fontWeight={config.primaryFontWeight}
               color={primaryTextColor}
-              lineHeight="tight"
-            >
+              lineHeight="tight">
               {displayPrimaryText}
             </Text>
             {displaySecondaryText && (
@@ -205,8 +202,7 @@ export const EmptyImageState: React.FC<EmptyImageStateProps> = ({
               fontSize={config.primaryFontSize}
               fontWeight={config.primaryFontWeight}
               color={primaryTextColor}
-              lineHeight="tight"
-            >
+              lineHeight="tight">
               {displayPrimaryText}
             </Text>
           )}

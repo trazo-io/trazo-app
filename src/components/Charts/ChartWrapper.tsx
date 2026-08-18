@@ -117,8 +117,7 @@ const ChartWrapper: React.FC<ChartWrapperProps> = ({
           backgroundColor: '#f7fafc',
           border: '1px solid #e2e8f0',
           borderRadius: '6px'
-        }}
-      >
+        }}>
         <span style={{ color: '#718096' }}>Chart unavailable</span>
       </div>
     );

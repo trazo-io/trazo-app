@@ -34,13 +34,7 @@ export const TokenManager = {
    * Call once on app init to remove any tokens from localStorage/sessionStorage.
    */
   cleanupLegacyStorage(): void {
-    const keysToRemove = [
-      'access',
-      'refresh',
-      'token',
-      'authToken',
-      'temp_access_token'
-    ];
+    const keysToRemove = ['access', 'refresh', 'token', 'authToken', 'temp_access_token'];
     keysToRemove.forEach((key) => {
       localStorage.removeItem(key);
       sessionStorage.removeItem(key);

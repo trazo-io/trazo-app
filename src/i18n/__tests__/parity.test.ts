@@ -37,7 +37,8 @@ describe('i18n locale parity', () => {
         for (const node of nodes) {
           // type 0 is a literal; every other node with a string `value` is an argument name.
           if (node.type !== 0 && typeof node.value === 'string') names.add(node.value);
-          if (node.options) for (const opt of Object.values<any>(node.options)) walkNodes(opt.value);
+          if (node.options)
+            for (const opt of Object.values<any>(node.options)) walkNodes(opt.value);
           if (node.children) walkNodes(node.children);
         }
       };

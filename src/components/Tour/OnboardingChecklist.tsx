@@ -45,16 +45,8 @@ const isFormRoute = (pathname: string): boolean => {
  * Suppressed on form routes — see FORM_ROUTE_SUFFIXES above.
  */
 const OnboardingChecklist: React.FC = () => {
-  const {
-    items,
-    variant,
-    completedCount,
-    totalCount,
-    progress,
-    allComplete,
-    isVisible,
-    dismiss
-  } = useOnboardingChecklist();
+  const { items, variant, completedCount, totalCount, progress, allComplete, isVisible, dismiss } =
+    useOnboardingChecklist();
 
   // Expanded by default on desktop, COLLAPSED on phones. At 375px the expanded panel is 300px
   // wide and ~370px tall — 80% of the width and 45% of the height of the viewport — and it is
@@ -98,8 +90,7 @@ const OnboardingChecklist: React.FC = () => {
       border="1px"
       borderColor={borderColor}
       boxShadow="0 10px 30px -5px rgba(0, 0, 0, 0.15)"
-      overflow="hidden"
-    >
+      overflow="hidden">
       {/* Header — always visible */}
       <HStack
         px={4}
@@ -108,8 +99,7 @@ const OnboardingChecklist: React.FC = () => {
         cursor="pointer"
         onClick={() => setIsExpanded(!isExpanded)}
         _hover={{ bg: itemBg }}
-        transition="background 0.15s"
-      >
+        transition="background 0.15s">
         <VStack align="start" spacing={0}>
           <Text fontSize="sm" fontWeight="700" color={headingColor}>
             <FormattedMessage id="tour.checklist.title" />
@@ -138,21 +128,12 @@ const OnboardingChecklist: React.FC = () => {
             minH="32px"
             minW="32px"
           />
-          <Icon
-            as={isExpanded ? FiChevronDown : FiChevronUp}
-            color={textColor}
-            boxSize={4}
-          />
+          <Icon as={isExpanded ? FiChevronDown : FiChevronUp} color={textColor} boxSize={4} />
         </HStack>
       </HStack>
 
       {/* Progress bar */}
-      <Progress
-        value={progress}
-        size="xs"
-        colorScheme="green"
-        bg={progressBg}
-      />
+      <Progress value={progress} size="xs" colorScheme="green" bg={progressBg} />
 
       {/* Checklist items */}
       <Collapse in={isExpanded}>
@@ -202,8 +183,7 @@ const OnboardingChecklist: React.FC = () => {
                     }
                     navigate(item.linkTo);
                   }
-                }}
-              >
+                }}>
                 {/* Check circle */}
                 <Box
                   w="20px"
@@ -216,11 +196,8 @@ const OnboardingChecklist: React.FC = () => {
                   alignItems="center"
                   justifyContent="center"
                   flexShrink={0}
-                  transition="all 0.2s"
-                >
-                  {item.completed && (
-                    <Icon as={FiCheck} color="white" boxSize={3} />
-                  )}
+                  transition="all 0.2s">
+                  {item.completed && <Icon as={FiCheck} color="white" boxSize={3} />}
                 </Box>
 
                 {/* Label */}
@@ -228,8 +205,7 @@ const OnboardingChecklist: React.FC = () => {
                   fontSize="sm"
                   color={item.completed ? textColor : headingColor}
                   textDecoration={item.completed ? 'line-through' : 'none'}
-                  flex={1}
-                >
+                  flex={1}>
                   <FormattedMessage id={item.labelKey} />
                 </Text>
               </HStack>

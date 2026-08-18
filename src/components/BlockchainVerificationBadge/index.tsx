@@ -66,8 +66,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
         borderRadius="lg"
         border="1px solid"
         borderColor={borderColor}
-        boxShadow="sm"
-      >
+        boxShadow="sm">
         <HStack spacing={spacing}>
           <Spinner size="sm" color={iconColor} />
           <Text fontSize="sm" color={textColor}>
@@ -87,8 +86,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
         borderRadius="lg"
         border="1px solid"
         borderColor="gray.200"
-        boxShadow="sm"
-      >
+        boxShadow="sm">
         <HStack spacing={spacing}>
           <Icon as={MdInfo} color="gray.400" />
           <Text fontSize="sm" color="gray.500">
@@ -163,8 +161,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
               px={2}
               py={1}
               borderRadius="full"
-              fontSize="xs"
-            >
+              fontSize="xs">
               <HStack spacing={1}>
                 <Icon as={FaCertificate} boxSize={3} />
                 <Text>Documented</Text>
@@ -182,8 +179,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
               px={2}
               py={1}
               borderRadius="full"
-              fontSize="xs"
-            >
+              fontSize="xs">
               <HStack spacing={1}>
                 <Icon as={FaShieldAlt} boxSize={3} />
                 <Text>{mock_data ? 'Demo' : 'Recorded'}</Text>
@@ -204,8 +200,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
       border="2px solid"
       borderColor={status === 'fully_documented' ? 'green.300' : borderColor}
       boxShadow="md"
-      position="relative"
-    >
+      position="relative">
       <VStack spacing={4} align="stretch">
         {/* Header with trust level indicator */}
         <HStack justify="space-between" align="center">
@@ -246,8 +241,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
             fontSize="xs"
             px={3}
             py={1}
-            borderRadius="full"
-          >
+            borderRadius="full">
             {status === 'fully_documented'
               ? 'ON-CHAIN'
               : status === 'partially_documented'
@@ -306,8 +300,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
                 <Badge
                   colorScheme={mock_data || fallback_data ? 'yellow' : 'blue'}
                   variant="solid"
-                  fontSize="xs"
-                >
+                  fontSize="xs">
                   {getNetworkName()}
                 </Badge>
               </HStack>
@@ -343,8 +336,7 @@ export const BlockchainVerificationBadge: React.FC<BlockchainVerificationBadgePr
               colorScheme="blue"
               variant="outline"
               leftIcon={<MdOpenInNew />}
-              flex={1}
-            >
+              flex={1}>
               View on Explorer
             </Button>
           </HStack>

@@ -48,7 +48,6 @@ import {
   checkSocialAuthConfig
 } from '../../../utils/socialAuth';
 
-
 // Motion components
 const MotionBox = motion(Box);
 
@@ -248,8 +247,7 @@ const ConsumerSignUp: React.FC = () => {
           alignItems="center"
           justifyContent="center"
           position="relative"
-          overflow="hidden"
-        >
+          overflow="hidden">
           {/* Sophisticated gradient foundation */}
           <Box
             position="absolute"
@@ -340,8 +338,7 @@ const ConsumerSignUp: React.FC = () => {
             color="white"
             px={12}
             maxW="lg"
-            zIndex={10}
-          >
+            zIndex={10}>
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
                 {intl.formatMessage({ id: 'consumerSignup.heroTitle' })}
@@ -382,16 +379,14 @@ const ConsumerSignUp: React.FC = () => {
           px={{ base: 4, sm: 6, md: 8 }}
           pt={{ base: '150px', md: 24 }}
           pb={8}
-          overflow="hidden"
-        >
+          overflow="hidden">
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
             maxW={{ base: '100%', md: '480px' }}
-            my={{ base: 4, lg: 8 }}
-          >
+            my={{ base: 4, lg: 8 }}>
             {/* Header */}
             <VStack spacing={4} mb={6}>
               <VStack spacing={1}>
@@ -401,8 +396,7 @@ const ConsumerSignUp: React.FC = () => {
                 <Text
                   fontSize="sm"
                   color={useColorModeValue('gray.500', 'gray.400')}
-                  textAlign="center"
-                >
+                  textAlign="center">
                   Start your sustainable food journey
                 </Text>
               </VStack>
@@ -417,8 +411,7 @@ const ConsumerSignUp: React.FC = () => {
                   borderColor="red.200"
                   borderRadius="lg"
                   p={4}
-                  mb={6}
-                >
+                  mb={6}>
                   <Text color="red.600" fontSize="sm">
                     {error}
                   </Text>
@@ -434,8 +427,7 @@ const ConsumerSignUp: React.FC = () => {
                         fontSize="sm"
                         fontWeight="500"
                         color={useColorModeValue('gray.700', 'gray.300')}
-                        mb={1}
-                      >
+                        mb={1}>
                         First Name
                       </Text>
                       <Box
@@ -470,7 +462,10 @@ const ConsumerSignUp: React.FC = () => {
                         transition="all 0.2s"
                         {...registerField('firstName', {
                           required: 'First name is required',
-                          maxLength: { value: PERSON_NAME_MAX_LENGTH, message: 'First name is too long' },
+                          maxLength: {
+                            value: PERSON_NAME_MAX_LENGTH,
+                            message: 'First name is too long'
+                          },
                           pattern: {
                             value: PERSON_NAME_PATTERN,
                             message: "First name can't contain numbers or symbols"
@@ -491,8 +486,7 @@ const ConsumerSignUp: React.FC = () => {
                         fontSize="sm"
                         fontWeight="500"
                         color={useColorModeValue('gray.700', 'gray.300')}
-                        mb={1}
-                      >
+                        mb={1}>
                         Last Name
                       </Text>
                       <Box
@@ -527,7 +521,10 @@ const ConsumerSignUp: React.FC = () => {
                         transition="all 0.2s"
                         {...registerField('lastName', {
                           required: 'Last name is required',
-                          maxLength: { value: PERSON_NAME_MAX_LENGTH, message: 'Last name is too long' },
+                          maxLength: {
+                            value: PERSON_NAME_MAX_LENGTH,
+                            message: 'Last name is too long'
+                          },
                           pattern: {
                             value: PERSON_NAME_PATTERN,
                             message: "Last name can't contain numbers or symbols"
@@ -550,8 +547,7 @@ const ConsumerSignUp: React.FC = () => {
                       fontSize="sm"
                       fontWeight="500"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={1}
-                    >
+                      mb={1}>
                       Email Address
                     </Text>
                     <InputGroup size="lg">
@@ -616,8 +612,7 @@ const ConsumerSignUp: React.FC = () => {
                       fontSize="sm"
                       fontWeight="500"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={1}
-                    >
+                      mb={1}>
                       Password
                     </Text>
                     <InputGroup size="lg">
@@ -674,8 +669,7 @@ const ConsumerSignUp: React.FC = () => {
                           variant="ghost"
                           onClick={() => setShowPassword(!showPassword)}
                           size="sm"
-                          _hover={{ bg: 'transparent' }}
-                        >
+                          _hover={{ bg: 'transparent' }}>
                           <Icon
                             as={showPassword ? FaEyeSlash : FaEye}
                             color={useColorModeValue('gray.400', 'gray.500')}
@@ -709,8 +703,7 @@ const ConsumerSignUp: React.FC = () => {
                       fontSize="sm"
                       fontWeight="500"
                       color={useColorModeValue('gray.700', 'gray.300')}
-                      mb={1}
-                    >
+                      mb={1}>
                       Confirm Password
                     </Text>
                     <InputGroup size="lg">
@@ -767,8 +760,7 @@ const ConsumerSignUp: React.FC = () => {
                           variant="ghost"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           size="sm"
-                          _hover={{ bg: 'transparent' }}
-                        >
+                          _hover={{ bg: 'transparent' }}>
                           <Icon
                             as={showConfirmPassword ? FaEyeSlash : FaEye}
                             color={useColorModeValue('gray.400', 'gray.500')}
@@ -784,8 +776,7 @@ const ConsumerSignUp: React.FC = () => {
                       <Text
                         fontSize="xs"
                         color={password === confirmPassword ? 'green.500' : 'red.500'}
-                        mt={1}
-                      >
+                        mt={1}>
                         {password === confirmPassword
                           ? '✓ Passwords match'
                           : '✗ Passwords do not match'}
@@ -808,28 +799,31 @@ const ConsumerSignUp: React.FC = () => {
                         spacing={3}
                         {...registerField('acceptTerms', {
                           required: 'You must accept the terms and conditions'
-                        })}
-                      >
+                        })}>
                         <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
                           I agree to the{' '}
-                          <a href="https://trazo.io/terms-conditions" target="_blank" rel="noopener noreferrer">
+                          <a
+                            href="https://trazo.io/terms-conditions"
+                            target="_blank"
+                            rel="noopener noreferrer">
                             <Text
                               as="span"
                               color="blue.600"
                               fontWeight="medium"
-                              _hover={{ textDecoration: 'underline' }}
-                            >
+                              _hover={{ textDecoration: 'underline' }}>
                               Terms of Service
                             </Text>
                           </a>{' '}
                           and{' '}
-                          <a href="https://trazo.io/privacy-policy" target="_blank" rel="noopener noreferrer">
+                          <a
+                            href="https://trazo.io/privacy-policy"
+                            target="_blank"
+                            rel="noopener noreferrer">
                             <Text
                               as="span"
                               color="blue.600"
                               fontWeight="medium"
-                              _hover={{ textDecoration: 'underline' }}
-                            >
+                              _hover={{ textDecoration: 'underline' }}>
                               Privacy Policy
                             </Text>
                           </a>
@@ -846,8 +840,7 @@ const ConsumerSignUp: React.FC = () => {
                       size="md"
                       colorScheme="green"
                       spacing={3}
-                      {...registerField('subscribeNewsletter')}
-                    >
+                      {...registerField('subscribeNewsletter')}>
                       <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
                         Send me updates about sustainable food choices and new features
                       </Text>
@@ -873,8 +866,7 @@ const ConsumerSignUp: React.FC = () => {
                     _active={{
                       transform: 'translateY(0)'
                     }}
-                    transition="all 0.2s"
-                  >
+                    transition="all 0.2s">
                     Create Free Account
                   </Button>
                 </VStack>
@@ -888,8 +880,7 @@ const ConsumerSignUp: React.FC = () => {
                     fontSize="sm"
                     color={useColorModeValue('gray.400', 'gray.400')}
                     flexShrink={0}
-                    fontWeight="500"
-                  >
+                    fontWeight="500">
                     Or continue with
                   </Text>
                   <Divider borderColor={useColorModeValue('gray.200', 'gray.600')} />
@@ -916,8 +907,7 @@ const ConsumerSignUp: React.FC = () => {
                         transform: 'translateY(-1px)',
                         boxShadow: 'sm'
                       }}
-                      transition="all 0.2s"
-                    >
+                      transition="all 0.2s">
                       <Icon as={social.icon} fontSize="18px" color={social.color} />
                     </Button>
                   ))}
@@ -939,8 +929,7 @@ const ConsumerSignUp: React.FC = () => {
                         textDecoration: 'underline',
                         color: 'blue.700'
                       }}
-                      transition="all 0.2s"
-                    >
+                      transition="all 0.2s">
                       Sign in
                     </Text>
                   </Link>
@@ -958,8 +947,7 @@ const ConsumerSignUp: React.FC = () => {
                         textDecoration: 'underline',
                         color: 'blue.700'
                       }}
-                      transition="all 0.2s"
-                    >
+                      transition="all 0.2s">
                       Create business account
                     </Text>
                   </Link>

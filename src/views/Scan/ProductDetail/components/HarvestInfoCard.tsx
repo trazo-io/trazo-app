@@ -88,8 +88,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
       borderRadius="xl"
       borderWidth="1px"
       borderColor={borderColor}
-      p={{ base: 4, smd: 6 }}
-    >
+      p={{ base: 4, smd: 6 }}>
       <VStack spacing={4} align="stretch">
         {/* Header */}
         <HStack spacing={3}>
@@ -113,15 +112,13 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
             p={3}
             borderRadius="lg"
             borderWidth="2px"
-            borderColor="green.400"
-          >
+            borderColor="green.400">
             <HStack spacing={3} justify="center">
               <Icon as={FaSeedling} color="green.500" boxSize={5} />
               <Text
                 fontWeight="bold"
                 fontSize="md"
-                color={useColorModeValue('green.700', 'green.200')}
-              >
+                color={useColorModeValue('green.700', 'green.200')}>
                 {localizeFieldValue(harvestDetails.production_method || '', intl.locale)}
               </Text>
             </HStack>
@@ -136,8 +133,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               bg={useColorModeValue('gray.50', 'gray.700')}
               p={3}
               borderRadius="lg"
-              textAlign="center"
-            >
+              textAlign="center">
               <Icon as={FaLeaf} color="green.500" boxSize={4} mb={1} />
               {(() => {
                 const formatted = formatHarvestQuantity(
@@ -165,8 +161,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               bg={useColorModeValue('gray.50', 'gray.700')}
               p={3}
               borderRadius="lg"
-              textAlign="center"
-            >
+              textAlign="center">
               <Icon as={FaBarcode} color="green.500" boxSize={4} mb={1} />
               <Text fontSize="sm" fontWeight="bold" color={textColor} noOfLines={1}>
                 {harvestDetails.lot_number}
@@ -183,8 +178,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               bg={useColorModeValue('gray.50', 'gray.700')}
               p={3}
               borderRadius="lg"
-              textAlign="center"
-            >
+              textAlign="center">
               <Icon as={FaClipboardCheck} color="green.500" boxSize={4} mb={1} />
               <Text fontSize="sm" fontWeight="bold" color="green.700">
                 {localizeFieldValue(humanize(harvestDetails.quality_grade || ''), intl.locale)}
@@ -201,8 +195,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
               bg={useColorModeValue('gray.50', 'gray.700')}
               p={3}
               borderRadius="lg"
-              textAlign="center"
-            >
+              textAlign="center">
               <Icon as={FaTractor} color="green.500" boxSize={4} mb={1} />
               <Text fontSize="xs" fontWeight="medium" color={textColor}>
                 {localizeFieldValue(humanize(harvestDetails.harvest_method || ''), intl.locale)}
@@ -221,8 +214,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
             p={4}
             borderRadius="lg"
             borderLeft="4px solid"
-            borderLeftColor="blue.400"
-          >
+            borderLeftColor="blue.400">
             <HStack spacing={3} align="flex-start">
               <Flex
                 w={8}
@@ -231,8 +223,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
                 bg={useColorModeValue('blue.100', 'blue.800')}
                 align="center"
                 justify="center"
-                flexShrink={0}
-              >
+                flexShrink={0}>
                 <Icon as={FaUserTie} color="blue.500" boxSize={4} />
               </Flex>
               <VStack align="start" spacing={1}>
@@ -240,15 +231,13 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
                   fontSize="xs"
                   fontWeight="bold"
                   color={useColorModeValue('blue.600', 'blue.300')}
-                  textTransform="uppercase"
-                >
+                  textTransform="uppercase">
                   {intl.formatMessage({ id: 'app.farmerNotes' })}
                 </Text>
                 <Text
                   fontSize="sm"
                   color={useColorModeValue('gray.700', 'gray.200')}
-                  lineHeight="1.5"
-                >
+                  lineHeight="1.5">
                   {harvestDetails.farmer_notes}
                 </Text>
               </VStack>
@@ -262,8 +251,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
           p={3}
           borderRadius="md"
           borderLeft="3px solid"
-          borderLeftColor="green.400"
-        >
+          borderLeftColor="green.400">
           <HStack spacing={2}>
             <Icon as={FaLeaf} color="green.500" boxSize={3} />
             <Text fontSize="xs" color={useColorModeValue('green.700', 'green.200')}>

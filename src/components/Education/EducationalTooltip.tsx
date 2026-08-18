@@ -197,8 +197,7 @@ export const EducationalTooltip: React.FC<EducationalTooltipProps> = ({
       shadow="lg"
       maxW="300px"
       p={3}
-      gutter={8}
-    >
+      gutter={8}>
       <Box
         display="inline-flex"
         alignItems="center"
@@ -207,8 +206,7 @@ export const EducationalTooltip: React.FC<EducationalTooltipProps> = ({
           color: `${config.color}.600`,
           transform: 'translateY(-1px)'
         }}
-        transition="all 0.2s"
-      >
+        transition="all 0.2s">
         {children}
         {showIcon && (
           <Icon as={FaInfoCircle} boxSize={3} ml={1} color={`${config.color}.400`} opacity={0.7} />
@@ -239,8 +237,8 @@ export const PhotoDocumentationTooltip: React.FC<{ children: React.ReactNode }> 
   children
 }) => <EducationalTooltip term="photo_documentation">{children}</EducationalTooltip>;
 
-export const TransparencyScoreTooltip: React.FC<{ children: React.ReactNode }> = ({
-  children
-}) => <EducationalTooltip term="transparency_score">{children}</EducationalTooltip>;
+export const TransparencyScoreTooltip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <EducationalTooltip term="transparency_score">{children}</EducationalTooltip>
+);
 
 export default EducationalTooltip;

@@ -54,7 +54,11 @@ const GeneralCard = ({ review }) => {
               flexShrink={0}
             />
             <VStack align="start" spacing={0} minW={0}>
-              <Text color={textColor} fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" noOfLines={1}>
+              <Text
+                color={textColor}
+                fontSize={{ base: 'xs', md: 'sm' }}
+                fontWeight="semibold"
+                noOfLines={1}>
                 {review.user}
               </Text>
               <Text color="gray.500" fontSize="xs" whiteSpace="nowrap">
@@ -62,12 +66,18 @@ const GeneralCard = ({ review }) => {
               </Text>
             </VStack>
           </HStack>
-          <HStack spacing={0.5} flexShrink={0}>{renderStars(review.rating)}</HStack>
+          <HStack spacing={0.5} flexShrink={0}>
+            {renderStars(review.rating)}
+          </HStack>
         </Flex>
 
         {/* Review Content */}
         <VStack align="stretch" spacing={{ base: 1, md: 3 }}>
-          <Text color={textColor} fontSize={{ base: 'sm', md: 'md' }} fontWeight="semibold" lineHeight="1.4">
+          <Text
+            color={textColor}
+            fontSize={{ base: 'sm', md: 'md' }}
+            fontWeight="semibold"
+            lineHeight="1.4">
             {review.headline}
           </Text>
           <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" lineHeight="1.5">

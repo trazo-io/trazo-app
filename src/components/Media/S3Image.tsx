@@ -218,8 +218,7 @@ export const S3Image: React.FC<S3ImageProps> = ({
         boxSize={boxSize}
         borderRadius={borderRadius}
         className={className}
-        {...props}
-      >
+        {...props}>
         {placeholder || (
           <Shimmer
             width={typeof boxSize === 'number' ? `${boxSize}px` : boxSize || '100%'}
@@ -245,10 +244,9 @@ export const S3Image: React.FC<S3ImageProps> = ({
         bg="gray.50"
         border="1px solid"
         borderColor="gray.200"
-        {...props}
-      >
+        {...props}>
         {showErrorMessage ? (
-          <Alert status="warning" variant="subtle" borderRadius={borderRadius} fontSize="sm">
+          <Alert status="warning" variant="subtle" fontSize="sm">
             <AlertIcon />
             Failed to load image
           </Alert>
@@ -272,16 +270,11 @@ export const S3Image: React.FC<S3ImageProps> = ({
       className={className}
       position="relative"
       overflow="hidden"
-      {...props}
-    >
+      {...props}>
       {/* Loading shimmer overlay */}
       {!imageLoaded && (
         <Box position="absolute" top={0} left={0} width="100%" height="100%">
-          <Shimmer
-            width="100%"
-            height="100%"
-            borderRadius={borderRadius || '15px'}
-          />
+          <Shimmer width="100%" height="100%" borderRadius={borderRadius || '15px'} />
         </Box>
       )}
 

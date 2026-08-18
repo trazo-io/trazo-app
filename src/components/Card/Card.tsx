@@ -21,8 +21,7 @@ function Card(props: CardProps) {
       borderRadius={{ base: '12px', md: '15px' }}
       data-component="Card"
       className="trazo-card"
-      {...rest}
-    >
+      {...rest}>
       {children}
     </Box>
   );

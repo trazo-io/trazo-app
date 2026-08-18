@@ -355,8 +355,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
       maxW="md"
       pt={{ base: '110px', md: '145px' }}
       pb={{ base: 10, md: 14 }}
-      px={{ base: 4, md: 0 }}
-    >
+      px={{ base: 4, md: 0 }}>
       <VStack spacing={5} w="full">
         <StandardCard variant="elevated">
           <VStack spacing={5} w="full" textAlign="center">
@@ -382,8 +381,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
                 color="gray.600"
                 textTransform="uppercase"
                 letterSpacing="0.04em"
-                mb={2}
-              >
+                mb={2}>
                 {intl.formatMessage({
                   id: 'consumer.error.troubleshooting',
                   defaultMessage: 'Troubleshooting Tips'
@@ -413,8 +411,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
                     defaultMessage: 'Retrying...'
                   })}
                   isDisabled={cooldown > 0}
-                  leftIcon={<FaRedo />}
-                >
+                  leftIcon={<FaRedo />}>
                   {retryLabel}
                 </StandardButton>
               )}
@@ -430,8 +427,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
                   alignItems="center"
                   gap={2}
                   py={2}
-                  _hover={{ textDecoration: 'underline' }}
-                >
+                  _hover={{ textDecoration: 'underline' }}>
                   {intl.formatMessage({
                     id: 'consumer.error.learnAboutTrazo',
                     defaultMessage: 'Learn About Trazo'
@@ -457,8 +453,7 @@ export const ModernErrorState: React.FC<ModernErrorStateProps> = ({
               fontSize="sm"
               fontWeight="medium"
               color="green.700"
-              _hover={{ textDecoration: 'underline' }}
-            >
+              _hover={{ textDecoration: 'underline' }}>
               {SUPPORT_EMAIL}
             </Link>
             <IconButton

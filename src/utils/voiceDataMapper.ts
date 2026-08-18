@@ -118,29 +118,17 @@ export function postProcessTranscript(transcript: string): string {
   );
 
   // Fix "NPK 101010" → "NPK 10-10-10" (6 digits)
-  processed = processed.replace(
-    /\bNPK\s*(\d{2})(\d{2})(\d{2})\b/gi,
-    'NPK $1-$2-$3'
-  );
+  processed = processed.replace(/\bNPK\s*(\d{2})(\d{2})(\d{2})\b/gi, 'NPK $1-$2-$3');
 
   // Fix "NPK 1010" → "NPK 10-10" (4 digits, likely missing last number)
   // But only if not already hyphenated
-  processed = processed.replace(
-    /\bNPK\s*(\d{2})(\d{2})\b(?!-)/gi,
-    'NPK $1-$2-$1'
-  );
+  processed = processed.replace(/\bNPK\s*(\d{2})(\d{2})\b(?!-)/gi, 'NPK $1-$2-$1');
 
   // Fix "NPK 10 10 10" → "NPK 10-10-10" (space-separated)
-  processed = processed.replace(
-    /\bNPK\s+(\d{1,2})\s+(\d{1,2})\s+(\d{1,2})\b/gi,
-    'NPK $1-$2-$3'
-  );
+  processed = processed.replace(/\bNPK\s+(\d{1,2})\s+(\d{1,2})\s+(\d{1,2})\b/gi, 'NPK $1-$2-$3');
 
   // Fix "dash" spoken literally: "10 dash 10 dash 10" → "10-10-10"
-  processed = processed.replace(
-    /(\d+)\s*dash\s*(\d+)\s*dash\s*(\d+)/gi,
-    '$1-$2-$3'
-  );
+  processed = processed.replace(/(\d+)\s*dash\s*(\d+)\s*dash\s*(\d+)/gi, '$1-$2-$3');
 
   return processed;
 }
@@ -248,9 +236,7 @@ const VOICE_TYPE_MAP: Record<string, VoiceTemplateMapping> = {
  */
 export function mapVoiceTypeToTemplate(voiceType: string): VoiceTemplateMapping {
   const normalized = voiceType.toLowerCase().trim();
-  return (
-    VOICE_TYPE_MAP[normalized] || VOICE_TYPE_MAP['general']
-  );
+  return VOICE_TYPE_MAP[normalized] || VOICE_TYPE_MAP['general'];
 }
 
 // ============================================================================
@@ -293,31 +279,33 @@ const UNIT_NORMALIZE: Record<string, string> = {
 export function extractStructuredAmounts(
   detectedAmounts: Array<StructuredAmount | string>
 ): StructuredAmount[] {
-  return detectedAmounts.map((amount) => {
-    // Already structured — still normalize units to match form dropdown values
-    if (typeof amount !== 'string') {
-      const normalizedUnit = UNIT_NORMALIZE[amount.unit?.toLowerCase()] || amount.unit;
-      return { ...amount, unit: normalizedUnit };
-    }
+  return detectedAmounts
+    .map((amount) => {
+      // Already structured — still normalize units to match form dropdown values
+      if (typeof amount !== 'string') {
+        const normalizedUnit = UNIT_NORMALIZE[amount.unit?.toLowerCase()] || amount.unit;
+        return { ...amount, unit: normalizedUnit };
+      }
 
-    // Parse string amounts like "200 pounds" or "2.5 hectares"
-    const match = amount.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);
-    if (match) {
-      const value = parseFloat(match[1]);
-      const rawUnit = match[2].trim().toLowerCase();
-      const unit = UNIT_NORMALIZE[rawUnit] || rawUnit;
+      // Parse string amounts like "200 pounds" or "2.5 hectares"
+      const match = amount.match(/^(\d+(?:\.\d+)?)\s*(.*)$/);
+      if (match) {
+        const value = parseFloat(match[1]);
+        const rawUnit = match[2].trim().toLowerCase();
+        const unit = UNIT_NORMALIZE[rawUnit] || rawUnit;
 
-      let category: string = 'unknown';
-      if (['lb', 'kg', 'tons'].includes(unit)) category = 'weight';
-      else if (['gal', 'L', 'mL'].includes(unit)) category = 'volume';
-      else if (['acres', 'ha', 'm2', 'km2'].includes(unit)) category = 'area';
-      else if (['hours', 'minutes'].includes(unit)) category = 'time';
+        let category: string = 'unknown';
+        if (['lb', 'kg', 'tons'].includes(unit)) category = 'weight';
+        else if (['gal', 'L', 'mL'].includes(unit)) category = 'volume';
+        else if (['acres', 'ha', 'm2', 'km2'].includes(unit)) category = 'area';
+        else if (['hours', 'minutes'].includes(unit)) category = 'time';
 
-      return { value, unit, category };
-    }
+        return { value, unit, category };
+      }
 
-    return { value: 0, unit: '', category: 'unknown' };
-  }).filter((a) => a.value > 0);
+      return { value: 0, unit: '', category: 'unknown' };
+    })
+    .filter((a) => a.value > 0);
 }
 
 // ============================================================================
@@ -347,7 +335,11 @@ export function mapVoiceDataToFieldValues(
     if (parsedData.commercial_name) {
       let cleanName = parsedData.commercial_name;
       // Clean raw transcript artifacts: "NPK with values fifteen nine twelve" → "NPK 15-9-12 Fertilizer"
-      if (parsedData.npk_ratio && /^NPK\b/i.test(cleanName) && !cleanName.includes(parsedData.npk_ratio)) {
+      if (
+        parsedData.npk_ratio &&
+        /^NPK\b/i.test(cleanName) &&
+        !cleanName.includes(parsedData.npk_ratio)
+      ) {
         cleanName = `NPK ${parsedData.npk_ratio} Fertilizer`;
       }
       overrides.commercial_name = cleanName;
@@ -356,7 +348,11 @@ export function mapVoiceDataToFieldValues(
     } else if (parsedData.detected_products.length > 0) {
       let product = parsedData.detected_products[0];
       // Clean NPK-only product entries for fertilization: "NPK 15-9-12" → "NPK 15-9-12 Fertilizer"
-      if (parsedData.npk_ratio && templateId === 'fertilization' && /^NPK\s*\d+-\d+-\d+$/i.test(product)) {
+      if (
+        parsedData.npk_ratio &&
+        templateId === 'fertilization' &&
+        /^NPK\s*\d+-\d+-\d+$/i.test(product)
+      ) {
         product = `NPK ${parsedData.npk_ratio} Fertilizer`;
       }
       overrides.commercial_name = product;
@@ -390,12 +386,24 @@ export function mapVoiceDataToFieldValues(
       overrides.area_unit = areaAmount.unit;
     } else if (parsedData.area_covered && typeof parsedData.area_covered === 'object') {
       overrides.area_treated = parsedData.area_covered.value;
-      overrides.area_unit = UNIT_NORMALIZE[parsedData.area_covered.unit] || parsedData.area_covered.unit;
+      overrides.area_unit =
+        UNIT_NORMALIZE[parsedData.area_covered.unit] || parsedData.area_covered.unit;
     }
   }
 
   // ── Production events (irrigation, harvest, planting, pruning, etc.) ──
-  if (['irrigation', 'harvest', 'planting', 'pruning', 'transplanting', 'cultivation', 'thinning', 'equipment_maintenance'].includes(templateId)) {
+  if (
+    [
+      'irrigation',
+      'harvest',
+      'planting',
+      'pruning',
+      'transplanting',
+      'cultivation',
+      'thinning',
+      'equipment_maintenance'
+    ].includes(templateId)
+  ) {
     // Area covered
     const areaAmount = amounts.find((a) => a.category === 'area');
     if (areaAmount) {
@@ -403,7 +411,8 @@ export function mapVoiceDataToFieldValues(
       overrides.area_unit = areaAmount.unit;
     } else if (parsedData.area_covered && typeof parsedData.area_covered === 'object') {
       overrides.area_covered = parsedData.area_covered.value;
-      overrides.area_unit = UNIT_NORMALIZE[parsedData.area_covered.unit] || parsedData.area_covered.unit;
+      overrides.area_unit =
+        UNIT_NORMALIZE[parsedData.area_covered.unit] || parsedData.area_covered.unit;
     }
 
     // Duration / equipment hours
@@ -420,7 +429,8 @@ export function mapVoiceDataToFieldValues(
     const fuelGuessAllowed = ['cultivation', 'equipment_maintenance'].includes(templateId);
     if (parsedData.fuel_amount && typeof parsedData.fuel_amount === 'object') {
       overrides.fuel_consumed = parsedData.fuel_amount.value;
-      overrides.fuel_unit = UNIT_NORMALIZE[parsedData.fuel_amount.unit] || parsedData.fuel_amount.unit;
+      overrides.fuel_unit =
+        UNIT_NORMALIZE[parsedData.fuel_amount.unit] || parsedData.fuel_amount.unit;
     } else if (fuelGuessAllowed) {
       const fuelAmount = amounts.find(
         (a) => a.category === 'volume' && ['gal', 'L'].includes(a.unit)

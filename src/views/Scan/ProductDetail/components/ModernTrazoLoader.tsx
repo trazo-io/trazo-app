@@ -269,8 +269,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
             borderLeftColor="green.500"
             p={4}
             borderRadius="lg"
-            maxW="lg"
-          >
+            maxW="lg">
             <Fade key={currentTip} in={true}>
               <HStack spacing={3}>
                 <Icon as={FaLeaf} color="green.600" boxSize={5} />

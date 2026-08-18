@@ -148,7 +148,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
         navigate(userType === 'producer' ? '/auth/signin' : '/consumidor/auth/signin');
       }, 3000);
     } catch (error: any) {
-      const errorMessage = error?.data?.detail || error?.data?.error || 'Failed to reset password. Please try again.';
+      const errorMessage =
+        error?.data?.detail || error?.data?.error || 'Failed to reset password. Please try again.';
       toast({
         title: 'Error',
         description: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage,
@@ -195,7 +196,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
             </Text>
           </VStack>
 
-          <Alert status="success" borderRadius="lg" bg="green.50" borderColor="green.200">
+          <Alert status="success" borderColor="green.200">
             <AlertIcon color="green.600" />
             <Text fontSize="sm" color="green.800">
               Redirecting you to sign in page in 3 seconds...
@@ -206,8 +207,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
             onClick={() => navigate(getSignInLink())}
             colorScheme={userType === 'producer' ? 'green' : 'blue'}
             size="lg"
-            width="full"
-          >
+            width="full">
             Go to Sign In
           </Button>
         </VStack>
@@ -242,8 +242,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
               label="New Password"
               required
               error={errors.newPassword?.message}
-              helpText="Choose a strong password that meets all requirements"
-            >
+              helpText="Choose a strong password that meets all requirements">
               <InputGroup>
                 <StandardInput
                   type={showNewPassword ? 'text' : 'password'}
@@ -348,8 +347,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
             <StandardField
               label="Confirm New Password"
               required
-              error={errors.confirmPassword?.message}
-            >
+              error={errors.confirmPassword?.message}>
               <InputGroup>
                 <StandardInput
                   type={showConfirmPassword ? 'text' : 'password'}
@@ -378,8 +376,7 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ userType }
               size="lg"
               isLoading={isLoading}
               loadingText="Resetting Password..."
-              width="full"
-            >
+              width="full">
               Reset Password
             </StandardButton>
           </VStack>

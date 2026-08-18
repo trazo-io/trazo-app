@@ -165,9 +165,7 @@ const dashboardMetricsApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
-      providesTags: (result, error, { farmId }) => [
-        { type: 'Farm', id: farmId }
-      ]
+      providesTags: (result, error, { farmId }) => [{ type: 'Farm', id: farmId }]
     }),
     getFarmComprehensiveDashboard: build.query<
       ComprehensiveDashboardResponse,
@@ -195,7 +193,10 @@ const dashboardMetricsApi = baseApi.injectEndpoints({
     // Outstanding items a certifier would query, for the farm's most recent season.
     // Same rows page 1 of the NOP audit PDF prints, so the dashboard and the certifier packet
     // cannot disagree. Tag id is namespaced so routine `Farm` invalidation does not evict it.
-    getCertifierReadiness: build.query<CertifierReadiness, { companyId: number | string; farmId: number }>({
+    getCertifierReadiness: build.query<
+      CertifierReadiness,
+      { companyId: number | string; farmId: number }
+    >({
       query: ({ companyId, farmId }) => ({
         url: `/companies/${companyId}/establishments/${farmId}/certifier-readiness/`,
         method: 'GET',

@@ -52,8 +52,7 @@ const Header = ({ backgroundHeader, backgroundProfile, avatarImage, name, email 
       display="flex"
       flexDirection="column"
       justifyContent="center"
-      align="center"
-    >
+      align="center">
       <Box
         bgImage={backgroundHeader}
         w="100%"
@@ -63,8 +62,7 @@ const Header = ({ backgroundHeader, backgroundProfile, avatarImage, name, email 
         bgRepeat="no-repeat"
         position="relative"
         display="flex"
-        justifyContent="center"
-      >
+        justifyContent="center">
         <Flex
           direction={{ sm: 'column', md: 'row' }}
           mx="1.5rem"
@@ -84,23 +82,20 @@ const Header = ({ backgroundHeader, backgroundProfile, avatarImage, name, email 
             sm: 'translateY(45%)',
             md: 'translateY(110%)',
             lg: 'translateY(160%)'
-          }}
-        >
+          }}>
           <Flex
             align="center"
             mb={{ sm: '10px', md: '0px' }}
             direction={{ sm: 'column', md: 'row' }}
             w={{ sm: '100%' }}
-            textAlign={{ sm: 'center', md: 'start' }}
-          >
+            textAlign={{ sm: 'center', md: 'start' }}>
             <Avatar me={{ md: '22px' }} src={avatarImage} w="80px" h="80px" borderRadius="15px" />
             <Flex direction="column" maxWidth="100%" my={{ sm: '14px' }}>
               <Text
                 fontSize={{ sm: 'lg', lg: 'xl' }}
                 color={textColor}
                 fontWeight="bold"
-                ms={{ sm: '8px', md: '0px' }}
-              >
+                ms={{ sm: '8px', md: '0px' }}>
                 {name}
               </Text>
               <Text fontSize={{ sm: 'sm', md: 'md' }} color={emailColor} fontWeight="semibold">
@@ -113,8 +108,7 @@ const Header = ({ backgroundHeader, backgroundProfile, avatarImage, name, email 
               p="0px"
               bg="transparent"
               _hover={{ bg: 'none' }}
-              variant="transparent-with-icon"
-            >
+              variant="transparent-with-icon">
               <Flex
                 align="center"
                 w={{ sm: '100%', lg: '135px' }}
@@ -126,8 +120,7 @@ const Header = ({ backgroundHeader, backgroundProfile, avatarImage, name, email 
                 justifyContent="center"
                 py="10px"
                 cursor="pointer"
-                onClick={() => dispatch({ type: 'SWITCH_ACTIVE', payload: 'overview' })}
-              >
+                onClick={() => dispatch({ type: 'SWITCH_ACTIVE', payload: 'overview' })}>
                 <Icon as={FaCube} me="6px" />
                 <Text fontSize="xs" color={textColor} fontWeight="bold">
                   OVERVIEW
@@ -138,8 +131,7 @@ const Header = ({ backgroundHeader, backgroundProfile, avatarImage, name, email 
               p="0px"
               bg="transparent"
               _hover={{ bg: 'none' }}
-              variant="transparent-with-icon"
-            >
+              variant="transparent-with-icon">
               <Flex
                 align="center"
                 w={{ sm: '100%', lg: '135px' }}
@@ -152,8 +144,7 @@ const Header = ({ backgroundHeader, backgroundProfile, avatarImage, name, email 
                 py="10px"
                 mx={{ lg: '1rem' }}
                 cursor="pointer"
-                onClick={() => dispatch({ type: 'SWITCH_ACTIVE', payload: 'teams' })}
-              >
+                onClick={() => dispatch({ type: 'SWITCH_ACTIVE', payload: 'teams' })}>
                 <Icon as={IoDocumentsSharp} me="6px" />
                 <Text fontSize="xs" color={textColor} fontWeight="bold">
                   TEAMS
@@ -164,8 +155,7 @@ const Header = ({ backgroundHeader, backgroundProfile, avatarImage, name, email 
               p="0px"
               bg="transparent"
               _hover={{ bg: 'none' }}
-              variant="transparent-with-icon"
-            >
+              variant="transparent-with-icon">
               <Flex
                 align="center"
                 w={{ sm: '100%', lg: '135px' }}
@@ -177,8 +167,7 @@ const Header = ({ backgroundHeader, backgroundProfile, avatarImage, name, email 
                 justifyContent="center"
                 py="10px"
                 cursor="pointer"
-                onClick={() => dispatch({ type: 'SWITCH_ACTIVE', payload: 'projects' })}
-              >
+                onClick={() => dispatch({ type: 'SWITCH_ACTIVE', payload: 'projects' })}>
                 <Icon as={FaPenFancy} me="6px" />
                 <Text fontSize="xs" color={textColor} fontWeight="bold">
                   PROJECTS

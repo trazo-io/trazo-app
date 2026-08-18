@@ -73,6 +73,7 @@ import { UltraMobileProductionJourney } from 'views/Scan/ProductDetail/component
 // Week 2 Voice & Mobile Components
 import { SalesDeliverySection } from 'views/Dashboard/Dashboard/Production/SalesDeliverySection';
 import { SalesRecordsSection } from 'views/Dashboard/Dashboard/Production/SalesRecordsSection';
+import { PostHarvestHandlerSection } from 'views/Dashboard/Dashboard/Production/PostHarvestHandlerSection';
 import AuditExportModal from 'components/AuditExport/AuditExportModal';
 import DriftFindingsBanner from 'components/Compliance/DriftFindingsBanner';
 
@@ -80,6 +81,7 @@ import DriftFindingsBanner from 'components/Compliance/DriftFindingsBanner';
 interface RootState {
   company: {
     currentCompany: {
+      id?: number | string;
       establishments: any[];
     };
   };
@@ -103,6 +105,7 @@ function ProfileProduction() {
   const establishments = useSelector(
     (state: RootState) => state.company.currentCompany?.establishments
   );
+  const companyId = useSelector((state: RootState) => state.company.currentCompany?.id);
 
   const {
     data: historyData,
@@ -1360,6 +1363,19 @@ function ProfileProduction() {
             )}
           </VStack>
         )}
+      </VStack>
+
+      {/* Off-farm handler — CCOF G6.1 / 7 CFR 205.272. Deliberately NOT gated on
+          finish_date like the sales block below: a lot goes to the huller during
+          harvest, weeks before the season closes, and that is exactly when the
+          grower has the handler's certificate in hand. */}
+      <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" mt={{ base: 4, md: 6 }}>
+        <PostHarvestHandlerSection
+          productionId={historyData?.public_id || productionId || ''}
+          companyId={companyId}
+          farmId={farmId}
+          canWrite={canWrite}
+        />
       </VStack>
 
       {/* Sales & Buyer Handoff (post-finish only). The itemized Sales Records

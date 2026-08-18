@@ -85,8 +85,7 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({
               cursor="pointer"
               onClick={() => handleProductClick(product.id)}
               _hover={{ shadow: 'md', transform: 'translateY(-2px)' }}
-              transition="all 0.2s"
-            >
+              transition="all 0.2s">
               <CardBody p={4}>
                 <VStack spacing={3} align="stretch">
                   {/* Product Image */}
@@ -95,8 +94,7 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({
                     bg="gray.200"
                     borderRadius="md"
                     overflow="hidden"
-                    position="relative"
-                  >
+                    position="relative">
                     {product.image ? (
                       <Image
                         src={product.image}
@@ -110,8 +108,7 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({
                         align="center"
                         justify="center"
                         h="full"
-                        bg="linear-gradient(135deg, #e6f7e6 0%, #b3d9b3 100%)"
-                      >
+                        bg="linear-gradient(135deg, #e6f7e6 0%, #b3d9b3 100%)">
                         <Icon as={FaLeaf} boxSize={8} color="green.600" />
                       </Flex>
                     )}
@@ -144,8 +141,7 @@ export const SimilarProducts: React.FC<SimilarProductsProps> = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         handleProductClick(product.id);
-                      }}
-                    >
+                      }}>
                       View Details
                     </Button>
                   </VStack>

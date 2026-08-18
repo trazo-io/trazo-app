@@ -59,8 +59,7 @@ export const InfoRow: React.FC<InfoRowProps> = ({
           fontWeight="medium"
           fontSize={{ base: 'sm', md: 'md' }}
           textAlign="left"
-          _hover={{ textDecoration: 'underline' }}
-        >
+          _hover={{ textDecoration: 'underline' }}>
           {value}
         </Link>
       );
@@ -73,8 +72,7 @@ export const InfoRow: React.FC<InfoRowProps> = ({
             isExternal
             color="green.700"
             fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
+            fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
@@ -84,8 +82,7 @@ export const InfoRow: React.FC<InfoRowProps> = ({
             href={`mailto:${value}`}
             color="green.700"
             fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
+            fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
@@ -95,8 +92,7 @@ export const InfoRow: React.FC<InfoRowProps> = ({
             href={`tel:${value}`}
             color="green.700"
             fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-          >
+            fontSize={{ base: 'sm', md: 'md' }}>
             {value}
           </Link>
         );
@@ -106,8 +102,7 @@ export const InfoRow: React.FC<InfoRowProps> = ({
             fontWeight="medium"
             color="gray.800"
             fontSize={{ base: 'sm', md: 'md' }}
-            noOfLines={noOfLines}
-          >
+            noOfLines={noOfLines}>
             {value}
           </Text>
         );
@@ -124,8 +119,7 @@ export const InfoRow: React.FC<InfoRowProps> = ({
             color="gray.500"
             textTransform="uppercase"
             fontWeight="semibold"
-            letterSpacing="0.05em"
-          >
+            letterSpacing="0.05em">
             {label}
           </Text>
           {isPublic && (
@@ -170,8 +164,7 @@ export const FieldGroup: React.FC<FieldGroupProps> = ({ label, cfr, action, chil
           color="gray.600"
           textTransform="uppercase"
           fontWeight="bold"
-          letterSpacing="0.08em"
-        >
+          letterSpacing="0.08em">
           {label}
         </Text>
         {cfr && (

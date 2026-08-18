@@ -274,8 +274,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                     label={intl.formatMessage({
                       id: 'certification.manage.remove',
                       defaultMessage: 'Remove'
-                    })}
-                  >
+                    })}>
                     <IconButton
                       aria-label={intl.formatMessage({
                         id: 'certification.manage.remove',
@@ -317,8 +316,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
               {intl.formatMessage({ id: 'certification.manage.add' })}
             </Button>
           </>
-        }
-      >
+        }>
         <VStack spacing={4}>
           <Box w="100%">
             <Text fontSize="sm" mb={1} fontWeight="medium">
@@ -332,8 +330,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                   certification_type: e.target.value as CertificationType
                 })
               }
-              size="sm"
-            >
+              size="sm">
               {CERTIFICATION_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
@@ -349,8 +346,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
               bg="blue.50"
               borderRadius="md"
               borderLeft="3px solid"
-              borderLeftColor="blue.400"
-            >
+              borderLeftColor="blue.400">
               <Text fontSize="xs" color="blue.700">
                 {intl.formatMessage({ id: 'certification.manage.usdaHelpText' })}
               </Text>
@@ -431,8 +427,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
       <AlertDialog
         isOpen={deleteDisclosure.isOpen}
         leastDestructiveRef={deleteRef}
-        onClose={deleteDisclosure.onClose}
-      >
+        onClose={deleteDisclosure.onClose}>
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="md">
@@ -450,8 +445,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                 onClick={handleDelete}
                 ml={3}
                 size="sm"
-                isLoading={isDeleting}
-              >
+                isLoading={isDeleting}>
                 Remove
               </Button>
             </AlertDialogFooter>

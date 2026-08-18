@@ -97,6 +97,27 @@ export const CERTIFICATION_VERIFY_URL = (
 ) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/certifications/${certificationId}/verify/`;
 
+// Off-farm post-harvest handlers — CCOF G6.1 / 7 CFR 205.272. The huller, dryer, cold store
+// or packer a lot is sent to, and the organic certificate that has to travel with it.
+export const POST_HARVEST_FACILITY_URL = (
+  companyId: string,
+  farmId: string,
+  facilityId?: string | number
+) =>
+  facilityId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/post-harvest-facilities/${facilityId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/post-harvest-facilities/`;
+export const POST_HARVEST_FACILITY_VERIFY_URL = (
+  companyId: string,
+  farmId: string,
+  facilityId: string | number
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/post-harvest-facilities/${facilityId}/verify/`;
+// Which handler ONE production was sent to. Owner-side: the handler's identity is
+// supply-chain data and the public production payload deliberately omits it.
+export const PRODUCTION_HANDLER_URL = (productionId: string) =>
+  `${ROOT_URL}histories/${productionId}/post_harvest_facility/`;
+
 // OSP URLs — Sprint 5A (7 CFR 205.201)
 export const OSP_URL = (companyId: string, farmId: string, ospId?: string | number) =>
   ospId != null

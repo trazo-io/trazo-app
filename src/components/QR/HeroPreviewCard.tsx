@@ -101,8 +101,7 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
         overflow="hidden"
         borderWidth="1px"
         borderColor="gray.200"
-        boxShadow="0 8px 24px rgba(0, 0, 0, 0.06)"
-      >
+        boxShadow="0 8px 24px rgba(0, 0, 0, 0.06)">
         {hasImage ? (
           <>
             <Image
@@ -138,8 +137,7 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
                 py={0.5}
                 borderRadius="full"
                 textTransform="none"
-                backdropFilter="blur(8px)"
-              >
+                backdropFilter="blur(8px)">
                 Using event photo
               </Badge>
             )}
@@ -155,8 +153,7 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
             }
             display="flex"
             alignItems="center"
-            justifyContent="center"
-          >
+            justifyContent="center">
             <VStack spacing={2}>
               <Icon as={FaImage} boxSize={6} color="gray.400" />
               <Text fontSize="xs" color="gray.500">
@@ -174,16 +171,14 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
           right="14px"
           align="flex-start"
           spacing={0.5}
-          color={hasImage ? 'white' : 'gray.800'}
-        >
+          color={hasImage ? 'white' : 'gray.800'}>
           <Text
             fontSize="md"
             fontWeight="bold"
             lineHeight="1.1"
             letterSpacing="-0.01em"
             noOfLines={2}
-            textShadow={hasImage ? '0 2px 12px rgba(0,0,0,0.4)' : 'none'}
-          >
+            textShadow={hasImage ? '0 2px 12px rgba(0,0,0,0.4)' : 'none'}>
             {farmName || 'Your farm'}
           </Text>
           <Text
@@ -191,8 +186,7 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
             fontWeight="medium"
             opacity={hasImage ? 0.95 : 0.75}
             noOfLines={2}
-            textShadow={hasImage ? '0 1px 6px rgba(0,0,0,0.4)' : 'none'}
-          >
+            textShadow={hasImage ? '0 1px 6px rgba(0,0,0,0.4)' : 'none'}>
             {productName || 'Your product'}
             {formattedHarvest ? ` · Harvested ${formattedHarvest}` : ''}
           </Text>
@@ -210,8 +204,7 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
         textAlign="center"
         maxW="320px"
         mx="auto"
-        lineHeight="1.4"
-      >
+        lineHeight="1.4">
         {statusText}
       </Text>
     </VStack>

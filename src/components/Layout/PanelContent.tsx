@@ -16,8 +16,7 @@ function PanelContent(props: PanelContentProps) {
       pe="15px"
       data-component="PanelContent"
       className="trazo-panel-content"
-      {...rest}
-    >
+      {...rest}>
       {children}
     </Box>
   );

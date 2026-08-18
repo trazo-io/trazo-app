@@ -208,9 +208,19 @@ export default function DashboardView() {
 
     const current = company.establishments?.length || 0;
     const allowed = limit === -1 || current < limit;
+
+    // A pilot is capped at one farm BY AGREEMENT, so the ceiling is not news and there is
+    // nothing to sell them — the account is comped. `SubscriptionSerializer.get_usage_warnings`
+    // already skips the farm warning for exactly this reason ("100% used — upgrade to avoid
+    // service interruption would sit permanently on every pilot's page, warning about a
+    // ceiling they chose"); the dashboard tile has to make the same exception or October's
+    // entire cohort meets a permanent upsell on the first screen after login.
+    const isPilot =
+      subscription?.plan?.slug === 'pilot' || subscription?.plan?.features?.is_pilot === true;
+
     // At the limit is a DIFFERENT state from "no plan loaded yet". Only the first one has
     // an answer to offer, so only the first one gets the explanatory tile.
-    return { allowed, limit, atLimit: !allowed && limit !== -1 };
+    return { allowed, limit, atLimit: !allowed && limit !== -1 && !isPilot };
   }, [company]);
 
   const canCreateEstablishment = farmCapacity.allowed;

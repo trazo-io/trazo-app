@@ -144,8 +144,7 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
       borderWidth="1px"
       borderColor={style.border}
       role="status"
-      aria-live="polite"
-    >
+      aria-live="polite">
       <HStack spacing={2} align="flex-start">
         <Icon as={style.icon} color={`${style.colorScheme}.600`} boxSize={4} mt="2px" />
         <VStack align="stretch" spacing={1} flex={1}>
@@ -158,8 +157,7 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
               variant="subtle"
               fontSize="xs"
               borderRadius="full"
-              px={2}
-            >
+              px={2}>
               {intl.formatMessage({
                 id: lotSuppressed ? 'osp.claim.lotNotOrganic' : style.labelId
               })}
@@ -183,8 +181,7 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
             _hover={{ color: `${style.colorScheme}.800` }}
             alignSelf="flex-start"
             pt={1}
-            aria-expanded={isOpen}
-          >
+            aria-expanded={isOpen}>
             <Icon as={FaInfoCircle} boxSize={3} />
             <Text fontSize="xs" fontWeight="semibold">
               {intl.formatMessage({
@@ -206,8 +203,7 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
                   fontSize="xs"
                   color="green.700"
                   mt={1}
-                  display="inline-block"
-                >
+                  display="inline-block">
                   {intl.formatMessage({ id: 'osp.claim.learnMoreUsda' })}
                 </Link>
               )}
@@ -218,8 +214,7 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
                   fontSize="xs"
                   color="yellow.700"
                   mt={1}
-                  display="inline-block"
-                >
+                  display="inline-block">
                   {intl.formatMessage({ id: 'osp.claim.learnMoreTransition' })}
                 </Link>
               )}

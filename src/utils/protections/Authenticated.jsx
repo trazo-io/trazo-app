@@ -98,8 +98,7 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
           !currentCompany.establishments.map((e) => e.id).includes(id)
         ) {
           // Check if we're navigating from farm creation (prevent redirect race condition)
-          const isFromFarmCreation =
-            sessionStorage.getItem('creating_farm') === 'true';
+          const isFromFarmCreation = sessionStorage.getItem('creating_farm') === 'true';
           const justCreatedId = sessionStorage.getItem('just_created_farm_id');
 
           // If we just created this farm, wait for cache to update instead of redirecting
@@ -167,7 +166,8 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
     isAuthenticated &&
     allowedRoles.includes(currentUser?.user_type) &&
     (mustBeCompanyAdmin
-      ? currentUser?.companies[0].role === ROLE_DISPLAY_COMPANY_ADMIN || currentUser?.user_type === SUPERUSER
+      ? currentUser?.companies[0].role === ROLE_DISPLAY_COMPANY_ADMIN ||
+        currentUser?.user_type === SUPERUSER
       : true) ? (
     <Outlet />
   ) : isLoading === false && isAuthenticated === false ? (

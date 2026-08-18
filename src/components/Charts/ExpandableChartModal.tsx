@@ -70,30 +70,26 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
       onClose={onClose}
       size={{ base: 'full', md: '4xl' }}
       isCentered
-      scrollBehavior="inside"
-    >
+      scrollBehavior="inside">
       <ModalOverlay bg="blackAlpha.500" />
       <ModalContent
         bg={bgColor}
         borderRadius={{ base: 'none', md: '2xl' }}
         boxShadow="xl"
         maxH={{ base: '100vh', md: '90vh' }}
-        mx={{ base: 0, md: 4 }}
-      >
+        mx={{ base: 0, md: 4 }}>
         <ModalHeader
           borderBottomWidth="1px"
           borderColor={borderColor}
           pb={3}
-          px={{ base: 4, md: 6 }}
-        >
+          px={{ base: 4, md: 6 }}>
           <Flex
             direction={{ base: 'column', md: 'row' }}
             justify="space-between"
             align={{ base: 'flex-start', md: 'center' }}
             w="100%"
             pr={8}
-            gap={2}
-          >
+            gap={2}>
             <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="semibold" color={textColor}>
               {title}
             </Text>
@@ -108,8 +104,7 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
                 fontWeight="medium"
                 borderRadius="lg"
                 _hover={{ bg: 'green.600' }}
-                _active={{ bg: 'green.700' }}
-              >
+                _active={{ bg: 'green.700' }}>
                 {currentPeriod.name}
               </MenuButton>
               <MenuList minW="120px">
@@ -122,8 +117,7 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
                     fontWeight={currentPeriod.id === period.id ? 'semibold' : 'normal'}
                     bg={currentPeriod.id === period.id ? 'green.50' : 'transparent'}
                     _hover={{ bg: 'gray.50' }}
-                    py={2}
-                  >
+                    py={2}>
                     {period.name}
                   </MenuItem>
                 ))}

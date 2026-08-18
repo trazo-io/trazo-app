@@ -34,6 +34,11 @@ export const historyApi = baseApi.injectEndpoints({
         });
 
         for (const [key, value] of Object.entries(historyData)) {
+          // The emptiness test is deliberately `!== ''` and not `!value`: `published`
+          // is a boolean and `false` is its meaningful value. Dropping it here would
+          // send no key at all, which the backend reads as "publish" — the buyer page
+          // would go live against an unchecked box. FormData stringifies it to "false",
+          // which History.finish()'s _parse_publish_flag expects.
           if (key !== 'album' && value !== null && value !== undefined && value !== '') {
             formData.append(key, value);
           }
@@ -99,6 +104,21 @@ export const historyApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       providesTags: (result, error, historyId) => (result ? [{ type: 'History', historyId }] : [])
+    }),
+    /**
+     * Every production on one farm — the picker source for "which lot does this document
+     * belong to". Tenant-scoped server-side (HistoryViewSet.get_queryset filters on the
+     * caller's companies before it applies `establishment`).
+     */
+    getFarmProductions: build.query({
+      query: (establishmentId) => ({
+        url: `${HISTORY_URL('')}?establishment=${establishmentId}`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      transformResponse: (response) =>
+        Array.isArray(response) ? response : response?.results ?? [],
+      providesTags: ['History']
     }),
     getEvent: build.query({
       query: ({ companyId, farmId, eventId, eventType }) => ({
@@ -211,10 +231,12 @@ export const historyApi = baseApi.injectEndpoints({
       providesTags: (result, error, farmId) => (result ? [{ type: 'History', farmId }] : [])
     }),
     createScan: build.mutation({
+      // `city` / `country` used to be declared here. The backend now derives
+      // location from the request IP via the local GeoLite2 database and ignores
+      // any location in the body — a public unauthenticated endpoint must not let
+      // the caller pick the location its farmer sees on the dashboard.
       query: ({
         production_id,
-        city,
-        country,
         explicit_consent,
         consent_timestamp,
         time_on_page,
@@ -227,8 +249,6 @@ export const historyApi = baseApi.injectEndpoints({
         credentials: 'include',
         body: {
           production_id,
-          city,
-          country,
           explicit_consent,
           consent_timestamp,
           time_on_page,
@@ -238,6 +258,20 @@ export const historyApi = baseApi.injectEndpoints({
         }
       }),
       invalidatesTags: (result) => (result ? ['History'] : [])
+    }),
+    // Attaches consented analytics to a scan already recorded anonymously.
+    // The scan POSTs on page mount; the consent banner renders after it, so a
+    // first-time visitor can never carry consent on the original request — and
+    // for QR traffic the first visit is the only visit. Authorised by the
+    // claim_token returned at create time; consent itself is re-read server-side
+    // from the cookie, never trusted from this body.
+    upgradeScanConsent: build.mutation({
+      query: ({ claim_token }) => ({
+        url: 'public_scans/consent/',
+        method: 'POST',
+        credentials: 'include',
+        body: { claim_token }
+      })
     }),
     claimScans: build.mutation({
       query: ({ claim_tokens }) => ({
@@ -320,6 +354,7 @@ export const {
   useGetCurrentHistoryQuery,
   useGetParcelHistoriesQuery,
   useGetHistoryQuery,
+  useGetFarmProductionsQuery,
   useGetEventQuery,
   useCreateEventMutation,
   useUpdateEventMutation,
@@ -335,6 +370,7 @@ export const {
   useGetUserReviewsQuery,
   useGetFarmScansPaginatedQuery,
   useCreateScanMutation,
+  useUpgradeScanConsentMutation,
   useClaimScansMutation,
   useGetRecentInputsQuery,
   useGetSeedSuppliersQuery,

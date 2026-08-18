@@ -191,8 +191,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                         size="sm"
                         display="flex"
                         alignItems="center"
-                        gap={1}
-                      >
+                        gap={1}>
                         <Icon as={config.icon} boxSize={3} />
                         <Text>{config.label}</Text>
                       </Badge>
@@ -215,8 +214,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
         <Button colorScheme="gray" onClick={onClose}>
           Close
         </Button>
-      }
-    >
+      }>
       <VStack spacing={6} align="stretch">
         {/* Event Details Section */}
         <Card bg={useColorModeValue('gray.50', 'gray.700')}>
@@ -340,8 +338,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                     <StatLabel fontSize="xs">Carbon Impact</StatLabel>
                     <StatNumber
                       fontSize="xl"
-                      color={`${getCarbonImpactColor(event.carbon_data.co2e)}.500`}
-                    >
+                      color={`${getCarbonImpactColor(event.carbon_data.co2e)}.500`}>
                       {formatCO2e(event.carbon_data.co2e)} kg CO₂e
                     </StatNumber>
                     <StatHelpText fontSize="xs">
@@ -355,8 +352,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                     <StatLabel fontSize="xs">Efficiency Score</StatLabel>
                     <StatNumber
                       fontSize="xl"
-                      color={`${getEfficiencyColor(event.carbon_data.efficiency_score)}.500`}
-                    >
+                      color={`${getEfficiencyColor(event.carbon_data.efficiency_score)}.500`}>
                       {Math.round(event.carbon_data.efficiency_score)}%
                     </StatNumber>
                     <StatHelpText fontSize="xs">Application efficiency</StatHelpText>
@@ -389,8 +385,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
                   <Badge
                     colorScheme={getConfidenceColor(event.carbon_data.verification_confidence)}
                     size="sm"
-                    textTransform="capitalize"
-                  >
+                    textTransform="capitalize">
                     {event.carbon_data.verification_confidence}
                   </Badge>
                 </HStack>
@@ -445,7 +440,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
             <CardBody pt={0}>
               <VStack spacing={3} align="stretch">
                 {event.carbon_data.recommendations.map((rec, index) => (
-                  <Alert key={index} status="info" borderRadius="md">
+                  <Alert key={index} status="info">
                     <AlertIcon />
                     <Box>
                       <AlertTitle fontSize="sm">{rec.title}</AlertTitle>
@@ -467,7 +462,7 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
 
         {/* No Carbon Data Message */}
         {!event.carbon_data && (
-          <Alert status="warning" borderRadius="md">
+          <Alert status="warning">
             <AlertIcon />
             <Box>
               <AlertTitle>Carbon Impact Not Calculated</AlertTitle>

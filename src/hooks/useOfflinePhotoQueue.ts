@@ -4,10 +4,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import {
-  offlinePhotoQueue,
-  QueuedPhoto
-} from '../services/offlinePhotoQueue';
+import { offlinePhotoQueue, QueuedPhoto } from '../services/offlinePhotoQueue';
 import { useFileUpload } from '../services/uploadService';
 
 export interface OfflineQueueState {
@@ -46,7 +43,10 @@ export function useOfflinePhotoQueue() {
     const unsubscribe = offlinePhotoQueue.onChange(setQueue);
 
     // Load initial state
-    offlinePhotoQueue.getAll().then(setQueue).catch(() => {});
+    offlinePhotoQueue
+      .getAll()
+      .then(setQueue)
+      .catch(() => {});
 
     return unsubscribe;
   }, []);
@@ -86,9 +86,7 @@ export function useOfflinePhotoQueue() {
     }
   }, [isOffline, uploadFile]);
 
-  const pendingCount = queue.filter(
-    (p) => p.status === 'queued' || p.status === 'failed'
-  ).length;
+  const pendingCount = queue.filter((p) => p.status === 'queued' || p.status === 'failed').length;
 
   return {
     queue,

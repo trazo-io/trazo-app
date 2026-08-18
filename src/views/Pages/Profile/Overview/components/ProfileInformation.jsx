@@ -66,8 +66,7 @@ const ProfileInformation = ({ title, description, name, mobile, email, location 
                 color="green.400"
                 fontSize="lg"
                 me="10px"
-                _hover={{ color: 'green.400' }}
-              >
+                _hover={{ color: 'green.400' }}>
                 <Icon as={FaFacebook} />
               </Link>
               <Link
@@ -75,8 +74,7 @@ const ProfileInformation = ({ title, description, name, mobile, email, location 
                 color="green.400"
                 fontSize="lg"
                 me="10px"
-                _hover={{ color: 'green.400' }}
-              >
+                _hover={{ color: 'green.400' }}>
                 <Icon as={FaInstagram} />
               </Link>
               <Link
@@ -84,8 +82,7 @@ const ProfileInformation = ({ title, description, name, mobile, email, location 
                 color="green.400"
                 fontSize="lg"
                 me="10px"
-                _hover={{ color: 'green.400' }}
-              >
+                _hover={{ color: 'green.400' }}>
                 <Icon as={FaTwitter} />
               </Link>
             </Flex>

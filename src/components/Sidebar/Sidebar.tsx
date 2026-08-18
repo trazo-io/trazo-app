@@ -121,129 +121,123 @@ function Sidebar(props: SidebarProps) {
   };
 
   useEffect(() => {
-    const dynamicRoutes =
-      (establishments ?? []).map((e: EstablishmentType) => {
-        return {
-          name: e.name,
-          path: `/dashboard/farm/${e.id}`,
-          collapse: true,
-          farmId: e.id,
-          authIcon: <HomeIcon color="inherit" />,
-          layout: '/admin',
-          isDashboard: true,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}(\\/.*)?$`),
-          // Parcels are CAPPED. Expanding a farm used to list every parcel it has, so a
-          // 25-parcel operation pushed Activities / OSP / Documents / Buyer Page off the bottom
-          // of the sidebar — the primary navigation buried under a data list. Neither a nested
-          // scroll region (scrollbar inside a scrollbar) nor pagination (navigation is not a
-          // dataset) belongs in a nav tree; the standard is a short list plus a way to reach the
-          // rest, which here is the farm home's parcel carousel and the ⌘K search this app
-          // already ships.
-          items: [
-            ...(e?.parcels ?? []).slice(0, SIDEBAR_PARCEL_LIMIT).map((p: ParcelType) => {
-              return {
-                name: p.name,
-                path: `/dashboard/farm/${e.id}/parcel/${p.id}`,
-                component: Overview,
-                layout: '/admin',
-                isDashboard: true,
-                regex: new RegExp(
-                  `^\\/admin\\/dashboard\\/farm\\/${e.id}\\/parcel\\/${p.id}(\\/.*)?$`
-                )
-              };
-            }),
-            ...((e?.parcels?.length ?? 0) > SIDEBAR_PARCEL_LIMIT
-              ? [
-                  {
-                    name: intl.formatMessage(
-                      { id: 'sidebar.viewAllParcels' },
-                      { count: e.parcels.length }
-                    ),
-                    path: `/dashboard/farm/${e.id}`,
-                    // Same shape as a parcel entry above, `component` included: a differently
-                    // shaped object turns `items` into a union type and the whole array stops
-                    // matching `Route[]`.
-                    component: Overview,
-                    layout: '/admin',
-                    isDashboard: true,
-                    // Deliberately matches nothing: this is a way out of the list, not a
-                    // destination that should ever paint itself as the active parcel.
-                    regex: /(?!)/
-                  }
-                ]
-              : [])
-          ]
-        };
-      });
+    const dynamicRoutes = (establishments ?? []).map((e: EstablishmentType) => {
+      return {
+        name: e.name,
+        path: `/dashboard/farm/${e.id}`,
+        collapse: true,
+        farmId: e.id,
+        authIcon: <HomeIcon color="inherit" />,
+        layout: '/admin',
+        isDashboard: true,
+        regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}(\\/.*)?$`),
+        // Parcels are CAPPED. Expanding a farm used to list every parcel it has, so a
+        // 25-parcel operation pushed Activities / OSP / Documents / Buyer Page off the bottom
+        // of the sidebar — the primary navigation buried under a data list. Neither a nested
+        // scroll region (scrollbar inside a scrollbar) nor pagination (navigation is not a
+        // dataset) belongs in a nav tree; the standard is a short list plus a way to reach the
+        // rest, which here is the farm home's parcel carousel and the ⌘K search this app
+        // already ships.
+        items: [
+          ...(e?.parcels ?? []).slice(0, SIDEBAR_PARCEL_LIMIT).map((p: ParcelType) => {
+            return {
+              name: p.name,
+              path: `/dashboard/farm/${e.id}/parcel/${p.id}`,
+              component: Overview,
+              layout: '/admin',
+              isDashboard: true,
+              regex: new RegExp(
+                `^\\/admin\\/dashboard\\/farm\\/${e.id}\\/parcel\\/${p.id}(\\/.*)?$`
+              )
+            };
+          }),
+          ...((e?.parcels?.length ?? 0) > SIDEBAR_PARCEL_LIMIT
+            ? [
+                {
+                  name: intl.formatMessage(
+                    { id: 'sidebar.viewAllParcels' },
+                    { count: e.parcels.length }
+                  ),
+                  path: `/dashboard/farm/${e.id}`,
+                  // Same shape as a parcel entry above, `component` included: a differently
+                  // shaped object turns `items` into a union type and the whole array stops
+                  // matching `Route[]`.
+                  component: Overview,
+                  layout: '/admin',
+                  isDashboard: true,
+                  // Deliberately matches nothing: this is a way out of the list, not a
+                  // destination that should ever paint itself as the active parcel.
+                  regex: /(?!)/
+                }
+              ]
+            : [])
+        ]
+      };
+    });
 
-    const iotDynamicRoutes =
-      (establishments ?? []).map((e: EstablishmentType) => {
-        return {
-          name: e.name,
-          path: `/dashboard/farm/${e.id}/iot`,
-          farmId: e.id,
-          authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/iot$`),
-          layout: '/admin',
-          items: []
-        };
-      });
+    const iotDynamicRoutes = (establishments ?? []).map((e: EstablishmentType) => {
+      return {
+        name: e.name,
+        path: `/dashboard/farm/${e.id}/iot`,
+        farmId: e.id,
+        authIcon: <HomeIcon color="inherit" />,
+        regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/iot$`),
+        layout: '/admin',
+        items: []
+      };
+    });
 
     // WS-4 — Activities per establishment.
-    const activitiesDynamicRoutes =
-      (establishments ?? []).map((e: EstablishmentType) => {
-        return {
-          name: e.name,
-          path: `/dashboard/farm/${e.id}/activities`,
-          farmId: e.id,
-          authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/activities$`),
-          layout: '/admin',
-          items: []
-        };
-      });
+    const activitiesDynamicRoutes = (establishments ?? []).map((e: EstablishmentType) => {
+      return {
+        name: e.name,
+        path: `/dashboard/farm/${e.id}/activities`,
+        farmId: e.id,
+        authIcon: <HomeIcon color="inherit" />,
+        regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/activities$`),
+        layout: '/admin',
+        items: []
+      };
+    });
 
     // WS-6 — Buyer Page per establishment.
-    const buyerDynamicRoutes =
-      (establishments ?? []).map((e: EstablishmentType) => {
-        return {
-          name: e.name,
-          path: `/dashboard/farm/${e.id}/buyer`,
-          farmId: e.id,
-          authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/buyer$`),
-          layout: '/admin',
-          items: []
-        };
-      });
+    const buyerDynamicRoutes = (establishments ?? []).map((e: EstablishmentType) => {
+      return {
+        name: e.name,
+        path: `/dashboard/farm/${e.id}/buyer`,
+        farmId: e.id,
+        authIcon: <HomeIcon color="inherit" />,
+        regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/buyer$`),
+        layout: '/admin',
+        items: []
+      };
+    });
 
     // WS-1 — Documents (DMS) per establishment.
-    const documentsDynamicRoutes =
-      (establishments ?? []).map((e: EstablishmentType) => {
-        return {
-          name: e.name,
-          path: `/dashboard/farm/${e.id}/documents`,
-          farmId: e.id,
-          authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/documents$`),
-          layout: '/admin',
-          items: []
-        };
-      });
+    const documentsDynamicRoutes = (establishments ?? []).map((e: EstablishmentType) => {
+      return {
+        name: e.name,
+        path: `/dashboard/farm/${e.id}/documents`,
+        farmId: e.id,
+        authIcon: <HomeIcon color="inherit" />,
+        regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/documents$`),
+        layout: '/admin',
+        items: []
+      };
+    });
 
     // Sprint 5A — Organic System Plan per establishment.
-    const ospDynamicRoutes =
-      (establishments ?? []).map((e: EstablishmentType) => {
-        return {
-          name: e.name,
-          path: `/dashboard/farm/${e.id}/osp`,
-          farmId: e.id,
-          authIcon: <HomeIcon color="inherit" />,
-          regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/osp$`),
-          layout: '/admin',
-          items: []
-        };
-      });
+    const ospDynamicRoutes = (establishments ?? []).map((e: EstablishmentType) => {
+      return {
+        name: e.name,
+        path: `/dashboard/farm/${e.id}/osp`,
+        farmId: e.id,
+        authIcon: <HomeIcon color="inherit" />,
+        regex: new RegExp(`^\\/admin\\/dashboard\\/farm\\/${e.id}\\/osp$`),
+        layout: '/admin',
+        items: []
+      };
+    });
 
     if (establishments) {
       setDynamicRoutes(dynamicRoutes);
@@ -287,8 +281,7 @@ function Sidebar(props: SidebarProps) {
                 xl: '16px'
               }}
               py="12px"
-              key={index}
-            >
+              key={index}>
               {Object.keys(intl?.messages).includes(`app.${prop.id}`)
                 ? intl.formatMessage({ id: `app.${prop.id}` })
                 : prop.name}
@@ -317,8 +310,7 @@ function Sidebar(props: SidebarProps) {
               py={prop.icon ? '12px' : null}
               bg={activeRoute(prop.regex) && prop.icon ? activeAccordionBg : 'transparent'}
               aria-expanded={activeRoute(prop.regex)}
-              aria-label={`${prop.name} navigation section`}
-            >
+              aria-label={`${prop.name} navigation section`}>
               {activeRoute(prop.regex) ? (
                 <Flex
                   alignItems="center"
@@ -327,8 +319,7 @@ function Sidebar(props: SidebarProps) {
                   px="0px"
                   borderRadius="15px"
                   flex="1"
-                  minW="0"
-                >
+                  minW="0">
                   {prop.icon ? (
                     <Flex>
                       <IconBox
@@ -337,8 +328,7 @@ function Sidebar(props: SidebarProps) {
                         h="30px"
                         w="30px"
                         me="12px"
-                        transition={variantChange}
-                      >
+                        transition={variantChange}>
                         {prop.icon}
                       </IconBox>
                       <Text
@@ -352,8 +342,7 @@ function Sidebar(props: SidebarProps) {
                           Object.keys(intl?.messages).includes(`app.${prop.id}`)
                             ? intl.formatMessage({ id: `app.${prop.id}` })
                             : prop.name
-                        }
-                      >
+                        }>
                         {Object.keys(intl?.messages).includes(`app.${prop.id}`)
                           ? intl.formatMessage({ id: `app.${prop.id}` })
                           : prop.name}
@@ -363,8 +352,7 @@ function Sidebar(props: SidebarProps) {
                     <HStack
                       spacing={sidebarWidth === 275 ? '22px' : '0px'}
                       ps={sidebarWidth === 275 ? '10px' : '0px'}
-                      ms={sidebarWidth === 275 ? '0px' : '8px'}
-                    >
+                      ms={sidebarWidth === 275 ? '0px' : '8px'}>
                       <Icon
                         as={FaCircle}
                         w="10px"
@@ -381,8 +369,7 @@ function Sidebar(props: SidebarProps) {
                             wordBreak="break-word"
                             whiteSpace="normal"
                             lineHeight="1.4"
-                            textAlign="left"
-                          >
+                            textAlign="left">
                             {sidebarWidth === 275 ? prop.name : prop.name[0]}
                           </Text>
                         </NavLink>
@@ -395,8 +382,7 @@ function Sidebar(props: SidebarProps) {
                           wordBreak="break-word"
                           whiteSpace="normal"
                           lineHeight="1.4"
-                          textAlign="left"
-                        >
+                          textAlign="left">
                           {sidebarWidth === 275 ? prop.name : prop.name[0]}
                         </Text>
                       )}
@@ -410,8 +396,7 @@ function Sidebar(props: SidebarProps) {
                   px="0px"
                   borderRadius="15px"
                   flex="1"
-                  minW="0"
-                >
+                  minW="0">
                   {prop.icon ? (
                     (() => {
                       const iconContent = (
@@ -424,8 +409,7 @@ function Sidebar(props: SidebarProps) {
                             me="12px"
                             transition={variantChange}
                             boxShadow={sidebarActiveShadow}
-                            _hover={{ boxShadow: 'none' }}
-                          >
+                            _hover={{ boxShadow: 'none' }}>
                             {prop.icon}
                           </IconBox>
                           <Text
@@ -439,8 +423,7 @@ function Sidebar(props: SidebarProps) {
                               Object.keys(intl?.messages).includes(`app.${prop.id}`)
                                 ? intl.formatMessage({ id: `app.${prop.id}` })
                                 : prop.name
-                            }
-                          >
+                            }>
                             {Object.keys(intl?.messages).includes(`app.${prop.id}`)
                               ? intl.formatMessage({ id: `app.${prop.id}` })
                               : prop.name}
@@ -457,8 +440,7 @@ function Sidebar(props: SidebarProps) {
                     <HStack
                       spacing={sidebarWidth === 275 ? '26px' : '0px'}
                       ps={sidebarWidth === 275 ? '10px' : '0px'}
-                      ms={sidebarWidth === 275 ? '0px' : '8px'}
-                    >
+                      ms={sidebarWidth === 275 ? '0px' : '8px'}>
                       <Icon
                         as={FaCircle}
                         w="6px"
@@ -476,8 +458,7 @@ function Sidebar(props: SidebarProps) {
                             wordBreak="break-word"
                             whiteSpace="normal"
                             lineHeight="1.4"
-                            textAlign="left"
-                          >
+                            textAlign="left">
                             {sidebarWidth === 275 ? prop.name : prop.name[0]}
                           </Text>
                         </NavLink>
@@ -491,8 +472,7 @@ function Sidebar(props: SidebarProps) {
                           wordBreak="break-word"
                           whiteSpace="normal"
                           lineHeight="1.4"
-                          textAlign="left"
-                        >
+                          textAlign="left">
                           {sidebarWidth === 275 ? prop.name : prop.name[0]}
                         </Text>
                       )}
@@ -523,8 +503,9 @@ function Sidebar(props: SidebarProps) {
               pe={prop.icon ? null : '0px'}
               display={prop.isCompanySettings ? 'none' : 'block'}
               pb="8px"
-              ps={prop.icon && !prop.isCompanySettings ? null : sidebarWidth === 275 ? null : '8px'}
-            >
+              ps={
+                prop.icon && !prop.isCompanySettings ? null : sidebarWidth === 275 ? null : '8px'
+              }>
               {(dynamicRoutes || iotDynamicRoutes) && (
                 <List>
                   {
@@ -581,15 +562,13 @@ function Sidebar(props: SidebarProps) {
                     color="white"
                     h="30px"
                     w="30px"
-                    transition={variantChange}
-                  >
+                    transition={variantChange}>
                     {prop.icon}
                   </IconBox>
                   <Text
                     color={activeRoute(prop.regex) ? activeColor : inactiveColor}
                     fontWeight={activeRoute(prop.regex) ? 'bold' : 'normal'}
-                    fontSize="sm"
-                  >
+                    fontSize="sm">
                     {prop.name}
                   </Text>
                 </HStack>
@@ -601,8 +580,7 @@ function Sidebar(props: SidebarProps) {
                     sidebarWidth === 275 ? (activeRoute(prop.regex) ? '22px' : '26px') : '8px'
                   }
                   py="5px"
-                  px={sidebarWidth === 275 ? '10px' : '0px'}
-                >
+                  px={sidebarWidth === 275 ? '10px' : '0px'}>
                   <Icon
                     as={FaCircle}
                     w={activeRoute(prop.regex) ? '10px' : '6px'}
@@ -611,8 +589,7 @@ function Sidebar(props: SidebarProps) {
                   />
                   <Text
                     color={activeRoute(prop.regex) ? activeColor : inactiveColor}
-                    fontWeight={activeRoute(prop.regex) ? 'bold' : 'normal'}
-                  >
+                    fontWeight={activeRoute(prop.regex) ? 'bold' : 'normal'}>
                     {sidebarWidth === 275 ? prop.name : prop.name[0]}
                   </Text>
                 </HStack>
@@ -639,8 +616,7 @@ function Sidebar(props: SidebarProps) {
               maxW={sidebarWidth === 275 ? '180px' : 'none'}
               wordBreak="break-word"
               whiteSpace="normal"
-              lineHeight="1.4"
-            >
+              lineHeight="1.4">
               {sidebarWidth === 275 ? prop.name : prop.name[0]}
             </Text>
           </ListItem>
@@ -672,8 +648,7 @@ function Sidebar(props: SidebarProps) {
           justifyContent: 'center',
           alignItems: 'center',
           fontSize: '11px'
-        }}
-      >
+        }}>
         <Image src={logo} alt="trazo logo" height="40px" paddingRight="10px" />
       </NavLink>
       <HSeparator />
@@ -709,8 +684,7 @@ function Sidebar(props: SidebarProps) {
         mb="40px"
         as="nav"
         aria-label="Main navigation"
-        data-tour="sidebar-nav"
-      >
+        data-tour="sidebar-nav">
         <Box>{links}</Box>
       </Stack>
       <SidebarHelp sidebarWidth={sidebarWidth} />
@@ -735,8 +709,7 @@ function Sidebar(props: SidebarProps) {
         placement="left"
         isOpen={props.isOpen || false}
         onClose={props.onClose || (() => {})}
-        size="xs"
-      >
+        size="xs">
         <DrawerOverlay />
         <DrawerContent
           w="250px"
@@ -748,8 +721,7 @@ function Sidebar(props: SidebarProps) {
             sm: '16px'
           }}
           borderRadius="16px"
-          bg={cmWhiteGray}
-        >
+          bg={cmWhiteGray}>
           <DrawerCloseButton
             _focus={{ boxShadow: 'none' }}
             _hover={{ boxShadow: 'none' }}
@@ -773,8 +745,7 @@ function Sidebar(props: SidebarProps) {
         }
         onMouseLeave={
           toggleSidebar ? () => setSidebarWidth(sidebarWidth === 275 ? 120 : 275) : null
-        }
-      >
+        }>
         <Box display={{ sm: 'none', xl: 'block' }} position="fixed">
           <Box
             className="sidebar-container"
@@ -793,15 +764,13 @@ function Sidebar(props: SidebarProps) {
             m={sidebarMargins}
             borderRadius={sidebarRadius}
             role="navigation"
-            aria-label="Main navigation"
-          >
+            aria-label="Main navigation">
             {isWindows ? (
               <Scrollbars
                 autoHide
                 renderTrackVertical={renderTrack}
                 renderThumbVertical={cmThumb}
-                renderView={renderView}
-              >
+                renderView={renderView}>
                 <Box pe="15px">{sidebarContent}</Box>
               </Scrollbars>
             ) : (

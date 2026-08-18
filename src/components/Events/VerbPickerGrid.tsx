@@ -64,8 +64,7 @@ export const VerbPickerGrid: React.FC<VerbPickerGridProps> = ({
               outline: 'none',
               boxShadow: `0 0 0 3px var(--chakra-colors-${verb.color}-200)`
             }}
-            aria-pressed={isSelected}
-          >
+            aria-pressed={isSelected}>
             <Icon
               as={verb.icon}
               boxSize={{ base: 5, md: 6 }}
@@ -77,8 +76,7 @@ export const VerbPickerGrid: React.FC<VerbPickerGridProps> = ({
               textAlign="center"
               lineHeight="1.25"
               wordBreak="normal"
-              overflowWrap="break-word"
-            >
+              overflowWrap="break-word">
               {intl.formatMessage({ id: `activities.verb.${verb.key}` })}
             </Text>
           </Box>

@@ -122,7 +122,10 @@ function buildOriginPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
   // harvestDate-dependent "Lot tracked" variant duplicated it here.
   if (location) {
     return {
-      pillarName: intl.formatMessage({ id: 'consumer.trust.pillarOrigin', defaultMessage: 'ORIGIN' }),
+      pillarName: intl.formatMessage({
+        id: 'consumer.trust.pillarOrigin',
+        defaultMessage: 'ORIGIN'
+      }),
       pillarIcon: FaMapMarkerAlt,
       badgeLabel: intl.formatMessage({
         id: 'consumer.trust.farmTracked',
@@ -277,7 +280,10 @@ function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
 
   if (transparencyScore == null && documentedEventsCount === 0) {
     return {
-      pillarName: intl.formatMessage({ id: 'consumer.trust.pillarEvents', defaultMessage: 'EVENTS' }),
+      pillarName: intl.formatMessage({
+        id: 'consumer.trust.pillarEvents',
+        defaultMessage: 'EVENTS'
+      }),
       pillarIcon: FaClipboardCheck,
       badgeLabel: intl.formatMessage({
         id: 'consumer.trust.limitedData',
@@ -319,7 +325,10 @@ function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
 
   const productPhrase = productName
     ? intl.formatMessage(
-        { id: 'consumer.trust.thisNamedProduction', defaultMessage: 'this {productName} production' },
+        {
+          id: 'consumer.trust.thisNamedProduction',
+          defaultMessage: 'this {productName} production'
+        },
         { productName }
       )
     : intl.formatMessage({
@@ -356,8 +365,7 @@ function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
     : intl.formatMessage(
         {
           id: 'consumer.trust.eventsDocumentedTooltip',
-          defaultMessage:
-            '{count} farming {count, plural, one {event} other {events}} documented.'
+          defaultMessage: '{count} farming {count, plural, one {event} other {events}} documented.'
         },
         { count: documentedEventsCount }
       );
@@ -522,8 +530,7 @@ const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }
             outline: '2px solid',
             outlineColor: 'green.500',
             outlineOffset: '2px'
-          }}
-        >
+          }}>
           <Image
             src="/certifications/usda-organic-seal.svg"
             alt={
@@ -537,7 +544,8 @@ const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }
                   )
                 : intl.formatMessage({
                     id: 'consumer.trust.sealAltGeneric',
-                    defaultMessage: 'USDA Organic seal — farm certified by a USDA-accredited certifier'
+                    defaultMessage:
+                      'USDA Organic seal — farm certified by a USDA-accredited certifier'
                   })
             }
             boxSize="36px"
@@ -565,7 +573,8 @@ const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }
                 )
               : intl.formatMessage({
                   id: 'consumer.trust.sealDisplayedNop',
-                  defaultMessage: ' Displayed because this farm is certified to the USDA NOP standard.'
+                  defaultMessage:
+                    ' Displayed because this farm is certified to the USDA NOP standard.'
                 })}
           </Text>
           <Link
@@ -573,8 +582,7 @@ const UsdaOrganicSeal: React.FC<{ certifierName?: string }> = ({ certifierName }
             href="https://www.ams.usda.gov/rules-regulations/organic/organic-seal"
             isExternal
             fontSize="xs"
-            color="green.700"
-          >
+            color="green.700">
             {intl.formatMessage({
               id: 'consumer.trust.learnMoreUsdaAms',
               defaultMessage: 'Learn more at USDA AMS'
@@ -613,8 +621,7 @@ const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
       _hover={{
         boxShadow: '0 2px 6px rgba(0, 0, 0, 0.06)',
         borderColor: `${tone.badgeColor}.200`
-      }}
-    >
+      }}>
       <HStack spacing={2} align="center" minH="36px">
         {pillar.showUsdaSeal ? (
           <UsdaOrganicSeal certifierName={pillar.usdaSealCertifierName} />
@@ -627,8 +634,7 @@ const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
             display="inline-flex"
             alignItems="center"
             justifyContent="center"
-            flexShrink={0}
-          >
+            flexShrink={0}>
             <Icon as={pillar.pillarIcon} aria-hidden="true" color={tone.iconColor} boxSize={3.5} />
           </Box>
         )}
@@ -639,8 +645,7 @@ const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
           color="gray.500"
           letterSpacing="0.08em"
           textTransform="uppercase"
-          noOfLines={1}
-        >
+          noOfLines={1}>
           {pillar.pillarName}
         </Text>
         {/* Dedicated tap/click info affordance — reachable on TOUCH (2026-06 audit P1-4).
@@ -680,8 +685,7 @@ const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
                 outlineColor: 'green.500',
                 outlineOffset: '2px',
                 borderRadius: 'full'
-              }}
-            >
+              }}>
               <Icon as={FaInfoCircle} aria-hidden="true" boxSize={3} />
             </Box>
           </PopoverTrigger>
@@ -705,8 +709,7 @@ const PillarCard: React.FC<{ pillar: PillarData }> = ({ pillar }) => {
           fontWeight="bold"
           color={`${tone.badgeColor}.700`}
           lineHeight="1.3"
-          noOfLines={2}
-        >
+          noOfLines={2}>
           {pillar.badgeLabel}
         </Text>
         {pillar.badgeSublabel && (
@@ -731,8 +734,7 @@ const PillarSkeleton: React.FC = () => (
     borderRadius="lg"
     px={3}
     py={3}
-    minH="88px"
-  >
+    minH="88px">
     <Skeleton height="14px" width="60px" mb={3} />
     <Skeleton height="16px" width="80%" mb={2} />
     <Skeleton height="12px" width="60%" />
@@ -777,8 +779,7 @@ const TrustSummaryHeader: React.FC<TrustSummaryHeaderProps> = (props) => {
       <Container maxW="container.lg">
         <SimpleGrid
           columns={{ base: 2, smd: pillars.length === 4 ? 4 : pillars.length }}
-          spacing={{ base: 2.5, smd: 3 }}
-        >
+          spacing={{ base: 2.5, smd: 3 }}>
           {pillars.map((pillar) => (
             <PillarCard key={pillar.pillarName} pillar={pillar} />
           ))}
@@ -815,8 +816,7 @@ const TrustSummaryHeader: React.FC<TrustSummaryHeaderProps> = (props) => {
                 outline: '2px solid',
                 outlineColor: 'green.500',
                 outlineOffset: '2px'
-              }}
-            >
+              }}>
               {intl.formatMessage({
                 id: 'consumer.trust.howCalculated',
                 defaultMessage: 'How is this calculated?'

@@ -186,8 +186,7 @@ const TrackList = ({ amount }) => {
       maxH={{ base: '700px', md: '700px' }}
       minW={{ base: '100%', md: '400px' }}
       w="100%"
-      className="trazo-card"
-    >
+      className="trazo-card">
       <CardHeader px={{ base: 4, md: 6 }} py={5} data-tour="current-production">
         <Flex direction="column" w="100%">
           {/* Header with consistent height */}
@@ -208,8 +207,7 @@ const TrackList = ({ amount }) => {
                   textTransform="none"
                   w="fit-content"
                   border="1px solid"
-                  borderColor="green.200"
-                >
+                  borderColor="green.200">
                   {currentHistory?.product}
                 </Badge>
               )}
@@ -220,8 +218,7 @@ const TrackList = ({ amount }) => {
                   onClick={onOpen1}
                   alignSelf="flex-start"
                   disabled={!currentHistory?.product}
-                  cursor={!currentHistory?.product ? 'default' : 'pointer'}
-                >
+                  cursor={!currentHistory?.product ? 'default' : 'pointer'}>
                   <Icon as={IoEllipsisVerticalSharp} color="gray.400" w="20px" h="20px" />
                 </MenuButton>
                 <MenuList>
@@ -231,8 +228,7 @@ const TrackList = ({ amount }) => {
                       navigate(
                         `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/change`
                       )
-                    }
-                  >
+                    }>
                     <Flex color={textColor} cursor="pointer" align="center" p="4px">
                       <Text fontSize="sm" fontWeight="500">
                         {intl.formatMessage({ id: 'app.edit' }).toUpperCase()}
@@ -244,8 +240,7 @@ const TrackList = ({ amount }) => {
                     onClick={() => {
                       onClose1();
                       onDeleteOpen();
-                    }}
-                  >
+                    }}>
                     <Flex color="red.500" cursor="pointer" align="center" p="4px">
                       <Text fontSize="sm" fontWeight="500">
                         {intl.formatMessage({ id: 'app.delete' }).toUpperCase()}
@@ -278,8 +273,7 @@ const TrackList = ({ amount }) => {
         pe="0px"
         mb="12px"
         position="relative"
-        data-tour="events-timeline"
-      >
+        data-tour="events-timeline">
         <Box
           maxH={{ base: '400px', md: '450px' }}
           overflowY="auto"
@@ -302,8 +296,7 @@ const TrackList = ({ amount }) => {
                 bg: 'gray.600'
               }
             }
-          }}
-        >
+          }}>
           <Flex direction="column" width={'100%'} pb={4}>
             {isLoading || isFetching ? (
               <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
@@ -420,8 +413,7 @@ const TrackList = ({ amount }) => {
         <Flex
           justify={{ base: 'stretch', smd: 'flex-end' }}
           gap={3}
-          p={{ base: '16px', md: '20px' }}
-        >
+          p={{ base: '16px', md: '20px' }}>
           {/* Existence of the CURRENT PRODUCTION decides the CTA. This used to test
               `!currentHistory?.product`, so a production without a product row rendered
               its timeline above while the button still said "Start production". */}
@@ -443,8 +435,7 @@ const TrackList = ({ amount }) => {
               transition="all 0.2s"
               onClick={() =>
                 navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`)
-              }
-            >
+              }>
               {intl.formatMessage({ id: 'app.startProduction' })}
             </Button>
           ) : (
@@ -454,8 +445,7 @@ const TrackList = ({ amount }) => {
               justify={{ base: 'stretch', smd: 'flex-end' }}
               align={{ base: 'stretch', smd: 'center' }}
               w="100%"
-              direction={{ base: 'column', smd: 'row' }}
-            >
+              direction={{ base: 'column', smd: 'row' }}>
               {/* WS-4b entry convergence: Add event opens the SAME "What did you do?"
                   verb modal the Activities page uses (shared VerbPickerGrid) — all ten
                   verbs always visible, never a scroll-hidden dropdown subset. */}
@@ -480,8 +470,7 @@ const TrackList = ({ amount }) => {
                     boxShadow: 'md'
                   }}
                   transition="all 0.2s"
-                  onClick={onAddEventMenuOpen}
-                >
+                  onClick={onAddEventMenuOpen}>
                   {intl.formatMessage({ id: 'app.addEvent' })}
                 </Button>
               )}
@@ -507,8 +496,7 @@ const TrackList = ({ amount }) => {
                     navigate(
                       `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/finish`
                     )
-                  }
-                >
+                  }>
                   <Text as="span" display={{ base: 'none', smd: 'inline' }}>
                     {intl.formatMessage({ id: 'app.finishProduction' })}
                   </Text>
@@ -533,8 +521,7 @@ const TrackList = ({ amount }) => {
           <Text fontSize="lg" fontWeight="semibold">
             {intl.formatMessage({ id: 'activities.pickVerb' })}
           </Text>
-        }
-      >
+        }>
         {/* WS-4 complete: voice + template accelerators live INSIDE the wizard
             now, so the Quick-vs-Manual fork is gone — one grid, one flow. */}
         <VerbPickerGrid
@@ -563,8 +550,7 @@ const TrackList = ({ amount }) => {
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
         onClose={onDeleteClose}
-        isCentered
-      >
+        isCentered>
         <AlertDialogOverlay bg="blackAlpha.300" backdropFilter="blur(10px)">
           <AlertDialogContent borderRadius="xl" p={2} mx={4}>
             <AlertDialogHeader fontSize="lg" fontWeight="bold" pb={4}>
@@ -603,8 +589,7 @@ const TrackList = ({ amount }) => {
                   size="lg"
                   color="gray.600"
                   borderRadius="lg"
-                  _hover={{ bg: 'gray.100' }}
-                >
+                  _hover={{ bg: 'gray.100' }}>
                   {intl.formatMessage({ id: 'app.cancel' })}
                 </Button>
                 <Button
@@ -624,8 +609,7 @@ const TrackList = ({ amount }) => {
                     color: 'red.600',
                     borderColor: 'red.600'
                   }}
-                  transition="all 0.2s"
-                >
+                  transition="all 0.2s">
                   {intl.formatMessage({ id: 'app.delete' })}
                 </Button>
               </HStack>

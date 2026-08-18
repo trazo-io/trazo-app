@@ -51,8 +51,7 @@ const ScansList = ({ title, labels, scansData }) => {
           border="1px solid"
           borderColor="gray.200"
           maxH="600px"
-          overflowY="auto"
-        >
+          overflowY="auto">
           <Table variant="simple" size="sm">
             <Thead bg="gray.50" position="sticky" top={0} zIndex={1}>
               <Tr>
@@ -69,8 +68,7 @@ const ScansList = ({ title, labels, scansData }) => {
                       px={{ base: 2, md: 6 }}
                       borderBottom="2px solid"
                       borderColor="gray.200"
-                      whiteSpace="nowrap"
-                    >
+                      whiteSpace="nowrap">
                       {label}
                     </Th>
                   );
@@ -119,15 +117,14 @@ const ScansList = ({ title, labels, scansData }) => {
                               borderRadius="md"
                               border="1px solid"
                               borderColor="green.200"
-                              boxShadow="sm"
-                            >
+                              boxShadow="sm">
                               <Text
                                 color={textColor}
                                 fontSize="sm"
                                 lineHeight="1.6"
-                                fontStyle={scan.comment ? 'normal' : 'italic'}
-                              >
-                                {scan.comment || intl.formatMessage({ id: 'commercial.noAdditionalComments' })}
+                                fontStyle={scan.comment ? 'normal' : 'italic'}>
+                                {scan.comment ||
+                                  intl.formatMessage({ id: 'commercial.noAdditionalComments' })}
                               </Text>
                             </Box>
                           </Td>
@@ -160,7 +157,10 @@ const ScansList = ({ title, labels, scansData }) => {
         {scansData && scansData.length > 0 && (
           <Flex justify="space-between" align="center" pt={2}>
             <Text fontSize="sm" color="gray.600">
-              {intl.formatMessage({ id: 'commercial.showingScans' }, { displayed: displayedScans?.length || 0, total: scansData.length })}
+              {intl.formatMessage(
+                { id: 'commercial.showingScans' },
+                { displayed: displayedScans?.length || 0, total: scansData.length }
+              )}
             </Text>
             <Flex gap={2}>
               {/* Only show expand/collapse if more than 10 scans */}
@@ -170,16 +170,14 @@ const ScansList = ({ title, labels, scansData }) => {
                     <StandardButton
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowAllScans(true)}
-                    >
+                      onClick={() => setShowAllScans(true)}>
                       {intl.formatMessage({ id: 'commercial.showAll' })}
                     </StandardButton>
                   ) : (
                     <StandardButton
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowAllScans(false)}
-                    >
+                      onClick={() => setShowAllScans(false)}>
                       {intl.formatMessage({ id: 'commercial.showLess' })}
                     </StandardButton>
                   )}

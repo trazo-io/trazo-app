@@ -53,11 +53,11 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   // ---- Weather examples + tips ----
   'Frost damage on crops or plants': 'Daño por helada en cultivos o plantas',
   'Hail impact on plants or equipment': 'Impacto del granizo en plantas o equipos',
-  'Drought conditions (brown/stressed plants)': 'Condiciones de sequía (plantas secas o estresadas)',
+  'Drought conditions (brown/stressed plants)':
+    'Condiciones de sequía (plantas secas o estresadas)',
   'Heavy rain or flooding evidence': 'Evidencia de lluvia intensa o inundación',
   'Wind damage to crops or structures': 'Daño por viento en cultivos o estructuras',
-  'Include date/timestamp in photo if possible':
-    'Incluya la fecha u hora en la foto si es posible',
+  'Include date/timestamp in photo if possible': 'Incluya la fecha u hora en la foto si es posible',
   'Show plants or crops affected by the weather':
     'Muestre las plantas o cultivos afectados por el clima',
   'Include scale reference (hand, ruler) for damage assessment':
@@ -155,8 +155,7 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Traps or monitoring equipment in field': 'Trampas o equipos de monitoreo en el lote',
   'Pest identification (close-up of insect or disease)':
     'Identificación de la plaga (primer plano del insecto o la enfermedad)',
-  'Scouting activity (person examining crops)':
-    'Labor de monitoreo (persona revisando el cultivo)',
+  'Scouting activity (person examining crops)': 'Labor de monitoreo (persona revisando el cultivo)',
   'Treatment equipment or beneficial insects being released':
     'Equipo de tratamiento o liberación de insectos benéficos',
   'Pest damage: wide shot showing extent + close-up of damage':
@@ -172,8 +171,7 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Certification document or certificate': 'Documento o certificado de certificación',
   'Inspection report or inspector on farm': 'Informe de inspección o inspector en la finca',
   'Compliance documentation being reviewed': 'Revisión de la documentación de cumplimiento',
-  'Third-party verification official seal/stamp':
-    'Sello oficial de verificación de terceros',
+  'Third-party verification official seal/stamp': 'Sello oficial de verificación de terceros',
   'Certification agency representative at farm':
     'Representante de la agencia certificadora en la finca',
   'Document: certificate number and date clearly readable':
@@ -210,15 +208,13 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
     'Agua aplicándose al cultivo con humedad visible',
   'Irrigation pump or control system showing operation':
     'Bomba o sistema de control de riego en operación',
-  'Show water actively flowing or spraying':
-    'Muestre el agua fluyendo o pulverizando activamente',
+  'Show water actively flowing or spraying': 'Muestre el agua fluyendo o pulverizando activamente',
   'Include irrigation timer or pump hour meter if available':
     'Incluya el temporizador de riego o el horómetro de la bomba si está disponible',
   'Worker actively pruning or trimming plants': 'Trabajador podando activamente las plantas',
   'Before/after comparison showing pruned branches':
     'Comparación antes y después mostrando las ramas podadas',
-  'Pruning tools and removed plant material':
-    'Herramientas de poda y material vegetal retirado',
+  'Pruning tools and removed plant material': 'Herramientas de poda y material vegetal retirado',
   'Before/after shots dramatically improve verification':
     'Las tomas antes y después mejoran notablemente la verificación',
   'Show removed branches/material to document work completion':

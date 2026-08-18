@@ -32,7 +32,7 @@ const MemberRow = (props: MemberRowProps) => {
   const roleNameMap: Record<string, string> = {
     'Company Admin': intl.formatMessage({ id: 'app.administrator' }),
     'Farm Manager': intl.formatMessage({ id: 'app.farmManager' }),
-    'Viewer': intl.formatMessage({ id: 'app.viewerRole' })
+    Viewer: intl.formatMessage({ id: 'app.viewerRole' })
   };
   const displayRole = roleNameMap[role] || role;
 
@@ -43,10 +43,13 @@ const MemberRow = (props: MemberRowProps) => {
       _hover={{ bg: 'gray.50' }}
       transition="all 0.2s"
       borderBottom="1px solid"
-      borderColor="gray.100"
-    >
+      borderColor="gray.100">
       <Td py={{ base: 3, md: 5 }} px={{ base: 3, md: 6 }}>
-        <Text color={textColor} fontSize={{ base: 'xs', md: 'md' }} fontWeight="semibold" whiteSpace="nowrap">
+        <Text
+          color={textColor}
+          fontSize={{ base: 'xs', md: 'md' }}
+          fontWeight="semibold"
+          whiteSpace="nowrap">
           {name}
         </Text>
       </Td>
@@ -68,8 +71,7 @@ const MemberRow = (props: MemberRowProps) => {
                 border="1px solid"
                 w="fit-content"
                 borderColor="green.200"
-                whiteSpace="nowrap"
-              >
+                whiteSpace="nowrap">
                 {establishment}
               </Badge>
             ))
@@ -85,8 +87,7 @@ const MemberRow = (props: MemberRowProps) => {
               fontWeight="medium"
               border="1px solid"
               borderColor="gray.200"
-              whiteSpace="nowrap"
-            >
+              whiteSpace="nowrap">
               {intl.formatMessage({ id: 'app.noEstablishmentsAssigned' })}
             </Badge>
           )}
@@ -105,8 +106,7 @@ const MemberRow = (props: MemberRowProps) => {
           border="1px solid"
           borderColor="gray.200"
           textTransform="capitalize"
-          whiteSpace="nowrap"
-        >
+          whiteSpace="nowrap">
           {displayRole}
         </Badge>
       </Td>
@@ -127,8 +127,7 @@ const MemberRow = (props: MemberRowProps) => {
               bg: 'gray.200',
               borderColor: 'gray.300'
             }}
-            transition="all 0.2s"
-          >
+            transition="all 0.2s">
             <Icon as={IoEllipsisVerticalSharp} color="gray.600" w="18px" h="18px" />
           </MenuButton>
           <MenuList
@@ -136,16 +135,14 @@ const MemberRow = (props: MemberRowProps) => {
             boxShadow="lg"
             border="1px solid"
             borderColor="gray.100"
-            py={2}
-          >
+            py={2}>
             <MenuItem
               py={3}
               onClick={() => {}}
               _hover={{ bg: 'green.50' }}
               borderRadius="lg"
               mx={2}
-              mb={1}
-            >
+              mb={1}>
               <Flex color={textColor} cursor="pointer" align="center">
                 <Text fontSize="sm" fontWeight="medium">
                   {intl.formatMessage({ id: 'app.edit' })}

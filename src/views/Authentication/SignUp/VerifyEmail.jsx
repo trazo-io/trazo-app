@@ -81,16 +81,14 @@ function SignUp() {
         }}
         bgSize="cover"
         mx={{ md: 'auto' }}
-        mt={{ md: '14px' }}
-      ></Box>
+        mt={{ md: '14px' }}></Box>
       <Flex
         direction="column"
         textAlign="center"
         justifyContent="center"
         align="center"
         mt="8.5rem"
-        mb="30px"
-      >
+        mb="30px">
         <Text fontSize="4xl" color="white" fontWeight="bold">
           Welcome back!
         </Text>
@@ -99,8 +97,7 @@ function SignUp() {
           color="white"
           fontWeight="normal"
           mt="10px"
-          w={{ base: '90%', sm: '60%', lg: '40%', xl: '30%' }}
-        >
+          w={{ base: '90%', sm: '60%', lg: '40%', xl: '30%' }}>
           You should be able to verify your email address. If you have not received the email, we
           will gladly send you another.
         </Text>
@@ -114,8 +111,7 @@ function SignUp() {
           p="40px"
           mx={{ base: '100px' }}
           bg={bgColor}
-          boxShadow="0 20px 27px 0 rgb(0 0 0 / 5%)"
-        >
+          boxShadow="0 20px 27px 0 rgb(0 0 0 / 5%)">
           {isLoadingVerification ? (
             <>
               <Flex direction="column" justifyContent="center" alignItems="center" mb="20px">
@@ -132,8 +128,7 @@ function SignUp() {
               justifyContent="center"
               alignItems="center"
               maxW="100%"
-              mt="0px"
-            >
+              mt="0px">
               <Text color="green.400" fontWeight="bold" textAlign="center" mb="22px">
                 Your account has been successfully verified. Now you can
                 <Link
@@ -142,8 +137,7 @@ function SignUp() {
                   as="span"
                   ms="5px"
                   fontWeight="bold"
-                  onClick={() => navigate('/auth/signin')}
-                >
+                  onClick={() => navigate('/auth/signin')}>
                   Sign In
                 </Link>
               </Text>

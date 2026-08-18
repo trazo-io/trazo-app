@@ -104,7 +104,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ userType
           </VStack>
 
           {/* Instructions */}
-          <Alert status="info" borderRadius="lg" bg="blue.50" borderColor="blue.200">
+          <Alert status="info" borderColor="blue.200">
             <AlertIcon color="blue.600" />
             <AlertDescription fontSize="sm" color="blue.800">
               <VStack align="start" spacing={2}>
@@ -125,8 +125,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ userType
                 setSubmittedEmail('');
               }}
               variant="outline"
-              width="full"
-            >
+              width="full">
               Send Another Email
             </StandardButton>
 
@@ -185,8 +184,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ userType
               isLoading={isLoading}
               loadingText="Sending Reset Link..."
               width="full"
-              isDisabled={!email}
-            >
+              isDisabled={!email}>
               Send Reset Link
             </StandardButton>
           </VStack>

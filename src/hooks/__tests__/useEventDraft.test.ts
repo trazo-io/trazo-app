@@ -24,7 +24,10 @@ describe('useEventDraft', () => {
     vi.useRealTimers();
   });
 
-  const flushDebounce = () => act(() => { vi.advanceTimersByTime(2500); });
+  const flushDebounce = () =>
+    act(() => {
+      vi.advanceTimersByTime(2500);
+    });
 
   it('persists a filled form after the debounce', () => {
     const { result } = renderHook(() => useEventDraft({ parcelId: 231 }));
@@ -86,10 +89,12 @@ describe('useEventDraft', () => {
     const second = renderHook(() => useEventDraft({ parcelId: 231 }));
     expect(second.result.current.hasDraft).toBe(true);
     let restored: unknown;
-    act(() => { restored = second.result.current.restoreDraft(); });
-    expect((restored as { eventFormData: Record<string, unknown> }).eventFormData.commercial_name).toBe(
-      'Zinc Sulfate 36%'
-    );
+    act(() => {
+      restored = second.result.current.restoreDraft();
+    });
+    expect(
+      (restored as { eventFormData: Record<string, unknown> }).eventFormData.commercial_name
+    ).toBe('Zinc Sulfate 36%');
   });
 
   it('discard removes it for good', () => {

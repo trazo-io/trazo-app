@@ -58,11 +58,7 @@ export function renderTrazoTooltip(
   currentRoot = createRoot(container);
   currentRoot.render(
     <ChakraProvider theme={theme}>
-      <IntlProvider
-        locale={meta.locale}
-        messages={meta.messages}
-        defaultLocale="en-US"
-      >
+      <IntlProvider locale={meta.locale} messages={meta.messages} defaultLocale="en-US">
         <TrazoTooltipContent {...meta} />
       </IntlProvider>
     </ChakraProvider>
@@ -147,8 +143,7 @@ const TrazoTooltipContent: React.FC<TooltipMeta> = ({
             color="gray.600"
             minH="44px"
             fontWeight="500"
-            onClick={onClose}
-          >
+            onClick={onClose}>
             <FormattedMessage id="tour.common.skip" />
           </Button>
         ) : (
@@ -159,8 +154,7 @@ const TrazoTooltipContent: React.FC<TooltipMeta> = ({
             minH="44px"
             leftIcon={<FiArrowLeft />}
             fontWeight="500"
-            onClick={onPrev}
-          >
+            onClick={onPrev}>
             <FormattedMessage id="tour.common.previous" />
           </Button>
         )}
@@ -184,8 +178,7 @@ const TrazoTooltipContent: React.FC<TooltipMeta> = ({
           fontWeight="600"
           rightIcon={!isLastStep ? <FiArrowRight /> : undefined}
           _hover={{ bg: 'green.600' }}
-          onClick={onNext}
-        >
+          onClick={onNext}>
           {isLastStep ? (
             <FormattedMessage id="tour.common.finish" />
           ) : (

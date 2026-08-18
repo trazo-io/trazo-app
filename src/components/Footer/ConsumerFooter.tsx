@@ -17,24 +17,22 @@ export default function ConsumerFooter() {
       px="30px"
       pb="20px"
       pt="20px"
-      gap={{ base: 3, md: 0 }}
-    >
-      <Text
-        color="gray.400"
-        textAlign={{ base: 'center', md: 'start' }}
-        fontSize="sm"
-      >
+      gap={{ base: 3, md: 0 }}>
+      <Text color="gray.400" textAlign={{ base: 'center', md: 'start' }} fontSize="sm">
         &copy; {new Date().getFullYear()} Trazo&trade;.
       </Text>
-      <Flex gap={{ base: '16px', md: '24px' }} flexWrap="wrap" justifyContent="center" alignItems="center">
+      <Flex
+        gap={{ base: '16px', md: '24px' }}
+        flexWrap="wrap"
+        justifyContent="center"
+        alignItems="center">
         <LanguageToggle />
         <Link
           as={RouterLink}
           to="/methodology"
           color="gray.400"
           fontSize="sm"
-          _hover={{ color: 'green.500' }}
-        >
+          _hover={{ color: 'green.500' }}>
           {intl.formatMessage({
             id: 'consumer.footer.howOurDataWorks',
             defaultMessage: 'How our data works'
@@ -45,8 +43,7 @@ export default function ConsumerFooter() {
           color="gray.400"
           fontSize="sm"
           isExternal
-          _hover={{ color: 'green.500' }}
-        >
+          _hover={{ color: 'green.500' }}>
           {intl.formatMessage({ id: 'app.privacyPolicy' })}
         </Link>
         <Link
@@ -54,8 +51,7 @@ export default function ConsumerFooter() {
           color="gray.400"
           fontSize="sm"
           isExternal
-          _hover={{ color: 'green.500' }}
-        >
+          _hover={{ color: 'green.500' }}>
           {intl.formatMessage({ id: 'app.termsOfService' })}
         </Link>
         <Link
@@ -63,8 +59,7 @@ export default function ConsumerFooter() {
           color="gray.400"
           fontSize="sm"
           _hover={{ color: 'green.500' }}
-          onClick={() => resetConsent()}
-        >
+          onClick={() => resetConsent()}>
           {intl.formatMessage({
             id: 'consumer.footer.privacySettings',
             defaultMessage: 'Privacy Settings'

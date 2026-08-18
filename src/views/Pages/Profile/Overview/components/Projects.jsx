@@ -35,8 +35,7 @@ const Projects = ({ title, description }) => {
         <Grid
           templateColumns={{ sm: '1fr', md: '1fr 1fr', xl: 'repeat(4, 1fr)' }}
           templateRows={{ sm: '1fr 1fr 1fr auto', md: '1fr 1fr', xl: '1fr' }}
-          gap="24px"
-        >
+          gap="24px">
           <ProjectCard
             image={imageArchitect1}
             name={'Project #1'}
@@ -68,8 +67,7 @@ const Projects = ({ title, description }) => {
             color="gray.500"
             border="1px solid lightgray"
             borderRadius="15px"
-            minHeight={{ sm: '200px', md: '100%' }}
-          >
+            minHeight={{ sm: '200px', md: '100%' }}>
             <Flex direction="column" justifyContent="center" align="center">
               <Icon as={FaPlus} fontSize="lg" mb="12px" />
               <Text fontSize="lg" fontWeight="bold">

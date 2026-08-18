@@ -51,7 +51,7 @@ export default function ImpactDashboard() {
   if (error) {
     return (
       <StandardPage title="Discover" description="" showBackButton onBack={() => navigate(-1)}>
-        <Alert status="error" borderRadius="xl">
+        <Alert status="error">
           <AlertIcon />
           <Text flex={1}>Unable to load your transparency data.</Text>
           <StandardButton size="sm" onClick={() => refetch()}>
@@ -72,8 +72,7 @@ export default function ImpactDashboard() {
       title="Discover"
       description="Your transparency journey at a glance"
       showBackButton
-      onBack={() => navigate(-1)}
-    >
+      onBack={() => navigate(-1)}>
       <VStack spacing={8} align="stretch">
         {/* Hero Section with Stats */}
         <StandardCard variant="elevated">
@@ -140,8 +139,7 @@ export default function ImpactDashboard() {
           <StandardCard
             title="Recent Discoveries"
             subtitle="Farms you've explored"
-            variant="outline"
-          >
+            variant="outline">
             <VStack spacing={3}>
               {recentScans.length === 0 ? (
                 <VStack py={8} spacing={3}>
@@ -170,8 +168,7 @@ export default function ImpactDashboard() {
                       transform: 'translateY(-1px)'
                     }}
                     transition="all 0.2s"
-                    textDecoration="none"
-                  >
+                    textDecoration="none">
                     <Flex gap={3} align="center">
                       {/* Product Icon/Placeholder */}
                       <Circle size="50px" bg="green.50" flexShrink={0}>
@@ -206,8 +203,7 @@ export default function ImpactDashboard() {
                               fontSize="xs"
                               px={2}
                               py={0.5}
-                              borderRadius="full"
-                            >
+                              borderRadius="full">
                               {scan.events_viewed} {scan.events_viewed === 1 ? 'event' : 'events'}
                             </Badge>
                           )}
@@ -218,8 +214,7 @@ export default function ImpactDashboard() {
                               fontSize="xs"
                               px={2}
                               py={0.5}
-                              borderRadius="full"
-                            >
+                              borderRadius="full">
                               <HStack spacing={1}>
                                 <Icon as={FaCheckCircle} boxSize={3} />
                                 <Text>Verified</Text>
@@ -273,8 +268,7 @@ export default function ImpactDashboard() {
                 variant="outline"
                 size="sm"
                 w="full"
-                onClick={() => navigate('/admin/dashboard/journey')}
-              >
+                onClick={() => navigate('/admin/dashboard/journey')}>
                 View Full History
               </StandardButton>
             </VStack>

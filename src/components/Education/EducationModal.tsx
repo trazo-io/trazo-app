@@ -209,7 +209,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
             )}
 
             {section.key_takeaway && (
-              <Alert status="success" borderRadius="md">
+              <Alert status="success">
                 <AlertIcon />
                 <VStack align="start" spacing={1}>
                   <Text fontSize="sm" fontWeight="medium">
@@ -243,8 +243,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
                 borderColor={borderColor}
                 cursor="pointer"
                 _hover={{ borderColor: accentColor, transform: 'translateY(-1px)' }}
-                transition="all 0.2s"
-              >
+                transition="all 0.2s">
                 <CardBody p={3}>
                   <HStack>
                     <Icon as={IconComponent} color={accentColor} />
@@ -348,16 +347,14 @@ const EducationModal: React.FC<EducationModalProps> = ({
             bg={bgColor}
             borderTopRadius="2xl"
             maxH="82vh"
-            containerProps={{ style: { zIndex: 10000 } }}
-          >
+            containerProps={{ style: { zIndex: 10000 } }}>
             <Box
               pt={3}
               pb={1}
               display="flex"
               justifyContent="center"
               cursor="grab"
-              {...swipeHandlers}
-            >
+              {...swipeHandlers}>
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>
             <DrawerCloseButton top={4} />
@@ -386,7 +383,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
   // Error state
   if (error) {
     const errorContent = (
-      <Alert status="error" borderRadius="md">
+      <Alert status="error">
         <AlertIcon />
         <VStack align="start" spacing={2}>
           <Text fontWeight="medium">Unable to Load Educational Content</Text>
@@ -406,16 +403,14 @@ const EducationModal: React.FC<EducationModalProps> = ({
             bg={bgColor}
             borderTopRadius="2xl"
             maxH="82vh"
-            containerProps={{ style: { zIndex: 10000 } }}
-          >
+            containerProps={{ style: { zIndex: 10000 } }}>
             <Box
               pt={3}
               pb={1}
               display="flex"
               justifyContent="center"
               cursor="grab"
-              {...swipeHandlers}
-            >
+              {...swipeHandlers}>
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>
             <DrawerCloseButton top={4} />
@@ -524,8 +519,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
           bg={bgColor}
           borderTopRadius="2xl"
           maxH="82vh"
-          containerProps={{ style: { zIndex: 10000 } }}
-        >
+          containerProps={{ style: { zIndex: 10000 } }}>
           {/* Drag handle - swipe down to dismiss */}
           <Box
             pt={3}
@@ -533,8 +527,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
             display="flex"
             justifyContent="center"
             cursor="grab"
-            {...swipeHandlers}
-          >
+            {...swipeHandlers}>
             <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
           </Box>
           <DrawerCloseButton top={4} />

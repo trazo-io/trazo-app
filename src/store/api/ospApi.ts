@@ -220,9 +220,7 @@ const ospApi = baseApi.injectEndpoints({
         body: data,
         credentials: 'include'
       }),
-      invalidatesTags: (_r, _e, { ospId }) => [
-        { type: 'OSPChangeNotification', id: Number(ospId) }
-      ]
+      invalidatesTags: (_r, _e, { ospId }) => [{ type: 'OSPChangeNotification', id: Number(ospId) }]
     }),
 
     // Withdraw a notification the certifier has not acknowledged yet. The
@@ -235,9 +233,7 @@ const ospApi = baseApi.injectEndpoints({
         method: 'DELETE',
         credentials: 'include'
       }),
-      invalidatesTags: (_r, _e, { ospId }) => [
-        { type: 'OSPChangeNotification', id: Number(ospId) }
-      ]
+      invalidatesTags: (_r, _e, { ospId }) => [{ type: 'OSPChangeNotification', id: Number(ospId) }]
     }),
 
     // Common OSP § 11 "Records Maintained" — evidence derived from logged events.

@@ -151,7 +151,7 @@ const ProducerForgotPassword: React.FC = () => {
                   and this was five loose blue.* tokens imitating it without the semantics
                   (no role, no icon mapping). Using the component gets both.
                 */}
-              <Alert status="info" borderRadius="xl" alignItems="flex-start">
+              <Alert status="info">
                 <AlertIcon />
                 <VStack spacing={1} align="start">
                   <Text fontSize="sm" fontWeight="medium">

@@ -194,7 +194,10 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
       toast({
         title: intl.formatMessage({ id: 'app.error' }),
         description:
-          error?.data?.detail || error?.data?.error || error?.data?.message || intl.formatMessage({ id: 'app.errorSavingProduction' }),
+          error?.data?.detail ||
+          error?.data?.error ||
+          error?.data?.message ||
+          intl.formatMessage({ id: 'app.errorSavingProduction' }),
         status: 'error',
         duration: 5000,
         isClosable: true

@@ -23,15 +23,18 @@
  * (soil-health practices), irrigation_methods, custom_message, images.
  */
 import React, { useEffect } from 'react';
-import { Box, CircularProgress, Flex, Text, useColorModeValue, useToast } from '@chakra-ui/react';
+import { useToast } from '@chakra-ui/react';
+import { StandardPage, StandardPageLoading } from 'components/Design';
 import { useIntl } from 'react-intl';
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { StandardFarmForm } from '../../../../components/Forms/StandardFarmForm';
 import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
 import subscriptionToastHelper from '../../../../utils/toast/SubscriptionToastHelper';
 import { useSelector, useDispatch } from 'react-redux';
 import { useCreateFarmMutation, useEditFarmMutation, useGetFarmQuery } from 'store/api/companyApi';
 import { addCompanyFarm } from 'store/features/companySlice';
+import { PlanLimitAlert } from 'components/Subscription/PlanLimitAlert';
+import { getLimit, isAtLimit } from 'utils/subscriptionLimits';
 
 interface Props {
   isEdit?: boolean;
@@ -42,20 +45,28 @@ function AddFarm({ isEdit = false }: Props) {
   const navigate = useNavigate();
   const toast = useToast();
   const dispatch = useDispatch();
-  const [searchParams] = useSearchParams();
   const { farmId } = useParams();
-  const isUpgrade = searchParams.get('return') === 'upgrade';
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
+
+  // Pre-flight plan limit check (informational only — backend enforces).
+  //
+  // AddParcel has had one of these; this form did not, and it is the form where it matters
+  // most: Starter is ONE farm and the Extra Farm add-on ($149/yr) is the only add-on Trazo
+  // sells. Without it a Starter customer filled all four steps, submitted, and got a raw
+  // backend rejection instead of being told up front what the second farm costs.
+  //
+  // Goes through `utils/subscriptionLimits` so it reads `effective_limits` (add-on adjusted)
+  // and treats -1 as unlimited — the two rules that produced live bugs in the parcel guard.
+  const maxFarms = getLimit(currentCompany, 'max_establishments');
+  const currentFarmCount = currentCompany?.establishments?.length ?? 0;
+  const isAtFarmLimit =
+    !isEdit && isAtLimit(currentCompany, 'max_establishments', currentFarmCount);
 
   const [createFarm, { isLoading: isCreating }] = useCreateFarmMutation();
   const [editFarm, { isLoading: isUpdating }] = useEditFarmMutation();
 
   // Fetch establishment data for editing
-  const {
-    data: establishmentData,
-    isLoading: isLoadingEstablishment,
-    isSuccess: isEstablishmentLoaded
-  } = useGetFarmQuery(
+  const { data: establishmentData, isLoading: isLoadingEstablishment } = useGetFarmQuery(
     {
       companyId: currentCompany?.id,
       farmId: farmId!
@@ -111,8 +122,6 @@ function AddFarm({ isEdit = false }: Props) {
             })
         };
 
-        console.log('Updating establishment data:', establishmentUpdateData);
-
         const result = await editFarm({
           companyId: currentCompany.id,
           farmId: farmId!,
@@ -158,20 +167,14 @@ function AddFarm({ isEdit = false }: Props) {
             })
         };
 
-        console.log('Sending establishment data to backend:', establishmentData);
-
         const result = await createFarm({
           companyId: currentCompany.id,
           establishment: establishmentData
         }).unwrap();
 
-        console.log('✅ Establishment created successfully:', result);
-        console.log('🚀 New establishment ID:', result.id);
-
         // CRITICAL FIX: Dispatch Redux action to set currentEstablishment
         // This ensures the newly created establishment becomes the active one in Redux state
         dispatch(addCompanyFarm(result));
-        console.log('🔄 Redux: Set currentEstablishment to newly created establishment');
 
         // Set sessionStorage flags to prevent Authenticated.jsx from redirecting during cache update
         sessionStorage.setItem('creating_farm', 'true');
@@ -179,8 +182,11 @@ function AddFarm({ isEdit = false }: Props) {
 
         // Success toast
         toast({
-          title: 'Establishment Created Successfully',
-          description: `"${data.name}" has been created and is ready for use.`,
+          title: intl.formatMessage({ id: 'farmForm.toast.createdTitle' }),
+          description: intl.formatMessage(
+            { id: 'farmForm.toast.createdDescription' },
+            { name: data.name }
+          ),
           status: 'success',
           duration: 5000,
           isClosable: true
@@ -188,14 +194,13 @@ function AddFarm({ isEdit = false }: Props) {
 
         // Navigate immediately - RTK Query optimistic update + sessionStorage flags prevent race conditions
         const targetUrl = `/admin/dashboard/farm/${result.id}`;
-        console.log('🔄 Navigating to:', targetUrl);
         navigate(targetUrl);
       }
     } catch (error) {
       console.error(`Failed to ${isEdit ? 'update' : 'create'} establishment:`, error);
 
       // Parse DRF field-level validation errors into readable message
-      let description = 'Please check all required fields and try again.';
+      let description = intl.formatMessage({ id: 'farmForm.toast.errorFallback' });
       if (error?.data && typeof error.data === 'object') {
         if (error.data.detail) {
           description = error.data.detail;
@@ -218,7 +223,9 @@ function AddFarm({ isEdit = false }: Props) {
       }
 
       toast({
-        title: `Error ${isEdit ? 'Updating' : 'Creating'} Establishment`,
+        title: intl.formatMessage({
+          id: isEdit ? 'farmForm.toast.errorUpdating' : 'farmForm.toast.errorCreating'
+        }),
         description,
         status: 'error',
         duration: 6000,
@@ -315,10 +322,12 @@ function AddFarm({ isEdit = false }: Props) {
 
   // Show loading state during data fetch for edit mode
   if (isEdit && isLoadingEstablishment) {
+    // Was a bare Flex + CircularProgress with no page wrapper, so the title and the Back
+    // button vanished while the fetch was in flight and the layout jumped when it landed.
     return (
-      <Flex justify="center" align="center" p={8} minH="200px">
-        <CircularProgress isIndeterminate color="green.500" size="40px" />
-      </Flex>
+      <StandardPage title="Edit Farm" showBackButton onBack={handleCancel}>
+        <StandardPageLoading />
+      </StandardPage>
     );
   }
 
@@ -331,6 +340,14 @@ function AddFarm({ isEdit = false }: Props) {
         isLoading={isCreating || isUpdating}
         isEdit={isEdit}
         companyName={currentCompany?.name || ''}
+        preFormAlert={
+          // Narrow explicitly rather than asserting: `isAtFarmLimit` is only true for a
+          // stated finite limit, but a future change to isAtLimit must not quietly pass
+          // `undefined` into the alert's {limit} placeholder.
+          isAtFarmLimit && maxFarms !== undefined ? (
+            <PlanLimitAlert limit={maxFarms} descriptionId="limits.farmsReached" />
+          ) : undefined
+        }
       />
     </WriteAccessGuard>
   );

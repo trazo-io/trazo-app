@@ -64,7 +64,10 @@ const certificationApi = baseApi.injectEndpoints({
       invalidatesTags: ['Certification', 'Farm']
     }),
 
-    verifyCertification: build.mutation<{ status: string; certification_id: number }, CertificationVerifyParams>({
+    verifyCertification: build.mutation<
+      { status: string; certification_id: number },
+      CertificationVerifyParams
+    >({
       query: ({ companyId, farmId, certificationId }) => ({
         url: CERTIFICATION_VERIFY_URL(companyId, farmId, certificationId),
         method: 'POST',

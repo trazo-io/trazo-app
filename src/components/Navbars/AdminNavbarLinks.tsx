@@ -145,8 +145,7 @@ export default function HeaderLinks(props: HeaderLinksProps) {
       justifyContent="flex-end"
       gap={{ base: 1, sm: 2, md: 3 }}
       flexShrink={0}
-      minW={0}
-    >
+      minW={0}>
       {/* Search Component - Icon on mobile, full input on desktop */}
       {subdomain === 'producer' && isHome && (
         <TrazoGlobalSearch
@@ -168,8 +167,7 @@ export default function HeaderLinks(props: HeaderLinksProps) {
           onClick={handleLogout}
           size="sm"
           px={{ base: 1, md: 2 }}
-          minW={0}
-        >
+          minW={0}>
           <Text display={{ base: 'none', lg: 'flex' }} fontSize="sm" ml={1}>
             {intl.formatMessage({ id: 'app.signOut' })}
           </Text>

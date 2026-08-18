@@ -14,8 +14,7 @@ function PanelContainer(props: PanelContainerProps) {
       minH="calc(100vh - 123px)"
       data-component="PanelContainer"
       className="trazo-panel-container"
-      {...rest}
-    >
+      {...rest}>
       {children}
     </Box>
   );

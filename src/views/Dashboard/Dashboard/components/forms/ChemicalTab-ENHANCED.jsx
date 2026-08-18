@@ -3781,7 +3781,6 @@ const ChemicalTab = forwardRef(
                       </StandardField>
                     </SimpleGrid>
 
-
                     {/* Restricted Use Pesticide - Clean toggle design */}
                     <StandardField
                       label="Restricted Use Pesticide (RUP)"
@@ -3893,7 +3892,7 @@ const ChemicalTab = forwardRef(
                 </SectionBox>
               )}
 
-                    {/* F21 — FSMA PSR § 112.161(b) supervisor review / sign-off.
+              {/* F21 — FSMA PSR § 112.161(b) supervisor review / sign-off.
 
                         Moved OUT of the PE/HE/FU block 2026-08-16. It had been nested inside
                         the pesticide-only section, so a FERTILIZER record could never be signed
@@ -3904,50 +3903,48 @@ const ChemicalTab = forwardRef(
 
                         REI, PHI, EPA registration and applicator certification stay inside that
                         block on purpose: those ARE pesticide concepts and a fertilizer has none. */}
-                    <Box
-                      mt={4}
-                      p={3}
-                      bg="gray.50"
-                      borderRadius="md"
-                      border="1px solid"
-                      borderColor="gray.200">
-                      <HStack justify="space-between" mb={3}>
-                        <Text fontSize="sm" fontWeight="semibold" color="gray.700">
-                          Supervisor Review (FSMA § 112.161(b))
-                        </Text>
-                        <Controller
-                          name="reviewed"
-                          control={methods.control}
-                          render={({ field }) => (
-                            <Switch
-                              isChecked={field.value === 'true'}
-                              onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
-                              colorScheme="green"
-                            />
-                          )}
-                        />
-                      </HStack>
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        <StandardField
-                          label="Reviewed By"
-                          helpText="Supervisor who reviewed this record">
-                          <Controller
-                            name="reviewer_name"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardInput {...field} placeholder="Reviewer name" />
-                            )}
-                          />
-                        </StandardField>
-                        <StandardField label="Review Date">
-                          <Controller
-                            name="review_date"
-                            control={methods.control}
-                            render={({ field }) => <StandardInput {...field} type="date" />}
-                          />
-                        </StandardField>
-                      </SimpleGrid>
-                    </Box>
+              <Box
+                mt={4}
+                p={3}
+                bg="gray.50"
+                borderRadius="md"
+                border="1px solid"
+                borderColor="gray.200">
+                <HStack justify="space-between" mb={3}>
+                  <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                    Supervisor Review (FSMA § 112.161(b))
+                  </Text>
+                  <Controller
+                    name="reviewed"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <Switch
+                        isChecked={field.value === 'true'}
+                        onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
+                        colorScheme="green"
+                      />
+                    )}
+                  />
+                </HStack>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                  <StandardField label="Reviewed By" helpText="Supervisor who reviewed this record">
+                    <Controller
+                      name="reviewer_name"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardInput {...field} placeholder="Reviewer name" />
+                      )}
+                    />
+                  </StandardField>
+                  <StandardField label="Review Date">
+                    <Controller
+                      name="review_date"
+                      control={methods.control}
+                      render={({ field }) => <StandardInput {...field} type="date" />}
+                    />
+                  </StandardField>
+                </SimpleGrid>
+              </Box>
 
               {/* Phase 2: Universal Field Details - variety, block_id, growth_stage */}
               <SectionBox variant="default">

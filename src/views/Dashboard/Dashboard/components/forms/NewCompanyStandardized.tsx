@@ -251,8 +251,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
         <StandardButton variant="outline" onClick={() => navigate('/dashboard/companies')}>
           View All Companies
         </StandardButton>
-      }
-    >
+      }>
       {/* Modern Progress Stepper */}
       <StandardStepper
         steps={steps}
@@ -268,8 +267,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
           {currentStep === 0 && (
             <StandardCard
               title="Company Information"
-              subtitle="Basic details about your agricultural company"
-            >
+              subtitle="Basic details about your agricultural company">
               <VStack spacing={6} align="stretch">
                 {/* Company Name & Email */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
@@ -277,8 +275,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                     label="Company Name"
                     required
                     error={errors.name?.message}
-                    helpText="Enter your company's legal name"
-                  >
+                    helpText="Enter your company's legal name">
                     <StandardInput
                       {...methods.register('name')}
                       placeholder="e.g., Green Valley Farms LLC"
@@ -290,8 +287,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                     label="Email Address"
                     required
                     error={errors.email?.message}
-                    helpText="Primary contact email for the company"
-                  >
+                    helpText="Primary contact email for the company">
                     <StandardInput
                       {...methods.register('email')}
                       type="email"
@@ -306,8 +302,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   <StandardField
                     label="Phone Number"
                     error={errors.phone?.message}
-                    helpText="Company contact phone number"
-                  >
+                    helpText="Company contact phone number">
                     <StandardInput
                       {...methods.register('phone')}
                       type="tel"
@@ -319,8 +314,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   <StandardField
                     label="Website"
                     error={errors.website?.message}
-                    helpText="Company website URL"
-                  >
+                    helpText="Company website URL">
                     <StandardInput
                       {...methods.register('website')}
                       type="url"
@@ -335,8 +329,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                     label="Legal Structure"
                     required
                     error={errors.legalStructure?.message}
-                    helpText="Business legal structure for compliance"
-                  >
+                    helpText="Business legal structure for compliance">
                     <StandardSelect {...methods.register('legalStructure')}>
                       <option value="">Select legal structure...</option>
                       <option value="sole_proprietorship">Sole Proprietorship</option>
@@ -353,8 +346,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                     label="Primary Agricultural Focus"
                     required
                     error={errors.primaryCommodities?.message}
-                    helpText="Main crops or agricultural commodities"
-                  >
+                    helpText="Main crops or agricultural commodities">
                     <StandardSelect {...methods.register('primaryCommodities')}>
                       <option value="">Select primary focus...</option>
                       <option value="fruits_tree">Tree Fruits (Apples, Citrus, etc.)</option>
@@ -380,8 +372,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   <StandardField
                     label="Industry Classification"
                     error={errors.industry?.message}
-                    helpText="General agricultural industry category"
-                  >
+                    helpText="General agricultural industry category">
                     <StandardSelect {...methods.register('industry')}>
                       <option value="">Select classification...</option>
                       <option value="crop_production">Crop Production</option>
@@ -397,12 +388,10 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   <StandardField
                     label="Employee Count"
                     error={errors.employeeCount?.message}
-                    helpText="Approximate number of employees"
-                  >
+                    helpText="Approximate number of employees">
                     <NumberInput
                       value={watch('employeeCount') || 0}
-                      onChange={(_, num) => methods.setValue('employeeCount', num || 0)}
-                    >
+                      onChange={(_, num) => methods.setValue('employeeCount', num || 0)}>
                       <NumberInputField borderRadius="lg" />
                       <NumberInputStepper>
                         <NumberIncrementStepper />
@@ -416,8 +405,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                 <StandardField
                   label="Sustainability Commitment"
                   error={errors.sustainabilityCommitment?.message}
-                  helpText="Your company's approach to sustainable agriculture"
-                >
+                  helpText="Your company's approach to sustainable agriculture">
                   <StandardSelect {...methods.register('sustainabilityCommitment')}>
                     <option value="">Select commitment level...</option>
                     <option value="carbon_neutral">Carbon Neutral Goals</option>
@@ -436,8 +424,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                 <StandardField
                   label="Company Description"
                   error={errors.description?.message}
-                  helpText="Describe your agricultural operations, products, and mission"
-                >
+                  helpText="Describe your agricultural operations, products, and mission">
                   <StandardTextarea
                     {...methods.register('description')}
                     placeholder="Tell us about your agricultural company, what you produce, your farming practices, and your sustainability goals..."
@@ -447,8 +434,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                 {/* Active Status */}
                 <StandardField
                   label="Company Status"
-                  helpText="Activate the company to start using Trazo services"
-                >
+                  helpText="Activate the company to start using Trazo services">
                   <HStack>
                     <Switch {...methods.register('isActive')} colorScheme="green" size="md" />
                     <Text fontSize="sm" color="gray.600">
@@ -465,8 +451,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}
-                  >
+                    disabled={!isStepComplete(0)}>
                     {isMobile ? 'Continue' : 'Continue to Location'}
                   </StandardButton>
                 </HStack>
@@ -478,15 +463,13 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
           {currentStep === 1 && (
             <StandardCard
               title="Location Details"
-              subtitle="Where is your agricultural operation based?"
-            >
+              subtitle="Where is your agricultural operation based?">
               <VStack spacing={6} align="stretch">
                 {/* Address */}
                 <StandardField
                   label="Street Address"
                   error={errors.address?.message}
-                  helpText="Physical address of your main operation"
-                >
+                  helpText="Physical address of your main operation">
                   <StandardInput
                     {...methods.register('address')}
                     placeholder="123 Farm Road"
@@ -535,8 +518,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   <StandardField
                     label="Facebook Page"
                     error={errors.facebook?.message}
-                    helpText="Company Facebook page URL"
-                  >
+                    helpText="Company Facebook page URL">
                     <StandardInput
                       {...methods.register('facebook')}
                       placeholder="https://facebook.com/yourfarm"
@@ -546,8 +528,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   <StandardField
                     label="Instagram Profile"
                     error={errors.instagram?.message}
-                    helpText="Company Instagram profile URL"
-                  >
+                    helpText="Company Instagram profile URL">
                     <StandardInput
                       {...methods.register('instagram')}
                       placeholder="https://instagram.com/yourfarm"
@@ -567,8 +548,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     {isMobile ? 'Back' : 'Back to Company Info'}
                   </StandardButton>
 
@@ -581,9 +561,14 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                     <StandardButton
                       type="submit"
                       isLoading={isLoading}
-                      loadingText={isEdit ? 'Updating...' : 'Creating...'}
-                    >
-                      {isEdit ? (isMobile ? 'Update' : 'Update Company') : (isMobile ? 'Create' : 'Create Company')}
+                      loadingText={isEdit ? 'Updating...' : 'Creating...'}>
+                      {isEdit
+                        ? isMobile
+                          ? 'Update'
+                          : 'Update Company'
+                        : isMobile
+                        ? 'Create'
+                        : 'Create Company'}
                     </StandardButton>
                   </HStack>
                 </HStack>

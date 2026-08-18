@@ -24,8 +24,7 @@ export default function LanguageToggle() {
         color={isEs ? 'gray.400' : 'green.500'}
         _hover={{ color: 'green.500' }}
         onClick={() => setLocale('en-US')}
-        aria-pressed={!isEs}
-      >
+        aria-pressed={!isEs}>
         EN
       </Link>
       <Text color="gray.300" fontSize="sm">
@@ -39,8 +38,7 @@ export default function LanguageToggle() {
         color={isEs ? 'green.500' : 'gray.400'}
         _hover={{ color: 'green.500' }}
         onClick={() => setLocale('es-419')}
-        aria-pressed={isEs}
-      >
+        aria-pressed={isEs}>
         ES
       </Link>
     </HStack>

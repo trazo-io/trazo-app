@@ -111,6 +111,13 @@ const formSchemaSoilManagement = object({
   amendment_type: string().optional(),
   amendment_product_name: string().optional(),
   amendment_manufacturer: string().optional(),
+  // Amendment purchase traceability — 7 CFR 205.103(b)(1)-(2), added 2026-08-16.
+  amendment_supplier_name: string().optional(),
+  amendment_purchase_date: string().optional(),
+  amendment_purchase_invoice: string().optional(),
+  amendment_quantity_purchased: string().optional(),
+  amendment_quantity_purchased_unit: string().optional(),
+  amendment_lot_number: string().optional(),
   // CC subtype — routed into extra_data on submit (NOP §205.203 cover-crop record)
   cover_crop_species: string().optional(),
   animal_type: string().optional(),
@@ -394,6 +401,12 @@ const SoilManagementTab = forwardRef(
         amendment_type: initialValues.amendment_type || '',
         amendment_product_name: initialValues.amendment_product_name || '',
         amendment_manufacturer: initialValues.amendment_manufacturer || '',
+        amendment_supplier_name: initialValues.amendment_supplier_name || '',
+        amendment_purchase_date: initialValues.amendment_purchase_date || '',
+        amendment_purchase_invoice: initialValues.amendment_purchase_invoice || '',
+        amendment_quantity_purchased: initialValues.amendment_quantity_purchased?.toString() ?? '',
+        amendment_quantity_purchased_unit: initialValues.amendment_quantity_purchased_unit || 'kg',
+        amendment_lot_number: initialValues.amendment_lot_number || '',
         // Cover-crop species persists in extra_data, so on EDIT read both the top-level
         // (when the edit path normalized it up) AND the extra_data fallback.
         cover_crop_species:
@@ -1279,6 +1292,102 @@ const SoilManagementTab = forwardRef(
                           <option value="inches">inches</option>
                         </StandardSelect>
                       </HStack>
+                    </StandardField>
+
+                    {/* 🔴 Amendment purchase traceability — 7 CFR 205.103(b)(1)-(2).
+                        CCOF's grower checklist asks for receipts for "fertilizer, compost,
+                        soil amendments, planting mixes" in one line. The chemical form has
+                        had these five inputs since Sprint 3; this one had none, so the
+                        largest purchased input on most organic orchards had no paper trail
+                        and the packet's mass balance could not reconcile. Blank is fine —
+                        on-farm compost is not a purchase. */}
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'events.soil.fields.amendmentSupplierName',
+                        defaultMessage: 'Bought From (Supplier)'
+                      })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.amendmentSupplierNameHelp',
+                        defaultMessage:
+                          'Who you bought it from — the name on the receipt. Leave blank for on-farm compost.'
+                      })}>
+                      <StandardInput
+                        placeholder={intl.formatMessage({
+                          id: 'events.soil.amendmentSupplierNamePlaceholder',
+                          defaultMessage: 'e.g., Central Valley Compost Supply'
+                        })}
+                        {...register('amendment_supplier_name')}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'events.soil.fields.amendmentPurchaseDate',
+                        defaultMessage: 'Purchase Date'
+                      })}>
+                      <StandardInput type="date" {...register('amendment_purchase_date')} />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'events.soil.fields.amendmentPurchaseInvoice',
+                        defaultMessage: 'Invoice / Receipt #'
+                      })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.amendmentPurchaseInvoiceHelp',
+                        defaultMessage:
+                          'Points your inspector at the paper record without you digging for it.'
+                      })}>
+                      <StandardInput
+                        placeholder="e.g., INV-20614"
+                        {...register('amendment_purchase_invoice')}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'events.soil.fields.amendmentQuantityPurchased',
+                        defaultMessage: 'Quantity Purchased'
+                      })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.amendmentQuantityPurchasedHelp',
+                        defaultMessage:
+                          'Total amount bought on this invoice. Certifiers reconcile purchased against applied.'
+                      })}>
+                      <HStack spacing={2}>
+                        <StandardInput
+                          flex={2}
+                          type="number"
+                          step="0.01"
+                          min={0}
+                          placeholder="0.00"
+                          {...register('amendment_quantity_purchased')}
+                        />
+                        {/* MUST stay the backend's UNIT_AMENDMENT list — the applied amount and
+                            the purchased amount are the two halves of the mass balance, and the
+                            export can only subtract them when the unit strings match. */}
+                        <StandardSelect flex={1} {...register('amendment_quantity_purchased_unit')}>
+                          <option value="kg">kg</option>
+                          <option value="lbs">Pounds</option>
+                          <option value="tons">Tons</option>
+                          <option value="gal">Gallons</option>
+                        </StandardSelect>
+                      </HStack>
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'events.soil.fields.amendmentLotNumber',
+                        defaultMessage: 'Lot / Batch #'
+                      })}
+                      helpText={intl.formatMessage({
+                        id: 'events.soil.amendmentLotNumberHelp',
+                        defaultMessage: 'From the bag, tote or delivery ticket.'
+                      })}>
+                      <StandardInput
+                        placeholder="e.g., LOT-CVC-8841"
+                        {...register('amendment_lot_number')}
+                      />
                     </StandardField>
                   </SimpleGrid>
 

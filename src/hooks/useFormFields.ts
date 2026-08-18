@@ -13,12 +13,7 @@
 
 import { useMemo } from 'react';
 
-import type {
-  AnySubtype,
-  EventTypeCode,
-  EventTypeName,
-  FieldConfig
-} from 'src/config/events';
+import type { AnySubtype, EventTypeCode, EventTypeName, FieldConfig } from 'src/config/events';
 import { getFieldConfig, getFieldNamesForSurface, getRegistryEntry } from 'src/config/events';
 
 export interface UseFormFieldsOptions {

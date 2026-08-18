@@ -209,8 +209,7 @@ const StandardImageGallery = ({
                 }
               : undefined
           }
-          transition="all 0.2s ease"
-        >
+          transition="all 0.2s ease">
           <S3Image
             src={imageData.url}
             alt={imageData.name || 'Gallery image'}
@@ -229,8 +228,7 @@ const StandardImageGallery = ({
               right={1}
               bg="blackAlpha.700"
               borderRadius="md"
-              p={1}
-            >
+              p={1}>
               <Icon as={FaExpand} boxSize={3} color="white" />
             </Box>
           )}
@@ -279,8 +277,7 @@ const StandardImageGallery = ({
                 px={3}
                 py={1}
                 borderRadius="full"
-                fontSize="sm"
-              >
+                fontSize="sm">
                 {intl.formatMessage(
                   {
                     id: 'gallery.photoCount',
@@ -315,8 +312,7 @@ const StandardImageGallery = ({
                     }
                   : undefined
               }
-              transition="all 0.2s ease"
-            >
+              transition="all 0.2s ease">
               {failedIndices.has(index) ? (
                 <EmptyImageState
                   variant="small"
@@ -357,8 +353,7 @@ const StandardImageGallery = ({
                     display="flex"
                     alignItems="center"
                     justifyContent="center"
-                    backdropFilter="blur(2px)"
-                  >
+                    backdropFilter="blur(2px)">
                     <VStack spacing={2}>
                       <Text color="white" fontSize="2xl" fontWeight="bold">
                         +{remainingCount}
@@ -392,8 +387,7 @@ const StandardImageGallery = ({
                     alignItems="center"
                     justifyContent="center"
                     transition="opacity 0.2s ease"
-                    _hover={{ opacity: 1 }}
-                  >
+                    _hover={{ opacity: 1 }}>
                     <VStack spacing={1}>
                       <Icon as={FaExpand} boxSize={6} color="white" />
                       <Text color="white" fontSize="xs" fontWeight="medium">
@@ -439,8 +433,7 @@ const StandardImageGallery = ({
             justifyContent="center"
             position="relative"
             overflow="hidden"
-            containerProps={{ style: { zIndex: 10001 } }}
-          >
+            containerProps={{ style: { zIndex: 10001 } }}>
             <ModalCloseButton
               position="absolute"
               top={{
@@ -466,8 +459,7 @@ const StandardImageGallery = ({
               justifyContent="center"
               position="relative"
               onClick={onClose}
-              cursor="pointer"
-            >
+              cursor="pointer">
               {/* Main image container */}
               <Box
                 position="relative"
@@ -475,8 +467,7 @@ const StandardImageGallery = ({
                 h="100%"
                 display="flex"
                 alignItems="center"
-                justifyContent="center"
-              >
+                justifyContent="center">
                 <S3Image
                   src={processedImages[currentImageIndex]?.url}
                   alt={processedImages[currentImageIndex]?.name || 'Gallery preview'}
@@ -557,8 +548,7 @@ const StandardImageGallery = ({
                   fontSize="sm"
                   fontWeight="medium"
                   zIndex={15}
-                  backdropFilter="blur(10px)"
-                >
+                  backdropFilter="blur(10px)">
                   {currentImageIndex + 1} of {processedImages.length}
                 </Box>
               )}
@@ -581,8 +571,7 @@ const StandardImageGallery = ({
                     display="flex"
                     alignItems="center"
                     justifyContent="flex-start"
-                    pl={2}
-                  >
+                    pl={2}>
                     <Icon
                       as={FaChevronLeft}
                       color="whiteAlpha.800"
@@ -608,8 +597,7 @@ const StandardImageGallery = ({
                     display="flex"
                     alignItems="center"
                     justifyContent="flex-end"
-                    pr={2}
-                  >
+                    pr={2}>
                     <Icon
                       as={FaChevronRight}
                       color="whiteAlpha.800"

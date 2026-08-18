@@ -59,6 +59,7 @@ import type {
   ModuleQuestion
 } from 'config/osp/types';
 import { useGetOSPModuleQuery, useGetOSPsQuery, useSaveOSPModuleMutation } from 'store/api/ospApi';
+import { useGetFarmDocumentsQuery, useUploadFarmDocumentMutation } from 'store/api/documentsApi';
 import type { RootState } from 'store/index';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
@@ -93,13 +94,113 @@ const toggleCheckbox = (
  * ignores the readOnly attribute entirely and would look locked while still accepting a
  * change.
  */
+/**
+ * The `upload` question kind, actually implemented.
+ *
+ * 🔴 2026-08-16. Every `kind: "upload"` question in every OSP module rendered a dashed
+ * placeholder reading "File attachments arrive with the Documents page — keep this record on
+ * paper for now". There are ~10 of them, and they cover exactly the records CCOF's grower
+ * checklist asks a document for: supplier organic certificates for purchased seedlings, the
+ * OFPP, handling SOPs, the § 11 audit-trail exhibit. The Documents page existed the whole
+ * time; nothing connected the two.
+ *
+ * Files land in the `organic_system_plan` folder tagged with this module's key, which is what
+ * makes them findable from the module and from the packet's document index.
+ */
+const ModuleUploadField = ({
+  companyId,
+  farmId,
+  moduleKey,
+  isReadOnly
+}: {
+  companyId: string;
+  farmId: string;
+  moduleKey: string;
+  isReadOnly: boolean;
+}) => {
+  const intl = useIntl();
+  const toast = useToast();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const canQuery = Boolean(companyId && farmId && moduleKey);
+
+  const { data: attached = [] } = useGetFarmDocumentsQuery(
+    { companyId, farmId, linkedSection: moduleKey },
+    { skip: !canQuery }
+  );
+  const [uploadDocument, { isLoading: uploading }] = useUploadFarmDocumentMutation();
+
+  const onPick = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      await uploadDocument({
+        companyId,
+        farmId,
+        file,
+        title: file.name.replace(/\.[^.]+$/, ''),
+        folder: 'organic_system_plan',
+        linkedSection: moduleKey
+      }).unwrap();
+      toast({
+        title: intl.formatMessage({ id: 'osp.wizard.uploadDone' }),
+        status: 'success',
+        duration: 3000
+      });
+    } catch (err) {
+      toast({
+        title: intl.formatMessage({ id: 'osp.wizard.uploadFailed' }),
+        description: apiErrorMessage(err) ?? undefined,
+        status: 'error',
+        duration: 7000,
+        isClosable: true
+      });
+    }
+    if (fileInput.current) fileInput.current.value = '';
+  };
+
+  return (
+    <VStack align="stretch" spacing={2}>
+      {attached.length > 0 && (
+        <VStack align="stretch" spacing={1}>
+          {attached.map((doc) => (
+            <HStack key={doc.id} spacing={2}>
+              <Box as={FaPaperclip} color="green.700" />
+              <Text fontSize="sm">{doc.title}</Text>
+            </HStack>
+          ))}
+        </VStack>
+      )}
+      <input
+        ref={fileInput}
+        type="file"
+        hidden
+        accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,.tif,.tiff,.xlsx,.xls,.docx,.doc,.csv,.txt,.zip"
+        onChange={(e) => onPick(e.target.files?.[0])}
+      />
+      <StandardButton
+        variant="outline"
+        size="sm"
+        isLoading={uploading}
+        isDisabled={isReadOnly || !canQuery}
+        leftIcon={<Box as={FaPaperclip} />}
+        onClick={() => fileInput.current?.click()}>
+        {intl.formatMessage({
+          id: attached.length ? 'osp.wizard.uploadAnother' : 'osp.wizard.uploadAttach'
+        })}
+      </StandardButton>
+    </VStack>
+  );
+};
+
 const QuestionField = ({
   question,
   value,
   locale,
   showMissing,
   isReadOnly,
-  onChange
+  onChange,
+  companyId,
+  farmId,
+  moduleKey
 }: {
   question: ModuleQuestion;
   value: AnswerValue;
@@ -107,6 +208,9 @@ const QuestionField = ({
   showMissing: boolean;
   isReadOnly: boolean;
   onChange: (value: AnswerValue) => void;
+  companyId: string;
+  farmId: string;
+  moduleKey: string;
 }) => {
   const intl = useIntl();
   const label = pickText(question.label, locale);
@@ -120,16 +224,12 @@ const QuestionField = ({
       break;
     case 'upload':
       control = (
-        <HStack
-          spacing={2}
-          p={3}
-          borderWidth="1px"
-          borderStyle="dashed"
-          borderRadius="md"
-          color="gray.500">
-          <Box as={FaPaperclip} />
-          <Text fontSize="sm">{intl.formatMessage({ id: 'osp.wizard.uploadComingSoon' })}</Text>
-        </HStack>
+        <ModuleUploadField
+          companyId={companyId}
+          farmId={farmId}
+          moduleKey={moduleKey}
+          isReadOnly={isReadOnly}
+        />
       );
       break;
     case 'boolean':
@@ -820,6 +920,9 @@ const OSPModuleWizard = () => {
                                 showMissing={showMissing && missing.includes(question.key)}
                                 isReadOnly={!ospIsDraft}
                                 onChange={(value) => setAnswer(question.key, value)}
+                                companyId={companyId}
+                                farmId={farmId || ''}
+                                moduleKey={moduleKey || ''}
                               />
                               {showSuggestion && (
                                 <Box

@@ -19,8 +19,7 @@ const ConsumerResetPassword: React.FC = () => {
           align="center"
           p={{ base: 6, md: 12 }}
           bg={bgColor}
-          position="relative"
-        >
+          position="relative">
           <Box w="full" maxW={{ base: '100%', md: '450px' }}>
             {/* Header */}
             <VStack spacing={6} mb={8} textAlign="center">
@@ -61,8 +60,7 @@ const ConsumerResetPassword: React.FC = () => {
           overflow="hidden"
           initial={{ opacity: 0, x: 100 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-        >
+          transition={{ duration: 0.8, ease: 'easeOut' }}>
           {/* Geometric Background Elements */}
           <Box
             position="absolute"
@@ -103,8 +101,7 @@ const ConsumerResetPassword: React.FC = () => {
             p={12}
             textAlign="center"
             position="relative"
-            zIndex={1}
-          >
+            zIndex={1}>
             <VStack spacing={8}>
               {/* Icon */}
               <Box
@@ -113,8 +110,7 @@ const ConsumerResetPassword: React.FC = () => {
                 borderRadius="3xl"
                 backdropFilter="blur(10px)"
                 border="1px solid"
-                borderColor="whiteAlpha.300"
-              >
+                borderColor="whiteAlpha.300">
                 <Icon as={FaHeart} boxSize={12} color="white" />
               </Box>
 
@@ -126,8 +122,8 @@ const ConsumerResetPassword: React.FC = () => {
                   Impact
                 </Text>
                 <Text fontSize="lg" opacity={0.9} maxW="md" lineHeight="1.6">
-                  Secure your transparency data and farm discoveries with a strong password.
-                  Your food transparency journey deserves the best protection we can provide.
+                  Secure your transparency data and farm discoveries with a strong password. Your
+                  food transparency journey deserves the best protection we can provide.
                 </Text>
               </VStack>
 

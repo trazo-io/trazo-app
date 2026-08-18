@@ -18,8 +18,6 @@ import {
   AccordionIcon,
   AccordionItem,
   AccordionPanel,
-  Alert,
-  AlertIcon,
   Badge,
   Box,
   Divider,
@@ -32,7 +30,6 @@ import {
   Spinner,
   Stack,
   Text,
-  Textarea,
   Tooltip,
   useColorModeValue,
   useToast,
@@ -43,20 +40,23 @@ import {
   FaDownload,
   FaExclamationTriangle,
   FaFileAlt,
+  FaHistory,
   FaLeaf,
   FaPlus,
   FaRegCircle
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
 import { config } from 'config/environment';
 import {
+  StandardAlert,
   StandardButton,
   StandardCard,
   StandardPage,
-  StandardPageLoading
+  StandardPageLoading,
+  StandardTextarea
 } from 'components/Design/StandardComponents';
 import {
   useCreateOSPMutation,
@@ -228,6 +228,12 @@ const OSPView: React.FC = () => {
   const intl = useIntl();
   const toast = useToast();
   const { farmId } = useParams<{ farmId: string }>();
+  const navigate = useNavigate();
+  // Drill-down page: reached from the OSP module list, never from the sidebar, so it owes a
+  // Back button (page-layout standard). Same target and same StandardPage affordance the
+  // module wizard uses. Unsaved narrative text survives the exit — the draft autosaves to
+  // localStorage on every keystroke and is restored on return.
+  const backToModules = () => navigate(`/admin/dashboard/farm/${farmId}/osp`);
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
   const companyId = currentCompany?.id;
   const farmState = useFarmState(farmId);
@@ -548,11 +554,15 @@ const OSPView: React.FC = () => {
   // Error state: list fetch failed. Without it, we'd spin forever on "Detail pending".
   if (listError) {
     return (
-      <StandardPage title={intl.formatMessage({ id: 'osp.title' })}>
-        <Alert status="error" borderRadius="md">
-          <AlertIcon />
-          <Text fontSize="sm">{intl.formatMessage({ id: 'osp.error.load' })}</Text>
-        </Alert>
+      <StandardPage
+        title={intl.formatMessage({ id: 'osp.title' })}
+        showBackButton
+        onBack={backToModules}>
+        <StandardAlert
+          status="error"
+          mb={0}
+          description={intl.formatMessage({ id: 'osp.error.load' })}
+        />
       </StandardPage>
     );
   }
@@ -570,10 +580,12 @@ const OSPView: React.FC = () => {
     return (
       <StandardPage
         title={intl.formatMessage({ id: 'osp.title' })}
-        description={intl.formatMessage({ id: 'osp.subtitle' })}>
+        description={intl.formatMessage({ id: 'osp.subtitle' })}
+        showBackButton
+        onBack={backToModules}>
         <StandardCard>
           <VStack spacing={4} py={8} px={4} bg={emptyBg} borderRadius="md">
-            <Icon as={FaLeaf} boxSize={10} color="green.500" />
+            <Icon as={FaLeaf} boxSize={10} color="green.700" />
             <Text fontWeight="bold" fontSize="lg" textAlign="center">
               {intl.formatMessage({ id: 'osp.none' })}
             </Text>
@@ -624,7 +636,10 @@ const OSPView: React.FC = () => {
   // Detail pending (summaries loaded but detail not yet).
   if (!editableOsp) {
     return (
-      <StandardPage title={intl.formatMessage({ id: 'osp.title' })}>
+      <StandardPage
+        title={intl.formatMessage({ id: 'osp.title' })}
+        showBackButton
+        onBack={backToModules}>
         <Flex justify="center" py={10}>
           {detailLoading ? (
             <Spinner />
@@ -682,16 +697,17 @@ const OSPView: React.FC = () => {
   return (
     <StandardPage
       title={intl.formatMessage({ id: 'osp.title' })}
-      description={intl.formatMessage({ id: 'osp.subtitle' })}>
+      description={intl.formatMessage({ id: 'osp.subtitle' })}
+      showBackButton
+      onBack={backToModules}>
       {/* Header card — status + progress + actions */}
-      <StandardCard mb={4}>
+      <StandardCard
+        mb={4}
+        titleIcon={<Icon as={FaFileAlt} color="green.700" />}
+        title={`${intl.formatMessage({ id: 'osp.version' })} ${editableOsp.version_number}`}>
         <VStack align="stretch" spacing={3}>
           <HStack justify="space-between" flexWrap="wrap" gap={2}>
             <HStack spacing={3}>
-              <Icon as={FaFileAlt} color="green.600" />
-              <Text fontWeight="bold" fontSize="lg">
-                {intl.formatMessage({ id: 'osp.version' })} {editableOsp.version_number}
-              </Text>
               <Badge colorScheme={statusColor}>
                 {intl.formatMessage({ id: `osp.status.${editableOsp.status}` })}
               </Badge>
@@ -849,10 +865,11 @@ const OSPView: React.FC = () => {
           in the narrative — matches the PDF's demotion logic. */}
       <StandardCard>
         {!isEditable && (
-          <Alert status="info" borderRadius="md" mb={3} fontSize="sm" alignItems="flex-start">
-            <AlertIcon />
-            <Text>{intl.formatMessage({ id: 'osp.sectionsLocked' })}</Text>
-          </Alert>
+          <StandardAlert
+            status="info"
+            mb={3}
+            description={intl.formatMessage({ id: 'osp.sectionsLocked' })}
+          />
         )}
         {parcelSummary && (
           <Box
@@ -885,12 +902,17 @@ const OSPView: React.FC = () => {
             const status = perSectionStatus[key];
             const showRegistryGap = key === 'inputs_list' && registrySyncHasWarning;
             const iconAs = status.tier === 'complete' ? FaCheckCircle : FaRegCircle;
+            // MEASURED on white, WCAG 1.4.11 non-text floor is 3.0:
+            //   green.500 2.78 ✗ -> green.700 5.13 ✓
+            //   gray.400  2.68 ✗ -> gray.500  4.61 ✓
+            // `orange.*` is not in this theme at all (it defines amber), so it silently
+            // resolved to CHAKRA's orange — a foreign accent beside Trazo's own ramp.
             const iconColor =
               status.tier === 'complete'
-                ? 'green.500'
+                ? 'green.700'
                 : status.tier === 'brief'
-                ? 'orange.400'
-                : 'gray.400';
+                ? 'amber.900'
+                : 'gray.500';
             return (
               <AccordionItem key={key} borderTopWidth="0px" borderBottomWidth="1px">
                 <AccordionButton py={3}>
@@ -953,17 +975,24 @@ const OSPView: React.FC = () => {
                   <AccordionIcon ml={2} />
                 </AccordionButton>
                 <AccordionPanel pb={4}>
-                  <Textarea
+                  <StandardTextarea
                     value={section.narrative}
-                    onChange={(e) => updateSection(key, e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      updateSection(key, e.target.value)
+                    }
                     placeholder={intl.formatMessage({ id: 'osp.section.narrative' })}
                     rows={8}
                     resize="vertical"
                     isReadOnly={!isEditable}
                     bg={isEditable ? undefined : lockedBg}
                   />
+                  {/* Was `orange.600` — this theme defines `amber`, not `orange`, so the token
+                      silently resolved to CHAKRA's orange: a foreign accent sitting beside
+                      Trazo's own ramp. Amber cannot replace it either — the ramp tops out at
+                      #E65100 = 3.75:1 on white, under the 4.5 a 12px line needs. So the hue
+                      carries no meaning here and the WORDS do, in a colour that is readable. */}
                   {status.tier === 'brief' && (
-                    <Text fontSize="xs" color="orange.600" mt={2}>
+                    <Text fontSize="xs" color="gray.700" mt={2}>
                       {intl.formatMessage(
                         { id: 'osp.section.briefHint' },
                         { chars: status.charCount, floor: OSP_MATERIAL_FLOOR }
@@ -1030,10 +1059,10 @@ const OSPView: React.FC = () => {
 
       {/* Version history — prior versions. */}
       {ospSummaries && ospSummaries.length > 1 && (
-        <StandardCard mt={4}>
-          <Text fontWeight="bold" mb={3} fontSize="sm">
-            {intl.formatMessage({ id: 'osp.version' })}s
-          </Text>
+        <StandardCard
+          mt={4}
+          titleIcon={<Icon as={FaHistory} color="green.700" />}
+          title={`${intl.formatMessage({ id: 'osp.version' })}s`}>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
             {ospSummaries.map((s) => {
               const isSelected = s.id === editableOsp.id;

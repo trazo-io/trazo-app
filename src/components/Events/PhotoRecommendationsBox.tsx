@@ -111,8 +111,7 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
       aria-label={intl.formatMessage(
         { id: 'events.photos.guidanceFor', defaultMessage: 'Photo guidance for {activity}' },
         { activity: tr(subtypeRec?.subtypeName || (photoRecs as PhotoRecommendation).eventType) }
-      )}
-    >
+      )}>
       <VStack spacing={3} align="stretch">
         {/* Title with Icon - No emoji, clean professional design */}
         <HStack spacing={2}>
@@ -120,11 +119,17 @@ export const PhotoRecommendationsBox: React.FC<PhotoRecommendationsBoxProps> = (
           <Text fontSize="sm" fontWeight="semibold" color={textPrimary}>
             {subtypeRec
               ? intl.formatMessage(
-                  { id: 'events.photos.guidanceTitle', defaultMessage: '{activity} — photo guidance' },
+                  {
+                    id: 'events.photos.guidanceTitle',
+                    defaultMessage: '{activity} — photo guidance'
+                  },
                   { activity: tr(subtypeRec.subtypeName) }
                 )
               : intl.formatMessage(
-                  { id: 'events.photos.guidanceFor', defaultMessage: 'Photo guidance for {activity}' },
+                  {
+                    id: 'events.photos.guidanceFor',
+                    defaultMessage: 'Photo guidance for {activity}'
+                  },
                   { activity: tr((photoRecs as PhotoRecommendation).eventType) }
                 )}
           </Text>

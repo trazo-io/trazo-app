@@ -421,8 +421,7 @@ function ProfileFarm() {
                 leftIcon={<Icon as={FaEdit} />}
                 onClick={() => navigate(`/admin/dashboard/farm/${farmId}/change`)}
                 flexShrink={0}
-                w="auto"
-              >
+                w="auto">
                 {intl.formatMessage({ id: 'app.edit' })}
               </StandardButton>
             )}
@@ -461,8 +460,7 @@ function ProfileFarm() {
             id: 'farm.section.forYourCertifierHelp',
             defaultMessage:
               'Share your records or generate the packet your certifier asks for at renewal.'
-          })}
-        >
+          })}>
           {/* The Starter/Compliance boundary, drawn once for the whole section instead of on
               each button — so a farmer sees a state of the page rather than two controls that
               fail on click, and a third artifact added below inherits it automatically.
@@ -502,14 +500,12 @@ function ProfileFarm() {
                     title={intl.formatMessage({ id: 'app.pur.complianceReports' })}
                     variant="elevated"
                     padding={{ base: 3, md: 4 }}
-                    mb={0}
-                  >
+                    mb={0}>
                     <HStack
                       justify="space-between"
                       align={{ base: 'flex-start', smd: 'center' }}
                       flexDirection={{ base: 'column', smd: 'row' }}
-                      gap={3}
-                    >
+                      gap={3}>
                       <VStack align="flex-start" gap={0.5}>
                         <Text fontSize="sm" fontWeight="semibold" color="gray.800">
                           {intl.formatMessage({ id: 'app.pur.title' })}
@@ -523,8 +519,7 @@ function ProfileFarm() {
                         size="sm"
                         leftIcon={<Icon as={FaFileAlt} />}
                         onClick={() => setPurModalOpen(true)}
-                        w={{ base: 'full', smd: 'auto' }}
-                      >
+                        w={{ base: 'full', smd: 'auto' }}>
                         {intl.formatMessage({ id: 'app.pur.generate' })}
                       </StandardButton>
                     </HStack>
@@ -540,8 +535,7 @@ function ProfileFarm() {
           title={intl.formatMessage({
             id: 'farm.section.organicCompliance',
             defaultMessage: 'Organic compliance'
-          })}
-        >
+          })}>
           <VStack align="stretch" gap={4} w="100%">
             <Box data-tour="farm-certifications" w="full">
               <StandardCard
@@ -554,13 +548,11 @@ function ProfileFarm() {
                     <StandardButton
                       size="sm"
                       leftIcon={<Icon as={FaPlus} />}
-                      onClick={addCertDisclosure.onOpen}
-                    >
+                      onClick={addCertDisclosure.onOpen}>
                       {intl.formatMessage({ id: 'certification.manage.add' })}
                     </StandardButton>
                   ) : undefined
-                }
-              >
+                }>
                 <CertificationManager
                   companyId={String(currentCompany?.id ?? '')}
                   farmId={String(farmId ?? '')}
@@ -587,8 +579,7 @@ function ProfileFarm() {
                 })}
                 variant="outline"
                 padding={{ base: 3, md: 4 }}
-                mb={0}
-              >
+                mb={0}>
                 <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
                   {/* ---- Organic fraud prevention plan (7 CFR 205.201(a)(3)) ---- */}
                   <FieldGroup
@@ -604,13 +595,11 @@ function ProfileFarm() {
                             setOfppResponsible(establishmentData.ofpp_responsible_person || '');
                             setOfppDate(establishmentData.fraud_prevention_plan_date || '');
                             setOfppEditMode(true);
-                          }}
-                        >
+                          }}>
                           {intl.formatMessage({ id: 'app.edit' })}
                         </StandardButton>
                       ) : undefined
-                    }
-                  >
+                    }>
                     <VStack gap={4} align="stretch">
                       {/* Three states, not two (2026-08-10): a suspicious
                           filename (invoice/receipt heuristic) previously showed
@@ -623,8 +612,8 @@ function ProfileFarm() {
                             establishmentData.ofpp_filename_suspicious
                               ? 'orange.500'
                               : establishmentData.fraud_prevention_plan_uploaded
-                                ? 'green.500'
-                                : 'yellow.500'
+                              ? 'green.500'
+                              : 'yellow.500'
                           }
                           boxSize={5}
                         />
@@ -633,20 +622,19 @@ function ProfileFarm() {
                             establishmentData.ofpp_filename_suspicious
                               ? 'orange'
                               : establishmentData.fraud_prevention_plan_uploaded
-                                ? 'green'
-                                : 'yellow'
+                              ? 'green'
+                              : 'yellow'
                           }
                           variant="subtle"
                           px={3}
                           py={1}
                           borderRadius="full"
-                          fontSize={{ base: 'xs', md: 'sm' }}
-                        >
+                          fontSize={{ base: 'xs', md: 'sm' }}>
                           {establishmentData.ofpp_filename_suspicious
                             ? intl.formatMessage({ id: 'farm.soe.planSuspicious' })
                             : establishmentData.fraud_prevention_plan_uploaded
-                              ? intl.formatMessage({ id: 'farm.soe.planUploaded' })
-                              : intl.formatMessage({ id: 'farm.soe.planMissing' })}
+                            ? intl.formatMessage({ id: 'farm.soe.planUploaded' })
+                            : intl.formatMessage({ id: 'farm.soe.planMissing' })}
                         </Badge>
                       </HStack>
                       {establishmentData.ofpp_filename_suspicious && (
@@ -664,13 +652,11 @@ function ProfileFarm() {
                               bg="yellow.50"
                               borderRadius="md"
                               border="1px solid"
-                              borderColor="yellow.200"
-                            >
+                              borderColor="yellow.200">
                               <HStack
                                 gap={3}
                                 align={{ base: 'stretch', smd: 'center' }}
-                                flexDirection={{ base: 'column', smd: 'row' }}
-                              >
+                                flexDirection={{ base: 'column', smd: 'row' }}>
                                 <Text fontSize="sm" color="yellow.800" flex={1}>
                                   {intl.formatMessage({ id: 'farm.soe.uploadCta' })}
                                 </Text>
@@ -683,8 +669,7 @@ function ProfileFarm() {
                                     );
                                     setOfppDate(establishmentData.fraud_prevention_plan_date || '');
                                     setOfppEditMode(true);
-                                  }}
-                                >
+                                  }}>
                                   {intl.formatMessage({ id: 'farm.soe.uploadButton' })}
                                 </StandardButton>
                               </HStack>
@@ -723,8 +708,7 @@ function ProfileFarm() {
                               isExternal
                               color="green.700"
                               fontWeight="medium"
-                              fontSize="sm"
-                            >
+                              fontSize="sm">
                               {intl.formatMessage({
                                 id: 'farm.soe.viewDocument',
                                 defaultMessage: 'View document'
@@ -743,8 +727,7 @@ function ProfileFarm() {
                               color="gray.500"
                               textTransform="uppercase"
                               fontWeight="semibold"
-                              mb={1}
-                            >
+                              mb={1}>
                               {intl.formatMessage({ id: 'farm.soe.responsiblePerson' })}
                             </FormLabel>
                             <Input
@@ -762,8 +745,7 @@ function ProfileFarm() {
                               color="gray.500"
                               textTransform="uppercase"
                               fontWeight="semibold"
-                              mb={1}
-                            >
+                              mb={1}>
                               {intl.formatMessage({ id: 'farm.soe.planDate' })}
                             </FormLabel>
                             <Input
@@ -779,8 +761,7 @@ function ProfileFarm() {
                               color="gray.500"
                               textTransform="uppercase"
                               fontWeight="semibold"
-                              mb={1}
-                            >
+                              mb={1}>
                               {intl.formatMessage({ id: 'farm.soe.documentLabel' })}
                             </FormLabel>
                             <Box
@@ -793,8 +774,7 @@ function ProfileFarm() {
                               cursor="pointer"
                               _hover={{ borderColor: 'green.400', bg: 'green.50' }}
                               transition="all 0.2s"
-                              onClick={() => document.getElementById('ofpp-file-input')?.click()}
-                            >
+                              onClick={() => document.getElementById('ofpp-file-input')?.click()}>
                               <input
                                 id="ofpp-file-input"
                                 type="file"
@@ -815,8 +795,7 @@ function ProfileFarm() {
                                     onClick={(e: React.MouseEvent) => {
                                       e.stopPropagation();
                                       setOfppFile(null);
-                                    }}
-                                  >
+                                    }}>
                                     <Icon as={FaTrash} boxSize={3} />
                                   </StandardButton>
                                 </HStack>
@@ -843,15 +822,13 @@ function ProfileFarm() {
                             <StandardButton
                               variant="ghost"
                               size="sm"
-                              onClick={() => setOfppEditMode(false)}
-                            >
+                              onClick={() => setOfppEditMode(false)}>
                               {intl.formatMessage({ id: 'app.cancel' })}
                             </StandardButton>
                             <StandardButton
                               size="sm"
                               isLoading={isSavingOfpp}
-                              onClick={handleSaveOfpp}
-                            >
+                              onClick={handleSaveOfpp}>
                               {intl.formatMessage({ id: 'app.save' })}
                             </StandardButton>
                           </HStack>
@@ -863,8 +840,7 @@ function ProfileFarm() {
                   {/* ---- Split operation (7 CFR 205.272) ---- */}
                   <FieldGroup
                     label={intl.formatMessage({ id: 'farm.split.title' })}
-                    cfr="7 CFR 205.272"
-                  >
+                    cfr="7 CFR 205.272">
                     <VStack gap={3} align="stretch">
                       <HStack justify="space-between" align="center" gap={3}>
                         <Box minW={0}>
@@ -890,8 +866,7 @@ function ProfileFarm() {
                             color="gray.500"
                             textTransform="uppercase"
                             fontWeight="semibold"
-                            mb={1}
-                          >
+                            mb={1}>
                             {intl.formatMessage({ id: 'farm.split.planLabel' })}
                           </FormLabel>
                           {!splitPlanEditMode ? (
@@ -916,8 +891,7 @@ function ProfileFarm() {
                                   onClick={() => {
                                     setSplitPlanText(establishmentData.split_operation_plan || '');
                                     setSplitPlanEditMode(true);
-                                  }}
-                                >
+                                  }}>
                                   {establishmentData.split_operation_plan
                                     ? intl.formatMessage({ id: 'farm.split.editPlan' })
                                     : intl.formatMessage({ id: 'farm.split.addPlan' })}
@@ -939,15 +913,13 @@ function ProfileFarm() {
                                 <StandardButton
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => setSplitPlanEditMode(false)}
-                                >
+                                  onClick={() => setSplitPlanEditMode(false)}>
                                   {intl.formatMessage({ id: 'app.cancel' })}
                                 </StandardButton>
                                 <StandardButton
                                   size="sm"
                                   isLoading={isSavingSplit}
-                                  onClick={handleSaveSplitPlan}
-                                >
+                                  onClick={handleSaveSplitPlan}>
                                   {intl.formatMessage({ id: 'app.save' })}
                                 </StandardButton>
                               </HStack>
@@ -986,8 +958,7 @@ function ProfileFarm() {
           title={intl.formatMessage({
             id: 'farm.section.details',
             defaultMessage: 'Farm details'
-          })}
-        >
+          })}>
           <StandardCard variant="outline" padding={{ base: 3, md: 4 }} mb={0}>
             <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
               {/* The disclosure legend. Neutral gray: which fields are public is a fact,
@@ -1168,8 +1139,7 @@ function ProfileFarm() {
                         })}
                       </Text>
                     </HStack>
-                  }
-                >
+                  }>
                   <HStack gap={2} flexWrap="wrap">
                     {crops.map((crop: string, index: number) => (
                       <Badge
@@ -1179,8 +1149,7 @@ function ProfileFarm() {
                         px={{ base: 2, md: 3 }}
                         py={0.5}
                         borderRadius="full"
-                        fontSize={{ base: 'xs', md: 'sm' }}
-                      >
+                        fontSize={{ base: 'xs', md: 'sm' }}>
                         <HStack gap={1}>
                           <Icon as={FaSeedling} boxSize={3} />
                           <Text>{crop}</Text>
@@ -1206,8 +1175,7 @@ function ProfileFarm() {
                         })}
                       </Text>
                     </HStack>
-                  }
-                >
+                  }>
                   <VStack gap={{ base: 3, md: 4 }} align="stretch">
                     {establishmentData.about && (
                       <Box>
@@ -1216,8 +1184,7 @@ function ProfileFarm() {
                           color="gray.500"
                           textTransform="uppercase"
                           fontWeight="semibold"
-                          mb={1}
-                        >
+                          mb={1}>
                           {intl.formatMessage({ id: 'app.description' })}
                         </Text>
                         <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
@@ -1232,8 +1199,7 @@ function ProfileFarm() {
                           color="gray.500"
                           textTransform="uppercase"
                           fontWeight="semibold"
-                          mb={1}
-                        >
+                          mb={1}>
                           {intl.formatMessage({ id: 'establishment.mainActivities' })}
                         </Text>
                         <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
@@ -1248,8 +1214,7 @@ function ProfileFarm() {
                           color="gray.500"
                           textTransform="uppercase"
                           fontWeight="semibold"
-                          mb={1}
-                        >
+                          mb={1}>
                           {intl.formatMessage({ id: 'establishment.locationHighlights' })}
                         </Text>
                         <Text color="gray.700" lineHeight="1.7" fontSize={{ base: 'sm', md: 'md' }}>
@@ -1274,8 +1239,7 @@ function ProfileFarm() {
                   label={intl.formatMessage({
                     id: 'farm.details.links',
                     defaultMessage: 'Links'
-                  })}
-                >
+                  })}>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>
                     <InfoRow
                       icon={FaGlobe}

@@ -112,9 +112,12 @@ const ScansRow = (props: ScansRowProps) => {
 
   // Engagement level indicator
   const getEngagementLevel = () => {
-    if (!consent_given) return { label: intl.formatMessage({ id: 'commercial.engagementNA' }), color: 'gray' };
-    if (engagement_score > 0.7) return { label: intl.formatMessage({ id: 'commercial.engagementHigh' }), color: 'green' };
-    if (engagement_score > 0.4) return { label: intl.formatMessage({ id: 'commercial.engagementMedium' }), color: 'yellow' };
+    if (!consent_given)
+      return { label: intl.formatMessage({ id: 'commercial.engagementNA' }), color: 'gray' };
+    if (engagement_score > 0.7)
+      return { label: intl.formatMessage({ id: 'commercial.engagementHigh' }), color: 'green' };
+    if (engagement_score > 0.4)
+      return { label: intl.formatMessage({ id: 'commercial.engagementMedium' }), color: 'yellow' };
     return { label: intl.formatMessage({ id: 'commercial.engagementLow' }), color: 'red' };
   };
 
@@ -139,7 +142,11 @@ const ScansRow = (props: ScansRowProps) => {
     <Tr pe="0px" px={{ base: 2, md: 5 }} _hover={{ bg: 'gray.50' }}>
       {/* Date */}
       <Td pe="0px" px={{ base: 2, md: 5 }}>
-        <Text color={textColor} fontSize={{ base: 'xs', md: 'sm' }} fontWeight="bold" whiteSpace="nowrap">
+        <Text
+          color={textColor}
+          fontSize={{ base: 'xs', md: 'sm' }}
+          fontWeight="bold"
+          whiteSpace="nowrap">
           {formatDate(date)}
         </Text>
       </Td>
@@ -156,7 +163,9 @@ const ScansRow = (props: ScansRowProps) => {
         <HStack spacing={1}>
           {getCustomerTypeBadge()}
           {is_duplicate && (
-            <Tooltip label={intl.formatMessage({ id: 'commercial.duplicateSession' })} placement="top">
+            <Tooltip
+              label={intl.formatMessage({ id: 'commercial.duplicateSession' })}
+              placement="top">
               <Badge colorScheme="gray" fontSize="xs" variant="outline">
                 {intl.formatMessage({ id: 'commercial.dup' })}
               </Badge>
@@ -172,7 +181,12 @@ const ScansRow = (props: ScansRowProps) => {
             {engagementLevel.label}
           </Badge>
           {consent_given && isHighEngagement && (
-            <Tooltip label={intl.formatMessage({ id: 'commercial.engagementTooltip' }, { score: Math.round(engagement_score * 100) })} placement="top">
+            <Tooltip
+              label={intl.formatMessage(
+                { id: 'commercial.engagementTooltip' },
+                { score: Math.round(engagement_score * 100) }
+              )}
+              placement="top">
               <Icon as={FaChartLine} color="green.500" boxSize={3} />
             </Tooltip>
           )}
@@ -185,21 +199,29 @@ const ScansRow = (props: ScansRowProps) => {
           <Tooltip
             label={
               isHumanLike
-                ? intl.formatMessage({ id: 'commercial.humanScanTooltip' }, { probability: Math.round((1 - bot_score) * 100) })
-                : intl.formatMessage({ id: 'commercial.botScanTooltip' }, { probability: Math.round((1 - bot_score) * 100) })
+                ? intl.formatMessage(
+                    { id: 'commercial.humanScanTooltip' },
+                    { probability: Math.round((1 - bot_score) * 100) }
+                  )
+                : intl.formatMessage(
+                    { id: 'commercial.botScanTooltip' },
+                    { probability: Math.round((1 - bot_score) * 100) }
+                  )
             }
             placement="top"
             maxW="300px"
-            hasArrow
-          >
+            hasArrow>
             <Badge
               colorScheme={isHumanLike ? 'green' : 'orange'}
               fontSize="xs"
-              variant={isHumanLike ? 'solid' : 'outline'}
-            >
+              variant={isHumanLike ? 'solid' : 'outline'}>
               <HStack spacing={1}>
                 <Icon as={isHumanLike ? FaUser : FaRobot} boxSize={2} />
-                <Text>{isHumanLike ? intl.formatMessage({ id: 'commercial.human' }) : intl.formatMessage({ id: 'commercial.bot' })}</Text>
+                <Text>
+                  {isHumanLike
+                    ? intl.formatMessage({ id: 'commercial.human' })
+                    : intl.formatMessage({ id: 'commercial.bot' })}
+                </Text>
               </HStack>
             </Badge>
           </Tooltip>
@@ -238,8 +260,7 @@ const ScansRow = (props: ScansRowProps) => {
                 }
               : {}
           }
-          transition="all 0.2s ease"
-        >
+          transition="all 0.2s ease">
           {comment
             ? intl.formatMessage({ id: isExpanded ? 'app.hide' : 'app.view' })
             : intl.formatMessage({ id: 'app.view' })}

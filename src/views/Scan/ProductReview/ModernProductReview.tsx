@@ -96,8 +96,7 @@ export default function ModernProductReview() {
       description="Help other consumers make informed choices by sharing your experience with this product"
       showBackButton={true}
       contentMaxW="2xl"
-      onBack={() => navigate(-1)}
-    >
+      onBack={() => navigate(-1)}>
       <StandardCard variant="elevated">
         <VStack spacing={{ base: 5, md: 6 }} align="stretch">
           {/* Product Information Header */}
@@ -106,8 +105,7 @@ export default function ModernProductReview() {
             bg="green.50"
             borderRadius="xl"
             border="1px solid"
-            borderColor="green.200"
-          >
+            borderColor="green.200">
             <HStack spacing={4} align="start">
               {historyData?.images?.length > 0 && (
                 <Image
@@ -131,8 +129,7 @@ export default function ModernProductReview() {
                   <strong>Farm:</strong> {historyData?.parcel?.establishment?.name}
                 </Text>
                 <Text fontSize="sm" color="gray.600">
-                  <strong>Producer:</strong>{' '}
-                  {historyData?.parcel?.establishment?.company_name}
+                  <strong>Producer:</strong> {historyData?.parcel?.establishment?.company_name}
                 </Text>
               </VStack>
             </HStack>
@@ -144,14 +141,12 @@ export default function ModernProductReview() {
                 <StandardAlert
                   status="success"
                   title="Review Submitted Successfully!"
-                  description="Thank you for contributing to agricultural transparency. Your review helps other consumers make informed choices."
-                >
+                  description="Thank you for contributing to agricultural transparency. Your review helps other consumers make informed choices.">
                   <StandardButton
                     variant="outline"
                     size="md"
                     onClick={() => navigate(`/production/${productionId}`)}
-                    leftIcon={<FaHeart />}
-                  >
+                    leftIcon={<FaHeart />}>
                     Back to Product
                   </StandardButton>
                 </StandardAlert>
@@ -160,8 +155,7 @@ export default function ModernProductReview() {
                   {/* Rating Section */}
                   <StandardField
                     label="How would you rate this product?"
-                    helpText="Consider farming practices, transparency, and overall quality"
-                  >
+                    helpText="Consider farming practices, transparency, and overall quality">
                     <HStack spacing={3} justify="center" py={4}>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Icon
@@ -193,8 +187,7 @@ export default function ModernProductReview() {
                     label="Review Headline"
                     required
                     error={errors.headline?.message as string | undefined}
-                    helpText="Highlight what stood out about this product's farming transparency"
-                  >
+                    helpText="Highlight what stood out about this product's farming transparency">
                     <StandardInput
                       {...register('headline')}
                       placeholder="e.g., 'Very transparent farm' or 'Great documented practices'"
@@ -204,8 +197,7 @@ export default function ModernProductReview() {
                   {/* Photo Upload Section */}
                   <StandardField
                     label="Add Photo (Optional)"
-                    helpText="Share a photo that shows the product's quality or sustainable packaging"
-                  >
+                    helpText="Share a photo that shows the product's quality or sustainable packaging">
                     <TrazoImageUpload
                       maxFiles={3}
                       maxSize={10 * 1024 * 1024}
@@ -219,8 +211,7 @@ export default function ModernProductReview() {
                     label="Your Review"
                     required
                     error={errors.written_review?.message as string | undefined}
-                    helpText="Share what you learned about how this food was grown and what influenced your choice"
-                  >
+                    helpText="Share what you learned about how this food was grown and what influenced your choice">
                     <StandardTextarea
                       {...register('written_review')}
                       placeholder="What did you discover about how this food was grown? Did the farming transparency influence your purchase decision? Would you recommend this farm to others?"
@@ -238,8 +229,7 @@ export default function ModernProductReview() {
                       isLoading={isLoadingReview}
                       loadingText="Submitting Review..."
                       leftIcon={<FaLeaf />}
-                      disabled={!rating || rating === 0}
-                    >
+                      disabled={!rating || rating === 0}>
                       Share Review
                     </StandardButton>
                   </Flex>

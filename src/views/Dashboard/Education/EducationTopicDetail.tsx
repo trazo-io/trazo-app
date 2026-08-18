@@ -75,7 +75,7 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryGettingStarted' }),
         content: (
           <VStack spacing={6} align="start">
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -191,7 +191,7 @@ const EducationTopicDetail: React.FC = () => {
               </ListItem>
             </UnorderedList>
 
-            <Alert status="info" borderRadius="lg">
+            <Alert status="info">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -221,8 +221,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <VStack spacing={2} align="start">
                     <HStack>
@@ -344,7 +343,7 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -481,7 +480,7 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -503,7 +502,7 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' }),
         content: (
           <VStack spacing={6} align="start">
-            <Alert status="warning" borderRadius="lg">
+            <Alert status="warning">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -560,8 +559,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
                     🏢 {intl.formatMessage({ id: 'education.detail.carbonData.b2bTitle' })}
@@ -673,7 +671,7 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -695,7 +693,7 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' }),
         content: (
           <VStack spacing={6} align="start">
-            <Alert status="info" borderRadius="lg">
+            <Alert status="info">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -737,8 +735,7 @@ const EducationTopicDetail: React.FC = () => {
                     pl={6}
                     mt={1}
                     display="flex"
-                    alignItems="center"
-                  >
+                    alignItems="center">
                     <Icon as={FaExternalLinkAlt} mr={1} />
                     epa.gov/climateleadership/ghg-emission-factors-hub
                   </Link>
@@ -763,8 +760,7 @@ const EducationTopicDetail: React.FC = () => {
                     pl={6}
                     mt={1}
                     display="flex"
-                    alignItems="center"
-                  >
+                    alignItems="center">
                     <Icon as={FaExternalLinkAlt} mr={1} />
                     epa.gov/egrid/summary-data
                   </Link>
@@ -787,8 +783,7 @@ const EducationTopicDetail: React.FC = () => {
                     pl={6}
                     mt={1}
                     display="flex"
-                    alignItems="center"
-                  >
+                    alignItems="center">
                     <Icon as={FaExternalLinkAlt} mr={1} />
                     eia.gov - Electricity CO₂ FAQ
                   </Link>
@@ -811,8 +806,7 @@ const EducationTopicDetail: React.FC = () => {
                     pl={6}
                     mt={1}
                     display="flex"
-                    alignItems="center"
-                  >
+                    alignItems="center">
                     <Icon as={FaExternalLinkAlt} mr={1} />
                     IPCC Vol 4 Ch 11 - N₂O Emissions (PDF)
                   </Link>
@@ -837,8 +831,7 @@ const EducationTopicDetail: React.FC = () => {
                     pl={6}
                     mt={1}
                     display="flex"
-                    alignItems="center"
-                  >
+                    alignItems="center">
                     <Icon as={FaExternalLinkAlt} mr={1} />
                     ars.usda.gov
                   </Link>
@@ -863,8 +856,7 @@ const EducationTopicDetail: React.FC = () => {
                     pl={6}
                     mt={1}
                     display="flex"
-                    alignItems="center"
-                  >
+                    alignItems="center">
                     <Icon as={FaExternalLinkAlt} mr={1} />
                     NRCS National Engineering Handbook - Chapter 8 (PDF)
                   </Link>
@@ -891,8 +883,7 @@ const EducationTopicDetail: React.FC = () => {
                     pl={6}
                     mt={1}
                     display="flex"
-                    alignItems="center"
-                  >
+                    alignItems="center">
                     <Icon as={FaExternalLinkAlt} mr={1} />
                     Lal 2004 - Carbon emission from farm operations
                   </Link>
@@ -1019,8 +1010,7 @@ const EducationTopicDetail: React.FC = () => {
                   <Grid
                     templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
                     gap={3}
-                    minW={{ base: '280px', md: 'auto' }}
-                  >
+                    minW={{ base: '280px', md: 'auto' }}>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontWeight="bold" color="gray.700">
                         {intl.formatMessage({
@@ -1079,7 +1069,7 @@ const EducationTopicDetail: React.FC = () => {
                     id: 'education.detail.carbonMethodology.fertilizerSource'
                   })}
                 </Text>
-                <Alert status="success" size="sm" borderRadius="md">
+                <Alert status="success" size="sm">
                   <AlertIcon />
                   <Text fontSize="sm">
                     {intl.formatMessage({
@@ -1107,8 +1097,7 @@ const EducationTopicDetail: React.FC = () => {
                   <Grid
                     templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
                     gap={3}
-                    minW={{ base: '280px', md: 'auto' }}
-                  >
+                    minW={{ base: '280px', md: 'auto' }}>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
                         {intl.formatMessage({
@@ -1186,8 +1175,7 @@ const EducationTopicDetail: React.FC = () => {
                   <Grid
                     templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
                     gap={3}
-                    minW={{ base: '280px', md: 'auto' }}
-                  >
+                    minW={{ base: '280px', md: 'auto' }}>
                     <Box p={3} borderRadius="md" border="1px solid" borderColor="gray.100">
                       <Text fontSize="sm" fontWeight="bold" color="gray.700">
                         {intl.formatMessage({
@@ -1330,7 +1318,7 @@ const EducationTopicDetail: React.FC = () => {
                 {intl.formatMessage({ id: 'education.detail.carbonMethodology.philosophyTitle' })}
               </Heading>
             </HStack>
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -1388,7 +1376,7 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="info" borderRadius="lg">
+            <Alert status="info">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -1412,7 +1400,7 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryGettingStarted' }),
         content: (
           <VStack spacing={6} align="start">
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -1523,8 +1511,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
                     📝{' '}
@@ -1580,7 +1567,7 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="info" borderRadius="lg">
+            <Alert status="info">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -1616,8 +1603,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="green.700" mb={2}>
                     ⚡ {intl.formatMessage({ id: 'education.detail.eventMastery.realTimeTitle' })}
@@ -1773,8 +1759,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="green.700" mb={2}>
                     🌱{' '}
@@ -1840,7 +1825,7 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -1862,7 +1847,7 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="start">
-            <Alert status="warning" borderRadius="lg">
+            <Alert status="warning">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -1913,8 +1898,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.scoreOptimization.mustHaveTitle' })}
@@ -2010,8 +1994,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
                     🥑{' '}
@@ -2087,7 +2070,7 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2123,8 +2106,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({
@@ -2350,8 +2332,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.consumerEngagement.speedTitle' })}
@@ -2438,7 +2419,7 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="info" borderRadius="lg">
+            <Alert status="info">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2460,7 +2441,7 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="start">
-            <Alert status="info" borderRadius="lg">
+            <Alert status="info">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2545,7 +2526,7 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2571,7 +2552,7 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="start">
-            <Alert status="info" borderRadius="lg">
+            <Alert status="info">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2654,7 +2635,7 @@ const EducationTopicDetail: React.FC = () => {
               {intl.formatMessage({ id: 'education.detail.renewalSeason.migratingDesc' })}
             </Text>
 
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2676,7 +2657,7 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="start">
-            <Alert status="info" borderRadius="lg">
+            <Alert status="info">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2692,8 +2673,7 @@ const EducationTopicDetail: React.FC = () => {
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
                 gap={4}
-                minW={{ base: '280px', md: 'auto' }}
-              >
+                minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <VStack spacing={2} align="start">
                     <HStack>
@@ -2788,7 +2768,7 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <Alert status="warning" borderRadius="lg">
+            <Alert status="warning">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2800,7 +2780,7 @@ const EducationTopicDetail: React.FC = () => {
               </Box>
             </Alert>
 
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2822,7 +2802,7 @@ const EducationTopicDetail: React.FC = () => {
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
           <VStack spacing={6} align="start">
-            <Alert status="info" borderRadius="lg">
+            <Alert status="info">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2891,7 +2871,7 @@ const EducationTopicDetail: React.FC = () => {
             </HStack>
             <Text>{intl.formatMessage({ id: 'education.detail.bufferZones.driftDesc' })}</Text>
 
-            <Alert status="success" borderRadius="lg">
+            <Alert status="success">
               <AlertIcon />
               <Box>
                 <AlertTitle>
@@ -2916,8 +2896,7 @@ const EducationTopicDetail: React.FC = () => {
       <StandardPage
         title={intl.formatMessage({ id: 'education.topicNotFound' })}
         showBackButton
-        onBack={() => navigate('/admin/dashboard/education')}
-      >
+        onBack={() => navigate('/admin/dashboard/education')}>
         <VStack spacing={6} py={8}>
           <Text>{intl.formatMessage({ id: 'education.topicNotFoundDescription' })}</Text>
         </VStack>
@@ -2930,8 +2909,7 @@ const EducationTopicDetail: React.FC = () => {
       title={topic.title}
       description={topic.description}
       showBackButton
-      onBack={() => navigate('/admin/dashboard/education')}
->
+      onBack={() => navigate('/admin/dashboard/education')}>
       <VStack spacing={6} w="full" align="stretch">
         {/* Topic Header with Icon */}
         <Card w="full">

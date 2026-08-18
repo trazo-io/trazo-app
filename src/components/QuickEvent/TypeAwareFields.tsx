@@ -105,15 +105,13 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
               label={label}
               required={field.required}
               helpText={helpText}
-              error={error}
-            >
+              error={error}>
               <StandardSelect
                 value={value as string}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                   onChange(field.name, e.target.value)
                 }
-                isDisabled={isDisabled}
-              >
+                isDisabled={isDisabled}>
                 {field.options?.map((option) => (
                   <option key={option.value} value={option.value}>
                     {intl.formatMessage({ id: option.labelKey })}
@@ -133,8 +131,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
                 label={label}
                 required={field.required}
                 helpText={helpText}
-                error={error}
-              >
+                error={error}>
                 <HStack spacing={2}>
                   <Box flex={2}>
                     <StandardInput
@@ -156,8 +153,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
                         onChange(field.unitFieldName!, e.target.value)
                       }
                       isDisabled={isDisabled}
-                      size="lg"
-                    >
+                      size="lg">
                       {field.unitOptions?.map((option) => (
                         <option key={option.value} value={option.value}>
                           {intl.formatMessage({ id: option.labelKey })}
@@ -177,8 +173,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
               label={label}
               required={field.required}
               helpText={helpText}
-              error={error}
-            >
+              error={error}>
               {unit ? (
                 <InputGroup size="lg">
                   <StandardInput
@@ -200,8 +195,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
                     fontSize="sm"
                     borderRadius="lg"
                     borderLeftRadius={0}
-                    h="auto"
-                  >
+                    h="auto">
                     {unit}
                   </InputRightAddon>
                 </InputGroup>
@@ -228,8 +222,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
               label={label}
               required={field.required}
               helpText={helpText}
-              error={error}
-            >
+              error={error}>
               <StandardTextarea
                 value={value as string}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -285,8 +278,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
                       <Badge
                         colorScheme={concentrationValidation.isValid ? 'green' : 'red'}
                         variant={concentrationValidation ? 'solid' : 'outline'}
-                        fontSize="xs"
-                      >
+                        fontSize="xs">
                         {concentrationValidation.isValid ? '✓ Valid' : '✗ Invalid'}
                       </Badge>
                     )}
@@ -298,8 +290,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
                   (concentrationValidation && !concentrationValidation.isValid
                     ? concentrationValidation.errors[0]
                     : undefined)
-                }
-              >
+                }>
                 <VStack spacing={2} align="stretch">
                   <StandardInput
                     type="text"
@@ -342,8 +333,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
               label={label}
               required={field.required}
               helpText={helpText}
-              error={error}
-            >
+              error={error}>
               <StandardInput
                 type="text"
                 value={value as string}
@@ -518,8 +508,7 @@ export const TypeAwareFields: React.FC<TypeAwareFieldsProps> = ({
               borderRadius="md"
               bg="gray.50"
               _hover={{ bg: 'gray.100' }}
-              _expanded={{ bg: 'gray.100' }}
-            >
+              _expanded={{ bg: 'gray.100' }}>
               <HStack flex="1" spacing={2}>
                 <Text fontSize="sm" fontWeight="medium" color="gray.600">
                   {advancedSectionLabel}

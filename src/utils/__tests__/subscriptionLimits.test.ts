@@ -24,10 +24,7 @@ const planOnly = (features: Record<string, unknown>) => ({
   subscription: { plan: { features } }
 });
 
-const withAddOns = (
-  features: Record<string, unknown>,
-  effective: Record<string, unknown>
-) => ({
+const withAddOns = (features: Record<string, unknown>, effective: Record<string, unknown>) => ({
   subscription: { plan: { features }, effective_limits: effective }
 });
 
@@ -61,13 +58,15 @@ describe('getEffectiveLimits', () => {
 
 describe('getLimit', () => {
   it('returns the number when stated', () => {
-    expect(getLimit(planOnly({ max_parcels_per_establishment: 2 }), 'max_parcels_per_establishment')).toBe(2);
+    expect(
+      getLimit(planOnly({ max_parcels_per_establishment: 2 }), 'max_parcels_per_establishment')
+    ).toBe(2);
   });
 
   it('returns -1 for unlimited rather than coercing it away', () => {
-    expect(getLimit(planOnly({ max_parcels_per_establishment: -1 }), 'max_parcels_per_establishment')).toBe(
-      UNLIMITED
-    );
+    expect(
+      getLimit(planOnly({ max_parcels_per_establishment: -1 }), 'max_parcels_per_establishment')
+    ).toBe(UNLIMITED);
   });
 
   it('returns undefined for an unstated limit, which is NOT unlimited', () => {
@@ -77,7 +76,9 @@ describe('getLimit', () => {
   });
 
   it('ignores non-numeric values', () => {
-    expect(getLimit(planOnly({ max_parcels_per_establishment: 'lots' }), 'max_parcels_per_establishment')).toBeUndefined();
+    expect(
+      getLimit(planOnly({ max_parcels_per_establishment: 'lots' }), 'max_parcels_per_establishment')
+    ).toBeUndefined();
   });
 });
 
@@ -132,9 +133,13 @@ describe('canCreateMore', () => {
   });
 
   it('treats an explicit 0 as blocked', () => {
-    expect(canCreateMore(planOnly({ max_parcels_per_establishment: 0 }), 'max_parcels_per_establishment', 0)).toBe(
-      false
-    );
+    expect(
+      canCreateMore(
+        planOnly({ max_parcels_per_establishment: 0 }),
+        'max_parcels_per_establishment',
+        0
+      )
+    ).toBe(false);
   });
 });
 

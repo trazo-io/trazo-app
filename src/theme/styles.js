@@ -150,6 +150,25 @@ export const globalStyles = {
       900: '#0D47A1'
     }
   },
+  /**
+   * ONE focus ring, for every component that asks for `boxShadow: 'outline'` — CloseButton,
+   * Input, Select, Checkbox, Radio, Switch, Tabs, Menu, Link. Chakra's stock token is
+   * `0 0 0 3px rgba(66,153,225,0.6)`, i.e. BLUE, and it was showing: the ring around the
+   * event-details modal's ✕ (which takes initial focus) was Chakra blue on a green app.
+   * `.claude/rules/frontend.md` — blue carries no meaning here outside `Alert status="info"`.
+   *
+   * green.600 #388E3C, at full opacity, MEASURED: 4.12:1 on white and 3.21:1 on gray.800, so
+   * one value clears the WCAG 2.4.11 / 1.4.11 3:1 focus-indicator floor in BOTH colour modes
+   * — which matters because `shadows` is a flat token and cannot be mode-dependent.
+   *
+   * ⚠️ NOT `rgba(76,175,80,0.6)` (green.500 @ 60%), which is what `theme/components/button.js`
+   * hand-rolled. Composited over white that is #94CF96 = 1.81:1 — a ring you can technically
+   * see and that fails the standard outright. button.js now inherits this token instead of
+   * defining a second, fainter ring.
+   */
+  shadows: {
+    outline: '0 0 0 3px #388E3C'
+  },
   styles: {
     global: (props) => ({
       body: {

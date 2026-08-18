@@ -1191,8 +1191,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                 transform: 'translateY(-1px)'
               }}
-              transition="all 0.2s ease"
-            >
+              transition="all 0.2s ease">
               <Icon as={eventConfig.icon} boxSize={5} />
             </Circle>
           </VStack>
@@ -1214,8 +1213,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
             transform: 'translateY(-2px)'
           }}
           onClick={() => (onEventClick ? onEventClick(event) : navigate(url))}
-          className="trazo-card"
-        >
+          className="trazo-card">
           <CardBody p={{ base: 3, md: 4 }}>
             <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
               {/* Clean Header */}
@@ -1234,8 +1232,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                         fontWeight="600"
                         color={textColor}
                         noOfLines={2}
-                        letterSpacing="-0.02em"
-                      >
+                        letterSpacing="-0.02em">
                         {title}
                       </Text>
                     </Tooltip>
@@ -1248,8 +1245,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                         px={2}
                         py={1}
                         fontWeight="500"
-                        borderRadius="6px"
-                      >
+                        borderRadius="6px">
                         {eventConfig.category}
                       </Badge>
 
@@ -1270,8 +1266,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                               : 'events'
                           }`}
                           hasArrow
-                          placement="top"
-                        >
+                          placement="top">
                           <Badge
                             colorScheme="purple"
                             variant="subtle"
@@ -1283,8 +1278,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             display="flex"
                             alignItems="center"
                             gap={1}
-                            cursor="help"
-                          >
+                            cursor="help">
                             <Icon as={FaLayerGroup} boxSize={3} />
                             {event.event_count || event.extra_data?.event_count || 'Summary'}
                           </Badge>
@@ -1305,8 +1299,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             });
                           })()}
                           hasArrow
-                          placement="top"
-                        >
+                          placement="top">
                           <Badge
                             colorScheme={
                               getVerificationBadgeConfig(event.verification_level).color.split(
@@ -1323,8 +1316,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             alignItems="center"
                             gap={1}
                             boxShadow="0 1px 2px rgba(0,0,0,0.08)"
-                            cursor="help"
-                          >
+                            cursor="help">
                             <Icon
                               as={getVerificationBadgeConfig(event.verification_level).icon}
                               boxSize={3}
@@ -1353,8 +1345,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                         <Tooltip
                           label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                           hasArrow
-                          placement="top"
-                        >
+                          placement="top">
                           <Badge
                             colorScheme="blue"
                             variant="subtle"
@@ -1365,8 +1356,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             borderRadius="4px"
                             textTransform="uppercase"
                             letterSpacing="0.05em"
-                            cursor="help"
-                          >
+                            cursor="help">
                             {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
                           </Badge>
                         </Tooltip>
@@ -1418,8 +1408,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                 fontSize={{ base: 'xs', md: 'sm' }}
                 color="gray.600"
                 lineHeight="relaxed"
-                noOfLines={2}
-              >
+                noOfLines={2}>
                 {enhancedDescription}
               </Text>
 
@@ -1437,8 +1426,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                           fontSize={{ base: 'xs', md: 'sm' }}
                           fontWeight="600"
                           color="gray.700"
-                          noOfLines={1}
-                        >
+                          noOfLines={1}>
                           {field.value}
                         </Text>
                       </HStack>
@@ -1466,8 +1454,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     fontSize="sm"
                     borderRadius="md"
                     px={3}
-                    py={2}
-                  >
+                    py={2}>
                     <HStack spacing={2} cursor="help" flexShrink={0}>
                       <Circle
                         size="24px"
@@ -1475,8 +1462,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                           carbonData.co2e === 0
                             ? 'gray.100'
                             : `${getImpactLevel(carbonData.co2e).color}.100`
-                        }
-                      >
+                        }>
                         <Icon
                           as={MdEco}
                           color={
@@ -1495,8 +1481,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                             ? 'gray.500'
                             : `${getImpactLevel(carbonData.co2e).color}.700`
                         }
-                        whiteSpace="nowrap"
-                      >
+                        whiteSpace="nowrap">
                         {formatCO2e(carbonData.co2e)} kg CO₂e
                       </Text>
                     </HStack>

@@ -3,7 +3,6 @@ import {
   VStack,
   HStack,
   SimpleGrid,
-  Switch,
   NumberInput,
   NumberInputField,
   NumberInputStepper,
@@ -11,14 +10,11 @@ import {
   NumberDecrementStepper,
   useToast,
   Text,
-  Icon,
   Box,
   Textarea,
   Flex,
   Badge,
-  Button,
-  Input,
-  Divider
+  Input
 } from '@chakra-ui/react';
 import {
   StandardPage,
@@ -30,7 +26,7 @@ import {
 } from '../Design';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, boolean, number, array } from 'zod';
+import { object, string, number, array } from 'zod';
 import { useIntl } from 'react-intl';
 import { GoogleMap, Polygon, Marker, useLoadScript } from '@react-google-maps/api';
 import { TrazoImageUpload } from '../Upload';
@@ -41,12 +37,9 @@ import {
   FaChevronRight,
   FaChevronLeft,
   FaTrash,
-  FaSeedling,
-  FaUsers,
-  FaCamera,
-  FaLeaf
+  FaCamera
 } from 'react-icons/fa';
-import { MdInfo, MdNature } from 'react-icons/md';
+import { MdInfo } from 'react-icons/md';
 
 // 🎯 CARBON TRANSPARENCY FOCUSED SCHEMA
 const transparencyParcelSchema = object({
@@ -183,8 +176,12 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       transparency_description: '',
       sustainability_practices: '',
       images: [],
-      certified: false,
-      certification_type: '',
+      // `certified` / `certification_type` removed 2026-08-17. They lived ONLY here: absent
+      // from transparencyParcelSchema, absent from TransparencyParcelFormData, and rendered
+      // by no input in any of the four steps. Their only effect was to seed AddParcel's
+      // payload with a hardcoded `certified: false` on every create — a claim field asserted
+      // by a form that never asked. Certifications are structured records
+      // (CertificationManager); see the note in AddParcel.handleSubmit.
       ...initialData
     }
   });
@@ -279,7 +276,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     {
       title: 'Visual Documentation',
       shortTitle: 'Photos',
-      description: 'Images & certification',
+      description: 'Photos of this block',
       icon: FaCamera,
       required: false
     }
@@ -293,15 +290,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       case 1:
         return isValidPolygon() || boundarySkipped;
       case 2:
-        const transparencyDesc = formData.transparency_description || '';
-        const isValid = transparencyDesc.trim().length >= 3;
-        console.log('🔍 Step 2 validation:', {
-          transparency_description: transparencyDesc,
-          length: transparencyDesc.trim().length,
-          isValid,
-          formData
-        });
-        return isValid;
+        // Braced: `case` shares one block scope, so bare `const` here leaks across the other
+        // arms and trips no-case-declarations.
+        return (formData.transparency_description || '').trim().length >= 3;
       case 3:
         return true; // Optional step
       default:
@@ -312,14 +303,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const isStepComplete = (step: number) => {
     const currentFormData = watch();
     const result = validateStep(step, currentFormData);
-    console.log('🔍 isStepComplete:', {
-      step,
-      result,
-      currentFormData,
-      name: currentFormData.name,
-      area: currentFormData.area,
-      transparency_description: currentFormData.transparency_description
-    });
     return result;
   };
 
@@ -929,7 +912,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
           {currentStep === 3 && (
             <StandardCard
               title="Visual Documentation"
-              subtitle="Build trust through images and certification">
+              subtitle="Photos of this block — certifications are managed as records on the farm profile">
               <VStack spacing={6} align="stretch">
                 <StandardField
                   label="Parcel Images"

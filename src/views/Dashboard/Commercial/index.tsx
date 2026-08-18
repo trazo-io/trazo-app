@@ -158,7 +158,9 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
     metrics.totalScans > 0 ? Math.round((metrics.uniqueSessions / metrics.totalScans) * 100) : 0;
   if (isLoading) {
     return (
-      <StandardCard title={intl.formatMessage({ id: 'commercial.customerQualityAnalytics' })} variant="elevated">
+      <StandardCard
+        title={intl.formatMessage({ id: 'commercial.customerQualityAnalytics' })}
+        variant="elevated">
         <Flex justify="center" align="center" h="200px">
           <CircularProgress isIndeterminate color="green.500" />
         </Flex>
@@ -170,8 +172,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
     <StandardCard
       title={intl.formatMessage({ id: 'commercial.customerQualityAnalytics' })}
       subtitle={intl.formatMessage({ id: 'commercial.customerQualitySubtitle' })}
-      variant="elevated"
-    >
+      variant="elevated">
       <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 6 }}>
         {/* Human vs Bot Scans */}
         <Stat>
@@ -179,8 +180,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
             <Tooltip
               label={intl.formatMessage({ id: 'commercial.humanScansTooltip' })}
               placement="top"
-              hasArrow
-            >
+              hasArrow>
               <HStack spacing={1.5}>
                 <Icon as={FaUser} color="green.500" boxSize={{ base: 3, md: 4 }} />
                 <Text>{intl.formatMessage({ id: 'commercial.humanScans' })}</Text>
@@ -191,12 +191,14 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
             {humanPercentage}%
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500" mb={0}>
-            {intl.formatMessage({ id: 'commercial.humanScansCount' }, { human: metrics.humanScans, total: metrics.totalScans })}
+            {intl.formatMessage(
+              { id: 'commercial.humanScansCount' },
+              { human: metrics.humanScans, total: metrics.totalScans }
+            )}
             <Badge
               ml={1.5}
               colorScheme={humanPercentage > 80 ? 'green' : humanPercentage > 60 ? 'yellow' : 'red'}
-              fontSize="xs"
-            >
+              fontSize="xs">
               {humanPercentage > 80
                 ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
                 : humanPercentage > 60
@@ -218,14 +220,16 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
             {engagementPercentage}%
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500" mb={0}>
-            {intl.formatMessage({ id: 'commercial.deeplyEngaged' }, { count: metrics.highEngagement })}
+            {intl.formatMessage(
+              { id: 'commercial.deeplyEngaged' },
+              { count: metrics.highEngagement }
+            )}
             <Badge
               ml={1.5}
               colorScheme={
                 engagementPercentage > 70 ? 'green' : engagementPercentage > 50 ? 'yellow' : 'red'
               }
-              fontSize="xs"
-            >
+              fontSize="xs">
               {engagementPercentage > 70
                 ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
                 : engagementPercentage > 50
@@ -247,14 +251,16 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
             {uniquePercentage}%
           </StatNumber>
           <StatHelpText fontSize="xs" color="gray.500" mb={0}>
-            {intl.formatMessage({ id: 'commercial.uniqueVisitors' }, { count: metrics.uniqueSessions })}
+            {intl.formatMessage(
+              { id: 'commercial.uniqueVisitors' },
+              { count: metrics.uniqueSessions }
+            )}
             <Badge
               ml={1.5}
               colorScheme={
                 uniquePercentage > 90 ? 'green' : uniquePercentage > 75 ? 'yellow' : 'red'
               }
-              fontSize="xs"
-            >
+              fontSize="xs">
               {uniquePercentage > 90
                 ? intl.formatMessage({ id: 'commercial.ratingExcellent' })
                 : uniquePercentage > 75
@@ -263,26 +269,46 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
             </Badge>
           </StatHelpText>
         </Stat>
-
       </SimpleGrid>
 
       {/* Quality Insights & Education */}
       {metrics.totalScans > 0 && (
         <VStack spacing={{ base: 4, md: 5 }} align="stretch" mt={{ base: 5, md: 6 }}>
           {/* Quality Score Summary */}
-          <Box p={{ base: 3, md: 4 }} bg="green.50" borderRadius="lg" border="1px solid" borderColor="green.200">
+          <Box
+            p={{ base: 3, md: 4 }}
+            bg="green.50"
+            borderRadius="lg"
+            border="1px solid"
+            borderColor="green.200">
             <Stack direction={{ base: 'column', md: 'row' }} spacing={{ base: 2, md: 4 }}>
               <VStack align="start" spacing={0.5}>
                 <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
-                  {intl.formatMessage({ id: 'commercial.qualityScore' }, { score: Math.round((humanPercentage + engagementPercentage + uniquePercentage) / 3) })}
+                  {intl.formatMessage(
+                    { id: 'commercial.qualityScore' },
+                    {
+                      score: Math.round(
+                        (humanPercentage + engagementPercentage + uniquePercentage) / 3
+                      )
+                    }
+                  )}
                 </Text>
                 <Text fontSize="xs" color="green.700">
                   {intl.formatMessage({ id: 'commercial.qualityScoreDescription' })}
                 </Text>
               </VStack>
 
-              <Divider orientation="vertical" h="40px" borderColor="green.300" display={{ base: 'none', md: 'block' }} />
-              <Divider orientation="horizontal" borderColor="green.300" display={{ base: 'block', md: 'none' }} />
+              <Divider
+                orientation="vertical"
+                h="40px"
+                borderColor="green.300"
+                display={{ base: 'none', md: 'block' }}
+              />
+              <Divider
+                orientation="horizontal"
+                borderColor="green.300"
+                display={{ base: 'block', md: 'none' }}
+              />
 
               <VStack align="start" spacing={0.5}>
                 <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="green.700">
@@ -300,7 +326,12 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
           </Box>
 
           {/* Educational Section for Farmers - Collapsible */}
-          <Box bg="blue.50" borderRadius="lg" border="1px solid" borderColor="blue.200" overflow="hidden">
+          <Box
+            bg="blue.50"
+            borderRadius="lg"
+            border="1px solid"
+            borderColor="blue.200"
+            overflow="hidden">
             <Flex
               align="center"
               justify="space-between"
@@ -308,34 +339,31 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
               cursor="pointer"
               onClick={onEducationToggle}
               _hover={{ bg: 'blue.100' }}
-              transition="background-color 0.2s"
-            >
+              transition="background-color 0.2s">
               <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="semibold" color="blue.700">
                 💡 {intl.formatMessage({ id: 'commercial.educationTitle' })}
               </Text>
-              <Icon as={isEducationOpen ? FiChevronUp : FiChevronDown} color="blue.500" boxSize={4} />
+              <Icon
+                as={isEducationOpen ? FiChevronUp : FiChevronDown}
+                color="blue.500"
+                boxSize={4}
+              />
             </Flex>
             <Collapse in={isEducationOpen} animateOpacity>
-              <VStack align="start" spacing={1.5} px={{ base: 3, md: 4 }} pb={{ base: 3, md: 4 }} fontSize="xs" color="blue.600">
-                <Text>
-                  {intl.formatMessage({ id: 'commercial.educationHumanScans' })}
-                </Text>
-                <Text>
-                  {intl.formatMessage({ id: 'commercial.educationDetectionSystem' })}
-                </Text>
+              <VStack
+                align="start"
+                spacing={1.5}
+                px={{ base: 3, md: 4 }}
+                pb={{ base: 3, md: 4 }}
+                fontSize="xs"
+                color="blue.600">
+                <Text>{intl.formatMessage({ id: 'commercial.educationHumanScans' })}</Text>
+                <Text>{intl.formatMessage({ id: 'commercial.educationDetectionSystem' })}</Text>
                 <VStack align="start" spacing={0.5} pl={{ base: 3, md: 4 }} fontSize="xs">
-                  <Text>
-                    • {intl.formatMessage({ id: 'commercial.educationAutomatic' })}
-                  </Text>
-                  <Text>
-                    • {intl.formatMessage({ id: 'commercial.educationDefault' })}
-                  </Text>
-                  <Text>
-                    • {intl.formatMessage({ id: 'commercial.educationRealistic' })}
-                  </Text>
-                  <Text>
-                    • {intl.formatMessage({ id: 'commercial.educationConservative' })}
-                  </Text>
+                  <Text>• {intl.formatMessage({ id: 'commercial.educationAutomatic' })}</Text>
+                  <Text>• {intl.formatMessage({ id: 'commercial.educationDefault' })}</Text>
+                  <Text>• {intl.formatMessage({ id: 'commercial.educationRealistic' })}</Text>
+                  <Text>• {intl.formatMessage({ id: 'commercial.educationConservative' })}</Text>
                 </VStack>
                 <Text>
                   {intl.formatMessage({ id: 'commercial.educationTransparencyCommitment' })}
@@ -435,10 +463,7 @@ export default function CommercialView() {
     },
     {
       skip:
-        !currentFarmId ||
-        !filters?.period ||
-        !currentCompany ||
-        currentCompany?.id === undefined
+        !currentFarmId || !filters?.period || !currentCompany || currentCompany?.id === undefined
     }
   );
 
@@ -492,7 +517,11 @@ export default function CommercialView() {
           await new Promise((resolve) => setTimeout(resolve, 0));
 
           // Reset filters only if no URL params are pending (notification redirect)
-          if (!initialParcelId.current && !initialProductId.current && !initialProductionId.current) {
+          if (
+            !initialParcelId.current &&
+            !initialProductId.current &&
+            !initialProductionId.current
+          ) {
             setFilters((prev) => ({
               parcel: null,
               product: null,
@@ -607,7 +636,10 @@ export default function CommercialView() {
       if (matchedProduction) {
         setFilters((prev) => ({
           ...prev,
-          production: { id: matchedProduction.id, name: matchedProduction.name || `Production ${matchedProduction.id}` }
+          production: {
+            id: matchedProduction.id,
+            name: matchedProduction.name || `Production ${matchedProduction.id}`
+          }
         }));
       }
       initialProductionId.current = null;
@@ -718,20 +750,24 @@ export default function CommercialView() {
         title={intl.formatMessage({ id: 'app.commercialDashboard' })}
         description={intl.formatMessage({ id: 'app.commercialDashboardDescription' })}
         showBackButton
-        onBack={() => navigate(-1)}
-      >
+        onBack={() => navigate(-1)}>
         <VStack spacing={6} align="stretch">
           {/* Filters Section */}
-          <StandardCard title={intl.formatMessage({ id: 'commercial.analysisFilters' })} variant="outline">
+          <StandardCard
+            title={intl.formatMessage({ id: 'commercial.analysisFilters' })}
+            variant="outline">
             <VStack spacing={6}>
               <Flex
                 direction={{ base: 'column', lg: 'row' }}
                 gap={6}
                 w="100%"
                 align={{ base: 'stretch', lg: 'center' }}
-                justify="space-between"
-              >
-                <Flex direction={{ base: 'column', md: 'row' }} gap={{ base: 2, md: 4 }} flex={1} wrap="wrap">
+                justify="space-between">
+                <Flex
+                  direction={{ base: 'column', md: 'row' }}
+                  gap={{ base: 2, md: 4 }}
+                  flex={1}
+                  wrap="wrap">
                   <Menu>
                     <MenuButton
                       as={Button}
@@ -745,8 +781,7 @@ export default function CommercialView() {
                       fontWeight="medium"
                       borderRadius="lg"
                       _hover={{ bg: 'green.50' }}
-                      _active={{ bg: 'green.100' }}
-                    >
+                      _active={{ bg: 'green.100' }}>
                       {filters.parcel
                         ? filters.parcel.name
                         : intl.formatMessage({ id: 'app.allParcels' })}
@@ -756,8 +791,7 @@ export default function CommercialView() {
                         onClick={() => onParcelFilterChange(null)}
                         fontSize="sm"
                         color="gray.600"
-                        py={2}
-                      >
+                        py={2}>
                         {intl.formatMessage({ id: 'app.allParcels' })}
                       </MenuItem>
                       <MenuDivider />
@@ -768,8 +802,7 @@ export default function CommercialView() {
                             onClick={() => onParcelFilterChange(parcel)}
                             fontSize="sm"
                             color="gray.600"
-                            py={2}
-                          >
+                            py={2}>
                             {parcel.name}
                           </MenuItem>
                         ))}
@@ -789,8 +822,7 @@ export default function CommercialView() {
                       fontWeight="medium"
                       borderRadius="lg"
                       _hover={{ bg: 'green.50' }}
-                      _active={{ bg: 'green.100' }}
-                    >
+                      _active={{ bg: 'green.100' }}>
                       {filters.product
                         ? filters.product.name
                         : intl.formatMessage({ id: 'app.allProducts' })}
@@ -800,8 +832,7 @@ export default function CommercialView() {
                         onClick={() => onProductFilterChange(null)}
                         fontSize="sm"
                         color="gray.600"
-                        py={2}
-                      >
+                        py={2}>
                         {intl.formatMessage({ id: 'app.allProducts' })}
                       </MenuItem>
                       <MenuDivider />
@@ -813,8 +844,7 @@ export default function CommercialView() {
                               onClick={() => onProductFilterChange(product)}
                               fontSize="sm"
                               color="gray.600"
-                              py={2}
-                            >
+                              py={2}>
                               {product.name}
                             </MenuItem>
                           ))
@@ -825,8 +855,7 @@ export default function CommercialView() {
                               onClick={() => onProductFilterChange(product)}
                               fontSize="sm"
                               color="gray.600"
-                              py={2}
-                            >
+                              py={2}>
                               {product.name}
                             </MenuItem>
                           ))}
@@ -847,8 +876,7 @@ export default function CommercialView() {
                       borderRadius="lg"
                       _hover={{ bg: 'green.50' }}
                       _active={{ bg: 'green.100' }}
-                      isDisabled={filters.product == null || filters.parcel == null}
-                    >
+                      isDisabled={filters.product == null || filters.parcel == null}>
                       {filters.production
                         ? filters.production.name
                         : intl.formatMessage({ id: 'app.allProductions' })}
@@ -858,8 +886,7 @@ export default function CommercialView() {
                         onClick={() => onProductionFilterChange(null)}
                         fontSize="sm"
                         color="gray.600"
-                        py={2}
-                      >
+                        py={2}>
                         {intl.formatMessage({ id: 'app.allProductions' })}
                       </MenuItem>
                       <MenuDivider />
@@ -870,8 +897,7 @@ export default function CommercialView() {
                             onClick={() => onProductionFilterChange(history)}
                             fontSize="sm"
                             color="gray.600"
-                            py={2}
-                          >
+                            py={2}>
                             {history.name}
                           </MenuItem>
                         ))}
@@ -891,8 +917,7 @@ export default function CommercialView() {
                     fontWeight="medium"
                     borderRadius="lg"
                     _hover={{ bg: 'green.600' }}
-                    _active={{ bg: 'green.700' }}
-                  >
+                    _active={{ bg: 'green.700' }}>
                     {filters.period.name}
                   </MenuButton>
                   <MenuList minW="150px">
@@ -905,8 +930,7 @@ export default function CommercialView() {
                       }
                       fontSize="sm"
                       color="gray.600"
-                      py={2}
-                    >
+                      py={2}>
                       {intl.formatMessage({ id: 'app.thisWeek' })}
                     </MenuItem>
                     <MenuItem
@@ -918,8 +942,7 @@ export default function CommercialView() {
                       }
                       fontSize="sm"
                       color="gray.600"
-                      py={2}
-                    >
+                      py={2}>
                       {intl.formatMessage({ id: 'app.thisMonth' })}
                     </MenuItem>
                     <MenuItem
@@ -931,8 +954,7 @@ export default function CommercialView() {
                       }
                       fontSize="sm"
                       color="gray.600"
-                      py={2}
-                    >
+                      py={2}>
                       {intl.formatMessage({ id: 'app.thisYear' })}
                     </MenuItem>
                   </MenuList>
@@ -944,10 +966,10 @@ export default function CommercialView() {
           <VStack spacing={6} w="100%">
             {/* Customer Quality Analytics Section - NEW */}
             <Box data-tour="scan-analytics" w="100%">
-            <CustomerQualityAnalytics
-              scansData={dataEstablishmentScans}
-              isLoading={!dataEstablishmentScans}
-            />
+              <CustomerQualityAnalytics
+                scansData={dataEstablishmentScans}
+                isLoading={!dataEstablishmentScans}
+              />
             </Box>
 
             {/* Scans Table - Full Width */}
@@ -960,7 +982,11 @@ export default function CommercialView() {
             </Box>
 
             {/* Charts Row - Side by Side */}
-            <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={6} w="100%" data-tour="trend-charts">
+            <Grid
+              templateColumns={{ base: '1fr', lg: '1fr 1fr' }}
+              gap={6}
+              w="100%"
+              data-tour="trend-charts">
               {/* Scans vs Reviews Chart */}
               <StandardCard
                 title={intl.formatMessage({ id: 'app.numberScansAndReviews' })}
@@ -974,8 +1000,7 @@ export default function CommercialView() {
                     colorScheme="green"
                     onClick={onChartModalOpen}
                   />
-                }
-              >
+                }>
                 <Box w="100%" h={{ base: '300px', md: '350px' }} overflow="hidden">
                   {isFetching ? (
                     <Flex justify="center" align="center" h="100%">
@@ -983,7 +1008,9 @@ export default function CommercialView() {
                     </Flex>
                   ) : !dataEstablishmentScansVsSaleInfo?.scans_vs_reviews ? (
                     <Flex justify="center" align="center" h="100%">
-                      <Text color={textColor}>{intl.formatMessage({ id: 'commercial.noDataAvailable' })}</Text>
+                      <Text color={textColor}>
+                        {intl.formatMessage({ id: 'commercial.noDataAvailable' })}
+                      </Text>
                     </Flex>
                   ) : (
                     <ModernLineBarChart
@@ -1015,8 +1042,7 @@ export default function CommercialView() {
               {/* Products Reputation Chart */}
               <StandardCard
                 title={`${intl.formatMessage({ id: 'app.productsReputation' })} ⭐️`}
-                variant="elevated"
-              >
+                variant="elevated">
                 <Box w="100%" h={{ base: '300px', md: '350px' }} overflow="hidden">
                   {isFetchingEstablishmentProductsReputation ? (
                     <Flex justify="center" align="center" h="100%">

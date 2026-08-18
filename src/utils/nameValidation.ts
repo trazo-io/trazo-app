@@ -28,5 +28,9 @@ export const PERSON_NAME_MAX_LENGTH = 128;
  */
 export function isValidPersonName(value: string): boolean {
   const trimmed = value.trim();
-  return trimmed.length > 0 && trimmed.length <= PERSON_NAME_MAX_LENGTH && PERSON_NAME_PATTERN.test(trimmed);
+  return (
+    trimmed.length > 0 &&
+    trimmed.length <= PERSON_NAME_MAX_LENGTH &&
+    PERSON_NAME_PATTERN.test(trimmed)
+  );
 }

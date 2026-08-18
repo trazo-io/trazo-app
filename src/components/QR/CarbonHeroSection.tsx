@@ -174,8 +174,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
         minH={heroHeight}
         bg={`linear-gradient(135deg, ${successColor}15 0%, ${successColor}05 100%)`}
         p={spacing}
-        position="relative"
-      >
+        position="relative">
         <Container maxW="container.md" py={spacing}>
           <VStack spacing={6} align="center" textAlign="center">
             <SkeletonCircle size={scoreSize} />
@@ -201,8 +200,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
         p={spacing}
         display="flex"
         alignItems="center"
-        justifyContent="center"
-      >
+        justifyContent="center">
         <VStack spacing={4} textAlign="center">
           <Icon as={FaInfoCircle} boxSize={12} color={mutedColor} />
           <Text fontSize="lg" color={mutedColor}>
@@ -244,8 +242,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
         minH={{ base: '440px', md: '500px' }}
         initial={{ opacity: 0 }}
         animate={{ opacity: visibleElements >= 1 ? 1 : 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-      >
+        transition={{ duration: 0.6, ease: 'easeOut' }}>
         {heroPhotoUrl ? (
           <>
             <Image
@@ -295,8 +292,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
           position="absolute"
           inset={0}
           px={{ base: 4, md: 6, lg: 8 }}
-          pointerEvents="none"
-        >
+          pointerEvents="none">
           {/* Bottom-left text overlay — farm name + product/harvest line.
               Right-padded to leave room for the score badge. */}
           <VStack
@@ -310,8 +306,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
             align="flex-start"
             spacing={1}
             color={heroPhotoUrl ? 'white' : 'gray.800'}
-            pointerEvents="auto"
-          >
+            pointerEvents="auto">
             <Text
               as="h1"
               fontSize={{ base: '2xl', md: '4xl' }}
@@ -323,8 +318,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               // "Solana Verde Organic Ranch (DEMO)" to "Solana Verde / Organic Ranc" with no
               // ellipsis. The farm's own name is the most identity-critical text on the page.
               noOfLines={{ base: 3, md: 2 }}
-              textShadow={heroPhotoUrl ? '0 2px 12px rgba(0,0,0,0.4)' : 'none'}
-            >
+              textShadow={heroPhotoUrl ? '0 2px 12px rgba(0,0,0,0.4)' : 'none'}>
               {productData?.company.name ?? 'Farm'}
             </Text>
             <Text
@@ -334,8 +328,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
               // Same 169px column as the title above: "Avocado · Lot SVR-2026-HA-001 ·
               // Harvested Apr 14, 2026" is ~55 characters and was being cut at "Harvested Apr".
               noOfLines={{ base: 3, md: 2 }}
-              textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.4)' : 'none'}
-            >
+              textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.4)' : 'none'}>
               {productData?.name ??
                 intl.formatMessage({
                   id: 'consumer.hero.productFallback',
@@ -373,8 +366,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                 scale: visibleElements >= 2 ? 1 : 0.85
               }}
               transition={{ delay: 0.2, duration: 0.6, type: 'spring', bounce: 0.3 }}
-              style={{ pointerEvents: 'auto' }}
-            >
+              style={{ pointerEvents: 'auto' }}>
               <VStack
                 spacing={0.5}
                 bg={heroPhotoUrl ? 'whiteAlpha.400' : 'white'}
@@ -389,8 +381,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                 justify="center"
                 boxShadow={
                   heroPhotoUrl ? '0 8px 32px rgba(0, 0, 0, 0.18)' : '0 4px 16px rgba(0, 0, 0, 0.08)'
-                }
-              >
+                }>
                 {certifiedLabel ? (
                   <>
                     {/* Compact: short certifier name on one line (the full
@@ -411,8 +402,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                         textAlign="center"
                         lineHeight="1.2"
                         whiteSpace="nowrap"
-                        textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}
-                      >
+                        textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}>
                         {certifiedLabel}
                       </Text>
                     </HStack>
@@ -422,8 +412,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                         fontWeight="medium"
                         color={heroPhotoUrl ? 'whiteAlpha.900' : 'gray.600'}
                         textAlign="center"
-                        noOfLines={1}
-                      >
+                        noOfLines={1}>
                         {intl.formatMessage(
                           { id: 'consumer.hero.byCertifier', defaultMessage: 'by {certifier}' },
                           { certifier: certifierName.split(' (')[0] }
@@ -436,8 +425,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                         color={heroPhotoUrl ? 'whiteAlpha.800' : 'gray.500'}
                         textAlign="center"
                         noOfLines={1}
-                        mt={0.5}
-                      >
+                        mt={0.5}>
                         {intl.formatMessage(
                           {
                             id: 'consumer.hero.practicesDocumented',
@@ -456,8 +444,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                       color={heroPhotoUrl ? 'white' : 'green.600'}
                       lineHeight="1"
                       letterSpacing="-0.04em"
-                      textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}
-                    >
+                      textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}>
                       {practicesCount}
                     </Text>
                     <Text
@@ -465,8 +452,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                       fontWeight="semibold"
                       color={heroPhotoUrl ? 'whiteAlpha.900' : 'gray.600'}
                       textAlign="center"
-                      lineHeight="1.2"
-                    >
+                      lineHeight="1.2">
                       {intl.formatMessage({
                         id: 'consumer.hero.practicesDocumentedLabel',
                         defaultMessage: 'practices documented'
@@ -483,8 +469,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                       fontSize="xs"
                       fontWeight="medium"
                       color={heroPhotoUrl ? 'white' : 'gray.600'}
-                      textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}
-                    >
+                      textShadow={heroPhotoUrl ? '0 1px 6px rgba(0,0,0,0.25)' : 'none'}>
                       {avgRating.toFixed(1)} ({reviewsCount})
                     </Text>
                   </HStack>
@@ -508,14 +493,12 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
         py={{ base: 4, md: 5 }}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: visibleElements >= 3 ? 1 : 0, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-      >
+        transition={{ delay: 0.3, duration: 0.5 }}>
         <Text
           fontSize={{ base: 'lg', md: 'xl' }}
           fontWeight="bold"
           color={successColor}
-          letterSpacing="-0.01em"
-        >
+          letterSpacing="-0.01em">
           {message.primary}
         </Text>
         <Text fontSize={{ base: 'sm', md: 'md' }} color={mutedColor} maxW="2xl" lineHeight="1.5">

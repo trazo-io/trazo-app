@@ -201,8 +201,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
               gap={4}
               borderBottomWidth="1px"
               borderColor="gray.100"
-              pb={1.5}
-            >
+              pb={1.5}>
               <Text fontSize="sm" color="gray.600">
                 {label}
               </Text>
@@ -218,8 +217,9 @@ const ParcelComplianceCard: React.FC<Props> = ({
           size="sm"
           variant="outline"
           rightIcon={<Icon as={FaExternalLinkAlt} boxSize={3} />}
-          onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application`)}
-        >
+          onClick={() =>
+            navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application`)
+          }>
           {intl.formatMessage({
             id: 'parcel.compliance.openApplication',
             defaultMessage: 'Open Parcel Application'
@@ -250,8 +250,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
               label={intl.formatMessage({
                 id: 'parcel.pump.efficiency',
                 defaultMessage: 'Pump Efficiency (%)'
-              })}
-            >
+              })}>
               <Input
                 type="number"
                 min={0}
@@ -266,8 +265,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
               label={intl.formatMessage({
                 id: 'parcel.pump.pressure',
                 defaultMessage: 'System Pressure (PSI)'
-              })}
-            >
+              })}>
               <Input
                 type="number"
                 min={0}
@@ -281,8 +279,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
               label={intl.formatMessage({
                 id: 'parcel.pump.testDate',
                 defaultMessage: 'Pump Test Date'
-              })}
-            >
+              })}>
               <Input
                 type="date"
                 value={pump.pump_test_date}
@@ -294,8 +291,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
               label={intl.formatMessage({
                 id: 'parcel.pump.provider',
                 defaultMessage: 'Test Provider'
-              })}
-            >
+              })}>
               <Input
                 value={pump.pump_test_provider}
                 isDisabled={!canWrite}
@@ -314,8 +310,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
             alignSelf="flex-end"
             size="sm"
             onClick={handleSavePump}
-            isLoading={isLoading}
-          >
+            isLoading={isLoading}>
             {intl.formatMessage({
               id: 'parcel.pump.save',
               defaultMessage: 'Save Pump Test'

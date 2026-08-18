@@ -53,9 +53,7 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
   if (compact) {
     return (
       <>
-        <Tooltip
-          label={intl.formatMessage({ id: 'app.usdaBadge.tooltipCompact' })}
-        >
+        <Tooltip label={intl.formatMessage({ id: 'app.usdaBadge.tooltipCompact' })}>
           <Badge
             colorScheme="blue"
             variant="subtle"
@@ -65,12 +63,9 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             alignItems="center"
             gap={1}
             px={2}
-            py={1}
-          >
+            py={1}>
             <Icon as={FiShield} boxSize={3} />
-            <Text fontSize="xs">
-              {intl.formatMessage({ id: 'app.usdaBadge.label' })}
-            </Text>
+            <Text fontSize="xs">{intl.formatMessage({ id: 'app.usdaBadge.label' })}</Text>
           </Badge>
         </Tooltip>
         {renderModal()}
@@ -89,8 +84,7 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
         cursor={showDetails ? 'pointer' : 'default'}
         onClick={showDetails ? handleBadgeClick : undefined}
         _hover={showDetails ? { borderColor: 'blue.300', shadow: 'sm' } : {}}
-        transition="all 0.2s"
-      >
+        transition="all 0.2s">
         <HStack justify="space-between" align="start">
           <VStack align="start" spacing={2} flex={1}>
             <HStack>
@@ -126,9 +120,7 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
     const headerContent = (
       <HStack>
         <Icon as={FiShield} color="blue.500" />
-        <Text>
-          {intl.formatMessage({ id: 'app.usdaBadge.modalTitle' })}
-        </Text>
+        <Text>{intl.formatMessage({ id: 'app.usdaBadge.modalTitle' })}</Text>
       </HStack>
     );
 
@@ -142,15 +134,11 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
           <VStack align="start" spacing={2}>
             <HStack>
               <Icon as={FiCheckCircle} color="green.500" boxSize={4} flexShrink={0} />
-              <Text fontSize="sm">
-                {intl.formatMessage({ id: 'app.usdaBadge.epaFactors' })}
-              </Text>
+              <Text fontSize="sm">{intl.formatMessage({ id: 'app.usdaBadge.epaFactors' })}</Text>
             </HStack>
             <HStack>
               <Icon as={FiCheckCircle} color="green.500" boxSize={4} flexShrink={0} />
-              <Text fontSize="sm">
-                {intl.formatMessage({ id: 'app.usdaBadge.usdaArs' })}
-              </Text>
+              <Text fontSize="sm">{intl.formatMessage({ id: 'app.usdaBadge.usdaArs' })}</Text>
             </HStack>
             <HStack>
               <Icon as={FiCheckCircle} color="green.500" boxSize={4} flexShrink={0} />
@@ -160,9 +148,7 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             </HStack>
             <HStack>
               <Icon as={FiCheckCircle} color="green.500" boxSize={4} flexShrink={0} />
-              <Text fontSize="sm">
-                {intl.formatMessage({ id: 'app.usdaBadge.epaEgrid' })}
-              </Text>
+              <Text fontSize="sm">{intl.formatMessage({ id: 'app.usdaBadge.epaEgrid' })}</Text>
             </HStack>
           </VStack>
         </Box>
@@ -218,8 +204,7 @@ const USDACredibilityBadge: React.FC<USDACredibilityBadgeProps> = ({
             bg={cardBg}
             borderTopRadius="2xl"
             maxH="92vh"
-            containerProps={{ style: { zIndex: 10000 } }}
-          >
+            containerProps={{ style: { zIndex: 10000 } }}>
             <Box pt={3} pb={1} display="flex" justifyContent="center">
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>

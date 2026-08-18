@@ -12,8 +12,7 @@ function CardHeader(props: CardHeaderProps) {
       width="100%"
       data-component="CardHeader"
       className="trazo-card-header"
-      {...rest}
-    >
+      {...rest}>
       {children}
     </Box>
   );

@@ -60,6 +60,7 @@ import {
   FaEye,
   FaSearch
 } from 'react-icons/fa';
+import { ALERT_ACCENT_SHADE, ALERT_PALETTE } from 'theme/components/alert';
 import { MdCheck, MdError, MdInfo, MdWarning } from 'react-icons/md';
 import { IconType } from 'react-icons';
 import { useDropzone } from 'react-dropzone';
@@ -285,6 +286,17 @@ interface StandardCardProps {
   subtitle?: string;
   headerAction?: ReactNode;
   /**
+   * Decorative glyph before the title. Additive, and the reason the OSP pages could not use
+   * `title` at all: every section card there leads with an icon, `title` takes a string, so
+   * ten cards hand-rolled `<HStack><Icon/><Text fontWeight="bold"/></HStack>` instead and
+   * drifted to 14px/700 and 18px/700 with no <Heading> between them — a ten-section
+   * compliance page whose only heading was the page <h1>.
+   *
+   * `aria-hidden` is applied here: the icon repeats the title, and a screen reader reading
+   * "leaf Organic System Plan" is worse than reading the title alone.
+   */
+  titleIcon?: ReactNode;
+  /**
    * ⚠️ CURRENTLY A NO-OP — every value renders identically.
    *
    * `assets/css/trazo-dashboard-styles.css` (one of the four protected CSS-production-build
@@ -319,6 +331,13 @@ interface StandardCardProps {
    * how the farm profile ended up with 56px between every pair of cards.
    */
   mb?: number | string | object;
+  /**
+   * Top margin. `mb` existed and `mt` did not, and StandardCard has no rest-spread, so
+   * `<StandardCard mt={4}>` reached no DOM node — the margin was silently dropped at every
+   * such call site (OSPView's version-history card and the approved-inputs panel among them)
+   * while reporting a TS error into the masked pile. Same inert-prop class as `variant`.
+   */
+  mt?: number | string | object;
 }
 
 export const StandardCard = ({
@@ -326,9 +345,11 @@ export const StandardCard = ({
   title,
   subtitle,
   headerAction,
+  titleIcon,
   variant = 'elevated',
   padding = { base: 3, md: 4 },
-  mb = 6
+  mb = 6,
+  mt
 }: StandardCardProps) => {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -352,7 +373,7 @@ export const StandardCard = ({
   };
 
   return (
-    <Card {...cardProps[variant]} mb={mb}>
+    <Card {...cardProps[variant]} mb={mb} mt={mt}>
       {(title || headerAction) && (
         <CardHeader pb={title && subtitle ? 2 : 4}>
           <Flex
@@ -363,9 +384,16 @@ export const StandardCard = ({
             w="100%">
             <VStack align="start" spacing={1} flexShrink={0}>
               {title && (
-                <Heading as="h3" size={{ base: 'sm', md: 'md' }} color="gray.700">
-                  {title}
-                </Heading>
+                <HStack spacing={2} align="center">
+                  {titleIcon ? (
+                    <Box aria-hidden="true" display="flex" alignItems="center">
+                      {titleIcon}
+                    </Box>
+                  ) : null}
+                  <Heading as="h3" size={{ base: 'sm', md: 'md' }} color="gray.700">
+                    {title}
+                  </Heading>
+                </HStack>
               )}
               {subtitle && (
                 <Text color="gray.500" fontSize={{ base: 'xs', md: 'sm' }}>
@@ -1197,6 +1225,15 @@ interface StandardAlertProps {
   title?: string;
   description?: string;
   children?: ReactNode;
+  /**
+   * Bottom margin. Defaults to 6, which is what every existing call site already gets.
+   *
+   * It was hardcoded, and that is why the OSP narrative page never adopted this component:
+   * its eleven alerts sit inside cards and accordion panels at mb 0–3, and the only way to
+   * use StandardAlert there was to accept 24px of dead space under each one. A component
+   * the design system cannot fit into its own pages loses to a raw <Alert> every time.
+   */
+  mb?: number | string;
 }
 
 /**
@@ -1213,56 +1250,46 @@ interface StandardAlertProps {
  * `warning` maps to `amber` deliberately. The theme defines amber and NOT orange, so
  * Chakra's own status->orange default was reaching for a foreign palette.
  */
-export const ALERT_PALETTE = {
-  success: 'green',
-  error: 'red',
-  warning: 'amber',
-  info: 'blue'
-} as const;
+/**
+ * Re-exported, NOT redeclared. `theme/components/alert.js` is the canonical home now that
+ * the theme paints every bare `<Alert>` too — two copies of this map is exactly how the
+ * standard component and the 71 bare call sites would drift apart again. The existing
+ * `theme/__tests__/alertContrast.test.ts` imports these names from here, so the re-export
+ * keeps that guard pointed at the values the theme actually renders from.
+ */
+export { ALERT_PALETTE, ALERT_ACCENT_SHADE };
 
 /**
- * Which step of that palette the icon and the 4px accent bar take.
+ * The accent bar, the `lg` radius, the `.50` ground and the top-aligned icon now all come
+ * from `theme/components/alert.js`, which paints a BARE `<Alert>` the same way. What is left
+ * here is the only thing this component ever added on top: an optional bold title stacked
+ * over a description, and a default bottom margin.
  *
- * Chakra's stock `.500` does not pay the 3.0:1 WCAG 1.4.11 non-text floor against these
- * `.50` grounds. MEASURED icon-on-ground, guarded in `theme/__tests__/alertContrast.test.ts`:
- *   green.500 -> 2.70 ✗   green.700 -> 4.98 ✓
- *   blue.500  -> 2.74 ✗   blue.700  -> 4.03 ✓
- *   red.500   -> 3.22 ✓   red.700   -> 4.36 ✓  (red already cleared; 700 for consistency)
- * The amber ramp tops out at #E65100, so warning is the one that needs the 900 step —
- * every lower rung fails: 500 -> 2.03, 600 -> 2.23, 700 -> 2.55, 800 -> 2.90, 900 -> 3.57 ✓
+ * ⛔ Do NOT re-add `bg` / `borderLeft` / `borderRadius` / `alignItems` as style props. They
+ * were correct when the theme owned nothing; now they would be a SECOND definition that
+ * silently outranks the theme (style props beat theme styles), so a future palette change in
+ * alert.js would move all 71 bare alerts and leave these 42 behind. That divergence is the
+ * exact defect this change closed.
  */
-export const ALERT_ACCENT_SHADE = {
-  success: '700',
-  error: '700',
-  warning: '900',
-  info: '700'
-} as const;
-
-export const StandardAlert = ({ status, title, description, children }: StandardAlertProps) => {
+export const StandardAlert = ({
+  status,
+  title,
+  description,
+  children,
+  mb = 6
+}: StandardAlertProps) => {
   const icons = {
     success: MdCheck,
     error: MdError,
     warning: MdWarning,
     info: MdInfo
   };
-  const accent = `${ALERT_PALETTE[status]}.${ALERT_ACCENT_SHADE[status]}`;
 
   return (
-    <Alert
-      status={status}
-      borderRadius="lg"
-      variant="left-accent"
-      bg={`${ALERT_PALETTE[status]}.50`}
-      borderLeft="4px solid"
-      marginBottom={6}
-      borderLeftColor={accent}
-      // Chakra hardcodes `display:flex; alignItems:center` in the Alert component's own
-      // `__css`, so a two-line body leaves the icon floating against the SECOND line with
-      // nothing beside the first. Harmless on a one-line alert, wrong the moment a title
-      // and a description stack — which is most of the 34 call sites. Style props outrank
-      // `__css`, so this is the override.
-      alignItems="flex-start">
-      <AlertIcon as={icons[status]} color={accent} />
+    <Alert status={status} variant="left-accent" marginBottom={mb}>
+      {/* `as` only swaps the glyph — the COLOUR comes from the theme's `icon` part, so it
+          cannot drift from the accent bar beside it. */}
+      <AlertIcon as={icons[status]} />
       <VStack align="start" spacing={1}>
         {title && (
           <Text fontWeight="semibold" fontSize="sm">
@@ -2156,7 +2183,7 @@ export const StandardMediaUpload = ({
         </Text>
       )}
       {error && (
-        <Alert status="error" borderRadius="md">
+        <Alert status="error">
           <AlertIcon />
           <Text fontSize="sm">{error}</Text>
         </Alert>
@@ -2208,14 +2235,7 @@ export const DraftRestorationAlert = ({
   };
 
   return (
-    <Alert
-      status="info"
-      borderRadius="lg"
-      variant="left-accent"
-      bg="blue.50"
-      borderLeft="4px solid"
-      borderLeftColor="blue.500"
-      mb={4}>
+    <Alert status="info" variant="left-accent" mb={4}>
       <AlertIcon color="blue.500" />
       <Flex
         direction={{ base: 'column', md: 'row' }}

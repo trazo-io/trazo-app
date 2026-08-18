@@ -7,6 +7,7 @@ import {
   Text,
   Icon,
   Badge,
+  Checkbox,
   useToast,
   useDisclosure,
   AlertDialog,
@@ -102,11 +103,19 @@ type FormStateData = {
   quality_grade: string;
   harvest_method: string;
   observation: string;
+  // Not a form field — the confirm dialog's publish checkbox is merged in at submit.
+  // Optional because the form itself never sets it; only handleConfirmFinish does.
+  published?: boolean;
 };
 
 interface StandardFinishProductionFormProps {
   onSubmit: (
-    data: FinishProductionFormData & { uploaded_image_urls: string[]; images: string[] }
+    data: FinishProductionFormData & {
+      uploaded_image_urls: string[];
+      images: string[];
+      // Absent when the confirm dialog did not run (isEdit) — see onSubmitForm.
+      published?: boolean;
+    }
   ) => void;
   onCancel: () => void;
   /** Prefill values, in the form's own string-shaped state — NOT the zod OUTPUT type.
@@ -161,6 +170,10 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
   // Confirmation dialog for finishing production (immutability warning)
   const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onClose: onConfirmClose } = useDisclosure();
+  // Publishing the buyer page defaults ON — it is the point of the product — but it is
+  // the one consequence of finishing that is REVERSIBLE (unpublish from the Buyer Page),
+  // so it is offered as a choice here instead of being listed with the permanent locks.
+  const [publishBuyerPage, setPublishBuyerPage] = useState(true);
   const confirmCancelRef = useRef<HTMLButtonElement>(null);
   const [pendingFormData, setPendingFormData] = useState<FormStateData | null>(null);
 
@@ -192,8 +205,9 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
     }
   });
 
+  // No `handleSubmit`: submission is routed through handleManualSubmit so the
+  // confirmation dialog cannot be bypassed. See the <form onSubmit> below.
   const {
-    handleSubmit,
     reset,
     watch,
     setValue,
@@ -257,8 +271,20 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
         observation: mergedData.observation
       };
 
+      // `finalFormData` above is an explicit allowlist built from the zod schema, so
+      // anything not named there is dropped. `published` is not a schema field (it is
+      // the dialog's checkbox, not a validated input), so it has to be carried here
+      // explicitly — omitting it sends no key, which the backend reads as "publish".
+      //
+      // Carried ONLY when the dialog actually set it. `onSubmitForm` is also reached by
+      // the isEdit branch of handleManualSubmit, which never opens the dialog and so
+      // never renders the checkbox — coercing `undefined` to `true` there would let an
+      // edit of a deliberately-unpublished season silently publish it. A payload does
+      // not get to assert a field its UI did not render; absent means "leave it alone",
+      // and the backend's absent-key default (publish) is the pre-checkbox behaviour.
       const finalData = {
         ...finalFormData,
+        ...(mergedData.published === undefined ? {} : { published: mergedData.published }),
         uploaded_image_urls: uploadedImageUrls,
         images: uploadedImageUrls
       };
@@ -309,7 +335,10 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   // Confirmed finish — actually submit the form
   const handleConfirmFinish = () => {
     if (pendingFormData) {
-      onSubmitForm(pendingFormData);
+      // The checkbox lives on the dialog, not the form, so it is merged in here.
+      // Always sent explicitly — the backend defaults an ABSENT key to publish, so
+      // omitting it when unchecked would publish the page the farmer just declined.
+      onSubmitForm({ ...pendingFormData, published: publishBuyerPage });
       setPendingFormData(null);
     }
     onConfirmClose();
@@ -395,7 +424,19 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
         </Badge>
       }>
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmitForm)}>
+        {/*
+          Routed through handleManualSubmit, NOT straight to onSubmitForm. Every button
+          here is type="button", so the only way to reach a native submit is implicit
+          submission — Enter pressed on a step that renders a single field. That used to
+          call onSubmitForm directly, which finishes the production while skipping the
+          immutability confirmation entirely (and now the publish checkbox with it).
+          Finishing is irreversible; it must not be reachable by an Enter keypress.
+        */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleManualSubmit();
+          }}>
           <VStack spacing={8} align="stretch">
             {/* Progress Stepper */}
             <StandardStepper
@@ -768,19 +809,25 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                     <HStack spacing={2}>
                       <Icon as={FaLock} boxSize={3} />
                       {/*
-                        compliance.md: "blockchain-recorded" is SAFE, "blockchain-verified"
-                        is NOT — blockchain proves the record was not altered, never that
-                        the practice happened. It is also a $15/mo add-on, so this dialog
-                        must not imply every finalized production gets it.
+                        This bullet advertised the blockchain add-on, which was WITHDRAWN
+                        2026-08-03 (`blockchain-verification` seeded is_active=False,
+                        BLOCKCHAIN_ENABLED False) — pitching something no farmer can buy, at
+                        the moment of commitment. It was then briefly reworded to say the
+                        finalization fingerprint appears in the certifier packet. That is
+                        ALSO untrue: `finalization_hash` is written by _store_finalization_hash
+                        and read back only by the (disabled) blockchain submission path and
+                        the verify_blockchain endpoint. No packet or export generator prints
+                        it, so nothing the farmer receives shows it.
+
+                        Replaced with the retention fact, which is the only claim in this
+                        dialog that organic certification actually imposes: 7 CFR 205.103(b)(4)
+                        requires records be kept at least 5 years, History.delete() enforces
+                        it against `retention_until`, and finish() is what stamps that date.
+                        ((b)(4), not (b)(3) — the Strengthening Organic Enforcement rule
+                        restructured 205.103(b) into five subsections and retention moved.)
                       */}
                       <Text>
-                        {intl.formatMessage({ id: 'finishProduction.confirm.fingerprint' })}
-                      </Text>
-                    </HStack>
-                    <HStack spacing={2}>
-                      <Icon as={FaLock} boxSize={3} />
-                      <Text>
-                        {intl.formatMessage({ id: 'finishProduction.confirm.consumerQr' })}
+                        {intl.formatMessage({ id: 'finishProduction.confirm.retention' })}
                       </Text>
                     </HStack>
                     {/*
@@ -797,6 +844,36 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                       </Text>
                     </HStack>
                   </VStack>
+                </Box>
+                {/*
+                  OUTSIDE the orange box on purpose. Everything in that box is permanent;
+                  this is the one thing the farmer can undo, and filing a reversible choice
+                  under a list of irreversible locks misrepresents both.
+                */}
+                <Box
+                  p={3}
+                  bg="gray.50"
+                  borderRadius="lg"
+                  w="full"
+                  borderWidth="1px"
+                  borderColor="gray.200">
+                  <Checkbox
+                    colorScheme="green"
+                    isChecked={publishBuyerPage}
+                    onChange={(e) => setPublishBuyerPage(e.target.checked)}
+                    minH="44px"
+                    alignItems="center">
+                    <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                      {intl.formatMessage({ id: 'finishProduction.confirm.publishLabel' })}
+                    </Text>
+                  </Checkbox>
+                  <Text fontSize="xs" color="gray.500" mt={1} ml={6}>
+                    {intl.formatMessage({
+                      id: publishBuyerPage
+                        ? 'finishProduction.confirm.publishHelpOn'
+                        : 'finishProduction.confirm.publishHelpOff'
+                    })}
+                  </Text>
                 </Box>
                 <Text fontSize="xs" color="gray.500">
                   {intl.formatMessage({ id: 'finishProduction.confirm.footnote' })}

@@ -151,7 +151,7 @@ const CertifierReview: React.FC = () => {
   if (notFound || !meta) {
     return (
       <Center minH="60vh" px={4}>
-        <Alert status="warning" maxW="lg" borderRadius="md">
+        <Alert status="warning" maxW="lg">
           <AlertIcon />
           <Box>
             <Text fontWeight="semibold">
@@ -228,14 +228,23 @@ const CertifierReview: React.FC = () => {
               </Text>
 
               {productionsWithFindings.length === 0 ? (
-                <Box bg={clearBg} border="1px solid" borderColor={clearBorder} borderRadius="lg" p={4}>
+                <Box
+                  bg={clearBg}
+                  border="1px solid"
+                  borderColor={clearBorder}
+                  borderRadius="lg"
+                  p={4}>
                   <HStack spacing={2}>
                     <Icon as={FaCheckCircle} color={clearText} boxSize={4} />
                     <Text fontSize="sm" fontWeight="semibold" color={clearText}>
-                      {intl.formatMessage({
-                        id: 'certifierReview.readinessAllClear',
-                        defaultMessage: 'No outstanding items across {count, plural, one {# season} other {# seasons}} in this window'
-                      }, { count: readiness.total_productions })}
+                      {intl.formatMessage(
+                        {
+                          id: 'certifierReview.readinessAllClear',
+                          defaultMessage:
+                            'No outstanding items across {count, plural, one {# season} other {# seasons}} in this window'
+                        },
+                        { count: readiness.total_productions }
+                      )}
                     </Text>
                   </HStack>
                 </Box>
@@ -257,8 +266,7 @@ const CertifierReview: React.FC = () => {
                             borderLeft="4px solid"
                             borderLeftColor={`${style.colorScheme}.400`}
                             borderRadius="md"
-                            p={3}
-                          >
+                            p={3}>
                             <HStack spacing={2} align="start">
                               <Icon
                                 as={style.icon}
@@ -276,8 +284,7 @@ const CertifierReview: React.FC = () => {
                                     colorScheme={style.colorScheme}
                                     variant="subtle"
                                     fontSize="xs"
-                                    borderRadius="full"
-                                  >
+                                    borderRadius="full">
                                     {finding.status}
                                   </Badge>
                                 </HStack>

@@ -46,7 +46,9 @@ describe('writer checklist shape', () => {
   it('keeps the season items sequential', () => {
     expect(WRITER_ITEMS.find((i) => i.id === 'start-production')?.dependsOn).toBe('add-parcel');
     expect(WRITER_ITEMS.find((i) => i.id === 'document-event')?.dependsOn).toBe('start-production');
-    expect(WRITER_ITEMS.find((i) => i.id === 'finish-production')?.dependsOn).toBe('document-event');
+    expect(WRITER_ITEMS.find((i) => i.id === 'finish-production')?.dependsOn).toBe(
+      'document-event'
+    );
     expect(WRITER_ITEMS.find((i) => i.id === 'share-qr')?.dependsOn).toBe('finish-production');
   });
 

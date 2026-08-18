@@ -35,8 +35,7 @@ function MainPanel(props: MainPanelProps) {
       data-component="MainPanel"
       className="trazo-main-panel"
       w={w}
-      {...rest}
-    >
+      {...rest}>
       {children}
     </Box>
   );

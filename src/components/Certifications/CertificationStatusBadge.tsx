@@ -100,8 +100,7 @@ const CertificationStatusBadge: React.FC<CertificationStatusBadgeProps> = ({
       // shrink, and the certification name beside it gets squeezed to zero width and wraps
       // one character per line ("U/S/D/A/ /O/r/g/a/n/i/c" on a phone).
       whiteSpace="normal"
-      maxW="100%"
-    >
+      maxW="100%">
       <HStack spacing={1} align="flex-start">
         <Icon as={config.icon} boxSize={size === 'md' ? 3.5 : 3} mt="2px" flexShrink={0} />
         <Text fontSize="xs" textAlign="left">

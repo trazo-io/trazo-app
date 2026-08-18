@@ -14,8 +14,7 @@ function CardBody(props: CardBodyProps) {
       flexDirection="column"
       data-component="CardBody"
       className="trazo-card-body"
-      {...rest}
-    >
+      {...rest}>
       {children}
     </Box>
   );

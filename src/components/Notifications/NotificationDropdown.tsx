@@ -207,9 +207,12 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
     const farmId = notification.extra_data?.establishment_id;
     if (farmId) {
       const params = new URLSearchParams();
-      if (notification.extra_data?.parcel_id) params.set('parcelId', String(notification.extra_data.parcel_id));
-      if (notification.extra_data?.product_id) params.set('productId', String(notification.extra_data.product_id));
-      if (notification.extra_data?.production_id) params.set('productionId', String(notification.extra_data.production_id));
+      if (notification.extra_data?.parcel_id)
+        params.set('parcelId', String(notification.extra_data.parcel_id));
+      if (notification.extra_data?.product_id)
+        params.set('productId', String(notification.extra_data.product_id));
+      if (notification.extra_data?.production_id)
+        params.set('productionId', String(notification.extra_data.production_id));
       const query = params.toString() ? `?${params.toString()}` : '';
       return `/admin/dashboard/farm/${farmId}/commercial${query}`;
     }
@@ -365,8 +368,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
       _hover={{ bg: hoverBg }}
       cursor="pointer"
       onClick={() => handleNotificationNavigate(notification)}
-      transition="background 0.15s"
-    >
+      transition="background 0.15s">
       <HStack spacing="12px" align="start" w="100%">
         {/* Icon */}
         <Box
@@ -377,8 +379,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
           borderRadius="full"
           display="flex"
           alignItems="center"
-          justifyContent="center"
-        >
+          justifyContent="center">
           <Icon as={getNotificationIcon(notification.type)} boxSize={isNested ? 4 : 5} />
         </Box>
 
@@ -389,8 +390,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
             fontWeight={notification.read ? 'normal' : 'semibold'}
             color={textColor}
             lineHeight="1.3"
-            noOfLines={2}
-          >
+            noOfLines={2}>
             {notification.title}
           </Text>
           <Text fontSize="xs" color={mutedTextColor} lineHeight="1.3" noOfLines={2}>
@@ -441,8 +441,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
           _hover={{ bg: hoverBg }}
           cursor="pointer"
           onClick={() => toggleGroup(group.key)}
-          transition="background 0.15s"
-        >
+          transition="background 0.15s">
           <HStack spacing="12px" align="start" w="100%">
             {/* Icon with count badge */}
             <Box position="relative">
@@ -454,8 +453,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
                 borderRadius="full"
                 display="flex"
                 alignItems="center"
-                justifyContent="center"
-              >
+                justifyContent="center">
                 <Icon as={getNotificationIcon(group.type)} boxSize={5} />
               </Box>
               {/* No inline bg/color: inherit the `brand` variant, which is green.700 on white
@@ -473,19 +471,28 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
                 alignItems="center"
                 justifyContent="center"
                 border="2px solid"
-                borderColor={menuBg}
-              >
+                borderColor={menuBg}>
                 {group.count}
               </Badge>
             </Box>
 
             {/* Content */}
             <VStack align="start" spacing="2px" flex="1" minW="0">
-              <Text fontSize="sm" fontWeight={hasUnread ? 'semibold' : 'normal'} color={textColor} lineHeight="1.3">
-                {intl.formatMessage({ id: 'notifications.productScanned' }, { productName: group.productName })}
+              <Text
+                fontSize="sm"
+                fontWeight={hasUnread ? 'semibold' : 'normal'}
+                color={textColor}
+                lineHeight="1.3">
+                {intl.formatMessage(
+                  { id: 'notifications.productScanned' },
+                  { productName: group.productName }
+                )}
               </Text>
               <Text fontSize="xs" color={mutedTextColor} lineHeight="1.3">
-                {intl.formatMessage({ id: 'notifications.consumersViewed' }, { count: group.count })}
+                {intl.formatMessage(
+                  { id: 'notifications.consumersViewed' },
+                  { count: group.count }
+                )}
               </Text>
               <HStack spacing="6px">
                 <Text fontSize="xs" color={mutedTextColor}>
@@ -500,9 +507,11 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
                     fontSize="11px"
                     borderRadius="full"
                     px="6px"
-                    variant="subtle"
-                  >
-                    {intl.formatMessage({ id: 'notifications.newCount' }, { count: group.unreadCount })}
+                    variant="subtle">
+                    {intl.formatMessage(
+                      { id: 'notifications.newCount' },
+                      { count: group.unreadCount }
+                    )}
                   </Badge>
                 )}
               </HStack>
@@ -542,8 +551,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
             borderLeftWidth="2px"
             borderLeftColor="green.200"
             mt="2px"
-            mb="4px"
-          >
+            mb="4px">
             <HStack spacing="8px" ml="12px" mb="4px">
               {hasUnread && (
                 <Button
@@ -554,8 +562,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
                   onClick={(e) => {
                     e.stopPropagation();
                     handleMarkGroupAsRead(group);
-                  }}
-                >
+                  }}>
                   {intl.formatMessage({ id: 'notifications.markGroupRead' })}
                 </Button>
               )}
@@ -568,9 +575,11 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
                   onClick={(e) => {
                     e.stopPropagation();
                     handleGroupNavigate(group);
-                  }}
-                >
-                  {intl.formatMessage({ id: 'notifications.viewDashboard', defaultMessage: 'View Dashboard' })}
+                  }}>
+                  {intl.formatMessage({
+                    id: 'notifications.viewDashboard',
+                    defaultMessage: 'View Dashboard'
+                  })}
                 </Button>
               )}
             </HStack>
@@ -602,8 +611,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
             fontSize="xs"
             display="flex"
             alignItems="center"
-            justifyContent="center"
-          >
+            justifyContent="center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>
         )}
@@ -619,12 +627,12 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
         maxH="500px"
         overflowY="auto"
         boxShadow="xl"
-        zIndex="1500"
-      >
+        zIndex="1500">
         {/* Header */}
         <Flex justify="space-between" align="center" px="8px" mb="12px">
           <Text fontSize="lg" fontWeight="bold" color={textColor}>
-            {intl.formatMessage({ id: 'notifications.title' })} {unreadCount > 0 && `(${unreadCount})`}
+            {intl.formatMessage({ id: 'notifications.title' })}{' '}
+            {unreadCount > 0 && `(${unreadCount})`}
           </Text>
           {unreadCount > 0 && (
             <Button
@@ -632,8 +640,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
               variant="ghost"
               colorScheme="green"
               fontSize="xs"
-              onClick={handleMarkAllAsRead}
-            >
+              onClick={handleMarkAllAsRead}>
               {intl.formatMessage({ id: 'notifications.markAllRead' })}
             </Button>
           )}
@@ -668,7 +675,10 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
             <Divider mt="12px" mb="8px" />
             <Box textAlign="center" py="4px">
               <Text fontSize="xs" color={mutedTextColor}>
-                {intl.formatMessage({ id: 'notifications.totalCount' }, { count: totalNotifications })}
+                {intl.formatMessage(
+                  { id: 'notifications.totalCount' },
+                  { count: totalNotifications }
+                )}
               </Text>
             </Box>
           </>

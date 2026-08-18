@@ -35,7 +35,13 @@ export const ConsumerSignUpClosed: React.FC = () => {
 
   return (
     <Box minH="100vh" display="flex" alignItems="center" justifyContent="center" px={4} py={12}>
-      <Box bg={cardBg} borderRadius="2xl" boxShadow="lg" p={{ base: 6, smd: 10 }} maxW="480px" w="full">
+      <Box
+        bg={cardBg}
+        borderRadius="2xl"
+        boxShadow="lg"
+        p={{ base: 6, smd: 10 }}
+        maxW="480px"
+        w="full">
         <VStack spacing={5} align="stretch" textAlign="center">
           <Icon as={FaLeaf} boxSize={10} color="green.500" alignSelf="center" />
           <Heading size="md">

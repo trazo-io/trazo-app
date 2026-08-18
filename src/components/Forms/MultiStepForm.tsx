@@ -183,8 +183,7 @@ export const MultiStepForm = <T extends Record<string, any>>({
       title={title}
       description={description}
       showBackButton={showBackButton}
-      onBack={onCancel}
-    >
+      onBack={onCancel}>
       {/* ✅ PROGRESS INDICATOR */}
       <VStack spacing={6} align="stretch" mb={8}>
         <Box>
@@ -287,16 +286,14 @@ export const StepWrapper: React.FC<StepWrapperProps> = ({
                 isLoading={isLoading}
                 loadingText="Submitting..."
                 leftIcon={<FaCheckCircle />}
-                onClick={onSubmit}
-              >
+                onClick={onSubmit}>
                 {submitText}
               </StandardButton>
             ) : (
               <StandardButton
                 rightIcon={<FaChevronRight />}
                 onClick={onNext}
-                isDisabled={nextDisabled}
-              >
+                isDisabled={nextDisabled}>
                 {nextText}
               </StandardButton>
             )}

@@ -18,8 +18,7 @@ const renderError = (props: React.ComponentProps<typeof ModernErrorState>, local
       <IntlProvider
         locale={locale}
         messages={locale === 'en-US' ? (enMessages as any) : (esMessages as any)}
-        onError={() => undefined}
-      >
+        onError={() => undefined}>
         <ModernErrorState {...props} />
       </IntlProvider>
     </ChakraProvider>

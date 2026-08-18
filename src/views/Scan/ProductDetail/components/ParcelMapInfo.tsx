@@ -150,8 +150,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
       border="1px solid"
       borderColor={useColorModeValue('gray.200', 'gray.600')}
       p={{ base: 4, smd: 6 }}
-      w="full"
-    >
+      w="full">
       <VStack spacing={4} align="stretch">
         <HStack spacing={3}>
           <Flex w={10} h={10} borderRadius="lg" bg="green.50" align="center" justify="center">
@@ -161,8 +160,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
             <Text
               fontWeight="bold"
               fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
-              color={textColor}
-            >
+              color={textColor}>
               {intl.formatMessage({
                 id: 'consumer.farm.parcelInformation',
                 defaultMessage: 'Parcel Information'
@@ -226,8 +224,7 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
                 <Text
                   fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                   fontWeight="semibold"
-                  color={textColor}
-                >
+                  color={textColor}>
                   {parcelData?.name ||
                     intl.formatMessage({
                       id: 'consumer.farm.fieldFallback',

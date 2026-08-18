@@ -22,7 +22,21 @@ import { describe, expect, it } from 'vitest';
 import { equipmentMaintenanceFields, harvestFields } from '../quickEventFields';
 
 // history/models.py ProductionEvent subtype codes.
-const PRODUCTION_SUBTYPES = ['PL', 'HA', 'IR', 'PR', 'TR', 'EM', 'CU', 'TH', 'PO', 'PH', 'CM', 'FP', 'MO'];
+const PRODUCTION_SUBTYPES = [
+  'PL',
+  'HA',
+  'IR',
+  'PR',
+  'TR',
+  'EM',
+  'CU',
+  'TH',
+  'PO',
+  'PH',
+  'CM',
+  'FP',
+  'MO'
+];
 
 describe('D12 — Quick-Add equipment maintenance targets a storable subtype', () => {
   it('declares EM, not the deprecated EquipmentEvent code', () => {

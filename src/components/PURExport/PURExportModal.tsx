@@ -201,22 +201,19 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
       onClose={handleClose}
       size={{ base: 'full', smd: 'lg' }}
       isCentered
-      scrollBehavior="inside"
-    >
+      scrollBehavior="inside">
       <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
       <ModalContent
         borderRadius={{ base: 'none', smd: '2xl' }}
         mx={{ base: 0, smd: 4 }}
-        my={{ base: 0, smd: 'auto' }}
-      >
+        my={{ base: 0, smd: 'auto' }}>
         <ModalHeader
           pb={3}
           fontSize={{ base: 'md', md: 'lg' }}
           fontWeight="bold"
           color={labelColor}
           borderBottom="1px solid"
-          borderColor={sectionBorder}
-        >
+          borderColor={sectionBorder}>
           <HStack spacing={2}>
             <Icon as={FiFileText} color="green.500" boxSize={5} />
             <Text>{intl.formatMessage({ id: 'app.pur.title' })}</Text>
@@ -240,8 +237,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                   value={month}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setMonth(Number(e.target.value))
-                  }
-                >
+                  }>
                   {MONTHS.map((label, idx) => (
                     <option key={label} value={idx + 1}>
                       {label}
@@ -257,8 +253,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                   value={year}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setYear(Number(e.target.value))
-                  }
-                >
+                  }>
                   {yearOptions.map((y) => (
                     <option key={y} value={y}>
                       {y}
@@ -323,8 +318,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                     overflowY="auto"
                     bg={sectionBg}
                     borderRadius="lg"
-                    p={3}
-                  >
+                    p={3}>
                     {summary.rows.map((row, idx) => (
                       <Box
                         key={idx}
@@ -332,8 +326,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                         borderRadius="md"
                         borderLeft="3px solid"
                         borderColor={row.notes ? 'orange.300' : 'green.300'}
-                        bg={rowBg}
-                      >
+                        bg={rowBg}>
                         <Text fontSize="sm" fontWeight="semibold" color={labelColor}>
                           {row.product_and_manufacturer || '—'}
                         </Text>
@@ -356,8 +349,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                     border="1px solid"
                     borderColor={infoBorder}
                     borderRadius="lg"
-                    p={3}
-                  >
+                    p={3}>
                     <Text fontSize="sm" color={infoText}>
                       {intl.formatMessage({ id: 'app.pur.noApplications' })}
                     </Text>
@@ -369,8 +361,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                   border="1px solid"
                   borderColor={infoBorder}
                   borderRadius="lg"
-                  p={3}
-                >
+                  p={3}>
                   <Text fontSize="xs" color={infoText} lineHeight="1.6">
                     {intl.formatMessage(
                       { id: 'app.pur.deadlineNote' },
@@ -383,8 +374,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                       href="https://www.calagpermits.org/"
                       isExternal
                       color="green.500"
-                      fontWeight="semibold"
-                    >
+                      fontWeight="semibold">
                       calagpermits.org
                       <Icon as={FiExternalLink} boxSize={3} ml={1} verticalAlign="middle" />
                     </Link>
@@ -400,15 +390,13 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
           borderColor={sectionBorder}
           gap={3}
           flexDirection={{ base: 'column', smd: 'row' }}
-          pt={4}
-        >
+          pt={4}>
           <StandardButton
             variant="outline"
             size="md"
             onClick={handleClose}
             isDisabled={isDownloading}
-            w={{ base: 'full', smd: 'auto' }}
-          >
+            w={{ base: 'full', smd: 'auto' }}>
             {intl.formatMessage({ id: 'app.cancel' })}
           </StandardButton>
           <StandardButton
@@ -419,8 +407,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
             isLoading={isDownloading}
             loadingText={intl.formatMessage({ id: 'app.exportDownloading' })}
             isDisabled={!hasApps || isPreviewing}
-            w={{ base: 'full', smd: 'auto' }}
-          >
+            w={{ base: 'full', smd: 'auto' }}>
             {intl.formatMessage({ id: 'app.pur.downloadCsv' })}
           </StandardButton>
         </ModalFooter>

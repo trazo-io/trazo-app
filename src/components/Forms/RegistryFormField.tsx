@@ -131,7 +131,14 @@ export const RegistryFormField: React.FC<RegistryFormFieldProps> = ({
   // --- Check custom renderer first ---
   const CustomRenderer = CUSTOM_FIELD_RENDERERS.get(field.name);
   if (CustomRenderer) {
-    return <CustomRenderer field={field} control={control} eventData={eventData} isDisabled={isDisabled} />;
+    return (
+      <CustomRenderer
+        field={field}
+        control={control}
+        eventData={eventData}
+        isDisabled={isDisabled}
+      />
+    );
   }
 
   // --- Check visibility ---
@@ -142,12 +149,15 @@ export const RegistryFormField: React.FC<RegistryFormFieldProps> = ({
   const helpText = field.helpKey ? resolveLabel(field.helpKey, intl) : undefined;
   const placeholder = field.placeholderKey ? resolveLabel(field.placeholderKey, intl) : undefined;
   const error = errors[field.name]?.message;
-  const isRequired = typeof field.required === 'function' ? field.required(eventData) : field.required === true;
+  const isRequired =
+    typeof field.required === 'function' ? field.required(eventData) : field.required === true;
 
   // --- Render by value type ---
   switch (field.valueType) {
     case 'enum': {
-      const options = field.enumSource ? (getEnumOptions(field.enumSource as EnumSourceKey) ?? []) : [];
+      const options = field.enumSource
+        ? getEnumOptions(field.enumSource as EnumSourceKey) ?? []
+        : [];
       return (
         <StandardField label={label} required={isRequired} helpText={helpText} error={error}>
           <Controller
@@ -158,8 +168,7 @@ export const RegistryFormField: React.FC<RegistryFormFieldProps> = ({
                 {...formField}
                 value={formField.value ?? ''}
                 placeholder={placeholder || `Select ${label.toLowerCase()}`}
-                isDisabled={isDisabled}
-              >
+                isDisabled={isDisabled}>
                 {options.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {resolveLabel(opt.labelKey, intl)}
@@ -205,8 +214,7 @@ export const RegistryFormField: React.FC<RegistryFormFieldProps> = ({
                         {...unitFormField}
                         value={unitFormField.value ?? ''}
                         isDisabled={isDisabled}
-                        size="sm"
-                      >
+                        size="sm">
                         {unitOptions.map((opt) => (
                           <option key={opt.value} value={opt.value}>
                             {resolveLabel(opt.labelKey, intl)}
@@ -253,8 +261,7 @@ export const RegistryFormField: React.FC<RegistryFormFieldProps> = ({
                 isChecked={Boolean(formField.value)}
                 onChange={formField.onChange}
                 isDisabled={isDisabled}
-                colorScheme="green"
-              >
+                colorScheme="green">
                 {label}
               </Checkbox>
             )}

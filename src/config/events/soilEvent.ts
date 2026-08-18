@@ -547,6 +547,63 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     surfaces: { form: 'immediate' }
   },
 
+  // ---- Amendment purchase traceability (7 CFR 205.103(b)(1)-(2)) ----
+  //
+  // 🔴 2026-08-16, CCOF grower-checklist audit. CCOF item 1 asks for receipts for
+  // "fertilizer, compost, soil amendments, planting mixes"; ChemicalEvent had supplier /
+  // purchase date / invoice / quantity / lot and this model had none of them, so the largest
+  // purchased input on a typical organic orchard was the one with no paper trail.
+  //
+  // Certifier and producer surfaces ONLY — no `consumer_card`. Who a farm buys from and what
+  // it paid is commercially sensitive, and it fails all three consumer-card questions. Same
+  // policy as ChemicalEvent.supplier_name, which the backend also strips from the public
+  // payload (see feedback_supplier_chain_leak).
+  {
+    name: 'amendment_supplier_name',
+    labelKey: 'events.soil.fields.amendmentSupplierName',
+    valueType: 'string',
+    visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'amendment_purchase_date',
+    labelKey: 'events.soil.fields.amendmentPurchaseDate',
+    valueType: 'date',
+    visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'amendment_purchase_invoice',
+    labelKey: 'events.soil.fields.amendmentPurchaseInvoice',
+    valueType: 'string',
+    visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    // The mass-balance input leg for amendments. Without it the packet cannot reconcile
+    // purchased against applied and prints a [REVIEW] block the operation cannot clear.
+    name: 'amendment_quantity_purchased',
+    labelKey: 'events.soil.fields.amendmentQuantityPurchased',
+    valueType: 'number',
+    unitField: 'amendment_quantity_purchased_unit',
+    visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'amendment_quantity_purchased_unit',
+    labelKey: 'events.soil.fields.amendmentQuantityPurchasedUnit',
+    valueType: 'enum',
+    visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
+    surfaces: { form: 'secondary' }
+  },
+  {
+    name: 'amendment_lot_number',
+    labelKey: 'events.soil.fields.amendmentLotNumber',
+    valueType: 'string',
+    visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+
   // ---- NOP Compliance: Amendment organic approval (7 CFR 205.203(b)) ----
   {
     name: 'amendment_organic_approved',

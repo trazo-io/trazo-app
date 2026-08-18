@@ -35,8 +35,7 @@ vi.mock('../../components/Forms/AddHistoryForm', () => ({
           start_date: '2024-01-01',
           end_date: '2024-06-30'
         });
-      }}
-    >
+      }}>
       <input data-testid="history-name" />
       <select data-testid="parcel-select">
         {parcels?.map((p: any) => (
@@ -68,8 +67,7 @@ vi.mock('../../components/Forms/AddEventForm', () => ({
           description: 'Planted seeds',
           date: '2024-01-15'
         });
-      }}
-    >
+      }}>
       <select data-testid="event-type">
         <option value="planting">Planting</option>
         <option value="fertilizing">Fertilizing</option>
@@ -281,8 +279,7 @@ describe('Production Flow Integration', () => {
                   description: 'Applied organic fertilizer',
                   date: '2024-02-01'
                 })
-              }
-            >
+              }>
               Add Second Event
             </button>
           </div>
@@ -355,8 +352,7 @@ describe('Production Flow Integration', () => {
                   parcel: null,
                   start_date: ''
                 });
-              }}
-            >
+              }}>
               <button type="submit">Create Production</button>
             </form>
             {errors.map((error) => (

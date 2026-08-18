@@ -79,7 +79,7 @@ const OperationReadinessPanel: React.FC<Props> = ({ companyId, farmId, variant =
   const body = (
     <VStack align="stretch" spacing={3}>
       {data.ready && problems.length === 0 && (
-        <Alert status="success" borderRadius="md">
+        <Alert status="success">
           <AlertIcon />
           <Text fontSize="sm">
             {intl.formatMessage({
@@ -92,7 +92,7 @@ const OperationReadinessPanel: React.FC<Props> = ({ companyId, farmId, variant =
       )}
 
       {data.blockers.length > 0 && (
-        <Alert status="error" borderRadius="md">
+        <Alert status="error">
           <AlertIcon />
           <Text fontSize="sm">
             {intl.formatMessage({
@@ -121,8 +121,7 @@ const OperationReadinessPanel: React.FC<Props> = ({ companyId, farmId, variant =
         defaultMessage: 'Inspection readiness'
       })}
       variant="elevated"
-      padding={{ base: 3, md: 4 }}
-    >
+      padding={{ base: 3, md: 4 }}>
       <VStack align="stretch" spacing={3}>
         <HStack justify="space-between">
           <Text fontSize="sm" color="gray.600">

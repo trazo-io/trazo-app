@@ -103,8 +103,7 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
         onClose={handleClose}
         placement="bottom"
         closeOnOverlayClick={isDismissible && closeOnOverlayClick}
-        closeOnEsc={isDismissible}
-      >
+        closeOnEsc={isDismissible}>
         <DrawerOverlay bg="blackAlpha.400" {...overlayProps} />
         <DrawerContent bg={bgColor} borderTopRadius="2xl" maxH={mobileMaxH} {...contentProps}>
           <Box
@@ -114,8 +113,7 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
             display="flex"
             justifyContent="center"
             cursor="grab"
-            {...swipeHandlers}
-          >
+            {...swipeHandlers}>
             <Box w="36px" h="4px" borderRadius="full" bg={handleColor} />
           </Box>
           <DrawerCloseButton top={4} isDisabled={isCloseDisabled} />
@@ -126,8 +124,7 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
               pt={2}
               pb={4}
               borderBottomWidth="1px"
-              borderColor={borderColor}
-            >
+              borderColor={borderColor}>
               {header}
             </DrawerHeader>
           )}
@@ -151,8 +148,7 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
       size={size}
       scrollBehavior="inside"
       closeOnOverlayClick={isDismissible && closeOnOverlayClick}
-      closeOnEsc={isDismissible}
-    >
+      closeOnEsc={isDismissible}>
       <ModalOverlay bg="blackAlpha.400" {...overlayProps} />
       <ModalContent bg={bgColor} borderRadius="xl" maxH="90vh" mx={4} {...contentProps}>
         {header && (
@@ -162,8 +158,7 @@ export const ResponsiveModal: React.FC<ResponsiveModalProps> = ({
             pt={6}
             pb={4}
             borderBottomWidth="1px"
-            borderColor={borderColor}
-          >
+            borderColor={borderColor}>
             {header}
           </ModalHeader>
         )}

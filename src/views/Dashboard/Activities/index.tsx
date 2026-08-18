@@ -534,7 +534,7 @@ const ActivitiesPage = () => {
 
         {/* A capped list that does not say it is capped reads as the whole log. */}
         {data?.truncated ? (
-          <Alert status="info" borderRadius="md">
+          <Alert status="info">
             <AlertIcon />
             <Text fontSize="sm">{intl.formatMessage({ id: 'activities.truncatedNotice' })}</Text>
           </Alert>

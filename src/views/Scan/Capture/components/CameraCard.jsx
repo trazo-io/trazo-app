@@ -22,8 +22,7 @@ const CameraCard = () => {
           <Box
             maxW={{ sm: '280px', md: '670px', lg: '600px' }}
             maxH={{ sm: '185px', md: '450px', lg: '400px' }}
-            mb="24px"
-          >
+            mb="24px">
             <Image src={productImage1} w="100%" h="100%" />
           </Box>
           <Flex alignSelf={'flex-end'}>
@@ -32,8 +31,7 @@ const CameraCard = () => {
               bg="gray.100"
               w={{ sm: '75px', md: '100px' }}
               h="35px"
-              me="12px"
-            >
+              me="12px">
               <Text fontSize="xs" color="gray.700" fontWeight="bold">
                 DISCARD
               </Text>
@@ -42,8 +40,7 @@ const CameraCard = () => {
               variant="no-hover"
               bg="linear-gradient(81.62deg, #313860 2.25%, #151928 79.87%)"
               w={{ sm: '75px', md: '100px' }}
-              h="35px"
-            >
+              h="35px">
               <Text fontSize="xs" color="#fff" fontWeight="bold">
                 CAPTURE
               </Text>

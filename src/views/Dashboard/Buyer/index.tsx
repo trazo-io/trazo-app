@@ -45,8 +45,8 @@ import {
 import { config, env } from 'config/environment';
 import { useUserRole } from 'hooks/useUserRole';
 import {
-  useGetBuyerDocRequestsQuery,
-  useGetFarmProductionsQuery,
+  useGetBuyerPageDocRequestsQuery,
+  useGetBuyerFarmProductionsQuery,
   useSetBuyerDocRequestStatusMutation,
   useSetProductionPublishedMutation
 } from 'store/api/buyerPageApi';
@@ -81,14 +81,6 @@ const scanTypeKey = (scanType: string): string =>
   SCAN_TYPE_KEYS.has(scanType) ? `buyer.scanType.${scanType}` : 'buyer.scanType.other';
 
 /**
- * A scan's location, or null when there isn't one.
- *
- * `establishment_scans_paginated` sends `get_location_display() or "-"`, so "absent" arrives as a
- * literal ASCII hyphen. Left alone that renders as a second, different placeholder next to the
- * em dashes every other column uses. Also guards the pre-GDPR placeholders in case an older row
- * reaches the serializer through the legacy `city`/`country` branch.
- */
-/**
  * Server-side scan filters. Keys are the endpoint's own query parameters, and each value is the
  * id the endpoint hands back on every row (`production_id`, `product_id`, `parcel_id`) — the
  * client filters with keys it was given, never ones it derived.
@@ -109,6 +101,20 @@ interface ScanFilterOption {
   name: string | null;
 }
 
+/**
+ * A scan's location, or null when there isn't one.
+ *
+ * `establishment_scans_paginated` sends `get_location_display() or "-"`, so "absent" arrives as a
+ * literal ASCII hyphen. Left alone that renders as a second, different placeholder next to the
+ * em dashes every other column uses.
+ *
+ * `XX` / `Unknown` are the CURRENT sentinels, not legacy ones: `process_scan_consent` writes them
+ * whenever consent is absent or the IP does not resolve, because `country_code`/`region` are
+ * NOT NULL. `get_location_display()` already maps them to null, but they are matched here too so
+ * that a row reaching this table through any other serializer cannot render "Unknown, XX" as if
+ * it were a place. The legacy `city`/`country` branch is also still covered — rows written before
+ * the two scan writers were unified (2026-08-16) carry those instead.
+ */
 const LOCATION_PLACEHOLDERS = new Set(['-', '—', '', 'XX', 'Unknown', 'Unknown, XX']);
 const locationOf = (location: string | null | undefined): string | null => {
   const trimmed = (location ?? '').trim();
@@ -132,7 +138,7 @@ const BuyerPage = () => {
 
   useTour('buyer-page', { enabled: !!companyId && !!farmId });
 
-  const { data: productions, isLoading } = useGetFarmProductionsQuery(
+  const { data: productions, isLoading } = useGetBuyerFarmProductionsQuery(
     { companyId, farmId: farmId || '' },
     { skip: !companyId || !farmId }
   );
@@ -169,7 +175,7 @@ const BuyerPage = () => {
     { skip: !companyId || !farmId }
   );
 
-  const { data: requests } = useGetBuyerDocRequestsQuery(
+  const { data: requests } = useGetBuyerPageDocRequestsQuery(
     { farmId: farmId || '' },
     { skip: !farmId }
   );
@@ -203,7 +209,7 @@ const BuyerPage = () => {
     setScanPageIndex(1);
   }, [scanFilters]);
 
-  // Options come from the RESPONSE, not from the productions list: `getFarmProductions` returns
+  // Options come from the RESPONSE, not from the productions list: `getBuyerFarmProductions` returns
   // `parcel` as a bare name with no id, so there is nothing to filter by, and it would offer every
   // parcel on the farm rather than the ones that have scans. The endpoint reports both.
   const scanFilterOptions = (
@@ -228,7 +234,7 @@ const BuyerPage = () => {
   );
   const hasActiveScanFilter = Object.values(scanFilters).some(Boolean);
 
-  // Client-side: `getFarmProductions` returns the whole list in one response, so paging here is
+  // Client-side: `getBuyerFarmProductions` returns the whole list in one response, so paging here is
   // pure presentation — it stops a 166-season farm from rendering 166 table rows at once.
   //
   // CLAMPED, not just stored. If the list shrinks under a viewer sitting on a later page (a
@@ -401,10 +407,19 @@ const BuyerPage = () => {
                     `width: 100%` makes it absorb the slack — the standard HTML-table idiom — and
                     pinning the action columns to `1%`/`whiteSpace: nowrap` keeps them tight to
                     their buttons instead of stretching. */}
-                  <Table size="sm" w="full" sx={{ tableLayout: 'auto' }}>
+                  {/* `minW` is what makes the wrapper above actually scroll. Without it the
+                      table shrinks to the viewport instead, and `w="100%"` on the first column
+                      — which absorbs slack on a wide screen — leaves that column near zero on a
+                      phone, so both the header and the cell wrap one character per line
+                      ("PRODUCTION" rendered as a vertical P-R-O-D-U-C-T-I-O-N stack at 430px).
+                      The scans table below already had this right; this one did not. */}
+                  <Table size="sm" w="full" minW="640px" sx={{ tableLayout: 'auto' }}>
                     <Thead>
                       <Tr>
-                        <Th w="100%">{intl.formatMessage({ id: 'buyer.col.production' })}</Th>
+                        {/* nowrap + a floor, so absorbing slack can never collapse the column. */}
+                        <Th whiteSpace="nowrap" w="100%" minW="240px">
+                          {intl.formatMessage({ id: 'buyer.col.production' })}
+                        </Th>
                         <Th whiteSpace="nowrap">
                           {intl.formatMessage({ id: 'buyer.col.parcel' })}
                         </Th>
@@ -577,15 +592,27 @@ const BuyerPage = () => {
               // latter is skipped by the `is_owner` guard.)
               //
               // LOCATION is real on that path. `PublicHistoryScanViewSet.create` spreads
-              // `PrivacyService.process_scan_consent(request)`, which geolocates the IP via
-              // ipapi.co and stores the privacy-safe pair `country_code` + `region` (the legacy
-              // `city`/`country` columns are deliberately nulled — GDPR data minimisation). The
-              // payload's `location` is `get_location_display()`, which prefers that pair.
-              // It is CONSENT-GATED end to end: ProductDetail only records a scan once
-              // `hasAnalyticsConsent()` is true, and without the cookie the service returns
-              // country_code "XX" / region "Unknown", which `get_location_display()` maps to null.
-              // So an em dash here means "scanned without analytics consent", not "missing data".
-              // Locally it is ALWAYS an em dash: ipapi.co reports 127.0.0.1 as `reserved`.
+              // `PrivacyService.process_scan_consent(request)`, which resolves the client IP
+              // against the LOCAL GeoLite2 database (`history/services/geoip_service.py`) and
+              // stores the privacy-safe pair `country_code` + `region` — an ISO 3166-1 alpha-2
+              // code plus the state/province, never the city. The legacy `city`/`country`
+              // columns are deliberately nulled (GDPR data minimisation), and the payload's
+              // `location` is `get_location_display()`, which prefers that pair.
+              //
+              // 2026-08-16: this used to call ipapi.co, which answers 429/403 from the
+              // DigitalOcean egress and had been failing SILENTLY on every scan in production
+              // — the column was empty for every row. Do not reintroduce an HTTP geolocation
+              // call; `test_scan_geolocation.py` fails if a lookup touches the network.
+              //
+              // It is CONSENT-GATED: without the `trazo-analytics-consent` cookie the service
+              // returns country_code "XX" / region "Unknown", which `get_location_display()`
+              // maps to null. The scan itself is still recorded — the count is not gated, only
+              // what the row carries. Because the scan POSTs on mount and the banner renders
+              // after it, a first-time visitor's row is written anonymous and then UPGRADED in
+              // place by `public_scans/consent/` when they accept; there is never a second row.
+              // So an em dash here means "declined, ignored the banner, or the IP did not
+              // resolve" — never "the scan was not counted".
+              // Locally it is ALWAYS an em dash: a private/loopback IP has no location to find.
               //
               // COMMENT dropped. The endpoint accepts one, but NOTHING IN THE APP EVER SENDS ONE:
               // `useCommentHistoryMutation` and `recordTransparencyScan` both have zero call
@@ -598,7 +625,9 @@ const BuyerPage = () => {
               // only when a comment or share flag is present — "qr" is its else-branch, not a
               // detection. Only a deliberately-set value earns a badge.
               <Box overflowX="auto">
-                <Table size="sm" w="full">
+                {/* nowrap on the headers stops them stacking, but only `minW` makes the
+                    wrapper scroll rather than compress the row on a phone. */}
+                <Table size="sm" w="full" minW="640px">
                   <Thead>
                     <Tr>
                       {/* Every header is nowrap: an uppercase, letter-spaced heading in a narrow

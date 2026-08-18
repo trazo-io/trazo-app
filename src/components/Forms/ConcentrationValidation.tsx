@@ -345,7 +345,7 @@ export const ConcentrationFeedback: React.FC<ConcentrationFeedbackProps> = ({
 
       {/* Errors */}
       {validation.errors && validation.errors.length > 0 && (
-        <Alert status="error" size="sm" borderRadius="md">
+        <Alert status="error" size="sm">
           <AlertIcon />
           <VStack align="start" spacing={1}>
             {validation.errors.map((error, index) => (
@@ -359,7 +359,7 @@ export const ConcentrationFeedback: React.FC<ConcentrationFeedbackProps> = ({
 
       {/* Suggestions */}
       {validation.suggestions && validation.suggestions.length > 0 && (
-        <Alert status="info" size="sm" borderRadius="md">
+        <Alert status="info" size="sm">
           <AlertIcon />
           <VStack align="start" spacing={1}>
             {validation.suggestions.map((suggestion, index) => (

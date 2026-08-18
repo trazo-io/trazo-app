@@ -248,14 +248,12 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
           borderRadius="xl"
           border="1px solid"
           borderColor={useColorModeValue('gray.200', 'gray.600')}
-          p={{ base: 4, smd: 6 }}
-        >
+          p={{ base: 4, smd: 6 }}>
           <VStack spacing={4} align="stretch">
             <Flex
               direction={{ base: 'column', smd: 'row' }}
               align={{ base: 'flex-start', smd: 'center' }}
-              gap={3}
-            >
+              gap={3}>
               <HStack spacing={3} flex="1" minW={0} align="start">
                 <Flex
                   w={10}
@@ -264,8 +262,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                   bg="green.50"
                   align="center"
                   justify="center"
-                  flexShrink={0}
-                >
+                  flexShrink={0}>
                   <Icon as={FaBuilding} color="green.500" boxSize={5} />
                 </Flex>
                 <VStack align="start" spacing={0} flex={1} minW={0}>
@@ -273,8 +270,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                     fontWeight="bold"
                     fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                     color={textColor}
-                    noOfLines={2}
-                  >
+                    noOfLines={2}>
                     {companyData.name ||
                       intl.formatMessage({
                         id: 'consumer.farm.companyName',
@@ -298,8 +294,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                 borderRadius="full"
                 fontSize="xs"
                 flexShrink={0}
-                alignSelf={{ base: 'flex-start', smd: 'center' }}
-              >
+                alignSelf={{ base: 'flex-start', smd: 'center' }}>
                 {intl.formatMessage({
                   id: 'consumer.farm.moreInfo',
                   defaultMessage: 'More Info'
@@ -333,8 +328,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                       borderRadius="full"
                       px={3}
                       py={1}
-                      fontSize="xs"
-                    >
+                      fontSize="xs">
                       {goal}
                     </Badge>
                   ))}
@@ -407,8 +401,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                         <Text
                           fontSize="xs"
                           color="green.500"
-                          display={{ base: 'none', md: 'block' }}
-                        >
+                          display={{ base: 'none', md: 'block' }}>
                           {intl.formatMessage({
                             id: 'consumer.farm.facebook',
                             defaultMessage: 'Facebook'
@@ -429,8 +422,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                         <Text
                           fontSize="xs"
                           color="pink.500"
-                          display={{ base: 'none', md: 'block' }}
-                        >
+                          display={{ base: 'none', md: 'block' }}>
                           {intl.formatMessage({
                             id: 'consumer.farm.instagram',
                             defaultMessage: 'Instagram'
@@ -453,8 +445,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
           borderRadius="xl"
           border="1px solid"
           borderColor={useColorModeValue('gray.200', 'gray.600')}
-          p={{ base: 4, smd: 6 }}
-        >
+          p={{ base: 4, smd: 6 }}>
           <VStack spacing={4} align="stretch">
             <Flex justify="space-between" align="flex-start" gap={3}>
               <HStack spacing={3} flex="1" minW={0} align="start">
@@ -465,8 +456,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                   bg="green.50"
                   align="center"
                   justify="center"
-                  flexShrink={0}
-                >
+                  flexShrink={0}>
                   <Icon as={FaMapMarkerAlt} color="green.500" boxSize={5} />
                 </Flex>
                 <VStack align="start" spacing={0} flex={1} minW={0}>
@@ -474,8 +464,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                     fontWeight="bold"
                     fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
                     color={textColor}
-                    noOfLines={2}
-                  >
+                    noOfLines={2}>
                     {establishmentData.name ||
                       intl.formatMessage({
                         id: 'consumer.farm.farmName',
@@ -500,8 +489,7 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                 onClick={onEstablishmentModalOpen}
                 borderRadius="full"
                 fontSize="xs"
-                flexShrink={0}
-              >
+                flexShrink={0}>
                 {intl.formatMessage({
                   id: 'consumer.farm.moreInfo',
                   defaultMessage: 'More Info'

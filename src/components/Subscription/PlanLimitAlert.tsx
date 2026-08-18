@@ -28,14 +28,13 @@ export const PlanLimitAlert: React.FC<PlanLimitAlertProps> = ({ limit, descripti
   const navigate = useNavigate();
 
   return (
-    <Alert status="warning" borderRadius="lg" mb={6} alignItems="flex-start">
+    <Alert status="warning" mb={6}>
       <AlertIcon />
       <Stack
         direction={{ base: 'column', smd: 'row' }}
         spacing={3}
         flex="1"
-        align={{ base: 'flex-start', smd: 'center' }}
-      >
+        align={{ base: 'flex-start', smd: 'center' }}>
         <Box flex="1">
           <AlertTitle fontSize="sm">
             {intl.formatMessage({ id: 'limits.planLimitReachedTitle' })}
@@ -49,8 +48,7 @@ export const PlanLimitAlert: React.FC<PlanLimitAlertProps> = ({ limit, descripti
           size="sm"
           minH="44px"
           flexShrink={0}
-          onClick={() => navigate('/admin/dashboard/pricing')}
-        >
+          onClick={() => navigate('/admin/dashboard/pricing')}>
           {intl.formatMessage({ id: 'app.upgradePlan' })}
         </Button>
       </Stack>

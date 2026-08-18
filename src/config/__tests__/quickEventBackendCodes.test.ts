@@ -31,13 +31,21 @@ describe('Quick Add → backend equipment operation codes', () => {
   });
 
   it('emits only codes the backend accepts', () => {
-    for (const value of ['routine_maintenance', 'repair', 'calibration', 'cleaning', 'inspection']) {
+    for (const value of [
+      'routine_maintenance',
+      'repair',
+      'calibration',
+      'cleaning',
+      'inspection'
+    ]) {
       expect(BACKEND_OPERATION_CODES).toContain(map(value));
     }
   });
 
   it('maps each operation to a distinct code, so none is silently swallowed', () => {
-    const codes = ['routine_maintenance', 'repair', 'calibration', 'cleaning', 'inspection'].map(map);
+    const codes = ['routine_maintenance', 'repair', 'calibration', 'cleaning', 'inspection'].map(
+      map
+    );
     expect(new Set(codes).size).toBe(codes.length);
   });
 });

@@ -19,8 +19,7 @@ import { FaCloudUploadAlt, FaWifi } from 'react-icons/fa';
 import { useOfflinePhotoQueue } from '../../hooks/useOfflinePhotoQueue';
 
 export const OfflineQueueIndicator: React.FC = () => {
-  const { pendingCount, isSyncing, isOffline, manualSync } =
-    useOfflinePhotoQueue();
+  const { pendingCount, isSyncing, isOffline, manualSync } = useOfflinePhotoQueue();
 
   const bgColor = useColorModeValue('orange.50', 'orange.900');
   const borderColor = useColorModeValue('orange.200', 'orange.700');
@@ -40,8 +39,7 @@ export const OfflineQueueIndicator: React.FC = () => {
       spacing={2}
       role="status"
       aria-live="polite"
-      aria-label={`${pendingCount} photos waiting to upload`}
-    >
+      aria-label={`${pendingCount} photos waiting to upload`}>
       {isOffline ? (
         <FaWifi color="gray" aria-hidden />
       ) : isSyncing ? (

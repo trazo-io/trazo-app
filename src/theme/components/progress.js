@@ -14,6 +14,20 @@ import { mode } from '@chakra-ui/theme-tools';
  * ⚠️ Verify any change here by reading the COMPUTED style of a rendered bar, never this
  * object — see the header of `theme/components/button.js` for why.
  */
+/**
+ * Which step of a palette fills the track. `.700` for everything, EXCEPT amber.
+ *
+ * The amber ramp is light all the way down — it ends at #E65100 — so `amber.700` against the
+ * `gray.100` groove is 2.57:1 and misses the 3:1 floor a meaningful graphic owes. MEASURED
+ * against the ramp in `theme/styles.js`:
+ *     amber.700 -> 2.57 ✗   amber.800 -> 2.92 ✗   amber.900 -> 3.60 ✓
+ * This is the same exception `ALERT_ACCENT_SHADE` in `theme/components/alert.js` makes for
+ * the same ramp and the same reason, and the same one `button.js` records when it refuses to
+ * offer an amber button at all. If a palette is added here, MEASURE it — do not pattern-match
+ * off `.700`.
+ */
+const FILL_SHADE = { amber: '900' };
+
 export const progressStyles = {
   components: {
     Progress: {
@@ -28,7 +42,9 @@ export const progressStyles = {
           const c = props.colorScheme;
           return {
             filledTrack: {
-              bg: c ? mode(`${c}.700`, `${c}.300`)(props) : mode('green.700', 'green.300')(props)
+              bg: c
+                ? mode(`${c}.${FILL_SHADE[c] || '700'}`, `${c}.300`)(props)
+                : mode('green.700', 'green.300')(props)
             }
           };
         }

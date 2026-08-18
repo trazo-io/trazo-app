@@ -16,12 +16,7 @@ export const WriteAccessGuard: React.FC<{ children: React.ReactNode }> = ({ chil
 
   if (!canWrite) {
     return (
-      <Box
-        minH="60vh"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-      >
+      <Box minH="60vh" display="flex" alignItems="center" justifyContent="center">
         <VStack spacing={4} textAlign="center" p={8}>
           <Icon as={FaLock} boxSize={12} color="gray.400" />
           <Text fontSize="xl" fontWeight="semibold" color="gray.700">
@@ -30,12 +25,7 @@ export const WriteAccessGuard: React.FC<{ children: React.ReactNode }> = ({ chil
           <Text fontSize="md" color="gray.500" maxW="400px">
             {intl.formatMessage({ id: 'app.accessRestrictedDescription' })}
           </Text>
-          <Button
-            colorScheme="green"
-            variant="outline"
-            onClick={() => navigate(-1)}
-            mt={2}
-          >
+          <Button colorScheme="green" variant="outline" onClick={() => navigate(-1)} mt={2}>
             {intl.formatMessage({ id: 'app.goBackButton' })}
           </Button>
         </VStack>

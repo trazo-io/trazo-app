@@ -65,8 +65,7 @@ const NotClaim: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     py={1}
     bg="gray.50"
     borderRadius="sm"
-    maxW="60ch"
-  >
+    maxW="60ch">
     <Text fontSize="sm" color="gray.600" lineHeight="1.7">
       {children}
     </Text>
@@ -91,7 +90,12 @@ const MethodologyPage: React.FC = () => {
 
   return (
     <Container maxW="container.md" px={{ base: 4, smd: 6 }} pt={{ base: 6, md: 10 }} pb={12}>
-      <Box bg="white" borderRadius="xl" border="1px solid" borderColor="gray.200" p={{ base: 5, smd: 8 }}>
+      <Box
+        bg="white"
+        borderRadius="xl"
+        border="1px solid"
+        borderColor="gray.200"
+        p={{ base: 5, smd: 8 }}>
         <VStack align="start" spacing={8}>
           {/* Header */}
           <Box as="header">
@@ -99,8 +103,7 @@ const MethodologyPage: React.FC = () => {
               How Trazo data works
             </Heading>
             <Text fontSize="sm" color="gray.600" lineHeight="1.7" maxW="60ch">
-              What every number and badge on a Trazo product page means — and what it
-              doesn&apos;t.
+              What every number and badge on a Trazo product page means — and what it doesn&apos;t.
             </Text>
           </Box>
 
@@ -108,30 +111,29 @@ const MethodologyPage: React.FC = () => {
 
           <Section id="transparency" title="Practice documentation">
             <Body>
-              Every Trazo product page is built from event records the farmer logs during the
-              season — planting, irrigation, soil work, pest management, harvest, and more.
-              Farmers enter these records through forms, guided templates, or voice notes.
+              Every Trazo product page is built from event records the farmer logs during the season
+              — planting, irrigation, soil work, pest management, harvest, and more. Farmers enter
+              these records through forms, guided templates, or voice notes.
             </Body>
             <Body>
-              A count like &ldquo;20 practices documented&rdquo; means exactly that: 20 records
-              are on file for this production. It measures how thoroughly the farm documented
-              its work.
+              A count like &ldquo;20 practices documented&rdquo; means exactly that: 20 records are
+              on file for this production. It measures how thoroughly the farm documented its work.
             </Body>
             <NotClaim>
-              Documentation counts and transparency scores are based on farmer-reported
-              records. They are not independently audited, and they are not a quality or
-              safety grade for the food itself.
+              Documentation counts and transparency scores are based on farmer-reported records.
+              They are not independently audited, and they are not a quality or safety grade for the
+              food itself.
             </NotClaim>
             <Body>
-              Records that include photos and timestamps are stronger evidence than text
-              alone, and the score weighs them accordingly.
+              Records that include photos and timestamps are stronger evidence than text alone, and
+              the score weighs them accordingly.
             </Body>
           </Section>
 
           <Section id="carbon" title="Environmental impact numbers">
             <Body>
-              The environmental figures on a product page cover direct operational emissions —
-              the emissions the farmer controls on the farm:
+              The environmental figures on a product page cover direct operational emissions — the
+              emissions the farmer controls on the farm:
             </Body>
             <Box as="ul" pl={5} maxW="60ch">
               <Text as="li" fontSize="sm" color="gray.700" lineHeight="1.7">
@@ -145,59 +147,56 @@ const MethodologyPage: React.FC = () => {
               </Text>
             </Box>
             <Body>
-              We multiply the quantities the farmer reports by emission factors published by
-              the EPA and USDA.
+              We multiply the quantities the farmer reports by emission factors published by the EPA
+              and USDA.
             </Body>
             <NotClaim>
-              This is not a full life-cycle footprint. It does not include transport to the
-              store, packaging, retail, or anything after the product leaves the farm.
-              Per-kilogram figures are estimates calculated from farmer-reported data, not
-              measured emissions.
+              This is not a full life-cycle footprint. It does not include transport to the store,
+              packaging, retail, or anything after the product leaves the farm. Per-kilogram figures
+              are estimates calculated from farmer-reported data, not measured emissions.
             </NotClaim>
           </Section>
 
           <Section id="photos" title="Photos">
             <Body>
-              Photos on a product page are submitted by the farmer alongside their event
-              records.
+              Photos on a product page are submitted by the farmer alongside their event records.
             </Body>
             <Body>
               Before a photo counts as evidence, an automated AI check screens it for blank,
               duplicate, or unrelated images. The check is a simple pass or fail.
             </Body>
             <NotClaim>
-              Passing the check means the image appears to be a real, relevant photo. It does
-              not verify that the practice shown in the photo was performed as described.
+              Passing the check means the image appears to be a real, relevant photo. It does not
+              verify that the practice shown in the photo was performed as described.
             </NotClaim>
           </Section>
-
 
           <Section id="certifications" title="Certifications">
             <Body>
               A USDA Organic certification shows &ldquo;Verified&rdquo; only when we match the
-              farm&apos;s certificate against the USDA Organic Integrity Database — the
-              federal public registry of certified organic operations.
+              farm&apos;s certificate against the USDA Organic Integrity Database — the federal
+              public registry of certified organic operations.
             </Body>
             <NotClaim>
-              That match is a database cross-reference. It is not a farm inspection by Trazo,
-              and Trazo does not certify farms or issue certifications of its own.
+              That match is a database cross-reference. It is not a farm inspection by Trazo, and
+              Trazo does not certify farms or issue certifications of its own.
             </NotClaim>
             <Body>
               Certifications we cannot match against a public database are labeled
               &ldquo;Self-Reported&rdquo; instead.
             </Body>
             <Body>
-              A note on lots: certification belongs to the farm, but each product page
-              describes one specific lot. When the records for a lot show a prohibited input
-              or a harvest outside the certificate window, we do not present that lot as
-              organic — even if the farm itself is certified.
+              A note on lots: certification belongs to the farm, but each product page describes one
+              specific lot. When the records for a lot show a prohibited input or a harvest outside
+              the certificate window, we do not present that lot as organic — even if the farm
+              itself is certified.
             </Body>
           </Section>
 
           <Section id="data" title="Reviews & scan data">
             <Body>
-              Reviews come from consumers who scanned this product&apos;s QR code. We do not
-              source reviews from anywhere else.
+              Reviews come from consumers who scanned this product&apos;s QR code. We do not source
+              reviews from anywhere else.
             </Body>
             <Body>
               Scan analytics shown to farms — such as how many people scanned a product — are
@@ -209,8 +208,7 @@ const MethodologyPage: React.FC = () => {
                 href={`${LANDING_URL}/privacy-policy`}
                 color="green.700"
                 isExternal
-                _hover={{ color: 'green.500' }}
-              >
+                _hover={{ color: 'green.500' }}>
                 Privacy Policy
               </Link>
               .
@@ -223,7 +221,10 @@ const MethodologyPage: React.FC = () => {
           <Box>
             <Text fontSize="sm" color="gray.600" lineHeight="1.7">
               Questions?{' '}
-              <Link href="mailto:support@trazo.io" color="green.700" _hover={{ color: 'green.500' }}>
+              <Link
+                href="mailto:support@trazo.io"
+                color="green.700"
+                _hover={{ color: 'green.500' }}>
                 support@trazo.io
               </Link>
             </Text>

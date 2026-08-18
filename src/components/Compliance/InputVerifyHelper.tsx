@@ -83,10 +83,12 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({ name, buttonLabel
             width: '100%',
             minWidth: '44px',
             height: '44px'
-          }}
-        >
+          }}>
           {buttonLabel ||
-            intl.formatMessage({ id: 'inputVerify.button', defaultMessage: 'Verify against OMRI / WSDA / National List' })}
+            intl.formatMessage({
+              id: 'inputVerify.button',
+              defaultMessage: 'Verify against OMRI / WSDA / National List'
+            })}
         </Button>
         {!isUninitialized && data && (
           <Text fontSize="xs" color="gray.500">
@@ -96,12 +98,13 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({ name, buttonLabel
       </HStack>
 
       {error && (
-        <Alert status="error" borderRadius="md" fontSize="xs" mt={2}>
+        <Alert status="error" fontSize="xs" mt={2}>
           <AlertIcon />
           <Text>
             {intl.formatMessage({
               id: 'inputVerify.error',
-              defaultMessage: "Couldn't reach the verifier. Save will still work; the drift detector runs after save."
+              defaultMessage:
+                "Couldn't reach the verifier. Save will still work; the drift detector runs after save."
             })}
           </Text>
         </Alert>
@@ -122,7 +125,7 @@ const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ re
   if (noMatch) {
     const search = `https://www.omri.org/omri-search?query=${encodeURIComponent(query)}`;
     return (
-      <Alert status="warning" borderRadius="md" fontSize="xs" mt={2}>
+      <Alert status="warning" fontSize="xs" mt={2}>
         <AlertIcon />
         <VStack align="start" spacing={1}>
           <Text>
@@ -132,8 +135,18 @@ const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ re
                 'No match in OMRI, WSDA, or the National List. This is allowed — the drift detector will stamp a finding on save so you can reconcile with your certifier.'
             })}
           </Text>
-          <Link href={search} isExternal fontSize="xs" color="blue.600" display="inline-flex" gap={1} alignItems="center">
-            {intl.formatMessage({ id: 'inputVerify.searchOmri', defaultMessage: 'Search omri.org manually' })}
+          <Link
+            href={search}
+            isExternal
+            fontSize="xs"
+            color="blue.600"
+            display="inline-flex"
+            gap={1}
+            alignItems="center">
+            {intl.formatMessage({
+              id: 'inputVerify.searchOmri',
+              defaultMessage: 'Search omri.org manually'
+            })}
             <Icon as={FaExternalLinkAlt} boxSize={2.5} />
           </Link>
         </VStack>
@@ -156,15 +169,22 @@ const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ re
           badgeLabel="WSDA"
           badgeColor="teal"
           title={result.wsda_material_name || ''}
-          subtitle={[result.wsda_material_id, result.wsda_material_category].filter(Boolean).join(' · ')}
+          subtitle={[result.wsda_material_id, result.wsda_material_category]
+            .filter(Boolean)
+            .join(' · ')}
         />
       )}
       {hasNL && (
         <MatchRow
-          badgeLabel={intl.formatMessage({ id: 'inputVerify.nationalList', defaultMessage: 'National List' })}
+          badgeLabel={intl.formatMessage({
+            id: 'inputVerify.nationalList',
+            defaultMessage: 'National List'
+          })}
           badgeColor="blue"
           title={result.national_list_substance_name || ''}
-          subtitle={[result.national_list_cfr_section, result.national_list_status].filter(Boolean).join(' · ')}
+          subtitle={[result.national_list_cfr_section, result.national_list_status]
+            .filter(Boolean)
+            .join(' · ')}
         />
       )}
       <Text fontSize="xs" color="gray.500">
@@ -192,8 +212,7 @@ const MatchRow: React.FC<{
     borderRadius="md"
     align="center"
     spacing={2}
-    _dark={{ bg: 'green.900', borderColor: 'green.700' }}
-  >
+    _dark={{ bg: 'green.900', borderColor: 'green.700' }}>
     <Icon as={FaCheckCircle} color="green.500" />
     <Badge colorScheme={badgeColor} fontSize="11px">
       {badgeLabel}

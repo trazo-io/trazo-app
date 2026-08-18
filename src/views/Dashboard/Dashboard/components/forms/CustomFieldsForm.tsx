@@ -151,8 +151,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
                 borderColor={tableBorder}
                 bg={useColorModeValue('white', 'gray.800')}
                 _hover={{ bg: hoverBg, borderColor: 'green.300' }}
-                transition="all 0.2s"
-              >
+                transition="all 0.2s">
                 <HStack justify="space-between" align="center" spacing={3}>
                   {/* Field Label and Value */}
                   <VStack align="start" spacing={1} flex={1} minW={0}>
@@ -171,8 +170,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
                       isReadOnly
                       size="sm"
                       colorScheme="green"
-                      isDisabled={disabled}
-                    >
+                      isDisabled={disabled}>
                       <Text fontSize="xs" color="gray.600" display={{ base: 'none', md: 'inline' }}>
                         Visible
                       </Text>
@@ -201,8 +199,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
             borderRadius="lg"
             bg={useColorModeValue('gray.50', 'gray.700')}
             borderLeft="4px"
-            borderLeftColor="green.400"
-          >
+            borderLeftColor="green.400">
             <Text color="gray.500" fontSize="sm">
               Add custom fields to document additional farming practices
             </Text>
@@ -217,8 +214,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
               leftIcon={<FaPlus />}
               onClick={() => setIsAddingField(true)}
               size="sm"
-              isDisabled={disabled}
-            >
+              isDisabled={disabled}>
               Add Custom Field
             </StandardButton>
           </HStack>
@@ -231,8 +227,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
             borderRadius="lg"
             border="1px solid"
             borderColor="green.300"
-            bg={useColorModeValue('green.50', 'gray.800')}
-          >
+            bg={useColorModeValue('green.50', 'gray.800')}>
             <form onSubmit={handleSubmit(onSubmit)}>
               <VStack spacing={4} align="stretch">
                 {/* Field Name Input */}
@@ -240,8 +235,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
                   label="Field Name"
                   required
                   error={errors.label?.message}
-                  helpText="Brief name for this information"
-                >
+                  helpText="Brief name for this information">
                   <Controller
                     name="label"
                     control={control}
@@ -260,8 +254,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
                 <StandardField
                   label="Value"
                   error={errors.value?.message}
-                  helpText="Details for this field"
-                >
+                  helpText="Details for this field">
                   <Controller
                     name="value"
                     control={control}
@@ -285,8 +278,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
                         isChecked={field.value === 'true'}
                         onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
                         size="md"
-                        colorScheme="green"
-                      >
+                        colorScheme="green">
                         <Text fontSize="sm" fontWeight="500" color="gray.700">
                           Visible to consumers
                         </Text>
@@ -319,8 +311,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
             borderRadius="lg"
             bg={useColorModeValue('orange.50', 'gray.700')}
             borderLeft="4px"
-            borderLeftColor="orange.400"
-          >
+            borderLeftColor="orange.400">
             <Text fontSize="sm" fontWeight="500" color="orange.700">
               Maximum 10 fields reached
             </Text>

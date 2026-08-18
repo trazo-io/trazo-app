@@ -19,8 +19,7 @@ const ConsumerForgotPassword: React.FC = () => {
           align="center"
           p={{ base: 6, md: 12 }}
           bg={bgColor}
-          position="relative"
-        >
+          position="relative">
           <Box w="full" maxW={{ base: '100%', md: '400px' }}>
             {/* Header */}
             <VStack spacing={6} mb={8} textAlign="center">
@@ -61,8 +60,7 @@ const ConsumerForgotPassword: React.FC = () => {
           overflow="hidden"
           initial={{ opacity: 0, x: 100 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-        >
+          transition={{ duration: 0.8, ease: 'easeOut' }}>
           {/* Geometric Background Elements */}
           <Box
             position="absolute"
@@ -103,8 +101,7 @@ const ConsumerForgotPassword: React.FC = () => {
             p={12}
             textAlign="center"
             position="relative"
-            zIndex={1}
-          >
+            zIndex={1}>
             <VStack spacing={8}>
               {/* Icon */}
               <Box
@@ -113,8 +110,7 @@ const ConsumerForgotPassword: React.FC = () => {
                 borderRadius="3xl"
                 backdropFilter="blur(10px)"
                 border="1px solid"
-                borderColor="whiteAlpha.300"
-              >
+                borderColor="whiteAlpha.300">
                 <Icon as={FaShieldAlt} boxSize={12} color="white" />
               </Box>
 
@@ -126,8 +122,8 @@ const ConsumerForgotPassword: React.FC = () => {
                   Green Journey
                 </Text>
                 <Text fontSize="lg" opacity={0.9} maxW="md" lineHeight="1.6">
-                  Your transparency data and farm discoveries are protected.
-                  Safely reset your password and continue exploring how your food was grown.
+                  Your transparency data and farm discoveries are protected. Safely reset your
+                  password and continue exploring how your food was grown.
                 </Text>
               </VStack>
 

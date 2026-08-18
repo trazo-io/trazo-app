@@ -250,6 +250,11 @@ export const AMOUNT_DETERMINATIONS: readonly EnumOption[] = [
 export const HARVEST_DESTINATIONS: readonly EnumOption[] = [
   { value: 'stored', labelKey: 'events.harvestDestination.stored' },
   { value: 'sold_direct', labelKey: 'events.harvestDestination.soldDirect' },
+  // CCOF grower checklist item 6. Sending a lot to a custom huller is not a sale — title does
+  // not change — and with no option for it a grower would enter the handler as a BUYER on a
+  // sales record, putting a non-sale into the § 205.307 sales table and breaking mass balance.
+  // MUST stay identical to HARVEST_DESTINATION in common/field_registry.py.
+  { value: 'handler', labelKey: 'events.harvestDestination.handler' },
   { value: 'livestock_feed', labelKey: 'events.harvestDestination.livestockFeed' },
   { value: 'other', labelKey: 'events.harvestDestination.other' }
 ] as const;

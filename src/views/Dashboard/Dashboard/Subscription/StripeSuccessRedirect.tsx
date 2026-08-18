@@ -104,8 +104,14 @@ const StripeSuccessRedirect: React.FC = () => {
 
         // Show success toast
         toast({
-          title: intl.formatMessage({ id: isNewCompany ? 'subscription.completedTitle' : 'subscription.updatedTitle' }),
-          description: intl.formatMessage({ id: isNewCompany ? 'subscription.completedNewDescription' : 'subscription.updatedDescription' }),
+          title: intl.formatMessage({
+            id: isNewCompany ? 'subscription.completedTitle' : 'subscription.updatedTitle'
+          }),
+          description: intl.formatMessage({
+            id: isNewCompany
+              ? 'subscription.completedNewDescription'
+              : 'subscription.updatedDescription'
+          }),
           status: 'success',
           duration: isNewCompany ? 8000 : 5000,
           isClosable: true,
@@ -156,11 +162,12 @@ const StripeSuccessRedirect: React.FC = () => {
       alignItems="center"
       justifyContent="center"
       flexDirection="column"
-      bg={bgColor}
-    >
+      bg={bgColor}>
       <CircularProgress isIndeterminate color="green.500" />
       <Text mt={4} fontSize="lg" fontWeight="medium" color={textColor}>
-        {intl.formatMessage({ id: isNewCompany ? 'subscription.processingNewCompany' : 'subscription.processingGeneric' })}
+        {intl.formatMessage({
+          id: isNewCompany ? 'subscription.processingNewCompany' : 'subscription.processingGeneric'
+        })}
       </Text>
       {isNewCompany && (
         <Text mt={2} fontSize="sm" color="gray.500" textAlign="center" maxW="md">

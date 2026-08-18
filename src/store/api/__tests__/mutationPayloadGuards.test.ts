@@ -76,6 +76,73 @@ describe('parcel edit form — no destructive buffer filter, no wizard-owned key
   });
 });
 
+describe('parcel form — no key the UI does not render', () => {
+  /**
+   * All four were hardcoded into AddParcel's payload with no control anywhere in the
+   * transparency form's four steps:
+   *
+   *   certified / certification_type  existed only as `defaultValues` in
+   *                                   StandardParcelForm_Transparency — absent from its zod
+   *                                   schema AND its interface — so every create shipped
+   *                                   `certified: false`. Certifications are structured
+   *                                   records; a form that never asks must not assert one.
+   *   transparency_ready              is NOT a model field. `Parcel.is_transparency_ready()`
+   *                                   is computed and exposed through a SerializerMethodField,
+   *                                   so the hardcoded `true` was discarded on arrival.
+   *   carbon_calculation_enabled      IS a real BooleanField, but the form derived it from
+   *                                   whether two prose boxes were non-empty.
+   *
+   * Same class as `treated_lumber_present: 'false'` above.
+   */
+  const UNRENDERED = [
+    'certified',
+    'certification_type',
+    'transparency_ready',
+    'carbon_calculation_enabled'
+  ];
+
+  it('AddParcel payload writes none of them', () => {
+    const source = read('views/Dashboard/Dashboard/Parcel/AddParcel.tsx');
+    for (const key of UNRENDERED) {
+      expect(writesKey(source, key), `AddParcel payload carries ${key}`).toBe(false);
+    }
+  });
+
+  it('the transparency form declares no default for them either', () => {
+    // Where they actually lived. Blocking only the payload would leave the seed in place for
+    // the next caller to pick up.
+    const source = read('components/Forms/StandardParcelForm_Transparency.tsx');
+    for (const key of ['certified', 'certification_type']) {
+      expect(writesKey(source, key), `transparency form defaults ${key}`).toBe(false);
+    }
+  });
+
+  it('one free-text box is never fanned out into two agronomic facts', () => {
+    /**
+     * `sustainability_practices` was written to BOTH `carbon_sequestration_practices` and
+     * `cover_crop_management`, so a farmer typing "we apply compost" was also recorded as
+     * running a cover-crop programme — and product/models.py reads either key as independent
+     * evidence for is_transparency_ready() and get_transparency_score(), counting one
+     * sentence twice.
+     *
+     * Reads assignments only: the legacy keys are still READ on hydration for parcels saved
+     * before the fix, which is correct and must keep working.
+     */
+    // Strip `//` lines first: the fix left the old assignments quoted verbatim in a comment
+    // so the next reader can see what the bug looked like, and a raw scan matches those.
+    const code = read('views/Dashboard/Dashboard/Parcel/AddParcel.tsx')
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('//') && !line.trim().startsWith('*'))
+      .join('\n');
+    for (const key of ['carbon_sequestration_practices', 'cover_crop_management']) {
+      expect(
+        new RegExp(`agriculturalDetails\\.${key}\\s*=`).test(code),
+        `AddParcel writes agricultural_details.${key}`
+      ).toBe(false);
+    }
+  });
+});
+
 describe('farm form — June-era and wiped fields stay out of the payload', () => {
   it('AddFarm payload never writes the wiped/legacy keys', () => {
     const source = read('views/Dashboard/Dashboard/Farm/AddFarm.tsx');

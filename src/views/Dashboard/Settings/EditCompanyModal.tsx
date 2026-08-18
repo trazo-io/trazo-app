@@ -312,8 +312,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
                 cursor="pointer"
                 onClick={() => setCurrentStep(index)}
                 transition="all 0.2s"
-                _hover={{ transform: 'scale(1.05)' }}
-              >
+                _hover={{ transform: 'scale(1.05)' }}>
                 {index < currentStep ? (
                   <Icon as={FaCheck} boxSize={4} />
                 ) : (
@@ -324,8 +323,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
                 fontSize="xs"
                 fontWeight={index === currentStep ? 'bold' : 'normal'}
                 color={index <= currentStep ? 'green.600' : 'gray.500'}
-                display={{ base: 'none', md: 'block' }}
-              >
+                display={{ base: 'none', md: 'block' }}>
                 {step.title}
               </Text>
             </VStack>
@@ -455,8 +453,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         <StandardField
           label="Estado"
           error={errors.state?.message}
-          helpText="Requerido para cálculos de carbono"
-        >
+          helpText="Requerido para cálculos de carbono">
           <StandardSelect {...register('state')}>
             <option value="">Seleccionar estado...</option>
             {US_STATES.map((state) => (
@@ -504,8 +501,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
       <StandardField
         label="Certificaciones"
         helpText="Separe múltiples certificaciones con comas"
-        error={errors.certifications?.message}
-      >
+        error={errors.certifications?.message}>
         <StandardInput
           placeholder="USDA Organic, Fair Trade, Rainforest Alliance"
           {...register('certifications')}
@@ -530,8 +526,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
 
       <StandardField
         label="Compromiso de Sostenibilidad"
-        error={errors.sustainability_commitment?.message}
-      >
+        error={errors.sustainability_commitment?.message}>
         <StandardSelect {...register('sustainability_commitment')}>
           <option value="">Seleccionar...</option>
           {SUSTAINABILITY_COMMITMENTS.map((opt) => (
@@ -579,8 +574,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
       <StandardButton
         variant="outline"
         onClick={currentStep === 0 ? handleClose : prevStep}
-        leftIcon={currentStep === 0 ? undefined : <Icon as={FaChevronLeft} />}
-      >
+        leftIcon={currentStep === 0 ? undefined : <Icon as={FaChevronLeft} />}>
         {currentStep === 0 ? 'Cancelar' : 'Anterior'}
       </StandardButton>
 
@@ -588,8 +582,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
         <StandardButton
           variant="primary"
           onClick={nextStep}
-          rightIcon={<Icon as={FaChevronRight} />}
-        >
+          rightIcon={<Icon as={FaChevronRight} />}>
           Siguiente
         </StandardButton>
       ) : (
@@ -598,8 +591,7 @@ const EditCompanyModal: React.FC<EditCompanyModalProps> = ({
           onClick={handleSubmit(handleFormSubmit)}
           isLoading={isLoading}
           loadingText="Guardando..."
-          leftIcon={<Icon as={FaCheck} />}
-        >
+          leftIcon={<Icon as={FaCheck} />}>
           Guardar Cambios
         </StandardButton>
       )}

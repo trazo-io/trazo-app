@@ -65,7 +65,11 @@ const Reviews = () => {
         {/* Reviews Statistics */}
         <Box flex={1} minW={{ base: 'auto', lg: '300px' }}>
           <VStack spacing={{ base: 3, md: 6 }}>
-            <Text fontSize={{ base: 'md', md: 'lg' }} fontWeight="semibold" color={textColor} alignSelf="start">
+            <Text
+              fontSize={{ base: 'md', md: 'lg' }}
+              fontWeight="semibold"
+              color={textColor}
+              alignSelf="start">
               {intl.formatMessage({ id: 'commercial.reputationSummary' })}
             </Text>
 
@@ -95,7 +99,10 @@ const Reviews = () => {
                   <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
                     {intl.formatMessage({ id: 'app.neutralReviews' })}
                   </Text>
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="yellow.600" fontWeight="semibold">
+                  <Text
+                    fontSize={{ base: 'xs', md: 'sm' }}
+                    color="yellow.600"
+                    fontWeight="semibold">
                     {reviewsPercentage?.neutral || 0}%
                   </Text>
                 </Flex>
@@ -155,8 +162,7 @@ const Reviews = () => {
                     <StandardButton
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowAllReviews(false)}
-                    >
+                      onClick={() => setShowAllReviews(false)}>
                       {intl.formatMessage({ id: 'commercial.showLess' })}
                     </StandardButton>
                     <StandardButton variant="primary" size="sm" onClick={handleViewAllReviews}>
@@ -170,8 +176,7 @@ const Reviews = () => {
                     variant="primary"
                     size={{ base: 'sm', md: 'md' }}
                     onClick={handleViewAllReviews}
-                    alignSelf="flex-end"
-                  >
+                    alignSelf="flex-end">
                     {intl.formatMessage({ id: 'app.viewAllReviews' })}
                   </StandardButton>
                 )}

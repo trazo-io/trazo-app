@@ -44,6 +44,8 @@ interface SalesRecord {
   quantity: number | string;
   quantity_unit: string;
   invoice_number?: string | null;
+  /** Amount received, USD. `null` = not recorded — never render it as 0. */
+  sale_amount?: string | number | null;
   organic_on_invoice: boolean;
   organic_label_category?: string;
   bill_of_lading?: string;
@@ -106,6 +108,9 @@ const EMPTY_FORM = {
   quantity: '',
   quantity_unit: '',
   invoice_number: '',
+  // CCOF item 7 asks what you sold, how much, to whom AND how much money you received.
+  // Optional: blank stays NULL server-side, which is "not recorded", not zero.
+  sale_amount: '',
   // NOT pre-ticked. This is an attestation that the shipping document identifies the product as
   // organic (§ 205.307, SOE 88 FR 3622), the packet prints it as "Organic on Invoice: Yes", and
   // resolve_sales_disclosure promotes it to a lot-level claim. The backend models it as
@@ -327,6 +332,11 @@ export function SalesRecordsSection({
       if (formData.invoice_number.trim()) {
         payload.invoice_number = formData.invoice_number.trim();
       }
+      // Sent only when typed. `Number('')` is 0, and a posted 0 would record "sold for
+      // nothing" on a regulatory document for a grower who simply skipped the field.
+      if (formData.sale_amount.trim() !== '') {
+        payload.sale_amount = Number(formData.sale_amount);
+      }
       (['bill_of_lading', 'carrier_name', 'vehicle_id', 'destination'] as const).forEach((key) => {
         if (formData[key].trim()) payload[key] = formData[key].trim();
       });
@@ -452,6 +462,16 @@ export function SalesRecordsSection({
                     <Text fontSize="xs" color={labelFg}>
                       {record.quantity} {record.quantity_unit}
                     </Text>
+                    {/* `!= null`, not truthiness: a recorded 0.00 is a fact (a donation, a
+                        rejected load) and must not disappear the way a blank does. */}
+                    {record.sale_amount != null && (
+                      <Text fontSize="xs" color={labelFg}>
+                        {intl.formatNumber(Number(record.sale_amount), {
+                          style: 'currency',
+                          currency: 'USD'
+                        })}
+                      </Text>
+                    )}
                     {(record.harvest_lot_codes?.length ?? 0) > 0 && (
                       <Text fontSize="xs" color={labelFg} noOfLines={1}>
                         {intl.formatMessage(
@@ -587,6 +607,22 @@ export function SalesRecordsSection({
                   value={formData.invoice_number}
                   maxLength={80}
                   onChange={(e) => setFormData({ ...formData, invoice_number: e.target.value })}
+                />
+              </StandardField>
+              {/* CCOF item 7's fourth part. Optional on purpose — a grower who does not want
+                  prices in Trazo leaves it blank and the packet prints an em-dash, not a zero. */}
+              <StandardField
+                label={intl.formatMessage({ id: 'sales.records.field.amount' })}
+                helpText={intl.formatMessage({ id: 'sales.records.field.amountHelp' })}>
+                <StandardInput
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="0.00"
+                  value={formData.sale_amount}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, sale_amount: e.target.value })
+                  }
                 />
               </StandardField>
             </SimpleGrid>

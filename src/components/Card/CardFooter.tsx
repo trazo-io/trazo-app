@@ -12,8 +12,7 @@ function CardFooter(props: CardFooterProps) {
       width="100%"
       data-component="CardFooter"
       className="trazo-card-footer"
-      {...rest}
-    >
+      {...rest}>
       {children}
     </Box>
   );

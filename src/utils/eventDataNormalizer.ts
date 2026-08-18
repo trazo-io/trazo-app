@@ -873,6 +873,33 @@ function normalizeProductionEventData(
     if (rawData.plant_spacing) {
       (productionData as any).plant_spacing = rawData.plant_spacing;
     }
+    // Off-farm handling round trip (HA) — CCOF grower checklist item 6, 2026-08-16.
+    // Named here for the reason the comment above gives: this is a hand-written copy list, and
+    // a column absent from it is dropped between the API payload and every producer surface,
+    // registry and serializer both green.
+    if (rawData.harvest_destination) {
+      (productionData as any).harvest_destination = rawData.harvest_destination;
+    }
+    if (rawData.sent_to_handler_date) {
+      (productionData as any).sent_to_handler_date = rawData.sent_to_handler_date;
+    }
+    // `!= null`, not truthiness — 0 is a real pack-out answer (an entire load rejected).
+    if (rawData.quantity_sent_to_handler != null) {
+      (productionData as any).quantity_sent_to_handler = rawData.quantity_sent_to_handler;
+    }
+    if (rawData.quantity_returned_from_handler != null) {
+      (productionData as any).quantity_returned_from_handler =
+        rawData.quantity_returned_from_handler;
+    }
+    if (rawData.handler_quantity_unit) {
+      (productionData as any).handler_quantity_unit = rawData.handler_quantity_unit;
+    }
+    if (rawData.handler_return_unit) {
+      (productionData as any).handler_return_unit = rawData.handler_return_unit;
+    }
+    if (rawData.handler_document_reference) {
+      (productionData as any).handler_document_reference = rawData.handler_document_reference;
+    }
     if (rawData.water_source) {
       (productionData as any).water_source = rawData.water_source;
     }
@@ -2070,6 +2097,18 @@ function normalizeSoilManagementEventData(
     'amendment_amount_numeric',
     'amendment_amount_unit',
     'amendment_type',
+    // Product identity. Both have declared `modal` surfaces in soilEvent.ts and were absent
+    // here, so the producer modal rendered them blank — the registry-declares-but-normalizer-
+    // drops shape this comment block already warns about, two fields further down.
+    'amendment_product_name',
+    'amendment_manufacturer',
+    // Amendment purchase traceability (7 CFR 205.103(b)(1)-(2)) — 2026-08-16.
+    'amendment_supplier_name',
+    'amendment_purchase_date',
+    'amendment_purchase_invoice',
+    'amendment_quantity_purchased',
+    'amendment_quantity_purchased_unit',
+    'amendment_lot_number',
     // NOP Compliance fields (7 CFR 205.203) — Amendment approval + Compost + Manure tracking
     'amendment_organic_approved',
     'compost_peak_temp_f',

@@ -211,8 +211,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
           position="relative"
           width={{ md: '100%', lg: '100%', xl: '320px' }}
           flex="1"
-          maxW={{ md: 'none', lg: 'none', xl: '320px' }}
-        >
+          maxW={{ md: 'none', lg: 'none', xl: '320px' }}>
           {/* This input's shape IS the app's search shape — it now comes from
               StandardSearchInput so a page that needs a search field cannot quietly ship a
               different one (Activities had a bare Input with no icon and another height). */}
@@ -244,8 +243,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
           size={modalSize}
           closeOnOverlayClick={true}
           closeOnEsc={true}
-          motionPreset="slideInTop"
-        >
+          motionPreset="slideInTop">
           <ModalOverlay bg={overlayBg} backdropFilter="blur(8px)" />
           <ModalContent
             bg={modalBg}
@@ -258,8 +256,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
             mx={isMobile ? 0 : 4}
             maxH={isMobile ? '100vh' : '70vh'}
             overflow="hidden"
-            onKeyDown={handleModalKeyDown}
-          >
+            onKeyDown={handleModalKeyDown}>
             <VStack spacing={0} align="stretch">
               {/* Search Header */}
               <Flex align="center" p={4} borderBottom="1px solid" borderColor={borderColor}>
@@ -336,8 +333,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
                       color="gray.500"
                       px={3}
                       py={2}
-                      textTransform="uppercase"
-                    >
+                      textTransform="uppercase">
                       Recent Searches
                     </Text>
                     {searchHistory.slice(0, 5).map((item, index) => (
@@ -425,8 +421,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
       borderColor={isSelected ? selectedBorderColor : 'transparent'}
       _hover={{ bg: isSelected ? selectedBg : hoverBg }}
       onClick={onClick}
-      transition="all 0.2s"
-    >
+      transition="all 0.2s">
       {/* Entity Icon */}
       <Flex
         align="center"
@@ -436,8 +431,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
         borderRadius="lg"
         bg={`${getEntityColor(result.type)}.100`}
         color={`${getEntityColor(result.type)}.600`}
-        mr={3}
-      >
+        mr={3}>
         <Icon as={getEntityIcon(result.type)} boxSize={4} />
       </Flex>
 
@@ -453,8 +447,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
             fontSize="xs"
             px={2}
             py={1}
-            borderRadius="full"
-          >
+            borderRadius="full">
             {result.type === 'establishment' ? 'Farm' : 'Parcel'}
           </Badge>
         </HStack>

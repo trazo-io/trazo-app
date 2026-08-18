@@ -2104,7 +2104,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 }
                               />
                               {isEdit && (
-                                <Alert status="warning" borderRadius="md" mb={4}>
+                                <Alert status="warning" mb={4}>
                                   <AlertIcon />
                                   <Text fontSize="sm">
                                     {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' }) ||

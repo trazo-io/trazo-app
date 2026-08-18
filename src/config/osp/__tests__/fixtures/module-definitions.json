@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.08.13",
+  "content_version": "2026.08.17",
   "registry": {
-    "content_version": "2026.08.13",
+    "content_version": "2026.08.17",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -2598,8 +2598,8 @@
             },
             "education": [
               {
-                "en": "Compost must start with plant and animal materials combined at an initial C:N (carbon:nitrogen) ratio between 25:1 and 40:1. The pile must then reach 131-170°F and hold that range for 3 days under an in-vessel or static aerated system, or for 15 days with at least 5 turnings under a windrow system (§ 205.2).",
-                "es": "El compost debe iniciarse combinando materiales vegetales y animales con una relación C:N (carbono:nitrógeno) inicial entre 25:1 y 40:1. La pila debe luego alcanzar 131-170°F y mantener ese rango durante 3 días en un sistema en recipiente cerrado o pila estática aireada, o durante 15 días con al menos 5 volteos en un sistema de hileras (§ 205.2)."
+                "en": "Compost must start with plant and animal materials combined at an initial C:N (carbon:nitrogen) ratio between 25:1 and 40:1. The pile must then reach 131-170°F and hold that range for 3 days under an in-vessel or static aerated system, or for 15 days with at least 5 turnings under a windrow system (§ 205.203(c)(2)).",
+                "es": "El compost debe iniciarse combinando materiales vegetales y animales con una relación C:N (carbono:nitrógeno) inicial entre 25:1 y 40:1. La pila debe luego alcanzar 131-170°F y mantener ese rango durante 3 días en un sistema en recipiente cerrado o pila estática aireada, o durante 15 días con al menos 5 volteos en un sistema de hileras (§ 205.203(c)(2))."
               },
               {
                 "en": "Vermicompost and purchased compost are held to the same standard. If a vermicomposting process does not reach these time/temperature thresholds and the feedstock includes animal manure, it is treated as raw manure and the interval rule on the previous page applies instead. For purchased compost, the supplier's documentation stands in for your own production records.",
@@ -2671,7 +2671,7 @@
                     ]
                   }
                 ],
-                "nop_cite": "§ 205.2",
+                "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,
@@ -2686,8 +2686,8 @@
                   "es": "¿Cuál fue la relación carbono:nitrógeno (C:N) inicial de su materia prima?"
                 },
                 "coaching": {
-                  "en": "Compost must start with a C:N ratio between 25:1 and 40:1 (§ 205.2).",
-                  "es": "El compost debe iniciar con una relación C:N entre 25:1 y 40:1 (§ 205.2)."
+                  "en": "Compost must start with a C:N ratio between 25:1 and 40:1 (§ 205.203(c)(2)).",
+                  "es": "El compost debe iniciar con una relación C:N entre 25:1 y 40:1 (§ 205.203(c)(2))."
                 },
                 "options": [],
                 "required": true,
@@ -2701,7 +2701,7 @@
                     ]
                   }
                 ],
-                "nop_cite": "§ 205.2",
+                "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,
@@ -2716,8 +2716,8 @@
                   "es": "¿Qué rango de temperatura alcanzó el compost y durante cuántos días?"
                 },
                 "coaching": {
-                  "en": "The pile must hold 131-170°F for 3 days (in-vessel or static aerated) or for 15 days (windrow) (§ 205.2).",
-                  "es": "La pila debe mantenerse entre 131-170°F durante 3 días (en recipiente cerrado o pila estática aireada) o durante 15 días (hileras) (§ 205.2)."
+                  "en": "The pile must hold 131-170°F for 3 days (in-vessel or static aerated) or for 15 days (windrow) (§ 205.203(c)(2)).",
+                  "es": "La pila debe mantenerse entre 131-170°F durante 3 días (en recipiente cerrado o pila estática aireada) o durante 15 días (hileras) (§ 205.203(c)(2))."
                 },
                 "options": [],
                 "required": true,
@@ -2731,7 +2731,7 @@
                     ]
                   }
                 ],
-                "nop_cite": "§ 205.2",
+                "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,
@@ -2746,8 +2746,8 @@
                   "es": "¿Cuántas veces se volteó la hilera durante el período de 15 días?"
                 },
                 "coaching": {
-                  "en": "Windrow compost requires a minimum of 5 turnings during the 15-day heating period (§ 205.2).",
-                  "es": "El compost en hileras requiere un mínimo de 5 volteos durante el período de calentamiento de 15 días (§ 205.2)."
+                  "en": "Windrow compost requires a minimum of 5 turnings during the 15-day heating period (§ 205.203(c)(2)).",
+                  "es": "El compost en hileras requiere un mínimo de 5 volteos durante el período de calentamiento de 15 días (§ 205.203(c)(2))."
                 },
                 "options": [],
                 "required": true,
@@ -2766,7 +2766,7 @@
                     "value": "windrow"
                   }
                 ],
-                "nop_cite": "§ 205.2",
+                "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,
@@ -2823,7 +2823,7 @@
                     ]
                   }
                 ],
-                "nop_cite": "§ 205.2",
+                "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,
@@ -2850,7 +2850,7 @@
                     "value": "purchased_compost"
                   }
                 ],
-                "nop_cite": "§ 205.2",
+                "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,
@@ -2882,7 +2882,7 @@
                     "value": null
                   }
                 ],
-                "nop_cite": "§ 205.2",
+                "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,
@@ -3771,7 +3771,8 @@
         },
         "nop_cites": [
           "§ 205.206",
-          "§ 205.601"
+          "§ 205.601",
+          "§ 205.203(e)(3)"
         ],
         "education": [
           {
@@ -3964,6 +3965,130 @@
                 "visible_when": [
                   {
                     "question": "prevention_practices",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "burns_crop_residue",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you burn crop residue on this operation?",
+                  "es": "¿Quema residuos de cultivo en esta operación?"
+                },
+                "coaching": {
+                  "en": "Includes prunings, brush, and orchard removals burned in place or in a pile. Burning as a way to dispose of crop residue is prohibited; burning is allowed only to suppress the spread of disease or to stimulate seed germination.",
+                  "es": "Incluye podas, ramas y arranques de huerto quemados en el lugar o en pila. Quemar como forma de eliminar residuos de cultivo está prohibido; solo se permite quemar para suprimir la propagación de una enfermedad o para estimular la germinación de semillas."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.203(e)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "burn_crops",
+                "kind": "text",
+                "label": {
+                  "en": "Which crops or residues are burned?",
+                  "es": "¿Qué cultivos o residuos se queman?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "burns_crop_residue",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.203(e)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "burn_reason",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Why is it burned?",
+                  "es": "¿Por qué se queman?"
+                },
+                "coaching": {
+                  "en": "The rule names exactly two allowed reasons. If neither applies, say so here — an accurate record your certifier can act on is worth more than a tidy one.",
+                  "es": "La normativa nombra exactamente dos razones permitidas. Si ninguna aplica, indíquelo aquí — un registro exacto sobre el que su certificadora pueda actuar vale más que uno prolijo."
+                },
+                "options": [
+                  {
+                    "value": "disease_suppression",
+                    "label": {
+                      "en": "To suppress the spread of disease",
+                      "es": "Para suprimir la propagación de una enfermedad"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "seed_germination",
+                    "label": {
+                      "en": "To stimulate seed germination",
+                      "es": "Para estimular la germinación de semillas"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Another reason (describe below)",
+                      "es": "Otra razón (describa abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "burns_crop_residue",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.203(e)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "burn_reason_other",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe the other reason for burning",
+                  "es": "Describa la otra razón para quemar"
+                },
+                "coaching": {
+                  "en": "§ 205.203(e)(3) allows burning only for disease suppression or seed germination, so a reason outside those two needs to be raised with your certifying agent rather than left in the plan unexplained.",
+                  "es": "El § 205.203(e)(3) solo permite la quema para suprimir enfermedades o estimular la germinación, por lo que una razón fuera de esas dos debe plantearse a su agencia certificadora en lugar de quedar sin explicar en el plan."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "burn_reason",
                     "op": "includes",
                     "value": "other"
                   }
@@ -4378,7 +4503,8 @@
         },
         "nop_cites": [
           "§ 205.202(c)",
-          "§ 205.201(a)"
+          "§ 205.201(a)",
+          "§ 205.272(a)"
         ],
         "education": [
           {
@@ -4863,6 +4989,156 @@
                 "max_length": null
               }
             ]
+          },
+          {
+            "key": "d_prohibited_material_storage",
+            "title": {
+              "en": "D. Where prohibited materials are kept",
+              "es": "D. Dónde se guardan los materiales prohibidos"
+            },
+            "education": [
+              {
+                "en": "§ 205.201(a)(5) requires your plan to describe the physical barriers that keep organic production and product away from prohibited substances, and § 205.272(a) restates the same duty as a practice standard. Materials count even when they are never applied to organic ground — conventional fertiliser held for a leased block, shop solvents, treated lumber, and fuel additives are all in scope. Describe where they live and what separates them.",
+                "es": "El § 205.201(a)(5) exige que su plan describa las barreras físicas que mantienen la producción y el producto orgánico alejados de las sustancias prohibidas, y el § 205.272(a) reitera el mismo deber como norma de práctica. Los materiales cuentan aunque nunca se apliquen en terreno orgánico — fertilizante convencional guardado para un lote arrendado, solventes de taller, madera tratada y aditivos de combustible están todos incluidos. Describa dónde se guardan y qué los separa."
+              }
+            ],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "prohibited_materials_on_site",
+                "kind": "boolean",
+                "label": {
+                  "en": "Are any materials prohibited in organic production kept anywhere on this operation?",
+                  "es": "¿Se guarda en algún lugar de esta operación algún material prohibido en la producción orgánica?"
+                },
+                "coaching": {
+                  "en": "Includes conventional fertilisers and pesticides, treated lumber, nonorganic cleaners and sanitisers, and fuel or shop chemicals — whether or not they are ever used on organic ground.",
+                  "es": "Incluye fertilizantes y pesticidas convencionales, madera tratada, limpiadores y desinfectantes no orgánicos, y combustible o químicos de taller — se usen o no en terreno orgánico."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "prohibited_materials_storage",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How are those materials stored and kept away from organic product, inputs, and equipment?",
+                  "es": "¿Cómo se almacenan esos materiales y se mantienen alejados del producto, insumos y equipo orgánicos?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "separate_building",
+                    "label": {
+                      "en": "In a separate building or shed from organic product and inputs",
+                      "es": "En un edificio o galpón separado del producto e insumos orgánicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "locked_or_enclosed",
+                    "label": {
+                      "en": "In a locked or enclosed cabinet, cage, or room",
+                      "es": "En un gabinete, jaula o sala cerrada con llave"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "labeled_dedicated_area",
+                    "label": {
+                      "en": "In a labeled, dedicated area within a shared building",
+                      "es": "En un área rotulada y dedicada dentro de un edificio compartido"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "physically_below",
+                    "label": {
+                      "en": "Stored below organic materials so a spill or leak cannot reach them",
+                      "es": "Almacenados por debajo de los materiales orgánicos para que un derrame o fuga no pueda alcanzarlos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "secondary_containment",
+                    "label": {
+                      "en": "In secondary containment (bunded pallet, spill tray, sealed drum)",
+                      "es": "En contención secundaria (pallet de retención, bandeja antiderrames, tambor sellado)"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "dedicated_equipment",
+                    "label": {
+                      "en": "Handled with dedicated equipment that never touches organic product",
+                      "es": "Manipulados con equipo dedicado que nunca toca producto orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "off_site",
+                    "label": {
+                      "en": "Stored off site, not on this operation's premises",
+                      "es": "Almacenados fuera del sitio, no en las instalaciones de esta operación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "other",
+                    "label": {
+                      "en": "Other (describe below)",
+                      "es": "Otra (describa abajo)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "prohibited_materials_on_site",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(5)",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "prohibited_materials_storage_other",
+                "kind": "text",
+                "label": {
+                  "en": "Describe the other storage or separation measure",
+                  "es": "Describa la otra medida de almacenamiento o separación"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "prohibited_materials_storage",
+                    "op": "includes",
+                    "value": "other"
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
           }
         ]
       },
@@ -5237,13 +5513,13 @@
                   "es": "¿Alguna vez ha reutilizado para producto orgánico un contenedor, cajón o remolque a granel que antes contuvo una sustancia prohibida (pesticida, fertilizante, combustible u otro material exclusivamente no orgánico)?"
                 },
                 "coaching": {
-                  "en": "§ 205.272(b)(1) forbids reusing a container for organic product when the reuse would compromise its organic integrity — a container that held a prohibited substance may be reused only behind a protective barrier or after cleaning that removes the residue.",
-                  "es": "El § 205.272(b)(1) prohíbe reutilizar un contenedor para producto orgánico cuando la reutilización comprometa su integridad orgánica — un contenedor que contuvo una sustancia prohibida solo puede reutilizarse con una barrera protectora o tras una limpieza que elimine el residuo."
+                  "en": "§ 205.272(b)(2) forbids reusing a container for organic product when the reuse would compromise its organic integrity — a container that held a prohibited substance may be reused only behind a protective barrier or after cleaning that removes the residue.",
+                  "es": "El § 205.272(b)(2) prohíbe reutilizar un contenedor para producto orgánico cuando la reutilización comprometa su integridad orgánica — un contenedor que contuvo una sustancia prohibida solo puede reutilizarse con una barrera protectora o tras una limpieza que elimine el residuo."
                 },
                 "options": [],
                 "required": true,
                 "visible_when": [],
-                "nop_cite": "§ 205.272(b)(1)",
+                "nop_cite": "§ 205.272(b)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,
@@ -5265,6 +5541,79 @@
                     "question": "containers_reused_from_prohibited",
                     "op": "truthy",
                     "value": null
+                  }
+                ],
+                "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "packaging_free_of_prohibited",
+                "kind": "radio",
+                "label": {
+                  "en": "Are your packaging materials, storage containers, and bins free of synthetic fungicides, preservatives, and fumigants?",
+                  "es": "¿Sus materiales de empaque, contenedores de almacenamiento y cajones están libres de fungicidas, conservantes y fumigantes sintéticos?"
+                },
+                "coaching": {
+                  "en": "§ 205.272(b)(1) prohibits outright the use of packaging materials, storage containers, or bins that CONTAIN a synthetic fungicide, preservative, or fumigant — treated wooden bins and fungicide-impregnated liners are the usual cases. This is a supplier question: if you have not confirmed it in writing, say so rather than guessing. An unconfirmed answer is a task for your certifier review; a wrong 'yes' is a misstatement in your organic system plan.",
+                  "es": "El § 205.272(b)(1) prohíbe de plano el uso de materiales de empaque, contenedores de almacenamiento o cajones que CONTENGAN un fungicida, conservante o fumigante sintético — los cajones de madera tratada y los forros impregnados con fungicida son los casos habituales. Esta es una pregunta para su proveedor: si no lo ha confirmado por escrito, indíquelo en lugar de suponer. Una respuesta sin confirmar es una tarea para la revisión de su certificadora; un 'sí' erróneo es una declaración falsa en su plan orgánico."
+                },
+                "options": [
+                  {
+                    "value": "confirmed",
+                    "label": {
+                      "en": "Yes — confirmed with the supplier or from product documentation",
+                      "es": "Sí — confirmado con el proveedor o mediante documentación del producto"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "unconfirmed",
+                    "label": {
+                      "en": "Believed free of them, but not yet confirmed in writing",
+                      "es": "Se cree que están libres, pero aún no se ha confirmado por escrito"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No — some packaging or containers contain one of these",
+                      "es": "No — algún empaque o contenedor contiene alguno de estos"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.272(b)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "packaging_prohibited_detail",
+                "kind": "textarea",
+                "label": {
+                  "en": "Which packaging or containers, and what is your plan to replace or confirm them?",
+                  "es": "¿Qué empaques o contenedores, y cuál es su plan para reemplazarlos o confirmarlos?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "packaging_free_of_prohibited",
+                    "op": "one_of",
+                    "value": [
+                      "unconfirmed",
+                      "no"
+                    ]
                   }
                 ],
                 "nop_cite": null,
@@ -6371,17 +6720,103 @@
             "visible_when": [],
             "questions": [
               {
-                "key": "sales_soe_description",
+                "key": "sales_soe_channels",
                 "kind": "textarea",
                 "label": {
-                  "en": "Describe your sales channels (wholesale, direct, packer) and how you verify the organic certificates of suppliers or co-marketed product.",
-                  "es": "Describa sus canales de venta (mayorista, directo, empacadora) y cómo verifica los certificados orgánicos de proveedores o producto comercializado en conjunto."
+                  "en": "Describe your sales channels (wholesale, direct, packer).",
+                  "es": "Describa sus canales de venta (mayorista, directo, empacadora)."
                 },
                 "coaching": null,
                 "options": [],
-                "required": false,
+                "required": true,
                 "visible_when": [],
-                "nop_cite": null,
+                "nop_cite": "§ 205.103(b)(2)",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sales_soe_supplier_verification",
+                "kind": "radio",
+                "label": {
+                  "en": "Do you buy or resell organic product from anyone else?",
+                  "es": "¿Compra o revende producto orgánico de terceros?"
+                },
+                "coaching": {
+                  "en": "If yes, § 205.201(a)(3) expects you to describe how you verify their organic certificate and guard against organic fraud.",
+                  "es": "Si es así, § 205.201(a)(3) espera que describa cómo verifica su certificado orgánico y previene el fraude orgánico."
+                },
+                "options": [
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No — we sell only what we grow",
+                      "es": "No — solo vendemos lo que cultivamos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes — we buy in or co-market organic product",
+                      "es": "Sí — compramos o comercializamos producto orgánico de terceros"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sales_soe_verification_method",
+                "kind": "textarea",
+                "label": {
+                  "en": "How do you verify those suppliers' organic certificates, and how often?",
+                  "es": "¿Cómo verifica los certificados orgánicos de esos proveedores, y con qué frecuencia?"
+                },
+                "coaching": {
+                  "en": "Name the check and its frequency — e.g. 'certificate requested at first purchase and re-checked each season against the USDA Organic Integrity Database'.",
+                  "es": "Nombre la verificación y su frecuencia — ej. 'certificado solicitado en la primera compra y revisado cada temporada contra la base USDA Organic Integrity'."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "sales_soe_supplier_verification",
+                    "op": "eq",
+                    "value": "yes"
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(3)",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "sales_soe_lot_linkage",
+                "kind": "textarea",
+                "label": {
+                  "en": "How does a sales record identify which harvest lot it came from?",
+                  "es": "¿Cómo identifica un registro de venta de qué lote de cosecha proviene?"
+                },
+                "coaching": {
+                  "en": "§ 205.103(b)(2) asks that records be traceable back to the last certified operation. For a grower selling their own crop, that is your farm — so the link a certifier follows is sale → lot → harvest.",
+                  "es": "§ 205.103(b)(2) pide que los registros sean rastreables hasta la última operación certificada. Para un productor que vende su propio cultivo, esa es su finca — el vínculo es venta → lote → cosecha."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(b)(2)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,
@@ -8344,11 +8779,65 @@
                   "en": "Legal name, business structure, and any name differences between the certificate and your sales documents.",
                   "es": "Razón social, estructura del negocio y cualquier diferencia de nombre entre el certificado y sus documentos de venta."
                 },
-                "coaching": null,
+                "coaching": {
+                  "en": "Name mismatches between the certificate and an invoice are one of the commonest audit findings — state them here rather than leaving the inspector to discover them.",
+                  "es": "Las diferencias de nombre entre el certificado y una factura son uno de los hallazgos de auditoría más comunes — indíquelas aquí en lugar de dejar que el inspector las descubra."
+                },
                 "options": [],
-                "required": false,
+                "required": true,
                 "visible_when": [],
-                "nop_cite": null,
+                "nop_cite": "§ 205.401",
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "contract_scopes",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which scopes is this operation certified for, or applying for?",
+                  "es": "¿Para qué alcances está certificada, o solicita, esta operación?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "crops",
+                    "label": {
+                      "en": "Crops",
+                      "es": "Cultivos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "wild_crops",
+                    "label": {
+                      "en": "Wild crops",
+                      "es": "Cultivos silvestres"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "livestock",
+                    "label": {
+                      "en": "Livestock",
+                      "es": "Ganadería"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "handling",
+                    "label": {
+                      "en": "Handling / processing",
+                      "es": "Manipulación / procesamiento"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.401(a)",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,

@@ -245,7 +245,10 @@ export const devUtils = {
       }
 
       // Warn about CORS requirements
-      if (config.API_BASE_URL.includes('localhost:8000') || config.API_BASE_URL.startsWith('/api')) {
+      if (
+        config.API_BASE_URL.includes('localhost:8000') ||
+        config.API_BASE_URL.startsWith('/api')
+      ) {
         console.info('💡 API requests proxied through Vite dev server');
       }
     }

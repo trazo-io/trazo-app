@@ -158,8 +158,7 @@ const BufferEditor = ({
                 size="sm"
                 minH="44px"
                 aria-label={intl.formatMessage({ id: 'app.delete' })}
-                onClick={() => onChange(rows.filter((_, i) => i !== index))}
-              >
+                onClick={() => onChange(rows.filter((_, i) => i !== index))}>
                 <FaTrash />
               </StandardButton>
             )}
@@ -172,8 +171,7 @@ const BufferEditor = ({
                   update(index, { direction: e.target.value })
                 }
                 placeholder={intl.formatMessage({ id: 'app.select' })}
-                isDisabled={!canWrite}
-              >
+                isDisabled={!canWrite}>
                 {DIRECTIONS.map((d) => (
                   <option key={d} value={d}>
                     {intl.formatMessage({ id: `parcelApp.buffers.dir.${d.toLowerCase()}` })}
@@ -231,8 +229,7 @@ const BufferEditor = ({
                   update(index, { drift_risk: e.target.value || undefined })
                 }
                 placeholder={intl.formatMessage({ id: 'app.select' })}
-                isDisabled={!canWrite}
-              >
+                isDisabled={!canWrite}>
                 <option value="low">
                   {intl.formatMessage({ id: 'parcelApp.buffers.driftRisk.low' })}
                 </option>
@@ -256,8 +253,7 @@ const BufferEditor = ({
             </StandardField>
             <StandardField
               label={intl.formatMessage({ id: 'parcelApp.buffers.prohibitedUseDate' })}
-              helpText={intl.formatMessage({ id: 'parcelApp.buffers.prohibitedUseHelp' })}
-            >
+              helpText={intl.formatMessage({ id: 'parcelApp.buffers.prohibitedUseHelp' })}>
               <StandardInput
                 type="date"
                 value={row.prohibited_use_last_date ?? ''}
@@ -274,8 +270,7 @@ const BufferEditor = ({
                 isChecked={row.adjacent_is_organic === true}
                 onChange={(e) => update(index, { adjacent_is_organic: e.target.checked })}
                 isDisabled={!canWrite}
-                minH="44px"
-              >
+                minH="44px">
                 <Text fontSize="sm">
                   {intl.formatMessage({ id: 'parcelApp.buffers.adjacentOrganic' })}
                 </Text>
@@ -289,16 +284,14 @@ const BufferEditor = ({
                   })
                 }
                 isDisabled={!canWrite}
-                minH="44px"
-              >
+                minH="44px">
                 <Text fontSize="sm">
                   {intl.formatMessage({ id: 'parcelApp.buffers.neighborNotified' })}
                 </Text>
               </Checkbox>
               {row.neighbor_notified === true && (
                 <StandardField
-                  label={intl.formatMessage({ id: 'parcelApp.buffers.neighborNotifiedDate' })}
-                >
+                  label={intl.formatMessage({ id: 'parcelApp.buffers.neighborNotifiedDate' })}>
                   <StandardInput
                     type="date"
                     value={row.neighbor_notification_date ?? ''}
@@ -321,8 +314,7 @@ const BufferEditor = ({
           variant="outline"
           minH="44px"
           leftIcon={<FaPlus />}
-          onClick={() => onChange([...rows, {}])}
-        >
+          onClick={() => onChange([...rows, {}])}>
           {intl.formatMessage({ id: 'parcelApp.buffers.addBorder' })}
         </StandardButton>
       )}
@@ -357,8 +349,7 @@ const QuestionField = ({
         <RadioGroup
           value={value === true ? 'yes' : value === false ? 'no' : ''}
           onChange={(v) => onChange(v === 'yes')}
-          isDisabled={!canWrite}
-        >
+          isDisabled={!canWrite}>
           <Stack direction={{ base: 'column', smd: 'row' }} spacing={4}>
             <Radio value="yes" minH="44px">
               {intl.formatMessage({ id: 'osp.wizard.yes' })}
@@ -375,8 +366,7 @@ const QuestionField = ({
         <RadioGroup
           value={(value as string) ?? ''}
           onChange={(v) => onChange(v)}
-          isDisabled={!canWrite}
-        >
+          isDisabled={!canWrite}>
           <Stack spacing={2}>
             {question.options.map((option) => (
               <Radio key={option.value} value={option.value} minH="44px">
@@ -619,8 +609,7 @@ const ParcelApplicationWizard = () => {
                     bg="green.50"
                     borderWidth="1px"
                     borderColor="green.200"
-                    borderRadius="md"
-                  >
+                    borderRadius="md">
                     <Text fontSize="sm" fontWeight="semibold" color="green.700" mb={1}>
                       {intl.formatMessage(
                         { id: 'parcelApp.map.bufferSummary' },
@@ -646,8 +635,7 @@ const ParcelApplicationWizard = () => {
                     minH="44px"
                     onClick={() =>
                       navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`)
-                    }
-                  >
+                    }>
                     {intl.formatMessage({ id: 'parcelApp.map.edit' })}
                   </StandardButton>
                 </HStack>
@@ -661,8 +649,7 @@ const ParcelApplicationWizard = () => {
                 borderStyle="dashed"
                 borderColor="gray.200"
                 borderRadius="xl"
-                align="center"
-              >
+                align="center">
                 <Box as={FaMapMarkedAlt} color="gray.300" fontSize="40px" />
                 <Text fontSize="sm" fontWeight="semibold" color="gray.700">
                   {intl.formatMessage({ id: 'parcelApp.map.missing' })}
@@ -674,8 +661,7 @@ const ParcelApplicationWizard = () => {
                   minH="44px"
                   onClick={() =>
                     navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`)
-                  }
-                >
+                  }>
                   {intl.formatMessage({ id: 'parcelApp.map.draw' })}
                 </StandardButton>
               </VStack>
@@ -727,21 +713,18 @@ const ParcelApplicationWizard = () => {
               )}
               size="sm"
               minH="44px"
-              variant="outline"
-            >
+              variant="outline">
               {intl.formatMessage({ id: 'parcelApp.downloadPdf' })}
             </StandardButton>
           ) : null}
         </HStack>
-      }
-    >
+      }>
       <VStack align="stretch" spacing={5}>
         <StandardSectionTabs
           tabs={sectionTabs}
           activeIndex={clamped}
           onChange={goTo}
-          ariaLabel={intl.formatMessage({ id: 'parcelApp.sections' })}
-        >
+          ariaLabel={intl.formatMessage({ id: 'parcelApp.sections' })}>
           {currentPage ? (
             <StandardCard>
               <VStack align="stretch" spacing={5}>
@@ -777,8 +760,7 @@ const ParcelApplicationWizard = () => {
             minH="44px"
             leftIcon={<FaChevronLeft />}
             isDisabled={clamped === 0}
-            onClick={() => goTo(clamped - 1)}
-          >
+            onClick={() => goTo(clamped - 1)}>
             {intl.formatMessage({ id: 'app.previous' })}
           </StandardButton>
           {clamped < pages.length - 1 ? (
@@ -786,8 +768,7 @@ const ParcelApplicationWizard = () => {
               minH="44px"
               rightIcon={<FaChevronRight />}
               isLoading={saving}
-              onClick={() => goTo(clamped + 1)}
-            >
+              onClick={() => goTo(clamped + 1)}>
               {intl.formatMessage({ id: 'app.next' })}
             </StandardButton>
           ) : (

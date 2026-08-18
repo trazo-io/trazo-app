@@ -138,8 +138,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
       transform="translateX(-50%) !important"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-    >
+      transition={{ duration: 0.4, ease: 'easeOut' }}>
       <HStack
         as="nav"
         aria-label={intl.formatMessage({
@@ -148,8 +147,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
         })}
         spacing={0}
         justify="space-around"
-        w="full"
-      >
+        w="full">
         {navigationItems.map((item) => {
           // Show as active if clicked (immediate feedback) OR if it's the current active section
           const isActive = clickedSection === item.id || currentActiveSection === item.id;
@@ -172,8 +170,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
               }}
               _active={{
                 transform: 'scale(0.95) !important'
-              }}
-            >
+              }}>
               <VStack spacing={1}>
                 {/* Icon with active state animation */}
                 <MotionBox
@@ -181,8 +178,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
                     scale: isActive ? 1.1 : 1,
                     y: isActive ? -1 : 0
                   }}
-                  transition={{ duration: 0.2 }}
-                >
+                  transition={{ duration: 0.2 }}>
                   <Icon
                     as={item.icon}
                     aria-hidden="true"
@@ -199,8 +195,7 @@ export const NavigationBottomBar: React.FC<NavigationBottomBarProps> = ({
                   color={isActive ? activeTextColor : textColor}
                   transition="all 0.2s ease"
                   lineHeight="1"
-                  noOfLines={1}
-                >
+                  noOfLines={1}>
                   {intl.formatMessage({ id: item.labelId, defaultMessage: item.defaultLabel })}
                 </Text>
 

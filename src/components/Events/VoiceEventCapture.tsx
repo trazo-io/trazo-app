@@ -130,9 +130,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
   // ── Unified state ──
   const listening = useDeepgram ? deepgramListening : webSpeechListening;
-  const currentTranscript = useDeepgram
-    ? deepgramTranscript
-    : webSpeechTranscript;
+  const currentTranscript = useDeepgram ? deepgramTranscript : webSpeechTranscript;
   const displayTranscript = useDeepgram
     ? deepgramInterim || deepgramTranscript
     : webSpeechTranscript;
@@ -176,7 +174,15 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // Auto-start recording when component mounts with autoStart=true
   // Waits for voiceConfig to load so the correct provider (Deepgram vs Web Speech) is used
   useEffect(() => {
-    if (autoStart && isActive && !isLoadingConfig && !voiceUnavailable && !hasAutoStarted.current && !listening && !isProcessing) {
+    if (
+      autoStart &&
+      isActive &&
+      !isLoadingConfig &&
+      !voiceUnavailable &&
+      !hasAutoStarted.current &&
+      !listening &&
+      !isProcessing
+    ) {
       hasAutoStarted.current = true;
       // Small delay to ensure component is fully mounted and mic permissions are ready
       const timer = setTimeout(() => {
@@ -293,10 +299,31 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     const lowerText = text.toLowerCase();
 
     const patterns: Record<string, string[]> = {
-      fertilization: ['fertilizer', 'fertilize', 'npk', 'nitrogen', 'phosphorus', 'potassium', 'urea', 'compost', 'manure'],
+      fertilization: [
+        'fertilizer',
+        'fertilize',
+        'npk',
+        'nitrogen',
+        'phosphorus',
+        'potassium',
+        'urea',
+        'compost',
+        'manure'
+      ],
       irrigation: ['irrigate', 'irrigation', 'water', 'watered', 'sprinkler', 'drip', 'flood'],
       herbicide: ['herbicide', 'weed', 'weeds'],
-      fungicide: ['fungicide', 'fungus', 'mildew', 'blight', 'rot', 'copper', 'anthracnose', 'kocide', 'mancozeb', 'phytophthora'],
+      fungicide: [
+        'fungicide',
+        'fungus',
+        'mildew',
+        'blight',
+        'rot',
+        'copper',
+        'anthracnose',
+        'kocide',
+        'mancozeb',
+        'phytophthora'
+      ],
       pesticide: ['spray', 'sprayed', 'pesticide', 'insecticide', 'pest'],
       pruning: ['prune', 'pruning', 'trim', 'trimming', 'cut branches'],
       equipment: ['tractor', 'equipment', 'machine', 'fuel', 'diesel', 'mowed', 'plowed'],
@@ -317,7 +344,8 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     const confidence = Math.min(30 + maxMatches * 15, 75);
 
     // Extract amounts
-    const amountRegex = /(\d+(?:\.\d+)?)\s*(pounds?|lbs?|kg|gallons?|liters?|hours?|acres?|hectares?)/gi;
+    const amountRegex =
+      /(\d+(?:\.\d+)?)\s*(pounds?|lbs?|kg|gallons?|liters?|hours?|acres?|hectares?)/gi;
     const detected_amounts: Array<{ value: number; unit: string; category: string }> = [];
     let match;
     while ((match = amountRegex.exec(text)) !== null) {
@@ -369,7 +397,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // Graceful degradation: replace the recorder with an info Alert when voice can't work here
   if (voiceUnavailable) {
     return (
-      <Alert status="info" borderRadius="md">
+      <Alert status="info">
         <AlertIcon />
         <Text fontSize="sm">{intl.formatMessage({ id: 'voice.unavailableInBrowser' })}</Text>
       </Alert>
@@ -399,7 +427,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         <VStack spacing={4} align="stretch" pt={4}>
           {/* Microphone permission blocked */}
           {micBlocked && (
-            <Alert status="warning" borderRadius="md">
+            <Alert status="warning">
               <AlertIcon />
               <Text fontSize="sm">{intl.formatMessage({ id: 'voice.microphoneBlocked' })}</Text>
             </Alert>
@@ -407,14 +435,14 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
           {/* Recording Button */}
           <HStack justify="center" spacing={4}>
-            <Tooltip
-              label={listening ? 'Stop recording' : 'Start voice input'}
-            >
+            <Tooltip label={listening ? 'Stop recording' : 'Start voice input'}>
               <Button
                 leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
                 colorScheme="green"
                 onClick={listening ? stopListening : startListening}
-                isDisabled={!isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked}
+                isDisabled={
+                  !isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked
+                }
                 size="lg"
                 variant={listening ? 'solid' : 'outline'}
                 animation={listening ? `${pulseRing} 1.5s ease-out infinite` : undefined}
@@ -422,8 +450,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                   transform: 'scale(1.05)',
                   boxShadow: 'lg'
                 }}
-                transition="all 0.2s"
-              >
+                transition="all 0.2s">
                 {listening ? 'Stop Recording' : 'Start Voice Input'}
               </Button>
             </Tooltip>
@@ -508,17 +535,35 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                   <Flex flexWrap="wrap" gap={2}>
                     {formatAmountsForDisplay(parsedData.detected_amounts).map(
                       (amount: string, index: number) => (
-                        <Badge key={`amt-${index}`} colorScheme="green" px={3} py={1} borderRadius="full" fontSize="sm">
+                        <Badge
+                          key={`amt-${index}`}
+                          colorScheme="green"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          fontSize="sm">
                           {amount}
                         </Badge>
                       )
                     )}
                     {parsedData.detected_products
-                      ?.filter((product: string) =>
-                        !(parsedData.npk_ratio && /^NPK[\s\d\-]*$/i.test(product.replace(/with values|values|fertilizer/gi, '').trim()))
+                      ?.filter(
+                        (product: string) =>
+                          !(
+                            parsedData.npk_ratio &&
+                            /^NPK[\s\d\-]*$/i.test(
+                              product.replace(/with values|values|fertilizer/gi, '').trim()
+                            )
+                          )
                       )
                       .map((product: string, index: number) => (
-                        <Badge key={`prod-${index}`} colorScheme="blue" px={3} py={1} borderRadius="full" fontSize="sm">
+                        <Badge
+                          key={`prod-${index}`}
+                          colorScheme="blue"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          fontSize="sm">
                           {product}
                         </Badge>
                       ))}
@@ -537,25 +582,36 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                         {parsedData.water_source}
                       </Badge>
                     )}
-                    {parsedData.commercial_name && !parsedData.detected_products?.some(
-                      (p: string) => p.toLowerCase() === parsedData.commercial_name?.toLowerCase()
-                    ) && (
-                      <Badge colorScheme="orange" px={3} py={1} borderRadius="full" fontSize="sm">
-                        {parsedData.commercial_name}
-                      </Badge>
-                    )}
+                    {parsedData.commercial_name &&
+                      !parsedData.detected_products?.some(
+                        (p: string) => p.toLowerCase() === parsedData.commercial_name?.toLowerCase()
+                      ) && (
+                        <Badge colorScheme="orange" px={3} py={1} borderRadius="full" fontSize="sm">
+                          {parsedData.commercial_name}
+                        </Badge>
+                      )}
                     {parsedData.detected_systems
                       ?.filter((system: string) => {
                         const sysLower = system.toLowerCase();
                         const methodLower = (parsedData.application_method || '').toLowerCase();
                         // Skip if it overlaps with application_method (e.g., "drip irrigation" vs "drip")
-                        if (methodLower && (sysLower.includes(methodLower) || methodLower.includes(sysLower))) return false;
+                        if (
+                          methodLower &&
+                          (sysLower.includes(methodLower) || methodLower.includes(sysLower))
+                        )
+                          return false;
                         // Skip generic low-value systems
                         if (['pump', 'engine', 'motor', 'hose'].includes(sysLower)) return false;
                         return true;
                       })
                       .map((system: string, index: number) => (
-                        <Badge key={`sys-${index}`} colorScheme="teal" px={3} py={1} borderRadius="full" fontSize="sm">
+                        <Badge
+                          key={`sys-${index}`}
+                          colorScheme="teal"
+                          px={3}
+                          py={1}
+                          borderRadius="full"
+                          fontSize="sm">
                           {system}
                         </Badge>
                       ))}
@@ -585,8 +641,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     colorScheme="green"
                     onClick={handleContinueToReview}
                     size="md"
-                    flex={1}
-                  >
+                    flex={1}>
                     Continue to Review
                   </Button>
                   <Button
@@ -594,8 +649,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     variant="outline"
                     colorScheme="gray"
                     onClick={handleTryAgain}
-                    size="md"
-                  >
+                    size="md">
                     Try Again
                   </Button>
                 </HStack>

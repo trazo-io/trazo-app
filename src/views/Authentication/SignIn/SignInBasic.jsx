@@ -86,21 +86,18 @@ function SignIn() {
         mx="auto"
         justifyContent="space-between"
         mb="30px"
-        pt={{ base: '150px', sm: '150px', md: '0px' }}
-      >
+        pt={{ base: '150px', sm: '150px', md: '0px' }}>
         <Flex
           alignItems="center"
           justifyContent="start"
           style={{ userSelect: 'none' }}
-          w={{ base: '100%', md: '50%', lg: '42%' }}
-        >
+          w={{ base: '100%', md: '50%', lg: '42%' }}>
           <Flex
             direction="column"
             w="100%"
             background="transparent"
             p="48px"
-            mt={{ md: '150px', lg: '80px' }}
-          >
+            mt={{ md: '150px', lg: '80px' }}>
             <Heading color={titleColor} fontSize="32px" mb="10px">
               {intl.formatMessage({ id: 'app.welcomeBack' })}
             </Heading>
@@ -142,8 +139,7 @@ function SignIn() {
                     }}
                     _active={{
                       bg: 'green.400'
-                    }}
-                  >
+                    }}>
                     {intl.formatMessage({ id: 'app.signIn' })}
                   </Button>
                 </FormControl>
@@ -154,8 +150,7 @@ function SignIn() {
               justifyContent="center"
               alignItems="center"
               maxW="100%"
-              mt="0px"
-            >
+              mt="0px">
               <Text color={textColor} fontWeight="medium">
                 {intl.formatMessage({ id: 'app.dontHaveAnAccount' })}
                 <Link
@@ -163,8 +158,7 @@ function SignIn() {
                   as="span"
                   ms="5px"
                   fontWeight="bold"
-                  onClick={() => navigate('/auth/signup')}
-                >
+                  onClick={() => navigate('/auth/signup')}>
                   {intl.formatMessage({ id: 'app.signUp' })}
                 </Link>
               </Text>
@@ -182,8 +176,7 @@ function SignIn() {
             xl: '40vw'
           }}
           position="absolute"
-          right="0px"
-        >
+          right="0px">
           <Box
             bgImage={signInImage}
             w="100%"
@@ -199,8 +192,7 @@ function SignIn() {
               xl: '40%'
             }}
             position="absolute"
-            borderBottomLeftRadius="20px"
-          ></Box>
+            borderBottomLeftRadius="20px"></Box>
         </Box>
       </Flex>
     </Flex>

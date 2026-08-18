@@ -38,7 +38,9 @@ function ProfileUser() {
   const formSchemaBasic = object({
     first_name: string().min(1, intl.formatMessage({ id: 'profile.firstNameRequired' })),
     last_name: string().min(1, intl.formatMessage({ id: 'profile.lastNameRequired' })),
-    email: string().email(intl.formatMessage({ id: 'profile.invalidEmail' })).min(1, intl.formatMessage({ id: 'profile.emailRequired' })),
+    email: string()
+      .email(intl.formatMessage({ id: 'profile.invalidEmail' }))
+      .min(1, intl.formatMessage({ id: 'profile.emailRequired' })),
     phone: string()
   });
   const navigate = useNavigate();
@@ -119,8 +121,7 @@ function ProfileUser() {
       title={intl.formatMessage({ id: 'app.userProfile' })}
       description={intl.formatMessage({ id: 'app.modifyFormToEditProfile' })}
       showBackButton
-      onBack={() => navigate(-1)}
-    >
+      onBack={() => navigate(-1)}>
       <StandardCard title={intl.formatMessage({ id: 'app.mainInfo' })} variant="elevated">
         <FormProvider {...basicMethods}>
           <form onSubmit={handleSubmit(onSubmitUseInfo)} style={{ width: '100%' }}>
@@ -135,15 +136,13 @@ function ProfileUser() {
                   borderRadius="2xl"
                   boxShadow="lg"
                   mx="auto"
-                  mb={4}
-                >
+                  mb={4}>
                   <AvatarBadge
                     boxSize="2em"
                     bg="green.100"
                     border="2px solid white"
                     borderRadius="full"
-                    {...getRootProps({ className: 'dropzone' })}
-                  >
+                    {...getRootProps({ className: 'dropzone' })}>
                     <FiCamera color="#2E7D32" size={20} />
                     <Input
                       id="imageInput"
@@ -172,8 +171,7 @@ function ProfileUser() {
                 <StandardField
                   label={intl.formatMessage({ id: 'app.firstName' })}
                   required
-                  error={errors.first_name?.message as string}
-                >
+                  error={errors.first_name?.message as string}>
                   <StandardInput
                     placeholder={intl.formatMessage({ id: 'app.firstName' })}
                     {...register('first_name')}
@@ -183,8 +181,7 @@ function ProfileUser() {
                 <StandardField
                   label={intl.formatMessage({ id: 'app.lastName' })}
                   required
-                  error={errors.last_name?.message as string}
-                >
+                  error={errors.last_name?.message as string}>
                   <StandardInput
                     placeholder={intl.formatMessage({ id: 'app.lastName' })}
                     {...register('last_name')}
@@ -196,8 +193,7 @@ function ProfileUser() {
                 <StandardField
                   label={intl.formatMessage({ id: 'app.email' })}
                   required
-                  error={errors.email?.message as string}
-                >
+                  error={errors.email?.message as string}>
                   <StandardInput
                     type="email"
                     placeholder={intl.formatMessage({ id: 'app.email' })}
@@ -207,8 +203,7 @@ function ProfileUser() {
 
                 <StandardField
                   label={intl.formatMessage({ id: 'app.phone' })}
-                  error={errors.phone?.message as string}
-                >
+                  error={errors.phone?.message as string}>
                   <StandardInput
                     type="tel"
                     placeholder={intl.formatMessage({ id: 'app.phone' })}
@@ -225,8 +220,7 @@ function ProfileUser() {
                   isLoading={isLoading}
                   loadingText={intl.formatMessage({ id: 'profile.saving' })}
                   size="lg"
-                  px={8}
-                >
+                  px={8}>
                   {intl.formatMessage({ id: 'app.save' })}
                 </StandardButton>
               </HStack>
@@ -237,7 +231,9 @@ function ProfileUser() {
 
       {/* Security Settings Section */}
       <Box mt={6}>
-        <StandardCard title={intl.formatMessage({ id: 'profile.securitySettings' })} variant="elevated">
+        <StandardCard
+          title={intl.formatMessage({ id: 'profile.securitySettings' })}
+          variant="elevated">
           <VStack spacing={4} align="stretch">
             <Text fontSize="sm" color="gray.600">
               {intl.formatMessage({ id: 'profile.securityDescription' })}
@@ -259,8 +255,7 @@ function ProfileUser() {
                 transform: 'translateY(-1px)',
                 boxShadow: 'sm'
               }}
-              transition="all 0.2s"
-            >
+              transition="all 0.2s">
               <HStack justify="space-between">
                 <HStack spacing={3}>
                   <Icon as={FaLock} color="green.500" boxSize={5} />

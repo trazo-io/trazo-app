@@ -253,12 +253,10 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
             variant="outline"
             size="sm"
             leftIcon={<Icon as={FaEdit} />}
-            onClick={() => setIsEditModalOpen(true)}
-          >
+            onClick={() => setIsEditModalOpen(true)}>
             {intl.formatMessage({ id: 'app.edit' })}
           </StandardButton>
-        }
-      >
+        }>
         <HStack spacing={6} align="flex-start" flexWrap={{ base: 'wrap', md: 'nowrap' }}>
           <Avatar
             size="2xl"
@@ -364,8 +362,7 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
       {/* Business Information Section */}
       <StandardCard
         title={intl.formatMessage({ id: 'app.businessInformation' })}
-        variant="elevated"
-      >
+        variant="elevated">
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
           <InfoRow
             icon={FaIdCard}
@@ -393,8 +390,7 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
       {/* Agricultural Information Section */}
       <StandardCard
         title={intl.formatMessage({ id: 'app.agriculturalInformation' })}
-        variant="elevated"
-      >
+        variant="elevated">
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
           <InfoRow
             icon={FaLeaf}
@@ -423,8 +419,7 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
                     fontSize="xs"
                     color="gray.500"
                     textTransform="uppercase"
-                    fontWeight="semibold"
-                  >
+                    fontWeight="semibold">
                     {intl.formatMessage({ id: 'app.certificationsList' })}
                   </Text>
                   <HStack spacing={2} mt={1} flexWrap="wrap">
@@ -435,8 +430,7 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
                         variant="subtle"
                         px={2}
                         py={1}
-                        borderRadius="full"
-                      >
+                        borderRadius="full">
                         {cert.trim()}
                       </Badge>
                     ))}
@@ -455,8 +449,7 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
                     fontSize="xs"
                     color="gray.500"
                     textTransform="uppercase"
-                    fontWeight="semibold"
-                  >
+                    fontWeight="semibold">
                     {intl.formatMessage({ id: 'app.sustainabilityGoals' })}
                   </Text>
                   <HStack spacing={2} mt={1} flexWrap="wrap">
@@ -467,8 +460,7 @@ const CompanyInfoTab: React.FC<CompanyInfoTabProps> = () => {
                         variant="subtle"
                         px={2}
                         py={1}
-                        borderRadius="full"
-                      >
+                        borderRadius="full">
                         {getSustainabilityGoalLabel(goalId)}
                       </Badge>
                     ))}

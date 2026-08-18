@@ -22,10 +22,7 @@ import {
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
-import {
-  StandardPage,
-  StandardCard
-} from '../../../components/Design/StandardComponents';
+import { StandardPage, StandardCard } from '../../../components/Design/StandardComponents';
 
 interface TopicSection {
   headingKey: string;
@@ -160,8 +157,7 @@ export default function ConsumerEducationHub() {
       title={intl.formatMessage({ id: 'consumer.education.pageTitle' })}
       description={intl.formatMessage({ id: 'consumer.education.pageDescription' })}
       showBackButton
-      onBack={() => navigate(-1)}
-    >
+      onBack={() => navigate(-1)}>
       <VStack spacing={8} align="stretch">
         {TOPICS.map((topic) => {
           const isExpanded = expandedTopic === topic.id;
@@ -175,15 +171,13 @@ export default function ConsumerEducationHub() {
                 onClick={() => toggleTopic(topic.id)}
                 _hover={{ bg: hoverBg }}
                 transition="background 0.2s"
-                borderRadius={{ base: 'lg', md: 'xl' }}
-              >
+                borderRadius={{ base: 'lg', md: 'xl' }}>
                 <HStack spacing={{ base: 3, md: 4 }} align="start">
                   <Circle
                     size={{ base: '44px', md: '50px' }}
                     bg={`${topic.color}.100`}
                     color={`${topic.color}.600`}
-                    flexShrink={0}
-                  >
+                    flexShrink={0}>
                     <Icon as={topic.icon} boxSize={{ base: 5, md: 6 }} />
                   </Circle>
 
@@ -193,8 +187,7 @@ export default function ConsumerEducationHub() {
                         fontWeight="bold"
                         fontSize={{ base: 'sm', md: 'md' }}
                         color={textColor}
-                        noOfLines={2}
-                      >
+                        noOfLines={2}>
                         {intl.formatMessage({ id: topic.titleKey })}
                       </Text>
                       <Icon
@@ -228,11 +221,13 @@ export default function ConsumerEducationHub() {
                         fontWeight="semibold"
                         fontSize={{ base: 'sm', md: 'md' }}
                         color={textColor}
-                        mb={2}
-                      >
+                        mb={2}>
                         {intl.formatMessage({ id: section.headingKey })}
                       </Text>
-                      <Text fontSize={{ base: 'xs', md: 'sm' }} color={mutedColor} lineHeight="tall">
+                      <Text
+                        fontSize={{ base: 'xs', md: 'sm' }}
+                        color={mutedColor}
+                        lineHeight="tall">
                         {intl.formatMessage({ id: section.bodyKey })}
                       </Text>
                     </Box>
@@ -244,8 +239,7 @@ export default function ConsumerEducationHub() {
                     p={4}
                     borderRadius="lg"
                     border="1px solid"
-                    borderColor={tipBorder}
-                  >
+                    borderColor={tipBorder}>
                     <HStack align="start" spacing={3}>
                       <Icon
                         as={FaLightbulb}
@@ -258,8 +252,7 @@ export default function ConsumerEducationHub() {
                         fontSize={{ base: 'xs', md: 'sm' }}
                         color={textColor}
                         fontWeight="medium"
-                        lineHeight="tall"
-                      >
+                        lineHeight="tall">
                         {intl.formatMessage({ id: topic.tipKey })}
                       </Text>
                     </HStack>

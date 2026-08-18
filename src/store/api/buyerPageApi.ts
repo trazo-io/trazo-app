@@ -33,7 +33,10 @@ export interface BuyerDocRequestRow {
 
 const buyerPageApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getFarmProductions: build.query<BuyerProductionRow[], { companyId: string; farmId: string }>({
+    getBuyerFarmProductions: build.query<
+      BuyerProductionRow[],
+      { companyId: string; farmId: string }
+    >({
       query: ({ farmId }) => ({
         url: `/histories/?establishment=${farmId}`,
         method: 'GET',
@@ -58,7 +61,7 @@ const buyerPageApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { farmId }) => [{ type: 'History', id: `buyer-${farmId}` }]
     }),
-    getBuyerDocRequests: build.query<BuyerDocRequestRow[], { farmId: string }>({
+    getBuyerPageDocRequests: build.query<BuyerDocRequestRow[], { farmId: string }>({
       query: ({ farmId }) => ({
         url: `/buyer_doc_requests/?establishment_id=${farmId}`,
         method: 'GET',
@@ -82,9 +85,9 @@ const buyerPageApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetFarmProductionsQuery,
+  useGetBuyerFarmProductionsQuery,
   useSetProductionPublishedMutation,
-  useGetBuyerDocRequestsQuery,
+  useGetBuyerPageDocRequestsQuery,
   useSetBuyerDocRequestStatusMutation
 } = buyerPageApi;
 

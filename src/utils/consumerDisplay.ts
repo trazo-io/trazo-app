@@ -60,7 +60,17 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   // Farmer-typed "Verified" on a certification event. Stripped from the public payload
   // 2026-08-01 (ECGT/FTC self-created-label risk); it has to be stripped here too or the
   // producer's "how consumers will see this" preview shows a field shoppers never get.
-  'verification_status'
+  'verification_status',
+  // Internal anti-gaming verdict from the Vision check (`not_agricultural` / `ai_generated` /
+  // `stock_photo`). Stripped from the public payload 2026-08-03; the mirror was missed, which
+  // is exactly the drift this file's parity test exists to catch (it has been failing since).
+  //
+  // It is moderation state ABOUT the farmer, so a preview headed "how consumers will see this"
+  // must not show it — that would tell a grower shoppers are being shown Trazo's accusation.
+  // The producer still sees it where it belongs: `EventDetailsModal` renders the flag as a
+  // warning with "replace with a field photo", reading the event directly rather than through
+  // `toConsumerVisibleEvent`, so this strip does not touch it.
+  'photo_content_flag'
 ];
 
 /**

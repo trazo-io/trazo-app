@@ -22,40 +22,39 @@ import {
   AccordionIcon,
   AccordionItem,
   AccordionPanel,
-  Alert,
   AlertDialog,
   AlertDialogBody,
   AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
-  AlertIcon,
   Badge,
   Box,
-  Button,
   Divider,
   Flex,
-  FormControl,
-  FormHelperText,
-  FormLabel,
   HStack,
   Icon,
-  Input,
   Stack,
   Tag,
   TagCloseButton,
   TagLabel,
   Text,
-  Textarea,
   Tooltip,
   useColorModeValue,
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaCheckCircle, FaPlus } from 'react-icons/fa';
+import { FaCheckCircle, FaFlask, FaPlus } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardCard, StandardSearchInput } from 'components/Design/StandardComponents';
+import {
+  StandardAlert,
+  StandardButton,
+  StandardCard,
+  StandardField,
+  StandardInput,
+  StandardSearchInput
+} from 'components/Design/StandardComponents';
 import {
   useAddApprovedInputMutation,
   useLazyVerifyInputQuery,
@@ -294,15 +293,14 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       // (events keep flagging as drift) and offered no action — a dead end on
       // the flagship feature. Name the two routes that actually work.
       return (
-        <Alert status="warning" fontSize="sm" borderRadius="md" alignItems="flex-start">
-          <AlertIcon />
+        <StandardAlert status="warning" mb={0}>
           <VStack align="stretch" spacing={1}>
             <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.noMatch' })}</Text>
             <Text fontSize="xs" color={subtextColor}>
               {intl.formatMessage({ id: 'osp.approvedInputs.search.noMatchNextStep' })}
             </Text>
           </VStack>
-        </Alert>
+        </StandardAlert>
       );
     }
 
@@ -336,14 +334,13 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               </Text>
             </VStack>
             {omriAlreadyApproved ? (
-              <HStack color="green.600" fontSize="sm">
+              <HStack color="green.700" fontSize="sm">
                 <Icon as={FaCheckCircle} />
                 <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
               </HStack>
             ) : (
-              <Button
+              <StandardButton
                 size="sm"
-                colorScheme="green"
                 leftIcon={<FaPlus />}
                 isLoading={adding}
                 onClick={() =>
@@ -354,7 +351,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                   )
                 }>
                 {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
-              </Button>
+              </StandardButton>
             )}
           </Flex>
         )}
@@ -383,14 +380,13 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               </Text>
             </VStack>
             {nlAlreadyApproved ? (
-              <HStack color="green.600" fontSize="sm">
+              <HStack color="green.700" fontSize="sm">
                 <Icon as={FaCheckCircle} />
                 <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
               </HStack>
             ) : (
-              <Button
+              <StandardButton
                 size="sm"
-                colorScheme="green"
                 leftIcon={<FaPlus />}
                 isLoading={adding}
                 onClick={() =>
@@ -401,7 +397,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                   )
                 }>
                 {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
-              </Button>
+              </StandardButton>
             )}
           </Flex>
         )}
@@ -435,14 +431,13 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               </Text>
             </VStack>
             {wsdaAlreadyApproved ? (
-              <HStack color="green.600" fontSize="sm">
+              <HStack color="green.700" fontSize="sm">
                 <Icon as={FaCheckCircle} />
                 <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
               </HStack>
             ) : (
-              <Button
+              <StandardButton
                 size="sm"
-                colorScheme="green"
                 leftIcon={<FaPlus />}
                 isLoading={adding}
                 onClick={() =>
@@ -453,7 +448,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                   )
                 }>
                 {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
-              </Button>
+              </StandardButton>
             )}
           </Flex>
         )}
@@ -462,41 +457,37 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   };
 
   return (
-    <StandardCard mt={4}>
+    <StandardCard
+      mt={4}
+      titleIcon={<Icon as={FaFlask} color="green.700" />}
+      title={intl.formatMessage({ id: 'osp.approvedInputs.title' })}
+      subtitle={intl.formatMessage({ id: 'osp.approvedInputs.cfr' })}
+      headerAction={
+        <Badge variant={totalApproved > 0 ? 'brand' : 'neutral'}>
+          {intl.formatMessage({ id: 'osp.approvedInputs.count' }, { count: totalApproved })}
+        </Badge>
+      }>
       <VStack align="stretch" spacing={4}>
-        <Flex justify="space-between" align="start" wrap="wrap" gap={2}>
-          <VStack align="start" spacing={1}>
-            <Text fontWeight="bold" fontSize="md">
-              {intl.formatMessage({ id: 'osp.approvedInputs.title' })}
-            </Text>
-            <Text fontSize="xs" color={subtextColor}>
-              {intl.formatMessage({ id: 'osp.approvedInputs.cfr' })}
-            </Text>
-          </VStack>
-          <Badge colorScheme={totalApproved > 0 ? 'green' : 'gray'} variant="subtle" fontSize="xs">
-            {intl.formatMessage({ id: 'osp.approvedInputs.count' }, { count: totalApproved })}
-          </Badge>
-        </Flex>
-
         {!isEditable && (
-          <Alert status="warning" fontSize="xs" borderRadius="md">
-            <AlertIcon />
-            <Text>{intl.formatMessage({ id: 'osp.approvedInputs.lockedHint' })}</Text>
-          </Alert>
+          <StandardAlert
+            status="warning"
+            mb={0}
+            description={intl.formatMessage({ id: 'osp.approvedInputs.lockedHint' })}
+          />
         )}
         {isEditable && !isActive && (
-          <Alert status="info" fontSize="xs" borderRadius="md">
-            <AlertIcon />
-            <Text>{intl.formatMessage({ id: 'osp.approvedInputs.notActiveHint' })}</Text>
-          </Alert>
+          <StandardAlert
+            status="info"
+            mb={0}
+            description={intl.formatMessage({ id: 'osp.approvedInputs.notActiveHint' })}
+          />
         )}
         {/* P0-5 — Registry ↔ § 205.201(a)(2) narrative sync warning. Inspector
             reads "registered inputs not mentioned in narrative" as an incomplete
             OSP filing. The diff is computed server-side and carried on the OSP
             serializer. */}
         {osp.registry_sync_diff?.has_warning && (
-          <Alert status="warning" fontSize="xs" borderRadius="md" alignItems="start">
-            <AlertIcon />
+          <StandardAlert status="warning" mb={0}>
             <VStack align="start" spacing={1} flex={1}>
               {osp.registry_sync_diff.entries_not_in_narrative.length > 0 ? (
                 <>
@@ -528,7 +519,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                 </Text>
               )}
             </VStack>
-          </Alert>
+          </StandardAlert>
         )}
 
         <Box>
@@ -671,19 +662,18 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                 })}
                 flex="1"
               />
-              <Button
+              <StandardButton
                 size="sm"
                 // 44px to match the field beside it and the project's touch-target floor.
                 // No leftIcon: the field now carries the magnifier, and two in a row read as
                 // two different actions.
                 minH="44px"
-                colorScheme="green"
                 onClick={handleSearch}
                 isLoading={searching}
                 isDisabled={!query.trim()}
                 flexShrink={0}>
                 {intl.formatMessage({ id: 'osp.approvedInputs.search.button' })}
-              </Button>
+              </StandardButton>
             </Stack>
             <Text fontSize="xs" color={subtextColor} mt={1}>
               {intl.formatMessage({ id: 'osp.approvedInputs.search.hint' })}
@@ -700,22 +690,21 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               (verifyResult.omri_product_pk != null ||
                 verifyResult.national_list_substance_pk != null ||
                 verifyResult.wsda_material_pk != null) && (
-                <FormControl mt={3}>
-                  <FormLabel fontSize="xs" mb={1}>
-                    {intl.formatMessage({ id: 'osp.approvedInputs.log.certRefLabel' })}
-                  </FormLabel>
-                  <Input
-                    value={certRef}
-                    onChange={(e) => setCertRef(e.target.value)}
-                    placeholder={intl.formatMessage({
-                      id: 'osp.approvedInputs.log.certRefPlaceholder'
-                    })}
-                    size="sm"
-                  />
-                  <FormHelperText fontSize="xs">
-                    {intl.formatMessage({ id: 'osp.approvedInputs.log.certRefHint' })}
-                  </FormHelperText>
-                </FormControl>
+                <Box mt={3}>
+                  <StandardField
+                    label={intl.formatMessage({ id: 'osp.approvedInputs.log.certRefLabel' })}
+                    helpText={intl.formatMessage({ id: 'osp.approvedInputs.log.certRefHint' })}>
+                    <StandardInput
+                      value={certRef}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setCertRef(e.target.value)
+                      }
+                      placeholder={intl.formatMessage({
+                        id: 'osp.approvedInputs.log.certRefPlaceholder'
+                      })}
+                    />
+                  </StandardField>
+                </Box>
               )}
           </Box>
         )}
@@ -739,41 +728,45 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                   { name: pendingRemove?.label || '' }
                 )}
               </Text>
-              <Alert status="warning" fontSize="xs" borderRadius="md" mb={3}>
-                <AlertIcon />
-                <Text>
-                  {intl.formatMessage({
-                    id: 'osp.approvedInputs.removeConfirm.warning'
-                  })}
-                </Text>
-              </Alert>
-              <FormControl>
-                <FormLabel fontSize="xs" mb={1}>
-                  {intl.formatMessage({ id: 'osp.approvedInputs.log.certRefLabel' })}
-                </FormLabel>
-                <Input
+              <StandardAlert
+                status="warning"
+                mb={3}
+                description={intl.formatMessage({
+                  id: 'osp.approvedInputs.removeConfirm.warning'
+                })}
+              />
+              <StandardField
+                label={intl.formatMessage({ id: 'osp.approvedInputs.log.certRefLabel' })}
+                helpText={intl.formatMessage({ id: 'osp.approvedInputs.log.certRefHint' })}>
+                <StandardInput
                   value={removeCertRef}
-                  onChange={(e) => setRemoveCertRef(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setRemoveCertRef(e.target.value)
+                  }
                   placeholder={intl.formatMessage({
                     id: 'osp.approvedInputs.log.certRefPlaceholder'
                   })}
-                  size="sm"
                 />
-                <FormHelperText fontSize="xs">
-                  {intl.formatMessage({ id: 'osp.approvedInputs.log.certRefHint' })}
-                </FormHelperText>
-              </FormControl>
+              </StandardField>
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button
+              <StandardButton
                 ref={cancelRemoveRef}
+                variant="outline"
                 onClick={() => setPendingRemove(null)}
                 isDisabled={removing}>
                 {intl.formatMessage({ id: 'osp.approvedInputs.removeConfirm.cancel' })}
-              </Button>
-              <Button colorScheme="red" onClick={handleConfirmRemove} ml={3} isLoading={removing}>
+              </StandardButton>
+              {/* No `danger` token exists in StandardButton's variant map. `colorScheme` is
+                  spread AFTER the map inside the component, so it overrides the green and this
+                  renders red solid — the one escape hatch, used deliberately. */}
+              <StandardButton
+                colorScheme="red"
+                onClick={handleConfirmRemove}
+                ml={3}
+                isLoading={removing}>
                 {intl.formatMessage({ id: 'osp.approvedInputs.removeConfirm.confirm' })}
-              </Button>
+              </StandardButton>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialogOverlay>

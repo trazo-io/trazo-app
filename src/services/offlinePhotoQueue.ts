@@ -83,10 +83,7 @@ class OfflinePhotoQueueService {
   /**
    * Add a photo to the offline queue.
    */
-  async enqueue(
-    file: File,
-    eventContext?: QueuedPhoto['eventContext']
-  ): Promise<number> {
+  async enqueue(file: File, eventContext?: QueuedPhoto['eventContext']): Promise<number> {
     const db = await this.openDB();
     // Use FileReader fallback for environments where file.arrayBuffer() is unavailable (e.g., older WebViews)
     let arrayBuf: ArrayBuffer;
@@ -227,9 +224,7 @@ class OfflinePhotoQueueService {
 
     try {
       const photos = await this.getAll();
-      const pending = photos.filter(
-        (p) => p.status !== 'uploading' && p.retryCount < MAX_RETRIES
-      );
+      const pending = photos.filter((p) => p.status !== 'uploading' && p.retryCount < MAX_RETRIES);
 
       for (const photo of pending) {
         if (!photo.id) continue;
@@ -246,17 +241,16 @@ class OfflinePhotoQueueService {
           await this.remove(photo.id);
           uploaded++;
 
-          console.log(
-            `[OfflineQueue] Uploaded queued photo: ${photo.fileName}`
-          );
+          console.log(`[OfflineQueue] Uploaded queued photo: ${photo.fileName}`);
         } catch (error) {
-          const errorMsg =
-            error instanceof Error ? error.message : 'Upload failed';
+          const errorMsg = error instanceof Error ? error.message : 'Upload failed';
           await this.updateStatus(photo.id, 'failed', errorMsg);
           failed++;
 
           console.warn(
-            `[OfflineQueue] Failed to upload ${photo.fileName} (attempt ${photo.retryCount + 1}/${MAX_RETRIES}):`,
+            `[OfflineQueue] Failed to upload ${photo.fileName} (attempt ${
+              photo.retryCount + 1
+            }/${MAX_RETRIES}):`,
             errorMsg
           );
         }

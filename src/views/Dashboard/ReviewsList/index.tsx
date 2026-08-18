@@ -74,8 +74,7 @@ export default function ReviewsListView() {
   return (
     <StandardPage
       title="Your Reviews"
-      description="Track your product reviews and farming transparency feedback"
-    >
+      description="Track your product reviews and farming transparency feedback">
       <StandardCard variant="elevated">
         <VStack spacing={6} align="stretch">
           <StandardAlert
@@ -101,8 +100,7 @@ export default function ReviewsListView() {
                       shadow: 'lg',
                       transform: 'translateY(-2px)',
                       borderColor: 'green.400'
-                    }}
-                  >
+                    }}>
                     <Flex direction={{ base: 'column', md: 'row' }} gap={6}>
                       {review.history.images?.length > 0 && (
                         <Image
@@ -142,8 +140,7 @@ export default function ReviewsListView() {
                                 borderRadius="lg"
                                 overflow="hidden"
                                 transition="all 0.2s"
-                                _hover={{ transform: 'scale(1.05)', boxShadow: 'md' }}
-                              >
+                                _hover={{ transform: 'scale(1.05)', boxShadow: 'md' }}>
                                 <Image
                                   src={imageUrl}
                                   alt={`Review image ${imgIndex + 1}`}
@@ -164,8 +161,7 @@ export default function ReviewsListView() {
                                     bg="blackAlpha.600"
                                     align="center"
                                     justify="center"
-                                    borderRadius="lg"
-                                  >
+                                    borderRadius="lg">
                                     <Text color="white" fontWeight="bold" fontSize="sm">
                                       +{review.images.length - 4}
                                     </Text>

@@ -41,8 +41,7 @@ export const ConsumerProductLayout: React.FC<ConsumerProductLayoutProps> = ({ ch
           borderTopColor="gray.200"
           px={4}
           pt={6}
-          pb={{ base: '120px', md: 6 }}
-        >
+          pb={{ base: '120px', md: 6 }}>
           <Footer />
         </Box>
       </Flex>

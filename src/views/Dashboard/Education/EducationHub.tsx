@@ -179,8 +179,7 @@ const EducationHub: React.FC = () => {
   return (
     <StandardPage
       title={intl.formatMessage({ id: 'education.pageTitle' })}
-      description={intl.formatMessage({ id: 'education.pageDescription' })}
->
+      description={intl.formatMessage({ id: 'education.pageDescription' })}>
       <VStack spacing={6} w="full" align="stretch">
         {/* Search — the app's one search field (same control as the navbar and Documents),
             left-aligned on the content column rather than floating centre-stage. */}
@@ -218,8 +217,7 @@ const EducationHub: React.FC = () => {
                     variant="outline"
                     colorScheme="green"
                     size="sm"
-                    onClick={() => handleTopicClick(topic.id)}
-                  >
+                    onClick={() => handleTopicClick(topic.id)}>
                     {intl.formatMessage({ id: 'education.readMore' })}
                   </Button>
                 </VStack>
@@ -258,8 +256,7 @@ const EducationHub: React.FC = () => {
                 variant="outline"
                 colorScheme="green"
                 size="sm"
-                onClick={() => navigate('/admin/dashboard/education/faq')}
-              >
+                onClick={() => navigate('/admin/dashboard/education/faq')}>
                 {intl.formatMessage({ id: 'education.faqCardCta' })}
               </Button>
             </HStack>

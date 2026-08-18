@@ -31,9 +31,7 @@ export function useTourScenario(): {
 
   const hasParcels = useMemo(() => {
     if (!establishments || establishments.length === 0) return false;
-    return establishments.some(
-      (e: any) => e.parcels && e.parcels.length > 0
-    );
+    return establishments.some((e: any) => e.parcels && e.parcels.length > 0);
   }, [establishments]);
 
   const scenario: TourScenario = useMemo(() => {

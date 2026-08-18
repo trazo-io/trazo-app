@@ -17,25 +17,16 @@
  */
 
 import React, { useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  AlertIcon,
-  Button,
-  FormControl,
-  FormErrorMessage,
-  FormHelperText,
-  FormLabel,
-  HStack,
-  Icon,
-  Input,
-  Text,
-  useToast,
-  VStack
-} from '@chakra-ui/react';
+import { HStack, Icon, Text, useToast, VStack } from '@chakra-ui/react';
 import { FaFileUpload } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardButton } from 'components/Design/StandardComponents';
+import {
+  StandardAlert,
+  StandardButton,
+  StandardField,
+  StandardInput
+} from 'components/Design/StandardComponents';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { useActivateOSPMutation } from 'store/api/ospApi';
 import type { OSP } from 'types/osp';
@@ -194,41 +185,41 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
       isCloseDisabled={isLoading}
       header={
         <HStack>
-          <Icon as={FaFileUpload} color="green.600" />
+          <Icon as={FaFileUpload} color="green.700" />
           <Text>{intl.formatMessage({ id: 'osp.activateModal.title' })}</Text>
         </HStack>
       }
       footer={
         <>
-          <Button variant="ghost" mr={3} onClick={handleClose} isDisabled={isLoading}>
+          <StandardButton variant="ghost" mr={3} onClick={handleClose} isDisabled={isLoading}>
             {intl.formatMessage({ id: 'osp.activateModal.cancel' })}
-          </Button>
+          </StandardButton>
           <StandardButton
             variant="primary"
             onClick={handleSubmit}
             isLoading={isLoading}
-            loadingText={intl.formatMessage({ id: 'osp.activateModal.activating' })}
-          >
+            loadingText={intl.formatMessage({ id: 'osp.activateModal.activating' })}>
             {intl.formatMessage({ id: 'osp.action.activate' })}
           </StandardButton>
         </>
-      }
-    >
+      }>
       <VStack align="stretch" spacing={4}>
-        <Alert status="info" fontSize="sm" borderRadius="md">
-          <AlertIcon />
-          <Text>{intl.formatMessage({ id: 'osp.activateModal.intro' })}</Text>
-        </Alert>
+        <StandardAlert
+          status="info"
+          mb={0}
+          description={intl.formatMessage({ id: 'osp.activateModal.intro' })}
+        />
 
-        <FormControl isRequired isInvalid={!!fieldErrors.approval_document}>
-          <FormLabel fontSize="sm">
-            {intl.formatMessage({ id: 'osp.activateModal.file.label' })}
-          </FormLabel>
-          <Input
+        <StandardField
+          required
+          error={fieldErrors.approval_document}
+          label={intl.formatMessage({ id: 'osp.activateModal.file.label' })}
+          helpText={fileHint}>
+          <StandardInput
             ref={fileInputRef}
             type="file"
             accept={ACCEPTED_MIME_TYPES}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               const next = e.target.files?.[0] || null;
               setFile(next);
               if (next && fieldErrors.approval_document) {
@@ -251,20 +242,16 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
               }
             }}
           />
-          {fieldErrors.approval_document ? (
-            <FormErrorMessage>{fieldErrors.approval_document}</FormErrorMessage>
-          ) : (
-            <FormHelperText fontSize="xs">{fileHint}</FormHelperText>
-          )}
-        </FormControl>
+        </StandardField>
 
-        <FormControl isRequired isInvalid={!!fieldErrors.approval_certificate_number}>
-          <FormLabel fontSize="sm">
-            {intl.formatMessage({ id: 'osp.activateModal.certNumber.label' })}
-          </FormLabel>
-          <Input
+        <StandardField
+          required
+          error={fieldErrors.approval_certificate_number}
+          label={intl.formatMessage({ id: 'osp.activateModal.certNumber.label' })}
+          helpText={intl.formatMessage({ id: 'osp.activateModal.certNumber.hint' })}>
+          <StandardInput
             value={certNumber}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setCertNumber(e.target.value);
               if (fieldErrors.approval_certificate_number) {
                 setFieldErrors((prev) => {
@@ -278,24 +265,16 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
             })}
             maxLength={100}
           />
-          {fieldErrors.approval_certificate_number ? (
-            <FormErrorMessage>{fieldErrors.approval_certificate_number}</FormErrorMessage>
-          ) : (
-            <FormHelperText fontSize="xs">
-              {intl.formatMessage({ id: 'osp.activateModal.certNumber.hint' })}
-            </FormHelperText>
-          )}
-        </FormControl>
+        </StandardField>
 
-        <FormControl isRequired isInvalid={!!fieldErrors.approval_certifier_name}>
-          <FormLabel fontSize="sm">
-            {intl.formatMessage({
-              id: 'osp.activateModal.certifierName.label'
-            })}
-          </FormLabel>
-          <Input
+        <StandardField
+          required
+          error={fieldErrors.approval_certifier_name}
+          label={intl.formatMessage({ id: 'osp.activateModal.certifierName.label' })}
+          helpText={intl.formatMessage({ id: 'osp.activateModal.certifierName.hint' })}>
+          <StandardInput
             value={certifierName}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setCertifierName(e.target.value);
               if (fieldErrors.approval_certifier_name) {
                 setFieldErrors((prev) => {
@@ -309,16 +288,7 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
             })}
             maxLength={200}
           />
-          {fieldErrors.approval_certifier_name ? (
-            <FormErrorMessage>{fieldErrors.approval_certifier_name}</FormErrorMessage>
-          ) : (
-            <FormHelperText fontSize="xs">
-              {intl.formatMessage({
-                id: 'osp.activateModal.certifierName.hint'
-              })}
-            </FormHelperText>
-          )}
-        </FormControl>
+        </StandardField>
       </VStack>
     </ResponsiveModal>
   );

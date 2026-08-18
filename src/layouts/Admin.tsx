@@ -300,84 +300,81 @@ export default function Dashboard(props: any) {
   // Chakra Color Mode
   return (
     <TourProvider>
-    <SidebarContext.Provider
-      value={{
-        sidebarWidth,
-        setSidebarWidth,
-        toggleSidebar,
-        setToggleSidebar
-      }}
-    >
-      <Sidebar
-        routes={routes}
-        logoText={''}
-        display="none"
-        sidebarVariant={sidebarVariant}
-        {...rest}
-      />
-      <MainPanel
-        ref={mainPanel}
-        w={{
-          base: '100%',
-          xl: `calc(100% - ${sidebarWidth}px)`
-        }}
-        ml={{ base: 0, xl: `${sidebarWidth}px` }}
-        transition="all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)"
-        position="relative"
-        float="right"
-      >
-        <Portal padding="0">
-          <AdminNavbar
-            onOpen={onOpen}
-            brandText={getActiveRoute(routes)}
-            secondary={getActiveNavbar(routes)}
-            fixed={fixed}
-            {...rest}
-          />
-        </Portal>
-
-        <OfflineQueueIndicator />
-
-        {getRoute() ? (
-          <PanelContent
-            paddingInlineStart={{ base: '4px', md: '15px' }}
-            paddingInlineEnd={{ base: '4px', md: '15px' }}
-          >
-            <PanelContainer padding={{ base: '4px 0px', lg: '30px 15px' }}>
-              {/* Suspense boundary so lazy-loaded dashboard route views (see App.tsx
-                  lazyWithRetry conversion) have a fallback while their chunk loads. */}
-              <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
-                <Outlet />
-              </Suspense>
-            </PanelContainer>
-          </PanelContent>
-        ) : null}
-        <Footer />
-        <OnboardingChecklist />
-        <Portal>
-          <FixedPlugin fixed={fixed} onOpen={onOpen} />
-        </Portal>
-        <Configurator
-          secondary={getActiveNavbar(routes)}
-          isOpen={isOpen}
-          onClose={onClose}
-          isChecked={fixed}
-          onSwitch={(value) => {
-            setFixed(value);
+      <SidebarContext.Provider
+        value={{
+          sidebarWidth,
+          setSidebarWidth,
+          toggleSidebar,
+          setToggleSidebar
+        }}>
+        <Sidebar
+          routes={routes}
+          logoText={''}
+          display="none"
+          sidebarVariant={sidebarVariant}
+          {...rest}
+        />
+        <MainPanel
+          ref={mainPanel}
+          w={{
+            base: '100%',
+            xl: `calc(100% - ${sidebarWidth}px)`
           }}
-          onOpaque={() => setSidebarVariant('opaque')}
-          onTransparent={() => setSidebarVariant('transparent')}
-        />
-      </MainPanel>
-      {activeMilestone && activeMilestone.pattern === 'modal' && (
-        <MilestoneCelebrationModal
-          milestone={activeMilestone}
-          isOpen={true}
-          onClose={dismissMilestone}
-          daysSinceSignup={daysSinceSignup}
-        />
-      )}
-    </SidebarContext.Provider>
+          ml={{ base: 0, xl: `${sidebarWidth}px` }}
+          transition="all 0.33s cubic-bezier(0.685, 0.0473, 0.346, 1)"
+          position="relative"
+          float="right">
+          <Portal padding="0">
+            <AdminNavbar
+              onOpen={onOpen}
+              brandText={getActiveRoute(routes)}
+              secondary={getActiveNavbar(routes)}
+              fixed={fixed}
+              {...rest}
+            />
+          </Portal>
+
+          <OfflineQueueIndicator />
+
+          {getRoute() ? (
+            <PanelContent
+              paddingInlineStart={{ base: '4px', md: '15px' }}
+              paddingInlineEnd={{ base: '4px', md: '15px' }}>
+              <PanelContainer padding={{ base: '4px 0px', lg: '30px 15px' }}>
+                {/* Suspense boundary so lazy-loaded dashboard route views (see App.tsx
+                  lazyWithRetry conversion) have a fallback while their chunk loads. */}
+                <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
+                  <Outlet />
+                </Suspense>
+              </PanelContainer>
+            </PanelContent>
+          ) : null}
+          <Footer />
+          <OnboardingChecklist />
+          <Portal>
+            <FixedPlugin fixed={fixed} onOpen={onOpen} />
+          </Portal>
+          <Configurator
+            secondary={getActiveNavbar(routes)}
+            isOpen={isOpen}
+            onClose={onClose}
+            isChecked={fixed}
+            onSwitch={(value) => {
+              setFixed(value);
+            }}
+            onOpaque={() => setSidebarVariant('opaque')}
+            onTransparent={() => setSidebarVariant('transparent')}
+          />
+        </MainPanel>
+        {activeMilestone && activeMilestone.pattern === 'modal' && (
+          <MilestoneCelebrationModal
+            milestone={activeMilestone}
+            isOpen={true}
+            onClose={dismissMilestone}
+            daysSinceSignup={daysSinceSignup}
+          />
+        )}
+      </SidebarContext.Provider>
     </TourProvider>
   );
 }

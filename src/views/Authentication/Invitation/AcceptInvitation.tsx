@@ -151,15 +151,13 @@ const AcceptInvitation: React.FC = () => {
           align="center"
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
-          px={4}
-        >
+          px={4}>
           <MotionBox
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
             textAlign="center"
-            maxW="400px"
-          >
+            maxW="400px">
             <VStack spacing={8}>
               <Box
                 w="80px"
@@ -170,8 +168,7 @@ const AcceptInvitation: React.FC = () => {
                 alignItems="center"
                 justifyContent="center"
                 animation="pulse 2s infinite"
-                boxShadow="0 10px 30px rgba(72, 187, 120, 0.3)"
-              >
+                boxShadow="0 10px 30px rgba(72, 187, 120, 0.3)">
                 <Text fontSize="2xl" fontWeight="900" color="white" letterSpacing="-1px">
                   T
                 </Text>
@@ -184,8 +181,7 @@ const AcceptInvitation: React.FC = () => {
                   fontSize="sm"
                   color={useColorModeValue('gray.500', 'gray.400')}
                   lineHeight="1.6"
-                  textAlign="center"
-                >
+                  textAlign="center">
                   Please wait while we verify your invitation details...
                 </Text>
                 <Spinner
@@ -213,15 +209,13 @@ const AcceptInvitation: React.FC = () => {
           align="center"
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
-          px={4}
-        >
+          px={4}>
           <MotionBox
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, type: 'spring', bounce: 0.3 }}
             textAlign="center"
-            maxW="400px"
-          >
+            maxW="400px">
             <VStack spacing={8}>
               <Box
                 w="100px"
@@ -231,24 +225,21 @@ const AcceptInvitation: React.FC = () => {
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
-                boxShadow="0 20px 40px rgba(72, 187, 120, 0.4)"
-              >
+                boxShadow="0 20px 40px rgba(72, 187, 120, 0.4)">
                 <Icon as={FiCheck} color="white" boxSize={12} />
               </Box>
               <VStack spacing={4}>
                 <Text
                   fontSize="2xl"
                   fontWeight="700"
-                  color={useColorModeValue('gray.800', 'white')}
-                >
+                  color={useColorModeValue('gray.800', 'white')}>
                   Welcome to the team!
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.600', 'gray.300')}
                   textAlign="center"
-                  lineHeight="1.6"
-                >
+                  lineHeight="1.6">
                   You've successfully joined the company. Taking you to your dashboard...
                 </Text>
               </VStack>
@@ -269,15 +260,13 @@ const AcceptInvitation: React.FC = () => {
           align="center"
           justify="center"
           bg={useColorModeValue('white', 'gray.900')}
-          px={4}
-        >
+          px={4}>
           <MotionBox
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             maxW="400px"
-            w="full"
-          >
+            w="full">
             <Box
               bg={useColorModeValue('white', 'gray.800')}
               borderRadius="2xl"
@@ -287,8 +276,7 @@ const AcceptInvitation: React.FC = () => {
               )}
               p={8}
               border="1px solid"
-              borderColor={useColorModeValue('gray.100', 'gray.700')}
-            >
+              borderColor={useColorModeValue('gray.100', 'gray.700')}>
               <VStack spacing={6} textAlign="center">
                 <Box
                   w="80px"
@@ -298,24 +286,21 @@ const AcceptInvitation: React.FC = () => {
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  boxShadow="0 10px 30px rgba(239, 68, 68, 0.3)"
-                >
+                  boxShadow="0 10px 30px rgba(239, 68, 68, 0.3)">
                   <Icon as={FiAlertCircle} color="white" boxSize={10} />
                 </Box>
                 <VStack spacing={3}>
                   <Text
                     fontSize="xl"
                     fontWeight="600"
-                    color={useColorModeValue('gray.800', 'white')}
-                  >
+                    color={useColorModeValue('gray.800', 'white')}>
                     Invitation Error
                   </Text>
                   <Text
                     fontSize="sm"
                     color={useColorModeValue('gray.600', 'gray.300')}
                     textAlign="center"
-                    lineHeight="1.6"
-                  >
+                    lineHeight="1.6">
                     {errorMessage}
                   </Text>
                 </VStack>
@@ -333,8 +318,7 @@ const AcceptInvitation: React.FC = () => {
                     bg: useColorModeValue('gray.200', 'gray.600'),
                     transform: 'translateY(-1px)'
                   }}
-                  transition="all 0.2s"
-                >
+                  transition="all 0.2s">
                   Go to Homepage
                 </Button>
               </VStack>
@@ -356,8 +340,7 @@ const AcceptInvitation: React.FC = () => {
           alignItems="center"
           justifyContent="center"
           position="relative"
-          overflow="hidden"
-        >
+          overflow="hidden">
           {/* Sophisticated gradient foundation */}
           <Box
             position="absolute"
@@ -448,8 +431,7 @@ const AcceptInvitation: React.FC = () => {
             color="white"
             px={12}
             maxW="lg"
-            zIndex={10}
-          >
+            zIndex={10}>
             <VStack spacing={4}>
               <Text fontSize="4xl" fontWeight="800" lineHeight="1.1" letterSpacing="tight">
                 You're Invited!
@@ -484,16 +466,14 @@ const AcceptInvitation: React.FC = () => {
           bg={useColorModeValue('white', 'gray.900')}
           px={{ base: 4, sm: 6, md: 8 }}
           py={12}
-          overflow="hidden"
-        >
+          overflow="hidden">
           <MotionBox
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             w="full"
             maxW={{ base: '100%', md: '420px' }}
-            my={{ base: 4, lg: 8 }}
-          >
+            my={{ base: 4, lg: 8 }}>
             {/* Header */}
             <VStack spacing={6} mb={10}>
               <VStack spacing={2}>
@@ -502,15 +482,13 @@ const AcceptInvitation: React.FC = () => {
                   fontWeight="700"
                   color={useColorModeValue('gray.900', 'white')}
                   letterSpacing="tight"
-                  textAlign="center"
-                >
+                  textAlign="center">
                   Team Invitation
                 </Text>
                 <Text
                   fontSize="md"
                   color={useColorModeValue('gray.500', 'gray.400')}
-                  textAlign="center"
-                >
+                  textAlign="center">
                   You've been invited to join the team
                 </Text>
               </VStack>
@@ -524,8 +502,7 @@ const AcceptInvitation: React.FC = () => {
                 p={6}
                 mb={8}
                 border="1px solid"
-                borderColor={useColorModeValue('green.200', 'green.700')}
-              >
+                borderColor={useColorModeValue('green.200', 'green.700')}>
                 <VStack spacing={4} textAlign="center">
                   <Box
                     w="50px"
@@ -534,8 +511,7 @@ const AcceptInvitation: React.FC = () => {
                     borderRadius="xl"
                     display="flex"
                     alignItems="center"
-                    justifyContent="center"
-                  >
+                    justifyContent="center">
                     <Icon as={HiOfficeBuilding} color="white" boxSize={6} />
                   </Box>
 
@@ -543,8 +519,7 @@ const AcceptInvitation: React.FC = () => {
                     <Text
                       fontSize="lg"
                       fontWeight="600"
-                      color={useColorModeValue('gray.800', 'white')}
-                    >
+                      color={useColorModeValue('gray.800', 'white')}>
                       {invitationDetails.company_name}
                     </Text>
                     <Badge
@@ -554,8 +529,7 @@ const AcceptInvitation: React.FC = () => {
                       py={1}
                       borderRadius="full"
                       fontSize="sm"
-                      fontWeight="600"
-                    >
+                      fontWeight="600">
                       {invitationDetails.role_display || invitationDetails.role}
                     </Badge>
                   </VStack>
@@ -564,8 +538,7 @@ const AcceptInvitation: React.FC = () => {
                     fontSize="sm"
                     color={useColorModeValue('gray.600', 'gray.300')}
                     textAlign="center"
-                    lineHeight="1.5"
-                  >
+                    lineHeight="1.5">
                     Join as a{' '}
                     <Text as="span" fontWeight="600" color="green.700">
                       {invitationDetails.role_display || invitationDetails.role}
@@ -596,8 +569,7 @@ const AcceptInvitation: React.FC = () => {
                 _active={{
                   transform: 'translateY(0)'
                 }}
-                transition="all 0.2s"
-              >
+                transition="all 0.2s">
                 Accept Invitation
               </Button>
 
@@ -616,8 +588,7 @@ const AcceptInvitation: React.FC = () => {
                   bg: useColorModeValue('gray.100', 'gray.600'),
                   borderColor: useColorModeValue('gray.300', 'gray.500')
                 }}
-                transition="all 0.2s"
-              >
+                transition="all 0.2s">
                 Decline
               </Button>
             </VStack>
@@ -630,8 +601,7 @@ const AcceptInvitation: React.FC = () => {
                 p={4}
                 mt={6}
                 border="1px solid"
-                borderColor={useColorModeValue('blue.200', 'blue.700')}
-              >
+                borderColor={useColorModeValue('blue.200', 'blue.700')}>
                 <HStack spacing={3}>
                   <Icon
                     as={FiShield}
@@ -641,8 +611,7 @@ const AcceptInvitation: React.FC = () => {
                   <Text
                     fontSize="sm"
                     color={useColorModeValue('blue.700', 'blue.300')}
-                    lineHeight="1.5"
-                  >
+                    lineHeight="1.5">
                     Don't have an account? You'll be able to create one after accepting the
                     invitation.
                   </Text>
@@ -658,8 +627,7 @@ const AcceptInvitation: React.FC = () => {
                 p={4}
                 mt={6}
                 border="1px solid"
-                borderColor={useColorModeValue('orange.200', 'orange.700')}
-              >
+                borderColor={useColorModeValue('orange.200', 'orange.700')}>
                 <HStack spacing={3} align="start">
                   <Icon
                     as={FiAlertCircle}
@@ -671,15 +639,13 @@ const AcceptInvitation: React.FC = () => {
                     <Text
                       fontSize="sm"
                       fontWeight="600"
-                      color={useColorModeValue('orange.700', 'orange.300')}
-                    >
+                      color={useColorModeValue('orange.700', 'orange.300')}>
                       Company Transfer
                     </Text>
                     <Text
                       fontSize="sm"
                       color={useColorModeValue('orange.700', 'orange.300')}
-                      lineHeight="1.5"
-                    >
+                      lineHeight="1.5">
                       Accepting this invitation will transfer you from your current company to{' '}
                       <Text as="span" fontWeight="600">
                         {invitationDetails?.company_name}

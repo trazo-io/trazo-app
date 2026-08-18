@@ -320,6 +320,55 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       modal: 'immediate'
     }
   },
+
+  // ---- Off-farm handling round trip (7 CFR 205.272 · CCOF G6.1) ----
+  //
+  // CCOF grower checklist item 6 asks four things about crop sent to another certified
+  // operation: what you sent, where, when, and what you received back. Trazo could answer only
+  // "where". These four answer the rest.
+  //
+  // Gated on the destination, not just the subtype: a lot stored on farm or sold field-run has
+  // no handler round trip, and four permanently-blank inputs on every harvest is how a form
+  // teaches growers to skip a section.
+  //
+  // Certifier + producer surfaces only. Pack-out figures and settlement references are
+  // commercial data and fail all three consumer-card questions.
+  {
+    name: 'sent_to_handler_date',
+    labelKey: 'events.production.fields.sentToHandlerDate',
+    valueType: 'date',
+    visibleForSubtypes: ['HA'],
+    visibleWhen: (e) => String(e.harvest_destination || '') === 'handler',
+    surfaces: { form: 'secondary', modal: 'secondary' }
+  },
+  {
+    name: 'quantity_sent_to_handler',
+    labelKey: 'events.production.fields.quantitySentToHandler',
+    valueType: 'number',
+    unitField: 'handler_quantity_unit',
+    visibleForSubtypes: ['HA'],
+    visibleWhen: (e) => String(e.harvest_destination || '') === 'handler',
+    surfaces: { form: 'secondary', modal: 'secondary' }
+  },
+  {
+    name: 'quantity_returned_from_handler',
+    labelKey: 'events.production.fields.quantityReturnedFromHandler',
+    valueType: 'number',
+    // A SEPARATE unit from the one sent: hulling changes the unit (in-shell in, shelled out),
+    // and reusing one unit field would force a conversion nobody measured.
+    unitField: 'handler_return_unit',
+    visibleForSubtypes: ['HA'],
+    visibleWhen: (e) => String(e.harvest_destination || '') === 'handler',
+    surfaces: { form: 'secondary', modal: 'secondary' }
+  },
+  {
+    name: 'handler_document_reference',
+    labelKey: 'events.production.fields.handlerDocumentReference',
+    valueType: 'string',
+    visibleForSubtypes: ['HA'],
+    visibleWhen: (e) => String(e.harvest_destination || '') === 'handler',
+    surfaces: { form: 'secondary', modal: 'secondary' }
+  },
   {
     name: 'buffer_disposition',
     labelKey: 'events.production.fields.bufferDisposition',

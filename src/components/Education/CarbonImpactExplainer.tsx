@@ -95,8 +95,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       borderRadius="xl"
       border="1px solid"
       borderColor={useColorModeValue('gray.200', 'gray.600')}
-      overflow="hidden"
-    >
+      overflow="hidden">
       {/* Header — carbon-impact card title. No self-graded documentation score:
           consumers see facts (counts/photos/certs), not a self-assigned grade. */}
       <Box p={4} bg={cardBg}>
@@ -107,8 +106,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               as="h2"
               fontSize={{ base: 'md', smd: 'lg', lg: 'xl' }}
               fontWeight="bold"
-              color={textColor}
-            >
+              color={textColor}>
               {intl.formatMessage({ id: 'app.carbonExplainer.title' })}
             </Text>
           </HStack>
@@ -128,8 +126,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               p={4}
               borderRadius="lg"
               border="1px solid"
-              borderColor={useColorModeValue('green.200', 'green.700')}
-            >
+              borderColor={useColorModeValue('green.200', 'green.700')}>
               <HStack mb={2}>
                 <Icon as={FaRecycle} color="green.500" boxSize={5} />
                 <Text fontSize="md" fontWeight="bold" color="green.700">
@@ -150,8 +147,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               p={4}
               borderRadius="lg"
               border="1px solid"
-              borderColor={useColorModeValue('gray.200', 'gray.600')}
-            >
+              borderColor={useColorModeValue('gray.200', 'gray.600')}>
               <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
                 {intl.formatMessage({ id: 'app.carbonExplainer.yourImpact' })}
               </Text>
@@ -212,8 +208,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             variant="ghost"
             colorScheme="green"
             onClick={() => setIsExpanded(!isExpanded)}
-            rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-          >
+            rightIcon={isExpanded ? <FaChevronUp /> : <FaChevronDown />}>
             {isExpanded
               ? intl.formatMessage({ id: 'app.carbonExplainer.showLess' })
               : intl.formatMessage({ id: 'app.carbonExplainer.showMore' })}
@@ -275,8 +270,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               display="inline-flex"
               alignItems="center"
               minH="44px"
-              alignSelf="flex-start"
-            >
+              alignSelf="flex-start">
               Read the full methodology →
             </Link>
           </VStack>

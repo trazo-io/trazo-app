@@ -94,8 +94,7 @@ export const ModernSkeletonCard: React.FC<ModernSkeletonCardProps> = ({
                   borderRadius="lg"
                   border="1px solid"
                   borderColor={borderColor}
-                  w="full"
-                >
+                  w="full">
                   <HStack spacing={4} align="start">
                     <SkeletonCircle size="12" {...commonProps} />
                     <VStack align="start" spacing={3} flex={1}>
@@ -152,8 +151,7 @@ export const ModernSkeletonCard: React.FC<ModernSkeletonCardProps> = ({
                   p={4}
                   borderRadius="lg"
                   border="1px solid"
-                  borderColor={borderColor}
-                >
+                  borderColor={borderColor}>
                   <VStack spacing={3}>
                     <SkeletonCircle size="8" {...commonProps} />
                     <Skeleton height="14px" width="80%" {...commonProps} />
@@ -173,8 +171,7 @@ export const ModernSkeletonCard: React.FC<ModernSkeletonCardProps> = ({
                   borderRadius="lg"
                   border="1px solid"
                   borderColor={borderColor}
-                  w="full"
-                >
+                  w="full">
                   <HStack spacing={4} align="start">
                     <SkeletonCircle size="10" {...commonProps} />
                     <VStack align="start" spacing={2} flex={1}>
@@ -261,8 +258,7 @@ export const ModernSkeletonCard: React.FC<ModernSkeletonCardProps> = ({
       borderColor={borderColor}
       w="full"
       height={height}
-      boxShadow="sm"
-    >
+      boxShadow="sm">
       {renderSkeletonContent()}
     </Box>
   );

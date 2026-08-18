@@ -21,13 +21,8 @@ export default function Footer() {
       px="30px"
       pb="20px"
       pt="20px"
-      gap={{ base: 3, xl: 0 }}
-    >
-      <Text
-        color="gray.400"
-        textAlign={{ base: 'center', xl: 'start' }}
-        fontSize="sm"
-      >
+      gap={{ base: 3, xl: 0 }}>
+      <Text color="gray.400" textAlign={{ base: 'center', xl: 'start' }} fontSize="sm">
         {/* Was the hardcoded English "Agricultural Transparency Platform." — pre-pivot
             positioning (the product is organic recordkeeping since the October realign), and it
             rendered untranslated on every dashboard page beside four translated links. */}
@@ -37,8 +32,7 @@ export default function Footer() {
         gap={{ base: '16px', md: '32px' }}
         flexWrap="wrap"
         justifyContent="center"
-        alignItems="center"
-      >
+        alignItems="center">
         {isConsumerHost && <LanguageToggle />}
         {isConsumerHost && (
           <Link
@@ -46,11 +40,10 @@ export default function Footer() {
             to="/methodology"
             color="gray.400"
             fontSize="sm"
-            _hover={{ color: 'green.500' }}
-          >
+            _hover={{ color: 'green.500' }}>
             {intl.formatMessage({
               id: 'consumer.footer.howOurDataWorks',
-              defaultMessage: 'How our data works',
+              defaultMessage: 'How our data works'
             })}
           </Link>
         )}
@@ -59,8 +52,7 @@ export default function Footer() {
           color="gray.400"
           fontSize="sm"
           isExternal
-          _hover={{ color: 'green.500' }}
-        >
+          _hover={{ color: 'green.500' }}>
           {intl.formatMessage({ id: 'app.privacyPolicy' })}
         </Link>
         <Link
@@ -68,8 +60,7 @@ export default function Footer() {
           color="gray.400"
           fontSize="sm"
           isExternal
-          _hover={{ color: 'green.500' }}
-        >
+          _hover={{ color: 'green.500' }}>
           {intl.formatMessage({ id: 'app.termsOfService' })}
         </Link>
         <Link
@@ -77,8 +68,7 @@ export default function Footer() {
           color="gray.400"
           fontSize="sm"
           isExternal
-          _hover={{ color: 'green.500' }}
-        >
+          _hover={{ color: 'green.500' }}>
           {intl.formatMessage({ id: 'app.about' })}
         </Link>
         <Link
@@ -86,8 +76,7 @@ export default function Footer() {
           color="gray.400"
           fontSize="sm"
           isExternal
-          _hover={{ color: 'green.500' }}
-        >
+          _hover={{ color: 'green.500' }}>
           {intl.formatMessage({ id: 'app.contactUs' })}
         </Link>
         <Link
@@ -95,11 +84,10 @@ export default function Footer() {
           color="gray.400"
           fontSize="sm"
           _hover={{ color: 'green.500' }}
-          onClick={() => resetConsent()}
-        >
+          onClick={() => resetConsent()}>
           {intl.formatMessage({
             id: 'consumer.footer.privacySettings',
-            defaultMessage: 'Privacy Settings',
+            defaultMessage: 'Privacy Settings'
           })}
         </Link>
       </Flex>

@@ -343,7 +343,11 @@ const WeatherTab = forwardRef(
     //
     // `useWatch` subscribes to the field itself, so it reflects defaultValues on the first
     // render and updates after `reset()`.
-    const type = useWatch({ control: mainInfoMethods.control, name: 'type', defaultValue: formType || '' });
+    const type = useWatch({
+      control: mainInfoMethods.control,
+      name: 'type',
+      defaultValue: formType || ''
+    });
 
     // Auto-generate event name from weather type (matches Production/Soil/Pest pattern)
     useEffect(() => {

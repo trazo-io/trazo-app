@@ -25,8 +25,7 @@ const ProjectCard = ({ image, name, category, avatars, description }) => {
           position="absolute"
           top="0"
           borderRadius="15px"
-          bg="linear-gradient(360deg, rgba(49, 56, 96, 0.16) 0%, rgba(21, 25, 40, 0.88) 100%)"
-        ></Box>
+          bg="linear-gradient(360deg, rgba(49, 56, 96, 0.16) 0%, rgba(21, 25, 40, 0.88) 100%)"></Box>
       </Box>
       <Flex direction="column">
         <Text fontSize="md" color="gray.500" fontWeight="600" mb="10px">
@@ -45,8 +44,7 @@ const ProjectCard = ({ image, name, category, avatars, description }) => {
             minW="110px"
             h="36px"
             fontSize="xs"
-            px="1.5rem"
-          >
+            px="1.5rem">
             VIEW PROJECT
           </Button>
           <AvatarGroup size="xs">

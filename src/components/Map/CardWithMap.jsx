@@ -176,8 +176,7 @@ const CardWithMap = ({ polygon, zoom, center }) => {
           borderRadius="15px"
           bg="gray.50"
           border="1px dashed"
-          borderColor="gray.200"
-        >
+          borderColor="gray.200">
           <Flex direction="column" align="center" justify="center" h="100%" px={4}>
             <VStack spacing={2}>
               <Icon as={FaMapMarkedAlt} boxSize={10} color="gray.400" />
@@ -211,8 +210,7 @@ const CardWithMap = ({ polygon, zoom, center }) => {
           }}
           zoom={mapZoom}
           center={mapCenter}
-          mapTypeId="satellite"
-        >
+          mapTypeId="satellite">
           {polygon && polygon.length > 0 && (
             <Polygon
               path={polygon}

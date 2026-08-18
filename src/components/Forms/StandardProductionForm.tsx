@@ -585,8 +585,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
         parcelName ? ` for ${parcelName}` : ''
       }`}
       showBackButton
-      onBack={onCancel}
-    >
+      onBack={onCancel}>
       {/* Modern Progress Stepper */}
       <StandardStepper
         steps={steps}
@@ -602,14 +601,12 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
           {currentStep === 0 && (
             <StandardCard
               title="Product & Production Type"
-              subtitle="Select the product and farming method"
-            >
+              subtitle="Select the product and farming method">
               <VStack spacing={6} align="stretch">
                 {/* Crop Category Filter */}
                 <StandardField
                   label="Crop Category"
-                  helpText="Filter products by crop type for easier selection"
-                >
+                  helpText="Filter products by crop type for easier selection">
                   <SimpleGrid columns={{ base: 2, md: 3, lg: 6 }} spacing={3}>
                     <Box
                       p={3}
@@ -621,8 +618,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                       transition="all 0.2s"
                       _hover={{ borderColor: 'green.400', transform: 'translateY(-1px)' }}
                       onClick={() => setSelectedCategory('')}
-                      textAlign="center"
-                    >
+                      textAlign="center">
                       <VStack spacing={2}>
                         <Icon
                           as={FaSearch}
@@ -632,8 +628,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                         <Text
                           fontSize="xs"
                           fontWeight="medium"
-                          color={!selectedCategory ? 'green.700' : 'gray.600'}
-                        >
+                          color={!selectedCategory ? 'green.700' : 'gray.600'}>
                           All Crops
                         </Text>
                       </VStack>
@@ -655,8 +650,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                           transform: 'translateY(-1px)'
                         }}
                         onClick={() => setSelectedCategory(category.id)}
-                        textAlign="center"
-                      >
+                        textAlign="center">
                         <VStack spacing={2}>
                           <Icon
                             as={category.icon}
@@ -674,8 +668,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                               selectedCategory === category.id
                                 ? `${category.color}.700`
                                 : 'gray.600'
-                            }
-                          >
+                            }>
                             {category.title}
                           </Text>
                         </VStack>
@@ -689,8 +682,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   label="Product"
                   required
                   error={productError}
-                  helpText="Search and select your crop or create a new one"
-                >
+                  helpText="Search and select your crop or create a new one">
                   {/* Product Selection Dropdown */}
                   <CreatableSelect
                     value={selectedProduct}
@@ -726,8 +718,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                           <HStack spacing={2}>
                             <Badge
                               colorScheme={categorizeCrop(selectedProduct.label).color}
-                              size="sm"
-                            >
+                              size="sm">
                               {categorizeCrop(selectedProduct.label).title}
                             </Badge>
                             <Text fontSize="xs" color="blue.600">
@@ -755,8 +746,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   label="Production Type"
                   required
                   error={errors.type?.message}
-                  helpText="Choose your farming approach"
-                >
+                  helpText="Choose your farming approach">
                   <StandardSelectionGrid
                     options={productionTypeOptions}
                     selectedValue={watch('type')}
@@ -788,8 +778,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
-                    disabled={!isStepComplete(0)}
-                  >
+                    disabled={!isStepComplete(0)}>
                     Continue to Details
                   </StandardButton>
                 </HStack>
@@ -801,16 +790,14 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
           {currentStep === 1 && (
             <StandardCard
               title="Production Details"
-              subtitle="Set the date and growing environment"
-            >
+              subtitle="Set the date and growing environment">
               <VStack spacing={6} align="stretch">
                 {/* Date Selection */}
                 <StandardField
                   label="Production Date"
                   required
                   error={errors.date?.message}
-                  helpText="When did this production start?"
-                >
+                  helpText="When did this production start?">
                   <Input
                     {...methods.register('date', {
                       required: 'Production date is required'
@@ -881,8 +868,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Product
                   </StandardButton>
 
@@ -893,8 +879,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
-                      disabled={!isStepComplete(1)}
-                    >
+                      disabled={!isStepComplete(1)}>
                       Continue to Details
                     </StandardButton>
                   </HStack>
@@ -907,8 +892,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
           {currentStep === 2 && (
             <StandardCard
               title="Enhanced Tracking & Sustainability"
-              subtitle="Configure blockchain verification and sustainability tracking"
-            >
+              subtitle="Configure blockchain verification and sustainability tracking">
               <VStack spacing={6} align="stretch">
                 {/* Blockchain Verification Section */}
                 <Box p={6} bg="blue.50" borderRadius="xl" border="1px solid" borderColor="blue.200">
@@ -946,8 +930,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                         bg="white"
                         borderRadius="lg"
                         border="1px solid"
-                        borderColor="blue.100"
-                      >
+                        borderColor="blue.100">
                         <VStack spacing={3} align="stretch">
                           <HStack>
                             <Icon as={FaCheckCircle} color="green.500" />
@@ -986,8 +969,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                 <StandardField
                   label="Production Method"
                   required
-                  helpText="Choose your agricultural approach for accurate carbon scoring"
-                >
+                  helpText="Choose your agricultural approach for accurate carbon scoring">
                   <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={3}>
                     {productionMethodOptions.map((method) => (
                       <Box
@@ -1002,15 +984,13 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                         cursor="pointer"
                         transition="all 0.2s"
                         _hover={{ borderColor: 'green.400', transform: 'translateY(-1px)' }}
-                        onClick={() => setValue('productionMethod', method.value)}
-                      >
+                        onClick={() => setValue('productionMethod', method.value)}>
                         <VStack spacing={2}>
                           <Text
                             fontWeight="semibold"
                             color={
                               watch('productionMethod') === method.value ? 'green.700' : 'gray.700'
-                            }
-                          >
+                            }>
                             {method.label}
                           </Text>
                           <Badge
@@ -1020,8 +1000,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                                 : method.carbonScore === 'Enhanced'
                                 ? 'green'
                                 : 'gray'
-                            }
-                          >
+                            }>
                             {method.carbonScore} Carbon Score
                           </Badge>
                         </VStack>
@@ -1035,8 +1014,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                 {/* Expected Harvest Date */}
                 <StandardField
                   label="Expected Harvest Date"
-                  helpText="Estimated completion date for production planning"
-                >
+                  helpText="Estimated completion date for production planning">
                   <Input
                     type="date"
                     value={watch('expectedHarvest') || ''}
@@ -1048,13 +1026,11 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                 {/* Estimated Yield */}
                 <StandardField
                   label="Estimated Yield"
-                  helpText="Expected production volume (optional, for carbon calculations)"
-                >
+                  helpText="Expected production volume (optional, for carbon calculations)">
                   <NumberInput
                     value={watch('estimatedYield') || 0}
                     onChange={(_, num) => setValue('estimatedYield', num || 0)}
-                    min={0}
-                  >
+                    min={0}>
                     <NumberInputField borderRadius="lg" placeholder="e.g., 1000 (lbs, kg, units)" />
                     <NumberInputStepper>
                       <NumberIncrementStepper />
@@ -1069,8 +1045,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   bg="green.50"
                   borderRadius="xl"
                   border="1px solid"
-                  borderColor="green.200"
-                >
+                  borderColor="green.200">
                   <HStack spacing={3} mb={4}>
                     <Icon as={FaLeaf} color="green.600" boxSize={6} />
                     <Text fontWeight="bold" color="green.700" fontSize="lg">
@@ -1112,8 +1087,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Enhanced Tracking
                   </StandardButton>
 
@@ -1125,8 +1099,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                       type="submit"
                       isLoading={isLoading}
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
-                      leftIcon={<FaCheckCircle />}
-                    >
+                      leftIcon={<FaCheckCircle />}>
                       {isEdit ? 'Update Production' : 'Start Production'}
                     </StandardButton>
                   </HStack>
@@ -1139,11 +1112,10 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
           {currentStep === 3 && (
             <StandardCard
               title="Additional Details"
-              subtitle="Optional information to improve tracking (can be updated later)"
-            >
+              subtitle="Optional information to improve tracking (can be updated later)">
               <VStack spacing={6} align="stretch">
                 {/* Quick Setup vs Detailed Setup Toggle */}
-                <Alert status="info" borderRadius="lg">
+                <Alert status="info">
                   <AlertIcon />
                   <VStack align="start" spacing={1}>
                     <AlertTitle fontSize="sm">Optional Information</AlertTitle>
@@ -1159,14 +1131,12 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   <StandardField
                     label="Age of Plants (days)"
                     error={errors.ageOfPlants?.message}
-                    helpText="How old are the plants? 0 for new plantings"
-                  >
+                    helpText="How old are the plants? 0 for new plantings">
                     <NumberInput
                       value={watch('ageOfPlants') || 0}
                       onChange={(_, num) => setValue('ageOfPlants', num || 0)}
                       min={0}
-                      max={1000}
-                    >
+                      max={1000}>
                       <NumberInputField borderRadius="lg" placeholder="0 (new planting)" />
                       <NumberInputStepper>
                         <NumberIncrementStepper />
@@ -1178,14 +1148,12 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   <StandardField
                     label="Number of Plants"
                     error={errors.numberOfPlants?.message}
-                    helpText="Approximate plant count (can be updated later)"
-                  >
+                    helpText="Approximate plant count (can be updated later)">
                     <NumberInput
                       value={watch('numberOfPlants') || 0}
                       onChange={(_, num) => setValue('numberOfPlants', num || 0)}
                       min={0}
-                      max={100000}
-                    >
+                      max={100000}>
                       <NumberInputField borderRadius="lg" placeholder="Enter approximate count" />
                       <NumberInputStepper>
                         <NumberIncrementStepper />
@@ -1199,8 +1167,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                 <StandardField
                   label="Soil pH"
                   error={errors.soilPh?.message}
-                  helpText="Soil acidity/alkalinity level. 7.0 is neutral (default)"
-                >
+                  helpText="Soil acidity/alkalinity level. 7.0 is neutral (default)">
                   <HStack spacing={4}>
                     <NumberInput
                       value={watch('soilPh') || 7.0}
@@ -1209,8 +1176,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                       max={14}
                       step={0.1}
                       precision={1}
-                      flex={1}
-                    >
+                      flex={1}>
                       <NumberInputField borderRadius="lg" />
                       <NumberInputStepper>
                         <NumberIncrementStepper />
@@ -1224,24 +1190,21 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                         size="sm"
                         variant="outline"
                         onClick={() => setValue('soilPh', 6.0)}
-                        colorScheme={watch('soilPh') === 6.0 ? 'red' : 'gray'}
-                      >
+                        colorScheme={watch('soilPh') === 6.0 ? 'red' : 'gray'}>
                         Acidic (6.0)
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => setValue('soilPh', 7.0)}
-                        colorScheme={watch('soilPh') === 7.0 ? 'green' : 'gray'}
-                      >
+                        colorScheme={watch('soilPh') === 7.0 ? 'green' : 'gray'}>
                         Neutral (7.0)
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => setValue('soilPh', 8.0)}
-                        colorScheme={watch('soilPh') === 8.0 ? 'blue' : 'gray'}
-                      >
+                        colorScheme={watch('soilPh') === 8.0 ? 'blue' : 'gray'}>
                         Alkaline (8.0)
                       </Button>
                     </HStack>
@@ -1254,8 +1217,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   bg="green.50"
                   borderRadius="xl"
                   border="2px solid"
-                  borderColor="green.200"
-                >
+                  borderColor="green.200">
                   <HStack spacing={3} mb={4}>
                     <Icon as={FaCheckCircle} color="green.500" boxSize={6} />
                     <Text fontWeight="bold" color="green.700" fontSize="lg">
@@ -1339,8 +1301,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   <StandardButton
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}
-                  >
+                    onClick={previousStep}>
                     Back to Enhanced Tracking
                   </StandardButton>
 
@@ -1352,8 +1313,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                       type="submit"
                       isLoading={isLoading}
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
-                      leftIcon={<FaCheckCircle />}
-                    >
+                      leftIcon={<FaCheckCircle />}>
                       {isEdit ? 'Update Production' : 'Start Production'}
                     </StandardButton>
                   </HStack>

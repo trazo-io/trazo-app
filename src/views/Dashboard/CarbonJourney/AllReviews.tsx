@@ -44,8 +44,7 @@ export default function AllReviews() {
       title="All Reviews"
       description="Complete history of reviews you've written"
       showBackButton
-      onBack={() => navigate('/admin/dashboard/journey')}
-    >
+      onBack={() => navigate('/admin/dashboard/journey')}>
       <StandardCard title={`Your Reviews (${totalCount})`} variant="elevated">
         <VStack spacing={3}>
           {isLoading ? (
@@ -68,8 +67,7 @@ export default function AllReviews() {
                   <NavLink
                     key={review.id || index}
                     to={`/production/${review.history.public_id}/`}
-                    style={{ width: '100%' }}
-                  >
+                    style={{ width: '100%' }}>
                     <Box
                       bg="white"
                       borderRadius="xl"
@@ -80,8 +78,7 @@ export default function AllReviews() {
                         boxShadow: 'md',
                         borderColor: 'green.200'
                       }}
-                      transition="all 0.2s"
-                    >
+                      transition="all 0.2s">
                       <VStack spacing={4} align="stretch">
                         {/* Header with Image and User Info */}
                         <Flex justify="space-between" align="center">
@@ -102,8 +99,7 @@ export default function AllReviews() {
                                 size="56px"
                                 bg="orange.50"
                                 border="2px solid"
-                                borderColor="orange.100"
-                              >
+                                borderColor="orange.100">
                                 <Icon as={FaStar} color="orange.500" boxSize={5} />
                               </Circle>
                             )}
@@ -112,8 +108,7 @@ export default function AllReviews() {
                                 fontWeight="semibold"
                                 fontSize="md"
                                 color="gray.800"
-                                noOfLines={1}
-                              >
+                                noOfLines={1}>
                                 {review.headline || productName}
                               </Text>
                               <Text fontSize="sm" color="gray.500">
@@ -128,8 +123,7 @@ export default function AllReviews() {
                               fontSize="xs"
                               px={2}
                               py={0.5}
-                              borderRadius="full"
-                            >
+                              borderRadius="full">
                               <HStack spacing={1}>
                                 <Icon as={FaStar} boxSize={2.5} />
                                 <Text>{review.rating}/5</Text>

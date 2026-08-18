@@ -231,7 +231,9 @@ const transparencyQrApi = baseApi.injectEndpoints({
           scan_type: 'transparency_qr' // Track as transparency-focused scan
         }
       }),
-      invalidatesTags: (result, error, { production_id }) => [{ type: 'TransparencyDetails', id: production_id }]
+      invalidatesTags: (result, error, { production_id }) => [
+        { type: 'TransparencyDetails', id: production_id }
+      ]
     }),
 
     // Buyer/retailer supplier documentation request (public, no auth)

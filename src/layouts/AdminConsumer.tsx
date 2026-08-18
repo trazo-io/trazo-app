@@ -75,8 +75,7 @@ export default function AdminConsumerLayout(props: any) {
         setSidebarWidth,
         toggleSidebar,
         setToggleSidebar
-      }}
-    >
+      }}>
       <>
         <Sidebar
           routes={consumerRoutes}
@@ -91,16 +90,14 @@ export default function AdminConsumerLayout(props: any) {
         w={{
           base: '100%',
           xl: `calc(100% - ${sidebarWidth}px)`
-        }}
-      >
+        }}>
         <Portal>
           <AdminNavbar onOpen={onOpen} brandText={getActiveRoute(consumerRoutes)} fixed={fixed} />
         </Portal>
 
         <PanelContent
           paddingInlineStart={{ base: '0px', lg: '15px' }}
-          paddingInlineEnd={{ base: '0px', lg: '15px' }}
-        >
+          paddingInlineEnd={{ base: '0px', lg: '15px' }}>
           <PanelContainer padding={{ base: '0px', lg: '30px 15px' }}>
             <Outlet />
           </PanelContainer>

@@ -14,8 +14,7 @@ const ConsumerChangePassword: React.FC = () => {
       description="Keep your Trazo account secure"
       showBackButton
       contentMaxW="xl"
-      onBack={() => navigate('/admin/dashboard/settings')}
-    >
+      onBack={() => navigate('/admin/dashboard/settings')}>
       <Box py={8}>
         {/* Consumer-focused Security Header */}
         <VStack spacing={4} mb={8} textAlign="center">
@@ -28,16 +27,15 @@ const ConsumerChangePassword: React.FC = () => {
             fontSize="sm"
             px={4}
             py={2}
-            borderRadius="full"
-          >
+            borderRadius="full">
             <HStack spacing={2}>
               <Icon as={FaLeaf} boxSize={4} />
               <Text>Protecting Your Transparency Journey</Text>
             </HStack>
           </Badge>
           <Text fontSize="sm" color="gray.600" maxW="md">
-            Your security is important to us. A strong password helps protect your
-            transparency data and farm discoveries.
+            Your security is important to us. A strong password helps protect your transparency data
+            and farm discoveries.
           </Text>
         </VStack>
 

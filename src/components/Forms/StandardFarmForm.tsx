@@ -129,6 +129,38 @@ const US_STATES = [
 ];
 
 // Form Schema
+/**
+ * How this farm operates. Feeds three places, which is why the vocabulary matters:
+ *
+ *  1. The certifier packet — `audit_export_service._farming_method_phrase` prints it in the
+ *     Operation Profile.
+ *  2. Production defaults — QuickStartProduction seeds `production_method` from this value,
+ *     but only when the term exists in History.PRODUCTION_METHOD_CHOICES.
+ *  3. The consumer QR page (CONSUMER_VISIBLE_FARM_FIELDS).
+ *
+ * `sustainable` and `permaculture` were removed 2026-08-17.
+ *
+ * "Sustainable" has no definition under 7 CFR 205 and is the unqualified
+ * general-environmental-benefit claim FTC 16 CFR 260.6 targets. The packet already had to
+ * DEFEND against it: `_farming_method_phrase` carries an `UNSUBSTANTIATED` set and, on a
+ * match, prints "not a term defined under 7 CFR 205 and not substantiated by this export"
+ * instead of the value. Suppressing a claim at print time is a patch; not offering it at the
+ * point of entry is the fix — the same call made for `production_method` on 2026-08-16.
+ *
+ * Neither term is a production method either, so a farm set to one of them silently fell
+ * through QuickStartProduction's filter and every production defaulted to conventional with
+ * no explanation. The four that remain all map straight through.
+ *
+ * ⚠️ `Establishment.farming_method` is a choice-less CharField, so this list is the ONLY
+ * vocabulary — nothing downstream will reject a bad value.
+ */
+const FARMING_METHOD_OPTIONS = [
+  { value: 'conventional', label: 'Conventional' },
+  { value: 'organic', label: 'Organic' },
+  { value: 'biodynamic', label: 'Biodynamic' },
+  { value: 'regenerative', label: 'Regenerative' }
+] as const;
+
 const establishmentSchema = object({
   // required_error matters as much as min(1): these fields have no defaultValue,
   // so an untouched field is `undefined` and zod falls back to a bare "Required"
@@ -203,6 +235,10 @@ interface StandardFarmFormProps {
   isLoading?: boolean;
   isEdit?: boolean;
   companyName?: string;
+  /** Optional informational content (e.g. a plan-limit warning) rendered above the stepper.
+      Mirrors StandardParcelForm_Transparency — the form stays fully usable; the backend is
+      what enforces the limit. */
+  preFormAlert?: React.ReactNode;
 }
 
 export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
@@ -211,7 +247,8 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
   initialData,
   isLoading = false,
   isEdit = false,
-  companyName = ''
+  companyName = '',
+  preFormAlert
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [newCrop, setNewCrop] = useState('');
@@ -517,8 +554,10 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
         companyName ? ` under ${companyName}` : ''
       }`}
       showBackButton
-      onBack={onCancel}
-    >
+      onBack={onCancel}>
+      {/* Optional pre-flight alert (e.g., subscription limit warning) */}
+      {preFormAlert}
+
       {/* Modern Progress Stepper */}
       <StandardStepper
         steps={steps}
@@ -540,8 +579,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     label="Farm Name"
                     required
                     error={errors.name?.message}
-                    helpText="Farm, ranch, or facility name"
-                  >
+                    helpText="Farm, ranch, or facility name">
                     <Controller
                       name="name"
                       control={methods.control}
@@ -565,8 +603,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   <StandardField
                     label="Farm Type"
                     error={errors.establishmentType?.message}
-                    helpText="Primary type of agricultural operation"
-                  >
+                    helpText="Primary type of agricultural operation">
                     <Controller
                       name="establishmentType"
                       control={methods.control}
@@ -581,8 +618,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderColor: 'green.500',
                             boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
                           }}
-                          size="lg"
-                        >
+                          size="lg">
                           <option value="crop_farm">Crop Farm</option>
                           <option value="livestock_ranch">Livestock Ranch</option>
                           <option value="dairy_farm">Dairy Farm</option>
@@ -601,8 +637,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 <StandardField
                   label="Description"
                   error={errors.description?.message}
-                  helpText="This is what consumers see when they scan your products - tell your story"
-                >
+                  helpText="This is what consumers see when they scan your products - tell your story">
                   <Controller
                     name="description"
                     control={methods.control}
@@ -637,8 +672,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       fontWeight="semibold"
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}
-                    >
+                      _hover={{ transform: 'translateY(-1px)' }}>
                       Continue
                     </StandardButton>
                   </VStack>
@@ -652,8 +686,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}
-                    >
+                      _hover={{ transform: 'translateY(-1px)' }}>
                       Continue to Location
                     </StandardButton>
                   </HStack>
@@ -666,15 +699,13 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
           {currentStep === 1 && (
             <StandardCard
               title="Location Details"
-              subtitle="Physical address and geographic coordinates"
-            >
+              subtitle="Physical address and geographic coordinates">
               <VStack spacing={6} align="stretch">
                 {/* Address */}
                 <StandardField
                   label="Street Address"
                   error={errors.address?.message}
-                  helpText="Physical address of your farm"
-                >
+                  helpText="Physical address of your farm">
                   <Controller
                     name="address"
                     control={methods.control}
@@ -722,8 +753,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     label="State"
                     required
                     error={errors.state?.message}
-                    helpText="Used for regional irrigation and emission factor adjustments in carbon calculations"
-                  >
+                    helpText="Used for regional irrigation and emission factor adjustments in carbon calculations">
                     <Controller
                       name="state"
                       control={methods.control}
@@ -738,8 +768,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderColor: 'green.500',
                             boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
                           }}
-                          size="lg"
-                        >
+                          size="lg">
                           {US_STATES.map((state) => (
                             <option key={state.code} value={state.code}>
                               {state.name}
@@ -779,8 +808,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 <StandardField
                   label="Zone/Area"
                   error={errors.zone?.message}
-                  helpText="Geographic zone or area designation"
-                >
+                  helpText="Geographic zone or area designation">
                   <Controller
                     name="zone"
                     control={methods.control}
@@ -815,8 +843,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     <StandardField
                       label="Latitude"
                       error={errors.latitude?.message}
-                      helpText="Decimal degrees (e.g., 40.7128). Range: -90 to 90"
-                    >
+                      helpText="Decimal degrees (e.g., 40.7128). Range: -90 to 90">
                       <Controller
                         name="latitude"
                         control={methods.control}
@@ -877,8 +904,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     <StandardField
                       label="Longitude"
                       error={errors.longitude?.message}
-                      helpText="Decimal degrees (e.g., -74.0060). Range: -180 to 180"
-                    >
+                      helpText="Decimal degrees (e.g., -74.0060). Range: -180 to 180">
                       <Controller
                         name="longitude"
                         control={methods.control}
@@ -945,15 +971,13 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     spacing={3}
                     justify="space-between"
                     w="100%"
-                    display={{ base: 'flex', md: 'none' }}
-                  >
+                    display={{ base: 'flex', md: 'none' }}>
                     <StandardButton
                       variant="outline"
                       size="md"
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
-                      borderRadius="xl"
-                    >
+                      borderRadius="xl">
                       Back
                     </StandardButton>
                     <StandardButton
@@ -961,8 +985,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       size="md"
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}
-                    >
+                      _hover={{ transform: 'translateY(-1px)' }}>
                       Continue
                     </StandardButton>
                   </HStack>
@@ -971,14 +994,12 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   <HStack
                     spacing={3}
                     justify="space-between"
-                    display={{ base: 'none', md: 'flex' }}
-                  >
+                    display={{ base: 'none', md: 'flex' }}>
                     <StandardButton
                       variant="outline"
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
-                      borderRadius="xl"
-                    >
+                      borderRadius="xl">
                       Back to Basic Info
                     </StandardButton>
 
@@ -990,8 +1011,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         onClick={nextStep}
                         rightIcon={<FaChevronRight />}
                         borderRadius="xl"
-                        _hover={{ transform: 'translateY(-1px)' }}
-                      >
+                        _hover={{ transform: 'translateY(-1px)' }}>
                         Next: Operations
                       </StandardButton>
                     </HStack>
@@ -1005,16 +1025,14 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
           {currentStep === 2 && (
             <StandardCard
               title="Operations & Practices"
-              subtitle="Details about your farming operations"
-            >
+              subtitle="Details about your farming operations">
               <VStack spacing={6} align="stretch">
                 {/* Farming Method & Acreage */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
                     label="Farming Method"
                     error={errors.farmingMethod?.message}
-                    helpText="Primary farming approach"
-                  >
+                    helpText="Primary farming approach">
                     <Controller
                       name="farmingMethod"
                       control={methods.control}
@@ -1029,14 +1047,12 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             borderColor: 'green.500',
                             boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
                           }}
-                          size="lg"
-                        >
-                          <option value="conventional">Conventional</option>
-                          <option value="organic">Organic</option>
-                          <option value="sustainable">Sustainable</option>
-                          <option value="biodynamic">Biodynamic</option>
-                          <option value="permaculture">Permaculture</option>
-                          <option value="regenerative">Regenerative</option>
+                          size="lg">
+                          {FARMING_METHOD_OPTIONS.map(({ value, label }) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
                         </Select>
                       )}
                     />
@@ -1053,8 +1069,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   <StandardField
                     label="Total Area (acres)"
                     error={errors.totalAcreage?.message}
-                    helpText="Total land area in acres - displayed on your farm profile"
-                  >
+                    helpText="Total land area in acres - displayed on your farm profile">
                     <Controller
                       name="totalAcreage"
                       control={methods.control}
@@ -1062,8 +1077,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         <NumberInput
                           value={field.value || 0}
                           onChange={(_, num) => field.onChange(num || 0)}
-                          min={0}
-                        >
+                          min={0}>
                           <NumberInputField borderRadius="lg" placeholder="e.g., 320" />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -1080,8 +1094,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   <StandardField
                     label="Year Established"
                     error={errors.yearEstablished?.message}
-                    helpText="When was the farm founded"
-                  >
+                    helpText="When was the farm founded">
                     <Controller
                       name="yearEstablished"
                       control={methods.control}
@@ -1090,8 +1103,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           value={field.value || ''}
                           onChange={(_, num) => field.onChange(num)}
                           min={1800}
-                          max={new Date().getFullYear()}
-                        >
+                          max={new Date().getFullYear()}>
                           <NumberInputField borderRadius="lg" placeholder="e.g., 1995" />
                           <NumberInputStepper>
                             <NumberIncrementStepper />
@@ -1143,8 +1155,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                               }
                             }}
                             leftIcon={<FaPlus />}
-                            size="sm"
-                          >
+                            size="sm">
                             Add
                           </StandardButton>
                         </HStack>
@@ -1171,15 +1182,13 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 {/* Certifications — managed via CertificationManager in Establishment Profile */}
                 <StandardField
                   label={intl.formatMessage({ id: 'certification.manage.title' })}
-                  helpText={intl.formatMessage({ id: 'certification.form.helpText' })}
-                >
+                  helpText={intl.formatMessage({ id: 'certification.form.helpText' })}>
                   <Box
                     p={4}
                     bg="blue.50"
                     borderRadius="lg"
                     border="1px solid"
-                    borderColor="blue.200"
-                  >
+                    borderColor="blue.200">
                     <HStack spacing={2}>
                       <Icon as={FaCertificate} color="blue.500" boxSize={4} flexShrink={0} />
                       <Text fontSize="sm" color="blue.700">
@@ -1211,8 +1220,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     id: 'farm.form.waterSources.helpText',
                     defaultMessage:
                       'Where your operation gets its water (e.g., well, irrigation district, surface water)'
-                  })}
-                >
+                  })}>
                   <Controller
                     name="waterSources"
                     control={methods.control}
@@ -1266,8 +1274,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     id: 'farm.form.soilHealthPractices.helpText',
                     defaultMessage:
                       'Practices you use to maintain and improve soil health (e.g., cover cropping, compost)'
-                  })}
-                >
+                  })}>
                   <Controller
                     name="soilHealthPractices"
                     control={methods.control}
@@ -1298,8 +1305,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           <StandardButton
                             onClick={addSoilHealthPractice}
                             leftIcon={<FaPlus />}
-                            size="sm"
-                          >
+                            size="sm">
                             Add
                           </StandardButton>
                         </HStack>
@@ -1324,8 +1330,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   helpText={intl.formatMessage({
                     id: 'farm.form.irrigationMethods.helpText',
                     defaultMessage: 'Irrigation systems used on your operation'
-                  })}
-                >
+                  })}>
                   <Controller
                     name="irrigationMethods"
                     control={methods.control}
@@ -1356,8 +1361,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                           <StandardButton
                             onClick={addIrrigationMethod}
                             leftIcon={<FaPlus />}
-                            size="sm"
-                          >
+                            size="sm">
                             Add
                           </StandardButton>
                         </HStack>
@@ -1380,8 +1384,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 <StandardField
                   label="Personal Message to Consumers"
                   error={errors.custom_message?.message}
-                  helpText="Optional: A personal note displayed to consumers who scan your products"
-                >
+                  helpText="Optional: A personal note displayed to consumers who scan your products">
                   <Controller
                     name="custom_message"
                     control={methods.control}
@@ -1414,15 +1417,13 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     spacing={3}
                     justify="space-between"
                     w="100%"
-                    display={{ base: 'flex', md: 'none' }}
-                  >
+                    display={{ base: 'flex', md: 'none' }}>
                     <StandardButton
                       variant="outline"
                       size="md"
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
-                      borderRadius="xl"
-                    >
+                      borderRadius="xl">
                       Back
                     </StandardButton>
                     <StandardButton
@@ -1430,8 +1431,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       size="md"
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}
-                    >
+                      _hover={{ transform: 'translateY(-1px)' }}>
                       Continue
                     </StandardButton>
                   </HStack>
@@ -1440,14 +1440,12 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   <HStack
                     spacing={3}
                     justify="space-between"
-                    display={{ base: 'none', md: 'flex' }}
-                  >
+                    display={{ base: 'none', md: 'flex' }}>
                     <StandardButton
                       variant="outline"
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
-                      borderRadius="xl"
-                    >
+                      borderRadius="xl">
                       Back to Location
                     </StandardButton>
 
@@ -1459,8 +1457,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         onClick={nextStep}
                         rightIcon={<FaChevronRight />}
                         borderRadius="xl"
-                        _hover={{ transform: 'translateY(-1px)' }}
-                      >
+                        _hover={{ transform: 'translateY(-1px)' }}>
                         Next: Media
                       </StandardButton>
                     </HStack>
@@ -1477,8 +1474,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 {/* 2025 Modern Image Upload */}
                 <StandardField
                   label="Images"
-                  helpText="Upload up to 5 high-quality images (JPG, PNG, GIF, WEBP - max 5MB each)"
-                >
+                  helpText="Upload up to 5 high-quality images (JPG, PNG, GIF, WEBP - max 5MB each)">
                   <TrazoImageUpload
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
@@ -1495,15 +1491,13 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     spacing={3}
                     justify="space-between"
                     w="100%"
-                    display={{ base: 'flex', md: 'none' }}
-                  >
+                    display={{ base: 'flex', md: 'none' }}>
                     <StandardButton
                       variant="outline"
                       size="md"
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
-                      borderRadius="xl"
-                    >
+                      borderRadius="xl">
                       Back
                     </StandardButton>
                     <StandardButton
@@ -1513,8 +1507,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       loadingText={isEdit ? 'Updating...' : 'Creating...'}
                       leftIcon={<FaCheckCircle />}
                       borderRadius="xl"
-                      _hover={{ transform: 'translateY(-1px)' }}
-                    >
+                      _hover={{ transform: 'translateY(-1px)' }}>
                       {isEdit ? 'Update' : 'Create'}
                     </StandardButton>
                   </HStack>
@@ -1523,14 +1516,12 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                   <HStack
                     spacing={3}
                     justify="space-between"
-                    display={{ base: 'none', md: 'flex' }}
-                  >
+                    display={{ base: 'none', md: 'flex' }}>
                     <StandardButton
                       variant="outline"
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
-                      borderRadius="xl"
-                    >
+                      borderRadius="xl">
                       Back to Operations
                     </StandardButton>
 
@@ -1544,8 +1535,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         loadingText={isEdit ? 'Updating...' : 'Creating...'}
                         leftIcon={<FaCheckCircle />}
                         borderRadius="xl"
-                        _hover={{ transform: 'translateY(-1px)' }}
-                      >
+                        _hover={{ transform: 'translateY(-1px)' }}>
                         {isEdit ? 'Update Farm' : 'Create Farm'}
                       </StandardButton>
                     </HStack>

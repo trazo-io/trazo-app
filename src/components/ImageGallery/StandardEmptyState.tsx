@@ -139,8 +139,7 @@ const StandardEmptyState = ({
         showAction
           ? { borderColor: 'green.300', bg: useColorModeValue('green.25', 'green.900') }
           : undefined
-      }
-    >
+      }>
       <VStack spacing={sizeSettings.spacing} textAlign="center" maxW="300px">
         <Icon as={displayIcon} boxSize={sizeSettings.iconSize} color={textColor} opacity={0.7} />
 
@@ -149,8 +148,7 @@ const StandardEmptyState = ({
             fontSize={sizeSettings.titleSize}
             fontWeight="600"
             color={textColor}
-            lineHeight="shorter"
-          >
+            lineHeight="shorter">
             {displayTitle}
           </Text>
 
@@ -160,8 +158,7 @@ const StandardEmptyState = ({
               color={subtitleColor}
               opacity={0.8}
               textAlign="center"
-              lineHeight="base"
-            >
+              lineHeight="base">
               {displaySubtitle}
             </Text>
           )}
@@ -180,8 +177,7 @@ const StandardEmptyState = ({
             _hover={{
               bg: 'green.50',
               borderColor: 'green.400'
-            }}
-          >
+            }}>
             {actionText}
           </Button>
         )}

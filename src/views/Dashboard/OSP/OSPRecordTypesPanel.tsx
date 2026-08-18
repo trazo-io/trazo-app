@@ -26,11 +26,8 @@
 
 import React, { useMemo, useState } from 'react';
 import {
-  Alert,
-  AlertIcon,
   Badge,
   Box,
-  Button,
   Checkbox,
   Divider,
   Flex,
@@ -46,7 +43,7 @@ import {
 import { FaDownload, FaFileAlt, FaInfoCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardCard } from 'components/Design/StandardComponents';
+import { StandardAlert, StandardButton, StandardCard } from 'components/Design/StandardComponents';
 import config from 'config/environment';
 import { OSP_ATTACHMENTS_URL } from 'config';
 import {
@@ -117,7 +114,11 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
   const handleDownload = async (wb: OSPAttachmentSummary) => {
     setDownloading(wb.key);
     try {
-      const url = `${config.API_BASE_URL}/${OSP_ATTACHMENTS_URL(companyId, farmId, osp.id)}?workbook=${wb.key}`;
+      const url = `${config.API_BASE_URL}/${OSP_ATTACHMENTS_URL(
+        companyId,
+        farmId,
+        osp.id
+      )}?workbook=${wb.key}`;
       const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) throw new Error(String(response.status));
       const blob = await response.blob();
@@ -147,16 +148,15 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
   if (isError) {
     return (
       <StandardCard>
-        <Alert status="info" borderRadius="md">
-          <AlertIcon />
-          <Text fontSize="sm">
-            {intl.formatMessage({
-              id: 'osp.recordTypes.unavailable',
-              defaultMessage:
-                'Record types could not be loaded right now. Your plan is unaffected — try again shortly.'
-            })}
-          </Text>
-        </Alert>
+        <StandardAlert
+          status="info"
+          mb={0}
+          description={intl.formatMessage({
+            id: 'osp.recordTypes.unavailable',
+            defaultMessage:
+              'Record types could not be loaded right now. Your plan is unaffected — try again shortly.'
+          })}
+        />
       </StandardCard>
     );
   }
@@ -165,27 +165,18 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
 
   return (
     <Box mt={4}>
-      <StandardCard>
+      <StandardCard
+        titleIcon={<Icon as={FaFileAlt} color="green.700" />}
+        title={intl.formatMessage({
+          id: 'osp.recordTypes.title',
+          defaultMessage: 'Records you maintain'
+        })}
+        subtitle={intl.formatMessage({
+          id: 'osp.recordTypes.subtitle',
+          defaultMessage:
+            'Common OSP § 11 · 7 CFR 205.103. We show what your logs already evidence — you confirm what your operation actually keeps.'
+        })}>
         <Stack spacing={4}>
-          <Box>
-            <HStack spacing={2} mb={1}>
-              <Icon as={FaFileAlt} color="green.500" />
-              <Text fontWeight="bold" fontSize="lg">
-                {intl.formatMessage({
-                  id: 'osp.recordTypes.title',
-                  defaultMessage: 'Records you maintain'
-                })}
-              </Text>
-            </HStack>
-            <Text fontSize="sm" color={mutedColor}>
-              {intl.formatMessage({
-                id: 'osp.recordTypes.subtitle',
-                defaultMessage:
-                  'Common OSP § 11 · 7 CFR 205.103. We show what your logs already evidence — you confirm what your operation actually keeps.'
-              })}
-            </Text>
-          </Box>
-
           {summary && (
             <HStack spacing={2} flexWrap="wrap">
               <Badge colorScheme="green" variant="subtle">
@@ -223,23 +214,25 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
               how a farmer concludes the feature is broken. The attestation note only makes
               sense while they can actually tick something, so the two are exclusive. */}
           {isEditable ? (
-            <Alert status="info" borderRadius="md" fontSize="sm">
-              <AlertIcon />
-              {intl.formatMessage({
+            <StandardAlert
+              status="info"
+              mb={0}
+              description={intl.formatMessage({
                 id: 'osp.recordTypes.attestationNote',
                 defaultMessage:
                   'Nothing here is checked for you. What your logs show is a suggestion; ticking a box is your statement to your certifier.'
               })}
-            </Alert>
+            />
           ) : (
-            <Alert status="warning" borderRadius="md" fontSize="sm">
-              <AlertIcon />
-              {intl.formatMessage({
+            <StandardAlert
+              status="warning"
+              mb={0}
+              description={intl.formatMessage({
                 id: 'osp.recordTypes.locked',
                 defaultMessage:
                   'This plan has already gone to your certifier, so these answers are locked. Start a new version to change them. What your records show is still shown below.'
               })}
-            </Alert>
+            />
           )}
 
           {isLoading && (
@@ -268,15 +261,13 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                     borderStyle={row.suggested ? 'dashed' : 'solid'}
                     borderColor={row.suggested ? 'green.300' : borderColor}
                     bg={row.suggested ? suggestedBg : 'transparent'}
-                    borderRadius="md"
-                  >
+                    borderRadius="md">
                     <Checkbox
                       isChecked={row.confirmed}
                       onChange={() => handleToggle(row)}
                       isDisabled={!isEditable || isConfirming}
                       colorScheme="green"
-                      alignItems="flex-start"
-                    >
+                      alignItems="flex-start">
                       <Stack spacing={0}>
                         <Text fontSize="sm">{row.label}</Text>
                         <HStack spacing={2} flexWrap="wrap">
@@ -302,8 +293,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                                 id: 'osp.recordTypes.checkFailedHelp',
                                 defaultMessage:
                                   'We could not check your records for this one. That is not the same as finding none — answer from what your operation actually keeps.'
-                              })}
-                            >
+                              })}>
                               <Box as="span">
                                 <Icon as={FaInfoCircle} color="red.400" boxSize={3} />
                               </Box>
@@ -314,20 +304,18 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                     </Checkbox>
 
                     {row.suggested && isEditable && (
-                      <Button
+                      <StandardButton
                         size="xs"
-                        colorScheme="green"
                         variant="outline"
                         minH="32px"
                         onClick={() => handleToggle(row)}
                         isDisabled={isConfirming}
-                        flexShrink={0}
-                      >
+                        flexShrink={0}>
                         {intl.formatMessage({
                           id: 'osp.recordTypes.confirm',
                           defaultMessage: 'Confirm'
                         })}
-                      </Button>
+                      </StandardButton>
                     )}
                   </Flex>
                 ))}
@@ -371,8 +359,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                     py={2}
                     borderWidth="1px"
                     borderColor={borderColor}
-                    borderRadius="md"
-                  >
+                    borderRadius="md">
                     <Stack spacing={0}>
                       <Text fontSize="sm">{wb.title}</Text>
                       <Text fontSize="xs" color={mutedColor}>
@@ -391,7 +378,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                             )}
                       </Text>
                     </Stack>
-                    <Button
+                    <StandardButton
                       size="xs"
                       variant="outline"
                       minH="32px"
@@ -399,13 +386,12 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                       leftIcon={<Icon as={FaDownload} boxSize={3} />}
                       isDisabled={wb.error || downloading === wb.key}
                       isLoading={downloading === wb.key}
-                      onClick={() => handleDownload(wb)}
-                    >
+                      onClick={() => handleDownload(wb)}>
                       {intl.formatMessage({
                         id: 'osp.attachments.download',
                         defaultMessage: 'Excel'
                       })}
-                    </Button>
+                    </StandardButton>
                   </Flex>
                 ))}
               </Stack>

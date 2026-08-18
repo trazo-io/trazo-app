@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
   VStack,
   HStack,
   Text,
@@ -26,17 +19,15 @@ import {
   AlertDialogOverlay,
   useDisclosure,
   Tooltip,
-  Progress,
   Flex,
   Image,
-  useBreakpointValue,
   Grid,
   AspectRatio,
   Center,
   Alert,
   AlertIcon,
-  AlertTitle,
-  AlertDescription
+  Wrap,
+  WrapItem
 } from '@chakra-ui/react';
 import {
   FaEdit,
@@ -44,27 +35,21 @@ import {
   FaCalendarAlt,
   FaUser,
   FaLeaf,
-  FaTint,
-  FaFlask,
-  FaSeedling,
-  FaSun,
   FaCertificate,
-  FaShieldAlt,
-  FaWrench,
-  FaCheckCircle,
   FaLayerGroup,
   FaLock,
-  FaCloudRain,
-  FaClipboardList,
-  FaTractor,
-  FaBug,
   FaMapMarkerAlt
 } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import { useDeleteEventMutation } from 'store/api/historyApi';
 import { getEventFieldDisplay } from '../../utils/fieldDisplayUtils';
-import { formatCO2e, getImpactLevel, getCarbonScoreColor } from '../../utils/carbonDisplayUtils';
+import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
+import { ResponsiveModal } from 'components/Design/ResponsiveModal';
+import { StandardAlert } from 'components/Design/StandardComponents';
+import { eventTypeAppearance } from 'config/events/eventTypeAppearance';
+import { eventTitle } from 'config/events/narrative';
 import { useIntl } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 // Event Field Registry (Phase 5 — feature-flagged)
 import { useEventFields } from 'src/hooks/useEventFields';
 import { RegistryFieldRenderer } from 'src/components/Events/RegistryFieldRenderer';
@@ -96,6 +81,9 @@ interface Event {
   image?: string;
   name?: string;
   certified?: boolean;
+  /** Set on a rolled-up row that stands in for several events; `event_count` is how many. */
+  is_summary?: boolean;
+  event_count?: number;
   carbon_data?: CarbonCalculationResult;
   album?: {
     id: number;
@@ -274,116 +262,50 @@ interface EventDetailsModalProps {
   parcelName?: string;
 }
 
-// Helper functions
-const getEventConfig = (type: string, description: string, eventType?: number) => {
-  // 🚨 PRIORITY 1: Check numeric event_type FIRST (definitive source of truth)
-  // This prevents description keywords from overriding the actual event type
-  if (eventType !== undefined) {
-    switch (eventType) {
-      case 0: // Weather Event
-        return {
-          icon: FaCloudRain,
-          color: 'blue.500',
-          category: 'Weather Event',
-          bgGradient: 'linear(to-r, blue.400, blue.500)'
-        };
-      case 1: // Production Activity
-        return {
-          icon: FaSeedling,
-          color: 'green.500',
-          category: 'Production',
-          bgGradient: 'linear(to-r, green.400, green.500)'
-        };
-      case 2: // Chemical Application
-        return {
-          icon: FaFlask,
-          color: 'orange.500',
-          category: 'Chemical Application',
-          bgGradient: 'linear(to-r, orange.400, orange.500)'
-        };
-      case 3: // General Activity
-        return {
-          icon: FaClipboardList,
-          color: 'gray.500',
-          category: 'Other Farm Activity',
-          bgGradient: 'linear(to-r, gray.400, gray.500)'
-        };
-      case 4: // Equipment Operation
-        return {
-          icon: FaTractor,
-          color: 'blue.700',
-          category: 'Equipment Operation',
-          bgGradient: 'linear(to-r, blue.600, blue.700)'
-        };
-      case 5: // Soil Management
-        return {
-          icon: FaLayerGroup,
-          color: 'yellow.700',
-          category: 'Soil Management',
-          bgGradient: 'linear(to-r, yellow.600, yellow.700)'
-        };
-      case 6: // Pest Management
-        return {
-          icon: FaBug,
-          color: 'red.500',
-          category: 'Pest Management',
-          bgGradient: 'linear(to-r, red.400, red.500)'
-        };
-      case 7: // Business Activity
-        return {
-          icon: FaCertificate,
-          color: 'teal.500',
-          category: 'Business Activity',
-          bgGradient: 'linear(to-r, teal.400, teal.500)'
-        };
-    }
-  }
+/**
+ * Impact level as a SEMANTIC badge variant, not a colorScheme.
+ *
+ * `getImpactLevel()` is a shared utility and answers with a Chakra colorScheme NAME —
+ * 'gray' | 'green' | 'blue' | 'yellow' | 'orange'. Three of those name scales
+ * `theme/styles.js` does not define, so they resolved to CHAKRA's palettes; and `blue` is
+ * reserved for `Alert status="info"` (`.claude/rules/frontend.md`).
+ *
+ * The reader does not need six colours anyway — the LABEL carries the precision ("Light
+ * activity", "Core practice"), the colour only says how much to care. So this collapses to
+ * the three steps the app already uses everywhere else: none → low → notable. Monotonic, and
+ * every step is a variant `theme/components/badge.js` actually defines.
+ *
+ * Mapped here rather than in `carbonDisplayUtils` on purpose: that helper has other callers,
+ * and repainting a surface this component cannot see is not this change.
+ */
+const IMPACT_BADGE_VARIANT: Record<string, string> = {
+  gray: 'neutral',
+  green: 'subtle',
+  blue: 'subtle',
+  yellow: 'warning',
+  orange: 'warning'
+};
 
-  // 🔄 PRIORITY 2: Fallback to description keywords only if event_type is unknown
-  const desc = description.toLowerCase();
+const impactBadgeVariantFor = (co2e: number) =>
+  IMPACT_BADGE_VARIANT[getImpactLevel(co2e).color] ?? 'neutral';
 
-  if (desc.includes('riego') || desc.includes('irrigation') || type.includes('irrigation')) {
-    return {
-      icon: FaTint,
-      color: 'blue.500',
-      category: 'Water Management',
-      bgGradient: 'linear(to-r, blue.400, cyan.400)'
-    };
-  }
-
-  if (type.includes('chemical') || desc.includes('fertilizer') || desc.includes('pesticide')) {
-    return {
-      icon: FaFlask,
-      color: 'orange.500',
-      category: 'Chemical Application',
-      bgGradient: 'linear(to-r, orange.400, yellow.400)'
-    };
-  }
-
-  if (desc.includes('harvest') || desc.includes('cosecha') || desc.includes('production')) {
-    return {
-      icon: FaSeedling,
-      color: 'green.500',
-      category: 'Production',
-      bgGradient: 'linear(to-r, green.400, emerald.400)'
-    };
-  }
-
-  if (desc.includes('weather') || desc.includes('climate') || desc.includes('temperature')) {
-    return {
-      icon: FaSun,
-      color: 'purple.500',
-      category: 'Weather Event',
-      bgGradient: 'linear(to-r, purple.400, indigo.400)'
-    };
-  }
-
-  return {
-    icon: FaLeaf,
-    color: 'green.500',
-    category: 'Farm Activity',
-    bgGradient: 'linear(to-r, green.400, emerald.400)'
-  };
+/**
+ * The per-family subtype code, wherever this event happens to carry it.
+ *
+ * The retrieve endpoint answers with the per-type UPDATE serializer, which flattens the
+ * subtype onto a differently-named field for every family. One chain, used by both the title
+ * resolver and the registry bridge — they were reading different fields, so the modal could
+ * title an event one way and render its fields for another subtype entirely.
+ */
+const subtypeOf = (event: Event): string | undefined => {
+  const d = event as unknown as Record<string, unknown>;
+  return (d.weather_type ||
+    d.production_type ||
+    d.chemical_type ||
+    d.soil_management_type ||
+    d.pest_management_type ||
+    d.business_event_type ||
+    d.type) as string | undefined;
 };
 
 // Helper function to get human-readable event names
@@ -562,22 +484,32 @@ const getEventDisplayName = (event: Event, intl: any): string => {
     return eventTypeMap[event.type];
   }
 
-  // Fallback: try direct translation
-  const directTranslation = intl.formatMessage({ id: event.type });
-  if (directTranslation && directTranslation !== event.type) {
-    return directTranslation;
+  // Fallback: the type IS a message id for some families ('event.chemical.fertilizer').
+  //
+  // Ask the catalog whether the key exists instead of calling formatMessage and comparing the
+  // answer to the id. The compare-the-echo trick works, but react-intl logs a
+  // MISSING_TRANSLATION error on every miss — and the miss is the COMMON case, because the
+  // retrieve endpoint mostly ships subtype codes ('MO', 'FE'). That was one console error per
+  // modal open, in production, for a lookup that was expected to fail.
+  if (intl.messages?.[event.type]) {
+    return intl.formatMessage({ id: event.type });
   }
 
-  // Last fallback: use description or a cleaned-up version of the type
-  if (event.description) {
-    return event.description;
-  }
-
-  // Clean up the type string for display
-  return event.type
-    .replace(/^event\./, '')
-    .replace(/[._]/g, ' ')
-    .replace(/\b\w/g, (l) => l.toUpperCase());
+  /**
+   * ⛔ NEVER the description, and never a de-dotted `event.type`.
+   *
+   * This used to `return event.description`, and for any event whose `type` misses the map
+   * above — which is most of them, because the retrieve endpoint answers with SUBTYPE CODES
+   * ('MO', 'IP', 'FE'), not `event.pest.monitoring` ids — the entire field note became the
+   * H1. Seen 2026-08-16: a five-line pest paragraph as the modal title, repeated verbatim in
+   * the Field Notes card immediately below it, filling half a phone screen before any
+   * information appeared. A title names the KIND of record; the description is the record.
+   *
+   * `eventTitle()` is the same resolver `activityTitle()` uses for the feed row this modal
+   * opens from, so the two can no longer disagree — which is the stated point of
+   * `config/events/narrative.ts`.
+   */
+  return eventTitle(event.event_type, subtypeOf(event), null, intl);
 };
 
 const extractEventData = (event: Event) => {
@@ -635,7 +567,12 @@ const extractEventData = (event: Event) => {
  *   Falls back to legacy getEventFieldDisplay() from fieldDisplayUtils.ts.
  *   This path will be removed once registry rendering is validated.
  */
-const renderSharedEventFields = (event: Event, cardBg: string, textColor: string) => {
+const renderSharedEventFields = (
+  event: Event,
+  cardBg: string,
+  textColor: string,
+  intl: IntlShape
+) => {
   if (USE_FIELD_REGISTRY) {
     // Registry-powered rendering (Phase 5)
     return <RegistryFieldRendererBridge event={event} cardBg={cardBg} textColor={textColor} />;
@@ -669,7 +606,7 @@ const renderSharedEventFields = (event: Event, cardBg: string, textColor: string
       {secondary.length > 0 && (
         <Box>
           <Text fontSize="md" fontWeight="semibold" mb={3} color={textColor}>
-            Additional Details
+            {intl.formatMessage({ id: 'eventDetails.additionalDetails' })}
           </Text>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             {secondary.map((field, index) => (
@@ -690,7 +627,7 @@ const renderSharedEventFields = (event: Event, cardBg: string, textColor: string
       {details.length > 0 && (
         <Box>
           <Text fontSize="md" fontWeight="semibold" mb={3} color={textColor}>
-            Technical Details
+            {intl.formatMessage({ id: 'eventDetails.technicalDetails' })}
           </Text>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             {details.map((field, index) => (
@@ -721,13 +658,7 @@ const RegistryFieldRendererBridge: React.FC<{
 }> = ({ event, cardBg, textColor }) => {
   const eventData = event as Record<string, unknown>;
   const eventType = (eventData.event_type as number) ?? 3; // default to general
-  const subtype = (eventData.weather_type ||
-    eventData.production_type ||
-    eventData.chemical_type ||
-    eventData.soil_management_type ||
-    eventData.pest_management_type ||
-    eventData.business_event_type ||
-    eventData.type) as string | undefined;
+  const subtype = subtypeOf(event);
 
   const { fields, hasFields } = useEventFields({
     eventType: eventType as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7,
@@ -770,14 +701,20 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   const farmId = farmIdProp ?? routeFarmId;
   const parcelId = parcelIdProp ?? routeParcelId;
 
-  // Theme colors
-  const bgColor = useColorModeValue('white', 'gray.800');
+  // Theme colors. ALL of them resolve here, above the `if (!event) return null` below —
+  // two `useColorModeValue` calls used to sit inside the JSX, i.e. after that early return,
+  // which is a rules-of-hooks violation. It happens not to crash (Chakra's hook is
+  // `useContext`-based and `useContext` takes no slot in the fiber's hook list), and that is
+  // luck, not design: swapping in any stateful hook there would break the component the first
+  // time `event` flipped from null.
   const textColor = useColorModeValue('gray.800', 'white');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const cardBg = useColorModeValue('gray.50', 'gray.700');
 
-  // Modal size based on screen
-  const modalSize = useBreakpointValue({ base: 'full', md: '4xl' });
+  // Icon-chip tokens for the header glyph — see `config/events/eventTypeAppearance`.
+  const appearance = eventTypeAppearance(event?.event_type);
+  const chipBg = useColorModeValue(appearance.chip.bg[0], appearance.chip.bg[1]);
+  const chipFg = useColorModeValue(appearance.chip.fg[0], appearance.chip.fg[1]);
 
   // State for carbon data - now using embedded data
   const [carbonData, setCarbonData] = useState<CarbonCalculationResult | null>(null);
@@ -841,7 +778,6 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
   if (!event) return null;
 
-  const eventConfig = getEventConfig(event.type, event.description, event.event_type);
   const eventData = extractEventData(event);
   const operator = members.find((member) => member.id === event.created_by);
 
@@ -864,8 +800,8 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       .unwrap()
       .then(() => {
         toast({
-          title: 'Event Deleted',
-          description: 'The event has been successfully deleted.',
+          title: intl.formatMessage({ id: 'eventDetails.deleted.title' }),
+          description: intl.formatMessage({ id: 'eventDetails.deleted.description' }),
           status: 'success',
           duration: 3000,
           isClosable: true
@@ -877,8 +813,8 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       .catch((error: any) => {
         console.error('Failed to delete event:', error);
         toast({
-          title: 'Error Deleting Event',
-          description: 'An error occurred while deleting the event.',
+          title: intl.formatMessage({ id: 'eventDetails.deleteFailed.title' }),
+          description: intl.formatMessage({ id: 'eventDetails.deleteFailed.description' }),
           status: 'error',
           duration: 3000,
           isClosable: true
@@ -886,469 +822,438 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       });
   };
 
+  const sharedFields = renderSharedEventFields(event, cardBg, textColor, intl);
+  const impactBadgeVariant = impactBadgeVariantFor(carbonData?.co2e ?? 0);
+
+  /**
+   * Footer.
+   *
+   * Three things changed and all three were showing in the 2026-08-16 screenshot:
+   *
+   * 1. Delete rendered GREEN. `colorScheme="red" variant="outline"` was inert — the theme's
+   *    outline variant hardcoded green — so the destructive action wore the brand/success
+   *    colour and only turned red on hover, from the inline `_hover` that used to be here.
+   *    `theme/components/button.js` now honours colorScheme, so that inline override is gone
+   *    with it; Delete is `ghost` + red, which is the weight a destructive secondary should
+   *    carry next to a primary.
+   * 2. Edit Event was BLUE. Primary fill is green.700 (`.claude/rules/frontend.md`).
+   * 3. Delete sat directly against Edit, same size, same row — an accidental-click zone. The
+   *    dismiss/destructive pair now share the left and the primary owns the right, and below
+   *    `md` the whole thing STACKS. Measured need for the stack: at 375px a single row has
+   *    351px for ~342px of English labels, and the Spanish labels this screen actually
+   *    renders come to ~400px.
+   *
+   * ⚠️ THE STACK ORDER IS LOAD-BEARING, and I got it wrong first (`column-reverse`, seen in
+   * the 2026-08-16 phone screenshot). Reversing put Edit Event on top and left DELETE as the
+   * bottom-most control — the single easiest target in the thumb arc, on a phone, for the one
+   * action that destroys a certifier record. On a bottom sheet the PRIMARY owns the bottom
+   * edge; destructive sits above it and off to the side. `column` + `order` gives that
+   * without changing the DOM order, so the tab sequence still runs Close → Delete → Edit.
+   */
+  const footer = (
+    <Flex
+      w="full"
+      direction={{ base: 'column', md: 'row' }}
+      justify="space-between"
+      align={{ base: 'stretch', md: 'center' }}
+      gap={3}>
+      <HStack spacing={2} justify={{ base: 'space-between', md: 'flex-start' }}>
+        <Button
+          variant="ghost"
+          colorScheme="gray"
+          onClick={onClose}
+          size={{ base: 'md', md: 'lg' }}>
+          {intl.formatMessage({ id: 'app.close' })}
+        </Button>
+
+        {!isProductionFinished && canWrite && (
+          <Button
+            leftIcon={<FaTrash />}
+            colorScheme="red"
+            variant="ghost"
+            onClick={onDeleteOpen}
+            size={{ base: 'md', md: 'lg' }}
+            isLoading={isDeleting}
+            loadingText={intl.formatMessage({ id: 'eventDetails.deleting' })}>
+            {intl.formatMessage({ id: 'app.delete' })}
+          </Button>
+        )}
+      </HStack>
+
+      {isProductionFinished ? (
+        <HStack spacing={2} bg="gray.100" px={4} py={2} borderRadius="lg" justify="center">
+          <Icon as={FaLock} boxSize={4} color="gray.600" />
+          <Text fontSize="sm" color="gray.700" fontWeight="medium">
+            {intl.formatMessage({ id: 'eventDetails.eventLocked' })}
+          </Text>
+        </HStack>
+      ) : canWrite ? (
+        <Button
+          leftIcon={<FaEdit />}
+          colorScheme="green"
+          variant="solid"
+          onClick={handleEdit}
+          size={{ base: 'md', md: 'lg' }}
+          // Full-width on a phone: a bottom-sheet primary that is not full-width reads as one
+          // of several equal options rather than as the thing to do.
+          w={{ base: 'full', md: 'auto' }}>
+          {intl.formatMessage({ id: 'eventDetails.editEvent' })}
+        </Button>
+      ) : null}
+    </Flex>
+  );
+
+  const header = (
+    <VStack align="start" spacing={3}>
+      <HStack spacing={3} align="start">
+        <Box p={3} borderRadius="lg" bg={chipBg} flexShrink={0}>
+          <Icon as={appearance.icon} boxSize={6} color={chipFg} />
+        </Box>
+        <VStack align="start" spacing={1}>
+          <Text fontSize="xl" fontWeight="bold" color={textColor}>
+            {getEventDisplayName(event, intl)}
+          </Text>
+          <HStack spacing={2}>
+            {/* Same variant and the same words the activity row used, so opening a record
+                does not rename its own category — see `config/events/eventTypeAppearance`. */}
+            <Badge variant={appearance.badgeVariant} fontSize="xs">
+              {intl.formatMessage({ id: appearance.labelKey })}
+            </Badge>
+            {(event.is_summary === true ||
+              event.extra_data?.is_summary === true ||
+              event.extra_data?.is_summary === 'true') && (
+              <Badge variant="neutral" fontSize="xs" display="flex" alignItems="center" gap={1}>
+                <Icon as={FaLayerGroup} boxSize={3} />
+                {intl.formatMessage(
+                  { id: 'eventDetails.summaryCount' },
+                  { count: Number(event.event_count ?? event.extra_data?.event_count ?? 0) }
+                )}
+              </Badge>
+            )}
+          </HStack>
+        </VStack>
+      </HStack>
+
+      {/* Wrap, not HStack: four meta items at 375px overflowed a row that could not break.
+          `Wrap` also supplies the row gap an HStack has no concept of. */}
+      <Wrap spacingX={6} spacingY={2} color="gray.600" fontSize="sm">
+        <WrapItem>
+          <HStack spacing={2}>
+            <Icon as={FaCalendarAlt} boxSize={4} />
+            <Text>
+              {event.extra_data?.date_start && event.extra_data?.date_end
+                ? `${new Date(event.extra_data.date_start).toLocaleDateString()} - ${new Date(
+                    event.extra_data.date_end
+                  ).toLocaleDateString()}`
+                : new Date(event.date).toLocaleDateString()}
+            </Text>
+          </HStack>
+        </WrapItem>
+        {parcelName && (
+          <WrapItem>
+            <HStack spacing={2}>
+              <Icon as={FaMapMarkerAlt} boxSize={4} />
+              <Text>{parcelName}</Text>
+            </HStack>
+          </WrapItem>
+        )}
+        {operator && (
+          <WrapItem>
+            <HStack spacing={2}>
+              <Icon as={FaUser} boxSize={4} />
+              <Text>{operator.full_name}</Text>
+            </HStack>
+          </WrapItem>
+        )}
+        {event.certified && (
+          <WrapItem>
+            <HStack spacing={2}>
+              {/* green.700, not green.500: 2.78:1 fails AA as text and even the 3:1 icon
+                  floor. `.claude/rules/frontend.md` → "if it renders glyphs, it is green.700". */}
+              <Icon as={MdVerified} boxSize={4} color="green.700" />
+              <Text color="green.700" fontWeight="medium">
+                {intl.formatMessage({ id: 'eventDetails.certified' })}
+              </Text>
+            </HStack>
+          </WrapItem>
+        )}
+      </Wrap>
+    </VStack>
+  );
+
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} size={modalSize} isCentered>
-        <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
-        <ModalContent
-          bg={bgColor}
-          borderRadius="xl"
-          maxH="90vh"
-          display="flex"
-          flexDirection="column"
-        >
-          {/* Modern Minimalist Header */}
-          <ModalHeader p={6} pb={4} borderBottom="1px" borderColor={borderColor} flexShrink={0}>
-            <HStack justify="space-between" align="start">
-              <VStack align="start" spacing={3} flex={1}>
-                <HStack spacing={3}>
-                  <Box
-                    p={3}
-                    borderRadius="lg"
-                    bg={useColorModeValue(
-                      `${eventConfig.color.split('.')[0]}.50`,
-                      `${eventConfig.color.split('.')[0]}.900`
-                    )}
-                  >
-                    <Icon as={eventConfig.icon} boxSize={6} color={eventConfig.color} />
-                  </Box>
-                  <VStack align="start" spacing={1}>
-                    <Text fontSize="xl" fontWeight="bold" color={textColor}>
-                      {getEventDisplayName(event, intl)}
-                    </Text>
-                    <HStack spacing={2}>
-                      <Badge
-                        colorScheme={eventConfig.color.split('.')[0]}
-                        variant="subtle"
-                        fontSize="sm"
-                        px={3}
-                        py={1}
-                        borderRadius="full"
-                      >
-                        {eventConfig.category}
-                      </Badge>
-                      {(event.is_summary === true ||
-                        event.extra_data?.is_summary === true ||
-                        event.extra_data?.is_summary === 'true') && (
-                        <Badge
-                          colorScheme="purple"
-                          variant="subtle"
-                          fontSize="sm"
-                          px={3}
-                          py={1}
-                          borderRadius="full"
-                          display="flex"
-                          alignItems="center"
-                          gap={1}
-                        >
-                          <Icon as={FaLayerGroup} boxSize={3} />
-                          {event.event_count || event.extra_data?.event_count || 'Summary'}
-                          {' events'}
-                        </Badge>
-                      )}
-                    </HStack>
-                  </VStack>
-                </HStack>
+      <ResponsiveModal isOpen={isOpen} onClose={onClose} size="4xl" header={header} footer={footer}>
+        <VStack spacing={6} align="stretch">
+          {/* Record value — the reason this row is worth keeping. Lifted OUT of the
+                  Carbon Impact card, where it was nested: guidance about what a CERTIFIER
+                  reads is not a footnote to an emissions number, and burying it there made
+                  a zero-emission record look like it was apologising for the zero. */}
+          {carbonData && !carbonData.error && carbonData.co2e === 0 && (
+            <StandardAlert
+              status="info"
+              title={intl.formatMessage({ id: 'event.recordValue.title' })}
+              description={
+                event.event_type === 7
+                  ? intl.formatMessage({ id: 'event.recordValue.business' })
+                  : event.event_type === 3
+                  ? intl.formatMessage({ id: 'event.recordValue.general' })
+                  : intl.formatMessage({ id: 'event.recordValue.default' })
+              }
+            />
+          )}
 
-                <HStack spacing={6} color="gray.500" fontSize="sm">
-                  <HStack spacing={2}>
-                    <Icon as={FaCalendarAlt} boxSize={4} />
-                    <Text>
-                      {event.extra_data?.date_start && event.extra_data?.date_end
-                        ? `${new Date(
-                            event.extra_data.date_start
-                          ).toLocaleDateString()} - ${new Date(
-                            event.extra_data.date_end
-                          ).toLocaleDateString()}`
-                        : new Date(event.date).toLocaleDateString()}
-                    </Text>
-                  </HStack>
-                  {parcelName && (
-                    <HStack spacing={2}>
-                      <Icon as={FaMapMarkerAlt} boxSize={4} />
-                      <Text>{parcelName}</Text>
-                    </HStack>
-                  )}
-                  {operator && (
-                    <HStack spacing={2}>
-                      <Icon as={FaUser} boxSize={4} />
-                      <Text>{operator.full_name}</Text>
-                    </HStack>
-                  )}
-                  {event.certified && (
-                    <HStack spacing={2}>
-                      <Icon as={MdVerified} boxSize={4} color="green.500" />
-                      <Text color="green.500" fontWeight="medium">
-                        Certified
-                      </Text>
-                    </HStack>
-                  )}
-                </HStack>
-              </VStack>
+          {/* Event Details Section */}
+          <Box>
+            <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
+              {intl.formatMessage({ id: 'app.eventDetails' })}
+            </Text>
 
-              <ModalCloseButton position="static" size="lg" />
-            </HStack>
-          </ModalHeader>
-
-          <ModalBody p={6} overflowY="auto" flex={1}>
-            <VStack spacing={6} align="stretch">
-              {/* Event Details Section */}
-              <Box>
-                <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
-                  {intl.formatMessage({ id: 'app.eventDetails' }) || 'Event Details'}
-                </Text>
-
-                {/* Field Notes always renders full width — farmer observations
+            {/* Field Notes always renders full width — farmer observations
                     are usually long paragraphs and look cramped in a 50% cell. */}
-                <VStack spacing={4} align="stretch">
-                  <Box p={4} bg={cardBg} borderRadius="lg">
-                    <Text fontSize="sm" color="gray.500" mb={1}>
-                      {intl.formatMessage({ id: 'app.fieldNotes' }) || 'Field Notes'}
-                    </Text>
-                    <Text fontWeight="medium" whiteSpace="pre-wrap">
-                      {event.description}
-                    </Text>
-                  </Box>
-
-                  {/* Duration and volume_applied are both handled by the
-                      registry in "Detailed Information" below (Bug Pattern #5). */}
-                </VStack>
+            <VStack spacing={4} align="stretch">
+              <Box p={4} bg={cardBg} borderRadius="lg">
+                <Text fontSize="sm" color="gray.500" mb={1}>
+                  {intl.formatMessage({ id: 'app.fieldNotes' })}
+                </Text>
+                <Text fontWeight="medium" whiteSpace="pre-wrap">
+                  {event.description}
+                </Text>
               </Box>
 
-              {/* Album Images Section */}
-              {event.album && event.album.images && event.album.images.length > 0 && (
-                <>
-                  <Divider />
-                  <Box>
-                    <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
-                      Event Photos
-                    </Text>
-                    {/* Photo content warning for flagged AI/stock photos */}
-                    {event.photo_content_flag && (
-                      <Alert status="warning" borderRadius="lg" mb={4} fontSize="sm">
-                        <AlertIcon boxSize={4} />
-                        <Box>
-                          <Text fontWeight="medium">
-                            {event.photo_content_flag === 'ai_generated'
-                              ? 'This photo appears to be AI-generated.'
+              {/* Duration and volume_applied are both handled by the
+                      registry in "Detailed Information" below (Bug Pattern #5). */}
+            </VStack>
+          </Box>
+
+          {/* Album Images Section */}
+          {event.album && event.album.images && event.album.images.length > 0 && (
+            <>
+              <Divider />
+              <Box>
+                <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
+                  {intl.formatMessage({ id: 'app.eventPhotos' })}
+                </Text>
+                {/* Photo content warning for flagged AI/stock photos */}
+                {event.photo_content_flag && (
+                  <Alert status="warning" mb={4} fontSize="sm">
+                    <AlertIcon boxSize={4} />
+                    <Box>
+                      <Text fontWeight="medium">
+                        {intl.formatMessage({
+                          id:
+                            event.photo_content_flag === 'ai_generated'
+                              ? 'event.photoFlag.aiGenerated'
                               : event.photo_content_flag === 'stock_photo'
-                              ? 'This photo appears to be a stock image.'
-                              : 'This photo was not recognized as agricultural content.'}
-                          </Text>
-                          <Text color="gray.600" mt={1}>
-                            {intl.formatMessage({ id: 'event.photoFlag.replaceWithFieldPhoto' })}
-                          </Text>
-                        </Box>
-                      </Alert>
-                    )}
-                    <Grid
-                      templateColumns={{
-                        base: 'repeat(2, 1fr)',
-                        md: 'repeat(3, 1fr)',
-                        lg: 'repeat(4, 1fr)'
-                      }}
-                      gap={4}
-                    >
-                      {event.album.images.map((image, index) => (
-                        <Box key={image.id || index}>
-                          <AspectRatio ratio={1}>
-                            <Image
-                              src={image.image}
-                              alt={`Event photo ${index + 1}`}
+                              ? 'event.photoFlag.stockPhoto'
+                              : 'event.photoFlag.notAgricultural'
+                        })}
+                      </Text>
+                      <Text color="gray.600" mt={1}>
+                        {intl.formatMessage({ id: 'event.photoFlag.replaceWithFieldPhoto' })}
+                      </Text>
+                    </Box>
+                  </Alert>
+                )}
+                <Grid
+                  templateColumns={{
+                    base: 'repeat(2, 1fr)',
+                    md: 'repeat(3, 1fr)',
+                    lg: 'repeat(4, 1fr)'
+                  }}
+                  gap={4}>
+                  {event.album.images.map((image, index) => (
+                    <Box key={image.id || index}>
+                      <AspectRatio ratio={1}>
+                        <Image
+                          src={image.image}
+                          alt={intl.formatMessage(
+                            { id: 'eventDetails.photoAlt' },
+                            { index: index + 1 }
+                          )}
+                          borderRadius="lg"
+                          objectFit="cover"
+                          border="1px"
+                          borderColor={borderColor}
+                          cursor="pointer"
+                          transition="all 0.2s"
+                          _hover={{
+                            transform: 'scale(1.05)',
+                            boxShadow: 'lg'
+                          }}
+                          onError={(e) => {
+                            console.error('Image failed to load:', image.image, e);
+                          }}
+                          fallback={
+                            <Center
+                              h="100%"
+                              bg={cardBg}
                               borderRadius="lg"
-                              objectFit="cover"
                               border="1px"
                               borderColor={borderColor}
-                              cursor="pointer"
-                              transition="all 0.2s"
-                              _hover={{
-                                transform: 'scale(1.05)',
-                                boxShadow: 'lg'
-                              }}
-                              onError={(e) => {
-                                console.error('Image failed to load:', image.image, e);
-                              }}
-                              fallback={
-                                <Center
-                                  h="100%"
-                                  bg={cardBg}
-                                  borderRadius="lg"
-                                  border="1px"
-                                  borderColor={borderColor}
-                                  flexDirection="column"
-                                  gap={2}
-                                >
-                                  <Box fontSize="2xl">📷</Box>
-                                  <Text fontSize="xs" color="gray.500" textAlign="center">
-                                    Image not available
-                                  </Text>
-                                </Center>
-                              }
-                            />
-                          </AspectRatio>
-                        </Box>
-                      ))}
-                    </Grid>
-                  </Box>
-                </>
-              )}
+                              flexDirection="column"
+                              gap={2}>
+                              <Box fontSize="2xl">📷</Box>
+                              <Text fontSize="xs" color="gray.500" textAlign="center">
+                                {intl.formatMessage({ id: 'eventDetails.imageUnavailable' })}
+                              </Text>
+                            </Center>
+                          }
+                        />
+                      </AspectRatio>
+                    </Box>
+                  ))}
+                </Grid>
+              </Box>
+            </>
+          )}
 
-              {/* Specific Event Fields Section */}
-              {renderSharedEventFields(event, cardBg, textColor) && (
-                <>
-                  <Divider />
-                  <Box>
-                    <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
-                      Detailed Information
-                    </Text>
-                    {renderSharedEventFields(event, cardBg, textColor)}
-                  </Box>
-                </>
-              )}
-
+          {/* Specific Event Fields Section. Built once and reused — this used to call
+                  the renderer twice, once as a truthiness test and once for real. */}
+          {sharedFields && (
+            <>
               <Divider />
+              <Box>
+                <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
+                  {intl.formatMessage({ id: 'eventDetails.detailedInformation' })}
+                </Text>
+                {sharedFields}
+              </Box>
+            </>
+          )}
 
-              {/* Carbon Impact Section - matches CarbonImpactPreview format */}
-              {carbonData && !carbonData.error && (
-                <Box p={4} bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
-                  <HStack justify="space-between" align="center" mb={3}>
-                    <HStack spacing={2}>
-                      <Icon as={FaLeaf} color="green.500" boxSize={4} />
-                      <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                        Carbon Impact
-                      </Text>
-                    </HStack>
-                    {(carbonData.usda_factors_based || carbonData.usda_factors_used) && (
-                      <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
-                        <Badge colorScheme="blue" fontSize="xs">
-                          <HStack spacing={1}>
-                            <Icon as={FaCertificate} boxSize={3} />
-                            <Text>{intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}</Text>
-                          </HStack>
-                        </Badge>
-                      </Tooltip>
-                    )}
-                  </HStack>
+          <Divider />
 
-                  {/* Weather/zero-emission events: transparency message */}
-                  {carbonData.co2e === 0 || carbonData.calculation_method?.includes('weather') ? (
-                    <VStack spacing={3} align="stretch">
-                      <HStack justify="space-between" align="center">
-                        <VStack spacing={0} align="start">
-                          <HStack spacing={2}>
-                            <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                              0
-                            </Text>
-                            <Text fontSize="sm" color="gray.500">
-                              kg CO₂e
-                            </Text>
-                            <Badge colorScheme="gray" size="sm">
-                              None
-                            </Badge>
-                          </HStack>
-                          <Text fontSize="xs" color="gray.500">
-                            No direct emissions
-                          </Text>
-                        </VStack>
-                        <VStack spacing={0} align="end">
-                          <HStack spacing={1}>
-                            <Text fontSize="lg" fontWeight="bold" color="green.500">
-                              100
-                            </Text>
-                            <Text fontSize="sm" color="gray.500">
-                              /100
-                            </Text>
-                          </HStack>
-                          <Text fontSize="xs" color="gray.500">
-                            Efficiency Score
-                          </Text>
-                        </VStack>
-                      </HStack>
-                      {/* Copy rewritten 2026-08-11. All four strings told the grower the event
-                          "builds your transparency score" — a number that no longer appears
-                          anywhere in the product, so the advice pointed at nothing. They were
-                          also hardcoded English on a translated screen. Reframed to what the
-                          record is actually for: the certifier reads it. */}
-                      <Alert status="info" size="sm" borderRadius="md">
-                        <AlertIcon boxSize={3} />
-                        <Box>
-                          <AlertTitle fontSize="xs">
-                            {intl.formatMessage({ id: 'event.recordValue.title' })}
-                          </AlertTitle>
-                          <AlertDescription fontSize="xs">
-                            {event.event_type === 7
-                              ? intl.formatMessage({ id: 'event.recordValue.business' })
-                              : event.event_type === 3
-                              ? intl.formatMessage({ id: 'event.recordValue.general' })
-                              : intl.formatMessage({ id: 'event.recordValue.default' })}
-                          </AlertDescription>
-                        </Box>
-                      </Alert>
-                    </VStack>
-                  ) : (
-                    <>
-                      <HStack justify="space-between" align="center">
-                        <VStack spacing={0} align="start">
-                          <HStack spacing={2}>
-                            <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                              {formatCO2e(carbonData.co2e)}
-                            </Text>
-                            <Text fontSize="sm" color="gray.500">
-                              kg CO₂e
-                            </Text>
-                            <Badge colorScheme={getImpactLevel(carbonData.co2e).color} size="sm">
-                              {intl.formatMessage({ id: getImpactLevel(carbonData.co2e).level })}
-                            </Badge>
-                          </HStack>
-                          <Text fontSize="xs" color="gray.500">
-                            Carbon footprint estimate
-                          </Text>
-                        </VStack>
-
-                        {carbonData.efficiency_score > 0 && (
-                          <VStack spacing={0} align="end">
-                            <HStack spacing={1}>
-                              <Text
-                                fontSize="lg"
-                                fontWeight="bold"
-                                color={`${getCarbonScoreColor(carbonData.efficiency_score)}.500`}
-                              >
-                                {Math.round(carbonData.efficiency_score)}
-                              </Text>
-                              <Text fontSize="sm" color="gray.500">
-                                /100
-                              </Text>
-                            </HStack>
-                            <Text fontSize="xs" color="gray.500">
-                              Efficiency Score
-                            </Text>
-                          </VStack>
-                        )}
-                      </HStack>
-
-                      {/* Efficiency Progress Bar */}
-                      {carbonData.efficiency_score > 0 && (
-                        <Box mt={3}>
-                          <Progress
-                            value={carbonData.efficiency_score}
-                            colorScheme={getCarbonScoreColor(carbonData.efficiency_score)}
-                            size="sm"
-                            borderRadius="md"
-                          />
-                        </Box>
-                      )}
-                    </>
-                  )}
-                </Box>
-              )}
-            </VStack>
-          </ModalBody>
-
-          {/* Fixed Footer */}
-          <ModalFooter
-            borderTop="1px"
-            borderColor={borderColor}
-            p={{ base: 3, md: 6 }}
-            flexShrink={0}
-            bg={useColorModeValue('white', 'gray.800')}
-            borderBottomRadius="xl"
-          >
-            <Flex w="full" justify="space-between" align="center" gap={2}>
-              <Button
-                variant="ghost"
-                onClick={onClose}
-                size={{ base: 'md', md: 'lg' }}
-                color="gray.600"
-                _hover={{ bg: 'gray.100' }}
-                borderRadius="lg"
-                flexShrink={0}
-              >
-                Close
-              </Button>
-
-              {isProductionFinished ? (
-                <HStack spacing={2} bg="gray.50" px={{ base: 2, md: 4 }} py={2} borderRadius="lg">
-                  <Icon as={FaLock} boxSize={4} color="gray.500" />
-                  <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600" fontWeight="medium">
-                    Event locked
+          {/* Carbon Impact Section - matches CarbonImpactPreview format */}
+          {carbonData && !carbonData.error && (
+            <Box p={4} bg={cardBg} borderRadius="lg" border="1px" borderColor={borderColor}>
+              <HStack justify="space-between" align="center" mb={3}>
+                <HStack spacing={2}>
+                  {/* green.700: a leaf that means "this section is about carbon" is a
+                          meaningful glyph, and green.500 is 2.78:1. */}
+                  <Icon as={FaLeaf} color="green.700" boxSize={4} />
+                  <Text fontSize="lg" fontWeight="bold" color={textColor}>
+                    {intl.formatMessage({ id: 'eventDetails.carbonImpact' })}
                   </Text>
                 </HStack>
-              ) : canWrite ? (
-                <HStack spacing={{ base: 2, md: 3 }}>
-                  <Button
-                    leftIcon={<FaTrash />}
-                    colorScheme="red"
-                    variant="outline"
-                    onClick={onDeleteOpen}
-                    size={{ base: 'md', md: 'lg' }}
-                    borderRadius="lg"
-                    fontWeight="semibold"
-                    isLoading={isDeleting}
-                    loadingText="Deleting..."
-                    _hover={{
-                      bg: 'red.50',
-                      color: 'red.600',
-                      borderColor: 'red.600'
-                    }}
-                    transition="all 0.2s"
-                  >
-                    Delete
-                  </Button>
+                {(carbonData.usda_factors_based || carbonData.usda_factors_used) && (
+                  <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
+                    {/* A sourcing note is a FACT, not a status — `neutral`, per
+                            `.claude/rules/frontend.md`. It was `colorScheme="blue"`, and blue
+                            belongs to `Alert status="info"` and nothing else. */}
+                    <Badge variant="neutral" fontSize="xs">
+                      <HStack spacing={1}>
+                        <Icon as={FaCertificate} boxSize={3} />
+                        <Text>{intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}</Text>
+                      </HStack>
+                    </Badge>
+                  </Tooltip>
+                )}
+              </HStack>
 
-                  <Button
-                    leftIcon={<FaEdit />}
-                    colorScheme="blue"
-                    variant="solid"
-                    onClick={handleEdit}
-                    size={{ base: 'md', md: 'lg' }}
-                    borderRadius="lg"
-                    fontWeight="semibold"
-                    _hover={{
-                      transform: 'translateY(-1px)',
-                      boxShadow: 'lg'
-                    }}
-                    transition="all 0.2s"
-                  >
-                    Edit Event
-                  </Button>
-                </HStack>
-              ) : null}
-            </Flex>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+              {/* Weather/zero-emission events. The "why this record matters" note that
+                      used to live here is now a StandardAlert at the TOP of the body — see
+                      the comment there. */}
+              {/* ⛔ NO EFFICIENCY SCORE. Removed 2026-08-16, and this is the note that
+                  stops it coming back a seventh time.
+
+                  This card used to end with "<n> /100 — Efficiency Score" plus a
+                  threshold-coloured progress bar. Three separate reasons, any one of which
+                  would be enough:
+
+                  1. The number was frequently FABRICATED HERE, not measured. The effect
+                     above hardcodes `efficiency_score: 100` for event types 0/3/7 and `50.0`
+                     for the no-carbon-data fallback. A season-planning note was being awarded
+                     a perfect 100/100 by a frontend constant.
+                  2. It is a self-authored 0–100 grade on the grower's own record, rendered on
+                     a producer record screen — the exact shape `noScoreOnProducerRecords`
+                     exists to keep off these surfaces, threshold-derived colour ladder and
+                     all. See `[[producer-score-retired-2026-08-11]]`: backend KPI, zero UI.
+                  3. It answers nothing a grower asked. The question these screens serve is
+                     "am I ready for my renewal inspection".
+
+                  The guard did not catch it for a year because the label was a hardcoded
+                  English string, which matches none of its patterns; translating it to
+                  `eventDetails.efficiencyScore` is what finally tripped the message-id rule.
+
+                  What stays is the FACT — kg CO₂e and its impact level. Those are measured,
+                  and neither is a verdict on the season.
+
+                  ⚠️ Still live in `components/Events/CarbonImpactPreview.tsx` and
+                  `components/Events/EnhancedEventDetailModal.tsx`, both as hardcoded English,
+                  both therefore invisible to the guard. */}
+              <HStack justify="space-between" align="center">
+                <VStack spacing={0} align="start">
+                  <HStack spacing={2}>
+                    <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                      {formatCO2e(carbonData.co2e)}
+                    </Text>
+                    <Text fontSize="sm" color="gray.600">
+                      kg CO₂e
+                    </Text>
+                    {/* One branch for both cases: zero IS impact level 0, so read the label
+                        from the same helper rather than hardcoding an English "None" that no
+                        locale could translate. */}
+                    <Badge variant={impactBadgeVariant} fontSize="xs">
+                      {intl.formatMessage({ id: getImpactLevel(carbonData.co2e).level })}
+                    </Badge>
+                  </HStack>
+                  <Text fontSize="xs" color="gray.600">
+                    {intl.formatMessage({
+                      id:
+                        carbonData.co2e === 0
+                          ? 'eventDetails.noDirectEmissions'
+                          : 'eventDetails.carbonEstimate'
+                    })}
+                  </Text>
+                </VStack>
+              </HStack>
+            </Box>
+          )}
+        </VStack>
+      </ResponsiveModal>
 
       {/* Modern Delete Confirmation Dialog */}
       <AlertDialog
         isOpen={isDeleteOpen}
         leastDestructiveRef={cancelRef}
         onClose={onDeleteClose}
-        isCentered
-      >
-        <AlertDialogOverlay bg="blackAlpha.300" backdropFilter="blur(10px)">
-          <AlertDialogContent borderRadius="xl" p={2}>
+        isCentered>
+        <AlertDialogOverlay bg="blackAlpha.400">
+          <AlertDialogContent borderRadius="xl" p={2} mx={4}>
             <AlertDialogHeader fontSize="lg" fontWeight="bold" pb={4}>
               <HStack spacing={3}>
                 <Box p={2} borderRadius="lg" bg="red.50">
-                  <Icon as={FaTrash} boxSize={5} color="red.500" />
+                  {/* red.700 (4.36:1 on red.50), not red.500 (3.22:1) — a glyph inside a
+                      tinted chip owes the 3:1 non-text floor and should not be scraping it. */}
+                  <Icon as={FaTrash} boxSize={5} color="red.700" />
                 </Box>
-                <Text>Delete Event</Text>
+                <Text>{intl.formatMessage({ id: 'eventDetails.deleteConfirm.title' })}</Text>
               </HStack>
             </AlertDialogHeader>
 
             <AlertDialogBody pb={6}>
               <VStack align="start" spacing={3}>
-                <Text color="gray.600">
-                  Are you sure you want to delete this event? This action cannot be undone.
+                <Text color="gray.700">
+                  {intl.formatMessage({ id: 'eventDetails.deleteConfirm.body' })}
                 </Text>
                 <Box p={3} bg="red.50" borderRadius="lg" w="full">
                   <Text fontSize="sm" color="red.700" fontWeight="medium">
-                    ⚠️ This will permanently remove:
+                    {intl.formatMessage({ id: 'eventDetails.deleteConfirm.removesTitle' })}
                   </Text>
-                  <VStack align="start" spacing={1} mt={2} fontSize="sm" color="red.600">
-                    <Text>• Event details and observations</Text>
-                    <Text>• Associated carbon impact data</Text>
-                    <Text>• Consumer QR code visibility</Text>
+                  {/* red.900, not red.600. red.600 on red.50 is 3.70:1 and this is body text
+                      at 14px, which owes 4.5:1 — the same call `badge.js` makes for its
+                      `danger` variant. red.900 is 5.75:1. */}
+                  <VStack align="start" spacing={1} mt={2} fontSize="sm" color="red.900">
+                    <Text>
+                      • {intl.formatMessage({ id: 'eventDetails.deleteConfirm.removesDetails' })}
+                    </Text>
+                    <Text>
+                      • {intl.formatMessage({ id: 'eventDetails.deleteConfirm.removesCarbon' })}
+                    </Text>
+                    <Text>
+                      • {intl.formatMessage({ id: 'eventDetails.deleteConfirm.removesQr' })}
+                    </Text>
                   </VStack>
                 </Box>
               </VStack>
@@ -1356,30 +1261,21 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
             <AlertDialogFooter pt={4}>
               <HStack spacing={3} w="full" justify="flex-end">
-                <Button
-                  ref={cancelRef}
-                  onClick={onDeleteClose}
-                  variant="ghost"
-                  size="lg"
-                  borderRadius="lg"
-                >
-                  Cancel
+                <Button ref={cancelRef} onClick={onDeleteClose} variant="ghost" colorScheme="gray">
+                  {intl.formatMessage({ id: 'app.cancel' })}
                 </Button>
+                {/* `variant="solid"` is not optional here. Without it the button falls to
+                    `defaultProps.variant: 'brand'`, which is green-locked because it IS the
+                    brand mark — so the CONFIRM-DELETE button rendered green, the same defect
+                    as the Delete button in the footer. `solid` + red resolves to red.700
+                    (4.98:1 under white); Chakra's stock red.500 is 3.76:1 and fails AA. */}
                 <Button
                   colorScheme="red"
+                  variant="solid"
                   onClick={handleDelete}
-                  size="lg"
-                  borderRadius="lg"
-                  fontWeight="semibold"
                   isLoading={isDeleting}
-                  loadingText="Deleting..."
-                  _hover={{
-                    transform: 'translateY(-1px)',
-                    boxShadow: 'lg'
-                  }}
-                  transition="all 0.2s"
-                >
-                  Delete Event
+                  loadingText={intl.formatMessage({ id: 'eventDetails.deleting' })}>
+                  {intl.formatMessage({ id: 'eventDetails.deleteConfirm.confirm' })}
                 </Button>
               </HStack>
             </AlertDialogFooter>

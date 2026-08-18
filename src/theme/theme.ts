@@ -1,3 +1,4 @@
+import { alertStyles } from './components/alert';
 import { badgeStyles } from './components/badge';
 import { breakpoints } from './foundations/breakpoints';
 import { buttonStyles } from './components/button';
@@ -13,6 +14,7 @@ export default extendTheme(
   globalStyles,
   buttonStyles,
   badgeStyles,
+  alertStyles,
   linkStyles,
   drawerStyles,
   progressStyles,

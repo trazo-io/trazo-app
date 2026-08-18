@@ -88,14 +88,16 @@ const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const location = useLocation();
   const isSetupPage = useMemo(() => {
     const p = location.pathname;
-    return p.includes('/select-company') ||
+    return (
+      p.includes('/select-company') ||
       p.includes('/pricing') ||
       p.includes('/stripe-success') ||
       p.endsWith('/farm/add') ||
       p.endsWith('/edit') ||
       p.includes('/parcel/add') ||
       p.includes('/event/add') ||
-      p.includes('/settings');
+      p.includes('/settings')
+    );
   }, [location.pathname]);
 
   // Cancel any active tour when navigating to a setup page
@@ -190,8 +192,8 @@ const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       popover: {
         title: step.titleKey,
         description: step.contentKey,
-        side: (step.placement === 'auto' || !step.placement) ? undefined : step.placement as any,
-        align: 'center' as const,
+        side: step.placement === 'auto' || !step.placement ? undefined : (step.placement as any),
+        align: 'center' as const
       }
     }));
 
@@ -267,14 +269,22 @@ const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
                 // Popover to the right → arrow points left (arrow-side-right = arrow on left edge)
                 popover.wrapper.style.left = `${elRect.right + padding + offset}px`;
                 popover.wrapper.style.right = 'auto';
-                popover.wrapper.style.top = `${Math.max(20, (window.innerHeight - popoverRect.height) / 2)}px`;
+                popover.wrapper.style.top = `${Math.max(
+                  20,
+                  (window.innerHeight - popoverRect.height) / 2
+                )}px`;
                 popover.wrapper.style.bottom = 'auto';
                 setArrowSide('right');
               } else if (leftSpace >= popoverRect.width + offset) {
                 // Popover to the left → arrow points right (arrow-side-left = arrow on right edge)
                 popover.wrapper.style.left = 'auto';
-                popover.wrapper.style.right = `${window.innerWidth - elRect.left + padding + offset}px`;
-                popover.wrapper.style.top = `${Math.max(20, (window.innerHeight - popoverRect.height) / 2)}px`;
+                popover.wrapper.style.right = `${
+                  window.innerWidth - elRect.left + padding + offset
+                }px`;
+                popover.wrapper.style.top = `${Math.max(
+                  20,
+                  (window.innerHeight - popoverRect.height) / 2
+                )}px`;
                 popover.wrapper.style.bottom = 'auto';
                 setArrowSide('left');
               } else {
@@ -291,16 +301,15 @@ const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
               // refresh() would recalculate and might pick a different side.
               const wrapperRect = popover.wrapper.getBoundingClientRect();
               const center = elRect.left + elRect.width / 2;
-              const newLeft = Math.max(10, Math.min(
-                center - wrapperRect.width / 2,
-                window.innerWidth - wrapperRect.width - 10
-              ));
+              const newLeft = Math.max(
+                10,
+                Math.min(center - wrapperRect.width / 2, window.innerWidth - wrapperRect.width - 10)
+              );
               popover.wrapper.style.left = `${newLeft}px`;
               popover.wrapper.style.right = 'auto';
             }
           });
         }
-
       },
 
       onDestroyStarted: () => {

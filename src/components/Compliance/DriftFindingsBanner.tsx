@@ -104,8 +104,7 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
       boxShadow="0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
       p={{ base: 3, md: 4 }}
       mb={{ base: 4, md: 6 }}
-      w="full"
-    >
+      w="full">
       <HStack align="start" justify="space-between" spacing={3} flexWrap="wrap">
         <HStack align="start" spacing={3} flex={1} minW={0}>
           <Icon as={FaExclamationTriangle} color={border} mt={1} boxSize={5} />
@@ -137,8 +136,7 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
                 bg={detailBg}
                 borderWidth="1px"
                 borderColor={border}
-                borderRadius="md"
-              >
+                borderRadius="md">
                 <Stack direction={{ base: 'column', md: 'row' }} spacing={3} align="start">
                   <VStack align="start" spacing={0} minW="120px">
                     <Text fontSize="xs" color={labelFg}>
@@ -165,8 +163,7 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
                     </Text>
                     <Badge
                       colorScheme={RESOLUTION_COLOR_SCHEME[dw.resolved_via] ?? 'red'}
-                      fontSize="11px"
-                    >
+                      fontSize="11px">
                       {resolutionKey ? intl.formatMessage({ id: resolutionKey }) : dw.resolved_via}
                     </Badge>
                     {/* CA-only: CDFA OIM registration sub-finding. */}
@@ -222,8 +219,7 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
                         mt={1}
                         display="inline-flex"
                         alignItems="center"
-                        gap={1}
-                      >
+                        gap={1}>
                         {intl.formatMessage({
                           id: dw.resolved_via.startsWith('seed_')
                             ? 'drift.detail.searchAosca'
@@ -237,7 +233,7 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
               </Box>
             );
           })}
-          <Alert status="info" fontSize="xs" borderRadius="md">
+          <Alert status="info" fontSize="xs">
             <AlertIcon />
             <Text>
               {intl.formatMessage({

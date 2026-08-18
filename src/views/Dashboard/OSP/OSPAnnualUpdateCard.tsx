@@ -10,22 +10,24 @@ import {
   Box,
   Checkbox,
   Divider,
-  FormControl,
-  FormErrorMessage,
   FormLabel,
   HStack,
   Icon,
-  Input,
   SimpleGrid,
   Text,
-  Textarea,
   useToast,
   VStack
 } from '@chakra-ui/react';
 import { FaCalendarCheck } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardField,
+  StandardInput,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import {
   OSPAnnualUpdate,
   useCreateOSPAnnualUpdateMutation,
@@ -437,28 +439,24 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
   };
 
   return (
-    <StandardCard mb={4}>
+    <StandardCard
+      mb={4}
+      titleIcon={<Icon as={FaCalendarCheck} color="green.700" />}
+      title={intl.formatMessage({
+        id: 'osp.annual.title',
+        defaultMessage: 'OSP Annual Continuation (7 CFR 205.406)'
+      })}
+      subtitle={intl.formatMessage({
+        id: 'osp.annual.subtitle',
+        defaultMessage:
+          'Each year, a certified operation must file an update summarizing any changes to its OSP (or reaffirming no changes).'
+      })}
+      headerAction={
+        updates.length > 0 ? <Badge variant="brand">{updates.length}</Badge> : undefined
+      }>
       <VStack align="stretch" spacing={3}>
-        <HStack spacing={2}>
-          <Icon as={FaCalendarCheck} color="green.600" />
-          <Text fontWeight="bold" fontSize="lg">
-            {intl.formatMessage({
-              id: 'osp.annual.title',
-              defaultMessage: 'OSP Annual Continuation (7 CFR 205.406)'
-            })}
-          </Text>
-          {updates.length > 0 && <Badge colorScheme="green">{updates.length}</Badge>}
-        </HStack>
-        <Text fontSize="sm" color="gray.500">
-          {intl.formatMessage({
-            id: 'osp.annual.subtitle',
-            defaultMessage:
-              'Each year, a certified operation must file an update summarizing any changes to its OSP (or reaffirming no changes).'
-          })}
-        </Text>
-
         {ospId == null && (
-          <Text fontSize="sm" color="orange.600">
+          <Text fontSize="sm" color="gray.700">
             {intl.formatMessage({
               id: 'osp.annual.noOsp',
               defaultMessage:
@@ -506,98 +504,98 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
         {ospId != null && (
           <Box p={3} borderWidth="1px" borderColor="green.200" borderRadius="md">
             <VStack align="stretch" spacing={3}>
-              <FormControl
+              <Box
                 maxW="200px"
-                isInvalid={Boolean(fieldErrors.reporting_year)}
                 ref={(el: HTMLDivElement | null) => {
                   fieldRefs.current.reporting_year = el;
-                }}
-              >
-                <FormLabel fontSize="sm">
-                  {intl.formatMessage({
+                }}>
+                <StandardField
+                  label={intl.formatMessage({
                     id: 'osp.annual.reportingYear',
                     defaultMessage: 'Reporting Year'
                   })}
-                </FormLabel>
-                <Input
-                  type="number"
-                  min={2000}
-                  max={2100}
-                  value={form.reporting_year}
-                  onChange={(e) => set('reporting_year', e.target.value)}
-                />
-                <FormErrorMessage fontSize="xs">{fieldErrors.reporting_year}</FormErrorMessage>
-              </FormControl>
-              <FormControl
-                isInvalid={Boolean(fieldErrors.changes_summary)}
+                  error={fieldErrors.reporting_year}>
+                  <StandardInput
+                    type="number"
+                    min={2000}
+                    max={2100}
+                    value={form.reporting_year}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      set('reporting_year', e.target.value)
+                    }
+                  />
+                </StandardField>
+              </Box>
+              <Box
                 ref={(el: HTMLDivElement | null) => {
                   fieldRefs.current.changes_summary = el;
-                }}
-              >
-                <FormLabel fontSize="sm">
-                  {intl.formatMessage({
+                }}>
+                <StandardField
+                  label={intl.formatMessage({
                     id: 'osp.annual.changesSummary',
                     defaultMessage: 'Summary of Changes (§ 205.406(a)(1))'
                   })}
-                </FormLabel>
-                <Textarea
-                  rows={3}
-                  value={form.changes_summary}
-                  onChange={(e) => set('changes_summary', e.target.value)}
-                  placeholder={intl.formatMessage({
-                    id: 'osp.annual.changesSummaryPlaceholder',
-                    defaultMessage:
-                      'Describe any changes since last year, or state that there are none.'
-                  })}
-                />
-                <FormErrorMessage fontSize="xs">{fieldErrors.changes_summary}</FormErrorMessage>
-              </FormControl>
-              <FormControl
-                isInvalid={Boolean(fieldErrors.additions)}
+                  error={fieldErrors.changes_summary}>
+                  <StandardTextarea
+                    rows={3}
+                    value={form.changes_summary}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      set('changes_summary', e.target.value)
+                    }
+                    placeholder={intl.formatMessage({
+                      id: 'osp.annual.changesSummaryPlaceholder',
+                      defaultMessage:
+                        'Describe any changes since last year, or state that there are none.'
+                    })}
+                  />
+                </StandardField>
+              </Box>
+              <Box
                 ref={(el: HTMLDivElement | null) => {
                   fieldRefs.current.additions = el;
-                }}
-              >
-                <FormLabel fontSize="sm">
-                  {intl.formatMessage({
+                }}>
+                <StandardField
+                  label={intl.formatMessage({
                     id: 'osp.annual.additions',
                     defaultMessage: 'Additions planned (one per line)'
                   })}
-                </FormLabel>
-                <Textarea
-                  rows={2}
-                  value={form.additions}
-                  onChange={(e) => set('additions', e.target.value)}
-                  placeholder={intl.formatMessage({
-                    id: 'osp.annual.additionsPlaceholder',
-                    defaultMessage: 'e.g., New 2-acre block; new OMRI compost supplier'
-                  })}
-                />
-                <FormErrorMessage fontSize="xs">{fieldErrors.additions}</FormErrorMessage>
-              </FormControl>
-              <FormControl
-                isInvalid={Boolean(fieldErrors.deletions)}
+                  error={fieldErrors.additions}>
+                  <StandardTextarea
+                    rows={2}
+                    value={form.additions}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      set('additions', e.target.value)
+                    }
+                    placeholder={intl.formatMessage({
+                      id: 'osp.annual.additionsPlaceholder',
+                      defaultMessage: 'e.g., New 2-acre block; new OMRI compost supplier'
+                    })}
+                  />
+                </StandardField>
+              </Box>
+              <Box
                 ref={(el: HTMLDivElement | null) => {
                   fieldRefs.current.deletions = el;
-                }}
-              >
-                <FormLabel fontSize="sm">
-                  {intl.formatMessage({
+                }}>
+                <StandardField
+                  label={intl.formatMessage({
                     id: 'osp.annual.deletions',
                     defaultMessage: 'Deletions planned (one per line)'
                   })}
-                </FormLabel>
-                <Textarea
-                  rows={2}
-                  value={form.deletions}
-                  onChange={(e) => set('deletions', e.target.value)}
-                  placeholder={intl.formatMessage({
-                    id: 'osp.annual.deletionsPlaceholder',
-                    defaultMessage: 'e.g., Discontinued a pest material'
-                  })}
-                />
-                <FormErrorMessage fontSize="xs">{fieldErrors.deletions}</FormErrorMessage>
-              </FormControl>
+                  error={fieldErrors.deletions}>
+                  <StandardTextarea
+                    rows={2}
+                    value={form.deletions}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      set('deletions', e.target.value)
+                    }
+                    placeholder={intl.formatMessage({
+                      id: 'osp.annual.deletionsPlaceholder',
+                      defaultMessage: 'e.g., Discontinued a pest material'
+                    })}
+                  />
+                </StandardField>
+              </Box>
               <Divider />
 
               {/*
@@ -622,8 +620,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                         'sections_unchanged',
                         OSP_SECTION_KEYS.reduce((acc, key) => ({ ...acc, [key]: true }), {})
                       )
-                    }
-                  >
+                    }>
                     {intl.formatMessage({
                       id: 'osp.annual.markAllUnchanged',
                       defaultMessage: 'Mark all unchanged'
@@ -644,8 +641,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                       size="sm"
                       colorScheme="green"
                       isChecked={Boolean(form.sections_unchanged[key])}
-                      onChange={(e) => setSection(key, e.target.checked)}
-                    >
+                      onChange={(e) => setSection(key, e.target.checked)}>
                       <Text fontSize="sm">{intl.formatMessage(SECTION_LABELS[key])}</Text>
                     </Checkbox>
                   ))}
@@ -655,7 +651,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
               <Divider />
 
               {duplicateForYear && (
-                <Text fontSize="sm" color="orange.600">
+                <Text fontSize="sm" color="gray.700">
                   {editingId == null
                     ? intl.formatMessage(
                         {
@@ -679,8 +675,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
               <Checkbox
                 isChecked={form.submitted}
                 colorScheme="green"
-                onChange={(e) => set('submitted', e.target.checked)}
-              >
+                onChange={(e) => set('submitted', e.target.checked)}>
                 {intl.formatMessage({
                   id: 'osp.annual.markSubmitted',
                   defaultMessage: 'Filed with my certifier'

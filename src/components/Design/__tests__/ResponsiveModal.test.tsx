@@ -58,8 +58,7 @@ const renderShell = (props: Partial<React.ComponentProps<typeof ResponsiveModal>
         onClose={() => undefined}
         header="Select Production Template"
         footer={<button type="button">Cancel</button>}
-        {...props}
-      >
+        {...props}>
         <div>Pistachios - Organic Production</div>
       </ResponsiveModal>
     </ChakraProvider>

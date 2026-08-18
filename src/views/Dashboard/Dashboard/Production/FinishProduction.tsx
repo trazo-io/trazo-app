@@ -123,7 +123,7 @@ function FinishProduction() {
 
   const handleSubmit = async (data: any) => {
     try {
-      await finishCurrentHistory({
+      const finished = await finishCurrentHistory({
         companyId: currentCompany?.id,
         farmId,
         parcelId: parcelId,
@@ -135,11 +135,20 @@ function FinishProduction() {
         }
       }).unwrap();
 
-      // Finishing also publishes the production (server-side) — tell the farmer
-      // their buyer page just went live instead of navigating silently.
+      // Finishing publishes the buyer page unless the farmer unchecked it in the confirm
+      // dialog. This toast used to claim the page was live unconditionally, which would
+      // now be wrong half the time. Read the SERVER's `published` off the finish response
+      // rather than the flag we sent: telling a farmer their lot is private when it is
+      // actually live is the one error here with a privacy consequence, so the claim has
+      // to come from the record, not from our own request. Fall back to the request only
+      // if the field is missing from the payload.
+      // (`??` only falls through on null/undefined, so a server `false` is respected.)
+      const isPublished = finished?.published ?? data?.published !== false;
       toast({
         title: intl.formatMessage({ id: 'production.finished' }),
-        description: intl.formatMessage({ id: 'production.finishedPublished' }),
+        description: intl.formatMessage({
+          id: isPublished ? 'production.finishedPublished' : 'production.finishedUnpublished'
+        }),
         status: 'success',
         duration: 6000,
         isClosable: true

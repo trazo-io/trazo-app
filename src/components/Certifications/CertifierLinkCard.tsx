@@ -241,8 +241,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
       })}
       variant="elevated"
       padding={{ base: 3, md: 4 }}
-      mb={0}
-    >
+      mb={0}>
       <VStack align="stretch" gap={3}>
         <Text fontSize="sm" color="gray.600">
           {intl.formatMessage({
@@ -276,8 +275,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                 setPeriod(e.target.value as PeriodChoice)
               }
               w={{ base: 'full', smd: '13rem' }}
-              flexShrink={0}
-            >
+              flexShrink={0}>
               <option value="current_year">
                 {intl.formatMessage(
                   {
@@ -307,8 +305,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
               isLoading={creating}
               isDisabled={isBlocked}
               w={{ base: 'full', smd: 'auto' }}
-              flexShrink={0}
-            >
+              flexShrink={0}>
               {intl.formatMessage({
                 id: 'certifierLink.create',
                 defaultMessage: 'Create link'
@@ -350,8 +347,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
               key={link.id}
               borderTopWidth={index === 0 ? 0 : '1px'}
               borderColor="gray.100"
-              pt={index === 0 ? 0 : 3}
-            >
+              pt={index === 0 ? 0 : 3}>
               <VStack align="stretch" gap={2}>
                 <HStack justify="space-between" align="baseline" gap={3} flexWrap="wrap">
                   <Text fontSize="sm" fontWeight="semibold" color="gray.800" minW={0}>
@@ -379,8 +375,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                               id: 'certifierLink.neverOpened',
                               defaultMessage: 'Not opened yet'
                             })
-                      }
-                    >
+                      }>
                       <HStack gap={1} color="gray.500" fontSize="xs">
                         <Icon as={FaEye} boxSize={3} />
                         <Text as="span">{link.access_count}</Text>
@@ -433,8 +428,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                       aria-label={intl.formatMessage({
                         id: 'certifierLink.copy',
                         defaultMessage: 'Copy link'
-                      })}
-                    >
+                      })}>
                       <Icon as={FaCopy} />
                     </StandardButton>
                   </InputRightElement>
@@ -456,8 +450,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                       fontSize="xs"
                       color="green.700"
                       fontWeight="medium"
-                      onClick={() => setOpenLog(openLog === link.id ? null : link.id)}
-                    >
+                      onClick={() => setOpenLog(openLog === link.id ? null : link.id)}>
                       {openLog === link.id
                         ? intl.formatMessage({
                             id: 'certifierLink.hideActivity',
@@ -481,8 +474,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                       color="gray.500"
                       fontWeight="medium"
                       _hover={{ color: 'red.600' }}
-                      onClick={() => handleRevoke(link)}
-                    >
+                      onClick={() => handleRevoke(link)}>
                       {intl.formatMessage({
                         id: 'certifierLink.revoke',
                         defaultMessage: 'Revoke'

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, Suspense } from 'react';
+import React, { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import {
   Avatar,
   Box,
@@ -82,9 +82,12 @@ import {
   useGetTransparencyDetailsQuery,
   useVerifyBlockchainIntegrityQuery
 } from '../../../store/api/transparencyQrApi';
-import { useCreateScanMutation } from '../../../store/api/historyApi';
+import {
+  useCreateScanMutation,
+  useUpgradeScanConsentMutation
+} from '../../../store/api/historyApi';
 import { addPendingScanToken } from '../../../utils/pendingScanStorage';
-import { hasAnalyticsConsent } from '../../../components/Privacy/ConsentBanner';
+import { hasAnalyticsConsent, readConsentCookie } from '../../../components/Privacy/ConsentBanner';
 import { HarvestInfoCard } from './components/HarvestInfoCard';
 import { convertArea } from '../../../utils/areaUnits';
 
@@ -359,14 +362,41 @@ function ProductDetail() {
   // without consent (GDPR Art. 4(1); ePrivacy Art. 5(3) covers device storage/access, and this
   // stores nothing on the device).
   //
-  // Recorded ONCE, and deliberately not re-recorded if consent arrives later in the visit:
-  // `anonymous_mode` skips deduplication (there is no identity to dedup against), so a second
-  // request would be a second row — the undercount traded for an overcount. The cost is that a
-  // shopper who accepts after the page loads is counted without a location; the Buyer Page
-  // already explains an em dash there as "scanned without analytics consent".
+  // Recorded ONCE. A second POST would be a second row — `anonymous_mode` skips deduplication
+  // (there is no identity to dedup against), so re-sending on consent would trade the undercount
+  // for an overcount.
+  //
+  // 2026-08-16: consent arriving later in the visit is no longer lost. The scan POSTs on mount
+  // and the banner renders ~100ms after it, so a FIRST-TIME visitor can never carry consent on
+  // the original request — and for QR traffic the first visit is the usually the only visit.
+  // Every scan in production was therefore recorded with country_code="XX" and the producer's
+  // "Ubicación" column was empty for every row. Accepting the banner writes a cookie and sends
+  // nothing, so consent could only take effect on a later page view that never came.
+  // We now UPGRADE the row we already have (authorised by its claim_token) instead of adding
+  // one: the count stays exact and the location is captured on the first visit.
   const [createScan] = useCreateScanMutation();
+  const [upgradeScanConsent] = useUpgradeScanConsentMutation();
   const [pageViewRecorded, setPageViewRecorded] = useState(false);
   const pageLoadTime = useState(() => Date.now())[0];
+  // Held for the lifetime of the visit so a late "Accept" can address its own scan.
+  const scanClaimToken = useRef<string | null>(null);
+  // Set when consent arrives BEFORE the scan POST has resolved. The banner is shown
+  // 100ms after mount while the POST itself took ~270ms in production, so an instant
+  // "Accept" genuinely can beat the token home — and dropping it there would silently
+  // reproduce the bug this whole change exists to fix.
+  const consentArrivedEarly = useRef(false);
+
+  const upgradeConsentForScan = useCallback(
+    (claimToken: string) => {
+      upgradeScanConsent({ claim_token: claimToken })
+        .unwrap()
+        .catch(() => {
+          // Best-effort. The scan is already recorded and counted; only the
+          // location is at stake, and the server treats a repeat as a no-op.
+        });
+    },
+    [upgradeScanConsent]
+  );
 
   useEffect(() => {
     if (!productionId || pageViewRecorded) return;
@@ -390,14 +420,58 @@ function ProductDetail() {
     })
       .unwrap()
       .then((result) => {
-        if (result?.claim_token && !isAuthenticated) {
-          addPendingScanToken(result.claim_token);
+        if (result?.claim_token) {
+          scanClaimToken.current = result.claim_token;
+          if (!isAuthenticated) {
+            addPendingScanToken(result.claim_token);
+          }
+          // Upgrade if the backend can see consent NOW but could not when this POST was
+          // sent. Two ways that happens, and the event alone covers only the first:
+          //   1. the visitor clicked Accept while the request was in flight
+          //      (banner at ~100ms, POST measured at ~270ms) — `consentArrivedEarly`;
+          //   2. ConsentBanner self-healed a cookie that Safari's ITP had expired, and
+          //      dispatched before this lazy-loaded route had registered its listener —
+          //      no event was ever received, so the cookie itself is the evidence.
+          // Checking the COOKIE, not hasAnalyticsConsent(): localStorage can say "true"
+          // while the cookie is missing, and only the cookie reaches the API.
+          if (!consented && (consentArrivedEarly.current || readConsentCookie() === 'true')) {
+            consentArrivedEarly.current = false;
+            upgradeConsentForScan(result.claim_token);
+          }
         }
       })
       .catch(() => {
         // Best-effort — don't block the page if scan tracking fails
       });
-  }, [productionId, pageViewRecorded, createScan, pageLoadTime, isAuthenticated]);
+  }, [
+    productionId,
+    pageViewRecorded,
+    createScan,
+    pageLoadTime,
+    isAuthenticated,
+    upgradeConsentForScan
+  ]);
+
+  // Late consent: the banner dispatches `trazo-consent-changed` when actioned. Only an ACCEPT
+  // is actionable — a decline leaves the row exactly as it already is, and `detail.consent`
+  // is null for a reset from the footer's Privacy Settings link.
+  useEffect(() => {
+    const handleConsentChange = (event: Event) => {
+      const { consent } = (event as CustomEvent).detail ?? {};
+      if (consent !== true) return;
+
+      if (!scanClaimToken.current) {
+        // The scan POST has not resolved yet; its .then() will replay this.
+        consentArrivedEarly.current = true;
+        return;
+      }
+
+      upgradeConsentForScan(scanClaimToken.current);
+    };
+
+    window.addEventListener('trazo-consent-changed', handleConsentChange);
+    return () => window.removeEventListener('trazo-consent-changed', handleConsentChange);
+  }, [upgradeConsentForScan]);
 
   // === JSON-LD STRUCTURED DATA (schema.org Product) ===
   // Injects a single <script type="application/ld+json"> into <head> when

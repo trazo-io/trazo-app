@@ -53,8 +53,7 @@ export default function ConsumerProfile() {
         title="Profile"
         description="Loading your profile..."
         showBackButton
-        onBack={() => navigate(-1)}
-      >
+        onBack={() => navigate(-1)}>
         <VStack spacing={6} align="stretch">
           {/* Loading indicator */}
           <VStack spacing={2} align="center" py={2}>
@@ -130,8 +129,7 @@ export default function ConsumerProfile() {
       title="Profile"
       description="Your transparency journey account"
       showBackButton
-      onBack={() => navigate(-1)}
-    >
+      onBack={() => navigate(-1)}>
       <VStack spacing={6} align="stretch">
         {/* Profile Header Card */}
         <StandardCard variant="elevated">
@@ -167,8 +165,7 @@ export default function ConsumerProfile() {
               p={4}
               bg={useColorModeValue('green.50', 'green.900')}
               borderRadius="xl"
-              spacing={1}
-            >
+              spacing={1}>
               <Icon as={FaQrcode} boxSize={6} color="green.500" />
               <Text fontSize="2xl" fontWeight="bold" color="green.700">
                 {impactMetrics?.total_scans || 0}
@@ -182,8 +179,7 @@ export default function ConsumerProfile() {
               p={4}
               bg={useColorModeValue('blue.50', 'blue.900')}
               borderRadius="xl"
-              spacing={1}
-            >
+              spacing={1}>
               <Icon as={FaStar} boxSize={6} color="blue.500" />
               <Text fontSize="2xl" fontWeight="bold" color="blue.600">
                 {reviewCount}
@@ -197,8 +193,7 @@ export default function ConsumerProfile() {
               p={4}
               bg={useColorModeValue('teal.50', 'teal.900')}
               borderRadius="xl"
-              spacing={1}
-            >
+              spacing={1}>
               <Icon as={FaLeaf} boxSize={6} color="teal.500" />
               <Text fontSize="2xl" fontWeight="bold" color="teal.600">
                 {impactMetrics?.verified_farms_scanned || 0}
@@ -220,8 +215,7 @@ export default function ConsumerProfile() {
               textAlign="left"
               onClick={() => navigate('/admin/dashboard/journey')}
               _hover={{ bg: hoverBg }}
-              transition="all 0.2s"
-            >
+              transition="all 0.2s">
               <HStack justify="space-between">
                 <HStack spacing={3}>
                   <Icon as={FaStar} color="yellow.500" boxSize={5} />
@@ -243,8 +237,7 @@ export default function ConsumerProfile() {
               textAlign="left"
               onClick={() => navigate('/admin/dashboard/settings')}
               _hover={{ bg: hoverBg }}
-              transition="all 0.2s"
-            >
+              transition="all 0.2s">
               <HStack justify="space-between">
                 <HStack spacing={3}>
                   <Icon as={FaLock} color="blue.500" boxSize={5} />

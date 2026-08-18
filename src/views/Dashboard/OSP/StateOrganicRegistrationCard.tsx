@@ -4,23 +4,17 @@
  * grower create/update it, and reports certifier-relevant currency. Mounted in OSPView.
  */
 import React, { useEffect, useState } from 'react';
-import {
-  Badge,
-  FormControl,
-  FormLabel,
-  HStack,
-  Icon,
-  Input,
-  Select,
-  SimpleGrid,
-  Text,
-  useToast,
-  VStack
-} from '@chakra-ui/react';
+import { Badge, HStack, Icon, SimpleGrid, useToast, VStack } from '@chakra-ui/react';
 import { FaLeaf } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardField,
+  StandardInput,
+  StandardSelect
+} from 'components/Design/StandardComponents';
 import {
   useCreateStateOrganicRegistrationMutation,
   useGetStateOrganicRegistrationsQuery,
@@ -136,46 +130,45 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
   };
 
   return (
-    <StandardCard mb={4}>
+    <StandardCard
+      mb={4}
+      // Header through the component's own slots instead of a hand-rolled HStack: this card
+      // rendered its title as `<Text fontWeight="bold" fontSize="lg">`, one of four different
+      // treatments across this page's ten cards, and left the page with no <h3> anywhere.
+      titleIcon={<Icon as={FaLeaf} color="green.700" />}
+      title={intl.formatMessage({
+        id: 'osp.cdfa.title',
+        defaultMessage: 'State Organic Program Registration (CDFA)'
+      })}
+      subtitle={intl.formatMessage({
+        id: 'osp.cdfa.description',
+        defaultMessage:
+          'California producers selling more than $5,000/yr organic must register annually with the CDFA State Organic Program before their first organic sale (CA Food & Ag Code §§ 46000-46029). Distinct from CDFA OIM input-material registration.'
+      })}
+      headerAction={
+        existing ? (
+          // `colorScheme` is inert on this theme's Badge (defaultProps.variant is 'brand') —
+          // the amber/green split has to ride `variant`, which is semantic here: current is a
+          // success state, anything else is a thing to act on.
+          <Badge variant={existing.is_current ? 'brand' : 'warning'}>
+            {existing.is_current
+              ? intl.formatMessage({ id: 'osp.cdfa.badge.current', defaultMessage: 'Current' })
+              : intl.formatMessage({ id: 'osp.cdfa.badge.review', defaultMessage: 'Review' })}
+          </Badge>
+        ) : undefined
+      }>
       <VStack align="stretch" spacing={3}>
-        <HStack justify="space-between">
-          <HStack spacing={2}>
-            <Icon as={FaLeaf} color="orange.600" />
-            <Text fontWeight="bold" fontSize="lg">
-              {intl.formatMessage({
-                id: 'osp.cdfa.title',
-                defaultMessage: 'State Organic Program Registration (CDFA)'
-              })}
-            </Text>
-          </HStack>
-          {existing && (
-            <Badge colorScheme={existing.is_current ? 'green' : 'orange'}>
-              {existing.is_current
-                ? intl.formatMessage({ id: 'osp.cdfa.badge.current', defaultMessage: 'Current' })
-                : intl.formatMessage({ id: 'osp.cdfa.badge.review', defaultMessage: 'Review' })}
-            </Badge>
-          )}
-        </HStack>
-        <Text fontSize="sm" color="gray.500">
-          {intl.formatMessage({
-            id: 'osp.cdfa.description',
-            defaultMessage:
-              'California producers selling more than $5,000/yr organic must register annually with the CDFA State Organic Program before their first organic sale (CA Food & Ag Code §§ 46000-46029). Distinct from CDFA OIM input-material registration.'
-          })}
-        </Text>
-
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-          <FormControl>
-            <FormLabel fontSize="sm">
-              {intl.formatMessage({
-                id: 'osp.cdfa.operationType',
-                defaultMessage: 'Operation Type'
-              })}
-            </FormLabel>
-            <Select
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.cdfa.operationType',
+              defaultMessage: 'Operation Type'
+            })}>
+            <StandardSelect
               value={form.operation_type}
-              onChange={(e) => set('operation_type', e.target.value)}
-            >
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                set('operation_type', e.target.value)
+              }>
               <option value="producer">
                 {intl.formatMessage({
                   id: 'osp.cdfa.operationType.producer',
@@ -200,13 +193,13 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
                   defaultMessage: 'Retailer'
                 })}
               </option>
-            </Select>
-          </FormControl>
-          <FormControl>
-            <FormLabel fontSize="sm">
-              {intl.formatMessage({ id: 'osp.cdfa.status', defaultMessage: 'Status' })}
-            </FormLabel>
-            <Select value={form.status} onChange={(e) => set('status', e.target.value)}>
+            </StandardSelect>
+          </StandardField>
+          <StandardField
+            label={intl.formatMessage({ id: 'osp.cdfa.status', defaultMessage: 'Status' })}>
+            <StandardSelect
+              value={form.status}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => set('status', e.target.value)}>
               <option value="registered">
                 {intl.formatMessage({
                   id: 'osp.cdfa.status.registered',
@@ -225,97 +218,95 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
                   defaultMessage: 'Exempt (< $5,000 organic sales)'
                 })}
               </option>
-            </Select>
-          </FormControl>
-          <FormControl>
-            <FormLabel fontSize="sm">
-              {intl.formatMessage({
-                id: 'osp.cdfa.registrationNumber',
-                defaultMessage: 'Registration Number'
-              })}
-            </FormLabel>
-            <Input
+            </StandardSelect>
+          </StandardField>
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.cdfa.registrationNumber',
+              defaultMessage: 'Registration Number'
+            })}>
+            <StandardInput
               value={form.registration_number}
-              onChange={(e) => set('registration_number', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                set('registration_number', e.target.value)
+              }
               placeholder={intl.formatMessage({
                 id: 'osp.cdfa.registrationNumberPlaceholder',
                 defaultMessage: 'e.g., TUL-2026-0042'
               })}
             />
-          </FormControl>
-          <FormControl>
-            <FormLabel fontSize="sm">
-              {intl.formatMessage({ id: 'osp.cdfa.county', defaultMessage: 'County' })}
-            </FormLabel>
-            <Input
+          </StandardField>
+          <StandardField
+            label={intl.formatMessage({ id: 'osp.cdfa.county', defaultMessage: 'County' })}>
+            <StandardInput
               value={form.county}
-              onChange={(e) => set('county', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => set('county', e.target.value)}
               placeholder={intl.formatMessage({
                 id: 'osp.cdfa.countyPlaceholder',
                 defaultMessage: 'e.g., Tulare'
               })}
             />
-          </FormControl>
-          <FormControl>
-            <FormLabel fontSize="sm">
-              {intl.formatMessage({
-                id: 'osp.cdfa.priorYearSales',
-                defaultMessage: 'Prior-Year Organic Gross Sales (USD)'
-              })}
-            </FormLabel>
-            <Input
+          </StandardField>
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.cdfa.priorYearSales',
+              defaultMessage: 'Prior-Year Organic Gross Sales (USD)'
+            })}>
+            <StandardInput
               type="number"
               min={0}
               value={form.prior_year_organic_gross_sales}
-              onChange={(e) => set('prior_year_organic_gross_sales', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                set('prior_year_organic_gross_sales', e.target.value)
+              }
               placeholder={intl.formatMessage({
                 id: 'osp.cdfa.priorYearSalesPlaceholder',
                 defaultMessage: 'e.g., 125000'
               })}
             />
-          </FormControl>
-          <FormControl>
-            <FormLabel fontSize="sm">
-              {intl.formatMessage({
-                id: 'osp.cdfa.commodities',
-                defaultMessage: 'Commodities (comma-separated)'
-              })}
-            </FormLabel>
-            <Input
+          </StandardField>
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.cdfa.commodities',
+              defaultMessage: 'Commodities (comma-separated)'
+            })}>
+            <StandardInput
               value={form.commodities}
-              onChange={(e) => set('commodities', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                set('commodities', e.target.value)
+              }
               placeholder={intl.formatMessage({
                 id: 'osp.cdfa.commoditiesPlaceholder',
                 defaultMessage: 'e.g., Navel orange, Lemon'
               })}
             />
-          </FormControl>
-          <FormControl>
-            <FormLabel fontSize="sm">
-              {intl.formatMessage({
-                id: 'osp.cdfa.registrationDate',
-                defaultMessage: 'Registration Date'
-              })}
-            </FormLabel>
-            <Input
+          </StandardField>
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.cdfa.registrationDate',
+              defaultMessage: 'Registration Date'
+            })}>
+            <StandardInput
               type="date"
               value={form.registration_date}
-              onChange={(e) => set('registration_date', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                set('registration_date', e.target.value)
+              }
             />
-          </FormControl>
-          <FormControl>
-            <FormLabel fontSize="sm">
-              {intl.formatMessage({
-                id: 'osp.cdfa.renewalDate',
-                defaultMessage: 'Renewal Date'
-              })}
-            </FormLabel>
-            <Input
+          </StandardField>
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.cdfa.renewalDate',
+              defaultMessage: 'Renewal Date'
+            })}>
+            <StandardInput
               type="date"
               value={form.renewal_date}
-              onChange={(e) => set('renewal_date', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                set('renewal_date', e.target.value)
+              }
             />
-          </FormControl>
+          </StandardField>
         </SimpleGrid>
 
         <HStack justify="flex-end">

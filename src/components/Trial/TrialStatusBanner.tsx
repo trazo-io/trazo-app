@@ -46,18 +46,23 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
     return null;
   });
 
-  // Color mode values — all hooks MUST be called before any conditional returns
-  const alertBg = useColorModeValue('orange.50', 'orange.900');
-  const alertBorder = useColorModeValue('orange.200', 'orange.700');
-  const progressBg = useColorModeValue('orange.100', 'orange.800');
+  // Color mode values — all hooks MUST be called before any conditional returns.
+  //
+  // The Alert's ground and its border used to be declared here as `orange.50`/`orange.200`.
+  // Two defects in one line: they outranked the theme (style props beat theme styles), and
+  // `.claude/rules/frontend.md` records that the theme defines `amber` and NOT `orange`, so
+  // an `orange.*` token silently resolved to CHAKRA's orange — a foreign accent on the trial
+  // banner. The ground and the accent bar now come from `theme/components/alert.js`; what is
+  // left is the progress track, and that override is gone too: MEASURED, amber.900 reads
+  // 3.60:1 on the theme's own gray.100 groove and only 3.23:1 on an amber one, so the
+  // default track is both more consistent AND the higher contrast.
 
   if (!company) return null;
 
   // Check if company has active (paid) subscription
   const hasActiveSubscription =
     company.has_subscription === true ||
-    (company.subscription &&
-      company.subscription.status === 'active') ||
+    (company.subscription && company.subscription.status === 'active') ||
     (company.subscription_plan && company.subscription_plan.id);
 
   // Don't show banner if user has active paid subscription
@@ -103,14 +108,7 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
 
   if (isTrialExpired) {
     return (
-      <Alert
-        status="error"
-        bg={alertBg}
-        border="1px"
-        borderColor={alertBorder}
-        borderRadius="xl"
-        mb={4}
-      >
+      <Alert status="error" mb={4}>
         <AlertIcon />
         <Box flex="1">
           <AlertTitle fontSize="sm" fontWeight="600">
@@ -128,42 +126,25 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
   }
 
   return (
-    <Alert
-      status="warning"
-      bg={alertBg}
-      border="1px"
-      borderColor={alertBorder}
-      borderRadius="xl"
-      mb={4}
-    >
+    <Alert status="warning" mb={4}>
       <AlertIcon />
       <Box flex="1">
         <Flex justify="space-between" align="center" mb={2}>
           <AlertTitle fontSize="sm" fontWeight="600">
             {intl.formatMessage({ id: 'app.freeTrialActive' })}
           </AlertTitle>
-          <Text fontSize="xs" fontWeight="500" color="orange.600">
+          <Text fontSize="xs" fontWeight="500" color="gray.700">
             {intl.formatMessage({ id: 'app.trialDaysRemaining' }, { days: daysRemaining })}
           </Text>
         </Flex>
 
         <AlertDescription fontSize="sm" mb={3}>
           {isTrialExpiringSoon
-            ? intl.formatMessage(
-                { id: 'app.trialExpiringSoonMessage' },
-                { days: daysRemaining }
-              )
+            ? intl.formatMessage({ id: 'app.trialExpiringSoonMessage' }, { days: daysRemaining })
             : intl.formatMessage({ id: 'app.trialExploringMessage' })}
         </AlertDescription>
 
-        <Progress
-          value={trialProgress}
-          size="sm"
-          colorScheme="orange"
-          bg={progressBg}
-          borderRadius="md"
-          mb={3}
-        />
+        <Progress value={trialProgress} size="sm" colorScheme="amber" borderRadius="md" mb={3} />
 
         <HStack spacing={2}>
           <Button size="sm" colorScheme="green" onClick={handleUpgradeClick}>
@@ -177,8 +158,7 @@ const TrialStatusBanner: React.FC<TrialStatusBannerProps> = ({
             colorScheme="blue"
             onClick={() => {
               resetAllTours();
-            }}
-          >
+            }}>
             {intl.formatMessage({ id: 'app.setupGuide' })}
           </Button>
           <Text fontSize="xs" color="gray.500" alignSelf="center">

@@ -70,8 +70,7 @@ const BADGE_PALETTES = new Set([
   'amber'
 ]);
 
-const paletteOf = (props) =>
-  BADGE_PALETTES.has(props?.colorScheme) ? props.colorScheme : 'green';
+const paletteOf = (props) => (BADGE_PALETTES.has(props?.colorScheme) ? props.colorScheme : 'green');
 
 /**
  * `.100` on `.800` — the contrast-checked pairing used by warning/danger below.

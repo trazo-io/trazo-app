@@ -203,10 +203,15 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     return null;
   };
 
-  // The self-serve lineup since 2026-08-07: Starter (free) and Compliance ($249/yr per farm).
-  // Enterprise is a conversation, not a checkout — it is rendered below as a static contact card,
-  // never priced. The API only serves active, non-pilot plans, so anything else that appears here
-  // is a data bug, not a tier.
+  // The self-serve lineup: Starter (free), Compliance ($249/yr, one farm) and Operation
+  // ($1,200/yr, every farm). Enterprise is a conversation, not a checkout — it is rendered below
+  // as a static contact card, never priced. The API only serves active, non-pilot plans, so
+  // anything else that appears here is a data bug, not a tier.
+  //
+  // 2026-08-17: Operation is the ceiling the page did not have. With one paid tier capped at a
+  // single farm, a six-farm business paid $994 (Compliance + 5 Extra Farm) where Quick Organics
+  // charges the same operation up to $4,250 — competitive at the bottom, giving the product away
+  // at the top. Extra Farm stays for 2–6 farms; the crossover lands at ~7 on its own.
   //
   // 2026-08-14: Starter no longer caps productions. The two tiers are separated by the OUTPUT —
   // the certifier packet, the audit export, the CA PUR export and the certifier link — not by how
@@ -217,6 +222,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
 
     const starterPlan = plans.find((plan) => plan.slug === 'starter');
     const compliancePlan = plans.find((plan) => plan.slug === 'compliance-yearly');
+    const operationPlan = plans.find((plan) => plan.slug === 'operation-yearly');
 
     // Starter ALWAYS renders. It used to be hidden from anyone with a subscription, on the
     // reasoning that "upgrading TO the free tier is not a thing" — true about the CTA, wrong
@@ -230,6 +236,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     const lineup = [];
     if (starterPlan) lineup.push(starterPlan);
     if (compliancePlan) lineup.push(compliancePlan);
+    if (operationPlan) lineup.push(operationPlan);
     return lineup;
   }, [plans]);
 
@@ -247,7 +254,10 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
   }
 
   const getRecommendedPlan = (plans) => {
-    // Compliance is the one paid tier — it is always the recommendation.
+    // Compliance, not Operation. The recommendation is for somebody who has not bought yet, and
+    // that is a one-farm operation until they tell us otherwise — recommending the $1,200 tier to
+    // a single-farm grower is the upsell that makes a pricing page feel like a sales call.
+    // Operation earns its way in through the farm-limit prompt, not through a badge.
     return plans.find((plan) => plan.slug === 'compliance-yearly') || null;
   };
 
@@ -255,6 +265,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
     const name = planName.toLowerCase();
     if (name.includes('starter')) return FaGift;
     if (name.includes('compliance')) return FaShieldAlt;
+    if (name.includes('operation')) return FaBuilding;
     return FaLeaf;
   };
 
@@ -440,11 +451,20 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
   const isOnStarter = currentPlanSlug === 'starter';
   const isOnPaidPlan = hasSubscription && !isOnStarter;
 
+  // The slugs this page can actually render. A SET, not a literal.
+  //
+  // 2026-08-17: `isOnRetiredPlan` was `currentPlanSlug !== 'compliance-yearly'`, and adding the
+  // Operation tier turned every Operation subscriber into a "your plan is no longer sold" banner
+  // — the same single-literal mistake that read a Corporate customer as free, one tier later.
+  // Anything that asks "is this plan still on sale" belongs against this list.
+  const LIVE_PAID_SLUGS = ['compliance-yearly', 'operation-yearly'];
+  const isOnLivePaidPlan = LIVE_PAID_SLUGS.includes(currentPlanSlug);
+
   // On a plan this page cannot show. Compliance is NOT auto-labelled an upgrade from one:
   // Corporate grants 4 farms and 50 GB against Compliance's 1 farm and 25 GB, and both already
   // carry `compliance_exports`. That move is a trade with real losses, so the page states the
   // fact and lets the operator decide — it does not pitch.
-  const isOnRetiredPlan = isOnPaidPlan && !isPilot && currentPlanSlug !== 'compliance-yearly';
+  const isOnRetiredPlan = isOnPaidPlan && !isPilot && !isOnLivePaidPlan;
 
   return (
     <StandardPage
@@ -472,6 +492,8 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
           ? t('app.pricingHeroPilot')
           : isOnRetiredPlan
           ? intl.formatMessage({ id: 'app.pricingHeroOnRetiredPlan' }, { plan: currentPlanLabel })
+          : currentPlanSlug === 'operation-yearly'
+          ? t('app.pricingHeroOnOperation')
           : currentPlanSlug === 'compliance-yearly'
           ? t('app.pricingHeroOnCompliance')
           : isOnStarter
@@ -577,9 +599,15 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                hole between two 298px cards, and plan cards NARROWER than the marketing cards
                below them. Tracks now size themselves and the cards fill them.
                `alignItems="stretch"` so the short Enterprise card matches its neighbours
-               instead of top-aligning above 348px of dead space. */
+               instead of top-aligning above 348px of dead space.
+
+               `+1` counts the static Enterprise card rendered inside this same grid. Capped
+               at 4, not 3: with three plans the old `min(len+1, 3)` put four cards into three
+               columns and stranded Enterprise alone on a second row. The step is 1 → 2 → 4
+               rather than 1 → 2 → 3 → 4 so the count never leaves an orphan; at `md`–`lg`
+               four cards read as a balanced 2×2. */
             <SimpleGrid
-              columns={{ base: 1, md: 2, lg: Math.min(displayPlans.length + 1, 3) }}
+              columns={{ base: 1, md: 2, xl: Math.min(displayPlans.length + 1, 4) }}
               spacing={5}
               w="full"
               alignItems="stretch">
@@ -881,10 +909,16 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                             </HStack>
                           )}
 
-                          {/* What Compliance actually sells — the renewal-season artifacts.
+                          {/* What the PAID tiers sell — the renewal-season artifacts.
                               Claim-safe wording: "readiness checks", never "findings";
-                              the OSP is a DRAFT the producer reviews and submits. */}
-                          {plan.slug === 'compliance-yearly' && (
+                              the OSP is a DRAFT the producer reviews and submits.
+
+                              Keyed off `compliance_exports`, not off a slug. The slug test
+                              silently dropped these three lines from Operation the moment it
+                              shipped, leaving the $1,200 card looking like it bought LESS than
+                              the $249 one. The feature flag is what the backend actually gates
+                              on (`subscriptions/gating.py`), so it is what the card should read. */}
+                          {plan.features?.compliance_exports && (
                             <>
                               <HStack spacing={2} align="center">
                                 <Icon as={FaShieldAlt} color={`${planColor}.700`} boxSize={4} />
@@ -905,6 +939,20 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                                 </Text>
                               </HStack>
                             </>
+                          )}
+
+                          {/* Operation's one differentiator, stated plainly.
+                              Every other row on this card is identical to Compliance — that is
+                              the point, and hiding it behind a longer feature list would only
+                              make the difference harder to find. What $1,200 buys is that the
+                              price stops counting farms. */}
+                          {plan.slug === 'operation-yearly' && (
+                            <HStack spacing={2} align="center">
+                              <Icon as={FaBuilding} color={`${planColor}.700`} boxSize={4} />
+                              <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
+                                {t('app.pricingFeatureEveryFarm')}
+                              </Text>
+                            </HStack>
                           )}
 
                           {/* Starter's boundary, stated ON the free card.

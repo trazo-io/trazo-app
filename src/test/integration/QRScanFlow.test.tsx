@@ -317,8 +317,7 @@ describe('QR Scan Flow Integration', () => {
             const invalidUrl = 'https://example.com/not-trazo';
             // This would not match the regex pattern
           }}
-          data-testid="scan-invalid"
-        >
+          data-testid="scan-invalid">
           Scan Invalid QR
         </button>
       );

@@ -40,10 +40,7 @@ export function todayLocalISODate(): string {
 }
 
 /** Format a backend DATE for display ("Jul 28, 2026"), timezone-safe. */
-export function formatDateOnly(
-  dateStr?: string | null,
-  locale: string = 'en-US'
-): string | null {
+export function formatDateOnly(dateStr?: string | null, locale: string = 'en-US'): string | null {
   const d = parseDateOnly(dateStr);
   if (!d) return null;
   return d.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });

@@ -81,8 +81,7 @@ function BasicTable(props: BasicTableProps) {
             size="sm"
             borderRadius="12px"
             maxW="75px"
-            cursor="pointer"
-          >
+            cursor="pointer">
             <option>5</option>
             <option>10</option>
             <option>15</option>
@@ -103,8 +102,7 @@ function BasicTable(props: BasicTableProps) {
                       justify="space-between"
                       align="center"
                       fontSize={{ sm: '10px', lg: '12px' }}
-                      color="gray.400"
-                    >
+                      color="gray.400">
                       {column.render('Header')}
                       <Icon
                         w={{ sm: '10px', md: '14px' }}
@@ -147,8 +145,7 @@ function BasicTable(props: BasicTableProps) {
           w="100%"
           justify="space-between"
           align="center"
-          px={{ md: '22px' }}
-        >
+          px={{ md: '22px' }}>
           <Text fontSize="sm" color="gray.500" fontWeight="normal" mb={{ sm: '24px', md: '0px' }}>
             Showing {pageSize * pageIndex + 1} to{' '}
             {pageSize * (pageIndex + 1) <= tableData.length
@@ -171,8 +168,7 @@ function BasicTable(props: BasicTableProps) {
                 bg: 'gray.200',
                 opacity: '0.7',
                 borderColor: 'gray.500'
-              }}
-            >
+              }}>
               <Icon as={GrFormPrevious} w="16px" h="16px" color="gray.400" />
             </Button>
             {pageSize === 5 ? (
@@ -182,8 +178,7 @@ function BasicTable(props: BasicTableProps) {
                 w="75px"
                 mx="6px"
                 defaultValue="1"
-                onChange={(e) => gotoPage(e)}
-              >
+                onChange={(e) => gotoPage(e)}>
                 <NumberInputField />
                 <NumberInputStepper>
                   <NumberIncrementStepper onClick={() => nextPage()} />
@@ -207,8 +202,7 @@ function BasicTable(props: BasicTableProps) {
                       opacity: '0.7',
                       borderColor: 'gray.500'
                     }}
-                    key={index}
-                  >
+                    key={index}>
                     <Text fontSize="sm" color={pageNumber === pageIndex + 1 ? '#fff' : 'gray.600'}>
                       {pageNumber}
                     </Text>
@@ -230,8 +224,7 @@ function BasicTable(props: BasicTableProps) {
                 bg: 'gray.200',
                 opacity: '0.7',
                 borderColor: 'gray.500'
-              }}
-            >
+              }}>
               <Icon as={GrFormNext} w="16px" h="16px" color="gray.400" />
             </Button>
           </Stack>

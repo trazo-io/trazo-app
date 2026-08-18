@@ -226,8 +226,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                 transform: 'translateY(-2px)',
                 boxShadow: 'lg'
               }}
-              onClick={quickAdd.onOpen}
-            >
+              onClick={quickAdd.onOpen}>
               <Flex direction="column" align="center" justify="center" gap={0.5}>
                 <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
                 <Text fontSize="xs" fontWeight="medium" color="green.700">
@@ -255,8 +254,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
                 WebkitOverflowScrolling: 'touch'
-              }}
-            >
+              }}>
               <Flex gap={{ base: 4, md: 6 }} pt={2} pb={2} pr="16px" pl={2} w="max-content">
                 {data.map((parcel) => (
                   <Box
@@ -264,8 +262,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
                     flexShrink={0}
                     w={{ base: '260px', smd: '280px', md: '310px' }}
                     minW={{ base: '260px', smd: '280px', md: '310px' }}
-                    maxW={{ base: '260px', smd: '280px', md: '310px' }}
-                  >
+                    maxW={{ base: '260px', smd: '280px', md: '310px' }}>
                     <CarouselCard
                       id={parcel.id}
                       image={parcel.image || BgMusicCard}

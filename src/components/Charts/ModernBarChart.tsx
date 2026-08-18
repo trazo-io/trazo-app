@@ -64,8 +64,7 @@ const ModernBarChart: React.FC<ModernBarChartProps> = ({
           borderRadius="lg"
           border="1px solid"
           borderColor={tooltipBorder}
-          boxShadow="lg"
-        >
+          boxShadow="lg">
           <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={1}>
             {label}
           </Text>

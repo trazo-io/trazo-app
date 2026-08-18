@@ -243,6 +243,13 @@ const formSchemaMainInfo = object({
   amount_determination: string().optional(),
   harvest_date_end: string().optional(),
   harvest_destination: string().optional(),
+  // Off-farm handling round trip — CCOF item 6 (2026-08-16).
+  sent_to_handler_date: string().optional(),
+  quantity_sent_to_handler: string().optional(),
+  quantity_returned_from_handler: string().optional(),
+  handler_quantity_unit: string().optional(),
+  handler_return_unit: string().optional(),
+  handler_document_reference: string().optional(),
   buffer_disposition: string().optional(),
   buffer_disposition_quantity: string().optional(),
   buffer_disposition_evidence: string().optional(),
@@ -549,6 +556,13 @@ const ProductionTab = forwardRef(
         amount_determination: initialValues.amount_determination || '',
         harvest_date_end: initialValues.harvest_date_end || '',
         harvest_destination: initialValues.harvest_destination || '',
+        sent_to_handler_date: initialValues.sent_to_handler_date || '',
+        quantity_sent_to_handler: initialValues.quantity_sent_to_handler?.toString() ?? '',
+        quantity_returned_from_handler:
+          initialValues.quantity_returned_from_handler?.toString() ?? '',
+        handler_quantity_unit: initialValues.handler_quantity_unit || 'lbs',
+        handler_return_unit: initialValues.handler_return_unit || 'lbs',
+        handler_document_reference: initialValues.handler_document_reference || '',
         buffer_disposition: initialValues.buffer_disposition || '',
         buffer_disposition_quantity: initialValues.buffer_disposition_quantity || '',
         buffer_disposition_evidence: initialValues.buffer_disposition_evidence || '',
@@ -785,6 +799,13 @@ const ProductionTab = forwardRef(
           amount_determination: initialValues.amount_determination || '',
           harvest_date_end: initialValues.harvest_date_end || '',
           harvest_destination: initialValues.harvest_destination || '',
+          sent_to_handler_date: initialValues.sent_to_handler_date || '',
+          quantity_sent_to_handler: initialValues.quantity_sent_to_handler?.toString() ?? '',
+          quantity_returned_from_handler:
+            initialValues.quantity_returned_from_handler?.toString() ?? '',
+          handler_quantity_unit: initialValues.handler_quantity_unit || 'lbs',
+          handler_return_unit: initialValues.handler_return_unit || 'lbs',
+          handler_document_reference: initialValues.handler_document_reference || '',
           buffer_disposition: initialValues.buffer_disposition || '',
           buffer_disposition_quantity: initialValues.buffer_disposition_quantity || '',
           buffer_disposition_evidence: initialValues.buffer_disposition_evidence || '',
@@ -1238,6 +1259,38 @@ const ProductionTab = forwardRef(
             : undefined,
         harvest_contract_number:
           data.type === 'HA' ? data.harvest_contract_number || undefined : undefined,
+        // Handler round trip rides the "handler" destination only — the same phantom-value
+        // rule as storage_* above. `null` rather than `undefined` on the inapplicable branch
+        // so switching the destination away from "handler" CLEARS what was typed instead of
+        // leaving a pack-out figure attached to a lot that never left the farm.
+        sent_to_handler_date:
+          data.type === 'HA' && data.harvest_destination === 'handler'
+            ? data.sent_to_handler_date || null
+            : null,
+        quantity_sent_to_handler:
+          data.type === 'HA' &&
+          data.harvest_destination === 'handler' &&
+          data.quantity_sent_to_handler !== ''
+            ? parseFloat(data.quantity_sent_to_handler)
+            : null,
+        quantity_returned_from_handler:
+          data.type === 'HA' &&
+          data.harvest_destination === 'handler' &&
+          data.quantity_returned_from_handler !== ''
+            ? parseFloat(data.quantity_returned_from_handler)
+            : null,
+        handler_quantity_unit:
+          data.type === 'HA' && data.harvest_destination === 'handler'
+            ? data.handler_quantity_unit || undefined
+            : null,
+        handler_return_unit:
+          data.type === 'HA' && data.harvest_destination === 'handler'
+            ? data.handler_return_unit || undefined
+            : null,
+        handler_document_reference:
+          data.type === 'HA' && data.harvest_destination === 'handler'
+            ? data.handler_document_reference || null
+            : null,
         // F28 phantom-value precedent, applied to the seed fields: these controls render only
         // for the seed-sourced subtypes, so sending them for HA/IR/etc. would write a value
         // the farmer never saw.
@@ -1643,7 +1696,10 @@ const ProductionTab = forwardRef(
                       </Box>
 
                       <Box flex={1}>
-                        <StandardField label={intl.formatMessage({ id: 'production.field.unit' })} required error={errors.area_unit?.message}>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'production.field.unit' })}
+                          required
+                          error={errors.area_unit?.message}>
                           <Controller
                             name="area_unit"
                             control={methods.control}
@@ -1678,7 +1734,9 @@ const ProductionTab = forwardRef(
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField
-                        label={intl.formatMessage({ id: 'events.production.fields.equipmentOperationType' })}
+                        label={intl.formatMessage({
+                          id: 'events.production.fields.equipmentOperationType'
+                        })}
                         required
                         error={errors.equipment_operation_type?.message}
                         helpText="What type of equipment operation?">
@@ -1719,7 +1777,9 @@ const ProductionTab = forwardRef(
                     </SimpleGrid>
 
                     <StandardField
-                      label={intl.formatMessage({ id: 'events.equipment.fields.operationEfficiency' })}
+                      label={intl.formatMessage({
+                        id: 'events.equipment.fields.operationEfficiency'
+                      })}
                       error={errors.operation_efficiency?.message}
                       helpText="Equipment condition and performance rating">
                       <Controller
@@ -1796,7 +1856,9 @@ const ProductionTab = forwardRef(
                         />
                       </StandardField>
 
-                      <StandardField label={intl.formatMessage({ id: 'events.production.fields.cleaningDate' })} helpText={intl.formatMessage({ id: 'production.field.cleaningDateHelp' })}>
+                      <StandardField
+                        label={intl.formatMessage({ id: 'events.production.fields.cleaningDate' })}
+                        helpText={intl.formatMessage({ id: 'production.field.cleaningDateHelp' })}>
                         <Controller
                           name="cleaning_date"
                           control={methods.control}
@@ -1836,7 +1898,9 @@ const ProductionTab = forwardRef(
                     </StandardField>
 
                     <StandardField
-                      label={intl.formatMessage({ id: 'events.production.fields.cleaningMaterialsUsed' })}
+                      label={intl.formatMessage({
+                        id: 'events.production.fields.cleaningMaterialsUsed'
+                      })}
                       helpText="Cleaning agents used (must be NOP-approved for organic operations)">
                       <Controller
                         name="cleaning_materials_used"
@@ -1852,7 +1916,9 @@ const ProductionTab = forwardRef(
                     </StandardField>
 
                     <StandardField
-                      label={intl.formatMessage({ id: 'events.production.fields.cleaningProtocolReference' })}
+                      label={intl.formatMessage({
+                        id: 'events.production.fields.cleaningProtocolReference'
+                      })}
                       helpText="Reference to cleaning SOP or protocol (e.g., SOP-CLEAN-001)">
                       <Controller
                         name="cleaning_protocol_reference"
@@ -1957,45 +2023,45 @@ const ProductionTab = forwardRef(
                   </HStack>
 
                   {showCleaningLink && (
-                  <StandardField
-                    label={intl.formatMessage({
-                      id: 'events.production.fields.equipmentCleaningEvent',
-                      defaultMessage: 'Cleaning Event Covering This Operation'
-                    })}
-                    helpText={
-                      cleaningEventOptions.length
-                        ? intl.formatMessage({
-                            id: 'events.production.fields.equipmentCleaningEventHelp',
-                            defaultMessage:
-                              'Select the Equipment Maintenance cleaning logged before this pass. It must be dated on or before this event.'
-                          })
-                        : intl.formatMessage({
-                            id: 'events.production.fields.equipmentCleaningEventEmpty',
-                            defaultMessage:
-                              'No Equipment Maintenance cleaning events logged on this production yet. Add one to link it here.'
-                          })
-                    }>
-                    <Controller
-                      name="equipment_cleaning_event"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardSelect
-                          {...field}
-                          bg="white"
-                          isDisabled={cleaningEventOptions.length === 0}
-                          placeholder={intl.formatMessage({
-                            id: 'events.production.fields.equipmentCleaningEventNone',
-                            defaultMessage: 'Not linked'
-                          })}>
-                          {cleaningEventOptions.map((opt) => (
-                            <option key={opt.id} value={String(opt.id)}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </StandardSelect>
-                      )}
-                    />
-                  </StandardField>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'events.production.fields.equipmentCleaningEvent',
+                        defaultMessage: 'Cleaning Event Covering This Operation'
+                      })}
+                      helpText={
+                        cleaningEventOptions.length
+                          ? intl.formatMessage({
+                              id: 'events.production.fields.equipmentCleaningEventHelp',
+                              defaultMessage:
+                                'Select the Equipment Maintenance cleaning logged before this pass. It must be dated on or before this event.'
+                            })
+                          : intl.formatMessage({
+                              id: 'events.production.fields.equipmentCleaningEventEmpty',
+                              defaultMessage:
+                                'No Equipment Maintenance cleaning events logged on this production yet. Add one to link it here.'
+                            })
+                      }>
+                      <Controller
+                        name="equipment_cleaning_event"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect
+                            {...field}
+                            bg="white"
+                            isDisabled={cleaningEventOptions.length === 0}
+                            placeholder={intl.formatMessage({
+                              id: 'events.production.fields.equipmentCleaningEventNone',
+                              defaultMessage: 'Not linked'
+                            })}>
+                            {cleaningEventOptions.map((opt) => (
+                              <option key={opt.id} value={String(opt.id)}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
                   )}
                 </VStack>
               </SectionBox>
@@ -2136,7 +2202,9 @@ const ProductionTab = forwardRef(
                     <HStack spacing={4} align="stretch">
                       <Box flex={1}>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.harvestQuality' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.harvestQuality'
+                          })}
                           error={errors.harvest_quality_grade?.message}
                           helpText="Classification for market destination (export, domestic, processing)">
                           <Controller
@@ -2158,9 +2226,13 @@ const ProductionTab = forwardRef(
 
                       <Box flex={1}>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.grainMoisture' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.grainMoisture'
+                          })}
                           error={errors.grain_moisture?.message}
-                          helpText={intl.formatMessage({ id: 'production.field.grainMoistureHelp' })}>
+                          helpText={intl.formatMessage({
+                            id: 'production.field.grainMoistureHelp'
+                          })}>
                           <Controller
                             name="grain_moisture"
                             control={methods.control}
@@ -2188,7 +2260,9 @@ const ProductionTab = forwardRef(
                     <HStack spacing={4} align="stretch">
                       <Box flex={1}>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.harvestMethod' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.harvestMethod'
+                          })}
                           error={errors.harvest_method?.message}
                           helpText="How the crop was harvested (consumer trust indicator)">
                           <Controller
@@ -2242,7 +2316,9 @@ const ProductionTab = forwardRef(
                             CA orchard ICP). Brix is for citrus/sugar fruit; grain moisture is grain-only. */}
                       <Box flex={1}>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.dryMatterPercentage' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.dryMatterPercentage'
+                          })}
                           error={errors.dry_matter_percentage?.message}
                           helpText={intl.formatMessage({ id: 'production.field.dryMatterHelp' })}>
                           <Controller
@@ -2345,6 +2421,12 @@ const ProductionTab = forwardRef(
                             </option>
                             <option value="sold_direct">
                               {intl.formatMessage({ id: 'events.harvestDestination.soldDirect' })}
+                            </option>
+                            {/* CCOF item 6 — sending a lot to a huller / dryer / cold store /
+                                packer is not a sale. Without this option growers recorded the
+                                handler as a BUYER, which corrupts the § 205.307 sales table. */}
+                            <option value="handler">
+                              {intl.formatMessage({ id: 'events.harvestDestination.handler' })}
                             </option>
                             <option value="livestock_feed">
                               {intl.formatMessage({
@@ -2491,6 +2573,125 @@ const ProductionTab = forwardRef(
                       />
                     </StandardField>
 
+                    {/* Off-farm handling round trip — CCOF grower checklist item 6
+                        ("what you sent, where, when, and what you received as the outcome").
+                        Rides the "handler" destination only, like the storage block below. */}
+                    {watch('harvest_destination') === 'handler' && (
+                      <>
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.sentToHandlerDate'
+                          })}
+                          error={errors.sent_to_handler_date?.message}
+                          helpText={intl.formatMessage({ id: 'production.sentToHandlerDateHelp' })}>
+                          <Controller
+                            name="sent_to_handler_date"
+                            control={methods.control}
+                            render={({ field }) => <Input {...field} type="date" size="md" />}
+                          />
+                        </StandardField>
+
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.quantitySentToHandler'
+                          })}
+                          error={errors.quantity_sent_to_handler?.message}
+                          helpText={intl.formatMessage({
+                            id: 'production.quantitySentToHandlerHelp'
+                          })}>
+                          <HStack spacing={2}>
+                            <Controller
+                              name="quantity_sent_to_handler"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  flex={2}
+                                  type="number"
+                                  step="0.01"
+                                  min={0}
+                                  size="md"
+                                  placeholder="0.00"
+                                />
+                              )}
+                            />
+                            <Controller
+                              name="handler_quantity_unit"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardSelect {...field} flex={1}>
+                                  <option value="lbs">lbs</option>
+                                  <option value="kg">kg</option>
+                                  <option value="tons">tons</option>
+                                  <option value="bins">bins</option>
+                                  <option value="boxes">boxes</option>
+                                </StandardSelect>
+                              )}
+                            />
+                          </HStack>
+                        </StandardField>
+
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.quantityReturnedFromHandler'
+                          })}
+                          error={errors.quantity_returned_from_handler?.message}
+                          helpText={intl.formatMessage({
+                            id: 'production.quantityReturnedFromHandlerHelp'
+                          })}>
+                          <HStack spacing={2}>
+                            <Controller
+                              name="quantity_returned_from_handler"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <Input
+                                  {...field}
+                                  flex={2}
+                                  type="number"
+                                  step="0.01"
+                                  min={0}
+                                  size="md"
+                                  placeholder="0.00"
+                                />
+                              )}
+                            />
+                            {/* A SEPARATE unit from the one sent: hulling changes the unit
+                                (in-shell in, shelled out). */}
+                            <Controller
+                              name="handler_return_unit"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardSelect {...field} flex={1}>
+                                  <option value="lbs">lbs</option>
+                                  <option value="kg">kg</option>
+                                  <option value="tons">tons</option>
+                                  <option value="bins">bins</option>
+                                  <option value="boxes">boxes</option>
+                                </StandardSelect>
+                              )}
+                            />
+                          </HStack>
+                        </StandardField>
+
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.handlerDocumentReference'
+                          })}
+                          error={errors.handler_document_reference?.message}
+                          helpText={intl.formatMessage({
+                            id: 'production.handlerDocumentReferenceHelp'
+                          })}>
+                          <Controller
+                            name="handler_document_reference"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <Input {...field} size="md" placeholder="e.g., PACKOUT-2026-114" />
+                            )}
+                          />
+                        </StandardField>
+                      </>
+                    )}
+
                     {/* Storage traceability — only meaningful when the lot's first hop
                         is on-farm storage (NOP 205.272 commingling; FSMA 204 KDE). */}
                     {watch('harvest_destination') === 'stored' && (
@@ -2594,7 +2795,9 @@ const ProductionTab = forwardRef(
                     {/* Sprint 5: Aggregate Harvest Fields (shown when summary mode is active) */}
                     {isSummaryMode && (
                       <>
-                        <StandardField label={intl.formatMessage({ id: 'production.field.periodStart' })} isRequired>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'production.field.periodStart' })}
+                          isRequired>
                           <Controller
                             name="date_start"
                             control={methods.control}
@@ -2602,7 +2805,9 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
 
-                        <StandardField label={intl.formatMessage({ id: 'production.field.periodEnd' })} isRequired>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'production.field.periodEnd' })}
+                          isRequired>
                           <Controller
                             name="date_end"
                             control={methods.control}
@@ -2610,7 +2815,9 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
 
-                        <StandardField label={intl.formatMessage({ id: 'production.field.harvestCount' })} isRequired>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'production.field.harvestCount' })}
+                          isRequired>
                           <Controller
                             name="event_count"
                             control={methods.control}
@@ -2625,7 +2832,9 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
 
-                        <StandardField label={intl.formatMessage({ id: 'production.field.totalYield' })} isRequired>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'production.field.totalYield' })}
+                          isRequired>
                           <HStack spacing={2}>
                             <Controller
                               name="yield_total"
@@ -3248,7 +3457,13 @@ const ProductionTab = forwardRef(
                   />
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                      <StandardField label={intl.formatMessage({ id: 'events.production.fields.protectionMethod' })} helpText={intl.formatMessage({ id: 'production.field.protectionMethodHelp' })}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.production.fields.protectionMethod'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'production.field.protectionMethodHelp'
+                        })}>
                         <Controller
                           name="protection_method"
                           control={methods.control}
@@ -3264,7 +3479,9 @@ const ProductionTab = forwardRef(
                       </StandardField>
 
                       <StandardField
-                        label={intl.formatMessage({ id: 'events.production.fields.lowTemperature' })}
+                        label={intl.formatMessage({
+                          id: 'events.production.fields.lowTemperature'
+                        })}
                         error={errors.low_temperature?.message}
                         helpText="Lowest temperature that triggered protection">
                         <Controller
@@ -3418,7 +3635,9 @@ const ProductionTab = forwardRef(
 
                     {isSummaryMode && (
                       <>
-                        <StandardField label={intl.formatMessage({ id: 'production.field.periodStart' })} isRequired>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'production.field.periodStart' })}
+                          isRequired>
                           <Controller
                             name="date_start"
                             control={methods.control}
@@ -3426,7 +3645,9 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
 
-                        <StandardField label={intl.formatMessage({ id: 'production.field.periodEnd' })} isRequired>
+                        <StandardField
+                          label={intl.formatMessage({ id: 'production.field.periodEnd' })}
+                          isRequired>
                           <Controller
                             name="date_end"
                             control={methods.control}
@@ -3651,7 +3872,8 @@ const ProductionTab = forwardRef(
                               </Box>
 
                               <Box flex={1}>
-                                <StandardField label={intl.formatMessage({ id: 'production.field.unit' })}>
+                                <StandardField
+                                  label={intl.formatMessage({ id: 'production.field.unit' })}>
                                   <Controller
                                     name="fuel_unit"
                                     control={methods.control}
@@ -3739,7 +3961,9 @@ const ProductionTab = forwardRef(
                     <HStack spacing={4} align="stretch">
                       <Box flex={2}>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.transportationDistance' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.transportationDistance'
+                          })}
                           error={errors.transportation_distance?.message}
                           helpText="Distance for transporting harvest affects carbon footprint">
                           <Controller
@@ -3782,7 +4006,9 @@ const ProductionTab = forwardRef(
 
                     {/* Production Efficiency Rating */}
                     <StandardField
-                      label={intl.formatMessage({ id: 'events.common.fields.productionEfficiency' })}
+                      label={intl.formatMessage({
+                        id: 'events.common.fields.productionEfficiency'
+                      })}
                       error={errors.production_efficiency?.message}
                       helpText="Rate the efficiency of this production activity for carbon scoring">
                       <Controller
@@ -3837,7 +4063,9 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.seedCertificationStatus' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.seedCertificationStatus'
+                          })}
                           helpText="Regulatory classification per NOP 7 CFR 205.204">
                           <Controller
                             name="seed_certification_status"
@@ -3857,7 +4085,9 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.seedSupplierName' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.seedSupplierName'
+                          })}
                           helpText="Who you bought the seed/planting stock from (NOP traceability)">
                           <Controller
                             name="seed_supplier_name"
@@ -3884,7 +4114,9 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.seedPurchaseDate' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.seedPurchaseDate'
+                          })}
                           helpText="Date of seed purchase (matches supplier invoice)">
                           <Controller
                             name="seed_purchase_date"
@@ -3893,7 +4125,9 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.seedPurchaseInvoice' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.seedPurchaseInvoice'
+                          })}
                           helpText="Supplier invoice or receipt number">
                           <Controller
                             name="seed_purchase_invoice"
@@ -3904,7 +4138,9 @@ const ProductionTab = forwardRef(
                           />
                         </StandardField>
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.seedLotNumber' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.seedLotNumber'
+                          })}
                           helpText="Supplier lot or batch identifier from the seed packet">
                           <Controller
                             name="seed_lot_number"
@@ -4276,7 +4512,9 @@ const ProductionTab = forwardRef(
                             </StandardField>
 
                             <StandardField
-                              label={intl.formatMessage({ id: 'production.field.totalWaterVolume' })}
+                              label={intl.formatMessage({
+                                id: 'production.field.totalWaterVolume'
+                              })}
                               helpText="Combined water used across all irrigation events"
                               isRequired>
                               <HStack spacing={2}>
@@ -4333,7 +4571,9 @@ const ProductionTab = forwardRef(
 
                         {/* ENHANCED: USDA NASS 2023 irrigation method for water estimation */}
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.irrigationMethod' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.irrigationMethod'
+                          })}
                           helpText="Type of irrigation system used (affects water usage calculation)">
                           <Controller
                             name="irrigation_method"
@@ -4355,7 +4595,9 @@ const ProductionTab = forwardRef(
 
                         {/* ENHANCED: Irrigation depth for USDA NASS 2023 water volume calculation */}
                         <StandardField
-                          label={intl.formatMessage({ id: 'events.production.fields.irrigationDepth' })}
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.irrigationDepth'
+                          })}
                           helpText="Water depth applied (USDA: 27,154 gal/acre per inch)">
                           <HStack spacing={2}>
                             <Controller

@@ -77,8 +77,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
       bg={cert.status === 'verified_via_database' ? 'green.50' : detailBg}
       borderRadius="lg"
       border="1px solid"
-      borderColor={cert.status === 'verified_via_database' ? 'green.200' : 'gray.100'}
-    >
+      borderColor={cert.status === 'verified_via_database' ? 'green.200' : 'gray.100'}>
       <VStack align="start" spacing={2}>
         <HStack spacing={2} w="100%">
           <Icon
@@ -96,8 +95,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
               fontSize="xs"
               px={2}
               py={0.5}
-              borderRadius="full"
-            >
+              borderRadius="full">
               {cert.status === 'verified_via_database'
                 ? intl.formatMessage({ id: 'certification.badge.verified' })
                 : intl.formatMessage({ id: 'certification.badge.selfReported' })}
@@ -133,8 +131,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
             isExternal
             fontSize="xs"
             color="blue.500"
-            pl={7}
-          >
+            pl={7}>
             <HStack spacing={1}>
               <Text>{intl.formatMessage({ id: 'certification.badge.viewSource' })}</Text>
               <Icon as={FaExternalLinkAlt} boxSize={2.5} />
@@ -185,8 +182,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
             bg={cardBg}
             borderTopRadius="2xl"
             maxH="92vh"
-            containerProps={{ style: { zIndex: 10000 } }}
-          >
+            containerProps={{ style: { zIndex: 10000 } }}>
             <Box pt={3} pb={1} display="flex" justifyContent="center">
               <Box w="36px" h="4px" borderRadius="full" bg="gray.300" />
             </Box>
@@ -229,8 +225,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
           gap={1}
           px={2}
           py={1}
-          borderRadius="full"
-        >
+          borderRadius="full">
           <Icon as={hasVerified ? FaCheckCircle : FaShieldAlt} boxSize={3} />
           <Text fontSize="xs">{primaryCert.display_name}</Text>
         </Badge>
@@ -251,8 +246,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
           px={3}
           _hover={{ bg: 'gray.50' }}
           borderRadius="lg"
-          transition="all 0.2s"
-        >
+          transition="all 0.2s">
           <Icon
             as={hasVerified ? FaCheckCircle : FaShieldAlt}
             color={hasVerified ? 'green.500' : 'gray.400'}
@@ -268,8 +262,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
                 variant="subtle"
                 fontSize="xs"
                 borderRadius="full"
-                px={2}
-              >
+                px={2}>
                 {hasVerified
                   ? intl.formatMessage({ id: 'certification.badge.verifiedShort' })
                   : intl.formatMessage({ id: 'certification.badge.selfReportedShort' })}
@@ -309,8 +302,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
           borderColor: hasVerified ? 'green.400' : 'gray.400',
           shadow: 'sm'
         }}
-        transition="all 0.2s"
-      >
+        transition="all 0.2s">
         {/* Header with gradient — matches page pattern */}
         <Box
           bg={
@@ -319,8 +311,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
               : 'linear-gradient(135deg, #f7fafc, #edf2f7)'
           }
           px={6}
-          py={4}
-        >
+          py={4}>
           <HStack justify="space-between" align="center">
             <HStack spacing={3}>
               <Icon
@@ -362,8 +353,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
                   fontSize="xs"
                   px={2}
                   py={1}
-                  borderRadius="full"
-                >
+                  borderRadius="full">
                   <HStack spacing={1}>
                     {cert.status === 'verified_via_database' && (
                       <Icon as={FaCheckCircle} boxSize={2.5} />

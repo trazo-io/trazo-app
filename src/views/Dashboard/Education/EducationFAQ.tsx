@@ -164,7 +164,9 @@ const EducationFAQ: React.FC = () => {
               <StandardSearchInput
                 placeholder={intl.formatMessage({ id: 'education.faqSearchPlaceholder' })}
                 value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSearchQuery(e.target.value)
+                }
               />
               <HStack spacing={2} flexWrap="wrap">
                 <Button
@@ -173,8 +175,7 @@ const EducationFAQ: React.FC = () => {
                   borderRadius="full"
                   variant={selectedCategory === null ? 'solid' : 'outline'}
                   colorScheme="green"
-                  onClick={() => setSelectedCategory(null)}
-                >
+                  onClick={() => setSelectedCategory(null)}>
                   {intl.formatMessage({ id: 'education.faqAllCategories' })}
                 </Button>
                 {categories.map((cat) => (
@@ -185,8 +186,7 @@ const EducationFAQ: React.FC = () => {
                     borderRadius="full"
                     variant={selectedCategory === cat ? 'solid' : 'outline'}
                     colorScheme="green"
-                    onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                  >
+                    onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}>
                     {intl.formatMessage({ id: CATEGORY_LABEL_IDS[cat] })}
                   </Button>
                 ))}
@@ -203,8 +203,7 @@ const EducationFAQ: React.FC = () => {
                       border="none"
                       borderBottomWidth="1px"
                       borderBottomColor={dividerColor}
-                      _last={{ borderBottomWidth: 0 }}
-                    >
+                      _last={{ borderBottomWidth: 0 }}>
                       <AccordionButton px={{ base: 4, md: 6 }} py={4} _hover={{ bg: hoverBg }}>
                         <HStack flex={1} spacing={3} align="flex-start" textAlign="left">
                           <Text fontWeight="semibold" fontSize="sm" flex={1}>
@@ -241,8 +240,7 @@ const EducationFAQ: React.FC = () => {
                     onClick={() => {
                       setSearchQuery('');
                       setSelectedCategory(null);
-                    }}
-                  >
+                    }}>
                     {intl.formatMessage({ id: 'education.faqClearSearch' })}
                   </Button>
                 </CardBody>

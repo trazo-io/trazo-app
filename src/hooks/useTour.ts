@@ -36,9 +36,7 @@ export function useTour(tourId: string, options: UseTourOptions = {}) {
   // Check if this tour is already done
   const isDone =
     !!skippedTours[tourId] ||
-    (!!completedTours[tourId] && tour
-      ? completedTours[tourId].version >= tour.version
-      : false);
+    (!!completedTours[tourId] && tour ? completedTours[tourId].version >= tour.version : false);
 
   // Check if another tour is already running
   const isBusy = !!activeTourId && activeTourId !== tourId;

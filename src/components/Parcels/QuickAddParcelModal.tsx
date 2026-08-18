@@ -116,21 +116,18 @@ export const QuickAddParcelModal: React.FC<QuickAddParcelModalProps> = ({
             variant="outline"
             minH="44px"
             onClick={handleClose}
-            isDisabled={isLoading}
-          >
+            isDisabled={isLoading}>
             {intl.formatMessage({ id: 'app.cancel' })}
           </StandardButton>
           <StandardButton
             minH="44px"
             onClick={handleCreate}
             isLoading={isLoading}
-            isDisabled={!canSubmit}
-          >
+            isDisabled={!canSubmit}>
             {intl.formatMessage({ id: 'parcel.quickAdd.create' })}
           </StandardButton>
         </HStack>
-      }
-    >
+      }>
       <VStack align="stretch" spacing={4}>
         <StandardField label={intl.formatMessage({ id: 'app.name' })} required>
           <StandardInput
@@ -151,8 +148,7 @@ export const QuickAddParcelModal: React.FC<QuickAddParcelModalProps> = ({
                   { ha: hectares.toFixed(2) }
                 )
               : undefined
-          }
-        >
+          }>
           <StandardInput
             value={acres}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAcres(e.target.value)}
@@ -171,8 +167,7 @@ export const QuickAddParcelModal: React.FC<QuickAddParcelModalProps> = ({
           onClick={() => {
             handleClose();
             navigate(`/admin/dashboard/farm/${farmId}/parcel/add`);
-          }}
-        >
+          }}>
           {intl.formatMessage({ id: 'parcel.quickAdd.fullForm' })}
         </Text>
       </VStack>

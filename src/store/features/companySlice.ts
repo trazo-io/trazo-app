@@ -115,9 +115,7 @@ export const companySlice = createSlice({
         'establishments' in state.currentCompany &&
         state.currentCompany.establishments
       ) {
-        const farm = state.currentCompany.establishments.find(
-          (farm: Farm) => farm.id === farmId
-        );
+        const farm = state.currentCompany.establishments.find((farm: Farm) => farm.id === farmId);
         if (farm && farm.parcels) {
           const parcel = farm.parcels.find((parcel) => parcel.id === parcelId);
           if (parcel) {

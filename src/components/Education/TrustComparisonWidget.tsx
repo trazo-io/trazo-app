@@ -169,8 +169,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
                 bg="orange.50"
                 borderRadius="md"
                 border="1px solid"
-                borderColor="orange.200"
-              >
+                borderColor="orange.200">
                 <VStack spacing={2}>
                   <HStack>
                     <Icon as={FiAlertTriangle} color={warningColor} boxSize={4} />
@@ -216,8 +215,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
                 <Text
                   fontSize="sm"
                   color={isImprovement ? 'green.700' : 'blue.700'}
-                  fontWeight="medium"
-                >
+                  fontWeight="medium">
                   {isImprovement
                     ? `${Math.abs(improvement).toFixed(1)}% more accurate`
                     : 'More precise calculation'}
@@ -267,8 +265,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
                     colorScheme={getScoreColor(
                       comparison.data_sources.generic.reliability_score,
                       100
-                    )}
-                  >
+                    )}>
                     {comparison.data_sources.generic.reliability_score}%
                   </Badge>
                 </HStack>
@@ -287,8 +284,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
                   <Badge
                     colorScheme={
                       comparison.data_sources.generic.regional_specificity ? 'green' : 'red'
-                    }
-                  >
+                    }>
                     {comparison.data_sources.generic.regional_specificity ? 'Yes' : 'No'}
                   </Badge>
                 </HStack>
@@ -318,8 +314,10 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
                     Reliability
                   </Text>
                   <Badge
-                    colorScheme={getScoreColor(comparison.data_sources.usda.reliability_score, 100)}
-                  >
+                    colorScheme={getScoreColor(
+                      comparison.data_sources.usda.reliability_score,
+                      100
+                    )}>
                     {comparison.data_sources.usda.reliability_score}%
                   </Badge>
                 </HStack>
@@ -338,8 +336,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
                   <Badge
                     colorScheme={
                       comparison.data_sources.usda.regional_specificity ? 'green' : 'red'
-                    }
-                  >
+                    }>
                     {comparison.data_sources.usda.regional_specificity ? 'Yes' : 'No'}
                   </Badge>
                 </HStack>
@@ -431,7 +428,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
 
   if (error) {
     return (
-      <Alert status="error" borderRadius="md">
+      <Alert status="error">
         <AlertIcon />
         <VStack align="start" spacing={2}>
           <Text fontWeight="medium">Unable to Load Trust Comparison</Text>
@@ -453,8 +450,7 @@ const TrustComparisonWidget: React.FC<TrustComparisonWidgetProps> = ({
       border="1px solid"
       borderColor={borderColor}
       p={compact ? 4 : 6}
-      maxW="100%"
-    >
+      maxW="100%">
       <VStack spacing={6} align="stretch">
         {/* Header */}
         <Box textAlign="center">

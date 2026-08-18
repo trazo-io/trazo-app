@@ -88,11 +88,17 @@ describe('i18n used-key gate', () => {
     const detail = missing
       .map((k) => `${k}  <-  ${[...(used.get(k) ?? [])].join(', ')}`)
       .join('\n');
-    expect(missing, `NEW missing i18n keys (add to BOTH en-US.json and es-419.json, or pass defaultMessage):\n${detail}`).toEqual([]);
+    expect(
+      missing,
+      `NEW missing i18n keys (add to BOTH en-US.json and es-419.json, or pass defaultMessage):\n${detail}`
+    ).toEqual([]);
   });
 
   it('baseline does not contain keys that are now defined (keep it tidy)', () => {
     const stale = [...BASELINE].filter((k) => enKeys.has(k));
-    expect(stale, `baseline keys now exist — remove from BASELINE in used-keys.test.ts: ${stale.join(', ')}`).toEqual([]);
+    expect(
+      stale,
+      `baseline keys now exist — remove from BASELINE in used-keys.test.ts: ${stale.join(', ')}`
+    ).toEqual([]);
   });
 });

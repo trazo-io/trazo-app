@@ -67,11 +67,7 @@ describe('OfflinePhotoQueue', () => {
 
       const all = await offlinePhotoQueue.getAll();
       expect(all.length).toBe(3);
-      expect(all.map((p) => p.fileName)).toEqual([
-        'photo1.jpg',
-        'photo2.jpg',
-        'photo3.jpg'
-      ]);
+      expect(all.map((p) => p.fileName)).toEqual(['photo1.jpg', 'photo2.jpg', 'photo3.jpg']);
     });
 
     it('should record queuedAt timestamp', async () => {
@@ -194,7 +190,10 @@ describe('OfflinePhotoQueue', () => {
 
       let resolveUpload!: (value: string) => void;
       const slowUpload = vi.fn().mockImplementation(
-        () => new Promise<string>((resolve) => { resolveUpload = resolve; })
+        () =>
+          new Promise<string>((resolve) => {
+            resolveUpload = resolve;
+          })
       );
 
       // Start first process (will hang on slow upload)

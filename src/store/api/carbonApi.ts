@@ -1047,7 +1047,6 @@ export const carbonApi = baseApi.injectEndpoints({
       })
     }),
 
-
     // Weather API endpoints
     getCurrentWeatherConditions: builder.query<
       WeatherResponse,
@@ -1271,10 +1270,7 @@ export const carbonApi = baseApi.injectEndpoints({
       providesTags: ['Education']
     }),
 
-    getTrustComparisonData: builder.query<
-      TrustComparisonData,
-      { farmId?: number; context?: any }
-    >({
+    getTrustComparisonData: builder.query<TrustComparisonData, { farmId?: number; context?: any }>({
       query: ({ farmId, context }) => {
         const params = new URLSearchParams();
         if (farmId) params.append('establishment_id', farmId.toString());

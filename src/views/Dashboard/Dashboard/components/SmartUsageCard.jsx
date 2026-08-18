@@ -196,8 +196,7 @@ const SmartUsageCard = ({
         p={6}
         bg={cardBg}
         borderRadius="15px"
-        boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
-      >
+        boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)">
         <Flex justify="center" align="center" h="full">
           <CircularProgress isIndeterminate color="green.500" size="40px" />
         </Flex>
@@ -212,8 +211,7 @@ const SmartUsageCard = ({
         p={6}
         bg={cardBg}
         borderRadius="15px"
-        boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
-      >
+        boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)">
         <VStack spacing={4} align="center" justify="center" h="full">
           <Circle size="40px" bg="red.500" color="white">
             <Icon as={FaChartLine} w="20px" h="20px" />
@@ -237,8 +235,7 @@ const SmartUsageCard = ({
       borderRadius="15px"
       boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)"
       position="relative"
-      overflow="hidden"
-    >
+      overflow="hidden">
       {smartInsight.priority === 'celebration' && (
         <Box
           position="absolute"
@@ -261,8 +258,7 @@ const SmartUsageCard = ({
                 fontSize={{ base: 'xs', md: 'sm' }}
                 fontWeight="700"
                 color={textColor}
-                lineHeight="1.2"
-              >
+                lineHeight="1.2">
                 {smartInsight.status}
               </Text>
               {/* The tier badge ("Excellent / Strong / Good / Solid Documentation", with a medal
@@ -374,8 +370,7 @@ const SmartUsageCard = ({
           p={3}
           borderRadius="md"
           border="1px solid"
-          borderColor={cardBorderAccent}
-        >
+          borderColor={cardBorderAccent}>
           <Flex align="center" justify="space-between">
             <HStack spacing={3}>
               <Circle size="32px" bg={accentColor} color="white">
@@ -389,8 +384,7 @@ const SmartUsageCard = ({
                   <Tooltip
                     label={intl.formatMessage({ id: 'dashboard.tooltipMonthlyScans' })}
                     hasArrow
-                    placement="top"
-                  >
+                    placement="top">
                     <Text fontSize="sm" fontWeight="700" color={textColor} cursor="help">
                       {monthlyQRScans.toLocaleString()}{' '}
                       {intl.formatMessage({ id: 'dashboard.qrScans' })}
@@ -444,8 +438,7 @@ const SmartUsageCard = ({
             _active={{
               transform: 'translateY(0px)'
             }}
-            transition="all 0.2s ease"
-          >
+            transition="all 0.2s ease">
             {smartInsight.action}
           </Button>
         </Box>

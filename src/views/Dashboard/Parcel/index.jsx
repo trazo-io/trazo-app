@@ -93,21 +93,18 @@ export default function ParcelView() {
       px={{ base: '16px', md: '24px' }}
       w="100%"
       maxW="100%"
-      overflow="hidden"
-    >
+      overflow="hidden">
       <Flex
         mb={{ base: '16px', md: '24px' }}
         justify="space-between"
         align={{ base: 'stretch', smd: 'center' }}
         direction={{ base: 'column', smd: 'row' }}
-        gap={3}
-      >
+        gap={3}>
         <Text
           color={mainText}
           fontSize={{ base: 'xl', md: '2xl' }}
           fontWeight="bold"
-          px={{ base: '16px', md: '0' }}
-        >
+          px={{ base: '16px', md: '0' }}>
           {establishment?.name}
         </Text>
         {/* WS-5: THE entry to the per-parcel certifier record. Status text rides the
@@ -126,8 +123,7 @@ export default function ParcelView() {
                 )
               : undefined
           }
-          hasArrow
-        >
+          hasArrow>
           <Button
             leftIcon={<Icon as={FaClipboardCheck} />}
             colorScheme="green"
@@ -135,8 +131,7 @@ export default function ParcelView() {
             minH="44px"
             onClick={() =>
               navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application`)
-            }
-          >
+            }>
             {intl.formatMessage({ id: 'parcelApp.title' })}
             {data?.application_status
               ? ` · ${intl.formatMessage({ id: `parcelApp.status.${data.application_status}` })}`
@@ -151,8 +146,7 @@ export default function ParcelView() {
         my={{ base: '20px', md: '26px' }}
         gap={{ base: '16px', md: '24px' }}
         w="100%"
-        maxW="100%"
-      >
+        maxW="100%">
         {establishment && !isFetching ? (
           <CardWithImage
             title={`${establishment?.city || establishment?.zone || ''}, ${establishment?.state}`}
@@ -195,8 +189,7 @@ export default function ParcelView() {
         templateRows={{ sm: '1fr auto', md: '1fr', lg: '1fr' }}
         gap={{ base: '16px', md: '24px' }}
         w="100%"
-        maxW="100%"
-      >
+        maxW="100%">
         <TrackList amount={40} />
         <HistoryCard
           title={intl.formatMessage({ id: 'parcel.history' })}

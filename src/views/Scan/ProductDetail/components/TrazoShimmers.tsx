@@ -61,8 +61,7 @@ export const HeroShimmer: React.FC = () => {
       px={{ base: 4, md: 8 }} // Add horizontal padding
       pb={8}
       overflow="hidden"
-      w="full"
-    >
+      w="full">
       {/* Background pattern */}
       <Box
         position="absolute"
@@ -109,8 +108,7 @@ export const HeroShimmer: React.FC = () => {
             borderWidth="1px"
             borderColor={borderColor}
             maxW="sm"
-            w="full"
-          >
+            w="full">
             <HStack justify="center" spacing={3}>
               <SkeletonCircle size="10" />
               <VStack align="start" spacing={1} flex={1}>
@@ -231,8 +229,7 @@ export const TransparencyShimmer: React.FC = () => {
               p={4}
               borderRadius="lg"
               border="1px solid"
-              borderColor={borderColor}
-            >
+              borderColor={borderColor}>
               <VStack spacing={3}>
                 <SkeletonCircle size="10" />
                 <TrazoShimmer height="14px" width="90%" />
@@ -295,8 +292,7 @@ export const SidebarShimmer: React.FC = () => {
         border="1px solid"
         borderColor={borderColor}
         p={6}
-        w="full"
-      >
+        w="full">
         <VStack spacing={4}>
           <SkeletonCircle size="16" />
           <TrazoShimmer height="20px" width="80%" />
@@ -312,8 +308,7 @@ export const SidebarShimmer: React.FC = () => {
         border="1px solid"
         borderColor={borderColor}
         p={5}
-        w="full"
-      >
+        w="full">
         <VStack spacing={4}>
           <TrazoShimmer height="18px" width="70%" />
           <SimpleGrid columns={2} spacing={3} w="full">
@@ -343,8 +338,7 @@ export const CardShimmer: React.FC<{ height?: string }> = ({ height = '200px' })
       borderColor={borderColor}
       p={6}
       w="full"
-      height={height}
-    >
+      height={height}>
       <VStack spacing={4}>
         <HStack justify="space-between" w="full">
           <TrazoShimmer height="20px" width="60%" />

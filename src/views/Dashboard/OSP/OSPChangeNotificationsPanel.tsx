@@ -24,16 +24,16 @@ import React, { useState } from 'react';
 import {
   Badge,
   Box,
-  Button,
   Divider,
   HStack,
+  Icon,
   SimpleGrid,
   Text,
   useColorModeValue,
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaPlus, FaTrash } from 'react-icons/fa';
+import { FaExchangeAlt, FaPlus, FaTrash } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import {
@@ -227,26 +227,21 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
     }
   };
 
-  // No `mt` on StandardCard: it destructures a fixed prop list and never spreads the rest, so
-  // the `mt={4}` that used to be here was silently dropped — the inert-prop class. Spacing
-  // already comes from the preceding card's `mb`, so removing it changes no pixels; it removes
-  // a claim that was never true.
+  // `mt` was dropped by StandardCard for years (fixed prop list, no rest-spread) and the note
+  // here recorded that. The prop now exists; spacing still comes from the preceding card's
+  // `mb`, so none is passed.
   return (
-    <StandardCard>
-      <Text fontWeight="bold" fontSize="sm">
-        {intl.formatMessage({
-          id: 'osp.changeNotifications.title',
-          defaultMessage: 'Notification of Changes (7 CFR 205.400(f))'
-        })}
-      </Text>
-      <Text fontSize="xs" color={subtextColor} mt={1}>
-        {intl.formatMessage({
-          id: 'osp.changeNotifications.subtitle',
-          defaultMessage:
-            'Record any change reported to your certifier. A prohibited-substance application must be reported immediately (§ 205.400(f)(1)); other changes require prior notice (§ 205.400(f)(2)).'
-        })}
-      </Text>
-
+    <StandardCard
+      titleIcon={<Icon as={FaExchangeAlt} color="green.700" />}
+      title={intl.formatMessage({
+        id: 'osp.changeNotifications.title',
+        defaultMessage: 'Notification of Changes (7 CFR 205.400(f))'
+      })}
+      subtitle={intl.formatMessage({
+        id: 'osp.changeNotifications.subtitle',
+        defaultMessage:
+          'Record any change reported to your certifier. A prohibited-substance application must be reported immediately (§ 205.400(f)(1)); other changes require prior notice (§ 205.400(f)(2)).'
+      })}>
       {/* Existing notifications */}
       <VStack align="stretch" spacing={2} mt={3}>
         {notifications.length === 0 ? (
@@ -293,26 +288,28 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                 {!cn.certifier_acknowledged_at &&
                   (pendingDeleteId === cn.id ? (
                     <HStack spacing={1}>
-                      <Button
+                      <StandardButton
                         size="xs"
                         colorScheme="red"
-                        variant="solid"
                         isLoading={isDeleting}
                         onClick={() => handleDelete(cn.id)}>
                         {intl.formatMessage({
                           id: 'osp.changeNotifications.withdrawConfirm',
                           defaultMessage: 'Withdraw'
                         })}
-                      </Button>
-                      <Button size="xs" variant="ghost" onClick={() => setPendingDeleteId(null)}>
+                      </StandardButton>
+                      <StandardButton
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => setPendingDeleteId(null)}>
                         {intl.formatMessage({
                           id: 'osp.changeNotifications.withdrawCancel',
                           defaultMessage: 'Cancel'
                         })}
-                      </Button>
+                      </StandardButton>
                     </HStack>
                   ) : (
-                    <Button
+                    <StandardButton
                       size="xs"
                       variant="ghost"
                       colorScheme="red"
@@ -329,7 +326,7 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                         id: 'osp.changeNotifications.withdraw',
                         defaultMessage: 'Withdraw'
                       })}
-                    </Button>
+                    </StandardButton>
                   ))}
               </HStack>
               <Text fontSize="xs" color={subtextColor}>

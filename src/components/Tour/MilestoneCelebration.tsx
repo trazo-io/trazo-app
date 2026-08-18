@@ -67,11 +67,7 @@ export const MilestoneCelebrationModal: React.FC<MilestoneCelebrationProps> = ({
         <ModalBody py={8} px={6}>
           <VStack spacing={5} textAlign="center">
             {/* Success icon */}
-            <Box
-              p={4}
-              borderRadius="full"
-              bg={accentBg}
-            >
+            <Box p={4} borderRadius="full" bg={accentBg}>
               <Icon as={FiCheck} boxSize={8} color={primaryColor} />
             </Box>
 
@@ -95,19 +91,12 @@ export const MilestoneCelebrationModal: React.FC<MilestoneCelebrationProps> = ({
               borderRadius="xl"
               rightIcon={<FiArrowRight />}
               _hover={{ bg: primaryHover }}
-              onClick={handleAction}
-            >
+              onClick={handleAction}>
               <FormattedMessage id={milestone.actionKey} />
             </Button>
 
             {/* Dismiss */}
-            <Button
-              variant="ghost"
-              size="sm"
-              color={textColor}
-              onClick={onClose}
-              minH="44px"
-            >
+            <Button variant="ghost" size="sm" color={textColor} onClick={onClose} minH="44px">
               <FormattedMessage id="tour.common.close" />
             </Button>
           </VStack>
@@ -124,10 +113,7 @@ export function useMilestoneToast() {
   const toast = useToast();
   const intl = useIntl();
 
-  const showToast = (
-    milestone: MilestoneDefinition,
-    daysSinceSignup: number | null
-  ) => {
+  const showToast = (milestone: MilestoneDefinition, daysSinceSignup: number | null) => {
     const isEarly = isEarlyStage(daysSinceSignup);
     const titleKey = isEarly ? milestone.titleKeyEarly : milestone.titleKeyLate;
     const bodyKey = isEarly ? milestone.bodyKeyEarly : milestone.bodyKeyLate;

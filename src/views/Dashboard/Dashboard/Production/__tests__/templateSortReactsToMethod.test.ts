@@ -17,10 +17,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const source = readFileSync(
-  join(__dirname, '..', 'QuickStartProduction.tsx'),
-  'utf8'
-);
+const source = readFileSync(join(__dirname, '..', 'QuickStartProduction.tsx'), 'utf8');
 
 /** The `filteredTemplates` memo, from its declaration to its dependency array. */
 const memoBlock = (() => {

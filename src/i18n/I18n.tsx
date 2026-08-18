@@ -87,8 +87,7 @@ export default function I18n(props: I18nProps) {
         locale={currentLocale}
         defaultLocale="en-US"
         messages={messages}
-        onError={handleIntlError}
-      >
+        onError={handleIntlError}>
         {props.children}
       </IntlProvider>
     </LocaleContext.Provider>

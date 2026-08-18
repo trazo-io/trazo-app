@@ -10,7 +10,12 @@ export default function VerifyEmailConsumer() {
       <Heading color={textColor} fontSize="32px" mb="24px">
         Verify Your Email
       </Heading>
-      <Text color={textColor} mb="24px" textAlign="center" maxW={{ base: '100%', md: '500px' }} px={4}>
+      <Text
+        color={textColor}
+        mb="24px"
+        textAlign="center"
+        maxW={{ base: '100%', md: '500px' }}
+        px={4}>
         We've sent you an email with a verification link. Please check your inbox and click the link
         to verify your account.
       </Text>
@@ -21,8 +26,7 @@ export default function VerifyEmailConsumer() {
         w="200px"
         h="50"
         mb="24px"
-        onClick={() => navigate('/auth/signin')}
-      >
+        onClick={() => navigate('/auth/signin')}>
         Back to Sign In
       </Button>
     </Flex>

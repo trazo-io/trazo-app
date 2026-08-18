@@ -100,8 +100,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
         id: 'operationAudit.subtitle',
         defaultMessage:
           'One combined NOP records PDF across every parcel and production — for your annual inspection.'
-      })}
-    >
+      })}>
       {blockers.length > 0 && (
         <HStack
           align="flex-start"
@@ -111,8 +110,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
           borderRadius="md"
           borderWidth="1px"
           borderColor="orange.200"
-          bg="orange.50"
-        >
+          bg="orange.50">
           <Icon as={FaExclamationTriangle} color="orange.500" mt="2px" flexShrink={0} />
           <Box>
             <Text fontSize="sm" fontWeight="semibold" color="orange.800">
@@ -137,8 +135,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
       <HStack
         gap={3}
         align={{ base: 'stretch', smd: 'flex-end' }}
-        flexDirection={{ base: 'column', smd: 'row' }}
-      >
+        flexDirection={{ base: 'column', smd: 'row' }}>
         <Box minW={{ smd: '200px' }} w={{ base: 'full', smd: 'auto' }}>
           <Text fontSize="sm" mb={1} color="gray.600">
             {intl.formatMessage({
@@ -149,8 +146,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
           <StandardSelect
             value={certification}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCertification(e.target.value)}
-            size="sm"
-          >
+            size="sm">
             {CERT_OPTIONS.map((c) => (
               <option key={c} value={c}>
                 {intl.formatMessage({
@@ -168,8 +164,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
           isLoading={isLoading}
           isDisabled={!companyId || !farmId}
           w={{ base: 'full', smd: 'auto' }}
-          flexShrink={0}
-        >
+          flexShrink={0}>
           {intl.formatMessage({
             id: 'operationAudit.download',
             defaultMessage: 'Download Operation Dossier'

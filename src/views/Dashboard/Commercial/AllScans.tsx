@@ -405,7 +405,10 @@ const AllScansView = () => {
             borderRadius="lg"
             border="1px solid"
             borderColor="gray.200">
-            <Table variant="simple" size="sm">
+            {/* The wrapper scrolls only if the table refuses to shrink below this. Without
+                a `minW` the columns compress until uppercase headers wrap one character per
+                line — the P-R-O-D-U-C-T-I-O-N failure seen on the Buyer page. */}
+            <Table variant="simple" size="sm" minW="720px">
               <Thead bg="gray.50" position="sticky" top={0} zIndex={1}>
                 <Tr>
                   <Th

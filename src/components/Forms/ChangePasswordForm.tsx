@@ -114,7 +114,8 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
         navigate('/consumidor/auth');
       }
     } catch (error: any) {
-      const errorMessage = error?.data?.detail || error?.data?.error || 'Failed to change password. Please try again.';
+      const errorMessage =
+        error?.data?.detail || error?.data?.error || 'Failed to change password. Please try again.';
       toast({
         title: 'Error',
         description: Array.isArray(errorMessage) ? errorMessage[0] : errorMessage,
@@ -138,8 +139,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
   return (
     <StandardCard
       title="Change Password"
-      subtitle="Enter your current password and choose a new secure password"
-    >
+      subtitle="Enter your current password and choose a new secure password">
       <form onSubmit={handleSubmit(onSubmit)}>
         <VStack spacing={6} align="stretch">
           {/* Current Password */}
@@ -169,8 +169,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
             label="New Password"
             required
             error={errors.newPassword?.message}
-            helpText="Choose a strong password that meets all requirements"
-          >
+            helpText="Choose a strong password that meets all requirements">
             <InputGroup>
               <StandardInput
                 type={showNewPassword ? 'text' : 'password'}
@@ -275,8 +274,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
           <StandardField
             label="Confirm New Password"
             required
-            error={errors.confirmPassword?.message}
-          >
+            error={errors.confirmPassword?.message}>
             <InputGroup>
               <StandardInput
                 type={showConfirmPassword ? 'text' : 'password'}
@@ -305,8 +303,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ userType
             size="lg"
             isLoading={isLoading}
             loadingText="Changing Password..."
-            width="full"
-          >
+            width="full">
             Change Password
           </StandardButton>
         </VStack>

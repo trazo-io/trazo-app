@@ -512,7 +512,12 @@ export function getPhotoGuidanceParts(
   if (!recs) return null;
 
   if (photoCount === 0) {
-    return { stage: 0, eventTypeName: recs.eventType, examples: recs.examples.slice(0, 2), tierText: '' };
+    return {
+      stage: 0,
+      eventTypeName: recs.eventType,
+      examples: recs.examples.slice(0, 2),
+      tierText: ''
+    };
   }
   if (photoCount === 1) {
     return {
@@ -538,7 +543,9 @@ export function getPhotoGuidanceText(eventType: number | undefined, photoCount: 
   if (!parts) return '';
 
   if (parts.stage === 0) {
-    return `To verify this ${parts.eventTypeName}, upload photos showing: ${parts.examples.join(', ')}`;
+    return `To verify this ${parts.eventTypeName}, upload photos showing: ${parts.examples.join(
+      ', '
+    )}`;
   }
   if (parts.stage === 1) {
     return `${parts.tierText} Add another photo from a different angle for stronger verification.`;

@@ -109,15 +109,14 @@ const BANNED = [
   {
     name: 'score-threshold verdict ladder',
     pattern: /\b(transparencyScore|carbonScore|score)\s*>=\s*\d{2}/,
-    reason:
-      'branching on a score threshold grades the season even when the only output is a colour'
+    reason: 'branching on a score threshold grades the season even when the only output is a colour'
   },
   {
     // The tier ladder by name. "Excellent Documentation" was the letter grade spelled out; it
     // came off farm home 2026-08-04 and must not reappear on a record screen.
     name: 'documentation tier verdict',
     pattern: /["'`][^"'`\n]*\b(Excellent|Fully)\s+Documen/i,
-    reason: 'a verdict on the grower\'s own records is a self-assigned grade, quietly worded'
+    reason: "a verdict on the grower's own records is a self-assigned grade, quietly worded"
   },
   {
     // i18n indirection: the strings above can be reintroduced through a message id without any

@@ -42,7 +42,12 @@ export default defineConfig({
       'utils': path.resolve(__dirname, './src/utils'),
       'hooks': path.resolve(__dirname, './src/hooks'),
       'store': path.resolve(__dirname, './src/store'),
-      'config': path.resolve(__dirname, './src/config')
+      'config': path.resolve(__dirname, './src/config'),
+      // `theme/...` is a real app specifier (src/index.tsx imports `theme/theme`) that this
+      // list was missing. It only surfaced when a component started importing a theme module
+      // — `StandardComponents` -> `theme/components/alert` — because until then nothing under
+      // test crossed that boundary. Same class as the `src` gap documented above.
+      theme: path.resolve(__dirname, './src/theme')
     }
   }
 })

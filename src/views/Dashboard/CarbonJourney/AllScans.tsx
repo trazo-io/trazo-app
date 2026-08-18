@@ -64,8 +64,7 @@ export default function AllScans() {
       title="All Product Scans"
       description="Complete history of products you've scanned"
       showBackButton
-      onBack={() => navigate('/admin/dashboard/journey')}
-    >
+      onBack={() => navigate('/admin/dashboard/journey')}>
       <StandardCard title={`Product Scans (${totalCount})`} variant="elevated">
         <VStack spacing={3}>
           {isLoading ? (
@@ -96,8 +95,7 @@ export default function AllScans() {
                   <NavLink
                     key={production.id || index}
                     to={`/production/${production.public_id}/`}
-                    style={{ width: '100%' }}
-                  >
+                    style={{ width: '100%' }}>
                     <Box
                       bg="white"
                       borderRadius="xl"
@@ -108,8 +106,7 @@ export default function AllScans() {
                         boxShadow: 'md',
                         borderColor: 'green.200'
                       }}
-                      transition="all 0.2s"
-                    >
+                      transition="all 0.2s">
                       <VStack spacing={4} align="stretch">
                         {/* Header with Image and Title */}
                         <Flex justify="space-between" align="center">
@@ -130,8 +127,7 @@ export default function AllScans() {
                                 size="56px"
                                 bg="green.50"
                                 border="2px solid"
-                                borderColor="green.100"
-                              >
+                                borderColor="green.100">
                                 <Icon as={FaQrcode} color="green.500" boxSize={5} />
                               </Circle>
                             )}
@@ -140,8 +136,7 @@ export default function AllScans() {
                                 fontWeight="semibold"
                                 fontSize="md"
                                 color="gray.800"
-                                noOfLines={1}
-                              >
+                                noOfLines={1}>
                                 {productName}
                               </Text>
                               <Text fontSize="sm" color="gray.500">
@@ -169,13 +164,14 @@ export default function AllScans() {
                               fontSize="xs"
                               px={2}
                               py={0.5}
-                              borderRadius="full"
-                            >
+                              borderRadius="full">
                               <HStack spacing={1}>
                                 <Icon as={FaEye} boxSize={2.5} />
                                 <Text>
                                   {transparencyInfo.eventsCount > 0
-                                    ? `${transparencyInfo.eventsCount} ${transparencyInfo.eventsCount === 1 ? 'event' : 'events'}`
+                                    ? `${transparencyInfo.eventsCount} ${
+                                        transparencyInfo.eventsCount === 1 ? 'event' : 'events'
+                                      }`
                                     : 'View'}
                                 </Text>
                               </HStack>
@@ -187,8 +183,7 @@ export default function AllScans() {
                                 fontSize="xs"
                                 px={2}
                                 py={0.5}
-                                borderRadius="full"
-                              >
+                                borderRadius="full">
                                 <HStack spacing={1}>
                                   <Icon as={FaCheckCircle} boxSize={2.5} />
                                   <Text>Verified</Text>
@@ -202,8 +197,7 @@ export default function AllScans() {
                                 fontSize="xs"
                                 px={2}
                                 py={0.5}
-                                borderRadius="full"
-                              >
+                                borderRadius="full">
                                 Photos
                               </Badge>
                             )}

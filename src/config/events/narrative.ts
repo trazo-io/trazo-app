@@ -42,11 +42,40 @@ const EVENT_TYPE_VERB: Record<number, string> = {
   7: 'business'
 };
 
-const verbKeyForRow = (row: ActivityRow): string | null => {
-  if (row.event_type === 1) {
-    return PRODUCTION_SUBTYPE_VERB[row.subtype ?? ''] ?? 'field_work';
+/**
+ * (event_type, subtype) → verb key. Takes the two values rather than a row so the detail
+ * modal, which holds a full event and not an `ActivityRow`, can ask the same question.
+ */
+export const verbKeyFor = (eventType: number, subtype?: string | null): string | null => {
+  if (eventType === 1) {
+    return PRODUCTION_SUBTYPE_VERB[subtype ?? ''] ?? 'field_work';
   }
-  return EVENT_TYPE_VERB[row.event_type] ?? null;
+  return EVENT_TYPE_VERB[eventType] ?? null;
+};
+
+const verbKeyForRow = (row: ActivityRow): string | null => verbKeyFor(row.event_type, row.subtype);
+
+/**
+ * Localized farmer-language title for an event.
+ *
+ * ⛔ NEVER falls back to the description. That fallback is what put a five-line paragraph —
+ * "Hull split at 15%. NOW egg-trap catch rose to 22 over the prior week, above the
+ * hull-split treatment threshold for the block." — in the detail modal's H1, verbatim
+ * duplicating the Field Notes card directly beneath it and eating half a phone screen
+ * (2026-08-16). A title names the KIND of thing; the description is the thing itself.
+ *
+ * `name` is honoured first because a farmer who typed one meant it.
+ */
+export const eventTitle = (
+  eventType: number,
+  subtype: string | null | undefined,
+  name: string | null | undefined,
+  intl: IntlShape
+): string => {
+  if (name) return name;
+  const verb = verbKeyFor(eventType, subtype);
+  if (verb) return intl.formatMessage({ id: `activities.verb.${verb}` });
+  return intl.formatMessage({ id: `activities.type.${eventType}` });
 };
 
 /** Localized farmer-language title for a feed row. */

@@ -25,9 +25,6 @@ export function getAllTours(): TourDefinition[] {
  */
 export function getToursForPage(page: string): TourDefinition[] {
   return getAllTours()
-    .filter(
-      (tour) =>
-        tour.trigger.type === 'first-visit' && page.includes(tour.trigger.page)
-    )
+    .filter((tour) => tour.trigger.type === 'first-visit' && page.includes(tour.trigger.page))
     .sort((a, b) => a.priority - b.priority);
 }

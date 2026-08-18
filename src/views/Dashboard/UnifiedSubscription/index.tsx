@@ -962,7 +962,7 @@ function UnifiedSubscriptionDashboard() {
                         </Flex>
 
                         {isPilot && (
-                          <Alert status="info" borderRadius="md" mb={4} variant="left-accent">
+                          <Alert status="info" mb={4} variant="left-accent">
                             <AlertIcon />
                             <Text fontSize="sm">
                               {intl.formatMessage({ id: 'subscription.pilotNoBilling' })}
@@ -971,7 +971,7 @@ function UnifiedSubscriptionDashboard() {
                         )}
 
                         {subscription?.cancel_at_period_end && (
-                          <Alert status="warning" borderRadius="md" mb={4}>
+                          <Alert status="warning" mb={4}>
                             <AlertIcon />
                             <Text fontSize="sm">
                               {intl.formatMessage({ id: 'app.subscriptionWillCancel' })}{' '}
@@ -981,7 +981,7 @@ function UnifiedSubscriptionDashboard() {
                         )}
 
                         {subscription?.pending_plan && (
-                          <Alert status="info" borderRadius="md" mb={4}>
+                          <Alert status="info" mb={4}>
                             <AlertIcon />
                             <Text fontSize="sm">
                               {intl.formatMessage(
@@ -1036,7 +1036,6 @@ function UnifiedSubscriptionDashboard() {
                           <Alert
                             key={warning.metric}
                             status={warning.level === 'critical' ? 'error' : 'warning'}
-                            borderRadius="md"
                             variant="left-accent">
                             <AlertIcon />
                             <Box flex="1">
@@ -1317,7 +1316,7 @@ function UnifiedSubscriptionDashboard() {
 
                                   {/* Helpful tip when some establishments are at limit */}
                                   {hasEstablishmentsAtLimit && capacityInfo.hasAnyCapacity && (
-                                    <Alert status="info" mt={4} borderRadius="lg" fontSize="sm">
+                                    <Alert status="info" mt={4} fontSize="sm">
                                       <AlertIcon boxSize={4} />
                                       <Box>
                                         <AlertTitle fontSize="sm">
