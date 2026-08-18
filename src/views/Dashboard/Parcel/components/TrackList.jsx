@@ -541,6 +541,13 @@ const TrackList = ({ amount }) => {
         onClose={onEventDetailsClose}
         event={selectedEvent}
         members={currentHistory?.members || []}
+        // Latent today — this card reads `current_history`, which finishing nulls
+        // (Parcel.finish_current_history), so a closed season empties the card rather
+        // than rendering here. Passed anyway: it is the same guarantee the activity
+        // feed needs, and leaving it unpassed is exactly how the prop went dead in the
+        // first place. If `current_history` ever points at a finished row, this shows
+        // the locked state instead of an Edit button that 423s.
+        isProductionFinished={!!(currentHistory?.finish_date || currentHistory?.published)}
         onEventUpdated={handleEventUpdated}
         onEventDeleted={handleEventDeleted}
       />

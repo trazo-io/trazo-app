@@ -27,6 +27,7 @@ import {
   FaCheckCircle,
   FaEdit,
   FaArrowRight,
+  FaLock,
   FaSearch
 } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -1121,6 +1122,36 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           <StandardButton
             onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
             {intl.formatMessage({ id: 'quickStart.error.goBack' })}
+          </StandardButton>
+        </VStack>
+      </StandardPage>
+    );
+  }
+
+  // A finished season cannot be edited. The menu item that links here is already gated
+  // (ProfileProduction), but the ROUTE was not — typing or bookmarking
+  // /production/<id>/change loaded the full form for a closed record, let the farmer
+  // refill it, and only failed at save. WriteAccessGuard above checks role, never state.
+  // Refusing here, before the form renders, is the honest order: say no while it still
+  // costs nothing, and offer the one thing they can actually do.
+  if (isEdit && (productionData as any)?.finish_date) {
+    return (
+      <StandardPage title={intl.formatMessage({ id: 'quickStart.page.titleEdit' })} showBackButton>
+        <VStack py={10} spacing={4} maxW="md" mx="auto" textAlign="center">
+          <Icon as={FaLock} boxSize={8} color="gray.500" />
+          <Text fontWeight="bold" color="gray.700">
+            {intl.formatMessage({ id: 'quickStart.locked.title' })}
+          </Text>
+          <Text color="gray.600" fontSize="sm">
+            {intl.formatMessage({ id: 'quickStart.locked.body' })}
+          </Text>
+          <StandardButton
+            onClick={() =>
+              navigate(
+                `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}`
+              )
+            }>
+            {intl.formatMessage({ id: 'quickStart.locked.viewRecord' })}
           </StandardButton>
         </VStack>
       </StandardPage>

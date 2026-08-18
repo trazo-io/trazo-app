@@ -35,6 +35,17 @@ vi.mock('store/api/historyApi', () => ({
   useDeleteEventMutation: () => [vi.fn(), { isLoading: false }]
 }));
 
+// EventDetailsModal mounts CorrectRecordModal (the locked-record correction path), which
+// calls RTK Query hooks unconditionally — `skip` avoids the request, not the hook. Without
+// this mock the whole suite fails with "could not find react-redux context value", because
+// these tests render the component against the real theme and no store. Mocked at the API
+// boundary, exactly as historyApi is above; the correction UI has its own suite in
+// correctRecordModal.test.tsx.
+vi.mock('store/api/amendmentsApi', () => ({
+  useGetEventAmendmentsQuery: () => ({ data: undefined, isLoading: false }),
+  useAmendEventMutation: () => [vi.fn(), { isLoading: false }]
+}));
+
 // canWrite gates the whole action cluster; this suite is about how those actions LOOK.
 vi.mock('hooks/useUserRole', () => ({ useUserRole: () => ({ canWrite: true }) }));
 

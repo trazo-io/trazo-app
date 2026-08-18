@@ -48,15 +48,16 @@ import {
 import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
 
-// Theme badge variants are SEMANTIC (colorScheme is inert — defaultProps.variant is
-// 'brand', see src/theme/components/badge.js). Status colors ride the same semantics
-// as the progress bars below.
+// Theme badge variants are SEMANTIC, and that is why they are used here rather than a
+// colorScheme. NOTE: colorScheme is NOT inert — the `brand` variant reads `paletteOf(props)`
+// (src/theme/components/badge.js), so both work. The variants are preferred because they
+// carry MEANING; a colorScheme only names a hue.
 const STATUS_BADGE_VARIANT: Record<ModuleStatus, string> = {
   not_started: 'neutral',
   in_progress: 'warning',
   completed: 'brand',
   // `subtle` renders GREEN, which put "Not Applicable" in the same success palette as
-  // "Completed" while STATUS_COLOR below painted its icon blue — one status, two colours, and
+  // "Completed" while STATUS_ICON_COLOR below painted its icon blue — one status, two colours, and
   // the green one claimed credit for work that was explicitly excluded. N/A is an attested
   // exclusion, not an achievement: neutral.
   not_applicable: 'neutral'
@@ -65,12 +66,32 @@ const STATUS_BADGE_VARIANT: Record<ModuleStatus, string> = {
 /** Parcels shown before the section collapses behind "Show all". Two orchards + slack. */
 const PARCEL_PREVIEW_COUNT = 6;
 
-const STATUS_COLOR: Record<ModuleStatus, string> = {
-  not_started: 'gray',
-  in_progress: 'orange',
-  completed: 'green',
+/**
+ * Split in two because the two consumers need different things, and one map serving both is
+ * how a failing colour hid here for so long: it was ONE map, read as `${palette}.500` for the
+ * status glyph and as a bare `colorScheme` for the progress bar.
+ *
+ * Both values it produced for a real status were wrong, and neither shows up in a grep for a
+ * colour token because the token was built by interpolation:
+ *   completed   -> `green.500`  = 2.78:1 on white, under the 3.0 WCAG 1.4.11 non-text floor
+ *   in_progress -> `orange.500` — this theme defines `amber`, NOT `orange`, so it silently
+ *                  resolved to CHAKRA's orange: a foreign accent on all 19 cards
+ *
+ * Glyph colours are therefore explicit tokens, and the bar keeps a palette NAME.
+ */
+const STATUS_ICON_COLOR: Record<ModuleStatus, string> = {
+  not_started: 'gray.500',
+  in_progress: 'amber.900',
+  completed: 'green.700',
   // grey, matching its `neutral` badge. It was blue here while the badge was neutral — the
   // exact "one status, two colours" split the comment above this map describes.
+  not_applicable: 'gray.500'
+};
+
+const STATUS_BAR_SCHEME: Record<ModuleStatus, string> = {
+  not_started: 'gray',
+  in_progress: 'amber',
+  completed: 'green',
   not_applicable: 'gray'
 };
 
@@ -121,7 +142,7 @@ const ModuleCard = ({
               as={
                 status === 'completed' || status === 'not_applicable' ? FaCheckCircle : FaRegCircle
               }
-              color={`${STATUS_COLOR[status]}.500`}
+              color={STATUS_ICON_COLOR[status]}
               boxSize={5}
               mt={0.5}
             />
@@ -146,7 +167,12 @@ const ModuleCard = ({
 
         {status !== 'not_applicable' && progress.required > 0 ? (
           <Box>
-            <Progress value={pct} size="sm" borderRadius="md" colorScheme={STATUS_COLOR[status]} />
+            <Progress
+              value={pct}
+              size="sm"
+              borderRadius="md"
+              colorScheme={STATUS_BAR_SCHEME[status]}
+            />
             <Text fontSize="xs" color="gray.500" mt={1}>
               {intl.formatMessage(
                 { id: 'osp.modules.progressCount' },
@@ -318,7 +344,7 @@ const OSPModuleListPage = () => {
       {!latestOsp ? (
         <StandardCard>
           <VStack spacing={4} py={6}>
-            <Box as={FaFileAlt} boxSize={8} color="green.500" />
+            <Box as={FaFileAlt} boxSize={8} color="green.700" />
             <Text fontWeight="semibold">
               {intl.formatMessage({ id: 'osp.modules.emptyTitle' })}
             </Text>
@@ -425,16 +451,12 @@ const OSPModuleListPage = () => {
           </Box>
 
           <Box data-tour="osp-parcel-applications" w="full">
-            <StandardCard>
+            <StandardCard
+              titleIcon={<Box as={FaMapMarkedAlt} boxSize={5} color="green.700" />}
+              title={intl.formatMessage({ id: 'osp.modules.parcelSectionTitle' })}
+              subtitle={intl.formatMessage({ id: 'osp.modules.parcelSectionHint' })}>
               <HStack spacing={3} align="flex-start">
-                <Box as={FaMapMarkedAlt} boxSize={5} color="green.500" mt={1} />
                 <VStack align="flex-start" spacing={2} w="full">
-                  <Text fontWeight="semibold">
-                    {intl.formatMessage({ id: 'osp.modules.parcelSectionTitle' })}
-                  </Text>
-                  <Text fontSize="sm" color="gray.600">
-                    {intl.formatMessage({ id: 'osp.modules.parcelSectionHint' })}
-                  </Text>
                   {/* Was a dead-end placeholder ("coming to this page next") while the
                     wizard had been shipped for weeks — 2026-08-10 signposting audit.
 

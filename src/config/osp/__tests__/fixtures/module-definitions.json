@@ -6854,6 +6854,7 @@
         },
         "nop_cites": [
           "§ 205.300",
+          "§ 205.301",
           "§ 205.303",
           "§ 205.307"
         ],
@@ -6962,6 +6963,52 @@
                   }
                 ],
                 "nop_cite": null,
+                "prefill": null,
+                "parcel_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "organic_label_categories",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "Which labeling categories does this operation sell under?",
+                  "es": "¿Bajo qué categorías de etiquetado vende esta operación?"
+                },
+                "coaching": {
+                  "en": "A raw agricultural crop sold whole is normally \"100 percent organic\". \"Organic\" allows up to 5% nonorganic ingredients, and \"made with organic\" is a multi-ingredient category — both are handler-side, so a grower who only sells whole crop picks the first. Pick every category that appears on a label, an invoice, or a bill of lading.",
+                  "es": "Un cultivo agrícola crudo vendido entero normalmente es \"100 por ciento orgánico\". \"Orgánico\" admite hasta 5% de ingredientes no orgánicos, y \"elaborado con orgánicos\" es una categoría multi-ingrediente — ambas corresponden al procesador, por lo que un productor que solo vende cultivo entero elige la primera. Marque cada categoría que aparezca en una etiqueta, una factura o una carta de porte."
+                },
+                "options": [
+                  {
+                    "value": "100_percent_organic",
+                    "label": {
+                      "en": "100 percent organic",
+                      "es": "100 por ciento orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "organic",
+                    "label": {
+                      "en": "Organic",
+                      "es": "Orgánico"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "made_with_organic",
+                    "label": {
+                      "en": "Made with organic (specified ingredients or food group(s))",
+                      "es": "Elaborado con orgánicos (ingredientes o grupos de alimentos especificados)"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.301",
                 "prefill": null,
                 "parcel_field": null,
                 "embed": null,

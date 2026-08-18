@@ -517,6 +517,11 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                   error={fieldErrors.reporting_year}>
                   <StandardInput
                     type="number"
+                    // StandardInput defaults type=number to inputMode="decimal" for the field
+                    // measurements it was built around (6.8 pH, 44.5 acres). A reporting YEAR is
+                    // a whole count, so this is the explicit override its own doc calls for —
+                    // otherwise the phone keypad offers a decimal point for "2026".
+                    inputMode="numeric"
                     min={2000}
                     max={2100}
                     value={form.reporting_year}

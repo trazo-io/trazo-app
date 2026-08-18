@@ -2135,7 +2135,7 @@ const ProductionTab = forwardRef(
                       </Box>
                     </HStack>
 
-                    {/* Whole-vs-part coverage (§ 205.103(b)(1)) — mirrors the
+                    {/* Whole-vs-part coverage (§ 205.103(b)(2)) — mirrors the
                         ChemicalEvent applied_scope pair. */}
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField

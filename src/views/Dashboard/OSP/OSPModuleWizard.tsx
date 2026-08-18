@@ -21,14 +21,11 @@ import {
   Checkbox,
   Flex,
   HStack,
-  Input,
   Progress,
   Radio,
   RadioGroup,
-  Select,
   Stack,
   Text,
-  Textarea,
   useColorModeValue,
   useToast,
   VStack
@@ -42,8 +39,11 @@ import {
   GuidanceNote,
   StandardButton,
   StandardCard,
+  StandardInput,
   StandardPage,
-  StandardPageLoading
+  StandardPageLoading,
+  StandardSelect,
+  StandardTextarea
 } from 'components/Design/StandardComponents';
 import {
   answerValue,
@@ -286,9 +286,9 @@ const QuestionField = ({
     }
     case 'select':
       control = (
-        <Select
+        <StandardSelect
           value={(value as string) ?? ''}
-          onChange={(e) => onChange(e.target.value || null)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value || null)}
           isDisabled={isReadOnly}
           placeholder={intl.formatMessage({ id: 'osp.wizard.selectPlaceholder' })}>
           {question.options.map((option) => (
@@ -296,15 +296,15 @@ const QuestionField = ({
               {pickText(option.label, locale)}
             </option>
           ))}
-        </Select>
+        </StandardSelect>
       );
       break;
     case 'date':
       control = (
-        <Input
+        <StandardInput
           type="date"
           value={(value as string) ?? ''}
-          onChange={(e) => onChange(e.target.value || null)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value || null)}
           // isDisabled, not isReadOnly: Chrome still opens the native date picker on a
           // readonly date input, so readOnly here would look locked and edit anyway.
           isDisabled={isReadOnly}
@@ -314,9 +314,9 @@ const QuestionField = ({
       break;
     case 'textarea':
       control = (
-        <Textarea
+        <StandardTextarea
           value={(value as string) ?? ''}
-          onChange={(e) => onChange(e.target.value || null)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value || null)}
           isReadOnly={isReadOnly}
           rows={4}
           maxLength={question.max_length ?? undefined}
@@ -326,9 +326,9 @@ const QuestionField = ({
       break;
     default:
       control = (
-        <Input
+        <StandardInput
           value={(value as string) ?? ''}
-          onChange={(e) => onChange(e.target.value || null)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value || null)}
           isReadOnly={isReadOnly}
           maxLength={question.max_length ?? undefined}
           placeholder={question.placeholder ? pickText(question.placeholder, locale) : undefined}
@@ -502,11 +502,8 @@ const LockedModuleDocument = ({
           // disabling a hook since that card was written. A test id that renders nothing is
           // worse than none: the next person writes a selector against it and it never matches.
           <Box key={page.key} data-testid={`osp-locked-page-${page.key}`}>
-            <StandardCard>
+            <StandardCard title={page.title ? pickText(page.title, locale) : undefined}>
               <VStack align="stretch" spacing={3}>
-                {page.title ? (
-                  <Text fontWeight="semibold">{pickText(page.title, locale)}</Text>
-                ) : null}
                 {questions.map((question) => (
                   <AnswerRow
                     key={question.key}
@@ -683,7 +680,9 @@ const OSPModuleWizard = () => {
   };
 
   const suggestions = data?.suggestions ?? {};
-  const suggestionBg = useColorModeValue('green.50', 'rgba(74, 222, 128, 0.08)');
+  // `rgba(74, 222, 128, .08)` was TAILWIND green-400 — a foreign palette literal, the exact
+  // class `.claude/rules/frontend.md` bans. Same tint derived from OUR green.700 (#2E7D32).
+  const suggestionBg = useColorModeValue('green.50', 'rgba(46, 125, 50, 0.18)');
   const suggestionBorder = useColorModeValue('green.200', 'green.700');
 
   const isUnanswered = (value: AnswerValue): boolean =>
@@ -884,11 +883,9 @@ const OSPModuleWizard = () => {
                 </Box>
 
                 {currentPage ? (
-                  <StandardCard>
+                  <StandardCard
+                    title={currentPage.title ? pickText(currentPage.title, locale) : undefined}>
                     <VStack align="stretch" spacing={5}>
-                      {currentPage.title ? (
-                        <Text fontWeight="semibold">{pickText(currentPage.title, locale)}</Text>
-                      ) : null}
                       {/*
                     Same content class as the module-level education above — this file used to
                     render it a third way (bare grey Text), so one page showed guidance in three
@@ -933,7 +930,7 @@ const OSPModuleWizard = () => {
                                   bg={suggestionBg}
                                   borderRadius="md">
                                   <HStack align="flex-start" spacing={2}>
-                                    <Box as={FaMagic} color="green.500" mt={0.5} flexShrink={0} />
+                                    <Box as={FaMagic} color="green.700" mt={0.5} flexShrink={0} />
                                     <Box minW={0}>
                                       <Text fontSize="sm">
                                         <Text as="span" fontWeight="semibold">
@@ -964,14 +961,10 @@ const OSPModuleWizard = () => {
                     </VStack>
                   </StandardCard>
                 ) : (
-                  <StandardCard>
+                  <StandardCard
+                    titleIcon={<Box as={FaCheckCircle} color="green.700" />}
+                    title={intl.formatMessage({ id: 'osp.wizard.reviewTitle' })}>
                     <VStack align="stretch" spacing={4}>
-                      <HStack spacing={2}>
-                        <Box as={FaCheckCircle} color="green.500" />
-                        <Text fontWeight="semibold">
-                          {intl.formatMessage({ id: 'osp.wizard.reviewTitle' })}
-                        </Text>
-                      </HStack>
                       {/* Same renderer the locked document uses. It was duplicated inline here,
                       which is how the two came to disagree about a stale option value. */}
                       {visibleQuestions(definition, answers)

@@ -704,14 +704,18 @@ const OSPView: React.FC = () => {
       <StandardCard
         mb={4}
         titleIcon={<Icon as={FaFileAlt} color="green.700" />}
-        title={`${intl.formatMessage({ id: 'osp.version' })} ${editableOsp.version_number}`}>
+        title={`${intl.formatMessage({ id: 'osp.version' })} ${editableOsp.version_number}`}
+        // The status badge belongs ON the title row, where it was before this card moved to the
+        // component's header slots — pulling the title out left the badge stranded on a line of
+        // its own inside the body, reading as content rather than as the plan's state. Same slot
+        // the CDFA and Annual cards use for theirs.
+        headerAction={
+          <Badge colorScheme={statusColor}>
+            {intl.formatMessage({ id: `osp.status.${editableOsp.status}` })}
+          </Badge>
+        }>
         <VStack align="stretch" spacing={3}>
-          <HStack justify="space-between" flexWrap="wrap" gap={2}>
-            <HStack spacing={3}>
-              <Badge colorScheme={statusColor}>
-                {intl.formatMessage({ id: `osp.status.${editableOsp.status}` })}
-              </Badge>
-            </HStack>
+          <HStack justify="flex-end" flexWrap="wrap" gap={2}>
             <HStack spacing={2} flexWrap="wrap">
               {/* Save only exists while the OSP is a draft. The backend's
                   perform_update rejects any edit once the OSP leaves 'draft'

@@ -452,7 +452,9 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       modal: 'secondary'
     }
   },
-  // Whole-vs-part coverage (§ 205.103(b)(1)) — mirrors ChemicalEvent.applied_scope.
+  // Whole-vs-part coverage (§ 205.103(b)(2)) — mirrors ChemicalEvent.applied_scope.
+  // (b)(2) is the clause that requires records to be traceable and auditable through the
+  // operation; (b)(1) is "adapted to the particular business" and is silent on location.
   {
     name: 'applied_scope',
     labelKey: 'events.production.fields.appliedScope',

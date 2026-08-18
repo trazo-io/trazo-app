@@ -759,10 +759,17 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                                         typeof plan.price === 'number'
                                           ? plan.price
                                           : parseFloat(plan.price) || 0;
-                                      // Whole dollars — every live price is one.
+                                      // Whole dollars — every live price is one — and GROUPED.
+                                      // `toFixed(0)` rendered Operation as "$1200", while the
+                                      // card body, the one-pager and the landing all say
+                                      // "$1,200". An unseparated four-figure number reads as a
+                                      // typo on the one element people stop at.
                                       return Number.isInteger(price)
-                                        ? price.toFixed(0)
-                                        : price.toFixed(2);
+                                        ? price.toLocaleString('en-US')
+                                        : price.toLocaleString('en-US', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2
+                                          });
                                     })()}
                                   </Text>
                                   <Text
@@ -778,7 +785,15 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                                 </HStack>
                                 {plan.interval === 'yearly' && (
                                   <Text fontSize="sm" color="gray.500">
-                                    {t('app.perFarmBilledAnnually')}
+                                    {/* Keyed off what the plan MEASURES, not off its interval.
+                                        This printed "Per farm, billed annually" for every yearly
+                                        plan — including Operation, which is $1,200 for UNLIMITED
+                                        farms. On a pricing page that reads as $1,200 x N farms:
+                                        the one tier built to stop counting farms was advertised
+                                        as counting them. */}
+                                    {plan.features?.max_establishments === -1
+                                      ? t('app.perOperationBilledAnnually')
+                                      : t('app.perFarmBilledAnnually')}
                                   </Text>
                                 )}
                               </>
@@ -869,19 +884,15 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                             </HStack>
                           )}
 
-                          {plan.features?.monthly_scan_limit && (
-                            <HStack spacing={2} align="center">
-                              <Icon as={FaQrcode} color={`${planColor}.700`} boxSize={4} />
-                              <Text fontSize="xs" color="gray.700" flex={1} fontWeight="medium">
-                                {plan.features.monthly_scan_limit === -1
-                                  ? t('app.unlimitedQrScans')
-                                  : intl.formatMessage(
-                                      { id: 'app.qrScansPerMonth' },
-                                      { count: plan.features.monthly_scan_limit.toLocaleString() }
-                                    )}
-                              </Text>
-                            </HStack>
-                          )}
+                          {/* The QR-scan row is GONE, on every tier.
+                              It advertised "1,000 QR scans/month" on Starter against a limit
+                              enforced NOWHERE: `UsageTrackingMiddleware` fires only on an
+                              `/api/scan/` path that does not exist, requires an authenticated
+                              user while consumer QR scans are anonymous by design, and calls
+                              `logger.info` rather than blocking even then. Publishing it
+                              promised to throttle a farm's own buyers — the opposite of what
+                              the buyer page is for — to buy a differentiator that is not real.
+                              Removed from the landing pricing table the same day. */}
 
                           {plan.features?.storage_limit_gb && (
                             <HStack spacing={2} align="center">

@@ -108,6 +108,14 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
         farmId={farmId}
         parcelId={row ? String(row.parcel_id) : undefined}
         parcelName={row?.parcel_name}
+        // The season this activity belongs to may be closed. EventDetailsModal has
+        // rendered a locked state for this since it was written, but NEITHER call site
+        // passed the prop, so it defaulted to false and the modal offered Edit and
+        // Delete on finished productions — both of which the API answers 423. The
+        // farmer could re-fill an entire event wizard before being told. The activity
+        // feed now carries `production_finished` per row (company/views.py) so this is
+        // answerable without a second request.
+        isProductionFinished={!!row?.production_finished}
         onEventDeleted={onDeleted}
       />
     </>

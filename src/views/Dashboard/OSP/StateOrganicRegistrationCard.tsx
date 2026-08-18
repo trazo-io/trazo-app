@@ -147,9 +147,10 @@ const StateOrganicRegistrationCard: React.FC<Props> = ({ companyId, farmId, stat
       })}
       headerAction={
         existing ? (
-          // `colorScheme` is inert on this theme's Badge (defaultProps.variant is 'brand') —
-          // the amber/green split has to ride `variant`, which is semantic here: current is a
-          // success state, anything else is a thing to act on.
+          // `variant`, not `colorScheme`. Both work — the `brand` variant reads
+          // `paletteOf(props)`, so colorScheme is live, not inert — but the variants carry the
+          // MEANING (`warning` is the in-progress token used across the app) while a colorScheme
+          // only names a hue. A registration that is not current is a thing to act on.
           <Badge variant={existing.is_current ? 'brand' : 'warning'}>
             {existing.is_current
               ? intl.formatMessage({ id: 'osp.cdfa.badge.current', defaultMessage: 'Current' })

@@ -383,18 +383,27 @@ export const StandardCard = ({
             gap={2}
             w="100%">
             <VStack align="start" spacing={1} flexShrink={0}>
-              {title && (
-                <HStack spacing={2} align="center">
-                  {titleIcon ? (
-                    <Box aria-hidden="true" display="flex" alignItems="center">
+              {/* The HStack appears ONLY when there is an icon to sit beside. Wrapping the
+                  Heading unconditionally would have turned it into a flex item at all 34
+                  existing call sites, and a flex item defaults to `min-width:auto` — it
+                  refuses to shrink below its longest word, so a long title on a narrow card
+                  could overflow instead of wrapping the way a block-level Heading does. No
+                  icon, no wrapper, no change for anyone who was already fine. */}
+              {title &&
+                (titleIcon ? (
+                  <HStack spacing={2} align="center" minW={0}>
+                    <Box aria-hidden="true" display="flex" alignItems="center" flexShrink={0}>
                       {titleIcon}
                     </Box>
-                  ) : null}
+                    <Heading as="h3" size={{ base: 'sm', md: 'md' }} color="gray.700" minW={0}>
+                      {title}
+                    </Heading>
+                  </HStack>
+                ) : (
                   <Heading as="h3" size={{ base: 'sm', md: 'md' }} color="gray.700">
                     {title}
                   </Heading>
-                </HStack>
-              )}
+                ))}
               {subtitle && (
                 <Text color="gray.500" fontSize={{ base: 'xs', md: 'sm' }}>
                   {subtitle}

@@ -19,6 +19,12 @@ export interface ActivityRow {
   parcel_id: number;
   parcel_name: string;
   history_id: number;
+  /**
+   * Whether the season this activity belongs to is closed (finished or published).
+   * Events on a finished production are locked server-side (423), so the detail modal
+   * uses this to show a locked state instead of offering Edit/Delete that will fail.
+   */
+  production_finished: boolean;
   performed_by: string;
   /** WS-4 auto-narrative: structured values only; wording composes client-side. */
   detail?: Record<string, unknown>;

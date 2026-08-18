@@ -37,6 +37,7 @@ import {
   FaLeaf,
   FaCertificate,
   FaLayerGroup,
+  FaExchangeAlt,
   FaLock,
   FaMapMarkerAlt
 } from 'react-icons/fa';
@@ -45,7 +46,8 @@ import { useDeleteEventMutation } from 'store/api/historyApi';
 import { getEventFieldDisplay } from '../../utils/fieldDisplayUtils';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
-import { StandardAlert } from 'components/Design/StandardComponents';
+import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
+import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
 import { eventTypeAppearance } from 'config/events/eventTypeAppearance';
 import { eventTitle } from 'config/events/narrative';
 import { useIntl } from 'react-intl';
@@ -722,6 +724,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
   // Delete confirmation modal
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const { isOpen: isCorrectOpen, onOpen: onCorrectOpen, onClose: onCorrectClose } = useDisclosure();
   const cancelRef = React.useRef<HTMLButtonElement>(null);
 
   // API hooks - only need delete now
@@ -881,12 +884,26 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       </HStack>
 
       {isProductionFinished ? (
-        <HStack spacing={2} bg="gray.100" px={4} py={2} borderRadius="lg" justify="center">
-          <Icon as={FaLock} boxSize={4} color="gray.600" />
-          <Text fontSize="sm" color="gray.700" fontWeight="medium">
-            {intl.formatMessage({ id: 'eventDetails.eventLocked' })}
-          </Text>
-        </HStack>
+        /* Locked, but not a dead end. Saying only "this is locked" is where the farmer
+           gives up or emails support; the one thing they can still do belongs right
+           here, next to the reason they cannot do the other thing. */
+        <VStack spacing={2} bg="gray.100" px={4} py={3} borderRadius="lg">
+          <HStack spacing={2} justify="center">
+            <Icon as={FaLock} boxSize={4} color="gray.600" />
+            <Text fontSize="sm" color="gray.700" fontWeight="medium">
+              {intl.formatMessage({ id: 'eventDetails.eventLocked' })}
+            </Text>
+          </HStack>
+          {canWrite && (
+            <StandardButton
+              variant="outline"
+              size="sm"
+              leftIcon={<FaExchangeAlt />}
+              onClick={onCorrectOpen}>
+              {intl.formatMessage({ id: 'eventDetails.correctRecord' })}
+            </StandardButton>
+          )}
+        </VStack>
       ) : canWrite ? (
         <Button
           leftIcon={<FaEdit />}
@@ -1212,6 +1229,16 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           )}
         </VStack>
       </ResponsiveModal>
+
+      {/* Correcting a value on a filed record. Mounted here rather than inside the
+          locked banner so it survives the details modal's own scroll container. */}
+      <CorrectRecordModal
+        isOpen={isCorrectOpen}
+        onClose={onCorrectClose}
+        eventId={event?.id}
+        eventType={event?.event_type}
+        onCorrected={onEventUpdated}
+      />
 
       {/* Modern Delete Confirmation Dialog */}
       <AlertDialog

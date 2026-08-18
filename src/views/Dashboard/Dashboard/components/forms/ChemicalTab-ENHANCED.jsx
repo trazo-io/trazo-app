@@ -2914,7 +2914,9 @@ const ChemicalTab = forwardRef(
                       />
                     </StandardField>
 
-                    {/* WS-4 — § 205.103(b)(1): records must identify WHERE the input went */}
+                    {/* WS-4 — § 205.103(b)(2): records must identify WHERE the input went.
+                        (b)(1) is "be adapted to the particular business" and says nothing about
+                        location; the user-facing help string already cites (b)(2). */}
                     <StandardField
                       label={intl.formatMessage({ id: 'events.chemical.fields.appliedScope' })}
                       error={errors.applied_scope?.message}
