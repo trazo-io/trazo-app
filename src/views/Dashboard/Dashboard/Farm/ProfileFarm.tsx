@@ -611,7 +611,7 @@ function ProfileFarm() {
                           color={
                             establishmentData.ofpp_filename_suspicious
                               ? 'orange.500'
-                              : establishmentData.fraud_prevention_plan_uploaded
+                              : establishmentData.ofpp_on_file
                               ? 'green.500'
                               : 'yellow.500'
                           }
@@ -621,7 +621,7 @@ function ProfileFarm() {
                           colorScheme={
                             establishmentData.ofpp_filename_suspicious
                               ? 'orange'
-                              : establishmentData.fraud_prevention_plan_uploaded
+                              : establishmentData.ofpp_on_file
                               ? 'green'
                               : 'yellow'
                           }
@@ -630,9 +630,19 @@ function ProfileFarm() {
                           py={1}
                           borderRadius="full"
                           fontSize={{ base: 'xs', md: 'sm' }}>
+                          {/* 🔴 2026-08-19: these three read `fraud_prevention_plan_uploaded`, the raw
+                              upload boolean, so a farm whose OFPP is the completed OSP module
+                              G2.0 was shown a yellow "Plan Missing" here while the readiness
+                              card had cleared the item and the certifier packet printed
+                              "Uploaded — authored in Trazo (OSP module G2.0)". Three surfaces,
+                              one fact, two answers. `ofpp_on_file` is the resolved property
+                              (upload OR module) that the packet and readiness service already
+                              use; it was on this serializer the whole time. The upload CTA
+                              below deliberately still keys off the raw boolean — there really
+                              is no document to view when the plan was authored in Trazo. */}
                           {establishmentData.ofpp_filename_suspicious
                             ? intl.formatMessage({ id: 'farm.soe.planSuspicious' })
-                            : establishmentData.fraud_prevention_plan_uploaded
+                            : establishmentData.ofpp_on_file
                             ? intl.formatMessage({ id: 'farm.soe.planUploaded' })
                             : intl.formatMessage({ id: 'farm.soe.planMissing' })}
                         </Badge>
@@ -646,7 +656,7 @@ function ProfileFarm() {
                       {/* View mode */}
                       {!ofppEditMode && (
                         <VStack gap={3} align="stretch">
-                          {!establishmentData.fraud_prevention_plan_uploaded && canWrite && (
+                          {!establishmentData.ofpp_on_file && canWrite && (
                             <Box
                               p={3}
                               bg="yellow.50"

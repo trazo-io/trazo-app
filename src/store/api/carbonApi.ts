@@ -592,8 +592,6 @@ export interface CropTemplate {
   description: string;
   events_count: number;
   carbon_potential: number;
-  avg_revenue: number;
-
   usage_count: number;
   carbon_benchmark: {
     emissions_range: string;
@@ -607,15 +605,13 @@ export interface CropTemplate {
     carbon_impact: number;
   }>;
   sustainability_practices: string[];
-  roi_projection: {
-    carbon_credits_value: number;
-    premium_pricing: string;
-    cost_savings: string;
-  };
-  // New fields from database
+  // `avg_revenue`, `roi_projection` and `is_verified` were removed from the payload on
+  // 2026-08-19: hardcoded literals ("10-25%" premium pricing, revenue identical for every
+  // crop) and a boolean named "verified" derived from `usda_reviewed`. Nothing rendered
+  // them, nothing could have measured them, and .claude/rules/compliance.md rules out both
+  // pricing promises and "USDA Verified".
   system_type?: string;
   management_intensity?: string;
-  is_verified?: boolean;
   source?: string;
 }
 
@@ -680,6 +676,8 @@ export interface CropTemplateDetail {
     order_sequence?: number; // New field
     usda_practice_code?: string; // New field
     is_required?: boolean; // New field
+    /** Catalogue field values. Read by isProhibitedSuggestion; prefill is built server-side. */
+    backend_event_fields?: Record<string, any>;
   }>;
   carbon_sources: Array<{
     id: number;
@@ -697,22 +695,12 @@ export interface CropTemplateDetail {
     usda_factors_used: boolean;
   };
   carbon_credit_potential: number;
-  estimated_revenue: number;
   sustainability_opportunities: string[];
   efficiency_tips: string[];
-  premium_pricing_potential: string;
-  typical_costs: number;
-  target_yield?: any; // New field
-  labor_hours_per_acre?: number; // New field
-  sustainability_score?: number; // New field
-  source?: string; // New field
-  is_verified?: boolean; // New field
-  roi_analysis: {
-    setup_time_saved: string;
-    carbon_credits_annual: number;
-    premium_pricing: string;
-    efficiency_savings: string;
-  };
+  source?: string;
+  // Removed from the payload 2026-08-19 — see the note on CropTemplate above:
+  // estimated_revenue, typical_costs, premium_pricing_potential, target_yield,
+  // labor_hours_per_acre, sustainability_score, is_verified, roi_analysis.
   // New fields from database
   system_type?: string;
   management_intensity?: string;
@@ -909,36 +897,12 @@ export interface EducationContent {
   last_updated?: string;
 }
 
-export interface EventTemplateFromDB {
-  id: number;
-  name: string;
-  event_type: string;
-  description: string;
-  timing: string;
-  carbon_impact: number;
-  carbon_category: 'high' | 'medium' | 'low' | 'negative' | 'neutral';
-  cost_estimate: number;
-  sustainability_score: number;
-  qr_visibility: 'high' | 'medium' | 'low' | 'hidden';
-  crop_type_name: string;
-  production_template_name: string;
-  backend_event_type: number;
-  backend_event_fields: Record<string, any>;
-  typical_amounts: Record<string, any>;
-  efficiency_tips?: string;
-  typical_duration?: string;
-  type: string; // Translation key for event name display
-}
-
-export interface EventTemplatesResponse {
-  crop_type: {
-    id: number;
-    name: string;
-    slug: string;
-    category: string;
-  };
-  templates: EventTemplateFromDB[];
-}
+// `getEventTemplatesByCropType` (GET /carbon/event-templates/by_crop_type/) and its
+// EventTemplateFromDB / EventTemplatesResponse types were deleted on 2026-08-19: the hook
+// had ZERO consumers. It shipped a raw catalogue of template rows to the browser, which is
+// the shape the season-plan refactor deliberately moved server-side — the plan is built
+// from carbon.EventTemplate by history/services/season_plan_service.py, so nothing needs
+// the catalogue client-side any more.
 
 export const carbonApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -1188,21 +1152,6 @@ export const carbonApi = baseApi.injectEndpoints({
     }),
 
     // NEW: Get event templates by crop type
-    getEventTemplatesByCropType: builder.query<
-      EventTemplatesResponse,
-      { cropTypeId: number; farmingApproach?: string }
-    >({
-      query: ({ cropTypeId, farmingApproach }) => ({
-        url: `/carbon/event-templates/by_crop_type/`,
-        params: {
-          crop_type_id: cropTypeId,
-          ...(farmingApproach && { farming_approach: farmingApproach })
-        },
-        credentials: 'include'
-      }),
-      providesTags: ['EventTemplate']
-    }),
-
     // Educational Content Endpoints
     getUSDAMethodologyContent: builder.query<
       USDAMethodologyContent,
@@ -1942,7 +1891,6 @@ export const {
   useGetRegionalFarmingPracticesQuery,
   useGetEducationContentQuery,
   // NEW: Get event templates by crop type
-  useGetEventTemplatesByCropTypeQuery,
   // USDA Government Data Integration hooks
   useGetUSDAEmissionFactorsQuery,
   useValidateUSDAComplianceMutation,

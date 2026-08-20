@@ -283,7 +283,14 @@ export const CLEANING_ASSET_CLASSES: readonly EnumOption[] = [
   { value: 'equipment', labelKey: 'events.cleaningAssetClass.equipment' },
   { value: 'harvest_bins', labelKey: 'events.cleaningAssetClass.harvestBins' },
   { value: 'storage', labelKey: 'events.cleaningAssetClass.storage' },
-  { value: 'transport_vehicle', labelKey: 'events.cleaningAssetClass.transportVehicle' }
+  { value: 'transport_vehicle', labelKey: 'events.cleaningAssetClass.transportVehicle' },
+  // Added for Quick Organics parity (2026-08-19). ⚠️ This vocabulary exists in THREE places —
+  // here, the <option> list in ProductionTab.jsx, and CLEANING_ASSET_CLASS in the backend's
+  // common/field_registry.py. Updating only the backend is what shipped a migration whose new
+  // choices no farmer could select. `cleaningAssetClassParity.test.ts` now fails when they drift.
+  { value: 'processing_line', labelKey: 'events.cleaningAssetClass.processingLine' },
+  { value: 'livestock_housing', labelKey: 'events.cleaningAssetClass.livestockHousing' },
+  { value: 'other', labelKey: 'events.cleaningAssetClass.other' }
 ] as const;
 
 // ============================================================================

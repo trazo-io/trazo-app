@@ -219,7 +219,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
               <StandardAlert
                 status="info"
                 title="Transparency Focus"
-                description="This event will build your transparency score and appear in consumer QR stories. Carbon calculations will be updated when available."
+                description="This event becomes part of the record your certifier reviews at renewal. A carbon estimate is added once there is enough detail to compute one."
               />
             </VStack>
           </CardBody>
@@ -280,18 +280,21 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
       const isGeneral = method.includes('general');
 
       const transparencyMessage = isPollination
-        ? 'Pollination is a biological service performed by bees and other insects. It generates no direct emissions and builds your transparency score by documenting this critical natural process.'
+        ? // Every one of these named the transparency SCORE, which was retired as a producer
+          // surface, and several also promised "the consumer story" — on a panel that renders
+          // beside the certifier record on every form. Each now says what the record is FOR.
+          'Pollination is a biological service — no fuel burned, so no direct emissions. Hive counts and placement dates evidence the § 205.200 biodiversity practices your OSP describes.'
         : isScouting
-        ? 'Pest scouting is observational and does not produce direct emissions. It builds your transparency score and demonstrates your commitment to integrated pest management.'
+        ? 'Scouting is observational, so it produces no direct emissions. It is also the record § 205.206(e) rests on: a National List substance is permitted only where prevention proved insufficient.'
         : isIPM
-        ? 'Integrated pest management activities like biological control and beneficial releases build your transparency score and demonstrate sustainable farming practices.'
+        ? 'Biological control and beneficial releases produce no direct emissions. They are the § 205.206(a)–(d) practices a certifier expects to see tried before any substance is applied.'
         : isBusiness
-        ? 'Business activities like certifications and audits build consumer trust. They generate no direct emissions but strengthen your transparency score.'
+        ? 'Certifications, inspections and audits produce no direct emissions. Their dates and certificate numbers are what your certifier asks for at renewal.'
         : isGeneral
-        ? 'General farm activities document agricultural practices. They generate no direct emissions but build your transparency score and enrich the consumer story.'
+        ? 'General farm work produces no direct emissions. It still belongs in the record — § 205.103(b)(1) asks for records adapted to the particular business you run.'
         : isWeather
-        ? 'Weather events document environmental conditions. They generate no emissions but build your transparency score and enrich the consumer story.'
-        : 'This event generates no direct emissions but builds your transparency score and enriches the consumer story.';
+        ? 'Weather events produce no emissions. They explain the gaps in a season when your certifier reads back through the record.'
+        : 'This event produces no direct emissions. It still forms part of the record your certifier reviews at renewal.';
 
       return (
         <Card size="sm" bg={bgColor} borderRadius="md" borderWidth="1px" borderColor={borderColor}>
@@ -351,7 +354,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
               */}
               <StandardAlert
                 status="info"
-                title={isPollination ? 'Zero-Emission Biological Service' : 'Transparency Value'}
+                title={
+                  isPollination
+                    ? 'Zero-Emission Biological Service'
+                    : 'Why this is still worth logging'
+                }
                 description={transparencyMessage}
               />
             </VStack>
@@ -510,8 +517,8 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                       <Text fontSize="sm">
                         {rec.potential_savings && rec.carbon_reduction ? (
                           <>
-                            Builds consumer trust • Save ${rec.potential_savings} • Reduce{' '}
-                            {rec.carbon_reduction.toFixed(1)} kg CO₂e
+                            Save ${rec.potential_savings} • Reduce {rec.carbon_reduction.toFixed(1)}{' '}
+                            kg CO₂e
                           </>
                         ) : (
                           <>

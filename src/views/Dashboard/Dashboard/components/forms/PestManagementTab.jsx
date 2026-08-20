@@ -20,6 +20,7 @@ import {
   StandardSelect,
   StandardTextarea,
   StandardAlert,
+  CollapsibleSection,
   SectionHeader,
   SectionBox
 } from 'components/Design/StandardComponents';
@@ -528,9 +529,8 @@ const PestManagementTab = forwardRef(
                   icon={FaBug}
                   iconColor="green.600"
                   title="Pest Management Event Information"
-                  badge="Transparency Tracking"
-                />
-
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                />{' '}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   {/* FIRST: Event Type (standardized order - matches other forms) */}
                   <StandardField
@@ -600,7 +600,7 @@ const PestManagementTab = forwardRef(
                       id: 'events.pest.sections.culturalControl',
                       defaultMessage: 'Preventive Cultural Practice'
                     })}
-                    badge="7 CFR 205.206(a)"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description={intl.formatMessage({
                       id: 'events.pest.sections.culturalControlHelp',
                       defaultMessage:
@@ -877,9 +877,9 @@ const PestManagementTab = forwardRef(
                       {/* F38 fix (2026-06): removed unsourced "+30 points" figure and the
                             FAO attribution that did not substantiate it (compliance: no
                             fabricated statistics or unsourced claims). */}
-                      <strong>Transparency Score Bonus:</strong> Comprehensive scouting
-                      documentation improves your transparency score by demonstrating IPM best
-                      practices.
+                      <strong>Why scouting is worth logging:</strong> § 205.206(e) permits a
+                      National List substance only where the practices in (a)–(d) proved
+                      insufficient. Your scouting record is the evidence that they did.
                     </Text>
                   </Box>
                 </Box>
@@ -893,7 +893,7 @@ const PestManagementTab = forwardRef(
                     icon={FaRulerHorizontal}
                     iconColor="green.600"
                     title="Field Area & Context"
-                    badge="Carbon Calculation Required"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -901,7 +901,7 @@ const PestManagementTab = forwardRef(
                     <StandardField
                       label="Area Covered"
                       required
-                      helpText="Area needed for carbon calculation (select your preferred unit)">
+                      helpText="The area you covered. Your certifier checks this against the block acreage; it is one of the fields § 205.103(b)(2) completeness looks for.">
                       <HStack spacing={2}>
                         <StandardInput
                           flex={2}
@@ -928,10 +928,9 @@ const PestManagementTab = forwardRef(
                     icon={FaSeedling}
                     iconColor="green.600"
                     title="Fuel Consumption & Equipment Data"
-                    badge="Enhanced Carbon Accuracy"
-                    description="Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. These details help consumers understand the real operational impact of your production operations."
-                  />
-
+                    badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
+                    description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
+                  />{' '}
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {/* Fuel Type Selector - for accurate EPA emission factor calculation */}
                     <StandardField
@@ -994,7 +993,7 @@ const PestManagementTab = forwardRef(
                     {/* Production Efficiency */}
                     <StandardField
                       label="Production Efficiency"
-                      helpText="Equipment efficiency rating for carbon scoring">
+                      helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
                       <StandardSelect {...methods.register('production_efficiency')}>
                         <option value="">Select efficiency level</option>
                         <option value="high">High Efficiency</option>
@@ -1012,7 +1011,7 @@ const PestManagementTab = forwardRef(
                   icon={FaCloudSun}
                   iconColor="green.600"
                   title="Agricultural Context & Conditions"
-                  badge="IPM Decision Support"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -1063,14 +1062,14 @@ const PestManagementTab = forwardRef(
                     icon={FaEye}
                     iconColor="green.600"
                     title="Pest Management Details"
-                    badge="IPM Documentation"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
 
                   {/* Universal Pest Context Fields - All Types */}
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={6}>
                     <StandardField
                       label={intl.formatMessage({ id: 'app.pestSpecies' }) || 'Pest Species'}
-                      helpText="Help consumers understand what pests you're managing">
+                      helpText="Name the pest as precisely as you can. § 205.206(e) requires the pest to be identified before a National List substance is applied.">
                       <StandardInput
                         {...methods.register('pest_species')}
                         placeholder="e.g., Aphids, Spider mites, Thrips"
@@ -1349,7 +1348,7 @@ const PestManagementTab = forwardRef(
                   icon={FaCheckCircle}
                   iconColor="green.600"
                   title="IPM Documentation (7 CFR 205.206)"
-                  badge="Organic Compliance"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   description="The certifier export checks these two records on every pest event, whatever its type."
                 />
                 <StandardField
@@ -1384,15 +1383,16 @@ const PestManagementTab = forwardRef(
                 </StandardField>
               </SectionBox>
 
-              {/* Sprint 3 Epic 3.2: Consumer Trust & Transparency Fields */}
+              {/* § 205.206(b) biological control + § 205.202(b) chemical-free interval */}
               <SectionBox variant="highlighted">
                 <SectionHeader
                   icon={FaSeedling}
                   iconColor="green.500"
-                  title="Consumer Trust & Transparency"
-                  badge="Builds Consumer Trust"
-                  description="Document your sustainable pest management practices to help consumers understand your commitment to environmentally responsible farming."
-                />
+                  title={intl.formatMessage({ id: 'events.section.bioControl.title' })}
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                  badgeColorScheme="green"
+                  description={intl.formatMessage({ id: 'events.section.bioControl.desc' })}
+                />{' '}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                   <StandardField
                     label="Beneficial Insects Used"
@@ -1407,7 +1407,7 @@ const PestManagementTab = forwardRef(
 
                   <StandardField
                     label="Chemical-Free Period (Days)"
-                    helpText="Days since last synthetic chemical application (builds consumer trust)">
+                    helpText="Days since the last synthetic application on this ground. Your certifier reads it against the § 205.202(b) 36-month requirement.">
                     <StandardInput
                       type="number"
                       min="0"
@@ -1434,7 +1434,7 @@ const PestManagementTab = forwardRef(
                     icon={FaCheckCircle}
                     iconColor="green.600"
                     title="NOP Pest Identification & Threshold Traceability"
-                    badge="Organic Compliance"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Required documentation for NOP organic certification: pest identification verification and action threshold rationale (7 CFR 205.206)."
                   />
 
@@ -1519,12 +1519,12 @@ const PestManagementTab = forwardRef(
                   icon={FaSeedling}
                   iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
-                  badge="Consumer Transparency"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
 
                 <StandardField
                   label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
-                  helpText="Share details about your pest management approach that help consumers understand your sustainable farming practices">
+                  helpText={intl.formatMessage({ id: 'events.common.help.observationAudience' })}>
                   <StandardTextarea
                     {...methods.register('observation')}
                     placeholder="Optional: Describe your IPM approach, beneficial insect populations observed, organic methods used, sustainability goals, etc. These details help consumers understand your natural pest management methods."

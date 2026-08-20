@@ -58,6 +58,12 @@ const HistoryCard = ({ amount }) => {
   const textColor = useColorModeValue('gray.700', 'white');
   const cardBgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  // ⚠️ These two were called INSIDE the productions .map() below, so the number of hook calls
+  // per render tracked the number of productions — a Rules of Hooks violation that throws
+  // "Rendered more hooks than during the previous render" the moment the list length changes.
+  // Which is exactly what starting or finishing a production does.
+  const completedHoverBg = useColorModeValue('green.50', 'green.900/10');
+  const ongoingHoverBg = useColorModeValue('blue.50', 'blue.900/10');
   const navigate = useNavigate();
 
   // Mobile responsiveness
@@ -606,40 +612,56 @@ const HistoryCard = ({ amount }) => {
                                 boxShadow="sm"
                                 border="1px solid"
                                 borderColor={borderColor}
-                                cursor={isCompleted ? 'pointer' : 'default'}
-                                transition="all 0.2s ease"
-                                position="relative"
-                                _hover={
-                                  isCompleted
-                                    ? {
-                                        bg: useColorModeValue('green.50', 'green.900/10'),
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: 'lg',
-                                        borderColor: 'green.500'
-                                      }
-                                    : {
-                                        bg: useColorModeValue('blue.50', 'blue.900/10'),
-                                        borderColor: 'orange.600',
-                                        transform: 'translateY(-1px)',
-                                        boxShadow: 'md'
-                                      }
-                                }
-                                _active={
-                                  isCompleted
-                                    ? {
-                                        transform: 'translateY(0px)',
-                                        boxShadow: 'sm'
-                                      }
-                                    : {}
-                                }
-                                onClick={() => {
-                                  // Only navigate if production is completed
-                                  if (isCompleted) {
+                                // Every production opens, ongoing included.
+                                //
+                                // This was `isCompleted ? 'pointer' : 'default'` with a
+                                // navigate() gated the same way — while the ongoing card kept
+                                // its full hover treatment (lift, shadow, colour change), so it
+                                // advertised a click that did nothing. The current season is
+                                // the one a farmer needs most: it is where the season plan,
+                                // the timeline and the audit export live, and the backend was
+                                // deliberately opened for it (HistoryViewSet.get_queryset lets
+                                // a producer read their OWN unpublished production "so the
+                                // ProfileProduction page loads before publishing"). The page
+                                // itself already renders the in-season states — the
+                                // add-first-activity CTA, the canWrite gates. Only this click
+                                // gate disagreed.
+                                cursor="pointer"
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
                                     navigate(
                                       `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${production.public_id}`
                                     );
                                   }
                                 }}
+                                transition="all 0.2s ease"
+                                position="relative"
+                                _hover={
+                                  isCompleted
+                                    ? {
+                                        bg: completedHoverBg,
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: 'lg',
+                                        borderColor: 'green.500'
+                                      }
+                                    : {
+                                        bg: ongoingHoverBg,
+                                        borderColor: 'orange.600',
+                                        transform: 'translateY(-1px)',
+                                        boxShadow: 'md'
+                                      }
+                                }
+                                // Ongoing cards used to have no press state, because they were
+                                // not clickable. They are now, so they press.
+                                _active={{ transform: 'translateY(0px)', boxShadow: 'sm' }}
+                                onClick={() =>
+                                  navigate(
+                                    `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${production.public_id}`
+                                  )
+                                }
                                 className="trazo-card">
                                 <CardBody p={4}>
                                   <VStack align="stretch" spacing={3}>

@@ -375,6 +375,16 @@ const companyApi = baseApi.injectEndpoints({
         is_outdoor?: boolean;
         type?: string;
         notes?: string;
+        /** ProductionTemplate the operator picked, if any. */
+        template_id?: number;
+        /**
+         * carbon.EventTemplate ids the operator ticked. They become the season PLAN.
+         *
+         * ⛔ Was `template_events`, the whole ticked rows, which the server turned into
+         * real dated event records attributed to the grower. A suggestion is not a record
+         * — see store/api/seasonPlanApi.ts.
+         */
+        plan_item_ids?: number[];
       }
     >({
       query: (productionData) => ({
@@ -383,7 +393,7 @@ const companyApi = baseApi.injectEndpoints({
         body: productionData,
         credentials: 'include'
       }),
-      invalidatesTags: ['History', 'Company', 'Parcel']
+      invalidatesTags: ['History', 'Company', 'Parcel', 'SeasonPlan']
     }),
     // Get crop types for the production form
     getCropTypes: build.query<any[], void>({

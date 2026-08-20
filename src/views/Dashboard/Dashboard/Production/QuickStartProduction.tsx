@@ -23,7 +23,6 @@ import {
   FaRocket,
   FaSeedling,
   FaLeaf,
-  FaChartLine,
   FaCheckCircle,
   FaEdit,
   FaArrowRight,
@@ -57,16 +56,6 @@ import { useIntl, FormattedMessage } from 'react-intl';
 // `hooks/*`, not `src/hooks/*` — see the note on the same import in
 // components/Forms/StandardFinishProductionForm.tsx.
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
-
-// Utility function for formatting carbon values with appropriate precision
-const formatCarbonValue = (value: number): string => {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '-' : '';
-  if (abs < 0.01) return sign + abs.toFixed(4);
-  if (abs < 0.1) return sign + abs.toFixed(3);
-  if (abs < 10) return sign + abs.toFixed(2);
-  return sign + abs.toFixed(1);
-};
 
 // Form validation schema
 const productionSchema = object({
@@ -363,26 +352,36 @@ export const PRODUCTION_METHOD_CHOICES = [
   { value: 'no_till', label: 'No-Till' }
 ] as const;
 
-/** Production methods under which a prohibited synthetic input must never be pre-enabled. */
-const ORGANIC_PRODUCTION_METHODS = ['organic', 'regenerative'];
+/**
+ * Production methods under which a prohibited synthetic input must never be suggested.
+ *
+ * Biodynamic joined the list on 2026-08-19: Demeter certification requires organic
+ * certification underneath it, so § 205.105 applies in full and leaving it out meant a
+ * biodynamic grower was offered the conventional programme's synthetics.
+ *
+ * ⛔ Must stay byte-identical to `ORGANIC_PRODUCTION_METHODS` in
+ * `history/services/season_plan_service.py`, which is the copy that decides. Guarded by
+ * `history/tests/test_season_plan_not_records.py`.
+ */
+const ORGANIC_PRODUCTION_METHODS = ['organic', 'regenerative', 'biodynamic'];
 
 /**
- * Is this template event one the operation is not permitted to perform at all?
+ * Is this catalogue suggestion one the operation is not permitted to perform at all?
  *
- * Template events are saved as REAL, backdated records attributed to the farmer by name — not
- * drafts. Crop templates are generic, so the walnut template ships "Roundup PowerMax 3
- * (glyphosate)" (`organic_approved: 'not_organic'`). Writing that to a certified organic
- * operation is a § 205.105 hard disqualification in the certifier dossier and a synthetic
- * herbicide published on the consumer QR page.
+ * Crop templates are generic, so the walnut template ships "Roundup PowerMax 3 (glyphosate)"
+ * (`organic_approved: 'not_organic'`). Performing that on a certified organic operation is a
+ * § 205.105 hard disqualification, so Trazo does not put it on the plan: prohibited items start
+ * unselected like every other, AND "Select all" refuses to turn them on.
  *
- * Used for two things: these events start unselected like every other, AND "Select all" refuses
- * to turn them on — a farmer bulk-accepting a template must not be able to bulk-accept a
- * prohibited substance in one tap.
+ * ⚠️ This is a UI affordance, not the rule. The rule is
+ * `season_plan_service.is_prohibited_suggestion` on the server, which runs on every plan build
+ * — a check that lives only in the browser is not a check. Keep the two in step.
  *
- * Exported for testing: this predicate is the last thing standing between a generic template and
- * a decertification-grade entry in a real grower's audit file.
+ * (Ticking one no longer writes a record: since 2026-08-19 a suggestion becomes a
+ * ProductionPlanItem, and the operator authors the record themselves. The stakes are lower
+ * than they were, which is exactly why the guard has to stay explicit rather than drift.)
  */
-export function isTemplateEventProhibited(event: any, productionMethod?: string): boolean {
+export function isProhibitedSuggestion(event: any, productionMethod?: string): boolean {
   const method = String(productionMethod || '').toLowerCase();
   if (!ORGANIC_PRODUCTION_METHODS.includes(method)) return false;
 
@@ -417,7 +416,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  const [customEvents, setCustomEvents] = useState<any[]>([]);
+  const [planSuggestions, setPlanSuggestions] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedCropTypeId, setSelectedCropTypeId] = useState<string | null>(null);
 
@@ -476,18 +475,6 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     areaUnits.system === 'imperial'
       ? `${(areaInput * ACRES_PER_HECTARE).toFixed(2)} acres (${areaInput} ha)`
       : `${areaInput} hectares`;
-  // Carbon previews derived from template pre-calculated values (no API calls needed)
-  // carbon_impact is an absolute estimate per event, not a per-hectare rate
-  const carbonPreviews = useMemo(() => {
-    const previews: Record<string, { estimated_carbon: number }> = {};
-    customEvents.forEach((event) => {
-      if (!event.excludeFromCarbonCalculation && event.carbon_impact != null) {
-        previews[event.id] = { estimated_carbon: event.carbon_impact };
-      }
-    });
-    return previews;
-  }, [customEvents]);
-
   // API hooks - Dynamic template fetching based on crop type
   const { data: templatesData, isLoading: isLoadingTemplates } = useGetCropTemplatesQuery(
     selectedCropTypeId ? { crop_type: selectedCropTypeId } : undefined
@@ -771,7 +758,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     if (!selectedCropTypeId || filteredTemplates.length === 0) {
       setSelectedTemplate(null);
       setSelectedTemplateId(null);
-      setCustomEvents([]);
+      setPlanSuggestions([]);
     }
   }, [selectedCropTypeId, filteredTemplates, isLoadingTemplates]);
 
@@ -783,7 +770,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       // Clear current template selection to force reload
       setSelectedTemplate(null);
       setSelectedTemplateId(null);
-      setCustomEvents([]);
+      setPlanSuggestions([]);
       // RTK Query will automatically refetch when selectedCropTypeId changes
     }
   }, [watchedCropTypeId, selectedCropTypeId]);
@@ -803,12 +790,12 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         setValue('name', generateProductionName(templateDetail.name, currentYear));
       }
       if (!getValues('description')?.trim()) {
-        setValue(
-          'description',
-          `${templateDetail.description} This production includes ${
-            templateDetail.events?.length || 4
-          } pre-configured events for optimal carbon tracking.`
-        );
+        // Was: "<blurb> This production includes N pre-configured events for optimal carbon
+        // tracking." Both halves became false when templates stopped writing events: nothing
+        // is pre-configured and no carbon is calculated until the farmer logs real records.
+        // It was also hardcoded English in a file that otherwise routes everything through
+        // intl. The template's own blurb is the part that was ever true.
+        setValue('description', templateDetail.description || '');
       }
 
       // Auto-set production method from the template's farming approach — but ONLY when
@@ -845,13 +832,16 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       // a claim in a certifier's audit file. "Select all" is right there for a farmer who really
       // did run the standard programme — one tap, but a tap they chose to make.
       if (templateDetail.events) {
-        setCustomEvents(
+        setPlanSuggestions(
           templateDetail.events.map((event, index) => ({
             ...event,
             // Spread backend_event_fields to make fields like pest_species available directly
             ...(event.backend_event_fields || {}),
-            id: `template-${index}`,
-            scheduled_date: calculateEventDate(event.timing),
+            id: `template-${event.id ?? index}`,
+            // The catalogue id. It is what the server builds the plan from — the server
+            // reads the practice, the window and the prefill off its own EventTemplate row
+            // rather than trusting anything sent from here.
+            templateEventId: event.id,
             enabled: false
           }))
         );
@@ -859,80 +849,44 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     }
   }, [templateDetail, setValue, getValues, farmDefaultMethod]);
 
-  const calculateEventDate = (timing: string) => {
-    const startDate = new Date(watch('start_date') || new Date());
-
-    // Parse timing like "December - February", "March - April", etc.
-    const monthMap: Record<string, number> = {
-      january: 0,
-      february: 1,
-      march: 2,
-      april: 3,
-      may: 4,
-      june: 5,
-      july: 6,
-      august: 7,
-      september: 8,
-      october: 9,
-      november: 10,
-      december: 11
-    };
-
-    const timingLower = timing.toLowerCase();
-    const firstMonth = Object.keys(monthMap).find((month) => timingLower.includes(month));
-
-    if (firstMonth) {
-      const eventDate = new Date(startDate.getFullYear(), monthMap[firstMonth], 15);
-      return eventDate.toISOString().split('T')[0];
-    }
-
-    // Default to 30 days from start
-    const defaultDate = new Date(startDate);
-    defaultDate.setDate(defaultDate.getDate() + 30);
-    return defaultDate.toISOString().split('T')[0];
-  };
-
-  // Helper function to generate production names within 30-character limit
+  /**
+   * ⚠️ RECONSTRUCTED 2026-08-19 — verify against git before relying on the exact string.
+   *
+   * A season name from the template's own name plus the year. The template is named for the
+   * crop and the programme ("Apples - Conventional Production"); the season is named for the
+   * crop and the year, so the programme half is dropped. Capped at 30 characters — that is
+   * this helper's own formatting rule, NOT `History.name`'s 150-character column bound.
+   *
+   * Only ever used to fill a name the farmer left blank (see the caller); it never replaces
+   * typed text.
+   */
   const generateProductionName = (templateName: string, year: number): string => {
-    // Create shorter versions of template names
-    const nameMap: Record<string, string> = {
-      'Citrus (Oranges)': 'Citrus',
-      Almonds: 'Almonds',
-      Soybeans: 'Soybeans',
-      'Corn (Field)': 'Corn'
-    };
-
-    const shortName = nameMap[templateName] || templateName.split(' ')[0];
-    const yearStr = year.toString();
-
-    // Format: "Citrus 2025" (max 30 chars)
-    const productionName = `${shortName} ${yearStr}`;
-
-    // Ensure it's within 30 characters
-    return productionName.length <= 30 ? productionName : productionName.substring(0, 30);
+    const crop = String(templateName || '')
+      .split(/\s+[-\u2013\u2014]\s+/)[0]
+      .replace(/\s*(production|programme|program|template)\s*$/i, '')
+      .trim();
+    const suffix = String(year);
+    const budget = 30 - suffix.length - 1;
+    const head = crop.length > budget ? crop.slice(0, budget).trim() : crop;
+    return head ? `${head} ${suffix}` : suffix;
   };
 
+  /**
+   * ⚠️ RECONSTRUCTED 2026-08-19 — verify against git.
+   *
+   * Picking a template is the FIRST of two opt-ins (the second is ticking each practice).
+   * It records the choice, keys the detail query that loads the practice list, and closes
+   * the picker. It deliberately does not touch the form's name or description: that is the
+   * effect on `templateDetail`, which fills only fields the farmer left blank.
+   */
   const handleTemplateSelect = (template: any) => {
     setSelectedTemplate(template);
-    if (template.template_id) {
-      setSelectedTemplateId(template.template_id.toString()); // Convert to string and check existence
-    }
+    setSelectedTemplateId(template?.template_id != null ? String(template.template_id) : null);
     onTemplateClose();
-
-    toast({
-      title: intl.formatMessage({ id: 'quickStart.toast.templateSelected' }),
-      description: intl.formatMessage(
-        { id: 'quickStart.toast.templateSelectedDescription' },
-        { name: template.name }
-      ),
-      status: 'success',
-      duration: 4000,
-      isClosable: true
-    });
   };
 
-  const handleEventToggle = (eventId: string) => {
-    setCustomEvents((events) =>
+  const handleSuggestionToggle = (eventId: string) => {
+    setPlanSuggestions((events) =>
       events.map((event) => (event.id === eventId ? { ...event, enabled: !event.enabled } : event))
     );
   };
@@ -944,28 +898,22 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
    * permanently false on an organic farm — the master switch would read unchecked forever and
    * could never be used to clear the list again.
    */
-  const allSelectableEventsEnabled = useMemo(() => {
+  const allSelectableSuggestionsEnabled = useMemo(() => {
     const method = getValues('production_method') || farmDefaultMethod || '';
-    const selectable = customEvents.filter((event) => !isTemplateEventProhibited(event, method));
+    const selectable = planSuggestions.filter((event) => !isProhibitedSuggestion(event, method));
     return selectable.length > 0 && selectable.every((event) => event.enabled);
-  }, [customEvents, getValues, farmDefaultMethod]);
+  }, [planSuggestions, getValues, farmDefaultMethod]);
 
   const handleToggleAll = () => {
     const method = getValues('production_method') || farmDefaultMethod || '';
-    setCustomEvents((events) =>
+    setPlanSuggestions((events) =>
       events.map((event) => ({
         ...event,
         // "Select all" must not be a one-tap route to a prohibited substance. On an organic
         // operation a template's synthetic inputs stay off; the farmer can still enable one
         // individually if they really did apply it (and lose their certification over it).
-        enabled: !allSelectableEventsEnabled && !isTemplateEventProhibited(event, method)
+        enabled: !allSelectableSuggestionsEnabled && !isProhibitedSuggestion(event, method)
       }))
-    );
-  };
-
-  const handleEventDateChange = (eventId: string, newDate: string) => {
-    setCustomEvents((events) =>
-      events.map((event) => (event.id === eventId ? { ...event, scheduled_date: newDate } : event))
     );
   };
 
@@ -1028,14 +976,21 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
           production_method: data.production_method,
           type: data.type,
           template_id: selectedTemplate?.template_id,
-          template_events: customEvents.filter((event) => event.enabled)
+          // ⛔ Was `template_events: <the whole ticked rows>`, and the server turned each one
+          // into a real dated event record. Now it is a list of catalogue ids and the server
+          // builds a season PLAN — see history/models.py ProductionPlanItem. Records are
+          // authored by the operator, in the activity wizard, with their own date.
+          plan_item_ids: planSuggestions
+            .filter((event) => event.enabled)
+            .map((event) => event.templateEventId)
+            .filter((id: number | undefined) => id != null)
         };
 
         await startProduction(productionPayload).unwrap();
 
         toast({
           title: intl.formatMessage({ id: 'production.createdSuccessfully' }),
-          description: intl.formatMessage({ id: 'production.eventsBeingGenerated' }),
+          description: intl.formatMessage({ id: 'production.planSaved' }),
           status: 'success',
           duration: 6000,
           isClosable: true
@@ -1225,11 +1180,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                                   { name: selectedTemplate.name }
                                 )}
                               </Text>
-                              <Badge colorScheme="green" variant="solid">
-                                {intl.formatMessage({
-                                  id: 'quickStart.templates.badge.smartSetup'
-                                })}
-                              </Badge>
+                              {/* The "Smart Setup" badge is gone. "Smart Setup" is the name
+                                  the 2026-08-02 incident is filed under — a crop template
+                                  writing a backdated glyphosate application into a certified
+                                  organic farm's audit trail — and keeping the brand on the
+                                  feature keeps the mental model that produced it. */}
                             </HStack>
                             {/* "Setup time reduced by 37 minutes" removed: that figure appeared
                                 exactly once in the whole codebase — no source, no calculation, no
@@ -1240,29 +1195,34 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                             <Text fontSize="sm" color="green.700">
                               {intl.formatMessage(
                                 { id: 'quickStart.templates.eventsConfigured' },
-                                { count: selectedTemplate.events_count || customEvents.length }
+                                { count: selectedTemplate.events_count || planSuggestions.length }
                               )}
                             </Text>
+                            {/* Was four badges: "Audit-Ready" + "NOP Compliant" on organic
+                                templates, "EPA/USDA-Sourced" + "Transparency Ready" otherwise.
+                                None is a property of a TEMPLATE — a farm's records may become
+                                audit-ready; a template cannot be, and it certainly is not NOP
+                                compliant before a single practice has been carried out. Same
+                                claim shape as the deleted "Setup Time: 8 minutes" and the
+                                `premium_pricing_potential` fields stripped from this payload.
+                                The farming approach is the one fact the template actually
+                                holds, and the picker card now carries it. */}
                             <HStack spacing={2} mt={1}>
-                              {selectedTemplate?.system_type === 'organic' ? (
-                                <>
-                                  <Badge variant="subtle" fontSize="xs">
-                                    {intl.formatMessage({ id: 'template.badge.auditReady' })}
-                                  </Badge>
-                                  <Badge variant="subtle" fontSize="xs">
-                                    {intl.formatMessage({ id: 'template.badge.nopReady' })}
-                                  </Badge>
-                                </>
-                              ) : (
-                                <>
-                                  <Badge variant="subtle" fontSize="xs">
-                                    {intl.formatMessage({ id: 'template.badge.epaSourced' })}
-                                  </Badge>
-                                  <Badge variant="subtle" fontSize="xs">
-                                    {intl.formatMessage({ id: 'template.badge.transparencyReady' })}
-                                  </Badge>
-                                </>
-                              )}
+                              <Badge
+                                variant={
+                                  selectedTemplate?.system_type === 'organic'
+                                    ? 'subtle'
+                                    : 'neutral'
+                                }
+                                textTransform="none">
+                                {intl.formatMessage({
+                                  id: `production.templateModal.approach.${
+                                    selectedTemplate?.system_type || 'conventional'
+                                  }`,
+                                  defaultMessage:
+                                    selectedTemplate?.system_type || 'conventional'
+                                })}
+                              </Badge>
                             </HStack>
                           </VStack>
                           <StandardButton size="sm" variant="outline" onClick={onTemplateOpen}>
@@ -1311,16 +1271,10 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                                       { count: filteredTemplates.length }
                                     )}
                                   </Badge>
-                                  <Badge variant="subtle" fontSize="xs">
-                                    {intl.formatMessage({
-                                      id: 'quickStart.templates.badge.farmDocumented'
-                                    })}
-                                  </Badge>
-                                  <Badge variant="subtle" fontSize="xs">
-                                    {intl.formatMessage({
-                                      id: 'quickStart.templates.badge.qrReady'
-                                    })}
-                                  </Badge>
+                                  {/* "Farm Documented" and "QR Ready" removed: both assert an
+                                      outcome, on a template the farmer has not picked yet, for
+                                      a farm that has documented nothing. The count beside them
+                                      is the only fact this row holds. */}
                                 </>
                               ) : (
                                 <Badge colorScheme="gray" variant="subtle" fontSize="xs">
@@ -1603,7 +1557,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             </StandardCard>
 
             {/* Fallback action buttons when no template events in create mode */}
-            {!isEdit && customEvents.length === 0 && (
+            {!isEdit && planSuggestions.length === 0 && (
               <HStack spacing={3} justify="flex-end" pt={4}>
                 <StandardButton
                   variant="outline"
@@ -1625,11 +1579,11 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                 applied, so a tour step pointing at it could never run at the same time as the
                 two steps that matter on arrival (crop, templates). It explains itself with the
                 helper note below. See src/tours/productionTour.ts. */}
-            {!isEdit && customEvents.length > 0 && (
+            {!isEdit && planSuggestions.length > 0 && (
               <Box>
                 <StandardCard
-                  title={intl.formatMessage({ id: 'quickStart.events.title' })}
-                  subtitle={intl.formatMessage({ id: 'production.template.eventsSubtitle' })}>
+                  title={intl.formatMessage({ id: 'quickStart.plan.title' })}
+                  subtitle={intl.formatMessage({ id: 'quickStart.plan.subtitle' })}>
                   {/* Helper note */}
                   <Box
                     p={3}
@@ -1639,7 +1593,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     border="1px solid"
                     borderColor="green.100">
                     <Text fontSize="xs" color="green.700">
-                      {intl.formatMessage({ id: 'production.template.eventsHelperNote' })}
+                      {intl.formatMessage({ id: 'quickStart.plan.helperNote' })}
                     </Text>
                   </Box>
 
@@ -1647,23 +1601,23 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                   <HStack justify="space-between" mb={4} p={3} bg="gray.50" borderRadius="md">
                     <Text fontSize="sm" color="gray.600">
                       {intl.formatMessage(
-                        { id: 'quickStart.events.selectedCount' },
+                        { id: 'quickStart.plan.selectedCount' },
                         {
-                          selected: customEvents.filter((event) => event.enabled).length,
-                          total: customEvents.length
+                          selected: planSuggestions.filter((event) => event.enabled).length,
+                          total: planSuggestions.length
                         }
                       )}
                     </Text>
                     <HStack spacing={3}>
                       <Switch
-                        isChecked={allSelectableEventsEnabled}
+                        isChecked={allSelectableSuggestionsEnabled}
                         onChange={handleToggleAll}
                         colorScheme="green"
                         size="md"
                       />
                       <Text fontSize="sm" fontWeight="medium" color="gray.700">
                         {intl.formatMessage({
-                          id: allSelectableEventsEnabled
+                          id: allSelectableSuggestionsEnabled
                             ? 'quickStart.events.unselectAll'
                             : 'quickStart.events.selectAll'
                         })}
@@ -1671,7 +1625,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     </HStack>
                   </HStack>
                   <VStack spacing={4} align="stretch">
-                    {customEvents.map((event) => (
+                    {planSuggestions.map((event) => (
                       <Box
                         key={event.id}
                         p={4}
@@ -1684,42 +1638,29 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                           <HStack>
                             <Switch
                               isChecked={event.enabled}
-                              onChange={() => handleEventToggle(event.id)}
+                              onChange={() => handleSuggestionToggle(event.id)}
                               colorScheme="green"
                             />
                             <VStack align="start" spacing={0}>
                               <Text fontWeight="bold">{event.name}</Text>
                               <Text fontSize="sm" color="gray.600">
-                                {event.timing} • {event.frequency}
+                                {event.frequency}
                               </Text>
                             </VStack>
                           </HStack>
+                          {/* A date picker used to sit here, pre-filled with the 15th of the
+                              window's first month, and the row was saved as a dated record.
+                              Nothing on a plan carries a day: the operator supplies the real
+                              date when they log the activity. A CO2e estimate was here too —
+                              an emissions figure for something that has not happened yet. */}
                           <VStack align="end" spacing={0}>
-                            {event.excludeFromCarbonCalculation ? (
-                              <Text fontSize="sm" fontWeight="bold" color="gray.500">
-                                {intl.formatMessage({ id: 'quickStart.events.noCarbonCalc' })}
-                              </Text>
-                            ) : carbonPreviews[event.id] ? (
-                              <Text fontSize="sm" fontWeight="bold" color="green.700">
-                                {formatCarbonValue(carbonPreviews[event.id].estimated_carbon)} kg
-                                CO2e
-                                <Text fontSize="xs" color="gray.500">
-                                  {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
-                                </Text>
-                              </Text>
-                            ) : (
-                              <Text fontSize="sm" fontWeight="bold" color="gray.400">
-                                N/A
-                              </Text>
-                            )}
-                            <Input
-                              type="date"
-                              size="sm"
-                              value={event.scheduled_date}
-                              onChange={(e) => handleEventDateChange(event.id, e.target.value)}
-                              isDisabled={!event.enabled}
-                              width="150px"
-                            />
+                            <Text fontSize="xs" color="gray.500">
+                              {intl.formatMessage({ id: 'quickStart.plan.expectedWindow' })}
+                            </Text>
+                            <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                              {event.timing ||
+                                intl.formatMessage({ id: 'quickStart.plan.windowAsNeeded' })}
+                            </Text>
                           </VStack>
                         </HStack>
                         {event.efficiency_tips && (
@@ -1794,8 +1735,17 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             </VStack>
           }
           footer={
+            /* The label says what closing actually does. Picking a card applies it and closes
+               the modal immediately, so there is never a pending change to "cancel" — and a
+               farmer who opened the picker and wants none of these templates had no obvious
+               way out. With a template already applied, closing keeps it, and "Cancel" is
+               right; with none, closing means starting the season without one. */
             <StandardButton variant="ghost" onClick={onTemplateClose}>
-              {intl.formatMessage({ id: 'app.cancel' })}
+              {intl.formatMessage({
+                id: selectedTemplate
+                  ? 'app.cancel'
+                  : 'production.templateModal.continueWithout'
+              })}
             </StandardButton>
           }>
           {filteredTemplates.length > 0 ? (
@@ -1853,30 +1803,35 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                         )}
                       </Badge>
                     </HStack>
-                    <Text fontSize="sm" color="gray.700" mb={4} noOfLines={2}>
+                    <Text fontSize="sm" color="gray.700" mb={4} noOfLines={3}>
                       {template.description}
                     </Text>
-                    {/* The "Setup Time: 8 minutes" tile that used to sit here is gone. The 8
-                        was a hardcoded literal in carbon/views.py, identical for every crop
-                        and never measured — see the note at its removal site. What is left is
-                        the one claim on this card we can actually stand behind. */}
-                    <Grid templateColumns="1fr" gap={3}>
-                      <VStack align="start" spacing={1}>
-                        <HStack>
-                          <Icon as={FaChartLine} color="green.500" boxSize={3} />
-                          <Text fontSize="xs" fontWeight="medium">
-                            {template.system_type === 'organic'
-                              ? intl.formatMessage({ id: 'template.badge.auditReady' })
-                              : intl.formatMessage({ id: 'template.badge.transparency' })}
-                          </Text>
-                        </HStack>
-                        <Text fontSize="sm" fontWeight="bold">
-                          {template.system_type === 'organic'
-                            ? intl.formatMessage({ id: 'template.badge.nopReady' })
-                            : intl.formatMessage({ id: 'template.badge.qrReady' })}
-                        </Text>
-                      </VStack>
-                    </Grid>
+                    {/* ONE fact about the template, as a theme Badge.
+                        What was here: an `FaChartLine` icon over "Transparency"/"Audit-Ready"
+                        in 12px medium, with "QR Ready"/"NOP Compliant" under it in 14px bold —
+                        two different typographic treatments impersonating a badge pair, on
+                        neither the theme's Badge nor any other standard component, with a
+                        line-chart glyph standing in for "audit".
+                        Worse than the styling: a template is not NOP compliant, audit-ready or
+                        QR ready. A farm's RECORDS may become those things. Printing them on a
+                        template the farmer has not even picked promises the outcome before any
+                        work is done — the same reason "Setup Time: 8 minutes" was deleted from
+                        this card, and the same claim shape .claude/rules/compliance.md rules
+                        out. The farming approach IS a fact about the template. */}
+                    <Badge
+                      variant={template.system_type === 'organic' ? 'subtle' : 'neutral'}
+                      // Chakra's Badge baseStyle capitalises; the `neutral` variant overrides
+                      // that with 'none' and `subtle` does not, so the same label rendered
+                      // "Organic Programme" beside "Conventional programme". Casing must not
+                      // be decided by which semantic variant a row happens to get.
+                      textTransform="none">
+                      {intl.formatMessage({
+                        id: `production.templateModal.approach.${
+                          template.system_type || 'conventional'
+                        }`,
+                        defaultMessage: template.system_type || 'conventional'
+                      })}
+                    </Badge>
                   </Box>
                 );
               })}

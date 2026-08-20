@@ -25,6 +25,7 @@ import {
   Checkbox
 } from '@chakra-ui/react';
 import { useForm, Controller } from 'react-hook-form';
+import { useIntl } from 'react-intl';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string } from 'zod';
 import {
@@ -65,6 +66,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
   eventTypeId = 3,
   disabled = false
 }) => {
+  const intl = useIntl();
   const [isAddingField, setIsAddingField] = useState(false);
   const tableHeaderBg = useColorModeValue('gray.50', 'gray.700');
   const tableBorder = useColorModeValue('gray.200', 'gray.600');
@@ -137,7 +139,15 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
     <SectionBox variant="default">
       <VStack spacing={4} align="stretch">
         {/* Section Header */}
-        <SectionHeader icon={FaFileAlt} iconColor="green.500" title="Additional Information" />
+        {/* Custom fields ARE in the packet — the "Additional Farmer-Recorded Data" section
+            renders them for the certifier. Without a badge this read as scratch space. */}
+        <SectionHeader
+          icon={FaFileAlt}
+          iconColor="green.500"
+          title="Additional Information"
+          badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+          badgeColorScheme="green"
+        />
 
         {/* Custom Fields - Stacked Card Layout */}
         {customFields.length > 0 && (

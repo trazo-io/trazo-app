@@ -300,23 +300,11 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
     }
   }, [initialData, reset, methods]);
 
-  // Debug effect to monitor form values
-  useEffect(() => {
-    const subscription = watch((value, { name, type }) => {
-      if (name) {
-        console.log(
-          `Form field changed: ${name} = ${value[name as keyof typeof value]} (type: ${type})`
-        );
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [watch]);
-
-  // Debug effect to log all form values on step change
-  useEffect(() => {
-    const allValues = methods.getValues();
-    console.log(`Step ${currentStep} loaded. All form values:`, allValues);
-  }, [currentStep, methods]);
+  // 🔴 2026-08-19: two debug effects lived here — one logging every keystroke as
+  // `Form field changed: <name> = <value>`, one dumping every form value on each step change.
+  // Creating a single farm emitted ~90 console entries, put the grower's farm data into the
+  // browser console, and buried the real warnings in the noise. Removed; the watch() import
+  // stays because the wizard uses it for conditional rendering.
 
   // Initialize existing images on edit mode for TrazoImageUpload
   useEffect(() => {
@@ -510,11 +498,6 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
   const previousStep = () => {
     if (currentStep > 0) {
-      const formValues = methods.getValues();
-      console.log(
-        `Moving from step ${currentStep} to step ${currentStep - 1}. Current form values:`,
-        formValues
-      );
       setCurrentStep(currentStep - 1);
     }
   };

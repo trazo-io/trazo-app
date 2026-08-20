@@ -59,7 +59,6 @@ const ALLOWED_WITHOUT_RENDERER: Record<string, string> = {
   micronutrient_rate_unit: 'unit companion',
   amendment_amount_unit: 'unit companion',
   transportation_unit: 'unit companion',
-  carbon_credits_unit: 'unit companion',
   quantity_purchased_unit: 'unit companion',
 
   // --- free text rendered outside the fact grid -----------------------------------

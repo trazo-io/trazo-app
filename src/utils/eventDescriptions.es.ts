@@ -17,6 +17,37 @@
 // own claims; no "carbono neutral". Keep faithful to the English meaning.
 
 export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
+  'USDA Organic Certification': 'Certificación USDA Organic',
+  'GlobalG.A.P. Certification': 'Certificación GlobalG.A.P.',
+  'Rainforest Alliance Certification': 'Certificación Rainforest Alliance',
+  'Fair Trade Certification': 'Certificación Fair Trade',
+  'Sustainable Agriculture Standard': 'Norma de agricultura sostenible',
+  'Water Stewardship Certification': 'Certificación de gestión del agua',
+  'Kosher Certification': 'Certificación kosher',
+  'SQF / Food Safety Certification': 'Certificación SQF / inocuidad alimentaria',
+  'USDA Organic: the National Organic Program standard, covering permitted inputs, land history and recordkeeping, assessed by a USDA-accredited certifier':
+    'USDA Organic: la norma del National Organic Program, que abarca los insumos permitidos, el historial del terreno y los registros, evaluada por un certificador acreditado por el USDA',
+  'GlobalG.A.P.: a farm-practice and food-safety standard covering production, handling and worker health, audited by an approved certification body':
+    'GlobalG.A.P.: una norma de prácticas agrícolas e inocuidad alimentaria que abarca producción, manipulación y salud de los trabajadores, auditada por un organismo de certificación aprobado',
+  'Rainforest Alliance: a standard covering farm management, biodiversity and working conditions, audited by an authorised certification body':
+    'Rainforest Alliance: una norma que abarca la gestión del establecimiento, la biodiversidad y las condiciones laborales, auditada por un organismo de certificación autorizado',
+  'Fair Trade: a standard covering labour conditions, trading terms and a producer premium, audited by the issuing body':
+    'Fair Trade: una norma que abarca las condiciones laborales, los términos comerciales y una prima para el productor, auditada por el organismo emisor',
+  'Regenerative Organic Certified: a standard layered on organic certification, adding soil practices, animal welfare and farmworker fairness':
+    'Regenerative Organic Certified: una norma que se suma a la certificación orgánica y agrega prácticas de suelo, bienestar animal y equidad para los trabajadores',
+  'Certified Naturally Grown: a peer-reviewed certification for farms following practices modelled on the National Organic Program':
+    'Certified Naturally Grown: una certificación revisada por pares para establecimientos que siguen prácticas basadas en el National Organic Program',
+  'Non-GMO Project Verified: a standard for avoiding genetically engineered inputs, assessed against the Project testing and traceability requirements':
+    'Non-GMO Project Verified: una norma para evitar insumos modificados genéticamente, evaluada según los requisitos de análisis y trazabilidad del Project',
+  'Sustainable Agriculture Standard, as recorded by this operation':
+    'Norma de agricultura sostenible, según lo registrado por este establecimiento',
+  'Water stewardship certification: a standard covering water use, catchment impact and water quality at the site':
+    'Certificación de gestión del agua: una norma que abarca el uso del agua, el impacto en la cuenca y la calidad del agua en el sitio',
+  'Kosher certification: a standard covering ingredients, equipment and handling, assessed by a certifying agency':
+    'Certificación kosher: una norma que abarca ingredientes, equipos y manipulación, evaluada por una agencia certificadora',
+  'SQF or equivalent food-safety certification: a standard covering handling, sanitation and traceability, audited by a licensed certification body':
+    'Certificación SQF o equivalente de inocuidad alimentaria: una norma que abarca manipulación, sanidad y trazabilidad, auditada por un organismo de certificación habilitado',
+
   'Third-Party Verification': 'Verificación de tercera parte',
   'Transparency Initiative': 'Iniciativa de transparencia',
 
@@ -775,14 +806,14 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   // had no Spanish translation, so a Spanish shopper saw one English paragraph mid-page.
   'You can see the week this fruit came off the block, and how much was picked that day.':
     'Puedes ver la semana en que esta fruta salió del lote y cuánto se cosechó ese día.',
-  'You can see what this crop was fed, how much, and whether it was allowed under organic rules.':
-    'Puedes ver con qué se alimentó este cultivo, cuánto, y si estaba permitido bajo las normas orgánicas.',
-  'You can see what was applied, which pest it was aimed at, and whether it was allowed under organic rules.':
-    'Puedes ver qué se aplicó, contra qué plaga, y si estaba permitido bajo las normas orgánicas.',
-  'You can see what was used against disease on this crop, and whether it was allowed under organic rules.':
-    'Puedes ver qué se usó contra enfermedades en este cultivo y si estaba permitido bajo las normas orgánicas.',
-  'You can see what was used on weeds here, and whether it was allowed under organic rules.':
-    'Puedes ver qué se usó contra las malezas aquí y si estaba permitido bajo las normas orgánicas.',
+  'The material, the quantity and the day it happened are all part of this entry.':
+    'El material, la cantidad y el día en que ocurrió forman parte de esta entrada.',
+  'The pest, the product aimed at it and the amount used are recorded here.':
+    'La plaga, el producto dirigido a ella y la cantidad usada quedan registrados aquí.',
+  'Both the target and the material are on file here, with the date.':
+    'Tanto el objetivo como el material constan aquí, con la fecha.',
+  'Weed control is logged with the product used and the area it covered.':
+    'El control de malezas se registra con el producto usado y la superficie cubierta.',
   'You can see where the irrigation water came from and how it reached the trees.':
     'Puedes ver de dónde vino el agua de riego y cómo llegó a los árboles.',
   'pH Adjustment': 'Ajuste de pH',

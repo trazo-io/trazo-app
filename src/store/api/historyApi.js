@@ -141,7 +141,10 @@ export const historyApi = baseApi.injectEndpoints({
           body: cleanEventData
         };
       },
-      invalidatesTags: (result) => (result ? ['Event', 'History'] : [])
+      // 'SeasonPlan' because a record logged against a planned practice closes that
+      // checklist item server-side, so the plan's completeness is stale the moment this
+      // succeeds. (See store/api/seasonPlanApi.ts.)
+      invalidatesTags: (result, error) => (error ? [] : ['Event', 'History', 'SeasonPlan']),
     }),
     updateEvent: build.mutation({
       query: ({ companyId, farmId, eventId, eventType, ...eventData }) => {
@@ -156,8 +159,11 @@ export const historyApi = baseApi.injectEndpoints({
           body: cleanEventData
         };
       },
+      // Guarded on `error`, not on `result` — see deleteEvent below for why, and because
+      // `{ type: 'Event', eventId }` was never a valid tag descriptor either: the id key is
+      // `id`, so this provided `{type:'Event', id:undefined}` and matched nothing specific.
       invalidatesTags: (result, error, { eventId }) =>
-        result ? [{ type: 'Event', eventId }, 'History'] : []
+        error ? [] : [{ type: 'Event', id: eventId }, 'Event', 'History', 'SeasonPlan'],
     }),
     deleteEvent: build.mutation({
       query: ({ companyId, farmId, eventId, eventType }) => ({
@@ -165,8 +171,15 @@ export const historyApi = baseApi.injectEndpoints({
         method: 'DELETE',
         credentials: 'include'
       }),
+      // ⚠️ Was `result ? [...] : []`. DELETE answers 204 with an empty body, so `result` is
+      // null on SUCCESS and this invalidated NOTHING — the production timeline and the farm
+      // dashboard both kept showing a record the server had already deleted. Guard on
+      // `error`: RTK passes the error and leaves `result` undefined when the call fails.
+      //
+      // 'SeasonPlan' matters as of 2026-08-19: deleting the record that fulfilled a planned
+      // practice puts that item back on the checklist server-side, so the plan is stale.
       invalidatesTags: (result, error, { eventId }) =>
-        result ? [{ type: 'Event', eventId }, 'History'] : []
+        error ? [] : [{ type: 'Event', id: eventId }, 'Event', 'History', 'SeasonPlan'],
     }),
     createProduction: build.mutation({
       query: (production) => ({

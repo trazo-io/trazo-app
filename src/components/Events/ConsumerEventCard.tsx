@@ -53,7 +53,6 @@ import {
   getEventTrustIndicators
 } from 'utils/eventDescriptions';
 import {
-  getEventFieldDisplay,
   localizeFieldValue,
   mergeCustomFieldsIntoDisplay,
   type EventFieldDisplay,
@@ -65,7 +64,6 @@ import { getFieldsForSurface, type ResolvedFieldSet } from 'src/config/events';
 import { maskPerformerName, withUSUnits, formatHarvestDate } from 'utils/consumerDisplay';
 import { extractSubtypeCode } from 'utils/eventDataNormalizer';
 
-const USE_FIELD_REGISTRY = import.meta.env.VITE_USE_FIELD_REGISTRY === 'true';
 import {
   getVerificationBadgeConfig,
   getVerificationColor,
@@ -585,11 +583,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
       : formatHarvestDate(event.date, intl.locale) || formattedDate;
 
   // Get comprehensive field display data based on field display matrix.
-  // When VITE_USE_FIELD_REGISTRY=true, the registry's consumer_card surface
-  // drives field selection (which fields appear) while keeping the existing
-  // rendering style. Registry ResolvedField format is bridged to legacy
-  // FieldDisplayItem format so existing JSX works unchanged.
-  const legacyFieldDisplay = getEventFieldDisplay(event);
+  // The registry's consumer_card surface drives field selection (which fields appear) while
+  // keeping the existing rendering style. Registry ResolvedField format is bridged to the
+  // FieldDisplayItem shape so the JSX below works unchanged.
 
   // Hoisted (2026-08-01) — the field-display build below needs it too, to drop the
   // organic-status row that the chip already covers.
@@ -599,8 +595,6 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     ['FE', 'PE', 'FU', 'HE'].includes(eventSubtype ?? '');
 
   const fieldDisplayBase: EventFieldDisplay = (() => {
-    if (!USE_FIELD_REGISTRY) return legacyFieldDisplay;
-
     // `translate` is what makes an enum render as its authored label ("Non-Organic
     // (Untreated)") rather than a de-underscored slug ("Non Organic Untreated"). The modal
     // gets it via useEventFields; this component calls the resolver directly, so without
@@ -678,19 +672,17 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     };
 
     // Use registry fields if they have content; fall back to legacy otherwise
-    const hasRegistryFields =
-      registryDisplay.immediate.length +
-        registryDisplay.secondary.length +
-        registryDisplay.details.length >
-      0;
     // The registry has no notion of farmer-authored custom fields, so they must be merged
     // in explicitly on this path. Without it, any event that resolved even one registry
     // field dropped every custom field the farmer marked consumer-visible — they showed in
     // the producer preview (legacy path) and then silently disappeared on the public page.
-    // The legacy branch already merges them inside getEventFieldDisplay().
-    return hasRegistryFields
-      ? mergeCustomFieldsIntoDisplay(registryDisplay, event)
-      : legacyFieldDisplay;
+    // Custom fields are merged unconditionally now. There used to be a `hasRegistryFields`
+    // branch falling back to fieldDisplayUtils' hand-rolled extractors when the registry
+    // resolved nothing; that fallback is gone, and `registryCoversEveryEventType.test.ts`
+    // holds the invariant that made removing it safe — every event type declares at least one
+    // consumer_card field, so "registry resolved nothing" means the EVENT is empty, not that
+    // the registry lacks coverage. In that case an empty display is the honest answer.
+    return mergeCustomFieldsIntoDisplay(registryDisplay, event);
   })();
 
   // R2 (2026-06-14): localize enum field VALUES to es-419 in one pass so every
@@ -2046,84 +2038,18 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   </Box>
                 )}
 
-                {/* Technical details if available (legacy fallback) */}
-                {(event.volume ||
-                  event.area ||
-                  event.concentration ||
-                  event.npk_ratio ||
-                  event.active_ingredient ||
-                  event.application_method ||
-                  event.target_pest_disease_need) &&
-                  fieldDisplay.immediate.length === 0 && (
-                    <Box>
-                      <HStack mb={4} spacing={2}>
-                        <Icon as={FaFlask} color="green.500" boxSize={4} />
-                        <Text fontWeight="600" fontSize="sm" color="gray.700">
-                          {intl.formatMessage({ id: 'consumer.eventCard.applicationDetails' })}
-                        </Text>
-                      </HStack>
+                {/* REMOVED (2026-08-19): a "legacy fallback" that rendered
+                    getEventFieldDisplay(event).details on the CONSUMER card whenever the
+                    registry resolved no immediate fields.
 
-                      {/* Modern grid layout for fields */}
-                      <SimpleGrid columns={{ base: 1, smd: 2 }} spacing={3} mb={4}>
-                        {(() => {
-                          const chemicalFields = getEventFieldDisplay(event);
-                          return [
-                            ...chemicalFields.immediate,
-                            ...chemicalFields.secondary,
-                            ...chemicalFields.details
-                          ].map((field, index) => (
-                            <Box
-                              key={index}
-                              p={3}
-                              bg="gray.50"
-                              borderRadius="lg"
-                              border="1px solid"
-                              borderColor="gray.100"
-                              _hover={{ borderColor: 'green.200', bg: 'green.50' }}
-                              transition="all 0.2s">
-                              <Text fontSize="xs" fontWeight="500" color="gray.500" mb={1}>
-                                {field.label}
-                              </Text>
-                              <Text fontSize="sm" fontWeight="600" color="gray.700">
-                                {localizeFieldValue(field.value, intl.locale)}
-                              </Text>
-                            </Box>
-                          ));
-                        })()}
-                      </SimpleGrid>
-
-                      {/* Carbon impact with modern styling */}
-                      {event.carbon_impact && (
-                        <Box
-                          p={4}
-                          bg="green.50"
-                          borderRadius="xl"
-                          border="1px solid"
-                          borderColor="green.200">
-                          <HStack spacing={3}>
-                            <Circle size="40px" bg="green.100">
-                              <Icon as={FaGlobeAmericas} color="green.600" boxSize={5} />
-                            </Circle>
-                            <Box>
-                              <Text fontSize="sm" fontWeight="600" color="gray.700">
-                                {intl.formatMessage({
-                                  id: 'consumer.eventCard.environmentalImpact'
-                                })}
-                              </Text>
-                              <Text fontSize="lg" fontWeight="bold" color="green.700">
-                                {event.carbon_impact.toFixed(2)} kg CO₂e
-                              </Text>
-                              <Text fontSize="xs" color="green.700">
-                                {intl.formatMessage({
-                                  id: 'consumer.eventCard.carbonDataNote'
-                                })}
-                              </Text>
-                            </Box>
-                          </HStack>
-                        </Box>
-                      )}
-                    </Box>
-                  )}
+                    The details tier was deliberately taken off the consumer card on
+                    2026-07-31 — 64 declarations lived there including EPA registration
+                    numbers, buffer distances, internal block IDs, raw CFR citations and
+                    per-event fuel figures (see consumerCardTiers.test.ts). This block reached
+                    around that decision: it bypassed the registry's surface rules entirely and
+                    printed all three tiers, so a sparse chemical event could still put
+                    operator data in front of a shopper. Showing less is the correct outcome;
+                    showing withheld data is not. */}
 
                 {/* Comprehensive Field Display - DETAILS Priority Fields.
                     Deduped against Key Details/Additional Information (the

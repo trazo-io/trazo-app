@@ -10,6 +10,7 @@ import {
   StandardSelect,
   StandardTextarea,
   StandardAlert,
+  CollapsibleSection,
   SectionHeader,
   SectionBox
 } from 'components/Design/StandardComponents';
@@ -32,7 +33,6 @@ const BUSINESS_TYPE_NAMES = {
   verification: 'Third-Party Verification',
   sustainability_audit: 'Sustainability Assessment',
   transparency: 'Transparency Initiative',
-  carbon_credits: 'Carbon Credits Earned',
   compliance: 'Regulatory Compliance'
 };
 
@@ -41,8 +41,6 @@ const formSchemaMainInfo = object({
   business_type: string().min(1, 'Business activity type is required'),
   name: string().optional(),
   certification_type: string().optional(),
-  carbon_credits_earned: string().optional(),
-  carbon_credits_unit: string().optional(),
   verification_status: string().optional(),
   sustainability_practice: string().optional(),
   trust_impact: string().optional(), // NEW: Impact on consumer trust
@@ -79,14 +77,6 @@ const formSchemaMainInfo = object({
       message: 'A verification event needs a definitive status: verified, in progress or failed'
     });
   }
-  // Same shape: a carbon-credits transaction must carry an amount.
-  if (data.business_type === 'carbon_credits' && !data.carbon_credits_earned) {
-    ctx.addIssue({
-      path: ['carbon_credits_earned'],
-      code: 'custom',
-      message: 'Enter the number of credits generated or traded'
-    });
-  }
   // Same shape again: the field renders with a required asterisk for certification events and
   // the API rejects a blank one, but the schema left it optional — so the step advanced, the
   // farmer uploaded photos, and only the POST failed, with a raw "certification_type: ..."
@@ -110,8 +100,6 @@ const BusinessTab = forwardRef(
         business_type: initialValues.business_type || '',
         certification_type: initialValues.certification_type || '',
         name: initialValues.name || '',
-        carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
-        carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
         verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
         sustainability_practice: initialValues.sustainability_practice || '',
         trust_impact: initialValues.trust_impact || '',
@@ -165,8 +153,6 @@ const BusinessTab = forwardRef(
           business_type: initialValues.business_type || '',
           name: initialValues.name || '',
           certification_type: initialValues.certification_type || '',
-          carbon_credits_earned: initialValues.carbon_credits_earned?.toString() || '',
-          carbon_credits_unit: initialValues.carbon_credits_unit || 'tCO2e',
           verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
           sustainability_practice: initialValues.sustainability_practice || '',
           trust_impact: initialValues.trust_impact || '',
@@ -214,8 +200,6 @@ const BusinessTab = forwardRef(
       'business_type',
       'name',
       'certification_type',
-      'carbon_credits_earned',
-      'carbon_credits_unit',
       'verification_status',
       'sustainability_practice',
       'trust_impact',
@@ -259,30 +243,18 @@ const BusinessTab = forwardRef(
     // They do NOT generate meaningful carbon emissions and should not call carbon APIs
 
     const onSubmit = (data) => {
-      // Only persist carbon-credits fields when the activity actually is a
-      // carbon-credits transaction. The inputs are conditionally rendered
-      // (businessType === 'carbon_credits'), but react-hook-form retains values
-      // across conditional unmounts — so a user who enters credits, then switches
-      // business_type to 'certification' would otherwise leak the stale amount
-      // and the 'tCO2e' default unit into the saved certification event.
-      const isCarbonCredits = data.business_type === 'carbon_credits';
-      const parsedEarned =
-        isCarbonCredits && data.carbon_credits_earned
-          ? parseFloat(data.carbon_credits_earned)
-          : NaN;
-      // Guard against NaN from non-numeric input — the backend DecimalField
-      // rejects NaN with a 400. Zero earned is treated the same as no entry:
-      // no amount means no unit should persist.
-      const earned = Number.isFinite(parsedEarned) && parsedEarned > 0 ? parsedEarned : undefined;
+      // Carbon credits are no longer an activity a farmer can log, so this form neither
+      // renders nor writes `carbon_credits_earned` / `carbon_credits_unit`. Both keys are
+      // absent from the payload rather than sent empty: the columns still hold values on
+      // events recorded before the type was withdrawn, and a mutation that names a field its
+      // UI does not render is how those get silently zeroed on the next edit.
       const processedData = {
         ...data,
         // D3 — BusinessEvent.type defaults to CE ("Certification Event"). This form never set
         // it, so an inspection, a compliance filing and a carbon-credit transaction all stored
         // and displayed as certifications on the audit PDF and the consumer page. Derive it
         // from the activity the farmer actually picked.
-        type: resolveBusinessSubtype(data.business_type),
-        carbon_credits_earned: earned,
-        carbon_credits_unit: earned ? data.carbon_credits_unit : undefined
+        type: resolveBusinessSubtype(data.business_type)
       };
       onSubmitHandler(processedData);
     };
@@ -318,9 +290,8 @@ const BusinessTab = forwardRef(
                     id: 'events.business.sections.trustBuildingBusinessActivity',
                     defaultMessage: 'Trust-Building Business Activity'
                   })}
-                  badge="Consumer Trust"
-                  badgeColorScheme="teal"
-                />
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                />{' '}
                 <VStack spacing={4} align="stretch">
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField
@@ -333,7 +304,7 @@ const BusinessTab = forwardRef(
                       helpText={intl.formatMessage({
                         id: 'events.business.help.selectActivitiesThatBuildConsumerTrustAndEnh',
                         defaultMessage:
-                          'Select activities that build consumer trust and enhance transparency'
+                          'Certifications, inspections, audits and agreements — what your certifier asks for at renewal'
                       })}>
                       <Controller
                         name="business_type"
@@ -368,12 +339,6 @@ const BusinessTab = forwardRef(
                               {intl.formatMessage({
                                 id: 'events.business.options.transparencyInitiativeLaunched',
                                 defaultMessage: 'Transparency Initiative Launched'
-                              })}
-                            </option>
-                            <option value="carbon_credits">
-                              {intl.formatMessage({
-                                id: 'events.business.options.carbonCreditsEarned',
-                                defaultMessage: 'Carbon Credits Earned'
                               })}
                             </option>
                             <option value="compliance">
@@ -415,7 +380,8 @@ const BusinessTab = forwardRef(
                       error={errors.verification_status?.message}
                       helpText={intl.formatMessage({
                         id: 'events.business.help.statusOfVerificationForConsumerTransparency',
-                        defaultMessage: 'Status of verification for consumer transparency'
+                        defaultMessage:
+                          'Where this verification stands — it appears in your certifier packet'
                       })}>
                       <Controller
                         name="verification_status"
@@ -530,7 +496,7 @@ const BusinessTab = forwardRef(
                         error={errors.verified_certifier_name?.message}
                         helpText={
                           businessType === 'certification'
-                            ? 'Name of the certifying organization (builds consumer trust)'
+                            ? 'The accredited certifying agent that issued this — your certifier packet lists it beside the certificate number'
                             : 'Name of the auditing or verification body'
                         }>
                         <Controller
@@ -578,70 +544,6 @@ const BusinessTab = forwardRef(
                       </StandardField>
                     </SimpleGrid>
                   )}
-
-                  {/* Carbon Credits - Only for carbon credit events */}
-                  {businessType === 'carbon_credits' && (
-                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                      <StandardField
-                        label={intl.formatMessage({
-                          id: 'events.business.fields.carbonCreditsEarned',
-                          defaultMessage: 'Carbon Credits Earned'
-                        })}
-                        required
-                        error={errors.carbon_credits_earned?.message}
-                        helpText={intl.formatMessage({
-                          id: 'events.business.help.amountOfCarbonCreditsGeneratedOrTraded',
-                          defaultMessage: 'Amount of carbon credits generated or traded'
-                        })}>
-                        <Controller
-                          name="carbon_credits_earned"
-                          control={methods.control}
-                          render={({ field }) => (
-                            <StandardInput
-                              {...field}
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder="0.00"
-                            />
-                          )}
-                        />
-                      </StandardField>
-
-                      <StandardField
-                        label={intl.formatMessage({
-                          id: 'events.business.fields.unit',
-                          defaultMessage: 'Unit'
-                        })}>
-                        <Controller
-                          name="carbon_credits_unit"
-                          control={methods.control}
-                          render={({ field }) => (
-                            <StandardSelect {...field}>
-                              <option value="tCO2e">
-                                {intl.formatMessage({
-                                  id: 'events.business.options.tco2eTonnesCo2Equivalent',
-                                  defaultMessage: 'tCO2e (tonnes CO2 equivalent)'
-                                })}
-                              </option>
-                              <option value="kgCO2e">
-                                {intl.formatMessage({
-                                  id: 'events.business.options.kgco2eKilogramsCo2Equivalent',
-                                  defaultMessage: 'kgCO2e (kilograms CO2 equivalent)'
-                                })}
-                              </option>
-                              <option value="credits">
-                                {intl.formatMessage({
-                                  id: 'events.business.options.carbonCreditsUnits',
-                                  defaultMessage: 'Carbon Credits (units)'
-                                })}
-                              </option>
-                            </StandardSelect>
-                          )}
-                        />
-                      </StandardField>
-                    </SimpleGrid>
-                  )}
                 </VStack>
               </SectionBox>
 
@@ -654,8 +556,8 @@ const BusinessTab = forwardRef(
                     id: 'events.business.sections.sustainabilityPractice',
                     defaultMessage: 'Sustainability Practice'
                   })}
-                  badge="Consumer Story"
-                />
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
+                />{' '}
                 <StandardField
                   label={intl.formatMessage({
                     id: 'events.business.fields.sustainabilityPracticeImplemented',
@@ -665,7 +567,7 @@ const BusinessTab = forwardRef(
                   helpText={intl.formatMessage({
                     id: 'events.business.help.practiceThatEnhancesCarbonTransparencyOrEnvi',
                     defaultMessage:
-                      'Practice that enhances carbon transparency or environmental benefit'
+                      'Optional — a sustainability practice noted against this activity, shown on your buyer page'
                   })}>
                   <Controller
                     name="sustainability_practice"
@@ -736,7 +638,7 @@ const BusinessTab = forwardRef(
                     id: 'events.business.sections.farmerSFieldNotesConsumerTransparency',
                     defaultMessage: "Farmer's Field Notes & Consumer Transparency"
                   })}
-                  badge="Consumer Transparency"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <VStack spacing={4} align="stretch">
                   <StandardField
@@ -768,11 +670,7 @@ const BusinessTab = forwardRef(
                   <StandardField
                     label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
                     error={errors.observation?.message}
-                    helpText={intl.formatMessage({
-                      id: 'events.business.help.shareDetailsAboutThisBusinessActivitySImpact',
-                      defaultMessage:
-                        "Share details about this business activity's impact on carbon transparency that help consumers understand your commitment to sustainability"
-                    })}>
+                    helpText={intl.formatMessage({ id: 'events.common.help.observationAudience' })}>
                     <Controller
                       name="observation"
                       control={methods.control}

@@ -1,0 +1,341 @@
+/**
+ * The season plan — what this crop usually needs, and what the grower has logged.
+ *
+ * ⛔ Every row here is a SUGGESTION. Picking a crop template used to write real, dated event
+ * records attributed to the grower (the day invented by the browser from the template's prose
+ * window, so routinely backdated) which then printed into the certifier packet
+ * indistinguishable from practices actually observed. § 205.201(a) makes the producer the
+ * author of the plan and § 205.103(b)(2) requires records that can be audited, so a template
+ * now produces this checklist and "Log this" hands the farmer the form — with the fields
+ * prefilled, the date blank, and their name on the save.
+ *
+ * The number in the header is COMPLETENESS ("9 of 12 logged"), not a count of events and not a
+ * score. Volume was the metric a template could inflate; completeness is the one a certifier
+ * actually reads.
+ */
+import React, { useState } from 'react';
+
+import {
+  Badge,
+  Box,
+  Divider,
+  HStack,
+  Icon,
+  Stack,
+  Text,
+  Textarea,
+  VStack,
+  useDisclosure,
+  useToast
+} from '@chakra-ui/react';
+import { FaCheckCircle, FaClipboardList, FaPlus, FaUndo } from 'react-icons/fa';
+import { useIntl } from 'react-intl';
+import { useNavigate } from 'react-router-dom';
+
+import {
+  GuidanceNote,
+  StandardButton,
+  StandardCard,
+  StandardSkeleton
+} from 'components/Design/StandardComponents';
+import { ResponsiveModal } from 'components/Design/ResponsiveModal';
+import { verbForEvent } from 'config/activityVerbs';
+import {
+  SeasonPlanItem,
+  useGetSeasonPlanQuery,
+  useUpdateSeasonPlanItemMutation
+} from 'store/api/seasonPlanApi';
+
+interface SeasonPlanSectionProps {
+  /** History public_id or numeric id — the endpoint resolves either. */
+  productionId: string | number;
+  farmId?: string;
+  parcelId?: string;
+  canWrite: boolean;
+  /** A finished season is a closed record; nothing more can be logged against it. */
+  isFinished?: boolean;
+}
+
+/** 44px minimum touch target on phones — these are field-use controls (frontend rules). */
+const TOUCH_TARGET = { base: '44px', smd: '32px' };
+
+const STATUS_LABEL: Record<SeasonPlanItem['status'], string> = {
+  logged: 'seasonPlan.statusLogged',
+  pending: 'seasonPlan.statusPending',
+  skipped: 'seasonPlan.statusSkipped'
+};
+
+export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
+  productionId,
+  farmId,
+  parcelId,
+  canWrite,
+  isFinished = false
+}) => {
+  const intl = useIntl();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const [skipTarget, setSkipTarget] = useState<SeasonPlanItem | null>(null);
+  const [skipReason, setSkipReason] = useState('');
+  // Which row is mid-request. `isUpdating` is the shared RTK flag, so using it directly put
+  // every "Put back" button in the list into a spinner at once.
+  const [pendingItemId, setPendingItemId] = useState<number | null>(null);
+
+  const { data, isLoading } = useGetSeasonPlanQuery(
+    { historyId: productionId },
+    { skip: !productionId }
+  );
+  const [updateItem, { isLoading: isUpdating }] = useUpdateSeasonPlanItemMutation();
+
+  const items = data?.items || [];
+  const completeness = data?.completeness;
+
+  // A production started without a crop template has no plan, and that is a perfectly good
+  // way to work — the card simply does not render rather than nagging for one.
+  if (!isLoading && items.length === 0) return null;
+
+  const openLogForm = (item: SeasonPlanItem) => {
+    const verb = verbForEvent(item.event_type, item.event_subtype);
+    const params = new URLSearchParams({
+      event_type: String(item.event_type),
+      plan_item: String(item.id),
+      production: String(productionId)
+    });
+    // Only preset the chooser when a verb genuinely matches. Guessing would drop the farmer
+    // into a form whose fields do not describe what they did.
+    if (verb) params.set('verb', verb.key);
+    navigate(
+      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?${params.toString()}`
+    );
+  };
+
+  const openRecord = (item: SeasonPlanItem) => {
+    navigate(
+      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/${item.fulfilled_by_id}/change` +
+        `?event_type=${item.fulfilled_by_event_type}`
+    );
+  };
+
+  const askToSkip = (item: SeasonPlanItem) => {
+    setSkipTarget(item);
+    setSkipReason('');
+    onOpen();
+  };
+
+  const applyStatus = async (item: SeasonPlanItem, status: 'pending' | 'skipped', reason = '') => {
+    setPendingItemId(item.id);
+    try {
+      await updateItem({
+        historyId: productionId,
+        itemId: item.id,
+        status,
+        skipped_reason: reason
+      }).unwrap();
+      return true;
+    } catch (error: any) {
+      toast({
+        title: intl.formatMessage({ id: 'seasonPlan.errorTitle' }),
+        // The 409 body explains that the practice is already logged against a record; without
+        // this the farmer gets a bare "could not update" and no way to work out why.
+        description: error?.data?.error || error?.data?.detail,
+        status: 'error',
+        duration: 6000,
+        isClosable: true
+      });
+      return false;
+    } finally {
+      setPendingItemId(null);
+    }
+  };
+
+  const confirmSkip = async () => {
+    if (!skipTarget) return;
+    // Only dismiss on success — closing regardless discards the reason the farmer just typed
+    // and leaves them looking at an unchanged list with no explanation.
+    if (await applyStatus(skipTarget, 'skipped', skipReason.trim())) {
+      onClose();
+    }
+  };
+
+  return (
+    <>
+      <StandardCard
+        title={intl.formatMessage({ id: 'seasonPlan.title' })}
+        subtitle={intl.formatMessage({ id: 'seasonPlan.subtitle' })}
+        titleIcon={<Icon as={FaClipboardList} />}
+        headerAction={
+          completeness ? (
+            <Badge
+              variant={
+                completeness.logged >= completeness.total - completeness.skipped
+                  ? 'subtle'
+                  : 'neutral'
+              }
+              colorScheme={
+                completeness.logged >= completeness.total - completeness.skipped
+                  ? 'green'
+                  : undefined
+              }
+              textTransform="none">
+              {/* Applicable, not total. A practice the operator set aside as not applicable
+                  this season is not an outstanding record, and counting it in the denominator
+                  means a farmer who has logged everything they were ever going to log still
+                  reads as behind. */}
+              {intl.formatMessage(
+                { id: 'seasonPlan.completeness' },
+                { logged: completeness.logged, total: completeness.total - completeness.skipped }
+              )}
+            </Badge>
+          ) : undefined
+        }>
+        {isLoading ? (
+          <StandardSkeleton count={3} />
+        ) : (
+          <VStack spacing={0} align="stretch">
+            {items.map((item, index) => {
+              const isLogged = item.status === 'logged';
+              const isSkipped = item.status === 'skipped';
+              return (
+                <Box key={item.id}>
+                  {index > 0 && <Divider />}
+                  {/* Stacks below 480px: "Not this season" + "Log this" side by side with the
+                      practice name does not fit a 375px screen. No row-level `opacity` — it
+                      pulls every label in the row under its measured contrast ratio, and the
+                      set-aside state is already carried by the strike-through, the muted
+                      title and the badge's own word. */}
+                  <Stack
+                    direction={{ base: 'column', smd: 'row' }}
+                    py={3}
+                    spacing={3}
+                    align={{ base: 'stretch', smd: 'flex-start' }}
+                    justify="space-between">
+                    <HStack spacing={3} align="flex-start" minW={0}>
+                      <Icon
+                        as={isLogged ? FaCheckCircle : FaClipboardList}
+                        color={isLogged ? 'green.700' : 'gray.400'}
+                        mt={1}
+                        aria-hidden
+                      />
+                      <VStack align="start" spacing={0} minW={0}>
+                        <Text
+                          fontWeight="medium"
+                          fontSize={{ base: 'sm', md: 'md' }}
+                          color={isSkipped ? 'gray.600' : undefined}
+                          textDecoration={isSkipped ? 'line-through' : undefined}>
+                          {item.name}
+                        </Text>
+                        {item.planned_window && (
+                          <Text fontSize="xs" color="gray.600">
+                            {intl.formatMessage(
+                              { id: 'seasonPlan.window' },
+                              { window: item.planned_window }
+                            )}
+                          </Text>
+                        )}
+                        {isSkipped && item.skipped_reason && (
+                          <Text fontSize="xs" color="gray.600" fontStyle="italic">
+                            {item.skipped_reason}
+                          </Text>
+                        )}
+                      </VStack>
+                    </HStack>
+
+                    <VStack align={{ base: 'stretch', smd: 'end' }} spacing={2} flexShrink={0}>
+                      {/* Status is never signalled by colour alone — the pill carries the word. */}
+                      <Badge
+                        variant={isLogged ? 'subtle' : 'neutral'}
+                        colorScheme={isLogged ? 'green' : undefined}
+                        textTransform="none">
+                        {intl.formatMessage({ id: STATUS_LABEL[item.status] })}
+                      </Badge>
+
+                      {isLogged && item.fulfilled_by_id != null && (
+                        <StandardButton
+                          size="sm"
+                          minH={TOUCH_TARGET}
+                          variant="ghost"
+                          onClick={() => openRecord(item)}>
+                          {intl.formatMessage({ id: 'seasonPlan.viewRecord' })}
+                        </StandardButton>
+                      )}
+
+                      {canWrite && !isFinished && item.status === 'pending' && (
+                        <HStack spacing={2} w={{ base: '100%', smd: 'auto' }}>
+                          <StandardButton
+                            size="sm"
+                            minH={TOUCH_TARGET}
+                            flex={{ base: 1, smd: 'none' }}
+                            variant="outline"
+                            onClick={() => askToSkip(item)}>
+                            {intl.formatMessage({ id: 'seasonPlan.notApplicable' })}
+                          </StandardButton>
+                          <StandardButton
+                            size="sm"
+                            minH={TOUCH_TARGET}
+                            flex={{ base: 1, smd: 'none' }}
+                            leftIcon={<Icon as={FaPlus} />}
+                            onClick={() => openLogForm(item)}>
+                            {intl.formatMessage({ id: 'seasonPlan.logThis' })}
+                          </StandardButton>
+                        </HStack>
+                      )}
+
+                      {canWrite && !isFinished && isSkipped && (
+                        <StandardButton
+                          size="sm"
+                          minH={TOUCH_TARGET}
+                          variant="ghost"
+                          leftIcon={<Icon as={FaUndo} />}
+                          isLoading={pendingItemId === item.id}
+                          onClick={() => applyStatus(item, 'pending')}>
+                          {intl.formatMessage({ id: 'seasonPlan.putBack' })}
+                        </StandardButton>
+                      )}
+                    </VStack>
+                  </Stack>
+                </Box>
+              );
+            })}
+          </VStack>
+        )}
+      </StandardCard>
+
+      <ResponsiveModal
+        isOpen={isOpen}
+        onClose={onClose}
+        size="md"
+        isCloseDisabled={isUpdating}
+        header={skipTarget?.name}
+        footer={
+          <HStack spacing={3} justify="flex-end" w="100%">
+            <StandardButton variant="outline" onClick={onClose} isDisabled={isUpdating}>
+              {intl.formatMessage({ id: 'seasonPlan.skipCancel' })}
+            </StandardButton>
+            <StandardButton onClick={confirmSkip} isLoading={isUpdating}>
+              {intl.formatMessage({ id: 'seasonPlan.skipConfirm' })}
+            </StandardButton>
+          </HStack>
+        }>
+        <VStack align="stretch" spacing={3}>
+          <Text fontSize="sm" color="gray.700">
+            {intl.formatMessage({ id: 'seasonPlan.skipReasonLabel' })}
+          </Text>
+          <Textarea
+            value={skipReason}
+            onChange={(event) => setSkipReason(event.target.value)}
+            placeholder={intl.formatMessage({ id: 'seasonPlan.skipReasonPlaceholder' })}
+            maxLength={255}
+            rows={3}
+          />
+          <GuidanceNote>
+            {intl.formatMessage({ id: 'seasonPlan.skipNote' })}
+          </GuidanceNote>
+        </VStack>
+      </ResponsiveModal>
+    </>
+  );
+};
+
+export default SeasonPlanSection;

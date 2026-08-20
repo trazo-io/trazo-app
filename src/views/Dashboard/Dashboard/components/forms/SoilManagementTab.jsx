@@ -27,6 +27,7 @@ import {
   StandardSelect,
   StandardTextarea,
   StandardAlert,
+  CollapsibleSection,
   SectionHeader,
   SectionBox
 } from 'components/Design/StandardComponents';
@@ -567,6 +568,36 @@ const SoilManagementTab = forwardRef(
     const watchedCompostInitialCnRatio = watch('compost_initial_cn_ratio');
     const watchedManureHarvestInterval = watch('manure_harvest_interval');
     const watchedManureApplicationDate = watch('manure_application_date');
+    const watchedManureHarvestDatePlanned = watch('manure_harvest_date_planned');
+
+    // Does the plan clear the interval it declares? Both dates and the interval were on this
+    // form already, and nothing compared them: a farmer could select the correct 120 days for
+    // a soil-contact crop — clearing the crop-rule check in the certifier packet, which only
+    // validates the LABEL — and plan harvest 60 days after application. Catching it here beats
+    // catching it in the packet, because here the harvest plan can still move.
+    const manureIntervalShortfall = useMemo(() => {
+      const days = parseInt(String(watchedManureHarvestInterval || '').split('_')[0], 10);
+      if (
+        !Number.isFinite(days) ||
+        !watchedManureApplicationDate ||
+        !watchedManureHarvestDatePlanned
+      )
+        return null;
+      const applied = new Date(watchedManureApplicationDate);
+      const planned = new Date(watchedManureHarvestDatePlanned);
+      if (Number.isNaN(applied.getTime()) || Number.isNaN(planned.getTime())) return null;
+      const gap = Math.round((planned - applied) / 86400000);
+      // Reversed dates are a typo, not a short interval. Reporting "planned -30 days after
+      // this application, 150 days short" would send the farmer to widen an interval when what
+      // is actually wrong is one of the two dates. Same split as the certifier packet's
+      // page-2 check, so the two surfaces never disagree about which fault this is.
+      if (gap < 0) return { reversed: true, gap: Math.abs(gap) };
+      return gap < days ? { gap, required: days, short: days - gap } : null;
+    }, [
+      watchedManureHarvestInterval,
+      watchedManureApplicationDate,
+      watchedManureHarvestDatePlanned
+    ]);
 
     // Note: These fields are watched to ensure form data updates
     // but are NOT included in the carbon calculation useEffect dependencies
@@ -758,23 +789,38 @@ const SoilManagementTab = forwardRef(
         ...coreData
       } = data;
 
-      // For Tillage events, rename depth to tillage_depth for backend compatibility
-      const tillageDepthData =
-        data.type === 'TI'
-          ? {
-              tillage_depth: depth || '',
-              tillage_depth_unit: depth_unit || 'cm'
-            }
-          : {
-              depth: depth || '',
-              depth_unit: depth_unit || 'cm'
-            };
+      // The model field is `working_depth` (+ `depth_unit`) for EVERY soil subtype.
+      //
+      // 🔴 2026-08-19: this block renamed the input to `tillage_depth`/`tillage_depth_unit`
+      // for TI and sent bare `depth` otherwise — and the serializer accepts neither, so DRF
+      // dropped both silently and the grower's depth never reached the record. The packet's
+      // Tillage Detail table reads `ev.working_depth` for its "Working Depth" column, i.e.
+      // the one number that separates a shallow conservation pass from an inversion pass
+      // under § 205.203(a), so that column printed blank for anything entered through the UI.
+      // Only seeded rows, which write the column directly, ever had a value.
+      //
+      // Empty must be null, not '': working_depth is a DecimalField and DRF rejects ''.
+      const tillageDepthData = {
+        working_depth: depth || null,
+        depth_unit: depth_unit || 'cm'
+      };
 
       // Process data for backend compatibility
       // Ensure all numeric fields are strings (not Decimal objects)
       const cleanedCoreData = Object.entries(coreData).reduce((acc, [key, value]) => {
-        // Convert any numeric values to strings to avoid Decimal serialization issues
-        acc[key] = value !== null && value !== undefined ? String(value) : value;
+        // Convert any numeric values to strings to avoid Decimal serialization issues.
+        //
+        // ⚠️ SCALARS ONLY. This ran String() over EVERY key, and `custom_fields` is an ARRAY
+        // that rides along in `coreData` — so a farmer's custom field was posted as the
+        // literal string "[object Object]", which the backend validator rejects (a 500 until
+        // that path was taught to raise a 400), and an empty list was posted as "" and
+        // silently dropped. An object or array reaching a JSON body needs no stringifying;
+        // only Decimal-ish scalars did.
+        if (value === null || value === undefined || typeof value === 'object') {
+          acc[key] = value;
+        } else {
+          acc[key] = String(value);
+        }
         return acc;
       }, {});
 
@@ -791,6 +837,19 @@ const SoilManagementTab = forwardRef(
         ...cleanedCoreData,
         // ENHANCED: Include depth data with proper field naming for backend
         ...tillageDepthData,
+        // FSMA § 112.161(b) supervisor review. The Switch stores 'true'/'false' strings and the
+        // date arrives as '' when untouched, which DRF's DateField rejects outright.
+        //
+        // 🔴 2026-08-19: this coercion existed in ProductionTab, ChemicalTab and
+        // PestManagementTab but NOT here, so EVERY soil event save failed with
+        // "review_date: Date has wrong format" unless the grower happened to fill an optional
+        // produce-safety field their organic certifier does not even ask for. A soil event is
+        // the § 205.203 record — the family this blocked is the one the packet leans on most.
+        // The same three lines were present in this file, but inside a console.log() object
+        // literal, which is why a grep for `review_date:` looked satisfied.
+        reviewed: cleanedCoreData.reviewed === 'true' || cleanedCoreData.reviewed === true,
+        reviewer_name: cleanedCoreData.reviewer_name || null,
+        review_date: cleanedCoreData.review_date || null,
         // NOP DateField: backend rejects empty strings — convert to null
         manure_application_date: cleanedCoreData.manure_application_date || null,
         manure_harvest_date_planned: cleanedCoreData.manure_harvest_date_planned || null,
@@ -954,7 +1013,7 @@ const SoilManagementTab = forwardRef(
                   icon={FaSeedling}
                   iconColor="green.600"
                   title="Soil Management Details"
-                  badge="Carbon Calculation Required"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -1068,10 +1127,9 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     iconColor="green.600"
                     title="Fuel & Equipment Operations"
-                    badge="Enhanced Carbon Accuracy"
-                    description="Document your equipment usage, fuel consumption, and operational details to build consumer trust through transparent farming practices."
-                  />
-
+                    badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
+                    description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
+                  />{' '}
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {/* Phase 3: Fuel Type Selector */}
                     <StandardField
@@ -1125,7 +1183,7 @@ const SoilManagementTab = forwardRef(
 
                     <StandardField
                       label="Production Efficiency"
-                      helpText="Equipment efficiency rating for carbon scoring">
+                      helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
                       <StandardSelect {...register('production_efficiency')}>
                         <option value="">Select efficiency level</option>
                         <option value="high">High Efficiency</option>
@@ -1144,7 +1202,6 @@ const SoilManagementTab = forwardRef(
                       />
                     </StandardField>
                   </SimpleGrid>
-
                   {/* Phase 3: Electric Equipment Info Box */}
                   {watch('fuel_type') === 'electric' && (
                     <Box mt={3}>
@@ -1155,12 +1212,13 @@ const SoilManagementTab = forwardRef(
                       />
                     </Box>
                   )}
-
                   <Box mt={3}>
+                    {/* Title and body described two different things: the body is the
+                        carbon-is-optional note, under a heading about consumer trust. */}
                     <StandardAlert
                       status="info"
-                      title="Building Consumer Trust"
-                      description="Documenting actual fuel consumption and equipment usage provides consumers with complete transparency into your farming operations."
+                      title={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
+                      description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
                     />
                   </Box>
                 </SectionBox>
@@ -1168,15 +1226,14 @@ const SoilManagementTab = forwardRef(
 
               {/* Soil Amendment fields — PA (pH Adjustment), OM (Organic Matter), CC (Cover Crop), CO (Composting) */}
               {['PA', 'OM', 'CC', 'CO'].includes(watch('type')) && (
-                <SectionBox variant="highlighted" borderColor="green.200">
+                <SectionBox variant="highlighted">
                   <SectionHeader
                     icon={FaSeedling}
                     iconColor="green.600"
                     title="Soil Amendment Details"
-                    badge="IPCC 2006 Carbon Calculation"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document lime or soil amendment application for accurate carbon emissions calculation using IPCC 2006 methodology."
-                  />
-
+                  />{' '}
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <StandardField label="Amendment Type" helpText="Type of soil amendment applied">
                       <StandardSelect
@@ -1390,7 +1447,6 @@ const SoilManagementTab = forwardRef(
                       />
                     </StandardField>
                   </SimpleGrid>
-
                   <Box mt={3}>
                     <StandardAlert
                       status="info"
@@ -1411,7 +1467,7 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     iconColor="teal.600"
                     title="NOP Organic Compliance"
-                    badge="7 CFR 205.203"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     badgeColorScheme="teal"
                     /* Subtype-aware: a grazing pass shows only the raw-manure interval —
                        no amendment approval, no composting record — so the generic
@@ -1710,6 +1766,26 @@ const SoilManagementTab = forwardRef(
                         </StandardField>
                       </SimpleGrid>
 
+                      {manureIntervalShortfall && (
+                        <StandardAlert status="warning" mt={3}>
+                          <Text fontSize="sm">
+                            {manureIntervalShortfall.reversed
+                              ? intl.formatMessage(
+                                  { id: 'events.soil.manureDatesReversed' },
+                                  { gap: manureIntervalShortfall.gap }
+                                )
+                              : intl.formatMessage(
+                                  { id: 'events.soil.manureIntervalShortfall' },
+                                  {
+                                    gap: manureIntervalShortfall.gap,
+                                    required: manureIntervalShortfall.required,
+                                    short: manureIntervalShortfall.short
+                                  }
+                                )}
+                          </Text>
+                        </StandardAlert>
+                      )}
+
                       {/* USDA Manure Application / Food Crop Harvest Interval Record asks two
                             columns Trazo had no home for: "How Applied / Incorporated"
                             ("Manure spreader disk in") and "Manure Type, Form and Source"
@@ -1852,10 +1928,8 @@ const SoilManagementTab = forwardRef(
                     icon={FaThermometerHalf}
                     iconColor="orange.600"
                     title="Soil Properties"
-                    badge="Improves Carbon Accuracy"
-                    badgeColorScheme="orange"
-                  />
-
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                  />{' '}
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                     <StandardField
                       label={intl.formatMessage({ id: 'app.soilPH' }) || 'Soil pH'}
@@ -1917,7 +1991,7 @@ const SoilManagementTab = forwardRef(
                     icon={FaThermometerHalf}
                     iconColor="orange.600"
                     title={watch('type') === 'LA' ? 'Lab Analysis Results' : 'Soil Test Results'}
-                    badge="Lab Report"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     badgeColorScheme="orange"
                     description={
                       watch('type') === 'LA'
@@ -2050,16 +2124,14 @@ const SoilManagementTab = forwardRef(
 
               {/* Tillage-Specific Fields - Only for Tillage Operations */}
               {watch('type') === 'TI' && (
-                <SectionBox variant="highlighted" borderColor="orange.200">
+                <SectionBox variant="highlighted">
                   <SectionHeader
                     icon={FaSeedling}
                     iconColor="orange.600"
                     title="Tillage Operation Details"
-                    badge="Carbon Impact Calculation"
-                    badgeColorScheme="orange"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Provide specific tillage details for accurate carbon impact assessment. Tillage practices significantly affect soil carbon sequestration and emissions."
-                  />
-
+                  />{' '}
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <StandardField
                       label="Tillage Type"
@@ -2120,7 +2192,6 @@ const SoilManagementTab = forwardRef(
                       </StandardSelect>
                     </StandardField>
                   </SimpleGrid>
-
                   <Box mt={3}>
                     <StandardAlert
                       status="success"
@@ -2138,7 +2209,7 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     iconColor="green.600"
                     title="Grazing Details"
-                    badge="Soil Health Practice"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document grazing activities for cover crop management, weed control, and soil health."
                   />
 
@@ -2295,7 +2366,7 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     iconColor="green.600"
                     title="Habitat Development"
-                    badge="Biodiversity Practice"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document planted/established habitat — hedgerows, insectary strips, native plantings, riparian buffers, or living groundcover. Add photos as evidence."
                   />
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -2347,7 +2418,7 @@ const SoilManagementTab = forwardRef(
                     icon={FaSeedling}
                     iconColor="green.600"
                     title="Nesting / Shelter Structures"
-                    badge="Biodiversity Practice"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document installed wildlife structures — barn-owl & songbird boxes, raptor perches, native-bee blocks, bat boxes, insect hotels, beetle banks. Add photos as evidence."
                   />
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -2474,11 +2545,11 @@ const SoilManagementTab = forwardRef(
                   icon={FaSeedling}
                   iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
-                  badge="Consumer Transparency"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <StandardField
                   label="Observations & Notes"
-                  helpText="Share details about your soil management approach that help consumers understand your sustainable farming practices">
+                  helpText={intl.formatMessage({ id: 'events.common.help.observationAudience' })}>
                   <StandardTextarea
                     placeholder="Optional: Describe your soil management approach, goals for soil health, organic practices used, sustainability goals, etc. These details help consumers understand your farming methods."
                     rows={4}

@@ -10,10 +10,12 @@
  * IN "Inspection Process". The mapping below is chosen so the rendered label is TRUE of the
  * activity — nothing that is not a certification may resolve to CE.
  *
- * Note the deviation from the original plan, which routed carbon_credits and transparency to CE.
- * A carbon-credit transaction and a transparency initiative are not certifications; sending them
- * to CE would have reproduced the very defect being fixed. They resolve to CM, the least-wrong
- * of the three available labels.
+ * Note the deviation from the original plan, which routed transparency to CE. A transparency
+ * initiative is not a certification; sending it to CE would have reproduced the very defect
+ * being fixed. It resolves to CM, the least-wrong of the three available labels.
+ *
+ * `carbon_credits` was withdrawn as an activity type (2026-08-18) and is intentionally absent
+ * here — the unknown-activity fallback below already resolves any historical row to CM.
  *
  * Shared by BusinessTab (write path) and eventDataNormalizer (preview path) so the preview a
  * farmer approves matches the row that lands in the database.
@@ -25,7 +27,6 @@ export const BUSINESS_ACTIVITY_TO_SUBTYPE: Record<string, 'CE' | 'CM' | 'IN'> = 
   verification: 'IN',
   sustainability_audit: 'CM',
   compliance: 'CM',
-  carbon_credits: 'CM',
   transparency: 'CM'
 };
 

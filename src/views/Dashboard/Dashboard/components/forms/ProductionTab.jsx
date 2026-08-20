@@ -26,6 +26,7 @@ import {
   StandardSelect,
   StandardTextarea,
   StandardAlert,
+  CollapsibleSection,
   SectionHeader,
   SectionBox
 } from 'components/Design/StandardComponents';
@@ -117,7 +118,12 @@ const PRODUCTION_TYPE_NAMES = {
   CM: 'Canopy Management',
   // Batch 3 (2026-06): Scope-1 fuel ops that had no structured home before.
   FP: 'Frost Protection',
-  MO: 'Mowing / Orchard-Floor'
+  MO: 'Mowing / Orchard-Floor',
+  // Batch 4 (2026-08-19): activities Quick Organics offers that Trazo could only record as
+  // fields buried on some other event.
+  TP: 'Transport',
+  BU: 'Buffer Use',
+  SS: 'Seed Search'
 };
 
 /**
@@ -256,6 +262,11 @@ const formSchemaMainInfo = object({
   harvest_contract_number: string().optional(),
   cleaning_asset_class: string().optional(),
   applied_scope: string().optional(),
+  purge_material: string().optional(),
+  purge_quantity: string().optional(),
+  purge_material_end_use: string().optional(),
+  transport_origin: string().optional(),
+  transport_destination_address: string().optional(),
   applied_scope_detail: string().optional(),
   storage_location: string().optional(),
   storage_temperature_f: string()
@@ -571,6 +582,16 @@ const ProductionTab = forwardRef(
         harvest_contract_number: initialValues.harvest_contract_number || '',
         cleaning_asset_class: initialValues.cleaning_asset_class || '',
         applied_scope: initialValues.applied_scope || '',
+        // A field absent from defaultValues is WIPED by the reset() this form runs on
+        // subtype/initialValues change: react-hook-form resets to exactly these keys, so an
+        // unlisted one is not left alone, it is dropped. MEASURED: a Transport event saved its
+        // endpoints fine when nothing else was touched, and lost them the moment the
+        // harvest_destination select re-rendered the section.
+        purge_material: initialValues.purge_material || '',
+        purge_quantity: initialValues.purge_quantity || '',
+        purge_material_end_use: initialValues.purge_material_end_use || '',
+        transport_origin: initialValues.transport_origin || '',
+        transport_destination_address: initialValues.transport_destination_address || '',
         applied_scope_detail: initialValues.applied_scope_detail || '',
         grain_moisture: initialValues.grain_moisture?.toString() || '',
         harvest_method: initialValues.harvest_method || '',
@@ -814,6 +835,16 @@ const ProductionTab = forwardRef(
           harvest_contract_number: initialValues.harvest_contract_number || '',
           cleaning_asset_class: initialValues.cleaning_asset_class || '',
           applied_scope: initialValues.applied_scope || '',
+          // A field absent from defaultValues is WIPED by the reset() this form runs on
+          // subtype/initialValues change: react-hook-form resets to exactly these keys, so an
+          // unlisted one is not left alone, it is dropped. MEASURED: a Transport event saved its
+          // endpoints fine when nothing else was touched, and lost them the moment the
+          // harvest_destination select re-rendered the section.
+          purge_material: initialValues.purge_material || '',
+          purge_quantity: initialValues.purge_quantity || '',
+          purge_material_end_use: initialValues.purge_material_end_use || '',
+          transport_origin: initialValues.transport_origin || '',
+          transport_destination_address: initialValues.transport_destination_address || '',
           applied_scope_detail: initialValues.applied_scope_detail || '',
           grain_moisture: initialValues.grain_moisture?.toString() || '',
           harvest_method: initialValues.harvest_method || '',
@@ -1159,7 +1190,7 @@ const ProductionTab = forwardRef(
 
       // The subtypes that put seed or planting stock in the ground, i.e. the ones whose seed
       // section this form renders. Mirrors SEED_SOURCED_SUBTYPES in common/field_registry.py.
-      const isSeedSourced = data.type === 'PL' || data.type === 'TR';
+      const isSeedSourced = ['PL', 'TR', 'SS'].includes(data.type);
 
       // CRITICAL FIX: Extract yield_quantity from custom_fields if main field is empty
       // This handles cases where users add "Yield Quantity" as a custom field instead of using the main form field
@@ -1180,6 +1211,12 @@ const ProductionTab = forwardRef(
       }
 
       const isSummaryEvent = data.is_summary === 'true' || data.is_summary === true;
+
+      // See the note inside processedData below. TP / BU / SS reuse these columns because the
+      // fact is identical; only its ownership moves off the harvest event.
+      const RECORDS_LOT_DISPOSITION = ['HA', 'TP', 'BU'].includes(data.type);
+      const RECORDS_BUFFER = ['HA', 'BU'].includes(data.type);
+      const RECORDS_HANDLER = ['HA', 'TP'].includes(data.type);
 
       const processedData = {
         ...data,
@@ -1212,21 +1249,37 @@ const ProductionTab = forwardRef(
         // (productionType === 'HA' gate), but its 'normal' default was spread via
         // ...data and submitted for every other subtype — a phantom value the
         // farmer never set. Only send it for HA.
+        // WHICH ACTIVITY OWNS WHICH RECORD.
+        //
+        // Transport, Buffer Use and Seed Search are their own activities (see
+        // config/activityVerbs.ts) and reuse these columns, because the FACT is the same —
+        // a load left, buffer crop was disposed of, a seed search happened. What changes is
+        // that the record no longer has to belong to the harvest event it used to hang off:
+        // a load ships days after the pick, and one pick can ship on several dates.
+        //
+        // Written as sets rather than repeating a ternary per key so the next subtype is one
+        // edit, and so the render gates in the JSX below can be checked against these lists.
         production_efficiency: data.type === 'HA' ? data.production_efficiency : undefined,
         // WS-4 harvest-record completeness — HA-only (F28 phantom-value precedent).
         // harvest_date_end: null clears on edit; '' would fail DateField validation.
         // Blank is meaningful: the model assigns a crop+block+date code when the operator
         // leaves it empty, so an empty string must reach the API as undefined, not as ''.
-        harvest_lot_code: data.type === 'HA' ? data.harvest_lot_code || undefined : undefined,
-        amount_determination:
-          data.type === 'HA' ? data.amount_determination || undefined : undefined,
+        harvest_lot_code: RECORDS_LOT_DISPOSITION ? data.harvest_lot_code || undefined : undefined,
+        // Renders inside the shared Harvest/Transport/Buffer section, so it must post for all
+        // three: "how was this quantity arrived at" is as real for a weighed load or a buffer
+        // disposal as for a pick.
+        amount_determination: RECORDS_LOT_DISPOSITION
+          ? data.amount_determination || undefined
+          : undefined,
         harvest_date_end: data.type === 'HA' ? data.harvest_date_end || null : undefined,
-        harvest_destination: data.type === 'HA' ? data.harvest_destination || undefined : undefined,
+        harvest_destination: RECORDS_LOT_DISPOSITION
+          ? data.harvest_destination || undefined
+          : undefined,
         // null so the select can be cleared. With `|| undefined` the key is omitted and the
         // backend keeps the old value, so a grower who picks a disposition by mistake and
         // blanks it again is stuck with it. (Many other fields in this payload still carry
         // that pattern — a wider sweep, not a drive-by.)
-        buffer_disposition: data.type === 'HA' ? data.buffer_disposition || null : undefined,
+        buffer_disposition: RECORDS_BUFFER ? data.buffer_disposition || null : undefined,
         // § 205.202(c) proof rides a commerce-entering disposition only.
         //
         // null, NOT undefined, on the inapplicable branch. `|| undefined` omits the key and
@@ -1235,18 +1288,14 @@ const ProductionTab = forwardRef(
         // leaves the old evidence string behind. The packet would then print delivery-tag
         // documentation beside a crop that never left the farm. Same reason
         // `harvest_date_end` sends null rather than ''.
-        buffer_disposition_quantity:
-          data.type === 'HA'
-            ? (BUFFER_ENTERS_COMMERCE(data.buffer_disposition) &&
-                data.buffer_disposition_quantity) ||
-              null
-            : undefined,
-        buffer_disposition_evidence:
-          data.type === 'HA'
-            ? (BUFFER_ENTERS_COMMERCE(data.buffer_disposition) &&
-                data.buffer_disposition_evidence) ||
-              null
-            : undefined,
+        buffer_disposition_quantity: RECORDS_BUFFER
+          ? (BUFFER_ENTERS_COMMERCE(data.buffer_disposition) && data.buffer_disposition_quantity) ||
+            null
+          : undefined,
+        buffer_disposition_evidence: RECORDS_BUFFER
+          ? (BUFFER_ENTERS_COMMERCE(data.buffer_disposition) && data.buffer_disposition_evidence) ||
+            null
+          : undefined,
         // Storage fields ride the "stored" destination only — a location typed and then
         // orphaned by switching the destination to sold_direct must not submit.
         storage_location:
@@ -1257,18 +1306,19 @@ const ProductionTab = forwardRef(
           data.type === 'HA' && data.harvest_destination === 'stored' && data.storage_temperature_f
             ? parseFloat(data.storage_temperature_f)
             : undefined,
-        harvest_contract_number:
-          data.type === 'HA' ? data.harvest_contract_number || undefined : undefined,
+        harvest_contract_number: RECORDS_HANDLER
+          ? data.harvest_contract_number || undefined
+          : undefined,
         // Handler round trip rides the "handler" destination only — the same phantom-value
         // rule as storage_* above. `null` rather than `undefined` on the inapplicable branch
         // so switching the destination away from "handler" CLEARS what was typed instead of
         // leaving a pack-out figure attached to a lot that never left the farm.
         sent_to_handler_date:
-          data.type === 'HA' && data.harvest_destination === 'handler'
+          RECORDS_HANDLER && data.harvest_destination === 'handler'
             ? data.sent_to_handler_date || null
             : null,
         quantity_sent_to_handler:
-          data.type === 'HA' &&
+          RECORDS_HANDLER &&
           data.harvest_destination === 'handler' &&
           data.quantity_sent_to_handler !== ''
             ? parseFloat(data.quantity_sent_to_handler)
@@ -1280,15 +1330,15 @@ const ProductionTab = forwardRef(
             ? parseFloat(data.quantity_returned_from_handler)
             : null,
         handler_quantity_unit:
-          data.type === 'HA' && data.harvest_destination === 'handler'
+          RECORDS_HANDLER && data.harvest_destination === 'handler'
             ? data.handler_quantity_unit || undefined
             : null,
         handler_return_unit:
-          data.type === 'HA' && data.harvest_destination === 'handler'
+          RECORDS_HANDLER && data.harvest_destination === 'handler'
             ? data.handler_return_unit || undefined
             : null,
         handler_document_reference:
-          data.type === 'HA' && data.harvest_destination === 'handler'
+          RECORDS_HANDLER && data.harvest_destination === 'handler'
             ? data.handler_document_reference || null
             : null,
         // F28 phantom-value precedent, applied to the seed fields: these controls render only
@@ -1333,10 +1383,16 @@ const ProductionTab = forwardRef(
             ? data.cleaning_asset_class || undefined
             : undefined,
         // Whole-vs-part coverage — the Yield & Output section (HA/PL) is its form home.
-        applied_scope:
-          data.type === 'HA' || data.type === 'PL' ? data.applied_scope || undefined : undefined,
+        // PH was missing here while the section that collects these two renders for
+        // HA || PL || PH (see the Yield & Output gate). A post-harvest event showed the
+        // farmer both inputs and posted neither — the lot-scope locator the certifier packet
+        // prints in its Partial-Area table simply vanished on save. Keep this list and the
+        // render gate identical; they are the same decision written twice.
+        applied_scope: ['HA', 'PL', 'PH'].includes(data.type)
+          ? data.applied_scope || undefined
+          : undefined,
         applied_scope_detail:
-          (data.type === 'HA' || data.type === 'PL') && data.applied_scope === 'part'
+          ['HA', 'PL', 'PH'].includes(data.type) && data.applied_scope === 'part'
             ? data.applied_scope_detail || undefined
             : undefined,
         // Empty date strings from default form state would fail backend DateField
@@ -1605,7 +1661,7 @@ const ProductionTab = forwardRef(
                   icon={FaSeedling}
                   iconColor="green.500"
                   title="Production Activity"
-                  badge="Carbon Critical"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
                 <VStack spacing={4} align="stretch">
                   {/* Production Type - Structured for carbon calculations */}
@@ -1646,6 +1702,16 @@ const ProductionTab = forwardRef(
                           <option value="FP">Frost Protection - Wind machines / heaters</option>
                           <option value="MO">
                             Mowing / Orchard-Floor - Mow, mulch, floor management
+                          </option>
+                          {/* Batch 4 (2026-08-19): parity with Quick Organics' activity list */}
+                          <option value="TP">
+                            Transport - A load leaving the farm (destination, quantity, cleanout)
+                          </option>
+                          <option value="BU">
+                            Buffer Use - Harvest or disposal from a buffer zone (§ 205.202(c))
+                          </option>
+                          <option value="SS">
+                            Seed Search - Organic seed availability search (§ 205.204(a)(1))
                           </option>
                         </StandardSelect>
                       )}
@@ -1727,7 +1793,7 @@ const ProductionTab = forwardRef(
                     icon={FaTools}
                     iconColor="orange.500"
                     title="Equipment Details"
-                    badge="Equipment Operations"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     badgeColorScheme="orange"
                     description="Specify equipment operation type and equipment used for accurate carbon emission calculations."
                   />
@@ -1812,7 +1878,7 @@ const ProductionTab = forwardRef(
                     icon={FaShieldAlt}
                     iconColor="red.500"
                     title="NOP Equipment Cleaning Log"
-                    badge="Organic Compliance"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     badgeColorScheme="red"
                     description="Document equipment cleaning per NOP 7 CFR 205.272. Required when equipment is shared between organic and conventional operations."
                   />
@@ -1844,6 +1910,21 @@ const ProductionTab = forwardRef(
                               <option value="storage">
                                 {intl.formatMessage({
                                   id: 'events.cleaningAssetClass.storage'
+                                })}
+                              </option>
+                              <option value="processing_line">
+                                {intl.formatMessage({
+                                  id: 'events.cleaningAssetClass.processingLine'
+                                })}
+                              </option>
+                              <option value="livestock_housing">
+                                {intl.formatMessage({
+                                  id: 'events.cleaningAssetClass.livestockHousing'
+                                })}
+                              </option>
+                              <option value="other">
+                                {intl.formatMessage({
+                                  id: 'events.cleaningAssetClass.other'
                                 })}
                               </option>
                               <option value="transport_vehicle">
@@ -1929,6 +2010,51 @@ const ProductionTab = forwardRef(
                       />
                     </StandardField>
 
+                    {/* Purge records (§ 205.272). A purge is how a shared line or auger is
+                        cleared: material is run through and the first output discarded. The
+                        END USE is the compliance-relevant half — purge fed to livestock, sold
+                        as conventional or discarded are three different stories — and it had
+                        no home before. Quick Organics asks all three on its Cleanout activity. */}
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.production.fields.purgeMaterial' })}
+                      helpText={intl.formatMessage({ id: 'events.production.help.purgeMaterial' })}>
+                      <Controller
+                        name="purge_material"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput {...field} placeholder="e.g., conventional walnuts" />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.production.fields.purgeQuantity' })}
+                      helpText={intl.formatMessage({ id: 'events.production.help.purgeQuantity' })}>
+                      <Controller
+                        name="purge_quantity"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput {...field} placeholder="e.g., 200 lb" />
+                        )}
+                      />
+                    </StandardField>
+
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.production.fields.purgeEndUse' })}
+                      helpText={intl.formatMessage({ id: 'events.production.help.purgeEndUse' })}>
+                      <Controller
+                        name="purge_material_end_use"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardTextarea
+                            {...field}
+                            rows={2}
+                            placeholder="e.g., sold as conventional to Handler B, delivery tag 4417"
+                          />
+                        )}
+                      />
+                    </StandardField>
+
                     {sanitizerRecordBlock}
 
                     <HStack
@@ -1983,7 +2109,7 @@ const ProductionTab = forwardRef(
                     id: 'events.production.sections.customOperator',
                     defaultMessage: 'Custom Operator & Equipment Cleaning'
                   })}
-                  badge="7 CFR 205.272"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   badgeColorScheme="orange"
                   description={intl.formatMessage({
                     id: 'events.production.sections.customOperatorHelp',
@@ -2074,21 +2200,34 @@ const ProductionTab = forwardRef(
                   timeline and consumer card. Caught by formRenderConformance. */}
               {(productionType === 'HA' || productionType === 'PL' || productionType === 'PH') && (
                 <SectionBox variant="default">
+                  {/* NOT collapsible and NOT optional. Quantity harvested, its unit and
+                      "Amount Determined By" are the mass-balance inputs § 205.103(b)(2) turns
+                      on, and NOP Harvest Record C14 asks for Quantity outright. This section
+                      was badged "Efficiency Calculation" historically, which is how it briefly
+                      became "Optional — carbon only" and got folded shut by default. The
+                      crop metrics beside them (Brix, moisture) are the odd ones out here,
+                      not the yield. */}
                   <SectionHeader
                     icon={FaBalanceScale}
-                    iconColor="blue.500"
+                    iconColor="green.600"
                     title="Yield & Output"
-                    badge="Efficiency Calculation"
-                    badgeColorScheme="blue"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                    badgeColorScheme="green"
                   />
                   <VStack spacing={4} align="stretch">
                     <HStack spacing={4} align="stretch">
                       <Box flex={2}>
                         <StandardField
                           label={intl.formatMessage({
+                            // Three subtypes render this section, not two. PH (post-harvest
+                            // washing / cooling / packing) fell through to the planting
+                            // default and asked a packing-shed operator for "Quantity
+                            // planted".
                             id:
                               productionType === 'HA'
                                 ? 'production.field.quantityHarvested'
+                                : productionType === 'PH'
+                                ? 'production.field.quantityProcessed'
                                 : 'production.field.quantityPlanted'
                           })}
                           error={errors.yield_quantity?.message}
@@ -2195,7 +2334,7 @@ const ProductionTab = forwardRef(
                     icon={FaBalanceScale}
                     iconColor="orange.500"
                     title="Harvest Quality"
-                    badge="Market Grading"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     badgeColorScheme="orange"
                   />
                   <VStack spacing={4} align="stretch">
@@ -2348,13 +2487,17 @@ const ProductionTab = forwardRef(
               )}
 
               {/* WS-4 — harvest-record completeness (§ 205.103(b)(2); § 205.202(c)) */}
-              {productionType === 'HA' && (
+              {/* Transport and Buffer Use record the same fact this section already holds — what came
+                  off, and where it went. They are separate activities because the record does not
+                  belong to the pick: a load ships days later, buffer crop is disposed on its own
+                  schedule. Keep this list in step with RECORDS_LOT_DISPOSITION above. */}
+              {['HA', 'TP', 'BU'].includes(productionType) && (
                 <SectionBox variant="default">
                   <SectionHeader
                     icon={FaBalanceScale}
                     iconColor="green.500"
                     title={intl.formatMessage({ id: 'production.harvestRecord' })}
-                    badge="NOP"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description={intl.formatMessage({ id: 'production.harvestRecordHint' })}
                   />
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -2403,114 +2546,176 @@ const ProductionTab = forwardRef(
                       />
                     </StandardField>
 
-                    <StandardField
-                      label={intl.formatMessage({
-                        id: 'events.production.fields.harvestDestination'
-                      })}
-                      error={errors.harvest_destination?.message}
-                      helpText={intl.formatMessage({ id: 'production.harvestDestinationHelp' })}>
-                      <Controller
-                        name="harvest_destination"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardSelect
-                            {...field}
-                            placeholder={intl.formatMessage({ id: 'app.select' })}>
-                            <option value="stored">
-                              {intl.formatMessage({ id: 'events.harvestDestination.stored' })}
-                            </option>
-                            <option value="sold_direct">
-                              {intl.formatMessage({ id: 'events.harvestDestination.soldDirect' })}
-                            </option>
-                            {/* CCOF item 6 — sending a lot to a huller / dryer / cold store /
+                    {/* Transport endpoints (§ 205.272). `harvest_destination` below is a
+                        CATEGORY — stored / sold / handler / feed. It says what KIND of move,
+                        never to whom or where, and a load to a custom huller is not a sale, so
+                        no SalesRecord carries the counterparty either. TP only: on a harvest
+                        the endpoints are the farm and its own storage. */}
+                    {productionType === 'TP' && (
+                      <>
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.transportOrigin'
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.production.help.transportOrigin'
+                          })}>
+                          <Controller
+                            name="transport_origin"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardTextarea
+                                {...field}
+                                rows={2}
+                                placeholder="Name and address"
+                              />
+                            )}
+                          />
+                        </StandardField>
+                        <StandardField
+                          label={intl.formatMessage({
+                            id: 'events.production.fields.transportDestination'
+                          })}
+                          helpText={intl.formatMessage({
+                            id: 'events.production.help.transportDestination'
+                          })}>
+                          <Controller
+                            name="transport_destination_address"
+                            control={methods.control}
+                            render={({ field }) => (
+                              <StandardTextarea
+                                {...field}
+                                rows={2}
+                                placeholder="Name and address"
+                              />
+                            )}
+                          />
+                        </StandardField>
+                      </>
+                    )}
+
+                    {/* Destination + the handler round trip below it belong to a LOAD, so
+                        they follow RECORDS_HANDLER (HA, TP). A buffer-use record has no
+                        handler leg. Keep in step with the payload gate. */}
+                    {['HA', 'TP'].includes(productionType) && (
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.production.fields.harvestDestination'
+                        })}
+                        error={errors.harvest_destination?.message}
+                        helpText={intl.formatMessage({ id: 'production.harvestDestinationHelp' })}>
+                        <Controller
+                          name="harvest_destination"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({ id: 'app.select' })}>
+                              <option value="stored">
+                                {intl.formatMessage({ id: 'events.harvestDestination.stored' })}
+                              </option>
+                              <option value="sold_direct">
+                                {intl.formatMessage({ id: 'events.harvestDestination.soldDirect' })}
+                              </option>
+                              {/* CCOF item 6 — sending a lot to a huller / dryer / cold store /
                                 packer is not a sale. Without this option growers recorded the
                                 handler as a BUYER, which corrupts the § 205.307 sales table. */}
-                            <option value="handler">
-                              {intl.formatMessage({ id: 'events.harvestDestination.handler' })}
-                            </option>
-                            <option value="livestock_feed">
-                              {intl.formatMessage({
-                                id: 'events.harvestDestination.livestockFeed'
-                              })}
-                            </option>
-                            <option value="other">
-                              {intl.formatMessage({ id: 'events.harvestDestination.other' })}
-                            </option>
-                          </StandardSelect>
-                        )}
-                      />
-                    </StandardField>
+                              <option value="handler">
+                                {intl.formatMessage({ id: 'events.harvestDestination.handler' })}
+                              </option>
+                              <option value="livestock_feed">
+                                {intl.formatMessage({
+                                  id: 'events.harvestDestination.livestockFeed'
+                                })}
+                              </option>
+                              <option value="other">
+                                {intl.formatMessage({ id: 'events.harvestDestination.other' })}
+                              </option>
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+                    )}
 
-                    <StandardField
-                      label={intl.formatMessage({ id: 'events.production.fields.harvestDateEnd' })}
-                      error={errors.harvest_date_end?.message}
-                      helpText={intl.formatMessage({ id: 'production.harvestDateEndHelp' })}>
-                      <Controller
-                        name="harvest_date_end"
-                        control={methods.control}
-                        render={({ field }) => <Input {...field} type="date" size="md" />}
-                      />
-                    </StandardField>
+                    {/* HA only — a transport or a buffer disposal has one date, not a range. */}
+                    {productionType === 'HA' && (
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.production.fields.harvestDateEnd'
+                        })}
+                        error={errors.harvest_date_end?.message}
+                        helpText={intl.formatMessage({ id: 'production.harvestDateEndHelp' })}>
+                        <Controller
+                          name="harvest_date_end"
+                          control={methods.control}
+                          render={({ field }) => <Input {...field} type="date" size="md" />}
+                        />
+                      </StandardField>
+                    )}
 
-                    <StandardField
-                      label={intl.formatMessage({
-                        id: 'events.production.fields.bufferDisposition'
-                      })}
-                      error={errors.buffer_disposition?.message}
-                      helpText={intl.formatMessage({ id: 'production.bufferDispositionHelp' })}>
-                      <Controller
-                        name="buffer_disposition"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardSelect
-                            {...field}
-                            placeholder={intl.formatMessage({ id: 'app.select' })}>
-                            {/* Common-OSP § 6 disposition taxonomy. Legacy
+                    {/* Buffer disposition follows RECORDS_BUFFER (HA, BU). A transport
+                        record does not decide what happened to buffer rows. */}
+                    {['HA', 'BU'].includes(productionType) && (
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.production.fields.bufferDisposition'
+                        })}
+                        error={errors.buffer_disposition?.message}
+                        helpText={intl.formatMessage({ id: 'production.bufferDispositionHelp' })}>
+                        <Controller
+                          name="buffer_disposition"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect
+                              {...field}
+                              placeholder={intl.formatMessage({ id: 'app.select' })}>
+                              {/* Common-OSP § 6 disposition taxonomy. Legacy
                                 harvested_conventional stays valid server-side so stored
                                 rows keep rendering, but new entries pick a specific
                                 disposition — except when editing a row that already
                                 carries the legacy value. */}
-                            <option value="not_harvested">
-                              {intl.formatMessage({
-                                id: 'events.bufferDisposition.notHarvested'
-                              })}
-                            </option>
-                            <option value="left_in_field">
-                              {intl.formatMessage({
-                                id: 'events.bufferDisposition.leftInField'
-                              })}
-                            </option>
-                            <option value="sold_conventional">
-                              {intl.formatMessage({
-                                id: 'events.bufferDisposition.soldConventional'
-                              })}
-                            </option>
-                            <option value="fed_nonorganic_livestock">
-                              {intl.formatMessage({
-                                id: 'events.bufferDisposition.fedNonorganicLivestock'
-                              })}
-                            </option>
-                            <option value="disposed">
-                              {intl.formatMessage({
-                                id: 'events.bufferDisposition.disposed'
-                              })}
-                            </option>
-                            <option value="given_away">
-                              {intl.formatMessage({
-                                id: 'events.bufferDisposition.givenAway'
-                              })}
-                            </option>
-                            {field.value === 'harvested_conventional' && (
-                              <option value="harvested_conventional">
+                              <option value="not_harvested">
                                 {intl.formatMessage({
-                                  id: 'events.bufferDisposition.harvestedConventional'
+                                  id: 'events.bufferDisposition.notHarvested'
                                 })}
                               </option>
-                            )}
-                          </StandardSelect>
-                        )}
-                      />
-                    </StandardField>
+                              <option value="left_in_field">
+                                {intl.formatMessage({
+                                  id: 'events.bufferDisposition.leftInField'
+                                })}
+                              </option>
+                              <option value="sold_conventional">
+                                {intl.formatMessage({
+                                  id: 'events.bufferDisposition.soldConventional'
+                                })}
+                              </option>
+                              <option value="fed_nonorganic_livestock">
+                                {intl.formatMessage({
+                                  id: 'events.bufferDisposition.fedNonorganicLivestock'
+                                })}
+                              </option>
+                              <option value="disposed">
+                                {intl.formatMessage({
+                                  id: 'events.bufferDisposition.disposed'
+                                })}
+                              </option>
+                              <option value="given_away">
+                                {intl.formatMessage({
+                                  id: 'events.bufferDisposition.givenAway'
+                                })}
+                              </option>
+                              {field.value === 'harvested_conventional' && (
+                                <option value="harvested_conventional">
+                                  {intl.formatMessage({
+                                    id: 'events.bufferDisposition.harvestedConventional'
+                                  })}
+                                </option>
+                              )}
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+                    )}
 
                     {/* USDA Buffer Crop Disposition Record: "Commercial quantities of crops
                         require more formal documentation (delivery tags and nonorganic sales
@@ -2552,26 +2757,30 @@ const ProductionTab = forwardRef(
                       </>
                     )}
 
-                    <StandardField
-                      label={intl.formatMessage({
-                        id: 'events.production.fields.harvestContractNumber'
-                      })}
-                      error={errors.harvest_contract_number?.message}
-                      helpText={intl.formatMessage({ id: 'production.harvestContractHelp' })}>
-                      <Controller
-                        name="harvest_contract_number"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <Input
-                            {...field}
-                            size="md"
-                            placeholder={intl.formatMessage({
-                              id: 'events.production.fields.harvestContractPlaceholder'
-                            })}
-                          />
-                        )}
-                      />
-                    </StandardField>
+                    {/* A work order belongs to a pick or a load, not to a buffer disposal. Matches
+                        RECORDS_HANDLER on the payload side. */}
+                    {['HA', 'TP'].includes(productionType) && (
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.production.fields.harvestContractNumber'
+                        })}
+                        error={errors.harvest_contract_number?.message}
+                        helpText={intl.formatMessage({ id: 'production.harvestContractHelp' })}>
+                        <Controller
+                          name="harvest_contract_number"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              size="md"
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.harvestContractPlaceholder'
+                              })}
+                            />
+                          )}
+                        />
+                      </StandardField>
+                    )}
 
                     {/* Off-farm handling round trip — CCOF grower checklist item 6
                         ("what you sent, where, when, and what you received as the outcome").
@@ -2746,7 +2955,7 @@ const ProductionTab = forwardRef(
                     icon={FaBalanceScale}
                     iconColor="blue.500"
                     title="Harvest Summary Mode"
-                    badge="Aggregate Logging"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     badgeColorScheme="blue"
                     description="Log multiple harvest picks as one summary record to reduce logging burden while maintaining full transparency."
                   />
@@ -3451,10 +3660,9 @@ const ProductionTab = forwardRef(
                     icon={FaShieldAlt}
                     iconColor="blue.600"
                     title="Frost Protection Details"
-                    badge="Scope-1 Fuel"
-                    badgeColorScheme="blue"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document the frost-protection method and conditions. Record the equipment fuel and run hours in the Fuel & Equipment section below so the carbon impact is captured."
-                  />
+                  />{' '}
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField
@@ -3510,9 +3718,9 @@ const ProductionTab = forwardRef(
                     icon={FaSeedling}
                     iconColor="green.600"
                     title="Orchard-Floor Management"
-                    badge="Scope-1 Fuel"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document the floor-management operation. Record equipment fuel and run hours in the Fuel & Equipment section below so the carbon impact is captured."
-                  />
+                  />{' '}
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField
@@ -3679,15 +3887,15 @@ const ProductionTab = forwardRef(
 
               {/* Equipment & Fuel Usage - Hidden for PO (Pollination is zero-emission biological service) */}
               {productionType !== 'PO' && (
-                <SectionBox variant="highlighted">
-                  <SectionHeader
-                    icon={FaSeedling}
-                    iconColor="green.600"
-                    title="Fuel Consumption & Equipment Data"
-                    badge="Enhanced Carbon Accuracy"
-                    description="Document your actual equipment usage and fuel consumption to build consumer trust through transparent farming practices. These details help consumers understand the real operational impact of your production operations."
-                  />
-
+                <CollapsibleSection
+                  icon={FaSeedling}
+                  iconColor="green.600"
+                  title="Fuel Consumption & Equipment Data"
+                  badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
+                  description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
+                  badgeColorScheme="gray"
+                  variant="highlighted">
+                  {' '}
                   <VStack spacing={4} align="stretch">
                     {/* Production Method - Manual operation detection for Trazo's Direct Operational
                     Emissions philosophy. Documenting "Hand thinning with pruning shears",
@@ -3945,7 +4153,7 @@ const ProductionTab = forwardRef(
                       />
                     </StandardField>
                   </VStack>
-                </SectionBox>
+                </CollapsibleSection>
               )}
 
               {/* Transportation - For logistics emissions */}
@@ -3955,7 +4163,7 @@ const ProductionTab = forwardRef(
                     icon={FaTruck}
                     iconColor="green.500"
                     title="Transportation"
-                    badge="Logistics Emissions"
+                    badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                   />
                   <VStack spacing={4} align="stretch">
                     <HStack spacing={4} align="stretch">
@@ -4010,7 +4218,7 @@ const ProductionTab = forwardRef(
                         id: 'events.common.fields.productionEfficiency'
                       })}
                       error={errors.production_efficiency?.message}
-                      helpText="Rate the efficiency of this production activity for carbon scoring">
+                      helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
                       <Controller
                         name="production_efficiency"
                         control={methods.control}
@@ -4031,19 +4239,37 @@ const ProductionTab = forwardRef(
                 </SectionBox>
               )}
 
-              {/* Sprint 3 Epic 3.2: Consumer Trust & Transparency Fields */}
-              {(productionType === 'PL' || productionType === 'TR' || productionType === 'IR') && (
+              {/* § 205.204 seed & planting-stock records (PL/TR) or Common OSP § 10 C water source (IR) */}
+              {['PL', 'TR', 'SS', 'IR'].includes(productionType) && (
                 <SectionBox variant="highlighted">
+                  {/* One section, two very different payloads. For PL/TR it holds the
+                      § 205.204 seed and planting-stock records — source, supplier, lot,
+                      treatment, and the (a)(4) one-year rule via stock_organic_management_start.
+                      For IR it holds water source and water testing, which the Common OSP asks
+                      about in § 10 C. It was titled "Consumer Trust & Transparency" and carried
+                      a description reading "not part of the records your certifier reviews" —
+                      false for both payloads, and the most scrutinised half of a planting
+                      record. Title and description now follow the subtype. */}
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="teal.500"
-                    title="Consumer Trust & Transparency"
-                    badge="Builds Consumer Trust"
-                    badgeColorScheme="teal"
-                    description="Document your sourcing practices to help consumers understand the origins and quality of your farming inputs."
-                  />
+                    iconColor="green.600"
+                    title={intl.formatMessage({
+                      id:
+                        productionType === 'IR'
+                          ? 'events.section.water.title'
+                          : 'events.section.seedStock.title'
+                    })}
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                    badgeColorScheme="green"
+                    description={intl.formatMessage({
+                      id:
+                        productionType === 'IR'
+                          ? 'events.section.water.desc'
+                          : 'events.section.seedStock.desc'
+                    })}
+                  />{' '}
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                    {(productionType === 'PL' || productionType === 'TR') && (
+                    {['PL', 'TR', 'SS'].includes(productionType) && (
                       <>
                         <StandardField
                           label={intl.formatMessage({ id: 'events.production.fields.seedsSource' })}
@@ -4260,7 +4486,7 @@ const ProductionTab = forwardRef(
                               certifying agent" invites — had nowhere to record it. The
                               non-organic status now drives the WARNING styling and copy, not
                               whether the evidence can be entered at all. */}
-                        {(productionType === 'PL' || productionType === 'TR') && (
+                        {['PL', 'TR', 'SS'].includes(productionType) && (
                           <Box
                             gridColumn={{ md: 'span 2' }}
                             p={3}
@@ -4779,7 +5005,6 @@ const ProductionTab = forwardRef(
                       </>
                     )}
                   </SimpleGrid>
-
                   <Box
                     bg="teal.50"
                     p={3}
@@ -4808,12 +5033,12 @@ const ProductionTab = forwardRef(
                   icon={FaSeedling}
                   iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
-                  badge="Consumer Transparency"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <StandardField
                   label={intl.formatMessage({ id: 'events.common.fields.observation' })}
                   error={errors.observation?.message}
-                  helpText="Share details about this production activity that help consumers understand your farming practices">
+                  helpText={intl.formatMessage({ id: 'events.common.help.observationAudience' })}>
                   <Controller
                     name="observation"
                     control={methods.control}

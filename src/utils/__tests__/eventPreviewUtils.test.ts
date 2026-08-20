@@ -1,3 +1,26 @@
+/**
+ * ⚠️ FIVE ASSERTIONS IN THIS FILE WERE INVERTED (2026-08-19), NOT "FIXED".
+ *
+ * They had been failing since the behaviour they pinned was deliberately changed, and each one
+ * demanded something the change removed. Made green the lazy way — by reverting the code — they
+ * would have restored three separate defects. The reasoning per assertion:
+ *
+ *   `type` is the SUBTYPE code ('HA'), not the family name ('production'). eventPreviewUtils
+ *   sets it under a `// Set the correct production type code` comment, the same correctness
+ *   work as `resolveBusinessSubtype`: an event stored under its family default displayed as
+ *   the wrong thing on the audit PDF and the consumer page.
+ *
+ *   `description` is the farmer's own words or empty — never generated. The old expectations
+ *   ("Applied Test Fertilizer fertilizer", "General farming activity") are machine prose in a
+ *   field presented as the grower's voice, which is the defect the farmer-words rule exists to
+ *   prevent. `generateEventDescription` still sits in the module with ZERO callers as a result
+ *   — dead code, flagged rather than deleted here since this is a test file.
+ *
+ *   Values carry their unit ('150 L', not '150'). Serving a magnitude without its basis is
+ *   what mislabelled treated area by 2.47x when a unit was guessed downstream.
+ *
+ *   Fields carry a human label ('Fuel Consumption', not the raw code 'FC').
+ */
 import { describe, it, expect } from 'vitest';
 import {
   transformFormDataToEvent,
@@ -48,12 +71,14 @@ describe('eventPreviewUtils', () => {
 
       const result = transformFormDataToEvent(1, formData, 'test-production');
 
-      expect(result.type).toBe('production');
+      // Subtype code, not family name — see the header note.
+      expect(result.type).toBe('HA');
       expect(result.description).toBe('Avocado harvest');
-      expect(result.area_covered).toBe(5.2);
-      expect(result.yield_quantity).toBe(1200);
-      expect(result.fuel_consumed).toBe(25.5);
-      expect(result.equipment_hours).toBe(6);
+      // Magnitude AND basis — a bare number is what a downstream default can mislabel.
+      expect(result.area_covered).toBe('5.2 acres');
+      expect(result.yield_quantity).toBe('1200 kg');
+      expect(result.fuel_consumed).toBe('25.5 gallons');
+      expect(result.equipment_hours).toBe('6 hours');
       expect(result.area_unit).toBe('acres');
     });
 
@@ -77,11 +102,12 @@ describe('eventPreviewUtils', () => {
 
       expect(result.type).toBe('chemical');
       expect(result.commercial_name).toBe('Premium NPK Fertilizer');
-      expect(result.volume).toBe('150');
-      expect(result.area).toBe('10');
+      expect(result.volume).toBe('150 L');
+      expect(result.area).toBe('10 ha');
       expect(result.concentration).toBe('20-10-10');
       expect(result.application_method).toBe('Spray');
-      expect(result.description).toContain('Applied Premium NPK Fertilizer fertilizer');
+      // Farmer-voice field: empty when the grower wrote nothing. See the header note.
+      expect(result.description).toBe('');
     });
 
     it('should transform equipment event (type 4) correctly', () => {
@@ -105,12 +131,13 @@ describe('eventPreviewUtils', () => {
 
       // Verify the Equipment form field mapping works correctly
       expect(result.type).toBe('FC'); // Keep original type
-      expect(result.operation_type).toBe('FC'); // Mapped for display
+      // Mapped for DISPLAY, so it carries the human label, not the raw code.
+      expect(result.operation_type).toBe('Fuel Consumption');
       expect(result.operation_name).toBe('Weekly Equipment Operation'); // Mapped for display
       expect(result.name).toBe('Weekly Equipment Operation'); // Keep original
       expect(result.equipment_type).toBe('tractor');
       expect(result.fuel_consumed).toBe(50); // Parsed as number
-      expect(result.fuel_type).toBe('gasoline');
+      expect(result.fuel_type).toBe('Gasoline');
       expect(result.hours_operated).toBe(22); // Parsed as number
       expect(result.area_worked).toBe(33); // Parsed as number
       expect(result.operation_efficiency).toBe('normal');
@@ -126,7 +153,9 @@ describe('eventPreviewUtils', () => {
 
       const result = transformFormDataToEvent(2, formData, 'test-auto-desc');
 
-      expect(result.description).toBe('Applied Test Fertilizer fertilizer');
+      // Generated prose must NOT appear in the farmer-voice field; empty is the correct
+      // outcome when the grower wrote nothing.
+      expect(result.description).toBe('');
     });
 
     it('should handle missing optional fields gracefully', () => {
@@ -137,7 +166,8 @@ describe('eventPreviewUtils', () => {
       const result = transformFormDataToEvent(3, formData, 'test-minimal');
 
       expect(result.type).toBe('general');
-      expect(result.description).toBe('General farming activity');
+      // Same rule: no machine-written stand-in for the grower's words.
+      expect(result.description).toBe('');
       expect(result.carbon_impact).toBeGreaterThan(0);
       expect(result.verification_confidence).toBe(85);
     });

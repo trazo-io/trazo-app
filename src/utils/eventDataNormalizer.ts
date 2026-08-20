@@ -982,10 +982,15 @@ function normalizeProductionEventData(
     if (rawData.pruning_passes !== undefined && rawData.pruning_passes !== null)
       extraFormFields.pruning_passes = rawData.pruning_passes;
     // Operation method (Hand thinning, Pruning shears, Mechanical harvester, etc.)
-    // ProductionTab.jsx onSubmit saves this to extra_data.method — mirror that for preview
-    // so legacy getProductionEventFields (which reads extraData.method) picks it up.
-    // Also mirrored at top-level `method` so the field registry resolver (which reads
-    // event[field.name]) can render it via productionEvent.ts `method` entry.
+    // ProductionTab.jsx onSubmit saves this to extra_data.method, mirrored here for preview.
+    //
+    // ⚠️ BOTH writes are still required, for different readers, and the reason for the first
+    // one changed on 2026-08-19: it used to serve `getProductionEventFields`, which has been
+    // deleted. What still reads `extra_data.method` is the certifier packet
+    // (`audit_export_service` resolves the production method from it). The top-level `method`
+    // serves the field registry resolver, which reads `event[field.name]`.
+    // Deleting either because "the legacy display is gone" would silently blank the method on
+    // one of the two outputs.
     if (rawData.production_method && String(rawData.production_method).trim()) {
       extraFormFields.method = rawData.production_method;
       (productionData as any).method = rawData.production_method;

@@ -19,7 +19,6 @@ const BUSINESS_TYPE_LABELS: Record<string, string> = {
   verification: 'Third-Party Verification',
   sustainability_audit: 'Sustainability Assessment',
   transparency: 'Transparency Initiative',
-  carbon_credits: 'Carbon Credits Earned',
   compliance: 'Regulatory Compliance'
 };
 
@@ -164,36 +163,6 @@ const BUSINESS_FIELDS: readonly FieldConfig<unknown, BusinessData>[] = [
       modal: 'immediate',
       form: 'immediate',
       consumer_card: 'secondary'
-    }
-  },
-  {
-    name: 'carbon_credits_earned',
-    labelKey: 'events.business.fields.carbonCreditsEarned',
-    valueType: 'number',
-    carbonRelevant: true,
-    formatter: formatNumber,
-    surfaces: {
-      modal: 'secondary',
-      form: 'secondary'
-    }
-  },
-  {
-    name: 'carbon_credits_unit',
-    labelKey: 'events.business.fields.carbonCreditsUnit',
-    valueType: 'enum',
-    carbonRelevant: true,
-    // Hide the unit when no credits were actually earned. Legacy rows may have
-    // a stored default ('tCO2e') from before BusinessTab-SIMPLIFIED stripped
-    // it on submit, which otherwise renders an orphan "Carbon Credits Unit"
-    // card in Additional Details on certification/compliance/inspection events.
-    visibleWhen: (e) => {
-      const earned = (e as Record<string, unknown>).carbon_credits_earned;
-      const n = typeof earned === 'number' ? earned : parseFloat(String(earned ?? ''));
-      return Number.isFinite(n) && n > 0;
-    },
-    surfaces: {
-      modal: 'secondary',
-      form: 'secondary'
     }
   },
   {

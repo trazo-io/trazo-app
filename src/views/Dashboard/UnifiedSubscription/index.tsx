@@ -232,8 +232,8 @@ function UnifiedSubscriptionDashboard() {
     data: dashboardData = { subscription: [], addons: [], paymentMethods: [], invoices: [] },
     isLoading: isDashboardLoading,
     refetch: refetchDashboard
-  } = useGetBillingDashboardQuery(undefined, {
-    skip: !activeCompany,
+  } = useGetBillingDashboardQuery(activeCompany?.id?.toString(), {
+    skip: !activeCompany?.id,
     refetchOnMountOrArgChange: true
   });
 
@@ -248,7 +248,21 @@ function UnifiedSubscriptionDashboard() {
     useCreateCheckoutSessionMutation();
   const [updateCompany, { isLoading: isUpdatingBilling }] = useUpdateCompanyMutation();
 
-  // Extract data
+  // Extract data.
+  //
+  // BOTH SOURCES MUST DESCRIBE THE SAME COMPANY. They are the same SHAPE either way — the
+  // company endpoint serializes its `subscription` with the very same SubscriptionSerializer,
+  // `effective_limits` and all — so this preference is about FRESHNESS, not fields:
+  // `dashboardData` refetches on mount and after every billing mutation (`refetchDashboard`),
+  // while `activeCompany.subscription` is only as current as the last company fetch. The
+  // fallback is what paints while that request is in flight, or if it failed.
+  //
+  // Preferring the fetched copy is only safe because the query is now keyed and scoped by
+  // `activeCompany.id`. While it was `useGetBillingDashboardQuery(undefined)` against an
+  // unscoped, unordered `.first()`, this line preferred an ARBITRARY company's plan over the
+  // active one's, and the usage meters below took their limits from it while taking their
+  // parcel and farm counts from `activeCompany` — a "Corporate, 3/16 parcels" reading on a
+  // Compliance farm with unlimited parcels.
   const subscription =
     Array.isArray(dashboardData?.subscription) && dashboardData.subscription.length > 0
       ? dashboardData.subscription[0]

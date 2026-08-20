@@ -116,10 +116,23 @@ export const billingApi = baseApi.injectEndpoints({
         paymentMethods: PaymentMethod[];
         invoices: Invoice[];
       },
-      void
+      // The COMPANY whose billing this is, as a STRING — the same normalisation
+      // `useGetCompanyQuery(activeCompany?.id?.toString())` already uses in this codebase.
+      // The argument is the RTK cache key, so `92` and `'92'` would be two entries for one
+      // company; the API types `Company.id` as a string while DRF sends a number, and that
+      // mismatch is exactly how a page ends up holding two copies of the same billing state.
+      //
+      // Taking `void` here meant ONE cached dashboard for a user who belongs to several
+      // companies: switching companies while this page stayed mounted left the previous
+      // company's plan, price and limits on screen with no refetch, because the arg never
+      // changed. The backend now scopes on `company_id`; passing it here is what makes the
+      // cache agree with the response.
+      string | undefined
     >({
-      query: () => ({
-        url: SUBSCRIPTION_DASHBOARD_URL,
+      query: (companyId) => ({
+        url: companyId
+          ? `${SUBSCRIPTION_DASHBOARD_URL}?company_id=${encodeURIComponent(companyId)}`
+          : SUBSCRIPTION_DASHBOARD_URL,
         credentials: 'include'
       }),
       transformResponse: (response: any) => {

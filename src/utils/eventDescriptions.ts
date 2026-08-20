@@ -438,12 +438,6 @@ export function getRealTransparencyDetails(event: any): string {
       details.push(`Certification: ${certDisplay}`);
     }
 
-    // Carbon credits information
-    if (event.carbon_credits_earned && event.carbon_credits_earned > 0) {
-      const unit = event.carbon_credits_unit || 'credits';
-      details.push(`Carbon Credits: ${event.carbon_credits_earned} ${unit}`);
-    }
-
     // Verification status
     if (event.verification_status && String(event.verification_status).trim()) {
       details.push(`Status: ${event.verification_status}`);
@@ -1577,7 +1571,7 @@ export function getConsumerEventDescription(
 
     if (chemicalType === 'fertilizer application') {
       consumerImpact =
-        'You can see what this crop was fed, how much, and whether it was allowed under organic rules.';
+        'The material, the quantity and the day it happened are all part of this entry.';
       // Phase 3: Fertigation note
       const isFertigationFlag =
         event.is_fertigation === true ||
@@ -1618,7 +1612,7 @@ export function getConsumerEventDescription(
       } else {
         baseDescription = 'A treatment was applied against a specific pest';
         consumerImpact =
-          'You can see what was applied, which pest it was aimed at, and whether it was allowed under organic rules.';
+          'The pest, the product aimed at it and the amount used are recorded here.';
         sustainabilityBenefit =
           'Recording the target pest shows the treatment answered a specific problem rather than a calendar.';
       }
@@ -1631,7 +1625,7 @@ export function getConsumerEventDescription(
           'Copper is tightly limited under organic rules because it builds up in soil, so the amount and timing are recorded.';
       } else {
         consumerImpact =
-          'You can see what was used against disease on this crop, and whether it was allowed under organic rules.';
+          'Both the target and the material are on file here, with the date.';
         sustainabilityBenefit =
           'Treating a known disease early generally takes less product than treating an outbreak later.';
       }
@@ -1647,7 +1641,7 @@ export function getConsumerEventDescription(
           'Weed control without tillage leaves soil structure intact, though it relies on a synthetic input to do it.';
       } else {
         consumerImpact =
-          'You can see what was used on weeds here, and whether it was allowed under organic rules.';
+          'Weed control is logged with the product used and the area it covered.';
         sustainabilityBenefit =
           'Recording what was used on weeds, and where, is what makes the choice checkable.';
       }
@@ -2609,12 +2603,6 @@ export function getConsumerEventDescription(
         description: 'A third-party certification was recorded for this crop',
         impact: 'HIGH'
       },
-      carbon_credits: {
-        title: 'Carbon Credits Transaction',
-        icon: '🌱',
-        description: 'Carbon credits were issued or transferred for this operation',
-        impact: 'HIGH'
-      },
       sustainability_audit: {
         title: 'Sustainability Assessment',
         icon: '📊',
@@ -2659,48 +2647,61 @@ export function getConsumerEventDescription(
 
     // Add certificate number for traceability and transparency
     if (event.certificate_number && String(event.certificate_number).trim()) {
-      fullDescription += ` Certificate number ${event.certificate_number} provides verifiable proof and traceability.`;
+      // "provides verifiable proof" asserts a verification Trazo has not performed — the number
+      // is a farmer-entered string. What it genuinely offers is a way for a buyer to ask the
+      // ISSUER. The consumerImpact text for certification events already says exactly that;
+      // this line contradicted it in the same payload.
+      fullDescription += ` Certificate number ${event.certificate_number} can be checked with the issuing body.`;
     }
 
     // Add certification details with consumer-friendly explanations
     if (event.certification_type) {
+      // Each entry says what the standard COVERS and who audits it — not what it achieves.
+      //
+      // "USDA Organic certification ensuring chemical-free farming practices" was the reason
+      // this map was rewritten: organic is not chemical-free. 7 CFR 205.601 permits a list of
+      // synthetics — copper, sulfur, pyrethrin among them — and this very codebase classifies
+      // events against that list. Telling a shopper otherwise is a false statement of fact,
+      // not a shade of emphasis, and the neighbours had the same shape: Fair Trade "ensuring"
+      // fair wages, Rainforest Alliance "protecting biodiversity", Non-GMO "free from genetic
+      // modification" (the Project verifies against an action threshold, not absence).
+      //
+      // A certificate is evidence that an operation was audited against a standard. It is not
+      // evidence that the standard's goals were achieved on this farm in this season, and only
+      // the issuing body can speak to the first — which is why every line below names it.
       const certificationTypes: Record<string, string> = {
         organic_usda:
-          'USDA Organic certification ensuring chemical-free farming practices and natural soil health',
+          'USDA Organic: the National Organic Program standard, covering permitted inputs, land history and recordkeeping, assessed by a USDA-accredited certifier',
         global_gap:
-          'GlobalG.A.P. certification ensuring Good Agricultural Practices for food safety, sustainability, and worker welfare',
-        carbon_neutral:
-          'Carbon neutral certification demonstrating climate-positive environmental responsibility',
+          'GlobalG.A.P.: a farm-practice and food-safety standard covering production, handling and worker health, audited by an approved certification body',
         rainforest_alliance:
-          'Rainforest Alliance certification protecting biodiversity and forest conservation',
+          'Rainforest Alliance: a standard covering farm management, biodiversity and working conditions, audited by an authorised certification body',
         fair_trade:
-          'Fair Trade certification ensuring ethical labor practices and fair wages for farmers',
+          'Fair Trade: a standard covering labour conditions, trading terms and a producer premium, audited by the issuing body',
         regenerative:
-          'Regenerative Organic certification promoting soil health and ecosystem restoration',
-        cng: 'Certified Naturally Grown certification for farms using natural growing practices',
+          'Regenerative Organic Certified: a standard layered on organic certification, adding soil practices, animal welfare and farmworker fairness',
+        cng: 'Certified Naturally Grown: a peer-reviewed certification for farms following practices modelled on the National Organic Program',
         non_gmo:
-          'Non-GMO Project Verified certification ensuring products are free from genetic modification',
-        sustainable_agriculture:
-          'Sustainable agriculture certification for eco-friendly farming practices and resource conservation',
+          'Non-GMO Project Verified: a standard for avoiding genetically engineered inputs, assessed against the Project testing and traceability requirements',
+        sustainable_agriculture: 'Sustainable Agriculture Standard, as recorded by this operation',
+        kosher:
+          'Kosher certification: a standard covering ingredients, equipment and handling, assessed by a certifying agency',
+        food_safety:
+          'SQF or equivalent food-safety certification: a standard covering handling, sanitation and traceability, audited by a licensed certification body',
         water_stewardship:
-          'Water stewardship certification promoting efficient water use and conservation'
+          'Water stewardship certification: a standard covering water use, catchment impact and water quality at the site'
       };
 
+      // The fallback described ANY unrecognised certification as "validating sustainable
+      // practices" — an unqualified general environmental benefit claim (16 CFR 260.6) applied
+      // to a value nobody had reviewed. State the record, claim nothing.
       const certDesc =
         certificationTypes[event.certification_type] ||
         `${event.certification_type.replace(
           /_/g,
           ' '
-        )} certification validating sustainable practices`;
+        )} certification, as recorded by this operation`;
       fullDescription = certDesc;
-    }
-
-    // Add carbon credits details with consumer context
-    if (event.carbon_credits_earned) {
-      const unit = event.carbon_credits_unit || 'credits';
-      const amount = parseFloat(event.carbon_credits_earned);
-      const formattedAmount = amount >= 1 ? amount.toFixed(1) : amount.toFixed(2);
-      fullDescription += `. Generated ${formattedAmount} ${unit} through documented sustainable farming practices`;
     }
 
     // Add verification status with consumer-friendly messaging
@@ -2760,9 +2761,6 @@ export function getConsumerEventDescription(
       // Verified / Self-Reported badge alongside carries the qualifier.
       consumerImpact =
         'The certificate number is published here so a buyer can check it with the issuing body instead of taking the farm at its word.';
-    } else if (businessType === 'carbon_credits') {
-      consumerImpact =
-        'Credits are counted in a scheme with its own rules; the amount and the scheme are on record here.';
     } else if (businessType === 'verification') {
       consumerImpact =
         'The audit body and the date are on record, so a buyer can take it up with the issuer rather than with the farm.';
@@ -2782,9 +2780,6 @@ export function getConsumerEventDescription(
       // see the attribution note on consumerImpact above.
       sustainabilityBenefit =
         'Certifications are re-checked on a schedule, so they reflect an ongoing review rather than a one-time claim.';
-    } else if (businessType === 'carbon_credits') {
-      sustainabilityBenefit =
-        'What a credit represents depends on the scheme that issued it, which is why the scheme is named rather than the credit alone.';
     } else if (businessType === 'verification') {
       sustainabilityBenefit =
         'An audit checks conformance to a written standard on the day it is carried out; the record here says which standard and when.';
@@ -2812,25 +2807,19 @@ export function getConsumerEventDescription(
         const certTypes: Record<string, string> = {
           organic_usda: 'USDA Organic Certification',
           global_gap: 'GlobalG.A.P. Certification',
-          carbon_neutral: 'Carbon Neutral Certification',
           rainforest_alliance: 'Rainforest Alliance Certification',
           fair_trade: 'Fair Trade Certification',
-          regenerative: 'Regenerative Organic Certification',
+          regenerative: 'Regenerative Organic Certified',
           cng: 'Certified Naturally Grown',
           non_gmo: 'Non-GMO Project Verified',
-          sustainable_agriculture: 'Sustainable Agriculture Certification',
+          kosher: 'Kosher Certification',
+          food_safety: 'SQF / Food Safety Certification',
+          sustainable_agriculture: 'Sustainable Agriculture Standard',
           water_stewardship: 'Water Stewardship Certification'
         };
         const certTitle =
           certTypes[event.certification_type] || `${event.certification_type} Certification`;
         return certTitle;
-      }
-
-      // Carbon credit events - show amount earned
-      if (businessType === 'carbon_credits' && event.carbon_credits_earned) {
-        return `Carbon Credits Transaction - ${event.carbon_credits_earned} ${
-          event.carbon_credits_unit || 'credits'
-        }`;
       }
 
       // Sustainability audit with practice details

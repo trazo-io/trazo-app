@@ -43,10 +43,34 @@ const VARIANTS: Record<number, Array<{ label: string; patch: Record<string, unkn
   // businessEvent: business_type selects the branch; the subtype code does not.
   7: [
     { label: 'certification', patch: { business_type: 'certification' } },
-    { label: 'carbon_credits', patch: { business_type: 'carbon_credits' } },
     { label: 'verification', patch: { business_type: 'verification' } },
     { label: 'transparency', patch: { business_type: 'transparency' } },
-    { label: 'sustainability_audit', patch: { business_type: 'sustainability_audit' } }
+    { label: 'sustainability_audit', patch: { business_type: 'sustainability_audit' } },
+    // ⚠️ certification_type selects a WHOLE PROSE MAP that nothing here reached before.
+    // The sweep fed business_type but never a certification_type, so `certDesc` was never
+    // appended and every string in that map was invisible to the claim guard — which is how
+    // "USDA Organic certification ensuring chemical-free farming practices" survived a file
+    // whose own header describes a 24-claim sweep. One variant per entry, plus an unknown
+    // value to exercise the fallback, which was the worst line of the set.
+    ...[
+      'organic_usda',
+      'global_gap',
+      'rainforest_alliance',
+      'fair_trade',
+      'regenerative',
+      'cng',
+      'non_gmo',
+      'sustainable_agriculture',
+      'water_stewardship',
+      // A REAL type that the prose map does not cover, so the fallback branch is exercised by
+      // a state that can actually occur. A made-up label did the same job but fabricated a
+      // string no dictionary can ever hold, which then failed the Spanish-coverage sweep for
+      // a sentence no shopper can reach.
+      'kosher'
+    ].map((certification_type) => ({
+      label: `certification/${certification_type}`,
+      patch: { business_type: 'certification', certification_type }
+    }))
   ]
 };
 

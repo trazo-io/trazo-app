@@ -67,7 +67,8 @@ export const baseApi = createApi({
     'OSPAnnualUpdate',
     'OSPChangeNotification',
     'OSPRecordTypes',
-    'PostHarvestFacility'
+    'PostHarvestFacility',
+    'SeasonPlan'
   ]
 });
 

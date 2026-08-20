@@ -553,7 +553,7 @@ const WeatherTab = forwardRef(
                     id: 'events.weather.sections.weatherEventInformation',
                     defaultMessage: 'Weather Event Information'
                   })}
-                  badge="Environmental Documentation"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
 
                 <SimpleGrid columns={{ base: 1, md: 1 }} spacing={4}>
@@ -664,7 +664,7 @@ const WeatherTab = forwardRef(
                       id: 'events.weather.sections.weatherDetailsMeasurements',
                       defaultMessage: 'Weather Details & Measurements'
                     })}
-                    badge="Climate Context"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
 
                   {type === 'FR' ? (
@@ -1048,7 +1048,7 @@ const WeatherTab = forwardRef(
                     id: 'events.weather.sections.farmerSFieldNotesConsumerTransparency',
                     defaultMessage: "Farmer's Field Notes & Consumer Transparency"
                   })}
-                  badge="Consumer Transparency"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
 
                 <StandardField
@@ -1056,11 +1056,7 @@ const WeatherTab = forwardRef(
                     id: 'events.weather.fields.observationsNotes',
                     defaultMessage: 'Observations & Notes'
                   })}
-                  helpText={intl.formatMessage({
-                    id: 'events.weather.help.shareAdditionalDetailsAboutWeatherImpactAndF',
-                    defaultMessage:
-                      'Share additional details about weather impact and farming response that help consumers understand your practices'
-                  })}>
+                  helpText={intl.formatMessage({ id: 'events.common.help.observationAudience' })}>
                   <StandardTextarea
                     placeholder={intl.formatMessage({
                       id: 'events.weather.placeholders.optionalDescribeHowThisWeatherEventAffectedY',

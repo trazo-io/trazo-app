@@ -348,7 +348,7 @@ const GeneralTab = forwardRef(
                     id: 'events.general.sections.otherFarmActivityInformation',
                     defaultMessage: 'Other Farm Activity Information'
                   })}
-                  badge="Activity Tracking"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
                 <VStack spacing={4} align="stretch">
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -418,7 +418,7 @@ const GeneralTab = forwardRef(
                     id: 'events.general.sections.activityDetailsContext',
                     defaultMessage: 'Activity Details & Context'
                   })}
-                  badge="Operational Documentation"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                   badgeColorScheme="blue"
                 />
                 <VStack spacing={4} align="stretch">
@@ -478,7 +478,7 @@ const GeneralTab = forwardRef(
                     id: 'events.general.sections.farmerSFieldNotesConsumerTransparency',
                     defaultMessage: "Farmer's Field Notes & Consumer Transparency"
                   })}
-                  badge="Consumer Transparency"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <StandardField
                   label={intl.formatMessage({
@@ -486,11 +486,7 @@ const GeneralTab = forwardRef(
                     defaultMessage: 'Observations & Notes'
                   })}
                   error={errors.observation?.message}
-                  helpText={intl.formatMessage({
-                    id: 'events.general.help.shareDetailsAboutThisActivityThatHelpConsume',
-                    defaultMessage:
-                      'Share details about this activity that help consumers understand your farming operations'
-                  })}>
+                  helpText={intl.formatMessage({ id: 'events.common.help.observationAudience' })}>
                   <Controller
                     name="observation"
                     control={mainInfoMethods.control}
@@ -528,7 +524,7 @@ const GeneralTab = forwardRef(
                     id: 'events.general.sections.nopContaminationIncident',
                     defaultMessage: 'NOP Contamination Incident'
                   })}
-                  badge="7 CFR 205.272"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   badgeColorScheme="orange"
                 />
                 <VStack spacing={4} align="stretch">

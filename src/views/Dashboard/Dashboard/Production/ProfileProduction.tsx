@@ -41,7 +41,8 @@ import {
   FaEye,
   FaLink,
   FaTag,
-  FaEllipsisV
+  FaEllipsisV,
+  FaLock
 } from 'react-icons/fa';
 import { MdTimeline, MdLocationOn } from 'react-icons/md';
 import { FiDownload } from 'react-icons/fi';
@@ -74,6 +75,7 @@ import { UltraMobileProductionJourney } from 'views/Scan/ProductDetail/component
 import { SalesDeliverySection } from 'views/Dashboard/Dashboard/Production/SalesDeliverySection';
 import { SalesRecordsSection } from 'views/Dashboard/Dashboard/Production/SalesRecordsSection';
 import { PostHarvestHandlerSection } from 'views/Dashboard/Dashboard/Production/PostHarvestHandlerSection';
+import { SeasonPlanSection } from 'views/Dashboard/Dashboard/Production/SeasonPlanSection';
 import AuditExportModal from 'components/AuditExport/AuditExportModal';
 import DriftFindingsBanner from 'components/Compliance/DriftFindingsBanner';
 
@@ -860,8 +862,17 @@ function ProfileProduction() {
                 variant="elevated"
                 padding={{ base: 3, md: 4 }}>
                 <VStack spacing={{ base: 3, md: 5 }} align="center">
-                  {/* Finished production banner */}
-                  {historyData?.finish_date && (
+                  {/* Live / not-live, stated. VERIFIED 2026-08-19 by scanning anonymously:
+                      an unpublished lot answers 404 on both `public_history` and the
+                      transparency endpoint, so this QR resolves for NOBODY but the owner —
+                      and `handleViewPublicPage` works for the owner, which is exactly how a
+                      farmer concludes it is live. The card said "Your QR code is ready.
+                      Consumers can scan it" in precisely this state and told them to print it.
+                      Printing a lot's labels off that is a real, expensive mistake.
+                      `HistoryViewSet.update` refuses `published=True` while `finish_date` is
+                      null ("Active productions cannot be made visible to consumers"), so the
+                      way out is to finish the season — say so rather than imply it is live. */}
+                  {historyData?.finish_date ? (
                     <Box
                       w="full"
                       p={{ base: 2, md: 3 }}
@@ -880,6 +891,30 @@ function ProfileProduction() {
                             'Your production is complete! Print this QR code and attach it to your packaging.'
                         })}
                       </Text>
+                    </Box>
+                  ) : (
+                    <Box
+                      w="full"
+                      p={{ base: 2, md: 3 }}
+                      bg="orange.50"
+                      borderRadius="lg"
+                      border="1px solid"
+                      borderColor="orange.200">
+                      <HStack spacing={2} align="flex-start" justify="center">
+                        <Icon as={FaLock} color="orange.800" boxSize={3} mt="2px" />
+                        <VStack spacing={1} align="center">
+                          <Text
+                            fontSize={{ base: 'xs', md: 'sm' }}
+                            fontWeight="semibold"
+                            color="orange.800"
+                            textAlign="center">
+                            {intl.formatMessage({ id: 'production.qr.notLiveTitle' })}
+                          </Text>
+                          <Text fontSize="xs" color="gray.700" textAlign="center">
+                            {intl.formatMessage({ id: 'production.qr.notLiveBody' })}
+                          </Text>
+                        </VStack>
+                      </HStack>
                     </Box>
                   )}
 
@@ -921,11 +956,7 @@ function ProfileProduction() {
                           defaultMessage:
                             "Print this QR and attach it to your packaging so consumers can see your production's transparency journey."
                         })
-                      : intl.formatMessage({
-                          id: 'production.qr.instructionActive',
-                          defaultMessage:
-                            "Your QR code is ready. Consumers can scan it to view your production's transparency details."
-                        })}
+                      : intl.formatMessage({ id: 'production.qr.instructionActive' })}
                   </Text>
 
                   {/* Action buttons */}
@@ -945,26 +976,38 @@ function ProfileProduction() {
                       size={{ base: 'xs', md: 'sm' }}
                       leftIcon={<Icon as={FaEye} />}
                       onClick={handleViewPublicPage}>
-                      {intl.formatMessage({ id: 'app.viewPublicPage' })}
+                      {/* Owner preview until the season is finished: `public_history`'s
+                          queryset lets a producer read their OWN unpublished production, and
+                          nobody else. Calling it "Public page" here is what convinces a farmer
+                          the lot is already live. */}
+                      {intl.formatMessage({
+                        id: historyData?.finish_date
+                          ? 'app.viewPublicPage'
+                          : 'production.qr.previewPublicPage'
+                      })}
                     </StandardButton>
                   </HStack>
 
-                  {/* Print tip */}
-                  <Box
-                    w="full"
-                    p={{ base: 2, md: 3 }}
-                    bg="blue.50"
-                    borderRadius="md"
-                    border="1px solid"
-                    borderColor="blue.100">
-                    <Text fontSize="xs" color="blue.700" textAlign="center">
-                      {intl.formatMessage({
-                        id: 'production.qr.tip',
-                        defaultMessage:
-                          'Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download the high-resolution PNG for print quality.'
-                      })}
-                    </Text>
-                  </Box>
+                  {/* Print tip — only once the QR actually resolves for a shopper. Telling
+                      someone the right size to print a code that answers 404 is the worst
+                      possible moment to be helpful about print quality. */}
+                  {historyData?.finish_date && (
+                    <Box
+                      w="full"
+                      p={{ base: 2, md: 3 }}
+                      bg="blue.50"
+                      borderRadius="md"
+                      border="1px solid"
+                      borderColor="blue.100">
+                      <Text fontSize="xs" color="blue.700" textAlign="center">
+                        {intl.formatMessage({
+                          id: 'production.qr.tip',
+                          defaultMessage:
+                            'Tip: Print at minimum 2.5cm (1 inch) for best scanning results. Download the high-resolution PNG for print quality.'
+                        })}
+                      </Text>
+                    </Box>
+                  )}
                 </VStack>
               </StandardCard>
             )}
@@ -1309,6 +1352,19 @@ function ProfileProduction() {
             </VStack>
           </SimpleGrid>
         </StandardSection>
+
+        {/* Season plan BEFORE the timeline: the plan is what to do next, the timeline is what
+            happened. Same ordering as farm home (deadlines → readiness → records). Renders
+            nothing when the production was started without a crop template. */}
+        <VStack spacing={{ base: 4, md: 6 }} align="stretch" w="100%" mb={{ base: 4, md: 6 }}>
+          <SeasonPlanSection
+            productionId={historyData?.public_id || productionId || ''}
+            farmId={farmId}
+            parcelId={parcelId}
+            canWrite={canWrite}
+            isFinished={Boolean(historyData?.finish_date)}
+          />
+        </VStack>
 
         {/* Production Timeline Section */}
 

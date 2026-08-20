@@ -37,7 +37,7 @@ import {
   FaLayerGroup
 } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { clearForm, setForm } from 'store/features/formSlice';
 import { object, string } from 'zod';
 import { useDispatch, useSelector } from 'react-redux';
@@ -85,6 +85,7 @@ import {
   useUpdateEventMutation
 } from 'store/api/historyApi';
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
+import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
@@ -236,6 +237,21 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const verbFromUrl = searchParams.get('verb');
   const typePresetFromVerb = !isEdit && verbFromUrl != null && eventTypeFromUrl != null;
 
+  // Season plan: "Log this" on a planned practice arrives with ?plan_item=&production=.
+  // The item's catalogue values PREFILL the form; the farmer reviews them and supplies the
+  // date. Nothing about the plan item is a record until this form is saved — which is the
+  // whole point of ProductionPlanItem (history/models.py). The id rides along on the POST so
+  // the server can close the checklist item against the record it actually wrote.
+  const planItemIdFromUrl = searchParams.get('plan_item');
+  const planProductionIdFromUrl = searchParams.get('production');
+
+  // A plan item answers "what did you do" as completely as a verb tile does, and it does so
+  // for practices the curated verb grid has no tile for — pruning, thinning, transplanting.
+  // Without this the farmer taps "Log this" on "Annual Structural Pruning" and lands back on
+  // a "What did you do?" grid, which is the opposite of what the button promised.
+  const typePresetFromPlan = !isEdit && planItemIdFromUrl != null && eventTypeFromUrl != null;
+  const typeChooserAnswered = typePresetFromVerb || typePresetFromPlan;
+
   // Theme colors
   const textColor = useColorModeValue('gray.700', 'white');
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -255,6 +271,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
   });
   // Verb picked in-page (no URL preset) — drives title + tile selection state.
   const [pickedVerbKey, setPickedVerbKey] = useState(null);
+
+  // The plan item is fetched, not passed through the URL: the practice this record answers is
+  // read from the operator's own plan, so a hand-edited link cannot invent one.
+  const { data: seasonPlanData } = useGetSeasonPlanQuery(
+    { historyId: planProductionIdFromUrl },
+    { skip: !planProductionIdFromUrl || !planItemIdFromUrl || isEdit }
+  );
+  const activePlanItem = useMemo(
+    () =>
+      (seasonPlanData?.items || []).find((item) => String(item.id) === String(planItemIdFromUrl)),
+    [seasonPlanData, planItemIdFromUrl]
+  );
 
   // WS-4c: voice accelerator on the details step (ported from QuickAddEvent).
   // voiceSeq keys the tab components — ChemicalTab resets from initialValues only
@@ -1061,6 +1089,26 @@ function NewEvent({ isEdit = false, eventId = null }) {
     }
   };
 
+  // Seed the SUBTYPE from the season-plan item, once, when it arrives.
+  //
+  // ⛔ The subtype and nothing else. A plan item deliberately carries no field values: this
+  // form's `cleanEventData` is a passthrough with no allowlist, so anything merged in here
+  // lands on the saved record whether the form renders it or not — and the catalogue's field
+  // sets are full of measurements and product names (`soil_ph: 6.5`,
+  // `organic_matter_percentage: 3.0`, `amendment_type: "Crimson Clover + White Mustard seed
+  // mix"`). Writing those unseen is a fabricated observation, which is the class the plan
+  // model exists to close. The render-verified way to prefill values is the template
+  // accelerator below, which the farmer picks explicitly.
+  const planSubtypeApplied = useRef(false);
+  useEffect(() => {
+    if (!activePlanItem || planSubtypeApplied.current) return;
+    planSubtypeApplied.current = true;
+    if (!activePlanItem.event_subtype) return;
+    setEventFormData((prev) => ({ ...prev, type: activePlanItem.event_subtype }));
+    // Remount the tab so it re-reads initialValues (ChemicalTab only reads them on mount).
+    setVoiceSeq((s) => s + 1);
+  }, [activePlanItem]);
+
   const handleEventTypeChange = (eventTypeId) => {
     setActiveEventType(eventTypeId);
 
@@ -1645,7 +1693,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
         savedEvent = await createEvent({
           companyId: currentCompany.id,
           farmId: parseInt(farmId || '0'),
-          ...finalEventData
+          ...finalEventData,
+          // Closes the season-plan item, server-side, in the same request that writes the
+          // record. A plan item may not claim to be done except by pointing at a record.
+          //
+          // `history` rides along because the endpoint otherwise derives the production from
+          // `parcel.current_history` — which is the wrong season for a plan item on any
+          // production that is not the parcel's current one, and would leave the record in one
+          // place and the checklist item open in another.
+          ...(activePlanItem
+            ? {
+                plan_item_id: activePlanItem.id,
+                ...(seasonPlanData?.history_id ? { history: seasonPlanData.history_id } : {})
+              }
+            : {})
         }).unwrap();
 
         toast({
@@ -1760,6 +1821,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
       title={
         isEdit
           ? intl.formatMessage({ id: 'app.editEvent' }) || 'Edit Event'
+          : // A plan item titles the page with the practice's own name ("Annual Structural
+          // Pruning"), which is more specific than any verb the grid could offer.
+          activePlanItem
+          ? intl.formatMessage({ id: 'activities.logTitle' }, { verb: activePlanItem.name })
           : typePresetFromVerb || pickedVerbKey
           ? intl.formatMessage(
               { id: 'activities.logTitle' },
@@ -1944,8 +2009,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             • Document hive count and placement dates for full transparency
                           </Text>
                           <Text fontSize="xs" color="gray.600">
-                            • Pollination events build your transparency score by showing natural
-                            processes
+                            • Hive counts and placement dates evidence the § 205.200 biodiversity
+                            practices your OSP describes
                           </Text>
                         </>
                       )}
@@ -2002,12 +2067,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
                             {intl.formatMessage({ id: 'app.documentObservations' }) ||
-                              'Document observations to build consumer trust'}
+                              'Notes your certifier reads in the packet, and that also appear on your buyer page'}
                           </Text>
                           <Text fontSize="xs" color="gray.600">
-                            •{' '}
-                            {intl.formatMessage({ id: 'app.maintainDetailedRecords' }) ||
-                              'Detailed records increase your transparency score'}
+                            • {intl.formatMessage({ id: 'app.maintainDetailedRecords' })}
                           </Text>
                           <Text fontSize="xs" color="gray.600">
                             •{' '}
@@ -2072,8 +2135,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)} noValidate>
                         <VStack spacing={{ base: 5, md: 6 }} align="stretch">
                           {/* Event Type Selection Section — hidden when the verb
-                              entry already answered it (typePresetFromVerb). */}
-                          {!typePresetFromVerb && (
+                              entry already answered it — a verb tile, or a season-plan
+                              item, which names the practice more precisely than any tile. */}
+                          {!typeChooserAnswered && (
                             <SectionBox>
                               <SectionHeader
                                 icon={FaTasks}
@@ -2218,6 +2282,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
                           {/* Event Timing & Traceability Section */}
                           <SectionBox>
+                            {/* Date and operator are the certifier record — § 205.103(b)(2)
+                                audit trail, and the "Responsible Party" column NOP form C21
+                                asks for. This badge said "USDA GAP", a separate voluntary
+                                food-safety audit scheme Trazo does not produce, on the two
+                                fields every organic record starts with. */}
                             <SectionHeader
                               icon={FaCalendarAlt}
                               iconColor="blue.500"
@@ -2225,8 +2294,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 id: 'events.wizard.timing',
                                 defaultMessage: 'Event Timing & Traceability'
                               })}
-                              badge="USDA GAP"
-                              badgeColorScheme="blue"
+                              badge={intl.formatMessage({
+                                id: 'events.section.badge.certifierRecord'
+                              })}
+                              badgeColorScheme="green"
                               description="When did this activity occur and who performed it?"
                             />
                             <VStack spacing={4} align="stretch">
@@ -2335,6 +2406,26 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               </Button>
                             )}
                           </HStack>
+                        )}
+                        {/* Arrived from "Log this" on the season plan. The banner says out
+                            loud that the values on screen are the CATALOGUE's, not the
+                            farm's — the suggest→confirm red line the OSP § 11 panel and the
+                            template accelerator both draw. The date is deliberately blank. */}
+                        {activePlanItem && !showVoiceCapture && (
+                          <Box
+                            mt={3}
+                            p={3}
+                            bg="green.50"
+                            borderWidth="1px"
+                            borderColor="green.200"
+                            borderRadius="md">
+                            <Text fontSize="sm" fontWeight="semibold" color="green.700" mb={1}>
+                              {activePlanItem.name}
+                            </Text>
+                            <Text fontSize="xs" color="gray.700">
+                              {intl.formatMessage({ id: 'seasonPlan.logFromPlanNote' })}
+                            </Text>
+                          </Box>
                         )}
                         {appliedTemplateKey && !showVoiceCapture && (
                           <Box

@@ -41,17 +41,56 @@ const CLAIM_PATTERNS: Array<[string, RegExp]> = [
 
 const SUPPRESSED = suppressedFallbackSentences();
 
+/**
+ * Proper nouns, removed before the prose is matched.
+ *
+ * The patterns below were written against SENTENCES. Once the sweep started feeding
+ * `certification_type`, they began seeing the NAMES of real programmes — "Regenerative Organic
+ * Certified" tripping the self-applied-label rule, "Non-GMO Project Verified" tripping the
+ * third-party-verification rule, "Sustainable Agriculture Standard" tripping both. Stating
+ * that a named certification exists is a fact about the record; the rule is aimed at Trazo
+ * asserting a benefit in its own words.
+ *
+ * Names only — never a claim phrase. Anything removed here stops being checked, so this list
+ * is the one place in the file where an addition needs real thought.
+ */
+const PROGRAMME_NAMES = [
+  'Regenerative Organic Certified',
+  'Certified Naturally Grown',
+  'Non-GMO Project Verified',
+  'Sustainable Agriculture Standard',
+  'Sustainability Audit',
+  'Sustainability Assessment',
+  'Rainforest Alliance',
+  'Fair Trade',
+  'GlobalG.A.P.',
+  'USDA Organic'
+];
+
+const withoutProgrammeNames = (text: string): string =>
+  PROGRAMME_NAMES.reduce((acc, name) => acc.split(name).join(' '), text);
+
 describe('consumer copy carries no unsubstantiable claims', () => {
   const findings: string[] = [];
   let sentences = 0;
 
   for (const { key, info } of enumerateConsumerCopy()) {
-    for (const field of ['shortDescription', 'consumerImpact', 'sustainabilityBenefit'] as const) {
-      const text = info?.[field];
-      if (!text || SUPPRESSED.has(text)) continue;
+    // EVERY string this function returns, not a hardcoded three. The chemical-free claim lived
+    // in `fullDescription`, which was simply not on the old list — the guard was scoped to the
+    // fields the 2026-08-02 sweep happened to look at, so a claim one field over read as clean.
+    // Enumerating the object means a new consumer-visible field is covered the day it appears.
+    for (const [field, text] of Object.entries(info ?? {})) {
+      // `consumerMessage` is named like shipped copy and is not: `grep -rn consumerMessage src`
+      // finds its declaration, its 180-odd assignments, and NO reader — no component, no view,
+      // no serializer consumes it. Scanning it would fail this suite on 180 strings a shopper
+      // cannot reach, which trains people to widen the exclusion list instead of fixing copy.
+      // ⚠️ If anything ever renders it, delete this line FIRST — those strings are unreviewed.
+      if (field === 'consumerMessage') continue;
+      if (typeof text !== 'string' || !text || SUPPRESSED.has(text)) continue;
       sentences++;
+      const prose = withoutProgrammeNames(text);
       for (const [label, pattern] of CLAIM_PATTERNS) {
-        if (pattern.test(text)) {
+        if (pattern.test(prose)) {
           findings.push(`  • [${label}] ${key}/${field}\n      ${text}`);
         }
       }

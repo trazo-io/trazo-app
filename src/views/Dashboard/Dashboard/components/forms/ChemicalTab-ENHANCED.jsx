@@ -30,6 +30,7 @@ import {
   StandardSelect,
   StandardTextarea,
   StandardAlert,
+  CollapsibleSection,
   SectionHeader,
   SectionBox
 } from 'components/Design/StandardComponents';
@@ -1252,13 +1253,15 @@ const ChemicalTab = forwardRef(
                   icon={FaFlask}
                   iconColor="green.500"
                   title="Chemical Application Details"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                  badgeColorScheme="green"
                 />
                 <VStack spacing={4} align="stretch">
                   <StandardField
                     label="Chemical Type"
                     required
                     error={errors.type?.message}
-                    helpText="Select the type of chemical for accurate carbon calculations">
+                    helpText="What kind of input this is. Your certifier reads this alongside the product name to check it against the National List.">
                     <Controller
                       name="type"
                       control={methods.control}
@@ -2164,7 +2167,7 @@ const ChemicalTab = forwardRef(
                     label="Commercial Name / Product"
                     required
                     error={errors.commercial_name?.message}
-                    helpText="Brand name or product name for transparency documentation">
+                    helpText="The product name exactly as it appears on the label — this is what your certifier looks up.">
                     <Controller
                       name="commercial_name"
                       control={methods.control}
@@ -2172,7 +2175,7 @@ const ChemicalTab = forwardRef(
                         <>
                           <StandardInput
                             {...field}
-                            placeholder="e.g., Miracle-Gro All Purpose, Roundup WeatherMAX"
+                            placeholder="e.g., Kocide 3000, Neptune's Harvest Fish &amp; Seaweed"
                           />
                           <InputVerifyHelper name={field.value || ''} />
                         </>
@@ -2183,12 +2186,12 @@ const ChemicalTab = forwardRef(
                   <StandardField
                     label="Active Ingredient (Optional)"
                     error={errors.active_ingredient?.message}
-                    helpText="Main active ingredient for consumer transparency">
+                    helpText="The active ingredient is what Trazo matches against 7 CFR 205.601/602 — a brand name alone rarely appears on the National List.">
                     <Controller
                       name="active_ingredient"
                       control={methods.control}
                       render={({ field }) => (
-                        <StandardInput {...field} placeholder="e.g., Glyphosate, NPK 10-10-10" />
+                        <StandardInput {...field} placeholder="e.g., Copper hydroxide, NPK 2-3-1" />
                       )}
                     />
                   </StandardField>
@@ -2201,9 +2204,9 @@ const ChemicalTab = forwardRef(
                   icon={FaCalculator}
                   iconColor="green.600"
                   title="Application Rate & Coverage"
-                  badge="Carbon Calculation"
-                  description="Accurate application rates are essential for calculating the environmental impact of your chemical applications."
-                />
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                  description="Rate and area are what a certifier checks a label maximum against, and what § 205.103(b)(2) means by records detailed enough to be audited."
+                />{' '}
                 <VStack spacing={4} align="stretch">
                   {/* Sprint 5: Hide individual quantity fields when in Summary Mode - aggregate fields replace them */}
                   {!isSummaryMode && (
@@ -2537,31 +2540,26 @@ const ChemicalTab = forwardRef(
                         </Box>
                       )}
 
+                      {/* Plain-string label, like every other field on this form.
+                          It used to be an <HStack> holding a <Badge> that showed the expected
+                          FORMAT ("NPK" / "%") once a chemical type was chosen — and fell back to
+                          the literal word "Required" before then. That put a red "Required" pill
+                          beside a field that already carries StandardField's asterisk, saying the
+                          same thing twice in two visual languages; and because the label was a JSX
+                          element rather than a string, the asterisk wrapped onto a line of its own.
+                          The format hint belongs in helpText, which is where every other field on
+                          this form puts it. */}
                       <StandardField
                         label={
-                          <HStack spacing={2}>
-                            <Text>
-                              {chemicalType === 'FE'
-                                ? 'NPK Ratio'
-                                : chemicalType === 'PE'
-                                ? 'Pesticide Concentration'
-                                : chemicalType === 'HE'
-                                ? 'Herbicide Concentration'
-                                : chemicalType === 'FU'
-                                ? 'Fungicide Concentration'
-                                : 'Concentration / Application Rate'}
-                            </Text>
-                            <Badge
-                              size="sm"
-                              colorScheme={concentrationValidation?.isValid ? 'green' : 'red'}
-                              variant={concentrationValidation ? 'solid' : 'outline'}>
-                              {chemicalType === 'FE'
-                                ? 'NPK'
-                                : ['PE', 'HE', 'FU'].includes(chemicalType)
-                                ? '%'
-                                : 'Required'}
-                            </Badge>
-                          </HStack>
+                          chemicalType === 'FE'
+                            ? 'NPK Ratio'
+                            : chemicalType === 'PE'
+                            ? 'Pesticide Concentration'
+                            : chemicalType === 'HE'
+                            ? 'Herbicide Concentration'
+                            : chemicalType === 'FU'
+                            ? 'Fungicide Concentration'
+                            : 'Concentration / Application Rate'
                         }
                         required
                         error={errors.concentration?.message}
@@ -2574,7 +2572,7 @@ const ChemicalTab = forwardRef(
                                       'NPK format (e.g., "10-10-10") or the nutrient percentage (e.g., "36%")'
                                     : 'NPK format (e.g., "10-10-10")'
                                   : 'percentage (e.g., "2.5%")'
-                              } for accurate carbon calculations`
+                              } — the format your certifier expects for this input type`
                             : 'Select chemical type first for format guidance'
                         }>
                         <Controller
@@ -2831,8 +2829,8 @@ const ChemicalTab = forwardRef(
                   icon={FaLeaf}
                   iconColor="green.500"
                   title="Environmental Context"
-                  badge="Transparency"
-                />
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                />{' '}
                 <VStack spacing={4} align="stretch">
                   <StandardField
                     label="Weather Conditions"
@@ -2992,7 +2990,7 @@ const ChemicalTab = forwardRef(
                     icon={FaTruck}
                     iconColor="orange.600"
                     title="Supplier & Purchase Tracking"
-                    badge="NOP Audit Trail"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     badgeColorScheme="orange"
                     description="Document input suppliers and purchase records for organic mass-balance audits. The #1 non-conformance finding nationally is inadequate mass-balance documentation."
                   />
@@ -3150,7 +3148,7 @@ const ChemicalTab = forwardRef(
                     icon={FaClock}
                     iconColor="green.600"
                     title="Legal Spray Record"
-                    badge="GLOBALG.A.P. / CA PUR"
+                    badge={intl.formatMessage({ id: 'events.section.badge.caPesticideReport' })}
                     description="Optional fields that make this entry a complete legal pesticide-use record — GLOBALG.A.P. FV-GFS 32.02.01 and the CA monthly Pesticide Use Report (DPR-PML-017C)."
                   />
                   <VStack spacing={4} align="stretch">
@@ -3545,7 +3543,7 @@ const ChemicalTab = forwardRef(
                         icon={FaFileInvoiceDollar}
                         iconColor="red.600"
                         title="CA DPR Restricted Materials Permit"
-                        badge="California State Law"
+                        badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                         badgeColorScheme="red"
                         description="This input is a California county-restricted material (3 CCR 6400 et seq.). Even when NOP-allowed under 7 CFR 205.601, a county Ag Commissioner permit is required before application."
                       />
@@ -3605,16 +3603,15 @@ const ChemicalTab = forwardRef(
               {/* Section 4: Application Equipment & Fuel Usage - Phase 3 Electric Equipment Support */}
               {/* Hidden in Summary Mode - aggregate fuel fields are shown in the summary sections instead */}
               {!isSummaryMode && (
-                <SectionBox variant="highlighted">
-                  <SectionHeader
-                    icon={FaBolt}
-                    iconColor="blue.600"
-                    title="Application Equipment & Fuel Usage"
-                    badge="Enhanced Carbon Accuracy"
-                    badgeColorScheme="blue"
-                    description="Document your sprayer, spreader, or other application equipment fuel consumption for accurate carbon calculations. Electric equipment has significantly lower carbon impact than diesel."
-                  />
-
+                <CollapsibleSection
+                  icon={FaBolt}
+                  iconColor="blue.600"
+                  title="Application Equipment & Fuel Usage"
+                  badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
+                  description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
+                  badgeColorScheme="gray"
+                  variant="highlighted">
+                  {' '}
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       {/* Phase 3: Application Fuel Type Selector */}
@@ -3722,7 +3719,7 @@ const ChemicalTab = forwardRef(
                       </Text>
                     </Box>
                   </VStack>
-                </SectionBox>
+                </CollapsibleSection>
               )}
 
               {/* Section 5: EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309 */}
@@ -3732,7 +3729,7 @@ const ChemicalTab = forwardRef(
                     icon={FaUserShield}
                     iconColor="orange.500"
                     title="Safety & Compliance"
-                    badge="EPA Required"
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     badgeColorScheme="orange"
                   />
                   <VStack spacing={4} align="stretch">
@@ -3913,9 +3910,19 @@ const ChemicalTab = forwardRef(
                 border="1px solid"
                 borderColor="gray.200">
                 <HStack justify="space-between" mb={3}>
-                  <Text fontSize="sm" fontWeight="semibold" color="gray.700">
-                    Supervisor Review (FSMA § 112.161(b))
-                  </Text>
+                  {/* Inline sub-block rather than a SectionBox, which is why it carried no
+                      destination badge while every section around it did. Both fields DO reach
+                      the certifier packet. The FSMA cite stays because it is why the field
+                      exists — but a grower should be told where the data lands, not left to
+                      infer it from a food-safety clause number. */}
+                  <HStack spacing={2}>
+                    <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+                      Supervisor Review (FSMA § 112.161(b))
+                    </Text>
+                    <Badge colorScheme="green" fontSize="xs">
+                      {intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                    </Badge>
+                  </HStack>
                   <Controller
                     name="reviewed"
                     control={methods.control}
@@ -4023,12 +4030,12 @@ const ChemicalTab = forwardRef(
                   icon={FaSeedling}
                   iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
-                  badge="Consumer Transparency"
+                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <StandardField
                   label="Observations & Notes"
                   error={errors.observation?.message}
-                  helpText="Share details about this chemical application that help consumers understand your farming practices">
+                  helpText={intl.formatMessage({ id: 'events.common.help.observationAudience' })}>
                   <Controller
                     name="observation"
                     control={methods.control}

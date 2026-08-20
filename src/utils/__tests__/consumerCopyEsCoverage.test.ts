@@ -26,6 +26,21 @@ import { CONSUMER_DESCRIPTION_ES } from '../eventDescriptions.es';
 import { getSubtypes } from '../../config/events/index';
 
 /** The exact fields localizeConsumerDescription() passes through the dictionary. */
+/**
+ * Names that are the same in both languages, so they need no dictionary entry.
+ *
+ * `localizeConsumerDescription` falls through to the input when a string is absent, which is
+ * the correct behaviour for a proper noun: "Regenerative Organic Certified" is what the
+ * programme is called in Spanish too. Adding identity entries to satisfy the coverage sweep
+ * would then trip the hygiene test that bans translations equal to their key — and rightly,
+ * since that is how a genuinely untranslated sentence hides. Exempt them by name instead.
+ */
+const UNTRANSLATED_PROGRAMME_NAMES = new Set([
+  'Regenerative Organic Certified',
+  'Certified Naturally Grown',
+  'Non-GMO Project Verified'
+]);
+
 const LOCALIZED_FIELDS = [
   'title',
   'description',
@@ -103,6 +118,7 @@ describe('Spanish coverage of consumer event copy', () => {
   it('translates every reachable sentence', () => {
     const missing: string[] = [];
     for (const [sentence, origins] of REACHABLE) {
+      if (UNTRANSLATED_PROGRAMME_NAMES.has(sentence)) continue;
       if (!CONSUMER_DESCRIPTION_ES[sentence]) {
         missing.push(`  • [${origins[0]}] "${sentence}"`);
       }

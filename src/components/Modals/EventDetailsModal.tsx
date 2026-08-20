@@ -43,7 +43,6 @@ import {
 } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import { useDeleteEventMutation } from 'store/api/historyApi';
-import { getEventFieldDisplay } from '../../utils/fieldDisplayUtils';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
@@ -558,96 +557,24 @@ const extractEventData = (event: Event) => {
 };
 
 /**
- * Render event-specific fields.
+ * Render event-specific fields, via the Event Field Registry (src/config/events/).
  *
- * When VITE_USE_FIELD_REGISTRY=true:
- *   Uses the centralized Event Field Registry (src/config/events/) for field
- *   selection, formatting, and FTC compliance enforcement. The registry is
- *   the single source of truth for which fields appear on which surface.
+ * The registry is the single source of truth for which fields appear on which surface, how
+ * they are formatted, and which are withheld for FTC/ECGT reasons.
  *
- * When flag is off (default):
- *   Falls back to legacy getEventFieldDisplay() from fieldDisplayUtils.ts.
- *   This path will be removed once registry rendering is validated.
+ * A legacy branch used to sit here behind `VITE_USE_FIELD_REGISTRY`, calling
+ * `getEventFieldDisplay()` from fieldDisplayUtils.ts, and its own comment said it "will be
+ * removed once registry rendering is validated". The flag has been `true` in every env file —
+ * .env.development, .env.local, .env.production and .env.example — so that branch had not run
+ * anywhere in a long time. It was still costing a full field-extraction pass on every render
+ * in ConsumerEventCard, where the call was made unconditionally and then discarded.
  */
 const renderSharedEventFields = (
   event: Event,
   cardBg: string,
   textColor: string,
   intl: IntlShape
-) => {
-  if (USE_FIELD_REGISTRY) {
-    // Registry-powered rendering (Phase 5)
-    return <RegistryFieldRendererBridge event={event} cardBg={cardBg} textColor={textColor} />;
-  }
-
-  // Legacy rendering (unchanged — will be removed after registry validation)
-  const { immediate, secondary, details } = getEventFieldDisplay(event as any);
-
-  const allFields = [...immediate, ...secondary, ...details];
-  if (allFields.length === 0) return null;
-
-  return (
-    <VStack spacing={4} align="stretch">
-      {/* Immediate Fields - Primary information */}
-      {immediate.length > 0 && (
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
-          {immediate.map((field, index) => (
-            <Box key={`imm-${index}`} p={4} bg={cardBg} borderRadius="lg">
-              <Text fontSize="sm" color="gray.500" mb={1}>
-                {field.label}
-              </Text>
-              <Text fontWeight="medium" color={textColor}>
-                {field.value}
-              </Text>
-            </Box>
-          ))}
-        </SimpleGrid>
-      )}
-
-      {/* Secondary Fields */}
-      {secondary.length > 0 && (
-        <Box>
-          <Text fontSize="md" fontWeight="semibold" mb={3} color={textColor}>
-            {intl.formatMessage({ id: 'eventDetails.additionalDetails' })}
-          </Text>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-            {secondary.map((field, index) => (
-              <Box key={`sec-${index}`} p={4} bg={cardBg} borderRadius="lg">
-                <Text fontSize="sm" color="gray.500" mb={1}>
-                  {field.label}
-                </Text>
-                <Text fontWeight="medium" color={textColor}>
-                  {field.value}
-                </Text>
-              </Box>
-            ))}
-          </SimpleGrid>
-        </Box>
-      )}
-
-      {/* Details Fields - Technical details */}
-      {details.length > 0 && (
-        <Box>
-          <Text fontSize="md" fontWeight="semibold" mb={3} color={textColor}>
-            {intl.formatMessage({ id: 'eventDetails.technicalDetails' })}
-          </Text>
-          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-            {details.map((field, index) => (
-              <Box key={`det-${index}`} p={4} bg={cardBg} borderRadius="lg">
-                <Text fontSize="sm" color="gray.500" mb={1}>
-                  {field.label}
-                </Text>
-                <Text fontWeight="medium" color={textColor}>
-                  {field.value}
-                </Text>
-              </Box>
-            ))}
-          </SimpleGrid>
-        </Box>
-      )}
-    </VStack>
-  );
-};
+) => <RegistryFieldRendererBridge event={event} cardBg={cardBg} textColor={textColor} />;
 
 /**
  * Bridge component: wraps useEventFields hook (hooks can't be called conditionally).
