@@ -91,12 +91,28 @@ interface RootState {
   };
 }
 
-const STATUS_COLOR: Record<OSPStatus, string> = {
-  draft: 'gray',
-  submitted: 'blue',
-  active: 'green',
-  superseded: 'gray',
-  withdrawn: 'red'
+/*
+ * Status -> badge PROPS, not a bare colorScheme, because the two tiers this needs are not
+ * both reachable through colorScheme.
+ *
+ * ⚠️ No `blue`. Blue carries no meaning in this palette — it survives in exactly one place
+ * app-wide, Chakra's `Alert status="info"` — so a blue status badge is decoration wearing the
+ * authority of a state. `submitted` means "in flight, waiting on the certifier", which the
+ * design rules map to the warning tier.
+ *
+ * ⚠️ And NOT `colorScheme="amber"` for that tier. The theme's amber scale tops out at
+ * #E65100, so the brand variant's tint pairing (amber.800 on amber.100) measures **2.66:1** —
+ * an unreadable pill. `variant="warning"` is the readable one at 7.62:1. Same reason
+ * `withdrawn` uses `variant="danger"` rather than colorScheme red.
+ */
+type StatusBadgeProps = { colorScheme?: string; variant?: string };
+
+const STATUS_BADGE: Record<OSPStatus, StatusBadgeProps> = {
+  draft: { colorScheme: 'gray' },
+  submitted: { variant: 'warning' },
+  active: { colorScheme: 'green' },
+  superseded: { colorScheme: 'gray' },
+  withdrawn: { variant: 'danger' }
 };
 
 /**
@@ -266,7 +282,6 @@ const OSPView: React.FC = () => {
 
   const subtextColor = useColorModeValue('gray.600', 'gray.400');
   const emptyBg = useColorModeValue('green.50', 'green.900');
-  const submissionBg = useColorModeValue('blue.50', 'blue.900');
   const lockedBg = useColorModeValue('gray.50', 'gray.700');
 
   // --- Fetching -----------------------------------------------------------
@@ -671,7 +686,7 @@ const OSPView: React.FC = () => {
   const completionPct = Math.round((completeSectionCount / OSP_SECTION_KEYS.length) * 100);
   // Mirrors `OrganicSystemPlanViewSet.perform_update` — only a draft accepts edits.
   const isEditable = editableOsp.status === 'draft';
-  const statusColor = STATUS_COLOR[editableOsp.status] || 'gray';
+  const statusBadgeProps = STATUS_BADGE[editableOsp.status] ?? { colorScheme: 'gray' };
   const submissionPdfUrl = resolveBackendFileUrl(editableOsp.submission_pdf);
 
   const updateSection = (key: OSPSectionKey, narrative: string) => {
@@ -710,7 +725,7 @@ const OSPView: React.FC = () => {
         // its own inside the body, reading as content rather than as the plan's state. Same slot
         // the CDFA and Annual cards use for theirs.
         headerAction={
-          <Badge colorScheme={statusColor}>
+          <Badge {...statusBadgeProps}>
             {intl.formatMessage({ id: `osp.status.${editableOsp.status}` })}
           </Badge>
         }>
@@ -737,7 +752,7 @@ const OSPView: React.FC = () => {
               )}
               {editableOsp.status === 'draft' && (
                 <StandardButton
-                  variant="secondary"
+                  variant="primary"
                   size="sm"
                   onClick={handleSubmit}
                   isLoading={submitting}>
@@ -745,7 +760,7 @@ const OSPView: React.FC = () => {
                 </StandardButton>
               )}
               {editableOsp.status === 'submitted' && (
-                <StandardButton variant="secondary" size="sm" onClick={openActivateModal}>
+                <StandardButton variant="primary" size="sm" onClick={openActivateModal}>
                   {intl.formatMessage({ id: 'osp.action.activate' })}
                 </StandardButton>
               )}
@@ -763,7 +778,7 @@ const OSPView: React.FC = () => {
                   osp={editableOsp}
                   companyId={String(companyId ?? '')}
                   farmId={farmId || ''}
-                  variant="secondary"
+                  variant="outline"
                   onForked={(fresh) => {
                     // The prior plan still exists and would otherwise win the default
                     // "newest" selection, so focus the new draft explicitly.
@@ -798,12 +813,7 @@ const OSPView: React.FC = () => {
                       { id: 'osp.completion.registryGapTooltip' },
                       { count: unreferencedCount }
                     )}>
-                    <Badge
-                      colorScheme="orange"
-                      variant="subtle"
-                      fontSize="xs"
-                      textTransform="none"
-                      cursor="help">
+                    <Badge variant="warning" fontSize="xs" textTransform="none" cursor="help">
                       <HStack spacing={1}>
                         <Icon as={FaExclamationTriangle} boxSize={2.5} />
                         <Text as="span">
@@ -829,15 +839,22 @@ const OSPView: React.FC = () => {
               snapshot IS what the certifier portal expects; exposing it
               here closes the submit → certifier upload loop. */}
           {submissionPdfUrl && (
+            /*
+             * Neutral, not blue. Blue carries no meaning in this palette outside Chakra's
+             * `Alert status="info"`, and this block cannot BE an alert — it holds an action
+             * (the download button), and a solid control inside an alert is its own
+             * anti-pattern. So it is simply a card: gray border, gray inset, and the green
+             * outline button carries the affordance.
+             */
             <HStack
               spacing={3}
               p={2}
               borderWidth="1px"
-              borderColor="blue.200"
+              borderColor="gray.200"
               borderRadius="md"
-              bg={submissionBg}
+              bg="gray.50"
               flexWrap="wrap">
-              <Icon as={FaFileAlt} color="blue.600" />
+              <Icon as={FaFileAlt} color="gray.600" />
               <VStack align="start" spacing={0} flex={1} minW="180px">
                 <Text fontSize="sm" fontWeight="semibold">
                   {intl.formatMessage({ id: 'osp.submissionPdf.title' })}
@@ -852,7 +869,7 @@ const OSPView: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 _hover={{ textDecoration: 'none' }}>
-                <StandardButton variant="secondary" size="sm" leftIcon={<FaDownload />}>
+                <StandardButton variant="outline" size="sm" leftIcon={<FaDownload />}>
                   {intl.formatMessage({ id: 'osp.submissionPdf.download' })}
                 </StandardButton>
               </ChakraLink>
@@ -949,12 +966,7 @@ const OSPView: React.FC = () => {
                             { id: 'osp.completion.registryGapTooltip' },
                             { count: unreferencedCount }
                           )}>
-                          <Badge
-                            colorScheme="orange"
-                            variant="subtle"
-                            fontSize="xs"
-                            textTransform="none"
-                            cursor="help">
+                          <Badge variant="warning" fontSize="xs" textTransform="none" cursor="help">
                             <HStack spacing={1}>
                               <Icon as={FaExclamationTriangle} boxSize={2.5} />
                               <Text as="span">
@@ -1102,7 +1114,7 @@ const OSPView: React.FC = () => {
                       {s.effective_date || s.created_at.slice(0, 10)}
                     </Text>
                   </VStack>
-                  <Badge colorScheme={STATUS_COLOR[s.status]} variant="subtle">
+                  <Badge variant="subtle" {...(STATUS_BADGE[s.status] ?? {})}>
                     {intl.formatMessage({ id: `osp.status.${s.status}` })}
                   </Badge>
                 </HStack>

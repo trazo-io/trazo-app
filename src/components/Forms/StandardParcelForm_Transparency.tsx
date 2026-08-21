@@ -3,15 +3,9 @@ import {
   VStack,
   HStack,
   SimpleGrid,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   useToast,
   Text,
   Box,
-  Textarea,
   Flex,
   Badge,
   Input
@@ -40,6 +34,11 @@ import {
   FaCamera
 } from 'react-icons/fa';
 import { MdInfo } from 'react-icons/md';
+import {
+  StandardNumberInput,
+  StandardInput,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 
 // 🎯 CARBON TRANSPARENCY FOCUSED SCHEMA
 const transparencyParcelSchema = object({
@@ -549,17 +548,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     required
                     error={errors.name?.message}
                     helpText="Consumer-friendly name for this parcel">
-                    <Input
+                    <StandardInput
                       {...methods.register('name')}
                       placeholder="e.g., North Avocado Grove, Organic Block A"
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{
-                        borderColor: 'green.500',
-                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                      }}
-                      size="lg"
                     />
                   </StandardField>
 
@@ -591,7 +582,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                         const acres = field.value ? field.value / HECTARES_PER_ACRE : 0;
                         return (
                           <>
-                            <NumberInput
+                            <StandardNumberInput
                               value={acres ? Number(acres.toFixed(2)) : 0}
                               onChange={(_, num) =>
                                 field.onChange(
@@ -600,22 +591,14 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                               }
                               min={0}
                               step={1}
-                              precision={2}>
-                              <NumberInputField
-                                borderRadius="lg"
-                                // 44px touch target: this is a required field a farmer
-                                // fills on a phone in the orchard.
-                                h="44px"
-                                placeholder={intl.formatMessage({
-                                  id: 'parcel.areaAcresPlaceholder',
-                                  defaultMessage: 'e.g., 42.5'
-                                })}
-                              />
-                              <NumberInputStepper>
-                                <NumberIncrementStepper />
-                                <NumberDecrementStepper />
-                              </NumberInputStepper>
-                            </NumberInput>
+                              precision={2}
+                              // 44px touch target: this is a required field a farmer
+                              // fills on a phone in the orchard.
+                              placeholder={intl.formatMessage({
+                                id: 'parcel.areaAcresPlaceholder',
+                                defaultMessage: 'e.g., 42.5'
+                              })}
+                            />
                             {field.value > 0 && (
                               <Text fontSize="xs" color="gray.500" mt={1}>
                                 {intl.formatMessage(
@@ -645,10 +628,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
                 <HStack spacing={3} justify="flex-end" pt={4}>
                   <StandardButton variant="outline" onClick={onCancel}>
-                    Cancel
+                    {intl.formatMessage({ id: 'app.cancel' })}
                   </StandardButton>
                   <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                    Continue to Location
+                    {intl.formatMessage({ id: 'app.continue' })}
                   </StandardButton>
                 </HStack>
               </VStack>
@@ -662,10 +645,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                 <Box borderRadius="lg" overflow="hidden" border="1px solid" borderColor="gray.200">
                   {loadError ? (
                     <Flex h="400px" align="center" justify="center" bg="red.50" direction="column">
-                      <Text color="red.500" mb={2}>
+                      <Text color="red.700" mb={2}>
                         Failed to load Google Maps
                       </Text>
-                      <Text fontSize="sm" color="red.400">
+                      <Text fontSize="sm" color="red.700">
                         {loadError.message}
                       </Text>
                     </Flex>
@@ -803,15 +786,15 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    Back to Identity
+                    {intl.formatMessage({ id: 'common.back' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
                     <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                     <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                      Continue to description
+                      {intl.formatMessage({ id: 'app.continue' })}
                     </StandardButton>
                   </HStack>
                 </HStack>
@@ -840,17 +823,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   required
                   error={errors.transparency_description?.message}
                   helpText="Crop, plantings, irrigation, anything that distinguishes this block from your others. 100+ characters recommended.">
-                  <Textarea
+                  <StandardTextarea
                     {...methods.register('transparency_description')}
                     placeholder="e.g., 12.5-acre Hass avocado block on the east slope, planted 2011 on Dusa rootstock. Drip irrigation from the deep well, cover cropped between rows over winter..."
-                    borderRadius="lg"
-                    borderColor="gray.300"
-                    _hover={{ borderColor: 'green.400' }}
-                    _focus={{
-                      borderColor: 'green.500',
-                      boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                    }}
-                    size="lg"
                     minH="150px"
                   />
                 </StandardField>
@@ -865,17 +840,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     label="Soil & conservation practices"
                     error={errors.sustainability_practices?.message}
                     helpText="Cover cropping, compost, buffer plantings — the practices your certifier asks about under 7 CFR 205.203.">
-                    <Textarea
+                    <StandardTextarea
                       {...methods.register('sustainability_practices')}
                       placeholder="e.g., Water conservation through drip irrigation, soil health improvement through cover crops, biodiversity support through native plant borders..."
-                      borderRadius="lg"
-                      borderColor="gray.300"
-                      _hover={{ borderColor: 'green.400' }}
-                      _focus={{
-                        borderColor: 'green.500',
-                        boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                      }}
-                      size="lg"
                       minH="120px"
                     />
                   </StandardField>
@@ -892,15 +859,15 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    Back to Location
+                    {intl.formatMessage({ id: 'common.back' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
                     <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                     <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                      Continue to Documentation
+                      {intl.formatMessage({ id: 'app.continue' })}
                     </StandardButton>
                   </HStack>
                 </HStack>
@@ -937,12 +904,12 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    Back to description
+                    {intl.formatMessage({ id: 'common.back' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
                     <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                     <StandardButton
                       type="submit"

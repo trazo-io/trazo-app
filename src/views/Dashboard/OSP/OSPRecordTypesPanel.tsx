@@ -186,7 +186,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                 )}
               </Badge>
               {summary.awaiting_confirmation > 0 && (
-                <Badge colorScheme="orange" variant="subtle">
+                <Badge variant="warning">
                   {intl.formatMessage(
                     {
                       id: 'osp.recordTypes.awaitingCount',
@@ -307,7 +307,6 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                       <StandardButton
                         size="xs"
                         variant="outline"
-                        minH="32px"
                         onClick={() => handleToggle(row)}
                         isDisabled={isConfirming}
                         flexShrink={0}>
@@ -381,7 +380,6 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                     <StandardButton
                       size="xs"
                       variant="outline"
-                      minH="32px"
                       flexShrink={0}
                       leftIcon={<Icon as={FaDownload} boxSize={3} />}
                       isDisabled={wb.error || downloading === wb.key}

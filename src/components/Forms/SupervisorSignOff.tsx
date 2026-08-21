@@ -59,7 +59,7 @@ export function SupervisorSignOff({ control }: { control: unknown }) {
           )}
         />
       </HStack>
-      <Text fontSize="xs" color="gray.500" mb={3}>
+      <Text fontSize="xs" color="gray.600" mb={3}>
         {intl.formatMessage({ id: 'events.common.signOff.help' })}
       </Text>
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>

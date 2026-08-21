@@ -58,11 +58,19 @@ import type {
   ModuleDefinition,
   ModuleQuestion
 } from 'config/osp/types';
-import { useGetOSPModuleQuery, useGetOSPsQuery, useSaveOSPModuleMutation } from 'store/api/ospApi';
+import {
+  useGetOSPModuleQuery,
+  useGetOSPQuery,
+  useGetOSPsQuery,
+  useSaveOSPModuleMutation
+} from 'store/api/ospApi';
 import { useGetFarmDocumentsQuery, useUploadFarmDocumentMutation } from 'store/api/documentsApi';
 import type { RootState } from 'store/index';
+import type { OSP } from 'types/osp';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
+import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
+import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
 
 /** Apply exclusive-option semantics client-side (server refuses conflicts anyway). */
@@ -200,7 +208,8 @@ const QuestionField = ({
   onChange,
   companyId,
   farmId,
-  moduleKey
+  moduleKey,
+  osp
 }: {
   question: ModuleQuestion;
   value: AnswerValue;
@@ -211,6 +220,7 @@ const QuestionField = ({
   companyId: string;
   farmId: string;
   moduleKey: string;
+  osp?: OSP;
 }) => {
   const intl = useIntl();
   const label = pickText(question.label, locale);
@@ -220,7 +230,25 @@ const QuestionField = ({
   let control: React.ReactNode = null;
   switch (question.kind) {
     case 'info':
-      control = null;
+      // 🔴 2026-08-21 — this was `control = null`, which threw away `question.embed`.
+      // The backend has declared two embeds since the modules shipped: G8.0's § 11
+      // record-types registry and Materials Application's approved-inputs list. Both
+      // questions therefore rendered a heading and coaching reading "add materials in
+      // this panel" / "the panel above" with NOTHING beneath them, and the attestation
+      // directly below ("every input material I use is entered in this list") could
+      // still be answered Yes and the module marked complete — an attestation with no
+      // artefact behind it, which is the one thing a certifier packet must never carry.
+      // Found filling a real OSP: 19 of 19 modules complete, materials list empty.
+      control =
+        question.embed && osp ? (
+          <Box mt={2}>
+            {question.embed === 'approved_inputs' ? (
+              <OSPApprovedInputsPanel companyId={companyId} farmId={farmId} osp={osp} />
+            ) : question.embed === 's11_record_types' ? (
+              <OSPRecordTypesPanel companyId={companyId} farmId={farmId} osp={osp} />
+            ) : null}
+          </Box>
+        ) : null;
       break;
     case 'upload':
       control = (
@@ -356,7 +384,7 @@ const QuestionField = ({
       ) : null}
       {control}
       {missing ? (
-        <Text fontSize="xs" color="red.500" mt={1}>
+        <Text fontSize="xs" color="red.700" mt={1}>
           {intl.formatMessage({ id: 'osp.wizard.required' })}
         </Text>
       ) : null}
@@ -543,6 +571,12 @@ const OSPModuleWizard = () => {
   const workingOsp = selectWorkingOsp(osps);
   const ospId = workingOsp?.id;
   const ospIsDraft = workingOsp?.status === 'draft';
+  // The list endpoint returns summaries; the embedded panels (approved inputs, § 11 record
+  // types) read the full plan, so fetch it once the working plan is known.
+  const { data: fullOsp } = useGetOSPQuery(
+    { companyId, farmId: farmId || '', ospId: String(ospId) },
+    { skip: !ospId || !farmId }
+  );
   /**
    * Read-only mode, stated positively.
    *
@@ -920,6 +954,7 @@ const OSPModuleWizard = () => {
                                 companyId={companyId}
                                 farmId={farmId || ''}
                                 moduleKey={moduleKey || ''}
+                                osp={fullOsp}
                               />
                               {showSuggestion && (
                                 <Box
@@ -947,7 +982,6 @@ const OSPModuleWizard = () => {
                                         size="sm"
                                         variant="outline"
                                         mt={2}
-                                        minH="36px"
                                         onClick={() => setAnswer(question.key, suggestion.value)}>
                                         {intl.formatMessage({ id: 'osp.wizard.suggestion.use' })}
                                       </StandardButton>

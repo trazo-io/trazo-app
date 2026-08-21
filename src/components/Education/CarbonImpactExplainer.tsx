@@ -49,6 +49,7 @@ interface CarbonImpactExplainerProps {
 export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   totalCO2e,
   productName = 'this product',
+  backendComparisons,
   consumerContext
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -59,6 +60,18 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const accentColor = useColorModeValue('green.700', 'green.300');
+  // Hoisted out of the JSX. These five used to be called inside the
+  // isNegativeEmissions / hasPerKgData branches and inside <Collapse>, i.e. conditionally
+  // and in different counts per branch — a rules-of-hooks violation that only stayed quiet
+  // because the branch never flipped after mount. The early return added below would have
+  // made it flip.
+  const cardBorderColor = useColorModeValue('gray.200', 'gray.600');
+  const factCardBg = useColorModeValue('gray.50', 'gray.700');
+  const factCardBorder = useColorModeValue('gray.200', 'gray.600');
+  const lowEmissionsBg = useColorModeValue('green.50', 'green.900');
+  const lowEmissionsBorder = useColorModeValue('green.200', 'green.700');
+  const expandedBg = useColorModeValue('gray.50', 'gray.700');
+  const disclaimerBg = useColorModeValue('gray.100', 'gray.600');
 
   // Self-graded transparency score removed from the consumer surface (2026-06 claim-safety):
   // a self-assigned "% documented / Fully Documented" verdict shown to shoppers is the
@@ -68,6 +81,32 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   // photos, third-party certs, timeline). This card now shows carbon facts only.
   const isNegativeEmissions = totalCO2e < 0;
   const hasPerKgData = consumerContext?.has_per_kg_data && consumerContext.kg_per_kg > 0;
+
+  // Per-kg is the preferred consumer framing, but it needs a recorded harvest amount to
+  // divide by (`total_co2_kg_per_kg`, transparency_response_formatter.py). A season finished
+  // without one — or imported — yields has_per_kg_data:false while the season TOTAL is still
+  // a real, calculated number, and the card then rendered a title, an expander and nothing
+  // in between. Fall back to the total for the whole season.
+  const hasSeasonTotal = Number.isFinite(totalCO2e) && totalCO2e > 0;
+  const seasonTotal = Math.round(totalCO2e * 10) / 10;
+  const seasonMiles = backendComparisons?.driving_miles ?? 0;
+
+  // No per-kg figure, no season total, not a negative-emissions season: there is nothing
+  // measurable to report, so render nothing at all. An "Environmental Impact" heading over
+  // an empty body reads as a broken page, and it invites the shopper to read the silence as
+  // "zero emissions" — a claim these records do not make (FTC 16 CFR 260.6).
+  if (!isNegativeEmissions && !hasPerKgData && !hasSeasonTotal) {
+    return null;
+  }
+
+  // FTC 16 CFR 260.7: the calculation boundary accompanies the environmental claim, in the
+  // same block as the number. Defined once — both the per-kg card and the season-total
+  // fallback render this exact string.
+  const boundaryLine = intl.formatMessage({
+    id: 'app.carbonExplainer.scopeBoundary',
+    defaultMessage:
+      'Counts direct on-farm emissions only — fuel, fertilizer, and equipment use, based on EPA/USDA factors. Not a full life-cycle footprint: transport, packaging, and retail are not included.'
+  });
 
   // Emission categories for methodology section
   const emissionCategories = [
@@ -94,7 +133,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       bg={bgColor}
       borderRadius="xl"
       border="1px solid"
-      borderColor={useColorModeValue('gray.200', 'gray.600')}
+      borderColor={cardBorderColor}
       overflow="hidden">
       {/* Header — carbon-impact card title. No self-graded documentation score:
           consumers see facts (counts/photos/certs), not a self-assigned grade. */}
@@ -122,11 +161,11 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           {/* Carbon stored / negative emissions highlight */}
           {isNegativeEmissions ? (
             <Box
-              bg={useColorModeValue('green.50', 'green.900')}
+              bg={lowEmissionsBg}
               p={4}
               borderRadius="lg"
               border="1px solid"
-              borderColor={useColorModeValue('green.200', 'green.700')}>
+              borderColor={lowEmissionsBorder}>
               <HStack mb={2}>
                 <Icon as={FaRecycle} color="green.500" boxSize={5} />
                 <Text fontSize="md" fontWeight="bold" color="green.700">
@@ -143,11 +182,11 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
           ) : hasPerKgData ? (
             /* Per-kg impact card — the only relatable metric for consumers */
             <Box
-              bg={useColorModeValue('gray.50', 'gray.700')}
+              bg={factCardBg}
               p={4}
               borderRadius="lg"
               border="1px solid"
-              borderColor={useColorModeValue('gray.200', 'gray.600')}>
+              borderColor={factCardBorder}>
               <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
                 {intl.formatMessage({ id: 'app.carbonExplainer.yourImpact' })}
               </Text>
@@ -156,7 +195,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               </Text>
               <HStack spacing={2} align="baseline" mb={3}>
                 <Text fontSize="2xl" fontWeight="bold" color={textColor}>
-                  {consumerContext!.kg_per_kg}
+                  {intl.formatNumber(consumerContext!.kg_per_kg)}
                 </Text>
                 <Text fontSize="sm" color={mutedColor}>
                   {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsUnit' })}
@@ -189,18 +228,54 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                 )}
               </VStack>
 
-              {/* Methodology boundary — FTC Green Guides 260.7 requires the
-                  calculation boundary to accompany the environmental claim,
-                  in the same section, not behind the expander. */}
               <Text fontSize="xs" color={mutedColor} mt={3}>
-                {intl.formatMessage({
-                  id: 'app.carbonExplainer.scopeBoundary',
-                  defaultMessage:
-                    'Counts direct on-farm emissions only — fuel, fertilizer, and equipment use, based on EPA/USDA factors. Not a full life-cycle footprint: transport, packaging, and retail are not included.'
-                })}
+                {boundaryLine}
               </Text>
             </Box>
-          ) : null}
+          ) : (
+            /* Season-total fallback. The per-kg figure needs a recorded harvest weight to
+               divide by, so any season the payload reports no kg_per_kg for lands here —
+               legacy or imported seasons, mostly. Same shape, same boundary line, one honest
+               number: the season's total instead of the amount behind one kilogram. The early
+               return above guarantees this branch has a total worth showing. */
+            <Box
+              bg={factCardBg}
+              p={4}
+              borderRadius="lg"
+              border="1px solid"
+              borderColor={factCardBorder}>
+              <Text fontSize="sm" fontWeight="semibold" color={textColor} mb={2}>
+                {intl.formatMessage({ id: 'app.carbonExplainer.totalSeasonTitle' })}
+              </Text>
+              <Text fontSize="sm" color={mutedColor} mb={1}>
+                {intl.formatMessage({ id: 'app.carbonExplainer.totalNarrative' })}
+              </Text>
+              <HStack spacing={2} align="baseline" mb={3}>
+                <Text fontSize="2xl" fontWeight="bold" color={textColor}>
+                  {intl.formatNumber(seasonTotal)}
+                </Text>
+                <Text fontSize="sm" color={mutedColor}>
+                  {intl.formatMessage({ id: 'app.carbonExplainer.directEmissionsUnit' })}
+                </Text>
+              </HStack>
+
+              {seasonMiles > 0 && (
+                <HStack spacing={2}>
+                  <Icon as={FaCar} color="gray.500" boxSize={4} />
+                  <Text fontSize="sm" color={mutedColor}>
+                    {intl.formatMessage(
+                      { id: 'app.carbonExplainer.totalMiles' },
+                      { miles: seasonMiles }
+                    )}
+                  </Text>
+                </HStack>
+              )}
+
+              <Text fontSize="xs" color={mutedColor} mt={3}>
+                {boundaryLine}
+              </Text>
+            </Box>
+          )}
 
           {/* Expand Button */}
           <Button
@@ -219,7 +294,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       {/* Expanded: Methodology + Trust */}
       <Collapse in={isExpanded}>
         <Divider />
-        <Box p={4} bg={useColorModeValue('gray.50', 'gray.700')}>
+        <Box p={4} bg={expandedBg}>
           <VStack spacing={6} align="stretch">
             {/* How We Calculate */}
             <Box>
@@ -253,7 +328,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             <USDACredibilityBadge />
 
             {/* Methodology Scope Disclaimer (FTC compliance) */}
-            <Box p={3} bg={useColorModeValue('gray.100', 'gray.600')} borderRadius="md">
+            <Box p={3} bg={disclaimerBg} borderRadius="md">
               <Text fontSize="xs" color={mutedColor}>
                 {intl.formatMessage({ id: 'app.carbonExplainer.disclaimer' })}
               </Text>

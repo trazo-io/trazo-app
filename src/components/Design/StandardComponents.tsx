@@ -13,8 +13,20 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  InputRightElement,
   Textarea,
   Select,
+  NumberInput,
+  NumberInputProps,
+  MenuItem,
+  MenuDivider,
+  InputProps,
+  SelectProps,
+  TextareaProps,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
   Badge,
   Icon,
   useColorModeValue,
@@ -113,6 +125,7 @@ export const StandardPage = ({
   rightAction,
   contentMaxW
 }: StandardPageProps) => {
+  const intl = useIntl();
   const bgColor = useColorModeValue('surface.canvas', 'gray.900');
   const isMobile = useBreakpointValue({ base: true, md: false });
 
@@ -133,14 +146,13 @@ export const StandardPage = ({
           // button lands on that column instead of out at the window edge.
           px={{ base: 3, md: 4 }}>
           <Container maxW={contentMaxW || PAGE_MAX_W} mx="auto" px={0}>
-            <Button
+            <StandardButton
               variant="outline"
               leftIcon={<FaChevronLeft />}
               onClick={onBack}
-              size="sm"
-              minH="44px">
-              Back
-            </Button>
+              size="sm">
+              {intl.formatMessage({ id: 'common.back' })}
+            </StandardButton>
           </Container>
         </Box>
       )}
@@ -165,15 +177,14 @@ export const StandardPage = ({
                 // Mobile: Compact left-aligned header
                 <VStack spacing={3} w="full" align="flex-start">
                   {showBackButton && (
-                    <Button
+                    <StandardButton
                       variant="outline"
                       leftIcon={<FaChevronLeft />}
                       onClick={onBack}
                       size="sm"
-                      minH="44px"
                       mb={1}>
-                      Back
-                    </Button>
+                      {intl.formatMessage({ id: 'common.back' })}
+                    </StandardButton>
                   )}
 
                   {title && (
@@ -217,7 +228,7 @@ export const StandardPage = ({
                         onClick={onBack}
                         size="sm"
                         minH="44px">
-                        Back
+                        {intl.formatMessage({ id: 'common.back' })}
                       </Button>
                     </Box>
                   )}
@@ -374,8 +385,17 @@ export const StandardCard = ({
 
   return (
     <Card {...cardProps[variant]} mb={mb} mt={mt}>
+      {/*
+        `px={padding}` on the header is what makes a card's header and its body share one
+        content edge. MEASURED on the parcel profile: the card container carries 22px (locked
+        in trazo-dashboard-styles.css, a do-not-edit file), the body then added another 16px
+        via `px`, and the header added none — so a button in a header slot ended at x=1045
+        while a button in a body ended at x=1029, and a title sat 16px left of the content
+        beneath it. Five right-aligned buttons on one page finished at three different x
+        positions.
+      */}
       {(title || headerAction) && (
-        <CardHeader pb={title && subtitle ? 2 : 4}>
+        <CardHeader px={padding} pb={title && subtitle ? 2 : 4}>
           <Flex
             direction={{ base: 'column', md: 'row' }}
             justify="space-between"
@@ -483,14 +503,20 @@ export const StandardStepper = ({
                 transition="all 0.3s ease">
                 <Circle
                   size={circleSize}
+                  /*
+                   * green.700 / green.800, not green.500 / green.400. The circle carries a
+                   * WHITE step number or check, and white on green.500 is 2.78:1 — on
+                   * green.400 it is worse. The current step is the DARKER of the two so
+                   * "where am I" is not signalled by hue alone.
+                   */
                   bg={
                     completedSteps.includes(index) || index < currentStep
-                      ? 'green.500'
+                      ? 'green.700'
                       : index === currentStep
-                      ? 'green.400'
+                      ? 'green.800'
                       : 'gray.200'
                   }
-                  color={index <= currentStep ? 'white' : 'gray.500'}
+                  color={index <= currentStep ? 'white' : 'gray.600'}
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="bold"
                   boxShadow={index === currentStep ? 'lg' : 'md'}
@@ -514,7 +540,7 @@ export const StandardStepper = ({
                   <Text
                     fontSize={titleFontSize}
                     fontWeight="bold"
-                    color={index <= currentStep ? 'green.500' : 'gray.500'}
+                    color={index <= currentStep ? 'green.700' : 'gray.600'}
                     textAlign="center"
                     lineHeight="1.2"
                     whiteSpace="normal"
@@ -562,7 +588,7 @@ export const StandardStepper = ({
                   <Box
                     height="3px"
                     w="100%"
-                    bg={index < currentStep ? 'green.500' : 'gray.200'}
+                    bg={index < currentStep ? 'green.700' : 'gray.200'}
                     borderRadius="full"
                     transition="all 0.3s"
                   />
@@ -744,13 +770,20 @@ export const StandardSectionTabs = ({
             px={{ base: 3, md: 4 }}
             fontSize="sm"
             fontWeight={index === activeIndex ? 'semibold' : 'medium'}
-            color={index === activeIndex ? 'green.600' : 'gray.600'}
+            /*
+             * green.700, not green.600. A tab label is TEXT and owes 4.5 — green.600 is the
+             * palette's boundary green (4.12 on white, and MEASURED 3.77 on the page's own
+             * #F4F5F7 ground, where these tabs actually sit). green.700 clears it at 4.94.
+             */
+            color={index === activeIndex ? 'green.700' : 'gray.600'}
             borderBottom="2px solid"
-            borderColor={index === activeIndex ? 'green.500' : 'transparent'}
+            // The underline is the non-text indicator of which tab is active, so it owes 3.0.
+            // green.500 is 2.78 and fails even that; green.600 is the boundary green (4.12).
+            borderColor={index === activeIndex ? 'green.600' : 'transparent'}
             mb="-1px"
             borderRadius="0"
             transition="color 0.2s, border-color 0.2s"
-            _hover={{ color: 'green.600' }}
+            _hover={{ color: 'green.700' }}
             _focusVisible={{ boxShadow: focusRing, borderRadius: 'md' }}>
             <HStack spacing={2}>
               {tab.icon ? <Icon as={tab.icon} boxSize="14px" flexShrink={0} aria-hidden /> : null}
@@ -764,7 +797,7 @@ export const StandardSectionTabs = ({
               {tab.status === 'complete' && (
                 <Icon
                   as={FaCheckCircle}
-                  color="green.500"
+                  color="green.700"
                   boxSize="14px"
                   flexShrink={0}
                   aria-hidden
@@ -925,7 +958,7 @@ export const StandardForm = ({
           <HStack spacing={3} justify="flex-end">
             {showCancel && (
               <Button variant="outline" onClick={onCancel} isDisabled={isLoading}>
-                Cancel
+                {intl.formatMessage({ id: 'app.cancel' })}
               </Button>
             )}
             <Button
@@ -966,17 +999,37 @@ export const StandardField = ({
 }: StandardFieldProps) => {
   return (
     <FormControl isRequired={required} isInvalid={!!error}>
-      <FormLabel fontWeight="semibold" color="gray.700" fontSize="sm" mb={2}>
+      <FormLabel
+        fontWeight="semibold"
+        color="gray.700"
+        fontSize="sm"
+        mb={2}
+        /*
+         * Chakra's stock required indicator is `red.500` = 3.68:1 — the asterisk is the only
+         * thing marking a field mandatory, so it is content and owes 4.5. red.700 is 4.98.
+         * (No FormLabel entry exists in theme.ts, so Chakra's default is what ships.)
+         */
+        requiredIndicator={
+          <Text as="span" color="red.700" ml={1} aria-hidden="true">
+            *
+          </Text>
+        }>
         {label}
       </FormLabel>
       {children}
       {helpText && !error && (
-        <Text fontSize="xs" color="gray.500" mt={1}>
+        /*
+         * gray.600, not gray.500. MEASURED: gray.500 is 4.61 on white — fine — but 4.41 on
+         * gray.50 and 4.48 on green.50, so every helper line inside a tinted block was under
+         * the floor (26 of them across the activity tabs). gray.600 clears all three grounds
+         * (6.19 / 5.93 / 6.02) and stays visibly secondary to the gray.700 label.
+         */
+        <Text fontSize="xs" color="gray.600" mt={1}>
           {helpText}
         </Text>
       )}
       {error && (
-        <Text fontSize="xs" color="red.500" mt={1}>
+        <Text fontSize="xs" color="red.700" mt={1}>
           {error}
         </Text>
       )}
@@ -985,16 +1038,77 @@ export const StandardField = ({
 };
 
 // Standard Input Components
-export const StandardInput = React.forwardRef<HTMLInputElement, any>(
-  ({ type, inputMode, leftElement, ...props }, ref) => {
+/**
+ * The one form-control treatment, shared by every input, select and textarea in the app.
+ *
+ * MEASURED 2026-08-20 against the sign-in form, which had hand-rolled these values on a
+ * `Box as="input"` (23 controls across views/Authentication) and so never touched this file.
+ * That outlier was the better design and is now the standard: 44px tall, 14px text, 12px
+ * radius, filled. The old values here were 48px / **18px** / 8px — 18px input text in a
+ * 20-field certifier record, which is what made the event form read as a different product.
+ *
+ * ⚠️ `_focus` alone is not enough. The theme registers no Input config (theme.ts composes
+ * button/badge/alert/link/drawer/progress/checkbox only), so Chakra's stock input theme is
+ * live and ships `_focusVisible: { borderColor: blue.500 }`. Both pseudo-selectors must be
+ * set here or a keyboard focus paints BLUE.
+ *
+ * ⚠️ Focus border is `green.600` (4.12:1), not `green.500` (2.78:1) — the border swap is the
+ * actual focus indicator and a non-text boundary owes 3.0. The halo around it is the
+ * `field-focus` shadow token; see the comment on it in theme/styles.js for why a form control
+ * may use a soft ring where a button may not.
+ */
+const CONTROL_FIELD_FOCUS = {
+  borderColor: 'green.600',
+  bg: 'white',
+  boxShadow: 'field-focus'
+} as const;
+
+const CONTROL_FIELD_SX = {
+  h: '44px',
+  fontSize: 'sm',
+  borderRadius: 'xl',
+  borderColor: 'gray.200',
+  bg: 'gray.50',
+  _hover: { borderColor: 'gray.300' },
+  _focus: CONTROL_FIELD_FOCUS,
+  _focusVisible: CONTROL_FIELD_FOCUS
+} as const;
+
+/**
+ * Wire a react-hook-form `register()` result to focus-tracking state without losing RHF's own
+ * `onBlur`.
+ *
+ * Every auth screen wrote `{...register('email', …)} onFocus={…} onBlur={() => setFocused(null)}`,
+ * and because the bare handler comes AFTER the spread it replaced RHF's `onBlur` outright — so
+ * the field was never marked touched and `mode: 'onBlur' | 'onTouched'` validation silently did
+ * nothing. Passing the registration through here keeps both.
+ */
+export const registerWithFocus = (
+  field: { name: string; onBlur: (e: any) => void; [k: string]: any },
+  setFocused: (name: string | null) => void
+) => ({
+  ...field,
+  onFocus: () => setFocused(field.name),
+  onBlur: (e: any) => {
+    field.onBlur(e);
+    setFocused(null);
+  }
+});
+
+type StandardInputProps = InputProps & {
+  /** Adornment rendered inside the field's leading gutter. Decorative — not clickable. */
+  leftElement?: ReactNode;
+  /** Adornment inside the trailing gutter; stays clickable (password toggles live here). */
+  rightElement?: ReactNode;
+};
+
+export const StandardInput = React.forwardRef<HTMLInputElement, StandardInputProps>(
+  ({ type, inputMode, leftElement, rightElement, ...props }, ref) => {
     const input = (
       <Input
         ref={ref}
-        borderRadius="lg"
-        borderColor="gray.200"
-        _hover={{ borderColor: 'green.400' }}
-        _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-700)' }}
-        size="lg"
+        {...CONTROL_FIELD_SX}
+        size="md"
         type={type}
         // D11 — every numeric field in the event forms is a measurement a farmer types on a phone
         // in the field: 6.8 pH, 44.5 acres, 0.8 ppm. `type="number"` alone does not guarantee the
@@ -1009,14 +1123,22 @@ export const StandardInput = React.forwardRef<HTMLInputElement, any>(
     // `leftElement` was previously spread onto <Input>, so callers that passed an
     // adornment icon got no icon and a "React does not recognize the leftElement
     // prop" warning. Render it as a real InputLeftElement instead.
-    if (!leftElement) return input;
+    //
+    // `rightElement` exists because the password fields need a show/hide toggle, and without
+    // it every auth screen hand-rolled its own InputGroup — which is how those 23 controls
+    // drifted off the design system in the first place. Unlike the left adornment it must
+    // stay clickable, so it gets no `pointerEvents="none"`.
+    if (!leftElement && !rightElement) return input;
 
     return (
-      <InputGroup size="lg">
-        <InputLeftElement pointerEvents="none" h="full">
-          {leftElement}
-        </InputLeftElement>
+      <InputGroup size="md">
+        {leftElement && (
+          <InputLeftElement pointerEvents="none" h="full">
+            {leftElement}
+          </InputLeftElement>
+        )}
         {input}
+        {rightElement && <InputRightElement h="full">{rightElement}</InputRightElement>}
       </InputGroup>
     );
   }
@@ -1040,10 +1162,6 @@ StandardInput.displayName = 'StandardInput';
  */
 export const StandardSearchInput = React.forwardRef<HTMLInputElement, any>(
   ({ rightHint, maxW, minW, w, width, flex, ...props }, ref) => {
-    const bg = useColorModeValue('white', 'gray.700');
-    const borderColor = useColorModeValue('gray.200', 'gray.600');
-    const hoverBorderColor = useColorModeValue('green.300', 'green.400');
-
     return (
       <InputGroup maxW={maxW} minW={minW} w={w ?? width} flex={flex}>
         <InputLeftElement pointerEvents="none" h="44px" w="44px">
@@ -1055,19 +1173,16 @@ export const StandardSearchInput = React.forwardRef<HTMLInputElement, any>(
           // accessible name falls back to the placeholder, which assistive tech is not
           // required to expose. Callers can still override it.
           aria-label={props['aria-label'] ?? props.placeholder}
-          bg={bg}
-          borderColor={borderColor}
-          _hover={{
-            borderColor: hoverBorderColor,
-            boxShadow: '0 0 0 1px var(--chakra-colors-green-300)'
-          }}
-          _focus={{
-            borderColor: 'green.500',
-            boxShadow: '0 0 0 2px rgba(72, 187, 120, 0.2)'
-          }}
-          h="44px"
-          fontSize="sm"
-          borderRadius="xl"
+          /*
+           * Height / font / radius / fill / hover / focus all come from StandardInput. They
+           * used to be repeated here and had drifted: the focus border was `green.500`
+           * (2.78:1, under the 3.0 a focus indicator owes) and the ring was
+           * `rgba(72,187,120,0.2)` — CHAKRA's green.400, not a token of ours.
+           *
+           * `pl` stays hand-set: InputGroup only auto-pads a child whose `type.id` is
+           * "Input", and this child is StandardInput, so the magnifier gutter is ours to
+           * reserve.
+           */
           pl="44px"
           pr={rightHint ? '64px' : 4}
           w="full"
@@ -1095,28 +1210,75 @@ export const StandardSearchInput = React.forwardRef<HTMLInputElement, any>(
 );
 StandardSearchInput.displayName = 'StandardSearchInput';
 
-export const StandardTextarea = React.forwardRef<HTMLTextAreaElement, any>((props, ref) => (
-  <Textarea
-    ref={ref}
-    borderRadius="lg"
-    borderColor="gray.200"
-    _hover={{ borderColor: 'green.400' }}
-    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-700)' }}
-    minH="120px"
-    resize="vertical"
-    {...props}
-  />
-));
+export const StandardTextarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  (props, ref) => (
+    <Textarea
+      ref={ref}
+      {...CONTROL_FIELD_SX}
+      // A textarea is the one control that must NOT take the shared 44px height — it grows.
+      // It also has no `size` of its own here, which is why it used to render at Chakra's
+      // default 16px next to 18px inputs.
+      h="auto"
+      minH="120px"
+      resize="vertical"
+      {...props}
+    />
+  )
+);
 StandardTextarea.displayName = 'StandardTextarea';
 
-export const StandardSelect = React.forwardRef<HTMLSelectElement, any>((props, ref) => (
+/**
+ * Numeric field — the same control surface as StandardInput, with NumberInput's clamping,
+ * precision and stepper behaviour kept intact.
+ *
+ * Chakra registers `NumberInput` as its own theme component; it does NOT inherit whatever an
+ * `Input` theme entry says. That is why these fields were the last ones on the activity form
+ * still rendering white / 6px / **Chakra's stock blue focus ring**, sitting directly beside
+ * selects that had already been converted.
+ *
+ * `hideStepper` is for decimal measurement fields (0.01 acres, Brix) where the spinner is a
+ * misclick hazard rather than a convenience — the field keeps its numeric semantics either way.
+ */
+type StandardNumberInputProps = Omit<NumberInputProps, 'children'> & {
+  placeholder?: string;
+  /** Drop the spinner where 0.01 steps are a misclick hazard, not a convenience. */
+  hideStepper?: boolean;
+  /** Escape hatch onto the inner NumberInputField (e.g. an `id` for a label to point at). */
+  fieldProps?: Record<string, unknown>;
+};
+
+export const StandardNumberInput = React.forwardRef<HTMLInputElement, StandardNumberInputProps>(
+  ({ placeholder, hideStepper, fieldProps, ...props }, ref) => (
+    <NumberInput w="full" {...props}>
+      <NumberInputField
+        ref={ref}
+        placeholder={placeholder}
+        {...CONTROL_FIELD_SX}
+        // Chakra reserves the stepper gutter through its `size`, which our explicit height
+        // overrides — so with the stepper shown the padding has to be stated here or a long
+        // value runs underneath the arrows.
+        pr={hideStepper ? 4 : 8}
+        {...fieldProps}
+      />
+      {!hideStepper && (
+        <NumberInputStepper>
+          <NumberIncrementStepper />
+          <NumberDecrementStepper />
+        </NumberInputStepper>
+      )}
+    </NumberInput>
+  )
+);
+StandardNumberInput.displayName = 'StandardNumberInput';
+
+export const StandardSelect = React.forwardRef<HTMLSelectElement, SelectProps>((props, ref) => (
   <Select
     ref={ref}
-    borderRadius="lg"
-    borderColor="gray.200"
-    _hover={{ borderColor: 'green.400' }}
-    _focus={{ borderColor: 'green.500', boxShadow: '0 0 0 1px var(--chakra-colors-green-700)' }}
-    size="lg"
+    {...CONTROL_FIELD_SX}
+    // Chakra's select theme hardcodes its own field background (`$bg -> colors.white`), so a
+    // select does not inherit the filled treatment the way an input does — `bg` above is what
+    // keeps it in line, and dropping it silently returns this one control to white.
+    size="md"
     {...props}
   />
 ));
@@ -1210,10 +1372,19 @@ export const StandardButton = React.forwardRef<HTMLButtonElement, StandardButton
         isDisabled={disabled || isDisabled}
         w={w}
         width={width}
-        borderRadius="lg"
+        /*
+         * NO `borderRadius` here on purpose. This used to force `lg` (8px), which overrode the
+         * theme's own Button baseStyle (`theme/components/button.js` — 12px). The result was a
+         * design-system button that disagreed with the design system: a raw Chakra <Button>
+         * rendered 12px, a StandardButton 8px, and after the form-control unification every
+         * input was 12px too — so the only 8px corners in the app were the ones this component
+         * produced. Let the theme own it.
+         */
         fontWeight="semibold"
         minH="44px"
-        _focus={{ boxShadow: '0 0 0 3px rgba(46, 125, 50, 0.15)' }}
+        // The same halo the form controls use; `rgba(46,125,50,0.15)` was written out here as a
+        // literal, which is exactly how it drifts from the one the fields use.
+        _focus={{ boxShadow: 'field-focus' }}
         // NO `_hover` here. A style prop REPLACES the theme variant's `_hover` object rather
         // than merging into it, so this one used to delete the variant's hover BACKGROUND —
         // the emitted rule was `{ box-shadow; transform }` with no colour, and every primary
@@ -1455,21 +1626,72 @@ export const StandardSection = ({ title, description, action, children }: Standa
 // Sprint 2 Epic 2.3: Section Header Component for Form Tabs
 // Provides consistent header styling across all event form tabs
 
+/**
+ * A section-heading icon is decoration for the title beside it, so it gets ONE colour.
+ * Nine headings on the chemical activity form carried six different hues — green.500,
+ * green.600, orange.600, orange.500, blue.600, teal.500 — and four of them measured 2.78:1,
+ * under the 3.0 a glyph owes. `green.700` is the palette's text-weight green (5.13:1).
+ */
+const SECTION_ICON_COLOR = 'green.700';
+
 interface SectionHeaderProps {
   icon: IconType;
+  /** Escape hatch; leave unset. Passing a hue here is what produced the six-colour spread. */
   iconColor?: string;
   title: string;
   badge?: string;
-  badgeColorScheme?: string;
+  badgeTone?: SectionBadgeTone;
   description?: string;
 }
 
+/**
+ * The section badge has exactly one appearance, and callers cannot change it.
+ *
+ * It used to take a `badgeColorScheme`, and the same badge — one i18n string,
+ * `events.section.badge.certifierRecord` — shipped in FIVE colours on one activity form
+ * (green, orange, red, teal, and gray from CollapsibleSection's default). Callers read the
+ * prop as decoration; a farmer reads two colours as two meanings.
+ *
+ * ⚠️ `textTransform="none"` is load-bearing. The theme's `brand` badge variant applies
+ * `capitalize` on the green palette only (theme/components/badge.js), which is why the green
+ * pills rendered "Certifier Record" and the tinted ones "Certifier record" from the SAME
+ * string. Worse, `capitalize` hits every word, so es-419's "Registro para el certificador"
+ * came out title-cased — which is not correct Spanish. Render the string as authored.
+ */
+export type SectionBadgeTone = 'certifier' | 'optional';
+
+const SectionBadge = ({
+  tone = 'certifier',
+  children,
+  ...props
+}: {
+  tone?: SectionBadgeTone;
+  children: ReactNode;
+  [k: string]: any;
+}) =>
+  /*
+   * TWO tones, because two things were being said and seven colours were being used to say
+   * them. "Certifier record" (4 different i18n keys, all emitting that same string) marks a
+   * section an inspector will read; "Optional — carbon only" marks one they will not. Flatten
+   * those to a single colour and an optional section starts wearing the required mark.
+   * Everything past that distinction was decoration.
+   */
+  tone === 'optional' ? (
+    <Badge variant="neutral" fontSize="xs" flexShrink={0} {...props}>
+      {children}
+    </Badge>
+  ) : (
+    <Badge colorScheme="green" textTransform="none" fontSize="xs" flexShrink={0} {...props}>
+      {children}
+    </Badge>
+  );
+
 export const SectionHeader = ({
   icon,
-  iconColor = 'green.500',
+  iconColor,
   title,
   badge,
-  badgeColorScheme = 'green',
+  badgeTone,
   description
 }: SectionHeaderProps) => (
   <Box mb={4}>
@@ -1479,29 +1701,21 @@ export const SectionHeader = ({
       align={{ base: 'flex-start', smd: 'center' }}
       gap={2}
       mb={description ? 2 : 0}>
-      {badge && (
-        <Badge
-          colorScheme={badgeColorScheme}
-          fontSize="xs"
-          flexShrink={0}
-          display={{ base: 'inline-flex', smd: 'none' }}>
-          {badge}
-        </Badge>
-      )}
       <HStack spacing={2}>
-        <Icon as={icon} color={iconColor} boxSize={5} flexShrink={0} />
+        <Icon as={icon} color={iconColor ?? SECTION_ICON_COLOR} boxSize={5} flexShrink={0} />
         <Text fontSize="md" fontWeight="bold" color="gray.700">
           {title}
         </Text>
       </HStack>
+      {/*
+       * One badge node, moved by `order` — not two nodes toggled by `display`. The old markup
+       * rendered the badge twice (mobile copy + desktop copy), so every section shipped a
+       * hidden duplicate and any edit had to be made in both places or they drifted.
+       */}
       {badge && (
-        <Badge
-          colorScheme={badgeColorScheme}
-          fontSize="xs"
-          flexShrink={0}
-          display={{ base: 'none', smd: 'inline-flex' }}>
+        <SectionBadge tone={badgeTone} order={{ base: -1, smd: 1 }}>
           {badge}
-        </Badge>
+        </SectionBadge>
       )}
     </Flex>
     {description && (
@@ -1512,26 +1726,33 @@ export const SectionHeader = ({
   </Box>
 );
 
-// Section Box Component - wrapper with border styling for form sections
+/**
+ * One section card, one appearance. There is no `variant` and no tint.
+ *
+ * `variant="highlighted"` painted the card `green.50` / `green.200`, and it was applied by no
+ * stated rule — on one activity form "Application Rate & Coverage" and the CA DPR permit were
+ * tinted while the equally-mandatory "Chemical Application Details" and "Environmental
+ * Context" were white, giving three backgrounds among sibling cards in a single scroll.
+ *
+ * The tint was also not free: `gray.500` helper text measures 4.61:1 on white but **4.48 on
+ * green.50 and 4.41 on gray.50** — so tinting a card quietly pushed 14 of its own helper lines
+ * under the 4.5 floor. A background that fails the text sitting on it is not an emphasis tool.
+ */
 interface SectionBoxProps {
   children: ReactNode;
-  variant?: 'default' | 'highlighted';
   borderColor?: string;
   bg?: string;
 }
 
-export const SectionBox = ({ children, variant = 'default', borderColor, bg }: SectionBoxProps) => {
-  const defaultBorderColor = variant === 'highlighted' ? 'green.200' : 'gray.200';
-  const defaultBg = variant === 'highlighted' ? 'green.50' : 'white';
-
+export const SectionBox = ({ children, borderColor, bg }: SectionBoxProps) => {
   return (
     <Box
       mb={6}
       p={{ base: 3, md: 4 }}
       border="1px"
-      borderColor={borderColor || defaultBorderColor}
+      borderColor={borderColor || 'gray.200'}
       borderRadius="lg"
-      bg={bg || defaultBg}>
+      bg={bg || 'white'}>
       {children}
     </Box>
   );
@@ -1545,27 +1766,30 @@ interface CollapsibleSectionProps {
   icon?: IconType;
   iconColor?: string;
   badge?: string;
-  badgeColorScheme?: string;
+  badgeTone?: SectionBadgeTone;
   description?: string;
   children: ReactNode;
   defaultIsOpen?: boolean;
-  variant?: 'default' | 'highlighted';
 }
 
+/**
+ * ⚠️ Body text here is `gray.600`, not `gray.500`. This section's header sits on `gray.50`,
+ * where gray.500 measures 4.41:1 — under the floor. Same reason as StandardField's helper text.
+ */
 export const CollapsibleSection = ({
   title,
   icon,
-  iconColor = 'gray.500',
+  iconColor,
   badge,
-  badgeColorScheme = 'gray',
+  badgeTone,
   description,
   children,
-  defaultIsOpen = false,
-  variant = 'default'
+  defaultIsOpen = false
 }: CollapsibleSectionProps) => {
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen });
-  const borderColor = variant === 'highlighted' ? 'green.200' : 'gray.200';
-  const bgColor = variant === 'highlighted' ? 'green.50' : 'white';
+  // No tint and no variant — see the note on SectionBox.
+  const borderColor = 'gray.200';
+  const bgColor = 'white';
   const headerBg = useColorModeValue('gray.50', 'gray.700');
 
   return (
@@ -1587,34 +1811,30 @@ export const CollapsibleSection = ({
         borderBottom={isOpen ? '1px' : '0'}
         borderColor={borderColor}
         cursor="pointer"
-        _hover={{ bg: variant === 'highlighted' ? 'green.100' : 'gray.100' }}
+        _hover={{ bg: 'gray.100' }}
         transition="all 0.2s">
         <Flex justify="space-between" align="center">
           <HStack spacing={2}>
-            {icon && <Icon as={icon} color={iconColor} boxSize={5} />}
+            {icon && <Icon as={icon} color={iconColor ?? SECTION_ICON_COLOR} boxSize={5} />}
             <Text fontSize="md" fontWeight="bold" color="gray.700">
               {title}
             </Text>
-            {badge && (
-              <Badge colorScheme={badgeColorScheme} fontSize="xs">
-                {badge}
-              </Badge>
-            )}
+            {badge && <SectionBadge tone={badgeTone}>{badge}</SectionBadge>}
           </HStack>
           <HStack spacing={2}>
-            <Text fontSize="sm" color="gray.500">
+            <Text fontSize="sm" color="gray.600">
               {isOpen ? 'Hide' : 'Show'}
             </Text>
             <Icon
               as={isOpen ? FaChevronUp : FaChevronDown}
-              color="gray.500"
+              color="gray.600"
               boxSize={4}
               transition="transform 0.2s"
             />
           </HStack>
         </Flex>
         {description && !isOpen && (
-          <Text fontSize="sm" color="gray.500" mt={2} textAlign="left">
+          <Text fontSize="sm" color="gray.600" mt={2} textAlign="left">
             {description}
           </Text>
         )}
@@ -2401,3 +2621,50 @@ export const StandardPagination = ({
     </Flex>
   );
 };
+
+/**
+ * Menu primitives — ONE menu language.
+ *
+ * The app had three. The sort/filter menus render an uppercase eyebrow, a divider, and items
+ * that go green.700/600-weight when selected. The activity kebab ran its labels through
+ * `.toUpperCase()` **in JavaScript** — uppercasing the translated string in code rather than
+ * in CSS — and painted Delete `red.500` (3.68:1, under the 4.5 a 14px label owes). A third
+ * kebab used sentence case with a leading icon on every row.
+ *
+ * These encode the sort/filter pattern, because it is the one that already reads best, and
+ * add the two rules the others were missing: a label renders as authored, and a destructive
+ * item is `red.700` (4.98:1).
+ */
+export const StandardMenuHeader = ({ children }: { children: ReactNode }) => (
+  <>
+    <Text px={3} py={1} fontSize="xs" fontWeight="600" color="gray.500" textTransform="uppercase">
+      {children}
+    </Text>
+    <MenuDivider />
+  </>
+);
+
+export const StandardMenuItem = ({
+  icon,
+  isSelected = false,
+  isDestructive = false,
+  children,
+  ...props
+}: {
+  icon?: ReactNode;
+  isSelected?: boolean;
+  isDestructive?: boolean;
+  children: ReactNode;
+  [k: string]: any;
+}) => (
+  <MenuItem
+    fontSize="sm"
+    py={2}
+    icon={icon as any}
+    // Selection is weight AND colour, never colour alone.
+    fontWeight={isSelected ? '600' : '400'}
+    color={isDestructive ? 'red.700' : isSelected ? 'green.700' : 'gray.700'}
+    {...props}>
+    {children}
+  </MenuItem>
+);

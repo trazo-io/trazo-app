@@ -184,6 +184,14 @@ interface UltraMobileProductionJourneyProps {
    *   reach a buyer is the "Copy buyer link" action on ProfileProduction.
    */
   audience: 'consumer' | 'producer';
+  /**
+   * Producer-only: open the correction sheet for one event. Called with the event's REAL
+   * database id and family code, which the payload carries as `record_id` / `event_type` for
+   * the owner only (PublicHistorySerializer._CERTIFIER_ONLY_EVENT_FIELDS).
+   *
+   * Absent on the consumer page, so no per-event tooling renders there.
+   */
+  onCorrectEvent?: (recordId: number, eventType: number) => void;
   productionId?: string;
   transparencyScore?: number;
   /** Production-level blockchain verification data */
@@ -211,6 +219,7 @@ interface UltraMobileProductionJourneyProps {
 export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourneyProps> = ({
   events,
   audience,
+  onCorrectEvent,
   productionId,
   // transparencyScore prop retained in the interface (parent still passes it)
   // but no longer rendered — the numeric score left the stats strip 2026-06.
@@ -650,6 +659,31 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   // Buyer-facing surfaces exist for a visitor of the PUBLIC record, not for the
   // farm looking at its own production.
   const isConsumerAudience = audience === 'consumer';
+
+  // One builder for all three ConsumerEventCard call sites in this file, so a card cannot
+  // acquire the affordance on one path and miss it on another. Returns undefined unless the
+  // caller wired a handler AND the payload gave us a real id to act on — an event the owner
+  // cannot address gets no button rather than a broken one.
+  const buildProducerAction = (event: any) => {
+    const recordId = event?.record_id;
+    const eventType = event?.event_type;
+    if (!onCorrectEvent || !recordId || eventType === undefined || eventType === null) {
+      return undefined;
+    }
+    return (
+      <Button
+        size="xs"
+        variant="link"
+        colorScheme="gray"
+        fontWeight="normal"
+        onClick={(e) => {
+          e.stopPropagation();
+          onCorrectEvent(Number(recordId), Number(eventType));
+        }}>
+        {intl.formatMessage({ id: 'producer.event.correct' })}
+      </Button>
+    );
+  };
 
   // Production public UUID for the buyer-docs CTA: prefer the prop, fall back
   // to the route param (the parent consumer page doesn't pass the prop).
@@ -1503,6 +1537,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                               suppressShortDescription={repeatShort.has(String(event.id))}
                               isExpanded={expandedEventId === event.id}
                               onToggleExpand={() => toggleEventExpand(event.id)}
+                              producerAction={buildProducerAction(event)}
                               productionBlockchain={productionBlockchain}
                             />
                           );
@@ -1793,6 +1828,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                   suppressShortDescription={repeatShort.has(String(event.id))}
                                   isExpanded={expandedEventId === event.id}
                                   onToggleExpand={() => toggleEventExpand(event.id)}
+                                  producerAction={buildProducerAction(event)}
                                   productionBlockchain={productionBlockchain}
                                 />
                               );
@@ -1815,6 +1851,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       suppressShortDescription={repeatShort.has(String(event.id))}
                       isExpanded={expandedEventId === event.id}
                       onToggleExpand={() => toggleEventExpand(event.id)}
+                      producerAction={buildProducerAction(event)}
                       productionBlockchain={productionBlockchain}
                     />
                   );

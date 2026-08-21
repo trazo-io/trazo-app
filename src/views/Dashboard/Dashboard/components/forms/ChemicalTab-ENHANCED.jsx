@@ -14,7 +14,6 @@ import {
   InputRightAddon,
   Switch,
   SimpleGrid,
-  Input,
   Divider,
   Wrap,
   WrapItem,
@@ -55,15 +54,16 @@ import {
 } from 'react-icons/fa';
 import { FormProvider, useForm, Controller, useFieldArray } from 'react-hook-form';
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
 import InputVerifyHelper from 'components/Compliance/InputVerifyHelper';
 import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
-import { APPLICATION_PURPOSES } from 'config/events/enums';
+import { APPLICATION_PURPOSES, retiredOrganicApprovedLabelKey } from 'config/events/enums';
 // Event Field Registry (Phase 5G — form integration)
 import { useFormFields } from 'src/hooks/useFormFields';
-import { useFarmState } from 'hooks/useMeasurementSystem';
+import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
 
 import { BlockIdField } from 'components/Fields/BlockIdField';
@@ -251,7 +251,9 @@ const formSchemaMainInfo = object({
     ctx.addIssue({
       code: 'custom',
       path: ['concentration'],
-      message: 'Concentration/application rate is required'
+      message:
+        'Product concentration is required — the strength on the label (e.g. "1.34%" or ' +
+        '"10-10-10"). The application RATE goes in Volume Applied and Area Treated below.'
     });
   } else if (data.type) {
     try {
@@ -263,7 +265,10 @@ const formSchemaMainInfo = object({
         ctx.addIssue({
           code: 'custom',
           path: ['concentration'],
-          message: 'Invalid concentration format for selected chemical type'
+          message:
+            'That looks like an application rate, not a concentration. Enter the product ' +
+            'strength from the label (e.g. "1.34%", or "10-10-10" for a fertilizer) and put ' +
+            'the rate in Volume Applied and Area Treated below.'
         });
       }
     } catch (e) {
@@ -309,7 +314,18 @@ const formSchemaMainInfo = object({
 });
 
 const ChemicalTab = forwardRef(
-  ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }, ref) => {
+  (
+    {
+      onSubmitHandler,
+      onDataChange,
+      onPrev,
+      initialValues = {},
+      hideActions = false,
+      carbonCalculation = null,
+      isCalculatingCarbon = false
+    },
+    ref
+  ) => {
     const intl = useIntl();
     const [hasInitialized, setHasInitialized] = useState(false);
 
@@ -460,6 +476,27 @@ const ChemicalTab = forwardRef(
     // Gates the CA Pesticide Use Report block below. null (unknown state) hides it,
     // which is correct: the PUR only applies to California operations.
     const farmState = useFarmState(farmId);
+
+    // 🔴 2026-08-19 — the verification basis was optional for every farm, and a blank one
+    // reaches the certifier packet as an amber "the transition date cannot be confirmed
+    // until they are classified" (§ 205.202(b)) that the grower never saw coming. For a farm
+    // that declares itself organic the basis is not optional under § 205.201(a)(2): the OSP
+    // must document that each substance is allowed, which is exactly what CCOF's Input
+    // Material Application Record asks for. So it is required here, where the grower has the
+    // label in hand — not discovered on the packet months later.
+    //
+    // Conventional / regenerative operations are untouched: the question does not apply to
+    // them and blocking their save would be the same mistake in the other direction.
+    // An ALLOW-LIST of affirmative organic methods, not a substring match with exceptions.
+    // `includes('organic')` plus a `^non[-\s]?organic` escape hatch is denylist thinking: it
+    // reads "not organic" as organic and would block a CONVENTIONAL grower from saving at all.
+    // `farming_method` is a choice-less CharField, so unknown values must fail SAFE — a
+    // missing basis raises a REVIEW on the packet that names the record, which is recoverable;
+    // a false requirement is a farmer who cannot log their spray.
+    const ORGANIC_FARMING_METHODS = ['organic', 'certified organic'];
+    const farm = useFarm(farmId);
+    const farmingMethod = (farm?.farming_method || '').trim().toLowerCase();
+    const requiresOrganicBasis = ORGANIC_FARMING_METHODS.includes(farmingMethod);
 
     // Mirrors ORGANIC_APPROVED_OK_VALUES in common/field_registry.py — the backend list is
     // the source of truth; this copy only drives local UI affordances.
@@ -957,6 +994,17 @@ const ChemicalTab = forwardRef(
     }, [watchedFieldsSerialized]); // Use serialized values: only fires when actual field values change, not on every render
 
     const onSubmit = (data) => {
+      // § 205.201(a)(2): an organic operation's OSP must document that each substance used
+      // is allowed. Enforced here rather than in the zod schema because the schema is a
+      // module-level constant with no access to which farm this event belongs to.
+      if (requiresOrganicBasis && chemicalType && !data.organic_approved) {
+        methods.setError('organic_approved', {
+          type: 'manual',
+          message: intl.formatMessage({ id: 'events.chemical.organicBasis.required' })
+        });
+        return;
+      }
+
       // Process numeric data and map frontend field names to backend field names
       const {
         // Remove frontend-only field names to avoid confusion
@@ -1029,6 +1077,12 @@ const ChemicalTab = forwardRef(
         volume_applied: effectiveVolume || '',
         area_treated: effectiveArea || '',
         way_of_application: application_method || '',
+        // Keep the form's own key too. The wizard's step-3 required-field check reads
+        // `application_method`; with only the renamed key present it passed or failed
+        // depending on whether a late onDataChange flush raced in after this submit —
+        // "Please fill in all required fields: Application Method" on a filled form
+        // (2026-08-21, Serenade and Grandevo on the Calapooia Bend rehearsal).
+        application_method: application_method || '',
         // EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309
         // These are direct model fields on ChemicalEvent, not extra_data
         applicator_name: applicator_name || null,
@@ -1245,16 +1299,14 @@ const ChemicalTab = forwardRef(
                 formConformance.test.ts, not by a runtime flag. */}
             <>
               {/* Section 1: Chemical Selection & Identification */}
-              <SectionBox variant="default">
+              <SectionBox>
                 {/* The "EPA/USDA-Sourced" badge is gone: the callout above already states it,
                     and purple carries no meaning in this system (see .claude/rules/frontend.md —
                     status colour is meaning, never decoration). Icon moved to the brand green. */}
                 <SectionHeader
                   icon={FaFlask}
-                  iconColor="green.500"
                   title="Chemical Application Details"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                  badgeColorScheme="green"
                 />
                 <VStack spacing={4} align="stretch">
                   <StandardField
@@ -1357,6 +1409,8 @@ const ChemicalTab = forwardRef(
                   {chemicalType && (
                     <StandardField
                       label="How is this input verified for organic use?"
+                      required={requiresOrganicBasis}
+                      error={methods.formState.errors.organic_approved?.message}
                       helpText="USDA's Input Material Application Record names four bases: OMRI or WSDA listing, the NOP seal on the label, or written certifier approval.">
                       <Controller
                         name="organic_approved"
@@ -1383,6 +1437,24 @@ const ChemicalTab = forwardRef(
                             <option value="transitional">
                               Transitional - in certification process
                             </option>
+                            {/* A <select> bound to a value with no matching <option> shows
+                                the placeholder, and the next save writes ''. Retiring
+                                `usda_nop_approved` / `organic_equivalent` on 2026-08-15
+                                therefore silently ERASED the recorded § 205.601 verification
+                                basis on any older record a grower reopened. Keep the stored
+                                answer selectable, marked retired, until they replace it. */}
+                            {retiredOrganicApprovedLabelKey(field.value) && (
+                              <option value={field.value}>
+                                {intl.formatMessage(
+                                  { id: 'events.organicApproved.retiredOption' },
+                                  {
+                                    label: intl.formatMessage({
+                                      id: retiredOrganicApprovedLabelKey(field.value)
+                                    })
+                                  }
+                                )}
+                              </option>
+                            )}
                           </StandardSelect>
                         )}
                       />
@@ -1481,9 +1553,7 @@ const ChemicalTab = forwardRef(
                           <Controller
                             name="date_start"
                             control={methods.control}
-                            render={({ field }) => (
-                              <Input {...field} type="date" size="md" bg="white" />
-                            )}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
 
@@ -1494,9 +1564,7 @@ const ChemicalTab = forwardRef(
                           <Controller
                             name="date_end"
                             control={methods.control}
-                            render={({ field }) => (
-                              <Input {...field} type="date" size="md" bg="white" />
-                            )}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
                       </SimpleGrid>
@@ -1509,13 +1577,7 @@ const ChemicalTab = forwardRef(
                           name="event_count"
                           control={methods.control}
                           render={({ field }) => (
-                            <StandardInput
-                              {...field}
-                              type="number"
-                              min="1"
-                              placeholder="e.g., 6"
-                              bg="white"
-                            />
+                            <StandardInput {...field} type="number" min="1" placeholder="e.g., 6" />
                           )}
                         />
                       </StandardField>
@@ -1540,7 +1602,6 @@ const ChemicalTab = forwardRef(
                                 step="0.1"
                                 min="0"
                                 placeholder="e.g., 120"
-                                bg="white"
                               />
                             )}
                           />
@@ -1559,7 +1620,6 @@ const ChemicalTab = forwardRef(
                                 step="0.1"
                                 min="0"
                                 placeholder="e.g., 60"
-                                bg="white"
                               />
                             )}
                           />
@@ -1578,7 +1638,6 @@ const ChemicalTab = forwardRef(
                                 step="0.1"
                                 min="0"
                                 placeholder="e.g., 60"
-                                bg="white"
                               />
                             )}
                           />
@@ -1600,7 +1659,6 @@ const ChemicalTab = forwardRef(
                                   type="number"
                                   step="0.01"
                                   placeholder="e.g., 1200"
-                                  bg="white"
                                 />
                               )}
                             />
@@ -1608,7 +1666,7 @@ const ChemicalTab = forwardRef(
                               name="volume_unit"
                               control={methods.control}
                               render={({ field }) => (
-                                <StandardSelect {...field} flex={1} bg="white">
+                                <StandardSelect {...field} flex={1}>
                                   <option value="L">Liters</option>
                                   <option value="gal">Gallons</option>
                                   <option value="kg">Kilograms</option>
@@ -1632,7 +1690,6 @@ const ChemicalTab = forwardRef(
                                   type="number"
                                   step="0.01"
                                   placeholder="e.g., 50"
-                                  bg="white"
                                 />
                               )}
                             />
@@ -1640,7 +1697,7 @@ const ChemicalTab = forwardRef(
                               name="area_unit"
                               control={methods.control}
                               render={({ field }) => (
-                                <StandardSelect {...field} flex={1} bg="white">
+                                <StandardSelect {...field} flex={1}>
                                   <option value="ha">Hectares</option>
                                   <option value="acres">Acres</option>
                                 </StandardSelect>
@@ -1658,10 +1715,7 @@ const ChemicalTab = forwardRef(
                             name="application_fuel_type"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect
-                                {...field}
-                                placeholder="Select fuel type..."
-                                bg="white">
+                              <StandardSelect {...field} placeholder="Select fuel type...">
                                 {FUEL_TYPES.map((type) => (
                                   <option key={type.value} value={type.value}>
                                     {type.label} ({type.factor})
@@ -1684,7 +1738,6 @@ const ChemicalTab = forwardRef(
                                 type="number"
                                 step="0.1"
                                 placeholder="e.g., 24"
-                                bg="white"
                               />
                             )}
                           />
@@ -1695,7 +1748,7 @@ const ChemicalTab = forwardRef(
                             name="application_fuel_unit"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect {...field} bg="white">
+                              <StandardSelect {...field}>
                                 <option value="gal">Gallons</option>
                                 <option value="L">Liters</option>
                                 <option value="kWh">Kilowatt-hours</option>
@@ -1733,7 +1786,7 @@ const ChemicalTab = forwardRef(
                   {isSummaryMode && chemicalType === 'FU' && (
                     <Box
                       p={4}
-                      bg="green.50"
+                      bg="white"
                       borderRadius="md"
                       border="1px solid"
                       borderColor="green.200"
@@ -1751,9 +1804,7 @@ const ChemicalTab = forwardRef(
                           <Controller
                             name="date_start"
                             control={methods.control}
-                            render={({ field }) => (
-                              <Input {...field} type="date" size="md" bg="white" />
-                            )}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
 
@@ -1764,9 +1815,7 @@ const ChemicalTab = forwardRef(
                           <Controller
                             name="date_end"
                             control={methods.control}
-                            render={({ field }) => (
-                              <Input {...field} type="date" size="md" bg="white" />
-                            )}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
                       </SimpleGrid>
@@ -1784,7 +1833,6 @@ const ChemicalTab = forwardRef(
                               type="number"
                               min="1"
                               placeholder="e.g., 12"
-                              bg="white"
                             />
                           )}
                         />
@@ -1809,7 +1857,6 @@ const ChemicalTab = forwardRef(
                               step="0.1"
                               min="0"
                               placeholder="e.g., 48"
-                              bg="white"
                             />
                           )}
                         />
@@ -1830,7 +1877,6 @@ const ChemicalTab = forwardRef(
                                   type="number"
                                   step="0.01"
                                   placeholder="e.g., 600"
-                                  bg="white"
                                 />
                               )}
                             />
@@ -1838,7 +1884,7 @@ const ChemicalTab = forwardRef(
                               name="volume_unit"
                               control={methods.control}
                               render={({ field }) => (
-                                <StandardSelect {...field} flex={1} bg="white">
+                                <StandardSelect {...field} flex={1}>
                                   <option value="L">Liters</option>
                                   <option value="gal">Gallons</option>
                                 </StandardSelect>
@@ -1861,7 +1907,6 @@ const ChemicalTab = forwardRef(
                                   type="number"
                                   step="0.01"
                                   placeholder="e.g., 50"
-                                  bg="white"
                                 />
                               )}
                             />
@@ -1869,7 +1914,7 @@ const ChemicalTab = forwardRef(
                               name="area_unit"
                               control={methods.control}
                               render={({ field }) => (
-                                <StandardSelect {...field} flex={1} bg="white">
+                                <StandardSelect {...field} flex={1}>
                                   <option value="ha">Hectares</option>
                                   <option value="acres">Acres</option>
                                 </StandardSelect>
@@ -1887,10 +1932,7 @@ const ChemicalTab = forwardRef(
                             name="application_fuel_type"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect
-                                {...field}
-                                placeholder="Select fuel type..."
-                                bg="white">
+                              <StandardSelect {...field} placeholder="Select fuel type...">
                                 {FUEL_TYPES.map((type) => (
                                   <option key={type.value} value={type.value}>
                                     {type.label} ({type.factor})
@@ -1913,7 +1955,6 @@ const ChemicalTab = forwardRef(
                                 type="number"
                                 step="0.1"
                                 placeholder="e.g., 24"
-                                bg="white"
                               />
                             )}
                           />
@@ -1924,7 +1965,7 @@ const ChemicalTab = forwardRef(
                             name="application_fuel_unit"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect {...field} bg="white">
+                              <StandardSelect {...field}>
                                 <option value="gal">Gallons</option>
                                 <option value="L">Liters</option>
                                 <option value="kWh">Kilowatt-hours</option>
@@ -1983,9 +2024,7 @@ const ChemicalTab = forwardRef(
                           <Controller
                             name="date_start"
                             control={methods.control}
-                            render={({ field }) => (
-                              <Input {...field} type="date" size="md" bg="white" />
-                            )}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
 
@@ -1996,9 +2035,7 @@ const ChemicalTab = forwardRef(
                           <Controller
                             name="date_end"
                             control={methods.control}
-                            render={({ field }) => (
-                              <Input {...field} type="date" size="md" bg="white" />
-                            )}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
                       </SimpleGrid>
@@ -2199,10 +2236,9 @@ const ChemicalTab = forwardRef(
               </SectionBox>
 
               {/* Section 2: Application Details & Carbon Calculation Data */}
-              <SectionBox variant="highlighted">
+              <SectionBox>
                 <SectionHeader
                   icon={FaCalculator}
-                  iconColor="green.600"
                   title="Application Rate & Coverage"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   description="Rate and area are what a certifier checks a label maximum against, and what § 205.103(b)(2) means by records detailed enough to be audited."
@@ -2235,7 +2271,6 @@ const ChemicalTab = forwardRef(
                                 step="0.1"
                                 min="0"
                                 placeholder="0.0"
-                                bg="white"
                               />
                             )}
                           />
@@ -2252,7 +2287,7 @@ const ChemicalTab = forwardRef(
                             name="volume_unit"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect {...field} bg="white">
+                              <StandardSelect {...field}>
                                 <option value="L">
                                   {intl.formatMessage({
                                     id: 'app.unit.liters',
@@ -2319,7 +2354,6 @@ const ChemicalTab = forwardRef(
                                 step="0.01"
                                 min="0"
                                 placeholder="0.00"
-                                bg="white"
                               />
                             )}
                           />
@@ -2336,7 +2370,7 @@ const ChemicalTab = forwardRef(
                             name="area_unit"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect {...field} bg="white">
+                              <StandardSelect {...field}>
                                 <option value="ha">
                                   {intl.formatMessage({
                                     id: 'app.unit.hectares',
@@ -2434,7 +2468,6 @@ const ChemicalTab = forwardRef(
                               render={({ field }) => (
                                 <StandardSelect
                                   {...field}
-                                  bg="white"
                                   placeholder={intl.formatMessage({
                                     id: 'app.notApplicable',
                                     defaultMessage: 'Not applicable'
@@ -2468,7 +2501,6 @@ const ChemicalTab = forwardRef(
                               step="0.001"
                               min="0"
                               placeholder="e.g., 10"
-                              bg="white"
                               {...methods.register('micronutrient_rate')}
                             />
                           </StandardField>
@@ -2482,7 +2514,7 @@ const ChemicalTab = forwardRef(
                               name="micronutrient_rate_unit"
                               control={methods.control}
                               render={({ field }) => (
-                                <StandardSelect {...field} bg="white">
+                                <StandardSelect {...field}>
                                   <option value="lb/ac">lb/ac</option>
                                   <option value="kg/ha">kg/ha</option>
                                   <option value="gal/ac">gal/ac</option>
@@ -2530,7 +2562,6 @@ const ChemicalTab = forwardRef(
                                   step="0.1"
                                   min="0"
                                   max="100"
-                                  bg="white"
                                   placeholder={f.ph}
                                   {...methods.register(f.name)}
                                 />
@@ -2559,7 +2590,15 @@ const ChemicalTab = forwardRef(
                             ? 'Herbicide Concentration'
                             : chemicalType === 'FU'
                             ? 'Fungicide Concentration'
-                            : 'Concentration / Application Rate'
+                            : // ⛔ NOT "Concentration / Application Rate". `validateConcentration`
+                              // accepts an NPK analysis or a percentage and rejects everything
+                              // else, so a grower reading "application rate" types the number off
+                              // the label — "4 qt/acre", exactly how Serenade's label reads — and
+                              // is hard-blocked. The RATE has its own home: Volume Applied over
+                              // Area Treated, which is what the packet divides to print
+                              // "4.00 gal/acre" and what a reviewer checks a label maximum
+                              // against. This field is the product's strength, nothing else.
+                              'Product Concentration'
                         }
                         required
                         error={errors.concentration?.message}
@@ -2594,7 +2633,6 @@ const ChemicalTab = forwardRef(
                                     : 'Select chemical type first...'
                                 }
                                 isDisabled={!chemicalType}
-                                bg="white"
                                 borderColor={
                                   concentrationValidation?.isValid
                                     ? 'green.300'
@@ -2641,7 +2679,7 @@ const ChemicalTab = forwardRef(
                       name="application_purpose"
                       control={methods.control}
                       render={({ field }) => (
-                        <StandardSelect {...field} bg="white">
+                        <StandardSelect {...field}>
                           <option value="">
                             {intl.formatMessage({
                               id: 'events.chemical.fields.applicationPurposePlaceholder',
@@ -2667,7 +2705,7 @@ const ChemicalTab = forwardRef(
                         name="nitrogen_source"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardSelect {...field} bg="white">
+                          <StandardSelect {...field}>
                             <option value="">Select nitrogen source...</option>
                             <option value="organic">
                               Organic (plant / animal / approved natural source)
@@ -2699,7 +2737,7 @@ const ChemicalTab = forwardRef(
                       name="application_method"
                       control={methods.control}
                       render={({ field }) => (
-                        <StandardSelect {...field} bg="white">
+                        <StandardSelect {...field}>
                           <option value="">Select application method...</option>
 
                           {/* USDA NRCS Standard Methods for Fertilizer (5 methods) */}
@@ -2824,10 +2862,9 @@ const ChemicalTab = forwardRef(
               </SectionBox>
 
               {/* Section 3: Environmental Context & Transparency */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaLeaf}
-                  iconColor="green.500"
                   title="Environmental Context"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />{' '}
@@ -2985,13 +3022,11 @@ const ChemicalTab = forwardRef(
               {/* Section 3.5: NOP Supplier & Purchase Tracking (7 CFR 205.103) */}
               {/* Required for mass-balance audits — purchased inputs must match applied inputs */}
               {!isSummaryMode && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaTruck}
-                    iconColor="orange.600"
                     title="Supplier & Purchase Tracking"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="orange"
                     description="Document input suppliers and purchase records for organic mass-balance audits. The #1 non-conformance finding nationally is inadequate mass-balance documentation."
                   />
 
@@ -3016,19 +3051,7 @@ const ChemicalTab = forwardRef(
                         <Controller
                           name="purchase_date"
                           control={methods.control}
-                          render={({ field }) => (
-                            <Input
-                              {...field}
-                              type="date"
-                              bg="white"
-                              borderColor="gray.300"
-                              _hover={{ borderColor: 'gray.400' }}
-                              _focus={{
-                                borderColor: 'green.500',
-                                boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                              }}
-                            />
-                          )}
+                          render={({ field }) => <StandardInput {...field} type="date" />}
                         />
                       </StandardField>
                     </SimpleGrid>
@@ -3143,10 +3166,9 @@ const ChemicalTab = forwardRef(
                     Report (DPR-PML-017C). Manufacturer + start/end + planted-area are
                     universal; the CA PUR block is clearly California-only. */}
               {!isSummaryMode && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaClock}
-                    iconColor="green.600"
                     title="Legal Spray Record"
                     badge={intl.formatMessage({ id: 'events.section.badge.caPesticideReport' })}
                     description="Optional fields that make this entry a complete legal pesticide-use record — GLOBALG.A.P. FV-GFS 32.02.01 and the CA monthly Pesticide Use Report (DPR-PML-017C)."
@@ -3538,13 +3560,11 @@ const ChemicalTab = forwardRef(
                   const isRestricted = CA_RESTRICTED_KEYWORDS.some((kw) => name.includes(kw));
                   if (!isRestricted) return null;
                   return (
-                    <SectionBox variant="highlighted">
+                    <SectionBox>
                       <SectionHeader
                         icon={FaFileInvoiceDollar}
-                        iconColor="red.600"
                         title="CA DPR Restricted Materials Permit"
                         badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                        badgeColorScheme="red"
                         description="This input is a California county-restricted material (3 CCR 6400 et seq.). Even when NOP-allowed under 7 CFR 205.601, a county Ag Commissioner permit is required before application."
                       />
                       <VStack spacing={4} align="stretch">
@@ -3578,7 +3598,7 @@ const ChemicalTab = forwardRef(
                           <Controller
                             name="ca_dpr_permit_expires"
                             control={methods.control}
-                            render={({ field }) => <Input {...field} type="date" />}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
                         <Box
@@ -3605,12 +3625,10 @@ const ChemicalTab = forwardRef(
               {!isSummaryMode && (
                 <CollapsibleSection
                   icon={FaBolt}
-                  iconColor="blue.600"
                   title="Application Equipment & Fuel Usage"
                   badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                   description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
-                  badgeColorScheme="gray"
-                  variant="highlighted">
+                  badgeTone="optional">
                   {' '}
                   <VStack spacing={4} align="stretch">
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -3718,19 +3736,38 @@ const ChemicalTab = forwardRef(
                         application practices.
                       </Text>
                     </Box>
+
+                    {/* No `onEnterActualFuel` here on purpose. ChemicalTab renders this
+                        fuel block once per application subtype — four `fuel_consumption_total`
+                        inputs exist in the tree — so a "jump to the fuel field" link has no
+                        single unambiguous target. The measured-vs-assumed disclosure still
+                        renders; only the shortcut is withheld. */}
+                    {(carbonCalculation || isCalculatingCarbon) && (
+                      <CarbonImpactPreview
+                        eventType="Chemical"
+                        /* LIVE values — see the same fix in ProductionTab. The fertigation
+                           note keys off `type === 'FE'` plus `is_fertigation`, and
+                           `initialValues` is empty on a new event. */
+                        formData={{
+                          ...initialValues,
+                          type: chemicalType,
+                          is_fertigation: watch('is_fertigation')
+                        }}
+                        calculation={carbonCalculation}
+                        isCalculating={isCalculatingCarbon}
+                      />
+                    )}
                   </VStack>
                 </CollapsibleSection>
               )}
 
               {/* Section 5: EPA Worker Protection Standard (WPS) Compliance - 40 CFR 170.309 */}
               {(chemicalType === 'PE' || chemicalType === 'HE' || chemicalType === 'FU') && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaUserShield}
-                    iconColor="orange.500"
                     title="Safety & Compliance"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="orange"
                   />
                   <VStack spacing={4} align="stretch">
                     {/* Clean info text without redundant alert styling */}
@@ -3919,7 +3956,10 @@ const ChemicalTab = forwardRef(
                     <Text fontSize="sm" fontWeight="semibold" color="gray.700">
                       Supervisor Review (FSMA § 112.161(b))
                     </Text>
-                    <Badge colorScheme="green" fontSize="xs">
+                    {/* textTransform is not decoration here: the theme capitalizes the green
+                        palette only, so without it this lone hand-rolled badge renders
+                        "Certifier Record" beside sections rendering "Certifier record". */}
+                    <Badge colorScheme="green" textTransform="none" fontSize="xs">
                       {intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     </Badge>
                   </HStack>
@@ -3956,13 +3996,11 @@ const ChemicalTab = forwardRef(
               </Box>
 
               {/* Phase 2: Universal Field Details - variety, block_id, growth_stage */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="teal.500"
                   title={intl.formatMessage({ id: 'fieldDetails.title' })}
                   badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
-                  badgeColorScheme="teal"
                   description={intl.formatMessage({ id: 'fieldDetails.description' })}
                 />
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
@@ -4025,10 +4063,9 @@ const ChemicalTab = forwardRef(
               </SectionBox>
 
               {/* Section 5: Farmer's Field Notes */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />

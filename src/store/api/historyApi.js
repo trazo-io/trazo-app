@@ -144,7 +144,7 @@ export const historyApi = baseApi.injectEndpoints({
       // 'SeasonPlan' because a record logged against a planned practice closes that
       // checklist item server-side, so the plan's completeness is stale the moment this
       // succeeds. (See store/api/seasonPlanApi.ts.)
-      invalidatesTags: (result, error) => (error ? [] : ['Event', 'History', 'SeasonPlan']),
+      invalidatesTags: (result, error) => (error ? [] : ['Event', 'History', 'SeasonPlan'])
     }),
     updateEvent: build.mutation({
       query: ({ companyId, farmId, eventId, eventType, ...eventData }) => {
@@ -163,7 +163,7 @@ export const historyApi = baseApi.injectEndpoints({
       // `{ type: 'Event', eventId }` was never a valid tag descriptor either: the id key is
       // `id`, so this provided `{type:'Event', id:undefined}` and matched nothing specific.
       invalidatesTags: (result, error, { eventId }) =>
-        error ? [] : [{ type: 'Event', id: eventId }, 'Event', 'History', 'SeasonPlan'],
+        error ? [] : [{ type: 'Event', id: eventId }, 'Event', 'History', 'SeasonPlan']
     }),
     deleteEvent: build.mutation({
       query: ({ companyId, farmId, eventId, eventType }) => ({
@@ -179,7 +179,7 @@ export const historyApi = baseApi.injectEndpoints({
       // 'SeasonPlan' matters as of 2026-08-19: deleting the record that fulfilled a planned
       // practice puts that item back on the checklist server-side, so the plan is stale.
       invalidatesTags: (result, error, { eventId }) =>
-        error ? [] : [{ type: 'Event', id: eventId }, 'Event', 'History', 'SeasonPlan'],
+        error ? [] : [{ type: 'Event', id: eventId }, 'Event', 'History', 'SeasonPlan']
     }),
     createProduction: build.mutation({
       query: (production) => ({

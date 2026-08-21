@@ -11,7 +11,6 @@ import {
   useColorModeValue,
   VStack,
   HStack,
-  Select,
   Badge,
   Flex,
   Button,
@@ -33,7 +32,9 @@ import {
   StandardPage,
   StandardCard,
   StandardButton,
-  StandardSearchInput
+  StandardSearchInput,
+  StandardInput,
+  StandardSelect
 } from 'components/Design/StandardComponents';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
@@ -143,24 +144,16 @@ const AllScansView = () => {
             </Box>
 
             <Box w={{ base: '100%', md: '200px' }}>
-              <Select
+              <StandardSelect
                 placeholder={intl.formatMessage({ id: 'commercial.allProducts' })}
                 value={filters.product_id}
-                onChange={(e) => handleFilterChange('product_id', e.target.value)}
-                borderRadius="lg"
-                bg="white"
-                size={{ base: 'sm', md: 'md' }}
-                fontSize={{ base: 'sm', md: 'md' }}
-                _focus={{
-                  borderColor: 'green.400',
-                  boxShadow: '0 0 0 1px rgb(72, 187, 120)'
-                }}>
+                onChange={(e) => handleFilterChange('product_id', e.target.value)}>
                 {uniqueProducts.map((product) => (
                   <option key={product.id} value={product.id}>
                     {product.name}
                   </option>
                 ))}
-              </Select>
+              </StandardSelect>
             </Box>
           </Flex>
 
@@ -169,17 +162,10 @@ const AllScansView = () => {
               <Text fontSize="xs" fontWeight="medium" mb={1} color="gray.700">
                 {intl.formatMessage({ id: 'commercial.dateFrom' })}
               </Text>
-              <Input
+              <StandardInput
                 type="date"
                 value={filters.date_from}
                 onChange={(e) => handleFilterChange('date_from', e.target.value)}
-                borderRadius="lg"
-                bg="white"
-                size="sm"
-                _focus={{
-                  borderColor: 'green.400',
-                  boxShadow: '0 0 0 1px rgb(72, 187, 120)'
-                }}
               />
             </Box>
 
@@ -187,17 +173,10 @@ const AllScansView = () => {
               <Text fontSize="xs" fontWeight="medium" mb={1} color="gray.700">
                 {intl.formatMessage({ id: 'commercial.dateTo' })}
               </Text>
-              <Input
+              <StandardInput
                 type="date"
                 value={filters.date_to}
                 onChange={(e) => handleFilterChange('date_to', e.target.value)}
-                borderRadius="lg"
-                bg="white"
-                size="sm"
-                _focus={{
-                  borderColor: 'green.400',
-                  boxShadow: '0 0 0 1px rgb(72, 187, 120)'
-                }}
               />
             </Box>
 
@@ -486,7 +465,7 @@ const AllScansView = () => {
                 ) : error ? (
                   <Tr>
                     <Td colSpan={7} textAlign="center" py={8}>
-                      <Text color="red.500" fontSize={{ base: 'xs', md: 'sm' }}>
+                      <Text color="red.700" fontSize={{ base: 'xs', md: 'sm' }}>
                         {intl.formatMessage({ id: 'commercial.errorLoadingScans' })}
                       </Text>
                     </Td>

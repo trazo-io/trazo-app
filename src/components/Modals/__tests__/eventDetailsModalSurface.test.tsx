@@ -43,7 +43,11 @@ vi.mock('store/api/historyApi', () => ({
 // correctRecordModal.test.tsx.
 vi.mock('store/api/amendmentsApi', () => ({
   useGetEventAmendmentsQuery: () => ({ data: undefined, isLoading: false }),
-  useAmendEventMutation: () => [vi.fn(), { isLoading: false }]
+  useAmendEventMutation: () => [vi.fn(), { isLoading: false }],
+  // CorrectRecordModal gained a season-header mode on 2026-08-21 (F7) and calls both hooks
+  // unconditionally — a mock missing one throws at render, not at assertion.
+  useGetSeasonAmendmentsQuery: () => ({ data: undefined, isLoading: false }),
+  useAmendSeasonMutation: () => [vi.fn(), { isLoading: false }]
 }));
 
 // canWrite gates the whole action cluster; this suite is about how those actions LOOK.

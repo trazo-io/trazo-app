@@ -137,6 +137,7 @@ const CarbonExplainerLoader = () => (
 );
 // Navigation Components
 import { NavigationBottomBar } from '../../../components/Navigation/NavigationBottomBar';
+import { resolveHarvestDates } from '../../../utils/consumerDisplay';
 
 // Educational modal content
 const EducationModal = ({
@@ -806,9 +807,27 @@ function ProductDetail() {
           // farm_context.production_period.end (transparency_response_formatter.py:198).
           // Neither top-level finish_date nor product.end_date exist on this
           // endpoint — which is why the hero never showed a harvest date.
-          const harvestDate =
+          //
+          // 🔴 2026-08-20 — but BOTH of those are the day the grower CLOSED the season, not
+          // the day the fruit came off. `resolveHarvestDates` reads the harvest records
+          // instead and only falls back to the close date when a lot has none. See the
+          // comment on that helper for why a three-day drift here is a real problem for a
+          // produce buyer rather than a cosmetic one.
+          const seasonClosedDate =
             (completeData as any)?.farm_context?.production_period?.end ||
             (completeData as any)?.finish_date;
+          const harvestWindow = resolveHarvestDates(
+            (completeData as any)?.timeline,
+            seasonClosedDate
+          );
+          // `?? undefined`: both consumers declare `harvestDate?: string`, and
+          // `resolveHarvestDates` returns null when a lot has neither a harvest record
+          // nor a close date. Passing null where the prop says optional-string works by
+          // accident today and stops working the moment strictNullChecks is turned on.
+          const harvestDate = harvestWindow.last ?? undefined;
+          const harvestDateStart = harvestWindow.isRange
+            ? harvestWindow.first ?? undefined
+            : undefined;
           // First production photo (S3 URL) — hero background. `images` is a
           // string[]; images[0] is the explicit cover (cover_image_url) when set,
           // else the first auto-collected photo. Tolerate the legacy {image}
@@ -889,6 +908,7 @@ function ProductDetail() {
                 }}
                 heroPhotoUrl={heroPhotoUrl}
                 harvestDate={harvestDate}
+                harvestDateStart={harvestDateStart}
                 certifiedLabel={certifiedLabel}
                 certifierName={oidVerifiedCert?.certifier_name}
                 practicesCount={completeData?.timeline?.length ?? 0}
@@ -901,6 +921,7 @@ function ProductDetail() {
                 farmName={farmName}
                 location={location}
                 harvestDate={harvestDate}
+                harvestDateStart={harvestDateStart}
                 lotId={lotId}
                 organicClaim={organicClaim}
                 certifications={heroCertifications}

@@ -336,7 +336,14 @@ function createBaseEvent(
     'carbon_impact',
     // Sprint 5.1 — OSP ↔ events drift detector. Pass-through so the producer
     // dashboard's DriftFindingsBanner can detect drift on normalized events.
-    'drift_warning'
+    'drift_warning',
+    // 2026-08-21 — the event's REAL database id, owner-only on both payloads that carry it.
+    // Every event here is keyed `chemical_2648` / `production_0`, which is either positional
+    // or needs parsing back apart, so the producer's Production Profile had no id to open a
+    // correction against and rendered records it could not act on. This list is an allowlist:
+    // a key absent from it is silently dropped, which is why adding a backend field means
+    // walking the whole chain (src/config/events/ADDING_FIELDS.md), not just the serializer.
+    'record_id'
   ];
 
   commonFields.forEach((field) => {

@@ -45,15 +45,11 @@ import {
   Icon,
   Badge,
   Link,
-  Input,
   FormLabel,
   Divider,
   useDisclosure,
   useToast,
-  useColorModeValue,
-  Center,
-  Switch,
-  Textarea
+  Center
 } from '@chakra-ui/react';
 import {
   FaMapMarkerAlt,
@@ -84,7 +80,9 @@ import {
   StandardButton,
   StandardPage,
   StandardPageLoading,
-  StandardSection
+  StandardSection,
+  StandardInput,
+  StandardAlert
 } from 'components/Design/StandardComponents';
 import { InfoRow, FieldGroup, PageHeaderMeta } from 'components/Design/ProfileField';
 import { useGetFarmQuery, useEditFarmMutation } from 'store/api/companyApi';
@@ -137,15 +135,10 @@ function ProfileFarm() {
   const [ofppResponsible, setOfppResponsible] = useState('');
   const [ofppDate, setOfppDate] = useState('');
   const [ofppFile, setOfppFile] = useState<File | null>(null);
-  const [isSavingSplit, setIsSavingSplit] = useState(false);
-  const [splitPlanText, setSplitPlanText] = useState('');
-  const [splitPlanEditMode, setSplitPlanEditMode] = useState(false);
   const [purModalOpen, setPurModalOpen] = useState(false);
   // Owned here so the "Add certification" button can sit in the card header instead of
   // CertificationManager painting a second header inside an already-titled card.
   const addCertDisclosure = useDisclosure();
-  const infoBg = useColorModeValue('blue.50', 'blue.900');
-  const infoColor = useColorModeValue('blue.700', 'blue.200');
 
   const {
     data: establishmentData,
@@ -161,6 +154,14 @@ function ProfileFarm() {
       skip: !farmId || currentCompany?.id === undefined
     }
   );
+
+  // F25 — three states, never two. `has_split_operation` is a boolean and cannot tell a
+  // declared "no" apart from a column nobody has touched, so the backend resolves the
+  // declaration once (certifications/services/split_operation.py) and sends it here. The
+  // legacy fallback keeps a pre-binding profile declaration visible on farms that made one.
+  const splitDeclaration: 'yes' | 'no' | 'unanswered' =
+    (establishmentData?.split_operation_declaration as 'yes' | 'no' | 'unanswered') ??
+    (establishmentData?.has_split_operation ? 'yes' : 'unanswered');
 
   const getCropsGrown = () => {
     if (!establishmentData?.crops_grown) return [];
@@ -237,66 +238,6 @@ function ProfileFarm() {
     }
   };
 
-  const handleToggleSplitOperation = async (checked: boolean) => {
-    setIsSavingSplit(true);
-    try {
-      const formData = new FormData();
-      formData.append('has_split_operation', String(checked));
-      if (!checked) {
-        formData.append('split_operation_plan', '');
-      }
-      await editFarm({
-        companyId: currentCompany?.id,
-        farmId,
-        establishmentData: formData
-      }).unwrap();
-      toast({
-        title: intl.formatMessage({ id: 'farm.split.saved' }),
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-    } catch {
-      toast({
-        title: intl.formatMessage({ id: 'farm.split.saveFailed' }),
-        status: 'error',
-        duration: 3000,
-        isClosable: true
-      });
-    } finally {
-      setIsSavingSplit(false);
-    }
-  };
-
-  const handleSaveSplitPlan = async () => {
-    setIsSavingSplit(true);
-    try {
-      const formData = new FormData();
-      formData.append('split_operation_plan', splitPlanText);
-      await editFarm({
-        companyId: currentCompany?.id,
-        farmId,
-        establishmentData: formData
-      }).unwrap();
-      toast({
-        title: intl.formatMessage({ id: 'farm.split.saved' }),
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
-      setSplitPlanEditMode(false);
-    } catch {
-      toast({
-        title: intl.formatMessage({ id: 'farm.split.saveFailed' }),
-        status: 'error',
-        duration: 3000,
-        isClosable: true
-      });
-    } finally {
-      setIsSavingSplit(false);
-    }
-  };
-
   if (isLoading || isUninitialized) {
     return (
       <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
@@ -309,7 +250,7 @@ function ProfileFarm() {
     return (
       <StandardPage showBackButton onBack={() => navigate('/admin/dashboard')}>
         <Center py={20}>
-          <Text color="red.500">{intl.formatMessage({ id: 'establishment.errorLoading' })}</Text>
+          <Text color="red.700">{intl.formatMessage({ id: 'establishment.errorLoading' })}</Text>
         </Center>
       </StandardPage>
     );
@@ -617,15 +558,27 @@ function ProfileFarm() {
                           }
                           boxSize={5}
                         />
+                        {/*
+                          Semantic VARIANTS, not a computed colorScheme.
+                          - `orange` and `yellow` are not Trazo palettes. The theme defines
+                            `amber` and no orange, so `colorScheme="orange"` silently resolved
+                            to CHAKRA's orange — a foreign accent.
+                          - `variant="subtle"` inherits the base `textTransform: capitalize`,
+                            which is why the string "Plan on file" rendered as "Plan On File",
+                            and why es-419's "Plan registrado" would title-case wrongly. The
+                            semantic variants set `textTransform: none` and render as authored.
+                          A missing plan is outstanding work (warning); a filename that does not
+                          look like an OFPP is a data-integrity flag (danger).
+                        */}
                         <Badge
-                          colorScheme={
+                          variant={
                             establishmentData.ofpp_filename_suspicious
-                              ? 'orange'
+                              ? 'danger'
                               : establishmentData.ofpp_on_file
-                              ? 'green'
-                              : 'yellow'
+                              ? 'subtle'
+                              : 'warning'
                           }
-                          variant="subtle"
+                          textTransform="none"
                           px={3}
                           py={1}
                           borderRadius="full"
@@ -648,7 +601,7 @@ function ProfileFarm() {
                         </Badge>
                       </HStack>
                       {establishmentData.ofpp_filename_suspicious && (
-                        <Text fontSize="sm" color="orange.700">
+                        <Text fontSize="sm" color="red.700">
                           {intl.formatMessage({ id: 'farm.soe.planSuspiciousDetail' })}
                         </Text>
                       )}
@@ -732,16 +685,10 @@ function ProfileFarm() {
                       {ofppEditMode && (
                         <VStack gap={3} align="stretch">
                           <Box>
-                            <FormLabel
-                              fontSize="xs"
-                              color="gray.500"
-                              textTransform="uppercase"
-                              fontWeight="semibold"
-                              mb={1}>
+                            <FormLabel fontSize="sm" color="gray.700" fontWeight="semibold" mb={2}>
                               {intl.formatMessage({ id: 'farm.soe.responsiblePerson' })}
                             </FormLabel>
-                            <Input
-                              size="sm"
+                            <StandardInput
                               value={ofppResponsible}
                               onChange={(e) => setOfppResponsible(e.target.value)}
                               placeholder={intl.formatMessage({
@@ -750,28 +697,17 @@ function ProfileFarm() {
                             />
                           </Box>
                           <Box>
-                            <FormLabel
-                              fontSize="xs"
-                              color="gray.500"
-                              textTransform="uppercase"
-                              fontWeight="semibold"
-                              mb={1}>
+                            <FormLabel fontSize="sm" color="gray.700" fontWeight="semibold" mb={2}>
                               {intl.formatMessage({ id: 'farm.soe.planDate' })}
                             </FormLabel>
-                            <Input
-                              size="sm"
+                            <StandardInput
                               type="date"
                               value={ofppDate}
                               onChange={(e) => setOfppDate(e.target.value)}
                             />
                           </Box>
                           <Box>
-                            <FormLabel
-                              fontSize="xs"
-                              color="gray.500"
-                              textTransform="uppercase"
-                              fontWeight="semibold"
-                              mb={1}>
+                            <FormLabel fontSize="sm" color="gray.700" fontWeight="semibold" mb={2}>
                               {intl.formatMessage({ id: 'farm.soe.documentLabel' })}
                             </FormLabel>
                             <Box
@@ -794,7 +730,7 @@ function ProfileFarm() {
                               />
                               {ofppFile ? (
                                 <HStack justify="center" gap={2}>
-                                  <Icon as={FaFileAlt} color="green.500" boxSize={4} />
+                                  <Icon as={FaFileAlt} color="green.700" boxSize={4} />
                                   <Text fontSize="sm" color="green.700" fontWeight="medium">
                                     {ofppFile.name}
                                   </Text>
@@ -848,111 +784,103 @@ function ProfileFarm() {
                   </FieldGroup>
 
                   {/* ---- Split operation (7 CFR 205.272) ---- */}
+                  {/* 🔴 2026-08-21 (F25) — READ-ONLY here, deliberately. This used to be a
+                      Switch plus a plan editor, which made the farm profile a SECOND editor of
+                      a § 205.201(a)(5) fact that OSP module G6.0 also records. The two could
+                      disagree, and one farm filed a packet whose § 205.272 row said "Split
+                      Operation: No" directly above a REVIEW pointing out that its own OSP said
+                      yes. The OSP owns the declaration and writes through to the establishment
+                      columns; this card reports it and sends the farmer to the one editor. */}
                   <FieldGroup
                     label={intl.formatMessage({ id: 'farm.split.title' })}
                     cfr="7 CFR 205.272">
                     <VStack gap={3} align="stretch">
-                      <HStack justify="space-between" align="center" gap={3}>
+                      <HStack justify="space-between" align="flex-start" gap={3} flexWrap="wrap">
                         <Box minW={0}>
                           <Text fontSize="sm" fontWeight="medium" color="gray.700">
                             {intl.formatMessage({ id: 'farm.split.toggleLabel' })}
                           </Text>
-                          <Text fontSize="xs" color="gray.500">
-                            {intl.formatMessage({ id: 'farm.split.toggleHelp' })}
+                          <Text
+                            fontSize="md"
+                            fontWeight="semibold"
+                            color={splitDeclaration === 'unanswered' ? 'gray.500' : 'green.700'}>
+                            {intl.formatMessage({
+                              id:
+                                splitDeclaration === 'yes'
+                                  ? 'farm.split.declaredYes'
+                                  : splitDeclaration === 'no'
+                                  ? 'farm.split.declaredNo'
+                                  : 'farm.split.declaredUnanswered'
+                            })}
                           </Text>
                         </Box>
-                        <Switch
-                          colorScheme="green"
-                          isChecked={establishmentData.has_split_operation || false}
-                          isDisabled={!canWrite || isSavingSplit}
-                          onChange={(e) => handleToggleSplitOperation(e.target.checked)}
-                        />
+                        {canWrite && (
+                          <StandardButton
+                            variant="outline"
+                            size="sm"
+                            leftIcon={<Icon as={FaEdit} />}
+                            onClick={() =>
+                              navigate(`/admin/dashboard/farm/${farmId}/osp/module/g6_0_production`)
+                            }>
+                            {intl.formatMessage({
+                              id:
+                                splitDeclaration === 'unanswered'
+                                  ? 'farm.split.answerInOsp'
+                                  : 'farm.split.changeInOsp'
+                            })}
+                          </StandardButton>
+                        )}
                       </HStack>
 
-                      {establishmentData.has_split_operation && (
+                      <Text fontSize="xs" color="gray.500">
+                        {intl.formatMessage({ id: 'farm.split.ospOwned' })}
+                      </Text>
+
+                      {splitDeclaration === 'yes' && (
                         <Box>
-                          <FormLabel
-                            fontSize="xs"
-                            color="gray.500"
-                            textTransform="uppercase"
-                            fontWeight="semibold"
-                            mb={1}>
+                          <FormLabel fontSize="sm" color="gray.700" fontWeight="semibold" mb={2}>
                             {intl.formatMessage({ id: 'farm.split.planLabel' })}
                           </FormLabel>
-                          {!splitPlanEditMode ? (
-                            <VStack gap={2} align="stretch">
-                              {establishmentData.split_operation_plan ? (
-                                <Box p={3} bg="gray.50" borderRadius="md">
-                                  <Text fontSize="sm" color="gray.700" whiteSpace="pre-wrap">
-                                    {establishmentData.split_operation_plan}
-                                  </Text>
-                                </Box>
-                              ) : (
-                                <Text fontSize="sm" color="gray.400" fontStyle="italic">
-                                  {intl.formatMessage({ id: 'farm.split.noPlan' })}
-                                </Text>
-                              )}
-                              {canWrite && (
-                                <StandardButton
-                                  variant="outline"
-                                  size="sm"
-                                  leftIcon={<Icon as={FaEdit} />}
-                                  alignSelf="flex-start"
-                                  onClick={() => {
-                                    setSplitPlanText(establishmentData.split_operation_plan || '');
-                                    setSplitPlanEditMode(true);
-                                  }}>
-                                  {establishmentData.split_operation_plan
-                                    ? intl.formatMessage({ id: 'farm.split.editPlan' })
-                                    : intl.formatMessage({ id: 'farm.split.addPlan' })}
-                                </StandardButton>
-                              )}
-                            </VStack>
+                          {establishmentData.split_operation_plan ? (
+                            <Box p={3} bg="gray.50" borderRadius="md">
+                              <Text fontSize="sm" color="gray.700" whiteSpace="pre-wrap">
+                                {establishmentData.split_operation_plan}
+                              </Text>
+                            </Box>
                           ) : (
-                            <VStack gap={2} align="stretch">
-                              <Textarea
-                                size="sm"
-                                value={splitPlanText}
-                                onChange={(e) => setSplitPlanText(e.target.value)}
-                                placeholder={intl.formatMessage({
-                                  id: 'farm.split.planPlaceholder'
-                                })}
-                                rows={4}
-                              />
-                              <HStack gap={2} justify="flex-end">
-                                <StandardButton
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setSplitPlanEditMode(false)}>
-                                  {intl.formatMessage({ id: 'app.cancel' })}
-                                </StandardButton>
-                                <StandardButton
-                                  size="sm"
-                                  isLoading={isSavingSplit}
-                                  onClick={handleSaveSplitPlan}>
-                                  {intl.formatMessage({ id: 'app.save' })}
-                                </StandardButton>
-                              </HStack>
-                            </VStack>
+                            <Text fontSize="sm" color="gray.400" fontStyle="italic">
+                              {intl.formatMessage({ id: 'farm.split.noPlan' })}
+                            </Text>
                           )}
                         </Box>
                       )}
 
-                      {!establishmentData.has_split_operation && (
+                      {splitDeclaration === 'no' && (
                         <Text fontSize="xs" color="gray.500">
                           {intl.formatMessage({ id: 'farm.split.singleOperation' })}
+                        </Text>
+                      )}
+
+                      {splitDeclaration === 'unanswered' && (
+                        <Text fontSize="xs" color="gray.500">
+                          {intl.formatMessage({ id: 'farm.split.unansweredHelp' })}
                         </Text>
                       )}
                     </VStack>
                   </FieldGroup>
 
-                  {/* ONE regulatory note for both attestations, not two stacked blue boxes. */}
-                  <Box p={3} bg={infoBg} borderRadius="md">
-                    <Text fontSize="xs" color={infoColor} lineHeight="1.6">
-                      {intl.formatMessage({ id: 'farm.soe.regulatoryNote' })}{' '}
-                      {intl.formatMessage({ id: 'farm.split.regulatoryNote' })}
-                    </Text>
-                  </Box>
+                  {/* ONE regulatory note for both attestations, not two stacked blue boxes.
+                      A real Alert rather than a blue Box: blue carries no meaning in this
+                      palette EXCEPT as Chakra's info status, so hand-painting blue.50/blue.700
+                      borrowed the convention without the semantics. As an Alert it also gets
+                      the info glyph and the role a screen reader needs. */}
+                  <StandardAlert
+                    status="info"
+                    mb={0}
+                    description={`${intl.formatMessage({
+                      id: 'farm.soe.regulatoryNote'
+                    })} ${intl.formatMessage({ id: 'farm.split.regulatoryNote' })}`}
+                  />
                 </VStack>
               </StandardCard>
             </Box>

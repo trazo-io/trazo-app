@@ -340,10 +340,9 @@ const GeneralTab = forwardRef(
               {/* === LEGACY FORM (unchanged, used when flag is OFF) === */}
 
               {/* Section 1: Activity Information */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaClipboardList}
-                  iconColor="green.500"
                   title={intl.formatMessage({
                     id: 'events.general.sections.otherFarmActivityInformation',
                     defaultMessage: 'Other Farm Activity Information'
@@ -410,16 +409,14 @@ const GeneralTab = forwardRef(
               </SectionBox>
 
               {/* Section 2: Activity Details & Context */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaCalculator}
-                  iconColor="blue.500"
                   title={intl.formatMessage({
                     id: 'events.general.sections.activityDetailsContext',
                     defaultMessage: 'Activity Details & Context'
                   })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
-                  badgeColorScheme="blue"
                 />
                 <VStack spacing={4} align="stretch">
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -470,10 +467,9 @@ const GeneralTab = forwardRef(
               </SectionBox>
 
               {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.500"
                   title={intl.formatMessage({
                     id: 'events.general.sections.farmerSFieldNotesConsumerTransparency',
                     defaultMessage: "Farmer's Field Notes & Consumer Transparency"
@@ -516,16 +512,14 @@ const GeneralTab = forwardRef(
                   audit PDF renders — so the PDF would always be empty even
                   when drift/commingling happened.
                 */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaShieldAlt}
-                  iconColor="orange.500"
                   title={intl.formatMessage({
                     id: 'events.general.sections.nopContaminationIncident',
                     defaultMessage: 'NOP Contamination Incident'
                   })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                  badgeColorScheme="orange"
                 />
                 <VStack spacing={4} align="stretch">
                   <HStack

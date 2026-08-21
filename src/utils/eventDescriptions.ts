@@ -1183,19 +1183,18 @@ export function getConsumerEventDescription(
       if (prodType) {
         const desc = (event.description || '').toLowerCase();
 
-        // For harvests - differentiate by quality grade or description
+        // For harvests - differentiate by description.
+        //
+        // 🔴 F5 (2026-08-21) — the grade no longer titles a CONSUMER card, and this is the
+        // same decision as `formatConsumerHarvestGrade`, one surface over. This branch used
+        // to read `harvest_quality_grade` through a slug map and title the card
+        // "Harvest - Grade B", which a shopper reads as "this food is second-rate" — a
+        // grade is a size-and-appearance sorting class and says nothing about how the food
+        // eats. The grade still reaches the consumer, as its own field, re-voiced into a
+        // neutral sentence; putting it back in the headline would undo that in the same
+        // render. It also could not survive the vocabulary change: the map keyed the retired
+        // slugs, so every record written after 2026-08-21 fell through it anyway.
         if (prodType === 'HA') {
-          if (event.harvest_quality_grade) {
-            const gradeLabels: Record<string, string> = {
-              export_quality: 'Harvest - Export Quality',
-              grade_a: 'Harvest - Grade A',
-              grade_b: 'Harvest - Grade B',
-              grade_c: 'Harvest - Grade C',
-              domestic: 'Harvest - Domestic Market',
-              processing: 'Harvest - Processing Grade'
-            };
-            return gradeLabels[event.harvest_quality_grade] || 'Harvest Operation';
-          }
           if (desc.includes('export')) return 'Harvest - Export Quality';
           if (desc.includes('processing') || desc.includes('juice'))
             return 'Harvest - Processing Grade';
@@ -1611,8 +1610,7 @@ export function getConsumerEventDescription(
           'The product, the target pest and the date are on record, so the treatment can be checked against that list.';
       } else {
         baseDescription = 'A treatment was applied against a specific pest';
-        consumerImpact =
-          'The pest, the product aimed at it and the amount used are recorded here.';
+        consumerImpact = 'The pest, the product aimed at it and the amount used are recorded here.';
         sustainabilityBenefit =
           'Recording the target pest shows the treatment answered a specific problem rather than a calendar.';
       }
@@ -1624,8 +1622,7 @@ export function getConsumerEventDescription(
         sustainabilityBenefit =
           'Copper is tightly limited under organic rules because it builds up in soil, so the amount and timing are recorded.';
       } else {
-        consumerImpact =
-          'Both the target and the material are on file here, with the date.';
+        consumerImpact = 'Both the target and the material are on file here, with the date.';
         sustainabilityBenefit =
           'Treating a known disease early generally takes less product than treating an outbreak later.';
       }
@@ -1640,8 +1637,7 @@ export function getConsumerEventDescription(
         sustainabilityBenefit =
           'Weed control without tillage leaves soil structure intact, though it relies on a synthetic input to do it.';
       } else {
-        consumerImpact =
-          'Weed control is logged with the product used and the area it covered.';
+        consumerImpact = 'Weed control is logged with the product used and the area it covered.';
         sustainabilityBenefit =
           'Recording what was used on weeds, and where, is what makes the choice checkable.';
       }
@@ -1709,13 +1705,21 @@ export function getConsumerEventDescription(
         // gypsum", which is neither, and which corrects sodium rather than pH. Naming a
         // product the record contradicts is worse than naming none; the Amendment Type fact
         // beside it already says exactly what went on.
-        description: 'A mineral amendment was worked into the ground to correct the soil',
+        //
+        // METHOD-agnostic too, since 2026-08-21: "worked into the ground" is an incorporation
+        // claim, and elemental sulfur under a drip line is broadcast on the surface and left
+        // for the rain — which is what the farmer's own note beside this card said ("Not
+        // incorporated; rain and drip carry it in"). The card contradicted the record it was
+        // describing. Working depth is a field on the event; the card does not need to guess.
+        description: 'A mineral amendment was applied to correct the soil',
         impact: 'MEDIUM'
       },
       OM: {
         title: 'Organic Matter Addition',
         icon: '🍂',
-        description: 'Organic matter was spread and worked into the ground',
+        // Not "spread and worked into the ground": a sawdust or compost top-dress on a
+        // perennial bed is surface-applied and deliberately NOT incorporated (2026-08-21).
+        description: 'Organic matter was added to the soil',
         impact: 'HIGH'
       },
       CC: {
@@ -1833,7 +1837,7 @@ export function getConsumerEventDescription(
         'Testing before feeding means only what the soil is short of gets added.';
     } else if (soilType === 'PA' || soilType.includes('pH')) {
       consumerImpact =
-        'Soil chemistry decides how much of what a farm applies the tree can actually take up.';
+        'Soil chemistry decides how much of what a farm applies the crop can actually take up.';
       sustainabilityBenefit =
         'The amendment, the amount and the area are on record, so the correction can be checked against the soil test that prompted it.';
     } else if (soilType === 'OM' || soilType.includes('Organic')) {
@@ -2759,11 +2763,21 @@ export function getConsumerEventDescription(
       //
       // So: say the farm RECORDED it, and explain what certification means in general. The
       // Verified / Self-Reported badge alongside carries the qualifier.
+      // ⛔ NOT "check it with the issuing body". The issuing body is DELIBERATELY withheld from
+      // the consumer payload — `verified_certifier_name` is farmer-typed free text and
+      // `public_certifier_name()` (history/serializers.py) suppresses it unless a USDA Organic
+      // Integrity Database match backs it (ECGT 2024/825, FTC 16 CFR 260.6). Telling a shopper
+      // to contact an issuer the page will not name is a promise the page cannot keep.
+      //
+      // The certificate NUMBER is published, and that is the checkable part.
       consumerImpact =
-        'The certificate number is published here so a buyer can check it with the issuing body instead of taking the farm at its word.';
+        'The certificate number is published here, so this is a claim a buyer can check rather than take on trust.';
     } else if (businessType === 'verification') {
+      // Same correction: the audit BODY is not on the wire for a consumer (see above), so the
+      // page cannot say it is "on record" for them. What is on record here is the farm's own
+      // account of the audit and its date, carrying the Self-Reported badge beside it.
       consumerImpact =
-        'The audit body and the date are on record, so a buyer can take it up with the issuer rather than with the farm.';
+        "The date and the farm's own account of the audit are on record here, labelled as the farm reported them.";
     } else if (businessType === 'transparency') {
       consumerImpact =
         'The record behind this crop is open for a buyer to read, not summarised for them.';

@@ -5,15 +5,26 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import theme from '../theme/theme';
-import { api } from '../store/api/api';
+// 🔴 2026-08-21 — was `import { api } from '../store/api/api'`, a module that does not exist.
+// Every suite importing this helper therefore died at IMPORT, so `Loader.test.tsx` and
+// `S3Image.test.tsx` — 11 cases between them — had been asserting nothing while the suite
+// reported green over the hole. Same shape as the dead typecheck gate and the blind lint gate:
+// a check that cannot run looks identical to a check that passes.
+//
+// The real slice is `baseApi`, and its `reducerPath` is 'baseApi' — the key below has to match
+// it, or RTK Query throws at store construction.
+import { baseApi } from '../store/api/baseApi';
 
 // Mock store for testing
 const createTestStore = (preloadedState = {}) => {
   return configureStore({
     reducer: {
-      api: api.reducer
+      // Keyed by `baseApi.reducerPath`, not a hand-typed 'api'. Every endpoint module in this
+      // codebase is `baseApi.injectEndpoints(...)`, which returns THE SAME instance, so one
+      // reducer and one middleware is the whole wiring (see the note in src/store/index).
+      [baseApi.reducerPath]: baseApi.reducer
     },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(baseApi.middleware),
     preloadedState
   });
 };

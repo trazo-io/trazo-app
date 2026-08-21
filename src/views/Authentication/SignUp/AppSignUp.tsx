@@ -11,9 +11,6 @@ import {
   Icon,
   Flex,
   Button,
-  InputGroup,
-  InputLeftElement,
-  InputRightElement,
   useColorModeValue,
   Checkbox,
   Stack,
@@ -51,6 +48,7 @@ import {
   handleSocialAuthError,
   checkSocialAuthConfig
 } from '../../../utils/socialAuth';
+import { StandardInput } from 'components/Design/StandardComponents';
 
 // No assets needed for minimalist design
 
@@ -471,7 +469,14 @@ const AppSignUp: React.FC = () => {
                   </Box>
                 )}
 
-                <form onSubmit={handleSubmit(onSubmit)}>
+                {/* A bare <form> has NO implicit `form` role until it carries an accessible
+                    name, so assistive tech announced this as an unlabelled group — on the
+                    first screen a farmer meets. Named from the same message that titles it. */}
+                <form
+                  onSubmit={handleSubmit(onSubmit)}
+                  aria-label={intl.formatMessage({
+                    id: joinExistingCompany ? 'auth.signup.title.join' : 'auth.signup.title.create'
+                  })}>
                   <VStack spacing={4}>
                     {/* Company Join Toggle with smooth animation */}
                     <MotionBox
@@ -584,43 +589,16 @@ const AppSignUp: React.FC = () => {
                             mb={1}>
                             Company Invitation Code
                           </Text>
-                          <Box
-                            as="input"
+                          <StandardInput
                             type="text"
                             placeholder={intl.formatMessage({
                               id: 'auth.signup.field.companyCode.placeholder',
                               defaultMessage: 'Enter 6-character company code'
                             })}
-                            w="full"
-                            h="44px"
-                            fontSize="sm"
-                            bg={useColorModeValue('gray.50', 'gray.900')}
-                            border="1px solid"
-                            borderColor={
-                              errors.company_code
-                                ? 'red.300'
-                                : focusedField === 'company_code'
-                                ? 'green.600'
-                                : useColorModeValue('gray.200', 'gray.600')
-                            }
-                            borderRadius="xl"
-                            px={4}
                             textTransform="uppercase"
                             letterSpacing="wide"
                             textAlign="center"
                             fontWeight="600"
-                            _hover={{
-                              borderColor: errors.company_code
-                                ? 'red.300'
-                                : useColorModeValue('gray.300', 'gray.500')
-                            }}
-                            _focus={{
-                              outline: 'none',
-                              borderColor: 'green.600',
-                              bg: useColorModeValue('white', 'gray.800'),
-                              boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                            }}
-                            transition="all 0.2s"
                             {...registerField('company_code', {
                               required: joinExistingCompany ? 'Company code is required' : false,
                               minLength: joinExistingCompany
@@ -662,7 +640,7 @@ const AppSignUp: React.FC = () => {
                             })}
                             onFocus={() => setFocusedField('company_code')}
                             onBlur={() => setFocusedField(null)}
-                            onChange={(e) => {
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               // Transform to uppercase and filter out invalid characters
                               const cleanValue = e.target.value
                                 .toUpperCase()
@@ -671,6 +649,7 @@ const AppSignUp: React.FC = () => {
                               e.target.value = cleanValue;
                               setValue('company_code', cleanValue, { shouldValidate: true });
                             }}
+                            isInvalid={!!errors.company_code}
                           />
                           {/* Company Code Validation Feedback */}
                           {isValidatingCode && joinExistingCompany && (
@@ -702,7 +681,7 @@ const AppSignUp: React.FC = () => {
                               </Text>
                             )}
                           {errors.company_code && (
-                            <Text fontSize="sm" color="red.500" mt={1}>
+                            <Text fontSize="sm" color="red.700" mt={1}>
                               {errors.company_code.message}
                             </Text>
                           )}
@@ -733,39 +712,17 @@ const AppSignUp: React.FC = () => {
                             defaultMessage: 'First Name'
                           })}
                         </Text>
-                        <Box
-                          as="input"
+                        <StandardInput
                           type="text"
                           placeholder={intl.formatMessage({
                             id: 'auth.signup.field.firstName.placeholder',
                             defaultMessage: 'First name'
                           })}
-                          w="full"
-                          h="44px"
-                          fontSize="sm"
-                          bg={useColorModeValue('gray.50', 'gray.900')}
-                          border="1px solid"
-                          borderColor={
-                            errors.first_name
-                              ? 'red.300'
-                              : focusedField === 'first_name'
-                              ? 'green.600'
-                              : useColorModeValue('gray.200', 'gray.600')
-                          }
-                          borderRadius="xl"
-                          px={4}
-                          _hover={{
-                            borderColor: errors.first_name
-                              ? 'red.300'
-                              : useColorModeValue('gray.300', 'gray.500')
-                          }}
-                          _focus={{
-                            outline: 'none',
-                            borderColor: 'green.600',
-                            bg: useColorModeValue('white', 'gray.800'),
-                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                          }}
-                          transition="all 0.2s"
+                          // The visible label above is a <Text>, not a <label>, so the accessible name has to
+                          // come from here — same intl id, one string.
+                          aria-label={intl.formatMessage({
+                            id: 'auth.signup.field.firstName.label'
+                          })}
                           {...registerField('first_name', {
                             required: intl.formatMessage({
                               id: 'auth.validation.firstName.required',
@@ -795,9 +752,10 @@ const AppSignUp: React.FC = () => {
                           })}
                           onFocus={() => setFocusedField('first_name')}
                           onBlur={() => setFocusedField(null)}
+                          isInvalid={!!errors.first_name}
                         />
                         {errors.first_name && (
-                          <Text fontSize="sm" color="red.500" mt={1}>
+                          <Text fontSize="sm" color="red.700" mt={1}>
                             {errors.first_name.message}
                           </Text>
                         )}
@@ -814,39 +772,17 @@ const AppSignUp: React.FC = () => {
                             defaultMessage: 'Last Name'
                           })}
                         </Text>
-                        <Box
-                          as="input"
+                        <StandardInput
                           type="text"
                           placeholder={intl.formatMessage({
                             id: 'auth.signup.field.lastName.placeholder',
                             defaultMessage: 'Last name'
                           })}
-                          w="full"
-                          h="44px"
-                          fontSize="sm"
-                          bg={useColorModeValue('gray.50', 'gray.900')}
-                          border="1px solid"
-                          borderColor={
-                            errors.last_name
-                              ? 'red.300'
-                              : focusedField === 'last_name'
-                              ? 'green.600'
-                              : useColorModeValue('gray.200', 'gray.600')
-                          }
-                          borderRadius="xl"
-                          px={4}
-                          _hover={{
-                            borderColor: errors.last_name
-                              ? 'red.300'
-                              : useColorModeValue('gray.300', 'gray.500')
-                          }}
-                          _focus={{
-                            outline: 'none',
-                            borderColor: 'green.600',
-                            bg: useColorModeValue('white', 'gray.800'),
-                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                          }}
-                          transition="all 0.2s"
+                          // The visible label above is a <Text>, not a <label>, so the accessible name has to
+                          // come from here — same intl id, one string.
+                          aria-label={intl.formatMessage({
+                            id: 'auth.signup.field.lastName.label'
+                          })}
                           {...registerField('last_name', {
                             required: intl.formatMessage({
                               id: 'auth.validation.lastName.required',
@@ -876,9 +812,10 @@ const AppSignUp: React.FC = () => {
                           })}
                           onFocus={() => setFocusedField('last_name')}
                           onBlur={() => setFocusedField(null)}
+                          isInvalid={!!errors.last_name}
                         />
                         {errors.last_name && (
-                          <Text fontSize="sm" color="red.500" mt={1}>
+                          <Text fontSize="sm" color="red.700" mt={1}>
                             {errors.last_name.message}
                           </Text>
                         )}
@@ -897,66 +834,41 @@ const AppSignUp: React.FC = () => {
                           defaultMessage: 'Business Email'
                         })}
                       </Text>
-                      <InputGroup size="lg">
-                        <InputLeftElement pointerEvents="none">
+                      <StandardInput
+                        type="email"
+                        placeholder={intl.formatMessage({
+                          id: 'auth.signup.field.email.placeholder',
+                          defaultMessage: 'Enter business email address'
+                        })}
+                        // The visible label above is a <Text>, not a <label>, so the accessible name has to
+                        // come from here — same intl id, one string.
+                        aria-label={intl.formatMessage({ id: 'auth.signup.field.email.label' })}
+                        {...registerField('email', {
+                          required: intl.formatMessage({
+                            id: 'auth.validation.email.required',
+                            defaultMessage: 'Email is required'
+                          }),
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: intl.formatMessage({
+                              id: 'auth.validation.email.invalid',
+                              defaultMessage: 'Enter a valid email address'
+                            })
+                          }
+                        })}
+                        onFocus={() => setFocusedField('email')}
+                        onBlur={() => setFocusedField(null)}
+                        isInvalid={!!errors.email}
+                        leftElement={
                           <Icon
                             as={FaEnvelope}
                             color={focusedField === 'email' ? 'green.500' : 'gray.400'}
                             transition="all 0.2s"
                           />
-                        </InputLeftElement>
-                        <Box
-                          as="input"
-                          type="email"
-                          placeholder={intl.formatMessage({
-                            id: 'auth.signup.field.email.placeholder',
-                            defaultMessage: 'Enter business email address'
-                          })}
-                          pl="3rem"
-                          w="full"
-                          h="44px"
-                          fontSize="sm"
-                          bg={useColorModeValue('gray.50', 'gray.900')}
-                          border="1px solid"
-                          borderColor={
-                            errors.email
-                              ? 'red.300'
-                              : focusedField === 'email'
-                              ? 'green.600'
-                              : useColorModeValue('gray.200', 'gray.600')
-                          }
-                          borderRadius="xl"
-                          _hover={{
-                            borderColor: errors.email
-                              ? 'red.300'
-                              : useColorModeValue('gray.300', 'gray.500')
-                          }}
-                          _focus={{
-                            outline: 'none',
-                            borderColor: 'green.600',
-                            bg: useColorModeValue('white', 'gray.800'),
-                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                          }}
-                          transition="all 0.2s"
-                          {...registerField('email', {
-                            required: intl.formatMessage({
-                              id: 'auth.validation.email.required',
-                              defaultMessage: 'Email is required'
-                            }),
-                            pattern: {
-                              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                              message: intl.formatMessage({
-                                id: 'auth.validation.email.invalid',
-                                defaultMessage: 'Enter a valid email address'
-                              })
-                            }
-                          })}
-                          onFocus={() => setFocusedField('email')}
-                          onBlur={() => setFocusedField(null)}
-                        />
-                      </InputGroup>
+                        }
+                      />
                       {errors.email && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.email.message}
                         </Text>
                       )}
@@ -974,72 +886,46 @@ const AppSignUp: React.FC = () => {
                           defaultMessage: 'Password'
                         })}
                       </Text>
-                      <InputGroup size="lg">
-                        <InputLeftElement pointerEvents="none">
+                      <StandardInput
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder={intl.formatMessage({
+                          id: 'auth.signup.field.password.placeholder',
+                          defaultMessage: 'Create secure password (8+ characters)'
+                        })}
+                        // The visible label above is a <Text>, not a <label>, so the accessible name has to
+                        // come from here — same intl id, one string.
+                        aria-label={intl.formatMessage({ id: 'auth.signup.field.password.label' })}
+                        {...registerField('password', {
+                          required: intl.formatMessage({
+                            id: 'auth.validation.password.required',
+                            defaultMessage: 'Password is required'
+                          }),
+                          minLength: {
+                            value: 8,
+                            message: intl.formatMessage({
+                              id: 'auth.validation.password.tooShort',
+                              defaultMessage: 'Password must be at least 8 characters'
+                            })
+                          },
+                          maxLength: {
+                            value: 32,
+                            message: intl.formatMessage({
+                              id: 'auth.validation.password.tooLong',
+                              defaultMessage: 'Password must be under 32 characters'
+                            })
+                          }
+                        })}
+                        onFocus={() => setFocusedField('password')}
+                        onBlur={() => setFocusedField(null)}
+                        isInvalid={!!errors.password}
+                        leftElement={
                           <Icon
                             as={FaLock}
                             color={focusedField === 'password' ? 'green.500' : 'gray.400'}
                             transition="all 0.2s"
                           />
-                        </InputLeftElement>
-                        <Box
-                          as="input"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder={intl.formatMessage({
-                            id: 'auth.signup.field.password.placeholder',
-                            defaultMessage: 'Create secure password (8+ characters)'
-                          })}
-                          pl="3rem"
-                          pr="3rem"
-                          w="full"
-                          h="44px"
-                          fontSize="sm"
-                          bg={useColorModeValue('gray.50', 'gray.900')}
-                          border="1px solid"
-                          borderColor={
-                            errors.password
-                              ? 'red.300'
-                              : focusedField === 'password'
-                              ? 'green.600'
-                              : useColorModeValue('gray.200', 'gray.600')
-                          }
-                          borderRadius="xl"
-                          _hover={{
-                            borderColor: errors.password
-                              ? 'red.300'
-                              : useColorModeValue('gray.300', 'gray.500')
-                          }}
-                          _focus={{
-                            outline: 'none',
-                            borderColor: 'green.600',
-                            bg: useColorModeValue('white', 'gray.800'),
-                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                          }}
-                          transition="all 0.2s"
-                          {...registerField('password', {
-                            required: intl.formatMessage({
-                              id: 'auth.validation.password.required',
-                              defaultMessage: 'Password is required'
-                            }),
-                            minLength: {
-                              value: 8,
-                              message: intl.formatMessage({
-                                id: 'auth.validation.password.tooShort',
-                                defaultMessage: 'Password must be at least 8 characters'
-                              })
-                            },
-                            maxLength: {
-                              value: 32,
-                              message: intl.formatMessage({
-                                id: 'auth.validation.password.tooLong',
-                                defaultMessage: 'Password must be under 32 characters'
-                              })
-                            }
-                          })}
-                          onFocus={() => setFocusedField('password')}
-                          onBlur={() => setFocusedField(null)}
-                        />
-                        <InputRightElement>
+                        }
+                        rightElement={
                           <Button
                             variant="ghost"
                             onClick={() => setShowPassword(!showPassword)}
@@ -1065,8 +951,8 @@ const AppSignUp: React.FC = () => {
                               transition="all 0.2s"
                             />
                           </Button>
-                        </InputRightElement>
-                      </InputGroup>
+                        }
+                      />
 
                       <PasswordStrengthIndicator
                         password={password || ''}
@@ -1079,7 +965,7 @@ const AppSignUp: React.FC = () => {
                       />
 
                       {errors.password && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.password.message}
                         </Text>
                       )}
@@ -1097,62 +983,36 @@ const AppSignUp: React.FC = () => {
                           defaultMessage: 'Confirm Password'
                         })}
                       </Text>
-                      <InputGroup size="lg">
-                        <InputLeftElement pointerEvents="none">
+                      <StandardInput
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        placeholder={intl.formatMessage({
+                          id: 'auth.signup.field.confirmPassword.placeholder',
+                          defaultMessage: 'Confirm your password'
+                        })}
+                        // The visible label above is a <Text>, not a <label>, so the accessible name has to
+                        // come from here — same intl id, one string.
+                        aria-label={intl.formatMessage({
+                          id: 'auth.signup.field.confirmPassword.label'
+                        })}
+                        {...registerField('password2', {
+                          required: intl.formatMessage({
+                            id: 'auth.validation.confirmPassword.required',
+                            defaultMessage: 'Please confirm your password'
+                          }),
+                          validate: (value: string) =>
+                            value === password || 'Passwords do not match'
+                        })}
+                        onFocus={() => setFocusedField('password2')}
+                        onBlur={() => setFocusedField(null)}
+                        isInvalid={!!errors.password2}
+                        leftElement={
                           <Icon
                             as={FaLock}
                             color={focusedField === 'password2' ? 'green.500' : 'gray.400'}
                             transition="all 0.2s"
                           />
-                        </InputLeftElement>
-                        <Box
-                          as="input"
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          placeholder={intl.formatMessage({
-                            id: 'auth.signup.field.confirmPassword.placeholder',
-                            defaultMessage: 'Confirm your password'
-                          })}
-                          pl="3rem"
-                          pr="3rem"
-                          w="full"
-                          h="44px"
-                          fontSize="sm"
-                          bg={useColorModeValue('gray.50', 'gray.900')}
-                          border="1px solid"
-                          borderColor={
-                            errors.password2
-                              ? 'red.300'
-                              : password2 && password !== password2
-                              ? 'red.300'
-                              : focusedField === 'password2'
-                              ? 'green.600'
-                              : useColorModeValue('gray.200', 'gray.600')
-                          }
-                          borderRadius="xl"
-                          _hover={{
-                            borderColor: errors.password2
-                              ? 'red.300'
-                              : useColorModeValue('gray.300', 'gray.500')
-                          }}
-                          _focus={{
-                            outline: 'none',
-                            borderColor: 'green.600',
-                            bg: useColorModeValue('white', 'gray.800'),
-                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                          }}
-                          transition="all 0.2s"
-                          {...registerField('password2', {
-                            required: intl.formatMessage({
-                              id: 'auth.validation.confirmPassword.required',
-                              defaultMessage: 'Please confirm your password'
-                            }),
-                            validate: (value: string) =>
-                              value === password || 'Passwords do not match'
-                          })}
-                          onFocus={() => setFocusedField('password2')}
-                          onBlur={() => setFocusedField(null)}
-                        />
-                        <InputRightElement>
+                        }
+                        rightElement={
                           <Button
                             variant="ghost"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -1178,8 +1038,8 @@ const AppSignUp: React.FC = () => {
                               transition="all 0.2s"
                             />
                           </Button>
-                        </InputRightElement>
-                      </InputGroup>
+                        }
+                      />
 
                       {/* Password Match Indicator */}
                       {password2 && (
@@ -1194,7 +1054,7 @@ const AppSignUp: React.FC = () => {
                       )}
 
                       {errors.password2 && !password2 && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.password2.message}
                         </Text>
                       )}
@@ -1258,7 +1118,7 @@ const AppSignUp: React.FC = () => {
                         </Text>
                       </Checkbox>
                       {errors.acceptTerms && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.acceptTerms.message}
                         </Text>
                       )}
@@ -1431,7 +1291,7 @@ const AppSignUp: React.FC = () => {
                   onClick={handleBackToSignup}
                   color={useColorModeValue('gray.600', 'gray.400')}
                   _hover={{ color: useColorModeValue('gray.800', 'white') }}>
-                  Back to signup
+                  {intl.formatMessage({ id: 'auth.backToSignUp' })}
                 </Button>
               </HStack>
 

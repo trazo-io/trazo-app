@@ -10,6 +10,15 @@
  * event wizard reopened. A correction is a small, deliberate, explained act, and making
  * it look like ordinary editing would invite exactly the quiet rewriting the lock exists
  * to prevent. The reason is required and the copy says why: it is what an inspector reads.
+ *
+ * 🔴 2026-08-21 (F7) — the same modal now corrects the SEASON HEADER. Pass `productionId`
+ * instead of `eventId`/`eventType`. The header (`production_amount`, `lot_id`,
+ * `quality_grade`, `harvest_method`) is frozen by the closed-record guard once a season is
+ * finished and had NO correction path, while every event underneath it did — so a farmer
+ * who finished with the wrong yield could neither edit it (the API answers 423) nor amend
+ * it, and the only repair was a developer with ORM access. Deliberately the same component
+ * and the same corrections table, not a twin: the act is identical and the packet prints
+ * both in one list.
  */
 import { useMemo, useState } from 'react';
 import {
@@ -23,9 +32,6 @@ import {
   VStack,
   HStack,
   Text,
-  Select,
-  Input,
-  Textarea,
   FormControl,
   FormLabel,
   FormHelperText,
@@ -37,8 +43,18 @@ import {
 import { FaExchangeAlt } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardButton } from 'components/Design/StandardComponents';
-import { useAmendEventMutation, useGetEventAmendmentsQuery } from 'store/api/amendmentsApi';
+import {
+  StandardButton,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
+import {
+  useAmendEventMutation,
+  useAmendSeasonMutation,
+  useGetEventAmendmentsQuery,
+  useGetSeasonAmendmentsQuery
+} from 'store/api/amendmentsApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface Props {
@@ -46,10 +62,19 @@ interface Props {
   onClose: () => void;
   eventId?: number;
   eventType?: number;
+  /** Season-header mode (F7). Mutually exclusive with eventId/eventType. */
+  productionId?: string;
   onCorrected?: () => void;
 }
 
-export const CorrectRecordModal = ({ isOpen, onClose, eventId, eventType, onCorrected }: Props) => {
+export const CorrectRecordModal = ({
+  isOpen,
+  onClose,
+  eventId,
+  eventType,
+  productionId,
+  onCorrected
+}: Props) => {
   const intl = useIntl();
   const toast = useToast();
   const [fieldName, setFieldName] = useState('');
@@ -57,17 +82,34 @@ export const CorrectRecordModal = ({ isOpen, onClose, eventId, eventType, onCorr
   const [reason, setReason] = useState('');
   const [showAllFields, setShowAllFields] = useState(false);
 
-  const { data, isLoading } = useGetEventAmendmentsQuery(
-    { eventId: eventId as number, eventType: eventType as number },
-    { skip: !isOpen || eventId == null || eventType == null }
-  );
-  const [amendEvent, { isLoading: isSaving }] = useAmendEventMutation();
+  // An explicit event target wins; header mode is the fallback so a caller that passes both
+  // by accident corrects the record it named, not the season around it.
+  const isSeasonHeader = eventId == null && eventType == null && !!productionId;
 
-  // Primary list is what the record actually carries; the rest are behind a toggle.
+  const { data: eventData, isLoading: isLoadingEvent } = useGetEventAmendmentsQuery(
+    { eventId: eventId as number, eventType: eventType as number },
+    { skip: !isOpen || isSeasonHeader || eventId == null || eventType == null }
+  );
+  const { data: seasonData, isLoading: isLoadingSeason } = useGetSeasonAmendmentsQuery(
+    productionId as string,
+    { skip: !isOpen || !isSeasonHeader }
+  );
+  const [amendEvent, { isLoading: isSavingEvent }] = useAmendEventMutation();
+  const [amendSeason, { isLoading: isSavingSeason }] = useAmendSeasonMutation();
+
+  const data = isSeasonHeader ? seasonData : eventData;
+  const isLoading = isSeasonHeader ? isLoadingSeason : isLoadingEvent;
+  const isSaving = isSeasonHeader ? isSavingSeason : isSavingEvent;
+
+  // Primary list is what the record actually carries; the rest are behind a toggle. The
+  // season header has no blank/secondary split — it is five fields, all of them the lot's
+  // identity, and hiding any of them behind "show all" would hide the one that is wrong.
+  const blankFields: { name: string; label: string; current_value: unknown }[] = isSeasonHeader
+    ? []
+    : eventData?.blank_fields ?? [];
   const visibleFields = useMemo(
-    () =>
-      showAllFields ? [...(data?.fields ?? []), ...(data?.blank_fields ?? [])] : data?.fields ?? [],
-    [data, showAllFields]
+    () => (showAllFields ? [...(data?.fields ?? []), ...blankFields] : data?.fields ?? []),
+    [data, blankFields, showAllFields]
   );
 
   const selected = useMemo(
@@ -88,15 +130,25 @@ export const CorrectRecordModal = ({ isOpen, onClose, eventId, eventType, onCorr
   };
 
   const handleSubmit = async () => {
-    if (!fieldName || !reason.trim() || eventId == null || eventType == null) return;
+    if (!fieldName || !reason.trim()) return;
+    if (!isSeasonHeader && (eventId == null || eventType == null)) return;
     try {
-      await amendEvent({
-        eventId,
-        eventType,
-        field_name: fieldName,
-        new_value: newValue,
-        reason: reason.trim()
-      }).unwrap();
+      if (isSeasonHeader) {
+        await amendSeason({
+          productionId: productionId as string,
+          field_name: fieldName,
+          new_value: newValue,
+          reason: reason.trim()
+        }).unwrap();
+      } else {
+        await amendEvent({
+          eventId: eventId as number,
+          eventType: eventType as number,
+          field_name: fieldName,
+          new_value: newValue,
+          reason: reason.trim()
+        }).unwrap();
+      }
       toast({
         title: intl.formatMessage({ id: 'correct.toast.savedTitle' }),
         description: intl.formatMessage({ id: 'correct.toast.savedBody' }),
@@ -135,7 +187,11 @@ export const CorrectRecordModal = ({ isOpen, onClose, eventId, eventType, onCorr
             <Box p={2} borderRadius="lg" bg="green.50">
               <Icon as={FaExchangeAlt} boxSize={5} color="green.700" />
             </Box>
-            <Text>{intl.formatMessage({ id: 'correct.title' })}</Text>
+            <Text>
+              {intl.formatMessage({
+                id: isSeasonHeader ? 'correct.season.title' : 'correct.title'
+              })}
+            </Text>
           </HStack>
         </ModalHeader>
         <ModalCloseButton />
@@ -143,14 +199,16 @@ export const CorrectRecordModal = ({ isOpen, onClose, eventId, eventType, onCorr
         <ModalBody>
           <VStack align="stretch" spacing={4}>
             <Text fontSize="sm" color="gray.600">
-              {intl.formatMessage({ id: 'correct.intro' })}
+              {intl.formatMessage({
+                id: isSeasonHeader ? 'correct.season.intro' : 'correct.intro'
+              })}
             </Text>
 
             <FormControl isRequired>
               <FormLabel fontSize="sm">
                 {intl.formatMessage({ id: 'correct.field.label' })}
               </FormLabel>
-              <Select
+              <StandardSelect
                 placeholder={intl.formatMessage({ id: 'correct.field.placeholder' })}
                 value={fieldName}
                 isDisabled={isLoading}
@@ -163,8 +221,8 @@ export const CorrectRecordModal = ({ isOpen, onClose, eventId, eventType, onCorr
                     {f.label}
                   </option>
                 ))}
-              </Select>
-              {!showAllFields && !!data?.blank_fields?.length && (
+              </StandardSelect>
+              {!showAllFields && !!blankFields.length && (
                 <FormHelperText fontSize="xs">
                   {/* Button, not Link: Chakra's Link renders an <a> and this one has no
                       href, so it would be unreachable by keyboard. It is a control, not
@@ -177,7 +235,7 @@ export const CorrectRecordModal = ({ isOpen, onClose, eventId, eventType, onCorr
                     onClick={() => setShowAllFields(true)}>
                     {intl.formatMessage(
                       { id: 'correct.field.showAll' },
-                      { count: data.blank_fields.length }
+                      { count: blankFields.length }
                     )}
                   </Button>
                 </FormHelperText>
@@ -204,14 +262,14 @@ export const CorrectRecordModal = ({ isOpen, onClose, eventId, eventType, onCorr
 
             <FormControl isRequired isDisabled={!fieldName}>
               <FormLabel fontSize="sm">{intl.formatMessage({ id: 'correct.new.label' })}</FormLabel>
-              <Input value={newValue} onChange={(e) => setNewValue(e.target.value)} />
+              <StandardInput value={newValue} onChange={(e) => setNewValue(e.target.value)} />
             </FormControl>
 
             <FormControl isRequired>
               <FormLabel fontSize="sm">
                 {intl.formatMessage({ id: 'correct.reason.label' })}
               </FormLabel>
-              <Textarea
+              <StandardTextarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}

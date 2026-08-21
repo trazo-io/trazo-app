@@ -203,8 +203,12 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
                 <Text fontSize="xs" color={mutedColor} mt={2}>
                   {intl.formatMessage({
                     id: 'consumer.farm.approximateAreaNote',
+                    // ⛔ NOT "the farmer chose not to share". `location_disclosure_level`
+                    // DEFAULTS to 'approximate' (product/models.py), so this line was
+                    // attributing a deliberate decision to a grower who never made one — on a
+                    // public page, about their own conduct. State the fact instead.
                     defaultMessage:
-                      'Approximate area — the farmer chose not to share the exact field location.'
+                      'Approximate area. The exact field boundary is not shown publicly.'
                   })}
                 </Text>
               )}

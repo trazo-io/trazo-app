@@ -66,7 +66,12 @@ const FAMILIES: Array<{ name: string; event: Record<string, unknown> }> = [
   },
   {
     name: 'general',
-    event: { event_type: 3, date: '2026-06-01T09:00:00Z', description: 'Fence repair', activity_type: 'maintenance' }
+    event: {
+      event_type: 3,
+      date: '2026-06-01T09:00:00Z',
+      description: 'Fence repair',
+      activity_type: 'maintenance'
+    }
   },
   {
     name: 'soil',

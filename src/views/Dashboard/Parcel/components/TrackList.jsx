@@ -6,7 +6,6 @@ import {
   Icon,
   Menu,
   MenuButton,
-  MenuItem,
   MenuList,
   Text,
   useColorModeValue,
@@ -55,6 +54,7 @@ import { useUserRole } from 'hooks/useUserRole';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody.tsx';
 import CardHeader from 'components/Card/CardHeader.tsx';
+import { StandardMenuItem } from 'components/Design/StandardComponents';
 
 const TrackList = ({ amount }) => {
   const textColor = useColorModeValue('gray.700', 'white');
@@ -222,31 +222,25 @@ const TrackList = ({ amount }) => {
                   <Icon as={IoEllipsisVerticalSharp} color="gray.400" w="20px" h="20px" />
                 </MenuButton>
                 <MenuList>
-                  <MenuItem
-                    py={3}
+                  <StandardMenuItem
                     onClick={() =>
                       navigate(
                         `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/change`
                       )
                     }>
-                    <Flex color={textColor} cursor="pointer" align="center" p="4px">
-                      <Text fontSize="sm" fontWeight="500">
-                        {intl.formatMessage({ id: 'app.edit' }).toUpperCase()}
-                      </Text>
-                    </Flex>
-                  </MenuItem>
-                  <MenuItem
-                    py={3}
+                    {/* No `.toUpperCase()`. That uppercased the TRANSLATED string in
+                        JavaScript, so the label could not be authored per locale, and it made
+                        this the only menu in the app shouting at the farmer. */}
+                    {intl.formatMessage({ id: 'app.edit' })}
+                  </StandardMenuItem>
+                  <StandardMenuItem
+                    isDestructive
                     onClick={() => {
                       onClose1();
                       onDeleteOpen();
                     }}>
-                    <Flex color="red.500" cursor="pointer" align="center" p="4px">
-                      <Text fontSize="sm" fontWeight="500">
-                        {intl.formatMessage({ id: 'app.delete' }).toUpperCase()}
-                      </Text>
-                    </Flex>
-                  </MenuItem>
+                    {intl.formatMessage({ id: 'app.delete' })}
+                  </StandardMenuItem>
                 </MenuList>
               </Menu>
             )}

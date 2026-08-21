@@ -192,7 +192,21 @@ export const badgeStyles = {
         })
       },
       baseStyle: {
-        textTransform: 'capitalize',
+        /*
+         * Render the label as the author wrote it. `capitalize` was here, and because it lives
+         * in baseStyle it reached every badge whose variant did not explicitly opt out — which
+         * in practice meant the solid green `brand` ones. Two consequences, both real:
+         *
+         * 1. One i18n string rendered two ways depending on a colour prop. The certifier badge
+         *    is authored "Certifier record"; on a green palette it came out "Certifier Record",
+         *    on a tinted one "Certifier record". Same string, same screen.
+         * 2. `capitalize` title-cases EVERY word, so es-419's "Registro para el certificador"
+         *    became "Registro Para El Certificador" — not correct Spanish. English hid this.
+         *
+         * Checked before removing: of 103 badge/status i18n keys only 6 start lowercase, and
+         * all 6 are `osp.status.phrase.*`, which are used inside sentences, not in badges.
+         */
+        textTransform: 'none',
         borderRadius: '6px',
         px: 2,
         py: 1,

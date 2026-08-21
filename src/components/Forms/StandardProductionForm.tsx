@@ -4,18 +4,12 @@ import {
   HStack,
   SimpleGrid,
   Switch,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   useToast,
   Text,
   Icon,
   Box,
   Badge,
   Divider,
-  Input,
   InputGroup,
   InputLeftElement,
   Grid,
@@ -62,6 +56,7 @@ import {
   FaCoffee
 } from 'react-icons/fa';
 import { MdLocalFlorist, MdHome, MdGrass, MdFilterVintage, MdVerified } from 'react-icons/md';
+import { StandardNumberInput } from 'components/Design/StandardComponents';
 
 // Form Schema
 const productionSchema = object({
@@ -773,13 +768,13 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                 {/* Navigation */}
                 <HStack spacing={3} justify="flex-end" pt={4}>
                   <StandardButton variant="outline" onClick={onCancel}>
-                    Cancel
+                    {intl.formatMessage({ id: 'app.cancel' })}
                   </StandardButton>
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
                     disabled={!isStepComplete(0)}>
-                    Continue to Details
+                    {intl.formatMessage({ id: 'app.continue' })}
                   </StandardButton>
                 </HStack>
               </VStack>
@@ -798,12 +793,11 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   required
                   error={errors.date?.message}
                   helpText="When did this production start?">
-                  <Input
+                  <StandardInput
                     {...methods.register('date', {
                       required: 'Production date is required'
                     })}
                     type="datetime-local"
-                    borderRadius="lg"
                     onChange={(e) => {
                       console.log('Date field onChange:', {
                         value: e.target.value,
@@ -869,18 +863,18 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    Back to Product
+                    {intl.formatMessage({ id: 'common.back' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
                     <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
                       disabled={!isStepComplete(1)}>
-                      Continue to Details
+                      {intl.formatMessage({ id: 'app.continue' })}
                     </StandardButton>
                   </HStack>
                 </HStack>
@@ -1015,11 +1009,10 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                 <StandardField
                   label="Expected Harvest Date"
                   helpText="Estimated completion date for production planning">
-                  <Input
+                  <StandardInput
                     type="date"
                     value={watch('expectedHarvest') || ''}
                     onChange={(e) => setValue('expectedHarvest', e.target.value)}
-                    borderRadius="lg"
                   />
                 </StandardField>
 
@@ -1027,16 +1020,12 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                 <StandardField
                   label="Estimated Yield"
                   helpText="Expected production volume (optional, for carbon calculations)">
-                  <NumberInput
+                  <StandardNumberInput
                     value={watch('estimatedYield') || 0}
                     onChange={(_, num) => setValue('estimatedYield', num || 0)}
-                    min={0}>
-                    <NumberInputField borderRadius="lg" placeholder="e.g., 1000 (lbs, kg, units)" />
-                    <NumberInputStepper>
-                      <NumberIncrementStepper />
-                      <NumberDecrementStepper />
-                    </NumberInputStepper>
-                  </NumberInput>
+                    min={0}
+                    placeholder="e.g., 1000 (lbs, kg, units)"
+                  />
                 </StandardField>
 
                 {/* Sustainability Preview */}
@@ -1088,12 +1077,12 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    Back to Enhanced Tracking
+                    {intl.formatMessage({ id: 'common.back' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
                     <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                     <StandardButton
                       type="submit"
@@ -1132,34 +1121,26 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                     label="Age of Plants (days)"
                     error={errors.ageOfPlants?.message}
                     helpText="How old are the plants? 0 for new plantings">
-                    <NumberInput
+                    <StandardNumberInput
                       value={watch('ageOfPlants') || 0}
                       onChange={(_, num) => setValue('ageOfPlants', num || 0)}
                       min={0}
-                      max={1000}>
-                      <NumberInputField borderRadius="lg" placeholder="0 (new planting)" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
+                      max={1000}
+                      placeholder="0 (new planting)"
+                    />
                   </StandardField>
 
                   <StandardField
                     label="Number of Plants"
                     error={errors.numberOfPlants?.message}
                     helpText="Approximate plant count (can be updated later)">
-                    <NumberInput
+                    <StandardNumberInput
                       value={watch('numberOfPlants') || 0}
                       onChange={(_, num) => setValue('numberOfPlants', num || 0)}
                       min={0}
-                      max={100000}>
-                      <NumberInputField borderRadius="lg" placeholder="Enter approximate count" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
+                      max={100000}
+                      placeholder="Enter approximate count"
+                    />
                   </StandardField>
                 </SimpleGrid>
 
@@ -1169,20 +1150,15 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   error={errors.soilPh?.message}
                   helpText="Soil acidity/alkalinity level. 7.0 is neutral (default)">
                   <HStack spacing={4}>
-                    <NumberInput
+                    <StandardNumberInput
                       value={watch('soilPh') || 7.0}
                       onChange={(_, num) => setValue('soilPh', num || 7.0)}
                       min={1}
                       max={14}
                       step={0.1}
                       precision={1}
-                      flex={1}>
-                      <NumberInputField borderRadius="lg" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
+                      flex={1}
+                    />
 
                     {/* pH Quick Buttons */}
                     <HStack spacing={2}>
@@ -1302,12 +1278,12 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    Back to Enhanced Tracking
+                    {intl.formatMessage({ id: 'common.back' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
                     <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                     <StandardButton
                       type="submit"

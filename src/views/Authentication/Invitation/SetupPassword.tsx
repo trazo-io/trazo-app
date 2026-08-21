@@ -8,10 +8,6 @@ import {
   VStack,
   HStack,
   Icon,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  InputRightElement,
   useToast,
   Progress,
   useColorModeValue,
@@ -34,7 +30,12 @@ import { HiOfficeBuilding } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import AuthFooter from 'components/Footer/AuthFooter';
-import { StandardField, StandardInput, StandardButton } from 'components/Design/StandardComponents';
+import {
+  StandardField,
+  StandardInput,
+  StandardButton,
+  registerWithFocus
+} from 'components/Design/StandardComponents';
 import { passwordValidator } from 'utils/passwordValidation';
 import { PasswordStrengthIndicator } from 'components/Forms/PasswordStrengthIndicator';
 import {
@@ -766,46 +767,21 @@ const SetupPassword: React.FC = () => {
                         mb={2}>
                         First Name
                       </Text>
-                      <Box
-                        as="input"
+                      <StandardInput
                         type="text"
                         placeholder="John"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.first_name
-                            ? 'red.300'
-                            : focusedField === 'first_name'
-                            ? 'green.500'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        px={4}
-                        _hover={{
-                          borderColor: errors.first_name
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'green.500',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...register('first_name', {
-                          required: 'First name is required',
-                          minLength: { value: 2, message: 'First name too short' },
-                          maxLength: { value: 50, message: 'First name too long' }
-                        })}
-                        onFocus={() => setFocusedField('first_name')}
-                        onBlur={() => setFocusedField(null)}
+                        {...registerWithFocus(
+                          register('first_name', {
+                            required: 'First name is required',
+                            minLength: { value: 2, message: 'First name too short' },
+                            maxLength: { value: 50, message: 'First name too long' }
+                          }),
+                          setFocusedField
+                        )}
+                        isInvalid={!!errors.first_name}
                       />
                       {errors.first_name && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.first_name.message}
                         </Text>
                       )}
@@ -819,46 +795,21 @@ const SetupPassword: React.FC = () => {
                         mb={2}>
                         Last Name
                       </Text>
-                      <Box
-                        as="input"
+                      <StandardInput
                         type="text"
                         placeholder="Doe"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.last_name
-                            ? 'red.300'
-                            : focusedField === 'last_name'
-                            ? 'green.500'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        px={4}
-                        _hover={{
-                          borderColor: errors.last_name
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'green.500',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...register('last_name', {
-                          required: 'Last name is required',
-                          minLength: { value: 2, message: 'Last name too short' },
-                          maxLength: { value: 50, message: 'Last name too long' }
-                        })}
-                        onFocus={() => setFocusedField('last_name')}
-                        onBlur={() => setFocusedField(null)}
+                        {...registerWithFocus(
+                          register('last_name', {
+                            required: 'Last name is required',
+                            minLength: { value: 2, message: 'Last name too short' },
+                            maxLength: { value: 50, message: 'Last name too long' }
+                          }),
+                          setFocusedField
+                        )}
+                        isInvalid={!!errors.last_name}
                       />
                       {errors.last_name && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.last_name.message}
                         </Text>
                       )}
@@ -874,61 +825,33 @@ const SetupPassword: React.FC = () => {
                       mb={2}>
                       Password
                     </Text>
-                    <InputGroup size="lg">
-                      <InputLeftElement pointerEvents="none">
+                    <StandardInput
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Create a strong password"
+                      {...registerWithFocus(
+                        register('password', {
+                          required: 'Password is required',
+                          minLength: { value: 8, message: 'Password must be at least 8 characters' }
+                        }),
+                        setFocusedField
+                      )}
+                      isInvalid={!!errors.password}
+                      leftElement={
                         <Icon
                           as={FiLock}
                           color={focusedField === 'password' ? 'green.500' : 'gray.400'}
                           transition="all 0.2s"
                         />
-                      </InputLeftElement>
-                      <Box
-                        as="input"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Create a strong password"
-                        pl="3rem"
-                        pr="3rem"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.password
-                            ? 'red.300'
-                            : focusedField === 'password'
-                            ? 'green.500'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        _hover={{
-                          borderColor: errors.password
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'green.500',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...register('password', {
-                          required: 'Password is required',
-                          minLength: { value: 8, message: 'Password must be at least 8 characters' }
-                        })}
-                        onFocus={() => setFocusedField('password')}
-                        onBlur={() => setFocusedField(null)}
-                      />
-                      <InputRightElement>
+                      }
+                      rightElement={
                         <Button
                           variant="ghost"
                           onClick={() => setShowPassword(!showPassword)}
                           size="sm">
                           <Icon as={showPassword ? FiEyeOff : FiEye} />
                         </Button>
-                      </InputRightElement>
-                    </InputGroup>
+                      }
+                    />
 
                     <PasswordStrengthIndicator
                       password={password || ''}
@@ -940,7 +863,7 @@ const SetupPassword: React.FC = () => {
                     />
 
                     {errors.password && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
+                      <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.password.message}
                       </Text>
                     )}
@@ -955,62 +878,32 @@ const SetupPassword: React.FC = () => {
                       mb={2}>
                       Confirm Password
                     </Text>
-                    <InputGroup size="lg">
-                      <InputLeftElement pointerEvents="none">
+                    <StandardInput
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Confirm your password"
+                      {...registerWithFocus(
+                        register('password_confirm', {
+                          required: 'Please confirm your password'
+                        }),
+                        setFocusedField
+                      )}
+                      isInvalid={!!errors.password_confirm}
+                      leftElement={
                         <Icon
                           as={FiLock}
                           color={focusedField === 'password_confirm' ? 'green.500' : 'gray.400'}
                           transition="all 0.2s"
                         />
-                      </InputLeftElement>
-                      <Box
-                        as="input"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Confirm your password"
-                        pl="3rem"
-                        pr="3rem"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.password_confirm
-                            ? 'red.300'
-                            : passwordConfirm && password !== passwordConfirm
-                            ? 'red.300'
-                            : focusedField === 'password_confirm'
-                            ? 'green.500'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        _hover={{
-                          borderColor: errors.password_confirm
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'green.500',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...register('password_confirm', {
-                          required: 'Please confirm your password'
-                        })}
-                        onFocus={() => setFocusedField('password_confirm')}
-                        onBlur={() => setFocusedField(null)}
-                      />
-                      <InputRightElement>
+                      }
+                      rightElement={
                         <Button
                           variant="ghost"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           size="sm">
                           <Icon as={showConfirmPassword ? FiEyeOff : FiEye} />
                         </Button>
-                      </InputRightElement>
-                    </InputGroup>
+                      }
+                    />
 
                     {/* Password Match Indicator */}
                     {passwordConfirm && (
@@ -1025,7 +918,7 @@ const SetupPassword: React.FC = () => {
                     )}
 
                     {errors.password_confirm && !passwordConfirm && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
+                      <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.password_confirm.message}
                       </Text>
                     )}
@@ -1070,7 +963,7 @@ const SetupPassword: React.FC = () => {
                       </Text>
                     </Checkbox>
                     {errors.acceptTerms && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
+                      <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.acceptTerms.message}
                       </Text>
                     )}

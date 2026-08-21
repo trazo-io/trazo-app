@@ -136,17 +136,15 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
   };
 
   return (
-    <SectionBox variant="default">
+    <SectionBox>
       <VStack spacing={4} align="stretch">
         {/* Section Header */}
         {/* Custom fields ARE in the packet — the "Additional Farmer-Recorded Data" section
             renders them for the certifier. Without a badge this read as scratch space. */}
         <SectionHeader
           icon={FaFileAlt}
-          iconColor="green.500"
           title="Additional Information"
           badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-          badgeColorScheme="green"
         />
 
         {/* Custom Fields - Stacked Card Layout */}
@@ -210,7 +208,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
             bg={useColorModeValue('gray.50', 'gray.700')}
             borderLeft="4px"
             borderLeftColor="green.400">
-            <Text color="gray.500" fontSize="sm">
+            <Text color="gray.600" fontSize="sm">
               Add custom fields to document additional farming practices
             </Text>
           </Box>
@@ -303,7 +301,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
                 {/* Action Buttons */}
                 <HStack spacing={3} justify="flex-end" pt={2}>
                   <StandardButton variant="outline" onClick={handleCancelAdd} size="md">
-                    Cancel
+                    {intl.formatMessage({ id: 'app.cancel' })}
                   </StandardButton>
                   <StandardButton variant="primary" onClick={handleSubmit(onSubmit)} size="md">
                     Add Field

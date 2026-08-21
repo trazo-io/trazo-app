@@ -1,7 +1,9 @@
 import { Box, Button, Flex, Heading, Text, useColorModeValue } from '@chakra-ui/react';
+import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 
 export default function VerifyEmailConsumer() {
+  const intl = useIntl();
   const navigate = useNavigate();
   const textColor = useColorModeValue('gray.700', 'white');
 
@@ -27,7 +29,7 @@ export default function VerifyEmailConsumer() {
         h="50"
         mb="24px"
         onClick={() => navigate('/auth/signin')}>
-        Back to Sign In
+        {intl.formatMessage({ id: 'auth.backToSignIn' })}
       </Button>
     </Flex>
   );

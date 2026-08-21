@@ -6,8 +6,6 @@ import {
   FormControl,
   FormLabel,
   Heading,
-  Input,
-  Select,
   Stack,
   Table,
   Tbody,
@@ -33,6 +31,7 @@ import { useForm } from 'react-hook-form';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
+import { StandardInput, StandardSelect } from 'components/Design/StandardComponents';
 
 const CarbonReportTab = ({ farmId }) => {
   const toast = useToast();
@@ -121,7 +120,7 @@ const CarbonReportTab = ({ farmId }) => {
         <CardHeader>
           <Flex justify="space-between" align="center">
             <Heading size="sm">Historial de Reportes</Heading>
-            <Select
+            <StandardSelect
               w="200px"
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}>
@@ -130,7 +129,7 @@ const CarbonReportTab = ({ farmId }) => {
                   {year}
                 </option>
               ))}
-            </Select>
+            </StandardSelect>
           </Flex>
         </CardHeader>
         <CardBody>
@@ -202,7 +201,7 @@ const CarbonReportTab = ({ farmId }) => {
               <Stack spacing={4}>
                 <FormControl isRequired>
                   <FormLabel>Año</FormLabel>
-                  <Input
+                  <StandardInput
                     type="number"
                     {...register('year', { valueAsNumber: true })}
                     min={2000}
@@ -212,26 +211,26 @@ const CarbonReportTab = ({ farmId }) => {
 
                 <FormControl isRequired>
                   <FormLabel>Tipo de Reporte</FormLabel>
-                  <Select {...register('reportType')}>
+                  <StandardSelect {...register('reportType')}>
                     <option value="annual">Anual</option>
                     <option value="quarterly">Trimestral</option>
                     <option value="custom">Personalizado</option>
-                  </Select>
+                  </StandardSelect>
                 </FormControl>
 
                 <FormControl>
                   <FormLabel>Trimestre</FormLabel>
-                  <Select {...register('quarter', { valueAsNumber: true })}>
+                  <StandardSelect {...register('quarter', { valueAsNumber: true })}>
                     <option value={1}>Q1</option>
                     <option value={2}>Q2</option>
                     <option value={3}>Q3</option>
                     <option value={4}>Q4</option>
-                  </Select>
+                  </StandardSelect>
                 </FormControl>
 
                 <FormControl>
                   <FormLabel>Documento (opcional)</FormLabel>
-                  <Input
+                  <StandardInput
                     type="file"
                     {...register('document')}
                     onChange={(e) => {

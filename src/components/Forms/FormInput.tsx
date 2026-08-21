@@ -1,12 +1,7 @@
 import { Controller, useFormContext } from 'react-hook-form';
 // Chakra imports
-import {
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Input,
-  useColorModeValue
-} from '@chakra-ui/react';
+import { FormControl, FormErrorMessage, FormLabel, useColorModeValue } from '@chakra-ui/react';
+import { StandardInput } from 'components/Design/StandardComponents';
 
 type FormInputProps = {
   name: string;
@@ -40,15 +35,12 @@ const FormInput = ({ name, label, placeholder, disabled, ...otherProps }: FormIn
               {label}
             </FormLabel>
           )}
-          <Input
+          <StandardInput
             {...field}
-            fontSize="sm"
             ms="4px"
             mb="0px"
-            borderRadius="15px"
             type="text"
             placeholder={placeholder}
-            size="md"
             disabled={disabled}
             {...otherProps}
           />

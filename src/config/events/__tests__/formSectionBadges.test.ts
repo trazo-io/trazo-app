@@ -226,7 +226,9 @@ describe('event form section badges', () => {
         const inPacket = fieldsIn(body).filter((n) => packet.includes(n));
         if (inPacket.length) {
           const title = /title=[{"]([^"}]*)/.exec(head)?.[1] ?? '(untitled)';
-          offenders.push(`${file} :: ${title.slice(0, 50)} — packet prints ${JSON.stringify(inPacket)}`);
+          offenders.push(
+            `${file} :: ${title.slice(0, 50)} — packet prints ${JSON.stringify(inPacket)}`
+          );
         }
       }
     }
@@ -346,5 +348,65 @@ describe('event form section badges', () => {
       offenders,
       `a carbon section must say it is optional:\n${JSON.stringify(offenders, null, 2)}`
     ).toEqual([]);
+  });
+  /**
+   * The badge's COLOUR is not the author's to choose.
+   *
+   * This file guarded the badge STRING and never the colour, so while the words held, the
+   * same string — `events.section.badge.certifierRecord`, plus three duplicate keys emitting
+   * the byte-identical "Certifier record" — shipped in green, orange, red, teal AND blue on
+   * the activity forms, with `iconColor` spread across eleven hues beside it. Callers read
+   * `badgeColorScheme` as decoration; a farmer reads two colours as two meanings.
+   *
+   * `SectionHeader` / `CollapsibleSection` / `SectionBox` now expose no colour prop at all.
+   * The only distinction left is `badgeTone`, which is semantic: 'certifier' (an inspector
+   * reads this section) vs 'optional' (they do not).
+   */
+  it('exposes no colour choice on a section component', () => {
+    const BANNED = ['badgeColorScheme', 'iconColor', 'variant'];
+    const offenders: { file: string; prop: string; line: number }[] = [];
+    for (const file of readdirSync(FORMS_DIR).filter((f) => /\.(jsx|tsx)$/.test(f))) {
+      const src = readFileSync(join(FORMS_DIR, file), 'utf8');
+      for (const m of src.matchAll(
+        /<(SectionHeader|CollapsibleSection|SectionBox)\b([\s\S]*?)>/g
+      )) {
+        for (const prop of BANNED) {
+          if (new RegExp(`(?<![A-Za-z_])${prop}=`).test(m[2])) {
+            offenders.push({ file, prop, line: src.slice(0, m.index).split('\n').length });
+          }
+        }
+      }
+    }
+    expect(
+      offenders,
+      `a section component takes no colour — use badgeTone for meaning:\n${JSON.stringify(
+        offenders,
+        null,
+        2
+      )}`
+    ).toEqual([]);
+  });
+
+  /** An "Optional" badge must not wear the certifier tone, and vice versa. */
+  it('marks optional sections with the optional tone', () => {
+    const offenders: { file: string; badge: string; issue: string }[] = [];
+    for (const file of readdirSync(FORMS_DIR).filter((f) => /\.(jsx|tsx)$/.test(f))) {
+      const src = readFileSync(join(FORMS_DIR, file), 'utf8');
+      for (const m of src.matchAll(/<(SectionHeader|CollapsibleSection)\b([\s\S]*?)>/g)) {
+        const seg = m[2];
+        const idMatch = seg.match(/badge=\{[^}]*?id:\s*'([^']+)'/) ?? seg.match(/badge="([^"]+)"/);
+        if (!idMatch) continue;
+        const text = EN[idMatch[1]] ?? idMatch[1];
+        const isOptional = /^optional\b/i.test(text);
+        const hasTone = /badgeTone="optional"/.test(seg);
+        if (isOptional && !hasTone) {
+          offenders.push({ file, badge: text, issue: 'optional badge missing badgeTone' });
+        }
+        if (!isOptional && hasTone) {
+          offenders.push({ file, badge: text, issue: 'required badge marked optional' });
+        }
+      }
+    }
+    expect(offenders, JSON.stringify(offenders, null, 2)).toEqual([]);
   });
 });

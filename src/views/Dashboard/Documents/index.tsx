@@ -511,7 +511,6 @@ const DocumentsPage = () => {
             <StandardButton
               size="xs"
               variant="ghost"
-              minH="32px"
               mt={1}
               px={2}
               fontSize="xs"

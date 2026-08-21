@@ -43,7 +43,8 @@ import {
   MANURE_ANIMAL_SOURCES,
   MANURE_APPLICATION_METHODS,
   MANURE_FORMS,
-  MANURE_ORIGINS
+  MANURE_ORIGINS,
+  retiredOrganicApprovedLabelKey
 } from 'config/events/enums';
 // Event Field Registry (Phase 5G — form integration)
 import { useFormFields } from 'src/hooks/useFormFields';
@@ -221,26 +222,43 @@ const formSchemaSoilManagement = object({
 // fabricates a measurement and previously earned an undeserved +5 carbon-confidence credit and a
 // false NOP soil baseline in the audit export. The subtype-switch effect already skips these via
 // MEASUREMENT_FIELDS; blanking the literals here is defense-in-depth so they can never reappear.
-const getSoilManagementDefaults = (soilType) => {
+/**
+ * Fields a subtype switch must NEVER inject a value into. They are measurements or facts the
+ * farmer observed — area worked, pH, organic matter, texture — and, since 2026-08-21, the working
+ * depth: switching to "pH Adjustment" used to prefill 20 cm and "Soil Testing" 30 cm, so a
+ * surface-broadcast sulfur the farmer described as "not incorporated" went into the § 205.203
+ * Soil Condition table as incorporated to 20 cm, and a soil test carried a 30 cm "working depth"
+ * nobody measured. A default may carry a UNIT (cm, acres); it may not carry a NUMBER.
+ * Guard: `__tests__/soilSubtypeDefaultsCarryNoMeasurement.test.ts`.
+ */
+export const SOIL_MEASUREMENT_FIELDS = [
+  'area_covered',
+  'soil_ph',
+  'organic_matter_percentage',
+  'soil_texture',
+  'depth'
+];
+
+export const getSoilManagementDefaults = (soilType) => {
   const defaults = {
     ST: {
-      area_covered: '2.0',
+      area_covered: '',
       area_unit: 'ha',
       soil_ph: '',
       organic_matter_percentage: '',
       soil_texture: '',
-      depth: '30',
+      depth: '',
       depth_unit: 'cm'
     },
     // Sprint 2 Epic 2.1.3: PA (Planting/Amendment) kept but simplified - overlaps with Production "Planting"
     // ENHANCED: Added amendment fields for IPCC 2006 lime dissolution calculations
     PA: {
-      area_covered: '2.0',
+      area_covered: '',
       area_unit: 'ha',
       soil_ph: '',
       organic_matter_percentage: '',
       soil_texture: '',
-      depth: '20',
+      depth: '',
       depth_unit: 'cm',
       // Amendment fields for carbon calculation (IPCC 2006 lime dissolution)
       amendment_amount: '',
@@ -248,39 +266,39 @@ const getSoilManagementDefaults = (soilType) => {
       amendment_type: ''
     },
     CC: {
-      area_covered: '2.0',
+      area_covered: '',
       area_unit: 'ha',
       soil_ph: '',
       organic_matter_percentage: '',
       soil_texture: '',
-      depth: '30',
+      depth: '',
       depth_unit: 'cm'
     },
     OM: {
-      area_covered: '2.0',
+      area_covered: '',
       area_unit: 'ha',
       soil_ph: '',
       organic_matter_percentage: '',
       soil_texture: '',
-      depth: '20',
+      depth: '',
       depth_unit: 'cm'
     },
     TI: {
-      area_covered: '2.0',
+      area_covered: '',
       area_unit: 'ha',
       soil_ph: '',
       organic_matter_percentage: '',
       soil_texture: '',
-      depth: '25',
+      depth: '',
       depth_unit: 'cm'
     },
     CO: {
-      area_covered: '2.0',
+      area_covered: '',
       area_unit: 'ha',
       soil_ph: '',
       organic_matter_percentage: '',
       soil_texture: '',
-      depth: '20',
+      depth: '',
       depth_unit: 'cm'
     },
     // Biodiversity / habitat — no phantom measurements; the farmer enters real area / counts.
@@ -711,17 +729,11 @@ const SoilManagementTab = forwardRef(
         // earned a +5 carbon-confidence credit for invented data. Leave them blank
         // so the farmer enters real values, consistent with the no-phantom policy
         // used for fertilizer NPK and irrigation. Area is already excluded.
-        const MEASUREMENT_FIELDS = [
-          'area_covered',
-          'soil_ph',
-          'organic_matter_percentage',
-          'soil_texture'
-        ];
 
         // Only apply defaults for non-measurement, non-critical fields
         Object.keys(newDefaults).forEach((field) => {
           // Skip measurement fields - farmer must provide real readings
-          if (MEASUREMENT_FIELDS.includes(field)) return;
+          if (SOIL_MEASUREMENT_FIELDS.includes(field)) return;
 
           const currentValue = watch(field);
           if (!currentValue || currentValue === '' || currentValue === intelligentDefaults[field]) {
@@ -1008,10 +1020,9 @@ const SoilManagementTab = forwardRef(
                 formConformance.test.ts, not by a runtime flag. */}
             <>
               {/* Sprint 3 Epic 3.1: Consolidated Section 1 - Soil Management Details (merged Info + Area) */}
-              <SectionBox variant="highlighted" mt={4}>
+              <SectionBox mt={4}>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.600"
                   title="Soil Management Details"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
@@ -1067,10 +1078,9 @@ const SoilManagementTab = forwardRef(
                           type="number"
                           step="0.1"
                           placeholder="2.0"
-                          bg="white"
                           {...register('area_covered')}
                         />
-                        <StandardSelect flex={1} bg="white" {...register('area_unit')}>
+                        <StandardSelect flex={1} {...register('area_unit')}>
                           <option value="ha">Hectares</option>
                           <option value="acres">Acres</option>
                         </StandardSelect>
@@ -1094,10 +1104,9 @@ const SoilManagementTab = forwardRef(
                           type="number"
                           step="1"
                           placeholder="30"
-                          bg="white"
                           {...register('depth')}
                         />
-                        <StandardSelect flex={1} bg="white" {...register('depth_unit')}>
+                        <StandardSelect flex={1} {...register('depth_unit')}>
                           <option value="cm">Centimeters</option>
                           <option value="inches">Inches</option>
                         </StandardSelect>
@@ -1122,13 +1131,13 @@ const SoilManagementTab = forwardRef(
                     uses no equipment, so the whole section is noise there. Kept for HD/NS because
                     planting a hedgerow or mounting nest boxes can use an auger/tractor. */}
               {watch('type') !== 'GR' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="green.600"
                     title="Fuel & Equipment Operations"
                     badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                     description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
+                    badgeTone="optional"
                   />{' '}
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {/* Phase 3: Fuel Type Selector */}
@@ -1226,10 +1235,9 @@ const SoilManagementTab = forwardRef(
 
               {/* Soil Amendment fields — PA (pH Adjustment), OM (Organic Matter), CC (Cover Crop), CO (Composting) */}
               {['PA', 'OM', 'CC', 'CO'].includes(watch('type')) && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="green.600"
                     title="Soil Amendment Details"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document lime or soil amendment application for accurate carbon emissions calculation using IPCC 2006 methodology."
@@ -1462,13 +1470,11 @@ const SoilManagementTab = forwardRef(
                     block further down is reachable; the amendment-approval control below is
                     excluded for GR, since a grazing pass applies no purchased amendment. */}
               {['PA', 'OM', 'CC', 'CO', 'GR'].includes(watch('type')) && (
-                <SectionBox variant="highlighted" borderColor="teal.200">
+                <SectionBox borderColor="teal.200">
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="teal.600"
                     title="NOP Organic Compliance"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="teal"
                     /* Subtype-aware: a grazing pass shows only the raw-manure interval —
                        no amendment approval, no composting record — so the generic
                        description promised two things that are not on screen. */
@@ -1494,20 +1500,48 @@ const SoilManagementTab = forwardRef(
                         <StandardSelect
                           placeholder="Select organic approval status"
                           {...register('amendment_organic_approved')}>
-                          <option value="omri_listed">OMRI Listed - Organic certified</option>
-                          <option value="usda_nop_approved">
-                            USDA NOP Approved - National Organic Program
+                          {/* 🔴 2026-08-19. This list was the pre-2026-08-15 vocabulary that
+                              ChemicalTab retired four days earlier and nobody carried across —
+                              a half-fix that left the SOIL record, which is the § 205.203
+                              evidence the packet leans on hardest, still offering the two
+                              invented bases. "USDA NOP Approved" asserts a federal product
+                              approval that does not exist (the NOP publishes a substance list
+                              and licenses a seal; it approves no products), and "Organic
+                              Equivalent" is a grower-graded self-assessment sitting in the
+                              column an inspector reads as a verification basis. USDA's own
+                              Input Material Application Record names four bases, verbatim:
+                              OMRI or WSDA listing, the NOP seal on the label, or certifier
+                              review and approval — and two of the four had no option here,
+                              which is why growers reached for the invented ones. */}
+                          <option value="omri_listed">OMRI Listed</option>
+                          <option value="wsda_listed">WSDA Listed</option>
+                          <option value="nop_seal_on_label">NOP seal on the product label</option>
+                          <option value="certifier_approved">
+                            Reviewed and approved by my certifier
                           </option>
-                          <option value="organic_equivalent">
-                            Organic Equivalent - Meets organic standards
-                          </option>
+                          <option value="not_organic">Not approved - conventional use only</option>
                           <option value="transitional">
-                            Transitional - In certification process
+                            Transitional - in certification process
                           </option>
-                          <option value="not_organic">
-                            Not Organic Approved - Conventional use only
-                          </option>
-                          <option value="not_applicable">Not Applicable</option>
+                          {/* A <select> bound to a value with no matching <option> shows the
+                              placeholder, and the next save writes ''. Retiring an option
+                              would therefore have SILENTLY ERASED the § 205.203(b) basis on
+                              every older record a grower reopened. Keep the stored answer
+                              selectable, marked retired, until they replace it deliberately. */}
+                          {retiredOrganicApprovedLabelKey(watchedAmendmentOrganicApproved) && (
+                            <option value={watchedAmendmentOrganicApproved}>
+                              {intl.formatMessage(
+                                { id: 'events.organicApproved.retiredOption' },
+                                {
+                                  label: intl.formatMessage({
+                                    id: retiredOrganicApprovedLabelKey(
+                                      watchedAmendmentOrganicApproved
+                                    )
+                                  })
+                                }
+                              )}
+                            </option>
+                          )}
                         </StandardSelect>
                       </StandardField>
                       {/*
@@ -1923,10 +1957,9 @@ const SoilManagementTab = forwardRef(
                     and showing these empty fields invited fabricated readings. PA/OM/CC/CO keep them
                     (the soil pH / OM reading is the context that justifies the amendment). */}
               {watch('type') && !['GR', 'HD', 'NS', 'TI'].includes(watch('type')) && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaThermometerHalf}
-                    iconColor="orange.600"
                     title="Soil Properties"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />{' '}
@@ -1986,13 +2019,11 @@ const SoilManagementTab = forwardRef(
                     petiole, hull, compost or water sample, plus the micronutrient results that
                     7 CFR 205.601(j)(6) requires before a micronutrient may be applied. */}
               {(watch('type') === 'ST' || watch('type') === 'LA') && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaThermometerHalf}
-                    iconColor="orange.600"
                     title={watch('type') === 'LA' ? 'Lab Analysis Results' : 'Soil Test Results'}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="orange"
                     description={
                       watch('type') === 'LA'
                         ? 'A dated lab report is the deficiency record a certifier looks for before any micronutrient application (7 CFR 205.601(j)(6)). Attach a photo of the report as well.'
@@ -2124,10 +2155,9 @@ const SoilManagementTab = forwardRef(
 
               {/* Tillage-Specific Fields - Only for Tillage Operations */}
               {watch('type') === 'TI' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="orange.600"
                     title="Tillage Operation Details"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Provide specific tillage details for accurate carbon impact assessment. Tillage practices significantly affect soil carbon sequestration and emissions."
@@ -2204,10 +2234,9 @@ const SoilManagementTab = forwardRef(
 
               {/* Grazing Management Fields - Only for Grazing Management Operations */}
               {watch('type') === 'GR' && (
-                <SectionBox variant="highlighted" borderColor="green.200">
+                <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="green.600"
                     title="Grazing Details"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document grazing activities for cover crop management, weed control, and soil health."
@@ -2262,7 +2291,7 @@ const SoilManagementTab = forwardRef(
                         </Box>
 
                         {isGrazingSummary && (
-                          <SectionBox variant="default" mb={4}>
+                          <SectionBox mb={4}>
                             <Text fontWeight="semibold" color="green.700" mb={3}>
                               <Icon as={FaSeedling} mr={2} />
                               Grazing Rotation Period
@@ -2361,10 +2390,9 @@ const SoilManagementTab = forwardRef(
               {/* Habitat Development (HD) — biodiversity infrastructure. Facts only, no score.
                     The living-floor / bugs / birds proof rides on the event photos. */}
               {watch('type') === 'HD' && (
-                <SectionBox variant="highlighted" borderColor="green.200">
+                <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="green.600"
                     title="Habitat Development"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document planted/established habitat — hedgerows, insectary strips, native plantings, riparian buffers, or living groundcover. Add photos as evidence."
@@ -2413,10 +2441,9 @@ const SoilManagementTab = forwardRef(
 
               {/* Nesting / Shelter Structures (NS) — installed wildlife structures. Facts only. */}
               {watch('type') === 'NS' && (
-                <SectionBox variant="highlighted" borderColor="green.200">
+                <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="green.600"
                     title="Nesting / Shelter Structures"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document installed wildlife structures — barn-owl & songbird boxes, raptor perches, native-bee blocks, bat boxes, insect hotels, beetle banks. Add photos as evidence."
@@ -2472,13 +2499,11 @@ const SoilManagementTab = forwardRef(
               {/* Sprint 3 Epic 3.1: Removed "Environmental Conditions & Equipment" section - merged into "Fuel & Equipment Operations" above */}
 
               {/* Phase 2: Universal Field Details - variety, block_id, growth_stage */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="teal.500"
                   title={intl.formatMessage({ id: 'fieldDetails.title' })}
                   badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
-                  badgeColorScheme="teal"
                   description={intl.formatMessage({ id: 'fieldDetails.description' })}
                 />
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
@@ -2540,10 +2565,9 @@ const SoilManagementTab = forwardRef(
                 </SimpleGrid>
               </SectionBox>
 
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />

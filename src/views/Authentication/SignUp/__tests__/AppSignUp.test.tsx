@@ -6,13 +6,26 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ChakraProvider } from '@chakra-ui/react';
+import { IntlProvider } from 'react-intl';
+import enUS from '../../../../i18n/lang/en-US.json';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import AppSignUp from '../AppSignUp';
-import { authApi } from '../../../../store/api/authApi';
+// 🔴 2026-08-21 — `useSignUpMutation` is imported HERE, statically, and read through
+// `vi.mocked` below. It used to be reached with `require('../../../../store/api/authApi')`
+// inside the test bodies, and that one call is why this whole file had never run: `require`
+// bypasses Vite and hands the specifier to NODE, whose ESM resolver then choked on
+// authApi.js's own `import ... from '../../config'` — a directory import Node does not
+// support. Every one of these 16 cases died at that line with
+// ERR_UNSUPPORTED_DIR_IMPORT, including `validates password strength`.
+//
+// The 2026-08-19 alias work in vitest.config.ts fixed the same error for the BARE specifiers
+// and its comment claims this file among the suites it revived. It did not: an alias cannot
+// help a module Vite never sees.
+import { authApi, useSignUpMutation } from '../../../../store/api/authApi';
 import theme from '../../../../theme/styles';
 
 // Mock config to avoid ES module directory import issues
@@ -30,8 +43,12 @@ vi.mock('../../../../config', () => ({
 // Mock the API
 vi.mock('../../../../store/api/authApi', () => ({
   authApi: {
-    reducer: vi.fn(),
-    middleware: vi.fn(),
+    // Real functions, not bare `vi.fn()`s. A `vi.fn()` reducer returns `undefined`, and Redux
+    // refuses to initialise a store whose slice reducer does that — which failed all 16 cases
+    // identically the moment the file started running at all. A `vi.fn()` middleware is worse:
+    // it is silently wrong until something dispatches through it.
+    reducer: (state = {}) => state,
+    middleware: () => (next: (a: unknown) => unknown) => (action: unknown) => next(action),
     reducerPath: 'authApi',
     endpoints: {
       signUp: {
@@ -39,7 +56,13 @@ vi.mock('../../../../store/api/authApi', () => ({
       }
     }
   },
-  useSignUpMutation: vi.fn()
+  // Every hook AppSignUp imports from this module. `useResendVerificationEmailMutation` and
+  // `useSocialAuthMutation` were added to the component after this suite was written, and
+  // nothing noticed — because the suite has never run. A mock that is missing an export
+  // throws at render, so the omission was invisible exactly as long as the file was dark.
+  useSignUpMutation: vi.fn(),
+  useResendVerificationEmailMutation: vi.fn(() => [vi.fn(), { isLoading: false }]),
+  useSocialAuthMutation: vi.fn(() => [vi.fn(), { isLoading: false }])
 }));
 
 // Mock framer-motion to avoid animation issues in tests
@@ -82,10 +105,23 @@ const createTestStore = () =>
 const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <ChakraProvider theme={theme}>
     <Provider store={createTestStore()}>
-      <BrowserRouter>{children}</BrowserRouter>
+      {/* AppSignUp calls `useIntl()`, so the real catalogue has to be here — the same shape
+          ConsumerSignIn's suite uses. Without it react-intl throws "Could not find required
+          `intl` object" before a single assertion runs, and with a STUB catalogue every
+          `getByText` below would be matching invented copy rather than what ships. */}
+      <IntlProvider locale="en-US" messages={enUS}>
+        <BrowserRouter>{children}</BrowserRouter>
+      </IntlProvider>
     </Provider>
   </ChakraProvider>
 );
+
+/**
+ * A password that satisfies all SIX rules the app enforces (length, upper, lower, number,
+ * special, and "no common words or personal information"). The last one is why this cannot
+ * contain the fixture names or the email local part.
+ */
+const VALID_PASSWORD = 'Willamette#2026';
 
 describe('AppSignUp Component', () => {
   const mockSignUp = vi.fn();
@@ -94,10 +130,7 @@ describe('AppSignUp Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSignUp.mockReturnValue({ unwrap: mockUnwrap });
-    (require('../../../../store/api/authApi').useSignUpMutation as any).mockReturnValue([
-      mockSignUp,
-      { isLoading: false }
-    ]);
+    vi.mocked(useSignUpMutation).mockReturnValue([mockSignUp, { isLoading: false }] as never);
   });
 
   it('renders the signup form with default create company mode', () => {
@@ -108,7 +141,9 @@ describe('AppSignUp Component', () => {
     );
 
     expect(screen.getByText('Create Business Account')).toBeInTheDocument();
-    expect(screen.getByText('Join leading agricultural enterprises')).toBeInTheDocument();
+    // Anchored on the form's own title, not the marketing panel: the hero copy has been
+    // rewritten twice since this file was written and is not what the case is about.
+    expect(screen.getByText("Build Your Farm's Brand")).toBeInTheDocument();
     expect(screen.getByText('Create New Company')).toBeInTheDocument();
     expect(screen.getByText('Join Existing Company')).toBeInTheDocument();
   });
@@ -127,7 +162,7 @@ describe('AppSignUp Component', () => {
 
     // Should show company code input
     await waitFor(() => {
-      expect(screen.getByText('Join Company Account')).toBeInTheDocument();
+      expect(screen.getByText('Join Existing Company')).toBeInTheDocument();
       expect(screen.getByText('Company Invitation Code')).toBeInTheDocument();
       expect(screen.getByPlaceholderText('Enter 6-character company code')).toBeInTheDocument();
     });
@@ -263,7 +298,10 @@ describe('AppSignUp Component', () => {
     await user.type(passwordInput, '123');
 
     await waitFor(() => {
-      expect(screen.getByText('Password strength: Weak')).toBeInTheDocument();
+      // The meter grades on a curve — `getStrengthLabel` returns 'Very Weak' below 20 and
+      // 'Weak' below 40 — so pinning one word makes the test brittle about the score rather
+      // than about the thing under test: that a bad password is SHOWN as bad.
+      expect(screen.getByText(/Password strength: (Very Weak|Weak)/)).toBeInTheDocument();
     });
 
     // Test strong password
@@ -319,9 +357,9 @@ describe('AppSignUp Component', () => {
     await user.type(screen.getByPlaceholderText('Enter business email address'), 'john@test.com');
     await user.type(
       screen.getByPlaceholderText('Create secure password (8+ characters)'),
-      'password123'
+      VALID_PASSWORD
     );
-    await user.type(screen.getByPlaceholderText('Confirm your password'), 'password123');
+    await user.type(screen.getByPlaceholderText('Confirm your password'), VALID_PASSWORD);
     await user.click(screen.getByLabelText(/I agree to the Terms of Service/));
 
     // Submit
@@ -332,7 +370,7 @@ describe('AppSignUp Component', () => {
         first_name: 'John',
         last_name: 'Doe',
         email: 'john@test.com',
-        password: 'password123',
+        password: VALID_PASSWORD,
         user_type: 'PRODUCER'
       });
     });
@@ -358,9 +396,9 @@ describe('AppSignUp Component', () => {
     await user.type(screen.getByPlaceholderText('Enter 6-character company code'), 'TEST123');
     await user.type(
       screen.getByPlaceholderText('Create secure password (8+ characters)'),
-      'password123'
+      VALID_PASSWORD
     );
-    await user.type(screen.getByPlaceholderText('Confirm your password'), 'password123');
+    await user.type(screen.getByPlaceholderText('Confirm your password'), VALID_PASSWORD);
     await user.click(screen.getByLabelText(/I agree to the Terms of Service/));
 
     // Submit
@@ -371,7 +409,7 @@ describe('AppSignUp Component', () => {
         first_name: 'Jane',
         last_name: 'Smith',
         email: 'jane@test.com',
-        password: 'password123',
+        password: VALID_PASSWORD,
         user_type: 'PRODUCER',
         company_code: 'TEST123'
       });
@@ -400,9 +438,9 @@ describe('AppSignUp Component', () => {
     await user.type(screen.getByPlaceholderText('Enter 6-character company code'), 'INVALID');
     await user.type(
       screen.getByPlaceholderText('Create secure password (8+ characters)'),
-      'password123'
+      VALID_PASSWORD
     );
-    await user.type(screen.getByPlaceholderText('Confirm your password'), 'password123');
+    await user.type(screen.getByPlaceholderText('Confirm your password'), VALID_PASSWORD);
     await user.click(screen.getByLabelText(/I agree to the Terms of Service/));
 
     // Submit
@@ -417,10 +455,7 @@ describe('AppSignUp Component', () => {
     const user = userEvent.setup();
 
     // Mock loading state
-    (require('../../../../store/api/authApi').useSignUpMutation as any).mockReturnValue([
-      mockSignUp,
-      { isLoading: true }
-    ]);
+    vi.mocked(useSignUpMutation).mockReturnValue([mockSignUp, { isLoading: true }] as never);
 
     render(
       <TestWrapper>
@@ -475,7 +510,9 @@ describe('AppSignUp Component', () => {
 
     // Check for proper typography hierarchy
     expect(screen.getByText('Create Business Account')).toBeInTheDocument();
-    expect(screen.getByText('Join leading agricultural enterprises')).toBeInTheDocument();
+    // Anchored on the form's own title, not the marketing panel: the hero copy has been
+    // rewritten twice since this file was written and is not what the case is about.
+    expect(screen.getByText("Build Your Farm's Brand")).toBeInTheDocument();
   });
 
   it('is accessible', async () => {
@@ -489,18 +526,30 @@ describe('AppSignUp Component', () => {
     expect(screen.getByLabelText(/First Name/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Last Name/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Business Email/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password/)).toBeInTheDocument();
+    // Exact, not /Password/: both this field and 'Confirm Password' now carry real accessible
+    // names, so the loose regex matches two elements and throws.
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
     expect(screen.getByLabelText(/Confirm Password/)).toBeInTheDocument();
 
     // Check for proper ARIA attributes and roles
     const form = screen.getByRole('form');
     expect(form).toBeInTheDocument();
 
-    // Test keyboard navigation
+    // Test keyboard navigation.
+    //
+    // REACHABILITY, not tab-stop position. This asserted that the very first Tab landed on the
+    // First Name input; it now lands on the create-vs-join mode toggle, which sits above the
+    // fields and is a legitimate first stop. Pinning the ordinal made the test a description of
+    // one layout. What has to hold is that a keyboard user can actually get to the first field
+    // — which is what a `tabIndex={-1}`, a focus trap, or an aria-hidden wrapper would break.
     const user = userEvent.setup();
     const firstInput = screen.getByPlaceholderText('First name');
 
-    await user.tab();
-    expect(document.activeElement).toBe(firstInput);
+    let reached = false;
+    for (let i = 0; i < 10 && !reached; i += 1) {
+      await user.tab();
+      reached = document.activeElement === firstInput;
+    }
+    expect(reached, 'First Name is not reachable by keyboard').toBe(true);
   });
 });

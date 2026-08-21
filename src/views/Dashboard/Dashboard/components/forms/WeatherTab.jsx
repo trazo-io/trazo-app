@@ -545,10 +545,9 @@ const WeatherTab = forwardRef(
                 formConformance.test.ts, not by a runtime flag. */}
             <>
               {/* Section 1: Weather Event Information */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaCloud}
-                  iconColor="green.600"
                   title={intl.formatMessage({
                     id: 'events.weather.sections.weatherEventInformation',
                     defaultMessage: 'Weather Event Information'
@@ -656,10 +655,9 @@ const WeatherTab = forwardRef(
 
               {/* Section 2: Weather Details & Measurements (Dynamic based on type) */}
               {type && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaThermometerHalf}
-                    iconColor="green.600"
                     title={intl.formatMessage({
                       id: 'events.weather.sections.weatherDetailsMeasurements',
                       defaultMessage: 'Weather Details & Measurements'
@@ -1040,10 +1038,9 @@ const WeatherTab = forwardRef(
               )}
 
               {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.500"
                   title={intl.formatMessage({
                     id: 'events.weather.sections.farmerSFieldNotesConsumerTransparency',
                     defaultMessage: "Farmer's Field Notes & Consumer Transparency"

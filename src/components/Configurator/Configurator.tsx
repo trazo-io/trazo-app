@@ -9,7 +9,6 @@ import {
   Flex,
   FormControl,
   Icon,
-  Select,
   Text
 } from '@chakra-ui/react';
 import { useContext, useRef } from 'react';
@@ -20,6 +19,7 @@ import { LocaleContext } from 'i18n/LocaleContext';
 import { locales } from 'i18n/i18n-config';
 import { useIntl } from 'react-intl';
 import { useTourStore } from 'store/tourStore';
+import { StandardSelect } from 'components/Design/StandardComponents';
 
 type ConfiguratorProps = {
   secondary: boolean;
@@ -89,10 +89,8 @@ function Configurator(props: ConfiguratorProps) {
                 {intl.formatMessage({ id: 'app.language' })}
               </Text>
               <FormControl paddingLeft={'24px'}>
-                <Select
-                  borderRadius="15px"
+                <StandardSelect
                   color="gray.600"
-                  fontSize="xs"
                   onChange={(e) => setLocale(e.target.value)}
                   value={locale}>
                   {Object.keys(locales).map((loc) => {
@@ -102,7 +100,7 @@ function Configurator(props: ConfiguratorProps) {
                       </option>
                     );
                   })}
-                </Select>
+                </StandardSelect>
               </FormControl>
             </Flex>
           </Flex>

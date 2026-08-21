@@ -4,7 +4,6 @@ import {
   AvatarBadge,
   Box,
   FormLabel,
-  Input,
   Text,
   Grid,
   VStack,
@@ -144,7 +143,7 @@ function ProfileUser() {
                     borderRadius="full"
                     {...getRootProps({ className: 'dropzone' })}>
                     <FiCamera color="#2E7D32" size={20} />
-                    <Input
+                    <StandardInput
                       id="imageInput"
                       type="file"
                       accept="image/*"

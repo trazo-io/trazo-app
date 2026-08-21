@@ -19,32 +19,30 @@ import {
 } from '@chakra-ui/react';
 import {
   FaBook,
+  FaBoxOpen,
+  FaTint,
+  FaLayerGroup,
+  FaBug,
+  FaTruck,
+  FaBorderAll,
+  FaBroom,
+  FaSearch,
+  FaFileInvoiceDollar,
+  FaCloudRain,
   FaLeaf,
   FaQrcode,
-  FaChartLine,
-  FaRocket,
   FaTractor,
-  FaShieldAlt,
-  FaCheckCircle,
-  FaPlayCircle,
   FaCamera,
-  FaTrophy,
   FaUsers,
-  FaCogs,
-  FaDollarSign,
-  FaMicrophone,
   FaCalculator,
   FaFlask,
   FaDatabase,
-  FaGasPump,
-  FaBolt,
   FaSeedling,
   FaExternalLinkAlt,
-  FaBullhorn,
-  FaSyncAlt,
   FaClipboardList,
   FaCalendarAlt,
   FaClipboardCheck,
+  FaFileSignature,
   FaMapMarkedAlt
 } from 'react-icons/fa';
 import { StandardPage } from 'components/Design/StandardComponents';
@@ -71,10 +69,10 @@ const EducationTopicDetail: React.FC = () => {
         id: 'getting-started',
         title: intl.formatMessage({ id: 'education.topicGettingStartedTitle' }),
         description: intl.formatMessage({ id: 'education.topicGettingStartedDesc' }),
-        icon: FaRocket,
+        icon: FaBook,
         category: intl.formatMessage({ id: 'education.categoryGettingStarted' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Alert status="success">
               <AlertIcon />
               <Box>
@@ -87,68 +85,47 @@ const EducationTopicDetail: React.FC = () => {
               </Box>
             </Alert>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaPlayCircle} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.gettingStarted.howItWorksTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.gettingStarted.howItWorksTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.gettingStarted.step1Label' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step1' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.gettingStarted.step2Label' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step2' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.gettingStarted.step3Label' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step3' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.gettingStarted.step4Label' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step4' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.gettingStarted.step5Label' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step5' })}
-                  </Text>
-                </HStack>
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step1Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.gettingStarted.step1' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step2Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.gettingStarted.step2' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step3Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.gettingStarted.step3' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step4Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.gettingStarted.step4' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.gettingStarted.step5Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.gettingStarted.step5' })}
+                </Text>
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaChartLine} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.gettingStarted.whyTransparencyTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.gettingStarted.whyTransparencyTitle' })}
+            </Heading>
             <Text>
               {intl.formatMessage({ id: 'education.detail.gettingStarted.whyTransparencyText' })}
             </Text>
@@ -212,136 +189,248 @@ const EducationTopicDetail: React.FC = () => {
         icon: FaTractor,
         category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
+            {/* 2026-08-21 — this topic taught the seven BACKEND event models (Production,
+                Chemical, Soil, Pest, Weather, Business, General). A farmer never sees those.
+                `config/activityVerbs.ts` is "the ONE farmer-language entry vocabulary (WS-4b)"
+                and every entry point renders ITS fourteen verbs — so a grower who read
+                "Chemical Events" here and opened Add activity found no Chemical tile. It also
+                listed "market sales" under Business, the exact claim the verb tile was renamed
+                away from on 2026-08-19: there is no sales field on that form, and a sale
+                belongs to SalesRecord on the production page. */}
             <Text fontSize="lg">
               {intl.formatMessage({ id: 'education.detail.farmEvents.intro' })}
             </Text>
 
-            <Box overflowX="auto" w="full">
-              <Grid
-                templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
-                gap={4}
-                minW={{ base: '280px', md: 'auto' }}>
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaTractor} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({ id: 'education.detail.farmEvents.productionTitle' })}
-                      </Heading>
-                    </HStack>
-                    <Text fontSize="sm">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.productionDesc' })}
-                    </Text>
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.productionExamples' })}
-                    </Text>
-                  </VStack>
+            <Box w="full">
+              <Heading size="sm" color="gray.700" mb={3}>
+                {intl.formatMessage({ id: 'education.detail.farmEvents.groupGrowing' })}
+              </Heading>
+              <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaSeedling} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.plantingTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.plantingDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
                 </Box>
-
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaFlask} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({ id: 'education.detail.farmEvents.chemicalTitle' })}
-                      </Heading>
-                    </HStack>
-                    <Text fontSize="sm">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.chemicalDesc' })}
-                    </Text>
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.chemicalExamples' })}
-                    </Text>
-                  </VStack>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaTint} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.irrigationTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.irrigationDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
                 </Box>
-
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaSeedling} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({ id: 'education.detail.farmEvents.soilTitle' })}
-                      </Heading>
-                    </HStack>
-                    <Text fontSize="sm">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.soilDesc' })}
-                    </Text>
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.soilExamples' })}
-                    </Text>
-                  </VStack>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaTractor} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.fieldWorkTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.fieldWorkDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
                 </Box>
-
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaShieldAlt} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({ id: 'education.detail.farmEvents.pestTitle' })}
-                      </Heading>
-                    </HStack>
-                    <Text fontSize="sm">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.pestDesc' })}
-                    </Text>
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.pestExamples' })}
-                    </Text>
-                  </VStack>
-                </Box>
-
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaLeaf} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({ id: 'education.detail.farmEvents.weatherTitle' })}
-                      </Heading>
-                    </HStack>
-                    <Text fontSize="sm">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.weatherDesc' })}
-                    </Text>
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.weatherExamples' })}
-                    </Text>
-                  </VStack>
-                </Box>
-
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaChartLine} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({ id: 'education.detail.farmEvents.businessTitle' })}
-                      </Heading>
-                    </HStack>
-                    <Text fontSize="sm">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.businessDesc' })}
-                    </Text>
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.businessExamples' })}
-                    </Text>
-                  </VStack>
-                </Box>
-
-                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaBook} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({ id: 'education.detail.farmEvents.generalTitle' })}
-                      </Heading>
-                    </HStack>
-                    <Text fontSize="sm">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.generalDesc' })}
-                    </Text>
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage({ id: 'education.detail.farmEvents.generalExamples' })}
-                    </Text>
-                  </VStack>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaBoxOpen} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.harvestTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.harvestDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
                 </Box>
               </Grid>
             </Box>
+
+            <Box w="full">
+              <Heading size="sm" color="gray.700" mb={3}>
+                {intl.formatMessage({ id: 'education.detail.farmEvents.groupInputs' })}
+              </Heading>
+              <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaFlask} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({
+                          id: 'education.detail.farmEvents.inputApplicationTitle'
+                        })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({
+                          id: 'education.detail.farmEvents.inputApplicationDesc'
+                        })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaLayerGroup} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.soilTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.soilDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaBug} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.pestTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.pestDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+              </Grid>
+            </Box>
+
+            <Box w="full">
+              <Heading size="sm" color="gray.700" mb={3}>
+                {intl.formatMessage({ id: 'education.detail.farmEvents.groupSeparation' })}
+              </Heading>
+              <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaTruck} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.transportTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.transportDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaBorderAll} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.bufferUseTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.bufferUseDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaBroom} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.cleanoutTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.cleanoutDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+              </Grid>
+            </Box>
+
+            <Box w="full">
+              <Heading size="sm" color="gray.700" mb={3}>
+                {intl.formatMessage({ id: 'education.detail.farmEvents.groupPaperwork' })}
+              </Heading>
+              <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={3}>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaSearch} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.seedSearchTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.seedSearchDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaFileInvoiceDollar} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.businessTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.businessDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaCloudRain} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.weatherTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.weatherDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaClipboardList} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.otherTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.otherDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+              </Grid>
+            </Box>
+
+            <Alert status="warning">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.farmEvents.notSalesTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.farmEvents.notSalesDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
 
             <Alert status="success">
               <AlertIcon />
@@ -364,89 +453,67 @@ const EducationTopicDetail: React.FC = () => {
         icon: FaQrcode,
         category: intl.formatMessage({ id: 'education.categoryConsumerEngagement' }),
         content: (
-          <VStack spacing={6} align="start">
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaQrcode} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.qrCodes.howItWorksTitle' })}
-              </Heading>
-            </HStack>
+          <VStack spacing={6} align="stretch">
+            {/* No icon here: the topic itself declares `icon: FaQrcode` and the page header
+                already renders it, so repeating it put two QR marks side by side. */}
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.qrCodes.howItWorksTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.qrCodes.progressiveLoadingLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.qrCodes.progressiveLoading' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.qrCodes.consumerLanguageLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.qrCodes.consumerLanguage' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.qrCodes.farmingJourneyLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.qrCodes.farmingJourney' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.qrCodes.trustIndicatorsLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.qrCodes.trustIndicators' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.qrCodes.carbonDetailsLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.qrCodes.carbonDetails' })}
-                  </Text>
-                </HStack>
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({
+                      id: 'education.detail.qrCodes.progressiveLoadingLabel'
+                    })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.progressiveLoading' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.qrCodes.consumerLanguageLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.consumerLanguage' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.qrCodes.farmingJourneyLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.farmingJourney' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.qrCodes.trustIndicatorsLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.trustIndicators' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.qrCodes.carbonDetailsLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.qrCodes.carbonDetails' })}
+                </Text>
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaCheckCircle} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.qrCodes.bestPracticesTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.qrCodes.bestPracticesTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <Text>📱 {intl.formatMessage({ id: 'education.detail.qrCodes.mobileFirst' })}</Text>
-                <Text>🎯 {intl.formatMessage({ id: 'education.detail.qrCodes.valueProp' })}</Text>
-                <Text>📍 {intl.formatMessage({ id: 'education.detail.qrCodes.placement' })}</Text>
-                <Text>🔄 {intl.formatMessage({ id: 'education.detail.qrCodes.updates' })}</Text>
-                <Text>📊 {intl.formatMessage({ id: 'education.detail.qrCodes.tracking' })}</Text>
+              <VStack spacing={3} align="stretch">
+                <Text>{intl.formatMessage({ id: 'education.detail.qrCodes.mobileFirst' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.qrCodes.valueProp' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.qrCodes.placement' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.qrCodes.updates' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.qrCodes.tracking' })}</Text>
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaUsers} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.qrCodes.whatConsumersSeeTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.qrCodes.whatConsumersSeeTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   <strong>
                     {intl.formatMessage({ id: 'education.detail.qrCodes.instantTrustLabel' })}
@@ -501,7 +568,7 @@ const EducationTopicDetail: React.FC = () => {
         icon: FaLeaf,
         category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Alert status="warning">
               <AlertIcon />
               <Box>
@@ -514,14 +581,11 @@ const EducationTopicDetail: React.FC = () => {
               </Box>
             </Alert>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaLeaf} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonData.philosophyTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonData.philosophyTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   <strong>
                     {intl.formatMessage({ id: 'education.detail.carbonData.primaryMetricLabel' })}
@@ -549,12 +613,9 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaChartLine} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonData.stillMattersTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonData.stillMattersTitle' })}
+            </Heading>
             <Box overflowX="auto" w="full">
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
@@ -562,7 +623,7 @@ const EducationTopicDetail: React.FC = () => {
                 minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🏢 {intl.formatMessage({ id: 'education.detail.carbonData.b2bTitle' })}
+                    {intl.formatMessage({ id: 'education.detail.carbonData.b2bTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
                     <ListItem>
@@ -581,7 +642,7 @@ const EducationTopicDetail: React.FC = () => {
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📊 {intl.formatMessage({ id: 'education.detail.carbonData.internalTitle' })}
+                    {intl.formatMessage({ id: 'education.detail.carbonData.internalTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
                     <ListItem>
@@ -601,14 +662,11 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaDatabase} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonData.usdaTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonData.usdaTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   <strong>
                     {intl.formatMessage({ id: 'education.detail.carbonData.usdaVerifiedLabel' })}
@@ -636,14 +694,11 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaUsers} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonData.presentationTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonData.presentationTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   <strong>
                     {intl.formatMessage({ id: 'education.detail.carbonData.leadLabel' })}
@@ -692,7 +747,7 @@ const EducationTopicDetail: React.FC = () => {
         icon: FaCalculator,
         category: intl.formatMessage({ id: 'education.categoryEnvironmentalImpact' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Alert status="info">
               <AlertIcon />
               <Box>
@@ -709,21 +764,15 @@ const EducationTopicDetail: React.FC = () => {
               </Box>
             </Alert>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaDatabase} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonMethodology.dataSourcesTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonMethodology.dataSourcesTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={4} align="start">
+              <VStack spacing={4} align="stretch">
                 <Box>
-                  <HStack mb={1}>
-                    <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">
-                      {intl.formatMessage({ id: 'education.detail.carbonMethodology.epaGhgTitle' })}
-                    </Text>
-                  </HStack>
+                  <Text fontWeight="bold">
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.epaGhgTitle' })}
+                  </Text>
                   <Text fontSize="sm" pl={6}>
                     {intl.formatMessage({ id: 'education.detail.carbonMethodology.epaGhgDesc' })}
                   </Text>
@@ -731,7 +780,7 @@ const EducationTopicDetail: React.FC = () => {
                     href="https://www.epa.gov/climateleadership/ghg-emission-factors-hub"
                     isExternal
                     fontSize="xs"
-                    color="blue.600"
+                    color="green.700"
                     pl={6}
                     mt={1}
                     display="flex"
@@ -741,14 +790,11 @@ const EducationTopicDetail: React.FC = () => {
                   </Link>
                 </Box>
                 <Box>
-                  <HStack mb={1}>
-                    <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">
-                      {intl.formatMessage({
-                        id: 'education.detail.carbonMethodology.epaEgridTitle'
-                      })}
-                    </Text>
-                  </HStack>
+                  <Text fontWeight="bold">
+                    {intl.formatMessage({
+                      id: 'education.detail.carbonMethodology.epaEgridTitle'
+                    })}
+                  </Text>
                   <Text fontSize="sm" pl={6}>
                     {intl.formatMessage({ id: 'education.detail.carbonMethodology.epaEgridDesc' })}
                   </Text>
@@ -756,7 +802,7 @@ const EducationTopicDetail: React.FC = () => {
                     href="https://www.epa.gov/egrid/summary-data"
                     isExternal
                     fontSize="xs"
-                    color="blue.600"
+                    color="green.700"
                     pl={6}
                     mt={1}
                     display="flex"
@@ -766,12 +812,9 @@ const EducationTopicDetail: React.FC = () => {
                   </Link>
                 </Box>
                 <Box>
-                  <HStack mb={1}>
-                    <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">
-                      {intl.formatMessage({ id: 'education.detail.carbonMethodology.eiaTitle' })}
-                    </Text>
-                  </HStack>
+                  <Text fontWeight="bold">
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.eiaTitle' })}
+                  </Text>
                   <Text fontSize="sm" pl={6}>
                     {intl.formatMessage({ id: 'education.detail.carbonMethodology.eiaDesc' })}
                   </Text>
@@ -779,7 +822,7 @@ const EducationTopicDetail: React.FC = () => {
                     href="https://www.eia.gov/tools/faqs/faq.php?id=74&t=11"
                     isExternal
                     fontSize="xs"
-                    color="blue.600"
+                    color="green.700"
                     pl={6}
                     mt={1}
                     display="flex"
@@ -789,12 +832,9 @@ const EducationTopicDetail: React.FC = () => {
                   </Link>
                 </Box>
                 <Box>
-                  <HStack mb={1}>
-                    <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">
-                      {intl.formatMessage({ id: 'education.detail.carbonMethodology.ipccTitle' })}
-                    </Text>
-                  </HStack>
+                  <Text fontWeight="bold">
+                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.ipccTitle' })}
+                  </Text>
                   <Text fontSize="sm" pl={6}>
                     {intl.formatMessage({ id: 'education.detail.carbonMethodology.ipccDesc' })}
                   </Text>
@@ -802,7 +842,7 @@ const EducationTopicDetail: React.FC = () => {
                     href="https://www.ipcc-nggip.iges.or.jp/public/2006gl/pdf/4_Volume4/V4_11_Ch11_N2O&CO2.pdf"
                     isExternal
                     fontSize="xs"
-                    color="blue.600"
+                    color="green.700"
                     pl={6}
                     mt={1}
                     display="flex"
@@ -812,14 +852,11 @@ const EducationTopicDetail: React.FC = () => {
                   </Link>
                 </Box>
                 <Box>
-                  <HStack mb={1}>
-                    <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">
-                      {intl.formatMessage({
-                        id: 'education.detail.carbonMethodology.usdaArsTitle'
-                      })}
-                    </Text>
-                  </HStack>
+                  <Text fontWeight="bold">
+                    {intl.formatMessage({
+                      id: 'education.detail.carbonMethodology.usdaArsTitle'
+                    })}
+                  </Text>
                   <Text fontSize="sm" pl={6}>
                     {intl.formatMessage({ id: 'education.detail.carbonMethodology.usdaArsDesc' })}
                   </Text>
@@ -827,7 +864,7 @@ const EducationTopicDetail: React.FC = () => {
                     href="https://www.ars.usda.gov"
                     isExternal
                     fontSize="xs"
-                    color="blue.600"
+                    color="green.700"
                     pl={6}
                     mt={1}
                     display="flex"
@@ -837,14 +874,11 @@ const EducationTopicDetail: React.FC = () => {
                   </Link>
                 </Box>
                 <Box>
-                  <HStack mb={1}>
-                    <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">
-                      {intl.formatMessage({
-                        id: 'education.detail.carbonMethodology.usdaNrcsTitle'
-                      })}
-                    </Text>
-                  </HStack>
+                  <Text fontWeight="bold">
+                    {intl.formatMessage({
+                      id: 'education.detail.carbonMethodology.usdaNrcsTitle'
+                    })}
+                  </Text>
                   <Text fontSize="sm" pl={6}>
                     {intl.formatMessage({ id: 'education.detail.carbonMethodology.usdaNrcsDesc' })}
                   </Text>
@@ -852,7 +886,7 @@ const EducationTopicDetail: React.FC = () => {
                     href="https://www.wcc.nrcs.usda.gov/ftpref/wntsc/waterMgt/irrigation/NEH15/ch8.pdf"
                     isExternal
                     fontSize="xs"
-                    color="blue.600"
+                    color="green.700"
                     pl={6}
                     mt={1}
                     display="flex"
@@ -862,14 +896,11 @@ const EducationTopicDetail: React.FC = () => {
                   </Link>
                 </Box>
                 <Box>
-                  <HStack mb={1}>
-                    <Icon as={FaCheckCircle} color="green.600" />
-                    <Text fontWeight="bold">
-                      {intl.formatMessage({
-                        id: 'education.detail.carbonMethodology.pesticideLcaTitle'
-                      })}
-                    </Text>
-                  </HStack>
+                  <Text fontWeight="bold">
+                    {intl.formatMessage({
+                      id: 'education.detail.carbonMethodology.pesticideLcaTitle'
+                    })}
+                  </Text>
                   <Text fontSize="sm" pl={6}>
                     {intl.formatMessage({
                       id: 'education.detail.carbonMethodology.pesticideLcaDesc'
@@ -879,7 +910,7 @@ const EducationTopicDetail: React.FC = () => {
                     href="https://www.sciencedirect.com/science/article/abs/pii/S0160412004000832"
                     isExternal
                     fontSize="xs"
-                    color="blue.600"
+                    color="green.700"
                     pl={6}
                     mt={1}
                     display="flex"
@@ -891,14 +922,11 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaGasPump} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   {intl.formatMessage({ id: 'education.detail.carbonMethodology.dieselFactor' })}
                 </Text>
@@ -942,14 +970,11 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaBolt} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonMethodology.electricityTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   {intl.formatMessage({
                     id: 'education.detail.carbonMethodology.electricityFactor'
@@ -998,14 +1023,11 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaSeedling} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonMethodology.fertilizerTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonMethodology.fertilizerTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Box overflowX="auto" w="full">
                   <Grid
                     templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
@@ -1080,14 +1102,11 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaFlask} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonMethodology.chemicalTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonMethodology.chemicalTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text fontWeight="bold">
                   {intl.formatMessage({
                     id: 'education.detail.carbonMethodology.pesticidesHerbicides'
@@ -1104,7 +1123,7 @@ const EducationTopicDetail: React.FC = () => {
                           id: 'education.detail.carbonMethodology.syntheticPesticide'
                         })}
                       </Text>
-                      <Text fontSize="lg" fontWeight="bold" color="orange.600">
+                      <Text fontSize="lg" fontWeight="bold" color="red.700">
                         {intl.formatMessage({
                           id: 'education.detail.carbonMethodology.syntheticPesticideValue'
                         })}
@@ -1138,7 +1157,7 @@ const EducationTopicDetail: React.FC = () => {
                           id: 'education.detail.carbonMethodology.syntheticHerbicide'
                         })}
                       </Text>
-                      <Text fontSize="lg" fontWeight="bold" color="orange.600">
+                      <Text fontSize="lg" fontWeight="bold" color="red.700">
                         {intl.formatMessage({
                           id: 'education.detail.carbonMethodology.syntheticHerbicideValue'
                         })}
@@ -1230,14 +1249,11 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaCalculator} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonMethodology.calculationTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonMethodology.calculationTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={4} align="start">
+              <VStack spacing={4} align="stretch">
                 <Text>
                   <strong>
                     {intl.formatMessage({
@@ -1312,12 +1328,9 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaLeaf} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.carbonMethodology.philosophyTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.carbonMethodology.philosophyTitle' })}
+            </Heading>
             <Alert status="success">
               <AlertIcon />
               <Box>
@@ -1337,42 +1350,24 @@ const EducationTopicDetail: React.FC = () => {
                 {intl.formatMessage({ id: 'education.detail.carbonMethodology.includesTitle' })}
               </Heading>
               <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }} gap={2}>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">
-                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes1' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">
-                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes2' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">
-                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes3' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">
-                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes4' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">
-                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes5' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.500" />
-                  <Text fontSize="sm">
-                    {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes6' })}
-                  </Text>
-                </HStack>
+                <Text fontSize="sm">
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes1' })}
+                </Text>
+                <Text fontSize="sm">
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes2' })}
+                </Text>
+                <Text fontSize="sm">
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes3' })}
+                </Text>
+                <Text fontSize="sm">
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes4' })}
+                </Text>
+                <Text fontSize="sm">
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes5' })}
+                </Text>
+                <Text fontSize="sm">
+                  {intl.formatMessage({ id: 'education.detail.carbonMethodology.includes6' })}
+                </Text>
               </Grid>
             </Box>
 
@@ -1396,10 +1391,10 @@ const EducationTopicDetail: React.FC = () => {
         id: 'first-production',
         title: intl.formatMessage({ id: 'education.topicFirstProductionTitle' }),
         description: intl.formatMessage({ id: 'education.topicFirstProductionDesc' }),
-        icon: FaPlayCircle,
+        icon: FaSeedling,
         category: intl.formatMessage({ id: 'education.categoryGettingStarted' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Alert status="success">
               <AlertIcon />
               <Box>
@@ -1412,63 +1407,45 @@ const EducationTopicDetail: React.FC = () => {
               </Box>
             </Alert>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaCogs} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.firstProduction.step1Title' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.firstProduction.step1Title' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.firstProduction.farmInfoLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.firstProduction.farmInfo' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.firstProduction.cropSelectionLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.firstProduction.cropSelection' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.firstProduction.farmSizeLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.firstProduction.farmSize' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.firstProduction.approachLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.firstProduction.approach' })}
-                  </Text>
-                </HStack>
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.firstProduction.farmInfoLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.farmInfo' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({
+                      id: 'education.detail.firstProduction.cropSelectionLabel'
+                    })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.cropSelection' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.firstProduction.farmSizeLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.farmSize' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.firstProduction.approachLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.approach' })}
+                </Text>
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaSeedling} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.firstProduction.step2Title' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.firstProduction.step2Title' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   <strong>
                     {intl.formatMessage({
@@ -1501,12 +1478,9 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaBook} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.firstProduction.step3Title' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.firstProduction.step3Title' })}
+            </Heading>
             <Box overflowX="auto" w="full">
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
@@ -1514,7 +1488,6 @@ const EducationTopicDetail: React.FC = () => {
                 minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📝{' '}
                     {intl.formatMessage({ id: 'education.detail.firstProduction.startWithTitle' })}
                   </Heading>
                   <Text fontSize="sm">
@@ -1523,7 +1496,6 @@ const EducationTopicDetail: React.FC = () => {
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    📸{' '}
                     {intl.formatMessage({ id: 'education.detail.firstProduction.addPhotoTitle' })}
                   </Heading>
                   <Text fontSize="sm">
@@ -1533,14 +1505,11 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaQrcode} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.firstProduction.step4Title' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.firstProduction.step4Title' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   <strong>
                     {intl.formatMessage({ id: 'education.detail.firstProduction.qrCreationLabel' })}
@@ -1588,17 +1557,14 @@ const EducationTopicDetail: React.FC = () => {
         icon: FaCamera,
         category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Text fontSize="lg">
               {intl.formatMessage({ id: 'education.detail.eventMastery.intro' })}
             </Text>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaCamera} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.eventMastery.realTimeVsBatchTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.eventMastery.realTimeVsBatchTitle' })}
+            </Heading>
             <Box overflowX="auto" w="full">
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
@@ -1606,7 +1572,7 @@ const EducationTopicDetail: React.FC = () => {
                 minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="green.700" mb={2}>
-                    ⚡ {intl.formatMessage({ id: 'education.detail.eventMastery.realTimeTitle' })}
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.realTimeTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
                     <ListItem>
@@ -1624,8 +1590,8 @@ const EducationTopicDetail: React.FC = () => {
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="yellow.600" mb={2}>
-                    📝 {intl.formatMessage({ id: 'education.detail.eventMastery.batchTitle' })}
+                  <Heading size="sm" color="gray.700" mb={2}>
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.batchTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
                     <ListItem>
@@ -1645,17 +1611,14 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaCamera} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.eventMastery.photoTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.eventMastery.photoTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   <strong>
-                    📸 {intl.formatMessage({ id: 'education.detail.eventMastery.whatToPhoto' })}
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.whatToPhoto' })}
                   </strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
@@ -1678,7 +1641,7 @@ const EducationTopicDetail: React.FC = () => {
 
                 <Text>
                   <strong>
-                    📱 {intl.formatMessage({ id: 'education.detail.eventMastery.technicalTips' })}
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.technicalTips' })}
                   </strong>
                 </Text>
                 <UnorderedList spacing={1} pl={6}>
@@ -1698,63 +1661,45 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaMicrophone} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.eventMastery.voiceTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.eventMastery.voiceTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <HStack>
-                  <Icon as={FaMicrophone} color="purple.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.eventMastery.voiceCommandsLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.eventMastery.voiceCommands' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaMicrophone} color="purple.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.eventMastery.quickNotesLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.eventMastery.quickNotes' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaMicrophone} color="purple.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.eventMastery.handsFreeLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.eventMastery.handsFree' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaMicrophone} color="purple.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.eventMastery.autoTranscriptionLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.eventMastery.autoTranscription' })}
-                  </Text>
-                </HStack>
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({
+                      id: 'education.detail.eventMastery.voiceCommandsLabel'
+                    })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.eventMastery.voiceCommands' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.quickNotesLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.eventMastery.quickNotes' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.eventMastery.handsFreeLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.eventMastery.handsFree' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({
+                      id: 'education.detail.eventMastery.autoTranscriptionLabel'
+                    })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.eventMastery.autoTranscription' })}
+                </Text>
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaLeaf} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.eventMastery.seasonalTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.eventMastery.seasonalTitle' })}
+            </Heading>
             <Box overflowX="auto" w="full">
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
@@ -1762,7 +1707,6 @@ const EducationTopicDetail: React.FC = () => {
                 minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="green.700" mb={2}>
-                    🌱{' '}
                     {intl.formatMessage({
                       id: 'education.detail.eventMastery.plantingSeasonTitle'
                     })}
@@ -1783,8 +1727,7 @@ const EducationTopicDetail: React.FC = () => {
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="yellow.600" mb={2}>
-                    🌾{' '}
+                  <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.eventMastery.growingSeasonTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
@@ -1803,8 +1746,7 @@ const EducationTopicDetail: React.FC = () => {
                   </UnorderedList>
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <Heading size="sm" color="orange.600" mb={2}>
-                    🍂{' '}
+                  <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.eventMastery.harvestSeasonTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="sm">
@@ -1843,10 +1785,10 @@ const EducationTopicDetail: React.FC = () => {
         id: 'score-optimization',
         title: intl.formatMessage({ id: 'education.topicScoreOptimizationTitle' }),
         description: intl.formatMessage({ id: 'education.topicScoreOptimizationDesc' }),
-        icon: FaTrophy,
+        icon: FaClipboardCheck,
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Alert status="warning">
               <AlertIcon />
               <Box>
@@ -1859,14 +1801,11 @@ const EducationTopicDetail: React.FC = () => {
               </Box>
             </Alert>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaCalculator} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.scoreOptimization.weightsTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.scoreOptimization.weightsTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   {intl.formatMessage({ id: 'education.detail.scoreOptimization.growingDesc' })}
                 </Text>
@@ -1888,12 +1827,9 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaTrophy} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.scoreOptimization.strategyTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.scoreOptimization.strategyTitle' })}
+            </Heading>
             <Box overflowX="auto" w="full">
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
@@ -1958,14 +1894,11 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaShieldAlt} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.scoreOptimization.mistakesTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.scoreOptimization.mistakesTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   {intl.formatMessage({ id: 'education.detail.scoreOptimization.mistake1' })}
                 </Text>
@@ -1984,12 +1917,9 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaSeedling} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.scoreOptimization.cropTypesTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.scoreOptimization.cropTypesTitle' })}
+            </Heading>
             <Box overflowX="auto" w="full">
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
@@ -1997,7 +1927,6 @@ const EducationTopicDetail: React.FC = () => {
                 minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🥑{' '}
                     {intl.formatMessage({
                       id: 'education.detail.scoreOptimization.treeFruitsTitle'
                     })}
@@ -2019,7 +1948,6 @@ const EducationTopicDetail: React.FC = () => {
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🌾{' '}
                     {intl.formatMessage({
                       id: 'education.detail.scoreOptimization.annualCropsTitle'
                     })}
@@ -2049,7 +1977,6 @@ const EducationTopicDetail: React.FC = () => {
                 </Box>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <Heading size="sm" color="gray.700" mb={2}>
-                    🫐{' '}
                     {intl.formatMessage({ id: 'education.detail.scoreOptimization.berriesTitle' })}
                   </Heading>
                   <UnorderedList spacing={1} fontSize="xs">
@@ -2091,17 +2018,14 @@ const EducationTopicDetail: React.FC = () => {
         icon: FaUsers,
         category: intl.formatMessage({ id: 'education.categoryConsumerEngagement' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Text fontSize="lg">
               {intl.formatMessage({ id: 'education.detail.consumerEngagement.intro' })}
             </Text>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaQrcode} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.consumerEngagement.qrPlacementTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.consumerEngagement.qrPlacementTitle' })}
+            </Heading>
             <Box overflowX="auto" w="full">
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
@@ -2113,7 +2037,7 @@ const EducationTopicDetail: React.FC = () => {
                       id: 'education.detail.consumerEngagement.packagingTitle'
                     })}
                   </Heading>
-                  <VStack spacing={2} align="start">
+                  <VStack spacing={2} align="stretch">
                     <Text fontSize="sm">
                       <strong>
                         {intl.formatMessage({
@@ -2152,7 +2076,7 @@ const EducationTopicDetail: React.FC = () => {
                   <Heading size="sm" color="gray.700" mb={2}>
                     {intl.formatMessage({ id: 'education.detail.consumerEngagement.posTitle' })}
                   </Heading>
-                  <VStack spacing={2} align="start">
+                  <VStack spacing={2} align="stretch">
                     <Text fontSize="sm">
                       <strong>
                         {intl.formatMessage({
@@ -2190,14 +2114,11 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaChartLine} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.consumerEngagement.analyticsTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.consumerEngagement.analyticsTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   <strong>
                     {intl.formatMessage({ id: 'education.detail.consumerEngagement.keyMetrics' })}
@@ -2207,30 +2128,10 @@ const EducationTopicDetail: React.FC = () => {
                   <ListItem>
                     <strong>
                       {intl.formatMessage({
-                        id: 'education.detail.consumerEngagement.scanRateLabel'
+                        id: 'education.detail.consumerEngagement.totalScansLabel'
                       })}
                     </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.scanRate' })}
-                  </ListItem>
-                  <ListItem>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.consumerEngagement.completionRateLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({
-                      id: 'education.detail.consumerEngagement.completionRate'
-                    })}
-                  </ListItem>
-                  <ListItem>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.consumerEngagement.engagementTimeLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({
-                      id: 'education.detail.consumerEngagement.engagementTime'
-                    })}
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.totalScans' })}
                   </ListItem>
                   <ListItem>
                     <strong>
@@ -2248,86 +2149,57 @@ const EducationTopicDetail: React.FC = () => {
                     </strong>{' '}
                     {intl.formatMessage({ id: 'education.detail.consumerEngagement.geographic' })}
                   </ListItem>
-                  <ListItem>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.consumerEngagement.peakTimesLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.peakTimes' })}
-                  </ListItem>
                 </UnorderedList>
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaUsers} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({
-                  id: 'education.detail.consumerEngagement.relationshipsTitle'
-                })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({
+                id: 'education.detail.consumerEngagement.relationshipsTitle'
+              })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <HStack>
-                  <Icon as={FaUsers} color="yellow.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.eduLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.edu' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaUsers} color="yellow.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.trustLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.trust' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaUsers} color="yellow.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.consumerEngagement.premiumLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.premium' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaUsers} color="yellow.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.consumerEngagement.repeatLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.repeat' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaUsers} color="yellow.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.consumerEngagement.womLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.wom' })}
-                  </Text>
-                </HStack>
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.eduLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.consumerEngagement.edu' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.trustLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.consumerEngagement.trust' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({
+                      id: 'education.detail.consumerEngagement.premiumLabel'
+                    })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.consumerEngagement.premium' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({
+                      id: 'education.detail.consumerEngagement.repeatLabel'
+                    })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.consumerEngagement.repeat' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.consumerEngagement.womLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.consumerEngagement.wom' })}
+                </Text>
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaRocket} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.consumerEngagement.perfTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.consumerEngagement.perfTitle' })}
+            </Heading>
             <Box overflowX="auto" w="full">
               <Grid
                 templateColumns={{ base: '1fr', md: 'repeat(3, 1fr)' }}
@@ -2393,14 +2265,11 @@ const EducationTopicDetail: React.FC = () => {
               </Grid>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaBullhorn} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.consumerEngagement.marketingTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.consumerEngagement.marketingTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text>
                   {intl.formatMessage({ id: 'education.detail.consumerEngagement.marketing1' })}
                 </Text>
@@ -2440,7 +2309,7 @@ const EducationTopicDetail: React.FC = () => {
         icon: FaClipboardList,
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Alert status="info">
               <AlertIcon />
               <Box>
@@ -2453,76 +2322,58 @@ const EducationTopicDetail: React.FC = () => {
               </Box>
             </Alert>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaClipboardList} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.organicSystemPlan.commonOspTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.organicSystemPlan.commonOspTitle' })}
+            </Heading>
             <Text>
               {intl.formatMessage({ id: 'education.detail.organicSystemPlan.commonOspDesc' })}
             </Text>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaCheckCircle} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({
-                  id: 'education.detail.organicSystemPlan.howTrazoHelpsTitle'
-                })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({
+                id: 'education.detail.organicSystemPlan.howTrazoHelpsTitle'
+              })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.organicSystemPlan.guidedQuestionsLabel'
-                      })}
-                    </strong>{' '}
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
                     {intl.formatMessage({
-                      id: 'education.detail.organicSystemPlan.guidedQuestions'
+                      id: 'education.detail.organicSystemPlan.guidedQuestionsLabel'
                     })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.organicSystemPlan.suggestedChipsLabel'
-                      })}
-                    </strong>{' '}
+                  </strong>{' '}
+                  {intl.formatMessage({
+                    id: 'education.detail.organicSystemPlan.guidedQuestions'
+                  })}
+                </Text>
+                <Text>
+                  <strong>
                     {intl.formatMessage({
-                      id: 'education.detail.organicSystemPlan.suggestedChips'
+                      id: 'education.detail.organicSystemPlan.suggestedChipsLabel'
                     })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.organicSystemPlan.naAttestationLabel'
-                      })}
-                    </strong>{' '}
+                  </strong>{' '}
+                  {intl.formatMessage({
+                    id: 'education.detail.organicSystemPlan.suggestedChips'
+                  })}
+                </Text>
+                <Text>
+                  <strong>
                     {intl.formatMessage({
-                      id: 'education.detail.organicSystemPlan.naAttestation'
+                      id: 'education.detail.organicSystemPlan.naAttestationLabel'
                     })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.organicSystemPlan.packetsLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.organicSystemPlan.packets' })}
-                  </Text>
-                </HStack>
+                  </strong>{' '}
+                  {intl.formatMessage({
+                    id: 'education.detail.organicSystemPlan.naAttestation'
+                  })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({
+                      id: 'education.detail.organicSystemPlan.packetsLabel'
+                    })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.organicSystemPlan.packets' })}
+                </Text>
               </VStack>
             </Box>
 
@@ -2551,7 +2402,7 @@ const EducationTopicDetail: React.FC = () => {
         icon: FaCalendarAlt,
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Alert status="info">
               <AlertIcon />
               <Box>
@@ -2564,24 +2415,18 @@ const EducationTopicDetail: React.FC = () => {
               </Box>
             </Alert>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaDollarSign} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.renewalSeason.occspTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.renewalSeason.occspTitle' })}
+            </Heading>
             <Text>{intl.formatMessage({ id: 'education.detail.renewalSeason.occspDesc' })}</Text>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaCalendarAlt} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({
-                  id: 'education.detail.renewalSeason.certifierWindowsTitle'
-                })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({
+                id: 'education.detail.renewalSeason.certifierWindowsTitle'
+              })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
+              <VStack spacing={3} align="stretch">
                 <Text fontSize="sm" color="gray.600">
                   {intl.formatMessage({
                     id: 'education.detail.renewalSeason.certifierWindowsIntro'
@@ -2604,12 +2449,9 @@ const EducationTopicDetail: React.FC = () => {
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaClipboardCheck} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.renewalSeason.completeUpdateTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.renewalSeason.completeUpdateTitle' })}
+            </Heading>
             <UnorderedList spacing={2} pl={6}>
               <ListItem>
                 {intl.formatMessage({ id: 'education.detail.renewalSeason.completeUpdate1' })}
@@ -2625,12 +2467,9 @@ const EducationTopicDetail: React.FC = () => {
               </ListItem>
             </UnorderedList>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaSyncAlt} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.renewalSeason.migratingTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.renewalSeason.migratingTitle' })}
+            </Heading>
             <Text>
               {intl.formatMessage({ id: 'education.detail.renewalSeason.migratingDesc' })}
             </Text>
@@ -2656,7 +2495,7 @@ const EducationTopicDetail: React.FC = () => {
         icon: FaClipboardCheck,
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Alert status="info">
               <AlertIcon />
               <Box>
@@ -2675,13 +2514,10 @@ const EducationTopicDetail: React.FC = () => {
                 gap={4}
                 minW={{ base: '280px', md: 'auto' }}>
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaFlask} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({ id: 'education.detail.inspectionPrep.inputsTitle' })}
-                      </Heading>
-                    </HStack>
+                  <VStack spacing={2} align="stretch">
+                    <Heading size="sm" color="gray.700">
+                      {intl.formatMessage({ id: 'education.detail.inspectionPrep.inputsTitle' })}
+                    </Heading>
                     <Text fontSize="sm" fontStyle="italic">
                       {intl.formatMessage({ id: 'education.detail.inspectionPrep.inputsQuestion' })}
                     </Text>
@@ -2695,13 +2531,10 @@ const EducationTopicDetail: React.FC = () => {
                 </Box>
 
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaSeedling} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({ id: 'education.detail.inspectionPrep.seedTitle' })}
-                      </Heading>
-                    </HStack>
+                  <VStack spacing={2} align="stretch">
+                    <Heading size="sm" color="gray.700">
+                      {intl.formatMessage({ id: 'education.detail.inspectionPrep.seedTitle' })}
+                    </Heading>
                     <Text fontSize="sm" fontStyle="italic">
                       {intl.formatMessage({ id: 'education.detail.inspectionPrep.seedQuestion' })}
                     </Text>
@@ -2715,15 +2548,12 @@ const EducationTopicDetail: React.FC = () => {
                 </Box>
 
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaTractor} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({
-                          id: 'education.detail.inspectionPrep.tracebackTitle'
-                        })}
-                      </Heading>
-                    </HStack>
+                  <VStack spacing={2} align="stretch">
+                    <Heading size="sm" color="gray.700">
+                      {intl.formatMessage({
+                        id: 'education.detail.inspectionPrep.tracebackTitle'
+                      })}
+                    </Heading>
                     <Text fontSize="sm" fontStyle="italic">
                       {intl.formatMessage({
                         id: 'education.detail.inspectionPrep.tracebackQuestion'
@@ -2741,15 +2571,12 @@ const EducationTopicDetail: React.FC = () => {
                 </Box>
 
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-                  <VStack spacing={2} align="start">
-                    <HStack>
-                      <Icon as={FaShieldAlt} color="green.600" />
-                      <Heading size="sm" color="gray.700">
-                        {intl.formatMessage({
-                          id: 'education.detail.inspectionPrep.equipmentTitle'
-                        })}
-                      </Heading>
-                    </HStack>
+                  <VStack spacing={2} align="stretch">
+                    <Heading size="sm" color="gray.700">
+                      {intl.formatMessage({
+                        id: 'education.detail.inspectionPrep.equipmentTitle'
+                      })}
+                    </Heading>
                     <Text fontSize="sm" fontStyle="italic">
                       {intl.formatMessage({
                         id: 'education.detail.inspectionPrep.equipmentQuestion'
@@ -2795,13 +2622,294 @@ const EducationTopicDetail: React.FC = () => {
         )
       },
       {
+        id: 'season-lifecycle',
+        title: intl.formatMessage({ id: 'education.topicSeasonLifecycleTitle' }),
+        description: intl.formatMessage({ id: 'education.topicSeasonLifecycleDesc' }),
+        icon: FaSeedling,
+        category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' }),
+        content: (
+          <VStack spacing={6} align="stretch">
+            <Alert status="info">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.introTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.introDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.seasonLifecycle.startTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.startDesc' })}</Text>
+            <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.startNote' })}</Text>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.seasonLifecycle.planTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.planDesc' })}</Text>
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="stretch">
+                <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.plan1' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.plan2' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.plan3' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.plan4' })}</Text>
+              </VStack>
+            </Box>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.seasonLifecycle.logTitle' })}
+            </Heading>
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="stretch">
+                <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.log1' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.log2' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.log3' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.log4' })}</Text>
+              </VStack>
+            </Box>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishDesc' })}</Text>
+
+            <Alert status="warning">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishWarnTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.finishWarnDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.seasonLifecycle.afterTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.seasonLifecycle.afterDesc' })}</Text>
+
+            <Alert status="success">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.whereTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.seasonLifecycle.whereDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+          </VStack>
+        )
+      },
+      {
+        id: 'osp-data',
+        title: intl.formatMessage({ id: 'education.topicOspDataTitle' }),
+        description: intl.formatMessage({ id: 'education.topicOspDataDesc' }),
+        icon: FaDatabase,
+        category: intl.formatMessage({ id: 'education.categoryCompliance' }),
+        content: (
+          <VStack spacing={6} align="stretch">
+            <Alert status="info">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.ospData.introTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.ospData.introDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="stretch">
+                <Text>{intl.formatMessage({ id: 'education.detail.ospData.section1' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.ospData.section2' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.ospData.section3' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.ospData.section4' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.ospData.section5' })}</Text>
+                <Text>{intl.formatMessage({ id: 'education.detail.ospData.section6' })}</Text>
+              </VStack>
+            </Box>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.ospData.authorTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.ospData.authorDesc' })}</Text>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.ospData.prefillTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.ospData.prefillDesc' })}</Text>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.ospData.registryTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.ospData.registryDesc' })}</Text>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.ospData.parcelTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.ospData.parcelDesc' })}</Text>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.ospData.lockTitle' })}
+            </Heading>
+            <Text>{intl.formatMessage({ id: 'education.detail.ospData.lockDesc' })}</Text>
+
+            <Alert status="warning">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.ospData.updateTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.ospData.updateDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+
+            <Alert status="success">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.ospData.whereTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.ospData.whereDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+          </VStack>
+        )
+      },
+      {
+        id: 'record-corrections',
+        title: intl.formatMessage({ id: 'education.topicRecordCorrectionsTitle' }),
+        description: intl.formatMessage({ id: 'education.topicRecordCorrectionsDesc' }),
+        icon: FaFileSignature,
+        category: intl.formatMessage({ id: 'education.categoryCompliance' }),
+        content: (
+          <VStack spacing={6} align="stretch">
+            <Alert status="info">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.lockTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.lockDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.recordCorrections.hitLockTitle' })}
+            </Heading>
+            <Text>
+              {intl.formatMessage({ id: 'education.detail.recordCorrections.hitLockDesc' })}
+            </Text>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.recordCorrections.howTitle' })}
+            </Heading>
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.recordCorrections.step1Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.step1' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.recordCorrections.step2Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.step2' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.recordCorrections.step3Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.step3' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.recordCorrections.step4Label' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.step4' })}
+                </Text>
+              </VStack>
+            </Box>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.recordCorrections.packetTitle' })}
+            </Heading>
+            <Text>
+              {intl.formatMessage({ id: 'education.detail.recordCorrections.packetDesc' })}
+            </Text>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.recordCorrections.goodPracticeTitle' })}
+            </Heading>
+            <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.good1' })}
+                </Text>
+                <Text>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.good2' })}
+                </Text>
+                <Text>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.good3' })}
+                </Text>
+                <Text>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.good4' })}
+                </Text>
+              </VStack>
+            </Box>
+
+            <Alert status="warning">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.limitTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.limitDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+
+            <Alert status="success">
+              <AlertIcon />
+              <Box>
+                <AlertTitle>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.whereTitle' })}
+                </AlertTitle>
+                <AlertDescription>
+                  {intl.formatMessage({ id: 'education.detail.recordCorrections.whereDesc' })}
+                </AlertDescription>
+              </Box>
+            </Alert>
+          </VStack>
+        )
+      },
+      {
         id: 'buffer-zones',
         title: intl.formatMessage({ id: 'education.topicBufferZonesTitle' }),
         description: intl.formatMessage({ id: 'education.topicBufferZonesDesc' }),
         icon: FaMapMarkedAlt,
         category: intl.formatMessage({ id: 'education.categoryCompliance' }),
         content: (
-          <VStack spacing={6} align="start">
+          <VStack spacing={6} align="stretch">
             <Alert status="info">
               <AlertIcon />
               <Box>
@@ -2814,61 +2922,43 @@ const EducationTopicDetail: React.FC = () => {
               </Box>
             </Alert>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaMapMarkedAlt} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.bufferZones.recordPerBorderTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.bufferZones.recordPerBorderTitle' })}
+            </Heading>
             <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
-              <VStack spacing={3} align="start">
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.bufferZones.adjoiningUseLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.bufferZones.adjoiningUse' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.bufferZones.bufferTypeLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.bufferZones.bufferType' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({
-                        id: 'education.detail.bufferZones.lastProhibitedLabel'
-                      })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.bufferZones.lastProhibited' })}
-                  </Text>
-                </HStack>
-                <HStack>
-                  <Icon as={FaCheckCircle} color="green.600" />
-                  <Text>
-                    <strong>
-                      {intl.formatMessage({ id: 'education.detail.bufferZones.dispositionLabel' })}
-                    </strong>{' '}
-                    {intl.formatMessage({ id: 'education.detail.bufferZones.disposition' })}
-                  </Text>
-                </HStack>
+              <VStack spacing={3} align="stretch">
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.bufferZones.adjoiningUseLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.bufferZones.adjoiningUse' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.bufferZones.bufferTypeLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.bufferZones.bufferType' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({
+                      id: 'education.detail.bufferZones.lastProhibitedLabel'
+                    })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.bufferZones.lastProhibited' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({ id: 'education.detail.bufferZones.dispositionLabel' })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.bufferZones.disposition' })}
+                </Text>
               </VStack>
             </Box>
 
-            <HStack spacing={2} mb={3}>
-              <Icon as={FaBullhorn} color="green.600" boxSize={5} />
-              <Heading size="md" color="gray.700">
-                {intl.formatMessage({ id: 'education.detail.bufferZones.driftTitle' })}
-              </Heading>
-            </HStack>
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.bufferZones.driftTitle' })}
+            </Heading>
             <Text>{intl.formatMessage({ id: 'education.detail.bufferZones.driftDesc' })}</Text>
 
             <Alert status="success">
@@ -2911,29 +3001,22 @@ const EducationTopicDetail: React.FC = () => {
       showBackButton
       onBack={() => navigate('/admin/dashboard/education')}>
       <VStack spacing={6} w="full" align="stretch">
-        {/* Topic Header with Icon */}
+        {/* 2026-08-21 — a header card stood here that printed the page's own <h1> a second
+            time, through `education.learnAbout` with `topic.title.toLowerCase()` applied. It
+            carried no information StandardPage was not already showing, and the lowercasing
+            mangled every proper noun in a title: "what your records put in the osp", "your
+            organic system plan in trazo". Its category line was also `green.500` AS TEXT on a
+            white card — 2.78:1, the failure frontend.md calls out by name. The category is
+            already on the hub card the reader clicked to get here. */}
         <Card w="full">
           <CardBody>
-            <HStack>
-              <Icon as={topic.icon} boxSize={8} color="green.500" />
-              <VStack align="start" spacing={1}>
-                <Text fontSize="sm" color="green.500" fontWeight="medium">
-                  {topic.category}
-                </Text>
-                <Heading size="md" color="gray.700">
-                  {intl.formatMessage(
-                    { id: 'education.learnAbout' },
-                    { topic: topic.title.toLowerCase() }
-                  )}
-                </Heading>
-              </VStack>
+            <HStack align="start" spacing={4}>
+              <Icon as={topic.icon} boxSize={8} color="green.700" flexShrink={0} />
+              <Box flex="1" minW={0}>
+                {topic.content}
+              </Box>
             </HStack>
           </CardBody>
-        </Card>
-
-        {/* Topic Content */}
-        <Card w="full">
-          <CardBody>{topic.content}</CardBody>
         </Card>
       </VStack>
     </StandardPage>

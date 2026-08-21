@@ -4,11 +4,6 @@ import {
   HStack,
   SimpleGrid,
   Switch,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   useToast,
   useBreakpointValue,
   Text,
@@ -38,6 +33,7 @@ import {
   FaChevronRight,
   FaChevronLeft
 } from 'react-icons/fa';
+import { StandardNumberInput } from 'components/Design/StandardComponents';
 
 // Form Schema
 const companySchema = object({
@@ -389,15 +385,10 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                     label="Employee Count"
                     error={errors.employeeCount?.message}
                     helpText="Approximate number of employees">
-                    <NumberInput
+                    <StandardNumberInput
                       value={watch('employeeCount') || 0}
-                      onChange={(_, num) => methods.setValue('employeeCount', num || 0)}>
-                      <NumberInputField borderRadius="lg" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
+                      onChange={(_, num) => methods.setValue('employeeCount', num || 0)}
+                    />
                   </StandardField>
                 </SimpleGrid>
 
@@ -446,7 +437,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                 {/* Navigation */}
                 <HStack spacing={3} justify="flex-end" pt={4}>
                   <StandardButton variant="outline" onClick={onCancel}>
-                    Cancel
+                    {intl.formatMessage({ id: 'app.cancel' })}
                   </StandardButton>
                   <StandardButton
                     onClick={nextStep}
@@ -555,7 +546,7 @@ export const StandardizedCompanyForm: React.FC<StandardizedCompanyFormProps> = (
                   <HStack spacing={3}>
                     {!isMobile && (
                       <StandardButton variant="outline" onClick={onCancel}>
-                        Cancel
+                        {intl.formatMessage({ id: 'app.cancel' })}
                       </StandardButton>
                     )}
                     <StandardButton

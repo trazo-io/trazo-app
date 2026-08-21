@@ -61,7 +61,12 @@ import {
 // Event Field Registry (Phase 5 — feature-flagged)
 import { getFieldsForSurface, type ResolvedFieldSet } from 'src/config/events';
 // Worker privacy mask for the public QR page — see utils/consumerDisplay.ts
-import { maskPerformerName, withUSUnits, formatHarvestDate } from 'utils/consumerDisplay';
+import {
+  formatDateRangeForConsumer,
+  formatHarvestDate,
+  maskPerformerName,
+  withUSUnits
+} from 'utils/consumerDisplay';
 import { extractSubtypeCode } from 'utils/eventDataNormalizer';
 
 import {
@@ -277,6 +282,11 @@ const ORGANIC_STATUS_KEYS: Record<string, string> = {
 const ORGANIC_TOOLTIP_KEYS: Record<string, string> = {
   omri_listed: 'consumer.eventCard.organic.tooltipOmri',
   national_list_allowed: 'consumer.eventCard.organic.tooltipNationalList',
+  // A § 205.602 entry the CFR permits for ONE stated use (calcium chloride as a foliar spray
+  // for a calcium-uptake disorder). Before 2026-08-20 the server chipped these
+  // `conventional_documented`, so an organic block's bitter-pit calcium programme — the very
+  // exception the regulation writes out — read to shoppers as a conventional input.
+  national_list_conditional: 'consumer.eventCard.organic.tooltipNationalListConditional',
   organic_approved: 'consumer.eventCard.organic.tooltipGrowerReported'
 };
 
@@ -436,6 +446,14 @@ interface ConsumerEventCardProps {
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   /** Production-level blockchain data to use when individual events lack their own */
+  /**
+   * Producer-only tooling rendered in a strip BELOW the card's content, never inside it.
+   *
+   * This card is also the producer's preview of what a shopper sees, so anything only a
+   * farmer would ever click has to sit visibly outside the consumer surface — otherwise the
+   * preview stops being a preview. Absent on the consumer page, where nothing renders.
+   */
+  producerAction?: React.ReactNode;
   productionBlockchain?: {
     tx_hash?: string;
     verified?: boolean;
@@ -453,6 +471,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   suppressShortDescription = false,
   isExpanded: controlledExpanded,
   onToggleExpand,
+  producerAction,
   productionBlockchain
 }) => {
   const intl = useIntl();
@@ -504,36 +523,12 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const formattedDate = formatEventDate(event.date);
 
   // Sprint 4: Format date range for aggregate/summary events
-  const formatDateRange = (startDate?: string, endDate?: string): string => {
-    if (!startDate || !endDate) return formattedDate;
-    try {
-      // Parse date strings as local time to avoid timezone offset issues
-      // "2025-11-01" parsed via new Date() is UTC midnight, which can show as previous day in local tz
-      const parseLocalDate = (dateStr: string): Date => {
-        if (dateStr.includes('T')) return new Date(dateStr);
-        const [y, m, d] = dateStr.split('-').map(Number);
-        return new Date(y, m - 1, d);
-      };
-      const start = parseLocalDate(startDate);
-      const end = parseLocalDate(endDate);
-      const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-      const yearOptions: Intl.DateTimeFormatOptions = { ...options, year: 'numeric' };
-
-      // If same year, only show year once at the end
-      if (start.getFullYear() === end.getFullYear()) {
-        return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString(
-          'en-US',
-          yearOptions
-        )}`;
-      }
-      return `${start.toLocaleDateString('en-US', yearOptions)} - ${end.toLocaleDateString(
-        'en-US',
-        yearOptions
-      )}`;
-    } catch {
-      return formattedDate;
-    }
-  };
+  // 🔴 2026-08-20 — this used to be a local copy that hardcoded `'en-US'`, so a Spanish
+  // shopper read "Apr 12 - Sep 15, 2025" on a summary card while every other date on the
+  // same page was formatted for their locale. One shared, locale-aware formatter now; see
+  // utils/consumerDisplay.formatDateRangeForConsumer for the local-date parsing rationale.
+  const formatDateRange = (startDate?: string, endDate?: string): string =>
+    formatDateRangeForConsumer(startDate, endDate, intl.locale) ?? formattedDate;
 
   // Sprint 4: Check if this is a summary event
   const isSummaryEvent = event.is_summary === true;
@@ -1229,6 +1224,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 const hasOrganicStatus = serverInput?.status
                   ? serverInput.status === 'omri_listed' ||
                     serverInput.status === 'national_list_allowed' ||
+                    serverInput.status === 'national_list_conditional' ||
                     serverInput.status === 'organic_approved'
                   : organicStatus &&
                     organicStatus !== 'not_organic' &&
@@ -1243,6 +1239,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   ? {
                       omri_listed: 'consumer.eventCard.organic.omriListed',
                       national_list_allowed: 'consumer.eventCard.organic.nationalListAllowed',
+                      national_list_conditional:
+                        'consumer.eventCard.organic.nationalListConditional',
                       organic_approved: 'consumer.eventCard.organic.growerReported'
                     }[serverInput.status]
                   : undefined;
@@ -1376,7 +1374,21 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 {event.verification_level &&
                   (() => {
                     const photoCount = event.album?.images?.length ?? 0;
-                    if (slim && !isExpanded) {
+                    // 🔴 2026-08-20 — the collapsed card is what a shopper actually reads, and
+                    // suppressing the tier badge there is right for an ordinary event (a "Data
+                    // Documented" chip on every card says nothing). It is WRONG on a card whose
+                    // body makes a THIRD-PARTY claim: a certification or audit event renders
+                    // "An outside body reviewed this operation against a written standard", and
+                    // the code that writes that line (eventDescriptions.ts) explicitly relies on
+                    // "the Verified / Self-Reported badge alongside" to carry the qualifier.
+                    //
+                    // With no photos the badge returned null, so the strong claim showed in the
+                    // default view and the word "Self Reported" was hidden behind "See More
+                    // Details". FTC 16 CFR 260.6 wants a qualification clear and conspicuous;
+                    // a disclosure behind an expander is the textbook case of one that is not.
+                    const makesThirdPartyClaim =
+                      event.event_type === 7 || event.type === 'business';
+                    if (slim && !isExpanded && !makesThirdPartyClaim) {
                       if (photoCount === 0) return null;
                       return (
                         <Badge
@@ -1442,6 +1454,49 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       </Tooltip>
                     );
                   })()}
+
+                {/* 🔴 2026-08-20 — the certificate number, on the collapsed card.
+                    `eventDescriptions.ts` tells the shopper "the certificate number is
+                    published here, so this is a claim a buyer can check rather than take on
+                    trust" — and the number itself was appended to a description string the
+                    default view never renders, so the one card that promised a checkable fact
+                    was the one card that withheld it.
+
+                    It is deliberately NOT dressed as a verification badge: the string is
+                    farmer-entered (`public_certifier_name()` withholds the farmer-typed
+                    certifier name for exactly that reason), so this is a reference a buyer can
+                    take to the issuer, not evidence Trazo has checked anything. Neutral pill,
+                    tabular figures, next to the Self-Reported badge that qualifies it. */}
+                {(event.event_type === 7 || event.type === 'business') &&
+                  (event as any).certificate_number &&
+                  String((event as any).certificate_number).trim() && (
+                    <Tooltip
+                      label={intl.formatMessage({
+                        id: 'consumer.eventCard.certificateNumber.tooltip'
+                      })}
+                      placement="top">
+                      <Badge
+                        variant="outline"
+                        colorScheme="gray"
+                        color={secondaryText}
+                        bg={neutralSoftBg}
+                        boxShadow="none"
+                        border="1px solid"
+                        borderColor={neutralBorder}
+                        fontSize="xs"
+                        px={3}
+                        py={1}
+                        borderRadius="full"
+                        textTransform="none"
+                        cursor="pointer"
+                        sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                        {intl.formatMessage(
+                          { id: 'consumer.eventCard.certificateNumber.badge' },
+                          { number: String((event as any).certificate_number).trim() }
+                        )}
+                      </Badge>
+                    </Tooltip>
+                  )}
 
                 {/* "HIGH INTEGRITY (98%)" and "ULTIMATE TRUST" badges removed
                     (2026-06): self-created superlative trust labels with no
@@ -1515,6 +1570,17 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   })}
             </Button>
           </Box>
+
+          {/* Producer tooling. Muted, divided off, and present only when the caller passes it
+              — the consumer page never does, so this whole strip is absent there. */}
+          {producerAction && (
+            <>
+              <Divider />
+              <Box px={{ base: 3, md: 4 }} py={2} bg={highlightBg}>
+                {producerAction}
+              </Box>
+            </>
+          )}
 
           {/* Expanded content */}
           <Collapse in={isExpanded}>

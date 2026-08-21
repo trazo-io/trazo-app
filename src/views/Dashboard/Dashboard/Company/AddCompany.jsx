@@ -626,7 +626,7 @@ function AddCompany({ isEdit = false }) {
                 <HStack spacing={3} justify="flex-end" pt={4}>
                   {!isMobile && hasExistingCompany && (
                     <StandardButton variant="outline" onClick={handleCancel}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                   )}
                   {/* Deliberately always enabled: nextStep() validates and shows
@@ -711,7 +711,7 @@ function AddCompany({ isEdit = false }) {
                   <HStack spacing={3}>
                     {!isMobile && (
                       <StandardButton variant="outline" onClick={handleCancel}>
-                        Cancel
+                        {intl.formatMessage({ id: 'app.cancel' })}
                       </StandardButton>
                     )}
                     <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
@@ -761,7 +761,7 @@ function AddCompany({ isEdit = false }) {
                   <HStack spacing={3}>
                     {!isMobile && (
                       <StandardButton variant="outline" onClick={handleCancel}>
-                        Cancel
+                        {intl.formatMessage({ id: 'app.cancel' })}
                       </StandardButton>
                     )}
                     <StandardButton

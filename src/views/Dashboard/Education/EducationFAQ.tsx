@@ -144,7 +144,7 @@ const EducationFAQ: React.FC = () => {
       <VStack spacing={5} w="full" align="stretch">
         {isLoading ? (
           <Center py={16}>
-            <CircularProgress isIndeterminate color="green.500" />
+            <CircularProgress isIndeterminate color="green.700" />
           </Center>
         ) : error ? (
           <Card bg={cardBg}>
@@ -215,7 +215,7 @@ const EducationFAQ: React.FC = () => {
                             </Badge>
                           )}
                         </HStack>
-                        <AccordionIcon color="green.500" ml={2} />
+                        <AccordionIcon color="green.700" ml={2} />
                       </AccordionButton>
                       <AccordionPanel px={{ base: 4, md: 6 }} pb={5} color={panelFg}>
                         <AnswerBody answer={faq.answer} />

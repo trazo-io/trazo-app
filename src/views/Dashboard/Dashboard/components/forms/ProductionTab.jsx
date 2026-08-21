@@ -8,11 +8,6 @@ import {
   VStack,
   Text,
   Icon,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   useColorModeValue,
   SimpleGrid,
   Switch,
@@ -28,8 +23,10 @@ import {
   StandardAlert,
   CollapsibleSection,
   SectionHeader,
-  SectionBox
+  SectionBox,
+  StandardNumberInput
 } from 'components/Design/StandardComponents';
+import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -41,7 +38,14 @@ import {
   FaShieldAlt
 } from 'react-icons/fa';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
-import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  forwardRef,
+  useImperativeHandle
+} from 'react';
 import { object, string, array } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
@@ -64,6 +68,8 @@ import { useSelector } from 'react-redux';
 import { useGetCurrentHistoryQuery, useGetSeedSuppliersQuery } from 'store/api/historyApi';
 import { RegistryFormField } from 'src/components/Forms/RegistryFormField';
 import { BlockIdField } from 'components/Fields/BlockIdField';
+import { offersSummaryMode, unrenderedProductionKeys } from 'utils/productionPayloadGates';
+import { harvestGradeOptions, MAX_GRADE_LENGTH, OTHER_GRADE } from 'config/harvestGrades';
 
 // Sprint 2 Epic 2.1: Equipment operation types (merged from EquipmentTab)
 const EQUIPMENT_OPERATION_TYPES = [
@@ -464,9 +470,72 @@ const formSchemaMainInfo = object({
   ).optional()
 });
 
+const FUEL_CONSUMED_INPUT_ID = 'production-fuel-consumed';
+
+/**
+ * Subtypes that can report powered equipment, and therefore the ONLY ones that show the
+ * "Fuel Consumption & Equipment Data" section.
+ *
+ * This list was written out inline three times for the individual fields, while the section
+ * WRAPPING them was gated on nothing but `productionType !== 'PO'`. So Buffer Use, Transport
+ * and Seed Search rendered the section header, its "Optional — carbon only" badge and its
+ * intro copy with no fuel fields inside — the only control left was Equipment Hours, which
+ * no calculator reads. A farmer logging a buffer harvest saw a fuel section, typed 10 hours
+ * into it, and got 0 kg CO₂e.
+ *
+ * TP is included: the production callout promises "transport from harvest to storage is
+ * counted here rather than against field equipment, so nothing is double-counted", which is
+ * only true if the operator can actually enter the haul fuel. The backend already counts it
+ * (`_calculate_reported_fuel_only_emissions`).
+ *
+ * BU and SS stay out. SS is a phone-and-catalogue search. BU's buffer rows are often taken
+ * in the same pass as the main harvest, which is logged as its own HA event — offering a
+ * second fuel entry there invites double-counting, and that is a product decision rather
+ * than a gap to quietly fill.
+ */
+const FUEL_REPORTING_SUBTYPES = [
+  'PL',
+  'HA',
+  'IR',
+  'PR',
+  'TR',
+  'CU',
+  'TH',
+  'EM',
+  'PH',
+  'CM',
+  'FP',
+  'MO',
+  'TP'
+];
+
 const ProductionTab = forwardRef(
-  ({ onSubmitHandler, onDataChange, onPrev, initialValues = {}, hideActions = false }, ref) => {
+  (
+    {
+      onSubmitHandler,
+      onDataChange,
+      onPrev,
+      initialValues = {},
+      hideActions = false,
+      carbonCalculation = null,
+      isCalculatingCarbon = false
+    },
+    ref
+  ) => {
     const intl = useIntl();
+
+    /**
+     * Send the operator to the fuel input the carbon panel is talking about. When fuel is
+     * blank the calculation substitutes a national average, and this is the one control
+     * that turns that assumption back into a record.
+     */
+    const focusFuelConsumed = useCallback(() => {
+      const input = document.getElementById(FUEL_CONSUMED_INPUT_ID);
+      if (!input) return;
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Focus after the smooth scroll settles, or the browser fights it.
+      window.setTimeout(() => input.focus(), 300);
+    }, []);
     // US-first unit defaults — see useMeasurementSystem. area_unit was already 'acres'
     // here; yield and fuel were not, so a US harvest defaulted to kilograms and litres.
     const defaultUnits = useDefaultUnits();
@@ -499,6 +568,18 @@ const ProductionTab = forwardRef(
       { companyId: currentCompanyId, farmId, parcelId },
       { skip: !currentCompanyId || !farmId || !parcelId }
     );
+    // F5 — which grade family this pick's crop belongs to. The crop_type slug is the exact
+    // key `harvestGrades` is written against; the product name is the fallback for older
+    // productions that carry no crop_type (the COG Pro importer can create one).
+    const harvestCropName =
+      currentProduction?.crop_type?.slug ||
+      currentProduction?.crop_type?.name ||
+      currentProduction?.product ||
+      '';
+    // Whether the operator picked "Other" and is typing a grade the catalogue does not carry.
+    // State, not derived from the value, so the empty box right after choosing "Other" does
+    // not snap the select back to the placeholder.
+    const [isTypingOwnGrade, setIsTypingOwnGrade] = useState(false);
     // Whether the § 205.272 cleaning-link control is on screen at all.
     //
     // 🔴 It used to render for EVERY production subtype, including Planting, where the
@@ -633,7 +714,13 @@ const ProductionTab = forwardRef(
         electricity_source: initialValues.electricity_source || '',
         water_test_date: initialValues.water_test_date || '',
         water_test_lab: initialValues.water_test_lab || '',
-        water_test_summary: summarizeWaterTestResults(initialValues.water_test_results),
+        // The form's own value wins. `initialValues` is the wizard's running snapshot (it never
+        // carries `water_test_results` — that is derived at submit), so re-deriving here on
+        // every snapshot change reset the textarea to '' under the farmer's hands (2026-08-21:
+        // an irrigation record kept only the tail of its water-test results).
+        water_test_summary:
+          initialValues.water_test_summary ??
+          summarizeWaterTestResults(initialValues.water_test_results),
         irrigation_depth: initialValues.irrigation_depth?.toString() || '',
         irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches',
         // Sprint 4: Aggregate Irrigation Support
@@ -797,7 +884,13 @@ const ProductionTab = forwardRef(
           electricity_source: initialValues.electricity_source || '',
           water_test_date: initialValues.water_test_date || '',
           water_test_lab: initialValues.water_test_lab || '',
-          water_test_summary: summarizeWaterTestResults(initialValues.water_test_results),
+          // The form's own value wins. `initialValues` is the wizard's running snapshot (it never
+          // carries `water_test_results` — that is derived at submit), so re-deriving here on
+          // every snapshot change reset the textarea to '' under the farmer's hands (2026-08-21:
+          // an irrigation record kept only the tail of its water-test results).
+          water_test_summary:
+            initialValues.water_test_summary ??
+            summarizeWaterTestResults(initialValues.water_test_results),
           irrigation_depth: initialValues.irrigation_depth?.toString() || '',
           irrigation_depth_unit: initialValues.irrigation_depth_unit || 'inches',
           // Sprint 4: Aggregate Irrigation Support
@@ -1211,6 +1304,7 @@ const ProductionTab = forwardRef(
       }
 
       const isSummaryEvent = data.is_summary === 'true' || data.is_summary === true;
+      const OFFERS_SUMMARY_MODE = offersSummaryMode(data.type);
 
       // See the note inside processedData below. TP / BU / SS reuse these columns because the
       // fact is identical; only its ownership moves off the harvest event.
@@ -1220,6 +1314,16 @@ const ProductionTab = forwardRef(
 
       const processedData = {
         ...data,
+        // 🔴 F9 (2026-08-21) — the mutation-payload rule, enforced. `...data` above is
+        // react-hook-form's WHOLE defaultValues object: every key for every subtype, several
+        // seeded with a non-empty literal (`|| 'gallons'`, `|| 'lbs'`, `|| 'false'`). A
+        // pruning record posted `is_summary:'false'`, `yield_total_unit:'lbs'`,
+        // `water_volume_unit:'gallons'` and `temperature_control:'false'` — none of them
+        // controls its form renders — and the backend does not discard them:
+        // `ProductionEventSerializer.to_internal_value` lifts exactly those names out of the
+        // top level into `extra_data`. The gates live in one testable module rather than as
+        // more ternaries here; see utils/productionPayloadGates.ts for the reasoning.
+        ...unrenderedProductionKeys(data),
         // The Switch stores 'true'/'false' strings; the model field is a BooleanField.
         // Coerced explicitly rather than trusting DRF's string parsing, and to match the
         // Chemical and Soil tabs.
@@ -1456,7 +1560,13 @@ const ProductionTab = forwardRef(
         water_source: data.water_source || undefined,
         irrigation_method: data.irrigation_method || undefined,
         irrigation_depth: data.irrigation_depth ? parseFloat(data.irrigation_depth) : undefined,
-        irrigation_depth_unit: data.irrigation_depth_unit || undefined,
+        // Ungated here on purpose: `unrenderedProductionKeys` above already drops the unit
+        // when no depth was entered, and re-asserting it after the gate would put the phantom
+        // straight back — the "a narrow gate OVERWRITTEN by a later spread" shape from the
+        // 2026-08-19 rehearsal, in reverse.
+        irrigation_depth_unit: data.irrigation_depth
+          ? data.irrigation_depth_unit || undefined
+          : undefined,
         // Phase 3: Pump fields for IR events — top-level model fields
         pump_depth_ft:
           data.type === 'IR' && data.pump_depth_ft ? parseFloat(data.pump_depth_ft) : undefined,
@@ -1468,7 +1578,9 @@ const ProductionTab = forwardRef(
         water_test_lab: data.type === 'IR' && data.water_test_lab ? data.water_test_lab : undefined,
         // Summary mode fields stored in extra_data (not model fields)
         extra_data: {
-          is_summary: isSummaryEvent,
+          // Only where the toggle exists. PL/TR/CU/... have no summary mode, so
+          // `is_summary: false` there is a statement about a control the farmer never saw.
+          ...(OFFERS_SUMMARY_MODE && { is_summary: isSummaryEvent }),
           ...(isSummaryEvent && {
             date_start: data.date_start || null,
             date_end: data.date_end || null,
@@ -1656,10 +1768,9 @@ const ProductionTab = forwardRef(
                 formConformance.test.ts, not by a runtime flag. */}
             <>
               {/* Basic Production Information */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.500"
                   title="Production Activity"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
@@ -1744,18 +1855,14 @@ const ProductionTab = forwardRef(
                             name="area_covered"
                             control={methods.control}
                             render={({ field }) => (
-                              <NumberInput
+                              <StandardNumberInput
                                 min={0}
                                 precision={2}
                                 step={0.01}
                                 value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}>
-                                <NumberInputField placeholder="0.00" />
-                                <NumberInputStepper>
-                                  <NumberIncrementStepper />
-                                  <NumberDecrementStepper />
-                                </NumberInputStepper>
-                              </NumberInput>
+                                onChange={(valueString) => field.onChange(valueString)}
+                                placeholder="0.00"
+                              />
                             )}
                           />
                         </StandardField>
@@ -1788,13 +1895,11 @@ const ProductionTab = forwardRef(
               {/* Sprint 2 Epic 2.1: Equipment Operations Section - Only for EM type */}
               {/* CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model */}
               {productionType === 'EM' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaTools}
-                    iconColor="orange.500"
                     title="Equipment Details"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="orange"
                     description="Specify equipment operation type and equipment used for accurate carbon emission calculations."
                   />
                   <VStack spacing={4} align="stretch">
@@ -1873,13 +1978,11 @@ const ProductionTab = forwardRef(
                     the second tier the cleaning section renders for Fuel Consumption /
                     Repair / Maintenance EM events too, leaking irrelevant fields. */}
               {productionType === 'EM' && watch('equipment_operation_type') === 'CL' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaShieldAlt}
-                    iconColor="red.500"
                     title="NOP Equipment Cleaning Log"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="red"
                     description="Document equipment cleaning per NOP 7 CFR 205.272. Required when equipment is shared between organic and conventional operations."
                   />
                   <VStack spacing={4} align="stretch">
@@ -1943,7 +2046,7 @@ const ProductionTab = forwardRef(
                         <Controller
                           name="cleaning_date"
                           control={methods.control}
-                          render={({ field }) => <Input {...field} type="date" size="md" />}
+                          render={({ field }) => <StandardInput {...field} type="date" />}
                         />
                       </StandardField>
 
@@ -2101,16 +2204,14 @@ const ProductionTab = forwardRef(
                     commingling exposure the rule is about. Naming the cleaning that preceded the
                     pass is what turns the page-1 contamination-prevention row from an aggregate
                     count into evidence about THIS operation. */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaTruck}
-                  iconColor="orange.500"
                   title={intl.formatMessage({
                     id: 'events.production.sections.customOperator',
                     defaultMessage: 'Custom Operator & Equipment Cleaning'
                   })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                  badgeColorScheme="orange"
                   description={intl.formatMessage({
                     id: 'events.production.sections.customOperatorHelp',
                     defaultMessage:
@@ -2173,7 +2274,6 @@ const ProductionTab = forwardRef(
                         render={({ field }) => (
                           <StandardSelect
                             {...field}
-                            bg="white"
                             isDisabled={cleaningEventOptions.length === 0}
                             placeholder={intl.formatMessage({
                               id: 'events.production.fields.equipmentCleaningEventNone',
@@ -2199,7 +2299,7 @@ const ProductionTab = forwardRef(
                   event could never record the yield the registry promises to display on the
                   timeline and consumer card. Caught by formRenderConformance. */}
               {(productionType === 'HA' || productionType === 'PL' || productionType === 'PH') && (
-                <SectionBox variant="default">
+                <SectionBox>
                   {/* NOT collapsible and NOT optional. Quantity harvested, its unit and
                       "Amount Determined By" are the mass-balance inputs § 205.103(b)(2) turns
                       on, and NOP Harvest Record C14 asks for Quantity outright. This section
@@ -2209,10 +2309,8 @@ const ProductionTab = forwardRef(
                       not the yield. */}
                   <SectionHeader
                     icon={FaBalanceScale}
-                    iconColor="green.600"
                     title="Yield & Output"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="green"
                   />
                   <VStack spacing={4} align="stretch">
                     <HStack spacing={4} align="stretch">
@@ -2236,18 +2334,14 @@ const ProductionTab = forwardRef(
                             name="yield_quantity"
                             control={methods.control}
                             render={({ field }) => (
-                              <NumberInput
+                              <StandardNumberInput
                                 min={0}
                                 precision={1}
                                 step={0.1}
                                 value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}>
-                                <NumberInputField placeholder="0.0" />
-                                <NumberInputStepper>
-                                  <NumberIncrementStepper />
-                                  <NumberDecrementStepper />
-                                </NumberInputStepper>
-                              </NumberInput>
+                                onChange={(valueString) => field.onChange(valueString)}
+                                placeholder="0.0"
+                              />
                             )}
                           />
                         </StandardField>
@@ -2311,9 +2405,8 @@ const ProductionTab = forwardRef(
                             name="applied_scope_detail"
                             control={methods.control}
                             render={({ field }) => (
-                              <Input
+                              <StandardInput
                                 {...field}
-                                size="md"
                                 placeholder={intl.formatMessage({
                                   id: 'events.production.fields.appliedScopeDetailPlaceholder'
                                 })}
@@ -2329,13 +2422,11 @@ const ProductionTab = forwardRef(
 
               {/* Harvest Quality - For premium fruit & grain markets */}
               {productionType === 'HA' && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaBalanceScale}
-                    iconColor="orange.500"
                     title="Harvest Quality"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="orange"
                   />
                   <VStack spacing={4} align="stretch">
                     <HStack spacing={4} align="stretch">
@@ -2345,20 +2436,59 @@ const ProductionTab = forwardRef(
                             id: 'events.production.fields.harvestQuality'
                           })}
                           error={errors.harvest_quality_grade?.message}
-                          helpText="Classification for market destination (export, domestic, processing)">
+                          helpText={intl.formatMessage({ id: 'harvestGrade.help' })}>
+                          {/* 🔴 F5 (2026-08-21) — these six options were Export Quality /
+                              Grade A / B / C / Domestic / Processing, while the season
+                              header's Finish form offered a DIFFERENT five (Premium / Grade A
+                              / Grade B / Standard / Processing). One fact, two vocabularies:
+                              the lot header and its own picks could not agree and the packet
+                              printed both. None of the eleven is a grade a US packing record
+                              uses — a certifier reviewer put it plainly, "Grade A is not an
+                              apple grade". Both forms now render config/harvestGrades.ts,
+                              crop-aware, with a free-text escape for private buyer grades. */}
                           <Controller
                             name="harvest_quality_grade"
                             control={methods.control}
-                            render={({ field }) => (
-                              <StandardSelect {...field} placeholder="Select grade (optional)">
-                                <option value="export_quality">Export Quality</option>
-                                <option value="grade_a">Grade A</option>
-                                <option value="grade_b">Grade B</option>
-                                <option value="grade_c">Grade C</option>
-                                <option value="domestic">Domestic Market</option>
-                                <option value="processing">Processing / Juice</option>
-                              </StandardSelect>
-                            )}
+                            render={({ field }) => {
+                              const options = harvestGradeOptions(harvestCropName, field.value);
+                              const isOther =
+                                isTypingOwnGrade ||
+                                (!!field.value && !options.some((o) => o.value === field.value));
+                              return (
+                                <VStack spacing={2} align="stretch">
+                                  <StandardSelect
+                                    value={isOther ? OTHER_GRADE : field.value || ''}
+                                    onChange={(e) => {
+                                      if (e.target.value === OTHER_GRADE) {
+                                        setIsTypingOwnGrade(true);
+                                        field.onChange('');
+                                        return;
+                                      }
+                                      setIsTypingOwnGrade(false);
+                                      field.onChange(e.target.value);
+                                    }}>
+                                    <option value="">
+                                      {intl.formatMessage({ id: 'harvestGrade.placeholder' })}
+                                    </option>
+                                    {options.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </StandardSelect>
+                                  {isOther && (
+                                    <StandardInput
+                                      value={field.value || ''}
+                                      onChange={field.onChange}
+                                      placeholder={intl.formatMessage({
+                                        id: 'harvestGrade.other.placeholder'
+                                      })}
+                                      maxLength={MAX_GRADE_LENGTH}
+                                    />
+                                  )}
+                                </VStack>
+                              );
+                            }}
                           />
                         </StandardField>
                       </Box>
@@ -2376,19 +2506,15 @@ const ProductionTab = forwardRef(
                             name="grain_moisture"
                             control={methods.control}
                             render={({ field }) => (
-                              <NumberInput
+                              <StandardNumberInput
                                 min={0}
                                 max={100}
                                 precision={1}
                                 step={0.1}
                                 value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}>
-                                <NumberInputField placeholder="Leave blank if N/A" />
-                                <NumberInputStepper>
-                                  <NumberIncrementStepper />
-                                  <NumberDecrementStepper />
-                                </NumberInputStepper>
-                              </NumberInput>
+                                onChange={(valueString) => field.onChange(valueString)}
+                                placeholder="Leave blank if N/A"
+                              />
                             )}
                           />
                         </StandardField>
@@ -2433,19 +2559,15 @@ const ProductionTab = forwardRef(
                             name="brix_level"
                             control={methods.control}
                             render={({ field }) => (
-                              <NumberInput
+                              <StandardNumberInput
                                 min={0}
                                 max={45}
                                 precision={1}
                                 step={0.1}
                                 value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}>
-                                <NumberInputField placeholder="Leave blank if N/A" />
-                                <NumberInputStepper>
-                                  <NumberIncrementStepper />
-                                  <NumberDecrementStepper />
-                                </NumberInputStepper>
-                              </NumberInput>
+                                onChange={(valueString) => field.onChange(valueString)}
+                                placeholder="Leave blank if N/A"
+                              />
                             )}
                           />
                         </StandardField>
@@ -2464,19 +2586,15 @@ const ProductionTab = forwardRef(
                             name="dry_matter_percentage"
                             control={methods.control}
                             render={({ field }) => (
-                              <NumberInput
+                              <StandardNumberInput
                                 min={0}
                                 max={100}
                                 precision={1}
                                 step={0.1}
                                 value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}>
-                                <NumberInputField placeholder="Leave blank if N/A" />
-                                <NumberInputStepper>
-                                  <NumberIncrementStepper />
-                                  <NumberDecrementStepper />
-                                </NumberInputStepper>
-                              </NumberInput>
+                                onChange={(valueString) => field.onChange(valueString)}
+                                placeholder="Leave blank if N/A"
+                              />
                             )}
                           />
                         </StandardField>
@@ -2492,10 +2610,9 @@ const ProductionTab = forwardRef(
                   belong to the pick: a load ships days later, buffer crop is disposed on its own
                   schedule. Keep this list in step with RECORDS_LOT_DISPOSITION above. */}
               {['HA', 'TP', 'BU'].includes(productionType) && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaBalanceScale}
-                    iconColor="green.500"
                     title={intl.formatMessage({ id: 'production.harvestRecord' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description={intl.formatMessage({ id: 'production.harvestRecordHint' })}
@@ -2648,7 +2765,7 @@ const ProductionTab = forwardRef(
                         <Controller
                           name="harvest_date_end"
                           control={methods.control}
-                          render={({ field }) => <Input {...field} type="date" size="md" />}
+                          render={({ field }) => <StandardInput {...field} type="date" />}
                         />
                       </StandardField>
                     )}
@@ -2736,7 +2853,7 @@ const ProductionTab = forwardRef(
                           <Controller
                             name="buffer_disposition_quantity"
                             control={methods.control}
-                            render={({ field }) => <Input {...field} size="md" />}
+                            render={({ field }) => <StandardInput {...field} />}
                           />
                         </StandardField>
 
@@ -2751,7 +2868,7 @@ const ProductionTab = forwardRef(
                           <Controller
                             name="buffer_disposition_evidence"
                             control={methods.control}
-                            render={({ field }) => <Input {...field} size="md" />}
+                            render={({ field }) => <StandardInput {...field} />}
                           />
                         </StandardField>
                       </>
@@ -2770,9 +2887,8 @@ const ProductionTab = forwardRef(
                           name="harvest_contract_number"
                           control={methods.control}
                           render={({ field }) => (
-                            <Input
+                            <StandardInput
                               {...field}
-                              size="md"
                               placeholder={intl.formatMessage({
                                 id: 'events.production.fields.harvestContractPlaceholder'
                               })}
@@ -2796,7 +2912,7 @@ const ProductionTab = forwardRef(
                           <Controller
                             name="sent_to_handler_date"
                             control={methods.control}
-                            render={({ field }) => <Input {...field} type="date" size="md" />}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
 
@@ -2813,13 +2929,12 @@ const ProductionTab = forwardRef(
                               name="quantity_sent_to_handler"
                               control={methods.control}
                               render={({ field }) => (
-                                <Input
+                                <StandardInput
                                   {...field}
                                   flex={2}
                                   type="number"
                                   step="0.01"
                                   min={0}
-                                  size="md"
                                   placeholder="0.00"
                                 />
                               )}
@@ -2853,13 +2968,12 @@ const ProductionTab = forwardRef(
                               name="quantity_returned_from_handler"
                               control={methods.control}
                               render={({ field }) => (
-                                <Input
+                                <StandardInput
                                   {...field}
                                   flex={2}
                                   type="number"
                                   step="0.01"
                                   min={0}
-                                  size="md"
                                   placeholder="0.00"
                                 />
                               )}
@@ -2894,7 +3008,7 @@ const ProductionTab = forwardRef(
                             name="handler_document_reference"
                             control={methods.control}
                             render={({ field }) => (
-                              <Input {...field} size="md" placeholder="e.g., PACKOUT-2026-114" />
+                              <StandardInput {...field} placeholder="e.g., PACKOUT-2026-114" />
                             )}
                           />
                         </StandardField>
@@ -2915,9 +3029,8 @@ const ProductionTab = forwardRef(
                             name="storage_location"
                             control={methods.control}
                             render={({ field }) => (
-                              <Input
+                              <StandardInput
                                 {...field}
-                                size="md"
                                 placeholder={intl.formatMessage({
                                   id: 'events.production.fields.storageLocationPlaceholder'
                                 })}
@@ -2938,7 +3051,7 @@ const ProductionTab = forwardRef(
                             name="storage_temperature_f"
                             control={methods.control}
                             render={({ field }) => (
-                              <Input {...field} size="md" type="number" step="0.1" />
+                              <StandardInput {...field} type="number" step="0.1" />
                             )}
                           />
                         </StandardField>
@@ -2950,13 +3063,11 @@ const ProductionTab = forwardRef(
 
               {/* Sprint 5: Aggregate Harvest Summary Toggle & Fields */}
               {productionType === 'HA' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaBalanceScale}
-                    iconColor="blue.500"
                     title="Harvest Summary Mode"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="blue"
                     description="Log multiple harvest picks as one summary record to reduce logging burden while maintaining full transparency."
                   />
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -3010,7 +3121,7 @@ const ProductionTab = forwardRef(
                           <Controller
                             name="date_start"
                             control={methods.control}
-                            render={({ field }) => <Input {...field} type="date" size="md" />}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
 
@@ -3020,7 +3131,7 @@ const ProductionTab = forwardRef(
                           <Controller
                             name="date_end"
                             control={methods.control}
-                            render={({ field }) => <Input {...field} type="date" size="md" />}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
 
@@ -3082,13 +3193,11 @@ const ProductionTab = forwardRef(
               {/* Phase 2: Universal Field Details - variety, block_id, growth_stage */}
               {/* Hidden for PO, PH, CM, EM — these subtypes handle fields in their own sections or don't need them */}
               {!['PO', 'PH', 'CM', 'EM'].includes(productionType) && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="teal.500"
                     title={intl.formatMessage({ id: 'fieldDetails.title' })}
                     badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
-                    badgeColorScheme="teal"
                     description={intl.formatMessage({ id: 'fieldDetails.description' })}
                   />
                   <SimpleGrid
@@ -3237,13 +3346,11 @@ const ProductionTab = forwardRef(
 
               {/* Phase 2: Pollination (PO) specific fields */}
               {productionType === 'PO' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="yellow.500"
                     title={intl.formatMessage({ id: 'production.pollination.title' })}
                     badge={intl.formatMessage({ id: 'production.pollination.badge' })}
-                    badgeColorScheme="yellow"
                     description="Document pollinator placement and management for full production transparency."
                   />
                   <VStack spacing={4} align="stretch">
@@ -3313,18 +3420,14 @@ const ProductionTab = forwardRef(
                           name="hive_count"
                           control={methods.control}
                           render={({ field }) => (
-                            <NumberInput
+                            <StandardNumberInput
                               min={0}
                               precision={0}
                               step={1}
                               value={field.value || ''}
-                              onChange={(valueString) => field.onChange(valueString)}>
-                              <NumberInputField placeholder="e.g., 4" />
-                              <NumberInputStepper>
-                                <NumberIncrementStepper />
-                                <NumberDecrementStepper />
-                              </NumberInputStepper>
-                            </NumberInput>
+                              onChange={(valueString) => field.onChange(valueString)}
+                              placeholder="e.g., 4"
+                            />
                           )}
                         />
                       </StandardField>
@@ -3337,7 +3440,7 @@ const ProductionTab = forwardRef(
                         <Controller
                           name="placement_date"
                           control={methods.control}
-                          render={({ field }) => <Input {...field} type="date" size="md" />}
+                          render={({ field }) => <StandardInput {...field} type="date" />}
                         />
                       </StandardField>
 
@@ -3349,7 +3452,7 @@ const ProductionTab = forwardRef(
                         <Controller
                           name="removal_date"
                           control={methods.control}
-                          render={({ field }) => <Input {...field} type="date" size="md" />}
+                          render={({ field }) => <StandardInput {...field} type="date" />}
                         />
                       </StandardField>
                     </SimpleGrid>
@@ -3359,10 +3462,9 @@ const ProductionTab = forwardRef(
 
               {/* Phase 2: Post-Harvest Processing (PH) specific fields */}
               {productionType === 'PH' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaTools}
-                    iconColor="green.500"
                     title={intl.formatMessage({ id: 'production.postHarvest.title' })}
                     badge={intl.formatMessage({ id: 'production.postHarvest.badge' })}
                     description="Document post-harvest handling and processing operations for full traceability."
@@ -3448,18 +3550,14 @@ const ProductionTab = forwardRef(
                           name="processing_duration_hours"
                           control={methods.control}
                           render={({ field }) => (
-                            <NumberInput
+                            <StandardNumberInput
                               min={0}
                               precision={1}
                               step={0.5}
                               value={field.value || ''}
-                              onChange={(valueString) => field.onChange(valueString)}>
-                              <NumberInputField placeholder="e.g., 4.5" />
-                              <NumberInputStepper>
-                                <NumberIncrementStepper />
-                                <NumberDecrementStepper />
-                              </NumberInputStepper>
-                            </NumberInput>
+                              onChange={(valueString) => field.onChange(valueString)}
+                              placeholder="e.g., 4.5"
+                            />
                           )}
                         />
                       </StandardField>
@@ -3518,10 +3616,9 @@ const ProductionTab = forwardRef(
 
               {/* Phase 2: Canopy Management (CM) specific fields */}
               {productionType === 'CM' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="green.600"
                     title={intl.formatMessage({ id: 'production.canopy.title' })}
                     badge={intl.formatMessage({ id: 'production.canopy.badge' })}
                     description="Document canopy management operations for transparency and carbon-accurate equipment tracking."
@@ -3631,18 +3728,14 @@ const ProductionTab = forwardRef(
                           name="pass_number"
                           control={methods.control}
                           render={({ field }) => (
-                            <NumberInput
+                            <StandardNumberInput
                               min={1}
                               precision={0}
                               step={1}
                               value={field.value || ''}
-                              onChange={(valueString) => field.onChange(valueString)}>
-                              <NumberInputField placeholder="e.g., 1" />
-                              <NumberInputStepper>
-                                <NumberIncrementStepper />
-                                <NumberDecrementStepper />
-                              </NumberInputStepper>
-                            </NumberInput>
+                              onChange={(valueString) => field.onChange(valueString)}
+                              placeholder="e.g., 1"
+                            />
                           )}
                         />
                       </StandardField>
@@ -3655,10 +3748,9 @@ const ProductionTab = forwardRef(
                     Fuel type, fuel consumed, equipment hours and area are captured by the
                     shared fuel/area sections below and feed the carbon calculation. */}
               {productionType === 'FP' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaShieldAlt}
-                    iconColor="blue.600"
                     title="Frost Protection Details"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document the frost-protection method and conditions. Record the equipment fuel and run hours in the Fuel & Equipment section below so the carbon impact is captured."
@@ -3713,10 +3805,9 @@ const ProductionTab = forwardRef(
               {/* Batch 3 (2026-06): Mowing / Orchard-Floor (MO). Fuel/area/hours captured
                     by the shared sections below; distinct from CU (tillage) carbon profile. */}
               {productionType === 'MO' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="green.600"
                     title="Orchard-Floor Management"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document the floor-management operation. Record equipment fuel and run hours in the Fuel & Equipment section below so the carbon impact is captured."
@@ -3782,13 +3873,11 @@ const ProductionTab = forwardRef(
 
               {/* Phase 2: Pruning Summary Mode (mirrors IR and HA summary pattern) */}
               {productionType === 'PR' && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="orange.500"
                     title={intl.formatMessage({ id: 'production.pruning.summaryTitle' })}
                     badge={intl.formatMessage({ id: 'production.pruning.summaryBadge' })}
-                    badgeColorScheme="orange"
                     description={intl.formatMessage({
                       id: 'production.pruning.summaryDescription'
                     })}
@@ -3849,7 +3938,7 @@ const ProductionTab = forwardRef(
                           <Controller
                             name="date_start"
                             control={methods.control}
-                            render={({ field }) => <Input {...field} type="date" size="md" />}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
 
@@ -3859,7 +3948,7 @@ const ProductionTab = forwardRef(
                           <Controller
                             name="date_end"
                             control={methods.control}
-                            render={({ field }) => <Input {...field} type="date" size="md" />}
+                            render={({ field }) => <StandardInput {...field} type="date" />}
                           />
                         </StandardField>
 
@@ -3886,15 +3975,16 @@ const ProductionTab = forwardRef(
               )}
 
               {/* Equipment & Fuel Usage - Hidden for PO (Pollination is zero-emission biological service) */}
-              {productionType !== 'PO' && (
+              {/* Gated by the SAME list as the fields inside it. `!== 'PO'` let the section
+                  render for BU/TP/SS, which have no fuel fields — an empty shell around one
+                  inert control. */}
+              {FUEL_REPORTING_SUBTYPES.includes(productionType) && (
                 <CollapsibleSection
                   icon={FaSeedling}
-                  iconColor="green.600"
                   title="Fuel Consumption & Equipment Data"
                   badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                   description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
-                  badgeColorScheme="gray"
-                  variant="highlighted">
+                  badgeTone="optional">
                   {' '}
                   <VStack spacing={4} align="stretch">
                     {/* Production Method - Manual operation detection for Trazo's Direct Operational
@@ -3934,20 +4024,7 @@ const ProductionTab = forwardRef(
                         complaint was that three always-visible inputs READ as required
                         certifier fields when they are neither. A header that says so fixes
                         that without hiding anything. */}
-                    {[
-                      'PL',
-                      'HA',
-                      'IR',
-                      'PR',
-                      'TR',
-                      'CU',
-                      'TH',
-                      'EM',
-                      'PH',
-                      'CM',
-                      'FP',
-                      'MO'
-                    ].includes(productionType) && (
+                    {FUEL_REPORTING_SUBTYPES.includes(productionType) && (
                       <Box gridColumn={{ md: 'span 2' }} pt={2}>
                         <Text fontSize="sm" fontWeight="semibold" color="gray.700">
                           {intl.formatMessage({ id: 'production.equipmentFuel.groupTitle' })}
@@ -3962,20 +4039,7 @@ const ProductionTab = forwardRef(
                     {/* CRITICAL FIX (2025-01-21): Removed EQ (standalone Equipment type 4), kept EM (Production subtype) */}
                     {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Added IR for electric irrigation pumps, PR/TH for powered pruning/thinning */}
                     {/* Phase 2: Added PH (Post-Harvest Processing) for processing equipment fuel */}
-                    {[
-                      'PL',
-                      'HA',
-                      'IR',
-                      'PR',
-                      'TR',
-                      'CU',
-                      'TH',
-                      'EM',
-                      'PH',
-                      'CM',
-                      'FP',
-                      'MO'
-                    ].includes(productionType) && (
+                    {FUEL_REPORTING_SUBTYPES.includes(productionType) && (
                       <StandardField
                         label={intl.formatMessage({ id: 'events.common.fields.fuelType' })}
                         error={errors.fuel_type?.message}
@@ -4001,20 +4065,7 @@ const ProductionTab = forwardRef(
                     {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Added IR for electric irrigation pumps, PR/TH for powered pruning/thinning */}
                     {/* IRRIGATION PUMP FIX (2026-02-19): Hide Energy Amount for electric IR — energy auto-calculated from water volume × pump factor */}
                     {/* Phase 2: Added PH (Post-Harvest Processing) and CM (Canopy Management) */}
-                    {[
-                      'PL',
-                      'HA',
-                      'IR',
-                      'PR',
-                      'TR',
-                      'CU',
-                      'TH',
-                      'EM',
-                      'PH',
-                      'CM',
-                      'FP',
-                      'MO'
-                    ].includes(productionType) && (
+                    {FUEL_REPORTING_SUBTYPES.includes(productionType) && (
                       <>
                         {/* For electric irrigation, energy is auto-calculated from water volume + water source */}
                         {productionType === 'IR' && watch('fuel_type') !== 'diesel' ? (
@@ -4056,24 +4107,23 @@ const ProductionTab = forwardRef(
                                     name="fuel_consumed"
                                     control={methods.control}
                                     render={({ field }) => (
-                                      <NumberInput
+                                      // Explicit id because the carbon panel below links
+                                      // straight to this input, and Chakra's
+                                      // NumberInputField renders no `name` attribute of its
+                                      // own to find it by.
+                                      <StandardNumberInput
                                         min={0}
                                         precision={1}
                                         step={0.1}
                                         value={field.value || ''}
-                                        onChange={(valueString) => field.onChange(valueString)}>
-                                        <NumberInputField
-                                          placeholder={
-                                            watch('fuel_type') === 'electric'
-                                              ? 'e.g., 50 kWh'
-                                              : 'Optional'
-                                          }
-                                        />
-                                        <NumberInputStepper>
-                                          <NumberIncrementStepper />
-                                          <NumberDecrementStepper />
-                                        </NumberInputStepper>
-                                      </NumberInput>
+                                        onChange={(valueString) => field.onChange(valueString)}
+                                        id={FUEL_CONSUMED_INPUT_ID}
+                                        placeholder={
+                                          watch('fuel_type') === 'electric'
+                                            ? 'e.g., 50 kWh'
+                                            : 'Optional'
+                                        }
+                                      />
                                     )}
                                   />
                                 </StandardField>
@@ -4132,38 +4182,66 @@ const ProductionTab = forwardRef(
                     <StandardField
                       label={intl.formatMessage({ id: 'events.common.fields.equipmentHours' })}
                       error={errors.equipment_hours?.message}
-                      helpText="Used for calculating fuel efficiency and carbon per hour">
+                      /* Was "Used for calculating fuel efficiency and carbon per hour".
+                         That is not true and has not been since the hours multiplier was
+                         removed in 2025 (USDA per-hectare factors are area-based; scaling
+                         them by time double-counted). MEASURED 2026-08-20: entering 10
+                         equipment hours changes co2e by exactly 0 for every one of the 16
+                         production subtypes. A field that claims to drive a number it
+                         cannot touch is the same defect class as a form key nothing
+                         downstream reads — the farmer fills it in expecting an effect and
+                         calibrates their trust on the result. */
+                      helpText={intl.formatMessage({ id: 'production.equipmentHours.help' })}>
                       <Controller
                         name="equipment_hours"
                         control={methods.control}
                         render={({ field }) => (
-                          <NumberInput
+                          <StandardNumberInput
                             min={0}
                             precision={1}
                             step={0.1}
                             value={field.value || ''}
-                            onChange={(valueString) => field.onChange(valueString)}>
-                            <NumberInputField placeholder="Optional" />
-                            <NumberInputStepper>
-                              <NumberIncrementStepper />
-                              <NumberDecrementStepper />
-                            </NumberInputStepper>
-                          </NumberInput>
+                            onChange={(valueString) => field.onChange(valueString)}
+                            placeholder="Optional"
+                          />
                         )}
                       />
                     </StandardField>
+
+                    {/* The carbon panel lives HERE, not in a sidebar. It reports on the
+                        fields directly above it, and when fuel is left blank its "Enter
+                        your actual fuel" link has somewhere to send the operator that is
+                        two rows up rather than half a screen away. */}
+                    {(carbonCalculation || isCalculatingCarbon) && (
+                      <CarbonImpactPreview
+                        eventType="Production"
+                        /* LIVE values, not `initialValues`. The panel branches on
+                           `type`/`electricity_source` to decide whether to show the
+                           zero-emission pollination copy or the solar-pump note, and
+                           `initialValues` is the seed the form was mounted with — empty on
+                           a new event, so those branches would never fire. */
+                        formData={{
+                          ...initialValues,
+                          type: productionType,
+                          electricity_source: watch('electricity_source')
+                        }}
+                        calculation={carbonCalculation}
+                        isCalculating={isCalculatingCarbon}
+                        onEnterActualFuel={focusFuelConsumed}
+                      />
+                    )}
                   </VStack>
                 </CollapsibleSection>
               )}
 
               {/* Transportation - For logistics emissions */}
               {productionType === 'HA' && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaTruck}
-                    iconColor="green.500"
                     title="Transportation"
                     badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
+                    badgeTone="optional"
                   />
                   <VStack spacing={4} align="stretch">
                     <HStack spacing={4} align="stretch">
@@ -4178,18 +4256,14 @@ const ProductionTab = forwardRef(
                             name="transportation_distance"
                             control={methods.control}
                             render={({ field }) => (
-                              <NumberInput
+                              <StandardNumberInput
                                 min={0}
                                 precision={1}
                                 step={0.1}
                                 value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}>
-                                <NumberInputField placeholder="Optional" />
-                                <NumberInputStepper>
-                                  <NumberIncrementStepper />
-                                  <NumberDecrementStepper />
-                                </NumberInputStepper>
-                              </NumberInput>
+                                onChange={(valueString) => field.onChange(valueString)}
+                                placeholder="Optional"
+                              />
                             )}
                           />
                         </StandardField>
@@ -4241,7 +4315,7 @@ const ProductionTab = forwardRef(
 
               {/* § 205.204 seed & planting-stock records (PL/TR) or Common OSP § 10 C water source (IR) */}
               {['PL', 'TR', 'SS', 'IR'].includes(productionType) && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   {/* One section, two very different payloads. For PL/TR it holds the
                       § 205.204 seed and planting-stock records — source, supplier, lot,
                       treatment, and the (a)(4) one-year rule via stock_organic_management_start.
@@ -4252,7 +4326,6 @@ const ProductionTab = forwardRef(
                       record. Title and description now follow the subtype. */}
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="green.600"
                     title={intl.formatMessage({
                       id:
                         productionType === 'IR'
@@ -4260,7 +4333,6 @@ const ProductionTab = forwardRef(
                           : 'events.section.seedStock.title'
                     })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                    badgeColorScheme="green"
                     description={intl.formatMessage({
                       id:
                         productionType === 'IR'
@@ -4410,7 +4482,7 @@ const ProductionTab = forwardRef(
                             name="seed_treatment_allowed_basis"
                             control={methods.control}
                             render={({ field }) => (
-                              <StandardSelect {...field} bg="white">
+                              <StandardSelect {...field}>
                                 <option value="">
                                   {intl.formatMessage({
                                     id: 'events.production.fields.seedTreatmentAllowedBasisPlaceholder',
@@ -4443,7 +4515,6 @@ const ProductionTab = forwardRef(
                             render={({ field }) => (
                               <StandardSelect
                                 {...field}
-                                bg="white"
                                 placeholder={intl.formatMessage({ id: 'app.select' })}>
                                 {SEED_NON_GMO_STATUSES.map((opt) => (
                                   <option key={opt.value} value={opt.value}>
@@ -4548,7 +4619,7 @@ const ProductionTab = forwardRef(
                                   name="seed_nonavailability_reason"
                                   control={methods.control}
                                   render={({ field }) => (
-                                    <StandardSelect {...field} size="sm" bg="white">
+                                    <StandardSelect {...field} size="sm">
                                       <option value="">
                                         {intl.formatMessage({
                                           id: 'events.production.fields.seedNonavailabilityReasonPlaceholder',
@@ -4704,7 +4775,7 @@ const ProductionTab = forwardRef(
                               <Controller
                                 name="date_start"
                                 control={methods.control}
-                                render={({ field }) => <Input {...field} type="date" size="md" />}
+                                render={({ field }) => <StandardInput {...field} type="date" />}
                               />
                             </StandardField>
 
@@ -4715,7 +4786,7 @@ const ProductionTab = forwardRef(
                               <Controller
                                 name="date_end"
                                 control={methods.control}
-                                render={({ field }) => <Input {...field} type="date" size="md" />}
+                                render={({ field }) => <StandardInput {...field} type="date" />}
                               />
                             </StandardField>
 
@@ -5028,10 +5099,9 @@ const ProductionTab = forwardRef(
               )}
 
               {/* Observations */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />

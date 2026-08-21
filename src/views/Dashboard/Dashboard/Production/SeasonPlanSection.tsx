@@ -23,7 +23,6 @@ import {
   Icon,
   Stack,
   Text,
-  Textarea,
   VStack,
   useDisclosure,
   useToast
@@ -36,9 +35,11 @@ import {
   GuidanceNote,
   StandardButton,
   StandardCard,
-  StandardSkeleton
+  StandardSkeleton,
+  StandardTextarea
 } from 'components/Design/StandardComponents';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
+import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
 import { verbForEvent } from 'config/activityVerbs';
 import {
   SeasonPlanItem,
@@ -82,6 +83,10 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
   // Which row is mid-request. `isUpdating` is the shared RTK flag, so using it directly put
   // every "Put back" button in the list into a spinner at once.
   const [pendingItemId, setPendingItemId] = useState<number | null>(null);
+  // Which filed record the farmer asked to open. Only ever set on a finished season.
+  const [correctTarget, setCorrectTarget] = useState<{ id: number; eventType: number } | null>(
+    null
+  );
 
   const { data, isLoading } = useGetSeasonPlanQuery(
     { historyId: productionId },
@@ -106,12 +111,26 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
     // Only preset the chooser when a verb genuinely matches. Guessing would drop the farmer
     // into a form whose fields do not describe what they did.
     if (verb) params.set('verb', verb.key);
-    navigate(
-      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?${params.toString()}`
-    );
+    navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?${params.toString()}`);
   };
 
+  // 🔴 2026-08-21 — this sent the farmer to `/change`, the EDIT wizard, whatever the season's
+  // state. On a finished production the server answers 423 to that edit, so the flow was:
+  // three wizard steps, then a refusal. The label said "View record" and the destination was
+  // an editor, which is the mismatch underneath it.
+  //
+  // A filed record still has to be READABLE — the farmer is usually checking what they wrote,
+  // not changing it — so a closed season opens the details modal, which is the surface that
+  // already carries the correction path (`EventDetailsModal` -> `CorrectRecordModal`, gated
+  // on `isProductionFinished`). An open season keeps the editor.
   const openRecord = (item: SeasonPlanItem) => {
+    if (isFinished) {
+      setCorrectTarget({
+        id: item.fulfilled_by_id as number,
+        eventType: item.fulfilled_by_event_type as number
+      });
+      return;
+    }
     navigate(
       `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/${item.fulfilled_by_id}/change` +
         `?event_type=${item.fulfilled_by_event_type}`
@@ -257,7 +276,13 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
                           minH={TOUCH_TARGET}
                           variant="ghost"
                           onClick={() => openRecord(item)}>
-                          {intl.formatMessage({ id: 'seasonPlan.viewRecord' })}
+                          {intl.formatMessage({
+                            // "View record" pointed at an editor. On a filed season the
+                            // control opens the correction sheet, which lists the record's
+                            // current values — so it reads as well as corrects — and the
+                            // label now says which of the two the farmer is getting.
+                            id: isFinished ? 'seasonPlan.correctRecord' : 'seasonPlan.viewRecord'
+                          })}
                         </StandardButton>
                       )}
 
@@ -322,18 +347,26 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
           <Text fontSize="sm" color="gray.700">
             {intl.formatMessage({ id: 'seasonPlan.skipReasonLabel' })}
           </Text>
-          <Textarea
+          <StandardTextarea
             value={skipReason}
             onChange={(event) => setSkipReason(event.target.value)}
             placeholder={intl.formatMessage({ id: 'seasonPlan.skipReasonPlaceholder' })}
             maxLength={255}
             rows={3}
           />
-          <GuidanceNote>
-            {intl.formatMessage({ id: 'seasonPlan.skipNote' })}
-          </GuidanceNote>
+          <GuidanceNote>{intl.formatMessage({ id: 'seasonPlan.skipNote' })}</GuidanceNote>
         </VStack>
       </ResponsiveModal>
+
+      {/* The correction sheet for a filed record. Mounted only when a row asked for it, so
+          the query behind it does not run for every plan item on the page. */}
+      <CorrectRecordModal
+        isOpen={correctTarget !== null}
+        onClose={() => setCorrectTarget(null)}
+        eventId={correctTarget?.id}
+        eventType={correctTarget?.eventType}
+        onCorrected={() => setCorrectTarget(null)}
+      />
     </>
   );
 };

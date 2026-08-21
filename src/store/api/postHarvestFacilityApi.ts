@@ -64,21 +64,31 @@ interface Scope {
   farmId: string;
 }
 
-/** The handler ONE production was sent to, as returned by the owner-side link endpoint. */
+export interface ProductionHandlerDetail {
+  id: number;
+  name: string;
+  facility_type: PostHarvestFacilityType;
+  facility_type_display: string;
+  certification_number?: string | null;
+  certifier_name?: string | null;
+  effective_date?: string | null;
+  expiry_date?: string | null;
+  verification_status: string;
+  cert_is_current: boolean | null;
+}
+
+/**
+ * The handlers ONE production was sent to, as returned by the owner-side link endpoint.
+ *
+ * 🔴 2026-08-21 — plural. This was `post_harvest_facility: number | null` plus one `detail`,
+ * because the link was a single ForeignKey. A lot with a fresh grade and a process grade goes
+ * to TWO certified operations (Calapooia Bend: Organically Grown Company fresh, Willamette
+ * Valley Fruit process), so the operator could record only half of § 205.272 — and the packet's
+ * "no handler certificate on file" warning cleared as soon as one was linked.
+ */
 export interface ProductionHandlerLink {
-  post_harvest_facility: number | null;
-  detail: {
-    id: number;
-    name: string;
-    facility_type: PostHarvestFacilityType;
-    facility_type_display: string;
-    certification_number?: string | null;
-    certifier_name?: string | null;
-    effective_date?: string | null;
-    expiry_date?: string | null;
-    verification_status: string;
-    cert_is_current: boolean | null;
-  } | null;
+  post_harvest_facilities: number[];
+  details: ProductionHandlerDetail[];
 }
 
 const postHarvestFacilityApi = baseApi.injectEndpoints({

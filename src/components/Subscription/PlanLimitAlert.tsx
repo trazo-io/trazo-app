@@ -1,15 +1,8 @@
 import React from 'react';
-import {
-  Alert,
-  AlertDescription,
-  AlertIcon,
-  AlertTitle,
-  Box,
-  Button,
-  Stack
-} from '@chakra-ui/react';
+import { Alert, AlertDescription, AlertIcon, AlertTitle, Box, Stack } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
+import { StandardButton } from 'components/Design/StandardComponents';
 
 interface PlanLimitAlertProps {
   /** Plan limit for the resource (already resolved from effective_limits/features) */
@@ -43,14 +36,17 @@ export const PlanLimitAlert: React.FC<PlanLimitAlertProps> = ({ limit, descripti
             {intl.formatMessage({ id: descriptionId }, { limit })}
           </AlertDescription>
         </Box>
-        <Button
-          colorScheme="green"
+        {/* The CTA stays inside this alert on purpose: it IS the alert's condition ("you hit
+            the limit -> here is the way out"), it sits inline beside the text rather than
+            acting as the page's action bar, and the form below keeps its own submit. That is
+            the difference from a notice that holds a page's only actions. */}
+        <StandardButton
+          variant="primary"
           size="sm"
-          minH="44px"
           flexShrink={0}
           onClick={() => navigate('/admin/dashboard/pricing')}>
           {intl.formatMessage({ id: 'app.upgradePlan' })}
-        </Button>
+        </StandardButton>
       </Stack>
     </Alert>
   );

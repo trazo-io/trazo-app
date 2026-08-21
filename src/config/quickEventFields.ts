@@ -327,22 +327,22 @@ export const harvestFields: QuickEventTypeConfig = {
       default: 'normal',
       options: PRODUCTION_EFFICIENCY_OPTIONS
     },
-    // Harvest Quality Grade (Consumer Trust field)
-    {
-      name: 'harvest_quality_grade',
-      type: 'select',
-      labelKey: 'app.harvestQualityGrade',
-      helpKey: 'app.harvestQualityGradeHelp',
-      options: [
-        { value: '', labelKey: 'app.harvestQualityGrade.select' },
-        { value: 'export_quality', labelKey: 'app.harvestQualityGrade.exportQuality' },
-        { value: 'grade_a', labelKey: 'app.harvestQualityGrade.gradeA' },
-        { value: 'grade_b', labelKey: 'app.harvestQualityGrade.gradeB' },
-        { value: 'grade_c', labelKey: 'app.harvestQualityGrade.gradeC' },
-        { value: 'domestic', labelKey: 'app.harvestQualityGrade.domestic' },
-        { value: 'processing', labelKey: 'app.harvestQualityGrade.processing' }
-      ]
-    },
+    // 🔴 F5 (2026-08-21) — the harvest-grade select is REMOVED from this surface, not
+    // rewritten.
+    //
+    // It carried the retired Export Quality / Grade A / B / C / Domestic / Processing list —
+    // a third copy of a vocabulary that already existed twice and disagreed with itself. This
+    // config is not mounted anywhere today (`TypeAwareFields` has no caller), which is exactly
+    // why it had to be dealt with rather than left: the 2026-08-20 sweep found six defects of
+    // the shape "fixed on the audited surface, alive on its sibling", and a dormant surface is
+    // the worst kind of sibling.
+    //
+    // Removed rather than repointed because a grade is CROP-AWARE now
+    // (`config/harvestGrades.ts`) and this shape — a static `options` array with no access to
+    // the production's crop — cannot express that. Offering a flat list of every USDA grade
+    // here would hand an apple grower "U.S. Commercial" and an onion grower "WA Extra Fancy",
+    // which is the defect one level down. If this surface is ever revived, render
+    // `harvestGradeOptions(crop)` the way ProductionTab and the Finish form do.
     // Grain Moisture at Harvest
     {
       name: 'grain_moisture',

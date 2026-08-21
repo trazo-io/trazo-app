@@ -19,6 +19,7 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
+import { unrenderedProductionKeys } from 'utils/productionPayloadGates';
 
 const read = (rel: string) => readFileSync(resolve(__dirname, '../../../..', 'src', rel), 'utf8');
 
@@ -159,5 +160,163 @@ describe('parcel compliance card mutation — pump-plant only', () => {
     for (const key of WIZARD_OWNED) {
       expect(writesKey(slice, key), `updateParcelCompliance carries ${key}`).toBe(false);
     }
+  });
+});
+
+describe('production form — F9: the payload carries no key the subtype does not render', () => {
+  /**
+   * 🔴 F9, Calapooia Bend rehearsal (2026-08-21). `ProductionTab.onSubmit` builds
+   * `{ ...data }` from react-hook-form's WHOLE `defaultValues` object — every key for every
+   * subtype — and several of those defaults are non-empty literals (`|| 'gallons'`,
+   * `|| 'lbs'`, `|| 'false'`). A pruning record created through the wizard therefore arrived
+   * carrying `is_summary:'false'`, `yield_total_unit:'lbs'`, `water_volume_unit:'gallons'`
+   * and `temperature_control:'false'`, plus a fuel/transport/irrigation unit for
+   * measurements it never took.
+   *
+   * Not cosmetic: `ProductionEventSerializer.to_internal_value` lifts exactly those names out
+   * of the top level and writes them into `extra_data`, so the phantoms landed on the record.
+   * Nothing renders `extra_data` generically today — which is the only reason no output was
+   * wrong — and that is one "show everything recorded" panel away from a pruning event
+   * asserting temperature control in a certifier packet.
+   *
+   * These assertions run the REAL gate rather than scanning the source, because the fix is a
+   * gate that must FIRE, not a key that must be absent — and this project's 2026-08 lesson is
+   * that a test supplying its own vocabulary passes forever while the feature does nothing.
+   */
+
+  /** The payload F9 actually observed, as react-hook-form hands it to `onSubmit`. */
+  const PRUNING_RECORD = {
+    type: 'PR',
+    name: 'Dormant pruning',
+    is_summary: 'false',
+    date_start: '',
+    date_end: '',
+    event_count: '',
+    yield_total: '',
+    yield_total_unit: 'lbs',
+    water_volume_total: '',
+    water_volume_unit: 'gallons',
+    temperature_control: 'false',
+    fuel_consumed: '',
+    fuel_unit: 'gal',
+    transportation_distance: '',
+    transportation_unit: 'km',
+    irrigation_depth: '',
+    irrigation_depth_unit: 'inches'
+  };
+
+  const gated = (data: Record<string, unknown>) => ({ ...data, ...unrenderedProductionKeys(data) });
+
+  it('drops every phantom the pruning record carried', () => {
+    const payload = gated(PRUNING_RECORD);
+    for (const key of [
+      'yield_total_unit',
+      'water_volume_unit',
+      'temperature_control',
+      'fuel_unit',
+      'transportation_unit',
+      'irrigation_depth_unit'
+    ]) {
+      expect(payload[key], `pruning record still posts ${key}`).toBeUndefined();
+    }
+  });
+
+  it('PR keeps its own summary keys — it is one of the three subtypes with the toggle', () => {
+    // HA, PR and IR render the aggregate/summary sections. Gating `is_summary` off PR would
+    // be the opposite error: dropping a control the farmer CAN see.
+    expect(gated(PRUNING_RECORD).is_summary).toBe('false');
+    expect(gated({ ...PRUNING_RECORD, type: 'HA' }).is_summary).toBe('false');
+    expect(gated({ ...PRUNING_RECORD, type: 'IR' }).is_summary).toBe('false');
+  });
+
+  it('a subtype with no summary mode posts no summary keys at all', () => {
+    const planting = gated({ ...PRUNING_RECORD, type: 'PL' });
+    for (const key of ['is_summary', 'date_start', 'date_end', 'event_count']) {
+      expect(planting[key], `PL posts ${key}`).toBeUndefined();
+    }
+  });
+
+  it('the subtype that owns a field still sends it', () => {
+    // The gate must not become a blanket strip — HA owns the harvest totals, IR the water
+    // totals, PH the temperature control.
+    const harvest = gated({
+      ...PRUNING_RECORD,
+      type: 'HA',
+      is_summary: 'true',
+      yield_total: '118750'
+    });
+    expect(harvest.yield_total_unit).toBe('lbs');
+
+    const irrigation = gated({
+      ...PRUNING_RECORD,
+      type: 'IR',
+      is_summary: 'true',
+      water_volume_total: '4200'
+    });
+    expect(irrigation.water_volume_unit).toBe('gallons');
+
+    const postHarvest = gated({ ...PRUNING_RECORD, type: 'PH' });
+    expect(postHarvest.temperature_control).toBe('false');
+  });
+
+  it('an ORDINARY harvest posts no aggregate keys — owning the subtype is not enough', () => {
+    // `yield_total_unit` renders inside the Harvest SUMMARY section, so a plain pick never
+    // sees it. Gating on `type === 'HA'` alone left every ordinary harvest posting
+    // `yield_total_unit: 'lbs'` — the same phantom as the pruning record, on the one subtype
+    // that looked correctly handled. `temperature_control` is the control case: the PH
+    // section renders it whether or not summary mode is on.
+    const plainHarvest = gated({ ...PRUNING_RECORD, type: 'HA', is_summary: 'false' });
+    expect(plainHarvest.yield_total_unit).toBeUndefined();
+    expect(plainHarvest.yield_total).toBeUndefined();
+    // …but the toggle itself is still on screen for HA, so it still travels.
+    expect(plainHarvest.is_summary).toBe('false');
+
+    const plainIrrigation = gated({ ...PRUNING_RECORD, type: 'IR', is_summary: 'false' });
+    expect(plainIrrigation.water_volume_unit).toBeUndefined();
+  });
+
+  it("reads the summary toggle's STRING, not just a boolean", () => {
+    // The toggle stores 'true'/'false' as strings, and `'false'` is truthy in JS — the trap
+    // the field's own defaultValue comment calls out by name.
+    const stringTrue = gated({ ...PRUNING_RECORD, type: 'HA', is_summary: 'true' });
+    const boolTrue = gated({ ...PRUNING_RECORD, type: 'HA', is_summary: true });
+    expect(stringTrue.yield_total_unit).toBe('lbs');
+    expect(boolTrue.yield_total_unit).toBe('lbs');
+  });
+
+  it('a unit travels exactly when its quantity does', () => {
+    // `fuel_unit: 'gal'` on a record with no fuel reading names a unit for a measurement
+    // nobody took. Same reasoning as the blank-`area_covered`/`area_unit` pair the amendment
+    // service refuses to offer as a populated field.
+    expect(gated({ type: 'EM', fuel_consumed: '', fuel_unit: 'gal' }).fuel_unit).toBeUndefined();
+    expect(gated({ type: 'EM', fuel_consumed: '12.5', fuel_unit: 'gal' }).fuel_unit).toBe('gal');
+    expect(
+      gated({ type: 'TP', transportation_distance: '', transportation_unit: 'km' })
+        .transportation_unit
+    ).toBeUndefined();
+    expect(
+      gated({ type: 'TP', transportation_distance: '48', transportation_unit: 'km' })
+        .transportation_unit
+    ).toBe('km');
+    expect(
+      gated({ type: 'IR', irrigation_depth: '', irrigation_depth_unit: 'inches' })
+        .irrigation_depth_unit
+    ).toBeUndefined();
+    expect(
+      gated({ type: 'IR', irrigation_depth: '1.5', irrigation_depth_unit: 'inches' })
+        .irrigation_depth_unit
+    ).toBe('inches');
+  });
+
+  it('the wizard actually calls the gate, and does not re-assert a gated key afterwards', () => {
+    // The source check that the behavioural ones cannot make: a later `key: data.key` line in
+    // the same object literal would put the phantom straight back, which is exactly how the
+    // 2026-08-19 rehearsal found a narrow gate overwritten by a wider spread.
+    const source = read('views/Dashboard/Dashboard/components/forms/ProductionTab.jsx');
+    expect(source.includes('...unrenderedProductionKeys(data)')).toBe(true);
+    expect(
+      /^\s*irrigation_depth_unit:\s*data\.irrigation_depth_unit\s*\|\|\s*undefined,/m.test(source),
+      'irrigation_depth_unit is re-asserted after the gate'
+    ).toBe(false);
   });
 });

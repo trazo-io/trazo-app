@@ -7,7 +7,15 @@
  * (`_facility_cert_block`) — and had no screen for it, so the packet asked the question on
  * every export and the operation had nowhere to answer. This is that screen.
  *
- * Two rules this component must not break:
+ * 🔴 2026-08-21. The link was a single ForeignKey and is now a MANY relation. A lot with a
+ * fresh grade and a process grade goes to two certified operations — Calapooia Bend ships
+ * fresh blueberries to Organically Grown Company and process grade to Willamette Valley
+ * Fruit, on separate loads — so the operator could record at most half of what § 205.272
+ * asks for, and the packet's "no handler certificate on file" warning cleared as soon as one
+ * of the two was linked. A checkbox list, not a dropdown: "which of these did this lot go
+ * to" is not a single choice.
+ *
+ * Three rules this component must not break:
  *
  * 1. `cert_is_current` is TRI-STATE. `null` means no effective date is on file — that is an
  *    ASK, not a pass and not a failure. Rendering absence as either one states something
@@ -20,6 +28,7 @@ import React, { useState } from 'react';
 import {
   Badge,
   Box,
+  Checkbox,
   Divider,
   HStack,
   Icon,
@@ -43,7 +52,8 @@ import {
   useGetPostHarvestFacilitiesQuery,
   useGetProductionHandlerQuery,
   type PostHarvestFacility,
-  type PostHarvestFacilityType
+  type PostHarvestFacilityType,
+  type ProductionHandlerDetail
 } from 'store/api/postHarvestFacilityApi';
 import { useUpdateProductionMutation } from 'store/api/historyApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
@@ -98,8 +108,8 @@ export function PostHarvestHandlerSection({
   const [addFacility, { isLoading: isCreating }] = useAddPostHarvestFacilityMutation();
   const [updateProduction, { isLoading: isLinking }] = useUpdateProductionMutation();
 
-  const facilityId = link?.post_harvest_facility ?? null;
-  const detail = link?.detail ?? null;
+  const linkedIds: number[] = link?.post_harvest_facilities ?? [];
+  const details: ProductionHandlerDetail[] = link?.details ?? [];
 
   const setField = (key: keyof typeof EMPTY_FORM, value: string) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -116,12 +126,16 @@ export function PostHarvestHandlerSection({
     });
   };
 
-  const linkFacility = async (nextId: number | null) => {
+  /** Replace the whole set. `removed` only picks which confirmation to show. */
+  const setLinkedFacilities = async (nextIds: number[], removed = false) => {
     try {
-      await updateProduction({ historyId: productionId, post_harvest_facility: nextId }).unwrap();
+      await updateProduction({
+        historyId: productionId,
+        post_harvest_facilities: nextIds
+      }).unwrap();
       toast({
         title: intl.formatMessage({
-          id: nextId === null ? 'handler.toast.unlinked' : 'handler.toast.linked'
+          id: removed ? 'handler.toast.unlinked' : 'handler.toast.linked'
         }),
         status: 'success',
         duration: 3000,
@@ -131,6 +145,12 @@ export function PostHarvestHandlerSection({
       showError(error, 'handler.toast.linkError');
     }
   };
+
+  const toggleFacility = (id: number, checked: boolean) =>
+    setLinkedFacilities(
+      checked ? [...linkedIds, id] : linkedIds.filter((linked) => linked !== id),
+      !checked
+    );
 
   const createFacility = async () => {
     if (!formData.name.trim()) return;
@@ -147,21 +167,24 @@ export function PostHarvestHandlerSection({
       }).unwrap();
       setFormData(EMPTY_FORM);
       setIsAdding(false);
-      await linkFacility(created.id);
+      // ADD, never replace: a farmer adding the second handler of a split-grade lot must not
+      // silently unlink the first.
+      await setLinkedFacilities([...linkedIds, created.id]);
     } catch (error) {
       showError(error, 'handler.toast.createError');
     }
   };
 
-  const renderCertStatus = () => {
-    if (!detail) return null;
+  // Takes the handler explicitly: with a many-relation there is one badge PER handler, and a
+  // component-level `detail` would have painted the first handler's verdict on all of them.
+  const renderCertStatus = (handler: ProductionHandlerDetail) => {
     // Tri-state, deliberately. See the file header.
     // A bare <Badge> is the solid Trazo-green pill; the theme has no `success` variant, and a
     // name it does not define would fall through to the brand tint and read as decoration.
-    if (detail.cert_is_current === true) {
+    if (handler.cert_is_current === true) {
       return <Badge>{intl.formatMessage({ id: 'handler.cert.current' })}</Badge>;
     }
-    if (detail.cert_is_current === false) {
+    if (handler.cert_is_current === false) {
       return <Badge variant="danger">{intl.formatMessage({ id: 'handler.cert.expired' })}</Badge>;
     }
     return <Badge variant="warning">{intl.formatMessage({ id: 'handler.cert.unknown' })}</Badge>;
@@ -177,66 +200,71 @@ export function PostHarvestHandlerSection({
           {intl.formatMessage({ id: 'handler.subtitle' })}
         </Text>
 
-        {detail ? (
-          <Box p={{ base: 2, md: 3 }} bg={rowBg} borderRadius="md">
-            <HStack spacing={2} flexWrap="wrap">
-              <Icon as={FaIndustry} color="green.700" boxSize={4} />
-              <Text fontSize="sm" fontWeight="semibold">
-                {detail.name}
-              </Text>
-              {detail.facility_type_display && (
-                <Text fontSize="xs" color={labelFg}>
-                  {detail.facility_type_display}
-                </Text>
-              )}
-              {renderCertStatus()}
-            </HStack>
-            <HStack spacing={3} flexWrap="wrap" mt={1}>
-              {detail.certification_number && (
-                <Text fontSize="xs" color={labelFg}>
-                  {intl.formatMessage(
-                    { id: 'handler.display.certNumber' },
-                    { number: detail.certification_number }
+        {details.length > 0 ? (
+          <VStack spacing={2} align="stretch">
+            {details.map((handler) => (
+              <Box key={handler.id} p={{ base: 2, md: 3 }} bg={rowBg} borderRadius="md">
+                <HStack spacing={2} flexWrap="wrap">
+                  <Icon as={FaIndustry} color="green.700" boxSize={4} />
+                  <Text fontSize="sm" fontWeight="semibold">
+                    {handler.name}
+                  </Text>
+                  {handler.facility_type_display && (
+                    <Text fontSize="xs" color={labelFg}>
+                      {handler.facility_type_display}
+                    </Text>
                   )}
-                </Text>
-              )}
-              {detail.certifier_name && (
-                <Text fontSize="xs" color={labelFg}>
-                  {detail.certifier_name}
-                </Text>
-              )}
-              {detail.effective_date && (
-                <Text fontSize="xs" color={labelFg}>
-                  {intl.formatMessage(
-                    { id: 'handler.display.effective' },
-                    { date: detail.effective_date }
+                  {renderCertStatus(handler)}
+                </HStack>
+                <HStack spacing={3} flexWrap="wrap" mt={1}>
+                  {handler.certification_number && (
+                    <Text fontSize="xs" color={labelFg}>
+                      {intl.formatMessage(
+                        { id: 'handler.display.certNumber' },
+                        { number: handler.certification_number }
+                      )}
+                    </Text>
                   )}
-                </Text>
-              )}
-            </HStack>
-            {detail.cert_is_current !== true && (
-              // Neutral, not amber: the badge above already carries the status, and the theme's
-              // amber tops out at #E65100 — amber body text on white does not clear 4.5:1.
-              <Text fontSize="xs" color={labelFg} mt={1}>
-                {intl.formatMessage({
-                  id:
-                    detail.cert_is_current === false
-                      ? 'handler.hint.expired'
-                      : 'handler.hint.unknown'
-                })}
-              </Text>
-            )}
-            {canWrite && (
-              <StandardButton
-                variant="ghost"
-                size="sm"
-                mt={2}
-                isLoading={isLinking}
-                onClick={() => linkFacility(null)}>
-                {intl.formatMessage({ id: 'handler.action.unlink' })}
-              </StandardButton>
-            )}
-          </Box>
+                  {handler.certifier_name && (
+                    <Text fontSize="xs" color={labelFg}>
+                      {handler.certifier_name}
+                    </Text>
+                  )}
+                  {handler.effective_date && (
+                    <Text fontSize="xs" color={labelFg}>
+                      {intl.formatMessage(
+                        { id: 'handler.display.effective' },
+                        { date: handler.effective_date }
+                      )}
+                    </Text>
+                  )}
+                </HStack>
+                {handler.cert_is_current !== true && (
+                  // Neutral, not amber: the badge above already carries the status, and the
+                  // theme's amber tops out at #E65100 — amber body text on white does not
+                  // clear 4.5:1.
+                  <Text fontSize="xs" color={labelFg} mt={1}>
+                    {intl.formatMessage({
+                      id:
+                        handler.cert_is_current === false
+                          ? 'handler.hint.expired'
+                          : 'handler.hint.unknown'
+                    })}
+                  </Text>
+                )}
+                {canWrite && (
+                  <StandardButton
+                    variant="ghost"
+                    size="sm"
+                    mt={2}
+                    isLoading={isLinking}
+                    onClick={() => toggleFacility(handler.id, false)}>
+                    {intl.formatMessage({ id: 'handler.action.unlink' })}
+                  </StandardButton>
+                )}
+              </Box>
+            ))}
+          </VStack>
         ) : (
           <Text fontSize="sm" color={labelFg}>
             {intl.formatMessage({ id: 'handler.empty' })}
@@ -246,21 +274,37 @@ export function PostHarvestHandlerSection({
         {canWrite && (
           <>
             <Divider />
-            <StandardField label={intl.formatMessage({ id: 'handler.field.select' })}>
-              <StandardSelect
-                value={facilityId ? String(facilityId) : ''}
-                isDisabled={isLinking || !canQuery}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                  linkFacility(e.target.value ? Number(e.target.value) : null)
-                }>
-                <option value="">{intl.formatMessage({ id: 'handler.field.selectNone' })}</option>
-                {facilities.map((facility) => (
-                  <option key={facility.id} value={facility.id}>
-                    {facility.name}
-                    {facility.facility_type_display ? ` — ${facility.facility_type_display}` : ''}
-                  </option>
-                ))}
-              </StandardSelect>
+            {/* A checkbox list, not a dropdown. "Which of these did this lot go to" is not a
+                single choice — the fresh grade and the process grade of one blueberry season
+                go to two different certified handlers. */}
+            <StandardField
+              label={intl.formatMessage({ id: 'handler.field.select' })}
+              helpText={intl.formatMessage({ id: 'handler.field.selectHelp' })}>
+              {facilities.length === 0 ? (
+                <Text fontSize="sm" color={labelFg}>
+                  {intl.formatMessage({ id: 'handler.field.noneRegistered' })}
+                </Text>
+              ) : (
+                <VStack align="stretch" spacing={2}>
+                  {facilities.map((facility) => (
+                    <Checkbox
+                      key={facility.id}
+                      colorScheme="green"
+                      isChecked={linkedIds.includes(facility.id)}
+                      isDisabled={isLinking || !canQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        toggleFacility(facility.id, e.target.checked)
+                      }>
+                      <Text fontSize="sm">
+                        {facility.name}
+                        {facility.facility_type_display
+                          ? ` — ${facility.facility_type_display}`
+                          : ''}
+                      </Text>
+                    </Checkbox>
+                  ))}
+                </VStack>
+              )}
             </StandardField>
 
             {isAdding ? (

@@ -231,7 +231,7 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
   if (isEdit && isProductionError) {
     return (
       <Box p={8} textAlign="center">
-        <Text color="red.500">Error loading production data. Please try again.</Text>
+        <Text color="red.700">Error loading production data. Please try again.</Text>
         <Text color="gray.500" fontSize="sm" mt={2}>
           Production ID: {productionId}
         </Text>

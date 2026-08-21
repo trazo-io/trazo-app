@@ -232,6 +232,18 @@ export const PRODUCTION_EFFICIENCY: readonly EnumOption[] = [
   { value: 'low', labelKey: 'events.productionEfficiency.low' }
 ] as const;
 
+/**
+ * ⛔ LEGACY DISPLAY ONLY (F5, 2026-08-21). Not a picker any more.
+ *
+ * These six were the harvest EVENT's grade list while the season HEADER offered a different
+ * five — two vocabularies for one fact, neither of them a grade a US packing record uses. The
+ * live vocabulary is crop-aware and lives in `config/harvestGrades.ts`; both forms render it.
+ *
+ * This list survives so a record written before the change still resolves its i18n label on a
+ * card or a detail modal (`resolver.ts` → `getEnumLabel`). A real grade needs no entry: it is
+ * its own label and the resolver falls through to the raw string, which is the point —
+ * "U.S. No. 1" is what the packing record says and what the packet prints.
+ */
 export const HARVEST_QUALITY_GRADES: readonly EnumOption[] = [
   { value: 'export_quality', labelKey: 'events.harvestQuality.export' },
   { value: 'grade_a', labelKey: 'events.harvestQuality.gradeA' },
@@ -325,6 +337,45 @@ export const ORGANIC_APPROVED: readonly EnumOption[] = [
   { value: 'not_organic', labelKey: 'events.organicApproved.notOrganic' },
   { value: 'transitional', labelKey: 'events.organicApproved.transitional' }
 ] as const;
+
+/**
+ * The verification bases a form may OFFER today. USDA's Input Material Application Record
+ * names exactly four, verbatim: OMRI or WSDA listing, the NOP seal on the label, or certifier
+ * review and approval — plus the two negative answers a grower still needs.
+ */
+export const ORGANIC_APPROVED_OFFERED: readonly string[] = [
+  'omri_listed',
+  'wsda_listed',
+  'nop_seal_on_label',
+  'certifier_approved',
+  'not_organic',
+  'transitional'
+];
+
+/**
+ * Label key for a value the picker no longer offers but a saved row may still hold.
+ *
+ * 🔴 Why this exists (2026-08-19): a `<select>` bound to a value with no matching `<option>`
+ * shows the placeholder, and the next save writes `''`. Retiring `usda_nop_approved` and
+ * `organic_equivalent` from the picker therefore SILENTLY ERASED the recorded § 205.203(b) /
+ * § 205.601 verification basis of every older record a grower happened to reopen — on records
+ * already filed with a certifier. Retiring an option from the picker must never delete the
+ * answer someone already gave; the form keeps it selectable, marked as retired, until the
+ * grower deliberately replaces it.
+ *
+ * Returns null when the value is one the picker still offers (or is empty).
+ */
+export const retiredOrganicApprovedLabelKey = (value?: string | null): string | null => {
+  if (!value || ORGANIC_APPROVED_OFFERED.includes(value)) return null;
+  const keys: Record<string, string> = {
+    usda_nop_approved: 'events.organicApproved.usdaNop',
+    organic_equivalent: 'events.organicApproved.organicEquivalent',
+    yes: 'quickAdd.fields.organicApproved.legacyYes',
+    no: 'quickAdd.fields.organicApproved.legacyNo',
+    not_applicable: 'events.organicApproved.notApplicable'
+  };
+  return keys[value] ?? null;
+};
 
 // ============================================================================
 // EQUIPMENT

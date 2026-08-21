@@ -254,7 +254,7 @@ function ProfileParcel(): React.ReactElement {
         showBackButton
         onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
         <Box py={20} textAlign="center">
-          <Text color="red.500">
+          <Text color="red.700">
             {intl.formatMessage({
               id: 'parcel.errorLoading',
               defaultMessage: 'This parcel could not be loaded.'

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
 import {
   Box,
   Button,
@@ -24,6 +25,7 @@ interface VerifyEmailProps {
 }
 
 const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }) => {
+  const intl = useIntl();
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
@@ -395,7 +397,7 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
             fontWeight="500"
             onClick={() => navigate('/auth/signin')}
             _hover={{ color: primaryColor }}>
-            Back to Sign In
+            {intl.formatMessage({ id: 'auth.backToSignIn' })}
           </Link>
         </VStack>
       </Box>

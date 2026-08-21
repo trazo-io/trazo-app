@@ -16,6 +16,7 @@ import {
   FaBook,
   FaChevronRight,
   FaQrcode,
+  FaSeedling,
   FaRocket,
   FaTractor,
   FaPlayCircle,
@@ -27,6 +28,8 @@ import {
   FaClipboardList,
   FaCalendarAlt,
   FaClipboardCheck,
+  FaDatabase,
+  FaFileSignature,
   FaMapMarkedAlt
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
@@ -108,6 +111,13 @@ const EducationHub: React.FC = () => {
       category: intl.formatMessage({ id: 'education.categoryGettingStarted' })
     },
     {
+      id: 'season-lifecycle',
+      title: intl.formatMessage({ id: 'education.topicSeasonLifecycleTitle' }),
+      description: intl.formatMessage({ id: 'education.topicSeasonLifecycleDesc' }),
+      icon: FaSeedling,
+      category: intl.formatMessage({ id: 'education.categoryFarmDocumentation' })
+    },
+    {
       id: 'event-mastery',
       title: intl.formatMessage({ id: 'education.topicEventMasteryTitle' }),
       description: intl.formatMessage({ id: 'education.topicEventMasteryDesc' }),
@@ -142,6 +152,13 @@ const EducationHub: React.FC = () => {
       category: intl.formatMessage({ id: 'education.categoryCompliance' })
     },
     {
+      id: 'osp-data',
+      title: intl.formatMessage({ id: 'education.topicOspDataTitle' }),
+      description: intl.formatMessage({ id: 'education.topicOspDataDesc' }),
+      icon: FaDatabase,
+      category: intl.formatMessage({ id: 'education.categoryCompliance' })
+    },
+    {
       id: 'renewal-season',
       title: intl.formatMessage({ id: 'education.topicRenewalSeasonTitle' }),
       description: intl.formatMessage({ id: 'education.topicRenewalSeasonDesc' }),
@@ -153,6 +170,13 @@ const EducationHub: React.FC = () => {
       title: intl.formatMessage({ id: 'education.topicInspectionPrepTitle' }),
       description: intl.formatMessage({ id: 'education.topicInspectionPrepDesc' }),
       icon: FaClipboardCheck,
+      category: intl.formatMessage({ id: 'education.categoryCompliance' })
+    },
+    {
+      id: 'record-corrections',
+      title: intl.formatMessage({ id: 'education.topicRecordCorrectionsTitle' }),
+      description: intl.formatMessage({ id: 'education.topicRecordCorrectionsDesc' }),
+      icon: FaFileSignature,
       category: intl.formatMessage({ id: 'education.categoryCompliance' })
     },
     {
@@ -229,7 +253,7 @@ const EducationHub: React.FC = () => {
         {/* Empty state */}
         {filteredTopics.length === 0 && (
           <Box textAlign="center" py={12}>
-            <Icon as={FaBook} boxSize={12} color="gray.300" mb={4} />
+            <Icon as={FaBook} boxSize={12} color="gray.500" mb={4} />
             <Text color={textColor}>
               {intl.formatMessage({ id: 'education.noResultsFound' }, { searchTerm })}
             </Text>

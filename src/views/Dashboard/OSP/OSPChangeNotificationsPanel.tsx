@@ -259,7 +259,8 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
               borderRadius="md"
               bg={cn.is_immediate ? 'red.50' : 'gray.50'}
               borderLeft="3px solid"
-              borderLeftColor={cn.is_immediate ? 'red.400' : 'green.400'}>
+              /* .600 not .400 — green.400 is 2.01:1, below the non-text floor. */
+              borderLeftColor={cn.is_immediate ? 'red.600' : 'green.600'}>
               <HStack spacing={2} mb={1} flexWrap="wrap">
                 <Badge colorScheme={cn.is_immediate ? 'red' : 'green'} fontSize="11px">
                   {cn.cfr_reference}

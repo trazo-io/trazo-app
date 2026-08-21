@@ -15,7 +15,6 @@ import { ROLE_DISPLAY_COMPANY_ADMIN } from 'config';
 // Layout components
 import AdminNavbar from 'components/Navbars/AdminNavbar';
 import Configurator from 'components/Configurator/Configurator';
-import FixedPlugin from 'components/FixedPlugin/FixedPlugin';
 import Footer from 'components/Footer/Footer.tsx';
 import { HomeIcon } from 'components/Icons/Icons';
 // Custom components
@@ -351,9 +350,21 @@ export default function Dashboard(props: any) {
           ) : null}
           <Footer />
           <OnboardingChecklist />
-          <Portal>
-            <FixedPlugin fixed={fixed} onOpen={onOpen} />
-          </Portal>
+          {/*
+            The floating settings puck was removed 2026-08-21.
+
+            It was a DUPLICATE: AdminNavbarLinks renders the same SettingsIcon wired to this
+            same `onOpen`, so the Configurator drawer stays reachable from the top bar at every
+            breakpoint — nothing here is lost.
+
+            It was also a repeat offender. `position: fixed` at right:35 / bottom:30 with
+            z-index 99 put it permanently in the one screen region any bottom-anchored UI needs.
+            On 2026-08-17 it was measured covering a document card's Download button; the fix
+            then was to hide it below `md`, which treated one breakpoint rather than the cause.
+            On 2026-08-21 it was measured covering 19.3% of "Start Production" on the new
+            production form (52x26px of overlap) AND winning the click there, because 99 > 10.
+            A global, rarely-used shortcut should not outrank a page's primary action.
+          */}
           <Configurator
             secondary={getActiveNavbar(routes)}
             isOpen={isOpen}

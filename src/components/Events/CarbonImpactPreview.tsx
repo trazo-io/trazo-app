@@ -12,7 +12,6 @@ import {
   StatHelpText,
   useColorModeValue,
   Spinner,
-  Progress,
   Tooltip,
   Heading,
   Flex,
@@ -26,8 +25,7 @@ import { FaLeaf, FaDollarSign, FaLightbulb, FaCheckCircle } from 'react-icons/fa
 import { useIntl } from 'react-intl';
 import {
   formatCO2e as formatCO2eUtil,
-  getImpactLevel as getImpactLevelUtil,
-  getCarbonScoreColor as getCarbonScoreColorUtil
+  getImpactLevel as getImpactLevelUtil
 } from '../../utils/carbonDisplayUtils';
 
 interface CarbonCalculation {
@@ -47,6 +45,42 @@ interface CarbonCalculation {
   original_area_treated?: number;
   original_area_unit?: string;
   breakdown?: {
+    /**
+     * Whether the fuel figure driving this number was MEASURED or ASSUMED, written by
+     * every area-based production activity (see `_annotate_fuel_basis` in
+     * carbon/services/verified_emission_factors.py).
+     *
+     * Read this instead of probing for a `usda_<verb>_factor_gallons_per_hectare` key.
+     * That key chain was hand-written per activity and cultivation names its factor
+     * differently, so it fell through to 0 and this panel printed "0.0 liters (estimated)"
+     * for every cultivation event.
+     */
+    fuel_basis?: {
+      measured: boolean;
+      /** The factor that actually produced the number — see `assumed_fuel_is_diesel`. */
+      emission_factor: {
+        value: number;
+        unit: string;
+        source: string;
+        provenance: 'published' | 'internal_estimate';
+      };
+      /**
+       * True when the operator picked a non-diesel fuel (electric, gasoline…) but entered no
+       * amount: the calculators substitute a diesel gal/hectare rate regardless of fuel type,
+       * so the figure is diesel-derived. Known backend methodology gap — surfaced rather than
+       * hidden, because otherwise the panel would describe an electric machine's emissions
+       * using a factor that never ran.
+       */
+      assumed_fuel_is_diesel: boolean;
+      /** Present only when we substituted a rate for fuel the operator did not enter. */
+      assumed_rate: {
+        value: number;
+        unit: string;
+        source: string;
+        provenance: 'published' | 'internal_estimate';
+        confidence_level: number;
+      } | null;
+    };
     // Chemical application fields
     nitrogen_emissions?: number;
     phosphorus_emissions?: number;
@@ -91,6 +125,8 @@ interface CarbonCalculation {
     water_volume_gallons?: number;
     kwh_consumed?: number;
     actual_kwh_consumed?: number;
+    /** kWh echoed back when the operator entered energy use (electric path). */
+    actual_fuel_consumed_kWh?: number;
     electricity_emission_factor_kg_per_kwh?: number;
     pump_efficiency_kwh_per_1000_gallons?: number;
     water_source?: string;
@@ -149,7 +185,6 @@ interface CarbonCalculation {
     pest_management_type?: string;
     area_covered?: number;
     area_unit?: string;
-    fuel_type?: string;
     production_efficiency?: string;
   };
   cost_analysis?: {
@@ -170,10 +205,17 @@ interface CarbonImpactPreviewProps {
   formData: any;
   calculation?: CarbonCalculation | null;
   isCalculating?: boolean;
+  /**
+   * Focus the fuel input this panel is describing. Supplied only where the panel renders
+   * beside that input, which is the whole reason it moved out of the sidebar: when fuel
+   * was left blank we substitute a national average, and the single most useful thing the
+   * panel can offer is a one-click path to replacing that guess with a real reading.
+   */
+  onEnterActualFuel?: () => void;
 }
 
 export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
-  ({ eventType, formData, calculation, isCalculating = false }) => {
+  ({ eventType, formData, calculation, isCalculating = false, onEnterActualFuel }) => {
     const intl = useIntl();
     const bgColor = useColorModeValue('gray.50', 'gray.700');
     const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -182,20 +224,46 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
     const [showDetails, setShowDetails] = useState(false);
 
     // Use shared utility functions (from carbonDisplayUtils.ts)
-    const getCarbonScoreColor = getCarbonScoreColorUtil;
     const getImpactLevel = getImpactLevelUtil;
     const formatCO2e = formatCO2eUtil;
 
     // Memoized calculations to prevent recalculation unless calculation changes
-    const { impactLevel, efficiencyColor, formattedCO2e } = useMemo(() => {
-      if (!calculation) return { impactLevel: null, efficiencyColor: null, formattedCO2e: null };
+    const { impactLevel, formattedCO2e } = useMemo(() => {
+      if (!calculation) return { impactLevel: null, formattedCO2e: null };
 
       return {
         impactLevel: getImpactLevel(calculation.co2e),
-        efficiencyColor: getCarbonScoreColor(calculation.efficiency_score),
         formattedCO2e: formatCO2e(calculation.co2e)
       };
-    }, [calculation, getImpactLevel, getCarbonScoreColor, formatCO2e]);
+    }, [calculation, getImpactLevel, formatCO2e]);
+
+    /**
+     * Measured-vs-assumed, straight from the backend. Everything this panel claims about
+     * provenance keys off this one object rather than inspecting `source` prose or
+     * guessing from which breakdown keys happen to be populated.
+     */
+    const fuelBasis = calculation?.breakdown?.fuel_basis;
+
+    /**
+     * Whether a published factor DEMONSTRABLY ran, rather than whether the response says so.
+     *
+     * `usda_factors_used` is hardcoded `True` for every production event in
+     * `carbon/views.py`, and `calculation_method` reads
+     * "verified_epa_usda_factors_with_electric_support" even for pruning and canopy
+     * management — whose figure is a Trazo 0.1 kg/acre manual-labour estimate computed
+     * without touching an EPA factor at all. Trusting either one put a citation badge on a
+     * number with no citation behind it.
+     *
+     * Evidence is: a `fuel_basis` whose factor is labelled published, or an explicit factor
+     * value in the breakdown (irrigation's eGRID electricity, the diesel combustion factor).
+     * Absent both, the panel says nothing about sourcing — the same fail-safe direction as
+     * `provenance` defaulting to `internal_estimate`.
+     */
+    const hasPublishedFactorEvidence = Boolean(
+      fuelBasis?.emission_factor?.provenance === 'published' ||
+        calculation?.breakdown?.diesel_emission_factor_kg_per_gallon ||
+        calculation?.breakdown?.electricity_emission_factor_kg_per_kwh
+    );
 
     // Handle error state from API failures
     if (calculation?.error || calculation?.calculation_unavailable) {
@@ -325,19 +393,11 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                     No direct emissions
                   </Text>
                 </VStack>
-                <VStack spacing={0} align="end">
-                  <HStack spacing={1}>
-                    <Text fontSize="lg" fontWeight="bold" color="green.500">
-                      100
-                    </Text>
-                    <Text fontSize="sm" color="gray.500">
-                      /100
-                    </Text>
-                  </HStack>
-                  <Text fontSize="xs" color="gray.500">
-                    Efficiency Score
-                  </Text>
-                </VStack>
+                {/* "Efficiency Score 100/100" stood here. It was a grade Trazo assigned to
+                    the farmer's work, on a scale nothing on screen explained, and it read
+                    as an achievement for events that simply burn no fuel — scouting scored
+                    100 for being observational. Same self-graded-number class as the
+                    producer transparency score, retired for the same reason. */}
               </HStack>
               {/*
                 Was a raw `<Alert status={isPollination ? 'success' : 'info'} size="sm">`.
@@ -377,18 +437,34 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                 Carbon Impact Preview
               </Heading>
             </HStack>
-            {calculation.usda_factors_used && (
-              <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
-                <Badge colorScheme="blue" size="sm">
-                  <HStack spacing={1}>
-                    <Icon as={FaCheckCircle} boxSize={3} />
+            {/* The badge answers "is this number yours or ours?", and it has to have two
+                answers. One "EPA/USDA-sourced" badge used to sit over the whole card even
+                when the fuel quantity underneath it was a Trazo per-hectare default —
+                the EPA combustion factor is genuinely published, the fuel figure it
+                multiplies was not, and a single badge let the citable half vouch for the
+                other. Driven by the typed `fuel_basis.measured`, never by parsing a
+                source string. */}
+            {hasPublishedFactorEvidence &&
+              (fuelBasis && !fuelBasis.measured ? (
+                <Tooltip label={intl.formatMessage({ id: 'carbon.badge.estimatedFuelTooltip' })}>
+                  <Badge colorScheme="gray" size="sm">
                     <Text fontSize="xs">
-                      {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
+                      {intl.formatMessage({ id: 'carbon.badge.estimatedFuel' })}
                     </Text>
-                  </HStack>
-                </Badge>
-              </Tooltip>
-            )}
+                  </Badge>
+                </Tooltip>
+              ) : (
+                <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
+                  <Badge colorScheme="blue" size="sm">
+                    <HStack spacing={1}>
+                      <Icon as={FaCheckCircle} boxSize={3} />
+                      <Text fontSize="xs">
+                        {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
+                      </Text>
+                    </HStack>
+                  </Badge>
+                </Tooltip>
+              ))}
           </HStack>
         </CardHeader>
 
@@ -445,24 +521,13 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                     {intl.formatMessage({ id: impactLevel.level })}
                   </Badge>
                 </HStack>
+                {/* "Carbon footprint estimate" implied a full LCA. This is Scope 1 only —
+                    direct operational emissions the farmer controls (carbon-methodology.md). */}
                 <Text fontSize="xs" color="gray.500">
-                  Carbon footprint estimate
+                  Direct operational emissions
                 </Text>
               </VStack>
-
-              <VStack spacing={0} align="end">
-                <HStack spacing={1}>
-                  <Text fontSize="lg" fontWeight="bold" color={`${efficiencyColor}.500`}>
-                    {Math.round(calculation.efficiency_score)}
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    /100
-                  </Text>
-                </HStack>
-                <Text fontSize="xs" color="gray.500">
-                  Efficiency Score
-                </Text>
-              </VStack>
+              {/* Efficiency Score /100 removed here too — see the zero-emission variant above. */}
             </HStack>
 
             {/* Cost Analysis */}
@@ -550,7 +615,12 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                     cursor="pointer"
                     onClick={() => setShowDetails(!showDetails)}
                     _hover={{ textDecoration: 'underline' }}>
-                    {showDetails ? 'Hide' : 'Show'} USDA calculation details
+                    {/* Was "USDA calculation details". The details are Trazo's arithmetic
+                        over a mix of published factors and our own defaults, so naming USDA
+                        in the affordance itself pre-certified everything behind it. */}
+                    {showDetails
+                      ? intl.formatMessage({ id: 'carbon.details.hide' })
+                      : intl.formatMessage({ id: 'carbon.details.show' })}
                   </Text>
 
                   {showDetails &&
@@ -582,8 +652,14 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   borderRadius="md"
                                   borderWidth="1px"
                                   borderColor="blue.200">
+                                  {/* "You told us" — and it must contain ONLY that. The
+                                      heading used to read "Your Production Activity" over a
+                                      block whose fuel row was frequently a Trazo default,
+                                      so the possessive was doing work it had not earned.
+                                      Anything we substituted now lives in its own block
+                                      below, headed "We assumed". */}
                                   <Text fontSize="xs" fontWeight="semibold" color="blue.700" mb={1}>
-                                    Your Production Activity:
+                                    You told us:
                                   </Text>
                                   <HStack justify="space-between" fontSize="xs">
                                     <Text color="blue.600">Activity:</Text>
@@ -612,44 +688,51 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                       </HStack>
                                     </>
                                   ) : (
-                                    <HStack justify="space-between" fontSize="xs">
-                                      <Text color="blue.600">
-                                        {calculation.breakdown.fuel_type === 'electric'
-                                          ? 'Energy Consumed:'
-                                          : 'Fuel Consumed:'}
-                                      </Text>
-                                      <Text color="blue.800">
-                                        {calculation.breakdown.fuel_type === 'electric'
-                                          ? `${(
-                                              calculation.breakdown.actual_kwh_consumed ??
-                                              calculation.breakdown.kwh_consumed ??
-                                              calculation.breakdown.actual_fuel_consumed_kWh ??
-                                              0
-                                            ).toFixed(1)} kWh`
-                                          : calculation.breakdown.actual_fuel_consumed_gallons
-                                          ? `${(
-                                              calculation.breakdown.actual_fuel_consumed_gallons *
-                                              3.78541
-                                            ).toFixed(1)} liters`
-                                          : `${(
-                                              derivedHectares *
-                                              (calculation.breakdown
-                                                .usda_planting_factor_gallons_per_hectare ||
-                                                calculation.breakdown
-                                                  .usda_production_factor_gallons_per_hectare ||
-                                                calculation.breakdown
-                                                  .usda_harvesting_factor_gallons_per_hectare ||
-                                                calculation.breakdown
-                                                  .usda_transplanting_factor_gallons_per_hectare ||
-                                                calculation.breakdown
-                                                  .usda_thinning_factor_gallons_per_hectare ||
-                                                calculation.breakdown
-                                                  .usda_cultivation_factor_gallons_per_hectare ||
-                                                0) *
-                                              3.78541
-                                            ).toFixed(1)} liters (estimated)`}
-                                      </Text>
-                                    </HStack>
+                                    /* Fuel appears under "You told us" ONLY if they told us.
+                                       This row used to fall back to hectares × a per-hectare
+                                       default and label it "(estimated)" in the same grey as
+                                       every measured value — one parenthetical carrying the
+                                       whole distinction between a reading and a guess. When
+                                       fuel is absent the row is simply not here; the
+                                       substitution is declared in its own block below. */
+                                    /* Boolean(): `actual_fuel_consumed_gallons` is a NUMBER,
+                                       and `0` is a value an operator can legitimately enter.
+                                       Left bare, `(… || 0) && <JSX>` evaluates to `0`, which
+                                       React renders as a literal "0" floating in the card. */
+                                    /* An unconditional pass for `fuel_type === 'electric'`
+                                       printed "Energy used: 0.0 kWh" under a heading that
+                                       promises only what the operator told us — for an
+                                       electric machine with nothing entered, that row was
+                                       reporting our own blank back at them as a reading. The
+                                       row now requires an actual figure from either path. */
+                                    Boolean(
+                                      fuelBasis?.measured ||
+                                        calculation.breakdown.actual_fuel_consumed_gallons ||
+                                        calculation.breakdown.actual_kwh_consumed ||
+                                        calculation.breakdown.kwh_consumed ||
+                                        calculation.breakdown.actual_fuel_consumed_kWh
+                                    ) && (
+                                      <HStack justify="space-between" fontSize="xs">
+                                        <Text color="blue.600">
+                                          {calculation.breakdown.fuel_type === 'electric'
+                                            ? 'Energy used:'
+                                            : 'Fuel used:'}
+                                        </Text>
+                                        <Text color="blue.800">
+                                          {calculation.breakdown.fuel_type === 'electric'
+                                            ? `${(
+                                                calculation.breakdown.actual_kwh_consumed ??
+                                                calculation.breakdown.kwh_consumed ??
+                                                calculation.breakdown.actual_fuel_consumed_kWh ??
+                                                0
+                                              ).toFixed(1)} kWh`
+                                            : `${(
+                                                (calculation.breakdown
+                                                  .actual_fuel_consumed_gallons || 0) * 3.78541
+                                              ).toFixed(1)} liters`}
+                                        </Text>
+                                      </HStack>
+                                    )
                                   )}
                                   {/* Hide area lines for EM/PO events where area is not applicable */}
                                   {(calculation.original_area_treated > 0 ||
@@ -695,8 +778,51 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 </Box>
                               )}
 
+                            {/* "We assumed" — the substitution, stated as a substitution.
+                                A default that changes the headline number deserves its own
+                                heading, its own colour, and a way out. `variant="warning"`
+                                territory rather than a green or blue tint: this is not an
+                                achievement and not a neutral fact, it is a gap in the
+                                record that the operator alone can close. */}
+                            {fuelBasis?.assumed_rate && (
+                              /* StandardAlert status="warning" rather than a hand-rolled
+                                 amber tint: the theme's amber ramp tops out at #E65100, so
+                                 amber.900 on an amber.50 ground measures 3.57:1 and fails
+                                 AA for body text. The alert's warning pair clears it, and
+                                 "warning" is the honest status — an assumed input is a gap
+                                 in the record, not an error and not a neutral fact. */
+                              <StandardAlert
+                                status="warning"
+                                title={intl.formatMessage({ id: 'carbon.assumedFuel.title' })}
+                                description={intl.formatMessage(
+                                  {
+                                    // A non-diesel machine with nothing entered is costed in
+                                    // DIESEL — saying "a US average for this activity" there
+                                    // would hide which fuel we actually priced.
+                                    id: fuelBasis.assumed_fuel_is_diesel
+                                      ? 'carbon.assumedFuel.explainDieselSubstitute'
+                                      : 'carbon.assumedFuel.explain'
+                                  },
+                                  { rate: fuelBasis.assumed_rate.value }
+                                )}>
+                                {onEnterActualFuel && (
+                                  <Text
+                                    as="button"
+                                    type="button"
+                                    fontSize="sm"
+                                    fontWeight="semibold"
+                                    color="green.700"
+                                    textDecoration="underline"
+                                    onClick={onEnterActualFuel}
+                                    _hover={{ color: 'green.800' }}>
+                                    {intl.formatMessage({ id: 'carbon.assumedFuel.cta' })}
+                                  </Text>
+                                )}
+                              </StandardAlert>
+                            )}
+
                             {/* Input Summary - Irrigation Events (Electricity-based) */}
-                            {calculation.breakdown?.water_volume_gallons && (
+                            {Boolean(calculation.breakdown?.water_volume_gallons) && (
                               <Box
                                 p={2}
                                 bg="blue.50"
@@ -949,7 +1075,9 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                             1
                                           )}{' '}
                                           gallons
-                                          {calculation.breakdown.application_fuel_liters && (
+                                          {Boolean(
+                                            calculation.breakdown.application_fuel_liters
+                                          ) && (
                                             <Text as="span" color="blue.500" fontStyle="italic">
                                               {' '}
                                               (
@@ -1042,9 +1170,14 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                   <VStack spacing={1} align="stretch">
                                     <HStack justify="space-between" fontSize="xs">
                                       <Text color="orange.600">
+                                        {/* `!assumed_fuel_is_diesel` on the electric test for
+                                            the same reason as the body below: a diesel-costed
+                                            event must not be labelled "Electric Energy
+                                            Emissions" over a line reading "1.7L × 2.70". */}
                                         {calculation.breakdown?.manual_operation_detected
                                           ? 'Manual Labor Estimate:'
-                                          : calculation.breakdown?.fuel_type === 'electric'
+                                          : calculation.breakdown?.fuel_type === 'electric' &&
+                                            !fuelBasis?.assumed_fuel_is_diesel
                                           ? 'Electric Energy Emissions:'
                                           : 'Direct Fuel Combustion:'}
                                       </Text>
@@ -1071,7 +1204,15 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                           • Basis: Trazo Direct Operational Emissions (manual labor)
                                         </Text>
                                       </>
-                                    ) : calculation.breakdown?.fuel_type === 'electric' ? (
+                                    ) : /* `!assumed_fuel_is_diesel`: an electric machine with
+                                          no kWh entered is costed in DIESEL by the backend,
+                                          so this branch used to print "0.0 kWh × 0.39"
+                                          directly beneath a 4.5 kg total — the arithmetic on
+                                          screen did not reach the number above it. Those
+                                          events fall through to the combustion branch, which
+                                          shows the litres and factor that actually ran. */
+                                    calculation.breakdown?.fuel_type === 'electric' &&
+                                      !fuelBasis?.assumed_fuel_is_diesel ? (
                                       <>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
                                           •{' '}
@@ -1085,76 +1226,68 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                           kg CO₂e/kWh
                                         </Text>
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • EPA Factor:{' '}
+                                          • EPA factor:{' '}
                                           {calculation.breakdown.electricity_emission_factor_kg_per_kwh?.toFixed(
                                             2
                                           ) || '0.39'}{' '}
                                           kg CO₂e/kWh (EPA eGRID 2023)
                                         </Text>
-                                        <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • Source:{' '}
-                                          {calculation.breakdown.calculation_basis
-                                            ?.replace(/_/g, ' ')
-                                            .replace(/\b\w/g, (l) => l.toUpperCase())}
-                                        </Text>
+                                        {/* `calculation_basis` title-cased was rendered here
+                                            as "Source:". It is an internal enum, not a
+                                            reference — see the diesel branch below. */}
                                       </>
                                     ) : (
                                       <>
+                                        {/* The multiplication, in the units the operator
+                                            entered. `fuel_basis` supplies the assumed rate
+                                            when fuel was blank, replacing a six-deep
+                                            `usda_<verb>_factor_gallons_per_hectare` chain
+                                            that cultivation never matched — it fell through
+                                            to 0 and this line read "0.0L × 2.70". */}
                                         <Text fontSize="xs" color="orange.600" pl={2}>
                                           •{' '}
-                                          {calculation.breakdown.actual_fuel_consumed_gallons
-                                            ? `${(
-                                                calculation.breakdown.actual_fuel_consumed_gallons *
-                                                3.78541
-                                              ).toFixed(1)}L × ${(
-                                                calculation.breakdown
-                                                  .diesel_emission_factor_kg_per_gallon / 3.78541
-                                              ).toFixed(2)} kg CO₂e/L`
-                                            : `${(
-                                                derivedHectares *
-                                                (calculation.breakdown
-                                                  .usda_planting_factor_gallons_per_hectare ||
-                                                  calculation.breakdown
-                                                    .usda_production_factor_gallons_per_hectare ||
-                                                  calculation.breakdown
-                                                    .usda_harvesting_factor_gallons_per_hectare ||
-                                                  calculation.breakdown
-                                                    .usda_transplanting_factor_gallons_per_hectare ||
-                                                  calculation.breakdown
-                                                    .usda_thinning_factor_gallons_per_hectare ||
-                                                  calculation.breakdown
-                                                    .usda_cultivation_factor_gallons_per_hectare ||
-                                                  0) *
-                                                3.78541
-                                              ).toFixed(1)}L (USDA standard) × ${(
-                                                calculation.breakdown
-                                                  .diesel_emission_factor_kg_per_gallon / 3.78541
-                                              ).toFixed(2)} kg CO₂e/L`}
+                                          {(() => {
+                                            // `fuel_basis.emission_factor` FIRST: it is the
+                                            // factor the backend actually multiplied by. The
+                                            // breakdown key is written only on the
+                                            // non-electric path, so a diesel-substituted
+                                            // electric event has nothing there and this line
+                                            // would read "0.0L × 0.00".
+                                            const kgPerGal =
+                                              fuelBasis?.emission_factor?.value ??
+                                              calculation.breakdown
+                                                .diesel_emission_factor_kg_per_gallon ??
+                                              0;
+                                            const gallons =
+                                              calculation.breakdown.actual_fuel_consumed_gallons ??
+                                              derivedHectares *
+                                                (fuelBasis?.assumed_rate?.value || 0);
+                                            const liters = (gallons * 3.78541).toFixed(1);
+                                            const kgPerL = (kgPerGal / 3.78541).toFixed(2);
+                                            return `${liters}L × ${kgPerL} kg CO₂e/L`;
+                                          })()}
                                         </Text>
+                                        {/* The one line here that IS a citation, so it
+                                            carries the document rather than the agency.
+                                            Two lines were dropped alongside it:
+                                            "Conversion: 10.21 ÷ 3.785 = 2.70", which is
+                                            unit arithmetic dressed as provenance and
+                                            padded the apparent citation count; and
+                                            "Source: Usda Standard Per Hectare", which was
+                                            `calculation_basis` — an internal enum —
+                                            title-cased into something that reads like a
+                                            reference and resolves to nothing. */}
                                         <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • EPA Factor:{' '}
-                                          {calculation.breakdown.diesel_emission_factor_kg_per_gallon?.toFixed(
-                                            2
-                                          )}{' '}
-                                          kg CO₂e/gallon
-                                        </Text>
-                                        <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • Conversion:{' '}
-                                          {calculation.breakdown.diesel_emission_factor_kg_per_gallon?.toFixed(
-                                            2
-                                          )}{' '}
-                                          ÷ 3.785 ={' '}
+                                          • EPA factor:{' '}
                                           {(
+                                            fuelBasis?.emission_factor?.value ??
                                             calculation.breakdown
-                                              .diesel_emission_factor_kg_per_gallon / 3.785
-                                          ).toFixed(2)}{' '}
-                                          kg CO₂e/L
-                                        </Text>
-                                        <Text fontSize="xs" color="orange.600" pl={2}>
-                                          • Source:{' '}
-                                          {calculation.breakdown.calculation_basis
-                                            ?.replace(/_/g, ' ')
-                                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                                              .diesel_emission_factor_kg_per_gallon
+                                          )?.toFixed(2)}{' '}
+                                          kg CO₂e/gallon
+                                          {fuelBasis?.emission_factor?.provenance === 'published'
+                                            ? ` — ${fuelBasis.emission_factor.source}`
+                                            : ''}
                                         </Text>
                                       </>
                                     )}
@@ -1162,7 +1295,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 )}
 
                               {/* Irrigation Event Emissions */}
-                              {calculation.breakdown?.water_volume_gallons && (
+                              {Boolean(calculation.breakdown?.water_volume_gallons) && (
                                 <VStack spacing={1} align="stretch">
                                   {(() => {
                                     // Prefer the backend-computed pump-only emissions
@@ -1218,7 +1351,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         ` (${calculation.breakdown.water_source_label})`}
                                     </Text>
                                   )}
-                                  {calculation.breakdown.actual_kwh_consumed && (
+                                  {Boolean(calculation.breakdown.actual_kwh_consumed) && (
                                     <Text fontSize="xs" color="orange.600" pl={2}>
                                       • Basis: Actual farmer-reported electricity consumption
                                     </Text>
@@ -1607,7 +1740,12 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                 )}
                             </Box>
 
-                            {/* USDA Standards Note */}
+                            {/* The footer note, which closed the breakdown with a green
+                                check and "Carbon calculation uses published EPA/USDA
+                                emission factors". It sat BELOW the "We assumed" block and
+                                undid it: the last word on screen re-certified the whole
+                                derivation, estimated fuel included. Same two states as the
+                                header badge, driven by the same typed field. */}
                             <Box
                               p={2}
                               bg="gray.50"
@@ -1615,15 +1753,33 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                               borderWidth="1px"
                               borderColor="gray.200">
                               <HStack spacing={2}>
-                                <Icon as={FaCheckCircle} color="green.500" boxSize={3} />
-                                <VStack spacing={0} align="start" flex={1}>
-                                  <Text fontSize="xs" fontWeight="semibold" color="gray.700">
-                                    {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
+                                {fuelBasis && !fuelBasis.measured ? (
+                                  <Text fontSize="xs" color="gray.600" flex={1}>
+                                    {intl.formatMessage({
+                                      id: 'carbon.badge.estimatedFuelTooltip'
+                                    })}
                                   </Text>
-                                  <Text fontSize="xs" color="gray.600">
-                                    {intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
+                                ) : hasPublishedFactorEvidence ? (
+                                  <>
+                                    <Icon as={FaCheckCircle} color="green.700" boxSize={3} />
+                                    <VStack spacing={0} align="start" flex={1}>
+                                      <Text fontSize="xs" fontWeight="semibold" color="gray.700">
+                                        {intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}
+                                      </Text>
+                                      <Text fontSize="xs" color="gray.600">
+                                        {intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
+                                      </Text>
+                                    </VStack>
+                                  </>
+                                ) : (
+                                  /* No published factor demonstrably ran (pruning and canopy
+                                     management are a flat Trazo per-acre manual estimate), so
+                                     the closing note describes the basis instead of awarding
+                                     a green check to a citation that does not exist. */
+                                  <Text fontSize="xs" color="gray.600" flex={1}>
+                                    {intl.formatMessage({ id: 'carbon.basis.trazoEstimate' })}
                                   </Text>
-                                </VStack>
+                                )}
                               </HStack>
                             </Box>
                           </VStack>
@@ -1634,23 +1790,13 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
               </>
             )}
 
-            {/* Efficiency Progress Bar */}
-            <Box>
-              <HStack justify="space-between" mb={1}>
-                <Text fontSize="xs" color="gray.500">
-                  Application Efficiency
-                </Text>
-                <Text fontSize="xs" color={textColor}>
-                  {Math.round(calculation.efficiency_score)}%
-                </Text>
-              </HStack>
-              <Progress
-                value={calculation.efficiency_score}
-                colorScheme={efficiencyColor}
-                size="sm"
-                borderRadius="md"
-              />
-            </Box>
+            {/* "Application Efficiency 80%" with a progress bar stood here — the third
+                rendering of `efficiency_score` on one card, and the most assertive: a
+                filled green bar reads as a rating of how well the operator did the job.
+                Nothing on screen said what the scale meant or what would raise it, and for
+                a planting event with no fuel entered it graded a national average. Removed
+                with the other two; the panel now reports emissions and their provenance,
+                and grades nothing. */}
           </VStack>
         </CardBody>
       </Card>
@@ -1659,10 +1805,25 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
   (prevProps, nextProps) => {
     // Custom comparison function for memo
     // Only re-render if calculation data or isCalculating state actually changes
+    //
+    // `formData` MUST be compared on the fields this component branches on. It was omitted
+    // entirely, which was survivable while callers passed a stable object — but the tabs now
+    // pass live watched values, and without these four an `electricity_source` or
+    // `is_fertigation` change that does not move the co2e total would be swallowed here and
+    // the note beneath it would never appear. Compared field-by-field rather than by
+    // stringifying the whole object: the tabs spread a fresh literal on every render, so a
+    // deep compare would run over the entire form payload each keystroke.
+    const sameFormBranchInputs =
+      prevProps.formData?.type === nextProps.formData?.type &&
+      prevProps.formData?.production_type === nextProps.formData?.production_type &&
+      prevProps.formData?.electricity_source === nextProps.formData?.electricity_source &&
+      prevProps.formData?.is_fertigation === nextProps.formData?.is_fertigation;
+
     return (
       prevProps.isCalculating === nextProps.isCalculating &&
+      prevProps.onEnterActualFuel === nextProps.onEnterActualFuel &&
+      sameFormBranchInputs &&
       prevProps.calculation?.co2e === nextProps.calculation?.co2e &&
-      prevProps.calculation?.efficiency_score === nextProps.calculation?.efficiency_score &&
       prevProps.calculation?.usda_factors_used === nextProps.calculation?.usda_factors_used &&
       JSON.stringify(prevProps.calculation?.recommendations) ===
         JSON.stringify(nextProps.calculation?.recommendations) &&

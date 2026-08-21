@@ -12,9 +12,6 @@ import {
   Flex,
   Image,
   Button,
-  InputGroup,
-  InputLeftElement,
-  InputRightElement,
   useColorModeValue,
   Checkbox,
   Grid,
@@ -47,6 +44,7 @@ import {
   handleSocialAuthError,
   checkSocialAuthConfig
 } from '../../../utils/socialAuth';
+import { StandardInput } from 'components/Design/StandardComponents';
 
 // Motion components
 const MotionBox = motion(Box);
@@ -430,36 +428,9 @@ const ConsumerSignUp: React.FC = () => {
                         mb={1}>
                         First Name
                       </Text>
-                      <Box
-                        as="input"
+                      <StandardInput
                         type="text"
                         placeholder="First name"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.firstName
-                            ? 'red.300'
-                            : focusedField === 'firstName'
-                            ? 'blue.600'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        px={4}
-                        _hover={{
-                          borderColor: errors.firstName
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'blue.600',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
                         {...registerField('firstName', {
                           required: 'First name is required',
                           maxLength: {
@@ -473,9 +444,10 @@ const ConsumerSignUp: React.FC = () => {
                         })}
                         onFocus={() => setFocusedField('firstName')}
                         onBlur={() => setFocusedField(null)}
+                        isInvalid={!!errors.firstName}
                       />
                       {errors.firstName && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.firstName.message}
                         </Text>
                       )}
@@ -489,36 +461,9 @@ const ConsumerSignUp: React.FC = () => {
                         mb={1}>
                         Last Name
                       </Text>
-                      <Box
-                        as="input"
+                      <StandardInput
                         type="text"
                         placeholder="Last name"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.lastName
-                            ? 'red.300'
-                            : focusedField === 'lastName'
-                            ? 'blue.600'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        px={4}
-                        _hover={{
-                          borderColor: errors.lastName
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'blue.600',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
                         {...registerField('lastName', {
                           required: 'Last name is required',
                           maxLength: {
@@ -532,9 +477,10 @@ const ConsumerSignUp: React.FC = () => {
                         })}
                         onFocus={() => setFocusedField('lastName')}
                         onBlur={() => setFocusedField(null)}
+                        isInvalid={!!errors.lastName}
                       />
                       {errors.lastName && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.lastName.message}
                         </Text>
                       )}
@@ -550,57 +496,29 @@ const ConsumerSignUp: React.FC = () => {
                       mb={1}>
                       Email Address
                     </Text>
-                    <InputGroup size="lg">
-                      <InputLeftElement pointerEvents="none">
+                    <StandardInput
+                      type="email"
+                      placeholder="Enter your email address"
+                      {...registerField('email', {
+                        required: 'Email is required',
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Invalid email address'
+                        }
+                      })}
+                      onFocus={() => setFocusedField('email')}
+                      onBlur={() => setFocusedField(null)}
+                      isInvalid={!!errors.email}
+                      leftElement={
                         <Icon
                           as={FaEnvelope}
                           color={focusedField === 'email' ? 'blue.600' : 'gray.400'}
                           transition="all 0.2s"
                         />
-                      </InputLeftElement>
-                      <Box
-                        as="input"
-                        type="email"
-                        placeholder="Enter your email address"
-                        pl="3rem"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.email
-                            ? 'red.300'
-                            : focusedField === 'email'
-                            ? 'blue.600'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        _hover={{
-                          borderColor: errors.email
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'blue.600',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...registerField('email', {
-                          required: 'Email is required',
-                          pattern: {
-                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: 'Invalid email address'
-                          }
-                        })}
-                        onFocus={() => setFocusedField('email')}
-                        onBlur={() => setFocusedField(null)}
-                      />
-                    </InputGroup>
+                      }
+                    />
                     {errors.email && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
+                      <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.email.message}
                       </Text>
                     )}
@@ -615,56 +533,27 @@ const ConsumerSignUp: React.FC = () => {
                       mb={1}>
                       Password
                     </Text>
-                    <InputGroup size="lg">
-                      <InputLeftElement pointerEvents="none">
+                    <StandardInput
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Create password (8+ characters)"
+                      {...registerField('password', {
+                        required: 'Password is required',
+                        minLength: {
+                          value: 8,
+                          message: 'Password must be at least 8 characters'
+                        }
+                      })}
+                      onFocus={() => setFocusedField('password')}
+                      onBlur={() => setFocusedField(null)}
+                      isInvalid={!!errors.password}
+                      leftElement={
                         <Icon
                           as={FaLock}
                           color={focusedField === 'password' ? 'blue.600' : 'gray.400'}
                           transition="all 0.2s"
                         />
-                      </InputLeftElement>
-                      <Box
-                        as="input"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Create password (8+ characters)"
-                        pl="3rem"
-                        pr="3rem"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.password
-                            ? 'red.300'
-                            : focusedField === 'password'
-                            ? 'blue.600'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        _hover={{
-                          borderColor: errors.password
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'blue.600',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...registerField('password', {
-                          required: 'Password is required',
-                          minLength: {
-                            value: 8,
-                            message: 'Password must be at least 8 characters'
-                          }
-                        })}
-                        onFocus={() => setFocusedField('password')}
-                        onBlur={() => setFocusedField(null)}
-                      />
-                      <InputRightElement>
+                      }
+                      rightElement={
                         <Button
                           variant="ghost"
                           onClick={() => setShowPassword(!showPassword)}
@@ -677,8 +566,8 @@ const ConsumerSignUp: React.FC = () => {
                             transition="all 0.2s"
                           />
                         </Button>
-                      </InputRightElement>
-                    </InputGroup>
+                      }
+                    />
 
                     <PasswordStrengthIndicator
                       password={password || ''}
@@ -691,7 +580,7 @@ const ConsumerSignUp: React.FC = () => {
                     />
 
                     {errors.password && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
+                      <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.password.message}
                       </Text>
                     )}
@@ -706,56 +595,24 @@ const ConsumerSignUp: React.FC = () => {
                       mb={1}>
                       Confirm Password
                     </Text>
-                    <InputGroup size="lg">
-                      <InputLeftElement pointerEvents="none">
+                    <StandardInput
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Confirm your password"
+                      {...registerField('confirmPassword', {
+                        required: 'Please confirm your password',
+                        validate: (value: string) => value === password || 'Passwords do not match'
+                      })}
+                      onFocus={() => setFocusedField('confirmPassword')}
+                      onBlur={() => setFocusedField(null)}
+                      isInvalid={!!errors.confirmPassword}
+                      leftElement={
                         <Icon
                           as={FaLock}
                           color={focusedField === 'confirmPassword' ? 'blue.600' : 'gray.400'}
                           transition="all 0.2s"
                         />
-                      </InputLeftElement>
-                      <Box
-                        as="input"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="Confirm your password"
-                        pl="3rem"
-                        pr="3rem"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.confirmPassword
-                            ? 'red.300'
-                            : confirmPassword && password !== confirmPassword
-                            ? 'red.300'
-                            : focusedField === 'confirmPassword'
-                            ? 'blue.600'
-                            : useColorModeValue('gray.200', 'gray.600')
-                        }
-                        borderRadius="xl"
-                        _hover={{
-                          borderColor: errors.confirmPassword
-                            ? 'red.300'
-                            : useColorModeValue('gray.300', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'blue.600',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 4px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...registerField('confirmPassword', {
-                          required: 'Please confirm your password',
-                          validate: (value: string) =>
-                            value === password || 'Passwords do not match'
-                        })}
-                        onFocus={() => setFocusedField('confirmPassword')}
-                        onBlur={() => setFocusedField(null)}
-                      />
-                      <InputRightElement>
+                      }
+                      rightElement={
                         <Button
                           variant="ghost"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -768,8 +625,8 @@ const ConsumerSignUp: React.FC = () => {
                             transition="all 0.2s"
                           />
                         </Button>
-                      </InputRightElement>
-                    </InputGroup>
+                      }
+                    />
 
                     {/* Password Match Indicator */}
                     {confirmPassword && (
@@ -784,7 +641,7 @@ const ConsumerSignUp: React.FC = () => {
                     )}
 
                     {errors.confirmPassword && !confirmPassword && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
+                      <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.confirmPassword.message}
                       </Text>
                     )}
@@ -830,7 +687,7 @@ const ConsumerSignUp: React.FC = () => {
                         </Text>
                       </Checkbox>
                       {errors.acceptTerms && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.acceptTerms.message}
                         </Text>
                       )}

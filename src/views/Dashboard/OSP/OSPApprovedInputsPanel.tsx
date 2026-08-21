@@ -115,10 +115,22 @@ const ChangeLogSection: React.FC<ChangeLogSectionProps> = ({ logs, subtextColor 
                       borderRadius="md"
                       bg={isAdded ? addedBg : removedBg}
                       borderLeft="3px solid"
-                      borderLeftColor={isAdded ? 'green.400' : 'red.400'}>
+                      /* green.600 / red.600 (4.12 / 4.23), not .400. This bar is the ONLY thing
+                          distinguishing an added input from a removed one, and green.400
+                          measures 2.01:1 on white — under the 3.0 a non-text indicator owes,
+                          and mismatched against the red it is paired with. */
+                      borderLeftColor={isAdded ? 'green.600' : 'red.600'}>
                       <HStack spacing={2} mb={entry.change_notification_reference ? 1 : 0}>
+                        {/*
+                          Matched weights. `colorScheme` + the default `brand` variant renders
+                          GREEN as a solid pill and every other palette as a tint, so ADDED
+                          arrived as a heavy dark-green chip and REMOVED as a light red one —
+                          asymmetric styling for a symmetric pair. Both are tints now.
+                          `uppercase` is kept on purpose: it applies to both halves and is the
+                          usual convention for a diff marker.
+                        */}
                         <Badge
-                          colorScheme={isAdded ? 'green' : 'red'}
+                          variant={isAdded ? 'subtle' : 'danger'}
                           fontSize="11px"
                           textTransform="uppercase">
                           {intl.formatMessage({

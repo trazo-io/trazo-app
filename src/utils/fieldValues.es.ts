@@ -498,6 +498,14 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   // Producer surfaces keep the trade term ("Grade B"); these are the shopper-facing forms. ---
   'Meets export size and appearance standards':
     'Cumple los estándares de tamaño y apariencia para exportación',
+  // F5 (2026-08-21) — the USDA grade families, translated for a shopper. A grade is a
+  // size-and-appearance sorting class and says nothing about how the food eats, which is why
+  // these are sentences rather than the grade name.
+  'Top size and appearance grade': 'Categoría superior por tamaño y apariencia',
+  'Graded for size and appearance, same quality inside':
+    'Clasificado por tamaño y apariencia; la misma calidad por dentro',
+  'Grown for juice or processing, same quality inside':
+    'Cultivado para jugo o procesamiento; la misma calidad por dentro',
   'Top grade, best size and appearance': 'Categoría superior: mejor tamaño y apariencia',
   'Sold for juice or processing, same quality inside':
     'Se vende para jugo o procesamiento: la misma calidad por dentro',

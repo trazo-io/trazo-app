@@ -44,6 +44,7 @@ import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useIntl } from 'react-intl';
+import { harvestGradeOptions, MAX_GRADE_LENGTH, OTHER_GRADE } from 'config/harvestGrades';
 // `hooks/*`, not `src/hooks/*`: vite resolves the latter through a `src` alias but tsconfig
 // `paths` has no `src/*` entry, so tsc could not see the module and reported TS2307 — an error
 // the build never surfaces (see frontend-typecheck-gate-dead). `hooks/*` resolves in both.
@@ -60,15 +61,12 @@ const UNIT_OPTIONS = [
   { value: 'units', label: 'Units' }
 ];
 
-// Quality grade options
-const QUALITY_GRADE_OPTIONS = [
-  { value: '', label: 'Select quality grade...' },
-  { value: 'premium', label: 'Premium Grade' },
-  { value: 'grade_a', label: 'Grade A' },
-  { value: 'grade_b', label: 'Grade B' },
-  { value: 'standard', label: 'Standard' },
-  { value: 'processing', label: 'Processing Grade' }
-];
+// 🔴 F5 (2026-08-21) — this list is GONE. It was Premium / Grade A / Grade B / Standard /
+// Processing, while the harvest EVENT form offered Export Quality / Grade A / B / C /
+// Domestic / Processing: two vocabularies for one fact, so a lot header and the picks
+// underneath it could not agree, and the certifier packet printed both. Neither carried a
+// grade a US packing record uses. The replacement is crop-aware and shared by both forms —
+// see config/harvestGrades.ts.
 
 // Harvest method options
 const HARVEST_METHOD_OPTIONS = [
@@ -174,6 +172,13 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   // the one consequence of finishing that is REVERSIBLE (unpublish from the Buyer Page),
   // so it is offered as a choice here instead of being listed with the permanent locks.
   const [publishBuyerPage, setPublishBuyerPage] = useState(true);
+  // F5 — whether the operator chose "Other" and is typing a grade the catalogue does not
+  // carry. Kept beside the field rather than derived from the value alone, so an empty box
+  // right after choosing "Other" does not snap the select back to the placeholder.
+  const [isTypingOwnGrade, setIsTypingOwnGrade] = useState(false);
+  // The crop this lot is. `productName` is what this form is given — a CropType name, a
+  // product name — and `gradesForCrop` slugifies it before looking it up.
+  const cropName = productName;
   const confirmCancelRef = useRef<HTMLButtonElement>(null);
   const [pendingFormData, setPendingFormData] = useState<FormStateData | null>(null);
 
@@ -468,13 +473,11 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                   {/* Section Cards Container */}
                   <VStack spacing={4} p={6} align="stretch">
                     {/* Harvest Output Section */}
-                    <SectionBox variant="default">
+                    <SectionBox>
                       <SectionHeader
                         icon={FaBoxes}
-                        iconColor="green.500"
                         title={intl.formatMessage({ id: 'finishProduction.section.harvestOutput' })}
                         badge={intl.formatMessage({ id: 'finishProduction.badge.required' })}
-                        badgeColorScheme="green"
                       />
                       <VStack spacing={4} align="stretch">
                         {/* Production Amount with Unit Selector */}
@@ -496,7 +499,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                                 type="number"
                                 min="0"
                                 step="0.01"
-                                size="lg"
                               />
                             </StandardField>
                           </Box>
@@ -521,7 +523,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                                 name="production_unit"
                                 control={control}
                                 render={({ field }) => (
-                                  <StandardSelect {...field} size="lg">
+                                  <StandardSelect {...field}>
                                     {UNIT_OPTIONS.map((option) => (
                                       <option key={option.value} value={option.value}>
                                         {option.label}
@@ -547,7 +549,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                             })}
                             type="text"
                             maxLength={50}
-                            size="lg"
                           />
                         </StandardField>
 
@@ -563,22 +564,20 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                               id: 'finishProduction.finishDate.placeholder'
                             })}
                             type="datetime-local"
-                            size="lg"
                           />
                         </StandardField>
                       </VStack>
                     </SectionBox>
 
                     {/* Quality & Harvest Details Section */}
-                    <SectionBox variant="highlighted">
+                    <SectionBox>
                       <SectionHeader
                         icon={FaClipboardCheck}
-                        iconColor="green.500"
                         title={intl.formatMessage({
                           id: 'finishProduction.section.qualityHarvest'
                         })}
                         badge={intl.formatMessage({ id: 'finishProduction.badge.optional' })}
-                        badgeColorScheme="gray"
+                        badgeTone="optional"
                       />
                       {/*
                         This said "helps consumers understand your product better". It does
@@ -610,15 +609,53 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                               <Controller
                                 name="quality_grade"
                                 control={control}
-                                render={({ field }) => (
-                                  <StandardSelect {...field} size="lg">
-                                    {QUALITY_GRADE_OPTIONS.map((option) => (
-                                      <option key={option.value} value={option.value}>
-                                        {option.label}
-                                      </option>
-                                    ))}
-                                  </StandardSelect>
-                                )}
+                                render={({ field }) => {
+                                  // The select's own value is the sentinel while the operator
+                                  // is typing a grade the catalogue does not carry; what the
+                                  // FORM holds is always the real string, because that is what
+                                  // the packet prints.
+                                  const options = harvestGradeOptions(cropName, field.value);
+                                  const isOther =
+                                    isTypingOwnGrade ||
+                                    (!!field.value &&
+                                      !options.some((o) => o.value === field.value));
+                                  return (
+                                    <VStack spacing={2} align="stretch">
+                                      <StandardSelect
+                                        value={isOther ? OTHER_GRADE : field.value || ''}
+                                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                          if (e.target.value === OTHER_GRADE) {
+                                            setIsTypingOwnGrade(true);
+                                            field.onChange('');
+                                            return;
+                                          }
+                                          setIsTypingOwnGrade(false);
+                                          field.onChange(e.target.value);
+                                        }}>
+                                        <option value="">
+                                          {intl.formatMessage({
+                                            id: 'finishProduction.qualityGrade.placeholder'
+                                          })}
+                                        </option>
+                                        {options.map((option) => (
+                                          <option key={option.value} value={option.value}>
+                                            {option.label}
+                                          </option>
+                                        ))}
+                                      </StandardSelect>
+                                      {isOther && (
+                                        <StandardInput
+                                          value={field.value || ''}
+                                          onChange={field.onChange}
+                                          placeholder={intl.formatMessage({
+                                            id: 'harvestGrade.other.placeholder'
+                                          })}
+                                          maxLength={MAX_GRADE_LENGTH}
+                                        />
+                                      )}
+                                    </VStack>
+                                  );
+                                }}
                               />
                             </StandardField>
                           </Box>
@@ -634,7 +671,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                                 name="harvest_method"
                                 control={control}
                                 render={({ field }) => (
-                                  <StandardSelect {...field} size="lg">
+                                  <StandardSelect {...field}>
                                     {HARVEST_METHOD_OPTIONS.map((option) => (
                                       <option key={option.value} value={option.value}>
                                         {option.label}
@@ -650,13 +687,12 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                     </SectionBox>
 
                     {/* Notes Section */}
-                    <SectionBox variant="default">
+                    <SectionBox>
                       <SectionHeader
                         icon={MdDescription}
-                        iconColor="green.500"
                         title={intl.formatMessage({ id: 'finishProduction.section.notes' })}
                         badge={intl.formatMessage({ id: 'finishProduction.badge.optional' })}
-                        badgeColorScheme="gray"
+                        badgeTone="optional"
                       />
                       <StandardField
                         label={intl.formatMessage({ id: 'app.observations' })}
@@ -681,7 +717,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                   </StandardButton>
 
                   <StandardButton onClick={nextStep} disabled={!isStep0Valid}>
-                    {intl.formatMessage({ id: 'finishProduction.nav.continue' })}
+                    {intl.formatMessage({ id: 'app.continue' })}
                   </StandardButton>
                 </HStack>
               </VStack>
@@ -689,13 +725,12 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
 
             {/* Step 2: Media Upload */}
             {currentStep === 1 && (
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaCamera}
-                  iconColor="green.500"
                   title={intl.formatMessage({ id: 'finishProduction.section.photos' })}
                   badge={intl.formatMessage({ id: 'finishProduction.badge.optional' })}
-                  badgeColorScheme="gray"
+                  badgeTone="optional"
                 />
                 <Text fontSize="sm" color="gray.600" mb={1}>
                   {intl.formatMessage({ id: 'finishProduction.photos.help' })}
@@ -755,7 +790,7 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                   {/* Step Navigation */}
                   <HStack spacing={4} justify="space-between" pt={4}>
                     <StandardButton variant="outline" onClick={previousStep}>
-                      {intl.formatMessage({ id: 'finishProduction.nav.back' })}
+                      {intl.formatMessage({ id: 'common.back' })}
                     </StandardButton>
 
                     <StandardButton

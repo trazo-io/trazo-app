@@ -589,12 +589,24 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                                 { count: waterSources.length }
                               )}
                             </Text>
-                            <Text fontSize="xs" color={textColor} noOfLines={1}>
+                            {/* 🔴 2026-08-20 — the header advertises a COUNT and the body
+                                showed the first two with a bare "…" that is not a control:
+                                "SOIL HEALTH (4)" over "Permanent grass alleyway, Compost
+                                application…" with no way to reach the other two. On a
+                                transparency product, hiding half the documented practices
+                                behind an inert ellipsis is the mission inverted — and the
+                                mismatch between the count and the list reads as a bug even to
+                                a shopper who does not care about the fourth practice. These
+                                are short strings from the farm profile; render them all and
+                                let the line wrap. `noOfLines={1}` went with the slice: it
+                                clipped the same list a second time, in CSS, where no count
+                                could contradict it.
+                                Related: documentation rule "truncation is opt-in, never
+                                silent" (audit PDF, 2026-08). */}
+                            <Text fontSize="xs" color={textColor}>
                               {waterSources
-                                .slice(0, 2)
                                 .map((s: string) => localizeFieldValue(s, intl.locale))
                                 .join(', ')}
-                              {waterSources.length > 2 && '...'}
                             </Text>
                           </VStack>
                         );
@@ -651,12 +663,11 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                                 { count: soilHealthPractices.length }
                               )}
                             </Text>
-                            <Text fontSize="xs" color={textColor} noOfLines={1}>
+                            {/* Render the whole list — see the WATER block above. */}
+                            <Text fontSize="xs" color={textColor}>
                               {soilHealthPractices
-                                .slice(0, 2)
                                 .map((s: string) => localizeFieldValue(s, intl.locale))
                                 .join(', ')}
-                              {soilHealthPractices.length > 2 && '...'}
                             </Text>
                           </VStack>
                         );
@@ -690,12 +701,11 @@ export const CompanyFarmInfo: React.FC<CompanyFarmInfoProps> = ({
                                 { count: irrigationMethods.length }
                               )}
                             </Text>
-                            <Text fontSize="xs" color={textColor} noOfLines={1}>
+                            {/* Render the whole list — see the WATER block above. */}
+                            <Text fontSize="xs" color={textColor}>
                               {irrigationMethods
-                                .slice(0, 2)
                                 .map((s: string) => localizeFieldValue(s, intl.locale))
                                 .join(', ')}
-                              {irrigationMethods.length > 2 && '...'}
                             </Text>
                           </VStack>
                         );

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
@@ -10,14 +11,13 @@ import {
   useColorModeValue,
   Flex,
   Button,
-  InputGroup,
-  InputLeftElement,
   useToast
 } from '@chakra-ui/react';
 import { FaLock, FaKey, FaArrowLeft, FaCheckCircle, FaShieldAlt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import AuthFooter from 'components/Footer/AuthFooter';
 import { useConfirmPasswordResetMutation } from '../../../store/api/authApi';
+import { StandardInput, registerWithFocus } from 'components/Design/StandardComponents';
 
 const MotionBox = motion(Box);
 
@@ -27,6 +27,7 @@ interface ResetPasswordFormData {
 }
 
 const ProducerResetPassword: React.FC = () => {
+  const intl = useIntl();
   const toast = useToast();
   const [confirmPasswordReset, { isLoading }] = useConfirmPasswordResetMutation();
   const [resetSuccess, setResetSuccess] = useState(false);
@@ -254,57 +255,30 @@ const ProducerResetPassword: React.FC = () => {
                         mb={2}>
                         New Password *
                       </Text>
-                      <InputGroup size="lg">
-                        <InputLeftElement pointerEvents="none">
-                          <Icon
-                            as={FaKey}
-                            color={focusedField === 'new_password' ? 'green.500' : 'gray.400'}
-                            transition="all 0.2s"
-                          />
-                        </InputLeftElement>
-                        <Box
-                          as="input"
-                          type="password"
-                          placeholder="Create your new password"
-                          pl="3rem"
-                          w="full"
-                          h="44px"
-                          fontSize="sm"
-                          bg={useColorModeValue('gray.50', 'gray.900')}
-                          border="1px solid"
-                          borderColor={
-                            errors.new_password
-                              ? 'red.300'
-                              : focusedField === 'new_password'
-                              ? 'green.600'
-                              : useColorModeValue('gray.200', 'gray.600')
-                          }
-                          borderRadius="xl"
-                          _hover={{
-                            borderColor: errors.new_password
-                              ? 'red.300'
-                              : useColorModeValue('gray.300', 'gray.500')
-                          }}
-                          _focus={{
-                            outline: 'none',
-                            borderColor: 'green.600',
-                            bg: useColorModeValue('white', 'gray.800'),
-                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                          }}
-                          transition="all 0.2s"
-                          {...register('new_password', {
+                      <StandardInput
+                        type="password"
+                        placeholder="Create your new password"
+                        {...registerWithFocus(
+                          register('new_password', {
                             required: 'New password is required',
                             minLength: {
                               value: 8,
                               message: 'Password must be at least 8 characters'
                             }
-                          })}
-                          onFocus={() => setFocusedField('new_password')}
-                          onBlur={() => setFocusedField(null)}
-                        />
-                      </InputGroup>
+                          }),
+                          setFocusedField
+                        )}
+                        isInvalid={!!errors.new_password}
+                        leftElement={
+                          <Icon
+                            as={FaKey}
+                            color={focusedField === 'new_password' ? 'green.500' : 'gray.400'}
+                            transition="all 0.2s"
+                          />
+                        }
+                      />
                       {errors.new_password && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.new_password.message}
                         </Text>
                       )}
@@ -319,54 +293,27 @@ const ProducerResetPassword: React.FC = () => {
                         mb={2}>
                         Confirm Password *
                       </Text>
-                      <InputGroup size="lg">
-                        <InputLeftElement pointerEvents="none">
+                      <StandardInput
+                        type="password"
+                        placeholder="Confirm your new password"
+                        {...registerWithFocus(
+                          register('confirm_password', {
+                            required: 'Please confirm your password',
+                            validate: (value) => value === newPassword || 'Passwords do not match'
+                          }),
+                          setFocusedField
+                        )}
+                        isInvalid={!!errors.confirm_password}
+                        leftElement={
                           <Icon
                             as={FaLock}
                             color={focusedField === 'confirm_password' ? 'green.500' : 'gray.400'}
                             transition="all 0.2s"
                           />
-                        </InputLeftElement>
-                        <Box
-                          as="input"
-                          type="password"
-                          placeholder="Confirm your new password"
-                          pl="3rem"
-                          w="full"
-                          h="44px"
-                          fontSize="sm"
-                          bg={useColorModeValue('gray.50', 'gray.900')}
-                          border="1px solid"
-                          borderColor={
-                            errors.confirm_password
-                              ? 'red.300'
-                              : focusedField === 'confirm_password'
-                              ? 'green.600'
-                              : useColorModeValue('gray.200', 'gray.600')
-                          }
-                          borderRadius="xl"
-                          _hover={{
-                            borderColor: errors.confirm_password
-                              ? 'red.300'
-                              : useColorModeValue('gray.300', 'gray.500')
-                          }}
-                          _focus={{
-                            outline: 'none',
-                            borderColor: 'green.600',
-                            bg: useColorModeValue('white', 'gray.800'),
-                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                          }}
-                          transition="all 0.2s"
-                          {...register('confirm_password', {
-                            required: 'Please confirm your password',
-                            validate: (value) => value === newPassword || 'Passwords do not match'
-                          })}
-                          onFocus={() => setFocusedField('confirm_password')}
-                          onBlur={() => setFocusedField(null)}
-                        />
-                      </InputGroup>
+                        }
+                      />
                       {errors.confirm_password && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.confirm_password.message}
                         </Text>
                       )}
@@ -411,7 +358,7 @@ const ProducerResetPassword: React.FC = () => {
                       color: 'green.700'
                     }}
                     transition="all 0.2s">
-                    Back to Sign In
+                    {intl.formatMessage({ id: 'auth.backToSignIn' })}
                   </Button>
                 </Link>
               </Box>

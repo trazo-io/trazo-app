@@ -55,7 +55,7 @@ import {
   FaShieldAlt
 } from 'react-icons/fa';
 import type { IconType } from 'react-icons';
-import { formatHarvestDate } from 'utils/consumerDisplay';
+import { formatDateRangeForConsumer, formatHarvestDate } from 'utils/consumerDisplay';
 import type { ConsumerCertification, OrganicClaim } from 'types/certification';
 
 export interface TrustSummaryHeaderProps {
@@ -63,6 +63,8 @@ export interface TrustSummaryHeaderProps {
   farmName?: string;
   location?: string;
   harvestDate?: string;
+  /** Set only for a multi-pass harvest: the FIRST pass, so the badge can show the window. */
+  harvestDateStart?: string;
   lotId?: string;
   organicClaim?: OrganicClaim | null;
   certifications?: ConsumerCertification[];
@@ -391,10 +393,16 @@ function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): Pil
  * the slot instead.
  */
 function buildHarvestPillar(props: TrustSummaryHeaderProps, intl: IntlShape): PillarData | null {
-  const { harvestDate, lotId } = props;
+  const { harvestDate, harvestDateStart, lotId } = props;
   if (!harvestDate && !lotId) return null;
 
-  const formattedHarvest = formatHarvestDate(harvestDate, intl.locale);
+  // Multi-pass harvests are the norm in tree fruit and citrus. Showing only the last pass
+  // would hide that the lot came off over a window, which is exactly what a buyer judging
+  // freshness needs to know.
+  const formattedHarvest =
+    (harvestDateStart
+      ? formatDateRangeForConsumer(harvestDateStart, harvestDate, intl.locale)
+      : null) ?? formatHarvestDate(harvestDate, intl.locale);
   if (!formattedHarvest && !lotId) return null;
 
   const lotLabel = intl.formatMessage(

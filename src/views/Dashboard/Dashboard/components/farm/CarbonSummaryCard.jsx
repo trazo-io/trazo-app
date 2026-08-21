@@ -192,7 +192,7 @@ const TransparencySummaryCard = ({ farmId }) => {
       <Card bg={bgColor} p={6} borderRadius="15px">
         <VStack spacing={4}>
           <Icon as={MdEco} color="red.500" boxSize={8} />
-          <Text color="red.500" textAlign="center">
+          <Text color="red.700" textAlign="center">
             {intl.formatMessage({ id: 'dashboard.errorLoadingTransparency' })}
           </Text>
           <Button

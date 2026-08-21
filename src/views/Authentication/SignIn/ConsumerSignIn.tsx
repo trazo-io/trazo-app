@@ -13,9 +13,6 @@ import {
   Flex,
   Image,
   Button,
-  InputGroup,
-  InputLeftElement,
-  InputRightElement,
   useColorModeValue,
   Grid,
   Badge
@@ -33,6 +30,7 @@ import {
   handleSocialAuthError,
   checkSocialAuthConfig
 } from '../../../utils/socialAuth';
+import { StandardInput, registerWithFocus } from 'components/Design/StandardComponents';
 
 // Motion components
 const MotionBox = motion(Box);
@@ -389,57 +387,30 @@ const ConsumerSignIn: React.FC = () => {
                       mb={2}>
                       Email Address
                     </Text>
-                    <InputGroup size="lg">
-                      <InputLeftElement pointerEvents="none">
-                        <Icon
-                          as={FaEnvelope}
-                          color={focusedField === 'email' ? 'blue.600' : 'gray.400'}
-                          transition="all 0.2s"
-                        />
-                      </InputLeftElement>
-                      <Box
-                        as="input"
-                        type="email"
-                        placeholder="Enter your email"
-                        pl="3rem"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.email
-                            ? 'red.300'
-                            : focusedField === 'email'
-                            ? 'blue.600'
-                            : useColorModeValue('gray.300', 'gray.600')
-                        }
-                        borderRadius="lg"
-                        _hover={{
-                          borderColor: errors.email
-                            ? 'red.300'
-                            : useColorModeValue('gray.400', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'blue.600',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 3px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...register('email', {
+                    <StandardInput
+                      type="email"
+                      placeholder="Enter your email"
+                      {...registerWithFocus(
+                        register('email', {
                           required: 'Email is required',
                           pattern: {
                             value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                             message: 'Invalid email address'
                           }
-                        })}
-                        onFocus={() => setFocusedField('email')}
-                        onBlur={() => setFocusedField(null)}
-                      />
-                    </InputGroup>
+                        }),
+                        setFocusedField
+                      )}
+                      isInvalid={!!errors.email}
+                      leftElement={
+                        <Icon
+                          as={FaEnvelope}
+                          color={focusedField === 'email' ? 'blue.600' : 'gray.400'}
+                          transition="all 0.2s"
+                        />
+                      }
+                    />
                     {errors.email && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
+                      <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.email.message}
                       </Text>
                     )}
@@ -454,52 +425,24 @@ const ConsumerSignIn: React.FC = () => {
                       mb={2}>
                       Password
                     </Text>
-                    <InputGroup size="lg">
-                      <InputLeftElement pointerEvents="none">
+                    <StandardInput
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      {...registerWithFocus(
+                        register('password', {
+                          required: 'Password is required'
+                        }),
+                        setFocusedField
+                      )}
+                      isInvalid={!!errors.password}
+                      leftElement={
                         <Icon
                           as={FaLock}
                           color={focusedField === 'password' ? 'blue.600' : 'gray.400'}
                           transition="all 0.2s"
                         />
-                      </InputLeftElement>
-                      <Box
-                        as="input"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter your password"
-                        pl="3rem"
-                        pr="3rem"
-                        w="full"
-                        h="44px"
-                        fontSize="sm"
-                        bg={useColorModeValue('gray.50', 'gray.900')}
-                        border="1px solid"
-                        borderColor={
-                          errors.password
-                            ? 'red.300'
-                            : focusedField === 'password'
-                            ? 'blue.600'
-                            : useColorModeValue('gray.300', 'gray.600')
-                        }
-                        borderRadius="lg"
-                        _hover={{
-                          borderColor: errors.password
-                            ? 'red.300'
-                            : useColorModeValue('gray.400', 'gray.500')
-                        }}
-                        _focus={{
-                          outline: 'none',
-                          borderColor: 'blue.600',
-                          bg: useColorModeValue('white', 'gray.800'),
-                          boxShadow: '0 0 0 3px rgba(72, 187, 120, 0.1)'
-                        }}
-                        transition="all 0.2s"
-                        {...register('password', {
-                          required: 'Password is required'
-                        })}
-                        onFocus={() => setFocusedField('password')}
-                        onBlur={() => setFocusedField(null)}
-                      />
-                      <InputRightElement>
+                      }
+                      rightElement={
                         <Button
                           variant="ghost"
                           onClick={() => setShowPassword(!showPassword)}
@@ -512,10 +455,10 @@ const ConsumerSignIn: React.FC = () => {
                             transition="all 0.2s"
                           />
                         </Button>
-                      </InputRightElement>
-                    </InputGroup>
+                      }
+                    />
                     {errors.password && (
-                      <Text fontSize="sm" color="red.500" mt={1}>
+                      <Text fontSize="sm" color="red.700" mt={1}>
                         {errors.password.message}
                       </Text>
                     )}

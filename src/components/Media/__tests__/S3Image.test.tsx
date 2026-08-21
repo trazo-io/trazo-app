@@ -116,8 +116,13 @@ describe('S3Image Component', () => {
     // Since IntersectionObserver is mocked to not trigger, no image should render
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
 
-    // Should show skeleton instead
-    expect(document.querySelector('.chakra-skeleton')).toBeInTheDocument();
+    // Should show the placeholder instead.
+    //
+    // 🔴 2026-08-21 — this looked for `.chakra-skeleton`, which the component has not rendered
+    // for some time: the placeholder is `<Shimmer>`, a Box with its own gradient animation. The
+    // lazy behaviour above was correct all along; only the selector was stale. Keyed on
+    // `data-component`, not the CSS class, because the class is styling and styling moves.
+    expect(document.querySelector('[data-component="Shimmer"]')).toBeInTheDocument();
   });
 
   it('disables lazy loading when specified', () => {
@@ -235,6 +240,46 @@ describe('S3Image Error Handling', () => {
     await waitFor(() => {
       expect(screen.getByText('Failed to load image')).toBeInTheDocument();
     });
+  });
+
+  // ── Ported from the retired `src/components/__tests__/S3Image.test.tsx` ──────────────
+  // That file targeted a `useBatchS3Images`-based implementation that no longer exists and
+  // had never run (its helper died on a missing import), so most of what it asserted was
+  // fiction — including a `responsive` / `sizes` API this component has never had. These two
+  // named real props, so they come across rather than being deleted with it.
+
+  it('applies a custom className', () => {
+    render(
+      <TestWrapper>
+        <S3Image
+          src="https://example.com/image.jpg"
+          alt="Classy image"
+          className="my-custom-class"
+          lazy={false}
+        />
+      </TestWrapper>
+    );
+
+    expect(document.querySelector('.my-custom-class')).toBeInTheDocument();
+  });
+
+  it('uses a presigned URL when one is supplied', () => {
+    // The caller has already resolved the signature (the batch path does this for galleries),
+    // so the component must use it rather than firing its own lazy presign request.
+    render(
+      <TestWrapper>
+        <S3Image
+          src="https://my-bucket.s3.amazonaws.com/photo.jpg"
+          alt="Presigned image"
+          presignedUrl="https://my-bucket.s3.amazonaws.com/photo.jpg?X-Amz-Signature=abc123"
+          lazy={false}
+        />
+      </TestWrapper>
+    );
+
+    const image = screen.getByRole('img');
+    expect(image).toHaveAttribute('src', expect.stringContaining('X-Amz-Signature=abc123'));
+    expect(mockGetPresignedReadUrl).not.toHaveBeenCalled();
   });
 
   it('shows fallback image on error', () => {

@@ -42,6 +42,7 @@ import {
   FaLink,
   FaTag,
   FaEllipsisV,
+  FaExchangeAlt,
   FaLock
 } from 'react-icons/fa';
 import { MdTimeline, MdLocationOn } from 'react-icons/md';
@@ -59,6 +60,7 @@ import {
   StandardSection
 } from 'components/Design/StandardComponents';
 import { InfoRow, PageHeaderMeta } from 'components/Design/ProfileField';
+import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetPublicHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
 import { TrazoImageUpload } from 'components/Upload';
@@ -78,6 +80,7 @@ import { PostHarvestHandlerSection } from 'views/Dashboard/Dashboard/Production/
 import { SeasonPlanSection } from 'views/Dashboard/Dashboard/Production/SeasonPlanSection';
 import AuditExportModal from 'components/AuditExport/AuditExportModal';
 import DriftFindingsBanner from 'components/Compliance/DriftFindingsBanner';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 
 // Type definitions
 interface RootState {
@@ -96,6 +99,13 @@ interface RootState {
 function ProfileProduction() {
   const intl = useIntl();
   const navigate = useNavigate();
+  // Which filed record the farmer asked to correct. Only ever set on a finished season.
+  // F7 — the lot header's own correction sheet. Separate from `correctTarget` because the
+  // header is not an event: it has no id/eventType pair, and the modal routes on that.
+  const [isCorrectingHeader, setIsCorrectingHeader] = useState(false);
+  const [correctTarget, setCorrectTarget] = useState<{ id: number; eventType: number } | null>(
+    null
+  );
   const toast = useToast();
   const { canWrite } = useUserRole();
   const { farmId, productionId, parcelId } = useParams();
@@ -318,14 +328,15 @@ function ProfileProduction() {
     return percentage === undefined || percentage === null ? null : percentage;
   };
 
-  // Format dates
+  // Format dates.
+  //
+  // Every value this renders (`start_date`, `finish_date`) is a DateTimeField holding a
+  // CALENDAR DATE — midnight UTC — so a local formatter prints the previous day for every
+  // timezone west of UTC. Delegates to the shared helper so this file cannot drift from the
+  // other nine copies of `formatDate` in the app, or from the server-rendered packet.
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'Not available';
-    try {
-      return new Date(dateString).toLocaleDateString();
-    } catch (error) {
-      return 'Invalid date';
-    }
+    return formatDateFromTimestamp(dateString) ?? 'Invalid date';
   };
 
   // Download QR code
@@ -510,7 +521,7 @@ function ProfileProduction() {
         showBackButton
         onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
         <Box py={8} textAlign="center">
-          <Text color="red.500">Error loading production data. Please try again.</Text>
+          <Text color="red.700">Error loading production data. Please try again.</Text>
         </Box>
       </StandardPage>
     );
@@ -576,8 +587,14 @@ function ProfileProduction() {
                         { count: timelineEvents.length }
                       )
                     : null,
+                  // formatDateFromTimestamp, not toLocaleDateString: `start_date` is a
+                  // DateTimeField holding a CALENDAR DATE, so it arrives as midnight UTC and a
+                  // local formatter prints the day before for every timezone west of UTC —
+                  // which is every US farm. The certifier packet renders the same value
+                  // server-side in UTC, so the dashboard and the packet were disagreeing by a
+                  // day about the same record.
                   historyData?.start_date
-                    ? new Date(historyData.start_date).toLocaleDateString(undefined, {
+                    ? formatDateFromTimestamp(historyData.start_date, undefined, {
                         dateStyle: 'medium'
                       })
                     : null
@@ -639,22 +656,49 @@ function ProfileProduction() {
                 )}
               </Wrap>
             </VStack>
-            <Wrap spacing={1} justify="flex-end" flexShrink={0}>
+            {/* spacing={2} (8px), not 1. At 4px the three buttons abutted and read as a
+                segmented control — which promises "pick one of these". Export, copy-link and
+                the overflow menu are unrelated actions. */}
+            <Wrap spacing={2} justify="flex-end" flexShrink={0}>
               {/* Primary wedge action + the buyer handoff stay visible; secondary
                   actions collapse into an overflow menu to reduce header clutter. */}
               <WrapItem>
                 <StandardButton
                   variant="primary"
-                  size="xs"
+                  size="sm"
                   leftIcon={<Icon as={FiDownload} />}
                   onClick={onExportOpen}>
                   {intl.formatMessage({ id: 'app.exportForAudit' })}
                 </StandardButton>
               </WrapItem>
+              {/* 🔴 F29 (2026-08-21) — Finish, on the season's own page.
+                  The ONLY finish affordance in the app was a PARCEL-level button
+                  (`Parcel/components/TrackList.jsx`) that navigates with
+                  `currentHistory?.id` — whichever season on that parcel started LAST. So on
+                  the routine case the server-side comment describes, a perennial block
+                  carrying a 2025 and a 2026 cycle, the older season had no link at all and
+                  the farmer's only route was to type the URL. The parcel button stays as the
+                  shortcut for the common single-season case; this one names the season it is
+                  closing, which is the whole point. */}
+              {canWrite && !historyData?.finish_date && (
+                <WrapItem>
+                  <StandardButton
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Icon as={FaSeedling} />}
+                    onClick={() =>
+                      navigate(
+                        `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}/finish`
+                      )
+                    }>
+                    {intl.formatMessage({ id: 'app.finishProduction' })}
+                  </StandardButton>
+                </WrapItem>
+              )}
               <WrapItem>
                 <StandardButton
                   variant="outline"
-                  size="xs"
+                  size="sm"
                   leftIcon={<Icon as={FaLink} />}
                   onClick={handleCopyBuyerLink}>
                   {intl.formatMessage({ id: 'production.copyBuyerLink.button' })}
@@ -665,8 +709,12 @@ function ProfileProduction() {
                   <MenuButton
                     as={IconButton}
                     variant="outline"
-                    size="xs"
-                    minH="32px"
+                    size="sm"
+                    /* 44px square, matching the buttons beside it. It was 24x32 — visually
+                       inset in the row, and under the 44px touch-target floor on the one
+                       control that hides four actions (including Edit) behind it. */
+                    minH="44px"
+                    minW="44px"
                     aria-label={intl.formatMessage({
                       id: 'production.moreActions',
                       defaultMessage: 'More actions'
@@ -1162,6 +1210,21 @@ function ProfileProduction() {
                         publicLabel={publicLabel}
                       />
                     )}
+                    {/* 🔴 F7 (2026-08-21) — the lot header is FROZEN once a season is
+                        finished, and until now that was the end of it: the API answers 423
+                        and there was no amendment path, so a farmer who finished with the
+                        wrong yield had no way to fix it and no way to explain it. The events
+                        underneath this header have had a correction sheet all along. */}
+                    {historyData?.finish_date && canWrite && (
+                      <StandardButton
+                        variant="ghost"
+                        size="sm"
+                        alignSelf="flex-start"
+                        leftIcon={<Icon as={FaExchangeAlt} />}
+                        onClick={() => setIsCorrectingHeader(true)}>
+                        {intl.formatMessage({ id: 'correct.season.action' })}
+                      </StandardButton>
+                    )}
                     {historyData?.earning && (
                       <InfoRow
                         icon={FaChartLine}
@@ -1378,6 +1441,21 @@ function ProfileProduction() {
             // for requesting documentation from itself. The producer's path to a
             // buyer is the "Copy buyer link" action above.
             audience="producer"
+            // The farmer's door into their own record. A filed season opens the correction
+            // sheet (the original is kept beside the correction); an open season goes to the
+            // ordinary editor. Without this the page rendered every event and offered no way
+            // to act on any of them — season-plan rows had a control, an input logged outside
+            // the plan had none.
+            onCorrectEvent={(recordId, eventType) => {
+              if (historyData?.finish_date || historyData?.published) {
+                setCorrectTarget({ id: recordId, eventType });
+                return;
+              }
+              navigate(
+                `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/${recordId}/change` +
+                  `?event_type=${eventType}`
+              );
+            }}
             transparencyScore={transparencyScore === null ? 0 : Math.round(transparencyScore)}
             // This is the producer's preview of the CONSUMER journey, so it must be fed the
             // same backend-computed organic classification the consumer page uses. Without
@@ -1406,7 +1484,13 @@ function ProfileProduction() {
                 colorScheme="green"
                 size="lg"
                 onClick={() =>
-                  navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add`)
+                  // `?production=` is load-bearing: without it the server derives the season
+                  // from `parcel.current_history`, and a block with two open seasons files the
+                  // record against the wrong one. Logged from THIS season's page, it belongs to
+                  // THIS season.
+                  navigate(
+                    `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?production=${productionId}`
+                  )
                 }
                 mt={4}>
                 {intl.formatMessage({ id: 'production.addFirstActivity' })}
@@ -1466,6 +1550,25 @@ function ProfileProduction() {
         onClose={onExportClose}
         productionId={historyData?.public_id || productionId || ''}
         productionName={historyData?.product?.name || historyData?.name || ''}
+      />
+
+      {/* Correction sheet for one filed record. Mounted only once a row asks for it. */}
+      <CorrectRecordModal
+        isOpen={correctTarget !== null}
+        onClose={() => setCorrectTarget(null)}
+        eventId={correctTarget?.id}
+        eventType={correctTarget?.eventType}
+        onCorrected={() => setCorrectTarget(null)}
+      />
+
+      {/* Same sheet, season-header mode (F7). Kept as a second mount rather than one piece
+          of state carrying both shapes: a header target has no event id, and collapsing the
+          two would mean encoding "not an event" as a null inside the event target. */}
+      <CorrectRecordModal
+        isOpen={isCorrectingHeader}
+        onClose={() => setIsCorrectingHeader(false)}
+        productionId={historyData?.public_id || productionId || ''}
+        onCorrected={() => setIsCorrectingHeader(false)}
       />
     </StandardPage>
   );

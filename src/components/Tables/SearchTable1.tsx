@@ -1,27 +1,13 @@
-import {
-  Button,
-  Flex,
-  Icon,
-  Input,
-  NumberDecrementStepper,
-  NumberIncrementStepper,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  Select,
-  Stack,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Th,
-  Thead,
-  Tr
-} from '@chakra-ui/react';
+import { Button, Flex, Icon, Stack, Table, Tbody, Td, Text, Th, Thead, Tr } from '@chakra-ui/react';
 import { GrFormNext, GrFormPrevious } from 'react-icons/gr';
 import React, { useMemo } from 'react';
 import { TiArrowSortedDown, TiArrowSortedUp, TiArrowUnsorted } from 'react-icons/ti';
 import { useGlobalFilter, usePagination, useSortBy, useTable } from 'react-table';
+import {
+  StandardNumberInput,
+  StandardInput,
+  StandardSelect
+} from 'components/Design/StandardComponents';
 
 type SearchTable1Props = {
   columnsData: any;
@@ -84,12 +70,10 @@ function SearchTable1(props: SearchTable1Props) {
             me="12px"
             my="24px"
             minW={{ sm: '100px', md: '200px' }}>
-            <Select
+            <StandardSelect
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
               color="gray.500"
-              size="sm"
-              borderRadius="12px"
               maxW="75px"
               cursor="pointer">
               <option>5</option>
@@ -97,18 +81,16 @@ function SearchTable1(props: SearchTable1Props) {
               <option>15</option>
               <option>20</option>
               <option>25</option>
-            </Select>
+            </StandardSelect>
             <Text fontSize="xs" color="gray.400" fontWeight="normal">
               entries per page
             </Text>
           </Stack>
-          <Input
+          <StandardInput
             type="text"
             placeholder="Search..."
             minW="75px"
             maxW="175px"
-            fontSize="sm"
-            _focus={{ borderColor: 'green.400' }}
             onChange={(e) => setGlobalFilter(e.target.value)}
           />
         </Flex>
@@ -198,19 +180,14 @@ function SearchTable1(props: SearchTable1Props) {
               <Icon as={GrFormPrevious} w="16px" h="16px" color="gray.400" />
             </Button>
             {pageSize === 5 ? (
-              <NumberInput
+              <StandardNumberInput
                 max={pageCount - 1}
                 min={1}
                 w="75px"
                 mx="6px"
                 defaultValue="1"
-                onChange={(e) => gotoPage(e)}>
-                <NumberInputField />
-                <NumberInputStepper>
-                  <NumberIncrementStepper onClick={() => nextPage()} />
-                  <NumberDecrementStepper onClick={() => previousPage()} />
-                </NumberInputStepper>
-              </NumberInput>
+                onChange={(e) => gotoPage(e)}
+              />
             ) : (
               createPages(pageCount).map((pageNumber, index) => {
                 return (

@@ -52,6 +52,7 @@ const DEFINITIONS = {
 
 vi.mock('store/api/ospApi', () => ({
   useGetOSPsQuery: () => ({
+    useGetOSPQuery: () => ({ data: undefined }),
     data: [{ id: '11', version_number: 2, status: ospStatus }],
     isLoading: false
   }),

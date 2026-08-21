@@ -8,10 +8,26 @@
  */
 import baseApi from './baseApi';
 
+/**
+ * 🔴 2026-08-21 (F7) — corrections come in two shapes now.
+ *
+ * The season HEADER (`production_amount`, `lot_id`, `quality_grade`, `harvest_method`,
+ * `production_unit`) is frozen by the closed-record guard once a season is finished, and it
+ * had no correction path at all while the events underneath it did: a farmer who finished
+ * with the wrong yield could neither edit it (423) nor amend it. Header corrections go to
+ * `histories/<id>/amend/` and land in the SAME table, so the packet's Documented Corrections
+ * section prints one chronological list.
+ */
 export interface AmendableField {
   name: string;
   label: string;
   current_value: unknown;
+}
+
+export interface SeasonAmendOptions {
+  is_finished: boolean;
+  fields: AmendableField[];
+  amendments: EventAmendment[];
 }
 
 export interface EventAmendment {
@@ -63,9 +79,41 @@ const amendmentsApi = baseApi.injectEndpoints({
         'Event',
         'History'
       ]
+    }),
+
+    getSeasonAmendments: build.query<SeasonAmendOptions, string>({
+      query: (productionId) => ({
+        url: `histories/${productionId}/amend/`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (result, error, productionId) => [{ type: 'History', id: productionId }]
+    }),
+
+    amendSeason: build.mutation<
+      EventAmendment,
+      { productionId: string; field_name: string; new_value: string; reason: string }
+    >({
+      query: ({ productionId, ...body }) => ({
+        url: `histories/${productionId}/amend/`,
+        method: 'POST',
+        credentials: 'include',
+        body
+      }),
+      // The header now carries the corrected value, so the production page, its lot tag and
+      // the sales block are all stale.
+      invalidatesTags: (result, error, { productionId }) => [
+        { type: 'History', id: productionId },
+        'History'
+      ]
     })
   })
 });
 
-export const { useGetEventAmendmentsQuery, useAmendEventMutation } = amendmentsApi;
+export const {
+  useGetEventAmendmentsQuery,
+  useAmendEventMutation,
+  useGetSeasonAmendmentsQuery,
+  useAmendSeasonMutation
+} = amendmentsApi;
 export default amendmentsApi;

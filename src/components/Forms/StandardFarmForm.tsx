@@ -21,11 +21,6 @@ import {
   HStack,
   SimpleGrid,
   Switch,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   useToast,
   Text,
   Icon,
@@ -33,9 +28,6 @@ import {
   Tag,
   TagLabel,
   TagCloseButton,
-  Input,
-  Select,
-  Textarea,
   useColorModeValue
 } from '@chakra-ui/react';
 import {
@@ -72,6 +64,7 @@ import {
 } from 'react-icons/fa';
 import { MdCheck, MdLocationOn, MdDescription, MdSettings, MdImage } from 'react-icons/md';
 import { TrazoImageUpload } from '../Upload';
+import { StandardNumberInput } from 'components/Design/StandardComponents';
 
 // US States - 2-letter codes used for regional agricultural context
 // Must match EditCompanyModal.tsx for consistency
@@ -257,6 +250,9 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
   const [newSoilHealthPractice, setNewSoilHealthPractice] = useState('');
   const [newIrrigationMethod, setNewIrrigationMethod] = useState('');
   const intl = useIntl();
+  // Shorthand for the many plain-string labels on this form. Anything taking a value goes
+  // through `intl.formatMessage` directly so the placeholder stays visible at the call site.
+  const t = (id: string) => intl.formatMessage({ id });
   const toast = useToast();
 
   // Simplified image management for TrazoImageUpload
@@ -265,10 +261,22 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
   // Define steps for stepper - certifications moved to operations step
   const steps = [
-    { title: 'Basic Info', description: 'Farm name & type', icon: FaBuilding },
-    { title: 'Location', description: 'Address & coordinates', icon: FaMapMarkedAlt },
-    { title: 'Operations', description: 'Farming, practices & certifications', icon: FaTractor },
-    { title: 'Media', description: 'Images', icon: MdImage }
+    {
+      title: t('farm.form.step.basicInfo'),
+      description: t('farm.form.step.basicInfo.desc'),
+      icon: FaBuilding
+    },
+    {
+      title: t('farm.form.step.location'),
+      description: t('farm.form.step.location.desc'),
+      icon: FaMapMarkedAlt
+    },
+    {
+      title: t('farm.form.step.operations'),
+      description: t('farm.form.step.operations.desc'),
+      icon: FaTractor
+    },
+    { title: t('farm.form.step.media'), description: t('farm.form.step.media.desc'), icon: MdImage }
   ];
 
   const methods = useForm<EstablishmentFormData>({
@@ -332,7 +340,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
     }
 
     toast({
-      title: 'Check your details',
+      title: t('farm.form.toast.checkDetails'),
       description:
         formErrors[badField]?.message || 'Some required information is missing or invalid.',
       status: 'error',
@@ -355,8 +363,8 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
       if (hasValidationErrors) {
         toast({
-          title: 'Validation Error',
-          description: 'Please review and complete all required fields in previous steps.',
+          title: t('farm.form.toast.validationError'),
+          description: t('farm.form.toast.completePrevious'),
           status: 'error',
           duration: 5000,
           isClosable: true
@@ -483,8 +491,8 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
     if (!isValid) {
       toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields correctly.',
+        title: t('farm.form.toast.validationError'),
+        description: t('farm.form.toast.fillRequired'),
         status: 'error',
         duration: 3000
       });
@@ -532,10 +540,19 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
   return (
     <StandardPage
-      title={isEdit ? 'Edit Farm' : 'Add New Farm'}
-      description={`${isEdit ? 'Update' : 'Register'} your farm${
-        companyName ? ` under ${companyName}` : ''
-      }`}
+      title={isEdit ? t('farm.form.page.editTitle') : t('farm.form.page.addTitle')}
+      description={
+        // Two messages, not a concatenated template: Spanish does not put the company
+        // name where English does ("Registre su finca de X" vs "Register your farm under
+        // X"), so the sentence has to be translatable as a whole rather than assembled
+        // from an English-ordered stem plus a suffix.
+        companyName
+          ? intl.formatMessage(
+              { id: isEdit ? 'farm.form.page.editUnder' : 'farm.form.page.addUnder' },
+              { company: companyName }
+            )
+          : t(isEdit ? 'farm.form.page.edit' : 'farm.form.page.add')
+      }
       showBackButton
       onBack={onCancel}>
       {/* Optional pre-flight alert (e.g., subscription limit warning) */}
@@ -554,63 +571,53 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
         <form onSubmit={handleSubmit(onSubmitForm, onInvalidSubmit)}>
           {/* Step 0: Basic Information */}
           {currentStep === 0 && (
-            <StandardCard title="Farm Information" subtitle="Tell us about your farm">
+            <StandardCard
+              title={t('farm.form.card.identity')}
+              subtitle={t('farm.form.card.identity.sub')}>
               <VStack spacing={6} align="stretch">
                 {/* Name & Type */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
-                    label="Farm Name"
+                    label={intl.formatMessage({ id: 'farm.form.farmName.label' })}
                     required
                     error={errors.name?.message}
-                    helpText="Farm, ranch, or facility name">
+                    helpText={t('farm.form.farmName.helpText')}>
                     <Controller
                       name="name"
                       control={methods.control}
                       render={({ field }) => (
-                        <Input
+                        <StandardInput
                           {...field}
-                          placeholder="e.g., Green Valley Farm"
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{
-                            borderColor: 'green.500',
-                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                          }}
-                          size="lg"
+                          placeholder={t('farm.form.farmName.placeholder')}
                         />
                       )}
                     />
                   </StandardField>
 
                   <StandardField
-                    label="Farm Type"
+                    label={intl.formatMessage({ id: 'farm.form.farmType.label' })}
                     error={errors.establishmentType?.message}
-                    helpText="Primary type of agricultural operation">
+                    helpText={t('farm.form.farmType.helpText')}>
                     <Controller
                       name="establishmentType"
                       control={methods.control}
                       render={({ field }) => (
-                        <Select
+                        <StandardSelect
                           {...field}
-                          placeholder="Select type..."
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{
-                            borderColor: 'green.500',
-                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                          }}
-                          size="lg">
-                          <option value="crop_farm">Crop Farm</option>
-                          <option value="livestock_ranch">Livestock Ranch</option>
-                          <option value="dairy_farm">Dairy Farm</option>
-                          <option value="orchard">Orchard</option>
-                          <option value="vineyard">Vineyard</option>
-                          <option value="greenhouse">Greenhouse</option>
-                          <option value="aquaculture">Aquaculture</option>
-                          <option value="mixed_operation">Mixed Operation</option>
-                        </Select>
+                          placeholder={t('farm.form.farmType.placeholder')}>
+                          <option value="crop_farm">{t('farm.form.farmType.crop_farm')}</option>
+                          <option value="livestock_ranch">
+                            {t('farm.form.farmType.livestock_ranch')}
+                          </option>
+                          <option value="dairy_farm">{t('farm.form.farmType.dairy_farm')}</option>
+                          <option value="orchard">{t('farm.form.farmType.orchard')}</option>
+                          <option value="vineyard">{t('farm.form.farmType.vineyard')}</option>
+                          <option value="greenhouse">{t('farm.form.farmType.greenhouse')}</option>
+                          <option value="aquaculture">{t('farm.form.farmType.aquaculture')}</option>
+                          <option value="mixed_operation">
+                            {t('farm.form.farmType.mixed_operation')}
+                          </option>
+                        </StandardSelect>
                       )}
                     />
                   </StandardField>
@@ -618,23 +625,16 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
                 {/* Description */}
                 <StandardField
-                  label="Description"
+                  label={intl.formatMessage({ id: 'farm.form.description.label' })}
                   error={errors.description?.message}
-                  helpText="This is what consumers see when they scan your products - tell your story">
+                  helpText={t('farm.form.description.helpText')}>
                   <Controller
                     name="description"
                     control={methods.control}
                     render={({ field }) => (
-                      <Textarea
+                      <StandardTextarea
                         {...field}
-                        placeholder="Share your farm's story: your farming philosophy, what makes your operation unique, and what you want consumers to know about how you grow..."
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{
-                          borderColor: 'green.500',
-                          boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                        }}
+                        placeholder={t('farm.form.description.placeholder')}
                         minH="120px"
                         resize="vertical"
                       />
@@ -656,21 +656,21 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}>
-                      Continue
+                      {t('farm.form.btn.continue')}
                     </StandardButton>
                   </VStack>
 
                   {/* Desktop Layout */}
                   <HStack spacing={3} justify="flex-end" display={{ base: 'none', md: 'flex' }}>
                     <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
-                      Cancel
+                      {t('farm.form.btn.cancel')}
                     </StandardButton>
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}>
-                      Continue to Location
+                      {t('app.continue')}
                     </StandardButton>
                   </HStack>
                 </Box>
@@ -681,29 +681,21 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
           {/* Step 1: Location Information */}
           {currentStep === 1 && (
             <StandardCard
-              title="Location Details"
-              subtitle="Physical address and geographic coordinates">
+              title={t('farm.form.card.location')}
+              subtitle={t('farm.form.card.location.sub')}>
               <VStack spacing={6} align="stretch">
                 {/* Address */}
                 <StandardField
-                  label="Street Address"
+                  label={intl.formatMessage({ id: 'farm.form.streetAddress.label' })}
                   error={errors.address?.message}
-                  helpText="Physical address of your farm">
+                  helpText={t('farm.form.streetAddress.helpText')}>
                   <Controller
                     name="address"
                     control={methods.control}
                     render={({ field }) => (
-                      <Input
+                      <StandardInput
                         {...field}
-                        placeholder="123 Farm Road"
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{
-                          borderColor: 'green.500',
-                          boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                        }}
-                        size="lg"
+                        placeholder={t('farm.form.streetAddress.placeholder')}
                       />
                     )}
                   />
@@ -711,53 +703,34 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
                 {/* City & State */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField label="City" error={errors.city?.message}>
+                  <StandardField
+                    label={intl.formatMessage({ id: 'farm.form.city.label' })}
+                    error={errors.city?.message}>
                     <Controller
                       name="city"
                       control={methods.control}
                       render={({ field }) => (
-                        <Input
-                          {...field}
-                          placeholder="Farmington"
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{
-                            borderColor: 'green.500',
-                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                          }}
-                          size="lg"
-                        />
+                        <StandardInput {...field} placeholder={t('farm.form.city.placeholder')} />
                       )}
                     />
                   </StandardField>
 
                   <StandardField
-                    label="State"
+                    label={intl.formatMessage({ id: 'farm.form.state.label' })}
                     required
                     error={errors.state?.message}
-                    helpText="Used for regional irrigation and emission factor adjustments in carbon calculations">
+                    helpText={t('farm.form.state.helpText')}>
                     <Controller
                       name="state"
                       control={methods.control}
                       render={({ field }) => (
-                        <Select
-                          {...field}
-                          placeholder="Select state..."
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{
-                            borderColor: 'green.500',
-                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                          }}
-                          size="lg">
+                        <StandardSelect {...field} placeholder={t('farm.form.state.placeholder')}>
                           {US_STATES.map((state) => (
                             <option key={state.code} value={state.code}>
                               {state.name}
                             </option>
                           ))}
-                        </Select>
+                        </StandardSelect>
                       )}
                     />
                   </StandardField>
@@ -765,22 +738,16 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
                 {/* ZIP Code */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField label="ZIP Code" error={errors.zipCode?.message}>
+                  <StandardField
+                    label={intl.formatMessage({ id: 'farm.form.zipCode.label' })}
+                    error={errors.zipCode?.message}>
                     <Controller
                       name="zipCode"
                       control={methods.control}
                       render={({ field }) => (
-                        <Input
+                        <StandardInput
                           {...field}
-                          placeholder="12345"
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{
-                            borderColor: 'green.500',
-                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                          }}
-                          size="lg"
+                          placeholder={t('farm.form.zipCode.placeholder')}
                         />
                       )}
                     />
@@ -789,25 +756,14 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
                 {/* Zone */}
                 <StandardField
-                  label="Zone/Area"
+                  label={intl.formatMessage({ id: 'farm.form.zone.label' })}
                   error={errors.zone?.message}
-                  helpText="Geographic zone or area designation">
+                  helpText={t('farm.form.zone.helpText')}>
                   <Controller
                     name="zone"
                     control={methods.control}
                     render={({ field }) => (
-                      <Input
-                        {...field}
-                        placeholder="e.g., North Valley, Agricultural Zone A"
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{
-                          borderColor: 'green.500',
-                          boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                        }}
-                        size="lg"
-                      />
+                      <StandardInput {...field} placeholder={t('farm.form.zone.placeholder')} />
                     )}
                   />
                 </StandardField>
@@ -824,14 +780,14 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                     <StandardField
-                      label="Latitude"
+                      label={intl.formatMessage({ id: 'farm.form.latitude.label' })}
                       error={errors.latitude?.message}
-                      helpText="Decimal degrees (e.g., 40.7128). Range: -90 to 90">
+                      helpText={t('farm.form.latitude.helpText')}>
                       <Controller
                         name="latitude"
                         control={methods.control}
                         render={({ field }) => (
-                          <Input
+                          <StandardInput
                             value={
                               field.value !== undefined && field.value !== null
                                 ? String(field.value)
@@ -870,29 +826,21 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                               field.onBlur();
                             }}
                             inputMode="decimal"
-                            placeholder="40.7128"
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{
-                              borderColor: 'green.500',
-                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                            }}
-                            size="lg"
+                            placeholder={t('farm.form.latitude.placeholder')}
                           />
                         )}
                       />
                     </StandardField>
 
                     <StandardField
-                      label="Longitude"
+                      label={intl.formatMessage({ id: 'farm.form.longitude.label' })}
                       error={errors.longitude?.message}
-                      helpText="Decimal degrees (e.g., -74.0060). Range: -180 to 180">
+                      helpText={t('farm.form.longitude.helpText')}>
                       <Controller
                         name="longitude"
                         control={methods.control}
                         render={({ field }) => (
-                          <Input
+                          <StandardInput
                             value={
                               field.value !== undefined && field.value !== null
                                 ? String(field.value)
@@ -931,15 +879,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                               field.onBlur();
                             }}
                             inputMode="decimal"
-                            placeholder="-74.0060"
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{
-                              borderColor: 'green.500',
-                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                            }}
-                            size="lg"
+                            placeholder={t('farm.form.longitude.placeholder')}
                           />
                         )}
                       />
@@ -961,7 +901,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      Back
+                      {t('common.back')}
                     </StandardButton>
                     <StandardButton
                       onClick={nextStep}
@@ -969,7 +909,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}>
-                      Continue
+                      {t('farm.form.btn.continue')}
                     </StandardButton>
                   </HStack>
 
@@ -983,19 +923,19 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      Back to Basic Info
+                      {t('common.back')}
                     </StandardButton>
 
                     <HStack spacing={3}>
                       <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
-                        Cancel
+                        {t('farm.form.btn.cancel')}
                       </StandardButton>
                       <StandardButton
                         onClick={nextStep}
                         rightIcon={<FaChevronRight />}
                         borderRadius="xl"
                         _hover={{ transform: 'translateY(-1px)' }}>
-                        Next: Operations
+                        {intl.formatMessage({ id: 'app.continue' })}
                       </StandardButton>
                     </HStack>
                   </HStack>
@@ -1007,36 +947,28 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
           {/* Step 2: Operations Information */}
           {currentStep === 2 && (
             <StandardCard
-              title="Operations & Practices"
-              subtitle="Details about your farming operations">
+              title={t('farm.form.card.operations')}
+              subtitle={t('farm.form.card.operations.sub')}>
               <VStack spacing={6} align="stretch">
                 {/* Farming Method & Acreage */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
-                    label="Farming Method"
+                    label={intl.formatMessage({ id: 'farm.form.farmingMethod.label' })}
                     error={errors.farmingMethod?.message}
-                    helpText="Primary farming approach">
+                    helpText={t('farm.form.farmingMethod.helpText')}>
                     <Controller
                       name="farmingMethod"
                       control={methods.control}
                       render={({ field }) => (
-                        <Select
+                        <StandardSelect
                           {...field}
-                          placeholder="Select method..."
-                          borderRadius="lg"
-                          borderColor="gray.300"
-                          _hover={{ borderColor: 'green.400' }}
-                          _focus={{
-                            borderColor: 'green.500',
-                            boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                          }}
-                          size="lg">
+                          placeholder={t('farm.form.farmingMethod.placeholder')}>
                           {FARMING_METHOD_OPTIONS.map(({ value, label }) => (
                             <option key={value} value={value}>
                               {label}
                             </option>
                           ))}
-                        </Select>
+                        </StandardSelect>
                       )}
                     />
                   </StandardField>
@@ -1050,23 +982,19 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     surfaced on the consumer page.
                   */}
                   <StandardField
-                    label="Total Area (acres)"
+                    label={intl.formatMessage({ id: 'farm.form.totalArea.label' })}
                     error={errors.totalAcreage?.message}
-                    helpText="Total land area in acres - displayed on your farm profile">
+                    helpText={t('farm.form.totalArea.helpText')}>
                     <Controller
                       name="totalAcreage"
                       control={methods.control}
                       render={({ field }) => (
-                        <NumberInput
+                        <StandardNumberInput
                           value={field.value || 0}
                           onChange={(_, num) => field.onChange(num || 0)}
-                          min={0}>
-                          <NumberInputField borderRadius="lg" placeholder="e.g., 320" />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
+                          min={0}
+                          placeholder={t('farm.form.totalArea.placeholder')}
+                        />
                       )}
                     />
                   </StandardField>
@@ -1075,43 +1003,41 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                 {/* Year Established */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
-                    label="Year Established"
+                    label={intl.formatMessage({ id: 'farm.form.yearEstablished.label' })}
                     error={errors.yearEstablished?.message}
-                    helpText="When was the farm founded">
+                    helpText={t('farm.form.yearEstablished.helpText')}>
                     <Controller
                       name="yearEstablished"
                       control={methods.control}
                       render={({ field }) => (
-                        <NumberInput
+                        <StandardNumberInput
                           value={field.value || ''}
                           onChange={(_, num) => field.onChange(num)}
                           min={1800}
-                          max={new Date().getFullYear()}>
-                          <NumberInputField borderRadius="lg" placeholder="e.g., 1995" />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
+                          max={new Date().getFullYear()}
+                          placeholder={t('farm.form.yearEstablished.placeholder')}
+                        />
                       )}
                     />
                   </StandardField>
                 </SimpleGrid>
 
                 {/* Crops Grown */}
-                <StandardField label="Crops Grown" helpText="Add crops that you produce">
+                <StandardField
+                  label={intl.formatMessage({ id: 'farm.form.cropsGrown.label' })}
+                  helpText={intl.formatMessage({ id: 'farm.form.cropsGrown.helpText' })}>
                   <Controller
                     name="cropsGrown"
                     control={methods.control}
                     render={({ field }) => (
                       <VStack align="stretch" spacing={3}>
                         <HStack>
-                          <Input
+                          <StandardInput
                             value={newCrop}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               setNewCrop(e.target.value);
                             }}
-                            placeholder="e.g., Tomatoes, Corn, Apples"
+                            placeholder={t('farm.form.cropsGrown.placeholder')}
                             onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
@@ -1121,14 +1047,6 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                                 }
                               }
                             }}
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{
-                              borderColor: 'green.500',
-                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                            }}
-                            size="lg"
                           />
                           <StandardButton
                             onClick={() => {
@@ -1139,7 +1057,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                             }}
                             leftIcon={<FaPlus />}
                             size="sm">
-                            Add
+                            {t('farm.form.btn.add')}
                           </StandardButton>
                         </HStack>
                         {field.value?.length ? (
@@ -1198,7 +1116,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
                 {/* Water Sources */}
                 <StandardField
-                  label="Water Sources"
+                  label={intl.formatMessage({ id: 'farm.form.waterSources.label' })}
                   helpText={intl.formatMessage({
                     id: 'farm.form.waterSources.helpText',
                     defaultMessage:
@@ -1210,29 +1128,21 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     render={({ field }) => (
                       <VStack align="stretch" spacing={3}>
                         <HStack>
-                          <Input
+                          <StandardInput
                             value={newWaterSource}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               setNewWaterSource(e.target.value);
                             }}
-                            placeholder="e.g., Rainwater collection, Well water, Recycled water"
+                            placeholder={t('farm.form.waterSources.placeholder')}
                             onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
                                 addWaterSource();
                               }
                             }}
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{
-                              borderColor: 'green.500',
-                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                            }}
-                            size="lg"
                           />
                           <StandardButton onClick={addWaterSource} leftIcon={<FaPlus />} size="sm">
-                            Add
+                            {t('farm.form.btn.add')}
                           </StandardButton>
                         </HStack>
                         {field.value?.length ? (
@@ -1252,7 +1162,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
                 {/* Soil Health Practices — stored in the legacy `soil_types` column */}
                 <StandardField
-                  label="Soil Health Practices"
+                  label={intl.formatMessage({ id: 'farm.form.soilHealthPractices.label' })}
                   helpText={intl.formatMessage({
                     id: 'farm.form.soilHealthPractices.helpText',
                     defaultMessage:
@@ -1264,32 +1174,24 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     render={({ field }) => (
                       <VStack align="stretch" spacing={3}>
                         <HStack>
-                          <Input
+                          <StandardInput
                             value={newSoilHealthPractice}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               setNewSoilHealthPractice(e.target.value);
                             }}
-                            placeholder="e.g., Cover cropping, Compost application, No-till farming"
+                            placeholder={t('farm.form.soilHealthPractices.placeholder')}
                             onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
                                 addSoilHealthPractice();
                               }
                             }}
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{
-                              borderColor: 'green.500',
-                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                            }}
-                            size="lg"
                           />
                           <StandardButton
                             onClick={addSoilHealthPractice}
                             leftIcon={<FaPlus />}
                             size="sm">
-                            Add
+                            {t('farm.form.btn.add')}
                           </StandardButton>
                         </HStack>
                         {field.value?.length ? (
@@ -1309,7 +1211,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
                 {/* Irrigation Methods */}
                 <StandardField
-                  label="Irrigation Methods"
+                  label={intl.formatMessage({ id: 'farm.form.irrigationMethods.label' })}
                   helpText={intl.formatMessage({
                     id: 'farm.form.irrigationMethods.helpText',
                     defaultMessage: 'Irrigation systems used on your operation'
@@ -1320,32 +1222,24 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     render={({ field }) => (
                       <VStack align="stretch" spacing={3}>
                         <HStack>
-                          <Input
+                          <StandardInput
                             value={newIrrigationMethod}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               setNewIrrigationMethod(e.target.value);
                             }}
-                            placeholder="e.g., Drip irrigation (water-efficient), Smart sensors, Rain-fed"
+                            placeholder={t('farm.form.irrigationMethods.placeholder')}
                             onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => {
                               if (e.key === 'Enter') {
                                 e.preventDefault();
                                 addIrrigationMethod();
                               }
                             }}
-                            borderRadius="lg"
-                            borderColor="gray.300"
-                            _hover={{ borderColor: 'green.400' }}
-                            _focus={{
-                              borderColor: 'green.500',
-                              boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                            }}
-                            size="lg"
                           />
                           <StandardButton
                             onClick={addIrrigationMethod}
                             leftIcon={<FaPlus />}
                             size="sm">
-                            Add
+                            {t('farm.form.btn.add')}
                           </StandardButton>
                         </HStack>
                         {field.value?.length ? (
@@ -1365,27 +1259,20 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
                 {/* Personal Message to Consumers */}
                 <StandardField
-                  label="Personal Message to Consumers"
+                  label={intl.formatMessage({ id: 'farm.form.customMessage.label' })}
                   error={errors.custom_message?.message}
-                  helpText="Optional: A personal note displayed to consumers who scan your products">
+                  helpText={t('farm.form.customMessage.helpText')}>
                   <Controller
                     name="custom_message"
                     control={methods.control}
                     render={({ field }) => (
-                      <Textarea
+                      <StandardTextarea
                         {...field}
                         placeholder={intl.formatMessage({
                           id: 'farm.form.customMessage.placeholder',
                           defaultMessage:
                             'Thank you for choosing our farm! We are happy to answer questions about how we grow...'
                         })}
-                        borderRadius="lg"
-                        borderColor="gray.300"
-                        _hover={{ borderColor: 'green.400' }}
-                        _focus={{
-                          borderColor: 'green.500',
-                          boxShadow: '0 0 0 1px var(--chakra-colors-green-500)'
-                        }}
                         minH="100px"
                         resize="vertical"
                       />
@@ -1407,7 +1294,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      Back
+                      {t('common.back')}
                     </StandardButton>
                     <StandardButton
                       onClick={nextStep}
@@ -1415,7 +1302,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       rightIcon={<FaChevronRight />}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}>
-                      Continue
+                      {t('farm.form.btn.continue')}
                     </StandardButton>
                   </HStack>
 
@@ -1429,19 +1316,19 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      Back to Location
+                      {t('common.back')}
                     </StandardButton>
 
                     <HStack spacing={3}>
                       <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
-                        Cancel
+                        {t('farm.form.btn.cancel')}
                       </StandardButton>
                       <StandardButton
                         onClick={nextStep}
                         rightIcon={<FaChevronRight />}
                         borderRadius="xl"
                         _hover={{ transform: 'translateY(-1px)' }}>
-                        Next: Media
+                        {intl.formatMessage({ id: 'app.continue' })}
                       </StandardButton>
                     </HStack>
                   </HStack>
@@ -1452,12 +1339,14 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
 
           {/* Step 3: Media */}
           {currentStep === 3 && (
-            <StandardCard title="Farm Images" subtitle="Upload images to showcase your farm">
+            <StandardCard
+              title={t('farm.form.card.images')}
+              subtitle={t('farm.form.card.images.sub')}>
               <VStack spacing={8} align="stretch">
                 {/* 2025 Modern Image Upload */}
                 <StandardField
-                  label="Images"
-                  helpText="Upload up to 5 high-quality images (JPG, PNG, GIF, WEBP - max 5MB each)">
+                  label={intl.formatMessage({ id: 'farm.form.images.label' })}
+                  helpText={t('farm.form.images.helpText')}>
                   <TrazoImageUpload
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
@@ -1481,17 +1370,19 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      Back
+                      {t('common.back')}
                     </StandardButton>
                     <StandardButton
                       type="submit"
                       size="md"
                       isLoading={isLoading}
-                      loadingText={isEdit ? 'Updating...' : 'Creating...'}
+                      loadingText={
+                        isEdit ? t('farm.form.btn.updating') : t('farm.form.btn.creating')
+                      }
                       leftIcon={<FaCheckCircle />}
                       borderRadius="xl"
                       _hover={{ transform: 'translateY(-1px)' }}>
-                      {isEdit ? 'Update' : 'Create'}
+                      {isEdit ? t('farm.form.btn.update') : t('farm.form.btn.create')}
                     </StandardButton>
                   </HStack>
 
@@ -1505,12 +1396,12 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       leftIcon={<FaChevronLeft />}
                       onClick={previousStep}
                       borderRadius="xl">
-                      Back to Operations
+                      {t('common.back')}
                     </StandardButton>
 
                     <HStack spacing={3}>
                       <StandardButton variant="outline" onClick={onCancel} borderRadius="xl">
-                        Cancel
+                        {t('farm.form.btn.cancel')}
                       </StandardButton>
                       <StandardButton
                         type="submit"
@@ -1519,7 +1410,7 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                         leftIcon={<FaCheckCircle />}
                         borderRadius="xl"
                         _hover={{ transform: 'translateY(-1px)' }}>
-                        {isEdit ? 'Update Farm' : 'Create Farm'}
+                        {isEdit ? t('farm.form.btn.updateFarm') : t('farm.form.btn.createFarm')}
                       </StandardButton>
                     </HStack>
                   </HStack>

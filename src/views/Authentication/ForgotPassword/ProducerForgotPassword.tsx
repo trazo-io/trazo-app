@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
@@ -9,8 +10,6 @@ import {
   useColorModeValue,
   Flex,
   Button,
-  InputGroup,
-  InputLeftElement,
   useToast,
   Alert,
   AlertIcon,
@@ -20,6 +19,7 @@ import { FaEnvelope, FaArrowLeft, FaCheckCircle } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import AuthFooter from 'components/Footer/AuthFooter';
 import { useRequestPasswordResetMutation } from '../../../store/api/authApi';
+import { StandardInput, registerWithFocus } from 'components/Design/StandardComponents';
 
 const MotionBox = motion(Box);
 
@@ -28,6 +28,7 @@ interface ForgotPasswordFormData {
 }
 
 const ProducerForgotPassword: React.FC = () => {
+  const intl = useIntl();
   const toast = useToast();
   const [requestPasswordReset, { isLoading }] = useRequestPasswordResetMutation();
   const [emailSent, setEmailSent] = useState(false);
@@ -206,7 +207,7 @@ const ProducerForgotPassword: React.FC = () => {
                       bg: useColorModeValue('gray.50', 'gray.700')
                     }}
                     transition="all 0.2s">
-                    Back to Sign In
+                    {intl.formatMessage({ id: 'auth.backToSignIn' })}
                   </Button>
                 </Link>
               </VStack>
@@ -260,57 +261,30 @@ const ProducerForgotPassword: React.FC = () => {
                         mb={2}>
                         Email Address *
                       </Text>
-                      <InputGroup size="lg">
-                        <InputLeftElement pointerEvents="none">
-                          <Icon
-                            as={FaEnvelope}
-                            color={focusedField === 'email' ? 'green.500' : 'gray.400'}
-                            transition="all 0.2s"
-                          />
-                        </InputLeftElement>
-                        <Box
-                          as="input"
-                          type="email"
-                          placeholder="Enter your email address"
-                          pl="3rem"
-                          w="full"
-                          h="44px"
-                          fontSize="sm"
-                          bg={useColorModeValue('gray.50', 'gray.900')}
-                          border="1px solid"
-                          borderColor={
-                            errors.email
-                              ? 'red.300'
-                              : focusedField === 'email'
-                              ? 'green.600'
-                              : useColorModeValue('gray.200', 'gray.600')
-                          }
-                          borderRadius="xl"
-                          _hover={{
-                            borderColor: errors.email
-                              ? 'red.300'
-                              : useColorModeValue('gray.300', 'gray.500')
-                          }}
-                          _focus={{
-                            outline: 'none',
-                            borderColor: 'green.600',
-                            bg: useColorModeValue('white', 'gray.800'),
-                            boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                          }}
-                          transition="all 0.2s"
-                          {...register('email', {
+                      <StandardInput
+                        type="email"
+                        placeholder="Enter your email address"
+                        {...registerWithFocus(
+                          register('email', {
                             required: 'Email is required',
                             pattern: {
                               value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                               message: 'Invalid email address'
                             }
-                          })}
-                          onFocus={() => setFocusedField('email')}
-                          onBlur={() => setFocusedField(null)}
-                        />
-                      </InputGroup>
+                          }),
+                          setFocusedField
+                        )}
+                        isInvalid={!!errors.email}
+                        leftElement={
+                          <Icon
+                            as={FaEnvelope}
+                            color={focusedField === 'email' ? 'green.500' : 'gray.400'}
+                            transition="all 0.2s"
+                          />
+                        }
+                      />
                       {errors.email && (
-                        <Text fontSize="sm" color="red.500" mt={1}>
+                        <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.email.message}
                         </Text>
                       )}
@@ -355,7 +329,7 @@ const ProducerForgotPassword: React.FC = () => {
                       color: 'green.700'
                     }}
                     transition="all 0.2s">
-                    Back to Sign In
+                    {intl.formatMessage({ id: 'auth.backToSignIn' })}
                   </Button>
                 </Link>
               </Box>

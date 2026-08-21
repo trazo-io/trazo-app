@@ -1,26 +1,9 @@
-import {
-  Button,
-  Flex,
-  Icon,
-  NumberDecrementStepper,
-  NumberIncrementStepper,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  Select,
-  Stack,
-  Table,
-  Tbody,
-  Td,
-  Text,
-  Th,
-  Thead,
-  Tr
-} from '@chakra-ui/react';
+import { Button, Flex, Icon, Stack, Table, Tbody, Td, Text, Th, Thead, Tr } from '@chakra-ui/react';
 import { GrFormNext, GrFormPrevious } from 'react-icons/gr';
 import React, { useMemo } from 'react';
 import { TiArrowSortedDown, TiArrowSortedUp, TiArrowUnsorted } from 'react-icons/ti';
 import { usePagination, useSortBy, useTable } from 'react-table';
+import { StandardNumberInput, StandardSelect } from 'components/Design/StandardComponents';
 
 type BasicTableProps = {
   columnsData: any;
@@ -74,12 +57,10 @@ function BasicTable(props: BasicTableProps) {
     <>
       <Flex direction="column" w="100%" overflowX={{ sm: 'scroll', lg: 'hidden' }}>
         <Stack direction="row" spacing="12px" align="center" my="24px" px="22px">
-          <Select
+          <StandardSelect
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
             color="gray.500"
-            size="sm"
-            borderRadius="12px"
             maxW="75px"
             cursor="pointer">
             <option>5</option>
@@ -87,7 +68,7 @@ function BasicTable(props: BasicTableProps) {
             <option>15</option>
             <option>20</option>
             <option>25</option>
-          </Select>
+          </StandardSelect>
           <Text fontSize="xs" color="gray.400" fontWeight="normal">
             entries per page
           </Text>
@@ -172,19 +153,14 @@ function BasicTable(props: BasicTableProps) {
               <Icon as={GrFormPrevious} w="16px" h="16px" color="gray.400" />
             </Button>
             {pageSize === 5 ? (
-              <NumberInput
+              <StandardNumberInput
                 max={pageCount - 1}
                 min={1}
                 w="75px"
                 mx="6px"
                 defaultValue="1"
-                onChange={(e) => gotoPage(e)}>
-                <NumberInputField />
-                <NumberInputStepper>
-                  <NumberIncrementStepper onClick={() => nextPage()} />
-                  <NumberDecrementStepper onClick={() => previousPage()} />
-                </NumberInputStepper>
-              </NumberInput>
+                onChange={(e) => gotoPage(e)}
+              />
             ) : (
               createPages(pageCount).map((pageNumber, index) => {
                 return (

@@ -12,19 +12,18 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { formatDateOnly } from 'utils/dateOnly';
 import {
   Badge,
   Box,
   Checkbox,
   Flex,
   HStack,
-  Input,
   Radio,
   RadioGroup,
   SimpleGrid,
   Stack,
   Text,
-  Textarea,
   useToast,
   VStack
 } from '@chakra-ui/react';
@@ -48,7 +47,8 @@ import {
   StandardPage,
   StandardPageLoading,
   StandardSectionTabs,
-  StandardSelect
+  StandardSelect,
+  StandardTextarea
 } from 'components/Design/StandardComponents';
 import type { SectionTabStatus } from 'components/Design/StandardComponents';
 import CardWithMap from 'components/Map/CardWithMap';
@@ -104,22 +104,54 @@ const TransitionCard = ({
   const { data, isLoading } = useGetParcelTransitionStatusQuery({ companyId, farmId, parcelId });
   if (isLoading) return <StandardPageLoading />;
   if (!data) return null;
+  // 🔴 2026-08-21 — this read `data.status` and `data.earliest_organic_harvest_date`, neither
+  // of which the endpoint has ever emitted (`TransitionStatus.to_dict` sends `is_eligible`,
+  // `transition_complete_date`, `days_remaining`, `note`). A farm certified continuously for
+  // twenty years opened its Parcel Application and saw its § 205.202(b) status rendered as a
+  // bare "—". Wrong in both directions: an eligible parcel looked unassessed, and a parcel
+  // genuinely in transition would have shown the same dash with no date. Read what is sent.
+  const eligible = (data as any).is_eligible === true;
+  const inTransition = (data as any).is_eligible === false;
+  const completeDate = (data as any).transition_complete_date as string | null | undefined;
+  const daysRemaining = (data as any).days_remaining as number | null | undefined;
+  const note = (data as any).note as string | undefined;
+  const badgeId = eligible
+    ? 'parcelApp.transition.status.eligible'
+    : inTransition
+    ? 'parcelApp.transition.status.inTransition'
+    : 'parcelApp.transition.status.unknown';
   return (
-    <Box p={4} bg="green.50" borderWidth="1px" borderColor="green.200" borderRadius="md">
+    <Box
+      p={4}
+      bg={eligible ? 'green.50' : 'amber.50'}
+      borderWidth="1px"
+      borderColor={eligible ? 'green.200' : 'amber.200'}
+      borderRadius="md">
       <HStack justify="space-between" mb={2}>
         <Text fontWeight="semibold" fontSize="sm">
           {intl.formatMessage({ id: 'parcelApp.transition.computed' })}
         </Text>
-        <Badge variant="brand" fontSize="11px">
-          {String(data.status ?? '—')}
+        <Badge variant={eligible ? 'brand' : 'warning'} fontSize="11px">
+          {intl.formatMessage({ id: badgeId })}
         </Badge>
       </HStack>
-      {data.earliest_organic_harvest_date ? (
+      {inTransition && completeDate ? (
         <Text fontSize="sm" color="gray.700">
           {intl.formatMessage(
             { id: 'parcelApp.transition.earliest' },
-            { date: String(data.earliest_organic_harvest_date) }
+            { date: formatDateOnly(completeDate) }
           )}
+          {typeof daysRemaining === 'number' && daysRemaining > 0
+            ? ` · ${intl.formatMessage(
+                { id: 'parcelApp.transition.daysRemaining' },
+                { days: daysRemaining }
+              )}`
+            : ''}
+        </Text>
+      ) : null}
+      {note ? (
+        <Text fontSize="sm" color="gray.700">
+          {note}
         </Text>
       ) : null}
       <Text fontSize="xs" color="gray.600" mt={1}>
@@ -156,7 +188,6 @@ const BufferEditor = ({
               <StandardButton
                 variant="ghost"
                 size="sm"
-                minH="44px"
                 aria-label={intl.formatMessage({ id: 'app.delete' })}
                 onClick={() => onChange(rows.filter((_, i) => i !== index))}>
                 <FaTrash />
@@ -269,8 +300,7 @@ const BufferEditor = ({
               <Checkbox
                 isChecked={row.adjacent_is_organic === true}
                 onChange={(e) => update(index, { adjacent_is_organic: e.target.checked })}
-                isDisabled={!canWrite}
-                minH="44px">
+                isDisabled={!canWrite}>
                 <Text fontSize="sm">
                   {intl.formatMessage({ id: 'parcelApp.buffers.adjacentOrganic' })}
                 </Text>
@@ -283,8 +313,7 @@ const BufferEditor = ({
                     ...(e.target.checked ? {} : { neighbor_notification_date: undefined })
                   })
                 }
-                isDisabled={!canWrite}
-                minH="44px">
+                isDisabled={!canWrite}>
                 <Text fontSize="sm">
                   {intl.formatMessage({ id: 'parcelApp.buffers.neighborNotified' })}
                 </Text>
@@ -312,7 +341,6 @@ const BufferEditor = ({
       {canWrite && (
         <StandardButton
           variant="outline"
-          minH="44px"
           leftIcon={<FaPlus />}
           onClick={() => onChange([...rows, {}])}>
           {intl.formatMessage({ id: 'parcelApp.buffers.addBorder' })}
@@ -351,12 +379,8 @@ const QuestionField = ({
           onChange={(v) => onChange(v === 'yes')}
           isDisabled={!canWrite}>
           <Stack direction={{ base: 'column', smd: 'row' }} spacing={4}>
-            <Radio value="yes" minH="44px">
-              {intl.formatMessage({ id: 'osp.wizard.yes' })}
-            </Radio>
-            <Radio value="no" minH="44px">
-              {intl.formatMessage({ id: 'osp.wizard.no' })}
-            </Radio>
+            <Radio value="yes">{intl.formatMessage({ id: 'osp.wizard.yes' })}</Radio>
+            <Radio value="no">{intl.formatMessage({ id: 'osp.wizard.no' })}</Radio>
           </Stack>
         </RadioGroup>
       );
@@ -369,7 +393,7 @@ const QuestionField = ({
           isDisabled={!canWrite}>
           <Stack spacing={2}>
             {question.options.map((option) => (
-              <Radio key={option.value} value={option.value} minH="44px">
+              <Radio key={option.value} value={option.value}>
                 <Text fontSize="sm">{pickText(option.label, locale)}</Text>
               </Radio>
             ))}
@@ -379,7 +403,7 @@ const QuestionField = ({
       break;
     case 'date':
       control = (
-        <Input
+        <StandardInput
           type="date"
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value || null)}
@@ -390,7 +414,7 @@ const QuestionField = ({
       break;
     case 'textarea':
       control = (
-        <Textarea
+        <StandardTextarea
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value || null)}
           rows={4}
@@ -401,7 +425,7 @@ const QuestionField = ({
       break;
     default:
       control = (
-        <Input
+        <StandardInput
           value={(value as string) ?? ''}
           onChange={(e) => onChange(e.target.value || null)}
           placeholder={question.placeholder ? pickText(question.placeholder, locale) : undefined}
@@ -632,7 +656,6 @@ const ParcelApplicationWizard = () => {
                 <HStack>
                   <StandardButton
                     variant="outline"
-                    minH="44px"
                     onClick={() =>
                       navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`)
                     }>
@@ -658,7 +681,6 @@ const ParcelApplicationWizard = () => {
                   {intl.formatMessage({ id: 'parcelApp.map.missingHint' })}
                 </Text>
                 <StandardButton
-                  minH="44px"
                   onClick={() =>
                     navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/change`)
                   }>
@@ -672,7 +694,10 @@ const ParcelApplicationWizard = () => {
         return (
           <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
             <HStack spacing={3}>
-              <Box as={FaCheckCircle} color={data?.has_affidavit ? 'green.500' : 'gray.300'} />
+              {/* green.700 / gray.500, not green.500 / gray.300 (2.78 and 1.94). This glyph is the
+                  state marker for "affidavit on file", so it is a non-text graphic carrying
+                  meaning and owes 3.0. */}
+              <Box as={FaCheckCircle} color={data?.has_affidavit ? 'green.700' : 'gray.500'} />
               <Text fontSize="sm">
                 {data?.has_affidavit
                   ? intl.formatMessage({ id: 'parcelApp.affidavit.onFile' })
@@ -712,7 +737,6 @@ const ParcelApplicationWizard = () => {
                 )
               )}
               size="sm"
-              minH="44px"
               variant="outline">
               {intl.formatMessage({ id: 'parcelApp.downloadPdf' })}
             </StandardButton>
@@ -755,24 +779,27 @@ const ParcelApplicationWizard = () => {
         </StandardSectionTabs>
 
         <Flex justify="space-between">
+          {/* size="sm" = 14px, the app's button label size. These were Chakra's default md
+              (16px), so the wizard's own nav read a size larger than the page's Back button
+              sitting directly above them. */}
           <StandardButton
             variant="outline"
-            minH="44px"
+            size="sm"
             leftIcon={<FaChevronLeft />}
             isDisabled={clamped === 0}
             onClick={() => goTo(clamped - 1)}>
-            {intl.formatMessage({ id: 'app.previous' })}
+            {intl.formatMessage({ id: 'common.back' })}
           </StandardButton>
           {clamped < pages.length - 1 ? (
             <StandardButton
-              minH="44px"
+              size="sm"
               rightIcon={<FaChevronRight />}
               isLoading={saving}
               onClick={() => goTo(clamped + 1)}>
-              {intl.formatMessage({ id: 'app.next' })}
+              {intl.formatMessage({ id: 'app.continue' })}
             </StandardButton>
           ) : (
-            <StandardButton minH="44px" isLoading={saving} onClick={() => flush()}>
+            <StandardButton size="sm" isLoading={saving} onClick={() => flush()}>
               {intl.formatMessage({ id: 'app.save' })}
             </StandardButton>
           )}

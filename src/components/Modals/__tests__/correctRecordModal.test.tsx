@@ -18,7 +18,7 @@
  */
 import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
@@ -29,10 +29,17 @@ import esMessages from '../../../i18n/lang/es-419.json';
 
 const amendMock = vi.fn();
 const queryState: { data: any; isLoading: boolean } = { data: undefined, isLoading: false };
+const amendSeasonMock = vi.fn();
+const seasonQueryState: { data: any; isLoading: boolean } = { data: undefined, isLoading: false };
 
 vi.mock('store/api/amendmentsApi', () => ({
   useGetEventAmendmentsQuery: () => queryState,
-  useAmendEventMutation: () => [amendMock, { isLoading: false }]
+  useAmendEventMutation: () => [amendMock, { isLoading: false }],
+  // F7 (2026-08-21) — the same modal corrects the SEASON HEADER when given `productionId`
+  // instead of an event. Both hooks are called on every render (React rules), so a mock that
+  // omits them throws before a single assertion runs.
+  useGetSeasonAmendmentsQuery: () => seasonQueryState,
+  useAmendSeasonMutation: () => [amendSeasonMock, { isLoading: false }]
 }));
 
 import { CorrectRecordModal } from '../CorrectRecordModal';
@@ -60,6 +67,17 @@ const renderModal = (locale: 'en-US' | 'es-419' = 'en-US') =>
 describe('CorrectRecordModal', () => {
   beforeEach(() => {
     amendMock.mockReset();
+    amendSeasonMock.mockReset();
+    amendSeasonMock.mockReturnValue({ unwrap: () => Promise.resolve({ id: 9 }) });
+    seasonQueryState.data = {
+      is_finished: true,
+      fields: [
+        { name: 'production_amount', label: 'Production amount', current_value: 2150 },
+        { name: 'lot_id', label: 'Lot ID', current_value: 'CBF-25-HFE' }
+      ],
+      amendments: []
+    };
+    seasonQueryState.isLoading = false;
     amendMock.mockReturnValue({ unwrap: () => Promise.resolve({ id: 1 }) });
     queryState.data = {
       event_type: 7,
@@ -194,5 +212,64 @@ describe('CorrectRecordModal', () => {
 
     renderModal('es-419');
     expect(screen.getByText(/Tu inspector lee esto/i)).toBeInTheDocument();
+  });
+
+  // ---------------------------------------------------------------------------------------
+  // F7 (2026-08-21) — the same sheet, pointed at the SEASON HEADER.
+  //
+  // The lot header (`production_amount`, `lot_id`, `quality_grade`, `harvest_method`) is
+  // frozen once a season is finished and had NO correction path at all, while every event
+  // under it did: a farmer who finished with the wrong yield could neither edit it (423) nor
+  // amend it, and the only repair was a developer with ORM access.
+  // ---------------------------------------------------------------------------------------
+  describe('season-header mode', () => {
+    const renderHeader = () =>
+      render(
+        <ChakraProvider theme={theme}>
+          <IntlProvider locale="en-US" messages={enMessages}>
+            <CorrectRecordModal isOpen onClose={vi.fn()} productionId="uuid-695" />
+          </IntlProvider>
+        </ChakraProvider>
+      );
+
+    it('offers the lot-header fields and none of the event ones', () => {
+      renderHeader();
+      const select = screen.getByRole('combobox');
+      const options = within(select)
+        .getAllByRole('option')
+        .map((o) => o.textContent);
+      expect(options).toContain('Production amount');
+      expect(options).toContain('Lot ID');
+      // The event sheet's fields must not leak in — the two modes share a component, and a
+      // header sheet offering `performed_by` would be correcting a record it is not showing.
+      expect(options).not.toContain('performed by');
+    });
+
+    it('has no "show all" toggle — the header is five fields and hiding one hides the wrong one', () => {
+      renderHeader();
+      expect(screen.queryByText(/show/i)).toBeNull();
+    });
+
+    it('submits through the SEASON endpoint, not the event one', async () => {
+      renderHeader();
+      fireEvent.change(screen.getByRole('combobox'), { target: { value: 'production_amount' } });
+      const boxes = screen.getAllByRole('textbox');
+      fireEvent.change(boxes[0], { target: { value: '118750' } });
+      fireEvent.change(boxes[boxes.length - 1], {
+        target: { value: '  Header was filled from the buffer-row pick.  ' }
+      });
+      fireEvent.click(screen.getByRole('button', { name: /save correction/i }));
+
+      await waitFor(() => expect(amendSeasonMock).toHaveBeenCalledTimes(1));
+      expect(amendMock).not.toHaveBeenCalled();
+      expect(amendSeasonMock).toHaveBeenCalledWith({
+        productionId: 'uuid-695',
+        field_name: 'production_amount',
+        new_value: '118750',
+        // Trimmed, like the event path: leading whitespace in a reason an inspector reads is
+        // noise, and an all-whitespace reason is no reason.
+        reason: 'Header was filled from the buffer-row pick.'
+      });
+    });
   });
 });

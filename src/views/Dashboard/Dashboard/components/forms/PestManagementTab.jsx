@@ -524,10 +524,9 @@ const PestManagementTab = forwardRef(
                 formConformance.test.ts, not by a runtime flag. */}
             <>
               {/* Basic Event Information */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaBug}
-                  iconColor="green.600"
                   title="Pest Management Event Information"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />{' '}
@@ -592,10 +591,9 @@ const PestManagementTab = forwardRef(
                     be recorded. § 205.206(e) later justifies a substance only once practices like
                     these are documented and shown insufficient. */}
               {pestType === 'CU' && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaLeaf}
-                    iconColor="green.600"
                     title={intl.formatMessage({
                       id: 'events.pest.sections.culturalControl',
                       defaultMessage: 'Preventive Cultural Practice'
@@ -699,7 +697,7 @@ const PestManagementTab = forwardRef(
               {isSummaryMode && pestType === 'SC' && (
                 <Box
                   p={4}
-                  bg="green.50"
+                  bg="white"
                   borderRadius="md"
                   border="1px solid"
                   borderColor="green.200"
@@ -888,10 +886,9 @@ const PestManagementTab = forwardRef(
               {/* Agricultural Context Section - Critical for Carbon Calculations */}
               {/* Sprint 5: Hide individual fields when in Summary Mode for Scouting - aggregate fields replace them */}
               {!(isSummaryMode && pestType === 'SC') && (
-                <SectionBox variant="highlighted" borderColor="green.200">
+                <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaRulerHorizontal}
-                    iconColor="green.600"
                     title="Field Area & Context"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
@@ -923,13 +920,13 @@ const PestManagementTab = forwardRef(
 
               {/* Sprint 3 Epic 3.1: Fuel & Equipment Operations Section (aligned with Production/Soil forms) */}
               {!(isSummaryMode && pestType === 'SC') && (
-                <SectionBox variant="highlighted">
+                <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    iconColor="green.600"
                     title="Fuel Consumption & Equipment Data"
                     badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                     description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
+                    badgeTone="optional"
                   />{' '}
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     {/* Fuel Type Selector - for accurate EPA emission factor calculation */}
@@ -1006,10 +1003,9 @@ const PestManagementTab = forwardRef(
               )}
 
               {/* Agricultural Decision Context */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaCloudSun}
-                  iconColor="green.600"
                   title="Agricultural Context & Conditions"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
@@ -1057,10 +1053,9 @@ const PestManagementTab = forwardRef(
               {/* In summary mode for Scouting, pest species and pressure are already captured
                 in the Pest Observations Summary section above - hide to avoid redundancy */}
               {!(isSummaryMode && pestType === 'SC') && (
-                <SectionBox variant="default">
+                <SectionBox>
                   <SectionHeader
                     icon={FaEye}
-                    iconColor="green.600"
                     title="Pest Management Details"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
@@ -1343,10 +1338,9 @@ const PestManagementTab = forwardRef(
                   about. It lives outside the block above because that block is hidden for an
                   aggregate scouting event (isSummaryMode && SC), which would have left the same
                   finding unclearable for a whole season rolled into one record. */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaCheckCircle}
-                  iconColor="green.600"
                   title="IPM Documentation (7 CFR 205.206)"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   description="The certifier export checks these two records on every pest event, whatever its type."
@@ -1384,13 +1378,11 @@ const PestManagementTab = forwardRef(
               </SectionBox>
 
               {/* § 205.206(b) biological control + § 205.202(b) chemical-free interval */}
-              <SectionBox variant="highlighted">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.500"
                   title={intl.formatMessage({ id: 'events.section.bioControl.title' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                  badgeColorScheme="green"
                   description={intl.formatMessage({ id: 'events.section.bioControl.desc' })}
                 />{' '}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -1429,10 +1421,9 @@ const PestManagementTab = forwardRef(
                 pestType === 'TA' ||
                 pestType === 'TM' ||
                 pestType === 'IP') && (
-                <SectionBox variant="highlighted" borderColor="green.200">
+                <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaCheckCircle}
-                    iconColor="green.600"
                     title="NOP Pest Identification & Threshold Traceability"
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Required documentation for NOP organic certification: pest identification verification and action threshold rationale (7 CFR 205.206)."
@@ -1481,13 +1472,11 @@ const PestManagementTab = forwardRef(
               {/* Phase 2: Universal Field Details - variety, block_id for traceability */}
               {/* NOTE: growth_stage omitted here — PestManagement already has crop_growth_stage */}
               {/* in "Agricultural Context & Conditions" with IPM-specific stage choices */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="teal.500"
                   title={intl.formatMessage({ id: 'fieldDetails.title' })}
                   badge={intl.formatMessage({ id: 'fieldDetails.badge' })}
-                  badgeColorScheme="teal"
                   description={intl.formatMessage({ id: 'fieldDetails.description' })}
                 />
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -1514,10 +1503,9 @@ const PestManagementTab = forwardRef(
 
               {/* Transparency Notes & Observations */}
               {/* Standardized: Always visible (matches ChemicalTab pattern - observations section stays visible in summary mode) */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.500"
                   title="Farmer's Field Notes & Consumer Transparency"
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />

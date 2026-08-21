@@ -187,7 +187,14 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
   const menuBg = useColorModeValue('white', 'gray.800');
   const menuBorder = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.700', 'gray.200');
-  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
+  /*
+   * gray.600, not gray.500 — because of `unreadBg` below.
+   *
+   * gray.500 measures 4.61 on white, which is fine, but an UNREAD row is painted green.50 and
+   * there it drops to 4.48 — under the floor on precisely the notifications the user is meant
+   * to read. gray.600 clears every ground this dropdown uses (6.19 white / 6.02 green.50).
+   */
+  const mutedTextColor = useColorModeValue('gray.600', 'gray.400');
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
   const unreadBg = useColorModeValue('green.50', 'gray.700');
 

@@ -16,18 +16,21 @@ import {
   HStack,
   Icon,
   IconButton,
-  Input,
-  Select,
   SimpleGrid,
   Text,
-  Textarea,
   VStack,
   useToast
 } from '@chakra-ui/react';
 import { FaFileSignature, FaPlus, FaTrash } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import {
   LandownerAffidavit,
   YearHistoryRow,
@@ -312,7 +315,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Prior Manager / Owner Name'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={form.previous_manager_name}
                   onChange={(e) => set('previous_manager_name', e.target.value)}
                 />
@@ -324,7 +327,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Prior Manager Phone'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={form.previous_manager_phone}
                   onChange={(e) => set('previous_manager_phone', e.target.value)}
                 />
@@ -336,7 +339,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Prior Manager Address'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={form.previous_manager_address}
                   onChange={(e) => set('previous_manager_address', e.target.value)}
                 />
@@ -353,7 +356,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Landowner Name (if different from manager)'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={form.landowner_name}
                   onChange={(e) => set('landowner_name', e.target.value)}
                 />
@@ -365,7 +368,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Landowner Phone'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={form.landowner_phone}
                   onChange={(e) => set('landowner_phone', e.target.value)}
                 />
@@ -377,7 +380,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Landowner Address'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={form.landowner_address}
                   onChange={(e) => set('landowner_address', e.target.value)}
                 />
@@ -389,7 +392,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Field Name'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={form.field_name}
                   onChange={(e) => set('field_name', e.target.value)}
                 />
@@ -401,7 +404,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Field Acres'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   type="number"
                   min={0}
                   value={form.field_acres}
@@ -415,7 +418,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Date of Last Prohibited Material'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   type="date"
                   value={form.last_prohibited_date}
                   onChange={(e) => set('last_prohibited_date', e.target.value)}
@@ -433,7 +436,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Materials Applied During Their Management?'
                   })}
                 </FormLabel>
-                <Select
+                <StandardSelect
                   value={form.no_materials_applied}
                   onChange={(e) => set('no_materials_applied', e.target.value)}>
                   <option value="">
@@ -454,7 +457,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                       defaultMessage: 'Materials were applied — listed below'
                     })}
                   </option>
-                </Select>
+                </StandardSelect>
               </FormControl>
               <FormControl>
                 <FormLabel fontSize="sm">
@@ -463,7 +466,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Managed This Land From'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   type="date"
                   value={form.management_period_start}
                   onChange={(e) => set('management_period_start', e.target.value)}
@@ -476,7 +479,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Managed This Land Until'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   type="date"
                   value={form.management_period_end}
                   onChange={(e) => set('management_period_end', e.target.value)}
@@ -489,7 +492,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Legal Land Description'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={form.parcel_legal_description}
                   onChange={(e) => set('parcel_legal_description', e.target.value)}
                   placeholder={intl.formatMessage({
@@ -505,7 +508,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Prior Manager Signed Date'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   type="date"
                   value={form.previous_manager_signed_date}
                   onChange={(e) => set('previous_manager_signed_date', e.target.value)}
@@ -518,7 +521,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     defaultMessage: 'Landowner Signed Date (if different)'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   type="date"
                   value={form.landowner_signed_date}
                   onChange={(e) => set('landowner_signed_date', e.target.value)}
@@ -548,8 +551,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
             <VStack spacing={2} align="stretch">
               {form.yearly_history.map((row, idx) => (
                 <SimpleGrid key={idx} columns={{ base: 1, md: 4 }} spacing={2}>
-                  <Input
-                    size="sm"
+                  <StandardInput
                     placeholder={intl.formatMessage({
                       id: 'parcel.affidavit.yearHistory.year',
                       defaultMessage: 'Year'
@@ -557,8 +559,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     value={String(row.year ?? '')}
                     onChange={(e) => updateYearRow(idx, 'year', e.target.value)}
                   />
-                  <Input
-                    size="sm"
+                  <StandardInput
                     placeholder={intl.formatMessage({
                       id: 'parcel.affidavit.yearHistory.landUse',
                       defaultMessage: 'Land use'
@@ -566,8 +567,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     value={row.land_use || ''}
                     onChange={(e) => updateYearRow(idx, 'land_use', e.target.value)}
                   />
-                  <Input
-                    size="sm"
+                  <StandardInput
                     placeholder={intl.formatMessage({
                       id: 'parcel.affidavit.yearHistory.inputs',
                       defaultMessage: 'Inputs applied'
@@ -576,8 +576,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     onChange={(e) => updateYearRow(idx, 'inputs', e.target.value)}
                   />
                   <HStack spacing={1}>
-                    <Input
-                      size="sm"
+                    <StandardInput
                       placeholder={intl.formatMessage({
                         id: 'parcel.affidavit.yearHistory.appliedBy',
                         defaultMessage: 'Applied by'
@@ -588,8 +587,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                     {/* USDA asks Material / Manufacturer / Date Applied as separate
                         columns. `inputs` above is the material; a 36-month eligibility
                         check needs the date, which it has never carried. */}
-                    <Input
-                      size="sm"
+                    <StandardInput
                       placeholder={intl.formatMessage({
                         id: 'parcel.affidavit.yearHistory.manufacturer',
                         defaultMessage: 'Manufacturer'
@@ -597,8 +595,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                       value={row.manufacturer || ''}
                       onChange={(e) => updateYearRow(idx, 'manufacturer', e.target.value)}
                     />
-                    <Input
-                      size="sm"
+                    <StandardInput
                       type="date"
                       aria-label={intl.formatMessage({
                         id: 'parcel.affidavit.yearHistory.dateApplied',
@@ -629,7 +626,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
                   defaultMessage: 'Attestation (leave blank to use the standard wording)'
                 })}
               </FormLabel>
-              <Textarea
+              <StandardTextarea
                 rows={2}
                 value={form.attestation_text}
                 onChange={(e) => set('attestation_text', e.target.value)}
@@ -644,7 +641,7 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
               <FormLabel fontSize="sm">
                 {intl.formatMessage({ id: 'parcel.affidavit.notes', defaultMessage: 'Notes' })}
               </FormLabel>
-              <Textarea
+              <StandardTextarea
                 rows={2}
                 value={form.notes}
                 onChange={(e) => set('notes', e.target.value)}

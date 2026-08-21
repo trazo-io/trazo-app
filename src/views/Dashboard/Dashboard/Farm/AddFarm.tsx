@@ -325,7 +325,10 @@ function AddFarm({ isEdit = false }: Props) {
     // Was a bare Flex + CircularProgress with no page wrapper, so the title and the Back
     // button vanished while the fetch was in flight and the layout jumped when it landed.
     return (
-      <StandardPage title="Edit Farm" showBackButton onBack={handleCancel}>
+      <StandardPage
+        title={intl.formatMessage({ id: 'farm.form.page.editTitle' })}
+        showBackButton
+        onBack={handleCancel}>
         <StandardPageLoading />
       </StandardPage>
     );

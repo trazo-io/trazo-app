@@ -15,7 +15,6 @@ import {
   Box,
   HStack,
   Icon,
-  Input,
   InputGroup,
   InputRightElement,
   Link,
@@ -41,6 +40,7 @@ import {
   type CertifierAccessLink
 } from 'store/api/certifierLinkApi';
 import OperationReadinessPanel from './OperationReadinessPanel';
+import { formatDateOnly } from 'utils/dateOnly';
 import {
   ComplianceExportsUpsell,
   useComplianceExports
@@ -84,8 +84,8 @@ const periodDates = (choice: PeriodChoice): { period_start?: string; period_end?
   return {};
 };
 
-const formatDate = (value?: string | null) =>
-  value ? new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' }) : null;
+// Byte-identical twin of the CertifierReview helper; same DateField inputs, same one-day shift.
+const formatDate = (value?: string | null) => formatDateOnly(value) ?? null;
 
 // Access-log rows need the time as well as the date: two opens on the same afternoon are a
 // certifier working through the records, which a date alone flattens into one indistinguishable
@@ -411,13 +411,10 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                 </HStack>
 
                 <InputGroup size="sm">
-                  <Input
+                  <StandardInput
                     value={reviewUrl(link.token)}
                     isReadOnly
-                    fontSize="xs"
                     pr="2.5rem"
-                    bg="gray.50"
-                    borderColor="gray.200"
                     color="gray.600"
                   />
                   <InputRightElement>

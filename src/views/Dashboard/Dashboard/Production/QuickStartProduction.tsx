@@ -12,7 +12,6 @@ import {
   Icon,
   Badge,
   useToast,
-  Input,
   InputGroup,
   InputLeftElement,
   Switch,
@@ -885,6 +884,31 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     onTemplateClose();
   };
 
+  /**
+   * Undo a template choice.
+   *
+   * There was no way back. "Change" only swapped one template for another, and the picker's
+   * footer read "Cancel" once something was selected — which closes and KEEPS it. The only
+   * code path that cleared the selection fired when the crop type changed, so a farmer who
+   * picked a 25-practice plan by mistake had to switch crops and switch back, losing the
+   * autofilled production details on the way.
+   *
+   * Clearing the plan only. The name, dates and area the farmer typed are theirs and survive.
+   */
+  const handleTemplateRemove = () => {
+    setSelectedTemplate(null);
+    setSelectedTemplateId(null);
+    setPlanSuggestions([]);
+    onTemplateClose();
+    toast({
+      title: intl.formatMessage({ id: 'quickStart.templates.removed' }),
+      description: intl.formatMessage({ id: 'quickStart.templates.removedDetail' }),
+      status: 'info',
+      duration: 4000,
+      isClosable: true
+    });
+  };
+
   const handleSuggestionToggle = (eventId: string) => {
     setPlanSuggestions((events) =>
       events.map((event) => (event.id === eventId ? { ...event, enabled: !event.enabled } : event))
@@ -1068,7 +1092,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
     return (
       <StandardPage title={intl.formatMessage({ id: 'quickStart.page.titleEdit' })} showBackButton>
         <VStack py={8} spacing={4}>
-          <Text color="red.500" fontWeight="bold">
+          <Text color="red.700" fontWeight="bold">
             {intl.formatMessage({ id: 'quickStart.error.loadTitle' })}
           </Text>
           <Text color="gray.600">
@@ -1210,37 +1234,63 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                             <HStack spacing={2} mt={1}>
                               <Badge
                                 variant={
-                                  selectedTemplate?.system_type === 'organic'
-                                    ? 'subtle'
-                                    : 'neutral'
+                                  selectedTemplate?.system_type === 'organic' ? 'subtle' : 'neutral'
                                 }
                                 textTransform="none">
                                 {intl.formatMessage({
                                   id: `production.templateModal.approach.${
                                     selectedTemplate?.system_type || 'conventional'
                                   }`,
-                                  defaultMessage:
-                                    selectedTemplate?.system_type || 'conventional'
+                                  defaultMessage: selectedTemplate?.system_type || 'conventional'
                                 })}
                               </Badge>
                             </HStack>
                           </VStack>
-                          <StandardButton size="sm" variant="outline" onClick={onTemplateOpen}>
-                            {intl.formatMessage({ id: 'quickStart.templates.change' })}
-                          </StandardButton>
+                          <HStack spacing={2}>
+                            <StandardButton size="sm" variant="outline" onClick={onTemplateOpen}>
+                              {intl.formatMessage({ id: 'quickStart.templates.change' })}
+                            </StandardButton>
+                            <StandardButton
+                              size="sm"
+                              variant="ghost"
+                              onClick={handleTemplateRemove}>
+                              {intl.formatMessage({ id: 'quickStart.templates.remove' })}
+                            </StandardButton>
+                          </HStack>
                         </HStack>
                       </Box>
                     ) : (
+                      // 2026-08-21: this was a bare <Box onClick> — cursor:pointer and nothing
+                      // else. It is the ONLY way into the season-plan picker, so a farmer on a
+                      // keyboard or a screen reader could not start a planned season at all,
+                      // while the template cards inside the modal (below) already carry
+                      // role/tabIndex/onKeyDown. Same treatment here.
                       <Box
+                        as="button"
+                        type="button"
+                        w="full"
+                        textAlign="left"
                         p={4}
                         bg="green.50"
                         borderRadius="lg"
                         borderWidth="2px"
                         borderColor="green.200"
-                        cursor="pointer"
+                        cursor={selectedCropTypeId ? 'pointer' : 'not-allowed'}
                         transition="all 0.2s"
-                        _hover={{ bg: 'green.100', borderColor: 'green.300' }}
+                        _hover={
+                          selectedCropTypeId
+                            ? { bg: 'green.100', borderColor: 'green.300' }
+                            : undefined
+                        }
                         onClick={selectedCropTypeId ? onTemplateOpen : undefined}
+                        disabled={!selectedCropTypeId}
+                        aria-disabled={!selectedCropTypeId}
+                        aria-haspopup="dialog"
+                        aria-label={intl.formatMessage({
+                          id: selectedCropTypeId
+                            ? 'quickStart.templates.selectPrompt'
+                            : 'quickStart.templates.selectCropFirst'
+                        })}
                         opacity={selectedCropTypeId ? 1 : 0.6}>
                         <HStack spacing={3}>
                           <Icon as={FaRocket} color="green.500" boxSize={6} />
@@ -1533,46 +1583,8 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     </StandardField>
                   </GridItem>
                 </Grid>
-
-                {/* Action Buttons - only show here in edit mode (no events section below) */}
-                {isEdit && (
-                  <HStack spacing={3} justify="flex-end" pt={4}>
-                    <StandardButton
-                      variant="outline"
-                      onClick={() =>
-                        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
-                      }>
-                      Cancel
-                    </StandardButton>
-                    <StandardButton
-                      type="submit"
-                      isLoading={isUpdating}
-                      loadingText={intl.formatMessage({ id: 'quickStart.action.updating' })}
-                      leftIcon={<FaCheckCircle />}>
-                      {intl.formatMessage({ id: 'quickStart.action.update' })}
-                    </StandardButton>
-                  </HStack>
-                )}
               </VStack>
             </StandardCard>
-
-            {/* Fallback action buttons when no template events in create mode */}
-            {!isEdit && planSuggestions.length === 0 && (
-              <HStack spacing={3} justify="flex-end" pt={4}>
-                <StandardButton
-                  variant="outline"
-                  onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
-                  Cancel
-                </StandardButton>
-                <StandardButton
-                  type="submit"
-                  isLoading={isCreating}
-                  loadingText={intl.formatMessage({ id: 'quickStart.action.creating' })}
-                  leftIcon={<FaRocket />}>
-                  {intl.formatMessage({ id: 'quickStart.action.start' })}
-                </StandardButton>
-              </HStack>
-            )}
 
             {/* Pre-configured Events - Only show in create mode.
                 No `data-tour` here any more: this block appears only AFTER a template has been
@@ -1625,79 +1637,145 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     </HStack>
                   </HStack>
                   <VStack spacing={4} align="stretch">
-                    {planSuggestions.map((event) => (
-                      <Box
-                        key={event.id}
-                        p={4}
-                        bg={event.enabled ? 'gray.50' : 'gray.100'}
-                        borderRadius="md"
-                        borderWidth="1px"
-                        borderColor={event.enabled ? 'gray.200' : 'gray.300'}
-                        opacity={event.enabled ? 1 : 0.6}>
-                        <HStack justify="space-between" mb={2}>
-                          <HStack>
-                            <Switch
-                              isChecked={event.enabled}
-                              onChange={() => handleSuggestionToggle(event.id)}
-                              colorScheme="green"
-                            />
-                            <VStack align="start" spacing={0}>
-                              <Text fontWeight="bold">{event.name}</Text>
-                              <Text fontSize="sm" color="gray.600">
-                                {event.frequency}
-                              </Text>
-                            </VStack>
-                          </HStack>
-                          {/* A date picker used to sit here, pre-filled with the 15th of the
+                    {planSuggestions.map((event) => {
+                      // 2026-08-21: crop templates are generic, so an ORGANIC carrot season was
+                      // offered "Herbicide Application" and "Fungicide Treatment" as ordinary
+                      // suggestions — no badge, no disabled toggle, nothing. Ticking one counted
+                      // it in "n of 14 practices on your plan" and then the server dropped it
+                      // (season_plan_service.is_prohibited_suggestion), so the count the farmer
+                      // read was never the plan they got. The server rule is the rule; the row
+                      // has to say so rather than let them toggle a thing that cannot happen.
+                      const prohibited = isProhibitedSuggestion(
+                        event,
+                        watchedProductionMethod || farmDefaultMethod || ''
+                      );
+                      return (
+                        <Box
+                          key={event.id}
+                          p={4}
+                          bg={event.enabled ? 'gray.50' : 'gray.100'}
+                          borderRadius="md"
+                          borderWidth="1px"
+                          borderColor={event.enabled ? 'gray.200' : 'gray.300'}
+                          opacity={event.enabled ? 1 : 0.6}>
+                          <HStack justify="space-between" mb={2}>
+                            <HStack>
+                              <Switch
+                                isChecked={event.enabled && !prohibited}
+                                isDisabled={prohibited}
+                                onChange={() => handleSuggestionToggle(event.id)}
+                                colorScheme="green"
+                              />
+                              <VStack align="start" spacing={0}>
+                                <HStack spacing={2}>
+                                  <Text fontWeight="bold">{event.name}</Text>
+                                  {prohibited && (
+                                    <Badge variant="warning" fontSize="xs" textTransform="none">
+                                      {intl.formatMessage({
+                                        id: 'quickStart.plan.prohibitedBadge'
+                                      })}
+                                    </Badge>
+                                  )}
+                                </HStack>
+                                <Text fontSize="sm" color="gray.600">
+                                  {prohibited
+                                    ? intl.formatMessage({ id: 'quickStart.plan.prohibitedHelp' })
+                                    : event.frequency}
+                                </Text>
+                              </VStack>
+                            </HStack>
+                            {/* A date picker used to sit here, pre-filled with the 15th of the
                               window's first month, and the row was saved as a dated record.
                               Nothing on a plan carries a day: the operator supplies the real
                               date when they log the activity. A CO2e estimate was here too —
                               an emissions figure for something that has not happened yet. */}
-                          <VStack align="end" spacing={0}>
-                            <Text fontSize="xs" color="gray.500">
-                              {intl.formatMessage({ id: 'quickStart.plan.expectedWindow' })}
-                            </Text>
-                            <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                              {event.timing ||
-                                intl.formatMessage({ id: 'quickStart.plan.windowAsNeeded' })}
-                            </Text>
-                          </VStack>
-                        </HStack>
-                        {event.efficiency_tips && (
-                          <Box mt={2} p={2} bg="gray.50" borderRadius="sm">
-                            <Text fontSize="xs" fontWeight="medium" color="gray.700" mb={1}>
-                              {intl.formatMessage({ id: 'quickStart.events.efficiencyTips' })}
-                            </Text>
-                            <Text fontSize="xs" color="gray.600">
-                              <Icon as={FaCheckCircle} color="green.400" mr={1} />
-                              {event.efficiency_tips}
-                            </Text>
-                          </Box>
-                        )}
-                      </Box>
-                    ))}
+                            <VStack align="end" spacing={0}>
+                              <Text fontSize="xs" color="gray.500">
+                                {intl.formatMessage({ id: 'quickStart.plan.expectedWindow' })}
+                              </Text>
+                              <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                                {event.timing ||
+                                  intl.formatMessage({ id: 'quickStart.plan.windowAsNeeded' })}
+                              </Text>
+                            </VStack>
+                          </HStack>
+                          {event.efficiency_tips && (
+                            <Box mt={2} p={2} bg="gray.50" borderRadius="sm">
+                              <Text fontSize="xs" fontWeight="medium" color="gray.700" mb={1}>
+                                {intl.formatMessage({ id: 'quickStart.events.efficiencyTips' })}
+                              </Text>
+                              <Text fontSize="xs" color="gray.600">
+                                <Icon as={FaCheckCircle} color="green.400" mr={1} />
+                                {event.efficiency_tips}
+                              </Text>
+                            </Box>
+                          )}
+                        </Box>
+                      );
+                    })}
                   </VStack>
-
-                  {/* Action Buttons - inside last card for create mode */}
-                  <HStack spacing={3} justify="flex-end" pt={4}>
-                    <StandardButton
-                      variant="outline"
-                      onClick={() =>
-                        navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)
-                      }>
-                      Cancel
-                    </StandardButton>
-                    <StandardButton
-                      type="submit"
-                      isLoading={isCreating || isUpdating}
-                      loadingText={intl.formatMessage({ id: 'quickStart.action.creating' })}
-                      leftIcon={<FaRocket />}>
-                      {intl.formatMessage({ id: 'quickStart.action.start' })}
-                    </StandardButton>
-                  </HStack>
                 </StandardCard>
               </Box>
             )}
+            {/*
+              ONE action bar, pinned to the bottom of the viewport.
+
+              There were THREE action rows before — edit-mode, a create-mode "fallback" for when
+              no template was chosen, and a third nested INSIDE the season-plan card. Which one
+              you got depended on `planSuggestions.length`, so choosing a template did not just
+              lengthen the page, it MOVED the commit button.
+
+              MEASURED at 375x667 with the 25-practice apple template: the page ran 9,630px and
+              "Start Production" sat at y=9,388 — about fourteen screens down. On 1800x1000 it
+              was 5.7 screens. The plan list is data-dependent (22 practices organic, 25
+              conventional, other crops differ), so the distance is unbounded from the farmer's
+              side. A commit control cannot live at the end of a list whose length is data.
+            */}
+            {/* Spacer so the last card is never hidden behind the fixed bar. */}
+            <Box h="72px" aria-hidden="true" />
+            {/*
+              `fixed`, not `sticky`, and that is not a preference.
+              MEASURED: `.trazo-main-panel` (components/Layout/MainPanel.tsx) sets
+              `overflowY="auto"` with `maxHeight="100%"`, so it sizes to its content and never
+              scrolls — scrollHeight === clientHeight === 9671 here, the WINDOW is the scroller.
+              But an overflow value other than `visible` still makes it the sticky containing
+              scrollport, so `position: sticky` on any descendant never engages. Flipping it is
+              not safe either: `overflowX="hidden"` forces the other axis to compute non-visible,
+              and that clamp is what keeps wide tables from scrolling the page sideways.
+              `left` tracks the sidebar the same way MainPanel does, via --sidebar-width at xl.
+            */}
+            <Box
+              position="fixed"
+              bottom={0}
+              right={0}
+              left={{ base: 0, xl: 'var(--sidebar-width, 275px)' }}
+              zIndex={10}
+              py={3}
+              px={{ base: 3, md: 6 }}
+              bg="white"
+              borderTopWidth="1px"
+              borderColor="gray.200">
+              <HStack spacing={3} justify="flex-end">
+                <StandardButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
+                  {intl.formatMessage({ id: 'app.cancel' })}
+                </StandardButton>
+                <StandardButton
+                  type="submit"
+                  size="sm"
+                  isLoading={isCreating || isUpdating}
+                  loadingText={intl.formatMessage({
+                    id: isEdit ? 'quickStart.action.updating' : 'quickStart.action.creating'
+                  })}
+                  leftIcon={isEdit ? <FaCheckCircle /> : <FaRocket />}>
+                  {intl.formatMessage({
+                    id: isEdit ? 'quickStart.action.update' : 'quickStart.action.start'
+                  })}
+                </StandardButton>
+              </HStack>
+            </Box>
           </VStack>
         </form>
 
@@ -1740,13 +1818,20 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                farmer who opened the picker and wants none of these templates had no obvious
                way out. With a template already applied, closing keeps it, and "Cancel" is
                right; with none, closing means starting the season without one. */
-            <StandardButton variant="ghost" onClick={onTemplateClose}>
-              {intl.formatMessage({
-                id: selectedTemplate
-                  ? 'app.cancel'
-                  : 'production.templateModal.continueWithout'
-              })}
-            </StandardButton>
+            <HStack spacing={2}>
+              {/* With a template applied, "Cancel" closes and KEEPS it — so this was a picker
+                  you could enter but not leave empty-handed. The remove action is the way out. */}
+              {selectedTemplate && (
+                <StandardButton variant="ghost" onClick={handleTemplateRemove}>
+                  {intl.formatMessage({ id: 'quickStart.templates.remove' })}
+                </StandardButton>
+              )}
+              <StandardButton variant="ghost" onClick={onTemplateClose}>
+                {intl.formatMessage({
+                  id: selectedTemplate ? 'app.cancel' : 'production.templateModal.continueWithout'
+                })}
+              </StandardButton>
+            </HStack>
           }>
           {filteredTemplates.length > 0 ? (
             <Grid templateColumns="repeat(auto-fit, minmax(min(320px, 100%), 1fr))" gap={6}>

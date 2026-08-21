@@ -150,7 +150,7 @@ const MemberRow = (props: MemberRowProps) => {
               </Flex>
             </MenuItem>
             <MenuItem py={3} onClick={() => {}} _hover={{ bg: 'red.50' }} borderRadius="lg" mx={2}>
-              <Flex color="red.500" cursor="pointer" align="center">
+              <Flex color="red.700" cursor="pointer" align="center">
                 <Text fontSize="sm" fontWeight="medium">
                   {intl.formatMessage({ id: 'app.delete' })}
                 </Text>

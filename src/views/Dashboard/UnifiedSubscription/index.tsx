@@ -31,11 +31,6 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   VStack,
   HStack,
   AlertTitle,
@@ -54,14 +49,18 @@ import {
   List,
   ListItem,
   ListIcon,
-  Input,
   FormControl,
   FormLabel
 } from '@chakra-ui/react';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
-import { StandardCard, StandardPage } from 'components/Design/StandardComponents';
+import {
+  StandardCard,
+  StandardPage,
+  StandardNumberInput,
+  StandardInput
+} from 'components/Design/StandardComponents';
 import {
   FaBuilding,
   FaMapMarkedAlt,
@@ -2018,7 +2017,7 @@ function UnifiedSubscriptionDashboard() {
                 <FormLabel fontSize="sm">
                   {intl.formatMessage({ id: 'subscription.email' })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   type="email"
                   value={billingForm.contact_email}
                   onChange={(e) =>
@@ -2031,7 +2030,7 @@ function UnifiedSubscriptionDashboard() {
                 <FormLabel fontSize="sm">
                   {intl.formatMessage({ id: 'subscription.phone' })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   type="tel"
                   value={billingForm.contact_phone}
                   onChange={(e) =>
@@ -2044,7 +2043,7 @@ function UnifiedSubscriptionDashboard() {
                 <FormLabel fontSize="sm">
                   {intl.formatMessage({ id: 'subscription.taxId' })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={billingForm.fiscal_id}
                   onChange={(e) => setBillingForm({ ...billingForm, fiscal_id: e.target.value })}
                   placeholder="EIN / Tax ID"
@@ -2174,17 +2173,12 @@ function UnifiedSubscriptionDashboard() {
                 </Box>
                 <Box>
                   <Text mb={2}>{intl.formatMessage({ id: 'app.quantity' })}</Text>
-                  <NumberInput
+                  <StandardNumberInput
                     value={addonQuantity}
                     min={1}
                     max={100}
-                    onChange={(valueString) => setAddonQuantity(parseInt(valueString) || 1)}>
-                    <NumberInputField />
-                    <NumberInputStepper>
-                      <NumberIncrementStepper />
-                      <NumberDecrementStepper />
-                    </NumberInputStepper>
-                  </NumberInput>
+                    onChange={(valueString) => setAddonQuantity(parseInt(valueString) || 1)}
+                  />
                 </Box>
                 <Box>
                   <Text color="gray.600" fontSize="sm">

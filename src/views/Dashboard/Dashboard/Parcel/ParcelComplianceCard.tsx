@@ -20,7 +20,12 @@ import { FaExternalLinkAlt, FaShieldAlt } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 
-import { StandardButton, StandardCard, StandardField } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardField,
+  StandardInput
+} from 'components/Design/StandardComponents';
 import { useUpdateParcelComplianceMutation } from 'store/api/productApi';
 
 interface BufferRow {
@@ -251,7 +256,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
                 id: 'parcel.pump.efficiency',
                 defaultMessage: 'Pump Efficiency (%)'
               })}>
-              <Input
+              <StandardInput
                 type="number"
                 min={0}
                 max={100}
@@ -266,7 +271,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
                 id: 'parcel.pump.pressure',
                 defaultMessage: 'System Pressure (PSI)'
               })}>
-              <Input
+              <StandardInput
                 type="number"
                 min={0}
                 value={pump.system_pressure_psi}
@@ -280,7 +285,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
                 id: 'parcel.pump.testDate',
                 defaultMessage: 'Pump Test Date'
               })}>
-              <Input
+              <StandardInput
                 type="date"
                 value={pump.pump_test_date}
                 isDisabled={!canWrite}
@@ -292,7 +297,7 @@ const ParcelComplianceCard: React.FC<Props> = ({
                 id: 'parcel.pump.provider',
                 defaultMessage: 'Test Provider'
               })}>
-              <Input
+              <StandardInput
                 value={pump.pump_test_provider}
                 isDisabled={!canWrite}
                 onChange={(e) => setPumpField('pump_test_provider', e.target.value)}

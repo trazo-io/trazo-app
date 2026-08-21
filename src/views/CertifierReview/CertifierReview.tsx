@@ -45,6 +45,7 @@ import { useParams } from 'react-router-dom';
 
 import { StandardButton } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
+import { formatDateOnly } from 'utils/dateOnly';
 
 interface ReviewMetadata {
   operation_name: string;
@@ -77,8 +78,11 @@ interface ReadinessResponse {
   total_productions: number;
 }
 
-const formatDate = (value?: string | null) =>
-  value ? new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' }) : null;
+// This page is read by a CERTIFIER. `period_start` / `period_end` are DateFields arriving as
+// "2025-01-01", and `new Date("2025-01-01")` is UTC midnight in JS, so the review window was
+// shown as starting Dec 31, 2024. The dossier PDF linked from this same page prints the
+// correct day, so the two disagreed in front of the certifier.
+const formatDate = (value?: string | null) => formatDateOnly(value) ?? null;
 
 function findingStyle(status: ReadinessFinding['status']) {
   return status === 'FAIL'

@@ -72,3 +72,21 @@ export function formatDateFromTimestamp(
   if (Number.isNaN(d.getTime())) return null;
   return d.toLocaleDateString(locale, { ...options, timeZone: 'UTC' });
 }
+
+/** Now as `YYYY-MM-DDTHH:mm` in the VIEWER's timezone, for seeding a `datetime-local` input.
+ *
+ *  `new Date().toISOString().slice(0, 16)` is the UTC wall clock, but a `datetime-local` input
+ *  is interpreted by the browser as LOCAL wall clock — so seeding one with the other pre-fills
+ *  the wrong time, and past the offset, the wrong DAY. A UTC-3 grower logging at 22:00 on
+ *  14 March was handed "15 March, 01:00": tomorrow, for work done tonight. That date is then
+ *  stored as the activity date on a § 205.103 record.
+ *
+ *  Sibling of `todayLocalISODate`, which fixed the same defect for date-only inputs. */
+export function nowLocalDateTimeInput(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}` +
+    `T${pad(now.getHours())}:${pad(now.getMinutes())}`
+  );
+}

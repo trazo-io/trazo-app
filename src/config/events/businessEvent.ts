@@ -25,6 +25,7 @@ const BUSINESS_TYPE_LABELS: Record<string, string> = {
 const CERTIFICATION_TYPE_LABELS: Record<string, string> = {
   organic_usda: 'USDA Organic',
   regenerative: 'Regenerative Organic Certified (ROC)',
+  real_organic: 'Real Organic Project (ROP)',
   cng: 'Certified Naturally Grown (CNG)',
   certified_naturally_grown: 'Certified Naturally Grown (CNG)',
   non_gmo: 'Non-GMO Project Verified',
@@ -119,7 +120,14 @@ const BUSINESS_FIELDS: readonly FieldConfig<unknown, BusinessData>[] = [
     name: 'verified_certifier_name',
     labelKey: 'events.business.fields.certifierName',
     valueType: 'string',
-    visibleForSubtypes: ['CE'],
+    // 'CE' only until 2026-08-20, so an INSPECTION (IN) hid the issuer even where one is
+    // publishable. An inspection is carried out by a body exactly as a certification is.
+    //
+    // ⚠️ On the CONSUMER surface this stays null unless a USDA Organic Integrity Database match
+    // backs it — `public_certifier_name()` in history/serializers.py withholds farmer-typed
+    // certifier names deliberately, and that is correct. This widening matters for the producer
+    // and modal surfaces; the consumer copy was fixed separately to stop promising the issuer.
+    visibleForSubtypes: ['CE', 'IN'],
     requiresVerificationBadge: true,
     surfaces: {
       modal: 'immediate',
@@ -131,7 +139,9 @@ const BUSINESS_FIELDS: readonly FieldConfig<unknown, BusinessData>[] = [
     name: 'certificate_number',
     labelKey: 'events.business.fields.certificateNumber',
     valueType: 'string',
-    visibleForSubtypes: ['CE'],
+    // Same reason as verified_certifier_name above: an inspection is carried out against a
+    // certificate, and the consumer copy tells the shopper the number is published here.
+    visibleForSubtypes: ['CE', 'IN'],
     surfaces: {
       modal: 'secondary',
       form: 'secondary',

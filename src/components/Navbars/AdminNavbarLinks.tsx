@@ -193,6 +193,10 @@ export default function HeaderLinks(props: HeaderLinksProps) {
           size="sm"
           px={{ base: 1, md: 2 }}
           minW={0}
+          /* Icon-only: with no text child a screen reader announces just "button". The
+             floating settings puck that was removed on 2026-08-21 carried this label; this is
+             now the ONLY door to the Configurator, so it has to carry it instead. */
+          aria-label={intl.formatMessage({ id: 'nav.openSettings' })}
         />
 
         {/* Notification Dropdown */}

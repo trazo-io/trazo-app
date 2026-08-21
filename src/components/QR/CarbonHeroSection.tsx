@@ -19,7 +19,7 @@ import { keyframes } from '@emotion/react';
 import { motion } from 'framer-motion';
 import { useIntl } from 'react-intl';
 import { FaStar, FaCheckCircle, FaInfoCircle } from 'react-icons/fa';
-import { formatHarvestDate } from 'utils/consumerDisplay';
+import { formatDateRangeForConsumer, formatHarvestDate } from 'utils/consumerDisplay';
 
 const MotionBox = motion(Box);
 const MotionVStack = motion(VStack);
@@ -83,6 +83,8 @@ interface CarbonHeroSectionProps {
   // 2026 hero redesign — optional photo + harvest context
   heroPhotoUrl?: string;
   harvestDate?: string;
+  /** Set only for a multi-pass harvest: the FIRST pass, so the hero can show the window. */
+  harvestDateStart?: string;
   // Claim-safe hero badge inputs. The numeric score + letter grade were
   // removed from the consumer hero (self-created sustainability label —
   // FTC 16 CFR 260.6(d) / EU ECGT exposure). The badge now leads with the
@@ -102,6 +104,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   onLearnMore,
   heroPhotoUrl,
   harvestDate,
+  harvestDateStart,
   certifiedLabel,
   certifierName,
   practicesCount,
@@ -219,7 +222,12 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   // placeholder which feels like a stand-in. Uses formatHarvestDate so
   // date-only strings ("2026-03-18") parse as local, not UTC midnight
   // (which renders as the previous day west of UTC).
-  const formattedHarvest = formatHarvestDate(harvestDate, intl.locale);
+  // See resolveHarvestDates(): `harvestDate` is the LAST harvest pass, and
+  // `harvestDateStart` is set only when the lot came off over more than one day.
+  const formattedHarvest =
+    (harvestDateStart
+      ? formatDateRangeForConsumer(harvestDateStart, harvestDate, intl.locale)
+      : null) ?? formatHarvestDate(harvestDate, intl.locale);
 
   // Consumer review rating — renders only when real reviews exist. Zero
   // reviews shows nothing (no "No ratings yet" placeholder on the hero).

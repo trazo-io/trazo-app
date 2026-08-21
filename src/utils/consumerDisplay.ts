@@ -128,6 +128,101 @@ export const maskPerformerName = (name: string): string => {
  * Returns null for missing/invalid input (callers hide the date rather
  * than show a placeholder).
  */
+/**
+ * The date this lot was actually HARVESTED, taken from the harvest records themselves.
+ *
+ * 🔴 2026-08-20 — the hero and the HARVEST pillar both read `production_period.end`
+ * (equivalently `finish_date`), which is the day the grower CLOSED the season in Trazo, and
+ * labelled it "Harvested {date}". On a real WA Honeycrisp block the two passes came off on
+ * 12 and 19 September and the record was closed on the 22nd, so the page told buyers the
+ * fruit was harvested on a day nothing was picked.
+ *
+ * That is not cosmetic. Harvest date is one of the two facts the HARVEST pillar exists to
+ * give a produce buyer (the other is the lot number), it drives shelf-life and storage
+ * decisions, and it is the field a buyer cross-checks against a packing record — where a
+ * three-day drift reads as a traceability failure in Trazo's own data.
+ *
+ * The harvest events carry the truth and are already on the payload. Prefer them; fall back
+ * to the close date only when a lot has no harvest record at all.
+ *
+ * Multi-pass harvests are the norm in tree fruit and citrus (spot-picking for colour, three
+ * or four picks on lemons), so the range is returned when the passes span more than a day —
+ * a single date would silently pick one pass and hide the rest.
+ */
+/**
+ * A date range for consumers, with the year printed once when both ends share it.
+ *
+ * Locale-aware, unlike the copy of this logic that lived inside ConsumerEventCard and
+ * hardcoded `'en-US'` — which put "Apr 12 - Sep 15, 2025" on a Spanish shopper's summary card
+ * while every other date on the same page read "12 abr 2025".
+ *
+ * Both ends are parsed as LOCAL dates when they are calendar-date strings: "2025-09-12" via
+ * `new Date()` is UTC midnight, which renders as the 11th everywhere in the US.
+ */
+export const formatDateRangeForConsumer = (
+  startDate?: string | null,
+  endDate?: string | null,
+  locale: string = 'en-US'
+): string | null => {
+  if (!startDate || !endDate) return null;
+  const parseLocal = (dateStr: string): Date => {
+    if (dateStr.includes('T')) return new Date(dateStr);
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const start = parseLocal(startDate);
+  const end = parseLocal(endDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+
+  const loc = locale || 'en-US';
+  const dayMonth: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+  const full: Intl.DateTimeFormatOptions = { ...dayMonth, year: 'numeric' };
+
+  const startText =
+    start.getFullYear() === end.getFullYear()
+      ? start.toLocaleDateString(loc, dayMonth)
+      : start.toLocaleDateString(loc, full);
+  return `${startText} – ${end.toLocaleDateString(loc, full)}`;
+};
+
+export const resolveHarvestDates = (
+  timeline?: Array<{ production_type?: string; type?: string; date?: string | null }> | null,
+  fallbackDate?: string | null
+): { first: string | null; last: string | null; isRange: boolean } => {
+  const harvestDates = (timeline || [])
+    .filter((e) => e?.production_type === 'HA' || e?.type === 'HA')
+    .map((e) => e?.date)
+    .filter((d): d is string => Boolean(d))
+    // Sort by INSTANT, not by string. A plain `.sort()` is lexicographic, which only happens
+    // to work while every date on the payload carries the same UTC offset — one row written
+    // as "2025-09-12T23:00:00-08:00" would sort before "2025-09-13T01:00:00+00:00" despite
+    // being the later instant.
+    .map((d) => ({ raw: d, at: new Date(d).getTime() }))
+    .filter((x) => !Number.isNaN(x.at))
+    .sort((a, b) => a.at - b.at)
+    .map((x) => x.raw);
+
+  if (!harvestDates.length) {
+    return { first: fallbackDate ?? null, last: fallbackDate ?? null, isRange: false };
+  }
+
+  const first = harvestDates[0];
+  const last = harvestDates[harvestDates.length - 1];
+  // Compare the days as the READER will see them. Slicing the ISO string compares UTC days,
+  // but every formatter downstream renders in the viewer's local zone, so two passes at
+  // 02:00Z and 20:00Z on the same UTC day are one calendar day apart in California — the
+  // page would then print a single date for what was actually a two-day pick. This is the
+  // calendar-date-as-UTC class that has bitten this codebase before; keep the comparison in
+  // the same frame as the render.
+  const localDay = (iso: string) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime())
+      ? iso.slice(0, 10)
+      : `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  };
+  return { first, last, isRange: localDay(first) !== localDay(last) };
+};
+
 export const formatHarvestDate = (
   dateStr?: string | null,
   locale: string = 'en-US'

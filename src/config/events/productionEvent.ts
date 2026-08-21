@@ -148,13 +148,74 @@ const CONSUMER_HARVEST_GRADE_LABELS: Record<string, string> = {
   organic_premium: 'Organic premium grade'
 };
 
+/**
+ * F5 (2026-08-21) — the USDA grade families, translated for a shopper.
+ *
+ * The grade column now holds real packing-record grades ("U.S. No. 1", "WA Extra Fancy",
+ * "U.S. Commercial") instead of Grade A/B/C. Those must NOT reach a consumer surface as
+ * typed: "U.S. No. 2" reads to a shopper as second-rate food, which is the same reason the
+ * A/B/C labels above were translated rather than printed. A grade is a size-and-appearance
+ * sorting class; it says nothing about how the food eats.
+ */
+const CONSUMER_GRADE_TOP = 'Top size and appearance grade';
+const CONSUMER_GRADE_STANDARD = 'Graded for size and appearance, same quality inside';
+const CONSUMER_GRADE_PROCESSING = 'Grown for juice or processing, same quality inside';
+
+const CONSUMER_GRADE_BUCKETS: Record<string, string> = {
+  'U.S. Extra Fancy': CONSUMER_GRADE_TOP,
+  'U.S. Fancy': CONSUMER_GRADE_TOP,
+  'WA Extra Fancy': CONSUMER_GRADE_TOP,
+  'WA Fancy': CONSUMER_GRADE_TOP,
+  'U.S. Extra No. 1': CONSUMER_GRADE_TOP,
+  'U.S. No. 1': CONSUMER_GRADE_TOP,
+  'U.S. Extra Fancy Table': CONSUMER_GRADE_TOP,
+  'U.S. Fancy Table': CONSUMER_GRADE_TOP,
+  'U.S. No. 1 Table': CONSUMER_GRADE_TOP,
+  'U.S. Grade A': CONSUMER_GRADE_TOP,
+  'U.S. Grade A (Fancy)': CONSUMER_GRADE_TOP,
+  'U.S. Utility': CONSUMER_GRADE_STANDARD,
+  'U.S. Combination': CONSUMER_GRADE_STANDARD,
+  'U.S. Commercial': CONSUMER_GRADE_STANDARD,
+  'U.S. No. 1 Institutional': CONSUMER_GRADE_STANDARD,
+  'U.S. No. 2': CONSUMER_GRADE_STANDARD,
+  'U.S. No. 3': CONSUMER_GRADE_STANDARD,
+  'U.S. No. 4': CONSUMER_GRADE_STANDARD,
+  'U.S. No. 5': CONSUMER_GRADE_STANDARD,
+  'U.S. Grade B': CONSUMER_GRADE_STANDARD,
+  'U.S. Grade B (Choice)': CONSUMER_GRADE_STANDARD,
+  'U.S. Grade C': CONSUMER_GRADE_STANDARD,
+  'U.S. Grade C (Standard)': CONSUMER_GRADE_STANDARD,
+  Processing: CONSUMER_GRADE_PROCESSING,
+  Juice: CONSUMER_GRADE_PROCESSING,
+  'Juice / Processing': CONSUMER_GRADE_PROCESSING,
+  Manufacturing: CONSUMER_GRADE_PROCESSING,
+  'Oil stock': CONSUMER_GRADE_PROCESSING,
+  'U.S. Select Sheller Run': CONSUMER_GRADE_PROCESSING,
+  'U.S. Standard Sheller Run': CONSUMER_GRADE_PROCESSING,
+  'U.S. Sample grade': CONSUMER_GRADE_PROCESSING
+};
+
 // Falls back to a humanized form, never the raw database value — see
 // formatters.humanizeEnumFallback. "manual" rendered as a bare slug on live cards.
 const lookupLabel = (table: Record<string, string>, v: unknown): string | null =>
   lookupEnumLabel(table, v);
 
-const formatConsumerHarvestGrade = (v: unknown): string | null =>
-  lookupLabel(CONSUMER_HARVEST_GRADE_LABELS, v);
+/**
+ * A grade reaches a shopper only if we have a neutral sentence for it.
+ *
+ * Deliberately returns null — hiding the row — for anything unrecognised, instead of falling
+ * back to `humanizeEnumFallback` like every other consumer formatter here. The grade column
+ * now carries a free-text escape for private buyer grades, and a buyer's own word ("Premium",
+ * "Fancy Pack", a packer's house grade) is a marketing claim the moment it appears on a
+ * consumer page. The farmer's record keeps it; the shopper is shown nothing rather than an
+ * unvetted superlative.
+ */
+const formatConsumerHarvestGrade = (v: unknown): string | null => {
+  if (typeof v !== 'string') return null;
+  const raw = v.trim();
+  if (!raw) return null;
+  return CONSUMER_HARVEST_GRADE_LABELS[raw] ?? CONSUMER_GRADE_BUCKETS[raw] ?? null;
+};
 const formatWaterSource = (v: unknown): string | null => lookupLabel(WATER_SOURCE_LABELS, v);
 const formatIrrigationMethod = (v: unknown): string | null =>
   lookupLabel(IRRIGATION_METHOD_LABELS, v);

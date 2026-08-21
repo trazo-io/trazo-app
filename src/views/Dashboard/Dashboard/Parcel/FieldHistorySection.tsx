@@ -14,16 +14,18 @@ import {
   Th,
   Td,
   TableContainer,
-  Select,
-  Textarea,
-  NumberInput,
-  NumberInputField,
-  Input,
   IconButton,
   useToast
 } from '@chakra-ui/react';
 import { FaHistory, FaPlus, FaTrash, FaInfoCircle, FaEdit } from 'react-icons/fa';
-import { StandardCard, StandardButton } from 'components/Design/StandardComponents';
+import {
+  StandardCard,
+  StandardButton,
+  StandardNumberInput,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import {
   useGetParcelCropHistoryQuery,
   useCreateParcelCropHistoryMutation,
@@ -270,22 +272,20 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                     <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
                       YEAR
                     </Text>
-                    <NumberInput
+                    <StandardNumberInput
                       min={1900}
                       max={currentYear}
                       value={form.year}
                       onChange={(val) => setForm((f) => ({ ...f, year: Number(val) }))}
-                      size="sm">
-                      <NumberInputField borderRadius="md" />
-                    </NumberInput>
+                      size="sm"
+                      borderRadius="md"
+                    />
                   </Box>
                   <Box flex={1} minW="140px">
                     <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
                       CROP GROWN
                     </Text>
-                    <Input
-                      size="sm"
-                      borderRadius="md"
+                    <StandardInput
                       placeholder="e.g. Avocado"
                       value={form.crop_grown}
                       onChange={(e) => setForm((f) => ({ ...f, crop_grown: e.target.value }))}
@@ -295,9 +295,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                     <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
                       COVER CROP (OPTIONAL)
                     </Text>
-                    <Input
-                      size="sm"
-                      borderRadius="md"
+                    <StandardInput
                       placeholder="e.g. Bell beans + oats alley cover"
                       value={form.cover_crop}
                       onChange={(e) => setForm((f) => ({ ...f, cover_crop: e.target.value }))}
@@ -314,9 +312,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         defaultMessage: 'BLOCK / ROWS (OPTIONAL)'
                       })}
                     </Text>
-                    <Input
-                      size="sm"
-                      borderRadius="md"
+                    <StandardInput
                       placeholder={intl.formatMessage({
                         id: 'parcel.fieldHistory.blockIdPlaceholder',
                         defaultMessage: 'e.g. Rows 1-40 — only if the field was split'
@@ -329,9 +325,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                     <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
                       METHOD
                     </Text>
-                    <Select
-                      size="sm"
-                      borderRadius="md"
+                    <StandardSelect
                       value={form.production_method}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, production_method: e.target.value }))
@@ -342,16 +336,14 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                           {m.label}
                         </option>
                       ))}
-                    </Select>
+                    </StandardSelect>
                   </Box>
                 </HStack>
                 <Box>
                   <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
                     SUBSTANCES APPLIED
                   </Text>
-                  <Textarea
-                    size="sm"
-                    borderRadius="md"
+                  <StandardTextarea
                     rows={2}
                     placeholder="All inputs applied this year (fertilizers, pesticides, amendments, cover crops)"
                     value={form.substances_applied}
@@ -370,9 +362,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         defaultMessage: 'LAST PROHIBITED INPUT'
                       })}
                     </Text>
-                    <Input
-                      size="sm"
-                      borderRadius="md"
+                    <StandardInput
                       placeholder={intl.formatMessage({
                         id: 'parcel.fieldHistory.lastProhibitedSubstancePlaceholder',
                         defaultMessage: 'e.g. Glyphosate'
@@ -390,10 +380,8 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                         defaultMessage: 'DATE APPLIED'
                       })}
                     </Text>
-                    <Input
-                      size="sm"
+                    <StandardInput
                       type="date"
-                      borderRadius="md"
                       value={form.date_last_prohibited}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, date_last_prohibited: e.target.value }))
@@ -434,8 +422,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                   <VStack align="stretch" spacing={2}>
                     {form.substance_applications.map((row, idx) => (
                       <HStack key={idx} spacing={2}>
-                        <Input
-                          size="sm"
+                        <StandardInput
                           placeholder={intl.formatMessage({
                             id: 'parcel.fieldHistory.material',
                             defaultMessage: 'Product brand name'
@@ -449,8 +436,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                             })
                           }
                         />
-                        <Input
-                          size="sm"
+                        <StandardInput
                           placeholder={intl.formatMessage({
                             id: 'parcel.fieldHistory.manufacturer',
                             defaultMessage: 'Manufacturer'
@@ -464,8 +450,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                             })
                           }
                         />
-                        <Input
-                          size="sm"
+                        <StandardInput
                           // Free text, not a date input: USDA's column is "Date(s)" and
                           // growers write "3/14 and 6/2". One date picker would either drop
                           // applications or invent precision.
@@ -508,9 +493,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                   <Text fontSize="xs" color="gray.500" fontWeight="semibold" mb={1}>
                     NOTES (optional)
                   </Text>
-                  <Textarea
-                    size="sm"
-                    borderRadius="md"
+                  <StandardTextarea
                     rows={2}
                     placeholder="Additional notes"
                     value={form.notes}
@@ -519,7 +502,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
                 </Box>
                 <HStack spacing={2} justify="flex-end">
                   <StandardButton size="sm" variant="ghost" onClick={closeForm}>
-                    Cancel
+                    {intl.formatMessage({ id: 'app.cancel' })}
                   </StandardButton>
                   <StandardButton size="sm" isLoading={isSaving} onClick={handleSave}>
                     {editingId ? 'Update' : 'Save'}

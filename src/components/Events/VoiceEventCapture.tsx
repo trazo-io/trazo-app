@@ -642,7 +642,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     onClick={handleContinueToReview}
                     size="md"
                     flex={1}>
-                    Continue to Review
+                    {intl.formatMessage({ id: 'events.voice.continueToReview' })}
                   </Button>
                   <Button
                     leftIcon={<FaRedo />}

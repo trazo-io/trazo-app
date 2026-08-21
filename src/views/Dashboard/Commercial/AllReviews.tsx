@@ -5,7 +5,6 @@ import {
   useColorModeValue,
   VStack,
   HStack,
-  Select,
   Badge,
   Flex,
   Grid,
@@ -26,7 +25,8 @@ import {
   StandardPage,
   StandardCard,
   StandardButton,
-  StandardSearchInput
+  StandardSearchInput,
+  StandardSelect
 } from 'components/Design/StandardComponents';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useIntl } from 'react-intl';
@@ -160,41 +160,27 @@ const AllReviewsView = () => {
           </Box>
 
           <SimpleGrid columns={{ base: 2, md: 3 }} spacing={{ base: 3, md: 4 }} w="100%">
-            <Select
+            <StandardSelect
               placeholder={intl.formatMessage({ id: 'commercial.allProducts' })}
               value={filters.product_id}
-              onChange={(e) => handleFilterChange('product_id', e.target.value)}
-              borderRadius="lg"
-              bg="white"
-              size="sm"
-              _focus={{
-                borderColor: 'green.400',
-                boxShadow: '0 0 0 1px rgb(72, 187, 120)'
-              }}>
+              onChange={(e) => handleFilterChange('product_id', e.target.value)}>
               {uniqueProducts.map((product) => (
                 <option key={product.id} value={product.id}>
                   {product.name}
                 </option>
               ))}
-            </Select>
+            </StandardSelect>
 
-            <Select
+            <StandardSelect
               placeholder={intl.formatMessage({ id: 'commercial.allRatings' })}
               value={filters.min_rating}
-              onChange={(e) => handleFilterChange('min_rating', e.target.value)}
-              borderRadius="lg"
-              bg="white"
-              size="sm"
-              _focus={{
-                borderColor: 'green.400',
-                boxShadow: '0 0 0 1px rgb(72, 187, 120)'
-              }}>
+              onChange={(e) => handleFilterChange('min_rating', e.target.value)}>
               <option value="5">⭐⭐⭐⭐⭐ (5)</option>
               <option value="4">⭐⭐⭐⭐ (4)</option>
               <option value="3">⭐⭐⭐ (3)</option>
               <option value="2">⭐⭐ (2)</option>
               <option value="1">⭐ (1)</option>
-            </Select>
+            </StandardSelect>
 
             <StandardButton
               variant="outline"
@@ -315,7 +301,7 @@ const AllReviewsView = () => {
             </Flex>
           ) : error ? (
             <Flex justify="center" align="center" py={12}>
-              <Text color="red.500">
+              <Text color="red.700">
                 {intl.formatMessage({ id: 'commercial.errorLoadingReviews' })}
               </Text>
             </Flex>

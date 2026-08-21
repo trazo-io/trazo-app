@@ -13,9 +13,6 @@ import {
   Icon,
   Flex,
   Button,
-  InputGroup,
-  InputLeftElement,
-  InputRightElement,
   useColorModeValue
 } from '@chakra-ui/react';
 import { FaGoogle, FaFacebook, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
@@ -61,6 +58,23 @@ const AppSignIn: React.FC = () => {
     handleSubmit,
     formState: { errors }
   } = useForm<SignInFormData>();
+
+  // Hoisted so the focus-tracking onBlur below can call register()'s own onBlur through
+  // instead of shadowing it (see the comment on the email field).
+  const emailField = register('email', {
+    required: 'Email is required',
+    pattern: {
+      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+      message: 'Invalid email address'
+    }
+  });
+  const passwordField = register('password', {
+    required: 'Password is required',
+    minLength: {
+      value: 8,
+      message: 'Password must be at least 8 characters'
+    }
+  });
 
   const onSubmit = async (data: SignInFormData) => {
     try {
@@ -311,57 +325,29 @@ const AppSignIn: React.FC = () => {
                     mb={2}>
                     {intl.formatMessage({ id: 'auth.signin.emailLabel' })}
                   </Text>
-                  <InputGroup size="lg">
-                    <InputLeftElement pointerEvents="none">
+                  <StandardInput
+                    type="email"
+                    placeholder="Enter your business email"
+                    isInvalid={!!errors.email}
+                    leftElement={
                       <Icon
                         as={FaEnvelope}
                         color={focusedField === 'email' ? 'green.500' : 'gray.400'}
                         transition="all 0.2s"
                       />
-                    </InputLeftElement>
-                    <Box
-                      as="input"
-                      type="email"
-                      placeholder="Enter your business email"
-                      pl="3rem"
-                      w="full"
-                      h="44px"
-                      fontSize="sm"
-                      bg={useColorModeValue('gray.50', 'gray.900')}
-                      border="1px solid"
-                      borderColor={
-                        errors.email
-                          ? 'red.300'
-                          : focusedField === 'email'
-                          ? 'green.600'
-                          : useColorModeValue('gray.200', 'gray.600')
-                      }
-                      borderRadius="xl"
-                      _hover={{
-                        borderColor: errors.email
-                          ? 'red.300'
-                          : useColorModeValue('gray.300', 'gray.500')
-                      }}
-                      _focus={{
-                        outline: 'none',
-                        borderColor: 'green.600',
-                        bg: useColorModeValue('white', 'gray.800'),
-                        boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                      }}
-                      transition="all 0.2s"
-                      {...register('email', {
-                        required: 'Email is required',
-                        pattern: {
-                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: 'Invalid email address'
-                        }
-                      })}
-                      onFocus={() => setFocusedField('email')}
-                      onBlur={() => setFocusedField(null)}
-                    />
-                  </InputGroup>
+                    }
+                    {...emailField}
+                    onFocus={() => setFocusedField('email')}
+                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                      // register()'s own onBlur has to be called through, or react-hook-form
+                      // never marks the field touched and onBlur/onTouched validation modes
+                      // go dead. The previous markup overwrote it.
+                      emailField.onBlur(e);
+                      setFocusedField(null);
+                    }}
+                  />
                   {errors.email && (
-                    <Text fontSize="sm" color="red.500" mt={1}>
+                    <Text fontSize="sm" color="red.700" mt={1}>
                       {errors.email.message}
                     </Text>
                   )}
@@ -376,56 +362,24 @@ const AppSignIn: React.FC = () => {
                     mb={2}>
                     {intl.formatMessage({ id: 'auth.signin.passwordLabel' })}
                   </Text>
-                  <InputGroup size="lg">
-                    <InputLeftElement pointerEvents="none">
+                  <StandardInput
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    isInvalid={!!errors.password}
+                    leftElement={
                       <Icon
                         as={FaLock}
                         color={focusedField === 'password' ? 'green.500' : 'gray.400'}
                         transition="all 0.2s"
                       />
-                    </InputLeftElement>
-                    <Box
-                      as="input"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
-                      pl="3rem"
-                      pr="3rem"
-                      w="full"
-                      h="44px"
-                      fontSize="sm"
-                      bg={useColorModeValue('gray.50', 'gray.900')}
-                      border="1px solid"
-                      borderColor={
-                        errors.password
-                          ? 'red.300'
-                          : focusedField === 'password'
-                          ? 'green.600'
-                          : useColorModeValue('gray.200', 'gray.600')
-                      }
-                      borderRadius="xl"
-                      _hover={{
-                        borderColor: errors.password
-                          ? 'red.300'
-                          : useColorModeValue('gray.300', 'gray.500')
-                      }}
-                      _focus={{
-                        outline: 'none',
-                        borderColor: 'green.600',
-                        bg: useColorModeValue('white', 'gray.800'),
-                        boxShadow: '0 0 0 4px rgba(46, 125, 50, 0.15)'
-                      }}
-                      transition="all 0.2s"
-                      {...register('password', {
-                        required: 'Password is required',
-                        minLength: {
-                          value: 8,
-                          message: 'Password must be at least 8 characters'
-                        }
-                      })}
-                      onFocus={() => setFocusedField('password')}
-                      onBlur={() => setFocusedField(null)}
-                    />
-                    <InputRightElement>
+                    }
+                    {...passwordField}
+                    onFocus={() => setFocusedField('password')}
+                    onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                      passwordField.onBlur(e);
+                      setFocusedField(null);
+                    }}
+                    rightElement={
                       <Button
                         variant="ghost"
                         onClick={() => setShowPassword(!showPassword)}
@@ -446,10 +400,10 @@ const AppSignIn: React.FC = () => {
                           transition="all 0.2s"
                         />
                       </Button>
-                    </InputRightElement>
-                  </InputGroup>
+                    }
+                  />
                   {errors.password && (
-                    <Text fontSize="sm" color="red.500" mt={1}>
+                    <Text fontSize="sm" color="red.700" mt={1}>
                       {errors.password.message}
                     </Text>
                   )}

@@ -167,7 +167,20 @@ export const globalStyles = {
    * defining a second, fainter ring.
    */
   shadows: {
-    outline: '0 0 0 3px #388E3C'
+    outline: '0 0 0 3px #388E3C',
+    /*
+     * Form-control focus halo — deliberately soft, and deliberately NOT the `outline` token.
+     *
+     * The warning above is about a ring that is the ONLY focus indicator: a translucent wash
+     * alone does not carry a 3:1 state change. A form control here is different, because it
+     * also swaps its border gray.200 -> green.600 (1.32 -> 4.12 against the field) and its fill
+     * gray.50 -> white on focus. The border is the indicator and it clears the bar on its own;
+     * this halo is the soft edge around it, which is why it can be 15% green.700 without
+     * repeating button.js's mistake.
+     *
+     * Do not "fix" this to `outline`: a 3px solid ring on a 44px field reads as an error state.
+     */
+    'field-focus': '0 0 0 4px rgba(46, 125, 50, 0.15)'
   },
   styles: {
     global: (props) => ({

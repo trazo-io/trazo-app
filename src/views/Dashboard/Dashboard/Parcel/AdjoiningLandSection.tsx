@@ -26,18 +26,21 @@ import {
   HStack,
   Icon,
   IconButton,
-  Input,
-  Select,
   SimpleGrid,
   Text,
-  Textarea,
   VStack,
   useToast
 } from '@chakra-ui/react';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardInput,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 import {
   AdjoiningLandAffidavit,
   AdjoiningMaterialCode,
@@ -212,11 +215,11 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
   const triSelect = (key: keyof typeof EMPTY_FORM, labelId: string) => (
     <FormControl>
       <FormLabel fontSize="sm">{intl.formatMessage({ id: labelId })}</FormLabel>
-      <Select value={form[key] as TriState} onChange={(e) => set(key, e.target.value)}>
+      <StandardSelect value={form[key] as TriState} onChange={(e) => set(key, e.target.value)}>
         <option value="">{intl.formatMessage({ id: 'parcel.adjoining.tri.unanswered' })}</option>
         <option value="yes">{intl.formatMessage({ id: 'parcel.adjoining.tri.yes' })}</option>
         <option value="no">{intl.formatMessage({ id: 'parcel.adjoining.tri.no' })}</option>
-      </Select>
+      </StandardSelect>
     </FormControl>
   );
 
@@ -302,7 +305,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
                     <FormLabel fontSize="sm">
                       {intl.formatMessage({ id: 'parcel.adjoining.neighborName' })}
                     </FormLabel>
-                    <Input
+                    <StandardInput
                       value={form.neighbor_name}
                       onChange={(e) => set('neighbor_name', e.target.value)}
                     />
@@ -311,7 +314,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
                     <FormLabel fontSize="sm">
                       {intl.formatMessage({ id: 'parcel.adjoining.borderSide' })}
                     </FormLabel>
-                    <Select
+                    <StandardSelect
                       value={form.border_side}
                       onChange={(e) => set('border_side', e.target.value)}
                       placeholder={intl.formatMessage({ id: 'app.select' })}>
@@ -320,13 +323,13 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
                           {s}
                         </option>
                       ))}
-                    </Select>
+                    </StandardSelect>
                   </FormControl>
                   <FormControl>
                     <FormLabel fontSize="sm">
                       {intl.formatMessage({ id: 'parcel.adjoining.neighborFarmName' })}
                     </FormLabel>
-                    <Input
+                    <StandardInput
                       value={form.neighbor_farm_name}
                       onChange={(e) => set('neighbor_farm_name', e.target.value)}
                     />
@@ -335,7 +338,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
                     <FormLabel fontSize="sm">
                       {intl.formatMessage({ id: 'parcel.adjoining.neighborPhone' })}
                     </FormLabel>
-                    <Input
+                    <StandardInput
                       value={form.neighbor_phone}
                       onChange={(e) => set('neighbor_phone', e.target.value)}
                     />
@@ -346,7 +349,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
                   <FormLabel fontSize="sm">
                     {intl.formatMessage({ id: 'parcel.adjoining.neighborAddress' })}
                   </FormLabel>
-                  <Input
+                  <StandardInput
                     value={form.neighbor_address}
                     onChange={(e) => set('neighbor_address', e.target.value)}
                   />
@@ -361,7 +364,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
                       <FormLabel fontSize="sm">
                         {intl.formatMessage({ id: 'parcel.adjoining.certifierName' })}
                       </FormLabel>
-                      <Input
+                      <StandardInput
                         value={form.neighbor_certifier_name}
                         onChange={(e) => set('neighbor_certifier_name', e.target.value)}
                       />
@@ -408,7 +411,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
                     </FormLabel>
                     {/* FEET, stated in the label. buffer_zones stores metres, and a number
                         typed into the wrong unit is a 3x error in a drift assessment. */}
-                    <Input
+                    <StandardInput
                       type="number"
                       min={0}
                       value={form.distance_to_organic_property_ft}
@@ -420,7 +423,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
                     <FormLabel fontSize="sm">
                       {intl.formatMessage({ id: 'parcel.adjoining.signedDate' })}
                     </FormLabel>
-                    <Input
+                    <StandardInput
                       type="date"
                       value={form.neighbor_signed_date}
                       onChange={(e) => set('neighbor_signed_date', e.target.value)}
@@ -432,7 +435,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
                   <FormLabel fontSize="sm">
                     {intl.formatMessage({ id: 'parcel.adjoining.notes' })}
                   </FormLabel>
-                  <Textarea
+                  <StandardTextarea
                     rows={2}
                     value={form.notes}
                     onChange={(e) => set('notes', e.target.value)}

@@ -6,8 +6,6 @@ import {
   VStack,
   Text,
   Icon,
-  Select,
-  Input,
   useDisclosure,
   useToast,
   Spinner,
@@ -29,7 +27,7 @@ import {
   useVerifyCertificationMutation
 } from '../../store/api/certificationApi';
 import { Certification, CertificationType, CreateCertificationData } from 'types/certification';
-import { ResponsiveModal } from 'components/Design';
+import { ResponsiveModal, StandardInput, StandardSelect } from 'components/Design';
 import CertificationStatusBadge from './CertificationStatusBadge';
 
 const CERTIFICATION_TYPE_OPTIONS: { value: CertificationType; label: string }[] = [
@@ -310,7 +308,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
         footer={
           <>
             <Button variant="ghost" mr={3} onClick={onClose} size="sm">
-              Cancel
+              {intl.formatMessage({ id: 'app.cancel' })}
             </Button>
             <Button colorScheme="green" onClick={handleAdd} isLoading={isAdding} size="sm">
               {intl.formatMessage({ id: 'certification.manage.add' })}
@@ -322,21 +320,20 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
             <Text fontSize="sm" mb={1} fontWeight="medium">
               {intl.formatMessage({ id: 'certification.manage.type' })}
             </Text>
-            <Select
+            <StandardSelect
               value={formData.certification_type}
               onChange={(e) =>
                 setFormData({
                   ...formData,
                   certification_type: e.target.value as CertificationType
                 })
-              }
-              size="sm">
+              }>
               {CERTIFICATION_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
-            </Select>
+            </StandardSelect>
           </Box>
 
           {formData.certification_type === 'usda_organic' && (
@@ -358,8 +355,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
               <Text fontSize="sm" mb={1} fontWeight="medium">
                 {intl.formatMessage({ id: 'certification.manage.usdaName' })}
               </Text>
-              <Input
-                size="sm"
+              <StandardInput
                 placeholder={intl.formatMessage({
                   id: 'certification.manage.usdaNamePlaceholder'
                 })}
@@ -376,8 +372,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
             <Text fontSize="sm" mb={1} fontWeight="medium">
               {intl.formatMessage({ id: 'certification.manage.number' })}
             </Text>
-            <Input
-              size="sm"
+            <StandardInput
               placeholder="e.g., GGN-123456"
               value={formData.certification_number}
               onChange={(e) => setFormData({ ...formData, certification_number: e.target.value })}
@@ -388,8 +383,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
             <Text fontSize="sm" mb={1} fontWeight="medium">
               {intl.formatMessage({ id: 'certification.manage.certifier' })}
             </Text>
-            <Input
-              size="sm"
+            <StandardInput
               placeholder="e.g., Oregon Tilth, CCOF"
               value={formData.certifier_name}
               onChange={(e) => setFormData({ ...formData, certifier_name: e.target.value })}
@@ -401,8 +395,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
               <Text fontSize="sm" mb={1} fontWeight="medium">
                 {intl.formatMessage({ id: 'certification.manage.effectiveDate' })}
               </Text>
-              <Input
-                size="sm"
+              <StandardInput
                 type="date"
                 value={formData.effective_date}
                 onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
@@ -412,8 +405,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
               <Text fontSize="sm" mb={1} fontWeight="medium">
                 {intl.formatMessage({ id: 'certification.manage.expiryDate' })}
               </Text>
-              <Input
-                size="sm"
+              <StandardInput
                 type="date"
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
@@ -438,7 +430,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
             </AlertDialogBody>
             <AlertDialogFooter>
               <Button ref={deleteRef} onClick={deleteDisclosure.onClose} size="sm">
-                Cancel
+                {intl.formatMessage({ id: 'app.cancel' })}
               </Button>
               <Button
                 colorScheme="red"

@@ -1,19 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  VStack,
-  HStack,
-  SimpleGrid,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
-  useToast,
-  Text,
-  Icon,
-  Badge,
-  Box
-} from '@chakra-ui/react';
+import { VStack, HStack, SimpleGrid, useToast, Text, Icon, Badge, Box } from '@chakra-ui/react';
 import {
   StandardPage,
   StandardCard,
@@ -46,6 +32,7 @@ import {
   ConcentrationFeedback,
   getFormatExamples
 } from './ConcentrationValidation';
+import { StandardNumberInput } from 'components/Design/StandardComponents';
 
 // Map form values to validation codes
 const mapChemicalTypeToCode = (formType: string): string => {
@@ -360,15 +347,11 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                     required
                     error={errors.volume?.message}
                     helpText="Total volume of product used (gallons)">
-                    <NumberInput
+                    <StandardNumberInput
                       value={watch('volume') || 0}
-                      onChange={(_, num) => methods.setValue('volume', num || 0)}>
-                      <NumberInputField borderRadius="lg" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
+                      onChange={(_, num) => methods.setValue('volume', num || 0)}
+                      borderRadius="lg"
+                    />
                   </StandardField>
 
                   <StandardField
@@ -376,15 +359,11 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                     required
                     error={errors.area?.message}
                     helpText="Acres treated with this application">
-                    <NumberInput
+                    <StandardNumberInput
                       value={watch('area') || 0}
-                      onChange={(_, num) => methods.setValue('area', num || 0)}>
-                      <NumberInputField borderRadius="lg" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
+                      onChange={(_, num) => methods.setValue('area', num || 0)}
+                      borderRadius="lg"
+                    />
                   </StandardField>
                 </SimpleGrid>
 
@@ -488,13 +467,13 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                 {/* Navigation */}
                 <HStack spacing={3} justify="flex-end" pt={4}>
                   <StandardButton variant="outline" onClick={onCancel}>
-                    Cancel
+                    {intl.formatMessage({ id: 'app.cancel' })}
                   </StandardButton>
                   <StandardButton
                     onClick={nextStep}
                     rightIcon={<FaChevronRight />}
                     disabled={!isStepComplete(0)}>
-                    Continue to Application
+                    {intl.formatMessage({ id: 'app.continue' })}
                   </StandardButton>
                 </HStack>
               </VStack>
@@ -557,30 +536,22 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                     label="Pre-Harvest Interval (days)"
                     error={errors.preHarvestInterval?.message}
                     helpText="Days before harvest allowed">
-                    <NumberInput
+                    <StandardNumberInput
                       value={watch('preHarvestInterval') || 0}
-                      onChange={(_, num) => methods.setValue('preHarvestInterval', num || 0)}>
-                      <NumberInputField borderRadius="lg" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
+                      onChange={(_, num) => methods.setValue('preHarvestInterval', num || 0)}
+                      borderRadius="lg"
+                    />
                   </StandardField>
 
                   <StandardField
                     label="Re-entry Interval (hours)"
                     error={errors.reentryInterval?.message}
                     helpText="Hours before safe re-entry">
-                    <NumberInput
+                    <StandardNumberInput
                       value={watch('reentryInterval') || 0}
-                      onChange={(_, num) => methods.setValue('reentryInterval', num || 0)}>
-                      <NumberInputField borderRadius="lg" />
-                      <NumberInputStepper>
-                        <NumberIncrementStepper />
-                        <NumberDecrementStepper />
-                      </NumberInputStepper>
-                    </NumberInput>
+                      onChange={(_, num) => methods.setValue('reentryInterval', num || 0)}
+                      borderRadius="lg"
+                    />
                   </StandardField>
                 </SimpleGrid>
 
@@ -590,18 +561,18 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    Back to Chemical Info
+                    {intl.formatMessage({ id: 'common.back' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
                     <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                     <StandardButton
                       onClick={nextStep}
                       rightIcon={<FaChevronRight />}
                       disabled={!isStepComplete(1)}>
-                      Continue to Safety
+                      {intl.formatMessage({ id: 'app.continue' })}
                     </StandardButton>
                   </HStack>
                 </HStack>
@@ -675,12 +646,12 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    Back to Application
+                    {intl.formatMessage({ id: 'common.back' })}
                   </StandardButton>
 
                   <HStack spacing={3}>
                     <StandardButton variant="outline" onClick={onCancel}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                     <StandardButton
                       type="submit"

@@ -1,7 +1,7 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import tsconfigPaths from 'vite-tsconfig-paths'
-import path from 'path'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import tsconfigPaths from 'vite-tsconfig-paths';
+import path from 'path';
 
 export default defineConfig({
   // 🔴 2026-08-19: this config previously listed only `react()`. Because a vitest.config.ts
@@ -16,19 +16,20 @@ export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   test: {
     globals: true,
+    // 🔴 2026-08-20: the suite ran with no TZ pin, and CI runners are UTC. Every assertion
+    // about a date rendered in the viewer's timezone therefore passed VACUOUSLY — including
+    // the one date test in the repo, which additionally used a noon timestamp and a regex
+    // that accepted both candidate days, so it could not fail in any zone.
+    //
+    // America/Los_Angeles is the zone the ICP actually farms in (UTC-7/-8), and it is west of
+    // UTC, which is the direction that exposes the "midnight UTC renders as yesterday" class.
+    env: { TZ: 'America/Los_Angeles' },
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
     coverage: {
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-        '**/*.d.ts',
-        '**/*.config.*',
-        'dist/',
-        'build/'
-      ],
+      exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.config.*', 'dist/', 'build/'],
       thresholds: {
         global: {
           branches: 70,
@@ -72,4 +73,4 @@ export default defineConfig({
       { find: 'theme', replacement: path.resolve(__dirname, './src/theme') }
     ]
   }
-})
+});

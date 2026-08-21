@@ -99,6 +99,7 @@ const ANSWERS = {
 
 vi.mock('store/api/ospApi', () => ({
   useGetOSPsQuery: () => ({ data: [{ id: '11', version_number: 2, status: ospStatus }] }),
+  useGetOSPQuery: () => ({ data: undefined }),
   useGetOSPModuleQuery: () => ({
     data: {
       definition: DEFINITION,

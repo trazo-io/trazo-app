@@ -59,8 +59,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Se realizó y registró una auditoría de la operación',
   'An outside body reviewed this operation against a written standard':
     'Un organismo externo revisó esta operación contra una norma escrita',
-  'The audit body and the date are on record, so a buyer can take it up with the issuer rather than with the farm.':
-    'El organismo auditor y la fecha quedan registrados, así un comprador puede consultarlo con el emisor y no con la finca.',
+  "The date and the farm's own account of the audit are on record here, labelled as the farm reported them.":
+    'Aquí quedan registrados la fecha y el relato de la propia finca sobre la auditoría, señalados como información que la finca reportó.',
   'An audit checks conformance to a written standard on the day it is carried out; the record here says which standard and when.':
     'Una auditoría verifica el cumplimiento de una norma escrita el día en que se realiza; el registro indica qué norma y cuándo.',
   'Credits are counted in a scheme with its own rules; the amount and the scheme are on record here.':
@@ -89,8 +89,7 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'What was applied, where and when is on record for this crop.':
     'Qué se aplicó, dónde y cuándo queda registrado para este cultivo.',
   'Work on the soil was recorded for this block': 'Se registró trabajo sobre el suelo en este lote',
-  'Organic matter was spread and worked into the ground':
-    'Se esparció materia orgánica y se incorporó al terreno',
+  'Organic matter was added to the soil': 'Se aplicó materia orgánica al suelo',
   'Animals eat the weeds and leave manure behind, which is weed control and fertiliser in one pass.':
     'Los animales comen las malezas y dejan estiércol, que es control de malezas y fertilización en una sola pasada.',
   'Structures and their locations are on record, so the habitat can be checked on the ground.':
@@ -102,10 +101,10 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'The method used against the pest is on record, alongside the counts that prompted it.':
     'El método usado contra la plaga queda registrado, junto con los conteos que lo motivaron.',
 
-  'A mineral amendment was worked into the ground to correct the soil':
-    'Se incorporó una enmienda mineral al terreno para corregir el suelo',
-  'Soil chemistry decides how much of what a farm applies the tree can actually take up.':
-    'La química del suelo determina cuánto de lo que aplica la finca puede realmente absorber el árbol.',
+  'A mineral amendment was applied to correct the soil':
+    'Se aplicó una enmienda mineral para corregir el suelo',
+  'Soil chemistry decides how much of what a farm applies the crop can actually take up.':
+    'La química del suelo determina cuánto de lo que aplica la finca puede realmente absorber el cultivo.',
   'The amendment, the amount and the area are on record, so the correction can be checked against the soil test that prompted it.':
     'La enmienda, la cantidad y el área quedan registradas, así la corrección puede verificarse contra el análisis de suelo que la motivó.',
   'Counts and dates are on record, so a decision to treat, or not to treat, can be checked against what was actually found.':
@@ -138,8 +137,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'El clima es lo único que una finca no puede controlar, y queda registrado aquí junto a todo lo que sí puede.',
   'A third-party certification was recorded for this crop':
     'Se registró una certificación de tercera parte para este cultivo',
-  'The certificate number is published here so a buyer can check it with the issuing body instead of taking the farm at its word.':
-    'El número de certificado se publica aquí para que un comprador pueda verificarlo con el organismo emisor en lugar de confiar solo en la palabra de la finca.',
+  'The certificate number is published here, so this is a claim a buyer can check rather than take on trust.':
+    'El número de certificado se publica aquí, así que es una afirmación que un comprador puede verificar en lugar de aceptarla sin más.',
 
   'Beneficial insects were released into the block': 'Se liberaron insectos benéficos en el lote',
   'Predator insects do the work a spray would otherwise do, and they stay in the orchard afterwards.':
@@ -190,8 +189,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Cortar la cubierta vegetal es control mecánico de malezas y deja una superficie limpia para la fruta que se recoge del suelo.',
   'Lime or sulfur was worked into the ground to correct the soil pH':
     'Se incorporó cal o azufre al terreno para corregir el pH del suelo',
-  'Soil at the right pH releases nutrients the tree can actually take up, so less fertilizer is needed to feed the crop.':
-    'Un suelo con el pH correcto libera nutrientes que el árbol sí puede absorber, así que hace falta menos fertilizante para alimentar al cultivo.',
+  'Soil at the right pH releases nutrients the crop can actually take up, so less fertilizer is needed to feed it.':
+    'Un suelo con el pH correcto libera nutrientes que el cultivo sí puede absorber, así que hace falta menos fertilizante para alimentarlo',
   'The ground was worked to prepare a seedbed':
     'Se trabajó el terreno para preparar la cama de siembra',
   'How often soil gets turned is one of the things that decides whether it stays put, so each pass is logged rather than left unrecorded.':

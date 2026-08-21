@@ -282,10 +282,9 @@ const BusinessTab = forwardRef(
                 formConformance.test.ts, not by a runtime flag. */}
             <>
               {/* Section 1: Business Event Information */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaClipboardList}
-                  iconColor="teal.500"
                   title={intl.formatMessage({
                     id: 'events.business.sections.trustBuildingBusinessActivity',
                     defaultMessage: 'Trust-Building Business Activity'
@@ -424,8 +423,18 @@ const BusinessTab = forwardRef(
                     </StandardField>
                   </SimpleGrid>
 
-                  {/* Certification/Verification Details - For certification and verification events */}
-                  {(businessType === 'certification' || businessType === 'verification') && (
+                  {/* Certification / verification / audit details.
+                      `sustainability_audit` was NOT in this gate until 2026-08-21, yet the
+                      certifier packet's business-record table prints a "Certifier / Auditor"
+                      and a "Certificate #" column for EVERY business row — so a Real Organic
+                      Project inspection printed as "Sustainability Audit … passed" with no
+                      auditor and no report number, because the farmer had nowhere to type them.
+                      An assessment nobody is named for is an unattributable claim; the render
+                      gate has to match what the output prints.
+                      Guard: `__tests__/businessCertifierFieldsRender.test.tsx`. */}
+                  {(businessType === 'certification' ||
+                    businessType === 'verification' ||
+                    businessType === 'sustainability_audit') && (
                     <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                       <StandardField
                         label={
@@ -450,12 +459,17 @@ const BusinessTab = forwardRef(
                                 id: 'events.business.placeholders.selectCertificationType',
                                 defaultMessage: 'Select certification type...'
                               })}>
-                              <option value="">Select certification...</option>
                               <option value="organic_usda">USDA Organic</option>
                               <option value="carbon_neutral">Carbon Neutral Certification</option>
                               <option value="rainforest_alliance">Rainforest Alliance</option>
                               <option value="fair_trade">Fair Trade Certified</option>
                               <option value="regenerative">Regenerative Organic Certified</option>
+                              <option value="real_organic">
+                                {intl.formatMessage({
+                                  id: 'events.business.options.realOrganicProject',
+                                  defaultMessage: 'Real Organic Project (ROP)'
+                                })}
+                              </option>
                               <option value="sustainable_agriculture">
                                 {intl.formatMessage({
                                   id: 'events.business.options.sustainableAgricultureStandard',
@@ -548,10 +562,9 @@ const BusinessTab = forwardRef(
               </SectionBox>
 
               {/* Section 2: Sustainability Practice */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaLeaf}
-                  iconColor="green.500"
                   title={intl.formatMessage({
                     id: 'events.business.sections.sustainabilityPractice',
                     defaultMessage: 'Sustainability Practice'
@@ -630,10 +643,9 @@ const BusinessTab = forwardRef(
               </SectionBox>
 
               {/* Section 3: Farmer's Field Notes & Consumer Transparency */}
-              <SectionBox variant="default">
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  iconColor="green.500"
                   title={intl.formatMessage({
                     id: 'events.business.sections.farmerSFieldNotesConsumerTransparency',
                     defaultMessage: "Farmer's Field Notes & Consumer Transparency"

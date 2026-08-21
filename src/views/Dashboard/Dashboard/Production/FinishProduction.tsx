@@ -1,53 +1,48 @@
 import React, { useMemo } from 'react';
+import { computeHarvestPrefill } from 'utils/harvestPrefill';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import { useToast } from '@chakra-ui/react';
 import { StandardFinishProductionForm } from '../../../../components/Forms';
-import {
-  useFinishCurrentHistoryMutation,
-  useGetCurrentHistoryQuery
-} from 'store/api/historyApi.js';
+import { useFinishCurrentHistoryMutation, useGetHistoryQuery } from 'store/api/historyApi.js';
 import { useGetTransparencyDetailsQuery } from 'store/api/transparencyQrApi';
 import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
-
-// Module scope so the prefill memo below has a stable dependency. The event vocabulary says
-// "lbs"; the finish form's unit select says "lb" — map, don't invent.
-const EVENT_UNIT_TO_FORM_UNIT: Record<string, string> = {
-  lbs: 'lb',
-  lb: 'lb',
-  pounds: 'lb',
-  kg: 'kg',
-  kilograms: 'kg',
-  tons: 'tons',
-  boxes: 'boxes',
-  crates: 'crates',
-  bushels: 'bushels',
-  units: 'units'
-};
 
 function FinishProduction() {
   const intl = useIntl();
   const navigate = useNavigate();
   const toast = useToast();
-  const { parcelId, farmId } = useParams();
+  const { parcelId, farmId, productionId } = useParams();
   const currentCompany = useSelector((state: any) => state.company.currentCompany);
 
-  // Pull current production so the preview frame can show real product/farm
-  // names while the farmer is still on the upload step. HistorySerializer
-  // returns `product` and `parcel` as plain name strings, so use them
-  // directly (no `.name` traversal).
-  const { data: currentHistory } = useGetCurrentHistoryQuery(
-    { companyId: currentCompany?.id, farmId, parcelId },
-    { skip: !currentCompany?.id || !farmId || !parcelId }
-  );
+  // 🔴 F30 (2026-08-21) — THE SEASON BEING CLOSED, fetched by its own id.
+  //
+  // This page used to read `useGetCurrentHistoryQuery({ farmId, parcelId })` — the PARCEL's
+  // current season, meaning whichever one started last — for the crop name, the parcel name,
+  // the harvest date, the consumer preview AND the harvest pre-fill, while `handleSubmit`
+  // posted `history: productionId` from the URL. Two different seasons in one screen. On a
+  // perennial block carrying a 2025 and a 2026 cycle, closing the 2025 one would have offered
+  // the 2026 season's harvest total as the 2025 lot header, beside the 2026 crop name, and
+  // closed 2025 with it.
+  //
+  // It was latent only because F29 meant the sole link into this page passed
+  // `currentHistory.id`, so the two agreed by accident. Fixing F29 — putting Finish on the
+  // production page, where the season is named — is exactly what would have made it live, so
+  // the two fixes ship together.
+  //
+  // `retrieve` and `current_history` both resolve to `HistorySerializer`, so the payload shape
+  // (including `events`, whose `type` arrives as `event.production.harvesting`) is identical.
+  // `HistoryViewSet.get_object` accepts a pk or a public UUID, so either form of
+  // `productionId` in the route resolves.
+  const { data: production } = useGetHistoryQuery(productionId, { skip: !productionId });
 
   // Same transparency endpoint the consumer page calls. Owners can fetch
   // unpublished histories (see `production_transparency_detail` perms),
   // so the preview can show the real score / farm name / harvest date
   // that consumers will see.
   const productionPublicId: string | undefined =
-    typeof currentHistory?.public_id === 'string' ? currentHistory.public_id : undefined;
+    typeof production?.public_id === 'string' ? production.public_id : undefined;
 
   const { data: transparency } = useGetTransparencyDetailsQuery(productionPublicId as string, {
     skip: !productionPublicId
@@ -59,16 +54,15 @@ function FinishProduction() {
   // ProductDetail.tsx's existing logic.
   const productName: string =
     (transparency as any)?.product?.name ||
-    (typeof currentHistory?.product === 'string' ? currentHistory.product : '');
-  const parcelName: string =
-    typeof currentHistory?.parcel === 'string' ? currentHistory.parcel : '';
+    (typeof production?.product === 'string' ? production.product : '');
+  const parcelName: string = typeof production?.parcel === 'string' ? production.parcel : '';
   const farmName: string = (transparency as any)?.farmer?.name || currentCompany?.name || '';
   // ProductDetail.tsx passes `completeData.finish_date` to the live hero;
   // for unfinished productions this is null, so the preview omits the
   // "Harvested ..." suffix. After finish, the same field drives the
   // consumer hero exactly.
   const harvestDate: string | undefined =
-    (transparency as any)?.finish_date || (currentHistory as any)?.finish_date || undefined;
+    (transparency as any)?.finish_date || (production as any)?.finish_date || undefined;
   const previewScore: number | undefined = transparency?.quick_view?.transparency_score?.percentage;
 
   // Fallback cover used by ProductDetail when farmer uploads no photos:
@@ -98,30 +92,42 @@ function FinishProduction() {
   // finish_date, a finish before start; see product/views.py _validate_finalization_fields)
   // wiped the lot number, the completion date and the observations the farmer had just
   // typed, leaving them an error toast and an empty form. RTK Query hands back a stable
-  // `currentHistory` reference while the cache entry is unchanged, so keying on it means the
+  // `production` reference while the cache entry is unchanged, so keying on it means the
   // prefill object only changes when the underlying production actually does.
   const harvestPrefill = useMemo(() => {
-    const events = ((currentHistory as any)?.events || []) as Array<any>;
-    const harvests = events.filter(
-      (e) => e?.yield_quantity != null || String(e?.type || '').includes('harvest')
-    );
-    const latest = harvests
-      .filter((e) => e?.yield_quantity != null)
-      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))[0];
-    if (!latest) return undefined;
-    const unit = EVENT_UNIT_TO_FORM_UNIT[String(latest.yield_unit || '').toLowerCase()];
-    return {
-      production_amount: String(latest.yield_quantity),
-      ...(unit ? { production_unit: unit } : {}),
-      ...(['manual', 'mechanical', 'mixed'].includes(latest.harvest_method)
-        ? { harvest_method: latest.harvest_method }
-        : {})
-    };
-  }, [currentHistory]);
+    // 🔴 2026-08-21 — the body that lived here took the LATEST event carrying any
+    // `yield_quantity`, which on a real blueberry season was the buffer-row `BU` record
+    // (sold conventional under § 205.202(c)) — so a 118,750 lb organic lot opened pre-filled
+    // with 2,150 lb of not-organic fruit. The helper sums the harvest records and nothing
+    // else; see utils/harvestPrefill for the full reasoning and the guard.
+    const events = ((production as any)?.events || []) as Array<any>;
+    const prefill = computeHarvestPrefill(events);
+    if (!prefill) return undefined;
+    const { pick_count: _picks, ...formFields } = prefill;
+    return formFields;
+  }, [production]);
 
   const [finishCurrentHistory, { isLoading }] = useFinishCurrentHistoryMutation();
 
   const handleSubmit = async (data: any) => {
+    // Name the season or do not submit.
+    //
+    // The server is not relying on us — `product/views.py` resolves `history` from either the
+    // numeric pk or the public UUID, refuses an already-finished season, and falls back to
+    // the parcel's own season ONLY when exactly one is open, where the fallback cannot pick
+    // wrong. So this guard is not load-bearing; it is here to fail with a sentence the farmer
+    // can act on rather than to post a request whose meaning depends on how many seasons
+    // happen to be open. The route always supplies `productionId`, so it should never fire.
+    if (!productionId) {
+      toast({
+        title: intl.formatMessage({ id: 'app.errorUpdating' }),
+        description: intl.formatMessage({ id: 'production.finish.noSeasonNamed' }),
+        status: 'error',
+        duration: 6000,
+        isClosable: true
+      });
+      return;
+    }
     try {
       const finished = await finishCurrentHistory({
         companyId: currentCompany?.id,
@@ -129,6 +135,17 @@ function FinishProduction() {
         parcelId: parcelId,
         historyData: {
           ...data,
+          // 🔴 The season being closed is NAMED. Before `product/views.py` stopped guessing
+          // (2026-08-20, it now falls back only when exactly ONE season is open), the endpoint
+          // acted on `parcel.current_history` — whichever started last — so on a block with
+          // two open seasons, closing the 2025 one validated against the 2026 one and told the
+          // farmer "finish date cannot be before 2026-03-18", a date they never entered. Had
+          // the dates lined up it would have closed the wrong season, irreversibly.
+          //
+          // Unconditional now: the guard at the top of this handler already refused a submit
+          // with no `productionId`, so the old ternary's empty-object branch was unreachable
+          // and only obscured that this key is mandatory.
+          history: productionId,
           album: {
             images: data.images || []
           }

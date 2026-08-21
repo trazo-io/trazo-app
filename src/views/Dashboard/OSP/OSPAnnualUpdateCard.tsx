@@ -489,7 +489,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                     })}
                   </Badge>
                 ) : (
-                  <Badge colorScheme="orange">
+                  <Badge variant="warning">
                     {intl.formatMessage({ id: 'osp.annual.draft', defaultMessage: 'Draft' })}
                   </Badge>
                 )}

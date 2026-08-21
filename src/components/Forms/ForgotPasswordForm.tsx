@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useIntl } from 'react-intl';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import {
@@ -34,6 +35,7 @@ interface ForgotPasswordFormProps {
 }
 
 export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ userType, onBack }) => {
+  const intl = useIntl();
   const toast = useToast();
   const [requestPasswordReset, { isLoading }] = useRequestPasswordResetMutation();
   const [emailSent, setEmailSent] = useState(false);
@@ -131,7 +133,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ userType
 
             <Link to={getBackLink()}>
               <Button variant="ghost" leftIcon={<FaArrowLeft />} color="gray.600" fontSize="sm">
-                Back to Sign In
+                {intl.formatMessage({ id: 'auth.backToSignIn' })}
               </Button>
             </Link>
           </VStack>
@@ -193,7 +195,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ userType
         {/* Back to Sign In */}
         <Link to={getBackLink()}>
           <Button variant="ghost" leftIcon={<FaArrowLeft />} color="gray.600" fontSize="sm">
-            Back to Sign In
+            {intl.formatMessage({ id: 'auth.backToSignIn' })}
           </Button>
         </Link>
 

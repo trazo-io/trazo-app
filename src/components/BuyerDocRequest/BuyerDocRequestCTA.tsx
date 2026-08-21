@@ -29,16 +29,15 @@ import {
   FormLabel,
   HStack,
   Icon,
-  Input,
   Stack,
   Text,
-  Textarea,
   VStack,
   useColorModeValue
 } from '@chakra-ui/react';
 import { FaCheckCircle, FaFileAlt } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useCreateBuyerDocRequestMutation } from 'store/api/transparencyQrApi';
+import { StandardInput, StandardTextarea } from 'components/Design/StandardComponents';
 
 interface BuyerDocRequestCTAProps {
   /** Production public UUID (consumer page route param) */
@@ -189,13 +188,7 @@ export const BuyerDocRequestCTA: React.FC<BuyerDocRequestCTAProps> = ({ producti
                     defaultMessage: 'Name'
                   })}
                 </FormLabel>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  bg={inputBg}
-                  h="44px"
-                  fontSize="sm"
-                />
+                <StandardInput value={name} onChange={(e) => setName(e.target.value)} />
                 <FormErrorMessage fontSize="xs">{errors.name}</FormErrorMessage>
               </FormControl>
 
@@ -206,13 +199,10 @@ export const BuyerDocRequestCTA: React.FC<BuyerDocRequestCTAProps> = ({ producti
                     defaultMessage: 'Work email'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  bg={inputBg}
-                  h="44px"
-                  fontSize="sm"
                 />
                 <FormErrorMessage fontSize="xs">{errors.email}</FormErrorMessage>
               </FormControl>
@@ -224,12 +214,9 @@ export const BuyerDocRequestCTA: React.FC<BuyerDocRequestCTAProps> = ({ producti
                     defaultMessage: 'Organization'
                   })}
                 </FormLabel>
-                <Input
+                <StandardInput
                   value={organization}
                   onChange={(e) => setOrganization(e.target.value)}
-                  bg={inputBg}
-                  h="44px"
-                  fontSize="sm"
                 />
               </FormControl>
 
@@ -240,7 +227,7 @@ export const BuyerDocRequestCTA: React.FC<BuyerDocRequestCTAProps> = ({ producti
                     defaultMessage: 'Message'
                   })}
                 </FormLabel>
-                <Textarea
+                <StandardTextarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   maxLength={1000}
@@ -248,14 +235,12 @@ export const BuyerDocRequestCTA: React.FC<BuyerDocRequestCTAProps> = ({ producti
                     id: 'consumer.buyerDoc.messagePlaceholder',
                     defaultMessage: 'What do you need? e.g. organic certificate, spray records…'
                   })}
-                  bg={inputBg}
-                  fontSize="sm"
                   rows={3}
                 />
               </FormControl>
 
               {submitError && (
-                <Text fontSize="xs" color="red.500">
+                <Text fontSize="xs" color="red.700">
                   {intl.formatMessage({
                     id: 'consumer.buyerDoc.submitError',
                     defaultMessage: "Couldn't send right now — please try again later."

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useIntl } from 'react-intl';
 import { Box, VStack, HStack, Text, Icon, Image, Flex, useColorModeValue } from '@chakra-ui/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -31,6 +32,7 @@ const reviewSchema = object({
 });
 
 export default function ModernProductReview() {
+  const intl = useIntl();
   const navigate = useNavigate();
   const { productionId, scanId } = useParams();
 
@@ -147,7 +149,7 @@ export default function ModernProductReview() {
                     size="md"
                     onClick={() => navigate(`/production/${productionId}`)}
                     leftIcon={<FaHeart />}>
-                    Back to Product
+                    {intl.formatMessage({ id: 'consumer.backToProduct' })}
                   </StandardButton>
                 </StandardAlert>
               ) : (
@@ -222,7 +224,7 @@ export default function ModernProductReview() {
                   {/* Submit Button */}
                   <Flex justify="space-between" align="center" pt={4}>
                     <StandardButton variant="outline" onClick={() => navigate(-1)}>
-                      Cancel
+                      {intl.formatMessage({ id: 'app.cancel' })}
                     </StandardButton>
                     <StandardButton
                       type="submit"

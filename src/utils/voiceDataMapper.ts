@@ -10,6 +10,7 @@
  */
 
 import { getQuickEventFields, getDefaultFieldValues } from '../config/quickEventFields';
+import { PREFILLABLE_FIELDS } from '../config/events/templateAccelerators';
 
 /** Structured amount from AI response */
 export interface StructuredAmount {
@@ -322,8 +323,12 @@ export function mapVoiceDataToFieldValues(
   parsedData: ParsedVoiceData,
   templateId: string
 ): VoiceFieldMappingResult {
-  // Start with template defaults
+  // Start with template defaults — but only the operational ones. See PREFILLABLE_FIELDS.
   const defaults = getDefaultFieldValues(templateId);
+  const prefillableDefaults: Record<string, unknown> = {};
+  Object.entries(defaults).forEach(([key, value]) => {
+    if (PREFILLABLE_FIELDS.has(key)) prefillableDefaults[key] = value;
+  });
   const overrides: Record<string, unknown> = {};
 
   const amounts = extractStructuredAmounts(parsedData.detected_amounts);
@@ -474,7 +479,16 @@ export function mapVoiceDataToFieldValues(
 
   // Merge: defaults < AI-extracted overrides
   return {
-    values: { ...defaults, ...overrides },
+    // 🔴 2026-08-19 — `defaults` is filtered, `overrides` is not.
+    //
+    // This function's own docstring says it "merges AI-extracted values on top of template
+    // defaults", and those defaults included `organic_approved: 'no'` for every chemical
+    // template — a value the backend reads as a PROHIBITED-SUBSTANCE application, which
+    // resets the § 205.202(b) 36-month clock. Speaking into the microphone about a fungicide
+    // must not put a compliance claim on the record that nobody said out loud.
+    //
+    // What the grower actually SAID stays untouched: `overrides` is their words.
+    values: { ...prefillableDefaults, ...overrides },
     overriddenFields: Object.keys(overrides)
   };
 }
@@ -506,7 +520,12 @@ export function generateVoiceSummary(
       // the default (e.g., user says "drip" and default is also "drip")
       if (overriddenSet.has(field.name)) {
         detected.push(field.name);
-      } else if (field.default !== undefined) {
+      } else if (field.name in mappingResult.values) {
+        // Was `field.default !== undefined`, which asked the CONFIG whether a default exists
+        // rather than the RESULT whether one was applied. Since 2026-08-19 the merge drops
+        // every non-operational default (see PREFILLABLE_FIELDS), so the banner would have
+        // told the grower a compliance field like `organic_approved` was pre-filled for them
+        // when it deliberately was not — a claim about the record that is not true.
         defaulted.push(field.name);
       }
     }
