@@ -43,7 +43,7 @@ export const ConsumerSignUpClosed: React.FC = () => {
         maxW="480px"
         w="full">
         <VStack spacing={5} align="stretch" textAlign="center">
-          <Icon as={FaLeaf} boxSize={10} color="green.500" alignSelf="center" />
+          <Icon as={FaLeaf} boxSize={10} color="green.700" alignSelf="center" />
           <Heading size="md">
             {intl.formatMessage({
               id: 'consumer.signup.closedTitle',

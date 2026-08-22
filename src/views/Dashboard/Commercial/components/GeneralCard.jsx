@@ -37,7 +37,7 @@ const GeneralCard = ({ review }) => {
   };
 
   return (
-    <StandardCard variant="outline" padding={{ base: 3, md: 4 }}>
+    <StandardCard variant="outline" padding={{ base: 0, md: 4 }}>
       <VStack spacing={{ base: 2, md: 4 }} align="stretch">
         {/* User Info and Rating */}
         <Flex justify="space-between" align="center" w="100%" gap={2} flexWrap="wrap">

@@ -636,6 +636,54 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
       form: 'secondary'
     }
   },
+  {
+    // The CA DPR restricted-materials permit. Every other field in this legal spray-record
+    // block — epa_registration_number, applicator_name, applicator_certification,
+    // restricted_use_pesticide, rei_hours, buffer_zone_meters — carries `modal: 'secondary'`.
+    // These three carried no declaration at all, so the permit under which a restricted
+    // material was applied was invisible on the record that applied it.
+    //
+    // The block's own comment excuses exactly two things from the modal, "the MTRS quartet +
+    // ffm_code", on clutter grounds; the permit was never in that exemption. It is also
+    // already named in `CERTIFIER_ONLY_EVENT_FIELDS` — a list of fields the backend strips
+    // from CONSUMERS, which only means anything if the producer surface shows them.
+    //
+    // `drift.resolution.ca_dpr_expired` already renders "permit #{num} expired {expires}" in
+    // the compliance banner, so the grower could be told their permit had expired on a record
+    // that would not show them the permit.
+    name: 'ca_dpr_permit_number',
+    labelKey: 'events.chemical.fields.caDprPermitNumber',
+    valueType: 'string',
+    // NO consumer_card, matching the rest of the block and the backend strip list.
+    surfaces: { modal: 'secondary' }
+  },
+  {
+    name: 'ca_dpr_permit_county',
+    labelKey: 'events.chemical.fields.caDprPermitCounty',
+    valueType: 'string',
+    surfaces: { modal: 'secondary' }
+  },
+  {
+    name: 'ca_dpr_permit_expires',
+    labelKey: 'events.chemical.fields.caDprPermitExpires',
+    valueType: 'date',
+    formatter: formatDate,
+    surfaces: { modal: 'secondary' }
+  },
+  {
+    // Certifiers reconcile PURCHASED against APPLIED — that is the whole point of the column,
+    // and the form's own help text says so. `soilEvent.ts` registers the identical fact as
+    // `amendment_quantity_purchased` (with its unit companion); the chemical side collected it
+    // and displayed nothing, so the same reconciliation was possible for an amendment and not
+    // for a spray.
+    name: 'quantity_purchased',
+    labelKey: 'events.chemical.fields.quantityPurchased',
+    valueType: 'number',
+    unitField: 'quantity_purchased_unit',
+    // NO consumer_card: an invoice quantity is a supplier-chain fact, the same reason
+    // `supplier_name` is withheld.
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
 
   // WS-4 — § 205.103(b)(2): records must be auditable, which for an application means WHERE it went.
   // (b)(1) is "adapted to the particular business" and says nothing about location — the

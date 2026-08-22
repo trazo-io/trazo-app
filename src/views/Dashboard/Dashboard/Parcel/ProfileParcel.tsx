@@ -517,7 +517,7 @@ function ProfileParcel(): React.ReactElement {
             id: 'parcel.section.details',
             defaultMessage: 'Parcel details'
           })}>
-          <StandardCard variant="outline" padding={{ base: 3, md: 4 }} mb={0}>
+          <StandardCard variant="outline" padding={{ base: 0, md: 4 }} mb={0}>
             <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
               <FieldGroup label={intl.formatMessage({ id: 'parcel.basicInformation' })}>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacingX={6} spacingY={4}>

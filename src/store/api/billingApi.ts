@@ -30,6 +30,13 @@ export interface Subscription {
   current_period_start: string;
   current_period_end: string;
   cancel_at_period_end: boolean;
+  /**
+   * Set as soon as a cancellation is REQUESTED, not when it takes effect. Read-only on the
+   * wire — the write path is the `cancel` action, which validates the reason against
+   * `Subscription.CANCELLATION_REASON_CHOICES` server-side.
+   */
+  cancellation_reason?: string;
+  cancellation_requested_at?: string | null;
   used_productions: number;
   used_storage_gb: number;
   storage_breakdown: StorageBreakdown;
@@ -217,17 +224,37 @@ export const billingApi = baseApi.injectEndpoints({
           ? result.map((invoice) => ({ type: 'Invoice' as const, id: invoice.id }))
           : [{ type: 'Invoice' as const, id: 'LIST' }]
     }),
-    cancelSubscription: builder.mutation<any, number>({
-      query: (subscriptionId) => {
+    /**
+     * `reason` and `feedback` are OPTIONAL and must stay optional.
+     *
+     * California's ARL (AB 2863) prohibits obstructing or delaying cancellation, so the answer
+     * to "why are you leaving" can never be a precondition for leaving. The backend validates
+     * `reason` against `Subscription.CANCELLATION_REASON_CHOICES` and silently drops anything
+     * it does not recognise rather than rejecting the cancellation — telemetry must not be able
+     * to fail a billing action.
+     */
+    cancelSubscription: builder.mutation<
+      any,
+      number | { subscriptionId: number; reason?: string; feedback?: string }
+    >({
+      query: (arg) => {
+        const { subscriptionId, reason, feedback } =
+          typeof arg === 'number'
+            ? { subscriptionId: arg, reason: undefined, feedback: undefined }
+            : arg;
         const cleanId = String(subscriptionId).replace(/\//g, '');
         return {
           url: `${SUBSCRIPTIONS_URL(cleanId)}cancel/`,
           method: 'POST',
-          credentials: 'include'
+          credentials: 'include',
+          body: { reason: reason || '', feedback: feedback || '' }
         };
       },
-      invalidatesTags: (result, error, subscriptionId) => [
-        { type: 'Subscription' as const, id: subscriptionId },
+      invalidatesTags: (result, error, arg) => [
+        {
+          type: 'Subscription' as const,
+          id: typeof arg === 'number' ? arg : arg.subscriptionId
+        },
         { type: 'Company' as const, id: 'LIST' }
       ]
     }),

@@ -376,7 +376,7 @@ const AllScansView = () => {
       <StandardCard
         title={intl.formatMessage({ id: 'commercial.scansCount' }, { count: totalCount })}
         variant="elevated"
-        padding={{ base: 2, md: 4 }}>
+        padding={{ base: 0, md: 4 }}>
         <VStack spacing={4}>
           <Box
             overflowX="auto"

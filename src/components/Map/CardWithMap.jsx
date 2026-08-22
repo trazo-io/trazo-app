@@ -179,7 +179,7 @@ const CardWithMap = ({ polygon, zoom, center }) => {
           borderColor="gray.200">
           <Flex direction="column" align="center" justify="center" h="100%" px={4}>
             <VStack spacing={2}>
-              <Icon as={FaMapMarkedAlt} boxSize={10} color="gray.400" />
+              <Icon as={FaMapMarkedAlt} boxSize={10} color="gray.500" />
               <Text fontSize="sm" color="gray.600" fontWeight="500" textAlign="center">
                 {intl.formatMessage({
                   id: 'parcel.mapUnavailable',

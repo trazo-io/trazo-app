@@ -315,7 +315,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
                   </Flex>
                 ) : query && searchResults.length === 0 ? (
                   <VStack spacing={4} py={8} px={4}>
-                    <Icon as={SearchIcon} boxSize={8} color="gray.400" />
+                    <Icon as={SearchIcon} boxSize={8} color="gray.500" />
                     <VStack spacing={1}>
                       <Text fontSize="md" fontWeight="medium" color="gray.600">
                         No results found
@@ -362,7 +362,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
                   </VStack>
                 ) : (
                   <VStack spacing={4} py={8} px={4}>
-                    <Icon as={FaLeaf} boxSize={8} color="green.400" />
+                    <Icon as={FaLeaf} boxSize={8} color="green.700" />
                     <VStack spacing={1}>
                       <Text fontSize="md" fontWeight="medium" color="gray.600">
                         Search your carbon data

@@ -43,7 +43,7 @@ export const DashboardSkeleton = () => (
       <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={8} w="full">
         {/* Chart Skeleton */}
         <Card boxShadow="lg" borderRadius="xl">
-          <CardBody p={6}>
+          <CardBody py={6} px={{ base: 0, md: 6 }}>
             <VStack spacing={4}>
               <Skeleton height="24px" width="200px" />
               <Box w="full" h="300px" bg="gray.100" borderRadius="lg">
@@ -55,7 +55,7 @@ export const DashboardSkeleton = () => (
 
         {/* List Skeleton */}
         <Card boxShadow="lg" borderRadius="xl">
-          <CardBody p={6}>
+          <CardBody py={6} px={{ base: 0, md: 6 }}>
             <VStack spacing={4}>
               <Skeleton height="24px" width="180px" />
               <VStack spacing={3} w="full">
@@ -84,7 +84,7 @@ export const CarbonDashboardSkeleton = () => (
     <VStack spacing={8}>
       {/* Carbon Score Display */}
       <Card boxShadow="xl" borderRadius="2xl" w="full">
-        <CardBody p={8}>
+        <CardBody py={8} px={{ base: 0, md: 8 }}>
           <VStack spacing={6}>
             <Skeleton height="32px" width="300px" />
             <SkeletonCircle size="150px" />
@@ -100,7 +100,7 @@ export const CarbonDashboardSkeleton = () => (
       <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6} w="full">
         {[1, 2, 3].map((i) => (
           <Card key={i} boxShadow="lg" borderRadius="xl">
-            <CardBody p={6}>
+            <CardBody py={6} px={{ base: 0, md: 6 }}>
               <VStack spacing={4}>
                 <SkeletonCircle size="80px" />
                 <VStack spacing={2}>
@@ -131,7 +131,7 @@ export const FormSkeleton = () => (
       <VStack spacing={6} w="full">
         {[1, 2, 3].map((i) => (
           <Card key={i} boxShadow="lg" borderRadius="xl" w="full">
-            <CardBody p={6}>
+            <CardBody py={6} px={{ base: 0, md: 6 }}>
               <VStack spacing={4}>
                 <Skeleton height="24px" width="200px" />
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} w="full">
@@ -209,7 +209,7 @@ export const MobileListSkeleton = () => (
   <VStack spacing={4} p={4}>
     {[1, 2, 3, 4, 5].map((i) => (
       <Card key={i} boxShadow="md" borderRadius="xl" w="full">
-        <CardBody p={4}>
+        <CardBody py={4} px={{ base: 0, md: 4 }}>
           <HStack spacing={4}>
             <SkeletonCircle size="50px" />
             <VStack align="start" flex={1} spacing={2}>
@@ -234,7 +234,7 @@ export const ProfileSkeleton = () => (
     <VStack spacing={8}>
       {/* Profile Header */}
       <Card boxShadow="lg" borderRadius="xl" w="full">
-        <CardBody p={8}>
+        <CardBody py={8} px={{ base: 0, md: 8 }}>
           <VStack spacing={6}>
             <SkeletonCircle size="120px" />
             <VStack spacing={2}>
@@ -253,7 +253,7 @@ export const ProfileSkeleton = () => (
       <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} w="full">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} boxShadow="md" borderRadius="xl">
-            <CardBody p={6}>
+            <CardBody py={6} px={{ base: 0, md: 6 }}>
               <VStack spacing={4}>
                 <HStack w="full" justify="space-between">
                   <Skeleton height="20px" width="120px" />

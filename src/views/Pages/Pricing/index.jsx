@@ -1281,7 +1281,7 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
                       h="full"
                       _hover={{ boxShadow: 'md' }}
                       transition="all 0.2s">
-                      <CardBody p={6} textAlign="center">
+                      <CardBody py={6} px={{ base: 0, md: 6 }} textAlign="center">
                         <VStack spacing={4}>
                           <Box
                             p={4}

@@ -48,6 +48,7 @@ import { useMemo, useState } from 'react';
 import { useGetParcelHistoriesQuery } from 'store/api/historyApi';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
+import { StandardEmptyState } from 'components/Design/StandardComponents';
 import CardHeader from 'components/Card/CardHeader';
 import { useUserRole } from 'hooks/useUserRole';
 import { formatDateFromTimestamp } from 'utils/dateOnly';
@@ -62,8 +63,14 @@ const HistoryCard = ({ amount }) => {
   // per render tracked the number of productions — a Rules of Hooks violation that throws
   // "Rendered more hooks than during the previous render" the moment the list length changes.
   // Which is exactly what starting or finishing a production does.
-  const completedHoverBg = useColorModeValue('green.50', 'green.900/10');
-  const ongoingHoverBg = useColorModeValue('blue.50', 'blue.900/10');
+  // ⚠️ The dark values here were `green.900/10` and `blue.900/10` — TAILWIND's slash-opacity
+  // syntax, which Chakra does not parse. They resolved to no token and emitted an invalid CSS
+  // value, so dark mode had no hover tint at all. Written as real tokens now.
+  //
+  // Ongoing is AMBER, not blue: `.claude/rules/frontend.md` gives in-progress to `warning`
+  // and leaves blue with no meaning outside `Alert status="info"`.
+  const completedHoverBg = useColorModeValue('green.50', 'green.900');
+  const ongoingHoverBg = useColorModeValue('amber.50', 'amber.900');
   const navigate = useNavigate();
 
   // Mobile responsiveness
@@ -199,13 +206,15 @@ const HistoryCard = ({ amount }) => {
       borderRadius="xl"
       boxShadow="lg"
       overflow="hidden"
-      h={{ base: '650px', md: '700px' }}
-      maxH={{ base: '650px', md: '700px' }}
+      /* No fixed height — same reason as its grid sibling TrackList. These two locked
+         DIFFERENT mobile heights (650 here, 700 there) in a grid that puts them in separate
+         rows on mobile, so the lock aligned nothing and only capped both. On desktop they
+         share a row and CSS Grid stretches them to equal height for free. */
       transition="all 0.3s ease"
       _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
       className="trazo-card"
       data-tour="productions-history">
-      <CardHeader px={{ base: 4, md: 6 }} py={5}>
+      <CardHeader px={{ base: 0, md: 6 }} py={5}>
         <Flex direction="column" w="100%">
           {/* Header with divider */}
           <Flex direction="column" pb={4} gap={3}>
@@ -427,8 +436,18 @@ const HistoryCard = ({ amount }) => {
               justify="space-between"
               pt={4}
               gap={{ base: 1, smd: 4 }}>
+              {/* All three numbers are NEUTRAL, and that is the rule, not a preference.
+                  `.claude/rules/frontend.md`: "Status colour = meaning, never decoration… a
+                  plain fact or count → neutral." None of these three is a status — they are
+                  counts, and the label under each already says which. Colouring them by metric
+                  identity broke down immediately: "ongoing" rendered `orange.800`, so a farm
+                  with nothing in progress showed a dark red-brown 0 that reads as an error
+                  when it is neutral (often good), while "completed" stayed green even at 0,
+                  where green would be exactly wrong. `orange.*` is also not a Trazo token at
+                  all — the theme defines `amber`; `orange.800` silently resolved to CHAKRA's
+                  #7B341E, a different accent. */}
               <VStack spacing={1} flex="1" minW={0}>
-                <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="green.700">
+                <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="gray.700">
                   {productionStats.completed}
                 </Text>
                 <Text
@@ -442,7 +461,7 @@ const HistoryCard = ({ amount }) => {
               </VStack>
 
               <VStack spacing={1} flex="1" minW={0}>
-                <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="orange.800">
+                <Text fontSize={{ base: 'lg', md: 'xl' }} fontWeight="bold" color="gray.700">
                   {productionStats.ongoing}
                 </Text>
                 <Text
@@ -645,11 +664,14 @@ const HistoryCard = ({ amount }) => {
                                         bg: completedHoverBg,
                                         transform: 'translateY(-2px)',
                                         boxShadow: 'lg',
-                                        borderColor: 'green.500'
+                                        // green.500 is 2.78:1 — a hover border is a boundary
+                                        // and owes 3.0. green.600 (4.12) is the palette's
+                                        // documented BOUNDARY green.
+                                        borderColor: 'green.600'
                                       }
                                     : {
                                         bg: ongoingHoverBg,
-                                        borderColor: 'orange.600',
+                                        borderColor: 'amber.800',
                                         transform: 'translateY(-1px)',
                                         boxShadow: 'md'
                                       }
@@ -663,7 +685,7 @@ const HistoryCard = ({ amount }) => {
                                   )
                                 }
                                 className="trazo-card">
-                                <CardBody p={4}>
+                                <CardBody py={4} px={{ base: 0, md: 4 }}>
                                   <VStack align="stretch" spacing={3}>
                                     {/* Header Row - Production Info and Status */}
                                     <Flex
@@ -674,14 +696,21 @@ const HistoryCard = ({ amount }) => {
                                       <HStack spacing={3} flex={1} minW={0}>
                                         <Box
                                           p={2}
-                                          bg={isCompleted ? 'green.50' : 'blue.50'}
+                                          bg={isCompleted ? 'green.50' : 'amber.50'}
                                           borderRadius="lg"
                                           border="1px solid"
-                                          borderColor={isCompleted ? 'green.200' : 'blue.200'}
+                                          borderColor={isCompleted ? 'green.200' : 'amber.200'}
                                           flexShrink={0}>
+                                          {/* One hue per state. This used to be a `blue.50`
+                                              tint with a `blue.200` border around an
+                                              `orange.800` glyph — three hues for one status,
+                                              two of them from palettes the theme does not
+                                              define (`orange.*` is Chakra's; the theme has
+                                              `amber`). MEASURED: amber.900 is 3.79:1 on white,
+                                              clearing the 3.0 a non-text mark owes. */}
                                           <Icon
                                             as={isCompleted ? FaChartLine : FaClock}
-                                            color={isCompleted ? 'green.700' : 'orange.800'}
+                                            color={isCompleted ? 'green.700' : 'amber.900'}
                                             boxSize={4}
                                           />
                                         </Box>
@@ -993,19 +1022,16 @@ const HistoryCard = ({ amount }) => {
               </VStack>
             )
           ) : (
-            <VStack spacing={6} py={16} align="center" px={6}>
-              <VStack spacing={4} textAlign="center">
-                <Icon as={FaSeedling} color="green.400" boxSize={12} />
-                <VStack spacing={2}>
-                  <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                    {intl.formatMessage({ id: 'parcel.noProductionsStarted' })}
-                  </Text>
-                  <Text fontSize="sm" color="gray.500" maxW="350px" lineHeight="1.5">
-                    {intl.formatMessage({ id: 'parcel.noProductionsDescription' })}
-                  </Text>
-                </VStack>
-              </VStack>
-            </VStack>
+            /* Was a hand-rolled copy of TrackList's empty state that had drifted from it:
+               same seedling at `green.400` (2.01:1, under the 3.0 a non-text mark owes) but
+               `spacing` 6 vs 8 and `py` 16 vs 16 against a different title size. No CTA here
+               on purpose — this card lists FINISHED productions, and the one action worth
+               offering ("start one") already sits in the card beside it. */
+            <StandardEmptyState
+              icon={FaSeedling}
+              title={intl.formatMessage({ id: 'parcel.noProductionsStarted' })}
+              description={intl.formatMessage({ id: 'parcel.noProductionsDescription' })}
+            />
           )}
         </CardBody>
       )}

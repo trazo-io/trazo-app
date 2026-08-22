@@ -26,6 +26,9 @@ import {
   FaTruck,
   FaBorderAll,
   FaBroom,
+  FaCut,
+  FaSnowflake,
+  FaSpa,
   FaSearch,
   FaFileInvoiceDollar,
   FaCloudRain,
@@ -255,6 +258,49 @@ const EducationTopicDetail: React.FC = () => {
                       </Text>
                       <Text fontSize="sm" color="gray.600">
                         {intl.formatMessage({ id: 'education.detail.farmEvents.harvestDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaCut} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.pruningTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.pruningDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaSpa} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.pollinationTitle' })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({ id: 'education.detail.farmEvents.pollinationDesc' })}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+                <Box p={3} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <HStack align="start" spacing={3}>
+                    <Icon as={FaSnowflake} color="green.700" mt={1} />
+                    <Box>
+                      <Text fontWeight="semibold" color="gray.700">
+                        {intl.formatMessage({
+                          id: 'education.detail.farmEvents.frostProtectionTitle'
+                        })}
+                      </Text>
+                      <Text fontSize="sm" color="gray.600">
+                        {intl.formatMessage({
+                          id: 'education.detail.farmEvents.frostProtectionDesc'
+                        })}
                       </Text>
                     </Box>
                   </HStack>

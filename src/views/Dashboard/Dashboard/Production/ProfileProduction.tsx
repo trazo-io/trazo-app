@@ -765,7 +765,7 @@ function ProfileProduction() {
               defaultMessage: 'Photo Gallery'
             })}
             variant="elevated"
-            padding={{ base: 3, md: 4 }}>
+            padding={{ base: 0, md: 4 }}>
             <StandardImageGallery
               images={historyData.images}
               title=""
@@ -802,7 +802,7 @@ function ProfileProduction() {
                   defaultMessage: 'Cover Photo'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}>
+                padding={{ base: 0, md: 4 }}>
                 <VStack align="stretch" spacing={4}>
                   <Text fontSize={{ base: 'xs', md: 'sm' }} color="gray.600">
                     {intl.formatMessage({
@@ -908,7 +908,7 @@ function ProfileProduction() {
                   defaultMessage: 'QR Code & Consumer Access'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}>
+                padding={{ base: 0, md: 4 }}>
                 <VStack spacing={{ base: 3, md: 5 }} align="center">
                   {/* Live / not-live, stated. VERIFIED 2026-08-19 by scanning anonymously:
                       an unpublished lot answers 404 on both `public_history` and the
@@ -1109,7 +1109,7 @@ function ProfileProduction() {
                   defaultMessage: 'Production Details'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}>
+                padding={{ base: 0, md: 4 }}>
                 <VStack align="stretch" gap={4}>
                   <Text fontSize="xs" color="gray.500" lineHeight="1.7">
                     <Icon as={FaEye} boxSize={3} color="gray.400" mr={2} verticalAlign="-1px" />
@@ -1261,7 +1261,7 @@ function ProfileProduction() {
                     defaultMessage: 'Agricultural Information'
                   })}
                   variant="elevated"
-                  padding={{ base: 3, md: 4 }}>
+                  padding={{ base: 0, md: 4 }}>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
                     {historyData?.age_of_plants && (
                       <InfoRow
@@ -1316,7 +1316,7 @@ function ProfileProduction() {
                   defaultMessage: 'Location'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}>
+                padding={{ base: 0, md: 4 }}>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={{ base: 3, md: 6 }}>
                   <InfoRow
                     icon={FaBuilding}
@@ -1375,7 +1375,7 @@ function ProfileProduction() {
                   defaultMessage: 'Recorded by'
                 })}
                 variant="elevated"
-                padding={{ base: 3, md: 4 }}>
+                padding={{ base: 0, md: 4 }}>
                 <VStack spacing={{ base: 3, md: 6 }} align="stretch">
                   {historyData?.operator && (
                     <Box p={{ base: 3, md: 4 }} bg="gray.50" borderRadius="lg">

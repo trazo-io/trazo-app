@@ -121,7 +121,7 @@ const OperationReadinessPanel: React.FC<Props> = ({ companyId, farmId, variant =
         defaultMessage: 'Inspection readiness'
       })}
       variant="elevated"
-      padding={{ base: 3, md: 4 }}>
+      padding={{ base: 0, md: 4 }}>
       <VStack align="stretch" spacing={3}>
         <HStack justify="space-between">
           <Text fontSize="sm" color="gray.600">

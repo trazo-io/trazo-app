@@ -92,7 +92,9 @@ import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsB
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
-import { verbForKey } from 'config/activityVerbs';
+import { subtypeQuestionFor, verbForKey } from 'config/activityVerbs';
+import { getSubtypes } from 'config/events';
+import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { VoiceEventCapture } from 'components/Events/VoiceEventCapture';
@@ -251,7 +253,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Without this the farmer taps "Log this" on "Annual Structural Pruning" and lands back on
   // a "What did you do?" grid, which is the opposite of what the button promised.
   const typePresetFromPlan = !isEdit && planItemIdFromUrl != null && eventTypeFromUrl != null;
-  const typeChooserAnswered = typePresetFromVerb || typePresetFromPlan;
 
   // Theme colors
   const textColor = useColorModeValue('gray.700', 'white');
@@ -273,6 +274,21 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // Verb picked in-page (no URL preset) — drives title + tile selection state.
   const [pickedVerbKey, setPickedVerbKey] = useState(null);
 
+  // Escape hatch for a wrong tile.
+  //
+  // The subtype is deliberately NOT echoed back as a locked summary row — the page title
+  // already says "Log activity — Harvest", and a second read-only copy of the same word is
+  // the same clutter the duplicate select was, minus the bug. But with the chooser hidden a
+  // mis-tap would otherwise strand the farmer, so step 0 offers one quiet text link that
+  // brings the grid back.
+  const [chooserReopened, setChooserReopened] = useState(false);
+  const typeChooserAnswered = (typePresetFromVerb || typePresetFromPlan) && !chooserReopened;
+
+  // The verb in force: an in-page pick always wins over the URL, so re-choosing after
+  // "Change activity" re-titles the page instead of leaving the old verb in the header.
+  const activeVerbKey = pickedVerbKey || (typePresetFromVerb ? verbFromUrl : null);
+  const activeVerb = verbForKey(activeVerbKey);
+
   // The plan item is fetched, not passed through the URL: the practice this record answers is
   // read from the operator's own plan, so a hand-edited link cannot invent one.
   const { data: seasonPlanData } = useGetSeasonPlanQuery(
@@ -283,6 +299,23 @@ function NewEvent({ isEdit = false, eventId = null }) {
     () =>
       (seasonPlanData?.items || []).find((item) => String(item.id) === String(planItemIdFromUrl)),
     [seasonPlanData, planItemIdFromUrl]
+  );
+
+  // What the wizard must still ask about the subtype — [] when the answer is already in.
+  // The branching lives in config/activityVerbs (`subtypeQuestionFor`) because it is pure,
+  // fiddly, and got it wrong twice while it was inline here; its branches are covered by
+  // config/events/__tests__/subtypeQuestion.test.ts.
+  const pendingSubtypeChoices = useMemo(
+    () =>
+      subtypeQuestionFor({
+        isEdit,
+        eventType: activeEventType,
+        verb: activeVerb,
+        fromPlanItem: typePresetFromPlan,
+        planItem: activePlanItem,
+        allProductionSubtypes: getSubtypes(1).map((entry) => entry.code)
+      }),
+    [isEdit, activeEventType, typePresetFromPlan, activePlanItem, activeVerb]
   );
 
   // WS-4c: voice accelerator on the details step (ported from QuickAddEvent).
@@ -1066,6 +1099,34 @@ function NewEvent({ isEdit = false, eventId = null }) {
     if (verb.subtype) {
       setEventFormData((prev) => ({ ...prev, type: verb.subtype }));
     }
+  };
+
+  /**
+   * Second-level pick (family verbs only) — same clearing contract as changing the event type.
+   *
+   * The subtype decides which fields the details step renders, so carrying values across a
+   * change is the "stale field rides along in the payload" class: a farmer who fills a Harvest
+   * record, walks Back to step 0 and switches to Post-Harvest would otherwise POST the harvest
+   * keys the new subtype never showed them. ProductionTab's per-subtype payload gates catch
+   * most of those keys and not all of them, and a gate that has to be complete for correctness
+   * is a worse guarantee than not having the values at all.
+   *
+   * Date and operator survive — they are step 0's own fields and describe the farmer, not the
+   * practice. voiceSeq remounts the tab so it re-reads the cleared initialValues (ChemicalTab
+   * and friends only read them on mount).
+   */
+  const handleSubtypeSelect = (code) => {
+    if (eventFormData.type === code) return;
+    setEventFormData((prev) => {
+      const kept = {};
+      ['date', 'performed_by'].forEach((f) => {
+        if (prev[f] !== undefined) kept[f] = prev[f];
+      });
+      return { ...kept, type: code };
+    });
+    setCarbonCalculation(null);
+    dispatch(clearForm());
+    setVoiceSeq((n) => n + 1);
   };
 
   // Seed the SUBTYPE from the season-plan item, once, when it arrives.
@@ -1896,14 +1957,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
           // Pruning"), which is more specific than any verb the grid could offer.
           activePlanItem
           ? intl.formatMessage({ id: 'activities.logTitle' }, { verb: activePlanItem.name })
-          : typePresetFromVerb || pickedVerbKey
+          : // An in-page pick wins over the URL preset — after "Change activity" the header
+          // must name what the farmer just chose, not what the link they followed said.
+          activeVerbKey
           ? intl.formatMessage(
               { id: 'activities.logTitle' },
-              {
-                verb: intl.formatMessage({
-                  id: `activities.verb.${typePresetFromVerb ? verbFromUrl : pickedVerbKey}`
-                })
-              }
+              { verb: intl.formatMessage({ id: `activities.verb.${activeVerbKey}` }) }
             )
           : intl.formatMessage({ id: 'app.createNewEvent' }) || 'Add Event'
       }
@@ -1935,18 +1994,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
       {/* 2025 UX: Enhanced loading state with progress indication */}
       {isEdit && isLoadingEvent && (
         <StandardCard>
-          <CardBody py={8} px={{ base: 4, md: 6 }}>
-            <Flex justify="center" align="center">
-              <CircularProgress isIndeterminate color="green.500" />
-            </Flex>
-          </CardBody>
+          {/* No <CardBody> here: StandardCard already renders one. Nesting a second put a
+              third inset inside the card's forced 14px and this body's 16px — 42px each
+              side on a 375px screen. */}
+          <Flex justify="center" align="center" py={8}>
+            <CircularProgress isIndeterminate color="green.500" />
+          </Flex>
         </StandardCard>
       )}
 
       {/* Error state when editing */}
       {isEdit && eventError && (
         <Card boxShadow="xl" bg={bgColor} borderRadius="2xl">
-          <CardBody py={8} px={{ base: 4, md: 6 }}>
+          <CardBody py={8} px={{ base: 0, md: 6 }}>
             <VStack spacing={4} align="center">
               <Text fontSize="lg" fontWeight="semibold" color="red.700">
                 {intl.formatMessage({ id: 'app.errorLoadingEvent' }) || 'Error loading event data'}
@@ -1994,12 +2054,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
           <Box>
             {activeStep === 0 && (
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                <CardHeader pb={2}>
+                <CardHeader pb={2} px={{ base: 0, md: 6 }}>
                   <Text fontSize="lg" fontWeight="semibold" color={textColor}>
                     {intl.formatMessage({ id: 'app.basicEventInfo' }) || 'Basic Event Information'}
                   </Text>
                 </CardHeader>
-                <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
+                <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
                   <FormProvider {...basicMethods}>
                     <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)} noValidate>
                       <VStack spacing={{ base: 5, md: 6 }} align="stretch">
@@ -2074,16 +2134,28 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     disabled={isEdit}
                                     cursor={isEdit ? 'not-allowed' : 'pointer'}
                                     opacity={isEdit && activeEventType !== eventType.id ? 0.4 : 1}
+                                    /*
+                                     * `.800` when selected, not `.500`.
+                                     *
+                                     * The selected tile puts a WHITE LABEL on this fill, which
+                                     * is text and owes 4.5:1. MEASURED at `.500`, SIX of the
+                                     * seven hues failed: yellow 2.39, green 2.78, blue 3.12,
+                                     * orange 3.39, teal 3.51, red 3.68 (only gray passed).
+                                     * `.claude/rules/frontend.md` bans white on green.500 by
+                                     * name. `.700` is still not enough here because these
+                                     * tiles share ONE step across every hue and yellow.700 is
+                                     * 3.64; `.800` clears every one, worst case 5.54.
+                                     */
                                     bg={
                                       activeEventType === eventType.id
-                                        ? `${eventType.color}.500`
+                                        ? `${eventType.color}.800`
                                         : 'white'
                                     }
                                     color={activeEventType === eventType.id ? 'white' : 'gray.700'}
                                     borderWidth="2px"
                                     borderColor={
                                       activeEventType === eventType.id
-                                        ? `${eventType.color}.500`
+                                        ? `${eventType.color}.800`
                                         : 'gray.200'
                                     }
                                     borderRadius={{ base: 'lg', md: 'xl' }}
@@ -2101,13 +2173,24 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                         ? {
                                             transform: 'translateY(-2px)',
                                             boxShadow: 'lg',
-                                            borderColor: `${eventType.color}.400`
+                                            // .400 is 1.9-2.9:1; a hover border is a
+                                            // boundary and owes 3.0. .600 worst case is 3.64.
+                                            borderColor: `${eventType.color}.600`
                                           }
                                         : {}
                                     }
                                     _focus={{
                                       outline: 'none',
-                                      boxShadow: `0 0 0 3px var(--chakra-colors-${eventType.color}-200)`
+                                      /*
+                                       * The theme's `outline` shadow, not a per-hue `.200`
+                                       * ring. A `.200` step is ~1.3-1.9:1 against white, so
+                                       * the focus indicator failed WCAG 2.4.11's 3.0 floor on
+                                       * every tile — and it varied by event type, which a
+                                       * focus ring never should. `theme/styles.js` defines
+                                       * `shadows.outline` as solid green.600 (4.12) precisely
+                                       * so every focusable thing rings the same way.
+                                       */
+                                      boxShadow: 'outline'
                                     }}
                                     aria-label={`Select ${eventType.label} event type. ${eventType.description}`}
                                     aria-pressed={activeEventType === eventType.id}
@@ -2119,7 +2202,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                       color={
                                         activeEventType === eventType.id
                                           ? 'white'
-                                          : `${eventType.color}.500`
+                                          : `${eventType.color}.700`
                                       }
                                     />
                                     <VStack spacing={0.5} width="100%">
@@ -2144,6 +2227,52 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               </Grid>
                             )}
                           </SectionBox>
+                        )}
+
+                        {/* Second-level activity question — family verbs only.
+                              A tile that already pinned its subtype renders NOTHING here:
+                              the page title carries the answer, and echoing it back as a
+                              locked row is the same clutter the duplicate select was. */}
+                        {pendingSubtypeChoices.length > 0 && (
+                          <SectionBox>
+                            <SectionHeader
+                              icon={FaTasks}
+                              title={intl.formatMessage({ id: 'activities.subtype.title' })}
+                              description={intl.formatMessage({ id: 'activities.subtype.hint' })}
+                            />
+                            <ActivitySubtypeChooser
+                              eventType={activeEventType}
+                              choices={pendingSubtypeChoices}
+                              value={eventFormData.type || null}
+                              onChange={handleSubtypeSelect}
+                            />
+                          </SectionBox>
+                        )}
+
+                        {/* Wrong tile? One quiet way back to the grid — see chooserReopened. */}
+                        {typeChooserAnswered && activeVerbKey && (
+                          <Box>
+                            <StandardButton
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                // Seed the grid's selection from the verb in force. Without
+                                // it the grid opens with NOTHING highlighted while the page
+                                // header still names a verb — the farmer cannot tell which
+                                // tile they are changing away from.
+                                setPickedVerbKey(activeVerbKey);
+                                setChooserReopened(true);
+                              }}>
+                              {intl.formatMessage(
+                                { id: 'activities.changeActivity' },
+                                {
+                                  verb: intl.formatMessage({
+                                    id: `activities.verb.${activeVerbKey}`
+                                  })
+                                }
+                              )}
+                            </StandardButton>
+                          </Box>
                         )}
 
                         {/* Event Timing & Traceability Section */}
@@ -2230,12 +2359,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
             {activeStep === 1 && (
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                <CardHeader pb={2}>
+                <CardHeader pb={2} px={{ base: 0, md: 6 }}>
                   <Text fontSize="lg" fontWeight="semibold" color={textColor}>
                     {intl.formatMessage({ id: 'app.eventDetails' }) || 'Event Details'}
                   </Text>
                 </CardHeader>
-                <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
+                <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
                   {/* WS-4c: voice accelerator — every entry path gets it, not just Quick */}
                   {!isEdit && activeEventType !== 0 && (
                     <Box mb={4}>
@@ -2365,6 +2494,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       onPrev={goToPreviousStep}
                       initialValues={eventFormData}
                       hideActions={true}
+                      /* Create mode has already asked: a verb tile pinned the subtype, a plan
+                         item named it, or step 0's ActivitySubtypeChooser collected it. Asking
+                         again here — in raw codes, against all sixteen, with the page title
+                         locked to the verb — is the double-ask this replaced. Edit mode keeps
+                         the select: there, changing it is a correction, not a second ask. */
+                      hideSubtypeSelect={!isEdit}
                       carbonCalculation={carbonCalculation}
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />
@@ -2519,13 +2654,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
             {activeStep === 2 && (
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
-                <CardHeader pb={2}>
+                <CardHeader pb={2} px={{ base: 0, md: 6 }}>
                   <Text fontSize="lg" fontWeight="semibold" color={textColor}>
                     {intl.formatMessage({ id: 'app.mediaAndDocumentation' }) ||
                       'Media & Documentation'}
                   </Text>
                 </CardHeader>
-                <CardBody pt={4} pb={6} px={{ base: 4, md: 6 }}>
+                <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
                   <VStack spacing={{ base: 5, md: 6 }} align="stretch">
                     {/* Photo Recommendations - Event-Type & Subtype-Specific Guidance */}
                     <PhotoRecommendationsBox

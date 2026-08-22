@@ -244,7 +244,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
                 cursor="pointer"
                 _hover={{ borderColor: accentColor, transform: 'translateY(-1px)' }}
                 transition="all 0.2s">
-                <CardBody p={3}>
+                <CardBody py={3} px={{ base: 0, md: 3 }}>
                   <HStack>
                     <Icon as={IconComponent} color={accentColor} />
                     <Text fontSize="sm" fontWeight="medium" color={textColor}>
@@ -285,7 +285,7 @@ const EducationModal: React.FC<EducationModalProps> = ({
         <VStack spacing={2} align="stretch">
           {content.external_resources.map((resource, index) => (
             <Card key={index} variant="outline" borderColor={borderColor}>
-              <CardBody p={3}>
+              <CardBody py={3} px={{ base: 0, md: 3 }}>
                 <HStack justify="space-between">
                   <HStack>
                     <Icon as={getResourceIcon(resource.type)} color={accentColor} />

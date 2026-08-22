@@ -333,6 +333,30 @@ interface StandardCardProps {
    * Horizontal padding, forwarded to CardBody's `px`. Chakra spacing tokens are NUMBERS
    * (`padding={3}` = 12px), which the old `string | object` type rejected — 6 callers were
    * passing numbers against it, unnoticed because the typecheck gate does not run.
+   *
+   * ⚠️ The mobile base is 0 ON PURPOSE, and a non-zero base is almost always a bug.
+   * `assets/css/trazo-dashboard-styles.css` (protected) forces `.trazo-card { padding: 14px }`
+   * on mobile and 22px from `md` up, with `!important`. That IS the card's inset. Anything
+   * `px` adds here is a SECOND inset inside the first.
+   *
+   * MEASURED 2026-08-22 at 375px, the width `.claude/rules/frontend.md` names as the design
+   * target, on the add-activity form — every contributing edge, walked from the input outward:
+   *
+   *     16  page gutter        (4 panel + 12 wrapper)
+   *      1  card border
+   *     14  card padding       ← forced, protected CSS
+   *     16  CardBody px
+   *      1  SectionBox border
+   *     12  SectionBox padding
+   *     ──
+   *     60  each side  →  a text input got 255px of a 375px screen. 68%.
+   *
+   * 88px, a quarter of a phone, spent on nested chrome. Material (16dp), Apple HIG (16pt) and
+   * Bootstrap (16px) all put the gutter at 16 and stop; the page gutter here was already right,
+   * so every pixel over it came from stacking insets. After: 16 + 1 + 14 = 31, input 313 (83%).
+   *
+   * `md` keeps its inset: 22 + 16 = 38px reads as generous rather than wasteful once there is
+   * room for it, and desktop was not the complaint.
    */
   padding?: string | number | object;
   /**
@@ -358,7 +382,7 @@ export const StandardCard = ({
   headerAction,
   titleIcon,
   variant = 'elevated',
-  padding = { base: 3, md: 4 },
+  padding = { base: 0, md: 4 },
   mb = 6,
   mt
 }: StandardCardProps) => {
@@ -479,7 +503,7 @@ export const StandardStepper = ({
   const titleFontSize = manySteps ? 'xs' : { base: 'xs', md: 'sm' };
 
   return (
-    <StandardCard padding={{ base: 2, md: 6 }}>
+    <StandardCard padding={{ base: 0, md: 6 }}>
       <Box overflowX="auto" w="100%" py={2}>
         <HStack
           spacing={spacing}
@@ -943,10 +967,21 @@ export const StandardForm = ({
   description,
   onSubmit,
   isLoading = false,
-  submitText = 'Save',
+  submitText,
   showCancel = false,
   onCancel
 }: StandardFormProps) => {
+  /*
+   * ⚠️ `intl` was referenced in the Cancel button below and NEVER obtained — no `useIntl()`
+   * call in this component. Rendering it with `showCancel` would have thrown
+   * `ReferenceError: intl is not defined`. It survived because this component has ZERO call
+   * sites, and because `tsconfig.json` sets `allowJs: false` while the typecheck gate is not
+   * enforced, so its TS2552 sat in the masked pile.
+   *
+   * `submitText` also defaulted to the literal 'Save' and `loadingText` to 'Saving...', both
+   * hard-coded English in a design-system component.
+   */
+  const intl = useIntl();
   return (
     <StandardCard title={title} subtitle={description}>
       <form onSubmit={onSubmit}>
@@ -965,10 +1000,10 @@ export const StandardForm = ({
               type="submit"
               colorScheme="green"
               isLoading={isLoading}
-              loadingText="Saving..."
+              loadingText={intl.formatMessage({ id: 'app.saving' })}
               size="lg"
               px={8}>
-              {submitText}
+              {submitText ?? intl.formatMessage({ id: 'app.save' })}
             </Button>
           </HStack>
         </VStack>
@@ -1634,6 +1669,85 @@ export const StandardSection = ({ title, description, action, children }: Standa
  */
 const SECTION_ICON_COLOR = 'green.700';
 
+/**
+ * The empty state every list, card and panel should use.
+ *
+ * MEASURED 2026-08-22: 33 files hand-rolled one, and no shared component existed — so every
+ * empty state invented its own icon size, title size, padding and colour. Two of them sat in
+ * the SAME card (`Parcel/components/TrackList`) and disagreed on all four: `boxSize` 12 vs 10,
+ * title `lg` vs `md`, `py` 16 vs 8, icon `green.400` vs `blue.400`.
+ *
+ * Every glyph colour in use failed the 3.0:1 a non-text mark owes on white — green.400 2.01,
+ * blue.400 2.65, Chakra orange.400 2.55, green.300 1.65 — because an empty state "feels" like
+ * a place for a soft, friendly tint. It is not: it is the only thing on the screen.
+ * `green.700` (5.13) is the same colour section headings already use.
+ *
+ * ⚠️ `action` belongs HERE, not in a card footer. In TrackList the CTA lived in a separate
+ * `<Flex>` after `<CardBody>`, pinned to the bottom of a card with a hard-coded 700px height,
+ * which MEASURED 179px of blank space between "No current production yet" and the button that
+ * answers it. A call to action separated from its sentence by half a phone screen reads as an
+ * unrelated control.
+ */
+interface StandardEmptyStateProps {
+  icon: IconType;
+  title: string;
+  description?: string;
+  /** The one thing to do next. Pass a StandardButton. */
+  action?: ReactNode;
+  /**
+   * `md` (default) is a card's primary empty state. `sm` is for a secondary one — a nested
+   * panel, or a second empty state in a card that already has a bigger one.
+   */
+  size?: 'sm' | 'md';
+  /*
+   * ⛔ There is no `fill` prop, and the one that was here on 2026-08-22 is gone because it
+   * was INERT.
+   *
+   * It set `flex: 1` intending to centre the empty state in a stretched grid item. MEASURED on
+   * TrackList: the chain above it is `CardBody` (computed `flex: 0 1 auto`) → a `Box` with
+   * `maxH={{ base: '400px', md: '450px' }}` → a content-sized `Flex`. Nothing in that chain
+   * grows, so there was never any free space to claim, and the `maxH` meant the empty state
+   * could not have exceeded 400px even if there had been.
+   *
+   * Making it real means flexing that whole chain and dropping the `maxH` scroll box — a
+   * layout change that has to be watched in a browser, not reasoned about. Until then a prop
+   * that quietly does nothing is worse than no prop: it reads as "handled".
+   */
+}
+
+export const StandardEmptyState = ({
+  icon,
+  title,
+  description,
+  action,
+  size = 'md'
+}: StandardEmptyStateProps) => {
+  const iconSize = size === 'md' ? 10 : 8;
+  return (
+    <VStack
+      spacing={size === 'md' ? 5 : 4}
+      py={size === 'md' ? 10 : 6}
+      px={4}
+      align="center"
+      justify="center"
+      textAlign="center"
+      w="100%">
+      <Icon as={icon} color={SECTION_ICON_COLOR} boxSize={iconSize} aria-hidden="true" />
+      <VStack spacing={2} maxW="360px">
+        <Text fontSize={size === 'md' ? 'lg' : 'md'} fontWeight="bold" color="gray.700">
+          {title}
+        </Text>
+        {description && (
+          <Text fontSize="sm" color="gray.600" lineHeight="1.5">
+            {description}
+          </Text>
+        )}
+      </VStack>
+      {action}
+    </VStack>
+  );
+};
+
 interface SectionHeaderProps {
   icon: IconType;
   /** Escape hatch; leave unset. Passing a hue here is what produced the six-colour spread. */
@@ -1741,18 +1855,66 @@ export const SectionHeader = ({
 interface SectionBoxProps {
   children: ReactNode;
   borderColor?: string;
-  bg?: string;
+  /*
+   * ⛔ No `bg`. It existed, and MEASURED 2026-08-22 not one of the 68 call sites passed it —
+   * every SectionBox in the app was a white box on a white card. Once the mobile treatment
+   * went flush (no border, no horizontal inset) the prop stopped being merely unused and
+   * became a trap: a tinted fill with no horizontal padding runs to the card's edge with the
+   * text sitting on it. If a tinted section is ever wanted, add it back deliberately WITH its
+   * mobile case — a tint cannot bleed the way white can.
+   */
 }
 
-export const SectionBox = ({ children, borderColor, bg }: SectionBoxProps) => {
+/**
+ * A grouped block of fields inside a card.
+ *
+ * ⚠️ On mobile it is FLUSH — no border, no inset — and that is the design, not an oversight.
+ *
+ * MEASURED 2026-08-22 at 375px on the add-activity form: this box was a WHITE box on a WHITE
+ * card (checked all 68 call sites — not one passed a `bg`), so its 1px border was the only
+ * thing distinguishing it, and it charged 12px each side for the privilege. It was the third
+ * inset in a row:
+ *
+ *     16 page gutter + 1 card border + 14 card padding
+ *        + 16 CardBody px + 1 this border + 12 this padding  =  60px each side
+ *
+ * — which left a text input 255px of a 375px screen.
+ *
+ * Nothing is lost by dropping it there. Every one of these blocks leads with a `SectionHeader`
+ * carrying an icon, a title and usually a `SectionBadge` — the grouping is stated in words
+ * before the border ever gets a chance to imply it, and the parent stack's gap keeps the
+ * blocks apart. Dropping a nested container on a narrow screen and letting the heading carry
+ * the group is what iOS grouped lists and Material both do; a border 15px inside another
+ * border is a desktop affordance that does not earn 24px of a phone's width.
+ *
+ * ⚠️ Only the HORIZONTAL axis changes. `py` stays at its old value on mobile ON PURPOSE: with
+ * the border gone, whitespace is the only thing left separating one section from the next, and
+ * these forms space their FIELDS 20px apart (`spacing={{ base: 5 }}`) while the parent stack's
+ * gap between sections is the same order — MEASURED 20px on step 1, 24px on step 2. Zeroing
+ * `py` too would have made section-to-section spacing indistinguishable from field-to-field
+ * spacing — six sections reading as one long list — at the exact moment the border that used
+ * to distinguish them was removed. Keeping `py={3}` holds content-to-content separation at
+ * 12 + gap + 12, i.e. 44-48px: unchanged from before this edit.
+ *
+ * From `md` up the border and inset come back — there is room for them, and desktop was never
+ * the complaint.
+ *
+ * ⚠️ `mb` here is INERT at every call site that sits in a Stack. `theme/styles.js` forces
+ * `.chakra-stack > *:not(.chakra-divider) { margin: 0 !important }`, and MEASURED on this
+ * form the computed margin-bottom is 0px — spacing comes from the stack's own gap. It is kept
+ * only for the call sites that are NOT stack children.
+ */
+export const SectionBox = ({ children, borderColor }: SectionBoxProps) => {
   return (
     <Box
       mb={6}
-      p={{ base: 3, md: 4 }}
-      border="1px"
+      px={{ base: 0, md: 4 }}
+      py={{ base: 3, md: 4 }}
+      borderWidth={{ base: 0, md: '1px' }}
+      borderStyle="solid"
       borderColor={borderColor || 'gray.200'}
-      borderRadius="lg"
-      bg={bg || 'white'}>
+      borderRadius={{ base: 0, md: 'lg' }}
+      bg="white">
       {children}
     </Box>
   );
@@ -1786,6 +1948,7 @@ export const CollapsibleSection = ({
   children,
   defaultIsOpen = false
 }: CollapsibleSectionProps) => {
+  const intl = useIntl();
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen });
   // No tint and no variant — see the note on SectionBox.
   const borderColor = 'gray.200';
@@ -1812,23 +1975,56 @@ export const CollapsibleSection = ({
         borderColor={borderColor}
         cursor="pointer"
         _hover={{ bg: 'gray.100' }}
-        transition="all 0.2s">
-        <Flex justify="space-between" align="center">
-          <HStack spacing={2}>
-            {icon && <Icon as={icon} color={iconColor ?? SECTION_ICON_COLOR} boxSize={5} />}
-            <Text fontSize="md" fontWeight="bold" color="gray.700">
+        transition="all 0.2s"
+        /* A disclosure control must SAY it is a disclosure. This was a bare <button> whose
+           only expanded/collapsed signal was the word "Show" and a chevron — both visual. */
+        aria-expanded={isOpen}>
+        <Flex justify="space-between" align="center" gap={2}>
+          {/*
+            `minW={0}` + `flexWrap` on the left, `flexShrink={0}` on the right.
+
+            A flex item defaults to `min-width: auto`, which refuses to shrink below its
+            longest word. Neither side declared anything, so on a narrow screen the browser
+            crushed whichever side it could — MEASURED on the planting form at 375px, the
+            title "Fuel Consumption & Equipment Data" wrapped to three lines and the word
+            "Show" was squeezed into a one-character-per-line column reading S / h / o / w.
+          */}
+          <HStack spacing={2} minW={0} flex="1" flexWrap="wrap">
+            {icon && (
+              <Icon
+                as={icon}
+                color={iconColor ?? SECTION_ICON_COLOR}
+                boxSize={5}
+                flexShrink={0}
+              />
+            )}
+            <Text fontSize="md" fontWeight="bold" color="gray.700" minW={0}>
               {title}
             </Text>
             {badge && <SectionBadge tone={badgeTone}>{badge}</SectionBadge>}
           </HStack>
-          <HStack spacing={2}>
-            <Text fontSize="sm" color="gray.600">
-              {isOpen ? 'Hide' : 'Show'}
+          <HStack spacing={2} flexShrink={0}>
+            {/*
+              Hidden below `smd` (480px) rather than shrunk. The chevron already carries the
+              affordance, `aria-expanded` carries it for assistive tech, and on a phone this
+              word is the least valuable thing competing for the row. Was also hard-coded
+              English in a DESIGN-SYSTEM component, so it shipped untranslated everywhere the
+              component is used.
+            */}
+            <Text
+              fontSize="sm"
+              color="gray.600"
+              whiteSpace="nowrap"
+              display={{ base: 'none', smd: 'inline' }}>
+              {isOpen
+                ? intl.formatMessage({ id: 'app.hide' })
+                : intl.formatMessage({ id: 'app.show' })}
             </Text>
             <Icon
               as={isOpen ? FaChevronUp : FaChevronDown}
               color="gray.600"
               boxSize={4}
+              flexShrink={0}
               transition="transform 0.2s"
             />
           </HStack>

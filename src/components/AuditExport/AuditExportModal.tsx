@@ -15,6 +15,8 @@ import {
   Stack,
   Box,
   Icon,
+  Collapse,
+  Button,
   Divider,
   useColorModeValue,
   useToast
@@ -28,7 +30,9 @@ import {
   FiShield,
   FiRefreshCw,
   FiHash,
-  FiDroplet
+  FiDroplet,
+  FiChevronDown,
+  FiChevronUp
 } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 
@@ -57,60 +61,75 @@ interface CertGroup {
   options: CertOption[];
 }
 
-const COMBINED_OPTION: CertOption = {
-  value: 'all',
-  labelKey: 'app.exportAllCertifications',
-  subtitleKey: 'app.exportAllCertificationsSubtitle',
-  icon: FiLayers
+/**
+ * 🔴 2026-08-22 — this picker opened on "All Certifications" with five branded standards
+ * given equal weight. Two problems, one strategic and one concrete.
+ *
+ * Concrete: "all" carries the carbon appendix that the organic export deliberately EXCLUDES
+ * ("USDA inspectors do not grade on environmental footprint, and including emissions data in
+ * an audit PDF risks greenwashing-by-association claims" — audit_export_service.py). The
+ * default therefore handed an organic grower the one variant carrying the risk the organic
+ * variant was built to avoid.
+ *
+ * Strategic: organic is 27 CFR-cited sections — OSP reference, drift findings, producer
+ * attestation, SOE compliance, mass balance, CDFA registration. The other four are 5–19
+ * generic sections re-sliced from the same records, with nothing standard-specific in them
+ * (ROC gets no animal welfare or social fairness; GlobalG.A.P. no hygiene or water-risk
+ * module; SCS nothing SCS-specific). Presenting them as peers of the organic packet claims
+ * a breadth the product does not have.
+ *
+ * So: USDA Organic leads and is the default, ROC sits under it as the organic-adjacent
+ * option, and the rest live behind a disclosure with a line saying plainly that choosing one
+ * filters sections and is not a claim of certification.
+ */
+const PRIMARY_OPTION: CertOption = {
+  value: 'organic',
+  labelKey: 'app.exportOrganic',
+  subtitleKey: 'app.exportOrganicSubtitle',
+  icon: FiCheckCircle
 };
 
-const CERT_GROUPS: CertGroup[] = [
+const SECONDARY_GROUP: CertGroup = {
+  titleKey: 'app.exportGroupAlsoOrganic',
+  options: [
+    {
+      value: 'roc',
+      labelKey: 'app.exportRoc',
+      subtitleKey: 'app.exportRocSubtitle',
+      icon: FiRefreshCw
+    }
+  ]
+};
+
+/** Behind "Other standards and full export" — available, not advertised. */
+const MORE_OPTIONS: CertOption[] = [
   {
-    titleKey: 'app.exportGroupOrganic',
-    options: [
-      {
-        value: 'organic',
-        labelKey: 'app.exportOrganic',
-        subtitleKey: 'app.exportOrganicSubtitle',
-        icon: FiCheckCircle
-      },
-      {
-        value: 'roc',
-        labelKey: 'app.exportRoc',
-        subtitleKey: 'app.exportRocSubtitle',
-        icon: FiRefreshCw
-      }
-    ]
+    value: 'all',
+    labelKey: 'app.exportAllCertifications',
+    subtitleKey: 'app.exportAllCertificationsSubtitle',
+    icon: FiLayers
   },
   {
-    titleKey: 'app.exportGroupFoodSafety',
-    options: [
-      {
-        value: 'globalgap',
-        labelKey: 'app.exportGlobalgap',
-        subtitleKey: 'app.exportGlobalgapSubtitle',
-        icon: FiShield
-      },
-      {
-        value: 'fsma204',
-        labelKey: 'app.exportFsma204',
-        subtitleKey: 'app.exportFsma204Subtitle',
-        icon: FiHash
-      }
-    ]
+    value: 'globalgap',
+    labelKey: 'app.exportGlobalgap',
+    subtitleKey: 'app.exportGlobalgapSubtitle',
+    icon: FiShield
   },
   {
-    titleKey: 'app.exportGroupSustainability',
-    options: [
-      {
-        value: 'scs',
-        labelKey: 'app.exportScs',
-        subtitleKey: 'app.exportScsSubtitle',
-        icon: FiDroplet
-      }
-    ]
+    value: 'fsma204',
+    labelKey: 'app.exportFsma204',
+    subtitleKey: 'app.exportFsma204Subtitle',
+    icon: FiHash
+  },
+  {
+    value: 'scs',
+    labelKey: 'app.exportScs',
+    subtitleKey: 'app.exportScsSubtitle',
+    icon: FiDroplet
   }
 ];
+
+const MORE_VALUES = MORE_OPTIONS.map((o) => o.value);
 
 const FORMAT_OPTIONS: Array<{ value: FormatKey; labelKey: string; icon: React.ElementType }> = [
   { value: 'pdf', labelKey: 'app.exportPdfReport', icon: FiFileText },
@@ -188,7 +207,11 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
   const intl = useIntl();
   const toast = useToast();
 
-  const [certification, setCertification] = useState<CertificationKey>('all');
+  const [certification, setCertification] = useState<CertificationKey>('organic');
+  // Opens itself when the current selection lives inside it, so a chosen standard is never
+  // hidden behind a collapsed section the farmer has to remember to open.
+  const [showMore, setShowMore] = useState(false);
+  const isMoreOpen = showMore || MORE_VALUES.includes(certification);
   const [format, setFormat] = useState<FormatKey>('pdf');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -199,6 +222,7 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
   const infoText = useColorModeValue('blue.700', 'blue.200');
   const labelColor = useColorModeValue('gray.700', 'gray.200');
   const groupLabelColor = useColorModeValue('gray.500', 'gray.400');
+  const subtleTextColor = useColorModeValue('gray.600', 'gray.400');
   const radioLabelColor = useColorModeValue('gray.800', 'gray.100');
 
   const handleDownload = async () => {
@@ -330,26 +354,50 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
                 value={certification}
                 onChange={(val) => setCertification(val as CertificationKey)}>
                 <VStack spacing={4} align="stretch">
-                  {/* Combined report — stands alone on top */}
+                  {/* USDA Organic — the packet this product exists to produce. */}
                   <CertRadioCard
-                    option={COMBINED_OPTION}
-                    isSelected={certification === COMBINED_OPTION.value}
+                    option={PRIMARY_OPTION}
+                    isSelected={certification === PRIMARY_OPTION.value}
                   />
 
-                  {/* Grouped cert options */}
-                  {CERT_GROUPS.map((group) => (
-                    <Box key={group.titleKey}>
-                      <Text
-                        fontSize="xs"
-                        fontWeight="semibold"
-                        textTransform="uppercase"
-                        color={groupLabelColor}
-                        mb={2}
-                        letterSpacing="0.06em">
-                        {intl.formatMessage({ id: group.titleKey })}
-                      </Text>
-                      <VStack spacing={2} align="stretch">
-                        {group.options.map((opt) => (
+                  <Box>
+                    <Text
+                      fontSize="xs"
+                      fontWeight="semibold"
+                      textTransform="uppercase"
+                      color={groupLabelColor}
+                      mb={2}
+                      letterSpacing="0.06em">
+                      {intl.formatMessage({ id: SECONDARY_GROUP.titleKey })}
+                    </Text>
+                    <VStack spacing={2} align="stretch">
+                      {SECONDARY_GROUP.options.map((opt) => (
+                        <CertRadioCard
+                          key={opt.value}
+                          option={opt}
+                          isSelected={certification === opt.value}
+                        />
+                      ))}
+                    </VStack>
+                  </Box>
+
+                  <Box>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      color="green.700"
+                      fontWeight="semibold"
+                      rightIcon={<Icon as={isMoreOpen ? FiChevronUp : FiChevronDown} />}
+                      onClick={() => setShowMore((open) => !open)}
+                      aria-expanded={isMoreOpen}>
+                      {intl.formatMessage({ id: 'app.exportMoreStandards' })}
+                    </Button>
+                    <Collapse in={isMoreOpen} animateOpacity>
+                      <VStack spacing={2} align="stretch" mt={3}>
+                        <Text fontSize="xs" color={subtleTextColor}>
+                          {intl.formatMessage({ id: 'app.exportMoreStandardsNote' })}
+                        </Text>
+                        {MORE_OPTIONS.map((opt) => (
                           <CertRadioCard
                             key={opt.value}
                             option={opt}
@@ -357,8 +405,8 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
                           />
                         ))}
                       </VStack>
-                    </Box>
-                  ))}
+                    </Collapse>
+                  </Box>
                 </VStack>
               </RadioGroup>
             </Box>

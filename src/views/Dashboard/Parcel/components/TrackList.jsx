@@ -28,7 +28,6 @@ import {
 import {
   FaRegCheckCircle,
   FaRegDotCircle,
-  FaClock,
   FaPlus,
   FaPlay,
   FaFlag,
@@ -54,7 +53,11 @@ import { useUserRole } from 'hooks/useUserRole';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody.tsx';
 import CardHeader from 'components/Card/CardHeader.tsx';
-import { StandardMenuItem } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardEmptyState,
+  StandardMenuItem
+} from 'components/Design/StandardComponents';
 
 const TrackList = ({ amount }) => {
   const textColor = useColorModeValue('gray.700', 'white');
@@ -112,11 +115,6 @@ const TrackList = ({ amount }) => {
       pollingInterval: eventsPolling ? 3000 : 0
     }
   );
-
-  // Start/stop polling based on events_status
-  useEffect(() => {
-    setEventsPolling(data?.events_status === 'pending');
-  }, [data?.events_status]);
 
   // Clear Redux state when parcel changes to prevent stale data
   useEffect(() => {
@@ -182,12 +180,16 @@ const TrackList = ({ amount }) => {
   return (
     <Card
       key={`track-list-${parcelId}`}
-      h={{ base: '700px', md: '700px' }}
-      maxH={{ base: '700px', md: '700px' }}
+      /* No fixed height. This was `h`/`maxH` 700px at BOTH breakpoints (an identical
+         responsive object, so just `700px`), which MEASURED 226px of dead space on a 375px
+         screen when the card was empty — 32% of the card. The parent in `Parcel/index.jsx`
+         is a CSS Grid, and grid items stretch to the row height for free, so the lock bought
+         nothing on desktop and only capped the card. The sibling HistoryCard locked 650px on
+         mobile against this one's 700px, so the two did not even match where they stack. */
       minW={{ base: '100%', md: '400px' }}
       w="100%"
       className="trazo-card">
-      <CardHeader px={{ base: 4, md: 6 }} py={5} data-tour="current-production">
+      <CardHeader px={{ base: 0, md: 6 }} py={5} data-tour="current-production">
         <Flex direction="column" w="100%">
           {/* Header with consistent height */}
           <Flex justify="space-between" align="center" pb={4}>
@@ -212,14 +214,15 @@ const TrackList = ({ amount }) => {
                 </Badge>
               )}
             </HStack>
-            {canWrite && (
+            {/* HIDDEN, not disabled, when there is no production. It offers Edit and Delete;
+                with nothing to edit or delete the control has no meaning. It was previously
+                rendered `disabled` — MEASURED computed opacity 1.0 and the same `gray.400`
+                glyph — so it looked identical to the live control and did nothing on tap.
+                `gray.400` is also 2.68:1, under the 3.0 a non-text mark owes. */}
+            {canWrite && currentHistory?.product && (
               <Menu isOpen={isOpen1} onClose={onClose1}>
-                <MenuButton
-                  onClick={onOpen1}
-                  alignSelf="flex-start"
-                  disabled={!currentHistory?.product}
-                  cursor={!currentHistory?.product ? 'default' : 'pointer'}>
-                  <Icon as={IoEllipsisVerticalSharp} color="gray.400" w="20px" h="20px" />
+                <MenuButton onClick={onOpen1} alignSelf="flex-start" cursor="pointer">
+                  <Icon as={IoEllipsisVerticalSharp} color="gray.600" w="20px" h="20px" />
                 </MenuButton>
                 <MenuList>
                   <StandardMenuItem
@@ -306,7 +309,9 @@ const TrackList = ({ amount }) => {
                       logo={event.certified ? FaRegCheckCircle : FaRegDotCircle}
                       title={getTimelineEventTitle(event, intl)}
                       date={new Date(event.date).toDateString()}
-                      color={event.certified ? 'green.300' : 'blue.400'}
+                      /* was green.300 (1.65:1) / blue.400 (2.65:1) — both under the 3.0 a
+                         non-text mark owes, and blue carries no meaning in this palette */
+                      color={event.certified ? 'green.700' : 'gray.500'}
                       index={index}
                       arrLength={arr.length}
                       url={`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/${event.id}?event_type=${event.event_type}`}
@@ -317,190 +322,137 @@ const TrackList = ({ amount }) => {
                     />
                   );
                 })}
-                {/* Progressive loading indicator: events exist but more are being created */}
-                {currentHistory?.events?.length > 0 &&
-                  currentHistory?.events_status === 'pending' && (
-                    <HStack spacing={2} justify="center" py={3} px={4}>
-                      <CircularProgress isIndeterminate color="green.500" size="16px" />
-                      <Text fontSize="xs" color="gray.500">
-                        {intl.formatMessage({ id: 'parcel.creatingMoreEvents' })}
-                      </Text>
-                    </HStack>
-                  )}
-                {!currentHistory?.events?.length > 0 && !currentHistory?.product && (
-                  <VStack spacing={8} py={16} align="center" px={6}>
-                    <VStack spacing={4} textAlign="center">
-                      <Icon as={FaSeedling} color="green.400" boxSize={12} />
-                      <VStack spacing={2}>
-                        <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                          {intl.formatMessage({ id: 'parcel.noCurrentProductionYet' })}
-                        </Text>
-                        <Text fontSize="sm" color="gray.500" maxW="350px" lineHeight="1.5">
-                          {intl.formatMessage({ id: 'parcel.startProductionDescription' })}
-                        </Text>
-                      </VStack>
-                    </VStack>
-                  </VStack>
+                {/* `!(x?.length > 0)`, not `!x?.length > 0`. The old form parsed as
+                    `(!length) > 0` and worked only by accident — `true > 0` coerces to
+                    `1 > 0`. The three sibling branches below already used the correct form. */}
+                {!(currentHistory?.events?.length > 0) && !currentHistory?.product && (
+                  <StandardEmptyState
+                    icon={FaSeedling}
+                    title={intl.formatMessage({ id: 'parcel.noCurrentProductionYet' })}
+                    description={intl.formatMessage({ id: 'parcel.startProductionDescription' })}
+                    action={
+                      canWrite ? (
+                        <StandardButton
+                          onClick={() =>
+                            navigate(
+                              `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`
+                            )
+                          }>
+                          {intl.formatMessage({ id: 'app.startProduction' })}
+                        </StandardButton>
+                      ) : undefined
+                    }
+                  />
                 )}
-                {/* Pending: background event creation in progress, no events yet */}
-                {!(currentHistory?.events?.length > 0) &&
-                  currentHistory?.product &&
-                  currentHistory?.events_status === 'pending' && (
-                    <VStack spacing={8} py={8} align="center" px={6}>
-                      <VStack spacing={4} textAlign="center">
-                        <CircularProgress isIndeterminate color="green.500" />
-                        <VStack spacing={2}>
-                          <Text fontSize="md" fontWeight="bold" color={textColor}>
-                            {intl.formatMessage({ id: 'parcel.settingUpEvents' })}
-                          </Text>
-                          <Text fontSize="sm" color="gray.500" maxW="300px" lineHeight="1.5">
-                            {intl.formatMessage({ id: 'parcel.settingUpEventsDescription' })}
-                          </Text>
-                        </VStack>
-                      </VStack>
-                    </VStack>
-                  )}
-                {/* Failed: background event creation failed */}
-                {!(currentHistory?.events?.length > 0) &&
-                  currentHistory?.product &&
-                  currentHistory?.events_status === 'failed' && (
-                    <VStack spacing={8} py={8} align="center" px={6}>
-                      <VStack spacing={4} textAlign="center">
-                        <Icon as={FaClock} color="orange.400" boxSize={10} />
-                        <VStack spacing={2}>
-                          <Text fontSize="md" fontWeight="bold" color={textColor}>
-                            {intl.formatMessage({ id: 'parcel.eventSetupFailed' })}
-                          </Text>
-                          <Text fontSize="sm" color="gray.500" maxW="300px" lineHeight="1.5">
-                            {intl.formatMessage({ id: 'parcel.eventSetupFailedDescription' })}
-                          </Text>
-                        </VStack>
-                      </VStack>
-                    </VStack>
-                  )}
-                {/* Normal empty state: production exists, no events, not pending */}
-                {!(currentHistory?.events?.length > 0) &&
-                  currentHistory?.product &&
-                  currentHistory?.events_status !== 'pending' &&
-                  currentHistory?.events_status !== 'failed' && (
-                    <VStack spacing={8} py={8} align="center" px={6}>
-                      <VStack spacing={4} textAlign="center">
-                        <Icon as={FaClock} color="blue.400" boxSize={10} />
-                        <VStack spacing={2}>
-                          <Text fontSize="md" fontWeight="bold" color={textColor}>
-                            {intl.formatMessage({ id: 'parcel.noEventsRecordedYet' })}
-                          </Text>
-                          <Text fontSize="sm" color="gray.500" maxW="300px" lineHeight="1.5">
-                            {intl.formatMessage({ id: 'parcel.addFirstEventDescription' })}
-                          </Text>
-                        </VStack>
-                      </VStack>
-                    </VStack>
-                  )}
+                {/* The "Setting up events" and "Event setup failed" states that used to sit
+                    here were DELETED 2026-08-22. Both keyed on `currentHistory.events_status`,
+                    a field removed from the `History` model by backend migration 0220
+                    (2026-08-19) when picking a crop template stopped writing dated event
+                    records and started writing a season PLAN instead. There is no longer any
+                    background event creation to report on, so neither state could ever render.
+                    The `orange.400` icon on the failed state was also Chakra's orange — the
+                    theme defines `amber` — at 2.55:1. */}
+                {/* Production exists, nothing recorded against it yet. The two
+                    `events_status !== …` guards this used to carry were always true — see
+                    above. `FaClock` in `blue.400` (2.65:1, and blue carries no meaning in this
+                    palette) becomes the seedling's sibling glyph at the shared colour. */}
+                {!(currentHistory?.events?.length > 0) && currentHistory?.product && (
+                  <StandardEmptyState
+                    size="sm"
+                    icon={FaRegDotCircle}
+                    title={intl.formatMessage({ id: 'parcel.noEventsRecordedYet' })}
+                    description={intl.formatMessage({ id: 'parcel.addFirstEventDescription' })}
+                  />
+                )}
               </>
             )}
           </Flex>
         </Box>
       </CardBody>
-      {/* Modern Action Buttons - Single Add Event Dropdown */}
-      {!isLoading && !isFetching && (
+      {/* Action bar for a production that EXISTS.
+          "Start production" used to live here, in a footer pinned to the bottom of a 700px
+          card — MEASURED 179px below the sentence that asked for it. It now sits inside the
+          empty state, beside its own copy.
+
+          ⚠️ `currentHistory?.id` gates the WRAPPER, not just its contents. When the inner
+          content alone was conditional, the wrapper still rendered on an empty parcel with
+          `p="16px"` and no children — MEASURED a 32px-tall empty box under the card. It was
+          invisible as a shape and visible as unexplained space.
+
+          The id, not `product`: a production without a product row used to render its
+          timeline above while the button still said "Start production". */}
+      {!isLoading && !isFetching && currentHistory?.id && (
         <Flex
           justify={{ base: 'stretch', smd: 'flex-end' }}
           gap={3}
           p={{ base: '16px', md: '20px' }}>
-          {/* Existence of the CURRENT PRODUCTION decides the CTA. This used to test
-              `!currentHistory?.product`, so a production without a product row rendered
-              its timeline above while the button still said "Start production". */}
-          {!currentHistory?.id ? (
-            <Button
-              bg={bgButton}
-              color="white"
-              fontSize="sm"
-              fontWeight="semibold"
-              variant="no-hover"
-              minW={{ base: '100%', smd: '140px', md: '160px' }}
-              w={{ base: '100%', smd: 'auto' }}
-              h="44px"
-              borderRadius="12px"
-              _hover={{
-                transform: 'translateY(-1px)',
-                boxShadow: 'lg'
-              }}
-              transition="all 0.2s"
-              onClick={() =>
-                navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`)
-              }>
-              {intl.formatMessage({ id: 'app.startProduction' })}
-            </Button>
-          ) : (
-            <Flex
-              data-tour="add-event-actions"
-              gap={{ base: 2, md: 3 }}
-              justify={{ base: 'stretch', smd: 'flex-end' }}
-              align={{ base: 'stretch', smd: 'center' }}
-              w="100%"
-              direction={{ base: 'column', smd: 'row' }}>
-              {/* WS-4b entry convergence: Add event opens the SAME "What did you do?"
-                  verb modal the Activities page uses (shared VerbPickerGrid) — all ten
-                  verbs always visible, never a scroll-hidden dropdown subset. */}
-              {canWrite && (
-                <Button
-                  leftIcon={<Icon as={FaPlus} />}
-                  bg={bgButton}
-                  color="white"
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  variant="no-hover"
-                  minW={{ base: '100%', smd: '120px', md: '140px' }}
-                  w={{ base: '100%', smd: 'auto' }}
-                  h="44px"
-                  borderRadius="12px"
-                  _hover={{
-                    transform: 'translateY(-1px)',
-                    boxShadow: 'lg'
-                  }}
-                  _active={{
-                    transform: 'translateY(0px)',
-                    boxShadow: 'md'
-                  }}
-                  transition="all 0.2s"
-                  onClick={onAddEventMenuOpen}>
-                  {intl.formatMessage({ id: 'app.addEvent' })}
-                </Button>
-              )}
+          <Flex
+            data-tour="add-event-actions"
+            gap={{ base: 2, md: 3 }}
+            justify={{ base: 'stretch', smd: 'flex-end' }}
+            align={{ base: 'stretch', smd: 'center' }}
+            w="100%"
+            direction={{ base: 'column', smd: 'row' }}>
+            {/* WS-4b entry convergence: Add event opens the SAME "What did you do?"
+                  verb modal the Activities page uses (shared VerbPickerGrid) — every
+                  verb always visible, never a scroll-hidden dropdown subset. */}
+            {canWrite && (
+              <Button
+                leftIcon={<Icon as={FaPlus} />}
+                bg={bgButton}
+                color="white"
+                fontSize="sm"
+                fontWeight="semibold"
+                variant="no-hover"
+                minW={{ base: '100%', smd: '120px', md: '140px' }}
+                w={{ base: '100%', smd: 'auto' }}
+                h="44px"
+                borderRadius="12px"
+                _hover={{
+                  transform: 'translateY(-1px)',
+                  boxShadow: 'lg'
+                }}
+                _active={{
+                  transform: 'translateY(0px)',
+                  boxShadow: 'md'
+                }}
+                transition="all 0.2s"
+                onClick={onAddEventMenuOpen}>
+                {intl.formatMessage({ id: 'app.addEvent' })}
+              </Button>
+            )}
 
-              {/* Finish Production Button - Only show if there are events */}
-              {canWrite && currentHistory?.events && currentHistory?.events.length > 0 && (
-                <Button
-                  px={{ base: 4, md: '16px' }}
-                  leftIcon={<Icon as={FaFlag} />}
-                  variant="outline"
-                  colorScheme="green"
-                  fontSize="sm"
-                  fontWeight="semibold"
-                  w={{ base: '100%', smd: 'auto' }}
-                  h="44px"
-                  borderRadius="12px"
-                  _hover={{
-                    transform: 'translateY(-1px)',
-                    boxShadow: 'md'
-                  }}
-                  transition="all 0.2s"
-                  onClick={() =>
-                    navigate(
-                      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/finish`
-                    )
-                  }>
-                  <Text as="span" display={{ base: 'none', smd: 'inline' }}>
-                    {intl.formatMessage({ id: 'app.finishProduction' })}
-                  </Text>
-                  <Text as="span" display={{ base: 'inline', smd: 'none' }}>
-                    {intl.formatMessage({ id: 'app.finish' })}
-                  </Text>
-                </Button>
-              )}
-            </Flex>
-          )}
+            {/* Finish Production Button - Only show if there are events */}
+            {canWrite && currentHistory?.events && currentHistory?.events.length > 0 && (
+              <Button
+                px={{ base: 4, md: '16px' }}
+                leftIcon={<Icon as={FaFlag} />}
+                variant="outline"
+                colorScheme="green"
+                fontSize="sm"
+                fontWeight="semibold"
+                w={{ base: '100%', smd: 'auto' }}
+                h="44px"
+                borderRadius="12px"
+                _hover={{
+                  transform: 'translateY(-1px)',
+                  boxShadow: 'md'
+                }}
+                transition="all 0.2s"
+                onClick={() =>
+                  navigate(
+                    `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${currentHistory?.id}/finish`
+                  )
+                }>
+                <Text as="span" display={{ base: 'none', smd: 'inline' }}>
+                  {intl.formatMessage({ id: 'app.finishProduction' })}
+                </Text>
+                <Text as="span" display={{ base: 'inline', smd: 'none' }}>
+                  {intl.formatMessage({ id: 'app.finish' })}
+                </Text>
+              </Button>
+            )}
+          </Flex>
         </Flex>
       )}
 

@@ -387,6 +387,48 @@ export const defaultFormatter: FieldFormatter = (value) => {
  * are what identify the search, and the full table (with dates, results and notes) is what
  * the certifier packet prints.
  */
+/**
+ * Water-test results — a JSONField of `{parameter, value, unit, result}` dicts.
+ *
+ * Same `[object Object]` hazard as `formatSeedSearchAttempts` above, and the same reason it
+ * matters: this is the half of the water test that says whether the water PASSED. Rendered as
+ * "parameter: value unit" lines joined with " · " so a modal row stays one line; the certifier
+ * packet prints the full table.
+ *
+ * A row whose `result` reads fail/positive/detected/exceeds is flagged inline, because a
+ * grower scanning this before an inspection needs the failure to be the thing they see. The
+ * check is substring-based on purpose — labs write "FAIL", "Fail (>126)", "Positive" — and it
+ * only ever ADDS a marker, so an unrecognised result still prints its own text verbatim.
+ */
+export const formatWaterTestResults: FieldFormatter<unknown> = (value) => {
+  if (!Array.isArray(value) || value.length === 0) return null;
+
+  const lines = value
+    .map((row) => {
+      if (!row || typeof row !== 'object') {
+        const s = String(row ?? '').trim();
+        return s || null;
+      }
+      const r = row as Record<string, unknown>;
+      const parameter = String(r.parameter ?? '').trim();
+      const reading = [r.value, r.unit]
+        .map((p) => String(p ?? '').trim())
+        .filter(Boolean)
+        .join(' ');
+      const result = String(r.result ?? '').trim();
+
+      const head = [parameter, reading].filter(Boolean).join(': ');
+      if (!head && !result) return null;
+
+      const failed = /fail|positive|detect|exceed/i.test(result);
+      if (!result) return head;
+      return `${head || result}${head ? ` (${result})` : ''}${failed ? ' ⚠' : ''}`;
+    })
+    .filter((l): l is string => Boolean(l));
+
+  return lines.length ? lines.join(' · ') : null;
+};
+
 export const formatSeedSearchAttempts: FieldFormatter<unknown> = (value) => {
   if (!Array.isArray(value) || value.length === 0) return null;
 

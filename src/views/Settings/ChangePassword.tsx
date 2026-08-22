@@ -19,7 +19,7 @@ const ChangePassword: React.FC = () => {
         {/* Security Header */}
         <Box mb={8} textAlign="center">
           <HStack justify="center" mb={4}>
-            <Icon as={FaLock} boxSize={8} color="green.500" />
+            <Icon as={FaLock} boxSize={8} color="green.700" />
           </HStack>
           <Text fontSize="sm" color="gray.600">
             We recommend changing your password regularly to keep your account secure. Choose a

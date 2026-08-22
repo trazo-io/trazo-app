@@ -22,6 +22,7 @@ import BgMusicCard from 'assets/img/BgMusicCard.png';
 // Custom components
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
+import { StandardEmptyState } from 'components/Design/StandardComponents';
 import CardHeader from 'components/Card/CardHeader';
 import CarouselCard from './CarouselCard';
 import { QuickAddParcelModal } from 'components/Parcels/QuickAddParcelModal';
@@ -237,7 +238,7 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
           )}
         </Flex>
       </CardHeader>
-      <CardBody px={{ base: 1, md: 2 }}>
+      <CardBody px={{ base: 0, md: 2 }}>
         {data && data.length > 0 ? (
           <>
             {/* Unified Horizontal Scrollable Layout for ALL screen sizes */}
@@ -308,19 +309,14 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
             )}
           </>
         ) : (
-          <VStack spacing={6} py={12} align="center" px={6}>
-            <VStack spacing={4} textAlign="center">
-              <Icon as={FaSeedling} color="green.400" boxSize={12} />
-              <VStack spacing={2}>
-                <Text fontSize="lg" fontWeight="bold" color={textColor}>
-                  {intl.formatMessage({ id: 'app.noParcelsYet' })}
-                </Text>
-                <Text fontSize="sm" color="gray.500" maxW="350px" lineHeight="1.5">
-                  {intl.formatMessage({ id: 'app.noParcelsYetDescription' })}
-                </Text>
-              </VStack>
-            </VStack>
-          </VStack>
+          /* Third hand-rolled copy of the same block (TrackList and HistoryCard had the
+             other two), and the third to carry `green.400` at 2.01:1. They had already
+             drifted apart on `spacing` and `py`. */
+          <StandardEmptyState
+            icon={FaSeedling}
+            title={intl.formatMessage({ id: 'app.noParcelsYet' })}
+            description={intl.formatMessage({ id: 'app.noParcelsYetDescription' })}
+          />
         )}
       </CardBody>
 

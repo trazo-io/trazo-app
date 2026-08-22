@@ -1729,7 +1729,7 @@ function ProductDetail() {
                     } else {
                       return (
                         <VStack spacing={3} py={8}>
-                          <Icon as={MdTimeline} boxSize={16} color="gray.400" />
+                          <Icon as={MdTimeline} boxSize={16} color="gray.500" />
                           <Heading as="h4" size="md" color="gray.600">
                             {intl.formatMessage({
                               id: 'app.noTimelineData',

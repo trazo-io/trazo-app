@@ -79,7 +79,15 @@ export type ProductionSubtype =
   | 'PH' // Post-Harvest
   | 'CM' // Canopy Management
   | 'FP' // Frost Protection (Batch 3, 2026-06)
-  | 'MO'; // Mowing / Orchard-Floor (Batch 3, 2026-06)
+  | 'MO' // Mowing / Orchard-Floor (Batch 3, 2026-06)
+  // Batch 4 (2026-08-19) shipped these three to the backend and the form and never to the
+  // display registry, so a Transport row fell through `getPhotoTier` to the type-level
+  // default and `getSubtypes(1)` never listed it. Backfilled 2026-08-22 — the parity guard in
+  // __tests__/productionSubtypeCoverage.test.ts now fails if this union drifts from
+  // history/models.py PRODUCTION_EVENTS again.
+  | 'TP' // Transport — a load leaving the farm (Batch 4, 2026-08-19)
+  | 'BU' // Buffer Use — § 205.202(c) harvest or disposal (Batch 4, 2026-08-19)
+  | 'SS'; // Seed Search — § 205.204(a)(1) availability search (Batch 4, 2026-08-19)
 
 export type ChemicalSubtype = 'FE' | 'PE' | 'FU' | 'HE';
 

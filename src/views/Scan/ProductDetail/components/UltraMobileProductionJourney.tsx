@@ -298,7 +298,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         case 0: // Weather
           return {
             icon: FaCloudRain,
-            color: 'blue.500',
+            color: 'blue.700',
             bgColor: 'blue.50',
             category: 'Weather',
             categoryColor: 'blue'
@@ -306,7 +306,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         case 1: // Production
           return {
             icon: FaSeedling,
-            color: 'green.500',
+            color: 'green.700',
             bgColor: 'green.50',
             category: 'Production',
             categoryColor: 'green'
@@ -314,7 +314,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         case 2: // Chemical
           return {
             icon: FaFlask,
-            color: 'orange.500',
+            color: 'orange.700',
             bgColor: 'orange.50',
             category: 'Crop Inputs',
             categoryColor: 'orange'
@@ -322,7 +322,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         case 3: // General
           return {
             icon: FaClipboardList,
-            color: 'gray.500',
+            color: 'gray.600',
             bgColor: 'gray.50',
             category: 'Other Farm Activity',
             categoryColor: 'gray'
@@ -330,7 +330,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         case 4: // Equipment
           return {
             icon: FaTractor,
-            color: 'blue.700',
+            color: 'blue.900',
             bgColor: 'blue.50',
             category: 'Equipment',
             categoryColor: 'blue'
@@ -338,7 +338,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         case 5: // Soil Management
           return {
             icon: FaLayerGroup,
-            color: 'yellow.700',
+            color: 'yellow.800',
             bgColor: 'yellow.50',
             category: 'Soil Management',
             categoryColor: 'yellow'
@@ -346,7 +346,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         case 6: // Pest Management
           return {
             icon: FaBug,
-            color: 'red.500',
+            color: 'red.700',
             bgColor: 'red.50',
             category: 'Pest Management',
             categoryColor: 'red'
@@ -354,7 +354,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
         case 7: // Business
           return {
             icon: FaCertificate,
-            color: 'teal.500',
+            color: 'teal.700',
             bgColor: 'teal.50',
             category: 'Business',
             categoryColor: 'teal'
@@ -373,7 +373,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaCloudRain,
-        color: 'blue.500',
+        color: 'blue.700',
         bgColor: 'blue.50',
         category: 'Weather',
         categoryColor: 'blue'
@@ -394,7 +394,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaFlask,
-        color: 'orange.500',
+        color: 'orange.700',
         bgColor: 'orange.50',
         category: 'Crop Inputs',
         categoryColor: 'orange'
@@ -419,7 +419,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaSeedling,
-        color: 'green.500',
+        color: 'green.700',
         bgColor: 'green.50',
         category: 'Production',
         categoryColor: 'green'
@@ -441,7 +441,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaTractor,
-        color: 'blue.700',
+        color: 'blue.900',
         bgColor: 'blue.50',
         category: 'Equipment',
         categoryColor: 'blue'
@@ -464,7 +464,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaSeedling,
-        color: 'yellow.700',
+        color: 'yellow.800',
         bgColor: 'yellow.50',
         category: 'Soil Management',
         categoryColor: 'yellow'
@@ -486,7 +486,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaBug,
-        color: 'red.500',
+        color: 'red.700',
         bgColor: 'red.50',
         category: 'Pest Management',
         categoryColor: 'red'
@@ -506,7 +506,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     ) {
       return {
         icon: FaCertificate,
-        color: 'teal.500',
+        color: 'teal.700',
         bgColor: 'teal.50',
         category: 'Business',
         categoryColor: 'teal'
@@ -516,7 +516,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
     // General Events (fallback)
     return {
       icon: MdEco,
-      color: 'gray.500',
+      color: 'gray.600',
       bgColor: 'gray.50',
       category: 'General',
       categoryColor: 'gray'
@@ -1337,32 +1337,32 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                   {categories.map((category) => {
                     const getEventConfig = (cat: string) => {
                       if (!cat || typeof cat !== 'string') {
-                        return { icon: MdTimeline, color: 'green.500' };
+                        return { icon: MdTimeline, color: 'green.700' };
                       }
                       switch (cat.toLowerCase()) {
                         case 'all':
-                          return { icon: MdTimeline, color: 'green.500' };
+                          return { icon: MdTimeline, color: 'green.700' };
                         case 'weather':
-                          return { icon: FaCloudRain, color: 'blue.500' };
+                          return { icon: FaCloudRain, color: 'blue.700' };
                         case 'crop inputs':
                         case 'chemical':
-                          return { icon: FaFlask, color: 'orange.500' };
+                          return { icon: FaFlask, color: 'orange.700' };
                         case 'production':
-                          return { icon: FaSeedling, color: 'green.500' };
+                          return { icon: FaSeedling, color: 'green.700' };
                         case 'equipment':
-                          return { icon: FaTractor, color: 'blue.700' };
+                          return { icon: FaTractor, color: 'blue.900' };
                         case 'soil management':
-                          return { icon: FaLayerGroup, color: 'yellow.700' };
+                          return { icon: FaLayerGroup, color: 'yellow.800' };
                         case 'pest management':
-                          return { icon: FaBug, color: 'red.500' };
+                          return { icon: FaBug, color: 'red.700' };
                         case 'business':
-                          return { icon: FaCertificate, color: 'teal.500' };
+                          return { icon: FaCertificate, color: 'teal.700' };
                         case 'other farm activity':
                         case 'other farm activities':
                         case 'general':
-                          return { icon: FaClipboardList, color: 'gray.500' };
+                          return { icon: FaClipboardList, color: 'gray.600' };
                         default:
-                          return { icon: FaClipboardList, color: 'gray.500' };
+                          return { icon: FaClipboardList, color: 'gray.600' };
                       }
                     };
 

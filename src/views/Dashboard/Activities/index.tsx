@@ -840,12 +840,38 @@ const ActivitiesPage = () => {
         }>
         {pendingVerb ? (
           <VStack align="stretch" spacing={2}>
+            {/*
+              Neutral option rows, not outline BUTTONS.
+              Step 2 used `variant="outline"`, so six parcels arrived as six green-bordered
+              calls to action — six things to do rather than one choice among six — and it
+              looked like a different product from step 1, which is white tiles with a grey
+              border. Same tile treatment here: grey at rest, green on hover/focus, the choice
+              signalled by fill and border rather than by every row shouting.
+            */}
             {parcels.map((p) => (
-              <StandardButton
+              <Box
                 key={p.id}
-                variant="outline"
+                as="button"
+                type="button"
+                textAlign="left"
+                bg="white"
+                color="gray.700"
+                fontWeight="semibold"
+                fontSize="sm"
+                borderWidth="2px"
+                borderColor="gray.200"
+                borderRadius="xl"
+                px={4}
                 minH="44px"
-                justifyContent="flex-start"
+                display="flex"
+                alignItems="center"
+                transition="all 0.2s ease"
+                _hover={{
+                  borderColor: 'green.600',
+                  transform: 'translateY(-1px)',
+                  boxShadow: 'lg'
+                }}
+                _focus={{ outline: 'none', borderColor: 'green.700', boxShadow: 'field-focus' }}
                 onClick={() => {
                   verbModal.onClose();
                   setPendingVerb(null);
@@ -854,7 +880,7 @@ const ActivitiesPage = () => {
                   );
                 }}>
                 {p.name}
-              </StandardButton>
+              </Box>
             ))}
           </VStack>
         ) : (

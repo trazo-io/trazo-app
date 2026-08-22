@@ -1923,7 +1923,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
             </Grid>
           ) : (
             <VStack spacing={4} py={8} textAlign="center">
-              <Icon as={FaSeedling} boxSize={12} color="gray.400" />
+              <Icon as={FaSeedling} boxSize={12} color="gray.500" />
               <VStack spacing={2}>
                 <Heading size="md" color="gray.600">
                   {intl.formatMessage({ id: 'production.templateModal.emptyTitle' })}

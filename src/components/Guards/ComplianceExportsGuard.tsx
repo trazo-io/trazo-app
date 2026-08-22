@@ -93,7 +93,7 @@ export const ComplianceExportsUpsell: React.FC<{ compact?: boolean }> = ({ compa
   }
 
   return (
-    <StandardCard variant="elevated" padding={{ base: 4, md: 5 }} mb={0}>
+    <StandardCard variant="elevated" padding={{ base: 0, md: 5 }} mb={0}>
       <VStack align="flex-start" gap={3} w="100%">
         <HStack gap={3} align="flex-start">
           {/* green.500 is a decorative fill here, never a text or icon colour on white —

@@ -90,7 +90,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
     // profile whose header did not match its neighbours.
     <StandardCard
       variant="elevated"
-      padding={{ base: 3, md: 4 }}
+      padding={{ base: 0, md: 4 }}
       mb={0}
       title={intl.formatMessage({
         id: 'operationAudit.title',

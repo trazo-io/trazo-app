@@ -55,6 +55,9 @@ import {
   SEED_TREATMENT_BASES
 } from 'config/events/enums';
 import { BUFFER_ENTERS_COMMERCE } from 'config/events/productionEvent';
+// Import through the barrel, not productionEvent directly: `config/events/index.ts` is what
+// calls `_setRegistry`, and `getSubtypes` answers with nothing until it has run.
+import { getSubtypes } from 'config/events';
 import CustomFieldsForm from './CustomFieldsForm';
 import { SupervisorSignOff } from 'components/Forms/SupervisorSignOff';
 // Event Field Registry (Phase 5G — form integration)
@@ -517,6 +520,16 @@ const ProductionTab = forwardRef(
       onPrev,
       initialValues = {},
       hideActions = false,
+      /**
+       * Hide the raw subtype select because the wizard already asked.
+       *
+       * ⛔ Hiding it does NOT stop `type` being posted: the field stays in the form's
+       * defaultValues (seeded from `initialValues.type`), so validation and every
+       * `.includes(data.type)` payload gate keep working. It removes a SECOND ask, not the
+       * answer. NewEvent passes this on every create path — a verb tile, a season-plan item
+       * or step 0's ActivitySubtypeChooser has answered by the time this mounts.
+       */
+      hideSubtypeSelect = false,
       carbonCalculation = null,
       isCalculatingCarbon = false
     },
@@ -1014,6 +1027,21 @@ const ProductionTab = forwardRef(
     } = methods;
 
     const productionType = watch('type');
+
+    /*
+     * The subtype list the select renders — the display registry's, not a local copy.
+     *
+     * There were four lists of the same sixteen codes (backend PRODUCTION_EVENTS, this
+     * file's <option> block, PRODUCTION_TYPE_NAMES, and config/events) and they had already
+     * drifted: TP/BU/SS shipped to three of them and never to the registry.
+     *
+     * Read at RENDER time on purpose. `getSubtypes` answers from a registry that
+     * `config/events/index.ts` populates when IT evaluates; a module-scope
+     * `const OPTIONS = getSubtypes(1)` here would snapshot whatever existed at this file's
+     * evaluation and could never recover — an empty select, permanently, if a bundler ever
+     * ordered the two modules the other way. Eight entries and a find; the cost is nothing.
+     */
+    const subtypeOptions = React.useMemo(() => getSubtypes(1), []);
     // Sprint 4: Watch for summary mode toggle
     const isSummaryMode = watch('is_summary') === 'true';
     // NOP: Watch shared_with_conventional for visual feedback on cleaning section
@@ -1775,59 +1803,35 @@ const ProductionTab = forwardRef(
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
                 <VStack spacing={4} align="stretch">
-                  {/* Production Type - Structured for carbon calculations */}
-                  <StandardField
-                    label={intl.formatMessage({ id: 'production.field.productionType' })}
-                    required
-                    error={errors.type?.message}
-                    helpText="Production type determines carbon calculation method">
-                    <Controller
-                      name="type"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardSelect {...field} placeholder="Select production activity...">
-                          <option value="PL">Planting - Crop establishment</option>
-                          <option value="HA">Harvesting - Crop collection & transport</option>
-                          <option value="IR">Irrigation - Water application</option>
-                          <option value="PR">Pruning/Trimming - Plant maintenance</option>
-                          <option value="TR">Transplanting - Plant relocation</option>
-                          {/* Sprint 2 Epic 2.2: Added CU and TH production types */}
-                          <option value="CU">Cultivation - Soil cultivation & weed control</option>
-                          <option value="TH">Thinning - Plant spacing optimization</option>
-                          {/* Sprint 2 Epic 2.1: Equipment Operations merged from Equipment tab */}
-                          {/* CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model */}
-                          <option value="EM">
-                            Equipment Maintenance - Equipment usage & maintenance
-                          </option>
-                          {/* Phase 2: New production subtypes */}
-                          <option value="PO">
-                            Pollination - Pollinator placement & management
-                          </option>
-                          <option value="PH">
-                            Post-Harvest Processing - Washing, cooling, packing
-                          </option>
-                          <option value="CM">
-                            Canopy Management - Pruning, hedging, leaf pulling, thinning
-                          </option>
-                          {/* Batch 3 (2026-06): Scope-1 fuel ops previously carbon-invisible */}
-                          <option value="FP">Frost Protection - Wind machines / heaters</option>
-                          <option value="MO">
-                            Mowing / Orchard-Floor - Mow, mulch, floor management
-                          </option>
-                          {/* Batch 4 (2026-08-19): parity with Quick Organics' activity list */}
-                          <option value="TP">
-                            Transport - A load leaving the farm (destination, quantity, cleanout)
-                          </option>
-                          <option value="BU">
-                            Buffer Use - Harvest or disposal from a buffer zone (§ 205.202(c))
-                          </option>
-                          <option value="SS">
-                            Seed Search - Organic seed availability search (§ 205.204(a)(1))
-                          </option>
-                        </StandardSelect>
-                      )}
-                    />
-                  </StandardField>
+                  {/* Production Type — EDIT MODE ONLY on the wizard path.
+                        The create path answers this in step 0, in farmer vocabulary
+                        (ActivitySubtypeChooser); rendering it again here is the double-ask
+                        removed 2026-08-22. Options come from the display registry, so this
+                        list cannot drift from history/models.py PRODUCTION_EVENTS or from the
+                        labels the timeline and the certifier packet use — the previous
+                        hand-written <option> block was English-only and had grown a fourth
+                        copy of the same list. */}
+                  {!hideSubtypeSelect && (
+                    <StandardField
+                      label={intl.formatMessage({ id: 'production.field.productionType' })}
+                      required
+                      error={errors.type?.message}
+                      helpText="Production type determines carbon calculation method">
+                      <Controller
+                        name="type"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect {...field} placeholder="Select production activity...">
+                            {subtypeOptions.map((entry) => (
+                              <option key={entry.code} value={entry.code}>
+                                {intl.formatMessage({ id: entry.labelKey })}
+                              </option>
+                            ))}
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+                  )}
 
                   {/* Event Name - Optional, auto-generated from production type if empty */}
                   <StandardField

@@ -139,12 +139,39 @@ interface CarbonCalculationResult {
 }
 
 // Enhanced event configuration for better categorization
+/**
+ * ⚠️ `color` is a `.700`/`.800` step ON PURPOSE, and moving it back to `.500` breaks two things.
+ *
+ * It is consumed FIVE ways (see the call sites below), and every one of them is a graphical
+ * object owing WCAG's 3.0 non-text minimum — a 42px ring border, the glyph inside that ring, a
+ * card hover border, and on mobile a filled circle carrying a WHITE glyph:
+ *
+ *   MEASURED on white, before this change:
+ *     green.500   2.78  ⛔ FAILS the 3.0 floor outright — and `.claude/rules/frontend.md` bans
+ *                        a white icon on green.500 by name, which is exactly what the mobile
+ *                        32px circle did
+ *     blue.500    3.12     clears 3.0 by 0.12
+ *     orange.500  3.39     "
+ *     teal.500    3.51     "
+ *     yellow.700  3.64     "
+ *     red.500     3.68     "
+ *   After: 4.60 - 6.53. Every ring and every white-on-fill glyph now clears 4.5 with room.
+ *
+ * The HUE of each entry is deliberately unchanged. The category Badge derives its palette by
+ * string-splitting this value (`eventConfig.color.split('.')[0]`), so altering the step is
+ * invisible to it — `green.500` and `green.700` both yield `green`. Whether eight categories
+ * should carry eight hues AT ALL is a separate, open design question; this change does not
+ * pre-empt it.
+ *
+ * ⚠️ `bgGradient` and `borderColor` below are DEAD — nothing reads either field. Left in place
+ * rather than deleted so this change stays a pure contrast fix, but do not add more.
+ */
 const getEventConfig = (eventType: number, type: string, description: string) => {
   switch (eventType) {
     case 0: // Weather Event
       return {
         icon: FaCloudRain,
-        color: 'blue.500',
+        color: 'blue.700',
         category: 'Weather Event',
         bgGradient: 'linear(to-r, blue.50, blue.100)',
         borderColor: 'blue.200'
@@ -152,7 +179,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 1: // Production Event
       return {
         icon: FaSeedling,
-        color: 'green.500',
+        color: 'green.700',
         category: 'Production Activity',
         bgGradient: 'linear(to-r, green.50, green.100)',
         borderColor: 'green.200'
@@ -160,7 +187,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 2: // Chemical Event
       return {
         icon: FaFlask,
-        color: 'orange.500',
+        color: 'orange.700',
         category: 'Chemical Application',
         bgGradient: 'linear(to-r, orange.50, orange.100)',
         borderColor: 'orange.200'
@@ -168,7 +195,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 3: // Other Farm Activities (Sprint 2: renamed from General Event)
       return {
         icon: FaClipboardList,
-        color: 'gray.500',
+        color: 'gray.600',
         category: 'Other Farm Activity',
         bgGradient: 'linear(to-r, gray.50, gray.100)',
         borderColor: 'gray.200'
@@ -176,7 +203,11 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 4: // Equipment Event
       return {
         icon: FaTractor,
-        color: 'blue.700',
+        // blue.900, not blue.700 — Weather (case 0) was `blue.500` and became `blue.700` when
+        // the steps were raised, which would have made these two categories the SAME colour.
+        // They already share a Badge palette (both split to `blue`), so the ring was the only
+        // thing telling them apart. 8.59:1 on white.
+        color: 'blue.900',
         category: 'Equipment Operation',
         bgGradient: 'linear(to-r, blue.50, blue.100)',
         borderColor: 'blue.200'
@@ -184,7 +215,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 5: // Soil Management
       return {
         icon: FaLayerGroup,
-        color: 'yellow.700',
+        color: 'yellow.800',
         category: 'Soil Management',
         bgGradient: 'linear(to-r, yellow.50, yellow.100)',
         borderColor: 'yellow.300'
@@ -192,7 +223,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 6: // Pest Management
       return {
         icon: FaBug,
-        color: 'red.500',
+        color: 'red.700',
         category: 'Pest Management',
         bgGradient: 'linear(to-r, red.50, red.100)',
         borderColor: 'red.200'
@@ -200,7 +231,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 7: // Business Event
       return {
         icon: FaCertificate,
-        color: 'teal.500',
+        color: 'teal.700',
         category: 'Business Activity',
         bgGradient: 'linear(to-r, teal.50, teal.100)',
         borderColor: 'teal.200'
@@ -208,7 +239,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     default:
       return {
         icon: FaLeaf,
-        color: 'gray.500',
+        color: 'gray.600',
         category: 'Farm Activity',
         bgGradient: 'linear(to-r, gray.50, gray.100)',
         borderColor: 'gray.200'
@@ -1214,7 +1245,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
           }}
           onClick={() => (onEventClick ? onEventClick(event) : navigate(url))}
           className="trazo-card">
-          <CardBody p={{ base: 3, md: 4 }}>
+          <CardBody py={{ base: 3, md: 4 }} px={{ base: 0, md: 4 }}>
             <VStack align="stretch" spacing={{ base: 3, md: 4 }}>
               {/* Clean Header */}
               <Flex justify="space-between" align="flex-start" w="100%">

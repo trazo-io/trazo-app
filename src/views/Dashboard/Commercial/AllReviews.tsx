@@ -147,7 +147,7 @@ const AllReviewsView = () => {
       <StandardCard
         title={intl.formatMessage({ id: 'commercial.searchFilters' })}
         variant="outline"
-        padding={{ base: 3, md: 4 }}>
+        padding={{ base: 0, md: 4 }}>
         <VStack spacing={{ base: 3, md: 4 }}>
           <Box w="100%">
             <StandardSearchInput
@@ -208,7 +208,7 @@ const AllReviewsView = () => {
         <StandardCard
           title={intl.formatMessage({ id: 'commercial.generalStats' })}
           variant="elevated"
-          padding={{ base: 3, md: 4 }}>
+          padding={{ base: 0, md: 4 }}>
           <VStack spacing={{ base: 2, md: 4 }} align="stretch">
             <HStack justify="space-between">
               <VStack align="start" spacing={0}>
@@ -252,7 +252,7 @@ const AllReviewsView = () => {
         <StandardCard
           title={intl.formatMessage({ id: 'commercial.ratingDistribution' })}
           variant="elevated"
-          padding={{ base: 3, md: 4 }}>
+          padding={{ base: 0, md: 4 }}>
           <VStack spacing={{ base: 2, md: 3 }} align="stretch">
             {ratingDistribution.map((item) => (
               <HStack key={item.rating} spacing={2}>
@@ -293,7 +293,7 @@ const AllReviewsView = () => {
       <StandardCard
         title={intl.formatMessage({ id: 'commercial.reviewsCount' }, { count: totalCount })}
         variant="elevated"
-        padding={{ base: 3, md: 4 }}>
+        padding={{ base: 0, md: 4 }}>
         <VStack spacing={{ base: 3, md: 6 }} align="stretch">
           {isLoading ? (
             <Flex justify="center" align="center" py={12}>

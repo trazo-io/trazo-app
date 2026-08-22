@@ -828,23 +828,23 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   const getEventTypeIcon = (eventType?: number) => {
     switch (eventType) {
       case 0:
-        return { icon: FaCloudRain, color: 'blue.500' };
+        return { icon: FaCloudRain, color: 'blue.700' };
       case 1:
-        return { icon: FaSeedling, color: 'green.500' };
+        return { icon: FaSeedling, color: 'green.700' };
       case 2:
-        return { icon: FaFlask, color: 'orange.500' };
+        return { icon: FaFlask, color: 'orange.700' };
       case 3:
-        return { icon: FaClipboardList, color: 'gray.500' };
+        return { icon: FaClipboardList, color: 'gray.600' };
       case 4:
-        return { icon: FaTractor, color: 'blue.700' };
+        return { icon: FaTractor, color: 'blue.900' };
       case 5:
-        return { icon: FaLayerGroup, color: 'yellow.700' };
+        return { icon: FaLayerGroup, color: 'yellow.800' };
       case 6:
-        return { icon: FaBug, color: 'red.500' };
+        return { icon: FaBug, color: 'red.700' };
       case 7:
-        return { icon: FaCertificate, color: 'teal.500' };
+        return { icon: FaCertificate, color: 'teal.700' };
       default:
-        return { icon: FaSeedling, color: 'green.500' };
+        return { icon: FaSeedling, color: 'green.700' };
     }
   };
 

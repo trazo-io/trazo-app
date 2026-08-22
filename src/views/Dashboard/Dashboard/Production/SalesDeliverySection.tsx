@@ -75,7 +75,7 @@ export function SalesDeliverySection({ historyData }: SalesDeliverySectionProps)
   if (!historyData.finish_date || !hasLegacySalesData) return null;
 
   return (
-    <StandardCard variant="elevated" padding={{ base: 3, md: 4 }} title="">
+    <StandardCard variant="elevated" padding={{ base: 0, md: 4 }} title="">
       <HStack spacing={2} align="flex-start" mb={3}>
         <Box p={2} borderRadius="lg" bg={iconBg}>
           <FaTruck color={iconColor} />

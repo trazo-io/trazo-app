@@ -218,7 +218,7 @@ const EducationHub: React.FC = () => {
         <SimpleGrid columns={columns} spacing={6} w="full">
           {filteredTopics.map((topic) => (
             <Card key={topic.id} bg={cardBg}>
-              <CardBody p={6}>
+              <CardBody py={6} px={{ base: 0, md: 6 }}>
                 <VStack spacing={4} align="start">
                   <HStack>
                     <Icon as={topic.icon} boxSize={6} color="green.700" />
@@ -262,7 +262,7 @@ const EducationHub: React.FC = () => {
 
         {/* FAQ entry — the /education/faq route existed with no inbound link anywhere. */}
         <Card bg={cardBg} w="full">
-          <CardBody p={6}>
+          <CardBody py={6} px={{ base: 0, md: 6 }}>
             <HStack justify="space-between" flexWrap="wrap" gap={3}>
               <HStack spacing={3}>
                 <Icon as={FaBook} boxSize={6} color="green.700" />

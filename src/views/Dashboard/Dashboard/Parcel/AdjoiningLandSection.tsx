@@ -232,7 +232,7 @@ const AdjoiningLandSection: React.FC<Props> = ({ companyId, farmId, parcelId, ca
         // edited elsewhere right now, so this passes a string rather than widening it here.
         title={intl.formatMessage({ id: 'parcel.adjoining.title' })}
         variant="elevated"
-        padding={{ base: 3, md: 4 }}
+        padding={{ base: 0, md: 4 }}
         headerAction={
           canWrite ? (
             <StandardButton

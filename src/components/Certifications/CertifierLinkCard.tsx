@@ -240,7 +240,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
         defaultMessage: 'Share with your certifier'
       })}
       variant="elevated"
-      padding={{ base: 3, md: 4 }}
+      padding={{ base: 0, md: 4 }}
       mb={0}>
       <VStack align="stretch" gap={3}>
         <Text fontSize="sm" color="gray.600">

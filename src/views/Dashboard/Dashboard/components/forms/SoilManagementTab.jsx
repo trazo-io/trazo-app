@@ -1020,7 +1020,7 @@ const SoilManagementTab = forwardRef(
                 formConformance.test.ts, not by a runtime flag. */}
             <>
               {/* Sprint 3 Epic 3.1: Consolidated Section 1 - Soil Management Details (merged Info + Area) */}
-              <SectionBox mt={4}>
+              <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
                   title="Soil Management Details"
@@ -1470,7 +1470,7 @@ const SoilManagementTab = forwardRef(
                     block further down is reachable; the amendment-approval control below is
                     excluded for GR, since a grazing pass applies no purchased amendment. */}
               {['PA', 'OM', 'CC', 'CO', 'GR'].includes(watch('type')) && (
-                <SectionBox borderColor="teal.200">
+                <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaSeedling}
                     title="NOP Organic Compliance"
@@ -2291,7 +2291,7 @@ const SoilManagementTab = forwardRef(
                         </Box>
 
                         {isGrazingSummary && (
-                          <SectionBox mb={4}>
+                          <SectionBox>
                             <Text fontWeight="semibold" color="green.700" mb={3}>
                               <Icon as={FaSeedling} mr={2} />
                               Grazing Rotation Period

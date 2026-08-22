@@ -4,7 +4,9 @@
  * Every surface that asks "What did you do?" renders this same grid: the
  * Activities page modal, the parcel Add Event modal, and NewEvent's own
  * chooser step. One vocabulary (config/activityVerbs), one tile style,
- * always all ten verbs visible — never a scroll-hidden subset.
+ * every verb visible — never a scroll-hidden subset. (The count is not
+ * pinned here on purpose; it lives in config/activityVerbs, along with the
+ * note on when a new subtype earns a tile instead of joining a family.)
  *
  * Labels wrap naturally (no line clamp): "Equipment cleanout" renders as two
  * clean lines, never "Equipme nt…".
@@ -41,10 +43,25 @@ export const VerbPickerGrid: React.FC<VerbPickerGridProps> = ({
             as="button"
             type="button"
             onClick={() => onSelect(verb)}
-            bg={isSelected ? `${verb.color}.500` : 'white'}
+            /*
+             * ONE colour for fourteen tiles.
+             *
+             * The hue used to come from `verb.color`, giving seven of them across one modal —
+             * and MEASURED on white: green.500 2.78, Chakra yellow.500 2.39, plus Chakra's
+             * orange/blue/teal, none of which are Trazo tokens (the theme defines amber, not
+             * orange). Five of the fourteen glyphs failed the 3.0 a non-text mark owes.
+             *
+             * Worse, SELECTION inverted onto those fills: white text on yellow.500 is the same
+             * 2.39, so choosing a verb made it the least legible tile on screen.
+             *
+             * Nothing was encoded by the hue — the label names the activity and the glyph
+             * distinguishes it. green.700 selected / white unselected, with weight and fill
+             * carrying the state, matches every other selectable surface in the app.
+             */
+            bg={isSelected ? 'green.700' : 'white'}
             color={isSelected ? 'white' : 'gray.700'}
             borderWidth="2px"
-            borderColor={isSelected ? `${verb.color}.500` : 'gray.200'}
+            borderColor={isSelected ? 'green.700' : 'gray.200'}
             borderRadius={{ base: 'lg', md: 'xl' }}
             p={{ base: 3, md: 4 }}
             minH={{ base: '80px', md: '96px' }}
@@ -58,19 +75,36 @@ export const VerbPickerGrid: React.FC<VerbPickerGridProps> = ({
             _hover={{
               transform: 'translateY(-2px)',
               boxShadow: 'lg',
-              borderColor: `${verb.color}.400`
+              // Hover DARKENS. This was a flat green.600, which on a SELECTED tile is lighter
+              // than its own green.700 fill — the border disappeared on the one tile the
+              // pointer was over.
+              borderColor: isSelected ? 'green.800' : 'green.600'
             }}
-            _focus={{
+            /*
+             * 2026-08-22: this was `_focus` with the halo alone. `field-focus` is 15% green
+             * and theme/styles.js is explicit that it only clears the 3:1 focus floor BECAUSE
+             * the control also swaps its border to green.600 — without the swap the keyboard
+             * ring here was ~1.3:1, i.e. no ring. `_focusVisible` so a tap does not leave it
+             * stuck on the tile the farmer just pressed.
+             */
+            _focusVisible={{
               outline: 'none',
-              boxShadow: `0 0 0 3px var(--chakra-colors-${verb.color}-200)`
+              boxShadow: 'field-focus',
+              borderColor: isSelected ? 'green.800' : 'green.600'
             }}
             aria-pressed={isSelected}>
             <Icon
               as={verb.icon}
               boxSize={{ base: 5, md: 6 }}
-              color={isSelected ? 'white' : `${verb.color}.500`}
+              color={isSelected ? 'white' : 'green.700'}
             />
+            {/* `as="span"`, not Text's default <p>.
+                MEASURED 2026-08-22 in the a11y tree: a <p> inside a <button> is invalid flow
+                content, and the browser refused to compute the label from it — every tile
+                announced as an unnamed pressed button. As a span the tile is
+                `button "Pruning & canopy" [pressed]`. */}
             <Text
+              as="span"
               fontSize={{ base: 'xs', md: 'sm' }}
               fontWeight="semibold"
               textAlign="center"

@@ -440,7 +440,7 @@ function ProfileFarm() {
                   <StandardCard
                     title={intl.formatMessage({ id: 'app.pur.complianceReports' })}
                     variant="elevated"
-                    padding={{ base: 3, md: 4 }}
+                    padding={{ base: 0, md: 4 }}
                     mb={0}>
                     <HStack
                       justify="space-between"
@@ -482,7 +482,7 @@ function ProfileFarm() {
               <StandardCard
                 title={intl.formatMessage({ id: 'certification.manage.title' })}
                 variant="outline"
-                padding={{ base: 3, md: 4 }}
+                padding={{ base: 0, md: 4 }}
                 mb={0}
                 headerAction={
                   canWrite ? (
@@ -519,7 +519,7 @@ function ProfileFarm() {
                   defaultMessage: 'Statements your certifier expects on file for the operation.'
                 })}
                 variant="outline"
-                padding={{ base: 3, md: 4 }}
+                padding={{ base: 0, md: 4 }}
                 mb={0}>
                 <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
                   {/* ---- Organic fraud prevention plan (7 CFR 205.201(a)(3)) ---- */}
@@ -897,7 +897,7 @@ function ProfileFarm() {
             id: 'farm.section.details',
             defaultMessage: 'Farm details'
           })}>
-          <StandardCard variant="outline" padding={{ base: 3, md: 4 }} mb={0}>
+          <StandardCard variant="outline" padding={{ base: 0, md: 4 }} mb={0}>
             <VStack gap={{ base: 6, md: 7 }} align="stretch" divider={<Divider />}>
               {/* The disclosure legend. Neutral gray: which fields are public is a fact,
                   not a claim, and colour on this page has to encode a real distinction. */}

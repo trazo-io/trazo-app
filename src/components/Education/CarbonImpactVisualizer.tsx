@@ -181,7 +181,7 @@ const CarbonImpactVisualizer: React.FC<CarbonImpactVisualizerProps> = ({
           shadow: 'md'
         }}
         transition="all 0.2s">
-        <CardBody p={4}>
+        <CardBody py={4} px={{ base: 0, md: 4 }}>
           <VStack spacing={3} align="center">
             <Box
               p={3}

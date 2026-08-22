@@ -1,9 +1,14 @@
 /**
  * Production Event Registry — Most Complex Event Type.
  *
- * 11 subtypes: PL(Planting), HA(Harvesting), IR(Irrigation), PR(Pruning),
+ * 16 subtypes: PL(Planting), HA(Harvesting), IR(Irrigation), PR(Pruning),
  * TR(Transplanting), EM(Equipment Maintenance), CU(Cultivation), TH(Thinning),
- * PO(Pollination), PH(Post-Harvest), CM(Canopy Management).
+ * PO(Pollination), PH(Post-Harvest), CM(Canopy Management), FP(Frost Protection),
+ * MO(Mowing/Orchard-Floor), TP(Transport), BU(Buffer Use), SS(Seed Search).
+ *
+ * This count is the one `history/models.py` PRODUCTION_EVENTS declares — the two lists are
+ * held together by __tests__/productionSubtypeCoverage.test.ts, because the last three were
+ * added to the backend and to the form while this file still said eleven.
  *
  * Highly subtype-conditional:
  * - IR: irrigation_method, irrigation_depth, pump_depth_ft, electricity_source, water_source
@@ -28,7 +33,8 @@ import {
   formatTransportationDistance,
   formatYield,
   formatConsumerTemperatureControl,
-  formatSeedSearchAttempts
+  formatSeedSearchAttempts,
+  formatWaterTestResults
 } from './formatters';
 
 type ProductionData = Record<string, unknown>;
@@ -277,6 +283,32 @@ export const BUFFER_ENTERS_COMMERCE = (value: unknown): boolean => {
   );
 };
 
+/**
+ * Subtype groups that own a shared block of columns.
+ *
+ * ⛔ These exist because the FORM and the DISPLAY registry were gating the same columns on
+ * different subtype lists, and nothing compared them. `ProductionTab` has collected the seed
+ * block for `['PL','TR','SS']` and the lot/buffer/handler blocks for `['HA','TP','BU']` /
+ * `['HA','BU']` / `['HA','TP']` since Batch 4 shipped (2026-08-19); every field below stayed
+ * on the pre-Batch-4 lists `['PL','TR']` and `['HA']`. The result was a write-only record: a
+ * Seed Search event saved eleven § 205.204(a)(1) columns and the detail modal rendered none of
+ * them, because the resolver found no field visible for `SS` and returned an empty set. Same
+ * for Transport (handler columns) and Buffer Use (disposition columns).
+ *
+ * Seen 2026-08-22 on a live SS event: title, field note, Performed By, Block — and nothing
+ * else. The supplier names, the three documented attempts, the purchase invoice and the
+ * non-availability reason were all in the row. The commercial-availability search is the ONLY
+ * reason the subtype exists, and it was the part you could not see.
+ *
+ * `SEED_SOURCED` mirrors `SEED_SOURCED_SUBTYPES` in `common/field_registry.py` — keep them
+ * byte-identical. The other three mirror the `RECORDS_*` gates in `ProductionTab`.
+ * `subtypeGateParity.test.ts` fails if any of the four drifts from the form.
+ */
+const SEED_SOURCED: ProductionSubtype[] = ['PL', 'TR', 'SS'];
+const RECORDS_LOT_DISPOSITION: ProductionSubtype[] = ['HA', 'TP', 'BU'];
+const RECORDS_BUFFER: ProductionSubtype[] = ['HA', 'BU'];
+const RECORDS_HANDLER: ProductionSubtype[] = ['HA', 'TP'];
+
 const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   // ---- Core identity (ALL subtypes) ----
   {
@@ -342,7 +374,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'harvest_lot_code',
     labelKey: 'events.production.fields.harvestLotCode',
     valueType: 'string',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_LOT_DISPOSITION,
     surfaces: {
       form: 'immediate',
       modal: 'immediate',
@@ -354,10 +386,40 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.amountDetermination',
     valueType: 'enum',
     enumSource: 'amount_determinations',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_LOT_DISPOSITION,
     surfaces: {
       form: 'immediate',
       modal: 'immediate'
+    }
+  },
+  {
+    // Where the load started and where it went. Both columns shipped with the TP subtype and
+    // were declared on no display surface, so a Transport event — a record whose entire
+    // subject is a load moving from one place to another — showed neither place.
+    //
+    // § 205.272(b)(1) turns on what the load touched between the two, which is why the
+    // cleanout reference sits beside them; origin and destination are what identify WHICH
+    // movement the cleanout belongs to.
+    name: 'transport_origin',
+    labelKey: 'events.production.fields.transportOrigin',
+    valueType: 'string',
+    visibleForSubtypes: ['TP'],
+    surfaces: {
+      form: 'secondary',
+      modal: 'immediate'
+    }
+  },
+  {
+    // No consumer_card: a street address is the operation's own logistics, and publishing a
+    // handler's address on an anonymous surface is the supplier-chain leak class
+    // (`feedback_supplier_chain_leak`) — the same reason `seed_supplier_name` is withheld.
+    name: 'transport_destination_address',
+    labelKey: 'events.production.fields.transportDestination',
+    valueType: 'string',
+    visibleForSubtypes: ['TP'],
+    surfaces: {
+      form: 'secondary',
+      modal: 'secondary'
     }
   },
   {
@@ -375,7 +437,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.harvestDestination',
     valueType: 'enum',
     enumSource: 'harvest_destinations',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_HANDLER,
     surfaces: {
       form: 'immediate',
       modal: 'immediate'
@@ -398,7 +460,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'sent_to_handler_date',
     labelKey: 'events.production.fields.sentToHandlerDate',
     valueType: 'date',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_HANDLER,
     visibleWhen: (e) => String(e.harvest_destination || '') === 'handler',
     surfaces: { form: 'secondary', modal: 'secondary' }
   },
@@ -407,7 +469,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.quantitySentToHandler',
     valueType: 'number',
     unitField: 'handler_quantity_unit',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_HANDLER,
     visibleWhen: (e) => String(e.harvest_destination || '') === 'handler',
     surfaces: { form: 'secondary', modal: 'secondary' }
   },
@@ -418,7 +480,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // A SEPARATE unit from the one sent: hulling changes the unit (in-shell in, shelled out),
     // and reusing one unit field would force a conversion nobody measured.
     unitField: 'handler_return_unit',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_HANDLER,
     visibleWhen: (e) => String(e.harvest_destination || '') === 'handler',
     surfaces: { form: 'secondary', modal: 'secondary' }
   },
@@ -426,7 +488,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'handler_document_reference',
     labelKey: 'events.production.fields.handlerDocumentReference',
     valueType: 'string',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_HANDLER,
     visibleWhen: (e) => String(e.harvest_destination || '') === 'handler',
     surfaces: { form: 'secondary', modal: 'secondary' }
   },
@@ -435,7 +497,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.bufferDisposition',
     valueType: 'enum',
     enumSource: 'buffer_dispositions',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_BUFFER,
     surfaces: {
       form: 'secondary',
       modal: 'secondary'
@@ -455,7 +517,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'buffer_disposition_quantity',
     labelKey: 'events.production.fields.bufferDispositionQuantity',
     valueType: 'string',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_BUFFER,
     visibleWhen: (e) => BUFFER_ENTERS_COMMERCE(e.buffer_disposition),
     surfaces: {
       form: 'secondary',
@@ -466,7 +528,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'buffer_disposition_evidence',
     labelKey: 'events.production.fields.bufferDispositionEvidence',
     valueType: 'string',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_BUFFER,
     visibleWhen: (e) => BUFFER_ENTERS_COMMERCE(e.buffer_disposition),
     surfaces: {
       form: 'secondary',
@@ -477,7 +539,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'storage_location',
     labelKey: 'events.production.fields.storageLocation',
     valueType: 'string',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_HANDLER,
     // Normalizer may have swapped the raw enum for its display label, so accept both
     // 'stored' and 'Stored on farm'.
     visibleWhen: (e) =>
@@ -493,7 +555,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'storage_temperature_f',
     labelKey: 'events.production.fields.storageTemperatureF',
     valueType: 'number',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_HANDLER,
     visibleWhen: (e) =>
       String(e.harvest_destination || '')
         .toLowerCase()
@@ -507,7 +569,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'harvest_contract_number',
     labelKey: 'events.production.fields.harvestContractNumber',
     valueType: 'string',
-    visibleForSubtypes: ['HA'],
+    visibleForSubtypes: RECORDS_HANDLER,
     surfaces: {
       form: 'secondary',
       modal: 'secondary'
@@ -666,7 +728,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedsSource',
     valueType: 'enum',
     enumSource: 'seeds_sources',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     surfaces: {
       card: 'immediate',
       modal: 'immediate',
@@ -693,7 +755,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedNonGmoStatus',
     valueType: 'enum',
     enumSource: 'seed_non_gmo_statuses',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     surfaces: {
       form: 'secondary',
       modal: 'secondary'
@@ -706,7 +768,11 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'stock_organic_management_start',
     labelKey: 'events.production.fields.stockOrganicManagementStart',
     valueType: 'date',
-    visibleForSubtypes: ['PL', 'TR'],
+    // SEED_SOURCED, not ['PL','TR']: the form asks for this inside its own
+    // `['PL','TR','SS']` seed block. `rootstock` / `plants_established` / `plant_spacing`
+    // stay planting-only because the form gates THOSE on ['PL','TR'] — the point is to
+    // match the form field-for-field, not to widen the whole file.
+    visibleForSubtypes: SEED_SOURCED,
     surfaces: {
       form: 'secondary',
       modal: 'secondary'
@@ -758,7 +824,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     formatter: formatSeedSearchAttempts,
     // TR too: a transplant of non-organic nursery stock carries the same 205.204(a)(1)
     // obligation, and the form has always shown the seed block for both subtypes.
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     // NOP 5029 commercial-availability search log embeds contacted-supplier identities —
     // commercially sensitive, producer/certifier-only. NO consumer_card surface (P0 leak fix,
     // mirrors chemical supplier_name; backend also strips it from the public payload).
@@ -774,7 +840,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedCertificationStatus',
     valueType: 'enum',
     enumSource: 'seed_certification_statuses',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     // ⚠️ NO consumer_card, removed 2026-08-15. This is a grower DROPDOWN whose values are
     // certification statuses, and on the card it rendered as a bare "Certified Organic" with
     // no self-reported qualifier anywhere near it — a self-assigned certification-mark claim
@@ -801,7 +867,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'seed_supplier_name',
     labelKey: 'events.production.fields.seedSupplierName',
     valueType: 'text',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     // Seed vendor identity — producer/certifier-only. NO consumer_card surface (P0 leak fix).
     surfaces: {
       modal: 'secondary',
@@ -812,7 +878,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'seed_purchase_date',
     labelKey: 'events.production.fields.seedPurchaseDate',
     valueType: 'date',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     // Seed purchase record — producer/certifier-only. NO consumer_card surface (P0 leak fix).
     surfaces: {
       modal: 'details',
@@ -823,7 +889,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'seed_purchase_invoice',
     labelKey: 'events.production.fields.seedPurchaseInvoice',
     valueType: 'text',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     // Seed invoice number — producer/certifier-only. NO consumer_card surface (P0 leak fix).
     surfaces: {
       modal: 'details',
@@ -834,7 +900,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'seed_lot_number',
     labelKey: 'events.production.fields.seedLotNumber',
     valueType: 'text',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     surfaces: {
       modal: 'secondary',
       form: 'secondary'
@@ -844,7 +910,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'seed_treatment',
     labelKey: 'events.production.fields.seedTreatment',
     valueType: 'text',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -867,7 +933,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedTreatmentAllowedBasis',
     valueType: 'enum',
     enumSource: 'seed_treatment_bases',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     surfaces: {
       modal: 'secondary',
       form: 'secondary'
@@ -886,7 +952,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.seedNonavailabilityReason',
     valueType: 'enum',
     enumSource: 'seed_nonavailability_reasons',
-    visibleForSubtypes: ['PL', 'TR'],
+    visibleForSubtypes: SEED_SOURCED,
     surfaces: {
       modal: 'secondary',
       form: 'secondary'
@@ -986,6 +1052,31 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     surfaces: {
       modal: 'secondary',
       form: 'secondary'
+    }
+  },
+  {
+    // The RESULT half of the water test. `water_test_date` and `water_test_lab` were declared
+    // here from the start; the results column — the only one that says whether the water
+    // passed — was collected by the form (as `water_test_summary`, parsed into this JSON on
+    // save) and declared on no display surface at all. So the modal showed that a test was
+    // ordered, from whom and when, and never what it found.
+    //
+    // JSONField of {parameter, value, unit, result} dicts, so it needs a formatter for the
+    // same reason `seed_search_attempts` does: defaultFormatter's String(value) renders
+    // "[object Object]".
+    name: 'water_test_results',
+    labelKey: 'events.production.fields.waterTestResults',
+    valueType: 'text',
+    formatter: formatWaterTestResults,
+    visibleForSubtypes: ['IR'],
+    // No consumer_card. A raw coliform count is a certifier record, and a shopper cannot
+    // act on "E. coli: <1 MPN/100mL".
+    // Modal only, no `form` surface: the form collects this as free-text
+    // `water_test_summary` and parses it into this JSON at submit, so ProductionTab never
+    // binds an input named `water_test_results`. Declaring `form` here would promise an
+    // input that does not exist (`formConformance` fails on exactly that).
+    surfaces: {
+      modal: 'secondary'
     }
   },
 
@@ -1096,6 +1187,58 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       modal: 'secondary',
       form: 'secondary',
       consumer_card: 'secondary'
+    }
+  },
+  {
+    // § 205.272(b)(1) purge: when a shared line is flushed, the first material through it
+    // carries the residue and must NOT be sold as organic. The three columns record what was
+    // purged, how much, and where it went — the last being the one an inspector actually
+    // tests, since "purged" with no end use is an unsupported claim.
+    //
+    // All three were collected by the form's cleaning block and declared on no display
+    // surface, so the evidence that the purge happened was invisible on the record that
+    // asserts the line was cleaned. Same gate as the rest of the block (EM + operation CL).
+    name: 'purge_material',
+    labelKey: 'events.production.fields.purgeMaterial',
+    valueType: 'string',
+    visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
+    },
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    name: 'purge_quantity',
+    labelKey: 'events.production.fields.purgeQuantity',
+    valueType: 'string',
+    visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
+    },
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    // NO consumer_card. The end use is frequently "sold as conventional" — a fact a certifier
+    // must see and a shopper would misread on a page about organic produce.
+    name: 'purge_material_end_use',
+    labelKey: 'events.production.fields.purgeEndUse',
+    valueType: 'string',
+    visibleForSubtypes: ['EM'],
+    visibleWhen: (e) => {
+      const op = String(e.equipment_operation_type || '').toLowerCase();
+      return op === 'cl' || op === 'cleaning';
+    },
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
     }
   },
   {
@@ -1284,6 +1427,103 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   // so they don't bleed into other production previews. Backend stores these
   // in `extra_data`; formatters fall back there so the Event Details Modal
   // (which reads raw API data without normalizer) also renders them.
+
+  // ---- extra_data fields that had no registry entry at all (2026-08-22) ----
+  //
+  // The same write-only defect as the seed block, one layer down. These are collected by
+  // ProductionTab and written to `extra_data`, and every one of them was declared on NO
+  // display surface — so `EnhancedTimelineRow` (which reads raw keys, not the registry)
+  // showed some of them on the feed row while the detail modal, the screen a grower opens to
+  // check a record before an inspection, showed none. `placement_date` and `removal_date`
+  // rendered nowhere at all.
+  //
+  // The model-column audit that caught the seed fields could not see these: they are not
+  // columns. `resolver.ts` already falls back to `extra_data`, so a plain declaration is all
+  // each one needs — no custom formatter, unlike the PH block above which predates that
+  // fallback.
+  {
+    // How many hives, and of what — the two facts an almond or tree-fruit grower is asked for
+    // at renewal, since § 205.206(a) counts managed pollinators as a pest/production practice.
+    name: 'pollinator_type',
+    labelKey: 'production.pollination.pollinatorType',
+    valueType: 'string',
+    visibleForSubtypes: ['PO'],
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'hive_count',
+    labelKey: 'production.pollination.hiveCount',
+    valueType: 'number',
+    visibleForSubtypes: ['PO'],
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    // Placement and removal bound the window the hives were on the block. Without them the
+    // event says bees were here and cannot say when they left.
+    name: 'placement_date',
+    labelKey: 'production.pollination.placementDate',
+    valueType: 'date',
+    visibleForSubtypes: ['PO'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'removal_date',
+    labelKey: 'production.pollination.removalDate',
+    valueType: 'date',
+    visibleForSubtypes: ['PO'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'canopy_operation',
+    labelKey: 'production.canopy.operation',
+    valueType: 'string',
+    visibleForSubtypes: ['CM'],
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'pass_number',
+    labelKey: 'production.canopy.passNumber',
+    valueType: 'number',
+    visibleForSubtypes: ['CM'],
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    // Summary-mode totals. The modal already renders the ROLL-UP header itself (event count
+    // and date range, `EventDetailsModal` ~line 866), which made the omission easy to miss:
+    // a harvest summary showed "12 events, Aug 3 - Aug 19" and not the yield those 12 events
+    // added up to — the only number the summary exists to carry.
+    //
+    // visibleWhen keeps them off a non-summary record, where the key is absent anyway; being
+    // explicit costs nothing and documents the coupling to the summary toggle.
+    name: 'pruning_passes',
+    labelKey: 'production.pruning.passes',
+    valueType: 'number',
+    visibleForSubtypes: ['PR'],
+    visibleWhen: (e) => Boolean(e.is_summary ?? (e.extra_data as ProductionData)?.is_summary),
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'yield_total',
+    labelKey: 'production.field.totalYield',
+    valueType: 'number',
+    unitField: 'yield_total_unit',
+    visibleForSubtypes: ['HA'],
+    visibleWhen: (e) => Boolean(e.is_summary ?? (e.extra_data as ProductionData)?.is_summary),
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'water_volume_total',
+    labelKey: 'production.field.totalWaterVolume',
+    valueType: 'number',
+    unitField: 'water_volume_unit',
+    // Drives the IR carbon number when present (aggregate irrigation path in
+    // `calculate_production_event_impact`), so it earns the CO₂ chip the same way
+    // `fuel_consumed` does.
+    carbonRelevant: true,
+    visibleForSubtypes: ['IR'],
+    visibleWhen: (e) => Boolean(e.is_summary ?? (e.extra_data as ProductionData)?.is_summary),
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
   {
     name: 'processing_type',
     labelKey: 'events.production.fields.processingType',
@@ -1625,7 +1865,19 @@ export const productionEventRegistry: EventRegistryEntry<ProductionSubtype, Prod
     { code: 'CM', labelKey: 'events.production.subtypes.canopyManagement', photoTier: 'optional' },
     // Batch 3 (2026-06): Scope-1 fuel ops
     { code: 'FP', labelKey: 'events.production.subtypes.frostProtection', photoTier: 'optional' },
-    { code: 'MO', labelKey: 'events.production.subtypes.mowing', photoTier: 'optional' }
+    { code: 'MO', labelKey: 'events.production.subtypes.mowing', photoTier: 'optional' },
+    // Batch 4 (2026-08-19): shipped to history/models.py and to ProductionTab's select but
+    // never here, so for three months `getPhotoTier(1, 'TP')` answered with the type-level
+    // default and `getSubtypes(1)` — the list the form's own chooser now renders from —
+    // simply did not contain them.
+    //
+    // Tiers: a load manifest and a seed-availability search are paperwork, so a photo adds
+    // nothing an inspector reads. Buffer disposal is the one an inspector DOES want to see —
+    // § 205.202(c) turns on the crop not being sold as organic, and a photo of the dumped or
+    // separately-stored rows is the only evidence of that outside the operator's own word.
+    { code: 'TP', labelKey: 'events.production.subtypes.transport', photoTier: 'optional' },
+    { code: 'BU', labelKey: 'events.production.subtypes.bufferUse', photoTier: 'recommended' },
+    { code: 'SS', labelKey: 'events.production.subtypes.seedSearch', photoTier: 'optional' }
   ],
   defaultPhotoTier: 'recommended',
   fields: PRODUCTION_FIELDS

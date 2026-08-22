@@ -496,7 +496,7 @@ export default function CarbonJourney() {
                 description="See how you're discovering transparent farming practices">
                 <VStack spacing={6}>
                   <StandardGrid columns={{ base: 1, md: 3 }} spacing={6}>
-                    <StandardCard variant="flat" padding={6}>
+                    <StandardCard variant="flat" padding={{ base: 0, md: 6 }}>
                       <VStack spacing={3}>
                         <Circle size="50px" bg="green.100" color="green.600">
                           <Icon as={FaQrcode} boxSize={6} />
@@ -509,7 +509,7 @@ export default function CarbonJourney() {
                       </VStack>
                     </StandardCard>
 
-                    <StandardCard variant="flat" padding={6}>
+                    <StandardCard variant="flat" padding={{ base: 0, md: 6 }}>
                       <VStack spacing={3}>
                         <Circle size="50px" bg="blue.100" color="blue.600">
                           <Icon as={FaTractor} boxSize={6} />
@@ -524,7 +524,7 @@ export default function CarbonJourney() {
                       </VStack>
                     </StandardCard>
 
-                    <StandardCard variant="flat" padding={6}>
+                    <StandardCard variant="flat" padding={{ base: 0, md: 6 }}>
                       <VStack spacing={3}>
                         <Circle size="50px" bg="teal.100" color="teal.600">
                           <Icon as={FaAward} boxSize={6} />

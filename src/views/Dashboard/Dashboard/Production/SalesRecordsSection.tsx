@@ -412,7 +412,7 @@ export function SalesRecordsSection({
     <StandardCard
       title={intl.formatMessage({ id: 'sales.records.title' })}
       variant="elevated"
-      padding={{ base: 3, md: 4 }}>
+      padding={{ base: 0, md: 4 }}>
       <VStack spacing={3} align="stretch">
         <Text fontSize="xs" color={labelFg}>
           {intl.formatMessage({ id: 'sales.records.subtitle' })}

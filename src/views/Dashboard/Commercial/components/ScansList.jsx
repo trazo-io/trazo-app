@@ -43,7 +43,7 @@ const ScansList = ({ title, labels, scansData }) => {
   const displayedScans = showAllScans ? scansData : scansData?.slice(0, 10);
 
   return (
-    <StandardCard title={title} variant="elevated" padding={{ base: 2, md: 4 }}>
+    <StandardCard title={title} variant="elevated" padding={{ base: 0, md: 4 }}>
       <VStack spacing={4} align="stretch">
         <Box
           overflowX="auto"

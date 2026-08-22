@@ -128,7 +128,11 @@ describe('Production: labelKeys resolve in en-US.json', () => {
 
   it('resolves every Production subtype labelKey', () => {
     const subtypes = getSubtypes('production');
-    expect(subtypes.length).toBe(13);
+    // A floor, not the exact count: the count itself is asserted against
+    // history/models.py PRODUCTION_EVENTS in productionSubtypeCoverage.test.ts, so it lives
+    // in one place and a new backend subtype fails THAT guard with a useful message instead
+    // of this one with "expected 16 to be 13".
+    expect(subtypes.length).toBeGreaterThan(10);
     for (const subtype of subtypes) {
       expect(enUS[subtype.labelKey], `missing en-US key: ${subtype.labelKey}`).toBeTypeOf('string');
     }

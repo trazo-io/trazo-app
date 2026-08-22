@@ -252,7 +252,7 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
           </HStack>
         }
         variant="elevated"
-        padding={{ base: 3, md: 4 }}
+        padding={{ base: 0, md: 4 }}
         headerAction={headerAction}>
         <VStack spacing={4} align="stretch">
           {/* Inline add/edit form */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   Box,
   Flex,
@@ -19,7 +19,6 @@ import {
   Tab,
   TabPanel,
   Stack,
-  Divider,
   Badge,
   Alert,
   AlertIcon,
@@ -35,20 +34,11 @@ import {
   HStack,
   AlertTitle,
   AlertDescription,
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogContent,
-  AlertDialogOverlay,
   Collapse,
   IconButton,
   Spinner,
   Container,
   Tooltip,
-  List,
-  ListItem,
-  ListIcon,
   FormControl,
   FormLabel
 } from '@chakra-ui/react';
@@ -61,6 +51,7 @@ import {
   StandardNumberInput,
   StandardInput
 } from 'components/Design/StandardComponents';
+import CancelSubscriptionModal from './CancelSubscriptionModal';
 import {
   FaBuilding,
   FaMapMarkedAlt,
@@ -210,7 +201,6 @@ function UnifiedSubscriptionDashboard() {
     onOpen: onBillingEditOpen,
     onClose: onBillingEditClose
   } = useDisclosure();
-  const cancelRef = useRef<HTMLButtonElement>(null);
   const [earlyAccessPlanName, setEarlyAccessPlanName] = useState<string | null>(null);
   const [billingForm, setBillingForm] = useState({
     contact_email: '',
@@ -271,9 +261,9 @@ function UnifiedSubscriptionDashboard() {
   const features = subscription?.effective_limits || plan?.features || {};
   const isTrial = subscription?.status === 'trialing';
   // Pilot = Compliance comped by agreement (provision_pilot), not a billed plan. Two sharp
-  // edges if rendered as one: the red Cancel button (canceling nulls `subscription_plan`
-  // and 403s every creation in the app — one click locks a pilot farm out mid-season) and
-  // "Next Billing Date", which for a pilot is actually their certifier renewal anchor.
+  // edges if rendered as one: the red Cancel button (a pilot has no charge to stop, and ending
+  // one is a conversation per the pilot agreement) and "Next Billing Date", which for a pilot is
+  // actually their certifier renewal anchor.
   const isPilot = (plan as any)?.slug === 'pilot' || (plan as any)?.features?.is_pilot === true;
   // Starter is FREE FOREVER (2026-08-13) — no trial, no renewal, no billing date. Its
   // subscription carries `current_period_end = null` on purpose, so the billing grid below would
@@ -457,24 +447,43 @@ function UnifiedSubscriptionDashboard() {
   ];
 
   // Handlers
-  const handleCancelSubscription = async () => {
+  const handleCancelSubscription = async ({
+    reason,
+    feedback
+  }: {
+    reason: string;
+    feedback: string;
+  }) => {
     if (!subscription) return;
     try {
-      await cancelSubscription(subscription.id).unwrap();
+      await cancelSubscription({
+        subscriptionId: Number(subscription.id),
+        reason,
+        feedback
+      }).unwrap();
+      // Closed HERE, not by the button's onClick, so a failed request leaves the modal open
+      // with the customer's typed feedback intact instead of dismissing the dialog and showing
+      // an error toast over a page that still says "active". The modal clears its own fields
+      // when it closes.
+      onCancelClose();
       toast({
         title: intl.formatMessage({ id: 'app.subscriptionCanceled' }),
         description: intl.formatMessage({ id: 'app.subscriptionCanceledDescription' }),
         status: 'info',
-        duration: 5000,
+        duration: 8000,
         isClosable: true
       });
       refetchDashboard();
     } catch (error) {
+      // The backend answers a specific message for a subscription that cannot be cancelled at
+      // all (Starter, pilot). Showing the generic "something went wrong" over it would hide the
+      // only sentence that explains why the button did nothing.
+      const detail = (error as any)?.data?.error;
       toast({
         title: intl.formatMessage({ id: 'app.error' }),
-        description: intl.formatMessage({ id: 'app.errorCancelingSubscription' }),
+        description: detail || intl.formatMessage({ id: 'app.errorCancelingSubscription' }),
         status: 'error',
-        duration: 5000,
+        duration: 8000,
         isClosable: true
       });
     }
@@ -683,7 +692,7 @@ function UnifiedSubscriptionDashboard() {
         description={intl.formatMessage({ id: 'app.noActiveSubscription' })}>
         <StandardCard mb={0}>
           <Box textAlign="center" py={4}>
-            <Icon as={FaInfoCircle} boxSize={12} color="green.500" mb={4} />
+            <Icon as={FaInfoCircle} boxSize={12} color="green.700" mb={4} />
             <Text fontSize="xl" fontWeight="bold" mb={4}>
               {intl.formatMessage({ id: 'app.noActiveSubscription' })}
             </Text>
@@ -948,16 +957,16 @@ function UnifiedSubscriptionDashboard() {
                                   onClick={() => navigate('/admin/dashboard/pricing')}>
                                   {intl.formatMessage({ id: 'app.changePlan' })}
                                 </Button>
-                                {/* A pilot has nothing to cancel — and canceling would null
-                                    the plan and 403 the whole app. Ending a pilot is a
-                                    conversation, per the pilot agreement.
+                                {/* A pilot has nothing to cancel: it is comped by agreement, so
+                                    there is no charge to stop and ending one is a conversation.
+                                    Starter is hidden for the same reason — it is free forever.
 
-                                    Starter is hidden for the same reason and it is worse there:
-                                    it is the FREE FOREVER tier, so there is no charge to stop
-                                    and no reason to offer the button — but one click still nulls
-                                    `subscription_plan` and 403s every creation, locking a farmer
-                                    out of their own records. Downgrading to free is "Change
-                                    Plan"; leaving Trazo is account deletion, not this. */}
+                                    ⚠️ This is a RENDER gate and proves nothing on its own. The
+                                    endpoint refuses both independently
+                                    (`SubscriptionViewSet._uncancellable_reason`), because a
+                                    stale tab or a direct POST never sees this condition. Until
+                                    2026-08-22 only this check existed, and the endpoint happily
+                                    stamped a pending cancellation onto the free-forever tier. */}
                                 {!isPilot && !isFreeForever && (
                                   <Button
                                     size="sm"
@@ -980,6 +989,52 @@ function UnifiedSubscriptionDashboard() {
                             <Text fontSize="sm">
                               {intl.formatMessage({ id: 'subscription.pilotNoBilling' })}
                             </Text>
+                          </Alert>
+                        )}
+
+                        {/* A declined card had NO surface here at all — `past_due` appeared
+                            nowhere in the frontend. The farm simply started getting 403s worded
+                            "your subscription plan does not allow creating more parcels", which
+                            is false and gives the farmer nothing to act on. The plan now stays
+                            live for the whole of Stripe's retry window, so this banner is the
+                            only thing that tells them to fix the card before it runs out.
+                            `warning`, not `error`: nothing is broken yet. */}
+                        {subscription?.status === 'past_due' && (
+                          <Alert status="warning" mb={4} borderRadius="md" alignItems="flex-start">
+                            <AlertIcon />
+                            <Box>
+                              <AlertTitle fontSize="sm">
+                                {intl.formatMessage({ id: 'subscription.pastDueTitle' })}
+                              </AlertTitle>
+                              <AlertDescription fontSize="sm" display="block">
+                                {intl.formatMessage({ id: 'subscription.pastDueBody' })}
+                              </AlertDescription>
+                              <Button
+                                size="sm"
+                                minH="44px"
+                                mt={2}
+                                colorScheme="green"
+                                onClick={handleAddPaymentMethod}
+                                isLoading={isCreatingCheckoutSession}>
+                                {intl.formatMessage({ id: 'subscription.pastDueCta' })}
+                              </Button>
+                            </Box>
+                          </Alert>
+                        )}
+
+                        {/* The farm has lapsed to Starter. Says what SURVIVED, because the
+                            previous behaviour deleted nothing but behaved as though it had. */}
+                        {isFreeForever && subscription?.cancellation_requested_at && (
+                          <Alert status="info" mb={4} borderRadius="md" alignItems="flex-start">
+                            <AlertIcon />
+                            <Box>
+                              <AlertTitle fontSize="sm">
+                                {intl.formatMessage({ id: 'subscription.lapsedTitle' })}
+                              </AlertTitle>
+                              <AlertDescription fontSize="sm" display="block">
+                                {intl.formatMessage({ id: 'subscription.lapsedBody' })}
+                              </AlertDescription>
+                            </Box>
                           </Alert>
                         )}
 
@@ -1675,7 +1730,7 @@ function UnifiedSubscriptionDashboard() {
                                     key={addonItem.id}
                                     variant="outline"
                                     mb={0}
-                                    padding={3}>
+                                    padding={{ base: 0, md: 3 }}>
                                     <Flex justify="space-between" align="center">
                                       <Box>
                                         <Text fontWeight="medium">{addonItem.addon?.name}</Text>
@@ -1771,7 +1826,11 @@ function UnifiedSubscriptionDashboard() {
                       {paymentMethods.length > 0 ? (
                         <Stack spacing={3}>
                           {paymentMethods.map((method: any, index: number) => (
-                            <StandardCard key={index} variant="outline" mb={0} padding={3}>
+                            <StandardCard
+                              key={index}
+                              variant="outline"
+                              mb={0}
+                              padding={{ base: 0, md: 3 }}>
                               <Flex justify="space-between" align="center">
                                 <Flex align="center">
                                   <Box
@@ -1936,7 +1995,11 @@ function UnifiedSubscriptionDashboard() {
                     {invoices.length > 0 ? (
                       <Stack spacing={3}>
                         {invoices.map((invoice: any, index: number) => (
-                          <StandardCard key={index} variant="outline" mb={0} padding={3}>
+                          <StandardCard
+                            key={index}
+                            variant="outline"
+                            mb={0}
+                            padding={{ base: 0, md: 3 }}>
                             <Flex justify="space-between" align="center">
                               <Box>
                                 <Text fontWeight="medium">
@@ -2205,34 +2268,17 @@ function UnifiedSubscriptionDashboard() {
         </ModalContent>
       </Modal>
 
-      {/* Cancel Subscription Confirmation */}
-      <AlertDialog isOpen={isCancelOpen} leastDestructiveRef={cancelRef} onClose={onCancelClose}>
-        <AlertDialogOverlay>
-          <AlertDialogContent>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              {intl.formatMessage({ id: 'app.cancelSubscription' })}
-            </AlertDialogHeader>
-            <AlertDialogBody>
-              {intl.formatMessage({ id: 'app.cancelConfirmationText' })}
-            </AlertDialogBody>
-            <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={onCancelClose}>
-                {intl.formatMessage({ id: 'app.goBack' })}
-              </Button>
-              <Button
-                colorScheme="red"
-                onClick={() => {
-                  onCancelClose();
-                  handleCancelSubscription();
-                }}
-                ml={3}
-                isLoading={isCancellingSubscription}>
-                {intl.formatMessage({ id: 'app.confirmCancellation' })}
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+      <CancelSubscriptionModal
+        isOpen={isCancelOpen}
+        onClose={onCancelClose}
+        onConfirm={handleCancelSubscription}
+        planName={plan?.name || ''}
+        periodEndLabel={
+          subscription?.current_period_end ? formatDate(subscription.current_period_end) : undefined
+        }
+        isSubmitting={isCancellingSubscription}
+        exceeds={(subscription as any)?.downgrade_preview?.exceeds || []}
+      />
     </StandardPage>
   );
 }

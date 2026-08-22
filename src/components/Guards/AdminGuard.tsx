@@ -18,7 +18,7 @@ export const AdminGuard: React.FC<{ children: React.ReactNode }> = ({ children }
     return (
       <Box minH="60vh" display="flex" alignItems="center" justifyContent="center">
         <VStack spacing={4} textAlign="center" p={8}>
-          <Icon as={FaLock} boxSize={12} color="gray.400" />
+          <Icon as={FaLock} boxSize={12} color="gray.500" />
           <Text fontSize="xl" fontWeight="semibold" color="gray.700">
             {intl.formatMessage({ id: 'app.accessRestricted' })}
           </Text>

@@ -88,6 +88,14 @@ export interface Subscription {
   used_storage_gb?: number;
   /** Base plan features plus purchased add-ons (preferred over plan.features) */
   effective_limits?: { [key: string]: any };
+  cancel_at_period_end?: boolean;
+  /**
+   * Set as soon as a cancellation is REQUESTED, not when it takes effect. Read-only on the
+   * wire — the write path is the `cancel` action, which validates the reason against
+   * `Subscription.CANCELLATION_REASON_CHOICES` server-side.
+   */
+  cancellation_reason?: string;
+  cancellation_requested_at?: string | null;
 }
 
 export interface Plan {
