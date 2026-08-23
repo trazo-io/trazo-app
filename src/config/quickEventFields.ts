@@ -2066,7 +2066,11 @@ export const organicAmendmentFields: QuickEventTypeConfig = {
       unitOptions: [
         { value: 'kg', labelKey: 'app.unit.kg' },
         { value: 'lbs', labelKey: 'app.unit.lbs' },
-        { value: 'tons', labelKey: 'app.unit.tons' }
+        { value: 'tons', labelKey: 'app.unit.tons' },
+        // Bulk compost/mulch is delivered and invoiced by the cubic yard — see
+        // UNIT_AMENDMENT in common/field_registry.py. Omitting it here forced a density
+        // guess the supplier's ticket does not support.
+        { value: 'yd3', labelKey: 'app.unit.yd3' }
       ]
     },
     {
@@ -2077,7 +2081,8 @@ export const organicAmendmentFields: QuickEventTypeConfig = {
       options: [
         { value: 'kg', labelKey: 'app.unit.kg' },
         { value: 'lbs', labelKey: 'app.unit.lbs' },
-        { value: 'tons', labelKey: 'app.unit.tons' }
+        { value: 'tons', labelKey: 'app.unit.tons' },
+        { value: 'yd3', labelKey: 'app.unit.yd3' }
       ]
     },
     {

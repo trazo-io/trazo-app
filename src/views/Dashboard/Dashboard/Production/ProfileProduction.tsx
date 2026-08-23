@@ -560,7 +560,24 @@ function ProfileProduction() {
             actions stay exactly as they were — Export for audit is the wedge action on this
             page and keeps its primary weight. */}
         <Box w="100%">
-          <Flex direction="row" justify="space-between" align="flex-start" gap={3}>
+          {/*
+            Column on mobile, row from `md`.
+        
+            `direction` was hard-coded to "row". The title column already carried `minW={0}`
+            and the action Wrap already carried `flexShrink={0}`, which is the correct pairing
+            — but only if the row can actually fit. It cannot: Export + Finish + Copy link +
+            the overflow menu demand roughly 330px and refuse to shrink, so on a 430px screen
+            (~370px of content) the heading was left about 40px and rendered one word per
+            line, with the buttons sitting on top of it.
+
+            `flexShrink={0}` is kept: in a column it is inert, and from `md` up it is still
+            what stops the buttons collapsing.
+          */}
+          <Flex
+            direction={{ base: 'column', md: 'row' }}
+            justify="space-between"
+            align={{ base: 'stretch', md: 'flex-start' }}
+            gap={3}>
             <VStack align="flex-start" gap={1} minW={0}>
               <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color="gray.800">
                 {historyData?.product?.name || historyData?.name}
@@ -659,7 +676,7 @@ function ProfileProduction() {
             {/* spacing={2} (8px), not 1. At 4px the three buttons abutted and read as a
                 segmented control — which promises "pick one of these". Export, copy-link and
                 the overflow menu are unrelated actions. */}
-            <Wrap spacing={2} justify="flex-end" flexShrink={0}>
+            <Wrap spacing={2} justify={{ base: 'flex-start', md: 'flex-end' }} flexShrink={0}>
               {/* Primary wedge action + the buyer handoff stay visible; secondary
                   actions collapse into an overflow menu to reduce header clutter. */}
               <WrapItem>

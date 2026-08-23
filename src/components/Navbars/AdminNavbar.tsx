@@ -51,6 +51,23 @@ type AdminNavbarProps = {
   logoText: string;
 };
 
+/**
+ * A 44px hit area without changing the navbar's height.
+ *
+ * MEASURED 2026-08-22: a breadcrumb link is 26px tall, against the 44px minimum
+ * `.claude/rules/frontend.md` sets for touch targets — and it sits at the very top of the
+ * screen, next to the status bar, where a thumb is least accurate. Padding alone would grow
+ * the navbar, so the negative margin pulls the layout back to where it was: the box the finger
+ * hits is 44px, the box the eye sees is unchanged.
+ */
+const CRUMB_TAP_TARGET = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  minH: '44px',
+  py: '9px',
+  my: '-9px'
+} as const;
+
 export default function AdminNavbar(props: AdminNavbarProps) {
   const intl = useIntl();
   const navigate = useNavigate();
@@ -247,7 +264,13 @@ export default function AdminNavbar(props: AdminNavbarProps) {
             spacing={{ base: '4px', sm: '6px', md: '8px' }}
             separator={
               <Box
-                color={secondaryText}
+                /*
+                 * gray.500 (4.61), not `secondaryText` (gray.400, 2.68). A separator should be
+                 * quieter than the segments it divides, but it is still a rendered glyph and
+                 * 2.68:1 is under every floor. This one token was also shared with the segment
+                 * text, which is how the whole row ended up too faint.
+                 */
+                color="gray.500"
                 fontSize={{ base: 'xs', md: 'sm' }}
                 px={{ base: 0.5, md: 1 }}>
                 /
@@ -256,13 +279,21 @@ export default function AdminNavbar(props: AdminNavbarProps) {
             {/* Home - Always visible, never truncates */}
             <BreadcrumbItem color={mainText}>
               <BreadcrumbLink
+                href="/admin/dashboard/"
                 onClick={handleHomeClick}
-                color={secondaryText}
+                /*
+                 * `green.700`, not `secondaryText`. Two reasons, both measured:
+                 * gray.400 is 2.68:1 on white — this is TEXT and owes 4.5 — and green is the
+                 * app's link colour, which the breadcrumb was spending on the one segment
+                 * that is NOT a link (see the current-page item below).
+                 */
+                color="green.700"
                 fontSize={{ base: 'sm', md: 'md' }}
-                _hover={{ color: mainText, textDecoration: 'none', cursor: 'pointer' }}
+                _hover={{ color: 'green.800', textDecoration: 'underline', cursor: 'pointer' }}
                 flexShrink={0}
                 whiteSpace="nowrap"
-                cursor="pointer">
+                cursor="pointer"
+                {...CRUMB_TAP_TARGET}>
                 {intl.formatMessage({ id: 'app.home' })}
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -271,10 +302,23 @@ export default function AdminNavbar(props: AdminNavbarProps) {
             {currentEstablishment && (
               <BreadcrumbItem color={mainText}>
                 <BreadcrumbLink
+                  href={parcelId ? `/admin/dashboard/farm/${farmId}` : undefined}
                   onClick={parcelId ? handleEstablishmentClick : undefined}
-                  color={!parcelId ? 'green.700' : mainText}
+                  aria-current={!parcelId ? 'page' : undefined}
+                  /*
+                   * ⚠️ INVERTED before this change, and that is the whole bug.
+                   *
+                   * It read `!parcelId ? 'green.700' : mainText` — green when this segment is
+                   * the CURRENT PAGE (not clickable) and gray.700 when it is a LINK. Green is
+                   * the app's link colour everywhere else, so on a parcel page the tappable
+                   * farm name looked like plain text while the inert current-page segment
+                   * looked like the link. People tap the green one and conclude navigation is
+                   * broken.
+                   */
+                  color={parcelId ? 'green.700' : 'gray.700'}
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="500"
+                  {...(parcelId ? CRUMB_TAP_TARGET : {})}
                   title={currentEstablishment.name}
                   // Smart allocation: More space when alone, conservative when sharing with parcel
                   isTruncated
@@ -286,11 +330,11 @@ export default function AdminNavbar(props: AdminNavbarProps) {
                   _hover={
                     parcelId
                       ? {
-                          color: 'green.700',
-                          textDecoration: 'none',
-                          cursor: 'pointer',
-                          transform: 'translateY(-0.5px)',
-                          transition: 'all 0.2s ease'
+                          // darker on hover, per the palette rule — and an underline, so the
+                          // affordance does not rest on colour alone
+                          color: 'green.800',
+                          textDecoration: 'underline',
+                          cursor: 'pointer'
                         }
                       : {}
                   }
@@ -305,7 +349,11 @@ export default function AdminNavbar(props: AdminNavbarProps) {
             {currentParcel && (
               <BreadcrumbItem color={mainText}>
                 <BreadcrumbLink
-                  color="green.700"
+                  // The current page. Neutral, and marked as such for assistive tech — it was
+                  // green.700 + bold, i.e. dressed as the only link in the row while carrying
+                  // `cursor: default`.
+                  aria-current="page"
+                  color="gray.700"
                   fontSize={{ base: 'sm', md: 'md' }}
                   fontWeight="600"
                   title={currentParcel.name}

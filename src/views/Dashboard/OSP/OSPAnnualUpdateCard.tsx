@@ -21,6 +21,8 @@ import {
 import { FaCalendarCheck } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
+import { formatDateFromTimestamp } from 'utils/dateOnly';
+
 import {
   StandardButton,
   StandardCard,
@@ -479,6 +481,71 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                       defaultMessage: 'No changes — OSP reaffirmed'
                     })}
                 </Text>
+                {/*
+                  `formatDateFromTimestamp`, NOT `formatDateOnly`. Both live in the same file and
+                  the neighbouring change-notifications panel uses the latter — correctly, because
+                  ITS columns are DateFields. `OSPAnnualUpdate.submitted_at` and
+                  `certifier_acknowledged_at` are DateTimeFields, and an ISO datetime falls
+                  through `parseDateOnly`'s YYYY-MM-DD pattern to `new Date(...)`, which renders in
+                  the VIEWER's zone. A filing submitted 2025-01-10T00:00:00Z showed as
+                  "Jan 9, 2025" anywhere west of UTC — a § 205.406 filing date off by one day.
+
+                  `intl.locale` is passed because the helper defaults to en-US: without it a
+                  Spanish-speaking farmer read "Aug 21, 2026" under Spanish labels.
+
+                  What a returning farmer — and the inspector sitting beside them — actually
+                  asks of a past filing: WHEN did we file, and WHICH plan version did it move
+                  us to. The row used to answer neither: a "Submitted" pill carried no date,
+                  and `prior_osp` was a database id nobody can read as a plan version.
+                */}
+                <HStack spacing={2} mt={1} flexWrap="wrap">
+                  {formatDateFromTimestamp(u.submitted_at, intl.locale) && (
+                    <Text fontSize="xs" color="gray.600">
+                      {intl.formatMessage(
+                        { id: 'osp.annual.filedOn', defaultMessage: 'Filed {date}' },
+                        { date: formatDateFromTimestamp(u.submitted_at, intl.locale) }
+                      )}
+                    </Text>
+                  )}
+                  {u.prior_osp_version != null && (
+                    <Text fontSize="xs" color="gray.600">
+                      {u.new_osp_version != null
+                        ? intl.formatMessage(
+                            {
+                              id: 'osp.annual.planMoved',
+                              defaultMessage: 'Plan v{from} → v{to}'
+                            },
+                            { from: u.prior_osp_version, to: u.new_osp_version }
+                          )
+                        : intl.formatMessage(
+                            {
+                              id: 'osp.annual.planReaffirmed',
+                              defaultMessage: 'Plan v{from} reaffirmed'
+                            },
+                            { from: u.prior_osp_version }
+                          )}
+                    </Text>
+                  )}
+                </HStack>
+                {/*
+                  Acknowledgment is shown ONLY when it is on record, and never as a pending
+                  state. Nothing in the product writes `certifier_acknowledged_at` — it is
+                  read-only on the serializer and set by staff — so for a farmer it is always
+                  null. A permanent "Acknowledgment pending" pill would put an amber warning on
+                  every filing forever and imply Trazo tracks certifier replies, which it does
+                  not. An absent acknowledgment is not evidence the certifier withheld one.
+                */}
+                {formatDateFromTimestamp(u.certifier_acknowledged_at, intl.locale) && (
+                  <Text fontSize="xs" color="green.700" fontWeight="medium" mt={1}>
+                    {intl.formatMessage(
+                      {
+                        id: 'osp.annual.acknowledgedOn',
+                        defaultMessage: 'Certifier acknowledged {date}'
+                      },
+                      { date: formatDateFromTimestamp(u.certifier_acknowledged_at, intl.locale) }
+                    )}
+                  </Text>
+                )}
               </Box>
               <HStack spacing={2}>
                 {u.submitted_at ? (
@@ -493,9 +560,24 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
                     {intl.formatMessage({ id: 'osp.annual.draft', defaultMessage: 'Draft' })}
                   </Badge>
                 )}
-                <StandardButton size="xs" variant="ghost" onClick={() => startEdit(u)}>
-                  {intl.formatMessage({ id: 'osp.annual.edit', defaultMessage: 'Edit' })}
-                </StandardButton>
+                {/*
+                  An acknowledged filing is frozen server-side (423). Offering Edit anyway would
+                  let a farmer reopen it, retype a summary, press save and only THEN be told —
+                  losing the work and reading as a bug rather than a rule. The badge carries the
+                  reason so the missing button is explained rather than merely absent.
+                */}
+                {u.certifier_acknowledged_at ? (
+                  <Badge variant="neutral">
+                    {intl.formatMessage({
+                      id: 'osp.annual.lockedBadge',
+                      defaultMessage: 'Acknowledged — as filed'
+                    })}
+                  </Badge>
+                ) : (
+                  <StandardButton size="xs" variant="ghost" onClick={() => startEdit(u)}>
+                    {intl.formatMessage({ id: 'osp.annual.edit', defaultMessage: 'Edit' })}
+                  </StandardButton>
+                )}
               </HStack>
             </HStack>
           </Box>

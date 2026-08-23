@@ -10,7 +10,12 @@ export interface OSPAnnualUpdate {
   id: number;
   public_id?: string;
   prior_osp: number;
+  /** Version number of the plan this filing references — read-only, from the server. */
+  prior_osp_version?: number | null;
   new_osp?: number | null;
+  /** Version this filing produced. Null is normal: § 205.406 allows a pure "no material
+   *  changes" attestation, which creates no new plan version. */
+  new_osp_version?: number | null;
   reporting_year: number;
   changes_summary?: string;
   additions?: unknown[];

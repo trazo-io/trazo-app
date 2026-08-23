@@ -128,7 +128,24 @@ export default function ParcelView() {
             leftIcon={<Icon as={FaClipboardCheck} />}
             colorScheme="green"
             variant={data?.application_status === 'complete' ? 'outline' : 'solid'}
+            /*
+              The label is CONCATENATED — title + " · status" + " (n)" — so its length is not
+              knowable from the code. In es-419 it becomes "Solicitud de parcela · En progreso
+              (4)", and a Chakra Button is `white-space: nowrap`, so it simply overflowed; the
+              page wrapper carries `overflow="hidden"` (which is what keeps the page from
+              scrolling sideways), so the tail was CLIPPED — the farmer saw "…En progreso (4"
+              with the count cut in half.
+
+              Wrap on mobile, where the button is full-width anyway thanks to the parent's
+              `align="stretch"`; keep nowrap from `smd` up, where it sits in a row and wrapping
+              would shrink it into a narrow column. `h="auto"` lets it grow to two lines while
+              `minH` holds the 44px touch target.
+            */
+            whiteSpace={{ base: 'normal', smd: 'nowrap' }}
+            textAlign="left"
+            h="auto"
             minH="44px"
+            py={2}
             onClick={() =>
               navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application`)
             }>
