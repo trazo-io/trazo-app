@@ -66,6 +66,7 @@ export const baseApi = createApi({
     'AdjoiningLandAffidavit',
     'OSPAnnualUpdate',
     'OSPChangeNotification',
+    'OSPReview',
     'OSPRecordTypes',
     'PostHarvestFacility',
     'SeasonPlan'

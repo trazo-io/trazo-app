@@ -11,6 +11,7 @@ import {
   OSP_ADD_APPROVED_INPUT_URL,
   OSP_CHANGE_NOTIFICATIONS_URL,
   OSP_ATTACHMENTS_URL,
+  OSP_REVIEW_URL,
   OSP_MODULE_DEFINITIONS_URL,
   OSP_MODULE_URL,
   OSP_MODULES_URL,
@@ -28,6 +29,7 @@ import {
   OSP,
   OSPChangeNotification,
   OSPAttachmentsResponse,
+  OSPReview,
   OSPRecordTypesResponse,
   OSPSummary,
   UpdateOSPData
@@ -220,7 +222,10 @@ const ospApi = baseApi.injectEndpoints({
         body: data,
         credentials: 'include'
       }),
-      invalidatesTags: (_r, _e, { ospId }) => [{ type: 'OSPChangeNotification', id: Number(ospId) }]
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSPChangeNotification', id: Number(ospId) },
+        { type: 'OSPReview', id: Number(ospId) }
+      ]
     }),
 
     // Withdraw a notification the certifier has not acknowledged yet. The
@@ -233,7 +238,10 @@ const ospApi = baseApi.injectEndpoints({
         method: 'DELETE',
         credentials: 'include'
       }),
-      invalidatesTags: (_r, _e, { ospId }) => [{ type: 'OSPChangeNotification', id: Number(ospId) }]
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSPChangeNotification', id: Number(ospId) },
+        { type: 'OSPReview', id: Number(ospId) }
+      ]
     }),
 
     // Common OSP § 11 "Records Maintained" — evidence derived from logged events.
@@ -328,6 +336,22 @@ const ospApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, { ospId }) => [{ type: 'OSPRecordTypes', id: Number(ospId) }]
     }),
 
+    // Plan review — the list of things the operation's records did after the plan's newest
+    // answer. Tagged with the OSP so a saved module answer or a new notification refreshes it.
+    getOSPReview: build.query<OSPReview, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_REVIEW_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      // Its own tag, so the things that change what the review says — a filed notice, a
+      // saved module, an OSP edit — refresh it without refetching the whole plan.
+      providesTags: (_r, _e, { ospId }) => [
+        { type: 'OSPReview', id: Number(ospId) },
+        { type: 'OSP', id: Number(ospId) }
+      ]
+    }),
+
     // Resolve a free-text product name to NL/OMRI matches. Used by the
     // Approved Inputs typeahead. Backend route: /certifications/verify-input/?name=
     verifyInput: build.query<InputVerifyResult, { name: string; omri_id?: string }>({
@@ -360,6 +384,7 @@ export const {
   useGetOSPModuleQuery,
   useSaveOSPModuleMutation,
   useGetOSPAttachmentsQuery,
+  useGetOSPReviewQuery,
   useConfirmOSPRecordTypesMutation,
   useLazyVerifyInputQuery
 } = ospApi;

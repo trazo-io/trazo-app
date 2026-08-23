@@ -222,20 +222,35 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
     }
   };
 
+  /*
+   * The header is StandardCard's own — `title` / `titleIcon` / `headerAction` — not a
+   * hand-rolled row inside the body.
+   *
+   * OBSERVED 2026-08-23 at 430px: it used to be `<HStack justify="space-between">` with the
+   * title cluster on the left and the button on the right. An HStack is a nowrap row, the
+   * title carries a regulation citation and so wraps to three lines, and neither side declared
+   * anything about shrinking — so the "Add Affidavit" button was pushed past the card's right
+   * edge and rendered as "Add Affidav". The count Badge was crushed against it.
+   *
+   * Its sibling `AdjoiningLandSection` was never broken because it uses these props, and
+   * StandardCard's header is already `direction={{ base: 'column', md: 'row' }}`. This is the
+   * "check StandardComponents FIRST" rule paying for itself: the fix is deleting the local
+   * copy, not repairing it.
+   *
+   * The Badge rides with the button rather than the title, so the citation is free to wrap
+   * without a number wedged into the middle of it.
+   */
   return (
-    <StandardCard mb={4}>
-      <VStack align="stretch" spacing={3}>
-        <HStack justify="space-between">
-          <HStack spacing={2}>
-            <Icon as={FaFileSignature} color="green.600" />
-            <Text fontWeight="bold" fontSize="lg">
-              {intl.formatMessage({
-                id: 'parcel.affidavit.title',
-                defaultMessage: 'Landowner / Prior-Manager Affidavit (7 CFR 205.202(b))'
-              })}
-            </Text>
-            {affidavits.length > 0 && <Badge colorScheme="green">{affidavits.length}</Badge>}
-          </HStack>
+    <StandardCard
+      mb={4}
+      title={intl.formatMessage({
+        id: 'parcel.affidavit.title',
+        defaultMessage: 'Landowner / Prior-Manager Affidavit (7 CFR 205.202(b))'
+      })}
+      titleIcon={<Icon as={FaFileSignature} color="green.600" />}
+      headerAction={
+        <HStack spacing={2} flexShrink={0}>
+          {affidavits.length > 0 && <Badge colorScheme="green">{affidavits.length}</Badge>}
           {canWrite && !showForm && (
             <StandardButton
               size="sm"
@@ -252,6 +267,8 @@ const LandownerAffidavitSection: React.FC<Props> = ({ companyId, farmId, parcelI
             </StandardButton>
           )}
         </HStack>
+      }>
+      <VStack align="stretch" spacing={3}>
         <Text fontSize="sm" color="gray.500">
           {intl.formatMessage({
             id: 'parcel.affidavit.description',

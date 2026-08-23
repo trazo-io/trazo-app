@@ -426,7 +426,21 @@ export const StandardCard = ({
             align={{ base: 'flex-start', md: 'center' }}
             gap={2}
             w="100%">
-            <VStack align="start" spacing={1} flexShrink={0}>
+            {/*
+              MEASURED 2026-08-23 at 768px on the parcel profile. `flexShrink={0}` here meant
+              the title column kept its MAX-CONTENT width, so a long title stayed on one line
+              and the header action was pushed out instead: the affidavit card's heading ran
+              94 → 690 (596px, one line) and its "Add Affidavit" button landed at x=729 —
+              outside a card ending at 698, and past the 768px viewport.
+
+              Backwards. The title is the part that can reflow; the action is a fixed-size
+              control that must not be squeezed. So the title column shrinks (`minW={0}`, which
+              a flex item needs to go below its longest word) and the action does not.
+
+              ⚠️ Applies from `md` only — at `base` this Flex is a column, where neither
+              declaration does anything.
+            */}
+            <VStack align="start" spacing={1} minW={0} flex="1 1 auto">
               {/* The HStack appears ONLY when there is an icon to sit beside. Wrapping the
                   Heading unconditionally would have turned it into a flex item at all 34
                   existing call sites, and a flex item defaults to `min-width:auto` — it
@@ -454,7 +468,9 @@ export const StandardCard = ({
                 </Text>
               )}
             </VStack>
-            {headerAction}
+            <Box flexShrink={0} maxW="100%">
+              {headerAction}
+            </Box>
           </Flex>
         </CardHeader>
       )}

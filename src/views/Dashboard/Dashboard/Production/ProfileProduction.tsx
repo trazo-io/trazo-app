@@ -1448,6 +1448,42 @@ function ProfileProduction() {
 
         {/* Production Timeline Section */}
 
+        {/* The season's own door for a NEW record, whether or not it has any yet. Until
+            2026-08-23 this page offered "add activity" only in its empty state; a season with
+            records relied on the parcel page, which resolves the season from
+            `parcel.current_history` — and finishing NULLS that pointer. So a finished lot with
+            69 records had no entry point anywhere for the work that still belonged to it:
+            the third load from storage, winter cover, the irrigation summary. The server
+            accepts records dated after the finish and refuses ones dated inside the sealed
+            season, naming the correction path. `?production=` names THIS season. */}
+        {canWrite && timelineEvents.length > 0 && (
+          <VStack align="flex-start" spacing={1} mb={3}>
+            <StandardButton
+              variant="outline"
+              size="sm"
+              leftIcon={<Icon as={FaSeedling} />}
+              onClick={() =>
+                navigate(
+                  `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?production=${productionId}`
+                )
+              }>
+              {intl.formatMessage({
+                id: historyData?.finish_date
+                  ? 'production.addPostHarvestActivity'
+                  : 'production.addActivity'
+              })}
+            </StandardButton>
+            {historyData?.finish_date && (
+              <Text fontSize="xs" color="gray.600" maxW="72ch">
+                {intl.formatMessage(
+                  { id: 'production.finishedLoggingHint' },
+                  { date: formatDate(historyData.finish_date) }
+                )}
+              </Text>
+            )}
+          </VStack>
+        )}
+
         {timelineEvents.length > 0 ? (
           <UltraMobileProductionJourney
             events={timelineEvents}
@@ -1495,27 +1531,37 @@ function ProfileProduction() {
                 defaultMessage: 'Events will appear here as the production progresses'
               })}
             </Text>
-            {canWrite && !historyData?.finish_date && (
+            {/* A finished season still takes POST-HARVEST records — the third load of a storage
+                crop, winter cover, the irrigation summary — dated after its finish. Only the
+                sealed window (records dated on or before the finish) is refused, server-side,
+                with the correction path named. This button was hidden the moment a season
+                closed, and finishing also nulls `parcel.current_history`, so the lot had no
+                entry point at all for work that belonged to it. `?production=` is load-bearing
+                either way: it names THIS season. */}
+            {canWrite && (
               <Button
                 leftIcon={<Icon as={FaSeedling} />}
                 colorScheme="green"
                 size="lg"
                 onClick={() =>
-                  // `?production=` is load-bearing: without it the server derives the season
-                  // from `parcel.current_history`, and a block with two open seasons files the
-                  // record against the wrong one. Logged from THIS season's page, it belongs to
-                  // THIS season.
                   navigate(
                     `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?production=${productionId}`
                   )
                 }
                 mt={4}>
-                {intl.formatMessage({ id: 'production.addFirstActivity' })}
+                {intl.formatMessage({
+                  id: historyData?.finish_date
+                    ? 'production.addPostHarvestActivity'
+                    : 'production.addFirstActivity'
+                })}
               </Button>
             )}
             {historyData?.finish_date && (
-              <Text fontSize="sm" color="gray.500" mt={4} textAlign="center">
-                This production is finished. Events cannot be added to completed productions.
+              <Text fontSize="sm" color="gray.500" mt={4} textAlign="center" maxW="64ch">
+                {intl.formatMessage(
+                  { id: 'production.finishedLoggingHint' },
+                  { date: formatDate(historyData.finish_date) }
+                )}
               </Text>
             )}
           </VStack>

@@ -78,6 +78,7 @@ import { StartNewVersionButton } from './OSPLockedNotice';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
 import OSPChangeNotificationsPanel from './OSPChangeNotificationsPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
+import OSPPlanReviewPanel from './OSPPlanReviewPanel';
 import StateOrganicRegistrationCard, {
   STATE_ORGANIC_PROGRAMS
 } from './StateOrganicRegistrationCard';
@@ -1026,6 +1027,20 @@ const OSPView: React.FC = () => {
           })}
         </Accordion>
       </StandardCard>
+
+      {/* Plan review — what the records did after this plan's answers were written. First
+          under the narratives because it is the thing to read BEFORE pressing Submit: a renewal
+          cloned from last year's answers went out saying "six parcels" with seven on file. It
+          lists, never judges, and never blocks. On an ACTIVE plan it is the running list of
+          what the next § 205.406 annual update has to mention; on a draft or a submitted plan
+          it is what to confirm before it goes. Superseded and withdrawn plans are history. */}
+      {companyId &&
+        farmId &&
+        (editableOsp.status === 'draft' ||
+          editableOsp.status === 'submitted' ||
+          editableOsp.status === 'active') && (
+          <OSPPlanReviewPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
+        )}
 
       {/* Common OSP § 11 "Records Maintained" — evidence derived from logged events, with an
           explicit operator-confirm gate. Sits directly under the § 205.201(a) narratives

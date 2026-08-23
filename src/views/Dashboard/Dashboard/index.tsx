@@ -484,7 +484,19 @@ export default function DashboardView() {
     <Flex
       flexDirection="column"
       pt={{ base: '120px', md: '75px' }}
-      px={{ base: 1, md: 6 }}
+      /*
+        MEASURED 2026-08-23 at 430px. Three pages, three different mobile gutters, so a card's
+        left edge moved as the farmer navigated:
+
+          StandardPage (farm profile, parcel profile)  px base 3  -> card at 16
+          this page                                    px base 1  -> card at  8
+          the other hand-rolled page                   Parcel: px base '16px' -> card at 20
+
+        `.claude/rules/frontend.md` already says StandardPage owns the width; these two pages
+        pre-date it and set their own. Aligned at `base` ONLY — the desktop values are left
+        as they are, since the complaint and the measurement were both about a phone.
+      */
+      px={{ base: 3, md: 6 }}
       pb={{ base: 8, md: 8 }}
       minH="100vh">
       {/* Enhanced Trial Status Banner */}

@@ -266,6 +266,12 @@ export const OSP_RECORD_TYPES_URL = (companyId: string, farmId: string, ospId: s
 
 // Common OSP required attachments (Field & Crop Information, Crop/Livestock Product List,
 // Materials List, Supplier List). No `workbook` param returns a summary; with it, downloads xlsx.
+// Plan review — what the operation's dated records did after this plan's answers were last
+// written (ground begun, seasons, § 205.400(f) notices, materials, incidents, unnamed parcels,
+// modules not revisited). Read-only; never blocks submission.
+export const OSP_REVIEW_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/review/`;
+
 export const OSP_ATTACHMENTS_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/attachments/`;
 

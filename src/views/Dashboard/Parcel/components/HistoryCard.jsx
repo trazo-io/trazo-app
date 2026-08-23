@@ -505,8 +505,23 @@ const HistoryCard = ({ amount }) => {
               <Box
                 maxH={{ base: '400px', md: '450px' }}
                 overflowY="auto"
-                pr={{ base: '8px', md: '12px' }}
+                /*
+                  MEASURED 2026-08-23 at 430px: the cards inside this scroll region sat 35px
+                  from the card's left edge and 51px from its right — 16px off centre, which
+                  reads as a layout mistake rather than a margin.
+
+                  `pr` alone was reserving room for the scrollbar, so the pad landed on ONE
+                  side and the scrollbar's own 8px landed on the same side. `scrollbarGutter:
+                  'stable both-edges'` is the property built for this: it reserves the gutter
+                  symmetrically, so the content stays centred whether or not a scrollbar is
+                  showing — which also matters because a phone paints an OVERLAY scrollbar
+                  (0px) while this desktop browser paints a classic one (8px), so a hand-tuned
+                  one-sided offset can only ever be right on one of them.
+                */
+                px={{ base: '8px', md: '12px' }}
                 sx={{
+                  // Reserved symmetrically so the list stays centred; see the note above.
+                  scrollbarGutter: 'stable both-edges',
                   '&::-webkit-scrollbar': {
                     width: '8px'
                   },

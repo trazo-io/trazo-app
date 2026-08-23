@@ -57,6 +57,10 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   // Internal compliance findings and raw blobs
   'drift_warning',
   'test_results',
+  // The record's own database key — an owner-side identifier a shopper has no use for and
+  // the correction sheet keys on. Stripped server-side; mirrored here so the producer's
+  // preview does not show a number the public page does not.
+  'record_id',
   // Farmer-typed "Verified" on a certification event. Stripped from the public payload
   // 2026-08-01 (ECGT/FTC self-created-label risk); it has to be stripped here too or the
   // producer's "how consumers will see this" preview shows a field shoppers never get.

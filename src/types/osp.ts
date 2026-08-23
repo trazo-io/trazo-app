@@ -111,6 +111,8 @@ export interface OSPChangeNotification {
   certifier_acknowledged_at: string | null;
   cfr_reference: string;
   is_immediate: boolean;
+  parcel?: number | null;
+  parcel_name?: string | null;
   created_at: string;
 }
 
@@ -120,6 +122,8 @@ export interface CreateOSPChangeNotificationData {
   date_notified?: string;
   method?: OSPNotificationMethod;
   documentation_timing?: OSPDocumentationTiming;
+  /** The parcel this notice concerns, when it concerns one. It then prints on that parcel's application. */
+  parcel?: number | null;
 }
 
 export interface OSP extends OSPSummary {
@@ -265,6 +269,42 @@ export interface OSPAttachmentSummary {
   rows: number;
   blank_cells: number;
   error: boolean;
+}
+
+/** One thing the operation's dated records did after the plan's newest answer. */
+export interface OSPReviewFinding {
+  code:
+    | 'new_ground'
+    | 'change_notifications'
+    | 'seasons_closed'
+    | 'seasons_started'
+    | 'inputs_changed'
+    | 'certifications_changed'
+    | 'affidavits_added'
+    | 'contamination_incidents'
+    | 'responsible_person_missing'
+    | string;
+  message: string;
+  count: number;
+  details: string[];
+  module_key: string | null;
+}
+
+export interface OSPReviewStaleModule {
+  module_key: string;
+  module: string;
+  answered_at: string;
+  days_before_submission: number;
+}
+
+/** GET /osps/{id}/review/ — a review LIST, never a verdict; it does not block submission. */
+export interface OSPReview {
+  answers_as_of: string | null;
+  reference_date: string;
+  is_clean: boolean;
+  findings: OSPReviewFinding[];
+  stale_modules: OSPReviewStaleModule[];
+  parcels_not_named: string[];
 }
 
 export interface OSPAttachmentsResponse {

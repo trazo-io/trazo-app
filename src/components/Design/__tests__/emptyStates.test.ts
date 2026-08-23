@@ -69,6 +69,62 @@ const SUB_THRESHOLD: Record<string, number> = {
   'teal.400': 2.3
 };
 
+/**
+ * Props of a JSX opening tag, by name, with the raw value text.
+ *
+ * ⚠️ This replaced a single regex whose value pattern was `\{[^=]*?\}\}|\{[^{}]*\}|"[^"]*"`,
+ * and that regex is why the parcel-page bug shipped past this very guard. `CardWithImage` wrote
+ *
+ *     height={
+ *       fillHeight
+ *         ? '100%'
+ *         : { base: '220px', sm: '240px', md: '270px', lg: '290.5px', xl: '290.5px' }
+ *     }
+ *
+ * — a multi-line ternary. It has no adjacent `}}` for the first alternative and it contains
+ * inner braces, so the second could not match either. The guard read the prop as ABSENT and
+ * passed. Brace-balance the value instead of pattern-matching its shape.
+ */
+const propsOf = (tag: string): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const m of tag.matchAll(/(?<![a-zA-Z0-9_$])([a-zA-Z_][\w$]*)=/g)) {
+    let i = m.index! + m[0].length;
+    const open = tag[i];
+    if (open === '"' || open === "'") {
+      const close = tag.indexOf(open, i + 1);
+      if (close === -1) continue;
+      out[m[1]] = tag.slice(i, close + 1);
+    } else if (open === '{') {
+      let depth = 0;
+      const start = i;
+      while (i < tag.length) {
+        if (tag[i] === '{') depth++;
+        else if (tag[i] === '}') {
+          depth--;
+          if (depth === 0) break;
+        }
+        i++;
+      }
+      out[m[1]] = tag.slice(start, i + 1);
+    }
+  }
+  return out;
+};
+
+/**
+ * The part of a responsive value that applies on a PHONE.
+ *
+ * A fixed height is legitimate from the breakpoint where a layout needs one — `CardWithImage`
+ * has a `height: 100%` image beside its text from `xl`. What breaks a phone is a px value at
+ * `base`. So: if the value names a `base` step, judge only that; otherwise the value is
+ * unconditional and applies everywhere, so judge all of it.
+ */
+const mobileStepOf = (raw: string): string => {
+  const steps = [...raw.matchAll(/(?:^|[{,\s])(base)\s*:\s*(['"])(.*?)\2/g)];
+  if (steps.length) return steps.map((m) => m[3]).join(' ');
+  return raw.replace(/\b(sm|smd|smdd|smddd|md|lg|xl)\s*:\s*(['"]).*?\2/g, '');
+};
+
 const files = walk(SRC);
 
 describe('empty states', () => {
@@ -163,17 +219,29 @@ describe('empty states', () => {
     ).toBe(false);
   });
 
-  it('never locks a card to a fixed pixel height', () => {
+  it('never locks a card to a fixed pixel height at mobile width', () => {
     /*
      * `h`/`maxH` in px on a card is how the parcel page shipped 226px of dead space — 32% of
      * a 375px-tall card — with the CTA stranded 179px below the sentence that asked for it.
      * Its grid sibling locked a DIFFERENT mobile height (650 vs 700) in a layout that puts
      * them in separate rows on mobile, so the lock aligned nothing.
      *
+     * ⛔ Worse than dead space: a locked height plus `overflow: hidden` DELETES whatever sits
+     * past the cap. MEASURED 2026-08-23 on `/farm/166/parcel/299` at 430px — `CardWithImage`
+     * held `height` and `maxHeight` at the `sm` step (240px) while its mobile column needed
+     * 322px, so the "Read more" button — the ONLY route to the parcel profile page — rendered
+     * at y=493 against a card ending at y=486. Fully outside. `elementFromPoint` over its
+     * centre returned the card div, not the button. The farmer's report was "I can't get into
+     * the parcel profile page", and they were right: there was no way in.
+     *
      * `minH` is fine and deliberately not matched: it is a floor, content can still grow, and
      * it is the right way to stop a loading skeleton from collapsing (SmartUsageCard uses
      * `h="290px"` on its skeletons to match the real card's `minH="290px"`, which is correct —
      * hence the allowance for files whose only fixed heights sit in a loading/error branch).
+     *
+     * ⚠️ Only the MOBILE step is banned. A definite height is legitimate from the breakpoint
+     * where a layout places a `height: 100%` image beside the text and needs something to
+     * resolve against — which is what `CardWithImage` now does from `xl`.
      */
     const offenders: { file: string; line: number; prop: string }[] = [];
     for (const file of files) {
@@ -192,6 +260,7 @@ describe('empty states', () => {
           i++;
         }
         const tag = code.slice(m.index!, i);
+        const props = propsOf(tag);
         /*
          * A card that fixes its WIDTH in px is a uniform tile — a carousel item, where every
          * card must be the same size for the row to scroll evenly — and fixing its height is
@@ -199,27 +268,76 @@ describe('empty states', () => {
          * cannot shrink to its content. `CarouselCard` is the former and was the first thing
          * this assertion wrongly flagged.
          */
-        const fixedWidthTile = /(?<![a-zA-Z])(w|width|maxW)=(\{[^=]*?\}\}|\{[^{}]*\}|"[^"]*")/
-          .exec(tag);
-        if (fixedWidthTile && /\d{3}px/.test(fixedWidthTile[2])) continue;
-        const hm = tag.match(/(?<![a-zA-Z])(h|height|maxH)=(\{[^=]*?\}\}|\{[^{}]*\}|"[^"]*")/);
-        if (hm && /\d{3}px/.test(hm[2])) {
-          offenders.push({
-            file: rel,
-            line: code.slice(0, m.index).split('\n').length,
-            prop: `${hm[1]}=${hm[2]}`
-          });
+        const fixedWidthTile = ['w', 'width', 'maxW', 'maxWidth'].some(
+          (k) => props[k] !== undefined && /\d{3}px/.test(mobileStepOf(props[k]))
+        );
+        if (fixedWidthTile) continue;
+        for (const k of ['h', 'height', 'maxH', 'maxHeight']) {
+          const raw = props[k];
+          if (raw === undefined) continue;
+          if (/\d{3}px/.test(mobileStepOf(raw))) {
+            offenders.push({
+              file: rel,
+              line: code.slice(0, m.index).split('\n').length,
+              prop: `${k}=${raw.replace(/\s+/g, ' ').slice(0, 90)}`
+            });
+          }
         }
       }
     }
     expect(
       offenders,
-      `A card locked to a pixel height cannot shrink to its content. Use \`minH\` for a floor, ` +
-        `or let the grid stretch it — grid items match row height for free:\n${JSON.stringify(
-          offenders,
-          null,
-          2
-        )}`
+      `A card locked to a pixel height cannot shrink to its content, and with ` +
+        `\`overflow: hidden\` it DELETES what does not fit — including the link out of it. Use ` +
+        `\`minH\` for a floor, or scope the fixed height to the breakpoint that needs it:\n` +
+        `${JSON.stringify(offenders, null, 2)}`
     ).toEqual([]);
+  });
+
+  it("keeps CardWithImage's only exit link reachable", () => {
+    /*
+     * Two facts the fix depends on, neither visible from the height prop:
+     *
+     *   - ONE shared `readMore` node. It used to be two byte-identical copies, one per
+     *     breakpoint layout, which is the shape that lets a fix land on one and miss the other
+     *     — this repo's most common defect.
+     *   - a 44px touch target. The button is `p="0px"` around a 14px label, so its natural hit
+     *     area was ~20px, sitting at the very bottom edge of a card.
+     */
+    const src = readFileSync(join(SRC, 'components/Card/CardWithImage.tsx'), 'utf8');
+    const code = codeOf(src);
+    expect(code, 'the readMore node was inlined again — declare it once').toMatch(
+      /const readMore = \(/
+    );
+    expect(
+      (code.match(/\{readMore\}/g) ?? []).length,
+      'both the mobile and the desktop layout must render the shared node'
+    ).toBe(2);
+    expect(
+      (code.match(/navigate\(readMoreLink\)/g) ?? []).length,
+      'a second, unshared copy of the navigation is back'
+    ).toBe(1);
+    const decl = code.slice(code.indexOf('const readMore = ('), code.indexOf('const identity'));
+    expect(
+      decl,
+      'the exit link owes the 44px touch target on the layout that can grow — MEASURED, an ' +
+        'unconditional 44px pushed the desktop label past a card that clips at 290.5px'
+    ).toMatch(/minH=\{\{ base: '44px', xl: 'auto' \}\}/);
+
+    /*
+     * The STRUCTURAL guarantee, and the reason the line clamps are safe rather than lucky:
+     * the text block takes the leftover space and clips ITSELF, so the link below it can never
+     * be what gets pushed out of the card. Both layouts, because a fix that lands on one
+     * breakpoint and misses the other is this repo's most common defect.
+     *
+     * It replaced a `Spacer`, which only pushes when there IS free space — once the text
+     * overflowed there was none, so it collapsed to 0px and the link went over the edge.
+     */
+    expect(
+      (code.match(/flex="1" minH=\{0\} overflow="hidden"/g) ?? []).length,
+      'both text blocks must absorb-and-clip, or a long description pushes the link out again'
+    ).toBe(2);
+    expect(code, 'the Spacer is back — it cannot push when the content already overflows')
+      .not.toMatch(/<Spacer\b/);
   });
 });

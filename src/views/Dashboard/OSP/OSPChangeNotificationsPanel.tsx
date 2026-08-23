@@ -21,6 +21,8 @@
  */
 
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Badge,
   Box,
@@ -34,9 +36,11 @@ import {
   VStack
 } from '@chakra-ui/react';
 import { FaExchangeAlt, FaPlus, FaTrash } from 'react-icons/fa';
+import type { RootState } from 'store/index';
 import { useIntl } from 'react-intl';
 
 import {
+  StandardAlert,
   StandardButton,
   StandardCard,
   StandardField,
@@ -63,6 +67,23 @@ interface Props {
   farmId: string;
   osp: OSP | null;
 }
+
+// What to update after each category of notice. Plain English defaults; both locales carry
+// the real strings under osp.changeNotifications.nextStep.<category>.
+const NEXT_STEP_DEFAULTS: Record<string, string> = {
+  prohibited_substance_application:
+    'Log the incident on the affected parcel’s season (contamination incident) so the corrective action and samples are on its record.',
+  acreage_field_addition:
+    'Add the parcel in Trazo and complete its application: land-use history, prior-manager and adjoining-land affidavits, buffers.',
+  field_removal:
+    'Mark the parcel as no longer in organic production and note it in the next annual update.',
+  new_retail_label:
+    'Upload the approved label to the documents shelf and update the Labeling module (G7.0).',
+  new_processing_handling:
+    'Update the handling module (G6.4) and the post-harvest facilities list.',
+  practice_input_procedure_change:
+    'Update the module or parcel record that describes the practice — buffer rows, materials list, rotation — so the plan matches the notice.'
+};
 
 const CATEGORY_KEYS: { value: OSPChangeCategory; defaultMessage: string }[] = [
   {
@@ -109,6 +130,13 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
   const subtextColor = useColorModeValue('gray.600', 'gray.400');
 
   const ospId = osp?.id ?? 0;
+  // The farm's parcels, so a notice about a field can name it. Read from the company slice the
+  // way the Activities page does — no second request for a list the app already holds.
+  const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
+  const establishmentRow = currentCompany?.establishments?.find(
+    (e: { id: number | string }) => String(e.id) === String(farmId)
+  );
+  const parcels: Array<{ id: number | string; name: string }> = establishmentRow?.parcels ?? [];
   const { data: notifications = [] } = useGetOSPChangeNotificationsQuery(
     { companyId, farmId, ospId },
     { skip: !companyId || !farmId || !osp }
@@ -122,6 +150,14 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
   const [dateNotified, setDateNotified] = useState('');
   const [method, setMethod] = useState<OSPNotificationMethod | ''>('');
   const [docTiming, setDocTiming] = useState<OSPDocumentationTiming | ''>('');
+  const [parcelId, setParcelId] = useState<string>('');
+  // The last notice filed, so the panel can say what to update next. A notice records what the
+  // certifier was told; the plan and records must describe the same change, and nothing in
+  // the product writes them from the notice — § 205.201(a) keeps the producer the author.
+  const [justFiled, setJustFiled] = useState<{
+    category: OSPChangeCategory;
+    parcelId: string;
+  } | null>(null);
 
   if (!osp) return null;
 
@@ -149,7 +185,9 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
 
   // Only explain the disabled button once they have started; on a pristine form the list is
   // just the required markers restated as an accusation.
-  const isDirty = Boolean(category || description.trim() || dateNotified || method || docTiming);
+  const isDirty = Boolean(
+    category || description.trim() || dateNotified || method || docTiming || parcelId
+  );
 
   const resetForm = () => {
     setCategory('');
@@ -157,6 +195,7 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
     setDateNotified('');
     setMethod('');
     setDocTiming('');
+    setParcelId('');
   };
 
   const handleDelete = async (notificationId: number) => {
@@ -196,10 +235,12 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
       description: description.trim(),
       ...(dateNotified ? { date_notified: dateNotified } : {}),
       ...(method ? { method } : {}),
-      ...(docTiming ? { documentation_timing: docTiming } : {})
+      ...(docTiming ? { documentation_timing: docTiming } : {}),
+      ...(parcelId ? { parcel: Number(parcelId) } : {})
     };
     try {
       await createNotification({ companyId, farmId, ospId, data }).unwrap();
+      setJustFiled({ category, parcelId });
       toast({
         status: 'success',
         title: intl.formatMessage({
@@ -268,6 +309,11 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
                 <Text fontSize="xs" fontWeight="semibold">
                   {cn.change_category_display}
                 </Text>
+                {cn.parcel_name && (
+                  <Badge variant="neutral" fontSize="11px">
+                    {cn.parcel_name}
+                  </Badge>
+                )}
                 {formatDateOnly(cn.date_notified) && (
                   <Text fontSize="xs" color={subtextColor}>
                     {formatDateOnly(cn.date_notified)}
@@ -385,6 +431,38 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
           />
         </StandardField>
 
+        {/* A notice about a field names the field, and then prints on that field's Parcel
+            Application beside its buffer and land-history rows — so "buffer widened to 45 ft"
+            and "buffer width 30 ft" meet on one page instead of one living on this screen and
+            the other in the packet. Optional: a new buyer or material is not about a field. */}
+        {parcels.length > 0 && (
+          <StandardField
+            label={intl.formatMessage({
+              id: 'osp.changeNotifications.field.parcel',
+              defaultMessage: 'About a specific parcel?'
+            })}
+            helpText={intl.formatMessage({
+              id: 'osp.changeNotifications.field.parcelHelp',
+              defaultMessage:
+                'Optional. A notice that names a parcel prints on that parcel’s application, next to the rows it must agree with.'
+            })}>
+            <StandardSelect
+              data-testid="osp-cn-parcel"
+              placeholder={intl.formatMessage({
+                id: 'osp.changeNotifications.field.parcelPlaceholder',
+                defaultMessage: 'Not about one parcel'
+              })}
+              value={parcelId}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setParcelId(e.target.value)}>
+              {parcels.map((p) => (
+                <option key={p.id} value={String(p.id)}>
+                  {p.name}
+                </option>
+              ))}
+            </StandardSelect>
+          </StandardField>
+        )}
+
         <SimpleGrid columns={{ base: 1, smd: 3 }} spacing={3}>
           <StandardField
             label={intl.formatMessage({
@@ -499,6 +577,44 @@ const OSPChangeNotificationsPanel: React.FC<Props> = ({ companyId, farmId, osp }
             </Text>
           )}
         </HStack>
+
+        {/* The step after filing. A notice is what the certifier was told; the plan and the
+            records must describe the same change, and nothing writes them from the notice. Name
+            the record for the category just filed and link to it. */}
+        {justFiled && (
+          <Box data-testid="osp-cn-next-step">
+            <StandardAlert
+              status="info"
+              mb={0}
+              title={intl.formatMessage({
+                id: 'osp.changeNotifications.nextStep.title',
+                defaultMessage: 'Recorded. Now make the plan say the same thing.'
+              })}>
+              {
+                <VStack align="stretch" spacing={1}>
+                  <Text fontSize="sm">
+                    {intl.formatMessage({
+                      id: `osp.changeNotifications.nextStep.${justFiled.category}`,
+                      defaultMessage: NEXT_STEP_DEFAULTS[justFiled.category]
+                    })}
+                  </Text>
+                  {justFiled.parcelId && (
+                    <Text fontSize="sm">
+                      <RouterLink
+                        to={`/admin/dashboard/farm/${farmId}/parcel/${justFiled.parcelId}/application`}
+                        style={{ textDecoration: 'underline' }}>
+                        {intl.formatMessage({
+                          id: 'osp.changeNotifications.nextStep.openParcel',
+                          defaultMessage: 'Open the parcel application'
+                        })}
+                      </RouterLink>
+                    </Text>
+                  )}
+                </VStack>
+              }
+            </StandardAlert>
+          </Box>
+        )}
       </VStack>
     </StandardCard>
   );
