@@ -45,6 +45,12 @@ import {
   checkSocialAuthConfig
 } from '../../../utils/socialAuth';
 import { StandardInput } from 'components/Design/StandardComponents';
+import { AuthErrorAlert } from '../AuthErrorAlert';
+import {
+  resolveGenericAuthError,
+  resolveSignUpError,
+  type AuthErrorResolution
+} from '../authErrors';
 
 // Motion components
 const MotionBox = motion(Box);
@@ -67,7 +73,15 @@ const ConsumerSignUp: React.FC = () => {
   const [signUp, { isLoading }] = useSignUpMutation();
   const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
   const [claimScans] = useClaimScansMutation();
-  const [error, setError] = useState<string | null>(null);
+  /**
+   * A RESOLUTION, not a sentence — see `authErrors.ts`.
+   *
+   * ⚠️ This screen is UNROUTED (`routes/config.ts` serves `ConsumerSignUpClosed` instead) and
+   * was fixed anyway. Leaving the old hand-rolled box here is precisely how a defect stays
+   * "fixed on the audited surface, alive on its sibling": the day consumer signup reopens,
+   * whoever flips the route inherits the 3.70:1 text and the unannounced banner.
+   */
+  const [error, setError] = useState<AuthErrorResolution | null>(null);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -133,9 +147,7 @@ const ConsumerSignUp: React.FC = () => {
 
       navigate('/auth/verifyemail', { state: { email: data.email } });
     } catch (err: any) {
-      const errorMessage =
-        err?.data?.detail || err?.data?.email?.[0] || 'Registration failed. Please try again.';
-      setError(errorMessage);
+      setError(resolveSignUpError(err));
     }
   };
 
@@ -173,9 +185,11 @@ const ConsumerSignUp: React.FC = () => {
       // Default redirect to dashboard
       navigate('/admin/dashboard', { replace: true });
     } catch (err: any) {
-      const errorMessage = err?.data?.error || 'Social authentication failed';
-      setError(errorMessage);
-      handleSocialAuthError(new Error(errorMessage), authData.provider);
+      setError(resolveGenericAuthError(err, 'auth.error.social.failed'));
+      handleSocialAuthError(
+        new Error(err?.data?.error || 'Social authentication failed'),
+        authData.provider
+      );
     }
   };
 
@@ -402,19 +416,7 @@ const ConsumerSignUp: React.FC = () => {
 
             {/* Main Form */}
             <Box w="full">
-              {error && (
-                <Box
-                  bg="red.50"
-                  border="1px solid"
-                  borderColor="red.200"
-                  borderRadius="lg"
-                  p={4}
-                  mb={6}>
-                  <Text color="red.600" fontSize="sm">
-                    {error}
-                  </Text>
-                </Box>
-              )}
+              <AuthErrorAlert resolution={error} />
 
               <form onSubmit={handleSubmit(onSubmit)}>
                 <VStack spacing={4}>

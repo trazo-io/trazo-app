@@ -3,6 +3,7 @@ import { Box, Grid, VStack, Text, Icon, HStack, useColorModeValue } from '@chakr
 import { FaLeaf, FaLock, FaShieldAlt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { ForgotPasswordForm } from '../../../components/Forms/ForgotPasswordForm';
+import { StandardCard } from '../../../components/Design/StandardComponents';
 
 const MotionBox = motion(Box);
 
@@ -21,25 +22,24 @@ const ConsumerForgotPassword: React.FC = () => {
           bg={bgColor}
           position="relative">
           <Box w="full" maxW={{ base: '100%', md: '400px' }}>
-            {/* Header */}
-            <VStack spacing={6} mb={8} textAlign="center">
-              <HStack spacing={3} justify="center">
-                <Icon as={FaLock} boxSize={6} color="blue.600" />
-                <Icon as={FaLeaf} boxSize={6} color="blue.700" />
-              </HStack>
+            {/*
+              The page's own "Reset Password / Organic farm recordkeeping" title block used to
+              sit here. It is gone because the shared component now renders the title itself —
+              as a real `<h1>`, which this page never had — and keeping both would print the
+              same title twice, one of them still hard-coded English.
 
-              <VStack spacing={2}>
-                <Text fontSize="2xl" fontWeight="700" color="gray.800">
-                  Reset Password
-                </Text>
-                <Text fontSize="sm" color="gray.500" maxW="sm" lineHeight="1.6">
-                  Organic farm recordkeeping
-                </Text>
-              </VStack>
-            </VStack>
+              The card wrapper moved here for the same reason: the component used to supply its
+              own `StandardCard`, which the producer page could not use without nesting a card
+              inside its own. Chrome belongs to the page, content to the component.
+            */}
+            <HStack spacing={3} justify="center" mb={8}>
+              <Icon as={FaLock} boxSize={6} color="blue.600" />
+              <Icon as={FaLeaf} boxSize={6} color="blue.700" />
+            </HStack>
 
-            {/* Form */}
-            <ForgotPasswordForm userType="consumer" />
+            <StandardCard>
+              <ForgotPasswordForm userType="consumer" />
+            </StandardCard>
 
             {/* Footer */}
             <Box mt={8} textAlign="center">

@@ -54,7 +54,8 @@ import {
   SEED_NON_GMO_STATUSES,
   SEED_TREATMENT_BASES
 } from 'config/events/enums';
-import { BUFFER_ENTERS_COMMERCE } from 'config/events/productionEvent';
+import { AREA_SUBTYPES, BUFFER_ENTERS_COMMERCE } from 'config/events/productionEvent';
+import { CONSUMER_WITHHELD_PRODUCTION_SUBTYPES } from 'utils/consumerDisplay';
 // Import through the barrel, not productionEvent directly: `config/events/index.ts` is what
 // calls `_setRegistry`, and `getSubtypes` answers with nothing until it has run.
 import { getSubtypes } from 'config/events';
@@ -471,6 +472,37 @@ const formSchemaMainInfo = object({
       photo_id: string().optional()
     })
   ).optional()
+}).superRefine((data, ctx) => {
+  // The asterisks below used to be decorative — `required` props over `.optional()`
+  // keys (and eleven props using a name StandardField does not have, silently dropped), so an EM
+  // record could save with no operation type and a summary event could save with
+  // no period at all. Each rule here backs a rendered asterisk; keep them paired.
+  const req = (path, message) => {
+    const value = data[path];
+    if (value == null || value === '') {
+      ctx.addIssue({ code: 'custom', path: [path], message });
+    }
+  };
+  if (data.type === 'EM') {
+    req('equipment_operation_type', 'Select what kind of equipment operation this was');
+  }
+  // Scoped to the three subtypes that RENDER a summary toggle: a stale is_summary
+  // carried across a subtype switch must not demand fields the form no longer shows.
+  if (['HA', 'PR', 'IR'].includes(data.type) && data.is_summary === 'true') {
+    req('date_start', 'A summary needs the period start date');
+    req('date_end', 'A summary needs the period end date');
+    if (data.type === 'HA') {
+      req('event_count', 'How many harvest picks does this summary cover?');
+      req('yield_total', 'A harvest summary needs the total yield');
+    }
+    if (data.type === 'PR') {
+      req('pruning_passes', 'A pruning summary needs the number of passes');
+    }
+    if (data.type === 'IR') {
+      req('event_count', 'How many irrigation events does this summary cover?');
+      req('water_volume_total', 'An irrigation summary needs the total water volume');
+    }
+  }
 });
 
 const FUEL_CONSUMED_INPUT_ID = 'production-fuel-consumed';
@@ -1456,7 +1488,7 @@ const ProductionTab = forwardRef(
             ? parseFloat(data.quantity_sent_to_handler)
             : null,
         quantity_returned_from_handler:
-          data.type === 'HA' &&
+          RECORDS_HANDLER &&
           data.harvest_destination === 'handler' &&
           data.quantity_returned_from_handler !== ''
             ? parseFloat(data.quantity_returned_from_handler)
@@ -1559,8 +1591,10 @@ const ProductionTab = forwardRef(
         // `equipment_cleaning_event` sends null (not '') so DRF clears the FK when unset. The
         // model's own clean() already refuses a self-link, a non-EM target, a cross-production
         // link and a cleaning dated after the operation, so widening the write is safe.
-        shared_with_conventional: data.shared_with_conventional === 'true',
-        operator_is_custom: data.operator_is_custom === 'true',
+        ...(data.type !== 'SS' && {
+          shared_with_conventional: data.shared_with_conventional === 'true',
+          operator_is_custom: data.operator_is_custom === 'true'
+        }),
         // Sent ONLY when the control is on screen. Posting null from a form that never
         // showed the picker is how an existing § 205.272 link got destroyed by a save that
         // touched something else entirely.
@@ -1785,9 +1819,31 @@ const ProductionTab = forwardRef(
               status="info"
               title={intl.formatMessage({ id: 'events.callout.production.title' })}>
               <Text fontSize="sm">
-                {intl.formatMessage({ id: 'events.callout.production.body' })}
+                {intl.formatMessage({
+                  id:
+                    productionType === 'SS'
+                      ? 'events.callout.production.bodySeedSearch'
+                      : 'events.callout.production.body'
+                })}
               </Text>
             </StandardAlert>
+
+            {/* Certifier-only notice — SSOT is CONSUMER_WITHHELD_PRODUCTION_SUBTYPES
+                (mirrors the backend event-level withhold in claim_authority.py). The
+                farmer learns at WRITE time that this record never reaches the buyer
+                page, and why — instead of discovering a "consumer card" for it in
+                their own preview and assuming shoppers see it. */}
+            {CONSUMER_WITHHELD_PRODUCTION_SUBTYPES[productionType] && (
+              <StandardAlert
+                status="info"
+                title={intl.formatMessage({ id: 'events.certifierOnly.title' })}>
+                <Text fontSize="sm">
+                  {intl.formatMessage({
+                    id: CONSUMER_WITHHELD_PRODUCTION_SUBTYPES[productionType]
+                  })}
+                </Text>
+              </StandardAlert>
+            )}
 
             {/* Forms are hand-crafted by design: the NOP section grouping below is what
                 makes the audit export complete, and the registry renderer flattens it.
@@ -1846,13 +1902,16 @@ const ProductionTab = forwardRef(
                     />
                   </StandardField>
 
-                  {/* Area Covered - Critical for carbon calculations (hidden for EM/PO — no area concept) */}
-                  {!['EM', 'PO'].includes(productionType) && (
+                  {/* Area Covered — field operations only. AREA_SUBTYPES is the registry's
+                      own gate: EM/PO/TP/BU/SS have no area concept, the display registry
+                      never shows the value for them, and the backend rejects area <= 0 for
+                      exactly those types — so asking here made Seed Search demand a number
+                      that could neither be displayed nor honestly entered. */}
+                  {AREA_SUBTYPES.includes(productionType) && (
                     <HStack spacing={4} align="stretch">
                       <Box flex={2}>
                         <StandardField
                           label={intl.formatMessage({ id: 'events.common.fields.areaCovered' })}
-                          required
                           error={errors.area_covered?.message}
                           helpText="Essential for calculating carbon emissions per hectare">
                           <Controller
@@ -1875,7 +1934,6 @@ const ProductionTab = forwardRef(
                       <Box flex={1}>
                         <StandardField
                           label={intl.formatMessage({ id: 'production.field.unit' })}
-                          required
                           error={errors.area_unit?.message}>
                           <Controller
                             name="area_unit"
@@ -1932,7 +1990,6 @@ const ProductionTab = forwardRef(
 
                       <StandardField
                         label={intl.formatMessage({ id: 'events.production.fields.equipmentType' })}
-                        required
                         error={errors.equipment_type?.message}
                         helpText="Select the type of equipment used">
                         <Controller
@@ -2208,93 +2265,135 @@ const ProductionTab = forwardRef(
                     commingling exposure the rule is about. Naming the cleaning that preceded the
                     pass is what turns the page-1 contamination-prevention row from an aggregate
                     count into evidence about THIS operation. */}
-              <SectionBox>
-                <SectionHeader
-                  icon={FaTruck}
-                  title={intl.formatMessage({
-                    id: 'events.production.sections.customOperator',
-                    defaultMessage: 'Custom Operator & Equipment Cleaning'
-                  })}
-                  badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
-                  description={intl.formatMessage({
-                    id: 'events.production.sections.customOperatorHelp',
-                    defaultMessage:
-                      'If a contractor ran this pass with their own equipment, say so and point to the cleaning that came before it.'
-                  })}
-                />
-                <VStack spacing={4} align="stretch">
-                  <HStack justify="space-between" align="center">
-                    <VStack align="start" spacing={0} flex={1}>
-                      <Text fontSize="sm" fontWeight="semibold">
-                        {intl.formatMessage({
-                          id: 'events.production.fields.operatorIsCustom',
-                          defaultMessage: 'Custom Operator'
-                        })}
-                      </Text>
-                      <Text fontSize="xs" color="gray.500">
-                        {intl.formatMessage({
-                          id: 'events.production.fields.operatorIsCustomHelp',
-                          defaultMessage:
-                            'A contractor performed this operation with their own equipment. Put their name in "Performed By".'
-                        })}
-                      </Text>
-                    </VStack>
-                    <Controller
-                      name="operator_is_custom"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <Switch
-                          colorScheme="orange"
-                          size="lg"
-                          isChecked={field.value === 'true'}
-                          onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
-                        />
-                      )}
-                    />
-                  </HStack>
-
-                  {showCleaningLink && (
-                    <StandardField
-                      label={intl.formatMessage({
-                        id: 'events.production.fields.equipmentCleaningEvent',
-                        defaultMessage: 'Cleaning Event Covering This Operation'
-                      })}
-                      helpText={
-                        cleaningEventOptions.length
-                          ? intl.formatMessage({
-                              id: 'events.production.fields.equipmentCleaningEventHelp',
-                              defaultMessage:
-                                'Select the Equipment Maintenance cleaning logged before this pass. It must be dated on or before this event.'
-                            })
-                          : intl.formatMessage({
-                              id: 'events.production.fields.equipmentCleaningEventEmpty',
-                              defaultMessage:
-                                'No Equipment Maintenance cleaning events logged on this production yet. Add one to link it here.'
-                            })
-                      }>
+              {/* SS is a sourcing-paperwork record — no pass, no equipment, nothing to
+                  clean — so the operator/shared-equipment questions do not apply. */}
+              {productionType !== 'SS' && (
+                <SectionBox>
+                  <SectionHeader
+                    icon={FaTruck}
+                    title={intl.formatMessage({
+                      id: 'events.production.sections.customOperator',
+                      defaultMessage: 'Custom Operator & Equipment Cleaning'
+                    })}
+                    badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
+                    description={intl.formatMessage({
+                      id: 'events.production.sections.customOperatorHelp',
+                      defaultMessage:
+                        'If a contractor ran this pass with their own equipment, say so and point to the cleaning that came before it.'
+                    })}
+                  />
+                  <VStack spacing={4} align="stretch">
+                    <HStack justify="space-between" align="center">
+                      <VStack align="start" spacing={0} flex={1}>
+                        <Text fontSize="sm" fontWeight="semibold">
+                          {intl.formatMessage({
+                            id: 'events.production.fields.operatorIsCustom',
+                            defaultMessage: 'Custom Operator'
+                          })}
+                        </Text>
+                        <Text fontSize="xs" color="gray.500">
+                          {intl.formatMessage({
+                            id: 'events.production.fields.operatorIsCustomHelp',
+                            defaultMessage:
+                              'A contractor performed this operation with their own equipment. Put their name in "Performed By".'
+                          })}
+                        </Text>
+                      </VStack>
                       <Controller
-                        name="equipment_cleaning_event"
+                        name="operator_is_custom"
                         control={methods.control}
                         render={({ field }) => (
-                          <StandardSelect
-                            {...field}
-                            isDisabled={cleaningEventOptions.length === 0}
-                            placeholder={intl.formatMessage({
-                              id: 'events.production.fields.equipmentCleaningEventNone',
-                              defaultMessage: 'Not linked'
-                            })}>
-                            {cleaningEventOptions.map((opt) => (
-                              <option key={opt.id} value={String(opt.id)}>
-                                {opt.label}
-                              </option>
-                            ))}
-                          </StandardSelect>
+                          <Switch
+                            colorScheme="orange"
+                            size="lg"
+                            isChecked={field.value === 'true'}
+                            onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
+                          />
                         )}
                       />
-                    </StandardField>
-                  )}
-                </VStack>
-              </SectionBox>
+                    </HStack>
+
+                    {/* 2026-08-25 — the control the 2026-08-15 payload widening assumed was
+                      here. The payload posts shared_with_conventional for EVERY subtype and
+                      the packet's § 205.272 coverage table reads it on non-EM events, but the
+                      only rendered switch lived inside the EM cleaning log — so every other
+                      subtype posted a hard `false` for a question the farmer was never asked.
+                      EM keeps its copy in the cleaning log, where the cleaning evidence lives. */}
+                    {productionType !== 'EM' && (
+                      <HStack justify="space-between" align="center">
+                        <VStack align="start" spacing={0} flex={1}>
+                          <Text fontSize="sm" fontWeight="semibold">
+                            {intl.formatMessage({
+                              id: 'events.production.fields.sharedWithConventional',
+                              defaultMessage: 'Equipment Shared with a Conventional Operation'
+                            })}
+                          </Text>
+                          <Text fontSize="xs" color="gray.500">
+                            {intl.formatMessage({
+                              id: 'events.production.fields.sharedWithConventionalHelp',
+                              defaultMessage:
+                                'The equipment used for this pass also works conventional ground. Link the cleaning that came before it below (§ 205.272).'
+                            })}
+                          </Text>
+                        </VStack>
+                        <Controller
+                          name="shared_with_conventional"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <Switch
+                              colorScheme="orange"
+                              size="lg"
+                              isChecked={field.value === 'true'}
+                              onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
+                            />
+                          )}
+                        />
+                      </HStack>
+                    )}
+
+                    {showCleaningLink && (
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.production.fields.equipmentCleaningEvent',
+                          defaultMessage: 'Cleaning Event Covering This Operation'
+                        })}
+                        helpText={
+                          cleaningEventOptions.length
+                            ? intl.formatMessage({
+                                id: 'events.production.fields.equipmentCleaningEventHelp',
+                                defaultMessage:
+                                  'Select the Equipment Maintenance cleaning logged before this pass. It must be dated on or before this event.'
+                              })
+                            : intl.formatMessage({
+                                id: 'events.production.fields.equipmentCleaningEventEmpty',
+                                defaultMessage:
+                                  'No Equipment Maintenance cleaning events logged on this production yet. Add one to link it here.'
+                              })
+                        }>
+                        <Controller
+                          name="equipment_cleaning_event"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect
+                              {...field}
+                              isDisabled={cleaningEventOptions.length === 0}
+                              placeholder={intl.formatMessage({
+                                id: 'events.production.fields.equipmentCleaningEventNone',
+                                defaultMessage: 'Not linked'
+                              })}>
+                              {cleaningEventOptions.map((opt) => (
+                                <option key={opt.id} value={String(opt.id)}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+                    )}
+                  </VStack>
+                </SectionBox>
+              )}
 
               {/* Yield & Output - For carbon efficiency calculation */}
               {/* PH belongs here. The registry declares `yield_quantity` for HA, PH and PL
@@ -3121,7 +3220,7 @@ const ProductionTab = forwardRef(
                       <>
                         <StandardField
                           label={intl.formatMessage({ id: 'production.field.periodStart' })}
-                          isRequired>
+                          required>
                           <Controller
                             name="date_start"
                             control={methods.control}
@@ -3131,7 +3230,7 @@ const ProductionTab = forwardRef(
 
                         <StandardField
                           label={intl.formatMessage({ id: 'production.field.periodEnd' })}
-                          isRequired>
+                          required>
                           <Controller
                             name="date_end"
                             control={methods.control}
@@ -3141,7 +3240,7 @@ const ProductionTab = forwardRef(
 
                         <StandardField
                           label={intl.formatMessage({ id: 'production.field.harvestCount' })}
-                          isRequired>
+                          required>
                           <Controller
                             name="event_count"
                             control={methods.control}
@@ -3158,7 +3257,7 @@ const ProductionTab = forwardRef(
 
                         <StandardField
                           label={intl.formatMessage({ id: 'production.field.totalYield' })}
-                          isRequired>
+                          required>
                           <HStack spacing={2}>
                             <Controller
                               name="yield_total"
@@ -3297,8 +3396,11 @@ const ProductionTab = forwardRef(
                       </>
                     )}
 
-                    {/* Growth Stage — hidden for PL, TR (meaningless at planting) and HA (always harvest_ready) */}
-                    {!['PL', 'TR', 'HA'].includes(productionType) && (
+                    {/* Growth Stage — hidden for PL, TR (meaningless at planting), HA
+                        (always harvest_ready), and the record-only subtypes SS/TP/BU
+                        (a sourcing search, a haul and a disposition have no phenology;
+                        the display registry never shows the value for them). */}
+                    {!['PL', 'TR', 'HA', 'SS', 'TP', 'BU'].includes(productionType) && (
                       <StandardField
                         label={intl.formatMessage({ id: 'fieldDetails.growthStage' })}
                         helpText={intl.formatMessage({ id: 'fieldDetails.growthStageHelp' })}>
@@ -3938,7 +4040,7 @@ const ProductionTab = forwardRef(
                       <>
                         <StandardField
                           label={intl.formatMessage({ id: 'production.field.periodStart' })}
-                          isRequired>
+                          required>
                           <Controller
                             name="date_start"
                             control={methods.control}
@@ -3948,7 +4050,7 @@ const ProductionTab = forwardRef(
 
                         <StandardField
                           label={intl.formatMessage({ id: 'production.field.periodEnd' })}
-                          isRequired>
+                          required>
                           <Controller
                             name="date_end"
                             control={methods.control}
@@ -3958,7 +4060,7 @@ const ProductionTab = forwardRef(
 
                         <StandardField
                           label={intl.formatMessage({ id: 'production.pruning.passes' })}
-                          isRequired>
+                          required>
                           <Controller
                             name="pruning_passes"
                             control={methods.control}
@@ -4238,8 +4340,9 @@ const ProductionTab = forwardRef(
                 </CollapsibleSection>
               )}
 
-              {/* Transportation - For logistics emissions */}
-              {productionType === 'HA' && (
+              {/* Transportation - For logistics emissions. TP is the activity that IS the
+                  haul — it had origin and destination but nowhere to put the distance. */}
+              {['HA', 'TP'].includes(productionType) && (
                 <SectionBox>
                   <SectionHeader
                     icon={FaTruck}
@@ -4290,29 +4393,32 @@ const ProductionTab = forwardRef(
                       </Box>
                     </HStack>
 
-                    {/* Production Efficiency Rating */}
-                    <StandardField
-                      label={intl.formatMessage({
-                        id: 'events.common.fields.productionEfficiency'
-                      })}
-                      error={errors.production_efficiency?.message}
-                      helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
-                      <Controller
-                        name="production_efficiency"
-                        control={methods.control}
-                        render={({ field }) => (
-                          <StandardSelect {...field}>
-                            <option value="high">
-                              High Efficiency (optimal conditions, planned operations)
-                            </option>
-                            <option value="normal">Normal Efficiency (standard operation)</option>
-                            <option value="low">
-                              Low Efficiency (adverse conditions, unplanned operations)
-                            </option>
-                          </StandardSelect>
-                        )}
-                      />
-                    </StandardField>
+                    {/* Production Efficiency Rating — HA only: the registry displays it
+                        for HA alone, so a TP value would be write-only. */}
+                    {productionType === 'HA' && (
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'events.common.fields.productionEfficiency'
+                        })}
+                        error={errors.production_efficiency?.message}
+                        helpText="Optional. Your own read on how the operation went — used only in the carbon estimate, never in your certifier record.">
+                        <Controller
+                          name="production_efficiency"
+                          control={methods.control}
+                          render={({ field }) => (
+                            <StandardSelect {...field}>
+                              <option value="high">
+                                High Efficiency (optimal conditions, planned operations)
+                              </option>
+                              <option value="normal">Normal Efficiency (standard operation)</option>
+                              <option value="low">
+                                Low Efficiency (adverse conditions, unplanned operations)
+                              </option>
+                            </StandardSelect>
+                          )}
+                        />
+                      </StandardField>
+                    )}
                   </VStack>
                 </SectionBox>
               )}
@@ -4775,7 +4881,7 @@ const ProductionTab = forwardRef(
                             <StandardField
                               label={intl.formatMessage({ id: 'production.field.periodStart' })}
                               helpText="When did this irrigation period begin?"
-                              isRequired>
+                              required>
                               <Controller
                                 name="date_start"
                                 control={methods.control}
@@ -4786,7 +4892,7 @@ const ProductionTab = forwardRef(
                             <StandardField
                               label={intl.formatMessage({ id: 'production.field.periodEnd' })}
                               helpText="When did this irrigation period end?"
-                              isRequired>
+                              required>
                               <Controller
                                 name="date_end"
                                 control={methods.control}
@@ -4797,7 +4903,7 @@ const ProductionTab = forwardRef(
                             <StandardField
                               label={intl.formatMessage({ id: 'production.field.irrigationCount' })}
                               helpText="How many irrigation events occurred during this period?"
-                              isRequired>
+                              required>
                               <Controller
                                 name="event_count"
                                 control={methods.control}
@@ -4817,7 +4923,7 @@ const ProductionTab = forwardRef(
                                 id: 'production.field.totalWaterVolume'
                               })}
                               helpText="Combined water used across all irrigation events"
-                              isRequired>
+                              required>
                               <HStack spacing={2}>
                                 <Controller
                                   name="water_volume_total"

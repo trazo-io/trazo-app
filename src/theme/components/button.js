@@ -197,6 +197,45 @@ export const buttonStyles = {
               _disabled: { transform: 'none', boxShadow: 'none' }
             }
           };
+        },
+        /*
+         * `link` was the ONE variant this file never claimed, so it fell through to Chakra's
+         * stock definition — which colours itself `${c}.500`, i.e. exactly the green this
+         * project bans as a text colour.
+         *
+         * MEASURED 2026-08-25 on the sign-in page: "Reenviar el correo de verificación",
+         * rendered by `AuthErrorAlert` as `<Button variant="link">`, came out green.500 #4CAF50
+         * on the error alert's red.50 #FFEBEE ground = **2.43:1** against the 4.5 that 14px
+         * text owes. It is the only recovery action available to someone who cannot sign in,
+         * and it was the least legible thing on the screen.
+         *
+         * Nobody caught it because hardening `solid`/`outline`/`ghost` looks like hardening
+         * "the button", and `link` only renders inside a red alert after a failed sign-in.
+         * Same lesson as `green.600` spreading onto glyphs: the gap is the variant nobody
+         * listed, not the value anybody chose.
+         *
+         * `.700` on white measures 5.13 (green) / 4.98 (red) / 10.05 (gray) and on the `.50`
+         * tints these alerts use it stays above 4.5, which is why the other variants use it.
+         */
+        link: (props) => {
+          const c = paletteOf(props);
+          return {
+            /*
+             * `.800`, not the `.700` the other variants use.
+             *
+             * A link button is the one variant that routinely renders on a TINTED ground it
+             * cannot see: `AuthErrorAlert` puts it on `red.50`. MEASURED there, green.700
+             * #2E7D32 on red.50 #FFEBEE = **4.49:1** — it misses the 4.5 floor by a hundredth,
+             * which is exactly the kind of margin that is not worth defending. green.800
+             * #1B5E20 clears it on the tint and measures 7.87 on white.
+             */
+            color: mode(`${c}.800`, `${c}.300`)(props),
+            _hover: {
+              color: mode(`${c}.900`, `${c}.200`)(props),
+              textDecoration: 'underline'
+            },
+            _active: { color: mode(`${c}.900`, `${c}.100`)(props) }
+          };
         }
       },
       baseStyle: {

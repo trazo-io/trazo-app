@@ -10,6 +10,11 @@ import { getSubdomainType } from '../subdomain';
 
 const isDev = import.meta.env.DEV;
 
+// Routes that belong to the USER, not to a company: reachable before the first company exists
+// and while a company carries no subscription. Gating these behind onboarding locked a
+// company-less producer out of their own profile with no way back in.
+const ACCOUNT_PATHS = ['/admin/dashboard/profile', '/admin/dashboard/settings/change-password'];
+
 const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const isLoading = useSelector((state) => state.auth.isLoading);
@@ -134,29 +139,56 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
 
   useEffect(() => {
     if (
-      (currentUser?.user_type === PRODUCER || currentUser?.user_type === SUPERUSER) &&
-      subdomain === 'producer'
+      !(currentUser?.user_type === PRODUCER || currentUser?.user_type === SUPERUSER) ||
+      subdomain !== 'producer'
     ) {
-      if (currentUser?.companies.length === 0) {
-        navigate(`/admin/dashboard/select-company`);
-      } else if (
-        currentUser?.companies.length === 1 &&
-        currentCompany?.establishments &&
-        currentCompany.establishments.length === 0
+      return;
+    }
+
+    // ACCOUNT_PATHS are reachable with no company and with no subscription: a user who
+    // cannot yet own a farm still owns their own account.
+    if (ACCOUNT_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+      return;
+    }
+
+    // This effect re-runs on every navigation, and that is intentional — the pin has to hold
+    // when the user clicks into a company-scoped route, not only on first mount. It used to
+    // re-run by ACCIDENT: `navigate` was a dependency, and because the app runs on a non-data
+    // router (<BrowserRouter> in src/index.tsx) useNavigate resolves to useNavigateUnstable,
+    // whose useCallback is keyed on the current pathname — so its identity churns on every
+    // navigation. Accidental or not, re-running is right; what was missing is that the
+    // redirect was not idempotent and had no carve-out, so clicking Profile from
+    // /select-company navigated and was immediately undone.
+    //
+    // Depend on `pathname` explicitly (the honest version of what was happening) and make the
+    // redirect a no-op when we are already where onboarding wants us — otherwise every
+    // currentUser/currentCompany refresh pushed another /select-company entry onto history.
+    const goOnce = (to) => {
+      if (pathname !== to) {
+        // replace, not push: a bounced-away route must not sit in history for Back to re-enter.
+        navigate(to, { replace: true });
+      }
+    };
+
+    if (currentUser?.companies?.length === 0) {
+      goOnce(`/admin/dashboard/select-company`);
+    } else if (
+      currentUser?.companies?.length === 1 &&
+      currentCompany?.establishments &&
+      currentCompany.establishments.length === 0
+    ) {
+      if (
+        currentCompany.subscription ||
+        (currentCompany.subscription_plan && currentCompany.subscription_plan.id)
       ) {
-        if (
-          currentCompany.subscription ||
-          (currentCompany.subscription_plan && currentCompany.subscription_plan.id)
-        ) {
-          navigate(`/admin/dashboard/farm/add`);
-        } else {
-          if (!currentCompany.has_subscription) {
-            navigate(`/admin/dashboard/pricing`);
-          }
+        goOnce(`/admin/dashboard/farm/add`);
+      } else {
+        if (!currentCompany.has_subscription) {
+          goOnce(`/admin/dashboard/pricing`);
         }
       }
     }
-  }, [currentCompany, currentUser, navigate, subdomain]);
+  }, [currentCompany, currentUser, subdomain, pathname]);
 
   // SECURITY: Create safe next URL with validation
   const nextUrl =

@@ -56,7 +56,7 @@ import {
   FaCoffee
 } from 'react-icons/fa';
 import { MdLocalFlorist, MdHome, MdGrass, MdFilterVintage, MdVerified } from 'react-icons/md';
-import { StandardNumberInput } from 'components/Design/StandardComponents';
+import { StandardNumberInput, StandardDecimalInput } from 'components/Design/StandardComponents';
 
 // Form Schema
 const productionSchema = object({
@@ -1020,10 +1020,15 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                 <StandardField
                   label="Estimated Yield"
                   helpText="Expected production volume (optional, for carbon calculations)">
-                  <StandardNumberInput
-                    value={watch('estimatedYield') || 0}
-                    onChange={(_, num) => setValue('estimatedYield', num || 0)}
+                  {/* A yield is a MEASUREMENT and it feeds the carbon calculation, so a
+                      swallowed decimal point becomes a 10x error downstream. See
+                      StandardDecimalInput. */}
+                  <StandardDecimalInput
+                    value={watch('estimatedYield')}
+                    onChange={(num) => setValue('estimatedYield', num ?? 0)}
                     min={0}
+                    step={1}
+                    hideStepper
                     placeholder="e.g., 1000 (lbs, kg, units)"
                   />
                 </StandardField>
@@ -1150,9 +1155,12 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                   error={errors.soilPh?.message}
                   helpText="Soil acidity/alkalinity level. 7.0 is neutral (default)">
                   <HStack spacing={4}>
-                    <StandardNumberInput
-                      value={watch('soilPh') || 7.0}
-                      onChange={(_, num) => setValue('soilPh', num || 7.0)}
+                    {/* pH is a one-decimal MEASUREMENT — number-controlled, 6.5 became 65.
+                        Found by the guard, not by hand: `precision={1}` was already here,
+                        which is exactly what made it look fine. */}
+                    <StandardDecimalInput
+                      value={watch('soilPh')}
+                      onChange={(num) => setValue('soilPh', num ?? 7.0)}
                       min={1}
                       max={14}
                       step={0.1}

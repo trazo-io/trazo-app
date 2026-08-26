@@ -14,10 +14,15 @@ import authSlice from '../../../store/features/authSlice';
 // Mock the auth API
 const mockLogin = vi.fn();
 const mockSocialAuth = vi.fn();
+// The screen offers "resend the verification email" as the recovery inside a failed-sign-in
+// alert, because SimpleJWT's one sentence covers a never-verified account too. See
+// `views/Authentication/authErrors.ts`.
+const mockResendVerificationEmail = vi.fn(() => ({ unwrap: () => Promise.resolve({}) }));
 
 vi.mock('../../../store/api/authApi', () => ({
   useLoginMutation: vi.fn(),
-  useSocialAuthMutation: () => [mockSocialAuth, { isLoading: false }]
+  useSocialAuthMutation: () => [mockSocialAuth, { isLoading: false }],
+  useResendVerificationEmailMutation: () => [mockResendVerificationEmail, { isLoading: false }]
 }));
 
 // Mock navigation

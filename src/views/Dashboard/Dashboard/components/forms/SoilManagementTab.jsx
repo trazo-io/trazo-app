@@ -1071,7 +1071,7 @@ const SoilManagementTab = forwardRef(
                     <StandardField
                       label={watch('type') === 'HD' ? 'Area Covered (optional)' : 'Area Covered'}
                       required={watch('type') !== 'HD'}
-                      error={errors.area_covered?.message}>
+                      error={errors.area_covered?.message || errors.area_unit?.message}>
                       <HStack spacing={2}>
                         <StandardInput
                           flex={2}

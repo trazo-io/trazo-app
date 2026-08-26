@@ -242,10 +242,36 @@ const formSchemaMainInfo = object({
   block_id: string().optional(),
   growth_stage: string().optional()
 }).superRefine((data, ctx) => {
+  const req = (path, message) => {
+    const value = data[path];
+    if (value == null || value === '') {
+      ctx.addIssue({ code: 'custom', path: [path], message });
+    }
+  };
+
+  // 40 CFR 170: an RUP application needs the applicator's certification number. The
+  // asterisk on that field was previously enforced by nothing at all.
+  // Scoped to the types that RENDER the RUP switch — a stale 'true' carried across a
+  // switch to FE must not demand a field the fertilizer form does not show.
+  if (['PE', 'HE', 'FU'].includes(data.type) && data.restricted_use_pesticide === 'true') {
+    req('applicator_certification', 'An RUP application needs the applicator certification number');
+  }
+
   // In summary mode, per-application fields (concentration, volume_applied, area_treated)
-  // are hidden and replaced by aggregate totals — skip their required validation.
+  // are hidden and replaced by aggregate totals — their asterisks move to the aggregates,
+  // which used to be marked required and enforced by nothing.
   const isSummary = data.is_summary === 'true' && ['FE', 'FU', 'PE'].includes(data.type);
-  if (isSummary) return;
+  if (isSummary) {
+    req('date_start', 'A summary needs the period start date');
+    req('date_end', 'A summary needs the period end date');
+    req('event_count', 'How many applications does this summary cover?');
+    if (data.type === 'FE') {
+      req('nitrogen_total_kg', 'A fertilizer summary needs the total nitrogen');
+    } else {
+      req('active_ingredient_total_kg', 'This summary needs the total active ingredient');
+    }
+    return;
+  }
 
   if (!data.concentration || data.concentration.length === 0) {
     ctx.addIssue({
@@ -547,7 +573,12 @@ const ChemicalTab = forwardRef(
           new Promise((resolve, reject) => {
             methods.handleSubmit(
               (data) => {
-                submitHandlerRef.current(data);
+                // A handler may veto AFTER zod passes (farm-dependent rules the
+                // module-level schema cannot see). `false` means: stay on this step.
+                if (submitHandlerRef.current(data) === false) {
+                  reject(methods.formState.errors);
+                  return;
+                }
                 resolve();
               },
               (errors) => {
@@ -1002,7 +1033,9 @@ const ChemicalTab = forwardRef(
           type: 'manual',
           message: intl.formatMessage({ id: 'events.chemical.organicBasis.required' })
         });
-        return;
+        // `false` tells submitForm to reject — without it the wizard's submit promise
+        // resolved on this early return and advanced past a form that saved nothing.
+        return false;
       }
 
       // Process numeric data and map frontend field names to backend field names
@@ -2281,6 +2314,8 @@ const ChemicalTab = forwardRef(
                             id: 'app.volumeUnit',
                             defaultMessage: 'Unit'
                           })}
+                          required
+                          error={errors.volume_unit?.message}
                           flex={1}
                           mt="0px">
                           <Controller
@@ -2364,6 +2399,8 @@ const ChemicalTab = forwardRef(
                             id: 'app.areaUnit',
                             defaultMessage: 'Unit'
                           })}
+                          required
+                          error={errors.area_unit?.message}
                           flex={1}
                           mt="0px">
                           <Controller

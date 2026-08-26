@@ -1062,7 +1062,13 @@ export function getConsumerEventDescription(
     let sustainabilityBenefit =
       'Part of responsible farming practices that support environmental stewardship and long-term agricultural sustainability.';
 
-    if (eventType.includes('planting') || eventType === 'PL') {
+    if (eventType.includes('transplant') || eventType === 'TR') {
+      // Before PL on purpose: the legacy string 'transplanting' contains 'planting'.
+      consumerImpact =
+        'You can see when young plants went into this block and where the stock came from.';
+      sustainabilityBenefit =
+        'Organic rules trace transplanted stock back to how it was raised, and this record is the first link in that trail.';
+    } else if (eventType.includes('planting') || eventType === 'PL') {
       // Stage 2 (2026-06-14): static sentence so it localizes via the dict —
       // quantitative detail (seed rate, area) already renders in Key Details.
       consumerImpact =
@@ -1830,7 +1836,12 @@ export function getConsumerEventDescription(
       'Documented soil management demonstrates commitment to soil health and environmental stewardship.';
 
     // Specific messages for each soil management type
-    if (soilType === 'ST' || soilType.includes('Testing')) {
+    if (soilType === 'LA') {
+      consumerImpact =
+        'You can see that the farm sent samples to a lab and recorded the results, rather than guessing at what the soil needs.';
+      sustainabilityBenefit =
+        'Lab results give the fertility decisions on this block a measured starting point, so inputs follow numbers instead of habit.';
+    } else if (soilType === 'ST' || soilType.includes('Testing')) {
       consumerImpact =
         'A lab measured what the soil actually needed, so nutrients were added on evidence rather than habit.';
       sustainabilityBenefit =
@@ -2085,7 +2096,12 @@ export function getConsumerEventDescription(
     let sustainabilityBenefit =
       'Part of integrated pest management approach that reduces reliance on synthetic pesticides and promotes ecological balance.';
 
-    if (eventPestType === 'SC' || eventPestType === 'scouting') {
+    if (eventPestType === 'CU') {
+      consumerImpact =
+        'Prevention work like sanitation and habitat choices is logged here, the part of pest control that avoids sprays entirely.';
+      sustainabilityBenefit =
+        'Organic pest management is built on prevention first, and this record is what puts that work on paper.';
+    } else if (eventPestType === 'SC' || eventPestType === 'scouting') {
       consumerImpact =
         'Regular pest monitoring helps detect issues early, preventing damage and reducing the need for chemical interventions.';
       sustainabilityBenefit =
@@ -2781,6 +2797,13 @@ export function getConsumerEventDescription(
     } else if (businessType === 'transparency') {
       consumerImpact =
         'The record behind this crop is open for a buyer to read, not summarised for them.';
+    } else if (businessType === 'sustainability_audit') {
+      // Same attribution rule as 'verification' above: the farm's own account, dated.
+      consumerImpact =
+        'What was reviewed, and when, is written down as the farm reported it, so a buyer can ask about specifics instead of generalities.';
+    } else if (businessType === 'compliance') {
+      consumerImpact =
+        'Compliance work like inspections and filings is dated and on record here, as the farm reported it.';
     }
 
     // Sustainability benefit - Enhanced with certificate transparency
@@ -2797,6 +2820,12 @@ export function getConsumerEventDescription(
     } else if (businessType === 'verification') {
       sustainabilityBenefit =
         'An audit checks conformance to a written standard on the day it is carried out; the record here says which standard and when.';
+    } else if (businessType === 'sustainability_audit') {
+      sustainabilityBenefit =
+        'An audit trail with dates is what lets a buyer ask better questions, starting from what was actually reviewed and when.';
+    } else if (businessType === 'compliance') {
+      sustainabilityBenefit =
+        'Keeping compliance events in the same timeline as the field work makes the record continuous instead of split across binders.';
     }
 
     // Enhanced title resolution for business events

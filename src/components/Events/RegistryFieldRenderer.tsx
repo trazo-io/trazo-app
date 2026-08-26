@@ -85,15 +85,24 @@ function useLabelResolver(): (labelKey: string) => string {
 // ============================================================================
 
 interface FieldItemProps {
+  /** When set, this field's value reaches the buyer page — render the marker. */
+  onBuyerPage?: boolean;
   field: ResolvedField;
   cardBg: string;
   textColor: string;
   compact?: boolean;
 }
 
-const FieldItem: React.FC<FieldItemProps> = ({ field, cardBg, textColor, compact }) => {
+const FieldItem: React.FC<FieldItemProps> = ({
+  field,
+  cardBg,
+  textColor,
+  compact,
+  onBuyerPage
+}) => {
   const badgeColor = useColorModeValue('orange.100', 'orange.800');
   const resolveLabel = useLabelResolver();
+  const intl = useIntl();
 
   return (
     <Box p={compact ? 2 : 4} bg={cardBg} borderRadius="lg">
@@ -122,6 +131,15 @@ const FieldItem: React.FC<FieldItemProps> = ({ field, cardBg, textColor, compact
             CO₂
           </Badge>
         )}
+        {onBuyerPage && (
+          <Badge
+            colorScheme="green"
+            fontSize="11px"
+            variant="subtle"
+            title={intl.formatMessage({ id: 'producer.event.fieldOnBuyerPageHelp' })}>
+            {intl.formatMessage({ id: 'producer.event.buyerPageBadge' })}
+          </Badge>
+        )}
       </HStack>
       <Text fontWeight="medium" color={textColor} fontSize={compact ? 'sm' : 'md'}>
         {field.formattedValue}
@@ -131,6 +149,7 @@ const FieldItem: React.FC<FieldItemProps> = ({ field, cardBg, textColor, compact
 };
 
 interface FieldSectionProps {
+  buyerVisibleFields?: ReadonlySet<string>;
   title: string;
   fields: ResolvedField[];
   cardBg: string;
@@ -142,6 +161,7 @@ interface FieldSectionProps {
 }
 
 const FieldSection: React.FC<FieldSectionProps> = ({
+  buyerVisibleFields,
   title,
   fields,
   cardBg,
@@ -159,6 +179,7 @@ const FieldSection: React.FC<FieldSectionProps> = ({
     <SimpleGrid columns={columns} spacing={compact ? 2 : 4}>
       {fields.map((field) => (
         <FieldItem
+          onBuyerPage={buyerVisibleFields?.has(field.name)}
           key={field.name}
           field={field}
           cardBg={cardBg}
@@ -197,6 +218,11 @@ const FieldSection: React.FC<FieldSectionProps> = ({
 export type RendererVariant = 'modal' | 'card' | 'timeline' | 'consumer';
 
 interface RegistryFieldRendererProps {
+  /**
+   * Producer surfaces only: the field names the buyer page displays for this event
+   * (from utils/buyerPageVisibility). Absent on consumer surfaces — no badges there.
+   */
+  buyerVisibleFields?: ReadonlySet<string>;
   fields: ResolvedFieldSet;
   /**
    * Rendering variant:
@@ -216,7 +242,8 @@ export const RegistryFieldRenderer: React.FC<RegistryFieldRendererProps> = ({
   fields,
   variant = 'modal',
   cardBg: cardBgProp,
-  textColor: textColorProp
+  textColor: textColorProp,
+  buyerVisibleFields
 }) => {
   const defaultCardBg = useColorModeValue('gray.50', 'gray.700');
   const defaultTextColor = useColorModeValue('gray.800', 'white');
@@ -309,12 +336,19 @@ export const RegistryFieldRenderer: React.FC<RegistryFieldRendererProps> = ({
             ...fields.hero.filter((f) => f.name !== 'name' && f.name !== 'commercial_name'),
             ...fields.immediate
           ].map((field) => (
-            <FieldItem key={field.name} field={field} cardBg={cardBg} textColor={textColor} />
+            <FieldItem
+              key={field.name}
+              field={field}
+              cardBg={cardBg}
+              textColor={textColor}
+              onBuyerPage={buyerVisibleFields?.has(field.name)}
+            />
           ))}
         </SimpleGrid>
       )}
       <FieldSection
         title="Additional Details"
+        buyerVisibleFields={buyerVisibleFields}
         fields={fields.secondary}
         cardBg={cardBg}
         textColor={textColor}
@@ -322,6 +356,7 @@ export const RegistryFieldRenderer: React.FC<RegistryFieldRendererProps> = ({
       />
       <FieldSection
         title="Technical Details"
+        buyerVisibleFields={buyerVisibleFields}
         fields={fields.details}
         cardBg={cardBg}
         textColor={textColor}

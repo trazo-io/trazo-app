@@ -123,31 +123,62 @@ const isValidUsPhone = (value) => {
 
 const US_ZIP_PATTERN = /^\d{5}(-\d{4})?$/;
 
-const companySchema = object({
-  // Essential Company Identity
-  // max lengths mirror company/models.py so the client never posts what the
-  // serializer will reject (name 150, address 200, phone 20).
-  name: string()
-    .min(1, 'Company name is required')
-    .max(150, 'Company name must be 150 characters or less'),
-  tradename: string().max(150, 'Trade name must be 150 characters or less').optional(),
-  email: string().min(1, 'Email address is required').email('Enter a valid email address'),
-  phone: string()
-    .min(1, 'Phone number is required')
-    .max(20, 'Phone number must be 20 characters or less')
-    .refine(isValidUsPhone, 'Enter a 10-digit US phone number, e.g. (559) 555-0142'),
-  legalStructure: string().optional(),
-  // Location fields (Step 1) - Company headquarters address
-  address: string().max(200, 'Address must be 200 characters or less').optional(),
-  city: string().max(100, 'City must be 100 characters or less').optional(),
-  state: string().min(1, 'State is required'),
-  zipCode: string()
-    .regex(US_ZIP_PATTERN, 'Enter a 5-digit ZIP code, e.g. 93257')
-    .optional()
-    .or(literal('')),
-  // Sustainability (Step 2)
-  sustainabilityGoals: array(string()).optional()
-});
+/**
+ * ⛔ `value` is a WIRE VALUE — posted as `legal_structure` and stored by
+ * `company/models.py`. Only `labelId` is translated. Changing a `value` migrates data.
+ */
+const LEGAL_STRUCTURES = [
+  { value: 'sole_proprietorship', labelId: 'company.form.legalStructure.soleProprietorship' },
+  { value: 'partnership', labelId: 'company.form.legalStructure.partnership' },
+  { value: 'llc', labelId: 'company.form.legalStructure.llc' },
+  { value: 'corporation', labelId: 'company.form.legalStructure.corporation' },
+  { value: 'cooperative', labelId: 'company.form.legalStructure.cooperative' },
+  { value: 'family_farm', labelId: 'company.form.legalStructure.familyFarm' }
+];
+
+/**
+ * ⛔ A FUNCTION of `intl`, not a module-level constant.
+ *
+ * Zod carries its own English message strings, and a schema built at module scope cannot see
+ * the locale — so every validation message this form can produce ("Company name is required",
+ * "Enter a 5-digit ZIP code…") reached a Spanish-locale farmer in English, no matter what the
+ * rest of the page did. The schema is therefore built inside the component, memoised on
+ * `intl`, so a locale switch re-derives the messages with it.
+ */
+const buildCompanySchema = (intl) =>
+  object({
+    // Essential Company Identity
+    // max lengths mirror company/models.py so the client never posts what the
+    // serializer will reject (name 150, address 200, phone 20).
+    name: string()
+      .min(1, intl.formatMessage({ id: 'company.validation.name.required' }))
+      .max(150, intl.formatMessage({ id: 'company.validation.name.tooLong' })),
+    tradename: string()
+      .max(150, intl.formatMessage({ id: 'company.validation.tradename.tooLong' }))
+      .optional(),
+    email: string()
+      .min(1, intl.formatMessage({ id: 'company.validation.email.required' }))
+      .email(intl.formatMessage({ id: 'company.validation.email.invalid' })),
+    phone: string()
+      .min(1, intl.formatMessage({ id: 'company.validation.phone.required' }))
+      .max(20, intl.formatMessage({ id: 'company.validation.phone.tooLong' }))
+      .refine(isValidUsPhone, intl.formatMessage({ id: 'company.validation.phone.pattern' })),
+    legalStructure: string().optional(),
+    // Location fields (Step 1) - Company headquarters address
+    address: string()
+      .max(200, intl.formatMessage({ id: 'company.validation.address.tooLong' }))
+      .optional(),
+    city: string()
+      .max(100, intl.formatMessage({ id: 'company.validation.city.tooLong' }))
+      .optional(),
+    state: string().min(1, intl.formatMessage({ id: 'company.validation.state.required' })),
+    zipCode: string()
+      .regex(US_ZIP_PATTERN, intl.formatMessage({ id: 'company.validation.zip.pattern' }))
+      .optional()
+      .or(literal('')),
+    // Sustainability (Step 2)
+    sustainabilityGoals: array(string()).optional()
+  });
 
 // Which schema fields belong to which wizard step. `nextStep` validates only the
 // current step's fields, so a farmer is told about a bad value on the step where
@@ -166,49 +197,63 @@ const FIELDS_BY_STEP = [
 // website, industry, employeeCount, description, facebook, instagram, certifications, isActive
 // removed from onboarding - exist at Establishment level or not essential for transparency
 
-// Transparency Goals - What consumers care about seeing
+/**
+ * Transparency goals — what a farmer states they are aiming at.
+ *
+ * `titleId` / `descriptionId`, not literals: this array is module-scope, so it cannot call
+ * `intl` itself. The card resolves the ids at render, which is what stopped six goal names
+ * and six descriptions rendering in English on a Spanish screen.
+ *
+ * ⛔ `id` is a WIRE VALUE. It is posted as `sustainability_metadata.sustainability_goals` and
+ * read back by `history/services/transparency_response_formatter.py`, which maps it to a
+ * consumer-facing label. Renaming one here silently changes what a shopper sees; that
+ * formatter's map must move with it.
+ *
+ * ⛔ No per-goal `color`. Each entry used to carry one — green / blue / orange / purple /
+ * teal / yellow — and three of those are not Trazo palettes at all (`.claude/rules/frontend.md`:
+ * the theme defines `amber`, NOT orange; an `orange.*` token silently resolved to CHAKRA's).
+ * MEASURED, the amber ramp cannot carry this tile at any step: it tops out at #E65100, so
+ * amber.800 on amber.50 is 2.90:1 where text owes 4.5, and even white on amber.700 is 2.70:1
+ * against a 3.0 non-text floor. More basic than the contrast: this is a MULTI-SELECT, and the
+ * hue carried no meaning — "Status colour = meaning, never decoration". One brand green for
+ * all six, with selection signalled by fill + weight + `aria-pressed`, not by hue.
+ */
 const SUSTAINABILITY_GOALS = [
   {
     id: 'full_transparency',
-    title: 'Full Farming Transparency',
-    description: 'Document all agricultural practices',
-    icon: FaLeaf,
-    color: 'green'
+    titleId: 'company.form.goal.fullTransparency.title',
+    descriptionId: 'company.form.goal.fullTransparency.description',
+    icon: FaLeaf
   },
   {
     id: 'water_conservation',
-    title: 'Water Conservation',
-    description: 'Show water-efficient practices',
-    icon: FaWater,
-    color: 'blue'
+    titleId: 'company.form.goal.waterConservation.title',
+    descriptionId: 'company.form.goal.waterConservation.description',
+    icon: FaWater
   },
   {
     id: 'soil_health',
-    title: 'Soil Health Practices',
-    description: 'Document soil improvement methods',
-    icon: FaSeedling,
-    color: 'orange'
+    titleId: 'company.form.goal.soilHealth.title',
+    descriptionId: 'company.form.goal.soilHealth.description',
+    icon: FaSeedling
   },
   {
     id: 'biodiversity',
-    title: 'Biodiversity Support',
-    description: 'Share ecosystem-friendly practices',
-    icon: FaBug,
-    color: 'purple'
+    titleId: 'company.form.goal.biodiversity.title',
+    descriptionId: 'company.form.goal.biodiversity.description',
+    icon: FaBug
   },
   {
     id: 'waste_reduction',
-    title: 'Waste Reduction',
-    description: 'Track waste minimization efforts',
-    icon: FaRecycle,
-    color: 'teal'
+    titleId: 'company.form.goal.wasteReduction.title',
+    descriptionId: 'company.form.goal.wasteReduction.description',
+    icon: FaRecycle
   },
   {
     id: 'renewable_energy',
-    title: 'Clean Energy Use',
-    description: 'Document renewable energy adoption',
-    icon: FaBolt,
-    color: 'yellow'
+    titleId: 'company.form.goal.renewableEnergy.title',
+    descriptionId: 'company.form.goal.renewableEnergy.description',
+    icon: FaBolt
   }
 ];
 
@@ -241,17 +286,27 @@ function AddCompany({ isEdit = false }) {
   // Define steps for stepper (Crop selection removed - belongs at Establishment/Parcel level)
   const steps = [
     {
-      title: 'Company Info',
-      shortTitle: 'Company',
-      description: 'Basic company details',
+      title: intl.formatMessage({ id: 'company.form.step.identity.title' }),
+      shortTitle: intl.formatMessage({ id: 'company.form.step.identity.short' }),
+      description: intl.formatMessage({ id: 'company.form.step.identity.description' }),
       icon: FaBuilding
     },
-    { title: 'Location', description: 'Address & contact', icon: FaMapMarkerAlt },
-    { title: 'Sustainability', shortTitle: 'Goals', description: 'Goals & practices', icon: FaLeaf }
+    {
+      title: intl.formatMessage({ id: 'company.form.step.location.title' }),
+      description: intl.formatMessage({ id: 'company.form.step.location.description' }),
+      icon: FaMapMarkerAlt
+    },
+    {
+      title: intl.formatMessage({ id: 'company.form.step.sustainability.title' }),
+      shortTitle: intl.formatMessage({ id: 'company.form.step.sustainability.short' }),
+      description: intl.formatMessage({ id: 'company.form.step.sustainability.description' }),
+      icon: FaLeaf
+    }
   ];
 
   const methods = useForm({
-    resolver: zodResolver(companySchema),
+    // Memoised on `intl` so switching locale re-derives every validation message with it.
+    resolver: zodResolver(React.useMemo(() => buildCompanySchema(intl), [intl])),
     // Validate a field once it has been touched, and re-check on every keystroke
     // afterwards, so a corrected value clears its error immediately instead of
     // leaving the step gate stuck on a stale failure.
@@ -287,9 +342,12 @@ function AddCompany({ isEdit = false }) {
     }
 
     toast({
-      title: 'Check your details',
+      title: intl.formatMessage({ id: 'company.form.toast.invalid.title' }),
+      // `formErrors[badField].message` is already localised — the zod schema is built from
+      // `intl` above, so it is a translated sentence, not an English one.
       description:
-        formErrors[badField]?.message || 'Some required information is missing or invalid.',
+        formErrors[badField]?.message ||
+        intl.formatMessage({ id: 'company.form.toast.invalid.body' }),
       status: 'error',
       duration: 5000,
       isClosable: true
@@ -336,7 +394,7 @@ function AddCompany({ isEdit = false }) {
       console.error('🏢 AddCompany: Failed to create company:', error);
 
       // Parse DRF field-level validation errors into readable message
-      let description = 'Please check all required fields and try again.';
+      let description = intl.formatMessage({ id: 'company.form.toast.error.body' });
       if (error?.data && typeof error.data === 'object') {
         if (error.data.detail) {
           description = error.data.detail;
@@ -358,7 +416,10 @@ function AddCompany({ isEdit = false }) {
       }
 
       toast({
-        title: 'Error Creating Company',
+        title: intl.formatMessage({ id: 'company.form.toast.error.title' }),
+        // ⚠️ `description` may still be a SERVER sentence (DRF field errors), which the API
+        // returns in English only. It is the last-resort branch: better a true English line
+        // than a generic one that hides which field the serializer rejected.
         description,
         status: 'error',
         duration: 6000,
@@ -457,20 +518,33 @@ function AddCompany({ isEdit = false }) {
     setValue('sustainabilityGoals', newGoals);
   };
 
-  // Custom sustainability goal selection component
+  /**
+   * Sustainability goal tile.
+   *
+   * ⛔ Every colour here is a `.700` where it paints GLYPHS and a `.500`/`.600` only where it
+   * paints a boundary. It used to put white on `${color}.500` (2.78:1 on the green ramp —
+   * below even the 3.0 non-text floor) and use `${color}.600` as a text colour (4.12:1 where
+   * 14px owes 4.5). Both are named in `.claude/rules/frontend.md` as the exact mistakes that
+   * keep coming back, and both were here, on the onboarding screen every new farmer sees.
+   *
+   * `aria-pressed` because this is a toggle, not a link: the tile's selected state was
+   * signalled by colour and a tick glyph alone, so a screen reader announced six identical
+   * buttons with no way to tell which were on.
+   */
   const SustainabilityGoalCard = ({ goal, isSelected, onToggle }) => (
     <Box
       as="button"
       type="button"
+      aria-pressed={isSelected}
       onClick={() => onToggle(goal.id)}
       p={4}
       borderRadius="lg"
       border="2px solid"
-      borderColor={isSelected ? `${goal.color}.500` : 'gray.200'}
-      bg={isSelected ? `${goal.color}.50` : 'white'}
+      borderColor={isSelected ? 'green.600' : 'gray.200'}
+      bg={isSelected ? 'green.50' : 'white'}
       _hover={{
-        borderColor: isSelected ? `${goal.color}.600` : `${goal.color}.300`,
-        bg: isSelected ? `${goal.color}.100` : `${goal.color}.50`,
+        borderColor: isSelected ? 'green.700' : 'green.500',
+        bg: isSelected ? 'green.100' : 'green.50',
         transform: 'translateY(-2px)',
         shadow: 'md'
       }}
@@ -483,7 +557,7 @@ function AddCompany({ isEdit = false }) {
           position="absolute"
           top={2}
           right={2}
-          bg={`${goal.color}.500`}
+          bg="green.700"
           color="white"
           borderRadius="full"
           p={1}>
@@ -493,8 +567,8 @@ function AddCompany({ isEdit = false }) {
 
       <VStack spacing={3} align="center">
         <Box
-          bg={isSelected ? `${goal.color}.500` : `${goal.color}.100`}
-          color={isSelected ? 'white' : `${goal.color}.600`}
+          bg={isSelected ? 'green.700' : 'green.100'}
+          color={isSelected ? 'white' : 'green.700'}
           p={3}
           borderRadius="full">
           <Icon as={goal.icon} boxSize={6} />
@@ -504,15 +578,15 @@ function AddCompany({ isEdit = false }) {
           <Text
             fontWeight="bold"
             fontSize="sm"
-            color={isSelected ? `${goal.color}.700` : 'gray.700'}
+            color={isSelected ? 'green.800' : 'gray.700'}
             textAlign="center">
-            {goal.title}
+            {intl.formatMessage({ id: goal.titleId })}
           </Text>
           <Text
             fontSize="xs"
-            color={isSelected ? `${goal.color}.600` : 'gray.500'}
+            color={isSelected ? 'green.800' : 'gray.600'}
             textAlign="center">
-            {goal.description}
+            {intl.formatMessage({ id: goal.descriptionId })}
           </Text>
         </VStack>
       </VStack>
@@ -521,8 +595,8 @@ function AddCompany({ isEdit = false }) {
 
   return (
     <StandardPage
-      title="Set Up Your Agricultural Company"
-      description="Create your company profile and start building consumer trust through transparency"
+      title={intl.formatMessage({ id: 'company.form.page.title' })}
+      description={intl.formatMessage({ id: 'company.form.page.description' })}
       showBackButton
       onBack={handleCancel}>
       {/* Modern Progress Stepper */}
@@ -539,30 +613,30 @@ function AddCompany({ isEdit = false }) {
           {/* Step 0: Company Identity - Essential fields only for transparency-first onboarding */}
           {currentStep === 0 && (
             <StandardCard
-              title="Company Identity"
-              subtitle="Essential details to set up your agricultural company">
+              title={intl.formatMessage({ id: 'company.form.card.identity' })}
+              subtitle={intl.formatMessage({ id: 'company.form.card.identity.sub' })}>
               <VStack spacing={6} align="stretch">
                 {/* Company Name & Trade Name */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
-                    label="Company Name"
+                    label={intl.formatMessage({ id: 'company.form.name.label' })}
                     required
                     error={errors.name?.message}
-                    helpText="Your company's legal registered name">
+                    helpText={intl.formatMessage({ id: 'company.form.name.help' })}>
                     <StandardInput
                       {...methods.register('name')}
-                      placeholder="e.g., Green Valley Farms LLC"
+                      placeholder={intl.formatMessage({ id: 'company.form.name.placeholder' })}
                       leftElement={<Icon as={FaBuilding} color="gray.400" />}
                     />
                   </StandardField>
 
                   <StandardField
-                    label="Trade Name"
+                    label={intl.formatMessage({ id: 'company.form.tradename.label' })}
                     error={errors.tradename?.message}
-                    helpText="Business name if different from legal name (optional)">
+                    helpText={intl.formatMessage({ id: 'company.form.tradename.help' })}>
                     <StandardInput
                       {...methods.register('tradename')}
-                      placeholder="e.g., Green Valley Organics"
+                      placeholder={intl.formatMessage({ id: 'company.form.tradename.placeholder' })}
                       leftElement={<Icon as={FaStore} color="gray.400" />}
                     />
                   </StandardField>
@@ -571,27 +645,27 @@ function AddCompany({ isEdit = false }) {
                 {/* Email & Phone */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
-                    label="Email Address"
+                    label={intl.formatMessage({ id: 'company.form.email.label' })}
                     required
                     error={errors.email?.message}
-                    helpText="Primary contact email for your company">
+                    helpText={intl.formatMessage({ id: 'company.form.email.help' })}>
                     <StandardInput
                       {...methods.register('email')}
                       type="email"
-                      placeholder="contact@greenvalleyfarms.com"
+                      placeholder={intl.formatMessage({ id: 'company.form.email.placeholder' })}
                       leftElement={<Icon as={FaEnvelope} color="gray.400" />}
                     />
                   </StandardField>
 
                   <StandardField
-                    label="Phone Number"
+                    label={intl.formatMessage({ id: 'company.form.phone.label' })}
                     required
                     error={errors.phone?.message}
-                    helpText="Primary contact number for your farm">
+                    helpText={intl.formatMessage({ id: 'company.form.phone.help' })}>
                     <StandardInput
                       {...methods.register('phone')}
                       type="tel"
-                      placeholder="(555) 123-4567"
+                      placeholder={intl.formatMessage({ id: 'company.form.phone.placeholder' })}
                       leftElement={<Icon as={FaPhone} color="gray.400" />}
                     />
                   </StandardField>
@@ -599,27 +673,30 @@ function AddCompany({ isEdit = false }) {
 
                 {/* Legal Structure */}
                 <StandardField
-                  label="Legal Structure"
+                  label={intl.formatMessage({ id: 'company.form.legalStructure.label' })}
                   error={errors.legalStructure?.message}
-                  helpText="Your business entity type (optional but recommended for B2B)">
+                  helpText={intl.formatMessage({ id: 'company.form.legalStructure.help' })}>
                   <StandardSelect
                     {...methods.register('legalStructure')}
                     value={watch('legalStructure') || ''}>
-                    <option value="">Select legal structure...</option>
-                    <option value="sole_proprietorship">Sole Proprietorship</option>
-                    <option value="partnership">Partnership</option>
-                    <option value="llc">Limited Liability Company (LLC)</option>
-                    <option value="corporation">Corporation</option>
-                    <option value="cooperative">Cooperative</option>
-                    <option value="family_farm">Family Farm</option>
+                    {/* ⛔ The `value`s are WIRE VALUES posted as `legal_structure`; only the
+                        labels are translated. */}
+                    <option value="">
+                      {intl.formatMessage({ id: 'company.form.legalStructure.placeholder' })}
+                    </option>
+                    {LEGAL_STRUCTURES.map(({ value, labelId }) => (
+                      <option key={value} value={value}>
+                        {intl.formatMessage({ id: labelId })}
+                      </option>
+                    ))}
                   </StandardSelect>
                 </StandardField>
 
                 {/* Info Alert */}
                 <StandardAlert
                   status="info"
-                  title="Quick Setup"
-                  description="You can add more details like certifications, description, and social media later in your company settings."
+                  title={intl.formatMessage({ id: 'company.form.alert.quickSetup.title' })}
+                  description={intl.formatMessage({ id: 'company.form.alert.quickSetup.body' })}
                 />
 
                 {/* Navigation */}
@@ -633,7 +710,11 @@ function AddCompany({ isEdit = false }) {
                       what is wrong. A disabled button gave the farmer a dead
                       control with no stated reason. */}
                   <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                    {isMobile ? 'Continue' : 'Continue to Location'}
+                    {intl.formatMessage({
+                      id: isMobile
+                        ? 'company.form.btn.continue'
+                        : 'company.form.btn.continueToLocation'
+                    })}
                   </StandardButton>
                 </HStack>
               </VStack>
@@ -643,34 +724,43 @@ function AddCompany({ isEdit = false }) {
           {/* Step 1: Location Information - Company headquarters */}
           {currentStep === 1 && (
             <StandardCard
-              title="Location Details"
-              subtitle="Where is your agricultural operation based? (US farms only)">
+              title={intl.formatMessage({ id: 'company.form.card.location' })}
+              subtitle={intl.formatMessage({ id: 'company.form.card.location.sub' })}>
               <VStack spacing={6} align="stretch">
                 {/* Address */}
                 <StandardField
-                  label="Street Address"
+                  label={intl.formatMessage({ id: 'company.form.address.label' })}
                   error={errors.address?.message}
-                  helpText="Physical address of your main operation">
+                  helpText={intl.formatMessage({ id: 'company.form.address.help' })}>
                   <StandardInput
                     {...methods.register('address')}
-                    placeholder="123 Farm Road"
+                    placeholder={intl.formatMessage({ id: 'company.form.address.placeholder' })}
                     leftElement={<Icon as={FaMapMarkerAlt} color="gray.400" />}
                   />
                 </StandardField>
 
                 {/* City & State */}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
-                  <StandardField label="City" error={errors.city?.message}>
-                    <StandardInput {...methods.register('city')} placeholder="Farmington" />
+                  <StandardField
+                    label={intl.formatMessage({ id: 'company.form.city.label' })}
+                    error={errors.city?.message}>
+                    <StandardInput
+                      {...methods.register('city')}
+                      placeholder={intl.formatMessage({ id: 'company.form.city.placeholder' })}
+                    />
                   </StandardField>
 
                   <StandardField
-                    label="State"
+                    label={intl.formatMessage({ id: 'company.form.state.label' })}
                     required
                     error={errors.state?.message}
-                    helpText="Your company's headquarter state">
+                    helpText={intl.formatMessage({ id: 'company.form.state.help' })}>
                     <StandardSelect {...methods.register('state')} value={watch('state') || ''}>
-                      <option value="">Select your state...</option>
+                      {/* US state names are postal/legal identifiers and stay as they are;
+                          only the prompt is translated. */}
+                      <option value="">
+                        {intl.formatMessage({ id: 'company.form.state.placeholder' })}
+                      </option>
                       {US_STATES.map((state) => (
                         <option key={state.code} value={state.code}>
                           {state.name}
@@ -682,12 +772,12 @@ function AddCompany({ isEdit = false }) {
 
                 {/* ZIP Code - single field since US only */}
                 <StandardField
-                  label="ZIP Code"
+                  label={intl.formatMessage({ id: 'company.form.zip.label' })}
                   error={errors.zipCode?.message}
-                  helpText="5-digit US postal code">
+                  helpText={intl.formatMessage({ id: 'company.form.zip.help' })}>
                   <StandardInput
                     {...methods.register('zipCode')}
-                    placeholder="12345"
+                    placeholder={intl.formatMessage({ id: 'company.form.zip.placeholder' })}
                     maxLength={5}
                   />
                 </StandardField>
@@ -695,8 +785,8 @@ function AddCompany({ isEdit = false }) {
                 {/* Location Info Alert */}
                 <StandardAlert
                   status="info"
-                  title="Company Location"
-                  description="This is your company's headquarters address. Your farm location will be set up in the next step when you create your establishment — that's where regional agricultural context is applied."
+                  title={intl.formatMessage({ id: 'company.form.alert.location.title' })}
+                  description={intl.formatMessage({ id: 'company.form.alert.location.body' })}
                 />
 
                 {/* Navigation */}
@@ -705,7 +795,9 @@ function AddCompany({ isEdit = false }) {
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    {isMobile ? 'Back' : 'Back to Company Info'}
+                    {intl.formatMessage({
+                      id: isMobile ? 'company.form.btn.back' : 'company.form.btn.backToIdentity'
+                    })}
                   </StandardButton>
 
                   <HStack spacing={3}>
@@ -715,7 +807,11 @@ function AddCompany({ isEdit = false }) {
                       </StandardButton>
                     )}
                     <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                      {isMobile ? 'Continue' : 'Continue to Sustainability'}
+                      {intl.formatMessage({
+                        id: isMobile
+                          ? 'company.form.btn.continue'
+                          : 'company.form.btn.continueToSustainability'
+                      })}
                     </StandardButton>
                   </HStack>
                 </HStack>
@@ -726,8 +822,8 @@ function AddCompany({ isEdit = false }) {
           {/* Step 2: Sustainability Goals (was Step 3) */}
           {currentStep === 2 && (
             <StandardCard
-              title="Sustainability Goals"
-              subtitle="Select your sustainability and transparency objectives">
+              title={intl.formatMessage({ id: 'company.form.card.sustainability' })}
+              subtitle={intl.formatMessage({ id: 'company.form.card.sustainability.sub' })}>
               <VStack spacing={6} align="stretch">
                 {/* Sustainability Goals Grid */}
                 <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
@@ -744,8 +840,20 @@ function AddCompany({ isEdit = false }) {
                 {sustainabilityGoals.length > 0 && (
                   <StandardAlert
                     status="success"
-                    title={`${sustainabilityGoals.length} Goals Selected`}
-                    description="These goals will be displayed on your consumer-facing product page, showing buyers your sustainability commitment."
+                    // Pluralised through ICU rather than an "N Goals Selected" template —
+                    // "1 Goals Selected" was reachable, and Spanish needs the agreement.
+                    title={intl.formatMessage(
+                      { id: 'company.form.alert.goalsSelected.title' },
+                      { count: sustainabilityGoals.length }
+                    )}
+                    // ⚠️ Reworded from "showing buyers your sustainability commitment". These
+                    // are goals a farmer TICKS during onboarding — nothing verifies them — so
+                    // describing them to the farmer as a commitment shoppers will read
+                    // overstates what the consumer page can honestly carry. See
+                    // `.claude/rules/compliance.md` and the open question in the report.
+                    description={intl.formatMessage({
+                      id: 'company.form.alert.goalsSelected.body'
+                    })}
                   />
                 )}
 
@@ -755,7 +863,9 @@ function AddCompany({ isEdit = false }) {
                     variant="outline"
                     leftIcon={<FaChevronLeft />}
                     onClick={previousStep}>
-                    {isMobile ? 'Back' : 'Back to Location'}
+                    {intl.formatMessage({
+                      id: isMobile ? 'company.form.btn.back' : 'company.form.btn.backToLocation'
+                    })}
                   </StandardButton>
 
                   <HStack spacing={3}>
@@ -767,9 +877,17 @@ function AddCompany({ isEdit = false }) {
                     <StandardButton
                       type="submit"
                       isLoading={isLoading}
-                      loadingText={isMobile ? 'Creating...' : 'Creating Company...'}
+                      loadingText={intl.formatMessage({
+                        id: isMobile
+                          ? 'company.form.btn.creating'
+                          : 'company.form.btn.creatingCompany'
+                      })}
                       leftIcon={<FaRocket />}>
-                      {isMobile ? 'Create' : 'Create Company'}
+                      {intl.formatMessage({
+                        id: isMobile
+                          ? 'company.form.btn.create'
+                          : 'company.form.btn.createCompany'
+                      })}
                     </StandardButton>
                   </HStack>
                 </HStack>

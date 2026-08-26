@@ -43,8 +43,6 @@ const formSchemaMainInfo = object({
   certification_type: string().optional(),
   verification_status: string().optional(),
   sustainability_practice: string().optional(),
-  trust_impact: string().optional(), // NEW: Impact on consumer trust
-  transparency_benefit: string().optional(), // NEW: Transparency benefit
   observation: string().optional(),
   // Sprint 3 Epic 3.2: Consumer Trust Field for transparency
   verified_certifier_name: string().optional(), // Name of the certifying organization
@@ -102,8 +100,6 @@ const BusinessTab = forwardRef(
         name: initialValues.name || '',
         verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
         sustainability_practice: initialValues.sustainability_practice || '',
-        trust_impact: initialValues.trust_impact || '',
-        transparency_benefit: initialValues.transparency_benefit || '',
         observation: initialValues.observation || '',
         // Sprint 3 Epic 3.2: Consumer Trust Field
         verified_certifier_name: initialValues.verified_certifier_name || '',
@@ -155,8 +151,6 @@ const BusinessTab = forwardRef(
           certification_type: initialValues.certification_type || '',
           verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
           sustainability_practice: initialValues.sustainability_practice || '',
-          trust_impact: initialValues.trust_impact || '',
-          transparency_benefit: initialValues.transparency_benefit || '',
           observation: initialValues.observation || '',
           // Sprint 3 Epic 3.2: Consumer Trust Field
           verified_certifier_name: initialValues.verified_certifier_name || '',
@@ -202,8 +196,6 @@ const BusinessTab = forwardRef(
       'certification_type',
       'verification_status',
       'sustainability_practice',
-      'trust_impact',
-      'transparency_benefit',
       'observation',
       'verified_certifier_name',
       'certificate_number',
@@ -376,6 +368,7 @@ const BusinessTab = forwardRef(
                         id: 'events.business.fields.verificationStatus',
                         defaultMessage: 'Verification Status'
                       })}
+                      required={businessType === 'verification'}
                       error={errors.verification_status?.message}
                       helpText={intl.formatMessage({
                         id: 'events.business.help.statusOfVerificationForConsumerTransparency',

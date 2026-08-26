@@ -876,5 +876,27 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'The orchard floor was mown and managed to keep ground cover healthy and harvest conditions clean.':
     'El suelo del huerto se segó y se manejó para mantener sana la cobertura vegetal y limpias las condiciones de cosecha.',
   'Managed ground cover protects soil from erosion, feeds pollinators and beneficial insects, and reduces the need for herbicides.':
-    'La cobertura vegetal manejada protege el suelo de la erosión, alimenta a polinizadores e insectos benéficos y reduce la necesidad de herbicidas.'
+    'La cobertura vegetal manejada protege el suelo de la erosión, alimenta a polinizadores e insectos benéficos y reduce la necesidad de herbicidas.',
+
+  // --- Certifier-only preview gaps closed 2026-08-25: TR, soil LA, pest CU, business audit/compliance ---
+  'You can see when young plants went into this block and where the stock came from.':
+    'Puedes ver cuándo entraron las plantas jóvenes a este lote y de dónde vino el material.',
+  'Organic rules trace transplanted stock back to how it was raised, and this record is the first link in that trail.':
+    'Las normas orgánicas rastrean el material trasplantado hasta cómo fue criado, y este registro es el primer eslabón de esa cadena.',
+  'You can see that the farm sent samples to a lab and recorded the results, rather than guessing at what the soil needs.':
+    'Puedes ver que la finca envió muestras a un laboratorio y registró los resultados, en lugar de adivinar lo que el suelo necesita.',
+  'Lab results give the fertility decisions on this block a measured starting point, so inputs follow numbers instead of habit.':
+    'Los resultados de laboratorio dan a las decisiones de fertilidad de este lote un punto de partida medido, para que los insumos sigan números y no costumbres.',
+  'Prevention work like sanitation and habitat choices is logged here, the part of pest control that avoids sprays entirely.':
+    'El trabajo preventivo, como la sanidad y el manejo del hábitat, se registra aquí: la parte del control de plagas que evita aplicaciones por completo.',
+  'Organic pest management is built on prevention first, and this record is what puts that work on paper.':
+    'El manejo orgánico de plagas empieza por la prevención, y este registro es lo que deja ese trabajo por escrito.',
+  'What was reviewed, and when, is written down as the farm reported it, so a buyer can ask about specifics instead of generalities.':
+    'Qué se revisó, y cuándo, queda escrito tal como la finca lo reportó, para que un comprador pregunte por lo concreto y no por generalidades.',
+  'An audit trail with dates is what lets a buyer ask better questions, starting from what was actually reviewed and when.':
+    'Un rastro de auditoría con fechas permite a un comprador hacer mejores preguntas, partiendo de qué se revisó realmente y cuándo.',
+  'Compliance work like inspections and filings is dated and on record here, as the farm reported it.':
+    'El trabajo de cumplimiento, como inspecciones y trámites, queda fechado y registrado aquí, tal como la finca lo reportó.',
+  'Keeping compliance events in the same timeline as the field work makes the record continuous instead of split across binders.':
+    'Mantener los eventos de cumplimiento en la misma línea de tiempo que el trabajo de campo hace el registro continuo, en lugar de dividido entre carpetas.'
 };

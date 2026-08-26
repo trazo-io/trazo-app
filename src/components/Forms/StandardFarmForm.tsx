@@ -64,7 +64,7 @@ import {
 } from 'react-icons/fa';
 import { MdCheck, MdLocationOn, MdDescription, MdSettings, MdImage } from 'react-icons/md';
 import { TrazoImageUpload } from '../Upload';
-import { StandardNumberInput } from 'components/Design/StandardComponents';
+import { StandardNumberInput, StandardDecimalInput } from 'components/Design/StandardComponents';
 
 // US States - 2-letter codes used for regional agricultural context
 // Must match EditCompanyModal.tsx for consistency
@@ -985,14 +985,18 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                     label={intl.formatMessage({ id: 'farm.form.totalArea.label' })}
                     error={errors.totalAcreage?.message}
                     helpText={t('farm.form.totalArea.helpText')}>
+                    {/* Acres are a MEASUREMENT — see the note on StandardDecimalInput.
+                        MEASURED here: typing 14.5 used to store 145. */}
                     <Controller
                       name="totalAcreage"
                       control={methods.control}
                       render={({ field }) => (
-                        <StandardNumberInput
-                          value={field.value || 0}
-                          onChange={(_, num) => field.onChange(num || 0)}
+                        <StandardDecimalInput
+                          value={field.value}
+                          onChange={field.onChange}
                           min={0}
+                          step={1}
+                          hideStepper
                           placeholder={t('farm.form.totalArea.placeholder')}
                         />
                       )}

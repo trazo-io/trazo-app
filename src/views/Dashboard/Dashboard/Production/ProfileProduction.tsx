@@ -61,6 +61,8 @@ import {
 } from 'components/Design/StandardComponents';
 import { InfoRow, PageHeaderMeta } from 'components/Design/ProfileField';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
+import { ActivityDetailModal } from 'views/Dashboard/Activities/ActivityDetailModal';
+import type { ActivityRow } from 'store/api/activityFeedApi';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetPublicHistoryQuery, useUpdateProductionMutation } from 'store/api/historyApi';
 import { TrazoImageUpload } from 'components/Upload';
@@ -106,6 +108,8 @@ function ProfileProduction() {
   const [correctTarget, setCorrectTarget] = useState<{ id: number; eventType: number } | null>(
     null
   );
+  // Full field-by-field record view (with buyer-page visibility marked).
+  const [viewTarget, setViewTarget] = useState<ActivityRow | null>(null);
   const toast = useToast();
   const { canWrite } = useUserRole();
   const { farmId, productionId, parcelId } = useParams();
@@ -1499,6 +1503,26 @@ function ProfileProduction() {
             // ordinary editor. Without this the page rendered every event and offered no way
             // to act on any of them — season-plan rows had a control, an input logged outside
             // the plan had none.
+            // "View full record": the field-by-field detail modal, with the fields a
+            // shopper sees marked. Before this, a finished production offered only the
+            // consumer-journey preview and the correction sheet; there was no way to
+            // read the complete stored record.
+            onViewEvent={(event) => {
+              setViewTarget({
+                event_type: Number(event?.event_type),
+                event_id: Number(event?.record_id),
+                subtype: (event?.production_type || event?.type || null) as string | null,
+                name: (event?.name as string) || null,
+                date: (event?.date as string) || null,
+                description: (event?.description as string) || '',
+                parcel_id: Number(parcelId) || 0,
+                parcel_name: historyData?.parcel?.name || '',
+                history_id: Number(historyData?.id) || 0,
+                production_finished: Boolean(historyData?.finish_date || historyData?.published),
+                performed_by: (event?.performed_by as string) || '',
+                detail: undefined
+              });
+            }}
             onCorrectEvent={(recordId, eventType) => {
               if (historyData?.finish_date || historyData?.published) {
                 setCorrectTarget({ id: recordId, eventType });
@@ -1616,6 +1640,12 @@ function ProfileProduction() {
       />
 
       {/* Correction sheet for one filed record. Mounted only once a row asks for it. */}
+      <ActivityDetailModal
+        row={viewTarget}
+        onClose={() => setViewTarget(null)}
+        farmId={farmId || ''}
+      />
+
       <CorrectRecordModal
         isOpen={correctTarget !== null}
         onClose={() => setCorrectTarget(null)}

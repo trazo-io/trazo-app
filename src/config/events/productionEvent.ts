@@ -305,6 +305,29 @@ export const BUFFER_ENTERS_COMMERCE = (value: unknown): boolean => {
  * `subtypeGateParity.test.ts` fails if any of the four drifts from the form.
  */
 const SEED_SOURCED: ProductionSubtype[] = ['PL', 'TR', 'SS'];
+
+/**
+ * The subtypes for which "area covered" is a real question — field operations.
+ * EM (equipment cleaning), PO (a hive placement), TP (a load moving), BU (the
+ * disposition of buffer-row crop) and SS (a sourcing-paperwork record) cover no
+ * acreage; asking for one writes a value no display surface will ever show, and
+ * the backend refuses area <= 0 for exactly these types. Exported so the
+ * ProductionTab form and this registry cannot gate the question differently
+ * (guard: __tests__/areaGateParity.test.ts).
+ */
+export const AREA_SUBTYPES: ProductionSubtype[] = [
+  'PL',
+  'HA',
+  'IR',
+  'PR',
+  'TR',
+  'CU',
+  'TH',
+  'PH',
+  'CM',
+  'FP',
+  'MO'
+];
 const RECORDS_LOT_DISPOSITION: ProductionSubtype[] = ['HA', 'TP', 'BU'];
 const RECORDS_BUFFER: ProductionSubtype[] = ['HA', 'BU'];
 const RECORDS_HANDLER: ProductionSubtype[] = ['HA', 'TP'];
@@ -328,7 +351,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // cleaning and pollination are not AREA operations — a hive placement covers no acreage —
     // so declaring area for them put a value on two modals that no input could set or clear.
     name: 'area_covered',
-    visibleForSubtypes: ['PL', 'HA', 'IR', 'PR', 'TR', 'CU', 'TH', 'PH', 'CM', 'FP', 'MO'],
+    visibleForSubtypes: AREA_SUBTYPES,
     labelKey: 'events.common.fields.areaCovered',
     valueType: 'number',
     unitField: 'area_unit',
@@ -1704,7 +1727,9 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     valueType: 'number',
     unitField: 'transportation_unit',
     formatter: formatTransportationDistance,
-    visibleForSubtypes: ['HA', 'PH', 'EM'],
+    // TP added 2026-08-25: a Transport record is ABOUT the haul, and the form now
+    // asks its distance; HA/PH/EM keep their legacy display.
+    visibleForSubtypes: ['HA', 'PH', 'EM', 'TP'],
     carbonRelevant: true,
     surfaces: {
       modal: 'secondary',
@@ -1805,7 +1830,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'variety',
     labelKey: 'events.common.fields.variety',
     valueType: 'string',
-    visibleForSubtypes: ['HA', 'PH', 'PL'],
+    // TR and SS added 2026-08-25: the form has always asked variety for both (a
+    // transplant's cultivar; the variety a seed search was looking for) — without
+    // them here the value was write-only.
+    visibleForSubtypes: ['HA', 'PH', 'PL', 'TR', 'SS'],
     surfaces: {
       modal: 'secondary',
       form: 'secondary',

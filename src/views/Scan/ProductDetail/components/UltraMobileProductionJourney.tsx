@@ -56,6 +56,7 @@ import {
 } from 'react-icons/fa';
 import { MdTimeline, MdEco, MdVerified, MdAgriculture } from 'react-icons/md';
 import { useIntl } from 'react-intl';
+import { buyerPageWithheldReasonId } from 'utils/consumerDisplay';
 import { useParams, useSearchParams } from 'react-router-dom';
 
 // Anchor the viewport at the journey section. Two-stage on purpose: the view
@@ -192,6 +193,11 @@ interface UltraMobileProductionJourneyProps {
    * Absent on the consumer page, so no per-event tooling renders there.
    */
   onCorrectEvent?: (recordId: number, eventType: number) => void;
+  /**
+   * Producer surfaces: open the full field-by-field record (the detail modal with
+   * buyer-page visibility marked). Receives the raw timeline event.
+   */
+  onViewEvent?: (event: any) => void;
   productionId?: string;
   transparencyScore?: number;
   /** Production-level blockchain verification data */
@@ -220,6 +226,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   events,
   audience,
   onCorrectEvent,
+  onViewEvent,
   productionId,
   // transparencyScore prop retained in the interface (parent still passes it)
   // but no longer rendered — the numeric score left the stats strip 2026-06.
@@ -664,24 +671,69 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   // acquire the affordance on one path and miss it on another. Returns undefined unless the
   // caller wired a handler AND the payload gave us a real id to act on — an event the owner
   // cannot address gets no button rather than a broken one.
+  /**
+   * Producer-audience visibility label. SSOT: CONSUMER_WITHHELD_PRODUCTION_SUBTYPES
+   * (the mirror of the backend's event-level withhold). Every card in the producer
+   * preview states which side of the buyer page it lives on, with the reason when
+   * it is certifier-only — a withheld record must never be dressed as a consumer card.
+   */
+  const buildVisibilityBadge = (event: any) => {
+    if (isConsumerAudience) return undefined;
+    const reasonId = buyerPageWithheldReasonId(event ?? {});
+    if (reasonId) {
+      return (
+        <Tooltip label={intl.formatMessage({ id: reasonId })} hasArrow placement="top">
+          <Badge colorScheme="gray" variant="subtle" fontSize="11px" cursor="help">
+            {intl.formatMessage({ id: 'producer.event.certifierOnlyBadge' })}
+          </Badge>
+        </Tooltip>
+      );
+    }
+    return (
+      <Badge colorScheme="green" variant="subtle" fontSize="11px">
+        {intl.formatMessage({ id: 'producer.event.buyerPageBadge' })}
+      </Badge>
+    );
+  };
+
   const buildProducerAction = (event: any) => {
     const recordId = event?.record_id;
     const eventType = event?.event_type;
-    if (!onCorrectEvent || !recordId || eventType === undefined || eventType === null) {
-      return undefined;
-    }
+    const hasIdentity = recordId && eventType !== undefined && eventType !== null;
+    const viewButton =
+      onViewEvent && hasIdentity ? (
+        <Button
+          size="xs"
+          variant="link"
+          colorScheme="gray"
+          fontWeight="normal"
+          onClick={(e) => {
+            e.stopPropagation();
+            onViewEvent(event);
+          }}>
+          {intl.formatMessage({ id: 'producer.event.viewFullRecord' })}
+        </Button>
+      ) : null;
+    const correctButton =
+      onCorrectEvent && hasIdentity ? (
+        <Button
+          size="xs"
+          variant="link"
+          colorScheme="gray"
+          fontWeight="normal"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCorrectEvent(Number(recordId), Number(eventType));
+          }}>
+          {intl.formatMessage({ id: 'producer.event.correct' })}
+        </Button>
+      ) : null;
+    if (!viewButton && !correctButton) return undefined;
     return (
-      <Button
-        size="xs"
-        variant="link"
-        colorScheme="gray"
-        fontWeight="normal"
-        onClick={(e) => {
-          e.stopPropagation();
-          onCorrectEvent(Number(recordId), Number(eventType));
-        }}>
-        {intl.formatMessage({ id: 'producer.event.correct' })}
-      </Button>
+      <HStack spacing={3}>
+        {viewButton}
+        {correctButton}
+      </HStack>
     );
   };
 
@@ -1538,6 +1590,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                               isExpanded={expandedEventId === event.id}
                               onToggleExpand={() => toggleEventExpand(event.id)}
                               producerAction={buildProducerAction(event)}
+                              producerVisibilityBadge={buildVisibilityBadge(event)}
                               productionBlockchain={productionBlockchain}
                             />
                           );
@@ -1756,6 +1809,18 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
                             {/* Row 3: Trust & Impact badges */}
                             <HStack mt={2} ml="52px" spacing={2} flexWrap="wrap">
+                              {/* A collapsed group of withheld events (e.g. 4 cleanouts)
+                                  must not read as buyer-visible until expanded — the
+                                  group key IS the subtype, so member 0 speaks for all. */}
+                              {!isConsumerAudience &&
+                                item.events.length > 0 &&
+                                buyerPageWithheldReasonId(item.events[0] as any) && (
+                                  <Badge colorScheme="gray" variant="subtle" fontSize="11px">
+                                    {intl.formatMessage({
+                                      id: 'producer.event.certifierOnlyBadge'
+                                    })}
+                                  </Badge>
+                                )}
                               {/* Blockchain wording: "recorded" never "verified"
                               (compliance rule). Impact-level badges ("Core
                               Practices" / "Standard" / "Supplementary")
@@ -1829,6 +1894,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                                   isExpanded={expandedEventId === event.id}
                                   onToggleExpand={() => toggleEventExpand(event.id)}
                                   producerAction={buildProducerAction(event)}
+                                  producerVisibilityBadge={buildVisibilityBadge(event)}
                                   productionBlockchain={productionBlockchain}
                                 />
                               );
@@ -1852,6 +1918,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       isExpanded={expandedEventId === event.id}
                       onToggleExpand={() => toggleEventExpand(event.id)}
                       producerAction={buildProducerAction(event)}
+                      producerVisibilityBadge={buildVisibilityBadge(event)}
                       productionBlockchain={productionBlockchain}
                     />
                   );

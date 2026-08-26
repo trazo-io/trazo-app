@@ -20,7 +20,8 @@ import { MdPreview } from 'react-icons/md';
 import { ConsumerEventCard } from './ConsumerEventCard';
 import { hasMinimalPreviewData, type PreviewEventData } from '../../utils/eventPreviewUtils';
 import { normalizeFormEventData } from '../../utils/eventDataNormalizer';
-import { toConsumerVisibleEvent } from '../../utils/consumerDisplay';
+import { buyerPageWithheldReasonId, toConsumerVisibleEvent } from '../../utils/consumerDisplay';
+import { StandardAlert } from 'components/Design/StandardComponents';
 import { scanEventNotes } from '../../utils/consumerNoteScan';
 import { StandardizedEvent, EVENT_TYPE_NAMES } from '../../types/standardizedEvents';
 import { getConsumerEventDescription } from '../../utils/eventDescriptions';
@@ -47,6 +48,10 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
   const bgColor = useColorModeValue('gray.50', 'gray.900');
   const textColor = useColorModeValue('gray.800', 'white');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
+  // Hoisted: these render inside a conditional branch below, and a hook call there
+  // would change hook order between withheld and published previews.
+  const previewCardBg = useColorModeValue('white', 'gray.800');
+  const previewCardBorder = useColorModeValue('gray.200', 'gray.600');
 
   // Check if we have enough data for preview
   const hasEnoughData = hasMinimalPreviewData(activeEventType, formData);
@@ -195,16 +200,35 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                 </Text>
               </HStack>
 
-              {/* The actual preview using ConsumerEventCard */}
-              <Box
-                bg={useColorModeValue('white', 'gray.800')}
-                borderRadius="xl"
-                border="1px solid"
-                borderColor={useColorModeValue('gray.200', 'gray.600')}
-                overflow="hidden"
-                p={4}>
-                <ConsumerEventCard event={previewEvent as any} isLast={true} />
-              </Box>
+              {/* The actual preview using ConsumerEventCard — unless the whole event is
+                  certifier-only (BU/SS/EM/TP): the backend withholds those events entirely,
+                  so an honest preview here is the explanation, not a card no shopper sees. */}
+              {(() => {
+                const withheldReasonId = buyerPageWithheldReasonId({
+                  ...(previewEvent as Record<string, unknown>),
+                  event_type: activeEventType
+                });
+                if (withheldReasonId) {
+                  return (
+                    <StandardAlert
+                      status="info"
+                      title={intl.formatMessage({ id: 'events.certifierOnly.title' })}
+                      description={intl.formatMessage({ id: withheldReasonId })}
+                    />
+                  );
+                }
+                return (
+                  <Box
+                    bg={previewCardBg}
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor={previewCardBorder}
+                    overflow="hidden"
+                    p={4}>
+                    <ConsumerEventCard event={previewEvent as any} isLast={true} />
+                  </Box>
+                );
+              })()}
 
               {/* Field-notes publish notice. Advisory only — nothing is edited or withheld. */}
               {hasEnoughData && (

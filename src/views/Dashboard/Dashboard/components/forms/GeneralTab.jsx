@@ -126,6 +126,18 @@ const formSchemaMainInfo = object({
       photo_id: string().optional()
     })
   ).optional()
+}).superRefine((data, ctx) => {
+  // The asterisk on contamination_source used to be enforced by a manual setError
+  // inside onSubmit — AFTER zod had already passed, so the wizard's submit promise
+  // resolved and it advanced past a form that showed an error and saved nothing.
+  // In the schema, a missing source fails validation and the wizard stays put.
+  if (data.is_contamination_incident === 'true' && !data.contamination_source) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['contamination_source'],
+      message: 'Contamination source is required when logging an incident'
+    });
+  }
 });
 
 const GeneralTab = forwardRef(
@@ -294,22 +306,23 @@ const GeneralTab = forwardRef(
     }, [watchedFields]); // FIXED: Removed onDataChange to prevent infinite loop
 
     const onSubmit = (data) => {
-      // F39 fix (2026-06): guard the contamination-incident toggle.
+      // F39 fix (2026-06), moved into the schema's superRefine 2026-08-25: a missing
+      // contamination source now fails zod itself, so handleSubmit never calls this
+      // and the wizard's submit promise rejects instead of advancing.
       const isIncident = data.is_contamination_incident === 'true';
-      if (isIncident && !data.contamination_source) {
-        // The "required" marker on contamination_source was cosmetic — enforce it.
-        mainInfoMethods.setError('contamination_source', {
-          type: 'manual',
-          message: 'Contamination source is required when logging an incident'
-        });
-        return;
-      }
       if (!isIncident) {
         // Don't persist orphaned contamination columns when the toggle is OFF
         // (e.g. fields filled, then toggled off) — they'd save with the incident
         // flag false but populated source/area.
         data.contamination_source = '';
         data.contamination_affected_area = '';
+        // The rest of the incident block renders only while the toggle is ON —
+        // clear it too, or a toggled-off incident keeps its corrective-action and
+        // certifier-notification columns while the flag says nothing happened.
+        data.corrective_action_taken = '';
+        data.corrective_action_date = '';
+        data.certifier_notified = '';
+        data.certifier_notification_date = '';
       }
       onSubmitHandler(data);
     };

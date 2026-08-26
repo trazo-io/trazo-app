@@ -1290,7 +1290,7 @@ StandardTextarea.displayName = 'StandardTextarea';
  * `hideStepper` is for decimal measurement fields (0.01 acres, Brix) where the spinner is a
  * misclick hazard rather than a convenience — the field keeps its numeric semantics either way.
  */
-type StandardNumberInputProps = Omit<NumberInputProps, 'children'> & {
+export type StandardNumberInputProps = Omit<NumberInputProps, 'children'> & {
   placeholder?: string;
   /** Drop the spinner where 0.01 steps are a misclick hazard, not a convenience. */
   hideStepper?: boolean;
@@ -1321,6 +1321,82 @@ export const StandardNumberInput = React.forwardRef<HTMLInputElement, StandardNu
   )
 );
 StandardNumberInput.displayName = 'StandardNumberInput';
+
+/**
+ * A numeric field that a decimal can actually be TYPED into.
+ *
+ * MEASURED 2026-08-25 with real keystrokes, before this existed:
+ *
+ *     farm "Total area (acres)"      typed 14.5 → stored 145      typed 86.9 → stored 869
+ *     parcel "Area (acres)"          typed 14.5 → stored 145      (…then ×0.404686 → 58.68 ha
+ *                                                                  instead of 5.87)
+ *
+ * Ten times the real area, silently, on the two fields that feed the certifier packet, the
+ * per-acre carbon maths and the consumer page.
+ *
+ * TWO causes, and the obvious one is not the one that matters:
+ *
+ *  1. Chakra derives `precision` from `step`, and `step` defaults to 1 — so precision is 0 and
+ *     the parser drops the ".".
+ *  2. The real cause: the field is controlled by a NUMBER. Every keystroke round-trips through
+ *     `onChange(number)` and returns as `value={86}`, so Chakra rewrites "86." back to "86"
+ *     before a digit can follow it. The parcel field PROVES this on its own — it already had
+ *     `precision={2}` and still turned 14.5 into 145.
+ *
+ * So the STRING is the state here and the number is derived from it. The parent keeps storing a
+ * number; it just stops being what drives the input.
+ *
+ * ⚠️ Use this for measurements (acres, gallons, tons, pH). `StandardNumberInput` stays correct
+ * for counts — plant counts, employee counts, years, intervals in whole days — where a decimal
+ * would be wrong and the number-controlled round-trip is harmless.
+ */
+interface StandardDecimalInputProps
+  extends Omit<StandardNumberInputProps, 'value' | 'onChange' | 'precision'> {
+  /** The stored value. `undefined` renders an empty field rather than a hard 0. */
+  value?: number;
+  /** Called with the parsed number, or `undefined` when the field is cleared. */
+  onChange: (next: number | undefined) => void;
+  /** Decimal places kept on blur. Defaults to 2. */
+  precision?: number;
+}
+
+export const StandardDecimalInput = ({
+  value,
+  onChange,
+  precision = 2,
+  ...props
+}: StandardDecimalInputProps) => {
+  const [text, setText] = React.useState(value == null ? '' : String(value));
+
+  /*
+   * Re-sync only when the parent's value and the text disagree NUMERICALLY. Comparing numbers
+   * rather than strings is what lets "86." survive: it parses to 86, matches the parent, and so
+   * is left alone instead of being rewritten to "86" mid-keystroke.
+   */
+  React.useEffect(() => {
+    const asNumber = text.trim() === '' ? undefined : Number(text);
+    const agrees =
+      value === asNumber || (value == null && asNumber == null) || Number.isNaN(asNumber as number);
+    if (!agrees) setText(value == null ? '' : String(value));
+    // Intentionally keyed on `value` alone: including `text` would re-run on every keystroke
+    // and undo the very thing this effect exists to avoid. (`react-hooks` is not configured in
+    // this project, so there is no rule to disable — the note is the whole record.)
+  }, [value]);
+
+  return (
+    <StandardNumberInput
+      {...props}
+      value={text}
+      precision={precision}
+      onChange={(valueAsString) => {
+        setText(valueAsString);
+        const parsed = parseFloat(valueAsString);
+        onChange(valueAsString.trim() === '' || Number.isNaN(parsed) ? undefined : parsed);
+      }}
+    />
+  );
+};
+StandardDecimalInput.displayName = 'StandardDecimalInput';
 
 export const StandardSelect = React.forwardRef<HTMLSelectElement, SelectProps>((props, ref) => (
   <Select
@@ -2007,12 +2083,7 @@ export const CollapsibleSection = ({
           */}
           <HStack spacing={2} minW={0} flex="1" flexWrap="wrap">
             {icon && (
-              <Icon
-                as={icon}
-                color={iconColor ?? SECTION_ICON_COLOR}
-                boxSize={5}
-                flexShrink={0}
-              />
+              <Icon as={icon} color={iconColor ?? SECTION_ICON_COLOR} boxSize={5} flexShrink={0} />
             )}
             <Text fontSize="md" fontWeight="bold" color="gray.700" minW={0}>
               {title}

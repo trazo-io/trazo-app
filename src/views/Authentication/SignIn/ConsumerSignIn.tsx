@@ -20,7 +20,11 @@ import {
 import { FaGoogle, FaFacebook, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import AuthFooter from 'components/Footer/AuthFooter';
-import { useLoginMutation, useSocialAuthMutation } from '../../../store/api/authApi';
+import {
+  useLoginMutation,
+  useResendVerificationEmailMutation,
+  useSocialAuthMutation
+} from '../../../store/api/authApi';
 import { useClaimScansMutation } from '../../../store/api/historyApi';
 import { login as loginAction } from '../../../store/features/authSlice';
 import { getPendingScanTokens, clearPendingScans } from '../../../utils/pendingScanStorage';
@@ -31,6 +35,12 @@ import {
   checkSocialAuthConfig
 } from '../../../utils/socialAuth';
 import { StandardInput, registerWithFocus } from 'components/Design/StandardComponents';
+import { AuthErrorAlert } from '../AuthErrorAlert';
+import {
+  resolveGenericAuthError,
+  resolveSignInError,
+  type AuthErrorResolution
+} from '../authErrors';
 
 // Motion components
 const MotionBox = motion(Box);
@@ -48,17 +58,39 @@ const ConsumerSignIn: React.FC = () => {
   const [login, { isLoading }] = useLoginMutation();
   const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
   const [claimScans] = useClaimScansMutation();
-  const [error, setError] = useState<string | null>(null);
+  /** A RESOLUTION, not a sentence — see `authErrors.ts`. */
+  const [error, setError] = useState<AuthErrorResolution | null>(null);
+  const [recoveryResendSent, setRecoveryResendSent] = useState(false);
+  const [resendEmail, { isLoading: isResending }] = useResendVerificationEmailMutation();
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors }
   } = useForm<SignInFormData>({
     defaultValues: { remember_me: true }
   });
+
+  /**
+   * See `AppSignIn.handleRecoveryResend` for why this is offered on every sign-in failure
+   * and why it reports "sent" unconditionally: the API answers "If an account exists…" for
+   * every address so that it cannot be used to enumerate accounts.
+   */
+  const handleRecoveryResend = async () => {
+    const address = (watch('email') || '').trim();
+    if (!address) return;
+
+    try {
+      await resendEmail({ email: address }).unwrap();
+    } catch (err) {
+      console.error('Recovery resend failed:', err);
+    } finally {
+      setRecoveryResendSent(true);
+    }
+  };
 
   const onSubmit = async (data: SignInFormData) => {
     console.log('🔍 ConsumerSignIn onSubmit called');
@@ -94,8 +126,8 @@ const ConsumerSignIn: React.FC = () => {
       // Default redirect to dashboard
       navigate('/admin/dashboard', { replace: true });
     } catch (err: any) {
-      const errorMessage = err?.data?.detail || 'Invalid email or password';
-      setError(errorMessage);
+      setError(resolveSignInError(err));
+      setRecoveryResendSent(false);
     }
   };
 
@@ -133,9 +165,12 @@ const ConsumerSignIn: React.FC = () => {
       // Default redirect to dashboard
       navigate('/admin/dashboard', { replace: true });
     } catch (err: any) {
-      const errorMessage = err?.data?.error || 'Social authentication failed';
-      setError(errorMessage);
-      handleSocialAuthError(new Error(errorMessage), authData.provider);
+      setError(resolveGenericAuthError(err, 'auth.error.social.failed'));
+      setRecoveryResendSent(false);
+      handleSocialAuthError(
+        new Error(err?.data?.error || 'Social authentication failed'),
+        authData.provider
+      );
     }
   };
 
@@ -362,19 +397,13 @@ const ConsumerSignIn: React.FC = () => {
 
             {/* Main Form */}
             <Box w="full">
-              {error && (
-                <Box
-                  bg="red.50"
-                  border="1px solid"
-                  borderColor="red.200"
-                  borderRadius="lg"
-                  p={4}
-                  mb={6}>
-                  <Text color="red.600" fontSize="sm">
-                    {error}
-                  </Text>
-                </Box>
-              )}
+              <AuthErrorAlert
+                resolution={error}
+                signInPath="/auth/signin"
+                onResendVerification={handleRecoveryResend}
+                isResending={isResending}
+                resendSent={recoveryResendSent}
+              />
 
               <form onSubmit={handleSubmit(onSubmit)}>
                 <VStack spacing={5}>

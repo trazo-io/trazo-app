@@ -454,6 +454,12 @@ interface ConsumerEventCardProps {
    * preview stops being a preview. Absent on the consumer page, where nothing renders.
    */
   producerAction?: React.ReactNode;
+  /**
+   * Producer-only visibility label ("On your buyer page" / "Certifier-only …"),
+   * rendered in the same muted strip as producerAction. Same contract: the consumer
+   * page never passes it, so the strip stays absent there.
+   */
+  producerVisibilityBadge?: React.ReactNode;
   productionBlockchain?: {
     tx_hash?: string;
     verified?: boolean;
@@ -472,6 +478,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   isExpanded: controlledExpanded,
   onToggleExpand,
   producerAction,
+  producerVisibilityBadge,
   productionBlockchain
 }) => {
   const intl = useIntl();
@@ -1573,11 +1580,14 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
           {/* Producer tooling. Muted, divided off, and present only when the caller passes it
               — the consumer page never does, so this whole strip is absent there. */}
-          {producerAction && (
+          {(producerAction || producerVisibilityBadge) && (
             <>
               <Divider />
               <Box px={{ base: 3, md: 4 }} py={2} bg={highlightBg}>
-                {producerAction}
+                <HStack justify="space-between" align="center" spacing={2}>
+                  <Box>{producerAction}</Box>
+                  {producerVisibilityBadge}
+                </HStack>
               </Box>
             </>
           )}

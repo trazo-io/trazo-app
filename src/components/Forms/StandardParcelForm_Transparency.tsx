@@ -37,7 +37,8 @@ import { MdInfo } from 'react-icons/md';
 import {
   StandardNumberInput,
   StandardInput,
-  StandardTextarea
+  StandardTextarea,
+  StandardDecimalInput
 } from 'components/Design/StandardComponents';
 
 // 🎯 CARBON TRANSPARENCY FOCUSED SCHEMA
@@ -582,16 +583,23 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                         const acres = field.value ? field.value / HECTARES_PER_ACRE : 0;
                         return (
                           <>
-                            <StandardNumberInput
-                              value={acres ? Number(acres.toFixed(2)) : 0}
-                              onChange={(_, num) =>
+                            {/*
+                              MEASURED 2026-08-25 with real keystrokes: typing "14.5" stored
+                              **145** acres — 58.68 ha instead of 5.87. This field already had
+                              `precision={2}`, which is exactly why it is the proof that
+                              precision is NOT the fix: the input was controlled by a number, so
+                              "14." was rewritten to "14" before the "5" could land. See the
+                              note on StandardDecimalInput.
+                            */}
+                            <StandardDecimalInput
+                              value={acres ? Number(acres.toFixed(2)) : undefined}
+                              onChange={(num) =>
                                 field.onChange(
-                                  num ? Number((num * HECTARES_PER_ACRE).toFixed(4)) : 0
+                                  num == null ? 0 : Number((num * HECTARES_PER_ACRE).toFixed(4))
                                 )
                               }
                               min={0}
                               step={1}
-                              precision={2}
                               // 44px touch target: this is a required field a farmer
                               // fills on a phone in the orchard.
                               placeholder={intl.formatMessage({

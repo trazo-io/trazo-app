@@ -81,6 +81,21 @@ export default function I18n(props: I18nProps) {
     };
   }, [currentLocale]);
 
+  /*
+   * `<html lang>` follows the locale. WCAG 3.1.1 (Level A).
+   *
+   * MEASURED 2026-08-25 on the sign-in page: `localStorage.trazo_locale` was `es-419` and
+   * `document.documentElement.lang` was still `"en"` — the value hard-coded in `index.html`,
+   * which nothing ever updated. A screen reader therefore read "Bienvenido de nuevo" through an
+   * ENGLISH voice engine, which is close to unintelligible; it also mis-hyphenates and tells
+   * translation tooling the page is English.
+   *
+   * This is the only place that knows the answer, so it is the only place that can set it.
+   */
+  useEffect(() => {
+    document.documentElement.lang = currentLocale;
+  }, [currentLocale]);
+
   return (
     <LocaleContext.Provider value={{ locale: currentLocale, setLocale }}>
       <IntlProvider

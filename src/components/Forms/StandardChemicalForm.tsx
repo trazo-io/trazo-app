@@ -32,7 +32,7 @@ import {
   ConcentrationFeedback,
   getFormatExamples
 } from './ConcentrationValidation';
-import { StandardNumberInput } from 'components/Design/StandardComponents';
+import { StandardNumberInput, StandardDecimalInput } from 'components/Design/StandardComponents';
 
 // Map form values to validation codes
 const mapChemicalTypeToCode = (formType: string): string => {
@@ -347,9 +347,14 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                     required
                     error={errors.volume?.message}
                     helpText="Total volume of product used (gallons)">
-                    <StandardNumberInput
-                      value={watch('volume') || 0}
-                      onChange={(_, num) => methods.setValue('volume', num || 0)}
+                    {/* Gallons and acres are MEASUREMENTS — a number-controlled
+                        NumberInput turns "2.5" into "25". See StandardDecimalInput. */}
+                    <StandardDecimalInput
+                      value={watch('volume')}
+                      onChange={(num) => methods.setValue('volume', num ?? 0)}
+                      min={0}
+                      step={1}
+                      hideStepper
                       borderRadius="lg"
                     />
                   </StandardField>
@@ -359,9 +364,14 @@ export const StandardChemicalForm: React.FC<StandardChemicalFormProps> = ({
                     required
                     error={errors.area?.message}
                     helpText="Acres treated with this application">
-                    <StandardNumberInput
-                      value={watch('area') || 0}
-                      onChange={(_, num) => methods.setValue('area', num || 0)}
+                    {/* Gallons and acres are MEASUREMENTS — a number-controlled
+                        NumberInput turns "2.5" into "25". See StandardDecimalInput. */}
+                    <StandardDecimalInput
+                      value={watch('area')}
+                      onChange={(num) => methods.setValue('area', num ?? 0)}
+                      min={0}
+                      step={1}
+                      hideStepper
                       borderRadius="lg"
                     />
                   </StandardField>

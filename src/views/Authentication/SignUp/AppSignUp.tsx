@@ -49,6 +49,12 @@ import {
   checkSocialAuthConfig
 } from '../../../utils/socialAuth';
 import { StandardInput } from 'components/Design/StandardComponents';
+import { AuthErrorAlert } from '../AuthErrorAlert';
+import {
+  resolveGenericAuthError,
+  resolveSignUpError,
+  type AuthErrorResolution
+} from '../authErrors';
 
 // No assets needed for minimalist design
 
@@ -72,7 +78,14 @@ const AppSignUp: React.FC = () => {
   const toast = useToast();
   const [signUp, { isLoading }] = useSignUpMutation();
   const [socialAuth, { isLoading: isSocialLoading }] = useSocialAuthMutation();
-  const [error, setError] = useState<string | null>(null);
+  /**
+   * A RESOLUTION, not a sentence. The screen used to hold `string | null` and fill it
+   * with whatever prose the server sent, which is how untranslated English reached a
+   * Spanish-locale farmer and how an error that named an action ('sign in instead')
+   * shipped with no control to perform it. `authErrors.ts` decides both.
+   */
+  const [error, setError] = useState<AuthErrorResolution | null>(null);
+  const [recoveryResendSent, setRecoveryResendSent] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -145,6 +158,32 @@ const AppSignUp: React.FC = () => {
         duration: 4000,
         isClosable: true
       });
+    }
+  };
+
+  /**
+   * The recovery offered INSIDE the error alert, for the case the alert exists to solve:
+   * this address already has an account that was never verified, so signing in is closed and
+   * a fresh verification link is the only way forward. Distinct from `handleResendEmail`
+   * above, which serves the post-signup verification panel and its 60s cooldown — this one
+   * fires from the form, before any account of this session exists, and reads the email out
+   * of the form rather than out of `verificationEmail`.
+   *
+   * ⚠️ It reports success unconditionally, and that is correct rather than sloppy: the
+   * endpoint answers "If an account exists, a verification email has been sent" for EVERY
+   * address, deliberately, so that it cannot be used to enumerate accounts. Surfacing a
+   * distinction the API refuses to make would undo that.
+   */
+  const handleRecoveryResend = async () => {
+    const address = (watch('email') || '').trim();
+    if (!address) return;
+
+    try {
+      await resendEmail({ email: address }).unwrap();
+    } catch (err) {
+      console.error('Recovery resend failed:', err);
+    } finally {
+      setRecoveryResendSent(true);
     }
   };
 
@@ -236,37 +275,11 @@ const AppSignUp: React.FC = () => {
     } catch (err: any) {
       console.error('Signup error:', err);
 
-      // Handle different types of errors with specific messaging
-      let errorMessage = 'Registration failed. Please try again.';
-
-      if (err?.data?.company_code) {
-        // Company code specific errors
-        const codeError = Array.isArray(err.data.company_code)
-          ? err.data.company_code[0]
-          : err.data.company_code;
-        errorMessage = codeError;
-      } else if (err?.data?.email) {
-        // Email specific errors
-        const emailError = Array.isArray(err.data.email) ? err.data.email[0] : err.data.email;
-        errorMessage = emailError;
-      } else if (err?.data?.detail) {
-        // General error detail
-        errorMessage = err.data.detail;
-      } else if (err?.data?.non_field_errors) {
-        // Non-field errors
-        const nonFieldError = Array.isArray(err.data.non_field_errors)
-          ? err.data.non_field_errors[0]
-          : err.data.non_field_errors;
-        errorMessage = nonFieldError;
-      } else if (err?.status === 429) {
-        // Rate limiting
-        errorMessage = 'Too many attempts. Please wait a moment before trying again.';
-      } else if (err?.status >= 500) {
-        // Server errors
-        errorMessage = 'Server error. Please try again in a few moments.';
-      }
-
-      setError(errorMessage);
+      // The whole ladder of `if (err.data.x)` branches that used to live here — each one
+      // ending at an English sentence, several of them the SERVER's English sentence — now
+      // lives in `authErrors.ts`, which every auth screen shares. See that file for why.
+      setError(resolveSignUpError(err));
+      setRecoveryResendSent(false);
     }
   };
 
@@ -308,9 +321,15 @@ const AppSignUp: React.FC = () => {
       // Don't redirect immediately - let Authenticated.jsx handle establishment redirect
       // This prevents race condition where company data isn't loaded yet
     } catch (err: any) {
-      const errorMessage = err?.data?.error || 'Social authentication failed';
-      setError(errorMessage);
-      handleSocialAuthError(new Error(errorMessage), authData.provider);
+      const resolution = resolveGenericAuthError(err, 'auth.error.social.failed');
+      setError(resolution);
+      setRecoveryResendSent(false);
+      // `handleSocialAuthError` logs and toasts for the provider SDK; it wants the raw
+      // reason, not the translated one shown on screen.
+      handleSocialAuthError(
+        new Error(err?.data?.error || 'Social authentication failed'),
+        authData.provider
+      );
     }
   };
 
@@ -392,7 +411,22 @@ const AppSignUp: React.FC = () => {
         flex="1"
         align="center"
         justify="center"
-        px={{ base: 4, sm: 6 }}
+        /*
+          `smd`, NOT `sm`. This app's `sm` breakpoint is **320px**, not Chakra's 480 — see
+          `theme/foundations/breakpoints.js`, and the rule in `.claude/rules/frontend.md`:
+          "Mobile-only (<480px): use `{{ base: 'x', smd: 'y' }}` NOT `{{ base: 'x', sm: 'y' }}`".
+
+          Written as `sm`, the `base` value applied only BELOW 320px — a width no phone in
+          service reports — so every real phone silently took the ROOMIER desktop value. MEASURED
+          at 375px before this change: 24px page gutter + 32px card padding = 57px of chrome per
+          side, leaving 261px of content, i.e. **70% of the screen**. The author's own `base`
+          numbers (16 + 24) were dead code.
+
+          With `smd` the phone gets what was always intended: 295px of content, 79% of the
+          screen — 34px more room, which is the difference between the sign-in row fitting on
+          one line and not.
+        */
+        px={{ base: 4, smd: 6 }}
         /* The navbar is in FLOW now (see layouts/Auth.tsx), so it occupies its own space —
            this used to reserve room under a fixed logo and would now double-count. */
         pt={{ base: 6, md: 10 }}
@@ -410,8 +444,8 @@ const AppSignUp: React.FC = () => {
           borderColor={cardBorder}
           borderRadius="2xl"
           boxShadow="0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -12px rgba(16, 24, 40, 0.12)"
-          px={{ base: 6, sm: 8 }}
-          py={{ base: 8, sm: 10 }}>
+          px={{ base: 6, smd: 8 }}
+          py={{ base: 8, smd: 10 }}>
           {/* 🚀 2025 UX Enhancement: Conditional rendering between signup form and verification */}
           {!showVerification ? (
             <>
@@ -455,19 +489,18 @@ const AppSignUp: React.FC = () => {
 
               {/* Main Form */}
               <Box w="full">
-                {error && (
-                  <Box
-                    bg="red.50"
-                    border="1px solid"
-                    borderColor="red.200"
-                    borderRadius="lg"
-                    p={4}
-                    mb={6}>
-                    <Text color="red.600" fontSize="sm">
-                      {error}
-                    </Text>
-                  </Box>
-                )}
+                {/*
+                  Was a hand-rolled red Box: `red.600` text on `red.50` measured 3.70:1 where
+                  14px owes 4.5, a `red.200` border measured 1.88:1 where a boundary owes 3.0,
+                  no icon, and no `role="alert"` — so nothing announced it. See AuthErrorAlert.
+                */}
+                <AuthErrorAlert
+                  resolution={error}
+                  signInPath="/auth/signin"
+                  onResendVerification={handleRecoveryResend}
+                  isResending={isResending}
+                  resendSent={recoveryResendSent}
+                />
 
                 {/* A bare <form> has NO implicit `form` role until it carries an accessible
                     name, so assistive tech announced this as an unlabelled group — on the
@@ -522,7 +555,7 @@ const AppSignUp: React.FC = () => {
                           borderRadius="lg"
                           fontSize={{ base: 'xs', sm: 'sm' }}
                           fontWeight="600"
-                          px={{ base: 3, sm: 6 }}
+                          px={{ base: 3, smd: 6 }}
                           py={2}
                           minH="44px"
                           onClick={() => setJoinExistingCompany(false)}
@@ -557,7 +590,7 @@ const AppSignUp: React.FC = () => {
                           borderRadius="lg"
                           fontSize={{ base: 'xs', sm: 'sm' }}
                           fontWeight="600"
-                          px={{ base: 3, sm: 6 }}
+                          px={{ base: 3, smd: 6 }}
                           py={2}
                           minH="44px"
                           onClick={() => setJoinExistingCompany(true)}
@@ -649,7 +682,9 @@ const AppSignUp: React.FC = () => {
                               e.target.value = cleanValue;
                               setValue('company_code', cleanValue, { shouldValidate: true });
                             }}
-                            isInvalid={!!errors.company_code}
+                            isInvalid={
+                              !!errors.company_code || error?.fieldsInvalid.includes('company_code')
+                            }
                           />
                           {/* Company Code Validation Feedback */}
                           {isValidatingCode && joinExistingCompany && (
@@ -858,7 +893,11 @@ const AppSignUp: React.FC = () => {
                         })}
                         onFocus={() => setFocusedField('email')}
                         onBlur={() => setFocusedField(null)}
-                        isInvalid={!!errors.email}
+                        // A SERVER rejection of this address is a rejection of this FIELD.
+                        // The banner used to be the only sign of it, so the one control the
+                        // farmer has to change sat there looking valid while the page said
+                        // something was wrong.
+                        isInvalid={!!errors.email || error?.fieldsInvalid.includes('email')}
                         leftElement={
                           <Icon
                             as={FaEnvelope}

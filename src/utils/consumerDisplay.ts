@@ -78,6 +78,60 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
 ];
 
 /**
+ * Production SUBTYPES the backend withholds from the anonymous payload as WHOLE EVENTS.
+ *
+ * Mirrors `_CONSUMER_WITHHELD_PRODUCTION_SUBTYPES` in
+ * trazo-back/history/services/claim_authority.py — the queryset filter in
+ * `PublicHistorySerializer.get_events` drops these before a shopper ever sees them
+ * (guard: history/tests/test_consumer_production_subtypes.py; the backend parity test
+ * regex-parses THIS object, so keep it a literal). The OWNER still receives them on
+ * their own ProfileProduction feed, which is exactly why this mirror exists: the
+ * producer preview must say "certifier-only, never on your buyer page" instead of
+ * dressing a withheld record up as a consumer card.
+ *
+ * Values are i18n message ids for the farmer-facing reason.
+ */
+export const CONSUMER_WITHHELD_PRODUCTION_SUBTYPES: Readonly<Record<string, string>> = {
+  BU: 'events.certifierOnly.reason.BU',
+  SS: 'events.certifierOnly.reason.SS',
+  EM: 'events.certifierOnly.reason.EM',
+  TP: 'events.certifierOnly.reason.TP'
+};
+
+/**
+ * Event-level visibility: does this event (as serialized on ANY surface) reach the
+ * buyer page at all? Production family only — every other family is published whole.
+ */
+export const isEventOnBuyerPage = (event: {
+  event_type?: number | string;
+  type?: string;
+  production_type?: string;
+}): boolean => {
+  const family = Number(event?.event_type);
+  if (family !== 1) return true;
+  const code = String(event?.production_type || event?.type || '')
+    .trim()
+    .toUpperCase();
+  return !(code in CONSUMER_WITHHELD_PRODUCTION_SUBTYPES);
+};
+
+/**
+ * The i18n id of the farmer-facing reason an event is certifier-only, or null when the
+ * event is on the buyer page.
+ */
+export const buyerPageWithheldReasonId = (event: {
+  event_type?: number | string;
+  type?: string;
+  production_type?: string;
+}): string | null => {
+  if (isEventOnBuyerPage(event)) return null;
+  const code = String(event?.production_type || event?.type || '')
+    .trim()
+    .toUpperCase();
+  return CONSUMER_WITHHELD_PRODUCTION_SUBTYPES[code] ?? null;
+};
+
+/**
  * Return a copy of `event` with everything a consumer never receives removed.
  *
  * Use on any surface that renders the consumer card from data that did NOT come through

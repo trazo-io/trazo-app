@@ -374,6 +374,20 @@ const App = () => {
               <Route path={config.protected.path} element={<AdminLayout />}>
                 {/* Routes accessible without subscription */}
                 <Route path="select-company" element={<SelectCompanyView />} />
+                {/* Account pages belong to the USER, not to a company. They stayed inside
+                    <SubscriptionRequired> until 2026-08-24, which meant a producer with no
+                    company (or a company between subscriptions) was bounced to /pricing when
+                    they opened their own profile — the second half of the select-company
+                    lock-out, alongside the onboarding redirect in Authenticated.jsx. */}
+                <Route path="profile" element={<ProfileUser />} />
+                <Route
+                  path="settings/change-password"
+                  element={
+                    <AdminGuard>
+                      <ChangePassword />
+                    </AdminGuard>
+                  }
+                />
                 <Route
                   path="pricing"
                   element={
@@ -411,7 +425,6 @@ const App = () => {
                       </NoSubscriptionRedirect>
                     }
                   />
-                  <Route path="profile" element={<ProfileUser />} />
                   <Route path="farm/add" element={<AddFarm />} />
                   <Route
                     path="farm/:farmId"
@@ -479,14 +492,6 @@ const App = () => {
                     element={
                       <AdminGuard>
                         <SettingsView />
-                      </AdminGuard>
-                    }
-                  />
-                  <Route
-                    path="settings/change-password"
-                    element={
-                      <AdminGuard>
-                        <ChangePassword />
                       </AdminGuard>
                     }
                   />

@@ -99,7 +99,9 @@ const formSchemaMainInfo = object({
       (val) => {
         if (!val || val.trim() === '') return true; // Optional field
         const num = parseFloat(val);
-        return !isNaN(num) && num >= 0 && num <= 168; // Flexible max for both minutes and hours
+        // One shared field, two units: HL enters MINUTES (widget max 1440), the hour
+        // variants cap at 720 — the old ceiling of 168 rejected values the widgets accept.
+        return !isNaN(num) && num >= 0 && num <= 1440;
       },
       { message: 'Duration must be a positive number' }
     )

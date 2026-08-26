@@ -18,6 +18,8 @@ import { motion } from 'framer-motion';
 import AuthFooter from 'components/Footer/AuthFooter';
 import { useConfirmPasswordResetMutation } from '../../../store/api/authApi';
 import { StandardInput, registerWithFocus } from 'components/Design/StandardComponents';
+import { AuthErrorAlert } from '../AuthErrorAlert';
+import { resolveGenericAuthError, type AuthErrorResolution } from '../authErrors';
 
 const MotionBox = motion(Box);
 
@@ -32,7 +34,8 @@ const ProducerResetPassword: React.FC = () => {
   const [confirmPasswordReset, { isLoading }] = useConfirmPasswordResetMutation();
   const [resetSuccess, setResetSuccess] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  /** A RESOLUTION, not a sentence — see `authErrors.ts`. */
+  const [error, setError] = useState<AuthErrorResolution | null>(null);
 
   // Get both token and email from URL search params (sent in reset link)
   const searchParams = new URLSearchParams(window.location.search);
@@ -53,15 +56,15 @@ const ProducerResetPassword: React.FC = () => {
     try {
       setError(null);
 
-      if (!token) {
-        setError('Reset token is missing from the link. Please request a new password reset.');
-        return;
-      }
-
-      if (!email) {
-        setError(
-          'Email parameter is missing from the reset link. Please request a new password reset.'
-        );
+      // A malformed link is a CLIENT-side finding, so it never has a server code; it is
+      // built by hand into the same shape everything else on this screen uses, so there is
+      // still exactly one thing the alert has to render.
+      if (!token || !email) {
+        setError({
+          messageId: 'auth.error.resetPassword.brokenLink',
+          action: { kind: 'none' },
+          fieldsInvalid: []
+        });
         return;
       }
 
@@ -81,9 +84,10 @@ const ProducerResetPassword: React.FC = () => {
         isClosable: true
       });
     } catch (error: any) {
-      const errorMessage =
-        error?.data?.detail || error?.data?.error || 'Something went wrong. Please try again.';
-      setError(errorMessage);
+      // ⚠️ `data.error` from `confirm_password_reset` is a LIST when Django's password
+      // validators reject the new password. Assigning it to a string state and rendering it
+      // ran the messages together with no separator; `resolveGenericAuthError` unwraps it.
+      setError(resolveGenericAuthError(error, 'auth.error.resetPassword.generic'));
     }
   };
 
@@ -106,7 +110,22 @@ const ProducerResetPassword: React.FC = () => {
         flex="1"
         align="center"
         justify="center"
-        px={{ base: 4, sm: 6 }}
+        /*
+          `smd`, NOT `sm`. This app's `sm` breakpoint is **320px**, not Chakra's 480 — see
+          `theme/foundations/breakpoints.js`, and the rule in `.claude/rules/frontend.md`:
+          "Mobile-only (<480px): use `{{ base: 'x', smd: 'y' }}` NOT `{{ base: 'x', sm: 'y' }}`".
+
+          Written as `sm`, the `base` value applied only BELOW 320px — a width no phone in
+          service reports — so every real phone silently took the ROOMIER desktop value. MEASURED
+          at 375px before this change: 24px page gutter + 32px card padding = 57px of chrome per
+          side, leaving 261px of content, i.e. **70% of the screen**. The author's own `base`
+          numbers (16 + 24) were dead code.
+
+          With `smd` the phone gets what was always intended: 295px of content, 79% of the
+          screen — 34px more room, which is the difference between the sign-in row fitting on
+          one line and not.
+        */
+        px={{ base: 4, smd: 6 }}
         pt={{ base: 6, md: 10 }}
         pb={{ base: 10, md: 16 }}>
         <MotionBox
@@ -120,8 +139,8 @@ const ProducerResetPassword: React.FC = () => {
           borderColor={cardBorder}
           borderRadius="2xl"
           boxShadow="0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -12px rgba(16, 24, 40, 0.12)"
-          px={{ base: 6, sm: 8 }}
-          py={{ base: 8, sm: 10 }}>
+          px={{ base: 6, smd: 8 }}
+          py={{ base: 8, smd: 10 }}>
           {resetSuccess ? (
             // Success State - Following exact Trazo design standards
             <VStack spacing={8} textAlign="center">
@@ -230,19 +249,7 @@ const ProducerResetPassword: React.FC = () => {
 
               {/* Main Form */}
               <Box w="full">
-                {error && (
-                  <Box
-                    bg="red.50"
-                    borderRadius="xl"
-                    p={4}
-                    mb={6}
-                    borderLeft="4px solid"
-                    borderLeftColor="red.500">
-                    <Text color="red.700" fontSize="sm" fontWeight="500">
-                      {error}
-                    </Text>
-                  </Box>
-                )}
+                <AuthErrorAlert resolution={error} />
 
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <VStack spacing={5}>

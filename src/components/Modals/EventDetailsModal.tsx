@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   VStack,
   HStack,
@@ -49,6 +49,8 @@ import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
 import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
 import { eventTypeAppearance } from 'config/events/eventTypeAppearance';
 import { eventTitle } from 'config/events/narrative';
+import { buyerPageWithheldReasonId } from 'utils/consumerDisplay';
+import { buyerVisibleFieldNames } from 'utils/buyerPageVisibility';
 import { useIntl } from 'react-intl';
 import type { IntlShape } from 'react-intl';
 // Event Field Registry (Phase 5 — feature-flagged)
@@ -596,10 +598,25 @@ const RegistryFieldRendererBridge: React.FC<{
     event: eventData
   });
 
+  // Which of these fields a shopper actually gets — same three authorities the real
+  // consumer pipeline uses (see utils/buyerPageVisibility). This modal is producer-only
+  // (its route sits behind auth), so the annotation never reaches a consumer surface.
+  const buyerVisibleFields = useMemo(
+    () => buyerVisibleFieldNames(eventType, subtype, eventData),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [eventType, subtype, event]
+  );
+
   if (!hasFields) return null;
 
   return (
-    <RegistryFieldRenderer fields={fields} variant="modal" cardBg={cardBg} textColor={textColor} />
+    <RegistryFieldRenderer
+      fields={fields}
+      variant="modal"
+      cardBg={cardBg}
+      textColor={textColor}
+      buyerVisibleFields={buyerVisibleFields}
+    />
   );
 };
 
@@ -929,6 +946,26 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     <>
       <ResponsiveModal isOpen={isOpen} onClose={onClose} size="4xl" header={header} footer={footer}>
         <VStack spacing={6} align="stretch">
+          {/* Buyer-page visibility, stated up front. Certifier-only subtypes (BU/SS/EM/TP)
+              never reach the anonymous payload; everything else publishes, with the
+              buyer-visible fields marked individually by the field renderer below. */}
+          {(() => {
+            const reasonId = buyerPageWithheldReasonId(event as Record<string, unknown>);
+            if (reasonId) {
+              return (
+                <StandardAlert
+                  status="info"
+                  title={intl.formatMessage({ id: 'events.certifierOnly.title' })}
+                  description={intl.formatMessage({ id: reasonId })}
+                />
+              );
+            }
+            return (
+              <Text fontSize="xs" color="gray.500">
+                {intl.formatMessage({ id: 'producer.event.buyerPageFieldsHint' })}
+              </Text>
+            );
+          })()}
           {/* Record value — the reason this row is worth keeping. Lifted OUT of the
                   Carbon Impact card, where it was nested: guidance about what a CERTIFIER
                   reads is not a footnote to an emissions number, and burying it there made

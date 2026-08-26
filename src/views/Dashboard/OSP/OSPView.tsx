@@ -182,38 +182,33 @@ function sectionStatus(narrative: string): SectionStatus {
   return { tier: 'complete', label: 'complete', badgeColor: 'green', charCount };
 }
 
-/** Starter-prompt text for the empty-OSP onboarding card. Farmer-first
- *  language followed by the CFR cite so the right anchor is first. */
-const SECTION_PROMPTS: Array<{ key: OSPSectionKey; prompt: string }> = [
-  {
-    key: 'practices_procedures',
-    prompt:
-      'Describe your production practices — crop rotation, tillage, cover crops, pest management, irrigation, buffer zones.'
-  },
-  {
-    key: 'inputs_list',
-    prompt:
-      'List every input you apply — fertilizers, pesticides, soil amendments. Add each one to the Approved inputs panel so drift detection has a target to match against.'
-  },
-  {
-    key: 'monitoring_plan',
-    prompt:
-      'How do you verify your practices and prevent fraud? SOE requires supplier verification and fraud-prevention procedures.'
-  },
-  {
-    key: 'recordkeeping_description',
-    prompt: 'What records do you keep and for how long? NOP requires 5 years minimum.'
-  },
-  {
-    key: 'commingling_barriers',
-    prompt:
-      'If you run organic + non-organic or share equipment with conventional neighbors, how do you prevent mixing and contamination?'
-  },
-  {
-    key: 'additional_certifier_info',
-    prompt:
-      'Anything specific to your certifier (CCOF, Oregon Tilth, QAI) that does not fit the sections above — land-use history, ICS details for co-ops, pollinator hedgerow plans, etc.'
-  }
+/**
+ * Day-1 cheat sheet for the six § 205.201(a) sections.
+ *
+ * ⛔ `promptId`, not a literal. This array is module scope, so it cannot call `intl` itself —
+ * exactly the shape that left six English paragraphs on a Spanish screen while every other
+ * string on the page was translated. The order is the ORDER OF THE REGULATION, and the
+ * per-card citation is rendered from `osp.section.cfr.<key>`, so the two cannot drift.
+ *
+ * ⚠️ VERIFIED 2026-08-25 against the current § 205.201 (65 FR 80637, as amended by the SOE
+ * rule at 88 FR 3622, 19 Jan 2023): paragraph (a) still has exactly SIX numbered items, and
+ * this key→subparagraph mapping is correct. SOE amended (a)(3) itself — it now also requires
+ * a description of how the operation verifies suppliers and the organic status of what it
+ * receives, and prevents organic fraud — which is why that prompt names it.
+ *
+ * ⛔ ICS is NOT an (a)(6) topic. A producer group's internal control system is § 205.201(c),
+ * its own paragraph with ten enumerated requirements — not "additional information deemed
+ * necessary by the certifying agent". This prompt used to offer "ICS details for co-ops" as
+ * an (a)(6) example; that pointed a co-op at the wrong paragraph. See
+ * `osp.empty.producerGroupNote` under the grid.
+ */
+const SECTION_PROMPTS: Array<{ key: OSPSectionKey; promptId: string }> = [
+  { key: 'practices_procedures', promptId: 'osp.empty.prompt.practices_procedures' },
+  { key: 'inputs_list', promptId: 'osp.empty.prompt.inputs_list' },
+  { key: 'monitoring_plan', promptId: 'osp.empty.prompt.monitoring_plan' },
+  { key: 'recordkeeping_description', promptId: 'osp.empty.prompt.recordkeeping_description' },
+  { key: 'commingling_barriers', promptId: 'osp.empty.prompt.commingling_barriers' },
+  { key: 'additional_certifier_info', promptId: 'osp.empty.prompt.additional_certifier_info' }
 ];
 
 /** Returns the localStorage key for a given OSP draft. Scoped per
@@ -627,7 +622,7 @@ const OSPView: React.FC = () => {
               {intl.formatMessage({ id: 'osp.empty.lengthHint' }, { floor: OSP_MATERIAL_FLOOR })}
             </Text>
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} mt={1}>
-              {SECTION_PROMPTS.map(({ key, prompt }) => (
+              {SECTION_PROMPTS.map(({ key, promptId }) => (
                 <Box key={key} p={3} borderWidth="1px" borderColor="gray.200" borderRadius="md">
                   <HStack mb={1} spacing={2}>
                     <Text fontWeight="semibold" fontSize="xs">
@@ -638,11 +633,22 @@ const OSPView: React.FC = () => {
                     </Text>
                   </HStack>
                   <Text fontSize="xs" color={subtextColor}>
-                    {prompt}
+                    {intl.formatMessage({ id: promptId })}
                   </Text>
                 </Box>
               ))}
             </SimpleGrid>
+
+            {/*
+              § 205.201 does not stop at (a). (b) allows substituting an equivalent plan filed
+              under another regulatory program, and (c) requires a producer group to describe
+              its internal control system in ten enumerated parts. "Six required sections" is
+              true of (a) and only of (a) — this line keeps the page from reading as though
+              those six are the whole of § 205.201.
+            */}
+            <Text fontSize="xs" color={subtextColor} pt={1}>
+              {intl.formatMessage({ id: 'osp.empty.producerGroupNote' })}
+            </Text>
           </VStack>
         </StandardCard>
       </StandardPage>

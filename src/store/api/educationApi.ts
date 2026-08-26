@@ -1,88 +1,17 @@
 import baseApi from './baseApi';
 
-// Education API Types
-export interface EducationCategory {
-  id: number;
-  name: string;
-  description: string;
-  icon: string;
-  display_order: number;
-  is_active: boolean;
-  subscription_level: 'basic' | 'standard' | 'corporate';
-  created_at: string;
-  updated_at: string;
-}
+/**
+ * Education API — the FAQ endpoint only.
+ *
+ * The category/course/lesson/dashboard/bookmark endpoints (and their types)
+ * were removed 2026-08-24 together with their backend viewsets: no component
+ * ever consumed them — the education topic pages are i18n strings bundled
+ * with the app — while the seeded course content still taught the pre-pivot
+ * transparency score and the withdrawn blockchain add-on. The only education
+ * surface the product serves is the farmer FAQ.
+ */
 
-export interface EducationCourse {
-  id: number;
-  title: string;
-  description: string;
-  category: EducationCategory;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  estimated_duration_minutes: number;
-  is_active: boolean;
-  subscription_level: 'basic' | 'standard' | 'corporate';
-  prerequisites: string[];
-  learning_objectives: string[];
-  created_at: string;
-  updated_at: string;
-  lessons_count: number;
-  user_progress?: UserEducationProgress;
-}
-
-export interface EducationLesson {
-  id: number;
-  course: number;
-  title: string;
-  content: string;
-  content_type: 'text' | 'video' | 'interactive' | 'quiz';
-  order: number;
-  estimated_duration_minutes: number;
-  video_url?: string;
-  quiz_data?: any;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-  user_progress?: UserEducationProgress;
-}
-
-export interface UserEducationProgress {
-  id: number;
-  user: number;
-  course?: number;
-  lesson?: number;
-  progress_percentage: number;
-  time_spent_minutes: number;
-  is_completed: boolean;
-  quiz_score?: number;
-  last_accessed: string;
-  completed_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface EducationCertificate {
-  id: number;
-  user: number;
-  course: EducationCourse;
-  issued_at: string;
-  certificate_id: string;
-  certificate_url: string;
-  is_valid: boolean;
-  created_at: string;
-}
-
-export interface EducationBookmark {
-  id: number;
-  user: number;
-  course?: EducationCourse;
-  lesson?: EducationLesson;
-  notes: string;
-  created_at: string;
-  updated_at: string;
-}
-
-/** Mirrors FarmerQuestion.QUESTION_CATEGORIES in trazo-back/education/models.py:180. */
+/** Mirrors FarmerQuestion.QUESTION_CATEGORIES in trazo-back/education/models.py. */
 export type FarmerQuestionCategory =
   | 'records'
   | 'quick_add'
@@ -95,15 +24,13 @@ export interface FarmerQuestionAnswer {
   question: string;
   answer: string;
   /**
-   * A slug, NOT the EducationCategory object. `FarmerQuestion.category` is a CharField with
-   * choices on the backend (education/models.py:190) and FarmerQuestionAnswerSerializer emits
-   * it directly; only EducationCourse.category is a real FK to EducationCategory.
+   * A slug, NOT an object. `FarmerQuestion.category` is a CharField with choices on the
+   * backend and FarmerQuestionAnswerSerializer emits it directly.
    *
-   * Typing it as the object made every correct use in EducationFAQ.tsx an error — indexing a
-   * label map by it, comparing it to the selected filter, using it as a React key — 7 of the
-   * errors that accumulated while the typecheck gate went unrun. The component was right and
-   * the type was wrong; had anyone "fixed" the component to satisfy this type, the chips
-   * would have rendered [object Object].
+   * Typing it as an object once made every correct use in EducationFAQ.tsx an error —
+   * indexing a label map by it, comparing it to the selected filter, using it as a React
+   * key. The component was right and the type was wrong; had anyone "fixed" the component
+   * to satisfy this type, the chips would have rendered [object Object].
    */
   category: FarmerQuestionCategory;
   is_featured: boolean;
@@ -113,77 +40,8 @@ export interface FarmerQuestionAnswer {
   updated_at: string;
 }
 
-export interface EducationDashboard {
-  total_courses: number;
-  completed_courses: number;
-  in_progress_courses: number;
-  total_certificates: number;
-  total_time_spent_minutes: number;
-  current_streak_days: number;
-  recent_courses: EducationCourse[];
-  recommended_courses: EducationCourse[];
-  certificates: EducationCertificate[];
-}
-
-// Education API endpoints
 export const educationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // Categories
-    getEducationCategories: builder.query<EducationCategory[], void>({
-      query: () => ({
-        url: 'education/categories/',
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['Education']
-    }),
-
-    // Courses
-    getEducationCourses: builder.query<EducationCourse[], { category_id?: number; level?: string }>(
-      {
-        query: (params) => ({
-          url: 'education/courses/',
-          method: 'GET',
-          params,
-          credentials: 'include'
-        }),
-        providesTags: ['Education']
-      }
-    ),
-
-    getEducationCourse: builder.query<EducationCourse, number>({
-      query: (courseId) => ({
-        url: `education/courses/${courseId}/`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['Education']
-    }),
-
-    // Lessons
-    getCourseLessons: builder.query<EducationLesson[], number>({
-      query: (courseId) => ({
-        url: `education/courses/${courseId}/lessons/`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['Education']
-    }),
-
-    getEducationLesson: builder.query<EducationLesson, number>({
-      query: (lessonId) => ({
-        url: `education/lessons/${lessonId}/`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['Education']
-    }),
-
-    // Note: These endpoints don't exist in the current backend
-    // Keeping them as placeholders for future implementation
-    // For now, they'll return mock data or handle gracefully
-
-    // FAQ (maps to /faqs/ endpoint in backend)
     getFarmerQuestions: builder.query<
       FarmerQuestionAnswer[],
       {
@@ -207,56 +65,10 @@ export const educationApi = baseApi.injectEndpoints({
         method: 'GET',
         credentials: 'include'
       }),
-      invalidatesTags: ['Education']
-    }),
-
-    // Dashboard endpoint (mock implementation for now since backend doesn't have this endpoint yet)
-    getEducationDashboard: builder.query<EducationDashboard, void>({
-      queryFn: async () => {
-        // Return mock data since the backend endpoint doesn't exist yet
-        // This would be replaced with actual API call when backend is implemented
-        return {
-          data: {
-            total_courses: 0,
-            completed_courses: 0,
-            in_progress_courses: 0,
-            total_certificates: 0,
-            total_time_spent_minutes: 0,
-            current_streak_days: 0,
-            recent_courses: [],
-            recommended_courses: [],
-            certificates: []
-          }
-        };
-      },
-      providesTags: ['Education']
-    }),
-
-    // User bookmarks endpoint (mock implementation for now since backend doesn't have this endpoint yet)
-    getUserBookmarks: builder.query<EducationBookmark[], void>({
-      queryFn: async () => {
-        // Return mock data since the backend endpoint doesn't exist yet
-        return {
-          data: []
-        };
-      },
       providesTags: ['Education']
     })
-
-    // Note: Search and Analytics endpoints don't exist in backend yet
   }),
   overrideExisting: false
 });
 
-// Export hooks (only for endpoints that actually exist)
-export const {
-  useGetEducationCategoriesQuery,
-  useGetEducationCoursesQuery,
-  useGetEducationCourseQuery,
-  useGetCourseLessonsQuery,
-  useGetEducationLessonQuery,
-  useGetFarmerQuestionsQuery,
-  useGetFarmerQuestionQuery,
-  useGetEducationDashboardQuery,
-  useGetUserBookmarksQuery
-} = educationApi;
+export const { useGetFarmerQuestionsQuery, useGetFarmerQuestionQuery } = educationApi;

@@ -2415,6 +2415,14 @@ const EducationTopicDetail: React.FC = () => {
                 <Text>
                   <strong>
                     {intl.formatMessage({
+                      id: 'education.detail.organicSystemPlan.planReviewLabel'
+                    })}
+                  </strong>{' '}
+                  {intl.formatMessage({ id: 'education.detail.organicSystemPlan.planReview' })}
+                </Text>
+                <Text>
+                  <strong>
+                    {intl.formatMessage({
                       id: 'education.detail.organicSystemPlan.packetsLabel'
                     })}
                   </strong>{' '}
@@ -2483,13 +2491,22 @@ const EducationTopicDetail: React.FC = () => {
                     {intl.formatMessage({ id: 'education.detail.renewalSeason.windowCcof' })}
                   </ListItem>
                   <ListItem>
+                    {intl.formatMessage({ id: 'education.detail.renewalSeason.windowOtco' })}
+                  </ListItem>
+                  <ListItem>
                     {intl.formatMessage({ id: 'education.detail.renewalSeason.windowPco' })}
                   </ListItem>
                   <ListItem>
-                    {intl.formatMessage({ id: 'education.detail.renewalSeason.windowMosa' })}
+                    {intl.formatMessage({ id: 'education.detail.renewalSeason.windowOeffa' })}
                   </ListItem>
                   <ListItem>
-                    {intl.formatMessage({ id: 'education.detail.renewalSeason.windowOtco' })}
+                    {intl.formatMessage({ id: 'education.detail.renewalSeason.windowNofaNy' })}
+                  </ListItem>
+                  <ListItem>
+                    {intl.formatMessage({ id: 'education.detail.renewalSeason.windowWsda' })}
+                  </ListItem>
+                  <ListItem>
+                    {intl.formatMessage({ id: 'education.detail.renewalSeason.windowMosa' })}
                   </ListItem>
                 </UnorderedList>
               </VStack>
@@ -2512,6 +2529,13 @@ const EducationTopicDetail: React.FC = () => {
                 {intl.formatMessage({ id: 'education.detail.renewalSeason.completeUpdate4' })}
               </ListItem>
             </UnorderedList>
+
+            <Heading size="md" color="gray.700">
+              {intl.formatMessage({ id: 'education.detail.renewalSeason.planReviewTitle' })}
+            </Heading>
+            <Text>
+              {intl.formatMessage({ id: 'education.detail.renewalSeason.planReviewDesc' })}
+            </Text>
 
             <Heading size="md" color="gray.700">
               {intl.formatMessage({ id: 'education.detail.renewalSeason.migratingTitle' })}

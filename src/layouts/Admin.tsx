@@ -157,12 +157,18 @@ export default function Dashboard(props: any) {
       path: currentPath
     });
 
-    // Skip checks for certain paths
+    // Skip checks for certain paths.
+    // /profile and /settings/change-password are the USER's own account, not the company's:
+    // a hard window.location redirect off them was the third independent way a producer with
+    // no company (or no subscription) was locked out of their profile. See the matching
+    // carve-outs in App.tsx and utils/protections/Authenticated.jsx (ACCOUNT_PATHS).
     if (
       currentPath.includes('/pricing') ||
       currentPath.includes('/stripe-success') ||
       currentPath.includes('/select-company') ||
-      currentPath.includes('/subscription')
+      currentPath.includes('/subscription') ||
+      currentPath.replace(/\/$/, '') === '/admin/dashboard/profile' ||
+      currentPath.replace(/\/$/, '') === '/admin/dashboard/settings/change-password'
     ) {
       return;
     }

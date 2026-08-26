@@ -149,6 +149,16 @@ const pestSchema = object({
       message: 'Select the preventive practice performed'
     });
   }
+  // A scouting summary's period asterisks were decorative — enforced by nothing, so a
+  // summary could save with no period at all.
+  if (data.type === 'SC' && data.is_summary === 'true') {
+    const req = (path, message) => {
+      if (!data[path]) ctx.addIssue({ code: 'custom', path: [path], message });
+    };
+    req('date_start', 'A summary needs the period start date');
+    req('date_end', 'A summary needs the period end date');
+    req('event_count', 'How many scouting trips does this summary cover?');
+  }
 });
 
 const PestManagementTab = forwardRef(
@@ -897,7 +907,6 @@ const PestManagementTab = forwardRef(
                     {/* Sprint 2 Epic 2.2: Flexible units - user can select hectares or acres */}
                     <StandardField
                       label="Area Covered"
-                      required
                       helpText="The area you covered. Your certifier checks this against the block acreage; it is one of the fields § 205.103(b)(2) completeness looks for.">
                       <HStack spacing={2}>
                         <StandardInput
