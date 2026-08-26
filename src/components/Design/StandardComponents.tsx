@@ -3,6 +3,7 @@ import React from 'react';
 import {
   Box,
   Container,
+  Stack,
   VStack,
   HStack,
   Heading,
@@ -204,7 +205,26 @@ export const StandardPage = ({
                     </Text>
                   )}
 
-                  {rightAction && <Box>{rightAction}</Box>}
+                  {/*
+                    `rightAction` is a SLOT, and it used to be a bare <Box> — which is fine for
+                    one button and silently wrong for two.
+
+                    MEASURED 2026-08-25 on the Documents page, the only page that passes two:
+                    "Subir" (94px) and "Exportar todos los registros (CSV)" (304px) rendered
+                    with a **0px gap** — touching — and left-aligned, so their right edges
+                    finished 210px apart against a page margin they were both supposed to meet.
+                    Neither was a decision: the stack came from a `data-tour` <Box> around the
+                    first button forcing a line break, and the ragged edge from block layout.
+
+                    A column Stack with `align="stretch"` fixes both and is a no-op for the
+                    seven pages that pass a single action: one child in an auto-width stack
+                    renders exactly as it did before.
+                  */}
+                  {rightAction && (
+                    <Stack spacing={3} align="stretch" w="full">
+                      {rightAction}
+                    </Stack>
+                  )}
                 </VStack>
               ) : (
                 // Desktop.
@@ -259,7 +279,12 @@ export const StandardPage = ({
                       )}
                     </VStack>
 
-                    {rightAction && <Box flexShrink={0}>{rightAction}</Box>}
+                    {rightAction && (
+                      // See the note on the mobile branch above.
+                      <Stack spacing={3} align="stretch" flexShrink={0}>
+                        {rightAction}
+                      </Stack>
+                    )}
                   </Flex>
                 </VStack>
               )}

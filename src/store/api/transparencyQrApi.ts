@@ -196,12 +196,27 @@ export interface BlockchainIntegrityResponse {
 const transparencyQrApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     // Complete transparency data with progressive loading structure
-    getTransparencyDetails: build.query<TransparencyResponse, string>({
-      query: (productionId) => ({
-        url: `/transparency/${productionId}/`,
-        method: 'GET'
-      }),
-      providesTags: (result, error, id) => [{ type: 'TransparencyDetails', id }]
+    getTransparencyDetails: build.query<
+      TransparencyResponse,
+      string | { productionId: string; reviewToken?: string | null }
+    >({
+      // Accepts a bare id (every pre-2026-08-25 caller) or {productionId, reviewToken}.
+      // `review_token` lets a BUYER review link open an unpublished, in-season
+      // production — the payload itself is unchanged (same claim-safe serializers);
+      // the token only changes which productions resolve.
+      query: (arg) => {
+        const productionId = typeof arg === 'string' ? arg : arg.productionId;
+        const reviewToken = typeof arg === 'string' ? null : arg.reviewToken;
+        return {
+          url: `/transparency/${productionId}/${
+            reviewToken ? `?review_token=${encodeURIComponent(reviewToken)}` : ''
+          }`,
+          method: 'GET'
+        };
+      },
+      providesTags: (result, error, arg) => [
+        { type: 'TransparencyDetails', id: typeof arg === 'string' ? arg : arg.productionId }
+      ]
     }),
 
     // Consumer education about transparency scoring

@@ -83,6 +83,7 @@ import {
   useCreateEventMutation,
   useGetEventQuery,
   useGetHistoryQuery,
+  useGetParcelHistoriesQuery,
   useUpdateEventMutation
 } from 'store/api/historyApi';
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
@@ -98,7 +99,12 @@ import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { VoiceEventCapture } from 'components/Events/VoiceEventCapture';
-import { mapVoiceDataToFieldValues, mapVoiceTypeToTemplate } from 'utils/voiceDataMapper';
+import {
+  mapVoiceDataToFieldValues,
+  mapVoiceTypeToTemplate,
+  gateVoiceOverridesToForm,
+  isRecognizedVoiceType
+} from 'utils/voiceDataMapper';
 import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
 import { nowLocalDateTimeInput } from 'utils/dateOnly';
 
@@ -238,6 +244,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // verb's production subtype (config/activityVerbs) seeds the form. With no preset,
   // create mode shows the same verb grid instead of backend categories.
   const verbFromUrl = searchParams.get('verb');
+  // "Log this again" (2026-08-25): copy the farmer's OWN previous record into a fresh
+  // create form — date reset to now, photos not copied. Suggest-and-confirm on their
+  // own words, so it does not touch the template->record red line.
+  const repeatIdFromUrl = searchParams.get('repeat');
+  const isRepeat = !isEdit && !!repeatIdFromUrl;
   const typePresetFromVerb = !isEdit && verbFromUrl != null && eventTypeFromUrl != null;
 
   // Season plan: "Log this" on a planned practice arrives with ?plan_item=&production=.
@@ -348,6 +359,53 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // eventFormData (local state) is the source of truth for form data.
   const currentCompany = useSelector((state) => state.company.currentCompany);
 
+  // Door check (2026-08-25): a parcel with NO open season used to dead-end in the
+  // backend's 400 ("No active production found") AFTER the farmer had filled the
+  // whole form. Ask at the door instead: start the next season, or log post-harvest
+  // work against the latest finished one — the finish DATE is the line
+  // (history/tests/test_post_harvest_continuation.py), so the backend accepts an
+  // explicit `history` with a later-dated record.
+  const { data: parcelHistories, isLoading: parcelHistoriesLoading } = useGetParcelHistoriesQuery(
+    { companyId: currentCompany?.id, farmId, parcelId },
+    { skip: isEdit || !parcelId || !farmId || !currentCompany?.id }
+  );
+  const openSeason = useMemo(
+    () => (parcelHistories || []).find((h) => !h.finish_date),
+    [parcelHistories]
+  );
+
+  const latestFinished = useMemo(() => {
+    const finished = (parcelHistories || []).filter((h) => h.finish_date);
+    // A plan link (?production=<id>) names its own season: when that season is
+    // finished, the door must offer THAT one, not whichever finished last —
+    // otherwise the plan item would bind to one season and the record to another.
+    const fromPlan = finished.find((h) => String(h.id) === String(planProductionIdFromUrl ?? ''));
+    if (fromPlan) return fromPlan;
+    finished.sort((a, b) => new Date(b.finish_date) - new Date(a.finish_date));
+    return finished[0] || null;
+  }, [parcelHistories, planProductionIdFromUrl]);
+  const [postHarvestTarget, setPostHarvestTarget] = useState(null);
+  // Crop context for the voice parser.
+  //
+  // `cropType` was the literal string "general" at the call site, on a platform with 33
+  // crops — so the backend's GPT prompt, which interpolates `Crop Type: {crop_type}` and
+  // treats it as required, was told nothing useful about what was growing. The season the
+  // record will actually be logged against knows: OptimizedHistoryListSerializer (the list
+  // action behind /parcels/<id>/histories/) exposes crop_type as {id, name, category, slug}.
+  // Post-harvest records target a finished season, so read that one when it is in play.
+  const voiceCropType = useMemo(() => {
+    const season = postHarvestTarget || openSeason;
+    return season?.crop_type?.name || season?.product?.name || 'general';
+  }, [postHarvestTarget, openSeason]);
+  // finish_date is a DATE-ONLY string; new Date("2026-01-15") parses as UTC midnight
+  // and prints the PREVIOUS day west of Greenwich. Build the local date explicitly.
+  const localDateLabel = (value) => {
+    if (!value) return '';
+    const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString();
+    return new Date(value).toLocaleDateString();
+  };
+
   // Step management
   const [activeStep, setActiveStep] = useState(0);
 
@@ -363,7 +421,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
     restoreDraft,
     discardDraft,
     clearDraft
-  } = useEventDraft({ parcelId, eventId, enabled: !isEdit });
+  } = useEventDraft({
+    parcelId,
+    eventId,
+    // Repeat mode prefills from the SOURCE record; letting a stale per-parcel
+    // draft restore over it (or the prefill silently overwrite a draft the
+    // farmer meant to finish) makes the form's contents unexplainable.
+    enabled: !isEdit && !isRepeat
+  });
 
   // D9 — write a draft whenever the form state or the chosen type changes. The hook debounces
   // and refuses to store an empty form, so this stays cheap and does not arm a restore banner
@@ -436,11 +501,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
     {
       companyId: currentCompany?.id,
       farmId: parseInt(farmId || '0'),
-      eventId: parseInt(eventId || '0'),
+      eventId: parseInt(eventId || repeatIdFromUrl || '0'),
       eventType: eventTypeFromUrl ? parseInt(eventTypeFromUrl) : undefined
     },
     {
-      skip: !isEdit || !currentCompany?.id || !eventId || !eventTypeFromUrl
+      skip:
+        !(isEdit || isRepeat) ||
+        !currentCompany?.id ||
+        !(eventId || repeatIdFromUrl) ||
+        !eventTypeFromUrl
     }
   );
 
@@ -690,10 +759,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const hasLoadedExistingData = useRef(false);
 
   useEffect(() => {
-    if (isEdit && existingEvent && !hasLoadedExistingData.current) {
-      const eventDate = existingEvent.date
-        ? new Date(existingEvent.date).toISOString().slice(0, 16)
-        : nowLocalDateTimeInput();
+    if ((isEdit || isRepeat) && existingEvent && !hasLoadedExistingData.current) {
+      // Repeat mode reuses the whole edit mapping below but stays a CREATE:
+      // the date resets to now and the album block is skipped further down.
+      const eventDate =
+        !isRepeat && existingEvent.date
+          ? new Date(existingEvent.date).toISOString().slice(0, 16)
+          : nowLocalDateTimeInput();
 
       // Map backend type to frontend code
       const mappedType = mapBackendTypeToFrontendCode(existingEvent.type);
@@ -703,6 +775,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // including weather-specific fields (water_deficit, highest_temperature, etc.)
       const initialData = {
         ...existingEvent, // Include all fields from backend (weather, production, etc.)
+        // Repeat mode copies VALUES, never identity or season binding: the source
+        // event's `id`/`history`/`album` riding into the create payload would bind
+        // the copy to the ORIGINAL (possibly closed) season and confuse the album
+        // dedup. Edit mode keeps them — same record, same season.
+        ...(isRepeat ? { id: undefined, history: undefined, album: undefined } : {}),
         date: eventDate,
         // Override type field with frontend code mapping
         // GENERAL EVENT FIX: General events store activity category in activity_type,
@@ -943,6 +1020,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // NOTE: We mark existing images with isExisting: true so we DON'T re-upload them on submit
       // NOTE: We store imageId so we can tell the backend which images to delete
       if (
+        !isRepeat &&
         existingEvent.album &&
         existingEvent.album.images &&
         existingEvent.album.images.length > 0
@@ -1065,19 +1143,142 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // confirms every field, and defaults they never said would be silent data
   // (suggest → confirm red line). Keys are backend field names, so they merge
   // straight into eventFormData and the tabs re-read them on remount.
-  const handleVoiceEventDetected = (eventData) => {
+  //
+  // 🔴 2026-08-25 — voice never routed the event type, and nothing downstream noticed.
+  //
+  // `mapVoiceTypeToTemplate` reads the type the AI HEARD; `activeEventType` and
+  // `eventFormData.type` stay on what the farmer picked at step 0. Only `templateId` was
+  // ever used, so a harvest utterance on an Irrigation form produced `yield_quantity` —
+  // which ProductionTab seeds for all 16 subtypes, emits with no subtype gate, and
+  // `cleanEventData` passes straight through to a real ProductionEvent column. The farmer
+  // saw "I understood: Harvest", saw no yield input (the registry gates it to HA/PH/PL),
+  // and saved a yield anyway.
+  //
+  // Two things close it. `gateVoiceOverridesToForm` asks the display registry which fields
+  // THIS subtype actually renders and drops the rest. And when the AI heard a different
+  // activity entirely, we do not quietly keep the leftovers — we say so and offer the
+  // switch. Suggest → confirm, the same line the season plan and the OSP §11 panel draw.
+  const applyVoiceData = (eventData, eventTypeId, subtypeCode) => {
     const mapping = mapVoiceTypeToTemplate(eventData.type);
     const result = mapVoiceDataToFieldValues(eventData, mapping.templateId);
     const detected = {};
     result.overriddenFields.forEach((key) => {
       detected[key] = result.values[key];
     });
-    setEventFormData((prev) => ({ ...prev, ...detected }));
-    setVoiceBanner({
-      transcript: eventData.original_transcript || eventData.description || '',
-      count: result.overriddenFields.length
-    });
+
+    const { kept, dropped } = gateVoiceOverridesToForm(detected, eventTypeId, subtypeCode);
+
+    return {
+      mapping,
+      kept,
+      detected,
+      banner: {
+        transcript: eventData.original_transcript || eventData.description || '',
+        count: Object.keys(kept).length,
+        droppedCount: dropped.length,
+        // Only a real cross-activity mismatch earns the switch offer. Two things disqualify
+        // one: the same event type with a different subtype (Harvest heard on a Pruning
+        // form) — the gate already handles that, nothing unseen is written either way — and
+        // an UNRECOGNISED utterance, which arrives as `general` and is ignorance, not a
+        // detection. See isRecognizedVoiceType: the eight newest production subtypes are in
+        // no prompt enum, so a correct Transport record would otherwise be told to switch.
+        suggestion:
+          isRecognizedVoiceType(eventData.type) && mapping.backendEventType !== eventTypeId
+            ? mapping
+            : null,
+        raw: eventData
+      }
+    };
+  };
+
+  // Voice values this form cannot show YET because the subtype is still unchosen.
+  //
+  // Production always knows its subtype by step 1 — every production tile in ACTIVITY_VERBS
+  // declares one. Soil, pest and business do not: their subtype is a select INSIDE the tab
+  // (SoilManagementTab opens on `type: formType || ''`), so voice can run before it exists.
+  // Gating against an unknown subtype drops every subtype-gated field — `area_covered` is
+  // `visibleForSubtypes` on nine of the ten soil subtypes — and then tells the farmer "this
+  // activity does not record it", which is false: it does, we just could not know it yet.
+  // So hold them, and re-gate the moment the subtype arrives.
+  const pendingVoiceRef = useRef(null);
+
+  const handleVoiceEventDetected = (eventData) => {
+    const subtype = eventFormData.type;
+    const { kept, banner, detected } = applyVoiceData(eventData, activeEventType, subtype);
+
+    // Only HOLD when the subtype was genuinely unknown. With a subtype in hand a dropped
+    // field really is unrecordable on this activity, and saying so is the honest answer.
+    const holding = !subtype && banner.droppedCount > 0;
+    // Pinned to the event type it was heard against. Changing the event type clears
+    // eventFormData.type, so without this a soil utterance held for a missing subtype would
+    // re-apply itself onto whatever type the farmer switched to next.
+    pendingVoiceRef.current = holding ? { detected, eventType: activeEventType } : null;
+
+    setEventFormData((prev) => ({ ...prev, ...kept }));
+    setVoiceBanner(holding ? { ...banner, droppedCount: 0 } : banner);
     setShowVoiceCapture(false);
+    setVoiceSeq((s) => s + 1);
+  };
+
+  // The subtype arrived (the farmer picked it in the tab). Re-gate what we held back and
+  // merge whatever this subtype really does render.
+  //
+  // Loop-safe by construction: the ref is cleared BEFORE any setState, and the deps are the
+  // event type and subtype — neither of which this effect writes.
+  useEffect(() => {
+    const pending = pendingVoiceRef.current;
+    const subtype = eventFormData.type;
+    if (!pending) return;
+    if (pending.eventType !== activeEventType) {
+      pendingVoiceRef.current = null; // different activity now — the held values do not apply
+      return;
+    }
+    if (!subtype) return;
+    pendingVoiceRef.current = null;
+
+    const { kept, dropped } = gateVoiceOverridesToForm(pending.detected, activeEventType, subtype);
+    // Never overwrite something the farmer typed in the meantime.
+    const fresh = {};
+    Object.entries(kept).forEach(([key, value]) => {
+      const current = eventFormData[key];
+      if (current === undefined || current === null || current === '') fresh[key] = value;
+    });
+
+    const added = Object.keys(fresh).length;
+    setVoiceBanner((prev) =>
+      prev ? { ...prev, count: prev.count + added, droppedCount: dropped.length } : prev
+    );
+    if (added === 0) return;
+    setEventFormData((prev) => ({ ...prev, ...fresh }));
+    // The tabs read initialValues on mount only — same remount the template accelerator uses.
+    setVoiceSeq((n) => n + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeEventType, eventFormData.type]);
+
+  // The farmer accepted the switch. Change the event type through the SAME handler a manual
+  // change uses (it clears type-specific fields — see handleEventTypeChange), seed the
+  // subtype the AI implied, then re-gate the utterance against the new form. Both
+  // setEventFormData calls are functional, so the clear lands before the merge.
+  const handleVoiceSwitchType = () => {
+    const pending = voiceBanner?.suggestion;
+    const raw = voiceBanner?.raw;
+    if (!pending || !raw) return;
+
+    const subtype = pending.backendSubtype || undefined;
+    handleEventTypeChange(pending.backendEventType);
+    // `activeVerbKey` titles the page and, for production, the subtype select is hidden
+    // (hideSubtypeSelect={!isEdit}) — leaving the old verb in place would title an Irrigation
+    // page over a Harvest form with no visible way to correct it. verbKey is asserted against
+    // ACTIVITY_VERBS in voiceRenderGate.test.ts.
+    setPickedVerbKey(pending.verbKey);
+    pendingVoiceRef.current = null;
+    const { kept, banner } = applyVoiceData(raw, pending.backendEventType, subtype);
+    setEventFormData((prev) => ({
+      ...prev,
+      ...(subtype ? { type: subtype } : {}),
+      ...kept
+    }));
+    setVoiceBanner({ ...banner, suggestion: null });
     setVoiceSeq((s) => s + 1);
   };
 
@@ -1682,6 +1883,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
         ...enhancedEventFormData,
         event_type: backendEventType, // Use corrected event_type mapping
         parcels: parcelId ? [parcelId] : [], // Add parcels array required by backend
+        // Post-harvest continuation: name the finished season explicitly so the
+        // backend logs against it instead of answering "no active production".
+        ...(postHarvestTarget ? { history: postHarvestTarget.id } : {}),
         // Add ONLY NEW album images from S3 URLs (prevents duplicates on edit)
         album_images: newImagesOnly,
         // 🚨 CRITICAL: Send IDs of images to delete (for edit mode)
@@ -1948,6 +2152,54 @@ function NewEvent({ isEdit = false, eventId = null }) {
     );
   }
 
+  if (!isEdit && !parcelHistoriesLoading && parcelHistories && !openSeason && !postHarvestTarget) {
+    // The door: no open season on this parcel. Two honest ways forward, asked
+    // BEFORE the form — mirrors the locked-record screen's alert+actions pattern.
+    return (
+      <StandardPage
+        title={intl.formatMessage({ id: 'events.noOpenSeason.title' })}
+        description={intl.formatMessage({ id: 'events.noOpenSeason.description' })}
+        showBackButton
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/`)}>
+        <StandardAlert
+          status="info"
+          description={
+            latestFinished
+              ? intl.formatMessage(
+                  { id: 'events.noOpenSeason.bodyWithFinished' },
+                  {
+                    name: latestFinished.name,
+                    date: localDateLabel(latestFinished.finish_date)
+                  }
+                )
+              : intl.formatMessage({ id: 'events.noOpenSeason.bodyNoFinished' })
+          }
+          mb={4}
+        />
+        <HStack spacing={3} flexWrap="wrap">
+          <StandardButton
+            size="sm"
+            onClick={() =>
+              navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/add`)
+            }>
+            {intl.formatMessage({ id: 'events.noOpenSeason.startCta' })}
+          </StandardButton>
+          {latestFinished && (
+            <StandardButton
+              size="sm"
+              variant="outline"
+              onClick={() => setPostHarvestTarget(latestFinished)}>
+              {intl.formatMessage(
+                { id: 'events.noOpenSeason.postHarvestCta' },
+                { name: latestFinished.name }
+              )}
+            </StandardButton>
+          )}
+        </HStack>
+      </StandardPage>
+    );
+  }
+
   return (
     <StandardPage
       title={
@@ -1991,6 +2243,35 @@ function NewEvent({ isEdit = false, eventId = null }) {
           </HStack>
         </Badge>
       }>
+      {isRepeat && existingEvent && (
+        <StandardAlert
+          status="info"
+          title={intl.formatMessage({ id: 'events.repeat.bannerTitle' })}
+          description={intl.formatMessage(
+            { id: 'events.repeat.bannerBody' },
+            {
+              date: existingEvent.date ? new Date(existingEvent.date).toLocaleDateString() : ''
+            }
+          )}
+          mb={4}
+        />
+      )}
+
+      {postHarvestTarget && (
+        <StandardAlert
+          status="info"
+          title={intl.formatMessage(
+            { id: 'events.postHarvest.bannerTitle' },
+            { name: postHarvestTarget.name }
+          )}
+          description={intl.formatMessage(
+            { id: 'events.postHarvest.bannerBody' },
+            { date: localDateLabel(postHarvestTarget.finish_date) }
+          )}
+          mb={4}
+        />
+      )}
+
       {/* 2025 UX: Enhanced loading state with progress indication */}
       {isEdit && isLoadingEvent && (
         <StandardCard>
@@ -2372,7 +2653,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                         <VoiceEventCapture
                           onEventDetected={handleVoiceEventDetected}
                           isActive={true}
-                          cropType="general"
+                          cropType={voiceCropType}
                           autoStart={true}
                           onClose={() => setShowVoiceCapture(false)}
                         />
@@ -2465,6 +2746,46 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   “{voiceBanner.transcript}”
                                 </Text>
                               ) : null}
+                              {/* Say out loud what was NOT written. A value the farmer spoke
+                                  and cannot see on the form has to be accounted for, or the
+                                  banner's own count becomes the misleading part. */}
+                              {voiceBanner.droppedCount > 0 && (
+                                <Text fontSize="xs" color="gray.700">
+                                  {intl.formatMessage(
+                                    { id: 'events.voice.notRecordedHere' },
+                                    { count: voiceBanner.droppedCount }
+                                  )}
+                                </Text>
+                              )}
+                              {voiceBanner.suggestion && (
+                                <VStack align="start" spacing={2} pt={1}>
+                                  <Text fontSize="xs" color="gray.700">
+                                    {intl.formatMessage(
+                                      { id: 'events.voice.typeMismatch' },
+                                      {
+                                        heard: intl.formatMessage({
+                                          id: `activities.verb.${voiceBanner.suggestion.verbKey}`
+                                        })
+                                      }
+                                    )}
+                                  </Text>
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    colorScheme="green"
+                                    minH="44px"
+                                    onClick={handleVoiceSwitchType}>
+                                    {intl.formatMessage(
+                                      { id: 'events.voice.switchTo' },
+                                      {
+                                        heard: intl.formatMessage({
+                                          id: `activities.verb.${voiceBanner.suggestion.verbKey}`
+                                        })
+                                      }
+                                    )}
+                                  </Button>
+                                </VStack>
+                              )}
                             </VStack>
                             <Button size="xs" variant="ghost" onClick={() => setVoiceBanner(null)}>
                               ✕

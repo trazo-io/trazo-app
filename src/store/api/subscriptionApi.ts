@@ -7,7 +7,6 @@ export interface PlanFeatures {
   max_parcels?: number;
   max_parcels_per_establishment?: number;
   max_productions_per_year: number;
-  monthly_scan_limit: number;
   storage_limit_gb: number;
   support_response_time: number;
   priority_support?: boolean;
@@ -15,8 +14,8 @@ export interface PlanFeatures {
   voice_recording?: boolean;
   ai_event_templates?: boolean;
   is_starter?: boolean;
-  trial_no_card_days?: number;
-  trial_with_card_days?: number;
+  // No trial keys, deliberately: Starter is free forever and no plan carries a
+  // trial (the phantom "14-day free trial" class — see backend migration 0015).
 }
 
 export interface Plan {

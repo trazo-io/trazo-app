@@ -14,7 +14,6 @@ import {
   ListItem,
   ListIcon,
   useToast,
-  Tooltip,
   Flex,
   useColorModeValue
 } from '@chakra-ui/react';
@@ -37,8 +36,13 @@ import {
   useGetVoiceConfigQuery,
   useGetDeepgramTokenMutation
 } from 'store/api/carbonApi';
-import { postProcessTranscript, mapVoiceTypeToTemplate } from 'utils/voiceDataMapper';
+import {
+  postProcessTranscript,
+  mapVoiceTypeToTemplate,
+  voiceActivityLabelKey
+} from 'utils/voiceDataMapper';
 import { useDeepgramTranscription } from 'hooks/useDeepgramTranscription';
+import { voiceLanguageFor } from 'config/voiceLanguages';
 
 // Pulse animation for recording state
 const pulseRing = keyframes`
@@ -71,11 +75,17 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const [lastProcessedTranscript, setLastProcessedTranscript] = useState('');
   const [parsedData, setParsedData] = useState<any | null>(null);
   const [processingStage, setProcessingStage] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState<'en-US' | 'es-ES' | 'pt-BR'>('en-US');
   const [processingTime, setProcessingTime] = useState(0);
   const hasAutoStarted = useRef(false);
   const toast = useToast();
   const intl = useIntl();
+
+  // The farmer's own locale drives speech recognition. This used to be
+  // `useState('en-US')` with a setter nothing ever called and a selector hidden behind
+  // "English only" for MVP — so a Spanish-speaking crew got English transcription while
+  // the landing site advertised "English and Spanish". See config/voiceLanguages.ts for
+  // why Deepgram and the Web Speech API need different codes for the same locale.
+  const voiceLanguage = voiceLanguageFor(intl.locale);
 
   // Determine which voice provider to use (deepgram vs web speech API)
   const { data: voiceConfig, isLoading: isLoadingConfig } = useGetVoiceConfigQuery();
@@ -111,7 +121,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cropType, selectedLanguage]
+    [cropType, voiceLanguage.deepgram]
   );
 
   const {
@@ -123,14 +133,13 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     stopListening: deepgramStop,
     resetTranscript: deepgramReset
   } = useDeepgramTranscription({
-    language: selectedLanguage,
+    language: voiceLanguage.deepgram,
     onTranscriptComplete: handleDeepgramComplete,
     fetchToken
   });
 
   // ── Unified state ──
   const listening = useDeepgram ? deepgramListening : webSpeechListening;
-  const currentTranscript = useDeepgram ? deepgramTranscript : webSpeechTranscript;
   const displayTranscript = useDeepgram
     ? deepgramInterim || deepgramTranscript
     : webSpeechTranscript;
@@ -140,8 +149,12 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const voiceUnavailable = !isLoadingConfig && !useDeepgram && !browserSupportsSpeechRecognition;
   // Microphone permission blocked: Web Speech exposes isMicrophoneAvailable;
   // Deepgram surfaces a getUserMedia denial through its error string.
+  // Was `deepgramError.toLowerCase().includes('microphone')` — a substring sniff over an
+  // English sentence, which silently decided whether the farmer saw a persistent Alert or a
+  // disappearing toast. The hook now returns a closed union of message ids, so this is an
+  // identity check that survives translation.
   const micBlocked = useDeepgram
-    ? Boolean(deepgramError && deepgramError.toLowerCase().includes('microphone'))
+    ? deepgramError === 'voice.microphoneBlocked'
     : !isMicrophoneAvailable;
 
   // Web Speech API: auto-process when speech stops
@@ -158,18 +171,19 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     }
   }, [webSpeechTranscript, webSpeechListening, useDeepgram]);
 
-  // Show Deepgram errors as toast (mic-permission errors get a persistent Alert instead)
+  // Show Deepgram errors as toast (mic-permission errors get a persistent Alert instead).
+  // `deepgramError` is a message id, so it is translated here rather than shown raw.
   useEffect(() => {
-    if (deepgramError && !deepgramError.toLowerCase().includes('microphone')) {
+    if (deepgramError && deepgramError !== 'voice.microphoneBlocked') {
       toast({
-        title: 'Voice Connection Error',
-        description: deepgramError,
+        title: intl.formatMessage({ id: 'voice.errorTitle' }),
+        description: intl.formatMessage({ id: deepgramError }),
         status: 'warning',
         duration: 5000,
         isClosable: true
       });
     }
-  }, [deepgramError, toast]);
+  }, [deepgramError, toast, intl]);
 
   // Auto-start recording when component mounts with autoStart=true
   // Waits for voiceConfig to load so the correct provider (Deepgram vs Web Speech) is used
@@ -203,7 +217,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       webSpeechResetTranscript();
       SpeechRecognition.startListening({
         continuous: false,
-        language: selectedLanguage
+        language: voiceLanguage.webSpeech
       });
     }
   };
@@ -219,24 +233,26 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const processVoiceInput = async (text: string) => {
     const startTime = Date.now();
     setIsProcessing(true);
-    setProcessingStage('Processing with AI...');
+    setProcessingStage(intl.formatMessage({ id: 'voice.stage.processing' }));
 
     try {
       // Post-process transcript to fix common speech-to-text errors (NPK, etc.)
       const processedText = postProcessTranscript(text);
 
-      setProcessingStage('Analyzing your voice input...');
+      setProcessingStage(intl.formatMessage({ id: 'voice.stage.analyzing' }));
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Use RTK Query mutation for voice processing
       const result = await processVoiceEventWithAI({
         transcript: processedText,
         crop_type: cropType,
-        language: selectedLanguage,
+        // The backend keys its GPT prompts by language FAMILY (prompt_key_for), so the raw
+        // app locale is what it wants — no third code to keep in step.
+        language: intl.locale,
         timestamp: new Date().toISOString()
       }).unwrap();
 
-      setProcessingStage('Organizing event details...');
+      setProcessingStage(intl.formatMessage({ id: 'voice.stage.organizing' }));
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const endTime = Date.now();
@@ -253,8 +269,8 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       console.error('AI voice processing error:', error);
 
       // Fallback to local processing if AI fails
-      setProcessingStage('Using fallback processing...');
-      const fallbackEvent = parseVoiceWithFallback(text, selectedLanguage);
+      setProcessingStage(intl.formatMessage({ id: 'voice.stage.fallback' }));
+      const fallbackEvent = parseVoiceWithFallback(text);
 
       const endTime = Date.now();
       fallbackEvent.processing_time = endTime - startTime;
@@ -295,7 +311,11 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   /**
    * Fallback local pattern matching when AI is unavailable.
    */
-  const parseVoiceWithFallback = (text: string, language: string): any => {
+  // Local last resort when the backend call fails. Deliberately takes NO language: the
+  // patterns below are English-only, so accepting a language argument and ignoring it would
+  // claim a capability that is not here. Spanish speech still transcribes (Deepgram es-419)
+  // and still parses server-side; only this offline keyword pass is English.
+  const parseVoiceWithFallback = (text: string): any => {
     const lowerText = text.toLowerCase();
 
     const patterns: Record<string, string[]> = {
@@ -412,14 +432,32 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         <HStack justify="space-between">
           <VStack align="start" spacing={1}>
             <Text fontSize="lg" fontWeight="bold" color="green.700">
-              Voice Event Capture
+              {intl.formatMessage({ id: 'voice.title' })}
             </Text>
             <Text fontSize="sm" color="gray.600">
-              Describe your farming activity and we'll fill in the form for you
+              {intl.formatMessage({ id: 'voice.subtitle' })}
             </Text>
           </VStack>
 
-          {/* Language selector hidden for MVP — English only */}
+          {/* No language selector by design: speech follows the app locale the farmer
+              already chose, so there is no second place to set the same fact.
+
+              A close control DOES belong here. `onClose` was declared as a prop and passed
+              by NewEvent, and nothing ever called it — so opening "Fill by voice" started
+              the microphone with no way back to the form short of leaving the page. */}
+          {onClose && (
+            <Button
+              size="sm"
+              variant="ghost"
+              minH="44px"
+              onClick={() => {
+                if (listening) stopListening();
+                onClose();
+              }}
+              aria-label={intl.formatMessage({ id: 'voice.close' })}>
+              {intl.formatMessage({ id: 'voice.close' })}
+            </Button>
+          )}
         </HStack>
       </CardHeader>
 
@@ -435,25 +473,25 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
           {/* Recording Button */}
           <HStack justify="center" spacing={4}>
-            <Tooltip label={listening ? 'Stop recording' : 'Start voice input'}>
-              <Button
-                leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
-                colorScheme="green"
-                onClick={listening ? stopListening : startListening}
-                isDisabled={
-                  !isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked
-                }
-                size="lg"
-                variant={listening ? 'solid' : 'outline'}
-                animation={listening ? `${pulseRing} 1.5s ease-out infinite` : undefined}
-                _hover={{
-                  transform: 'scale(1.05)',
-                  boxShadow: 'lg'
-                }}
-                transition="all 0.2s">
-                {listening ? 'Stop Recording' : 'Start Voice Input'}
-              </Button>
-            </Tooltip>
+            {/* No Tooltip: the button carries its own visible label, so a tooltip repeating
+                it is announced twice by a screen reader and tells a sighted user nothing. */}
+            <Button
+              leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
+              colorScheme="green"
+              onClick={listening ? stopListening : startListening}
+              isDisabled={
+                !isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked
+              }
+              size="lg"
+              variant={listening ? 'solid' : 'outline'}
+              animation={listening ? `${pulseRing} 1.5s ease-out infinite` : undefined}
+              _hover={{
+                transform: 'scale(1.05)',
+                boxShadow: 'lg'
+              }}
+              transition="all 0.2s">
+              {intl.formatMessage({ id: listening ? 'voice.stop' : 'voice.start' })}
+            </Button>
           </HStack>
 
           {/* Processing indicator */}
@@ -463,7 +501,9 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 <Progress value={75} colorScheme="green" size="sm" w="full" isIndeterminate />
                 <Text fontSize="sm" color="green.700">
                   {processingStage ||
-                    (isProcessingVoice ? 'Processing with AI...' : 'Processing...')}
+                    intl.formatMessage({
+                      id: isProcessingVoice ? 'voice.stage.processing' : 'voice.stage.generic'
+                    })}
                 </Text>
               </VStack>
             </Box>
@@ -482,16 +522,16 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     animation={`${pulseDot} 1.2s ease-in-out infinite`}
                   />
                   <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                    Listening...
+                    {intl.formatMessage({ id: 'voice.listening' })}
                   </Text>
                 </HStack>
                 {displayTranscript && (
                   <Text fontSize="sm" fontStyle="italic" color="gray.700">
-                    "{displayTranscript}"
+                    “{displayTranscript}”
                   </Text>
                 )}
                 <Text fontSize="xs" color="gray.500">
-                  Speak naturally — auto-stops when you pause
+                  {intl.formatMessage({ id: 'voice.speakNaturally' })}
                 </Text>
               </VStack>
             </Box>
@@ -510,7 +550,10 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                       boxSize={5}
                     />
                     <Text fontWeight="bold" color="green.700" fontSize="md">
-                      I understood: {mapping.displayName}
+                      {intl.formatMessage(
+                        { id: 'voice.understood' },
+                        { activity: intl.formatMessage({ id: voiceActivityLabelKey(mapping) }) }
+                      )}
                     </Text>
                   </HStack>
                   {processingTime > 0 && (
@@ -525,7 +568,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
                 {/* Original transcript */}
                 <Text fontSize="sm" color="gray.600" fontStyle="italic">
-                  "{parsedData.original_transcript || parsedData.description}"
+                  “{parsedData.original_transcript || parsedData.description}”
                 </Text>
 
                 {/* Detected values - inline badges */}
@@ -551,7 +594,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                         (product: string) =>
                           !(
                             parsedData.npk_ratio &&
-                            /^NPK[\s\d\-]*$/i.test(
+                            /^NPK[\s\d-]*$/i.test(
                               product.replace(/with values|values|fertilizer/gi, '').trim()
                             )
                           )
@@ -622,14 +665,19 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 {parsedData.confidence >= 70 ? (
                   <Box p={2} bg="green.100" borderRadius="md">
                     <Text fontSize="sm" color="green.700" textAlign="center">
-                      {parsedData.confidence}% confidence - Review and confirm the details below
+                      {intl.formatMessage(
+                        { id: 'voice.confidenceHigh' },
+                        { confidence: parsedData.confidence }
+                      )}
                     </Text>
                   </Box>
                 ) : (
                   <Box p={2} bg="yellow.100" borderRadius="md">
                     <Text fontSize="sm" color="yellow.700" textAlign="center">
-                      {parsedData.confidence}% confidence - Please review and complete the missing
-                      fields
+                      {intl.formatMessage(
+                        { id: 'voice.confidenceLow' },
+                        { confidence: parsedData.confidence }
+                      )}
                     </Text>
                   </Box>
                 )}
@@ -650,7 +698,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     colorScheme="gray"
                     onClick={handleTryAgain}
                     size="md">
-                    Try Again
+                    {intl.formatMessage({ id: 'voice.tryAgain' })}
                   </Button>
                 </HStack>
               </VStack>
@@ -661,20 +709,20 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
           {!listening && !isProcessing && !isProcessingVoice && !parsedData && (
             <Box p={3} bg="gray.50" borderRadius="md">
               <Text fontSize="sm" fontWeight="semibold" color="gray.700" mb={2}>
-                Try saying:
+                {intl.formatMessage({ id: 'voice.trySaying' })}
               </Text>
               <List spacing={1} fontSize="xs" color="gray.600">
                 <ListItem>
                   <ListIcon as={FaMicrophone} color="green.400" />
-                  "Applied fertilizer today, 200 pounds per acre, NPK 10-10-10"
+                  {intl.formatMessage({ id: 'voice.example.fertilizer' })}
                 </ListItem>
                 <ListItem>
                   <ListIcon as={FaMicrophone} color="green.400" />
-                  "Irrigated field for 6 hours with drip system"
+                  {intl.formatMessage({ id: 'voice.example.irrigation' })}
                 </ListItem>
                 <ListItem>
                   <ListIcon as={FaMicrophone} color="green.400" />
-                  "Used tractor for 3 hours, consumed 15 gallons of diesel"
+                  {intl.formatMessage({ id: 'voice.example.equipment' })}
                 </ListItem>
               </List>
             </Box>

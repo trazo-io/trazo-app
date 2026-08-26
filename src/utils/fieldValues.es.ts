@@ -15,6 +15,27 @@
 // Certified (ROC)) and free-text the farmer typed.
 
 export const FIELD_VALUE_ES: Record<string, string> = {
+  // Consumer organic-approval sentences (formatters.ts CONSUMER_ORGANIC_STATUS) —
+  // rendered on the consumer card; were showing in English on the Spanish page
+  // (2026-08-25 screenshot: "Yes — the grower recorded this as approved…").
+  'Yes — the grower recorded this as approved for organic use':
+    'Sí — el productor registró este insumo como aprobado para uso orgánico',
+  'Yes — the grower recorded their certifier approved this input':
+    'Sí — el productor registró que su certificador aprobó este insumo',
+  'Yes — the grower recorded this as organic-equivalent':
+    'Sí — el productor lo registró como equivalente a orgánico',
+  'Transitional — the farm is converting to organic':
+    'En transición — la finca se está convirtiendo a orgánico',
+  'The grower did not record an approval status':
+    'El productor no registró un estado de aprobación',
+
+  // Amendment-type label: only 'Elemental Sulfur' is new (added with the sulfur
+  // option, 2026-08-25). Every other AMENDMENT_TYPE_LABELS value already exists
+  // further down this file — a re-entry here is DEAD (object-literal last-wins)
+  // and can silently contradict the live translation (this block briefly shipped
+  // Limestone 'Caliza' vs the live 'Piedra caliza'). Grep before adding.
+  'Elemental Sulfur': 'Azufre elemental',
+
   'Yes, counts reached the level that calls for treatment':
     'Sí, los conteos alcanzaron el nivel que justifica un tratamiento',
   'No, counts stayed below the level that calls for treatment':

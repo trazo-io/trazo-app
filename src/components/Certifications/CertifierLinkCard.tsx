@@ -139,14 +139,16 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
   const { data: readiness } = useGetOperationReadinessQuery({ companyId, farmId });
   const isBlocked = readiness ? !readiness.ready : false;
 
-  const activeLinks = links.filter((l) => l.is_active);
+  // Buyer-audience links live on the Buyer page's own card; showing them here
+  // would imply a certifier can open them (they cannot — cross-audience is 404).
+  const activeLinks = links.filter((l) => l.is_active && l.audience !== 'buyer');
 
   const handleCreate = async () => {
     try {
       await createLink({
         companyId,
         farmId,
-        data: { label: label.trim(), ...periodDates(period) }
+        data: { label: label.trim(), audience: 'certifier', ...periodDates(period) }
       }).unwrap();
       setLabel('');
       toast({

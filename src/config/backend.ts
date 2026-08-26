@@ -203,6 +203,10 @@ export const DOCUMENTS_URL = (companyId: string, farmId: string, docId?: string 
     ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/documents/${docId}/`
     : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/documents/`;
 
+// Free raw-records export (record ownership — never plan-gated; 2026-08-25)
+export const RECORDS_EXPORT_URL = (companyId: string, farmId: string) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/records-export/`;
+
 export const DOCUMENT_DOWNLOAD_URL = (companyId: string, farmId: string, docId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/documents/${docId}/download/`;
 

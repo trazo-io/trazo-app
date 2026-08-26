@@ -781,6 +781,17 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     }
   },
   {
+    // The uploaded FILE behind the invoice number (2026-08-25). Modal-only:
+    // supplier-chain identity never reaches consumer surfaces, and the packet
+    // carries the file itself in receipts/.
+    name: 'receipt_document_title',
+    labelKey: 'events.receipt.label',
+    valueType: 'string',
+    surfaces: {
+      modal: 'secondary'
+    }
+  },
+  {
     // Manufacturer/supplier lot/batch # — required NOP purchase-record field (CCOF G8.0)
     // for input traceability + mass-balance. Producer/certifier-only; NO consumer_card
     // surface (mirrors supplier_name; backend also strips it from the public payload).

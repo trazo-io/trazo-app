@@ -95,6 +95,13 @@ export interface DriftWarning {
   osp_version: number;
   input_label: string;
   reason: string;
+  /**
+   * Stable machine code + params for localized rendering (2026-08-25). The
+   * English `reason` prose remains the packet text and the UI fallback for
+   * findings stamped by older detector builds (both fields absent there).
+   */
+  reason_code?: string | null;
+  reason_params?: Record<string, unknown> | null;
   resolved_via:
     | 'omri'
     | 'national_list'

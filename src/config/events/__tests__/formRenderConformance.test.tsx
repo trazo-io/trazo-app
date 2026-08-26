@@ -38,6 +38,7 @@ import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import baseApi from 'store/api/baseApi';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 // ProductionTab reads one RTK Query endpoint purely to populate an optional
@@ -104,8 +105,15 @@ const testStore = () =>
           // CA specifically because it is the ICP state and carries the strictest surface.
           establishments: [{ id: 1, name: 'Test Farm', state: 'CA', country: 'US' }]
         }
-      })
-    }
+      }),
+      // RTK Query slice + middleware: the receipt-file picker (2026-08-25) calls
+      // useGetFarmDocumentsQuery inside the soil and chemical tabs, and a store
+      // without the api middleware turns that into a thrown warning that fails
+      // every render this guard performs. Real reducer, real middleware — the
+      // query itself is skipped (no companyId resolvable here).
+      [baseApi.reducerPath]: baseApi.reducer
+    },
+    middleware: (getDefault) => getDefault().concat(baseApi.middleware)
   });
 
 /** Mount a form tab with a given subtype preselected and list the inputs it renders. */

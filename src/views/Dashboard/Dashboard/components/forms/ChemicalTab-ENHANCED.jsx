@@ -55,6 +55,7 @@ import {
 import { FormProvider, useForm, Controller, useFieldArray } from 'react-hook-form';
 import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
+import { ReceiptDocumentSelect } from 'components/Forms/ReceiptDocumentSelect';
 import InputVerifyHelper from 'components/Compliance/InputVerifyHelper';
 import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
@@ -163,6 +164,7 @@ const formSchemaMainInfo = object({
   supplier_name: string().optional(),
   purchase_date: string().optional(),
   purchase_invoice: string().optional(),
+  receipt_document: string().optional(),
   chemical_lot_number: string().optional(),
   // 🔴 2026-08-15 — the mass-balance input leg. The column, the serializer field, the
   // readiness check and the packet column all existed; the INPUT did not, so 289 of 289
@@ -1065,6 +1067,7 @@ const ChemicalTab = forwardRef(
         purchase_date,
         purchase_invoice,
         chemical_lot_number,
+        receipt_document,
         // Phase 3: Extract is_fertigation to include in extra_data
         is_fertigation,
         ...filteredData
@@ -1129,6 +1132,8 @@ const ChemicalTab = forwardRef(
         supplier_name: supplier_name || null,
         purchase_date: purchase_date || null, // DateField — empty string must be null
         purchase_invoice: purchase_invoice || null,
+        // FK — an empty select must post null, never "" (DRF PK field 400s on "")
+        receipt_document: receipt_document || null,
         chemical_lot_number: chemical_lot_number || null,
         // D2 — the structured NPK trio, fertilizer-only. Sent as null for other subtypes so
         // re-typing an FE event as a pesticide clears them rather than leaving a phantom
@@ -3104,6 +3109,17 @@ const ChemicalTab = forwardRef(
                         )}
                       />
                     </StandardField>
+
+                    {/* The FILE behind the number (2026-08-25): links an uploaded
+                        receipt so the packet carries it in receipts/ and the audit
+                        table marks the row "[receipt on file]". */}
+                    <Controller
+                      name="receipt_document"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <ReceiptDocumentSelect value={field.value} onChange={field.onChange} />
+                      )}
+                    />
 
                     <StandardField
                       label={intl.formatMessage({

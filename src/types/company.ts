@@ -107,7 +107,6 @@ export interface Plan {
     max_establishments: number;
     max_parcels: number;
     max_productions_per_year: number;
-    monthly_scan_limit: number;
     storage_limit_gb: number;
     [key: string]: any;
   };

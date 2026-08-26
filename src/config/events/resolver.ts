@@ -198,7 +198,17 @@ export function getFieldsForSurface(
     // extra_data, not as model columns. Without this fallback those never render on the card.
     const extraData =
       event.extra_data && typeof event.extra_data === 'object' ? event.extra_data : {};
-    const rawValue = event[field.name] ?? extraData[field.name];
+    // Soil lab results live inside the `test_results` JSON column, not as model
+    // columns. The PUBLIC serializer lifts them to top level for the consumer card,
+    // but the producer detail modal reads the per-type retrieve payload, where they
+    // are still nested — so the "full record" view showed LESS than the consumer
+    // card (2026-08-25: Laboratorio visible to shoppers, absent from the modal).
+    const testResults =
+      (event as Record<string, unknown>).test_results &&
+      typeof (event as Record<string, unknown>).test_results === 'object'
+        ? ((event as Record<string, unknown>).test_results as Record<string, unknown>)
+        : {};
+    const rawValue = event[field.name] ?? extraData[field.name] ?? testResults[field.name];
     let formattedValue: string | null;
 
     // For enum fields: use custom formatter if available, otherwise capitalize and humanize

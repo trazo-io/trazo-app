@@ -9,8 +9,10 @@
  * template-based form flow.
  */
 
-import { getQuickEventFields, getDefaultFieldValues } from '../config/quickEventFields';
+import { getDefaultFieldValues } from '../config/quickEventFields';
 import { PREFILLABLE_FIELDS } from '../config/events/templateAccelerators';
+import { getFieldNamesForSurface, getSubtypes } from '../config/events';
+import type { AnySubtype, EventTypeCode } from '../config/events';
 
 /** Structured amount from AI response */
 export interface StructuredAmount {
@@ -46,22 +48,19 @@ export interface VoiceTemplateMapping {
   templateId: string;
   backendEventType: number;
   backendSubtype: string;
-  displayName: string;
+  /**
+   * Key into `activities.verb.*` — the SAME label the verb picker shows, and the only
+   * name this map carries. It replaced a parallel `displayName` set of hardcoded English
+   * strings ('Fertilizer Application', 'Harvest', …) that could not be translated and had
+   * drifted from the verb tiles the farmer actually picks from. Keys live in ACTIVITY_VERBS.
+   */
+  verbKey: string;
 }
 
 /** Result from mapVoiceDataToFieldValues including which fields were AI-overridden */
 export interface VoiceFieldMappingResult {
   values: Record<string, unknown>;
   overriddenFields: string[];
-}
-
-/** Summary of what was detected vs defaulted */
-export interface VoiceSummary {
-  detected: string[];
-  defaulted: string[];
-  transcript: string;
-  confidence: number;
-  eventType: string;
 }
 
 // ============================================================================
@@ -139,105 +138,168 @@ export function postProcessTranscript(transcript: string): string {
 // ============================================================================
 
 /** Maps AI-detected voice event types to quickEventFields template IDs */
-const VOICE_TYPE_MAP: Record<string, VoiceTemplateMapping> = {
+export const VOICE_TYPE_MAP: Record<string, VoiceTemplateMapping> = {
   fertilization: {
     templateId: 'fertilization',
     backendEventType: 2,
     backendSubtype: 'FE',
-    displayName: 'Fertilizer Application'
+    verbKey: 'input_application'
   },
   fertilizer: {
     templateId: 'fertilization',
     backendEventType: 2,
     backendSubtype: 'FE',
-    displayName: 'Fertilizer Application'
+    verbKey: 'input_application'
   },
   irrigation: {
     templateId: 'irrigation',
     backendEventType: 1,
     backendSubtype: 'IR',
-    displayName: 'Irrigation'
+    verbKey: 'irrigation'
   },
   pesticide: {
     templateId: 'pest_control',
     backendEventType: 2,
     backendSubtype: 'PE',
-    displayName: 'Pesticide Application'
+    verbKey: 'input_application'
   },
   herbicide: {
     templateId: 'herbicide',
     backendEventType: 2,
     backendSubtype: 'HE',
-    displayName: 'Herbicide Application'
+    verbKey: 'input_application'
   },
   fungicide: {
     templateId: 'fungicide',
     backendEventType: 2,
     backendSubtype: 'FU',
-    displayName: 'Fungicide Application'
+    verbKey: 'input_application'
   },
   equipment: {
     templateId: 'cultivation',
     backendEventType: 1,
     backendSubtype: 'EM',
-    displayName: 'Equipment Maintenance'
+    verbKey: 'cleanout'
   },
   harvest: {
     templateId: 'harvest',
     backendEventType: 1,
     backendSubtype: 'HA',
-    displayName: 'Harvest'
+    verbKey: 'harvest'
   },
   planting: {
     templateId: 'planting',
     backendEventType: 1,
     backendSubtype: 'PL',
-    displayName: 'Planting'
+    verbKey: 'planting'
   },
   pruning: {
     templateId: 'pruning',
     backendEventType: 1,
     backendSubtype: 'PR',
-    displayName: 'Pruning'
+    verbKey: 'pruning'
   },
   transplanting: {
     templateId: 'transplanting',
     backendEventType: 1,
     backendSubtype: 'TR',
-    displayName: 'Transplanting'
+    verbKey: 'planting'
   },
   cultivation: {
     templateId: 'cultivation',
     backendEventType: 1,
     backendSubtype: 'CU',
-    displayName: 'Cultivation'
+    verbKey: 'field_work'
   },
   thinning: {
     templateId: 'thinning',
     backendEventType: 1,
     backendSubtype: 'TH',
-    displayName: 'Thinning'
+    verbKey: 'field_work'
   },
   soil_management: {
     templateId: 'cultivation',
     backendEventType: 5,
     backendSubtype: 'ST',
-    displayName: 'Soil Management'
+    verbKey: 'soil'
   },
   general: {
     templateId: 'general_documentation',
     backendEventType: 3,
     backendSubtype: '',
-    displayName: 'General Activity'
+    verbKey: 'other'
   }
 };
 
 /**
+ * Normalise a parser-supplied type to a key this map really OWNS.
+ *
+ * `in` and plain indexing both walk the prototype chain, and the parser's type string is
+ * not a trusted enum — it is whatever came back from GPT or a keyword fallback. MEASURED:
+ * `'constructor'` survived `normalized in VOICE_TYPE_MAP`, and
+ * `VOICE_TYPE_MAP['constructor']` returned the Object CONSTRUCTOR as the mapping, so
+ * `templateId`, `backendEventType` and `verbKey` all came back `undefined` — which would
+ * have rendered `activities.verb.undefined` as a raw message id. (`'toString'` slipped past
+ * only because `.toLowerCase()` turns it into `tostring`, which is nobody's prototype key —
+ * the kind of near-miss that makes a bug look absent.)
+ *
+ * Returns `''` for anything the map does not own itself, so callers can treat unknown and
+ * unrecognised as the same thing.
+ */
+function normalizeVoiceType(voiceType: string): string {
+  const normalized = (voiceType || '').toLowerCase().trim();
+  return Object.prototype.hasOwnProperty.call(VOICE_TYPE_MAP, normalized) ? normalized : '';
+}
+
+/**
  * Maps AI-detected voice type to a quickEventFields template ID.
+ *
+ * Unrecognised input falls through to `general`. That fallback is load-bearing and easy to
+ * misread — see `isRecognizedVoiceType`.
  */
 export function mapVoiceTypeToTemplate(voiceType: string): VoiceTemplateMapping {
-  const normalized = voiceType.toLowerCase().trim();
-  return VOICE_TYPE_MAP[normalized] || VOICE_TYPE_MAP['general'];
+  return VOICE_TYPE_MAP[normalizeVoiceType(voiceType)] || VOICE_TYPE_MAP['general'];
+}
+
+/**
+ * i18n key naming the activity the parser heard, for the "Sounds like: …" confirmation.
+ *
+ * Prefers the SUBTYPE label from the display registry over the verb-tile label, because the
+ * verb tile is deliberately broader than the activity: a fertilizer utterance maps to the
+ * `input_application` tile, whose label is "Input application" — true, but vaguer than what
+ * the farmer just said. The registry knows 'FE' is "Fertilizer Application", and knows it in
+ * both locales (pinned by registryLabelKeysExist.test.ts).
+ *
+ * This replaced a hardcoded English `displayName` on every map entry. Falls back to the verb
+ * label for entries with no subtype — `general` is the only one.
+ */
+export function voiceActivityLabelKey(mapping: VoiceTemplateMapping): string {
+  if (mapping.backendSubtype) {
+    const entry = getSubtypes(mapping.backendEventType as never)?.find(
+      (s) => s.code === mapping.backendSubtype
+    );
+    if (entry?.labelKey) return entry.labelKey;
+  }
+  return `activities.verb.${mapping.verbKey}`;
+}
+
+/**
+ * Did the parser actually RECOGNISE the activity, or fall through to `general`?
+ *
+ * `general` is both a real event type and this map's default, so it means "I did not
+ * recognise that" far more often than it means "the farmer logged a general activity".
+ * The backend's GPT prompt enumerates thirteen activities, and the production subtypes
+ * added since — PO, PH, CM, FP, MO, TP, BU, SS — are in none of them. So a farmer who
+ * correctly picks the Transport tile and says "hauled three bins to the huller" gets
+ * `general` back.
+ *
+ * Treating that as a detected activity made the mismatch notice offer to switch a farmer
+ * OFF the right form and onto "Other farm activities" — advice generated from ignorance.
+ * A fallback is not a suggestion, so the caller must not raise one from it.
+ */
+export function isRecognizedVoiceType(voiceType: string): boolean {
+  const normalized = normalizeVoiceType(voiceType);
+  return normalized !== 'general' && normalized !== '';
 }
 
 // ============================================================================
@@ -332,7 +394,6 @@ export function mapVoiceDataToFieldValues(
   const overrides: Record<string, unknown> = {};
 
   const amounts = extractStructuredAmounts(parsedData.detected_amounts);
-  const mapping = mapVoiceTypeToTemplate(parsedData.type);
 
   // ── Chemical events (fertilization, pest_control, herbicide, fungicide) ──
   if (['fertilization', 'pest_control', 'herbicide', 'fungicide'].includes(templateId)) {
@@ -494,50 +555,82 @@ export function mapVoiceDataToFieldValues(
 }
 
 // ============================================================================
-// VOICE SUMMARY GENERATION
+// RENDER GATE — what voice may write to the record
 // ============================================================================
 
 /**
- * Returns which fields were AI-detected vs which fell back to defaults.
- * Used for the UI banner showing what was understood.
+ * Unit fields have no entry of their own in the display registry: the form renders
+ * each one inline beside its value (there is no `groupWith` link for them), so
+ * `getFieldNamesForSurface` never returns `volume_unit`, `area_unit`, `fuel_unit`,
+ * `yield_unit` or `irrigation_depth_unit`.
+ *
+ * A gate that asked the registry about them directly would therefore strip every unit
+ * and leave bare numbers on the record — the exact failure `_public_unit` documents in
+ * `history/serializers.py`: "a guessed unit is an unverifiable claim about how much was
+ * applied to food". So a unit rides on its value: kept if and only if the value it
+ * measures is itself both detected and rendered.
+ *
+ * `area_unit` lists two owners because the mapper writes it beside `area_treated` on
+ * chemical events and `area_covered` on production ones.
  */
-export function generateVoiceSummary(
-  parsedData: ParsedVoiceData,
-  mappingResult: VoiceFieldMappingResult,
-  templateId: string
-): VoiceSummary {
-  const detected: string[] = [];
-  const defaulted: string[] = [];
-  const overriddenSet = new Set(mappingResult.overriddenFields);
+export const VOICE_UNIT_COMPANIONS: Readonly<Record<string, readonly string[]>> = {
+  volume_unit: ['volume_applied'],
+  area_unit: ['area_treated', 'area_covered'],
+  fuel_unit: ['fuel_consumed'],
+  yield_unit: ['yield_quantity'],
+  irrigation_depth_unit: ['irrigation_depth']
+};
 
-  const config = getQuickEventFields(templateId);
-  if (config) {
-    for (const field of config.quickFields) {
-      if (field.advanced) continue; // Skip advanced fields
+/** What survived the gate, and what the farmer must be told did not. */
+export interface VoiceGateResult {
+  kept: Record<string, unknown>;
+  dropped: string[];
+}
 
-      // Use the override list from the mapper — this correctly identifies
-      // AI-detected fields even when the detected value happens to match
-      // the default (e.g., user says "drip" and default is also "drip")
-      if (overriddenSet.has(field.name)) {
-        detected.push(field.name);
-      } else if (field.name in mappingResult.values) {
-        // Was `field.default !== undefined`, which asked the CONFIG whether a default exists
-        // rather than the RESULT whether one was applied. Since 2026-08-19 the merge drops
-        // every non-operational default (see PREFILLABLE_FIELDS), so the banner would have
-        // told the grower a compliance field like `organic_approved` was pre-filled for them
-        // when it deliberately was not — a claim about the record that is not true.
-        defaulted.push(field.name);
-      }
-    }
+/**
+ * Restrict voice-detected values to the fields the ACTIVE event type and subtype
+ * actually render on the form.
+ *
+ * 🔴 Why this exists. `mapVoiceTypeToTemplate` derives its template from what the AI
+ * HEARD, while the form stays on whatever the farmer picked at step 0 — voice never
+ * routes the event type. Nothing downstream closes that gap:
+ *
+ *   - every tab receives `initialValues={eventFormData}`, so a merged key becomes a
+ *     react-hook-form default whether or not that subtype renders an input for it
+ *     (`ProductionTab` seeds `yield_quantity` for all 16 subtypes);
+ *   - `ProductionTab`'s payload emits `yield_quantity`, `area_covered`, `fuel_consumed`
+ *     and `equipment_hours` with no subtype gate of their own;
+ *   - `cleanEventData` in NewEvent is a passthrough with no allowlist;
+ *   - `yield_quantity` / `yield_unit` / `area_covered` / `fuel_consumed` /
+ *     `equipment_hours` are real ProductionEvent columns.
+ *
+ * So speaking about a harvest while the form sat on Irrigation wrote a yield the farmer
+ * never saw onto an irrigation record. The display registry already knows the answer —
+ * `yield_quantity` is `visibleForSubtypes: ['HA', 'PH', 'PL']` — it was simply never
+ * consulted on the write path. It is now.
+ *
+ * Failure direction is deliberate: an under-declared registry drops a value the farmer
+ * then types in themselves. That costs a keystroke. The other direction writes an
+ * unseen measurement into a §205.103(b)(2) record, which costs the record.
+ */
+export function gateVoiceOverridesToForm(
+  overrides: Record<string, unknown>,
+  eventType: EventTypeCode,
+  subtype: AnySubtype | undefined
+): VoiceGateResult {
+  const rendered = new Set(getFieldNamesForSurface(eventType, subtype, 'form'));
+  const kept: Record<string, unknown> = {};
+  const dropped: string[] = [];
+
+  for (const [key, value] of Object.entries(overrides)) {
+    const owners = VOICE_UNIT_COMPANIONS[key];
+    const allowed = owners
+      ? owners.some((owner) => owner in overrides && rendered.has(owner))
+      : rendered.has(key);
+
+    if (allowed) kept[key] = value;
+    else dropped.push(key);
   }
 
-  const mapping = mapVoiceTypeToTemplate(parsedData.type);
-
-  return {
-    detected,
-    defaulted,
-    transcript: parsedData.original_transcript || parsedData.description,
-    confidence: parsedData.confidence,
-    eventType: mapping.displayName
-  };
+  return { kept, dropped };
 }

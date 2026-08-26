@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getKeytermsForLanguage } from 'config/agriculturalKeyterms';
 
 interface UseDeepgramTranscriptionOptions {
@@ -8,11 +8,24 @@ interface UseDeepgramTranscriptionOptions {
   fetchToken: () => Promise<string>;
 }
 
+/**
+ * Errors this hook can surface, as i18n message ids.
+ *
+ * A closed union, not free prose: the caller both TRANSLATES these and branches on them
+ * (a blocked microphone gets a persistent Alert, everything else a toast). When they were
+ * English sentences the caller had to sniff `.includes('microphone')` to tell them apart,
+ * which is a contract no compiler checks and no reader can see.
+ */
+export type DeepgramErrorId =
+  | 'voice.tokenFailed'
+  | 'voice.microphoneBlocked'
+  | 'voice.connectionFailed';
+
 interface UseDeepgramTranscriptionReturn {
   isListening: boolean;
   transcript: string;
   interimTranscript: string;
-  error: string | null;
+  error: DeepgramErrorId | null;
   startListening: () => Promise<void>;
   stopListening: () => void;
   resetTranscript: () => void;
@@ -37,7 +50,7 @@ export function useDeepgramTranscription({
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<DeepgramErrorId | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -98,7 +111,7 @@ export function useDeepgramTranscription({
     try {
       token = await fetchToken();
     } catch {
-      setError('Failed to get Deepgram token. Please try again.');
+      setError('voice.tokenFailed');
       return;
     }
 
@@ -109,7 +122,7 @@ export function useDeepgramTranscription({
         audio: { echoCancellation: true, noiseSuppression: true }
       });
     } catch {
-      setError('Microphone access denied. Please allow microphone permissions.');
+      setError('voice.microphoneBlocked');
       return;
     }
     streamRef.current = stream;
@@ -197,7 +210,11 @@ export function useDeepgramTranscription({
     };
 
     ws.onerror = () => {
-      setError('Connection to Deepgram failed. Falling back to browser speech recognition.');
+      // Said "Falling back to browser speech recognition" until 2026-08-25, and then did
+      // not: this handler tears the socket down and stops. Nothing re-routes to the Web
+      // Speech API, so the farmer waited for a recovery that was never coming. The caller
+      // surfaces this string verbatim in a toast, so it has to describe what happened.
+      setError('voice.connectionFailed');
       cleanup();
       setIsListening(false);
     };
@@ -210,6 +227,16 @@ export function useDeepgramTranscription({
       }
     };
   }, [language, fetchToken, onInterimTranscript, stopListening, cleanup]);
+
+  // Release the microphone and the socket if this unmounts mid-recording.
+  //
+  // `cleanup` was only ever reached through stopListening / onerror / onclose, so a component
+  // that went away while listening — the wizard step changing, a navigation, the farmer
+  // closing the panel — left the MediaStream tracks live and the Deepgram socket open. The
+  // browser keeps showing the recording indicator, and audio keeps being billed and streamed
+  // from a page nobody is on. `cleanup` is a useCallback with no deps, so this runs on
+  // unmount and not between renders.
+  useEffect(() => cleanup, [cleanup]);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');

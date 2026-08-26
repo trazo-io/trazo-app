@@ -50,6 +50,9 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   'seed_purchase_date',
   'seed_purchase_invoice',
   'seed_search_attempts',
+  // receipt FILE link (2026-08-25) — supplier-chain, like the invoice number
+  'receipt_document',
+  'receipt_document_title',
   // Worker names and internal operator references
   'cleaned_by',
   'cleaning_protocol_reference',

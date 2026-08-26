@@ -63,8 +63,10 @@ describe('mobile horizontal rhythm', () => {
     const std = codeOf('components/Design/StandardComponents.tsx');
     // The value every other page is being held to. Read from the source rather than hard-coded,
     // so changing the standard moves the pages with it instead of turning this red.
-    expect(std, 'StandardPage no longer declares a page gutter — this would pass vacuously')
-      .toMatch(/px=\{\{ base: 3, md: 4 \}\}/);
+    expect(
+      std,
+      'StandardPage no longer declares a page gutter — this would pass vacuously'
+    ).toMatch(/px=\{\{ base: 3, md: 4 \}\}/);
 
     for (const rel of ['views/Dashboard/Dashboard/index.tsx', 'views/Dashboard/Parcel/index.jsx']) {
       const code = codeOf(rel);
@@ -126,6 +128,36 @@ describe('mobile horizontal rhythm', () => {
     }
   });
 
+  it('lays out the page header action slot', () => {
+    /*
+     * `rightAction` is a SLOT. Seven pages pass one control; Documents passes two, and until
+     * 2026-08-25 the slot was a bare <Box>, so block layout applied.
+     *
+     * MEASURED at 1440 on the Documents header: "Subir" (94px) and "Exportar todos los
+     * registros (CSV)" (304px) rendered with a **0px gap** — touching — and left-aligned, so
+     * their right edges finished 210px apart against a page margin they were both meant to
+     * meet. The stack itself was an accident: a `data-tour` <Box> around the first button
+     * forced the line break.
+     *
+     * A column Stack with `align="stretch"` gaps them and squares the edges, and is a no-op
+     * for a single action (VERIFIED on Activities: 191px, right edge 1394, unchanged).
+     */
+    const code = codeOf('components/Design/StandardComponents.tsx');
+    const slots = [...code.matchAll(/\{rightAction && \(/g)];
+    expect(slots.length, 'StandardPage should render rightAction on both branches').toBe(2);
+    for (const m of slots) {
+      const region = code.slice(m.index!, m.index! + 260);
+      expect(region, 'the slot must be a Stack, not a bare Box — two actions get no gap').toMatch(
+        /<Stack[^>]*spacing=\{3\}/
+      );
+      expect(
+        region,
+        'align="stretch" is what squares the right edges when a page passes two actions'
+      ).toMatch(/align="stretch"/);
+    }
+    expect(code, 'a bare rightAction Box is back').not.toMatch(/\{rightAction && <Box/);
+  });
+
   it('keeps StandardCard header roles the right way round', () => {
     /*
      * MEASURED at 768px on the parcel profile. The title column carried `flexShrink={0}`, so it
@@ -138,8 +170,10 @@ describe('mobile horizontal rhythm', () => {
      */
     const code = codeOf('components/Design/StandardComponents.tsx');
     const i = code.indexOf('{headerAction}');
-    expect(i, 'StandardCard no longer renders headerAction — this would pass vacuously')
-      .toBeGreaterThan(-1);
+    expect(
+      i,
+      'StandardCard no longer renders headerAction — this would pass vacuously'
+    ).toBeGreaterThan(-1);
     const vstackStart = code.lastIndexOf('<VStack', i);
     const vstack = openingTagAt(code, vstackStart, 'VStack');
     expect(
@@ -189,8 +223,10 @@ describe('mobile horizontal rhythm', () => {
     expect(i, 'the affidavit card moved — this would pass vacuously').toBeGreaterThan(-1);
     const tag = openingTagAt(code, i, 'StandardCard');
     for (const prop of ['title', 'titleIcon', 'headerAction']) {
-      expect(tag, `the affidavit card must pass \`${prop}\` rather than hand-rolling a header`)
-        .toMatch(new RegExp(`(?<![a-zA-Z])${prop}=`));
+      expect(
+        tag,
+        `the affidavit card must pass \`${prop}\` rather than hand-rolling a header`
+      ).toMatch(new RegExp(`(?<![a-zA-Z])${prop}=`));
     }
     // The shape that broke: a space-between row holding the title, inside the card body.
     const body = code.slice(i);

@@ -281,6 +281,10 @@ function ProductDetail() {
 
   // Use the verified production ID for API calls
   const productionId = verifiedProductionId;
+  // Buyer review link (2026-08-25): `?rt=` carries the token of a producer-minted
+  // buyer link. It widens WHICH productions this page can open (in-season,
+  // unpublished — consented by the farmer when minting), never WHAT is shown.
+  const reviewToken = proofSearchParams.get('rt');
 
   // Get authentication state from Redux store (same as Authenticated component)
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
@@ -321,11 +325,14 @@ function ProductDetail() {
     error: completeError,
     isLoading: isCompleteLoading,
     refetch: refetchTransparency
-  } = useGetTransparencyDetailsQuery(productionId || '', {
-    skip: !productionId,
-    refetchOnMountOrArgChange: false,
-    refetchOnFocus: false
-  });
+  } = useGetTransparencyDetailsQuery(
+    { productionId: productionId || '', reviewToken },
+    {
+      skip: !productionId,
+      refetchOnMountOrArgChange: false,
+      refetchOnFocus: false
+    }
+  );
 
   // Blockchain integrity check — runs whenever production is finalized (has finalization_hash)
   // OR has blockchain data (tx_hash). This closes the gap between finalization and
@@ -400,7 +407,10 @@ function ProductDetail() {
   );
 
   useEffect(() => {
-    if (!productionId || pageViewRecorded) return;
+    // A buyer following a review link is doing DILIGENCE, not shopping: their
+    // open is logged server-side to the link's access log, and counting it as a
+    // QR scan would inflate the engagement numbers the farmer reads.
+    if (!productionId || pageViewRecorded || reviewToken) return;
 
     setPageViewRecorded(true);
 
@@ -447,6 +457,7 @@ function ProductDetail() {
   }, [
     productionId,
     pageViewRecorded,
+    reviewToken,
     createScan,
     pageLoadTime,
     isAuthenticated,

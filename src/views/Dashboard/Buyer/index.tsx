@@ -52,6 +52,7 @@ import {
 } from 'store/api/buyerPageApi';
 import type { BuyerDocRequestRow } from 'store/api/buyerPageApi';
 import { useGetFarmScansPaginatedQuery } from 'store/api/historyApi';
+import BuyerReviewLinkCard from 'components/Certifications/BuyerReviewLinkCard';
 import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
 
@@ -388,6 +389,14 @@ const BuyerPage = () => {
               </VStack>
             </SimpleGrid>
           </StandardCard>
+        </Box>
+
+        {/* The in-season output (2026-08-25): the QR page serves the SHOPPER after
+            harvest; a wholesale buyer decides before it. The buyer review link is the
+            producer-consented way to open in-season records — same claim-safe policy
+            as the public page, private token, revocable, opens logged. */}
+        <Box data-tour="buyer-review-link" w="full">
+          <BuyerReviewLinkCard companyId={companyId} farmId={farmId || ''} canWrite={canWrite} />
         </Box>
 
         <Box data-tour="buyer-productions" w="full">

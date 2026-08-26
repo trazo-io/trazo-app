@@ -813,6 +813,27 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           {intl.formatMessage({ id: 'app.close' })}
         </Button>
 
+        {/* "Log this again" (2026-08-25): repetition is the real logging cost — a
+            spray program is the same record eight times with a new date. Opens the
+            add form prefilled from THIS record (date reset, photos not copied).
+            Works from finished seasons too: the new record lands on the parcel's
+            open season, or the no-open-season door asks where it belongs. */}
+        {canWrite && farmId && parcelId && event?.id != null && event?.event_type != null && (
+          <Button
+            variant="ghost"
+            colorScheme="green"
+            onClick={() => {
+              onClose();
+              navigate(
+                `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add` +
+                  `?repeat=${event.id}&event_type=${event.event_type}`
+              );
+            }}
+            size={{ base: 'md', md: 'lg' }}>
+            {intl.formatMessage({ id: 'eventDetails.logAgain' })}
+          </Button>
+        )}
+
         {!isProductionFinished && canWrite && (
           <Button
             leftIcon={<FaTrash />}
@@ -998,7 +1019,11 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   {intl.formatMessage({ id: 'app.fieldNotes' })}
                 </Text>
                 <Text fontWeight="medium" whiteSpace="pre-wrap">
-                  {event.description}
+                  {/* The farmer's own note. `description` is the system-generated
+                      summary ("Annual soil test") and rendered here it masqueraded
+                      as field notes; fall back to it only when no observation
+                      exists (legacy events wrote their note there). */}
+                  {(event as Record<string, unknown>).observation || event.description}
                 </Text>
               </Box>
 

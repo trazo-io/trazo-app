@@ -38,6 +38,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, array } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { SupervisorSignOff } from 'components/Forms/SupervisorSignOff';
+import { ReceiptDocumentSelect } from 'components/Forms/ReceiptDocumentSelect';
 import { useIntl } from 'react-intl';
 import {
   MANURE_ANIMAL_SOURCES,
@@ -117,6 +118,7 @@ const formSchemaSoilManagement = object({
   amendment_supplier_name: string().optional(),
   amendment_purchase_date: string().optional(),
   amendment_purchase_invoice: string().optional(),
+  receipt_document: string().optional(),
   amendment_quantity_purchased: string().optional(),
   amendment_quantity_purchased_unit: string().optional(),
   amendment_lot_number: string().optional(),
@@ -547,6 +549,7 @@ const SoilManagementTab = forwardRef(
       formState: { errors },
       register,
       setValue,
+      control,
       watch
     } = methods;
 
@@ -847,6 +850,8 @@ const SoilManagementTab = forwardRef(
 
       const processedData = {
         ...cleanedCoreData,
+        // FK — an empty select must post null, never "" (DRF PK field 400s on "")
+        receipt_document: cleanedCoreData.receipt_document || null,
         // ENHANCED: Include depth data with proper field naming for backend
         ...tillageDepthData,
         // FSMA § 112.161(b) supervisor review. The Switch stores 'true'/'false' strings and the
@@ -1252,8 +1257,10 @@ const SoilManagementTab = forwardRef(
                         <option value="calcium_oxide">Quick Lime (CaO) - High reactivity</option>
                         <option value="calcium_hydroxide">Hydrated Lime (Ca(OH)2)</option>
                         <option value="gypsum">Gypsum (CaSO4) - No CO2 emissions</option>
+                        <option value="sulfur">Elemental Sulfur (S) - Lowers pH</option>
                         <option value="compost">Compost - Organic amendment</option>
                         <option value="manure">Manure - Organic fertilizer</option>
+                        <option value="mulch">Mulch - Surface organic cover</option>
                         <option value="other">Other Amendment</option>
                       </StandardSelect>
                     </StandardField>
@@ -1408,6 +1415,15 @@ const SoilManagementTab = forwardRef(
                         {...register('amendment_purchase_invoice')}
                       />
                     </StandardField>
+
+                    {/* The FILE behind the number (2026-08-25) — see ChemicalTab. */}
+                    <Controller
+                      name="receipt_document"
+                      control={control}
+                      render={({ field }) => (
+                        <ReceiptDocumentSelect value={field.value} onChange={field.onChange} />
+                      )}
+                    />
 
                     <StandardField
                       label={intl.formatMessage({

@@ -125,8 +125,12 @@ const ALLOWED = new Set([
   'fé',
   'ré',
   'mié',
-  // 1st-person preterites that appear in cancel-reason copy written in the farmer's voice
+  // 1st-person preterites that appear in copy written in the farmer's own voice — the
+  // cancel-reason list, and the voice-entry examples ("Regué el lote…", "Apliqué
+  // fertilizante…"). These are ordinary Spanish, not Rioplatense imperatives; the regex
+  // cannot tell "regué" (I irrigated) from "regá" (irrigate, vos) by shape alone.
   'apliqué',
+  'regué',
   'pasé',
   'revisé',
   'terminé',

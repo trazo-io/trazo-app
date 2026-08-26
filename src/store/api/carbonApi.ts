@@ -1382,42 +1382,6 @@ export const carbonApi = baseApi.injectEndpoints({
     }),
 
     // Voice Processing Endpoints
-    processVoiceEvent: builder.mutation<
-      {
-        type: string;
-        description: string;
-        date: string;
-        detected_amounts: string[];
-        detected_products: string[];
-        detected_systems?: string[];
-        confidence: number;
-        suggested_carbon_impact: number;
-        language_detected?: string;
-        processing_time?: number;
-        auto_approved?: boolean;
-        confidence_factors?: {
-          keyword_match: number;
-          amount_detection: number;
-          context_relevance: number;
-          language_clarity: number;
-        };
-      },
-      {
-        transcript: string;
-        crop_type: string;
-        language?: string;
-        timestamp?: string;
-      }
-    >({
-      query: (data) => ({
-        url: 'carbon/process-voice-event/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      }),
-      invalidatesTags: ['Event', 'CarbonSummary']
-    }),
-
     processVoiceEventWithAI: builder.mutation<
       {
         type: string;
@@ -1899,14 +1863,12 @@ export const {
   useGetVoiceConfigQuery,
   useGetDeepgramTokenMutation,
   // Voice Processing hooks
-  useProcessVoiceEventMutation,
   useProcessVoiceEventWithAIMutation,
   // AI Smart Suggestions hook
   useGetAIEventSuggestionsQuery,
   // Paginated Carbon Entries hook
   useGetFarmCarbonEntriesPaginatedQuery,
   // Enhanced Security hooks
-  useCreateSecureCarbonOffsetMutation,
   useValidateFileUploadSecurityMutation,
   useGetUserSecurityStatusQuery,
   // Photo Evidence hooks

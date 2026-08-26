@@ -123,8 +123,13 @@ const AMENDMENT_TYPE_LABELS: Record<string, string> = {
   calcium_oxide: 'Quick Lime',
   calcium_hydroxide: 'Hydrated Lime',
   gypsum: 'Gypsum',
+  // sulfur + mulch added 2026-08-25: elemental sulfur is THE pH-down amendment and
+  // mulch is a routine OM material — both were seedable but absent from this map AND
+  // the form's option list, so a stored "sulfur" rendered as its raw enum value.
+  sulfur: 'Elemental Sulfur',
   compost: 'Compost',
   manure: 'Manure',
+  mulch: 'Mulch',
   other: 'Other Amendment'
 };
 
@@ -578,6 +583,17 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     valueType: 'string',
     visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
     surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    // The uploaded FILE behind the invoice number (2026-08-25). Modal-only:
+    // supplier-chain identity never reaches consumer surfaces, and the packet
+    // carries the file itself in receipts/.
+    name: 'receipt_document_title',
+    labelKey: 'events.receipt.label',
+    valueType: 'string',
+    surfaces: {
+      modal: 'secondary'
+    }
   },
   {
     // The mass-balance input leg for amendments. Without it the packet cannot reconcile

@@ -433,7 +433,11 @@ function UnifiedSubscriptionDashboard() {
       icon: FaQrcode,
       name: 'app.scans',
       used: Math.max(0, subscription?.scan_count || 0),
-      limit: formatLimit(features?.monthly_scan_limit ?? 0),
+      // QR scans are deliberately unlimited on every plan (monthly_scan_limit was
+      // deleted 2026-08-25 — it was never enforced, and the buyer page is the
+      // demonstration that sells the paid tier). The count stays: it is the
+      // engagement fact; -1 renders as unlimited like the other uncapped rows.
+      limit: -1,
       colorScheme: 'green'
     },
     {

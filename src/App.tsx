@@ -143,6 +143,7 @@ const EducationFAQ = lazyWithRetry(() => import('views/Dashboard/Education/Educa
 import { useGetCsrfTokenQuery } from './store/api/baseApi';
 const GoogleAuthCallback = lazyWithRetry(() => import('views/Authentication/GoogleAuthCallback'));
 const CertifierReview = lazyWithRetry(() => import('views/CertifierReview/CertifierReview'));
+const BuyerReview = lazyWithRetry(() => import('views/BuyerReview/BuyerReview'));
 const AcceptInvitation = lazyWithRetry(
   () => import('views/Authentication/Invitation/AcceptInvitation')
 );
@@ -320,6 +321,7 @@ const App = () => {
             opens this with no Trazo account; the token in the URL is the credential.
             Must stay outside CheckAuth so it never redirects to login. */}
         <Route path="/certifier-review/:token" element={<CertifierReview />} />
+        <Route path="/buyer-review/:token" element={<BuyerReview />} />
 
         {/* OAuth Callback - must be accessible from localhost:3000 */}
         <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />

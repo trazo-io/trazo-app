@@ -15,7 +15,7 @@ import baseApi from './baseApi';
 
 export interface CertifierAccessLog {
   id: number;
-  action: 'metadata' | 'dossier';
+  action: 'metadata' | 'dossier' | 'readiness' | 'production';
   action_display: string;
   accessed_at: string;
   ip_address: string | null;
@@ -26,6 +26,10 @@ export interface CertifierAccessLink {
   /** Only ever returned to the operation's own members. */
   token: string;
   label: string;
+  /** Which review surface the token opens. "certifier" resolves the audit
+      dossier; "buyer" resolves only the claim-safe consumer payload, in-season.
+      Cross-audience use is a 404 server-side. */
+  audience: 'certifier' | 'buyer';
   certification_type: string;
   period_start: string | null;
   period_end: string | null;

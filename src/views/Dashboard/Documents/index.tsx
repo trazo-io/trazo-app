@@ -59,7 +59,7 @@ import {
   StandardSelect
 } from 'components/Design/StandardComponents';
 import { useGetFarmProductionsQuery } from 'store/api/historyApi';
-import { DOCUMENT_DOWNLOAD_URL } from 'config';
+import { DOCUMENT_DOWNLOAD_URL, RECORDS_EXPORT_URL } from 'config';
 import { env } from 'config/environment';
 import { useDebounce } from 'hooks/useDebounce';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
@@ -590,8 +590,15 @@ const DocumentsPage = () => {
             accept={UPLOAD_ACCEPT}
             onChange={(e) => stageUpload(e.target.files?.[0])}
           />
+          {/*
+            `w="full"` because this page is the only one that puts TWO actions in the header
+            slot, and StandardPage stretches them so their right edges meet the page margin.
+            The stretch lands on this `data-tour` Box; without it the Button inside stays
+            auto-width (MEASURED 94px against the export's 304px) and the column is ragged.
+          */}
           <Box data-tour="documents-upload">
             <StandardButton
+              w="full"
               minH="44px"
               leftIcon={<FaFileUpload />}
               isLoading={uploading}
@@ -599,6 +606,17 @@ const DocumentsPage = () => {
               {intl.formatMessage({ id: 'documents.upload' })}
             </StandardButton>
           </Box>
+          {/* Free raw export — every plan, always (record ownership; the endpoint is
+              deliberately ungated: history/tests/test_records_export.py). Plain anchor:
+              cookie auth rides along and the browser handles the download. */}
+          <StandardButton
+            as="a"
+            href={env.getApiUrl(RECORDS_EXPORT_URL(companyId, farmId || ''))}
+            minH="44px"
+            variant="outline"
+            leftIcon={<FaDownload />}>
+            {intl.formatMessage({ id: 'documents.exportAll' })}
+          </StandardButton>
         </>
       }>
       {/* `mt` CANCELS StandardPage's hero overlap (`StandardComponents.tsx` pulls the body up

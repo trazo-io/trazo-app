@@ -71,6 +71,34 @@ const RESOLUTION_COLOR_SCHEME: Record<DriftWarning['resolved_via'], string> = {
 
 const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => {
   const intl = useIntl();
+
+  /**
+   * Localize a finding's reason from its stable code (2026-08-25). The backend
+   * used to send only English prose, which rendered verbatim on the Spanish
+   * dashboard. Codes localize; the prose stays as the fallback for legacy
+   * findings (no code) and for any code this bundle does not know yet —
+   * checked via intl.messages so an unknown id degrades to prose instead of
+   * printing the raw key.
+   */
+  const localizedReason = (dw: DriftWarning): string => {
+    const code = dw.reason_code;
+    if (!code) return dw.reason;
+    const id = `drift.reason.${code}`;
+    if (!(intl.messages as Record<string, unknown>)[id]) return dw.reason;
+    const params: Record<string, unknown> = { ...(dw.reason_params ?? {}) };
+    if (code === 'approved_with_issues') {
+      const issueCodes = Array.isArray(params.issues) ? (params.issues as string[]) : [];
+      params.issues = issueCodes
+        .map((issue) => {
+          const issueId = `drift.reason.issue.${issue}`;
+          return (intl.messages as Record<string, unknown>)[issueId]
+            ? intl.formatMessage({ id: issueId }, params as Record<string, string>)
+            : issue;
+        })
+        .join('; ');
+    }
+    return intl.formatMessage({ id }, params as Record<string, string>);
+  };
   const [open, setOpen] = useState(false);
 
   // Use Chakra `yellow.*` tokens — matches the existing compliance-warning
@@ -154,7 +182,7 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
                       {dw.input_label || '—'}
                     </Text>
                     <Text fontSize="xs" color={reasonFg} noOfLines={3} mt={1}>
-                      {dw.reason}
+                      {localizedReason(dw)}
                     </Text>
                   </VStack>
                   <VStack align="start" spacing={1}>
