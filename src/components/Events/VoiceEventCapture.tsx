@@ -76,6 +76,10 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const [parsedData, setParsedData] = useState<any | null>(null);
   const [processingStage, setProcessingStage] = useState('');
   const [processingTime, setProcessingTime] = useState(0);
+  // The operation spent its daily voice budget (HTTP 429 from the backend). Not an error the
+  // farmer caused and not something retrying fixes, so it replaces the recorder rather than
+  // flashing a toast.
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
   const hasAutoStarted = useRef(false);
   const toast = useToast();
   const intl = useIntl();
@@ -110,8 +114,18 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
   // ── Deepgram Nova-3 ──
   const fetchToken = useCallback(async () => {
-    const result = await getDeepgramToken().unwrap();
-    return result.token;
+    try {
+      const result = await getDeepgramToken().unwrap();
+      return result.token;
+    } catch (err: any) {
+      // Branch on the machine-readable `code`, not the server's sentence. Server prose opts
+      // the client out of i18n, and a message that only exists in English is a message a
+      // Spanish-speaking farmer cannot read.
+      if (err?.status === 429 && err?.data?.code === 'voice_daily_limit') {
+        setDailyLimitReached(true);
+      }
+      throw err;
+    }
   }, [getDeepgramToken]);
 
   const handleDeepgramComplete = useCallback(
@@ -126,6 +140,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
   const {
     isListening: deepgramListening,
+    stoppedAtLimit: deepgramStoppedAtLimit,
     transcript: deepgramTranscript,
     interimTranscript: deepgramInterim,
     error: deepgramError,
@@ -267,6 +282,12 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       });
     } catch (error) {
       console.error('AI voice processing error:', error);
+      if ((error as any)?.status === 429 && (error as any)?.data?.code === 'voice_daily_limit') {
+        setDailyLimitReached(true);
+        setIsProcessing(false);
+        setProcessingStage('');
+        return;
+      }
 
       // Fallback to local processing if AI fails
       setProcessingStage(intl.formatMessage({ id: 'voice.stage.fallback' }));
@@ -414,14 +435,33 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     });
   };
 
+  // Spent for the day. Says what still works: voice is an accelerator, and the form and the
+  // templates are always open — so this is a pause, not a wall.
+  // Both dead ends below REPLACE the panel — and the panel itself replaced the "Fill by
+  // voice" / "Use template" buttons in NewEvent. A bare Alert therefore strands the farmer
+  // with no route back to the form, which is the same trap `onClose` was left in. Every exit
+  // carries its own way out.
+  const exitNotice = (status: 'warning' | 'info', messageId: string) => (
+    <Alert status={status} alignItems="start">
+      <AlertIcon />
+      <HStack justify="space-between" align="start" flex={1} spacing={3}>
+        <Text fontSize="sm">{intl.formatMessage({ id: messageId })}</Text>
+        {onClose && (
+          <Button size="sm" variant="ghost" minH="44px" flexShrink={0} onClick={onClose}>
+            {intl.formatMessage({ id: 'voice.close' })}
+          </Button>
+        )}
+      </HStack>
+    </Alert>
+  );
+
+  if (dailyLimitReached) {
+    return exitNotice('warning', 'voice.dailyLimitReached');
+  }
+
   // Graceful degradation: replace the recorder with an info Alert when voice can't work here
   if (voiceUnavailable) {
-    return (
-      <Alert status="info">
-        <AlertIcon />
-        <Text fontSize="sm">{intl.formatMessage({ id: 'voice.unavailableInBrowser' })}</Text>
-      </Alert>
-    );
+    return exitNotice('info', 'voice.unavailableInBrowser');
   }
 
   const mapping = parsedData ? mapVoiceTypeToTemplate(parsedData.type) : null;
@@ -565,6 +605,14 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     </Badge>
                   )}
                 </HStack>
+
+                {/* Cut short by MAX_SESSION_MS rather than by a pause. Say so, or the
+                    farmer reads a half-captured note as a transcription failure. */}
+                {deepgramStoppedAtLimit && (
+                  <Text fontSize="xs" color="gray.700">
+                    {intl.formatMessage({ id: 'voice.stoppedAtLimit' })}
+                  </Text>
+                )}
 
                 {/* Original transcript */}
                 <Text fontSize="sm" color="gray.600" fontStyle="italic">

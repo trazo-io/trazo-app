@@ -59,6 +59,33 @@ describe('voice capture is reachable from the activity wizard', () => {
     expect(capture).toMatch(/if \(listening\) stopListening\(\);/);
   });
 
+  it('caps how long ONE recording can stream', () => {
+    // The cost tail is a session with no end, not a busy day. `UtteranceEnd` only fires on
+    // 1.5s of silence, and silence is the assumption that fails on a farm — a tractor idling
+    // or wind in the mic can keep endpointing from ever triggering, and the 8s KeepAlive
+    // holds the socket open while MediaRecorder keeps pushing audio. Without this cap the
+    // daily session ceiling bounded nothing in minutes.
+    const hook = readFileSync(join(__dirname, '../../hooks/useDeepgramTranscription.ts'), 'utf8');
+    expect(hook).toMatch(/export const MAX_SESSION_MS/);
+    expect(hook, 'the cap is declared but never armed').toMatch(
+      /maxDurationRef\.current = setTimeout\(/
+    );
+    expect(hook, 'the cap must end the stream the normal way, keeping the transcript').toMatch(
+      /setStoppedAtLimit\(true\);\s*stopListening\(\);/
+    );
+    // ...and it must be cleared, or a finished session leaves a timer that fires later
+    expect(hook).toMatch(/clearTimeout\(maxDurationRef\.current\)/);
+  });
+
+  it('keeps the KeepAlive under the socket idle timeout', () => {
+    // Deepgram closes a live socket after 10s without audio. An interval at or above that
+    // races the server and drops sessions mid-sentence.
+    const hook = readFileSync(join(__dirname, '../../hooks/useDeepgramTranscription.ts'), 'utf8');
+    const interval = /\}, (\d+)\);\s*\n\s*\/\/ Hard stop/.exec(hook);
+    expect(interval, 'could not find the keep-alive interval').toBeTruthy();
+    expect(Number(interval![1])).toBeLessThan(10000);
+  });
+
   it('releases the microphone if it unmounts mid-recording', () => {
     // cleanup() was only reachable via stopListening/onerror/onclose, so a component that
     // went away while listening left the MediaStream tracks live and the Deepgram socket

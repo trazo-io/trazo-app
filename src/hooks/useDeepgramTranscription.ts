@@ -1,6 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getKeytermsForLanguage } from 'config/agriculturalKeyterms';
 
+/**
+ * Hard ceiling on a single recording, in milliseconds.
+ *
+ * Until 2026-08-26 nothing bounded a session's LENGTH. The only stop conditions were the
+ * farmer pressing stop and Deepgram's `UtteranceEnd` firing after 1.5s of silence — and
+ * silence is the assumption that does not hold on a farm. With a tractor idling, wind in the
+ * mic or a radio on, endpointing may never trigger: MediaRecorder keeps pushing 250ms chunks
+ * and the 8s KeepAlive keeps the socket open, so one forgotten session streams (and bills)
+ * until the page is closed.
+ *
+ * That is the real cost tail, not the number of sessions. A single stuck mic can out-spend a
+ * whole day of honest logging, which is why the daily session ceiling alone was never a
+ * bound on minutes. With this cap it becomes one: sessions x MAX_SESSION_MS is a provable
+ * worst case.
+ *
+ * 90s is far past any field note — the examples the UI suggests run 5-10 seconds — and short
+ * enough that a stuck mic costs pennies rather than a morning.
+ */
+export const MAX_SESSION_MS = 90_000;
+
 interface UseDeepgramTranscriptionOptions {
   language: string;
   onTranscriptComplete: (text: string) => void;
@@ -23,6 +43,8 @@ export type DeepgramErrorId =
 
 interface UseDeepgramTranscriptionReturn {
   isListening: boolean;
+  /** The last recording was cut short by MAX_SESSION_MS rather than by silence or the user. */
+  stoppedAtLimit: boolean;
   transcript: string;
   interimTranscript: string;
   error: DeepgramErrorId | null;
@@ -51,11 +73,13 @@ export function useDeepgramTranscription({
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [error, setError] = useState<DeepgramErrorId | null>(null);
+  const [stoppedAtLimit, setStoppedAtLimit] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const maxDurationRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transcriptRef = useRef('');
   const stoppingRef = useRef(false);
 
@@ -63,6 +87,10 @@ export function useDeepgramTranscription({
     if (keepAliveRef.current) {
       clearInterval(keepAliveRef.current);
       keepAliveRef.current = null;
+    }
+    if (maxDurationRef.current) {
+      clearTimeout(maxDurationRef.current);
+      maxDurationRef.current = null;
     }
     if (recorderRef.current && recorderRef.current.state !== 'inactive') {
       recorderRef.current.stop();
@@ -102,6 +130,7 @@ export function useDeepgramTranscription({
 
   const startListening = useCallback(async () => {
     setError(null);
+    setStoppedAtLimit(false);
     setTranscript('');
     setInterimTranscript('');
     transcriptRef.current = '';
@@ -166,12 +195,21 @@ export function useDeepgramTranscription({
 
       recorder.start(250); // 250ms chunks
 
-      // Keep-alive every 8 seconds
+      // Keep-alive every 8 seconds. Deepgram closes a socket that has gone 10s without
+      // audio, so this interval is deliberately under that.
       keepAliveRef.current = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'KeepAlive' }));
         }
       }, 8000);
+
+      // Hard stop. Ends the stream the same way the farmer would, so whatever was said so
+      // far is still flushed, transcribed and handed to onTranscriptComplete — a cap that
+      // threw the work away would be worse than the runaway it prevents.
+      maxDurationRef.current = setTimeout(() => {
+        setStoppedAtLimit(true);
+        stopListening();
+      }, MAX_SESSION_MS);
     };
 
     ws.onmessage = (event) => {
@@ -246,6 +284,7 @@ export function useDeepgramTranscription({
 
   return {
     isListening,
+    stoppedAtLimit,
     transcript,
     interimTranscript,
     error,

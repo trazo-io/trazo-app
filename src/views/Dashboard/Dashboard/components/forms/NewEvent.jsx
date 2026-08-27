@@ -1168,6 +1168,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
     const { kept, dropped } = gateVoiceOverridesToForm(detected, eventTypeId, subtypeCode);
 
+    // Never type over the farmer's own notes. Every other field voice fills is a measurement
+    // it just heard, so replacing one is correct; `observation` is prose the farmer may have
+    // already written, and clobbering it would lose work they cannot get back.
+    if (kept.observation && String(eventFormData.observation ?? '').trim()) {
+      delete kept.observation;
+    }
+
     return {
       mapping,
       kept,

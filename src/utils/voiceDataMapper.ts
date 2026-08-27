@@ -217,6 +217,46 @@ export const VOICE_TYPE_MAP: Record<string, VoiceTemplateMapping> = {
     backendSubtype: 'TH',
     verbKey: 'field_work'
   },
+  // 2026-08-26 — five subtypes the parser previously could not name, so every utterance
+  // about them came back `general` and voice filled nothing at all on those tiles.
+  //
+  // Field prefill is claimed only where the subtype RENDERS the field (checked against
+  // getFieldNamesForSurface, and enforced at merge time by gateVoiceOverridesToForm):
+  // FP / MO / PH render area_covered, fuel_consumed and equipment_hours, and PH also renders
+  // yield_quantity. TP and PO render neither — a transport records a destination and a
+  // handler reference, a pollination records hive counts — so those two ROUTE only, and the
+  // transcript reaches the notes box instead. Claiming acreage on a hive placement would be
+  // a fabricated measurement, which is the whole point of the gate.
+  transport: {
+    templateId: 'transport',
+    backendEventType: 1,
+    backendSubtype: 'TP',
+    verbKey: 'transport'
+  },
+  pollination: {
+    templateId: 'pollination',
+    backendEventType: 1,
+    backendSubtype: 'PO',
+    verbKey: 'pollination'
+  },
+  frost_protection: {
+    templateId: 'frost_protection',
+    backendEventType: 1,
+    backendSubtype: 'FP',
+    verbKey: 'frost_protection'
+  },
+  mowing: {
+    templateId: 'mowing',
+    backendEventType: 1,
+    backendSubtype: 'MO',
+    verbKey: 'field_work'
+  },
+  post_harvest: {
+    templateId: 'post_harvest',
+    backendEventType: 1,
+    backendSubtype: 'PH',
+    verbKey: 'harvest'
+  },
   soil_management: {
     templateId: 'cultivation',
     backendEventType: 5,
@@ -395,6 +435,30 @@ export function mapVoiceDataToFieldValues(
 
   const amounts = extractStructuredAmounts(parsedData.detected_amounts);
 
+  // The transcript belongs in the notes box, on EVERY activity.
+  //
+  // Three subtypes are still unroutable — canopy management, buffer use and seed search —
+  // and for those the parser answers `general`, which produces no field overrides at all:
+  // voice transcribed the farmer perfectly and then filled in nothing. The words themselves
+  // are the useful output there, and `observation` is exactly the field for them. It renders
+  // on the form for every subtype of every event type (verified against
+  // getFieldNamesForSurface), so the gate always lets it through.
+  //
+  // ⚠️ This is the ONE place voice writes prose rather than a measurement, and `observation`
+  // is what ConsumerEventCard quotes as "Farmer's Field Notes". That is defensible precisely
+  // because a transcript IS the farmer's own words — unlike `description`, which on a legacy
+  // row may be AI-template output and is deliberately never seeded into this box. The farmer
+  // still reads and edits it in the form before saving, and NewEvent will not overwrite notes
+  // they have already typed.
+  // ⛔ `original_transcript` ONLY — never `description`. They look interchangeable and are
+  // not: the GPT prompt asks for "a clean, professional description of the activity", so
+  // `description` is MACHINE-AUTHORED prose, while `original_transcript` is what the farmer
+  // actually said. `observation` is quoted verbatim on the buyer page as "Farmer's Field
+  // Notes", and NewEvent's own notes-field comment records why the box is never seeded from
+  // `description`: it promotes machine copy into the grower's quoted voice.
+  const spokenNotes = (parsedData.original_transcript || '').trim();
+  if (spokenNotes) overrides.observation = spokenNotes;
+
   // ── Chemical events (fertilization, pest_control, herbicide, fungicide) ──
   if (['fertilization', 'pest_control', 'herbicide', 'fungicide'].includes(templateId)) {
     // Commercial name
@@ -467,7 +531,13 @@ export function mapVoiceDataToFieldValues(
       'transplanting',
       'cultivation',
       'thinning',
-      'equipment_maintenance'
+      'equipment_maintenance',
+      // FP / MO / PH render area_covered, fuel_consumed and equipment_hours on their forms.
+      // `transport` and `pollination` are deliberately NOT here — neither renders any of
+      // them, so the gate would drop everything this branch produced anyway.
+      'frost_protection',
+      'mowing',
+      'post_harvest'
     ].includes(templateId)
   ) {
     // Area covered
@@ -528,8 +598,9 @@ export function mapVoiceDataToFieldValues(
       }
     }
 
-    // Harvest-specific: yield
-    if (templateId === 'harvest') {
+    // Yield — harvest and post-harvest processing both render it (visibleForSubtypes
+    // ['HA','PH','PL']), so a weight spoken about either lands on the same field.
+    if (templateId === 'harvest' || templateId === 'post_harvest') {
       const weightAmount = amounts.find((a) => a.category === 'weight');
       if (weightAmount) {
         overrides.yield_quantity = weightAmount.value;

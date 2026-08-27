@@ -17,6 +17,8 @@
  * value the subtype DOES render must still survive (a gate that drops everything
  * would "pass" while quietly killing the feature).
  */
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import IntlMessageFormat from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
 
@@ -306,16 +308,21 @@ describe('voice mismatch notice can always be rendered', () => {
 });
 
 describe('voice activity coverage is explicit, not accidental', () => {
-  // KNOWN GAP, pinned deliberately. VOICE_TYPE_MAP routes thirteen activities; the eight
-  // production subtypes added after it — PO, PH, CM, FP, MO, TP, BU, SS — appear in no
-  // entry, and in no enum of the backend's GPT prompt either, so the parser cannot return
-  // them. Closing it means extending the prompt enum in three languages, the fallback
-  // keyword sets, and the mapper's field branches; half-doing it would prefill a Seed
-  // Search with acreage and hours it does not record.
+  // The record of WHICH activities voice covers. If someone adds a mapping this fails and
+  // they update the list on purpose; if someone adds a subtype and assumes voice picks it
+  // up, the list says otherwise.
   //
-  // Until then this test is the record of WHICH activities voice covers. If someone adds a
-  // mapping, this fails and they update the list on purpose; if someone adds a subtype and
-  // assumes voice picks it up, the list says otherwise.
+  // 2026-08-26: five of the original eight gaps closed — TP, PO, FP, MO, PH now have prompt
+  // enum values, fallback keywords in three languages, and map entries.
+  //
+  // Three remain unroutable ON PURPOSE:
+  //   CM (canopy management) — shares the pruning tile; "hedging" / "leaf pulling" overlap
+  //       pruning vocabulary closely enough that a misroute is likelier than a hit.
+  //   BU (buffer use)        — § 205.202(c). Mislabelling an ordinary harvest as a buffer
+  //       harvest would put a compliance claim on the record nobody said out loud.
+  //   SS (seed search)       — § 205.204(a)(1). Records suppliers contacted and varieties
+  //       sought, not a measurement this mapper produces.
+  // For all three the transcript still reaches the notes box, so voice is never a no-op.
   const ROUTED_SUBTYPES = [
     'FE',
     'IR',
@@ -329,9 +336,14 @@ describe('voice activity coverage is explicit, not accidental', () => {
     'TR',
     'CU',
     'TH',
-    'ST'
+    'ST',
+    'TP',
+    'PO',
+    'FP',
+    'MO',
+    'PH'
   ];
-  const NOT_ROUTED = ['PO', 'PH', 'CM', 'FP', 'MO', 'TP', 'BU', 'SS'];
+  const NOT_ROUTED = ['CM', 'BU', 'SS'];
 
   it('routes exactly the activities it claims to', () => {
     const routed = new Set(
@@ -349,11 +361,145 @@ describe('voice activity coverage is explicit, not accidental', () => {
     // The parser answers `general` for anything it does not know, including every subtype
     // in NOT_ROUTED. That is ignorance, and must not be dressed up as a detection.
     expect(isRecognizedVoiceType('general')).toBe(false);
-    expect(isRecognizedVoiceType('transport')).toBe(false);
     expect(isRecognizedVoiceType('seed_search')).toBe(false);
+    expect(isRecognizedVoiceType('canopy_management')).toBe(false);
+    expect(isRecognizedVoiceType('buffer_use')).toBe(false);
     expect(isRecognizedVoiceType('')).toBe(false);
+    // ...and the five closed this round ARE recognised, so the list above is not just stale
+    expect(isRecognizedVoiceType('transport')).toBe(true);
+    expect(isRecognizedVoiceType('post_harvest')).toBe(true);
     // ...while a real detection still is one, or the notice would never fire at all
     expect(isRecognizedVoiceType('harvest')).toBe(true);
     expect(isRecognizedVoiceType('Fertilization')).toBe(true);
+  });
+});
+
+describe('newly routed activities (2026-08-26)', () => {
+  const heard = (type: string, over: Partial<ParsedVoiceData> = {}) =>
+    parsed({ type, original_transcript: 'spoken words', ...over });
+
+  it('FP / MO / PH keep the measurements their own forms render', () => {
+    const fp = heardOn(
+      heard('frost_protection', { detected_amounts: ['4 hours', '20 acres'] }),
+      PRODUCTION,
+      'FP'
+    );
+    expect(fp.kept.equipment_hours).toBe(4);
+    expect(fp.kept.area_covered).toBe(20);
+
+    const mo = heardOn(
+      heard('mowing', { detected_amounts: ['30 acres', '12 gallons'] }),
+      PRODUCTION,
+      'MO'
+    );
+    expect(mo.kept.area_covered).toBe(30);
+
+    // Post-harvest renders yield_quantity (visibleForSubtypes ['HA','PH','PL'])
+    const ph = heardOn(
+      heard('post_harvest', { detected_amounts: ['8000 pounds'] }),
+      PRODUCTION,
+      'PH'
+    );
+    expect(ph.kept.yield_quantity).toBe(8000);
+    expect(ph.kept.yield_unit).toBe('lb');
+  });
+
+  it('TP / PO route without inventing a measurement', () => {
+    // Neither renders area/hours/fuel, so nothing but the notes may survive. Claiming
+    // acreage on a hive placement would be a fabricated measurement.
+    for (const [type, code] of [
+      ['transport', 'TP'],
+      ['pollination', 'PO']
+    ] as const) {
+      const { kept } = heardOn(
+        heard(type, { detected_amounts: ['20 acres', '3 hours', '15 gallons'] }),
+        PRODUCTION,
+        code
+      );
+      expect(Object.keys(kept).sort(), `${type} invented a field`).toEqual(['observation']);
+    }
+  });
+
+  it('routes to the right subtype and offers no bogus switch', () => {
+    for (const [type, code] of [
+      ['transport', 'TP'],
+      ['pollination', 'PO'],
+      ['frost_protection', 'FP'],
+      ['mowing', 'MO'],
+      ['post_harvest', 'PH']
+    ] as const) {
+      const m = mapVoiceTypeToTemplate(type);
+      expect(m.backendSubtype, type).toBe(code);
+      expect(m.backendEventType, type).toBe(PRODUCTION);
+      expect(isRecognizedVoiceType(type), type).toBe(true);
+    }
+  });
+});
+
+describe('the transcript always reaches the notes box', () => {
+  it('fills observation even for an activity voice cannot route', () => {
+    // CM, BU and SS produce no field overrides at all — before this, voice transcribed the
+    // farmer perfectly and then filled in nothing. The words are the useful output there.
+    for (const code of ['CM', 'BU', 'SS']) {
+      const { kept } = heardOn(
+        parsed({ type: 'general', original_transcript: 'pulled leaves on the north block' }),
+        PRODUCTION,
+        code
+      );
+      expect(kept.observation, `${code} lost the transcript`).toBe(
+        'pulled leaves on the north block'
+      );
+    }
+  });
+
+  it('observation survives the gate on every event type', () => {
+    for (const [et, st] of [
+      [PRODUCTION, 'IR'],
+      [CHEMICAL, 'FE'],
+      [5, 'ST'],
+      [3, null]
+    ] as const) {
+      const { kept } = gateVoiceOverridesToForm(
+        { observation: 'spoken' },
+        et as never,
+        st as never
+      );
+      expect(kept.observation, `${et}/${st}`).toBe('spoken');
+    }
+  });
+
+  it('NEVER puts the AI-authored description in the farmer\u2019s notes', () => {
+    // The GPT prompt asks for "a clean, professional description of the activity", so
+    // `description` is machine prose. `observation` is quoted verbatim on the buyer page as
+    // "Farmer's Field Notes". Falling back to description would promote machine copy into
+    // the grower's quoted voice — the exact thing NewEvent's notes-field comment forbids.
+    const { kept } = heardOn(
+      parsed({
+        type: 'general',
+        original_transcript: '',
+        description: 'Applied a foliar nutrient program to the orchard block.'
+      }),
+      PRODUCTION,
+      'CM'
+    );
+    expect(Object.keys(kept)).not.toContain('observation');
+  });
+
+  it('an empty transcript writes no note at all', () => {
+    const { kept } = heardOn(
+      parsed({ type: 'general', original_transcript: '   ', description: '' }),
+      PRODUCTION,
+      'CM'
+    );
+    expect(Object.keys(kept)).not.toContain('observation');
+  });
+
+  it('NewEvent refuses to type over notes the farmer already wrote', () => {
+    const src = readFileSync(
+      join(__dirname, '../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
+      'utf8'
+    );
+    expect(src).toMatch(/delete kept\.observation;/);
+    expect(src).toMatch(/String\(eventFormData\.observation \?\? ''\)\.trim\(\)/);
   });
 });

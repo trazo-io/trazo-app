@@ -33,7 +33,12 @@ const BACKEND_FIELDS = new Set([
   'irrigation_depth',
   'irrigation_depth_unit',
   'yield_quantity',
-  'yield_unit'
+  'yield_unit',
+  // 2026-08-26: the transcript now lands in the notes box on every activity, so this is a
+  // legitimate override key. The fixtures below set no `original_transcript`, so nothing
+  // here exercises it — this entry keeps the allowlist honest rather than letting a future
+  // fixture trip a guard that was simply out of date.
+  'observation'
 ]);
 
 const parsed = (over: Partial<ParsedVoiceData>): ParsedVoiceData =>

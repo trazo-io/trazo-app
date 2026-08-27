@@ -263,7 +263,7 @@ const loadGoogleSDK = (): Promise<void> => {
     script.async = true;
     script.defer = true;
     script.onload = resolve;
-    script.onerror = reject;
+    script.onerror = () => reject(new Error('Google SDK failed to load'));
     document.head.appendChild(script);
   });
 };
@@ -293,7 +293,7 @@ const loadFacebookSDK = () => {
     script.async = true;
     script.defer = true;
     script.crossOrigin = 'anonymous';
-    script.onerror = reject;
+    script.onerror = () => reject(new Error('Facebook SDK failed to load'));
     document.head.appendChild(script);
   });
 };
@@ -314,7 +314,7 @@ const loadAppleSDK = () => {
     script.async = true;
     script.defer = true;
     script.onload = resolve;
-    script.onerror = reject;
+    script.onerror = () => reject(new Error('Apple SDK failed to load'));
     document.head.appendChild(script);
   });
 };
@@ -322,16 +322,21 @@ const loadAppleSDK = () => {
 /**
  * Generic error handler for social authentication
  */
-export const handleSocialAuthError = (error: Error, provider: string): void => {
+export const handleSocialAuthError = (error: unknown, provider: string): void => {
   console.error(`${provider} authentication error:`, error);
+
+  // A provider SDK can reject with a DOM Event (script onerror) or a plain string.
+  // Reading .message off those yields undefined and the .includes() below throws,
+  // which would swallow the toast entirely and leave the click a silent no-op.
+  const reason = error instanceof Error ? error.message : String(error ?? '');
 
   let errorMessage = `${provider} sign in failed. Please try again.`;
 
-  if (error.message.includes('not configured')) {
+  if (reason.includes('not configured')) {
     errorMessage = `${provider} sign in is not properly configured.`;
-  } else if (error.message.includes('cancelled')) {
+  } else if (reason.includes('cancelled')) {
     errorMessage = `${provider} sign in was cancelled.`;
-  } else if (error.message.includes('popup_blocked')) {
+  } else if (reason.includes('popup_blocked')) {
     errorMessage = 'Please allow popups for social sign in to work.';
   }
 
