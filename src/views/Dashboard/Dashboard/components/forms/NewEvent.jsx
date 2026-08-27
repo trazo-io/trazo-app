@@ -13,8 +13,7 @@ import {
   Alert,
   AlertIcon,
   useToast,
-  CircularProgress,
-  Grid
+  CircularProgress
 } from '@chakra-ui/react';
 import { BsFillCloudLightningRainFill } from 'react-icons/bs';
 import {
@@ -93,7 +92,12 @@ import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsB
 import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
-import { subtypeQuestionFor, verbForKey } from 'config/activityVerbs';
+import {
+  subtypeChoicesFor,
+  subtypeQuestionFor,
+  verbForEvent,
+  verbForKey
+} from 'config/activityVerbs';
 import { getSubtypes } from 'config/events';
 import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
@@ -188,29 +192,88 @@ const eventTypeConfig = [
 ];
 
 // Step configuration - Streamlined for mobile efficiency
-const steps = [
-  { title: 'Basic Info', description: 'Event type & date' },
-  { title: 'Event Details', description: 'Specific information & observations' },
-  { title: 'Photos', description: 'Documentation (optional)' }
-];
+/*
+ * Built INSIDE the component, from `intl`.
+ *
+ * This was a module-scope array of hardcoded English — the same shape as the module-scope zod
+ * schema in select-company, and untranslatable for the same structural reason: `intl` does not
+ * exist yet at module load, so no amount of "sweep the file for user-facing strings" can reach
+ * it. Every farmer, in every locale, read "Basic Info · Event type & date".
+ *
+ * The wording is also the retired vocabulary. Step 0 asks "What did you do?" and renders the
+ * verb grid; it has not asked for an "event type" since WS-4b, and "Event Details" names the
+ * backend model rather than the thing the farmer is describing.
+ */
+const useWizardSteps = (intl) =>
+  useMemo(
+    () => [
+      {
+        title: intl.formatMessage({ id: 'events.wizard.step.basic' }),
+        description: intl.formatMessage({ id: 'events.wizard.step.basicHint' })
+      },
+      {
+        title: intl.formatMessage({ id: 'events.wizard.step.details' }),
+        description: intl.formatMessage({ id: 'events.wizard.step.detailsHint' })
+      },
+      {
+        title: intl.formatMessage({ id: 'events.wizard.step.photos' }),
+        description: intl.formatMessage({ id: 'events.wizard.step.photosHint' })
+      }
+    ],
+    [intl]
+  );
 
-// Save-time record-completeness nudge (chemical events only). The backend echoes
-// `completeness_gaps` — machine keys from history/services/record_completeness.py
-// (§ 205.103(b)(2) / § 205.206(a)) still blank on the saved row. Keys, not labels,
-// cross the wire; the human wording is owned here via i18n.
+// Save-time record-completeness nudge. The backend echoes `completeness_gaps` — machine keys
+// from history/services/record_completeness.py (§ 205.103(b)(2) / § 205.206(a) / § 205.204)
+// still blank on the saved row. Keys, not labels, cross the wire; the human wording is owned
+// here via i18n.
+//
+// ⛔ This map must cover EVERY key both backend registries can emit. The fallback below renders
+// the raw Python identifier, so a key with no entry here reaches the farmer as
+// "seed_certification_status" — untranslated, in both locales. It did: the map was written for
+// the four chemical fields of v1 and never grew when the backend added `quantity_purchased` and
+// the five § 205.204 seed fields, which is six of ten keys leaking raw. The invariant is a
+// backend test, not this comment: history/tests/test_completeness_gap_label_parity.py.
 const COMPLETENESS_GAP_LABELS = {
+  // CHEMICAL_EVENT_REQUIRED_FIELDS
   commercial_name: { id: 'app.completenessGap.commercialName', defaultMessage: 'Product name' },
   volume: { id: 'app.completenessGap.volume', defaultMessage: 'Amount applied' },
   area: { id: 'app.completenessGap.area', defaultMessage: 'Area treated' },
   target_pest_disease: {
     id: 'app.completenessGap.targetPestDisease',
     defaultMessage: 'Target pest/disease'
+  },
+  quantity_purchased: {
+    id: 'app.completenessGap.quantityPurchased',
+    defaultMessage: 'Quantity purchased'
+  },
+  // PLANTING_EVENT_REQUIRED_FIELDS (§ 205.204 — PL / TR / SS)
+  seed_certification_status: {
+    id: 'app.completenessGap.seedCertificationStatus',
+    defaultMessage: 'Seed organic status'
+  },
+  seed_nonavailability_reason: {
+    id: 'app.completenessGap.seedNonavailabilityReason',
+    defaultMessage: 'Reason organic seed was unavailable'
+  },
+  seed_search_attempts: {
+    id: 'app.completenessGap.seedSearchAttempts',
+    defaultMessage: 'Three documented supplier searches'
+  },
+  seed_treatment_allowed_basis: {
+    id: 'app.completenessGap.seedTreatmentAllowedBasis',
+    defaultMessage: 'Why the seed treatment is allowed'
+  },
+  seed_supplier_name: {
+    id: 'app.completenessGap.seedSupplierName',
+    defaultMessage: 'Seed supplier'
   }
 };
 
 function NewEvent({ isEdit = false, eventId = null }) {
   const intl = useIntl();
   const toast = useToast();
+  const steps = useWizardSteps(intl);
 
   // D7 — move the farmer to the first field that failed validation. react-hook-form marks
   // invalid inputs with aria-invalid, so this works for every tab without each one having to
@@ -293,12 +356,56 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // mis-tap would otherwise strand the farmer, so step 0 offers one quiet text link that
   // brings the grid back.
   const [chooserReopened, setChooserReopened] = useState(false);
+  /*
+   * Edit's correction affordance — opt-in, same reason `chooserReopened` is.
+   *
+   * The activity IS correctable on a saved record, but a farmer who opened the page to fix a
+   * date should not be met by a sixteen-tile grid restating a question they already answered.
+   */
+  const [correctingActivity, setCorrectingActivity] = useState(false);
   const typeChooserAnswered = (typePresetFromVerb || typePresetFromPlan) && !chooserReopened;
 
   // The verb in force: an in-page pick always wins over the URL, so re-choosing after
   // "Change activity" re-titles the page instead of leaving the old verb in the header.
   const activeVerbKey = pickedVerbKey || (typePresetFromVerb ? verbFromUrl : null);
   const activeVerb = verbForKey(activeVerbKey);
+
+  /*
+   * EDIT mode names the ACTIVITY, exactly as the create path does.
+   *
+   * WS-4b moved every entry point to the farmer verb vocabulary ("Log activity — Seed
+   * search"), but edit was left rendering the old seven-tile CATEGORY grid with six tiles
+   * greyed out. The same record was therefore "Seed search" while it was written and
+   * "Production" while it was corrected — and "Production" is not a fact a farmer recognises
+   * about their own record: sixteen different practices answer to it. Worse, the grid was a
+   * PICKER for something that cannot be picked (every tile `disabled`), under a header that
+   * said "Required" and instructed "Select the type…", i.e. seven controls that do nothing.
+   *
+   * Derived, not stored: `eventFormData.type` is still editable in edit mode (ProductionTab
+   * keeps its select — correcting a saved subtype is not a second ask, see
+   * `subtypeQuestionFor`), so this restatement has to track it rather than snapshot the
+   * loaded value. Undefined for legacy event_type 4 (Equipment), which has no verb; the
+   * fallback below names the category instead of rendering nothing.
+   */
+  const editVerb = useMemo(
+    () => (isEdit ? verbForEvent(activeEventType, eventFormData.type) : undefined),
+    [isEdit, activeEventType, eventFormData.type]
+  );
+  const editVerbLabel = editVerb
+    ? intl.formatMessage({ id: `activities.verb.${editVerb.key}` })
+    : eventTypeConfig.find((c) => c.id === activeEventType)?.label || null;
+  /*
+   * A FAMILY verb does not name the record on its own: "Field work" is cultivation, thinning
+   * or mowing, three different forms. Name the subtype beside it — from the display registry,
+   * never a local map, so this row, ActivitySubtypeChooser, the timeline and the certifier
+   * packet all word a subtype identically. A 1:1 verb pinned its subtype and gets nothing
+   * here, for the same reason the create path shows no locked summary row.
+   */
+  const editSubtypeLabel = useMemo(() => {
+    if (!editVerb || !subtypeChoicesFor(editVerb).length) return null;
+    const entry = getSubtypes(activeEventType).find((s) => s.code === eventFormData.type);
+    return entry ? intl.formatMessage({ id: entry.labelKey }) : null;
+  }, [editVerb, activeEventType, eventFormData.type, intl]);
 
   // The plan item is fetched, not passed through the URL: the practice this record answers is
   // read from the operator's own plan, so a hand-edited link cannot invent one.
@@ -320,13 +427,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
     () =>
       subtypeQuestionFor({
         isEdit,
+        isCorrecting: correctingActivity,
         eventType: activeEventType,
         verb: activeVerb,
         fromPlanItem: typePresetFromPlan,
         planItem: activePlanItem,
         allProductionSubtypes: getSubtypes(1).map((entry) => entry.code)
       }),
-    [isEdit, activeEventType, typePresetFromPlan, activePlanItem, activeVerb]
+    [isEdit, correctingActivity, activeEventType, typePresetFromPlan, activePlanItem, activeVerb]
   );
 
   // WS-4c: voice accelerator on the details step (ported from QuickAddEvent).
@@ -1274,7 +1382,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     const subtype = pending.backendSubtype || undefined;
     handleEventTypeChange(pending.backendEventType);
     // `activeVerbKey` titles the page and, for production, the subtype select is hidden
-    // (hideSubtypeSelect={!isEdit}) — leaving the old verb in place would title an Irrigation
+    // (the tab's subtype select is hidden) — leaving the old verb in place would title an Irrigation
     // page over a Harvest form with no visible way to correct it. verbKey is asserted against
     // ACTIVITY_VERBS in voiceRenderGate.test.ts.
     setPickedVerbKey(pending.verbKey);
@@ -1334,6 +1442,29 @@ function NewEvent({ isEdit = false, eventId = null }) {
     });
     setCarbonCalculation(null);
     dispatch(clearForm());
+    setVoiceSeq((n) => n + 1);
+  };
+
+  /**
+   * Edit-mode correction — sets the subtype and NOTHING else.
+   *
+   * ⛔ Deliberately NOT `handleSubtypeSelect`. That one clears every field but date and
+   * operator, which is right on the create path (nothing typed yet, or typed for the wrong
+   * subtype) and destructive here: the form is populated from a SAVED record, so clearing it
+   * would blank the row on the next PATCH. This matches exactly what ProductionTab's select
+   * did before the ask moved — the change is where the question is asked and in what words,
+   * not what answering it does.
+   *
+   * ⚠️ Known, pre-existing and unchanged by this: correcting SS→HA leaves the old subtype's
+   * values in `eventFormData`, and `cleanEventData` is a passthrough with no allowlist, so
+   * ProductionTab's per-subtype payload gates are the only thing keeping them out of the
+   * PATCH. Same hazard the select carried; fixing it is its own change.
+   */
+  const handleCorrectSubtype = (code) => {
+    setCorrectingActivity(false);
+    if (eventFormData.type === code) return;
+    setEventFormData((prev) => ({ ...prev, type: code }));
+    setCarbonCalculation(null);
     setVoiceSeq((n) => n + 1);
   };
 
@@ -1994,7 +2125,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
       if (completenessGaps.length > 0) {
         const gapNames = completenessGaps
           .map((key) =>
-            COMPLETENESS_GAP_LABELS[key] ? intl.formatMessage(COMPLETENESS_GAP_LABELS[key]) : key
+            COMPLETENESS_GAP_LABELS[key]
+              ? intl.formatMessage(COMPLETENESS_GAP_LABELS[key])
+              : // Belt and braces behind the parity test. An unmapped key used to render as the
+                // bare Python identifier; sentence-casing the words at least keeps a farmer's
+                // toast readable if the registries ever get ahead of this map again.
+                key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase())
           )
           .join(', ');
         toast({
@@ -2211,7 +2347,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
     <StandardPage
       title={
         isEdit
-          ? intl.formatMessage({ id: 'app.editEvent' }) || 'Edit Event'
+          ? // Same vocabulary as the create header: a record the farmer opened as
+            // "Log activity — Seed search" must not come back as "Edit Event". The
+            // fallback is only reachable for legacy event_type 4 (Equipment), the one
+            // category with no verb.
+            editVerbLabel
+            ? intl.formatMessage({ id: 'activities.editTitle' }, { verb: editVerbLabel })
+            : intl.formatMessage({ id: 'app.editEvent' })
           : // A plan item titles the page with the practice's own name ("Annual Structural
           // Pruning"), which is more specific than any verb the grid could offer.
           activePlanItem
@@ -2227,8 +2369,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       }
       description={
         isEdit
-          ? intl.formatMessage({ id: 'app.editEventDescription' }) ||
-            'Update the event information below'
+          ? intl.formatMessage({ id: 'activities.editDescription' })
           : intl.formatMessage({ id: 'app.createNewEventDescription' }) ||
             'Complete the form to add a new event to your parcel history'
       }
@@ -2344,7 +2485,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                 <CardHeader pb={2} px={{ base: 0, md: 6 }}>
                   <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                    {intl.formatMessage({ id: 'app.basicEventInfo' }) || 'Basic Event Information'}
+                    {/* Not "Basic Event Info". This card carries the activity identity and
+                        the date/operator pair; "event" is the backend model's word, and the
+                        farmer chose an ACTIVITY to get here. */}
+                    {intl.formatMessage({ id: 'events.wizard.step.basic' })}
                   </Text>
                 </CardHeader>
                 <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
@@ -2356,26 +2500,30 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               item, which names the practice more precisely than any tile. */}
                         {!typeChooserAnswered && (
                           <SectionBox>
+                            {/* Edit states the activity; create asks for it. The badge is
+                                  "Required" only on the ASK — a locked restatement has
+                                  nothing to fill in, and a Required chip over a control the
+                                  farmer cannot touch is the same broken promise as the
+                                  "Select the type…" instruction that used to sit here. */}
                             <SectionHeader
                               icon={FaTasks}
                               title={
                                 isEdit
                                   ? intl.formatMessage({
-                                      id: 'events.wizard.eventType',
-                                      defaultMessage: 'Event Type'
+                                      id: 'activities.editActivityTitle',
+                                      defaultMessage: 'Activity'
                                     })
                                   : intl.formatMessage({
                                       id: 'activities.pickVerb',
                                       defaultMessage: 'What did you do?'
                                     })
                               }
-                              badge="Required"
+                              badge={isEdit ? undefined : 'Required'}
                               description={
                                 isEdit
                                   ? intl.formatMessage({
-                                      id: 'events.wizard.eventTypeHint',
-                                      defaultMessage:
-                                        'Select the type of agricultural activity you want to document'
+                                      id: 'activities.editActivityHint',
+                                      defaultMessage: 'What this record documents'
                                     })
                                   : intl.formatMessage({
                                       id: 'activities.pickVerbHint',
@@ -2384,136 +2532,89 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               }
                             />
                             {isEdit && (
-                              <Alert status="warning" mb={4}>
+                              /* `info`, not `warning`. Nothing is wrong and there is nothing
+                                 to fix — this is the one Chakra convention blue still carries
+                                 (frontend.md). A warning fill next to a control the farmer
+                                 cannot act on reads as an error they caused. */
+                              <Alert status="info" mb={4} borderRadius="md">
                                 <AlertIcon />
                                 <Text fontSize="sm">
-                                  {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' }) ||
-                                    'Event type cannot be changed after creation for data integrity reasons.'}
+                                  {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' })}
                                 </Text>
                               </Alert>
                             )}
                             {/* WS-4b: create mode shows the SHARED farmer-verb grid
                                   (components/Events/VerbPickerGrid — same tiles as the
-                                  Activities page and parcel Add Event modal); the backend
-                                  category grid remains only for edit mode, where the type
-                                  is locked anyway. */}
+                                  Activities page and parcel Add Event modal).
+
+                                  Edit mode RESTATES the activity instead of re-rendering
+                                  that grid disabled. A disabled picker is not a read-only
+                                  display: it puts seven tap targets on screen, six of them
+                                  dimmed to 0.4 (2.4:1 — below the 4.5 its own label owes),
+                                  to communicate one word. It also spoke the wrong vocabulary
+                                  — "Production" / "Other Farm Activities" are backend
+                                  categories, hardcoded in English in `eventTypeConfig`, and
+                                  sixteen distinct practices share the first of them. */}
                             {!isEdit ? (
                               <VerbPickerGrid
                                 onSelect={handleVerbSelect}
                                 selectedKey={pickedVerbKey}
                               />
                             ) : (
-                              <Grid
-                                templateColumns={{
-                                  base: 'repeat(2, 1fr)',
-                                  md: 'repeat(3, 1fr)',
-                                  lg: 'repeat(3, 1fr)',
-                                  '2xl': 'repeat(4, 1fr)'
-                                }}
-                                gap={{ base: 2, md: 3, lg: 4 }}
+                              <HStack
+                                spacing={4}
+                                align="center"
+                                borderWidth="1px"
+                                borderColor="gray.200"
+                                borderRadius="lg"
+                                bg="gray.50"
+                                px={4}
+                                py={3}
                                 width="100%">
-                                {/* Sprint 2 Epic 2.1: Equipment removed from event types - now a Production subtype */}
-                                {eventTypeConfig.map((eventType) => (
-                                  <Box
-                                    key={eventType.id}
-                                    as="button"
-                                    type="button"
-                                    onClick={() => !isEdit && handleEventTypeChange(eventType.id)}
-                                    disabled={isEdit}
-                                    cursor={isEdit ? 'not-allowed' : 'pointer'}
-                                    opacity={isEdit && activeEventType !== eventType.id ? 0.4 : 1}
-                                    /*
-                                     * `.800` when selected, not `.500`.
-                                     *
-                                     * The selected tile puts a WHITE LABEL on this fill, which
-                                     * is text and owes 4.5:1. MEASURED at `.500`, SIX of the
-                                     * seven hues failed: yellow 2.39, green 2.78, blue 3.12,
-                                     * orange 3.39, teal 3.51, red 3.68 (only gray passed).
-                                     * `.claude/rules/frontend.md` bans white on green.500 by
-                                     * name. `.700` is still not enough here because these
-                                     * tiles share ONE step across every hue and yellow.700 is
-                                     * 3.64; `.800` clears every one, worst case 5.54.
-                                     */
-                                    bg={
-                                      activeEventType === eventType.id
-                                        ? `${eventType.color}.800`
-                                        : 'white'
-                                    }
-                                    color={activeEventType === eventType.id ? 'white' : 'gray.700'}
-                                    borderWidth="2px"
-                                    borderColor={
-                                      activeEventType === eventType.id
-                                        ? `${eventType.color}.800`
-                                        : 'gray.200'
-                                    }
-                                    borderRadius={{ base: 'lg', md: 'xl' }}
-                                    p={{ base: 3, md: 4 }}
-                                    minH={{ base: '90px', md: '130px' }}
-                                    minW={0}
-                                    display="flex"
-                                    flexDirection="column"
-                                    justifyContent="center"
-                                    alignItems="center"
-                                    gap={2}
-                                    transition="all 0.2s ease"
-                                    _hover={
-                                      !isEdit
-                                        ? {
-                                            transform: 'translateY(-2px)',
-                                            boxShadow: 'lg',
-                                            // .400 is 1.9-2.9:1; a hover border is a
-                                            // boundary and owes 3.0. .600 worst case is 3.64.
-                                            borderColor: `${eventType.color}.600`
-                                          }
-                                        : {}
-                                    }
-                                    _focus={{
-                                      outline: 'none',
-                                      /*
-                                       * The theme's `outline` shadow, not a per-hue `.200`
-                                       * ring. A `.200` step is ~1.3-1.9:1 against white, so
-                                       * the focus indicator failed WCAG 2.4.11's 3.0 floor on
-                                       * every tile — and it varied by event type, which a
-                                       * focus ring never should. `theme/styles.js` defines
-                                       * `shadows.outline` as solid green.600 (4.12) precisely
-                                       * so every focusable thing rings the same way.
-                                       */
-                                      boxShadow: 'outline'
-                                    }}
-                                    aria-label={`Select ${eventType.label} event type. ${eventType.description}`}
-                                    aria-pressed={activeEventType === eventType.id}
-                                    role="button"
-                                    tabIndex={isEdit ? -1 : 0}>
-                                    <Icon
-                                      as={eventType.icon}
-                                      boxSize={{ base: 5, md: 6 }}
-                                      color={
-                                        activeEventType === eventType.id
-                                          ? 'white'
-                                          : `${eventType.color}.700`
-                                      }
-                                    />
-                                    <VStack spacing={0.5} width="100%">
-                                      <Text
-                                        fontSize={{ base: 'xs', md: 'sm' }}
-                                        fontWeight="semibold"
-                                        textAlign="center">
-                                        {eventType.label}
-                                      </Text>
-                                      <Text
-                                        fontSize="xs"
-                                        opacity={activeEventType === eventType.id ? 0.9 : 0.7}
-                                        textAlign="center"
-                                        lineHeight="1.2"
-                                        noOfLines={2}
-                                        display={{ base: 'none', md: 'block' }}>
-                                        {eventType.description}
-                                      </Text>
-                                    </VStack>
-                                  </Box>
-                                ))}
-                              </Grid>
+                                {/* green.700, not green.500: a glyph is non-text and owes
+                                    3.0, and green.500 is 2.78 even for that (frontend.md). */}
+                                <Icon
+                                  as={editVerb?.icon || FaClipboardList}
+                                  boxSize={6}
+                                  color="green.700"
+                                  flexShrink={0}
+                                  aria-hidden="true"
+                                />
+                                <VStack align="start" spacing={0} minW={0}>
+                                  <Text fontWeight="semibold" color="gray.700">
+                                    {editVerbLabel}
+                                  </Text>
+                                  {editSubtypeLabel && (
+                                    <Text fontSize="sm" color="gray.600">
+                                      {editSubtypeLabel}
+                                    </Text>
+                                  )}
+                                </VStack>
+                              </HStack>
                             )}
+
+                            {/* Edit's correction affordance, production only.
+                                  Every other tab owns its subtype as its single in-tab ask, so
+                                  there is nothing to correct from here; production's ask lives
+                                  in step 0 on both paths, which is why this is the one type
+                                  that needs a way back to it. Hidden while the chooser is
+                                  open — the grid below IS the control. */}
+                            {isEdit &&
+                              activeEventType === 1 &&
+                              !correctingActivity &&
+                              editVerbLabel && (
+                                <Box mt={3}>
+                                  <StandardButton
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setCorrectingActivity(true)}>
+                                    {intl.formatMessage(
+                                      { id: 'activities.correctActivity' },
+                                      { verb: editVerbLabel }
+                                    )}
+                                  </StandardButton>
+                                </Box>
+                              )}
                           </SectionBox>
                         )}
 
@@ -2528,11 +2629,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               title={intl.formatMessage({ id: 'activities.subtype.title' })}
                               description={intl.formatMessage({ id: 'activities.subtype.hint' })}
                             />
+                            {/* One chooser, two clearing contracts. Create wipes the fields
+                                  the wrong subtype collected; edit must not, because they came
+                                  from a saved record. See handleCorrectSubtype. */}
                             <ActivitySubtypeChooser
                               eventType={activeEventType}
                               choices={pendingSubtypeChoices}
                               value={eventFormData.type || null}
-                              onChange={handleSubtypeSelect}
+                              onChange={isEdit ? handleCorrectSubtype : handleSubtypeSelect}
                             />
                           </SectionBox>
                         )}
@@ -2827,7 +2931,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
                          again here — in raw codes, against all sixteen, with the page title
                          locked to the verb — is the double-ask this replaced. Edit mode keeps
                          the select: there, changing it is a correction, not a second ask. */
-                      hideSubtypeSelect={!isEdit}
+                      /* Unconditional now — it used to be gated on the edit flag. The wizard
+                         owns the activity question on BOTH paths (create in the verb grid, edit
+                         in step 0's chooser behind the "Not X?" link), so a `type` select down
+                         here is a second surface for one fact whichever path renders it.
+                         ⛔ Hiding the control must never unregister the field: `type` still has
+                         to reach onSubmit, which is the half subtypeAskedOnce.test.tsx pins. */
+                      hideSubtypeSelect
                       carbonCalculation={carbonCalculation}
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />

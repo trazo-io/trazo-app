@@ -987,23 +987,22 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               </Text>
             );
           })()}
-          {/* Record value — the reason this row is worth keeping. Lifted OUT of the
-                  Carbon Impact card, where it was nested: guidance about what a CERTIFIER
-                  reads is not a footnote to an emissions number, and burying it there made
-                  a zero-emission record look like it was apologising for the zero. */}
-          {carbonData && !carbonData.error && carbonData.co2e === 0 && (
-            <StandardAlert
-              status="info"
-              title={intl.formatMessage({ id: 'event.recordValue.title' })}
-              description={
-                event.event_type === 7
-                  ? intl.formatMessage({ id: 'event.recordValue.business' })
-                  : event.event_type === 3
-                  ? intl.formatMessage({ id: 'event.recordValue.general' })
-                  : intl.formatMessage({ id: 'event.recordValue.default' })
-              }
-            />
-          )}
+          {/* Zero-emissions note, DEMOTED from a second info box to one muted line
+              (2026-08-27). Two stacked banners opened every certifier-only record's
+              modal, both ending in "it's for your certifier" — banner fatigue that
+              devalued the visibility notice above, and the "Why this record matters"
+              title promised a compliance story while the body explained emissions
+              accounting. The fact survives as a caption where a carbon number would
+              otherwise appear; on certifier-only records it is dropped entirely —
+              the notice above already carries the certifier-reads-the-season story. */}
+          {carbonData &&
+            !carbonData.error &&
+            carbonData.co2e === 0 &&
+            !buyerPageWithheldReasonId(event as Record<string, unknown>) && (
+              <Text fontSize="sm" color="gray.600">
+                {intl.formatMessage({ id: 'event.recordValue.zeroEmissions' })}
+              </Text>
+            )}
 
           {/* Event Details Section */}
           <Box>

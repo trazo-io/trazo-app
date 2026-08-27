@@ -75,7 +75,8 @@ export interface ActivityVerb {
    * step asks for. The farmer answers that in step 0 of the wizard (ActivitySubtypeChooser),
    * in this same vocabulary — NOT in ProductionTab's raw code select, which is the developer
    * vocabulary and used to ask the question a second time after a tile had already answered
-   * it.
+   * it. That select is now gone from the wizard on BOTH paths: edit corrects the activity
+   * through the same step-0 chooser, opt-in behind a "Not X?" link.
    *
    * Codes are validated against history/models.py PRODUCTION_EVENTS by
    * config/events/__tests__/productionSubtypeCoverage.test.ts, which also asserts every
@@ -185,8 +186,16 @@ export const subtypeChoicesFor = (verb: ActivityVerb | undefined): readonly stri
   verb?.subtypeChoices && verb.subtypeChoices.length > 1 ? verb.subtypeChoices : [];
 
 export interface SubtypeQuestionInput {
-  /** Edit mode keeps ProductionTab's select; correcting a saved subtype is not a second ask. */
+  /** Editing a saved record rather than creating one. */
   isEdit: boolean;
+  /**
+   * Edit only: the farmer explicitly asked to correct the activity.
+   *
+   * Edit IS a correction surface — a mis-tapped tile has to be fixable — but the correction is
+   * OPT-IN. Opening every edit on a sixteen-tile grid taxes the farmer who came to fix a date,
+   * and it is also the wrong default to show beside a header that already names the record.
+   */
+  isCorrecting?: boolean;
   /** Backend event_type currently in force, or null before anything is chosen. */
   eventType: number | null | undefined;
   /** The verb the farmer picked, if any. `undefined` means the grid is still asking. */
@@ -210,16 +219,33 @@ export interface SubtypeQuestionInput {
  */
 export const subtypeQuestionFor = ({
   isEdit,
+  isCorrecting = false,
   eventType,
   verb,
   fromPlanItem,
   planItem,
   allProductionSubtypes
 }: SubtypeQuestionInput): readonly string[] => {
-  if (isEdit) return [];
   // Production is the only event type with family verbs today; every other tab asks its own
-  // subtype exactly once, inside itself, so there is nothing to hoist into step 0.
+  // subtype exactly once, inside itself, so there is nothing to hoist into step 0. True on the
+  // edit path too: a Chemical record's subtype is ChemicalTab's single ask and stays there.
   if (eventType !== 1) return [];
+
+  /*
+   * EDIT asks the same question, in the same place, in the same words.
+   *
+   * It used to be asked somewhere else entirely: ProductionTab kept its raw `type` select on
+   * the edit path (`hideSubtypeSelect={!isEdit}`), so one record had TWO activity surfaces —
+   * step 0 stating "Seed search" beside a notice that the record type was fixed, and step 2
+   * offering a sixteen-option select labelled "Production type" that changed it. The notice
+   * and the select contradicted each other, and "Production type" is the developer's word for
+   * a fact the farmer answered by tapping a tile.
+   *
+   * All sixteen, not the family: on the create path the tile constrains the question, but a
+   * farmer correcting a saved record may have tapped the wrong tile outright — Seed search
+   * when they meant Harvest — and both live under the same event_type.
+   */
+  if (isEdit) return isCorrecting ? allProductionSubtypes : [];
 
   if (fromPlanItem) {
     // Still in flight, or one that already names the practice — nothing to ask.

@@ -399,6 +399,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     valueType: 'string',
     visibleForSubtypes: RECORDS_LOT_DISPOSITION,
     surfaces: {
+      timeline: 'immediate',
       form: 'immediate',
       modal: 'immediate',
       card: 'secondary'
@@ -428,6 +429,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     valueType: 'string',
     visibleForSubtypes: ['TP'],
     surfaces: {
+      timeline: 'immediate',
       form: 'secondary',
       modal: 'immediate'
     }
@@ -462,6 +464,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     enumSource: 'harvest_destinations',
     visibleForSubtypes: RECORDS_HANDLER,
     surfaces: {
+      timeline: 'immediate',
       form: 'immediate',
       modal: 'immediate'
     }
@@ -522,6 +525,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     enumSource: 'buffer_dispositions',
     visibleForSubtypes: RECORDS_BUFFER,
     surfaces: {
+      timeline: 'immediate',
       form: 'secondary',
       modal: 'secondary'
     }
@@ -543,6 +547,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     visibleForSubtypes: RECORDS_BUFFER,
     visibleWhen: (e) => BUFFER_ENTERS_COMMERCE(e.buffer_disposition),
     surfaces: {
+      timeline: 'immediate',
       form: 'secondary',
       modal: 'secondary'
     }
@@ -753,6 +758,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     enumSource: 'seeds_sources',
     visibleForSubtypes: SEED_SOURCED,
     surfaces: {
+      timeline: 'immediate',
       card: 'immediate',
       modal: 'immediate',
       form: 'immediate',
@@ -852,6 +858,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // commercially sensitive, producer/certifier-only. NO consumer_card surface (P0 leak fix,
     // mirrors chemical supplier_name; backend also strips it from the public payload).
     surfaces: {
+      timeline: 'immediate',
       modal: 'secondary',
       form: 'secondary'
     }
@@ -1471,14 +1478,14 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'production.pollination.pollinatorType',
     valueType: 'string',
     visibleForSubtypes: ['PO'],
-    surfaces: { modal: 'immediate', form: 'immediate' }
+    surfaces: { timeline: 'immediate', modal: 'immediate', form: 'immediate' }
   },
   {
     name: 'hive_count',
     labelKey: 'production.pollination.hiveCount',
     valueType: 'number',
     visibleForSubtypes: ['PO'],
-    surfaces: { modal: 'immediate', form: 'immediate' }
+    surfaces: { timeline: 'immediate', modal: 'immediate', form: 'immediate' }
   },
   {
     // Placement and removal bound the window the hives were on the block. Without them the
@@ -1523,7 +1530,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     valueType: 'number',
     visibleForSubtypes: ['PR'],
     visibleWhen: (e) => Boolean(e.is_summary ?? (e.extra_data as ProductionData)?.is_summary),
-    surfaces: { modal: 'secondary', form: 'secondary' }
+    surfaces: { timeline: 'immediate', modal: 'secondary', form: 'secondary' }
   },
   {
     name: 'yield_total',
@@ -1682,7 +1689,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     formatter: formatFuelConsumption,
     carbonRelevant: true,
     surfaces: {
-      timeline: 'immediate',
+      // NO timeline tier (2026-08-27). Fuel is an INPUT to the carbon calculation, and
+      // the card already carries the kg CO2e line — a fuel headline told the carbon
+      // story twice while record facts (passes, suppliers, lot codes) sat hidden.
+      // Records-first standard: carbonRelevant fields never take a timeline slot.
       modal: 'secondary',
       form: 'secondary',
       quick_form: 'secondary'
@@ -1835,6 +1845,7 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // them here the value was write-only.
     visibleForSubtypes: ['HA', 'PH', 'PL', 'TR', 'SS'],
     surfaces: {
+      timeline: 'immediate',
       modal: 'secondary',
       form: 'secondary',
       consumer_card: 'secondary'

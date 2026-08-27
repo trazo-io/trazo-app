@@ -107,3 +107,41 @@ describe('subtypeQuestionFor', () => {
     ).toEqual([]);
   });
 });
+
+describe('subtypeQuestionFor — the edit path', () => {
+  /*
+   * Edit used to return `[]` unconditionally, because the question was asked somewhere else:
+   * ProductionTab kept its raw `type` select on the edit path. That made one wizard contradict
+   * itself — step 0 stated the activity beside a notice that the record type was fixed, and a
+   * select two steps below changed it, labelled "Production type". The ask moved here.
+   */
+  it('asks nothing until the farmer opts in — an edit is usually a date fix', () => {
+    expect(ask({ isEdit: true, verb: verbForKey('seed_search') })).toEqual([]);
+  });
+
+  it('offers ALL production subtypes when correcting, not just the family', () => {
+    // A mis-tapped tile is not constrained to the family it landed in: Seed search and Harvest
+    // are both event_type 1, and the farmer who wants the second may have saved the first.
+    const asked = ask({ isEdit: true, isCorrecting: true, verb: verbForKey('seed_search') });
+    expect(asked).toEqual(ALL);
+    expect(asked).toContain('HA');
+    expect(asked).toContain('SS');
+  });
+
+  it('never asks for a non-production record — its tab owns its own subtype', () => {
+    for (const eventType of [0, 2, 3, 5, 6, 7]) {
+      expect(
+        ask({ isEdit: true, isCorrecting: true, eventType }),
+        `event_type ${eventType}`
+      ).toEqual([]);
+    }
+  });
+
+  it('leaves the CREATE path untouched — correcting is an edit-only concept', () => {
+    // isCorrecting must not leak into create: the verb grid is the ask there, and a chooser
+    // rendered underneath it is the two-questions-one-fact bug branch 1 of this file records.
+    expect(ask({ isCorrecting: true, verb: undefined })).toEqual([]);
+    expect(ask({ isCorrecting: true, verb: verbForKey('irrigation') })).toEqual([]);
+    expect(ask({ isCorrecting: true, verb: verbForKey('field_work') })).toEqual(['CU', 'TH', 'MO']);
+  });
+});

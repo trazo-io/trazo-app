@@ -87,6 +87,10 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
   const [correctTarget, setCorrectTarget] = useState<{ id: number; eventType: number } | null>(
     null
   );
+  // Finished seasons collapse the plan to a retrospective: the header badge carries the
+  // planned-vs-logged count, and the row list is opt-in. Open seasons never collapse —
+  // there the checklist is doing its job.
+  const [showFinishedPlan, setShowFinishedPlan] = useState(false);
 
   const { data, isLoading } = useGetSeasonPlanQuery(
     { historyId: productionId },
@@ -96,10 +100,18 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
 
   const items = data?.items || [];
   const completeness = data?.completeness;
+  const loggedCount = items.filter((i) => i.status === 'logged').length;
 
   // A production started without a crop template has no plan, and that is a perfectly good
   // way to work — the card simply does not render rather than nagging for one.
   if (!isLoading && items.length === 0) return null;
+
+  // A plan is a FORWARD-looking artifact; its job ends when the season closes. On a
+  // finished season with nothing fulfilled, a 16-row "Planned / 0 of 16 logged" panel is
+  // not a record of anything — it misreads a season that may be fully documented
+  // free-form as an empty one, and "Planned" promises work that can never happen.
+  // Nothing to review → nothing rendered (2026-08-26).
+  if (!isLoading && isFinished && loggedCount === 0) return null;
 
   const openLogForm = (item: SeasonPlanItem) => {
     const verb = verbForEvent(item.event_type, item.event_subtype);
@@ -211,11 +223,45 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
         }>
         {isLoading ? (
           <StandardSkeleton count={3} />
+        ) : isFinished && !showFinishedPlan ? (
+          <VStack align="stretch" spacing={3}>
+            <Text fontSize="sm" color="gray.600">
+              {intl.formatMessage(
+                { id: 'seasonPlan.finishedSummary' },
+                {
+                  logged: loggedCount,
+                  total: completeness ? completeness.total - completeness.skipped : items.length
+                }
+              )}
+            </Text>
+            <StandardButton
+              size="sm"
+              variant="ghost"
+              alignSelf="flex-start"
+              onClick={() => setShowFinishedPlan(true)}>
+              {intl.formatMessage({ id: 'seasonPlan.showPlan' })}
+            </StandardButton>
+          </VStack>
         ) : (
           <VStack spacing={0} align="stretch">
+            {isFinished && (
+              <StandardButton
+                size="sm"
+                variant="ghost"
+                alignSelf="flex-start"
+                mb={2}
+                onClick={() => setShowFinishedPlan(false)}>
+                {intl.formatMessage({ id: 'seasonPlan.hidePlan' })}
+              </StandardButton>
+            )}
             {items.map((item, index) => {
               const isLogged = item.status === 'logged';
               const isSkipped = item.status === 'skipped';
+              // "Planned" is a promise; on a finished season the honest word is a fact.
+              const statusKey =
+                item.status === 'pending' && isFinished
+                  ? 'seasonPlan.statusNotLogged'
+                  : STATUS_LABEL[item.status];
               return (
                 <Box key={item.id}>
                   {index > 0 && <Divider />}
@@ -267,7 +313,7 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
                         variant={isLogged ? 'subtle' : 'neutral'}
                         colorScheme={isLogged ? 'green' : undefined}
                         textTransform="none">
-                        {intl.formatMessage({ id: STATUS_LABEL[item.status] })}
+                        {intl.formatMessage({ id: statusKey })}
                       </Badge>
 
                       {isLogged && item.fulfilled_by_id != null && (

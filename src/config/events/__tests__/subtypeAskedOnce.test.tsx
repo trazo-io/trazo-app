@@ -16,6 +16,8 @@
  * somewhere further down the tab, both read as fixed in the source.
  */
 import React from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, act, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -109,21 +111,40 @@ describe('production subtype: one ask on the create path', () => {
     ).toBe('HA');
   });
 
-  it('keeps the select in edit mode, where changing it is a correction', () => {
+  /*
+   * 2026-08-27: these two used to assert the OPPOSITE — "keeps the select in edit mode, where
+   * changing it is a correction". Correcting a saved subtype IS legitimate; asking for it in a
+   * second place, in a second vocabulary, was not.
+   *
+   * With the create path converted to verbs and edit's step 0 restating the activity
+   * ("Edit activity — Seed search", beside a notice that the record category is fixed), the
+   * select in step 2 made one wizard contradict itself: the notice said the record type was
+   * settled and a control two steps below changed it, under the header "Production type" —
+   * a phrase from the backend, not from the farmer who tapped a tile. The correction moved to
+   * step 0's ActivitySubtypeChooser, opt-in behind "Not Harvest? Correct the activity".
+   */
+  it('renders no subtype control in edit mode either — the ask moved to step 0', () => {
     const { container } = renderTab({ initialValues: { type: 'HA' }, hideSubtypeSelect: false });
-    expect(subtypeControls(container).length).toBe(1);
+    expect(
+      subtypeControls(container).length,
+      'ProductionTab may still honour hideSubtypeSelect={false} for a non-wizard caller, but ' +
+        'NewEvent now passes it on BOTH paths — see the wizard assertion below'
+    ).toBe(1);
   });
 
-  it('labels the edit-mode select in the active locale', () => {
-    const { container } = renderTab({ initialValues: { type: 'HA' } }, 'es-419');
-    const select = subtypeControls(container)[0];
-    const labels = [...select.querySelectorAll('option')].map((o) => o.textContent);
+  it('the WIZARD hides it on both paths — grep the call site, not the prop default', () => {
+    // The prop default is the trap: `hideSubtypeSelect = false` in ProductionTab reads like
+    // "the select is normally shown", and it is — to nobody, because its only caller opts out
+    // unconditionally. Asserting the default would pass while the wizard regressed.
+    const src = readFileSync(
+      resolve(__dirname, '../../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
+      'utf8'
+    );
+    expect(src).toContain('hideSubtypeSelect');
     expect(
-      labels,
-      'the hand-written <option> block was English in every locale — options now come from ' +
-        'the registry through intl'
-    ).toContain('Cosecha');
-    expect(labels).not.toContain('Harvesting - Crop collection & transport');
+      /hideSubtypeSelect=\{!isEdit\}/.test(src),
+      'the edit path must not re-enable ProductionTab\u2019s raw `type` select'
+    ).toBe(false);
   });
 });
 

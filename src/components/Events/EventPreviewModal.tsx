@@ -15,7 +15,7 @@ import {
   useColorModeValue,
   Divider
 } from '@chakra-ui/react';
-import { FaEye, FaInfoCircle } from 'react-icons/fa';
+import { FaEye } from 'react-icons/fa';
 import { MdPreview } from 'react-icons/md';
 import { ConsumerEventCard } from './ConsumerEventCard';
 import { hasMinimalPreviewData, type PreviewEventData } from '../../utils/eventPreviewUtils';
@@ -118,6 +118,19 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
     [hasEnoughData, formData]
   );
 
+  /*
+   * Hoisted so the OPENING banner and the section heading can read it too.
+   *
+   * It used to be computed inside the IIFE that renders the card, which is why the banner
+   * above could promise "how consumers will see your event" for an activity the backend
+   * withholds from the buyer page entirely — the banner had no way to know.
+   */
+  const withheldReasonId = buyerPageWithheldReasonId({
+    ...(previewEvent as unknown as Record<string, unknown>),
+    event_type: activeEventType
+  });
+  const isWithheld = Boolean(withheldReasonId);
+
   // Use official event type names to prevent mapping errors
   const eventTypeName =
     EVENT_TYPE_NAMES[activeEventType as keyof typeof EVENT_TYPE_NAMES] || 'Farming Activity';
@@ -141,7 +154,9 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
           borderColor={useColorModeValue('gray.200', 'gray.600')}>
           <VStack spacing={2} align="start">
             <HStack spacing={3}>
-              <Icon as={MdPreview} color="green.500" boxSize={6} />
+              {/* .700, not .500: 2.78 on white fails the 3.0 a glyph owes. Missed on the
+                  first pass — the section icon below was fixed and this one was not. */}
+              <Icon as={MdPreview} color="green.700" boxSize={6} />
               <Text fontSize="lg" fontWeight="bold" color={textColor}>
                 {intl.formatMessage({ id: 'app.eventPreview' }) || 'Event Preview'}
               </Text>
@@ -157,46 +172,59 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
 
         <ModalBody p={{ base: 4, md: 6 }}>
           <VStack spacing={6} align="stretch">
-            {/* Preview Info Banner */}
-            <Box
-              bg={useColorModeValue('blue.50', 'blue.900')}
-              border="1px solid"
-              borderColor={useColorModeValue('blue.200', 'blue.700')}
-              borderRadius="lg"
-              p={4}>
-              <HStack spacing={3} align="start">
-                <Icon as={FaInfoCircle} color="blue.500" boxSize={5} mt={1} />
-                <VStack spacing={2} align="start" flex={1}>
-                  <Text fontSize="sm" fontWeight="semibold" color="blue.600">
-                    {eventTypeName} Preview
-                  </Text>
-                  <Text
-                    fontSize="xs"
-                    color={useColorModeValue('blue.700', 'blue.200')}
-                    lineHeight="1.4">
-                    This preview shows how consumers will see your event in the Production Journey.
-                    All verification badges shown are for preview only - actual verification will be
-                    applied when the event is saved.
-                  </Text>
+            {/*
+              The banner promised a CONSUMER preview unconditionally — including for the
+              certifier-only activities (buffer use, seed search, equipment, treated lumber)
+              that the backend withholds from the buyer page entirely. So the modal opened by
+              saying "this is how consumers will see your event" and, two blocks later, said
+              "not shown on your buyer page". It now renders only when the activity actually
+              reaches a shopper; when it does not, the alert below is already the honest
+              answer and this would contradict it.
 
+              Was a hand-rolled <Box> imitating an info alert: bg blue.50, 1px blue.200,
+              blue.500 icon, blue.600 heading, blue.700 body. MEASURED against blue.50 —
+              heading 3.22 (needs 4.5), body 4.03 (needs 4.5), icon 2.74 (needs 3.0). All
+              three fail, and `theme/components/alert.js` records the SAME 2.74 for blue.500
+              as its reason for moving the real alert to the .700 step. The imitation used
+              precisely the values the theme had already rejected.
+            */}
+            {!isWithheld && (
+              <StandardAlert
+                status="info"
+                title={intl.formatMessage(
+                  { id: 'events.preview.banner.title' },
+                  { eventType: eventTypeName }
+                )}
+                mb={0}>
+                <VStack align="start" spacing={2}>
+                  <Text fontSize="sm">
+                    {intl.formatMessage({ id: 'events.preview.banner.body' })}
+                  </Text>
                   {!hasEnoughData && (
-                    <Badge colorScheme="orange" variant="subtle" fontSize="xs">
-                      <HStack spacing={1}>
-                        <Icon as={FaInfoCircle} boxSize={3} />
-                        <Text>Fill in more details for a complete preview</Text>
-                      </HStack>
+                    /* `variant="warning"`, not `colorScheme="orange"`: Badge colorScheme is
+                       inert in this theme, and `orange` is not a Trazo scale at all — it
+                       resolves to CHAKRA's orange, a different accent from the app's amber. */
+                    <Badge variant="warning">
+                      {intl.formatMessage({ id: 'events.preview.incomplete' })}
                     </Badge>
                   )}
                 </VStack>
-              </HStack>
-            </Box>
+              </StandardAlert>
+            )}
             <Divider />
             {/* Event Preview Header */}
             <Box>
               <HStack spacing={3} mb={4}>
-                <Icon as={FaEye} color="green.500" boxSize={5} />
+                {/* green.500 is 2.78 on white and fails the 3.0 a glyph owes; .700 is 5.13.
+                    `.claude/rules/frontend.md` bans the .500 step for anything that renders
+                    marks, which this does. */}
+                <Icon as={FaEye} color="green.700" boxSize={5} />
                 <Text fontSize="md" fontWeight="semibold" color={textColor}>
-                  How consumers will see this event:
+                  {intl.formatMessage({
+                    id: isWithheld
+                      ? 'events.preview.headingCertifier'
+                      : 'events.preview.headingConsumer'
+                  })}
                 </Text>
               </HStack>
 
@@ -204,16 +232,13 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                   certifier-only (BU/SS/EM/TP): the backend withholds those events entirely,
                   so an honest preview here is the explanation, not a card no shopper sees. */}
               {(() => {
-                const withheldReasonId = buyerPageWithheldReasonId({
-                  ...(previewEvent as Record<string, unknown>),
-                  event_type: activeEventType
-                });
                 if (withheldReasonId) {
                   return (
                     <StandardAlert
                       status="info"
                       title={intl.formatMessage({ id: 'events.certifierOnly.title' })}
                       description={intl.formatMessage({ id: withheldReasonId })}
+                      mb={0}
                     />
                   );
                 }
@@ -230,72 +255,60 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                 );
               })()}
 
-              {/* Field-notes publish notice. Advisory only — nothing is edited or withheld. */}
+              {/*
+                Field-notes publish notice. Advisory only — nothing is edited or withheld.
+
+                Was a third hand-rolled <Box>, and the one that swapped gray.50/gray.200 for
+                ORANGE.50/orange.200 when the scanner found something. `orange` is not a Trazo
+                scale (the theme defines green, gray, red, blue and amber), so the warning
+                state silently rendered CHAKRA's orange — a different accent from every other
+                warning in the app. `status="warning"` maps to amber through the theme, which
+                is the whole reason that mapping exists.
+              */}
               {hasEnoughData && (
-                <Box
-                  mt={4}
-                  p={3}
-                  borderRadius="md"
-                  bg={useColorModeValue(
-                    noteFindings.length > 0 ? 'orange.50' : 'gray.50',
-                    noteFindings.length > 0 ? 'orange.900' : 'gray.700'
-                  )}
-                  border="1px solid"
-                  borderColor={useColorModeValue(
-                    noteFindings.length > 0 ? 'orange.200' : 'gray.200',
-                    noteFindings.length > 0 ? 'orange.700' : 'gray.600'
-                  )}>
-                  <HStack spacing={2} align="start">
-                    <Icon
-                      as={FaInfoCircle}
-                      color={noteFindings.length > 0 ? 'orange.500' : 'gray.500'}
-                      boxSize={4}
-                      mt="2px"
-                    />
-                    <VStack spacing={noteFindings.length > 0 ? 2 : 1} align="start" flex={1}>
-                      <Text fontSize="sm" fontWeight="semibold">
+                <Box mt={4}>
+                  <StandardAlert
+                    status={noteFindings.length > 0 ? 'warning' : 'info'}
+                    title={intl.formatMessage({
+                      id: 'events.noteScan.heading',
+                      defaultMessage: 'Your notes will be public'
+                    })}
+                    mb={0}>
+                    {noteFindings.length === 0 ? (
+                      // No findings is NOT a clean bill of health — the scanner is tuned for
+                      // precision and cannot recognise, say, a neighbour's farm name. Keep a
+                      // short standing reminder rather than implying "all clear".
+                      <Text fontSize="sm" lineHeight="1.5">
                         {intl.formatMessage({
-                          id: 'events.noteScan.heading',
-                          defaultMessage: 'Your notes will be public'
+                          id: 'events.noteScan.alwaysPublic',
+                          defaultMessage:
+                            "Notes are published as written. Avoid worker names, other farms' names, prices and licence numbers unless you want shoppers to see them."
                         })}
                       </Text>
-
-                      {noteFindings.length === 0 ? (
-                        // No findings is NOT a clean bill of health — the scanner is tuned for
-                        // precision and cannot recognise, say, a neighbour's farm name. Keep a
-                        // short standing reminder rather than implying "all clear".
-                        <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
+                    ) : (
+                      <>
+                        <Text fontSize="sm" lineHeight="1.5">
                           {intl.formatMessage({
-                            id: 'events.noteScan.alwaysPublic',
+                            id: 'events.noteScan.intro',
                             defaultMessage:
-                              "Notes are published as written. Avoid worker names, other farms' names, prices and licence numbers unless you want shoppers to see them."
+                              'Field notes appear on the product page exactly as you write them. A few things below may be worth a second look before you save — this is only a suggestion, nothing is changed or hidden.'
                           })}
                         </Text>
-                      ) : (
-                        <>
-                          <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
-                            {intl.formatMessage({
-                              id: 'events.noteScan.intro',
-                              defaultMessage:
-                                'Field notes appear on the product page exactly as you write them. A few things below may be worth a second look before you save — this is only a suggestion, nothing is changed or hidden.'
-                            })}
-                          </Text>
-                          <VStack spacing={1.5} align="start" pl={1}>
-                            {noteFindings.map((finding, i) => (
-                              <Box key={`${finding.category}-${i}`}>
-                                <Text fontSize="xs" fontWeight="semibold">
-                                  “{finding.match}”
-                                </Text>
-                                <Text fontSize="xs" color={mutedColor} lineHeight="1.4">
-                                  {intl.formatMessage({ id: finding.reasonKey })}
-                                </Text>
-                              </Box>
-                            ))}
-                          </VStack>
-                        </>
-                      )}
-                    </VStack>
-                  </HStack>
+                        <VStack spacing={1.5} align="start" pl={1} pt={1}>
+                          {noteFindings.map((finding, i) => (
+                            <Box key={`${finding.category}-${i}`}>
+                              <Text fontSize="sm" fontWeight="semibold">
+                                “{finding.match}”
+                              </Text>
+                              <Text fontSize="sm" lineHeight="1.4">
+                                {intl.formatMessage({ id: finding.reasonKey })}
+                              </Text>
+                            </Box>
+                          ))}
+                        </VStack>
+                      </>
+                    )}
+                  </StandardAlert>
                 </Box>
               )}
             </Box>
@@ -336,22 +349,17 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
               </Box>
             )} */}
 
-            {/* Help Text */}
-            <Box
-              bg={useColorModeValue('green.50', 'green.900')}
-              border="1px solid"
-              borderColor={useColorModeValue('green.200', 'green.700')}
-              borderRadius="lg"
-              p={4}>
-              <Text
-                fontSize="xs"
-                color={useColorModeValue('green.700', 'green.200')}
-                textAlign="center">
-                💡 <strong>Tip:</strong> The more details you provide in the form, the more
-                informative and trustworthy your event will appear to consumers. Complete
-                transparency builds consumer confidence!
-              </Text>
-            </Box>
+            {/*
+              A fourth notice used to sit here: a green box, centred text, and the only emoji
+              in the modal — "💡 Tip: the more details you provide ... Complete transparency
+              builds consumer confidence!".
+
+              Removed rather than converted. It carried no action the farmer could take that
+              the "fill in more details" badge above does not already say, it was the fourth
+              stacked notice around a single preview card (the preview is what this modal is
+              for), and its copy leaned on the trust/confidence framing that
+              `.claude/rules/transparency-first.md` moved away from.
+            */}
           </VStack>
         </ModalBody>
       </ModalContent>
