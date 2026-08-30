@@ -20,12 +20,25 @@ import baseApi from './baseApi';
 
 export type PostHarvestFacilityType = 'huller' | 'dryer' | 'cold_storage' | 'packer' | 'custom';
 
+/**
+ * What the facility DOES for this operation — a different axis from what it IS. CCOF asks about
+ * handling on G6.1 §C and storage on G6.2 §A; WSDA splits them again across sections K and L. A
+ * cold store can be either, and without this axis one record answers both questions or neither.
+ */
+// `''` is a real, expected value, not a placeholder: the backend field is `blank=True` with an
+// empty default so a facility nobody has been asked about prints in the plan as unstated rather
+// than as a role the operator never chose. Leaving it out of the union forces every caller to
+// launder the empty string, which is how the honest state gets quietly replaced by a guess.
+export type PostHarvestFacilityRole = '' | 'handling' | 'storage' | 'both';
+
 export interface PostHarvestFacility {
   id: number;
   public_id: string;
   name: string;
   facility_type: PostHarvestFacilityType;
   facility_type_display: string;
+  role: PostHarvestFacilityRole;
+  role_display: string;
   address?: string | null;
   city?: string | null;
   state?: string | null;
@@ -48,6 +61,7 @@ export type PostHarvestFacilityInput = Partial<
     PostHarvestFacility,
     | 'name'
     | 'facility_type'
+    | 'role'
     | 'address'
     | 'city'
     | 'state'

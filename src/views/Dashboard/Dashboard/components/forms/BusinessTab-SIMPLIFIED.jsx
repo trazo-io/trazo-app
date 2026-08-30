@@ -2,14 +2,13 @@
 // Tracks business activities that enhance agricultural transparency and consumer trust
 // Phase 1 Enhanced: Trust indicators, progressive disclosure, consumer value messaging
 
-import { HStack, Box, VStack, Text, SimpleGrid } from '@chakra-ui/react';
+import { HStack, Box, VStack, SimpleGrid } from '@chakra-ui/react';
 import {
   StandardButton,
   StandardField,
   StandardInput,
   StandardSelect,
   StandardTextarea,
-  StandardAlert,
   CollapsibleSection,
   SectionHeader,
   SectionBox
@@ -258,15 +257,6 @@ const BusinessTab = forwardRef(
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <VStack spacing={6} align="stretch">
-            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. */}
-            <StandardAlert
-              status="info"
-              title={intl.formatMessage({ id: 'events.callout.business.title' })}>
-              <Text fontSize="sm">
-                {intl.formatMessage({ id: 'events.callout.business.body' })}
-              </Text>
-            </StandardAlert>
-
             {/* Forms are hand-crafted by design: the NOP section grouping below is what
                 makes the audit export complete, and the registry renderer flattens it.
                 The field registry is the SSOT for DISPLAY surfaces (consumer card, modal,
@@ -275,12 +265,15 @@ const BusinessTab = forwardRef(
             <>
               {/* Section 1: Business Event Information */}
               <SectionBox>
+                {/* Not "Trust-Building Business Activity": EVENT_TYPE_NAMES[7] with a
+                      claim bolted to the front — the heading asserted an OUTCOME ("builds
+                      trust") over fields that only record what happened. This section is
+                      not activity basics like its siblings; it also holds the certification
+                      type, certificate number, certifier name and verification status, so
+                      it is named for what it actually collects. */}
                 <SectionHeader
                   icon={FaClipboardList}
-                  title={intl.formatMessage({
-                    id: 'events.business.sections.trustBuildingBusinessActivity',
-                    defaultMessage: 'Trust-Building Business Activity'
-                  })}
+                  title={intl.formatMessage({ id: 'events.section.business.certification' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />{' '}
                 <VStack spacing={4} align="stretch">
@@ -452,8 +445,22 @@ const BusinessTab = forwardRef(
                                 id: 'events.business.placeholders.selectCertificationType',
                                 defaultMessage: 'Select certification type...'
                               })}>
+                              {/* ⛔ 2026-08-27 — "Carbon Neutral Certification" and
+                                  "Sustainable Agriculture Standard" were removed from this
+                                  list, NOT hidden. Both name a claim with no issuing body
+                                  behind it, so `claim_authority._WITHHELD_CERTIFICATION_TYPES`
+                                  already kept them off every consumer surface: the farmer was
+                                  being offered a claim the product silently declined to show.
+                                  "Carbon neutral" is a general environmental benefit claim
+                                  (16 CFR 260.6) that also contradicts Trazo's own
+                                  direct-operational-emissions methodology, and an
+                                  unattributed "Sustainable Agriculture Standard" is the
+                                  self-created label ECGT 2024/825 bans from 2026-09-27.
+                                  Existing records keep their value and their label —
+                                  `BusinessEvent.DEPRECATED_CERTIFICATION_TYPE_CHOICES` — and
+                                  `BusinessEventSerializer.validate_certification_type` is the
+                                  gate, because dropping an <option> is not one. */}
                               <option value="organic_usda">USDA Organic</option>
-                              <option value="carbon_neutral">Carbon Neutral Certification</option>
                               <option value="rainforest_alliance">Rainforest Alliance</option>
                               <option value="fair_trade">Fair Trade Certified</option>
                               <option value="regenerative">Regenerative Organic Certified</option>
@@ -461,12 +468,6 @@ const BusinessTab = forwardRef(
                                 {intl.formatMessage({
                                   id: 'events.business.options.realOrganicProject',
                                   defaultMessage: 'Real Organic Project (ROP)'
-                                })}
-                              </option>
-                              <option value="sustainable_agriculture">
-                                {intl.formatMessage({
-                                  id: 'events.business.options.sustainableAgricultureStandard',
-                                  defaultMessage: 'Sustainable Agriculture Standard'
                                 })}
                               </option>
                               <option value="water_stewardship">
@@ -486,6 +487,14 @@ const BusinessTab = forwardRef(
                                 {intl.formatMessage({
                                   id: 'events.business.options.foodSafetyPrimusGfsSqfBrc',
                                   defaultMessage: 'Food Safety (Primus GFS, SQF, BRC)'
+                                })}
+                              </option>
+                              {/* In BusinessEvent.CERTIFICATION_TYPE_CHOICES since Sprint 2,
+                                  offered by no form until now. */}
+                              <option value="kosher">
+                                {intl.formatMessage({
+                                  id: 'events.business.options.kosherCertified',
+                                  defaultMessage: 'Kosher Certified'
                                 })}
                               </option>
                             </StandardSelect>

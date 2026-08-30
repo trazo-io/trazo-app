@@ -1779,9 +1779,9 @@ export function getConsumerEventDescription(
     };
 
     // Determine soil management type from various possible fields
-    const soilType = event.soil_management_type || event.type || 'Soil Management';
+    const soilType = event.soil_management_type || event.type || '';
     const typeInfo = soilTypeMap[soilType] || {
-      title: 'Soil Management Operation',
+      title: 'Soil work',
       icon: '🌱',
       description: 'Work on the soil was recorded for this block',
       impact: 'MEDIUM' as 'HIGH' | 'MEDIUM' | 'LOW'
@@ -2041,7 +2041,7 @@ export function getConsumerEventDescription(
     // Get pest management type from event data
     const eventPestType = event.pest_management_type || event.pest_type || event.type || 'SC';
     const typeInfo = pestTypeMap[eventPestType] || {
-      title: 'Pest Management Activity',
+      title: 'Pest & scouting',
       icon: '🐛',
       description: 'Applied sustainable pest management practices to protect crop health',
       impact: 'MEDIUM' as 'MEDIUM'
@@ -2373,7 +2373,7 @@ export function getConsumerEventDescription(
   if (event && event.event_type === 4) {
     // Since Equipment-specific fields are not being serialized from backend,
     // provide fallback messages based on available event data
-    const equipmentName = event.name || 'Equipment Operation';
+    const equipmentName = event.name || 'Equipment work';
 
     // Check if we have Equipment-specific data fields
     if (!event.operation_type && !event.equipment_type && !event.fuel_consumed) {
@@ -2485,9 +2485,9 @@ export function getConsumerEventDescription(
     };
 
     // Determine operation type from various possible fields
-    const operationType = event.operation_type || event.type || 'Equipment Operation';
+    const operationType = event.operation_type || event.type || '';
     const typeInfo = operationTypeMap[operationType] || {
-      title: 'Equipment Operation',
+      title: 'Equipment work',
       icon: '🚜',
       description: 'Agricultural equipment operation with transparent operational tracking',
       impact: 'MEDIUM' as 'HIGH' | 'MEDIUM' | 'LOW'
@@ -2653,7 +2653,7 @@ export function getConsumerEventDescription(
     // Determine business activity type from various possible fields
     const businessType = event.business_activity_type || event.business_type || 'business';
     const typeInfo = businessTypeMap[businessType] || {
-      title: 'Business Activity',
+      title: 'Certification & compliance',
       icon: '📋',
       description: 'A business or compliance record was filed for this crop',
       impact: 'LOW' as 'HIGH' | 'MEDIUM' | 'LOW'
@@ -3405,8 +3405,10 @@ export function getTimelineEventTitle(event: any, intl?: any): string {
     'event.soil.preparation': 'Soil Preparation',
     SA: 'Soil Amendment',
     'event.soil.amendment': 'Soil Amendment',
-    SM: 'Soil Management',
-    'event.soil.management': 'Soil Management',
+    // SM ("Soil Management") deleted 2026-08-29: a phantom subtype. It is absent from the
+    // soil registry (ST/PA/OM/CC/TI/CO/GR/HD/NS/LA) and from SoilManagementEvent's
+    // SOIL_TYPE_CHOICES in the backend, so no record could ever carry it — it existed only to
+    // print family 5's own name as if it were a practice.
 
     // Business
     CE: 'Certification',
@@ -3437,13 +3439,13 @@ export function getTimelineEventTitle(event: any, intl?: any): string {
 
   // 6. Category defaults
   const categoryDefaults: Record<number, string> = {
-    0: 'Weather Event',
+    0: 'Weather event',
     1: 'Farm Activity',
-    2: 'Chemical Application',
-    4: 'Equipment Operation',
-    5: 'Soil Management',
-    6: 'Pest Management',
-    7: 'Business Activity'
+    2: 'Input application',
+    4: 'Equipment work',
+    5: 'Soil work',
+    6: 'Pest & scouting',
+    7: 'Certification & compliance'
   };
 
   return event.name || categoryDefaults[event.event_type] || 'Farm Activity';

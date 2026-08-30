@@ -48,7 +48,7 @@ import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
 import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
 import { eventTypeAppearance } from 'config/events/eventTypeAppearance';
-import { eventTitle } from 'config/events/narrative';
+import { eventTitle, subtypeOf as sharedSubtypeOf } from 'config/events/narrative';
 import { buyerPageWithheldReasonId } from 'utils/consumerDisplay';
 import { buyerVisibleFieldNames } from 'utils/buyerPageVisibility';
 import { useIntl } from 'react-intl';
@@ -281,16 +281,22 @@ interface EventDetailsModalProps {
  * Mapped here rather than in `carbonDisplayUtils` on purpose: that helper has other callers,
  * and repainting a surface this component cannot see is not this change.
  */
-const IMPACT_BADGE_VARIANT: Record<string, string> = {
-  gray: 'neutral',
-  green: 'subtle',
-  blue: 'subtle',
-  yellow: 'warning',
-  orange: 'warning'
-};
-
-const impactBadgeVariantFor = (co2e: number) =>
-  IMPACT_BADGE_VARIANT[getImpactLevel(co2e).color] ?? 'neutral';
+/*
+ * 2026-08-28: every band is now NEUTRAL, so this is a constant rather than a map.
+ *
+ * The previous step collapsed five Chakra colorSchemes to three semantic variants, which fixed
+ * the foreign-palette and the reserved-blue problems but kept the underlying claim: yellow and
+ * orange still mapped to `warning`, so a high-emission event was still being told it was bad.
+ *
+ * It is not a judgement to make. `getImpactLevel`'s 5/15/30/60 kg bands cite no EPA/USDA
+ * benchmark and carry no denominator — no crop, no area — so the only thing they reliably
+ * track is how much ground the pass covered. And `carbon-methodology.md` scopes these numbers
+ * to DIRECT OPERATIONAL emissions, explicitly not an LCA, which leaves nothing to grade
+ * against. Same class as the per-event `efficiency_score` deleted on 2026-08-04.
+ *
+ * The figure and its label still render; only the verdict is gone.
+ */
+const impactBadgeVariantFor = (_co2e: number) => 'neutral';
 
 /**
  * The per-family subtype code, wherever this event happens to carry it.
@@ -300,16 +306,10 @@ const impactBadgeVariantFor = (co2e: number) =>
  * resolver and the registry bridge — they were reading different fields, so the modal could
  * title an event one way and render its fields for another subtype entirely.
  */
-const subtypeOf = (event: Event): string | undefined => {
-  const d = event as unknown as Record<string, unknown>;
-  return (d.weather_type ||
-    d.production_type ||
-    d.chemical_type ||
-    d.soil_management_type ||
-    d.pest_management_type ||
-    d.business_event_type ||
-    d.type) as string | undefined;
-};
+// `subtypeOf` moved to config/events/narrative.ts (2026-08-29) — the timeline carried two more
+// copies of this exact chain, and three copies of one rule is how they start disagreeing.
+const subtypeOf = (event: Event): string | undefined =>
+  sharedSubtypeOf(event as unknown as Record<string, unknown>);
 
 // Helper function to get human-readable event names
 const getEventDisplayName = (event: Event, intl: any): string => {
@@ -382,8 +382,6 @@ const getEventDisplayName = (event: Event, intl: any): string => {
     'event.soil.preparation':
       intl.formatMessage({ id: 'event.soil.preparation' }) || 'Soil Preparation',
     'event.soil.amendment': intl.formatMessage({ id: 'event.soil.amendment' }) || 'Soil Amendment',
-    'event.soil.management':
-      intl.formatMessage({ id: 'event.soil.management' }) || 'Soil Management',
 
     // Soil events (additional)
     'event.soil.organic_matter_addition':
@@ -1004,19 +1002,22 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               </Text>
             )}
 
-          {/* Event Details Section */}
+          {/* The farmer's own note.
+              Was headed "Event Details" over a box separately labelled "Field Notes" — a
+              heading, a sublabel and one paragraph, three layers of chrome over a single
+              value. "Event" is also the backend model's word, and the heading sat two
+              blocks above "Detailed Information", which is where every registry field
+              actually renders: one section called Details containing none, another
+              containing all of them. One heading, named for what is under it. */}
           <Box>
             <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
-              {intl.formatMessage({ id: 'app.eventDetails' })}
+              {intl.formatMessage({ id: 'app.fieldNotes' })}
             </Text>
 
-            {/* Field Notes always renders full width — farmer observations
-                    are usually long paragraphs and look cramped in a 50% cell. */}
+            {/* Full width — farmer observations are usually long paragraphs and look
+                cramped in a 50% cell. */}
             <VStack spacing={4} align="stretch">
               <Box p={4} bg={cardBg} borderRadius="lg">
-                <Text fontSize="sm" color="gray.500" mb={1}>
-                  {intl.formatMessage({ id: 'app.fieldNotes' })}
-                </Text>
                 <Text fontWeight="medium" whiteSpace="pre-wrap">
                   {/* The farmer's own note. `description` is the system-generated
                       summary ("Annual soil test") and rendered here it masqueraded
@@ -1037,7 +1038,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               <Divider />
               <Box>
                 <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
-                  {intl.formatMessage({ id: 'app.eventPhotos' })}
+                  {intl.formatMessage({ id: 'events.wizard.step.photos' })}
                 </Text>
                 {/* Photo content warning for flagged AI/stock photos */}
                 {event.photo_content_flag && (

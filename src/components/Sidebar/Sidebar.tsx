@@ -110,7 +110,22 @@ function Sidebar(props: SidebarProps) {
   const cmWhiteGray = useColorModeValue('white', 'gray.700');
   const cmWhiteWhite = useColorModeValue('white', 'white');
   const cmActiveColor = useColorModeValue('gray.700', 'white');
-  const cmInactiveColor = useColorModeValue('gray.400', 'gray.400');
+  /**
+   * gray.500, not gray.400. This paints every INACTIVE nav label — "Activities", "Organic
+   * System Plan", "Documents", "Buyer Page", "Subscription", "Educational Resources",
+   * "Company Settings" — i.e. 16px primary navigation text, which owes 4.5:1. MEASURED
+   * 2026-08-28 on the farm dashboard: gray.400 #9E9E9E is 2.68:1, the lowest-contrast text
+   * anywhere on the screen, and it covered seven of the eight nav items (only the active
+   * "Home" was legible, at gray.700). gray.500 #757575 is 4.61:1.
+   *
+   * Still clearly quieter than the active label (gray.700, 10.05:1), and active/inactive was
+   * never carried by this colour alone anyway — the active item also gets the filled green
+   * chip, which is the fill change frontend.md requires alongside any colour shift.
+   *
+   * Same defect class as the nav ICONS three lines above: a mark that carries meaning was
+   * given a decorative-tint step.
+   */
+  const cmInactiveColor = useColorModeValue('gray.500', 'gray.400');
   const cmInactiveBgOpaque = useColorModeValue('gray.100', 'gray.600');
   const cmThumb = useColorModeValue(renderThumbLight, renderThumbDark);
 
@@ -480,8 +495,11 @@ function Sidebar(props: SidebarProps) {
                   )}
                 </Flex>
               )}
+              {/* gray.500 (4.61:1), not gray.400 (2.68:1). A disclosure chevron is not
+                  decoration — it is the only thing saying this row expands — so it owes the
+                  3.0 WCAG 1.4.11 floor a meaningful graphic owes. */}
               <AccordionIcon
-                color="gray.400"
+                color="gray.500"
                 flexShrink={0}
                 display={
                   prop.icon

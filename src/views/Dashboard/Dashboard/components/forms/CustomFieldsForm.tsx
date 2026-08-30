@@ -143,7 +143,7 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
             renders them for the certifier. Without a badge this read as scratch space. */}
         <SectionHeader
           icon={FaFileAlt}
-          title="Additional Information"
+          title={intl.formatMessage({ id: 'events.section.additionalInfo' })}
           badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
         />
 

@@ -9,6 +9,8 @@ import {
   INPUT_VERIFY_URL,
   OSP_ACTIVATE_URL,
   OSP_ADD_APPROVED_INPUT_URL,
+  OSP_PLAN_MATERIAL_DETAIL_URL,
+  OSP_PLAN_MATERIALS_URL,
   OSP_CHANGE_NOTIFICATIONS_URL,
   OSP_ATTACHMENTS_URL,
   OSP_REVIEW_URL,
@@ -32,6 +34,8 @@ import {
   OSPReview,
   OSPRecordTypesResponse,
   OSPSummary,
+  PlanMaterialEntry,
+  PlanMaterialInput,
   UpdateOSPData
 } from 'types/osp';
 import type {
@@ -174,6 +178,46 @@ const ospApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       invalidatesTags: [{ type: 'OSP', id: 'LIST' }]
+    }),
+
+    // --- Operator-authored materials-list rows -------------------------------------------
+    // The materials list could hold only what a catalog already knew, so CCOF NOPB41 §A's own
+    // examples (compost, manure, gypsum, limestone) and every home-formulated product had
+    // nowhere to go — while the module attested that everything in use was on the list.
+    getPlanMaterials: build.query<PlanMaterialEntry[], OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_PLAN_MATERIALS_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      transformResponse: (r: PlanMaterialEntry[] | { results: PlanMaterialEntry[] }) =>
+        Array.isArray(r) ? r : r?.results ?? [],
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSP', id: Number(ospId) }]
+    }),
+
+    addPlanMaterial: build.mutation<PlanMaterialEntry, OSPOne & { body: PlanMaterialInput }>({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_PLAN_MATERIALS_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSP', id: 'LIST' }
+      ]
+    }),
+
+    deletePlanMaterial: build.mutation<void, OSPOne & { entryId: number }>({
+      query: ({ companyId, farmId, ospId, entryId }) => ({
+        url: OSP_PLAN_MATERIAL_DETAIL_URL(companyId, farmId, ospId, entryId),
+        method: 'DELETE',
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSP', id: 'LIST' }
+      ]
     }),
 
     addApprovedInput: build.mutation<OSP, OSPApprovedInputArgs>({
@@ -374,6 +418,9 @@ export const {
   useActivateOSPMutation,
   useNewOSPVersionMutation,
   useAddApprovedInputMutation,
+  useAddPlanMaterialMutation,
+  useDeletePlanMaterialMutation,
+  useGetPlanMaterialsQuery,
   useRemoveApprovedInputMutation,
   useGetOSPChangeNotificationsQuery,
   useCreateOSPChangeNotificationMutation,

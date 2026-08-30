@@ -132,6 +132,33 @@ describe('production subtype: one ask on the create path', () => {
     ).toBe(1);
   });
 
+  /*
+   * 🔴 2026-08-27: the preset MACHINERY existed (verb, plan item) and "Log this again" simply
+   * was not wired into it — `?repeat=` carries `event_type=` but no `verb=`, so every
+   * preset flag read false and the farmer was asked to re-pick the activity they had just
+   * pressed the button on.
+   *
+   * That is the bug class a source assertion catches and a unit test cannot: `subtypeQuestionFor`
+   * was correct in isolation the whole time; nothing passed it the repeat.
+   */
+  it('wires "Log this again" into the chooser preset — a preset nothing reads is not a preset', () => {
+    const src = readFileSync(
+      resolve(__dirname, '../../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
+      'utf8'
+    );
+    // The three ways step 0's question can already be answered. All three must reach
+    // typeChooserAnswered, or the grid re-asks a question the link already answered.
+    const answered = src.match(/const typeChooserAnswered\s*=([\s\S]{0,220}?);/);
+    expect(answered, 'typeChooserAnswered moved or was renamed').not.toBeNull();
+    for (const preset of ['typePresetFromVerb', 'typePresetFromPlan', 'typePresetFromRepeat']) {
+      expect((answered as RegExpMatchArray)[1], preset).toContain(preset);
+    }
+    // …and the repeat must also silence the SECOND-level question, or a repeated Cultivation
+    // stops to ask "which one was it" about a record that says CU.
+    expect(src).toContain('fromRepeat:');
+    expect(src).toContain('knownSubtype:');
+  });
+
   it('the WIZARD hides it on both paths — grep the call site, not the prop default', () => {
     // The prop default is the trap: `hideSubtypeSelect = false` in ProductionTab reads like
     // "the select is normally shown", and it is — to nobody, because its only caller opts out

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   VStack,
   HStack,
@@ -22,6 +22,7 @@ import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, number, array } from 'zod';
 import { useIntl } from 'react-intl';
+import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
 import { GoogleMap, Polygon, Marker, useLoadScript } from '@react-google-maps/api';
 import { TrazoImageUpload } from '../Upload';
 import {
@@ -156,8 +157,6 @@ interface StandardParcelFormTransparencyProps {
   preFormAlert?: React.ReactNode;
 }
 
-const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-
 export const StandardParcelFormTransparency: React.FC<StandardParcelFormTransparencyProps> = ({
   onSubmit,
   onCancel,
@@ -246,9 +245,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const polygonRef = useRef<google.maps.Polygon>();
   const listenersRef = useRef<google.maps.MapsEventListener[]>([]);
 
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey
-  });
+  // Language follows the APP's locale, not the browser's — see mapsLoaderOptions.
+  const loaderOptions = useMemo(() => googleMapsLoaderOptions(intl.locale), [intl.locale]);
+  const { isLoaded, loadError } = useLoadScript(loaderOptions);
 
   // 🎯 SIMPLIFIED 4-STEP TRANSPARENCY STRUCTURE
   // `shortTitle` is what a phone column shows (below `md`); `title` still shows wherever

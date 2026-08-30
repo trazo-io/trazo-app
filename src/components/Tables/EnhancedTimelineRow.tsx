@@ -1,5 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useIntl } from 'react-intl';
+import { TYPE_BADGE } from 'config/events/eventTypeAppearance';
+import { activityLabel, subtypeOf } from 'config/events/narrative';
 // Event Field Registry (Phase 5 — feature-flagged)
 import { getFieldsForSurface } from 'src/config/events';
 
@@ -157,11 +159,21 @@ interface CarbonCalculationResult {
  *     red.500     3.68     "
  *   After: 4.60 - 6.53. Every ring and every white-on-fill glyph now clears 4.5 with room.
  *
- * The HUE of each entry is deliberately unchanged. The category Badge derives its palette by
- * string-splitting this value (`eventConfig.color.split('.')[0]`), so altering the step is
- * invisible to it — `green.500` and `green.700` both yield `green`. Whether eight categories
- * should carry eight hues AT ALL is a separate, open design question; this change does not
- * pre-empt it.
+ * ⚠️ That open question — "should eight categories carry eight hues at all" — was ANSWERED on
+ * 2026-08-29: no. Every entry below is now `green.700`, and the ring sits on `green.50`.
+ *
+ * The eight hues were decoration wearing the clothes of a code: blue for weather, yellow for
+ * soil, teal for business, red for pest — four of them (orange, yellow, teal, purple) not even
+ * Trazo scales but Chakra defaults, and two families, Weather and Equipment, resolving to
+ * pixel-identical blues, so the code did not separate what it claimed to. Meanwhile red and
+ * amber were spent on ordinary compliant records, which is the colour the dashboard needs for
+ * a real blocker.
+ *
+ * ONE hue, weight carrying difference. The GLYPH separates a frost record from a spray — this
+ * value only says the row belongs to Trazo. Status colour stays reserved for status.
+ *
+ * The old caution about string-splitting is spent: the category Badge stopped deriving its
+ * palette from this value on 2026-08-28 and now renders from TYPE_BADGE. Hue here is free.
  *
  * ⚠️ `bgGradient` and `borderColor` below are DEAD — nothing reads either field. Left in place
  * rather than deleted so this change stays a pure contrast fix, but do not add more.
@@ -171,7 +183,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 0: // Weather Event
       return {
         icon: FaCloudRain,
-        color: 'blue.700',
+        color: 'green.700',
         category: 'Weather Event',
         bgGradient: 'linear(to-r, blue.50, blue.100)',
         borderColor: 'blue.200'
@@ -187,7 +199,9 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 2: // Chemical Event
       return {
         icon: FaFlask,
-        color: 'orange.700',
+        // gray.600, not orange.700 (2026-08-28). See the note on case 6 — an approved organic
+        // input is not a warning, and the badge beside this ring is now `neutral`.
+        color: 'green.700',
         category: 'Chemical Application',
         bgGradient: 'linear(to-r, orange.50, orange.100)',
         borderColor: 'orange.200'
@@ -195,7 +209,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 3: // Other Farm Activities (Sprint 2: renamed from General Event)
       return {
         icon: FaClipboardList,
-        color: 'gray.600',
+        color: 'green.700',
         category: 'Other Farm Activity',
         bgGradient: 'linear(to-r, gray.50, gray.100)',
         borderColor: 'gray.200'
@@ -207,7 +221,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
         // the steps were raised, which would have made these two categories the SAME colour.
         // They already share a Badge palette (both split to `blue`), so the ring was the only
         // thing telling them apart. 8.59:1 on white.
-        color: 'blue.900',
+        color: 'green.700',
         category: 'Equipment Operation',
         bgGradient: 'linear(to-r, blue.50, blue.100)',
         borderColor: 'blue.200'
@@ -215,7 +229,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 5: // Soil Management
       return {
         icon: FaLayerGroup,
-        color: 'yellow.800',
+        color: 'green.700',
         category: 'Soil Management',
         bgGradient: 'linear(to-r, yellow.50, yellow.100)',
         borderColor: 'yellow.300'
@@ -223,7 +237,18 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 6: // Pest Management
       return {
         icon: FaBug,
-        color: 'red.700',
+        /*
+         * gray.600, not red.700 (2026-08-28). A pheromone-trap reading rendered with a RED ring
+         * and a red badge, which on a certifier-facing record reads as an incident. It is the
+         * opposite: 7 CFR 205.206 is the crop pest, weed and disease management practice
+         * standard, and monitoring is the documented preventive practice it asks for — this row
+         * is compliance EVIDENCE. Red is reserved for something a grower must act on.
+         *
+         * Grey rather than a new hue because the GLYPH is the identity here — the bug separates
+         * this from a spray, exactly as config/events/eventTypeAppearance.ts argues. Matches
+         * case 3, which is already gray.600 (5.74:1 on white).
+         */
+        color: 'green.700',
         category: 'Pest Management',
         bgGradient: 'linear(to-r, red.50, red.100)',
         borderColor: 'red.200'
@@ -231,7 +256,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     case 7: // Business Event
       return {
         icon: FaCertificate,
-        color: 'teal.700',
+        color: 'green.700',
         category: 'Business Activity',
         bgGradient: 'linear(to-r, teal.50, teal.100)',
         borderColor: 'teal.200'
@@ -239,7 +264,7 @@ const getEventConfig = (eventType: number, type: string, description: string) =>
     default:
       return {
         icon: FaLeaf,
-        color: 'gray.600',
+        color: 'green.700',
         category: 'Farm Activity',
         bgGradient: 'linear(to-r, gray.50, gray.100)',
         borderColor: 'gray.200'
@@ -1109,6 +1134,23 @@ const getEnhancedDescription = (event: Event) => {
   }
 };
 
+/**
+ * Timeline geometry, in CSS pixels.
+ *
+ * The connector line and the node circle are laid out by two separate rules that have to agree;
+ * when they were independent literals they drifted (the line started below one node and ran
+ * through the next). Every position below is computed from these, so changing the circle size
+ * or the row gap moves the line with it.
+ */
+const TIMELINE_NODE_SIZE = 42; // circle diameter
+const TIMELINE_ROW_GAP = 16; // vertical margin between rows (was mb={4})
+const TIMELINE_LINE_WIDTH = 2;
+/* The node sits flush with the top of its row. It used to carry `mt="8px"`, which never
+   applied: `theme/styles.js` forces `.chakra-stack > *:not(.chakra-divider) { margin: 0
+   !important }`, so a margin prop on a direct child of any Stack is inert app-wide (the same
+   trap is documented on SectionBox). MEASURED: the circle's top edge == the row's top edge.
+   The connector was positioned as if the offset were real, which is half of why it missed. */
+
 function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   const { logo, title, date, color, isLast, url, type, event, members, onEventClick } = props;
   const intl = useIntl();
@@ -1149,14 +1191,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   // The registry's timeline surface has maxFields=3 with automatic tier-based truncation.
   const registryTimelineFields = useMemo(() => {
     if (!USE_FIELD_REGISTRY) return null;
-    const subtype =
-      (event as any).weather_type ||
-      (event as any).production_type ||
-      (event as any).chemical_type ||
-      (event as any).soil_management_type ||
-      (event as any).pest_management_type ||
-      (event as any).business_event_type ||
-      event.type;
+    const subtype = subtypeOf(event as never);
     const result = getFieldsForSurface(event.event_type, subtype, 'timeline', event as any);
     return [
       ...result.hero.filter((f) => f.name !== 'name' && f.name !== 'commercial_name'),
@@ -1190,15 +1225,22 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
   }, []);
 
   return (
-    <Box position="relative" mb={4} w="100%" ref={timelineRef}>
-      {/* Timeline Connector Line */}
+    <Box position="relative" mb={`${TIMELINE_ROW_GAP}px`} w="100%" ref={timelineRef}>
+      {/* Timeline Connector Line.
+          Geometry is DERIVED from the node, never guessed: the segment must start at this
+          row's circle and end exactly on the next row's circle. It used to be
+          `top: 56px; height: calc(100% + 8px)`: MEASURED, that started 14px below a circle
+          whose bottom edge is at 42px, and ran 48px past the next circle's top edge — so the
+          line left a gap under one node and then ran on THROUGH the next one, poking out
+          below it. The node read as disconnected from the thread it sits on. */}
       {!isLast && !isMobile && isMounted && (
         <Box
           position="absolute"
-          left="20px"
-          top="56px"
-          w="2px"
-          h="calc(100% + 8px)"
+          left={`${TIMELINE_NODE_SIZE / 2 - TIMELINE_LINE_WIDTH / 2}px`}
+          top={`${TIMELINE_NODE_SIZE}px`}
+          w={`${TIMELINE_LINE_WIDTH}px`}
+          /* ends on the next circle's top edge: (100% + row gap) - this row's node bottom */
+          h={`calc(100% - ${TIMELINE_NODE_SIZE - TIMELINE_ROW_GAP}px)`}
           bg={useColorModeValue('gray.200', 'gray.600')}
           borderRadius="full"
           zIndex={0}
@@ -1210,10 +1252,18 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
       <HStack spacing={isMobile ? 0 : 4} align="flex-start" w="100%">
         {/* Minimal Timeline Icon */}
         {!isMobile && (
-          <VStack spacing={0} align="center" minW="42px" position="relative" zIndex={1} mt="8px">
+          <VStack
+            spacing={0}
+            align="center"
+            minW={`${TIMELINE_NODE_SIZE}px`}
+            position="relative"
+            zIndex={1}>
             <Circle
-              size="42px"
-              bg="white"
+              size={`${TIMELINE_NODE_SIZE}px`}
+              /* TONAL GREEN (2026-08-29): one hue for every family, on the brand tint.
+                 green.700 is 4.98:1 both as the 3px boundary and as the glyph on green.50 —
+                 comfortably over the 3.0 a meaningful graphic owes. */
+              bg="green.50"
               borderWidth="3px"
               borderColor={eventConfig.color}
               color={eventConfig.color}
@@ -1268,16 +1318,56 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                       </Text>
                     </Tooltip>
                     <HStack spacing={2} wrap="wrap">
-                      {/* Event Category Badge - Subtle */}
+                      {/* Renders from TYPE_BADGE, the shared event-appearance SSOT, so this
+                          timeline says the same thing as the activity feed and the event modal
+                          (2026-08-28).
+
+                          It used to derive a PALETTE from the category's decorative hue
+                          (`colorScheme={eventConfig.color.split('.')[0]}`): seven hues across
+                          eight categories, four of them — orange, yellow, teal, purple — not
+                          Trazo scales at all but Chakra defaults. It made a routine record read
+                          as a verdict, Pest Management in RED and Soil Management in YELLOW, and
+                          it did not even separate the families it was decorating: Weather and
+                          Equipment both split to `blue` and resolved to identical pixels, as the
+                          note on `getEventConfig` case 4 already admits.
+
+                          The fix is NOT "make them all neutral" — that was the first instinct and
+                          it would have invented a FOURTH answer for a question this repo already
+                          settled. `config/events/eventTypeAppearance.ts` owns it: semantic
+                          VARIANTS, never per-family hues — inputs `warning`, pest `danger`, the
+                          rest `neutral`/`subtle`/`brand`. Colour here says how much the reader
+                          should care; the GLYPH is what separates a frost record from a spray.
+
+                          `?? 'neutral'` because `getEventConfig` has a `default` branch for an
+                          absent/unknown event_type, and an undefined variant would silently fall
+                          back to Chakra's stock badge.
+
+                          `colorScheme` is DROPPED, not left behind: these variants ignore it by
+                          design (theme/components/badge.js), so keeping it would be a dead prop
+                          implying a control that does nothing. */}
                       <Badge
-                        colorScheme={eventConfig.color.split('.')[0]}
-                        variant="subtle"
+                        variant={TYPE_BADGE[event.event_type] ?? 'neutral'}
                         fontSize="xs"
                         px={2}
                         py={1}
                         fontWeight="500"
                         borderRadius="6px">
-                        {eventConfig.category}
+                        {/* The ACTIVITY the grower filed, not the retired family name
+                            (2026-08-29). `getEventConfig().category` returns a hardcoded English
+                            literal from the seven-family vocabulary — "Production Activity",
+                            "Chemical Application", "Soil Management" — which the create path
+                            stopped using: "What did you do?" offers Irrigation, Input
+                            application, Pest & scouting. So a record filed as Irrigation
+                            displayed as "Production Activity", and an OMRI-listed fish
+                            fertiliser displayed as a "Chemical Application" on a certified
+                            ORGANIC operation. One record, two identities — the same defect
+                            already fixed on the edit path.
+
+                            `activityLabel` is the shared composer the activity feed and the
+                            detail modal already render from, so all three now agree, and the
+                            string is translated (these nine literals were English-only, on a
+                            surface an es-419 grower reads). */}
+                        {activityLabel(event.event_type, subtypeOf(event as never), intl)}
                       </Badge>
 
                       {/* Summary/Aggregate Badge */}
@@ -1298,9 +1388,13 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                           }`}
                           hasArrow
                           placement="top">
+                          {/* A COUNT is a fact → `neutral`. This was `colorScheme="purple"`,
+                              and frontend.md removes blue and purple from status badges by
+                              name — they carry no meaning in this palette, and `purple` is not
+                              even a Trazo scale (styles.js defines green/gray/amber/red/blue;
+                              this resolved to Chakra's default). */}
                           <Badge
-                            colorScheme="purple"
-                            variant="subtle"
+                            variant="neutral"
                             fontSize="xs"
                             px={2}
                             py={1}
@@ -1377,9 +1471,15 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                           label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                           hasArrow
                           placement="top">
+                          {/* Provenance is a fact, not a status → `neutral`. This was
+                              `colorScheme="blue"`, the other hue frontend.md strikes from status
+                              badges (blue survives only on Chakra's `Alert status="info"`).
+                              Neutral also suits the claim: per compliance.md the badge may say
+                              the FACTORS are "EPA/USDA-sourced" and must not imply a government
+                              endorsement — and a blue government-looking chip leans the wrong
+                              way on exactly the line the comment above is policing. */}
                           <Badge
-                            colorScheme="blue"
-                            variant="subtle"
+                            variant="neutral"
                             fontSize="xs"
                             px={1.5}
                             py={0.5}
@@ -1486,33 +1586,43 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     borderRadius="md"
                     px={3}
                     py={2}>
+                    {/* An emissions figure is a MEASUREMENT, so it gets ONE treatment — it is
+                        not graded (2026-08-28).
+
+                        This interpolated `getImpactLevel(co2e).color`, a magnitude ramp:
+                        green ≤5, blue ≤15, yellow ≤30, orange above. So a 581 kg fertigation
+                        printed rust-orange and a 3 kg scouting pass printed green — a verdict
+                        on the farmer's practice, delivered in colour.
+
+                        Three reasons that had to go, in order of seriousness:
+
+                        1. The bands are UNSOURCED and have NO DENOMINATOR. 5/15/30/60 kg is
+                           tied to no EPA/USDA benchmark, no crop and no area, so a 12.5-acre
+                           fertigation is marked worse than a hand-weeding pass purely for
+                           covering more ground. This is the same class as the per-event
+                           `efficiency_score` that was deleted on 2026-08-04 — a fabricated
+                           grade — only wearing colour instead of a number.
+                        2. `carbon-methodology.md` scopes this to DIRECT OPERATIONAL emissions,
+                           explicitly not an LCA. There is no basis on which a Scope-1 number
+                           can be called good or bad, and `compliance.md` treats an unsourced
+                           sustainability judgement as the FTC 16 CFR 260.6 risk it is.
+                        3. Two of the five bands were broken anyway: the `blue` glyph measured
+                           2.62:1, under the 3.0 a non-text mark owes, and `yellow`/`orange`
+                           are not Trazo scales at all (styles.js defines green/gray/amber/
+                           red/blue) so they resolved to Chakra's palettes.
+
+                        The magnitude is already in the digits, and the tooltip still carries
+                        the detail. gray.600 on gray.100 is 5.88:1; gray.700 text is 10.05:1.
+
+                        ⚠️ `getImpactLevel` is still imported for its `level` LABEL, which is
+                        rendered by EventDetailsModal. Those band NAMES ("Core practice",
+                        "Major activity") are the same unsourced banding in words and are worth
+                        a separate look; this change does not touch copy. */}
                     <HStack spacing={2} cursor="help" flexShrink={0}>
-                      <Circle
-                        size="24px"
-                        bg={
-                          carbonData.co2e === 0
-                            ? 'gray.100'
-                            : `${getImpactLevel(carbonData.co2e).color}.100`
-                        }>
-                        <Icon
-                          as={MdEco}
-                          color={
-                            carbonData.co2e === 0
-                              ? 'gray.500'
-                              : `${getImpactLevel(carbonData.co2e).color}.600`
-                          }
-                          boxSize={3}
-                        />
+                      <Circle size="24px" bg="gray.100">
+                        <Icon as={MdEco} color="gray.600" boxSize={3} />
                       </Circle>
-                      <Text
-                        fontSize="sm"
-                        fontWeight="600"
-                        color={
-                          carbonData.co2e === 0
-                            ? 'gray.500'
-                            : `${getImpactLevel(carbonData.co2e).color}.700`
-                        }
-                        whiteSpace="nowrap">
+                      <Text fontSize="sm" fontWeight="600" color="gray.700" whiteSpace="nowrap">
                         {formatCO2e(carbonData.co2e)} kg CO₂e
                       </Text>
                     </HStack>
@@ -1539,9 +1649,17 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                   <Text fontSize="xs" color="gray.500" textAlign="right" maxW="100px" noOfLines={1}>
                     {operatorName}
                   </Text>
+                  {/* Shown when an event has NO photo. Neutral, not amber (2026-08-28).
+                      It MEASURED 2.89:1 — orange.500 on orange.100, under the 3.0 floor a
+                      meaningful glyph owes — and `orange` is not a Trazo scale. It also fired on
+                      every photo-less record, so the amber that is supposed to mean "act on this"
+                      became wallpaper; the deadlines card documents that exact failure mode. The
+                      camera glyph itself carries the fact, and the real nudge lives in the
+                      completeness toast and the transparency KPI, not in a coloured dot on every
+                      row. gray.600 on gray.100 is 5.88:1. */}
                   {!event.image && (
-                    <Circle size="20px" bg="orange.100" flexShrink={0}>
-                      <Icon as={FaCamera} color="orange.500" boxSize={2.5} />
+                    <Circle size="20px" bg="gray.100" flexShrink={0}>
+                      <Icon as={FaCamera} color="gray.600" boxSize={2.5} />
                     </Circle>
                   )}
                 </HStack>

@@ -98,7 +98,12 @@ const ANSWERS = {
 };
 
 vi.mock('store/api/ospApi', () => ({
-  useGetOSPsQuery: () => ({ data: [{ id: '11', version_number: 2, status: ospStatus }] }),
+  useGetOSPsQuery: () => ({
+    data: [{ id: '11', version_number: 2, status: ospStatus }],
+    isLoading: false,
+    isFetching: false
+  }),
+  useCreateOSPMutation: () => [vi.fn(), { isLoading: false }],
   useGetOSPQuery: () => ({ data: undefined }),
   useGetOSPModuleQuery: () => ({
     data: {

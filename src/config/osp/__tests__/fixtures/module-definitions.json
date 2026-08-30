@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.08.18",
+  "content_version": "2026.08.28",
   "registry": {
-    "content_version": "2026.08.18",
+    "content_version": "2026.08.28",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -129,6 +129,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -153,6 +154,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -279,6 +281,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -303,6 +306,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -327,6 +331,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -348,6 +353,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -369,6 +375,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -436,6 +443,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -460,6 +468,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -481,6 +490,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -540,6 +550,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -564,6 +575,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -667,6 +679,7 @@
                   "source": "seed_status"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -713,6 +726,7 @@
                 "nop_cite": "§ 205.204(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -759,6 +773,7 @@
                 "nop_cite": "§ 205.2",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -824,6 +839,7 @@
                   "source": "seed_search_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -900,6 +916,7 @@
                 "nop_cite": "§ 205.105(e)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -953,14 +970,6 @@
                       "es": "Aprobación escrita del certificador"
                     },
                     "exclusive": false
-                  },
-                  {
-                    "value": "trazo_verification",
-                    "label": {
-                      "en": "Checked against the National List / OMRI / WSDA in Trazo at logging time",
-                      "es": "Verificado contra la Lista Nacional / OMRI / WSDA en Trazo al registrar"
-                    },
-                    "exclusive": false
                   }
                 ],
                 "required": true,
@@ -968,6 +977,7 @@
                 "nop_cite": "§ 205.105",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -986,6 +996,7 @@
                 "nop_cite": "§ 205.201(a)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1044,6 +1055,7 @@
                 "nop_cite": "§ 205.204",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1099,6 +1111,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1117,6 +1130,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1225,6 +1239,7 @@
                 "nop_cite": "§ 205.204",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1268,6 +1283,7 @@
                 "nop_cite": "§ 205.204(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1289,6 +1305,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1310,6 +1327,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1410,6 +1428,7 @@
                 "nop_cite": "§ 205.204(a)(1)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1434,6 +1453,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1504,6 +1524,7 @@
                 "nop_cite": "§ 205.204(a)(1)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1550,6 +1571,7 @@
                 "nop_cite": "§ 205.204(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1601,6 +1623,7 @@
                 "nop_cite": "§ 205.204(a)(4)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1628,6 +1651,7 @@
                 "nop_cite": "§ 205.204(a)(4)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1652,6 +1676,7 @@
                 "nop_cite": "§ 205.204(a)(4)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1730,6 +1755,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1748,6 +1774,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1832,6 +1859,7 @@
                 "nop_cite": "§ 205.205",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1859,6 +1887,7 @@
                 "nop_cite": "§ 205.205",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1934,6 +1963,7 @@
                   "source": "cover_crop_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -1958,6 +1988,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2078,6 +2109,7 @@
                   "source": "soil_amendment_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2096,6 +2128,7 @@
                 "nop_cite": "§ 205.201(a)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2119,6 +2152,7 @@
                   "source": "tillage_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2189,6 +2223,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2251,6 +2286,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2353,6 +2389,7 @@
                 "nop_cite": "§ 205.203(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2471,6 +2508,7 @@
                   "source": "manure_compost_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2539,6 +2577,7 @@
                 "nop_cite": "§ 205.203(c)(1)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2560,6 +2599,7 @@
                 "nop_cite": "§ 205.203(c)(1)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2584,6 +2624,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2674,6 +2715,7 @@
                 "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2704,6 +2746,7 @@
                 "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2734,6 +2777,7 @@
                 "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2769,6 +2813,7 @@
                 "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2796,6 +2841,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2826,6 +2872,7 @@
                 "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2853,6 +2900,7 @@
                 "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -2885,6 +2933,7 @@
                 "nop_cite": "§ 205.203(c)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3024,6 +3073,7 @@
                 "nop_cite": "§ 205.200",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3048,6 +3098,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3134,6 +3185,7 @@
                 "nop_cite": "§ 205.2",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3158,6 +3210,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3231,6 +3284,7 @@
                 "nop_cite": "§ 205.200",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3260,6 +3314,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3330,6 +3385,7 @@
                 "nop_cite": "§ 205.200",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3376,6 +3432,7 @@
                 "nop_cite": "§ 205.200",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3444,6 +3501,7 @@
                 "nop_cite": "§ 205.200",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3468,6 +3526,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3505,6 +3564,7 @@
                 "nop_cite": "§ 205.200",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3523,6 +3583,7 @@
                 "nop_cite": "§ 205.200",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3547,6 +3608,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3568,6 +3630,7 @@
                 "nop_cite": "§ 205.202(b)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3617,6 +3680,7 @@
                 "nop_cite": "§ 205.202(b)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3644,6 +3708,7 @@
                 "nop_cite": "§ 205.202(b)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3668,6 +3733,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3730,6 +3796,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3754,6 +3821,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3948,6 +4016,7 @@
                 "nop_cite": "§ 205.206(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3972,6 +4041,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -3993,6 +4063,7 @@
                 "nop_cite": "§ 205.203(e)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4017,6 +4088,7 @@
                 "nop_cite": "§ 205.203(e)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4069,6 +4141,7 @@
                 "nop_cite": "§ 205.203(e)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4096,6 +4169,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4211,6 +4285,7 @@
                 "nop_cite": "§ 205.206(c)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4235,6 +4310,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4253,6 +4329,7 @@
                 "nop_cite": "§ 205.206(c)(6)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4280,6 +4357,7 @@
                 "nop_cite": "§ 205.206(c)(6)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4316,6 +4394,7 @@
                   "source": "applies_inputs_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4343,6 +4422,7 @@
                 "nop_cite": "§ 205.206(e)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4412,6 +4492,7 @@
                   "source": "pest_monitoring_scope"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4465,6 +4546,7 @@
                   "source": "pest_monitoring_frequency"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4486,6 +4568,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4548,6 +4631,7 @@
                 "nop_cite": "§ 205.201(a)(5)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": "has_split_operation",
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4575,6 +4659,7 @@
                 "nop_cite": "§ 205.201(a)(5)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": "split_operation_plan",
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4596,6 +4681,7 @@
                 "nop_cite": "§ 205.201(a)(5)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4623,6 +4709,7 @@
                 "nop_cite": "§ 205.201(a)(5)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4781,6 +4868,7 @@
                 "nop_cite": "§ 205.202(c)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4805,6 +4893,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4939,6 +5028,7 @@
                 "nop_cite": "§ 205.202(c)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4963,6 +5053,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -4984,6 +5075,7 @@
                 "nop_cite": "§ 205.400(f)(1)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5021,6 +5113,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5110,6 +5203,7 @@
                 "nop_cite": "§ 205.201(a)(5)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5134,6 +5228,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5217,6 +5312,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5244,6 +5340,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5268,6 +5365,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5344,6 +5442,7 @@
                 "nop_cite": "§ 205.103(b)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5435,6 +5534,7 @@
                 "nop_cite": "§ 205.272",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5459,24 +5559,62 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
               },
               {
-                "key": "containers_clean_or_dedicated",
-                "kind": "boolean",
+                "key": "container_safeguards",
+                "kind": "checkbox_group",
                 "label": {
-                  "en": "Are these containers new, dedicated to organic use, or cleaned before each use?",
-                  "es": "¿Estos contenedores son nuevos, están dedicados al uso orgánico o se limpian antes de cada uso?"
+                  "en": "How do you keep harvest containers from contaminating organic crops?",
+                  "es": "¿Cómo evita que los contenedores de cosecha contaminen los cultivos orgánicos?"
                 },
-                "coaching": null,
-                "options": [],
+                "coaching": {
+                  "en": "Tick every safeguard you rely on. If different container types are handled differently — new cartons but reused lugs — say so in the description below, because your certifier reads this as a statement about every container named above.",
+                  "es": "Marque cada salvaguarda en la que se apoya. Si distintos tipos de contenedor se manejan de forma diferente — cartones nuevos pero cajas reutilizadas — indíquelo en la descripción de abajo, porque su certificador lo lee como una afirmación sobre todos los contenedores nombrados arriba."
+                },
+                "options": [
+                  {
+                    "value": "cleaned_prior",
+                    "label": {
+                      "en": "Cleaned prior to use",
+                      "es": "Se limpian antes de usarse"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "lined_prior",
+                    "label": {
+                      "en": "Lined prior to use",
+                      "es": "Se forran antes de usarse"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "only_new",
+                    "label": {
+                      "en": "Only new containers are used",
+                      "es": "Solo se usan contenedores nuevos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "organic_only",
+                    "label": {
+                      "en": "Dedicated to organic product only",
+                      "es": "Dedicados únicamente a producto orgánico"
+                    },
+                    "exclusive": false
+                  }
+                ],
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5485,22 +5623,26 @@
                 "key": "containers_cleaning_method",
                 "kind": "textarea",
                 "label": {
-                  "en": "Describe the cleaning method and when it happens relative to organic use",
-                  "es": "Describa el método de limpieza y cuándo ocurre en relación con el uso orgánico"
+                  "en": "Describe the cleaning or lining method, and which container types it applies to",
+                  "es": "Describa el método de limpieza o forrado, y a qué tipos de contenedor se aplica"
                 },
                 "coaching": null,
                 "options": [],
                 "required": true,
                 "visible_when": [
                   {
-                    "question": "containers_clean_or_dedicated",
-                    "op": "truthy",
-                    "value": null
+                    "question": "container_safeguards",
+                    "op": "includes_any",
+                    "value": [
+                      "cleaned_prior",
+                      "lined_prior"
+                    ]
                   }
                 ],
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5522,6 +5664,7 @@
                 "nop_cite": "§ 205.272(b)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5546,6 +5689,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5592,6 +5736,7 @@
                 "nop_cite": "§ 205.272(b)(1)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5619,6 +5764,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5678,6 +5824,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5696,6 +5843,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5717,6 +5865,7 @@
                 "nop_cite": "§ 205.103(b)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5747,6 +5896,128 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              }
+            ]
+          },
+          {
+            "key": "d_off_farm_handling",
+            "title": {
+              "en": "D. Off-farm handling",
+              "es": "D. Manejo fuera de la finca"
+            },
+            "education": [
+              {
+                "en": "If anyone off your operation hulls, dries, packs, conditions or otherwise handles your crop, the certifier needs to know who they are and whether they are certified — because from that point the audit trail runs through their records, not yours. Answering “no” here is a complete answer; leaving it blank is not, because a reviewer cannot tell the difference between “nobody handles our crop” and “not filled in yet”.",
+                "es": "Si alguien fuera de su operación descascara, seca, empaca, acondiciona o de otro modo manipula su cultivo, el certificador necesita saber quién es y si está certificado, porque desde ese punto el rastro de auditoría pasa por sus registros y no por los suyos. Responder “no” aquí es una respuesta completa; dejarlo en blanco no lo es, porque quien revisa no puede distinguir entre “nadie manipula nuestro cultivo” y “aún no se ha completado”."
+              }
+            ],
+            "visible_when": [],
+            "questions": [
+              {
+                "key": "handled_by_another_operation",
+                "kind": "radio",
+                "label": {
+                  "en": "Is your organic crop handled off the farm by another operation?",
+                  "es": "¿Su cultivo orgánico es manipulado fuera de la finca por otra operación?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No — nobody off this operation handles our crop",
+                      "es": "No — nadie fuera de esta operación manipula nuestro cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes_certified",
+                    "label": {
+                      "en": "Yes — by a certified organic operation",
+                      "es": "Sí — por una operación orgánica certificada"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes_uncertified",
+                    "label": {
+                      "en": "Yes — by an operation that is not certified",
+                      "es": "Sí — por una operación que no está certificada"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "off_farm_handler_table",
+                "kind": "info",
+                "label": {
+                  "en": "Handlers on file for this operation",
+                  "es": "Manejadores registrados para esta operación"
+                },
+                "coaching": {
+                  "en": "These are the facilities recorded on your farm profile. Each one prints here with its address and its organic certificate, so the reviewer sees the same handler in the plan and in the records.",
+                  "es": "Estas son las instalaciones registradas en el perfil de su finca. Cada una aparece aquí con su dirección y su certificado orgánico, para que quien revisa vea el mismo manejador en el plan y en los registros."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "handled_by_another_operation",
+                    "op": "one_of",
+                    "value": [
+                      "yes_certified",
+                      "yes_uncertified"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": "post_harvest_facilities",
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "uncertified_handler_records",
+                "kind": "textarea",
+                "label": {
+                  "en": "What records does that operation provide to preserve your product's organic identity?",
+                  "es": "¿Qué registros proporciona esa operación para preservar la identidad orgánica de su producto?"
+                },
+                "coaching": {
+                  "en": "An uncertified operation handling your crop needs records proving identity preservation — lot tags, logs showing physical or timing separation from nonorganic product, and cleaning records for the equipment and space used.",
+                  "es": "Una operación no certificada que manipula su cultivo necesita registros que demuestren la preservación de la identidad — etiquetas de lote, bitácoras que muestren separación física o temporal del producto no orgánico, y registros de limpieza del equipo y el espacio utilizados."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "handled_by_another_operation",
+                    "op": "one_of",
+                    "value": [
+                      "yes_uncertified"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.103",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5867,6 +6138,7 @@
                   "source": "storage_location_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5891,6 +6163,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5909,6 +6182,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5936,6 +6210,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -5963,7 +6238,69 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "third_party_storage_contracted",
+                "kind": "boolean",
+                "label": {
+                  "en": "Do you contract another operation to store your organic product?",
+                  "es": "¿Contrata a otra operación para almacenar su producto orgánico?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "storage_locations",
+                    "op": "includes_any",
+                    "value": [
+                      "commercial_cold_off_farm",
+                      "certified_handler",
+                      "uncertified_facility"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "off_farm_storage_table",
+                "kind": "info",
+                "label": {
+                  "en": "Storage facilities on file for this operation",
+                  "es": "Instalaciones de almacenamiento registradas para esta operación"
+                },
+                "coaching": {
+                  "en": "These are the facilities recorded on your farm profile, with their address and organic certificate. A facility that both stores and handles your crop appears here and on G6.1 §D — it is one record.",
+                  "es": "Estas son las instalaciones registradas en el perfil de su finca, con su dirección y su certificado orgánico. Una instalación que almacena y además manipula su cultivo aparece aquí y en G6.1 §D — es un solo registro."
+                },
+                "options": [],
+                "required": false,
+                "visible_when": [
+                  {
+                    "question": "storage_locations",
+                    "op": "includes_any",
+                    "value": [
+                      "commercial_cold_off_farm",
+                      "certified_handler",
+                      "uncertified_facility"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.272(a)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": "post_harvest_facilities",
                 "placeholder": null,
                 "max_length": null
               }
@@ -5992,6 +6329,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6019,6 +6357,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6040,6 +6379,7 @@
                 "nop_cite": "§ 205.271",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6064,6 +6404,7 @@
                 "nop_cite": "§ 205.271",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6085,6 +6426,7 @@
                 "nop_cite": "§ 205.272",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6218,6 +6560,7 @@
                 "nop_cite": "§ 205.270",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6242,6 +6585,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6282,6 +6626,7 @@
                 "nop_cite": "§ 205.270",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": {
                   "en": "e.g., in-shell walnuts, hulled and dried",
@@ -6323,6 +6668,7 @@
                 "nop_cite": "§ 205.100(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6350,6 +6696,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6371,6 +6718,7 @@
                 "nop_cite": "§ 205.270",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6419,6 +6767,7 @@
                 "nop_cite": "§ 205.201(a)(1)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6446,6 +6795,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6473,6 +6823,7 @@
                 "nop_cite": "§ 205.605",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6543,6 +6894,7 @@
                 "nop_cite": "§ 205.272(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6567,6 +6919,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6659,6 +7012,7 @@
                 "nop_cite": "§ 205.103(b)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6680,6 +7034,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6733,6 +7088,7 @@
                 "nop_cite": "§ 205.103(b)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6771,6 +7127,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6798,6 +7155,7 @@
                 "nop_cite": "§ 205.201(a)(3)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6819,6 +7177,7 @@
                 "nop_cite": "§ 205.103(b)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6837,6 +7196,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6856,7 +7216,8 @@
           "§ 205.300",
           "§ 205.301",
           "§ 205.303",
-          "§ 205.307"
+          "§ 205.307",
+          "§ 205.311"
         ],
         "education": [
           {
@@ -6941,6 +7302,7 @@
                 "nop_cite": "§ 205.300",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -6965,6 +7327,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7011,6 +7374,7 @@
                 "nop_cite": "§ 205.301",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7038,6 +7402,7 @@
                 "nop_cite": "§ 205.303",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7065,6 +7430,7 @@
                 "nop_cite": "§ 205.311",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7092,6 +7458,7 @@
                 "nop_cite": "§ 205.303",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7129,6 +7496,7 @@
                 "nop_cite": "§ 205.307",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7150,6 +7518,7 @@
                 "nop_cite": "§ 205.307",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7171,6 +7540,7 @@
                 "nop_cite": "§ 205.300",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7231,6 +7601,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": "s11_record_types",
                 "placeholder": null,
                 "max_length": null
@@ -7249,6 +7620,7 @@
                 "nop_cite": "§ 205.103(b)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7308,6 +7680,7 @@
                 "nop_cite": "§ 205.307",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7335,6 +7708,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7356,6 +7730,7 @@
                 "nop_cite": "§ 205.103(b)(2)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7415,6 +7790,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7439,6 +7815,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7515,6 +7892,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7539,6 +7917,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7566,6 +7945,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7590,6 +7970,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7650,6 +8031,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7674,6 +8056,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7698,6 +8081,7 @@
                 "nop_cite": "§ 205.272",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7728,6 +8112,7 @@
                 "nop_cite": "§ 205.272",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7812,6 +8197,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7878,6 +8264,7 @@
                 "nop_cite": "§ 205.271",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7902,6 +8289,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -7954,6 +8342,7 @@
                 "nop_cite": "§ 205.271",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8037,6 +8426,7 @@
                 "nop_cite": "§ 205.103",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8128,6 +8518,7 @@
                 "nop_cite": "§ 205.271(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8152,6 +8543,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8227,6 +8619,7 @@
                 "nop_cite": "§ 205.271(b)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8292,6 +8685,7 @@
                 "nop_cite": "§ 205.271(c)-(d)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8363,6 +8757,7 @@
                 "nop_cite": "§ 205.271(c)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8387,6 +8782,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8471,6 +8867,7 @@
                 "nop_cite": "§ 205.271(c)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8526,6 +8923,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8544,6 +8942,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8566,8 +8965,8 @@
         ],
         "education": [
           {
-            "en": "Trazo verifies every input material against OMRI, WSDA, and the National List, so that only compliant fertilizers, pest and disease materials, weed-control materials, and production aids are used on certified or transitional land (§ 205.105, § 205.601). This module does not collect a new list — it points to the materials list you already maintain and asks you to confirm it is complete by category.",
-            "es": "Trazo verifica cada material de insumo contra OMRI, WSDA y la Lista Nacional, de modo que en tierra certificada o en transición solo se usen fertilizantes, materiales para plagas y enfermedades, materiales para el control de malezas y auxiliares de producción que cumplan (§ 205.105, § 205.601). Este módulo no recopila una lista nueva — remite a la lista de materiales que ya mantiene y le pide confirmar que está completa por categoría."
+            "en": "Trazo resolves each input material's name against OMRI, the WSDA Materials List and the National List, and shows what it found — your certifying agent is the one who approves what may be used on certified or transitional land (§ 205.105, § 205.601). This module does not collect a new list: it points to the materials list you already maintain and asks you to confirm it is complete by category.",
+            "es": "Trazo resuelve el nombre de cada material de insumo contra OMRI, la Lista de Materiales de WSDA y la Lista Nacional, y muestra lo que encontró — tu agente certificador es quien aprueba lo que puede usarse en tierra certificada o en transición (§ 205.105, § 205.601). Este módulo no recopila una lista nueva: remite a la lista de materiales que ya mantienes y te pide confirmar que está completa por categoría."
           }
         ],
         "allows_not_applicable": false,
@@ -8583,8 +8982,8 @@
             },
             "education": [
               {
-                "en": "The materials list below is the single record of every input used on this operation. Trazo checks each entry against OMRI, WSDA, and the National List and shows the result to your certifier — add or update materials there, not in this questionnaire.",
-                "es": "La lista de materiales a continuación es el registro único de cada insumo usado en esta operación. Trazo verifica cada entrada contra OMRI, WSDA y la Lista Nacional y muestra el resultado a su certificador — agregue o actualice materiales ahí, no en este cuestionario."
+                "en": "The materials list below is the single record of every input used on this operation. Trazo resolves each entry against OMRI, the WSDA Materials List and the National List and shows what it found to your certifier — add or update materials there, not in this questionnaire.",
+                "es": "La lista de materiales a continuación es el registro único de cada insumo usado en esta operación. Trazo resuelve cada entrada contra OMRI, la Lista de Materiales de WSDA y la Lista Nacional y le muestra a tu certificador lo que encontró — agrega o actualiza materiales ahí, no en este cuestionario."
               }
             ],
             "visible_when": [],
@@ -8593,12 +8992,12 @@
                 "key": "materials_list_panel",
                 "kind": "info",
                 "label": {
-                  "en": "Approved input materials",
-                  "es": "Materiales de insumos aprobados"
+                  "en": "Input materials on this plan",
+                  "es": "Materiales de insumo de este plan"
                 },
                 "coaching": {
-                  "en": "Every fertilizer, pest, disease, or weed-control material, and production aid you use or plan to use is verified here against OMRI, WSDA, and the National List. Add materials in this panel — your certifier sees each material's name, verification status, and source.",
-                  "es": "Aquí se verifica contra OMRI, WSDA y la Lista Nacional cada fertilizante, material para el control de plagas, enfermedades o malezas, y cada auxiliar de producción que usa o planea usar. Agregue los materiales en este panel — su certificador ve el nombre, el estado de verificación y la fuente de cada material."
+                  "en": "List every fertilizer, pest, disease, or weed-control material and production aid you use or plan to use. Trazo resolves each name against OMRI, the WSDA Materials List and the National List and shows the result; your certifier reviews the list and decides what is approved for your operation.",
+                  "es": "Lista cada fertilizante, material para el control de plagas, enfermedades o malezas, y cada auxiliar de producción que usas o planeas usar. Trazo resuelve cada nombre contra OMRI, la Lista de Materiales de WSDA y la Lista Nacional y muestra el resultado; tu certificador revisa la lista y decide qué queda aprobado para tu operación."
                 },
                 "options": [],
                 "required": false,
@@ -8606,6 +9005,7 @@
                 "nop_cite": "§ 205.601",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": "approved_inputs",
                 "placeholder": null,
                 "max_length": null
@@ -8627,6 +9027,7 @@
                 "nop_cite": "§ 205.105",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8666,6 +9067,7 @@
                   "source": "materials_category_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8689,6 +9091,7 @@
                   "source": "materials_category_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8710,6 +9113,7 @@
                 "nop_cite": "§ 205.601",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8733,6 +9137,7 @@
                   "source": "materials_category_evidence"
                 },
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8754,6 +9159,7 @@
                 "nop_cite": "§ 205.202(b)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8781,6 +9187,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8836,6 +9243,7 @@
                 "nop_cite": "§ 205.401",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8887,6 +9295,7 @@
                 "nop_cite": "§ 205.401(a)",
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
@@ -8905,6 +9314,7 @@
                 "nop_cite": null,
                 "prefill": null,
                 "parcel_field": null,
+                "establishment_field": null,
                 "embed": null,
                 "placeholder": null,
                 "max_length": null

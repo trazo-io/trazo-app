@@ -52,6 +52,7 @@ import {
   useGetPostHarvestFacilitiesQuery,
   useGetProductionHandlerQuery,
   type PostHarvestFacility,
+  type PostHarvestFacilityRole,
   type PostHarvestFacilityType,
   type ProductionHandlerDetail
 } from 'store/api/postHarvestFacilityApi';
@@ -67,9 +68,24 @@ const FACILITY_TYPES: { value: PostHarvestFacilityType; labelId: string }[] = [
   { value: 'custom', labelId: 'handler.type.custom' }
 ];
 
+/**
+ * What the facility DOES for this operation — a different axis from what it IS, and the one CCOF
+ * and WSDA split their forms on: CCOF asks handling on G6.1 §C and storage on G6.2 §A, WSDA again
+ * across sections K and L. The blank first option is deliberate and is the default: a facility
+ * nobody has been asked about must print in the plan as unstated, never as a role the operator
+ * never chose.
+ */
+const FACILITY_ROLES = [
+  { value: '', labelId: 'handler.role.unstated' },
+  { value: 'handling', labelId: 'handler.role.handling' },
+  { value: 'storage', labelId: 'handler.role.storage' },
+  { value: 'both', labelId: 'handler.role.both' }
+];
+
 const EMPTY_FORM = {
   name: '',
   facility_type: 'huller' as PostHarvestFacilityType,
+  role: '' as PostHarvestFacilityRole,
   city: '',
   state: '',
   certification_number: '',
@@ -331,6 +347,21 @@ export function PostHarvestHandlerSection({
                       {FACILITY_TYPES.map((t) => (
                         <option key={t.value} value={t.value}>
                           {intl.formatMessage({ id: t.labelId })}
+                        </option>
+                      ))}
+                    </StandardSelect>
+                  </StandardField>
+                  <StandardField
+                    label={intl.formatMessage({ id: 'handler.field.role' })}
+                    helpText={intl.formatMessage({ id: 'handler.field.roleHelp' })}>
+                    <StandardSelect
+                      value={formData.role}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        setField('role', e.target.value)
+                      }>
+                      {FACILITY_ROLES.map((r) => (
+                        <option key={r.value} value={r.value}>
+                          {intl.formatMessage({ id: r.labelId })}
                         </option>
                       ))}
                     </StandardSelect>

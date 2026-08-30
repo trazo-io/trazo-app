@@ -6,7 +6,6 @@ import {
   StandardInput,
   StandardSelect,
   StandardTextarea,
-  StandardAlert,
   StandardCard,
   SectionHeader,
   SectionBox
@@ -337,13 +336,6 @@ const GeneralTab = forwardRef(
         <form onSubmit={mainInfoSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <VStack spacing={6} align="stretch">
             {/* Sprint 2: Renamed to "Other Farm Activities" with better guidance */}
-            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. */}
-            <StandardAlert
-              status="info"
-              title={intl.formatMessage({ id: 'events.callout.general.title' })}>
-              <Text fontSize="sm">{intl.formatMessage({ id: 'events.callout.general.body' })}</Text>
-            </StandardAlert>
-
             {/* Forms are hand-crafted by design: the NOP section grouping below is what
                 makes the audit export complete, and the registry renderer flattens it.
                 The field registry is the SSOT for DISPLAY surfaces (consumer card, modal,
@@ -354,12 +346,12 @@ const GeneralTab = forwardRef(
 
               {/* Section 1: Activity Information */}
               <SectionBox>
+                {/* Not "Other Farm Activity Information" — the retired family-3 wording
+                      plus the backend model's word. Name and subtype, same as the first
+                      section in every other tab, so it carries the same key. */}
                 <SectionHeader
                   icon={FaClipboardList}
-                  title={intl.formatMessage({
-                    id: 'events.general.sections.otherFarmActivityInformation',
-                    defaultMessage: 'Other Farm Activity Information'
-                  })}
+                  title={intl.formatMessage({ id: 'events.section.activityBasics' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
                 <VStack spacing={4} align="stretch">

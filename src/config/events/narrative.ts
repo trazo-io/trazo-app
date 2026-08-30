@@ -56,6 +56,49 @@ export const verbKeyFor = (eventType: number, subtype?: string | null): string |
 const verbKeyForRow = (row: ActivityRow): string | null => verbKeyFor(row.event_type, row.subtype);
 
 /**
+ * The per-family subtype code, wherever this event happens to carry it.
+ *
+ * Lives here because three surfaces needed it and each had grown its own copy: the detail
+ * modal, and TWICE inside EnhancedTimelineRow (once for the field registry, once for the
+ * label). Same shape as the organic-allowlist duplication — N copies drift into M answers.
+ *
+ * ⚠️ Order matters, and `type` is LAST on purpose: on several families `type` holds a message
+ * id rather than a subtype code, so it is only a fallback for rows that carry nothing else.
+ */
+export const subtypeOf = (event: Record<string, unknown>): string | undefined =>
+  (event.weather_type ||
+    event.production_type ||
+    event.chemical_type ||
+    event.soil_management_type ||
+    event.pest_management_type ||
+    event.business_event_type ||
+    event.type) as string | undefined;
+
+/**
+ * The farmer-language ACTIVITY label for an event — "Irrigation", "Input application",
+ * "Pest & scouting" — i.e. the same words the "What did you do?" picker offers.
+ *
+ * Use this for any chip or badge that names what an event IS. The retired seven-family
+ * vocabulary ("Production Activity", "Chemical Application", "Soil Management") must not be
+ * rendered: a record the grower filed as Irrigation was displaying as "Production Activity",
+ * so one record had two identities depending on which screen you opened — the same defect
+ * already fixed on the edit path.
+ *
+ * Falls back to `activities.type.${eventType}` only where no verb exists (event_type 4,
+ * Equipment), which keeps the string translated either way.
+ */
+export const activityLabel = (
+  eventType: number,
+  subtype: string | null | undefined,
+  intl: IntlShape
+): string => {
+  const verb = verbKeyFor(eventType, subtype);
+  return verb
+    ? intl.formatMessage({ id: `activities.verb.${verb}` })
+    : intl.formatMessage({ id: `activities.type.${eventType}` });
+};
+
+/**
  * Localized farmer-language title for an event.
  *
  * ⛔ NEVER falls back to the description. That fallback is what put a five-line paragraph —

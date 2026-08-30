@@ -30,7 +30,7 @@ import {
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaCheckCircle, FaMagic, FaPaperclip } from 'react-icons/fa';
+import { FaCheckCircle, FaFileAlt, FaMagic, FaPaperclip } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -59,6 +59,7 @@ import type {
   ModuleQuestion
 } from 'config/osp/types';
 import {
+  useCreateOSPMutation,
   useGetOSPModuleQuery,
   useGetOSPQuery,
   useGetOSPsQuery,
@@ -70,6 +71,7 @@ import type { OSP } from 'types/osp';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
+import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
 
@@ -246,6 +248,8 @@ const QuestionField = ({
               <OSPApprovedInputsPanel companyId={companyId} farmId={farmId} osp={osp} />
             ) : question.embed === 's11_record_types' ? (
               <OSPRecordTypesPanel companyId={companyId} farmId={farmId} osp={osp} />
+            ) : question.embed === 'post_harvest_facilities' ? (
+              <OSPHandlerFacilitiesPanel companyId={companyId} farmId={farmId} />
             ) : null}
           </Box>
         ) : null;
@@ -561,10 +565,11 @@ const OSPModuleWizard = () => {
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
   const companyId = currentCompany?.id != null ? String(currentCompany.id) : '';
 
-  const { data: osps } = useGetOSPsQuery(
-    { companyId, farmId: farmId || '' },
-    { skip: !companyId || !farmId }
-  );
+  const {
+    data: osps,
+    isLoading: ospsLoading,
+    isFetching: ospsFetching
+  } = useGetOSPsQuery({ companyId, farmId: farmId || '' }, { skip: !companyId || !farmId });
   // Not `osps[0]` — see selectWorkingOsp. This matters more here than on the list page:
   // when the farmer forks a new version from the notice below, the query refetches and
   // this has to start resolving to the new draft, which is what unlocks the page in place.
@@ -597,6 +602,42 @@ const OSPModuleWizard = () => {
     { skip: !companyId || !farmId || ospId == null || !moduleKey }
   );
   const [saveModule, { isLoading: saving }] = useSaveOSPModuleMutation();
+  const [createOSP, { isLoading: creating }] = useCreateOSPMutation();
+
+  /**
+   * No plan yet is a STATE, not a loading state.
+   *
+   * `ProfileFarm` deep-links straight to module g6_0_production from the § 205.272 card,
+   * and it has no idea whether the farm has an OSP at all. With no plan, `ospId` is
+   * undefined, `useGetOSPModuleQuery` is SKIPPED — and a skipped RTK Query reports
+   * `isLoading: false` with no data, so the `!definition` guard below returned the page
+   * loader forever. The farmer clicked "Answer in your plan" and got a spinner with no
+   * plan, no error and no way out.
+   *
+   * The module list page already owns the answer ("Start my OSP"); it just was not on the
+   * one route a farmer can reach without passing through it. Starting from here refetches
+   * the list, `workingOsp` resolves, and the wizard renders THIS module — the farmer keeps
+   * the destination they asked for instead of being bounced to the index.
+   */
+  // `isFetching`, not just `isLoading`: after `createOSP` invalidates the list, RTK Query
+  // refetches while still serving the OLD empty cache. Without it the start card renders a
+  // second time the instant the button stops spinning, which reads as "nothing happened" —
+  // and invites a second click that creates a second plan.
+  const ospsResolved =
+    Boolean(companyId) && Boolean(farmId) && !ospsLoading && !ospsFetching && osps !== undefined;
+
+  const handleStartOsp = async () => {
+    try {
+      await createOSP({ companyId, farmId: farmId || '', data: {} }).unwrap();
+    } catch (err) {
+      toast({
+        title: intl.formatMessage({ id: 'osp.modules.createFailed' }),
+        description: apiErrorMessage(err),
+        status: 'error',
+        duration: 6000
+      });
+    }
+  };
 
   const definition: ModuleDefinition | undefined = data?.definition;
   const [answers, setAnswers] = useState<ModuleAnswers>({});
@@ -796,6 +837,33 @@ const OSPModuleWizard = () => {
     });
     navigate(`/admin/dashboard/farm/${farmId}/osp`);
   };
+
+  if (!workingOsp) {
+    if (!ospsResolved) return <StandardPageLoading />;
+    return (
+      <StandardPage
+        title={intl.formatMessage({ id: 'osp.modules.pageTitle' })}
+        description={intl.formatMessage({ id: 'osp.modules.pageDescription' })}
+        showBackButton
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/osp`)}
+        contentMaxW="4xl">
+        <StandardCard>
+          <VStack spacing={4} py={6}>
+            <Box as={FaFileAlt} boxSize={8} color="green.700" />
+            <Text fontWeight="semibold">
+              {intl.formatMessage({ id: 'osp.modules.emptyTitle' })}
+            </Text>
+            <Text fontSize="sm" color="gray.600" textAlign="center" maxW="lg">
+              {intl.formatMessage({ id: 'osp.modules.emptyBody' })}
+            </Text>
+            <StandardButton minH="44px" onClick={handleStartOsp} isLoading={creating}>
+              {intl.formatMessage({ id: 'osp.modules.startOsp' })}
+            </StandardButton>
+          </VStack>
+        </StandardCard>
+      </StandardPage>
+    );
+  }
 
   if (isLoading || !definition) return <StandardPageLoading />;
 

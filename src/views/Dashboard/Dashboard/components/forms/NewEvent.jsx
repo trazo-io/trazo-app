@@ -363,11 +363,37 @@ function NewEvent({ isEdit = false, eventId = null }) {
    * date should not be met by a sixteen-tile grid restating a question they already answered.
    */
   const [correctingActivity, setCorrectingActivity] = useState(false);
-  const typeChooserAnswered = (typePresetFromVerb || typePresetFromPlan) && !chooserReopened;
+
+  /*
+   * "Log this again" answers the activity question the same way a plan item does.
+   *
+   * 🔴 2026-08-27: `?repeat=639&event_type=1` carries no `verb=`, so `typePresetFromVerb` was
+   * false and the wizard opened on "What did you do?" — a farmer who pressed *Log this again*
+   * on their own Seed search was asked what they had just done. Same shape as the plan-item
+   * bug this preset was built for: a link that names the practice, landing on a grid that asks
+   * for it.
+   *
+   * Derived from the LOADED RECORD, not from the URL — deliberately, and for the same reason
+   * the plan item is fetched rather than passed: the practice is read from the farmer's own
+   * row, so a hand-edited `?repeat=` link cannot assert one. It also fixes every caller at
+   * once instead of requiring each "Log this again" CTA to append the right `&verb=`.
+   *
+   * `undefined` until the fetch lands (no production verb matches on eventType alone), which
+   * is why the main content is gated on the repeat fetch below — otherwise the grid renders
+   * for a frame and then vanishes under the farmer.
+   */
+  const repeatVerb = isRepeat ? verbForEvent(activeEventType, eventFormData.type) : undefined;
+  const typePresetFromRepeat = isRepeat && !!repeatVerb;
+
+  const typeChooserAnswered =
+    (typePresetFromVerb || typePresetFromPlan || typePresetFromRepeat) && !chooserReopened;
 
   // The verb in force: an in-page pick always wins over the URL, so re-choosing after
   // "Change activity" re-titles the page instead of leaving the old verb in the header.
-  const activeVerbKey = pickedVerbKey || (typePresetFromVerb ? verbFromUrl : null);
+  const activeVerbKey =
+    pickedVerbKey ||
+    (typePresetFromVerb ? verbFromUrl : null) ||
+    (typePresetFromRepeat ? repeatVerb.key : null);
   const activeVerb = verbForKey(activeVerbKey);
 
   /*
@@ -432,9 +458,30 @@ function NewEvent({ isEdit = false, eventId = null }) {
         verb: activeVerb,
         fromPlanItem: typePresetFromPlan,
         planItem: activePlanItem,
+        /*
+         * `!pickedVerbKey`: the repeat preset yields the moment the farmer picks in-page.
+         *
+         * Without it, reopening the grid on a repeat and choosing a FAMILY verb ("Field work")
+         * would still take the repeat branch — `handleVerbSelect` seeds the family's default
+         * subtype (CU), `knownSubtype` goes truthy, and the CU/TH/MO question is silently
+         * skipped for a farmer who has explicitly changed their mind. Once they pick, the
+         * ordinary create rules apply.
+         */
+        fromRepeat: isRepeat && !pickedVerbKey,
+        knownSubtype: eventFormData.type,
         allProductionSubtypes: getSubtypes(1).map((entry) => entry.code)
       }),
-    [isEdit, correctingActivity, activeEventType, typePresetFromPlan, activePlanItem, activeVerb]
+    [
+      isEdit,
+      correctingActivity,
+      activeEventType,
+      typePresetFromPlan,
+      activePlanItem,
+      activeVerb,
+      isRepeat,
+      pickedVerbKey,
+      eventFormData.type
+    ]
   );
 
   // WS-4c: voice accelerator on the details step (ported from QuickAddEvent).
@@ -2386,7 +2433,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
           <HStack spacing={1}>
             <Icon as={FaTasks} boxSize={3} />
             <Text fontSize="sm">
-              Step {activeStep + 1} of {steps.length}
+              {/* The key is `osp.*` only because the OSP wizard needed it first; it is a
+                  generic "Paso {current} de {total}" and both locales already have it.
+                  Left hardcoded, this badge stayed English beside a fully translated
+                  form. */}
+              {intl.formatMessage(
+                { id: 'osp.wizard.stepCount' },
+                { current: activeStep + 1, total: steps.length }
+              )}
             </Text>
           </HStack>
         </Badge>
@@ -2421,7 +2475,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
       )}
 
       {/* 2025 UX: Enhanced loading state with progress indication */}
-      {isEdit && isLoadingEvent && (
+      {/* `isEdit || isRepeat`: repeat fetches the SAME record through the same query, and the
+          activity it is repeating is not known until it lands. Showing the form meanwhile put
+          the verb grid on screen for a frame — asking a question the next frame answered. */}
+      {(isEdit || isRepeat) && isLoadingEvent && (
         <StandardCard>
           {/* No <CardBody> here: StandardCard already renders one. Nesting a second put a
               third inset inside the card's forced 14px and this body's 16px — 42px each
@@ -2446,7 +2503,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       )}
 
       {/* Main Content - Show only when not loading or when creating */}
-      {(!isEdit || !isLoadingEvent) && !eventError && (
+      {(!(isEdit || isRepeat) || !isLoadingEvent) && !eventError && (
         <VStack spacing={{ base: 6, md: 8 }} align="stretch">
           {/* D9 — offered only on step 0: restoring mid-wizard would replace the form under
                 the farmer's hands while they are typing in it. */}
@@ -2753,7 +2810,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                 <CardHeader pb={2} px={{ base: 0, md: 6 }}>
                   <Text fontSize="lg" fontWeight="semibold" color={textColor}>
-                    {intl.formatMessage({ id: 'app.eventDetails' }) || 'Event Details'}
+                    {/* The step-0 card names itself with its own step title; this one now
+                        does the same. "Event Details" named the backend MODEL — the same
+                        defect the stepper labels were fixed for, left standing on the card
+                        heading directly beneath them. `app.eventDetails` is retired: this
+                        was its last call site apart from EventDetailsModal, which now
+                        heads that block with what is actually under it. */}
+                    {intl.formatMessage({ id: 'events.wizard.step.details' })}
                   </Text>
                 </CardHeader>
                 <CardBody pt={4} pb={6} px={{ base: 0, md: 6 }}>
@@ -3108,7 +3171,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                     />
 
                     <StandardField
-                      label={intl.formatMessage({ id: 'app.eventPhotos' }) || 'Event Photos'}
+                      label={intl.formatMessage({ id: 'events.wizard.step.photos' })}
                       helpText={intl.formatMessage({
                         id: 'events.wizard.photosHelp',
                         defaultMessage: 'Upload photos documenting this agricultural event'

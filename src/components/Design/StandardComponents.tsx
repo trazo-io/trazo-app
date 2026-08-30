@@ -1657,6 +1657,41 @@ export const GUIDANCE_NOTE_TOKENS = {
 } as const;
 
 /**
+ * Urgency tokens for a status ROW — a deadline, a readiness finding, an open-item count. Named
+ * and exported for the same reason as GUIDANCE_NOTE_TOKENS above: a guard that reads the object
+ * the component actually paints from is enforceable; one that restates hex codes is not.
+ *
+ * ⚠️ THESE ARE CHAKRA'S `orange`, NOT THE THEME'S `amber`, AND THAT IS DELIBERATE.
+ *
+ * The theme (`theme/styles.js`) defines green, gray, amber, red, blue — there is no `orange`
+ * scale, so every `orange.*` in this codebase silently resolves to Chakra's default palette.
+ * That normally makes `orange.*` a foreign-palette bug. For the WARNING semantic it is not,
+ * because the theme's own amber CANNOT carry text: MEASURED on white, amber.500 #FF9800 is
+ * 2.16:1, amber.700 2.70:1, and even the darkest step amber.900 #E65100 reaches only 3.79:1 —
+ * still under the 4.5 small text owes. Amber is a FILL ramp. This is why `badge.js`'s
+ * `variant="warning"` is itself built on `orange.100`/`orange.800`, and why frontend.md tells
+ * you to reach for that variant instead of `colorScheme="amber"`. Swapping these to amber to
+ * "fix the foreign palette" would REGRESS every one of them below AA — do not.
+ *
+ * Steps chosen by role, MEASURED on white:
+ *   warn.text  orange.600 #C05621  4.57:1  ✓ 4.5 (orange.500 was 3.39 — the failure this fixes)
+ *   warn.icon  orange.500 #DD6B20  3.39:1  ✓ 3.0 (orange.400 was 2.55 — under the glyph floor)
+ *   warn.bar   orange.400 #ED8936  2.55:1  — decorative only; never the sole carrier of urgency
+ *   crit.text  red.700    #D32F2F  4.98:1  ✓ 4.5 (red.500, the theme's own "Error color", is
+ *                                                  3.68 and fails as small text)
+ *   crit.icon  red.500    #F44336  3.68:1  ✓ 3.0
+ *   crit.bar   red.400    #EF5350  3.49:1  — decorative only
+ *
+ * `bar` is exempt from the 3.0 floor ONLY while the row also states its urgency in words
+ * ("in 1 day", "Needs attention"). A row that drops the text must not keep the bar as the
+ * signal — that is colour-alone status, which frontend.md rules out.
+ */
+export const STATUS_URGENCY_TOKENS = {
+  warn: { text: 'orange.600', icon: 'orange.500', bar: 'orange.400' },
+  crit: { text: 'red.700', icon: 'red.500', bar: 'red.400' }
+} as const;
+
+/**
  * A quiet, NEUTRAL aside for static teaching copy — the "here is what this section means"
  * text that ships with a form, not something that just happened.
  *

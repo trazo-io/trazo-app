@@ -1814,19 +1814,25 @@ const ProductionTab = forwardRef(
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <VStack spacing={6} align="stretch">
-            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. */}
-            <StandardAlert
-              status="info"
-              title={intl.formatMessage({ id: 'events.callout.production.title' })}>
-              <Text fontSize="sm">
-                {intl.formatMessage({
-                  id:
-                    productionType === 'SS'
-                      ? 'events.callout.production.bodySeedSearch'
-                      : 'events.callout.production.body'
-                })}
-              </Text>
-            </StandardAlert>
+            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. ChemicalTab
+                dropped its callout entirely; the generic production one went the same way
+                (2026-08-29). "This is the production record your certifier reviews at
+                renewal" restated the page the operator is already on, and cost ~200px above
+                the first field on a phone — the form's own section headers and field helpers
+                carry the same guidance where it applies.
+
+                Seed Search KEEPS its callout: § 205.204 is the reason the record exists at
+                all (non-organic untreated seed is permitted only when organic seed is not
+                commercially available), and nothing else on the form says so. */}
+            {productionType === 'SS' && (
+              <StandardAlert
+                status="info"
+                title={intl.formatMessage({ id: 'events.callout.production.title' })}>
+                <Text fontSize="sm">
+                  {intl.formatMessage({ id: 'events.callout.production.bodySeedSearch' })}
+                </Text>
+              </StandardAlert>
+            )}
 
             {/* Certifier-only notice — SSOT is CONSUMER_WITHHELD_PRODUCTION_SUBTYPES
                 (mirrors the backend event-level withhold in claim_authority.py). The
@@ -1853,9 +1859,21 @@ const ProductionTab = forwardRef(
             <>
               {/* Basic Production Information */}
               <SectionBox>
+                {/* Not "Production Activity". That is EVENT_TYPE_NAMES[1] — the retired
+                    seven-family vocabulary narrative.ts forbids rendering, and it arrived
+                    here as a hardcoded English literal so every locale read it. A farmer
+                    who tapped the Planting tile and reads "Log activity — Planting" was
+                    then told by the first heading inside the form that they were filing a
+                    "Production Activity": one record, two identities, the same defect
+                    already fixed on the timeline and the edit path.
+
+                    The sibling headings in this file name a FIELD GROUP ("Yield & Output",
+                    "Harvest Quality"), so this one does too — it holds the name, area and
+                    unit. Echoing the subtype label instead would only restate the page
+                    title. */}
                 <SectionHeader
                   icon={FaSeedling}
-                  title="Production Activity"
+                  title={intl.formatMessage({ id: 'events.section.activityBasics' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
                 <VStack spacing={4} align="stretch">
@@ -1960,7 +1978,7 @@ const ProductionTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaTools}
-                    title="Equipment Details"
+                    title={intl.formatMessage({ id: 'events.section.production.equipment' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Specify equipment operation type and equipment used for accurate carbon emission calculations."
                   />
@@ -2042,7 +2060,9 @@ const ProductionTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaShieldAlt}
-                    title="NOP Equipment Cleaning Log"
+                    title={intl.formatMessage({
+                      id: 'events.section.production.equipmentCleaning'
+                    })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document equipment cleaning per NOP 7 CFR 205.272. Required when equipment is shared between organic and conventional operations."
                   />
@@ -2412,7 +2432,7 @@ const ProductionTab = forwardRef(
                       not the yield. */}
                   <SectionHeader
                     icon={FaBalanceScale}
-                    title="Yield & Output"
+                    title={intl.formatMessage({ id: 'events.section.production.yield' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
                   <VStack spacing={4} align="stretch">
@@ -2528,7 +2548,7 @@ const ProductionTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaBalanceScale}
-                    title="Harvest Quality"
+                    title={intl.formatMessage({ id: 'events.section.production.harvestQuality' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
                   <VStack spacing={4} align="stretch">
@@ -3169,7 +3189,7 @@ const ProductionTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaBalanceScale}
-                    title="Harvest Summary Mode"
+                    title={intl.formatMessage({ id: 'events.section.production.harvestSummary' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Log multiple harvest picks as one summary record to reduce logging burden while maintaining full transparency."
                   />
@@ -3857,7 +3877,7 @@ const ProductionTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaShieldAlt}
-                    title="Frost Protection Details"
+                    title={intl.formatMessage({ id: 'events.section.production.frostProtection' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document the frost-protection method and conditions. Record the equipment fuel and run hours in the Fuel & Equipment section below so the carbon impact is captured."
                   />{' '}
@@ -3914,7 +3934,7 @@ const ProductionTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    title="Orchard-Floor Management"
+                    title={intl.formatMessage({ id: 'events.section.production.orchardFloor' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document the floor-management operation. Record equipment fuel and run hours in the Fuel & Equipment section below so the carbon impact is captured."
                   />{' '}
@@ -4087,7 +4107,7 @@ const ProductionTab = forwardRef(
               {FUEL_REPORTING_SUBTYPES.includes(productionType) && (
                 <CollapsibleSection
                   icon={FaSeedling}
-                  title="Fuel Consumption & Equipment Data"
+                  title={intl.formatMessage({ id: 'events.section.fuelEquipment' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                   description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
                   badgeTone="optional">
@@ -4346,7 +4366,7 @@ const ProductionTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaTruck}
-                    title="Transportation"
+                    title={intl.formatMessage({ id: 'events.section.production.transport' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                     badgeTone="optional"
                   />
@@ -5212,7 +5232,7 @@ const ProductionTab = forwardRef(
               <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  title="Farmer's Field Notes & Consumer Transparency"
+                  title={intl.formatMessage({ id: 'events.section.fieldNotes' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <StandardField

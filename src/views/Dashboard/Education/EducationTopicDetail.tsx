@@ -2617,6 +2617,50 @@ const EducationTopicDetail: React.FC = () => {
                   </VStack>
                 </Box>
 
+                {/*
+                  Two questions an inspector asks that this page did not cover until 2026-08-29.
+                  Both came out of reading CCOF's and WSDA's own forms question by question: the
+                  parcel map is a MANDATORY ATTACHMENT at both (CCOF reviews it before inspecting
+                  a new parcel; WSDA wants one with every site application), and once the crop
+                  leaves the farm the audit trail runs through the handler's records, so their
+                  current certificate is the inspector's next question.
+                */}
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <VStack spacing={2} align="stretch">
+                    <Heading size="sm" color="gray.700">
+                      {intl.formatMessage({ id: 'education.detail.inspectionPrep.mapTitle' })}
+                    </Heading>
+                    <Text fontSize="sm" fontStyle="italic">
+                      {intl.formatMessage({ id: 'education.detail.inspectionPrep.mapQuestion' })}
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>
+                        {intl.formatMessage({ id: 'education.detail.inspectionPrep.recordsLabel' })}
+                      </strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.inspectionPrep.mapAnswer' })}
+                    </Text>
+                  </VStack>
+                </Box>
+
+                <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
+                  <VStack spacing={2} align="stretch">
+                    <Heading size="sm" color="gray.700">
+                      {intl.formatMessage({ id: 'education.detail.inspectionPrep.handlerTitle' })}
+                    </Heading>
+                    <Text fontSize="sm" fontStyle="italic">
+                      {intl.formatMessage({
+                        id: 'education.detail.inspectionPrep.handlerQuestion'
+                      })}
+                    </Text>
+                    <Text fontSize="sm">
+                      <strong>
+                        {intl.formatMessage({ id: 'education.detail.inspectionPrep.recordsLabel' })}
+                      </strong>{' '}
+                      {intl.formatMessage({ id: 'education.detail.inspectionPrep.handlerAnswer' })}
+                    </Text>
+                  </VStack>
+                </Box>
+
                 <Box p={4} borderRadius="lg" border="1px solid" borderColor="gray.200">
                   <VStack spacing={2} align="stretch">
                     <Heading size="sm" color="gray.700">

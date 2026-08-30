@@ -9,7 +9,10 @@ import { createIntl, createIntlCache } from 'react-intl';
 
 import en from '../../../i18n/lang/en-US.json';
 import es from '../../../i18n/lang/es-419.json';
-import { activitySummary, activityTitle } from '../narrative';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+import { activityLabel, activitySummary, activityTitle } from '../narrative';
 import type { ActivityRow } from 'store/api/activityFeedApi';
 
 const cache = createIntlCache();
@@ -90,5 +93,70 @@ describe('activitySummary', () => {
   it('returns null when there is nothing to say', () => {
     expect(activitySummary(row({ subtype: 'IR' }), intlEn)).toBeNull();
     expect(activitySummary(row({ subtype: 'HA', detail: {} }), intlEn)).toBeNull();
+  });
+});
+
+/**
+ * The retired seven-family vocabulary must not reach a screen.
+ *
+ * The create path asks "What did you do?" and offers ACTIVITY verbs — Irrigation, Input
+ * application, Pest & scouting. The producer timeline was rendering
+ * `getEventConfig().category`, hardcoded English from the old family vocabulary, so a record
+ * filed as Irrigation displayed as "Production Activity" and an OMRI-listed fish fertiliser
+ * displayed as a "Chemical Application" on a certified-organic operation. Same record, two
+ * identities — the defect already fixed once on the edit path.
+ */
+describe('surfaces render the activity verb, not the retired family name', () => {
+  const RETIRED = [
+    'Production Activity',
+    'Chemical Application',
+    'Soil Management',
+    'Pest Management',
+    'Weather Event',
+    'Equipment Operation',
+    'Business Activity',
+    'Other Farm Activity'
+  ];
+
+  it('the timeline badge renders from activityLabel, not eventConfig.category', () => {
+    const code = readFileSync(
+      join(__dirname, '../../../components/Tables/EnhancedTimelineRow.tsx'),
+      'utf8'
+    );
+    expect(code).toMatch(/activityLabel\(\s*event\.event_type/);
+    // The literals may still exist inside getEventConfig (it feeds icons/rings); what must not
+    // happen is rendering one. `{eventConfig.category}` is the exact shape that did.
+    expect(code, 'eventConfig.category must not be rendered').not.toMatch(
+      /\{\s*eventConfig\.category\s*\}/
+    );
+  });
+
+  it('every retired family name has a verb key that supersedes it', () => {
+    // Anti-vacuity: proves the replacement vocabulary actually resolves for each family.
+    for (const [eventType, subtype] of [
+      [1, 'IR'],
+      [2, null],
+      [5, null],
+      [6, null],
+      [0, null],
+      [3, null],
+      [7, null]
+    ] as [number, string | null][]) {
+      const label = activityLabel(eventType, subtype, intlEn);
+      expect(label, `event_type ${eventType} produced no label`).toBeTruthy();
+      expect(RETIRED, `event_type ${eventType} still says "${label}"`).not.toContain(label);
+    }
+  });
+
+  it('subtypeOf has ONE definition — no surface may grow its own copy', () => {
+    for (const rel of [
+      '../../../components/Tables/EnhancedTimelineRow.tsx',
+      '../../../components/Modals/EventDetailsModal.tsx'
+    ]) {
+      const code = readFileSync(join(__dirname, rel), 'utf8');
+      // the inline `weather_type || production_type || …` chain is the shape that duplicated
+      const copies = [...code.matchAll(/weather_type\s*\|\|[\s\S]{0,200}?business_event_type/g)];
+      expect(copies.length, `${rel} re-implements subtypeOf`).toBe(0);
+    }
   });
 });

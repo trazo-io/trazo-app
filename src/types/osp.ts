@@ -179,6 +179,59 @@ export interface InputVerifyResult {
   wsda_material_category?: string | null;
 }
 
+/**
+ * A material the operator put on the plan in their own words — CCOF NOPB41 §A–§D, WSDA AGR 2196.
+ *
+ * `listing_basis` is what may be SAID about the material and nothing more. `none_unlisted` renders
+ * as "operator-entered; no third-party listing on file" — never as listed, approved or verified.
+ * `listing_statement` is computed server-side for exactly that reason: the sentence a surface
+ * prints must not be assembled locally out of a basis code.
+ */
+export type PlanMaterialListingBasis =
+  | 'omri'
+  | 'wsda'
+  | 'national_list'
+  | 'certifier_letter'
+  | 'none_unlisted';
+
+export type PlanMaterialCategory =
+  | 'fertilizer_amendment'
+  | 'pest_disease_weed'
+  | 'production_aid'
+  | 'post_harvest'
+  | 'other';
+
+export interface PlanMaterialEntry {
+  id: number;
+  product_name: string;
+  manufacturer: string;
+  category: PlanMaterialCategory;
+  category_display: string;
+  reason_for_use: string;
+  listing_basis: PlanMaterialListingBasis;
+  listing_basis_display: string;
+  /** Server-computed. Print this, never a locally-built equivalent. */
+  listing_statement: string;
+  certifier_letter_reference: string;
+  status: 'planned' | 'in_use';
+  notes: string;
+  national_list_substance?: number | null;
+  omri_product?: number | null;
+  wsda_material?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanMaterialInput {
+  product_name: string;
+  manufacturer?: string;
+  category?: PlanMaterialCategory;
+  reason_for_use?: string;
+  listing_basis?: PlanMaterialListingBasis;
+  certifier_letter_reference?: string;
+  status?: 'planned' | 'in_use';
+}
+
 export interface ActivateOSPPayload {
   approval_document: File;
   approval_certificate_number: string;

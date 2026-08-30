@@ -145,3 +145,54 @@ describe('subtypeQuestionFor — the edit path', () => {
     expect(ask({ isCorrecting: true, verb: verbForKey('field_work') })).toEqual(['CU', 'TH', 'MO']);
   });
 });
+
+describe('subtypeQuestionFor — "Log this again"', () => {
+  /*
+   * 🔴 2026-08-27, reported from the running app: pressing *Log this again* on a Seed search
+   * opened "What did you do?" and made the farmer pick the activity they had just pressed the
+   * button on. `?repeat=639&event_type=1` carries no `verb=`, so every verb-shaped preset was
+   * false and the wizard fell through to the no-verb branch.
+   *
+   * Structurally identical to branch 1 in this file's header (an `?event_type=1` bookmark with
+   * no `verb=`) and to the plan-item preset: a link that already names the practice, landing on
+   * a grid that asks for it.
+   */
+  it('asks nothing once the source record has loaded', () => {
+    expect(ask({ fromRepeat: true, knownSubtype: 'SS' })).toEqual([]);
+    // A family subtype too: the record names CU exactly, so "which one was it" is answered.
+    expect(ask({ fromRepeat: true, knownSubtype: 'CU', verb: verbForKey('field_work') })).toEqual(
+      []
+    );
+  });
+
+  it('asks rather than defaulting when the source names no subtype', () => {
+    // Unreachable in practice (`type` is required on the model) and the render gate hides this
+    // window anyway — but a QUESTION is the safe failure. Falling through to ProductionTab's
+    // silent 'PL' is how a repeat of a Harvest would save as a Planting.
+    expect(ask({ fromRepeat: true, knownSubtype: undefined })).toEqual(ALL);
+    expect(ask({ fromRepeat: true, knownSubtype: null })).toEqual(ALL);
+  });
+
+  it('yields to an in-page pick — changing your mind re-opens the family question', () => {
+    // The caller passes `fromRepeat: isRepeat && !pickedVerbKey`. Once the farmer reopens the
+    // grid and taps "Field work", handleVerbSelect seeds the family default (CU) — so a repeat
+    // branch that only looked at knownSubtype would skip CU/TH/MO for someone who had just
+    // explicitly changed the activity.
+    expect(ask({ fromRepeat: false, knownSubtype: 'CU', verb: verbForKey('field_work') })).toEqual([
+      'CU',
+      'TH',
+      'MO'
+    ]);
+  });
+
+  it('never applies to a non-production repeat — that tab owns its own subtype', () => {
+    expect(ask({ fromRepeat: true, knownSubtype: 'FE', eventType: 2 })).toEqual([]);
+  });
+
+  it('does not disturb the edit or plan branches', () => {
+    expect(ask({ isEdit: true, fromRepeat: true, knownSubtype: 'SS' })).toEqual([]);
+    expect(
+      ask({ fromPlanItem: true, planItem: { event_subtype: 'PR' }, knownSubtype: 'PR' })
+    ).toEqual([]);
+  });
+});

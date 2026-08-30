@@ -15,25 +15,11 @@ import {
   Stack,
   Box,
   Icon,
-  Collapse,
-  Button,
   Divider,
   useColorModeValue,
   useToast
 } from '@chakra-ui/react';
-import {
-  FiDownload,
-  FiFileText,
-  FiGrid,
-  FiLayers,
-  FiCheckCircle,
-  FiShield,
-  FiRefreshCw,
-  FiHash,
-  FiDroplet,
-  FiChevronDown,
-  FiChevronUp
-} from 'react-icons/fi';
+import { FiDownload, FiFile, FiTable } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 
 import { StandardButton } from 'components/Design/StandardComponents';
@@ -49,17 +35,14 @@ interface AuditExportModalProps {
 type CertificationKey = 'all' | 'organic' | 'globalgap' | 'roc' | 'fsma204' | 'scs';
 type FormatKey = 'pdf' | 'csv';
 
-interface CertOption {
-  value: CertificationKey;
-  labelKey: string;
-  subtitleKey: string;
-  icon: React.ElementType;
-}
-
-interface CertGroup {
-  titleKey: string;
-  options: CertOption[];
-}
+/**
+ * The two things this modal still chooses between. (The standard picker that used to sit above
+ * the format selector was removed 2026-08-29 — see the note in the body.)
+ */
+const FORMAT_OPTIONS: { value: FormatKey; labelKey: string; icon: typeof FiFile }[] = [
+  { value: 'pdf', labelKey: 'app.exportPdfReport', icon: FiFile },
+  { value: 'csv', labelKey: 'app.exportCsvSpreadsheet', icon: FiTable }
+];
 
 /**
  * 🔴 2026-08-22 — this picker opened on "All Certifications" with five branded standards
@@ -82,122 +65,6 @@ interface CertGroup {
  * option, and the rest live behind a disclosure with a line saying plainly that choosing one
  * filters sections and is not a claim of certification.
  */
-const PRIMARY_OPTION: CertOption = {
-  value: 'organic',
-  labelKey: 'app.exportOrganic',
-  subtitleKey: 'app.exportOrganicSubtitle',
-  icon: FiCheckCircle
-};
-
-const SECONDARY_GROUP: CertGroup = {
-  titleKey: 'app.exportGroupAlsoOrganic',
-  options: [
-    {
-      value: 'roc',
-      labelKey: 'app.exportRoc',
-      subtitleKey: 'app.exportRocSubtitle',
-      icon: FiRefreshCw
-    }
-  ]
-};
-
-/** Behind "Other standards and full export" — available, not advertised. */
-const MORE_OPTIONS: CertOption[] = [
-  {
-    value: 'all',
-    labelKey: 'app.exportAllCertifications',
-    subtitleKey: 'app.exportAllCertificationsSubtitle',
-    icon: FiLayers
-  },
-  {
-    value: 'globalgap',
-    labelKey: 'app.exportGlobalgap',
-    subtitleKey: 'app.exportGlobalgapSubtitle',
-    icon: FiShield
-  },
-  {
-    value: 'fsma204',
-    labelKey: 'app.exportFsma204',
-    subtitleKey: 'app.exportFsma204Subtitle',
-    icon: FiHash
-  },
-  {
-    value: 'scs',
-    labelKey: 'app.exportScs',
-    subtitleKey: 'app.exportScsSubtitle',
-    icon: FiDroplet
-  }
-];
-
-const MORE_VALUES = MORE_OPTIONS.map((o) => o.value);
-
-const FORMAT_OPTIONS: Array<{ value: FormatKey; labelKey: string; icon: React.ElementType }> = [
-  { value: 'pdf', labelKey: 'app.exportPdfReport', icon: FiFileText },
-  { value: 'csv', labelKey: 'app.exportCsvSpreadsheet', icon: FiGrid }
-];
-
-const CERT_INFO_KEYS: Record<CertificationKey, string> = {
-  all: 'app.exportInfoAll',
-  organic: 'app.exportInfoOrganic',
-  globalgap: 'app.exportInfoGlobalgap',
-  roc: 'app.exportInfoRoc',
-  fsma204: 'app.exportInfoFsma204',
-  scs: 'app.exportInfoScs'
-};
-
-interface CertRadioCardProps {
-  option: CertOption;
-  isSelected: boolean;
-}
-
-const CertRadioCard: React.FC<CertRadioCardProps> = ({ option, isSelected }) => {
-  const intl = useIntl();
-  const cardBg = useColorModeValue('white', 'gray.800');
-  const cardBorder = useColorModeValue('gray.200', 'gray.600');
-  const subtitleColor = useColorModeValue('gray.500', 'gray.400');
-  const titleColor = useColorModeValue('gray.800', 'gray.100');
-
-  return (
-    <Box
-      as="label"
-      cursor="pointer"
-      px={3}
-      py={3}
-      borderRadius="lg"
-      border="2px solid"
-      borderColor={isSelected ? 'green.400' : cardBorder}
-      bg={isSelected ? 'green.50' : cardBg}
-      transition="all 0.15s"
-      _hover={{ borderColor: isSelected ? 'green.500' : 'green.300' }}
-      minH="44px"
-      display="block">
-      <Radio value={option.value} colorScheme="green" size="md" w="full" alignItems="flex-start">
-        <HStack spacing={3} align="flex-start" ml={1}>
-          <Icon
-            as={option.icon}
-            boxSize={5}
-            mt="2px"
-            color={isSelected ? 'green.600' : 'gray.500'}
-            flexShrink={0}
-          />
-          <VStack align="flex-start" spacing={0} flex={1}>
-            <Text
-              fontSize="sm"
-              fontWeight={isSelected ? 'semibold' : 'medium'}
-              color={isSelected ? 'green.700' : titleColor}
-              lineHeight="1.3">
-              {intl.formatMessage({ id: option.labelKey })}
-            </Text>
-            <Text fontSize="xs" color={subtitleColor} lineHeight="1.4">
-              {intl.formatMessage({ id: option.subtitleKey })}
-            </Text>
-          </VStack>
-        </HStack>
-      </Radio>
-    </Box>
-  );
-};
-
 const AuditExportModal: React.FC<AuditExportModalProps> = ({
   isOpen,
   onClose,
@@ -207,11 +74,10 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
   const intl = useIntl();
   const toast = useToast();
 
-  const [certification, setCertification] = useState<CertificationKey>('organic');
+  // Fixed: this export is USDA Organic. See the note in the body where the picker was.
+  const certification: CertificationKey = 'organic';
   // Opens itself when the current selection lives inside it, so a chosen standard is never
   // hidden behind a collapsed section the farmer has to remember to open.
-  const [showMore, setShowMore] = useState(false);
-  const isMoreOpen = showMore || MORE_VALUES.includes(certification);
   const [format, setFormat] = useState<FormatKey>('pdf');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -221,8 +87,6 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
   const infoBorder = useColorModeValue('blue.100', 'blue.700');
   const infoText = useColorModeValue('blue.700', 'blue.200');
   const labelColor = useColorModeValue('gray.700', 'gray.200');
-  const groupLabelColor = useColorModeValue('gray.500', 'gray.400');
-  const subtleTextColor = useColorModeValue('gray.600', 'gray.400');
   const radioLabelColor = useColorModeValue('gray.800', 'gray.100');
 
   const handleDownload = async () => {
@@ -339,78 +203,28 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
 
         <ModalBody py={5}>
           <VStack spacing={5} align="stretch">
-            {/* Certification selector — grouped, card-style */}
-            <Box>
-              <Text
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-                color="gray.500"
-                mb={3}
-                letterSpacing="0.05em">
-                {intl.formatMessage({ id: 'app.exportCertificationType' })}
-              </Text>
-              <RadioGroup
-                value={certification}
-                onChange={(val) => setCertification(val as CertificationKey)}>
-                <VStack spacing={4} align="stretch">
-                  {/* USDA Organic — the packet this product exists to produce. */}
-                  <CertRadioCard
-                    option={PRIMARY_OPTION}
-                    isSelected={certification === PRIMARY_OPTION.value}
-                  />
+            {/*
+              ⛔ THE STANDARD PICKER WAS REMOVED 2026-08-29. This export is USDA Organic, always.
 
-                  <Box>
-                    <Text
-                      fontSize="xs"
-                      fontWeight="semibold"
-                      textTransform="uppercase"
-                      color={groupLabelColor}
-                      mb={2}
-                      letterSpacing="0.06em">
-                      {intl.formatMessage({ id: SECONDARY_GROUP.titleKey })}
-                    </Text>
-                    <VStack spacing={2} align="stretch">
-                      {SECONDARY_GROUP.options.map((opt) => (
-                        <CertRadioCard
-                          key={opt.value}
-                          option={opt}
-                          isSelected={certification === opt.value}
-                        />
-                      ))}
-                    </VStack>
-                  </Box>
+              Measured, not assumed: every non-organic set was a strict SUBSET of `organic`,
+              except that `roc`, `scs` and `all` each added exactly one section — `carbon` — and
+              `fsma204` added `traceability`. `globalgap` added nothing whatsoever. So the picker
+              offered LESS information under brands Trazo cannot substantiate, plus the one
+              section the organic export deliberately omits (emissions data in an audit PDF is a
+              greenwashing-by-association risk, and inspectors do not grade on it).
 
-                  <Box>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      color="green.700"
-                      fontWeight="semibold"
-                      rightIcon={<Icon as={isMoreOpen ? FiChevronUp : FiChevronDown} />}
-                      onClick={() => setShowMore((open) => !open)}
-                      aria-expanded={isMoreOpen}>
-                      {intl.formatMessage({ id: 'app.exportMoreStandards' })}
-                    </Button>
-                    <Collapse in={isMoreOpen} animateOpacity>
-                      <VStack spacing={2} align="stretch" mt={3}>
-                        <Text fontSize="xs" color={subtleTextColor}>
-                          {intl.formatMessage({ id: 'app.exportMoreStandardsNote' })}
-                        </Text>
-                        {MORE_OPTIONS.map((opt) => (
-                          <CertRadioCard
-                            key={opt.value}
-                            option={opt}
-                            isSelected={certification === opt.value}
-                          />
-                        ))}
-                      </VStack>
-                    </Collapse>
-                  </Box>
-                </VStack>
-              </RadioGroup>
-            </Box>
+              The brands did not survive research: SCS-001 §2.5.1.2 requires a GFSI or USDA GAP
+              certification Trazo publicly says it does not do, §3.4.1.1 requires an SCS-approved
+              carbon calculator Trazo is not on, and SCS-001 is outside ANAB's accredited scope
+              for its own issuer. FDA's FAQ TF.1 states FSMA 204 has no Key Data Elements for the
+              growing stage, and §1.1320(a) puts the lot code on the initial packer, not the
+              grower. The GlobalG.A.P. copy already conceded the missing hygiene, water-risk and
+              worker-training data.
 
+              The backend still accepts `certification_type` and every section set is intact, so
+              restoring a standard is re-adding a control — not rebuilding a feature. Do not
+              restore one without a named grower asking.
+            */}
             <Divider />
 
             {/* Format selector */}
@@ -466,9 +280,20 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
             {/* Info text — describes what the selected cert export contains */}
             <Box bg={infoBg} border="1px solid" borderColor={infoBorder} borderRadius="lg" p={3}>
               <Text fontSize="xs" color={infoText} lineHeight="1.6">
-                {intl.formatMessage({ id: CERT_INFO_KEYS[certification] })}
+                {intl.formatMessage({ id: 'app.exportInfoOrganic' })}
               </Text>
             </Box>
+            {/*
+              Trazo has THREE certifier-facing exports and their names do not distinguish them:
+              this one (a season), the Operation Audit Dossier (every parcel and production) and
+              the OSP renewal packet (the filing). Until 2026-08-29 this modal's own copy called
+              itself "the full renewal packet" — the exact phrase used elsewhere for the OSP ZIP,
+              which is what a grower actually files. One line here, one on the farm card, both
+              naming all three.
+            */}
+            <Text fontSize="xs" color="gray.600" lineHeight="1.6">
+              {intl.formatMessage({ id: 'app.exportScopeNote' })}
+            </Text>
           </VStack>
         </ModalBody>
 

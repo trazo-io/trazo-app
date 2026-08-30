@@ -70,7 +70,7 @@ const HistoryCard = ({ amount }) => {
   // Ongoing is AMBER, not blue: `.claude/rules/frontend.md` gives in-progress to `warning`
   // and leaves blue with no meaning outside `Alert status="info"`.
   const completedHoverBg = useColorModeValue('green.50', 'green.900');
-  const ongoingHoverBg = useColorModeValue('amber.50', 'amber.900');
+  const ongoingHoverBg = useColorModeValue('green.50', 'green.900');
   const navigate = useNavigate();
 
   // Mobile responsiveness
@@ -686,7 +686,9 @@ const HistoryCard = ({ amount }) => {
                                       }
                                     : {
                                         bg: ongoingHoverBg,
-                                        borderColor: 'amber.800',
+                                        // green.600 is the palette's documented BOUNDARY green
+                                        // (4.12:1), same as the completed card's hover above.
+                                        borderColor: 'green.600',
                                         transform: 'translateY(-1px)',
                                         boxShadow: 'md'
                                       }
@@ -711,21 +713,26 @@ const HistoryCard = ({ amount }) => {
                                       <HStack spacing={3} flex={1} minW={0}>
                                         <Box
                                           p={2}
-                                          bg={isCompleted ? 'green.50' : 'amber.50'}
+                                          bg={isCompleted ? 'gray.100' : 'green.50'}
                                           borderRadius="lg"
                                           border="1px solid"
-                                          borderColor={isCompleted ? 'green.200' : 'amber.200'}
+                                          borderColor={isCompleted ? 'gray.200' : 'green.200'}
                                           flexShrink={0}>
-                                          {/* One hue per state. This used to be a `blue.50`
-                                              tint with a `blue.200` border around an
-                                              `orange.800` glyph — three hues for one status,
-                                              two of them from palettes the theme does not
-                                              define (`orange.*` is Chakra's; the theme has
-                                              `amber`). MEASURED: amber.900 is 3.79:1 on white,
-                                              clearing the 3.0 a non-text mark owes. */}
+                                          {/* One hue per state — and as of 2026-08-28 the LIVE
+                                              season is the green one, not the amber one.
+
+                                              History: this was a `blue.50` tint with a
+                                              `blue.200` border around an `orange.800` glyph —
+                                              three hues for one status, two from palettes the
+                                              theme does not define. That became amber, which
+                                              cleared contrast (amber.900 = 3.79:1) but kept
+                                              saying the wrong thing; see the Badge below.
+                                              green.700 on green.50 is 4.97:1, gray.600 on
+                                              gray.100 is 5.74:1 — both clear the 3.0 a
+                                              non-text mark owes. */}
                                           <Icon
                                             as={isCompleted ? FaChartLine : FaClock}
-                                            color={isCompleted ? 'green.700' : 'amber.900'}
+                                            color={isCompleted ? 'gray.600' : 'green.700'}
                                             boxSize={4}
                                           />
                                         </Box>
@@ -742,13 +749,38 @@ const HistoryCard = ({ amount }) => {
                                           </Text>
                                           <Flex wrap="wrap" gap={2} align="center">
                                             <Badge
-                                              // in-progress = the `warning` variant, matching the
-                                              // OSP module list. NOT colorScheme="amber": the
-                                              // theme's amber scale tops out at #E65100, so an
-                                              // amber pill is 2.63:1 — `warning` is 7.62:1.
+                                              /*
+                                               * ONGOING is GREEN and COMPLETE is NEUTRAL
+                                               * (2026-08-28). It ran the other way — ongoing on
+                                               * `variant="warning"`, completed on a green tint —
+                                               * because frontend.md reads "in progress →
+                                               * variant='warning'". That rule is right for a TASK
+                                               * that owes work, like an unfinished OSP module.
+                                               * A growing season is not a task: a walnut block is
+                                               * ongoing in March because that is what seasons do,
+                                               * and there is nothing to attend to.
+                                               *
+                                               * Two things were wrong with amber here. It
+                                               * COLLIDES: the certifier card on the same
+                                               * dashboard uses this exact `warning` pill for
+                                               * "Needs attention", a real call to action, so an
+                                               * amber that also means "proceeding normally"
+                                               * spends the one colour that is supposed to make a
+                                               * grower look. And it INVERTS the product: Trazo's
+                                               * whole formula is more events → more transparency,
+                                               * the open season is where a grower actually logs,
+                                               * yet the live season was painted caution and the
+                                               * closed one success — finishing looked like the
+                                               * good state and working looked like a problem.
+                                               *
+                                               * So: green = live, act here. Neutral = closed,
+                                               * nothing owed. Never colour alone — each pill
+                                               * carries its word, and the chip glyph differs
+                                               * (clock vs chart).
+                                               */
                                               {...(isCompleted
-                                                ? { colorScheme: 'green', variant: 'subtle' }
-                                                : { variant: 'warning' })}
+                                                ? { variant: 'neutral' }
+                                                : { variant: 'brand' })}
                                               borderRadius="full"
                                               fontSize="xs"
                                               fontWeight="600"

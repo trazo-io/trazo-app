@@ -16,7 +16,7 @@ import { Box, HStack, Icon, Text, useToast } from '@chakra-ui/react';
 import { FaExclamationTriangle, FaFilePdf } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
-import { StandardButton, StandardCard, StandardSelect } from 'components/Design/StandardComponents';
+import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
 import { useGetOperationReadinessQuery } from 'store/api/certifierLinkApi';
 import { config } from 'config/environment';
 
@@ -25,12 +25,32 @@ interface Props {
   farmId?: string;
 }
 
-const CERT_OPTIONS = ['organic', 'all', 'roc', 'globalgap'];
+/**
+ * ⛔ THE STANDARD PICKER WAS REMOVED 2026-08-29. This export is USDA Organic, always.
+ *
+ * Measured, not assumed: every non-organic set was a strict SUBSET of `organic`, except that
+ * `roc`, `scs` and `all` each added exactly one section — `carbon` — and `fsma204` added
+ * `traceability`. `globalgap` added nothing at all. So the picker offered LESS information under
+ * a brand Trazo cannot substantiate, plus the one section the organic export deliberately omits
+ * ("USDA inspectors do not grade on environmental footprint, and including emissions data in an
+ * audit PDF risks greenwashing-by-association claims").
+ *
+ * The brands did not survive research either: SCS-001 §2.5.1.2 requires a GFSI or USDA GAP
+ * certification Trazo publicly says it does not do, §3.4.1.1 requires an SCS-approved carbon
+ * calculator Trazo is not on, and SCS-001 is not in ANAB's accredited scope. FDA's own FAQ says
+ * FSMA 204 has no Key Data Elements for the growing stage and the initial packer — not the
+ * grower — assigns the lot code. The GlobalG.A.P. copy already conceded Trazo lacks its hygiene,
+ * water-risk and worker-training data.
+ *
+ * The backend still accepts `certification_type` and the section sets are intact, so restoring a
+ * standard is re-adding a control, not rebuilding a feature. Do not restore one without a named
+ * grower asking for it.
+ */
+const CERTIFICATION = 'organic';
 
 const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
   const intl = useIntl();
   const toast = useToast();
-  const [certification, setCertification] = useState('organic');
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: readiness } = useGetOperationReadinessQuery(
@@ -45,7 +65,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
     try {
       const url =
         `${config.API_BASE_URL}/companies/${companyId}/establishments/${farmId}/operation-audit-export/` +
-        `?certification=${certification}`;
+        `?certification=${CERTIFICATION}`;
       const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) {
         let msg = intl.formatMessage({ id: 'app.exportFailed', defaultMessage: 'Export failed' });
@@ -136,27 +156,6 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
         gap={3}
         align={{ base: 'stretch', smd: 'flex-end' }}
         flexDirection={{ base: 'column', smd: 'row' }}>
-        <Box minW={{ smd: '200px' }} w={{ base: 'full', smd: 'auto' }}>
-          <Text fontSize="sm" mb={1} color="gray.600">
-            {intl.formatMessage({
-              id: 'operationAudit.certification',
-              defaultMessage: 'Certification filter'
-            })}
-          </Text>
-          <StandardSelect
-            value={certification}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCertification(e.target.value)}
-            size="sm">
-            {CERT_OPTIONS.map((c) => (
-              <option key={c} value={c}>
-                {intl.formatMessage({
-                  id: `operationAudit.cert.${c}`,
-                  defaultMessage: c.toUpperCase()
-                })}
-              </option>
-            ))}
-          </StandardSelect>
-        </Box>
         <StandardButton
           size="sm"
           leftIcon={<FaFilePdf />}
@@ -171,6 +170,21 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
           })}
         </StandardButton>
       </HStack>
+      {/*
+        What the chosen standard actually covers — and, for ROC and GlobalG.A.P., what it does
+        NOT. The per-production modal has said this since 2026-08-22; this dropdown offered the
+        same four standards as flat peers with no description at all, so choosing GlobalG.A.P.
+        here produced a 9-section document where USDA Organic produces 27, with nothing on screen
+        to say so. Same strings as the modal on purpose: two copies of one explanation is how
+        they come to disagree.
+      */}
+      <Text fontSize="xs" color="gray.600" mt={3}>
+        {intl.formatMessage({ id: 'app.exportInfoOrganic' })}
+      </Text>
+      {/* Which of the three certifier artifacts this is, so it is not mistaken for the others. */}
+      <Text fontSize="xs" color="gray.600" mt={1}>
+        {intl.formatMessage({ id: 'operationAudit.scopeNote' })}
+      </Text>
     </StandardCard>
   );
 };

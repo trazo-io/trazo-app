@@ -33,6 +33,7 @@ import { FaCalendarAlt, FaChevronRight } from 'react-icons/fa';
 
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
+import { STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
 import { useGetOperationReadinessQuery } from 'store/api/certifierLinkApi';
 import { useGetCertificationsQuery } from 'store/api/certificationApi';
 import { useGetOSPAnnualUpdatesQuery } from 'store/api/ospAnnualUpdateApi';
@@ -134,6 +135,14 @@ const CertifierDeadlinesStrip: React.FC<{
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
   const textColor = useColorModeValue('gray.700', 'gray.200');
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
+  /**
+   * The card-header icon, one step BELOW its own title — see the note at the `Icon` below.
+   * Colour-mode aware on purpose: the literal `gray.700` that used to be here goes
+   * near-invisible on the dark theme, the exact bug CarbonSummaryCard's header already fixed.
+   * MEASURED: light `gray.600` 6.19:1 under a `gray.700` title at 10.05:1; dark `gray.400`
+   * 4.93:1 under a `gray.200` title at 10.0:1 — the same step down in both modes.
+   */
+  const headerIconColor = useColorModeValue('gray.600', 'gray.400');
 
   const { data: readiness } = useGetOperationReadinessQuery(scope, skip);
   // Only the annual-update query needs a load flag — the cert and registration rows are driven by
@@ -264,8 +273,31 @@ const CertifierDeadlinesStrip: React.FC<{
             {/* SOLID weight. Font Awesome ships Regular (outline) and Solid as separate sets, and
                 the outline calendar was the ONLY `FaReg*` icon anywhere in the dashboard tree —
                 so the one card with a hollow header icon sat directly above a card with a filled
-                clipboard. Same family, two weights, reads as two icon sets. */}
-            <Icon as={FaCalendarAlt} color="gray.700" boxSize={5} />
+                clipboard. Same family, two weights, reads as two icon sets.
+
+                One step BELOW the title beside it, NOT matched to it (2026-08-27). This briefly
+                ran at `gray.700` — the title's own colour — on the theory that a header icon and
+                its title should agree. MEASURED on the rendered dashboard, that made these two
+                glyphs the darkest on the page at 10.05:1, while the sidebar's nav icons — marks
+                that DO carry meaning — sit at `green.700`, 5.13:1. The one icon carrying no
+                information was the loudest on the screen. `gray.600` (6.19:1) puts it back in
+                the same band as those nav icons.
+
+                Two reasons it steps down. (1) A header icon duplicates the title beside it — this
+                codebase already says so by `aria-hidden`-ing StandardCard's `titleIcon` — and
+                WCAG 1.4.11 exempts decorative graphics, so the 3.0 floor that forced
+                `SECTION_ICON_COLOR` to `green.700` is not the constraint here; that rule is a
+                contrast fix and is NOT precedent for "icon = title colour". (2) A solid glyph
+                carries far more ink per area than letterforms, so matching the hex makes the icon
+                read HEAVIER than its own heading — muting a step is how you get perceptual parity,
+                and it is why muted header icons are the norm. At 20px against 16px text this one
+                was already the larger mark.
+
+                `gray.600` rather than `gray.500`: the calendar is a HOLLOW glyph sitting above a
+                solid clipboard, and the lighter both go the more that ink difference shows —
+                `gray.500` washes the thin strokes out while the slab below still holds. Fixing
+                the glyph weights is what would buy the lighter grey. */}
+            <Icon as={FaCalendarAlt} color={headerIconColor} boxSize={5} />
             {/* `size="sm"` (16px), NOT StandardCard's `{ base: 'sm', md: 'md' }`.
                 MEASURED against the page: `md` renders 20px, which made these two card titles the
                 largest text on the dashboard — larger than the farm name that is the page's own
@@ -299,7 +331,11 @@ const CertifierDeadlinesStrip: React.FC<{
                 w="100%"
                 minH="44px"
                 borderLeft="3px solid"
-                borderLeftColor={d.urgency === 'overdue' ? 'red.400' : 'orange.300'}
+                borderLeftColor={
+                  d.urgency === 'overdue'
+                    ? STATUS_URGENCY_TOKENS.crit.bar
+                    : STATUS_URGENCY_TOKENS.warn.bar
+                }
                 borderBottom="1px solid"
                 borderBottomColor={borderColor}
                 pl={3}
@@ -309,10 +345,20 @@ const CertifierDeadlinesStrip: React.FC<{
                   {d.label}
                 </Text>
                 <HStack spacing={2} flexShrink={0}>
+                  {/* MEASURED 2026-08-28: this ran `orange.500` (#DD6B20, 3.39:1) and
+                      `red.500` (#F44336, 3.68:1) as 12px semibold text — BOTH under the
+                      4.5 small text owes. `red.500` is the theme's declared "Error color",
+                      which is exactly how it passed review. See STATUS_URGENCY_TOKENS for
+                      why the warning step is Chakra orange and must not be "corrected" to
+                      the theme's amber. */}
                   <Text
                     fontSize="xs"
                     fontWeight="semibold"
-                    color={d.urgency === 'overdue' ? 'red.500' : 'orange.500'}
+                    color={
+                      d.urgency === 'overdue'
+                        ? STATUS_URGENCY_TOKENS.crit.text
+                        : STATUS_URGENCY_TOKENS.warn.text
+                    }
                     whiteSpace="nowrap">
                     {d.detail}
                   </Text>

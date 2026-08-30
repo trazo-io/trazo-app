@@ -27,7 +27,6 @@ import {
   StandardSelect,
   StandardTextarea,
   StandardAlert,
-  CollapsibleSection,
   SectionHeader,
   SectionBox
 } from 'components/Design/StandardComponents';
@@ -1011,24 +1010,19 @@ const SoilManagementTab = forwardRef(
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(handleEnhancedSubmit)} noValidate style={{ width: '100%' }}>
           <Flex direction="column" w="100%">
-            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. */}
-            <StandardAlert
-              status="info"
-              title={intl.formatMessage({ id: 'events.callout.soil.title' })}>
-              <Text fontSize="sm">{intl.formatMessage({ id: 'events.callout.soil.body' })}</Text>
-            </StandardAlert>
-
             {/* Forms are hand-crafted by design: the NOP section grouping below is what
                 makes the audit export complete, and the registry renderer flattens it.
                 The field registry is the SSOT for DISPLAY surfaces (consumer card, modal,
                 timeline) and is enforced here by src/config/events/__tests__/
                 formConformance.test.ts, not by a runtime flag. */}
             <>
-              {/* Sprint 3 Epic 3.1: Consolidated Section 1 - Soil Management Details (merged Info + Area) */}
+              {/* Sprint 3 Epic 3.1: consolidated section 1 (merged Info + Area) */}
               <SectionBox>
+                {/* Not "Soil Management Details" — EVENT_TYPE_NAMES[5], the retired family
+                      name, hardcoded in English. Name, subtype, area and depth. */}
                 <SectionHeader
                   icon={FaSeedling}
-                  title="Soil Management Details"
+                  title={intl.formatMessage({ id: 'events.section.activityBasics' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
 
@@ -1139,7 +1133,7 @@ const SoilManagementTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    title="Fuel & Equipment Operations"
+                    title={intl.formatMessage({ id: 'events.section.soil.fuelOperations' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                     description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
                     badgeTone="optional"
@@ -1243,7 +1237,7 @@ const SoilManagementTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    title="Soil Amendment Details"
+                    title={intl.formatMessage({ id: 'events.section.soil.amendment' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document lime or soil amendment application for accurate carbon emissions calculation using IPCC 2006 methodology."
                   />{' '}
@@ -1489,7 +1483,7 @@ const SoilManagementTab = forwardRef(
                 <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaSeedling}
-                    title="NOP Organic Compliance"
+                    title={intl.formatMessage({ id: 'events.section.soil.nopCompliance' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     /* Subtype-aware: a grazing pass shows only the raw-manure interval —
                        no amendment approval, no composting record — so the generic
@@ -1976,7 +1970,7 @@ const SoilManagementTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaThermometerHalf}
-                    title="Soil Properties"
+                    title={intl.formatMessage({ id: 'events.section.soil.properties' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />{' '}
                   <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
@@ -2038,7 +2032,12 @@ const SoilManagementTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaThermometerHalf}
-                    title={watch('type') === 'LA' ? 'Lab Analysis Results' : 'Soil Test Results'}
+                    title={intl.formatMessage({
+                      id:
+                        watch('type') === 'LA'
+                          ? 'events.section.soil.labResults'
+                          : 'events.section.soil.testResults'
+                    })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description={
                       watch('type') === 'LA'
@@ -2174,7 +2173,7 @@ const SoilManagementTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    title="Tillage Operation Details"
+                    title={intl.formatMessage({ id: 'events.section.soil.tillage' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Provide specific tillage details for accurate carbon impact assessment. Tillage practices significantly affect soil carbon sequestration and emissions."
                   />{' '}
@@ -2253,7 +2252,7 @@ const SoilManagementTab = forwardRef(
                 <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaSeedling}
-                    title="Grazing Details"
+                    title={intl.formatMessage({ id: 'events.section.soil.grazing' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document grazing activities for cover crop management, weed control, and soil health."
                   />
@@ -2409,7 +2408,7 @@ const SoilManagementTab = forwardRef(
                 <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaSeedling}
-                    title="Habitat Development"
+                    title={intl.formatMessage({ id: 'events.section.soil.habitat' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document planted/established habitat — hedgerows, insectary strips, native plantings, riparian buffers, or living groundcover. Add photos as evidence."
                   />
@@ -2460,7 +2459,7 @@ const SoilManagementTab = forwardRef(
                 <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaSeedling}
-                    title="Nesting / Shelter Structures"
+                    title={intl.formatMessage({ id: 'events.section.soil.nesting' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document installed wildlife structures — barn-owl & songbird boxes, raptor perches, native-bee blocks, bat boxes, insect hotels, beetle banks. Add photos as evidence."
                   />
@@ -2584,7 +2583,7 @@ const SoilManagementTab = forwardRef(
               <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  title="Farmer's Field Notes & Consumer Transparency"
+                  title={intl.formatMessage({ id: 'events.section.fieldNotes' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <StandardField

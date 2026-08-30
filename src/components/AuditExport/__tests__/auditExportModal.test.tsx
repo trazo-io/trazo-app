@@ -44,40 +44,50 @@ const radioFor = (labelText: string) => {
 };
 
 describe('AuditExportModal', () => {
-  it('opens on USDA Organic, not on the everything export', () => {
-    const { unmount } = renderModal();
-    expect(radioFor('USDA Organic')?.checked).toBe(true);
-    unmount();
+  /*
+    The four tests that used to live here pinned the STANDARD PICKER: that it opened on organic
+    rather than the everything export, that the other standards sat behind a disclosure, that
+    choosing one was framed as a filter and not a certification claim, and that each named what
+    it could not cover. They were good tests and they did their job — the default-is-a-claim
+    finding of 2026-08-22 came from that work.
+
+    The picker was removed on 2026-08-29, so those assertions now pin a control that should never
+    come back. What replaces them is the reason it was removed, stated as tests: the export is
+    organic, the other standards are not offered, and nothing on screen claims certification.
+  */
+
+  it('offers no standard picker at all', () => {
+    renderModal();
+    // Every brand the picker used to list. None may be selectable here again without a decision.
+    for (const brand of [
+      'GlobalGAP',
+      'GlobalG.A.P.',
+      'FSMA 204',
+      'SCS',
+      'Sustainably Grown',
+      'Regenerative Organic'
+    ]) {
+      expect(screen.queryByText(new RegExp(brand, 'i'))).toBeNull();
+    }
+    expect(screen.queryByText(/all sections/i)).toBeNull();
   });
 
-  it('keeps the other standards behind a disclosure', () => {
-    const { unmount } = renderModal();
-    // Collapse keeps children mounted, so assert on the control, not on presence.
-    const toggle = screen.getByRole('button', { name: /other standards and full export/i });
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    fireEvent.click(toggle);
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    unmount();
+  it('still says what the USDA Organic export contains', () => {
+    renderModal();
+    expect(screen.getByText(/OSP reference and attestation/i)).toBeTruthy();
   });
 
-  it('states that picking a standard is a filter, not a certification claim', () => {
-    const { unmount } = renderModal();
-    const text = () => document.body.textContent || '';
-    fireEvent.click(screen.getByRole('button', { name: /other standards and full export/i }));
-    expect(text()).toMatch(/not a claim that your operation is certified/i);
-    unmount();
+  it('does not describe itself as the renewal filing', () => {
+    // The production export is one season's records. The renewal FILING is the OSP packet, and
+    // this copy used to call itself "the full renewal packet" — the same phrase used for that ZIP.
+    renderModal();
+    expect(screen.queryByText(/full renewal packet/i)).toBeNull();
+    expect(screen.getByText(/your renewal filing is the OSP packet/i)).toBeTruthy();
   });
 
-  it('says what the standards it cannot fully cover are missing', () => {
-    const { unmount } = renderModal();
-    const text = () => document.body.textContent || '';
-    fireEvent.click(screen.getByRole('button', { name: /other standards and full export/i }));
-    fireEvent.click(screen.getByText('GlobalGAP'));
-    // The old copy promised "water management records, and worker safety documentation";
-    // neither section exists in the globalgap set.
-    expect(text()).not.toMatch(/worker safety documentation/i);
-    expect(text()).toMatch(/Trazo does not hold that data/i);
-    unmount();
+  it('says which of the three certifier exports this one is', () => {
+    renderModal();
+    expect(screen.getByText(/Covers this production only/i)).toBeTruthy();
   });
 
   it('does not call the output an audit Trazo performed', () => {

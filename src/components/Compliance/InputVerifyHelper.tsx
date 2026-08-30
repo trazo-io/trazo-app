@@ -121,6 +121,9 @@ const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ re
   const hasWSDA = result.wsda_material_pk != null;
   const hasNL = result.national_list_substance_pk != null;
   const noMatch = !hasOMRI && !hasWSDA && !hasNL;
+  // 33 of the 97 seeded National List rows are prohibited, and they answer ordinary searches:
+  // "manure" returns "Ash from manure burning" (§ 205.602).
+  const nlProhibited = hasNL && (result.national_list_status || '').toLowerCase() === 'prohibited';
 
   if (noMatch) {
     const search = `https://www.omri.org/omri-search?query=${encodeURIComponent(query)}`;
@@ -156,6 +159,34 @@ const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ re
 
   return (
     <VStack align="stretch" spacing={2} mt={2}>
+      {nlProhibited && (
+        <Alert status="error" fontSize="xs" mt={0} alignItems="flex-start">
+          <AlertIcon />
+          <VStack align="start" spacing={1}>
+            <Text fontWeight="semibold">
+              {intl.formatMessage({
+                id: 'inputVerify.prohibited.title',
+                defaultMessage: 'Prohibited in organic crop production'
+              })}
+            </Text>
+            <Text>
+              {intl.formatMessage(
+                {
+                  id: 'inputVerify.prohibited.body',
+                  defaultMessage:
+                    '{name} is on the National List as prohibited ({section}). Using it on certified organic land is a violation your certifier must be told about — it is not something to record as an approved input.'
+                },
+                {
+                  name: result.national_list_substance_name || '',
+                  section: result.national_list_cfr_section
+                    ? `\u00a7 ${result.national_list_cfr_section}`
+                    : '\u00a7 205.602'
+                }
+              )}
+            </Text>
+          </VStack>
+        </Alert>
+      )}
       {hasOMRI && (
         <MatchRow
           badgeLabel="OMRI"
@@ -182,7 +213,21 @@ const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ re
           })}
           badgeColor="blue"
           title={result.national_list_substance_name || ''}
-          subtitle={[result.national_list_cfr_section, result.national_list_status]
+          tone={nlProhibited ? 'prohibited' : 'allowed'}
+          subtitle={[
+            result.national_list_cfr_section,
+            // Two static ids, not one interpolated one: a dynamic message id is invisible to the
+            // locale-parity test and shows up as a runtime "missing message" instead.
+            nlProhibited
+              ? intl.formatMessage({
+                  id: 'inputVerify.nlStatus.prohibited',
+                  defaultMessage: 'prohibited'
+                })
+              : intl.formatMessage({
+                  id: 'inputVerify.nlStatus.allowed',
+                  defaultMessage: 'allowed'
+                })
+          ]
             .filter(Boolean)
             .join(' · ')}
         />
@@ -198,22 +243,46 @@ const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ re
   );
 };
 
+/**
+ * MEASURED on the rendered app (contrast probe, 2026-08-28), because this theme's red scale is
+ * Material's, not Chakra's — `red.700` here is #D32F2F, not #9B2C2C. On `red.50`: red.700 = 4.36
+ * (FAILS 4.5 for the 12px subtitle), red.800 = 4.92, red.900 = 5.75. `red.300` as a border is 2.99
+ * on white — one hundredth under the 3.0 non-text floor — so the border is red.500 (3.68).
+ *
+ * A catalog hit is not automatically good news. The National List holds BOTH the § 205.601
+ * allowed substances and the § 205.602 prohibited ones, so "found in the National List" can mean
+ * either. Rendering both in the same green check card told a grower that a prohibited substance
+ * had been verified — the word "prohibited" sat in a grey 12px subtitle under a green tick.
+ */
 const MatchRow: React.FC<{
   badgeLabel: string;
   badgeColor: string;
   title: string;
   subtitle?: string;
-}> = ({ badgeLabel, badgeColor, title, subtitle }) => (
+  tone?: 'allowed' | 'prohibited';
+}> = ({ badgeLabel, badgeColor, title, subtitle, tone = 'allowed' }) => (
   <HStack
     p={2}
-    bg="green.50"
+    bg={tone === 'prohibited' ? 'red.50' : 'green.50'}
     borderWidth="1px"
-    borderColor="green.200"
+    borderColor={tone === 'prohibited' ? 'red.500' : 'green.200'}
     borderRadius="md"
     align="center"
     spacing={2}
-    _dark={{ bg: 'green.900', borderColor: 'green.700' }}>
-    <Icon as={FaCheckCircle} color="green.500" />
+    _dark={
+      tone === 'prohibited'
+        ? { bg: 'red.900', borderColor: 'red.600' }
+        : { bg: 'green.900', borderColor: 'green.700' }
+    }
+    data-tone={tone}>
+    <Icon
+      as={tone === 'prohibited' ? FaExclamationTriangle : FaCheckCircle}
+      color={tone === 'prohibited' ? 'red.800' : 'green.500'}
+      // Dark mode is not reachable in this app today (no ColorModeScript, no toggle), but the
+      // `_dark` background above is already declared — and red.800/red.900 glyphs on a red.900
+      // ground would be the same colour twice. Declared light so the trap is not waiting.
+      _dark={{ color: tone === 'prohibited' ? 'red.100' : 'green.200' }}
+    />
     <Badge colorScheme={badgeColor} fontSize="11px">
       {badgeLabel}
     </Badge>
@@ -222,7 +291,12 @@ const MatchRow: React.FC<{
         {title}
       </Text>
       {subtitle && (
-        <Text fontSize="xs" color="gray.600" noOfLines={1}>
+        <Text
+          fontSize="xs"
+          color={tone === 'prohibited' ? 'red.900' : 'gray.600'}
+          _dark={{ color: tone === 'prohibited' ? 'red.100' : 'gray.300' }}
+          fontWeight={tone === 'prohibited' ? 'semibold' : 'normal'}
+          noOfLines={1}>
           {subtitle}
         </Text>
       )}

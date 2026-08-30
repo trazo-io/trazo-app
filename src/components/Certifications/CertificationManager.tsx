@@ -30,19 +30,35 @@ import { Certification, CertificationType, CreateCertificationData } from 'types
 import { ResponsiveModal, StandardInput, StandardSelect } from 'components/Design';
 import CertificationStatusBadge from './CertificationStatusBadge';
 
-const CERTIFICATION_TYPE_OPTIONS: { value: CertificationType; label: string }[] = [
-  { value: 'usda_organic', label: 'USDA Organic' },
-  { value: 'ccof', label: 'CCOF' },
-  { value: 'cng', label: 'Certified Naturally Grown' },
-  { value: 'real_organic_project', label: 'Real Organic Project' },
-  { value: 'roc', label: 'Regenerative Organic Certified' },
-  { value: 'non_gmo_project', label: 'Non-GMO Project Verified' },
-  { value: 'global_gap', label: 'GlobalG.A.P.' },
-  { value: 'fair_trade', label: 'Fair Trade Certified' },
-  { value: 'rainforest_alliance', label: 'Rainforest Alliance' },
-  { value: 'sqf', label: 'SQF Certified' },
-  { value: 'kosher', label: 'Kosher Certified' },
-  { value: 'other', label: 'Other' }
+/**
+ * Offered certification types, in the backend's own order.
+ *
+ * `labelId` rather than a literal: these twelve strings were the last hardcoded English in
+ * this form, so a Spanish-speaking operator picked their certification from an English list.
+ * Proper nouns still read as themselves in both catalogs — "GlobalG.A.P." is a programme
+ * name, not a phrase to translate — but the descriptive ones ("Certified Naturally Grown",
+ * "Korean Organic Certification") are not.
+ *
+ * ⛔ NO CERTIFYING AGENT IN THIS LIST. "CCOF" was here until 2026-08-27; it issues USDA
+ * Organic and belongs in the Certifier field below, whose own placeholder said so all along.
+ * Keeping it here cost those operations their Organic Integrity Database verification,
+ * because the verify path keys on `usda_organic`.
+ */
+const CERTIFICATION_TYPE_OPTIONS: { value: CertificationType; labelId: string }[] = [
+  { value: 'usda_organic', labelId: 'certification.type.usdaOrganic' },
+  { value: 'cng', labelId: 'certification.type.cng' },
+  { value: 'real_organic_project', labelId: 'certification.type.realOrganicProject' },
+  { value: 'roc', labelId: 'certification.type.roc' },
+  { value: 'korean_organic', labelId: 'certification.type.koreanOrganic' },
+  { value: 'non_gmo_project', labelId: 'certification.type.nonGmoProject' },
+  { value: 'global_gap', labelId: 'certification.type.globalGap' },
+  { value: 'primus_gfs', labelId: 'certification.type.primusGfs' },
+  { value: 'salmon_safe', labelId: 'certification.type.salmonSafe' },
+  { value: 'fair_trade', labelId: 'certification.type.fairTrade' },
+  { value: 'rainforest_alliance', labelId: 'certification.type.rainforestAlliance' },
+  { value: 'sqf', labelId: 'certification.type.sqf' },
+  { value: 'kosher', labelId: 'certification.type.kosher' },
+  { value: 'other', labelId: 'certification.type.other' }
 ];
 
 interface CertificationManagerProps {
@@ -330,21 +346,28 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
               }>
               {CERTIFICATION_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {intl.formatMessage({ id: opt.labelId })}
                 </option>
               ))}
             </StandardSelect>
           </Box>
 
+          {/* Was bg="blue.50" / borderLeftColor="blue.400" / color="blue.700". Blue carries
+                no meaning in this palette outside Chakra's `Alert status="info"`, so a
+                hand-painted blue panel borrowed that convention without the semantics, the
+                glyph or the role a screen reader needs. This is an explanatory note, not a
+                status: neutral surface, `green.600` for the boundary (4.12:1, clears the 3.0
+                non-text floor) and `green.700` for the text, which renders glyphs and so owes
+                4.5:1. */}
           {formData.certification_type === 'usda_organic' && (
             <Box
               w="100%"
               p={3}
-              bg="blue.50"
+              bg="gray.50"
               borderRadius="md"
               borderLeft="3px solid"
-              borderLeftColor="blue.400">
-              <Text fontSize="xs" color="blue.700">
+              borderLeftColor="green.600">
+              <Text fontSize="xs" color="green.700">
                 {intl.formatMessage({ id: 'certification.manage.usdaHelpText' })}
               </Text>
             </Box>

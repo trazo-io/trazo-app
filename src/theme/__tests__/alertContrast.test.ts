@@ -3,7 +3,8 @@ import theme from '../theme';
 import {
   ALERT_PALETTE,
   ALERT_ACCENT_SHADE,
-  GUIDANCE_NOTE_TOKENS
+  GUIDANCE_NOTE_TOKENS,
+  STATUS_URGENCY_TOKENS
 } from 'components/Design/StandardComponents';
 
 /**
@@ -143,6 +144,43 @@ describe('GuidanceNote stays neutral and legible', () => {
         statusPalettes,
         `GuidanceNote.${role} uses the status palette "${palette}"`
       ).not.toContain(palette);
+    }
+  });
+});
+
+describe('STATUS_URGENCY_TOKENS carry urgency legibly on a white card', () => {
+  // Reads the object the status rows render from, same contract as GuidanceNote above.
+  // The failure being locked out (MEASURED 2026-08-28 on the farm dashboard): the certifier
+  // deadline row painted "in 1 day" in orange.500 at 3.39:1 and the findings glyph in
+  // orange.400 at 2.55:1 — one under the 4.5 text floor, the other under the 3.0 glyph floor.
+  const WHITE = '#FFFFFF';
+  const resolve = (v: string) => token(v.split('.')[0], v.split('.')[1]);
+
+  it.each(['warn', 'crit'] as const)('%s.text clears the 4.5 text floor on white', (role) => {
+    expect(contrast(resolve(STATUS_URGENCY_TOKENS[role].text), WHITE)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it.each(['warn', 'crit'] as const)('%s.icon clears the 3.0 glyph floor on white', (role) => {
+    expect(contrast(resolve(STATUS_URGENCY_TOKENS[role].icon), WHITE)).toBeGreaterThanOrEqual(3.0);
+  });
+
+  it('documents WHY warn is Chakra orange and not the theme amber', () => {
+    // If someone "fixes the foreign palette" by repointing warn.* at amber, warn.text drops
+    // to at best 3.79:1 and this suite must already say why that is a regression, not a fix.
+    // Every amber step fails the text floor — amber is a FILL ramp, it cannot letter.
+    for (const shade of ['500', '600', '700', '800', '900']) {
+      expect(contrast(token('amber', shade), WHITE), `amber.${shade} as text`).toBeLessThan(4.5);
+    }
+    expect(STATUS_URGENCY_TOKENS.warn.text.split('.')[0]).toBe('orange');
+  });
+
+  it('bar is decorative only — it is NEVER the darkest of the three', () => {
+    // Guards the documented exemption: the bar may sit under 3.0 because the row also states
+    // its urgency in words. If a bar were ever the strongest mark the row would be leaning on
+    // colour alone, which frontend.md rules out.
+    for (const role of ['warn', 'crit'] as const) {
+      const t = STATUS_URGENCY_TOKENS[role];
+      expect(contrast(resolve(t.bar), WHITE)).toBeLessThan(contrast(resolve(t.text), WHITE));
     }
   });
 });

@@ -19,7 +19,10 @@ const COMMON_KEYTERMS = [
   'potash',
   'ammonium nitrate',
   'ammonium sulfate',
-  // Chemicals
+  // Conventional chemicals. KEPT DELIBERATELY even though this is an organic product: a
+  // grower dictates these when recording a DRIFT or contamination incident from a neighbour
+  // (§ 205.202(b)), and a garbled prohibited-substance name in that record is worse than a
+  // garbled permitted one. They are here to be transcribed, not to be applied.
   'glyphosate',
   'Roundup',
   'atrazine',
@@ -27,6 +30,55 @@ const COMMON_KEYTERMS = [
   'pyrethrin',
   'neem oil',
   'copper sulfate',
+  // ORGANIC MATERIALS — added 2026-08-28.
+  //
+  // This list previously boosted glyphosate, Roundup, atrazine, DAP and ammonium nitrate and
+  // NOT ONE material an organic operation actually applies. An organic recordkeeping product
+  // was teaching its recogniser the vocabulary of the farming its users are certified not to
+  // do — the same wrong-domain assumption that put Osmocote Plus 15-9-12 in the April demo
+  // video. Brand names with alphanumeric suffixes ("Kocide 3000-O") are exactly what a
+  // general model mangles, and they are what gets dictated in the block.
+  //
+  // Sourced from the § 205.601 entries and OMRI listings already seeded on the showcase farm.
+  'OMRI',
+  'OMRI Listed',
+  'National List',
+  'Kocide',
+  'Kocide 3000-O',
+  'copper hydroxide',
+  'Entrust',
+  'Entrust SC',
+  'spinosad',
+  'Bacillus thuringiensis',
+  'Bt',
+  'kaolin clay',
+  'Surround WP',
+  'horticultural oil',
+  'lime sulfur',
+  'potassium bicarbonate',
+  'insecticidal soap',
+  'feather meal',
+  'fish emulsion',
+  "Neptune's Harvest",
+  'compost tea',
+  'gypsum',
+  'pheromone',
+  'mating disruption',
+  'Trichogramma',
+  'beneficials',
+  // Orchard operations and targets
+  'air-blast',
+  'airblast',
+  'hull split',
+  'walnut blight',
+  'navel orangeworm',
+  'codling moth',
+  'degree day',
+  'buffer zone',
+  're-entry interval',
+  'pre-harvest interval',
+  'REI',
+  'PHI',
   // Units & measures
   'hectare',
   'acre',
@@ -85,7 +137,27 @@ const SPANISH_KEYTERMS = [
   'diesel',
   'urea',
   'glifosato',
-  'sulfato de cobre'
+  'sulfato de cobre',
+  // Materiales orgánicos — 2026-08-28, same correction as the English list. The crew logging
+  // in Spanish applies the same § 205.601 materials the packet prints in English.
+  'OMRI',
+  'Lista Nacional',
+  'hidróxido de cobre',
+  'espinosad',
+  'aceite hortícola',
+  'azufre',
+  'jabón insecticida',
+  'harina de plumas',
+  'emulsión de pescado',
+  'té de compost',
+  'feromona',
+  'confusión sexual',
+  'zona de amortiguamiento',
+  'intervalo de reingreso',
+  'nebulizadora',
+  'apertura de ruezno',
+  'tizón del nogal',
+  'gusano de la nuez'
 ];
 
 const PORTUGUESE_KEYTERMS = [

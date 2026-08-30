@@ -229,7 +229,13 @@ const CarouselHorizontal = ({ title, description, data }: CarouselHorizontalProp
               }}
               onClick={quickAdd.onOpen}>
               <Flex direction="column" align="center" justify="center" gap={0.5}>
-                <Icon as={FaPlus} color="green.500" fontSize={{ base: '14px', md: '20px' }} />
+                {/* `green.700`, not `green.500` (2026-08-27). MEASURED on the rendered farm
+                    dashboard: this glyph was the palette's brand green on a white card at
+                    2.78:1 — under even the 3.0 a non-text mark owes — while the "New" label
+                    directly beneath it was already correct at `green.700` (5.13:1). One tile,
+                    two greens, and the failing one was the glyph. This is the documented
+                    ⛔ case: `green.500` is a fill/decorative colour and never renders glyphs. */}
+                <Icon as={FaPlus} color="green.700" fontSize={{ base: '14px', md: '20px' }} />
                 <Text fontSize="xs" fontWeight="medium" color="green.700">
                   {intl.formatMessage({ id: 'app.new' }) || 'New'}
                 </Text>

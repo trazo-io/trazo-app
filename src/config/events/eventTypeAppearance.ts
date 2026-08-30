@@ -35,16 +35,80 @@ import {
 } from 'react-icons/fa';
 import type { IconType } from 'react-icons';
 
-/** Badge variant per event_type. Status colour = meaning: inputs warn, pest is danger. */
+/**
+ * Badge variant per event_type.
+ *
+ * ⚠️ 2 (inputs) and 6 (pest) are NEUTRAL as of 2026-08-28. They were `warning` and `danger`,
+ * on the reading that "inputs warn, pest is danger" — which is a CONVENTIONAL-ag instinct and
+ * the wrong one for a product whose subject is a certified ORGANIC operation.
+ *
+ * What it produced on screen: a pheromone-trap reading ("Trap Monitoring", "Pest Scouting")
+ * wore a red badge and a red icon ring, and an OMRI-type input — Neptune's Harvest fish
+ * fertiliser — wore the amber `warning` pill. Both are the opposite of trouble. 7 CFR 205.206
+ * is the crop pest, weed and disease management practice standard and monitoring is the
+ * preventive practice it asks a producer to document; 7 CFR 205.601 inputs are permitted by
+ * definition. These rows are the compliance EVIDENCE a certifier opens the packet to find, and
+ * they were rendering in the same red and amber the dashboard uses for a real blocker and for
+ * "Needs attention".
+ *
+ * Reserving red and amber for things a grower must ACT on is what keeps them worth looking at.
+ * Category identity is carried by the glyph (bug, flask) and the label, per the note above.
+ *
+ * CHIP_BY_VARIANT below is keyed off these values, so the icon chip follows automatically on
+ * every surface that renders through `eventTypeAppearance()`.
+ *
+ * ── TONAL GREEN, 2026-08-29 ─────────────────────────────────────────────────────────────────
+ * All eight families are now the SAME variant. `subtle` resolves to green.800 on green.100
+ * (6.99:1) — one hue, with weight rather than hue carrying difference.
+ *
+ * This finishes a job that had been left half-done twice. The families first carried seven
+ * decorative hues; two were neutralised when pest and inputs came off red and amber; the rest
+ * kept theirs, so the system ended up half one rule and half another — a green badge above a
+ * blue ring on the same record. Splitting the difference is what kept producing the drift.
+ *
+ * Why one hue can be the whole answer: a category is a plain fact, the glyph already names it,
+ * and eight families against the five scales styles.js defines cannot be one-to-one anyway —
+ * with amber and red reserved for things a grower must act on, only three remain. So the
+ * choice was never "which eight hues", it was "one hue or none". Trazo picked its own.
+ *
+ * ⛔ Do NOT reintroduce a per-family variant here. If a family ever needs to stand out, that
+ * is a STATUS about a particular record (overdue, unverified, blocked), not a property of the
+ * family — and it belongs on a status element, not on the category chip.
+ * ────────────────────────────────────────────────────────────────────────────────────────────
+ */
 export const TYPE_BADGE: Record<number, string> = {
   0: 'subtle',
-  1: 'brand',
-  2: 'warning',
-  3: 'neutral',
-  4: 'neutral',
+  1: 'subtle',
+  2: 'subtle',
+  3: 'subtle',
+  4: 'subtle',
   5: 'subtle',
-  6: 'danger',
-  7: 'neutral'
+  6: 'subtle',
+  7: 'subtle'
+};
+
+/**
+ * event_type → activity-family key, for the CALENDAR only.
+ *
+ * The month view is the one surface where the chip stands alone — no glyph beside it, no title,
+ * no description, and a label that truncates ("Certification & compl…"). One tonal green there
+ * is a month of identical pills you cannot scan. Everywhere the glyph is present, TYPE_BADGE's
+ * single green still applies; see the note on it above.
+ *
+ * The hues live in `theme/styles.js` under `colors.family` with their measurements and the
+ * mnemonic-not-evaluative rule. This map is only the wiring.
+ *
+ * ⚠️ Pair every use with `TYPE_ICON` — colour must never be the sole signal.
+ */
+export const CALENDAR_FAMILY: Record<number, string> = {
+  0: 'sky',
+  1: 'production',
+  2: 'inputs',
+  3: 'other',
+  4: 'equipment',
+  5: 'soil',
+  6: 'pest',
+  7: 'business'
 };
 
 export const TYPE_ICON: Record<number, IconType> = {

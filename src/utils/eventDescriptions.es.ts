@@ -241,7 +241,10 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Applied sustainable pest management practices to protect crop health':
     'Se aplicaron prácticas sostenibles de manejo de plagas para proteger la salud del cultivo',
   'Beneficial Release': 'Liberación de insectos benéficos',
-  'Business Activity': 'Actividad comercial',
+  'Certification & compliance': 'Certificación y cumplimiento',
+  'Pest & scouting': 'Plagas y monitoreo',
+  'Weather event': 'Evento climático',
+  'Input application': 'Aplicación de insumos',
   'Business activity enhancing agricultural transparency and sustainability':
     'Actividad comercial que mejora la transparencia y la sostenibilidad agrícola',
   'Business activity supporting sustainable agricultural operations':
@@ -314,7 +317,7 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Environmental monitoring practice following sustainable agriculture principles':
     'Práctica de monitoreo ambiental que sigue los principios de la agricultura sostenible',
   'Equipment Maintenance': 'Mantenimiento de equipos',
-  'Equipment Operation': 'Operación de equipos',
+  'Equipment work': 'Trabajo con equipos',
   'Equipment maintenance and service activities to ensure optimal operational efficiency':
     'Actividades de mantenimiento y servicio de equipos para asegurar una eficiencia operativa óptima',
   'Equipment operation completed as part of farm activities':
@@ -830,7 +833,7 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Independent Laboratory Analysis': 'Análisis de laboratorio independiente',
   'A sample of leaf, soil, compost or irrigation water sent to an outside laboratory, so nutrient decisions rest on measurements rather than guesswork':
     'Una muestra de hoja, suelo, compost o agua de riego enviada a un laboratorio externo, para que las decisiones de nutrición se basen en mediciones y no en suposiciones',
-  'Soil Management Operation': 'Operación de manejo del suelo',
+  'Soil work': 'Trabajo en el suelo',
   'Farm Maintenance Activity': 'Actividad de mantenimiento de la finca',
   'Fuel Consumption - Field Operations': 'Consumo de combustible en operaciones de campo',
   'Transportation & Logistics': 'Transporte y logística',

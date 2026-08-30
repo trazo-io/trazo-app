@@ -1,14 +1,5 @@
 // Sprint 3 Epic 3.1: Cleaned unused Chakra imports - using StandardComponents only
-import {
-  Icon,
-  Text,
-  useColorModeValue,
-  HStack,
-  Box,
-  SimpleGrid,
-  VStack,
-  Flex
-} from '@chakra-ui/react';
+import { Icon, useColorModeValue, HStack, Box, SimpleGrid, VStack, Flex } from '@chakra-ui/react';
 import {
   StandardCard,
   StandardButton,
@@ -16,7 +7,6 @@ import {
   StandardInput,
   StandardSelect,
   StandardTextarea,
-  StandardAlert,
   SectionHeader,
   SectionBox
 } from 'components/Design/StandardComponents';
@@ -533,27 +523,19 @@ const WeatherTab = forwardRef(
       <FormProvider {...mainInfoMethods}>
         <form onSubmit={mainInfoSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <Flex direction="column" w="100%">
-            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. */}
-            <StandardAlert
-              status="info"
-              title={intl.formatMessage({ id: 'events.callout.weather.title' })}>
-              <Text fontSize="sm">{intl.formatMessage({ id: 'events.callout.weather.body' })}</Text>
-            </StandardAlert>
-
             {/* Forms are hand-crafted by design: the NOP section grouping below is what
                 makes the audit export complete, and the registry renderer flattens it.
                 The field registry is the SSOT for DISPLAY surfaces (consumer card, modal,
                 timeline) and is enforced here by src/config/events/__tests__/
                 formConformance.test.ts, not by a runtime flag. */}
             <>
-              {/* Section 1: Weather Event Information */}
+              {/* Section 1: activity basics */}
               <SectionBox>
+                {/* Not "Weather Event Information" — EVENT_TYPE_NAMES[0]. Name and
+                      subtype; the shared heading. */}
                 <SectionHeader
                   icon={FaCloud}
-                  title={intl.formatMessage({
-                    id: 'events.weather.sections.weatherEventInformation',
-                    defaultMessage: 'Weather Event Information'
-                  })}
+                  title={intl.formatMessage({ id: 'events.section.activityBasics' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
 

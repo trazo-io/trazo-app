@@ -217,7 +217,10 @@ const TransparencySummaryCard = ({ farmId }) => {
       <CardHeader p={0} mb={{ base: 4, md: 4 }}>
         <Flex direction="column">
           <HStack spacing={2} align="center">
-            <Icon as={FaClipboardList} color="green.500" boxSize={{ base: 5, md: 6 }} />
+            {/* `green.700`, not `green.500` — same ⛔ case as CarouselHorizontal's "+ New"
+                glyph: `green.500` on a white card is 2.78:1, under the 3.0 floor a non-text
+                mark owes. `green.700` is the palette's text-weight green (5.13:1). */}
+            <Icon as={FaClipboardList} color="green.700" boxSize={{ base: 5, md: 6 }} />
             {/* `textColor` is colour-mode aware; the literal "gray.700" that used to be here went
                 near-invisible on the dark theme. It also left `textColor` defined-but-unused once
                 the score header above it was removed. */}

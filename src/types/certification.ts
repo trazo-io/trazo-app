@@ -1,11 +1,21 @@
+// Mirrors `certifications/constants.py CERTIFICATION_TYPE_CHOICES`, member for member —
+// `certificationTypeParity.test.ts` reads the Python file and fails on drift.
+//
+// `ccof` is deliberately ABSENT (2026-08-27). CCOF is an accredited certifying agent that
+// ISSUES USDA Organic; it is not a certification. It travels in `certifier_name`, which is
+// what the same form's own placeholder always said ("e.g., Oregon Tilth, CCOF").
+// `korean_organic` had been missing here while the backend offered it, so a record carrying
+// it could not be represented on edit.
 export type CertificationType =
   | 'usda_organic'
-  | 'ccof'
   | 'cng'
   | 'real_organic_project'
   | 'roc'
+  | 'korean_organic'
   | 'non_gmo_project'
   | 'global_gap'
+  | 'primus_gfs'
+  | 'salmon_safe'
   | 'fair_trade'
   | 'rainforest_alliance'
   | 'sqf'

@@ -62,7 +62,17 @@ import {
   useSaveParcelApplicationMutation
 } from 'store/api/parcelApplicationApi';
 import { useGetOSPsQuery } from 'store/api/ospApi';
+import { useGetFarmDocumentsQuery, useUploadFarmDocumentMutation } from 'store/api/documentsApi';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSP_MODULE_PDF_URL } from 'config';
+
+/**
+ * DMS `linked_section` for an operator-supplied parcel map. Must stay byte-identical to
+ * `PARCEL_MAP_SECTION` in `certifications/services/osp_module_pdf.py` — the backend reads this
+ * exact string to decide what rides in the packet under `parcels/maps/`, and a file saved under
+ * any other section is a file the certifier never sees.
+ */
+const PARCEL_MAP_SECTION = 'parcel_application_map';
 import { env } from 'config/environment';
 import type { BufferZoneRow } from 'store/api/parcelApplicationApi';
 import { useUserRole } from 'hooks/useUserRole';
@@ -456,6 +466,116 @@ const QuestionField = ({
   );
 };
 
+/**
+ * The operator's own parcel map — CCOF NOPB49 §E, WSDA AGR 2264.
+ *
+ * 🔴 The last register defect that stops a filing rather than merely overstating one. Both
+ * certifiers require the map as a MANDATORY ATTACHMENT ("must be reviewed by CCOF prior to
+ * inspection of a new parcel"; "must be submitted with each site application") and Trazo shipped
+ * a packet with no map in it at all.
+ *
+ * Trazo draws a boundary schematic from the recorded geometry, and that is a floor, not the
+ * answer: it is not satellite imagery and it cannot carry roads, landmarks, block identifiers or
+ * the other operation areas CCOF lists. This is where the real map goes. It is linked to the
+ * PARCEL, not just the module, because the packet writes one map per parcel — a file attached
+ * without the parcel would sit in the DMS and never reach the certifier.
+ */
+const ParcelMapUpload = ({
+  companyId,
+  farmId,
+  parcelId,
+  canWrite
+}: {
+  companyId: string;
+  farmId: string;
+  parcelId: string;
+  canWrite: boolean;
+}) => {
+  const intl = useIntl();
+  const toast = useToast();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const scoped = Boolean(companyId && farmId && parcelId);
+
+  const { data: attached = [], isError } = useGetFarmDocumentsQuery(
+    { companyId, farmId, linkedSection: PARCEL_MAP_SECTION },
+    { skip: !scoped }
+  );
+  const [uploadDocument, { isLoading: uploading }] = useUploadFarmDocumentMutation();
+
+  // The list endpoint filters by section, not by parcel, so narrow it here — otherwise every
+  // parcel's page would show every parcel's map.
+  const forThisParcel = attached.filter((doc) => String(doc.parcel ?? '') === String(parcelId));
+
+  const onPick = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      await uploadDocument({
+        companyId,
+        farmId,
+        file,
+        title: file.name.replace(/\.[^.]+$/, ''),
+        folder: 'organic_system_plan',
+        parcel: Number(parcelId),
+        linkedSection: PARCEL_MAP_SECTION
+      }).unwrap();
+      toast({
+        title: intl.formatMessage({ id: 'parcelApp.map.uploadDone' }),
+        status: 'success',
+        duration: 3000
+      });
+    } catch (err) {
+      toast({
+        title: intl.formatMessage({ id: 'parcelApp.map.uploadFailed' }),
+        description: apiErrorMessage(err) ?? undefined,
+        status: 'error',
+        duration: 7000,
+        isClosable: true
+      });
+    }
+    if (fileInput.current) fileInput.current.value = '';
+  };
+
+  return (
+    <VStack align="stretch" spacing={2}>
+      <Text fontSize="sm" fontWeight="semibold">
+        {intl.formatMessage({ id: 'parcelApp.map.uploadTitle' })}
+      </Text>
+      {/* A failed fetch is not an absence: saying "no map attached" because a request failed
+          would state something about the operation's records that nobody checked. */}
+      {isError ? (
+        <Text fontSize="xs" color="red.800">
+          {intl.formatMessage({ id: 'parcelApp.map.uploadLoadFailed' })}
+        </Text>
+      ) : forThisParcel.length > 0 ? (
+        forThisParcel.map((doc) => (
+          <Text key={doc.id} fontSize="xs" color="gray.700">
+            {intl.formatMessage({ id: 'parcelApp.map.attached' }, { name: doc.title })}
+          </Text>
+        ))
+      ) : (
+        <Text fontSize="xs" color="gray.600">
+          {intl.formatMessage({ id: 'parcelApp.map.uploadHint' })}
+        </Text>
+      )}
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/*,application/pdf"
+        style={{ display: 'none' }}
+        onChange={(e) => onPick(e.target.files?.[0])}
+      />
+      <StandardButton
+        size="sm"
+        variant="outline"
+        isLoading={uploading}
+        isDisabled={!canWrite || !scoped}
+        onClick={() => fileInput.current?.click()}>
+        {intl.formatMessage({ id: 'parcelApp.map.uploadAction' })}
+      </StandardButton>
+    </VStack>
+  );
+};
+
 const ParcelApplicationWizard = () => {
   const intl = useIntl();
   const toast = useToast();
@@ -556,6 +676,10 @@ const ParcelApplicationWizard = () => {
 
   const flush = async () => {
     if (!definition) return true;
+    // A disabled button is a courtesy, not a gate: `flush()` is also called from the
+    // step-advance path, so the check belongs here too. Returns true so a read-only user can
+    // still page through their own application without every Continue reporting a failure.
+    if (!canWrite) return true;
     const values: Record<string, AnswerValue> = {};
     dirtyKeys.current.forEach((key) => {
       values[key] = answerValue(answers, key);
@@ -688,6 +812,18 @@ const ParcelApplicationWizard = () => {
                 </StandardButton>
               </VStack>
             )}
+            {/* CCOF NOPB49 §E prefers satellite imagery and lists eleven required elements —
+                roads and landmarks, block identifiers, other operation areas, livestock and
+                treated-lumber notes — most of which a drawn boundary cannot carry. WSDA AGR 2264
+                additionally wants the operation and site name printed ON the map. So the drawn
+                boundary is a floor, and the operator's own map is what actually satisfies the
+                requirement; it rides in the packet under `parcels/maps/`. */}
+            <ParcelMapUpload
+              companyId={companyId || ''}
+              farmId={farmId || ''}
+              parcelId={parcelId || ''}
+              canWrite={canWrite}
+            />
           </VStack>
         );
       case 'landowner_affidavit':
@@ -799,7 +935,16 @@ const ParcelApplicationWizard = () => {
               {intl.formatMessage({ id: 'app.continue' })}
             </StandardButton>
           ) : (
-            <StandardButton size="sm" isLoading={saving} onClick={() => flush()}>
+            <StandardButton
+              size="sm"
+              isLoading={saving}
+              // Every other control on this page reads `canWrite`; this one did not, so a
+              // Viewer got an enabled Save that the server then refused with a 403. The server
+              // IS the gate (`ReadOnlyForViewers` blocks non-safe methods and its role set
+              // matches `canWrite` exactly) — this is the control finally reading the flag it
+              // was already surrounded by. Open since the 2026-08-15 edit-lock audit.
+              isDisabled={!canWrite}
+              onClick={() => flush()}>
               {intl.formatMessage({ id: 'app.save' })}
             </StandardButton>
           )}

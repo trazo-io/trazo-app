@@ -33,6 +33,7 @@
  * all is an open design question and deliberately NOT decided here.
  */
 import { readFileSync, readdirSync, statSync } from 'fs';
+import { TYPE_BADGE } from 'config/events/eventTypeAppearance';
 import { join, relative } from 'path';
 import { describe, it, expect } from 'vitest';
 
@@ -111,7 +112,9 @@ describe('event-type glyph colour', () => {
     }
     // 1 (timeline) + 1 (consumer card) + 2 (journey) at the time of writing. The journey's
     // first function holds two map blocks, so block count (3) != function count (2) there.
-    expect(found, 'the maps moved — every assertion here would go vacuous').toBeGreaterThanOrEqual(4);
+    expect(found, 'the maps moved — every assertion here would go vacuous').toBeGreaterThanOrEqual(
+      4
+    );
   });
 
   it('never backs an event-type glyph with a sub-threshold step', () => {
@@ -158,5 +161,173 @@ describe('event-type glyph colour', () => {
     expect(code, 'focus ring must use the theme `outline` shadow').not.toMatch(
       /--chakra-colors-\$\{eventType\.color\}-\d+/
     );
+  });
+});
+
+/**
+ * The producer timeline's category Badge must take its colour from the SHARED semantic map,
+ * never from the event's decorative accent.
+ *
+ * The bug (MEASURED 2026-08-28, resolved through the real theme): the Badge derived a PALETTE
+ * by string-splitting `eventConfig.color` — `colorScheme={eventConfig.color.split('.')[0]}` —
+ * giving seven hues across eight categories, of which orange/yellow/teal/purple are not Trazo
+ * scales at all (styles.js declares green/gray/amber/red/blue) and resolved to Chakra's
+ * defaults. Contrast passed everywhere; the defect was MEANING. Pest Management rendered
+ * #B71C1C on #FFCDD2 and Soil Management #744210 on #FEFCBF, so ordinary logged records read
+ * as an error and a warning on a surface a certifier reads. It did not even separate what it
+ * decorated: Weather and Equipment both split to `blue`, identical pixels.
+ *
+ * `config/events/eventTypeAppearance.ts` already owned this decision for the activity feed and
+ * the event modal — semantic variants, never per-family hues. This asserts the timeline uses
+ * the same one instead of inventing a fourth answer.
+ */
+describe('timeline category badge renders from the shared semantic map', () => {
+  const code = readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8');
+
+  it('imports TYPE_BADGE and drives the badge variant from it', () => {
+    expect(code).toMatch(
+      /import \{[^}]*TYPE_BADGE[^}]*\} from 'config\/events\/eventTypeAppearance'/
+    );
+    expect(code, 'the category Badge must read TYPE_BADGE').toMatch(
+      /variant=\{TYPE_BADGE\[[^\]]+\]\s*\?\?\s*'neutral'\}/
+    );
+  });
+
+  it('never derives a Badge palette from the decorative accent', () => {
+    // The exact shape of the bug. Any reappearance — here or on a new badge — fails.
+    expect(
+      codeOf(code),
+      'a Badge colorScheme must not be computed from eventConfig.color'
+    ).not.toMatch(/colorScheme=\{[^}]*eventConfig\.color/);
+  });
+
+  it('carries no banned status hue on a badge — blue and purple are struck by frontend.md', () => {
+    const banned = [
+      ...codeOf(code).matchAll(/colorScheme="(blue|purple|teal|yellow|orange)"/g)
+    ].map((m) => m[1]);
+    expect(banned, `found colorScheme literals: ${JSON.stringify(banned)}`).toEqual([]);
+  });
+});
+
+/**
+ * Red and amber must stay spendable.
+ *
+ * The bug (2026-08-28): `TYPE_BADGE` read "inputs warn, pest is danger" — a conventional-ag
+ * instinct applied to a certified-organic product. A pheromone-trap reading rendered with a red
+ * badge and red ring, and an OMRI-type fish fertiliser with the amber `warning` pill, in the
+ * same two colours the dashboard spends on a real blocker and on "Needs attention". 7 CFR
+ * 205.206 monitoring and 7 CFR 205.601 inputs are the compliance evidence a certifier looks
+ * for, not incidents.
+ */
+describe('status colour stays reserved for things a grower must act on', () => {
+  const PEST = 6;
+  const INPUTS = 2;
+
+  it('neither pest nor inputs claims a status variant', () => {
+    for (const code of [PEST, INPUTS]) {
+      expect(['danger', 'warning'], `event_type ${code}`).not.toContain(TYPE_BADGE[code]);
+    }
+  });
+
+  it('no event family carries a status variant — the glyph is the identity', () => {
+    const offenders = Object.entries(TYPE_BADGE)
+      .filter(([, v]) => v === 'danger' || v === 'warning')
+      .map(([k, v]) => `${k}=${v}`);
+    expect(offenders, `families claiming a status colour: ${JSON.stringify(offenders)}`).toEqual(
+      []
+    );
+  });
+
+  it('the timeline ring drops red and amber for those two families too', () => {
+    // A neutral badge above a red ring would still read as an alert, so the ring is checked
+    // separately — EnhancedTimelineRow keeps its own getEventConfig map.
+    const code = codeOf(
+      readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8')
+    );
+    for (const [glyph, family] of [
+      ['FaBug', 'pest'],
+      ['FaFlask', 'inputs']
+    ] as const) {
+      // Bounded by the entry's own `category:` key rather than a character count — `codeOf`
+      // blanks comments to spaces, so a documented entry can push `color:` far down the file.
+      const at = code.indexOf(`icon: ${glyph},`);
+      expect(at, `${glyph} entry not found — this would pass vacuously`).toBeGreaterThan(-1);
+      const end = code.indexOf('category:', at);
+      expect(end, `no category: after ${glyph}`).toBeGreaterThan(at);
+      const hue = /color: '([a-z]+)\.\d+'/.exec(code.slice(at, end))?.[1];
+      expect(hue, `no colour found between ${glyph} and its category`).toBeTruthy();
+      expect(['red', 'orange', 'amber'], `${family} ring is "${hue}"`).not.toContain(hue);
+    }
+  });
+});
+
+/**
+ * An emissions figure is a measurement, not a performance. `getImpactLevel`'s 5/15/30/60 kg
+ * bands cite no benchmark and carry no denominator, and carbon-methodology.md scopes the number
+ * to direct operational emissions rather than an LCA — so there is nothing to grade against.
+ */
+describe('carbon figures are reported, not graded', () => {
+  it('the timeline does not interpolate the impact ramp into a colour', () => {
+    const code = codeOf(
+      readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8')
+    );
+    expect(code, 'carbon colour must not come from getImpactLevel').not.toMatch(
+      /\$\{getImpactLevel\([^)]*\)\.color\}/
+    );
+  });
+
+  it('the detail modal awards every band the same variant', () => {
+    const code = codeOf(readFileSync(join(SRC, 'components/Modals/EventDetailsModal.tsx'), 'utf8'));
+    expect(code, 'impactBadgeVariantFor must not branch on magnitude').not.toMatch(
+      /IMPACT_BADGE_VARIANT\s*\[/
+    );
+    expect(code).toMatch(/impactBadgeVariantFor\s*=\s*\([^)]*\)\s*=>\s*'neutral'/);
+  });
+});
+
+/**
+ * TONAL GREEN — one hue for the whole event-type system, on BOTH carriers.
+ *
+ * The recurring failure was never a wrong hue, it was a half-applied rule: seven decorative
+ * hues, then two of them neutralised for good reasons, leaving a green badge above a blue ring
+ * on the same record. These two assertions make "apply it to all eight families and to both
+ * carriers" a thing the suite can check, rather than a thing a comment asks for.
+ */
+describe('one hue, both carriers', () => {
+  it('every family shares ONE badge variant', () => {
+    const variants = [...new Set(Object.values(TYPE_BADGE))];
+    expect(Object.keys(TYPE_BADGE).length, 'families moved — this would pass vacuously').toBe(8);
+    expect(
+      variants,
+      `families disagree on their badge variant: ${JSON.stringify(TYPE_BADGE)}`
+    ).toHaveLength(1);
+  });
+
+  it('every timeline ring shares ONE colour token', () => {
+    const code = codeOf(
+      readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8')
+    );
+    // Only the entries inside getEventConfig: `color: '<token>',` immediately before `category:`.
+    const rings = [...code.matchAll(/color: '([a-z]+\.\d+)',\s*\n\s*category:/g)].map((m) => m[1]);
+    expect(rings.length, 'the ring map moved — this would pass vacuously').toBeGreaterThanOrEqual(
+      8
+    );
+    expect([...new Set(rings)], `rings disagree: ${JSON.stringify(rings)}`).toHaveLength(1);
+  });
+
+  it('the badge and the ring belong to the SAME hue family', () => {
+    // A green chip over a blue ring is the exact defect this pair of rules exists to stop.
+    const code = codeOf(
+      readFileSync(join(SRC, 'components/Tables/EnhancedTimelineRow.tsx'), 'utf8')
+    );
+    const ringHue = /color: '([a-z]+)\.\d+',\s*\n\s*category:/.exec(code)?.[1];
+    expect(ringHue, 'no ring colour found').toBeTruthy();
+    // `subtle` and `brand` both resolve through badge.js defaultProps.colorScheme = green.
+    const GREEN_VARIANTS = ['subtle', 'brand'];
+    const variant = TYPE_BADGE[1];
+    expect(
+      GREEN_VARIANTS.includes(variant) ? 'green' : variant,
+      `badge variant "${variant}" and ring hue "${ringHue}" are different families`
+    ).toBe(ringHue);
   });
 });

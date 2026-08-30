@@ -19,8 +19,6 @@ import {
   StandardInput,
   StandardSelect,
   StandardTextarea,
-  StandardAlert,
-  CollapsibleSection,
   SectionHeader,
   SectionBox
 } from 'components/Design/StandardComponents';
@@ -520,13 +518,6 @@ const PestManagementTab = forwardRef(
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} noValidate style={{ width: '100%' }}>
           <VStack spacing={6} align="stretch">
-            {/* One callout, one message — see the note in ChemicalTab-ENHANCED. */}
-            <StandardAlert
-              status="info"
-              title={intl.formatMessage({ id: 'events.callout.pest.title' })}>
-              <Text fontSize="sm">{intl.formatMessage({ id: 'events.callout.pest.body' })}</Text>
-            </StandardAlert>
-
             {/* Forms are hand-crafted by design: the NOP section grouping below is what
                 makes the audit export complete, and the registry renderer flattens it.
                 The field registry is the SSOT for DISPLAY surfaces (consumer card, modal,
@@ -535,9 +526,13 @@ const PestManagementTab = forwardRef(
             <>
               {/* Basic Event Information */}
               <SectionBox>
+                {/* Not "Pest Management Event Information" — EVENT_TYPE_NAMES[6] plus the
+                      backend model's word, in hardcoded English. Same key as the first
+                      heading in ProductionTab and SoilManagementTab: all three hold the
+                      activity's name and subtype, so all three say the same thing. */}
                 <SectionHeader
                   icon={FaBug}
-                  title="Pest Management Event Information"
+                  title={intl.formatMessage({ id: 'events.section.activityBasics' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />{' '}
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -899,7 +894,7 @@ const PestManagementTab = forwardRef(
                 <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaRulerHorizontal}
-                    title="Field Area & Context"
+                    title={intl.formatMessage({ id: 'events.section.pest.fieldArea' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
 
@@ -932,7 +927,7 @@ const PestManagementTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaSeedling}
-                    title="Fuel Consumption & Equipment Data"
+                    title={intl.formatMessage({ id: 'events.section.fuelEquipment' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                     description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
                     badgeTone="optional"
@@ -1015,7 +1010,7 @@ const PestManagementTab = forwardRef(
               <SectionBox>
                 <SectionHeader
                   icon={FaCloudSun}
-                  title="Agricultural Context & Conditions"
+                  title={intl.formatMessage({ id: 'events.section.pest.conditions' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
 
@@ -1063,9 +1058,13 @@ const PestManagementTab = forwardRef(
                 in the Pest Observations Summary section above - hide to avoid redundancy */}
               {!(isSummaryMode && pestType === 'SC') && (
                 <SectionBox>
+                  {/* Not "Pest Management Details". The section holds trap and monitoring
+                      counts, species, pressure level, damage percentage and whether the
+                      action threshold was met — observations and thresholds, which is what
+                      § 205.206 asks the grower to record before any control. */}
                   <SectionHeader
                     icon={FaEye}
-                    title="Pest Management Details"
+                    title={intl.formatMessage({ id: 'events.section.pest.observations' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
 
@@ -1350,7 +1349,7 @@ const PestManagementTab = forwardRef(
               <SectionBox>
                 <SectionHeader
                   icon={FaCheckCircle}
-                  title="IPM Documentation (7 CFR 205.206)"
+                  title={intl.formatMessage({ id: 'events.section.pest.ipm' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   description="The certifier export checks these two records on every pest event, whatever its type."
                 />
@@ -1433,7 +1432,7 @@ const PestManagementTab = forwardRef(
                 <SectionBox borderColor="green.200">
                   <SectionHeader
                     icon={FaCheckCircle}
-                    title="NOP Pest Identification & Threshold Traceability"
+                    title={intl.formatMessage({ id: 'events.section.pest.identification' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Required documentation for NOP organic certification: pest identification verification and action threshold rationale (7 CFR 205.206)."
                   />
@@ -1515,7 +1514,7 @@ const PestManagementTab = forwardRef(
               <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  title="Farmer's Field Notes & Consumer Transparency"
+                  title={intl.formatMessage({ id: 'events.section.fieldNotes' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
 

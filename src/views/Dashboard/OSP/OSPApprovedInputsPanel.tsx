@@ -44,7 +44,7 @@ import {
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { FaCheckCircle, FaFlask, FaPlus } from 'react-icons/fa';
+import { FaCheckCircle, FaExclamationTriangle, FaFlask, FaPlus } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import {
@@ -57,10 +57,19 @@ import {
 } from 'components/Design/StandardComponents';
 import {
   useAddApprovedInputMutation,
+  useAddPlanMaterialMutation,
+  useDeletePlanMaterialMutation,
+  useGetPlanMaterialsQuery,
   useLazyVerifyInputQuery,
   useRemoveApprovedInputMutation
 } from 'store/api/ospApi';
-import type { ApprovedInputChangeLog, ApprovedInputKind, InputVerifyResult, OSP } from 'types/osp';
+import type {
+  ApprovedInputChangeLog,
+  ApprovedInputKind,
+  InputVerifyResult,
+  OSP,
+  PlanMaterialEntry
+} from 'types/osp';
 
 interface ChangeLogSectionProps {
   logs: ApprovedInputChangeLog[];
@@ -209,7 +218,17 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   const nlList = osp.approved_national_list_substances || [];
   const omriList = osp.approved_omri_products || [];
   const wsdaList = osp.approved_wsda_materials || [];
-  const totalApproved = nlList.length + omriList.length + wsdaList.length;
+
+  // The fourth source, and the one CCOF NOPB41 §A's own prompt asks for: compost, manure,
+  // gypsum, limestone, a home-formulated spray. Until 2026-08-28 the only way onto this list
+  // was a catalog match, so those materials had nowhere to go while the module below attested
+  // that everything in use was on the list.
+  const { data: operatorRows } = useGetPlanMaterialsQuery({ companyId, farmId, ospId: osp.id });
+  const [addPlanMaterial, { isLoading: isAddingOwn }] = useAddPlanMaterialMutation();
+  const [deletePlanMaterial] = useDeletePlanMaterialMutation();
+  const ownRows = operatorRows || [];
+
+  const totalApproved = nlList.length + omriList.length + wsdaList.length + ownRows.length;
 
   const handleSearch = async () => {
     const trimmed = query.trim();
@@ -222,6 +241,48 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         title: intl.formatMessage({ id: 'osp.approvedInputs.error.search' }),
         description: String(err?.data?.error || err?.message || err),
         duration: 5000
+      });
+    }
+  };
+
+  const handleAddOwnMaterial = async () => {
+    const name = query.trim();
+    if (!name) return;
+    try {
+      await addPlanMaterial({
+        companyId,
+        farmId,
+        ospId: osp.id,
+        // Deliberately the operator's own words and NOTHING else. The row is created with no
+        // third-party listing, which is exactly what it has; the operator fills in manufacturer,
+        // reason and any certifier approval from the list below.
+        body: { product_name: name, listing_basis: 'none_unlisted' }
+      }).unwrap();
+      setQuery('');
+      toast({
+        status: 'success',
+        title: intl.formatMessage({ id: 'osp.approvedInputs.own.added' }, { name }),
+        duration: 4000
+      });
+    } catch (err: any) {
+      toast({
+        status: 'error',
+        title: intl.formatMessage({ id: 'osp.approvedInputs.own.addFailed' }),
+        description: String(err?.data?.product_name || err?.data?.detail || err?.message || err),
+        duration: 6000
+      });
+    }
+  };
+
+  const handleRemoveOwnMaterial = async (entryId: number) => {
+    try {
+      await deletePlanMaterial({ companyId, farmId, ospId: osp.id, entryId }).unwrap();
+    } catch (err: any) {
+      toast({
+        status: 'error',
+        title: intl.formatMessage({ id: 'osp.approvedInputs.own.removeFailed' }),
+        description: String(err?.data?.detail || err?.message || err),
+        duration: 6000
       });
     }
   };
@@ -297,6 +358,11 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
     const hasOMRI = result.omri_product_pk != null;
     const hasNL = result.national_list_substance_pk != null;
     const hasWSDA = result.wsda_material_pk != null;
+    // The National List catalogue holds § 205.601 allowed AND § 205.602 prohibited substances,
+    // and both answer the same search. `national_list_status` was served from day one and read
+    // nowhere, so an ordinary Add button sat next to a substance banned in organic production.
+    const nlProhibited =
+      hasNL && (result.national_list_status || '').toLowerCase() === 'prohibited';
 
     if (!hasOMRI && !hasNL && !hasWSDA) {
       // Trazo's OMRI catalog is a licensed reference subset, not the full
@@ -306,11 +372,23 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       // the flagship feature. Name the two routes that actually work.
       return (
         <StandardAlert status="warning" mb={0}>
-          <VStack align="stretch" spacing={1}>
+          <VStack align="stretch" spacing={2}>
             <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.noMatch' })}</Text>
             <Text fontSize="xs" color={subtextColor}>
               {intl.formatMessage({ id: 'osp.approvedInputs.search.noMatchNextStep' })}
             </Text>
+            {isEditable && (
+              <StandardButton
+                size="sm"
+                leftIcon={<FaPlus />}
+                isLoading={isAddingOwn}
+                onClick={handleAddOwnMaterial}>
+                {intl.formatMessage(
+                  { id: 'osp.approvedInputs.own.addAction' },
+                  { name: query.trim() }
+                )}
+              </StandardButton>
+            )}
           </VStack>
         </StandardAlert>
       );
@@ -391,7 +469,23 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                 {result.national_list_substance_name}
               </Text>
             </VStack>
-            {nlAlreadyApproved ? (
+            {nlProhibited ? (
+              // The server refuses this too (add_approved_input). The control is removed here so
+              // the operator is told why BEFORE they act, rather than by an error afterwards.
+              <HStack color="red.800" fontSize="sm" maxW="320px" align="flex-start">
+                <Icon as={FaExclamationTriangle} mt="2px" />
+                <Text>
+                  {intl.formatMessage(
+                    { id: 'osp.approvedInputs.search.prohibited' },
+                    {
+                      section: result.national_list_cfr_section
+                        ? `\u00a7 ${result.national_list_cfr_section}`
+                        : '\u00a7 205.602'
+                    }
+                  )}
+                </Text>
+              </HStack>
+            ) : nlAlreadyApproved ? (
               <HStack color="green.700" fontSize="sm">
                 <Icon as={FaCheckCircle} />
                 <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
@@ -651,6 +745,73 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
                 </Tooltip>
               ))}
             </Flex>
+          )}
+        </Box>
+
+        {/* Operator-authored rows. Rendered as their own group, never mixed into a catalog
+            group, because what may be SAID about them is different: each row prints the basis
+            it actually has, and "no third-party listing" is a legitimate answer a certifier
+            reviews — not a defect and not a listing. */}
+        <Box>
+          <Text fontWeight="semibold" fontSize="sm" mb={2}>
+            {intl.formatMessage({ id: 'osp.approvedInputs.section.own' })}
+            <Text as="span" color={subtextColor} fontWeight="normal" ml={2}>
+              ({ownRows.length})
+            </Text>
+          </Text>
+          {ownRows.length === 0 ? (
+            <Text fontSize="xs" color={subtextColor}>
+              {intl.formatMessage({ id: 'osp.approvedInputs.empty.own' })}
+            </Text>
+          ) : (
+            <VStack align="stretch" spacing={2}>
+              {ownRows.map((row: PlanMaterialEntry) => (
+                <Flex
+                  key={`own-${row.id}`}
+                  p={3}
+                  bg={sectionBg}
+                  borderRadius="md"
+                  justify="space-between"
+                  align="center"
+                  gap={3}
+                  wrap="wrap">
+                  <VStack align="start" spacing={0} minW={0} flex={1}>
+                    <HStack spacing={2} wrap="wrap">
+                      <Badge colorScheme="gray" fontSize="11px">
+                        {row.category_display}
+                      </Badge>
+                      {row.manufacturer && (
+                        <Text fontSize="xs" color={subtextColor}>
+                          {row.manufacturer}
+                        </Text>
+                      )}
+                    </HStack>
+                    <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
+                      {row.product_name}
+                    </Text>
+                    {/* Server-computed. Never assembled here from the basis code — the sentence
+                        a certifier reads must have one author. */}
+                    <Text fontSize="xs" color={subtextColor}>
+                      {row.listing_statement}
+                    </Text>
+                  </VStack>
+                  {isEditable && (
+                    <StandardButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleRemoveOwnMaterial(row.id)}
+                      title={String(
+                        intl.formatMessage(
+                          { id: 'osp.approvedInputs.removeAria' },
+                          { name: row.product_name }
+                        )
+                      )}>
+                      {intl.formatMessage({ id: 'osp.approvedInputs.own.remove' })}
+                    </StandardButton>
+                  )}
+                </Flex>
+              ))}
+            </VStack>
           )}
         </Box>
 

@@ -204,6 +204,15 @@ export interface SubtypeQuestionInput {
   fromPlanItem: boolean;
   /** The fetched plan item — `undefined`/`null` while the request is still in flight. */
   planItem: { event_subtype?: string | null } | null | undefined;
+  /** True when the wizard was opened from "Log this again" (`?repeat=`). */
+  fromRepeat?: boolean;
+  /**
+   * The subtype already on the source record — repeat only, `undefined` until it loads.
+   *
+   * Repeat's answer comes from the farmer's OWN previous row, which is at least as precise as
+   * any tile, so nothing is asked once it is known.
+   */
+  knownSubtype?: string | null;
   /** Every production subtype the display registry knows, for the fallback. */
   allProductionSubtypes: readonly string[];
 }
@@ -224,6 +233,8 @@ export const subtypeQuestionFor = ({
   verb,
   fromPlanItem,
   planItem,
+  fromRepeat = false,
+  knownSubtype,
   allProductionSubtypes
 }: SubtypeQuestionInput): readonly string[] => {
   // Production is the only event type with family verbs today; every other tab asks its own
@@ -246,6 +257,19 @@ export const subtypeQuestionFor = ({
    * when they meant Harvest — and both live under the same event_type.
    */
   if (isEdit) return isCorrecting ? allProductionSubtypes : [];
+
+  if (fromRepeat) {
+    // 🔴 2026-08-27: "Log this again" carries `?repeat=` and `event_type=` but no `verb=`, so
+    // this fell through to the no-verb branch and the farmer was asked to re-pick the activity
+    // they had just pressed the button on. The record names it; asking again is the wizard
+    // doubting a fact it read.
+    //
+    // The fallback is the same silent-'PL' guard the plan branch carries: a source row with no
+    // subtype must produce a QUESTION, never ProductionTab's default. It should be unreachable
+    // (`type` is required on the model) and it is also what renders if the loading gate above
+    // this ever regresses, which is the safer of the two failures.
+    return knownSubtype ? [] : allProductionSubtypes;
+  }
 
   if (fromPlanItem) {
     // Still in flight, or one that already names the practice — nothing to ask.

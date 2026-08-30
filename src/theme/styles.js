@@ -98,6 +98,39 @@ export const globalStyles = {
       canvas: '#F4F5F7',
       card: '#FFFFFF'
     },
+    /**
+     * Activity-family encoding — CALENDAR ONLY.
+     *
+     * ⚠️ These are NOT a general-purpose ramp and must not be used as one. They exist for one
+     * job: the month view's chips, where the chip is the ONLY carrier of what an activity is —
+     * no glyph beside it, no title, no description, and a label that truncates. Everywhere else
+     * (timeline, feed, detail modal) a family renders in the single tonal green, because those
+     * surfaces already carry identity in the icon; see TYPE_BADGE in config/events.
+     *
+     * MNEMONIC, NEVER EVALUATIVE. Each hue describes what the thing IS — sky for weather, earth
+     * for soil, the brand green for production — and none of them says how good it is. That is
+     * the line that makes per-family colour safe here after red-for-pest and amber-for-inputs
+     * were removed for exactly the opposite reason. `red` and `amber` are deliberately absent
+     * from this set so status colour stays spendable; a family may never claim one.
+     *
+     * MEASURED, both modes, all sixteen pairs (worst 6.15, floor 4.5 for a chip label):
+     *   production 6.99/9.01   sky 6.15/9.48   inputs 6.78/8.57   soil 7.20/8.57
+     *   pest 6.23/8.65   business 6.43/8.52   equipment 6.67/8.57   other 7.61/8.62
+     *
+     * Colour is never the sole signal: the calendar chip pairs each of these with the family
+     * glyph, so a colour-vision-deficient reader loses nothing. Guarded in
+     * `config/events/__tests__/calendarFamilyTokens.test.ts`.
+     */
+    family: {
+      production: { bg: '#E8F5E8', fg: '#1B5E20', bgDark: '#1B3D1D', fgDark: '#C8E6C8' },
+      sky: { bg: '#BBDEFB', fg: '#0D47A1', bgDark: '#12314F', fgDark: '#BBDEFB' },
+      inputs: { bg: '#B2DFDB', fg: '#004D40', bgDark: '#0B3B34', fgDark: '#B2DFDB' },
+      soil: { bg: '#D7CCC8', fg: '#4E342E', bgDark: '#3B2B26', fgDark: '#D7CCC8' },
+      pest: { bg: '#D1C4E9', fg: '#4527A0', bgDark: '#2E2352', fgDark: '#D1C4E9' },
+      business: { bg: '#C5CAE9', fg: '#283593', bgDark: '#22285C', fgDark: '#C5CAE9' },
+      equipment: { bg: '#CFD8DC', fg: '#37474F', bgDark: '#2B363B', fgDark: '#CFD8DC' },
+      other: { bg: '#E0E0E0', fg: '#424242', bgDark: '#3A3A3A', fgDark: '#E0E0E0' }
+    },
     // Professional Neutral Scale
     gray: {
       50: '#FAFAFA',

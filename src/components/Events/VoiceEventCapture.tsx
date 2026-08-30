@@ -6,29 +6,14 @@ import {
   VStack,
   HStack,
   Icon,
-  Alert,
-  AlertIcon,
   Badge,
   Progress,
-  List,
-  ListItem,
-  ListIcon,
   useToast,
-  Flex,
-  useColorModeValue
+  Flex
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
-import Card from 'components/Card/Card';
-import CardBody from 'components/Card/CardBody';
-import CardHeader from 'components/Card/CardHeader';
-import {
-  FaMicrophone,
-  FaMicrophoneSlash,
-  FaCheckCircle,
-  FaArrowRight,
-  FaBolt,
-  FaRedo
-} from 'react-icons/fa';
+import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
+import { FaMicrophone, FaMicrophoneSlash, FaArrowRight, FaRedo } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import {
@@ -75,7 +60,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const [lastProcessedTranscript, setLastProcessedTranscript] = useState('');
   const [parsedData, setParsedData] = useState<any | null>(null);
   const [processingStage, setProcessingStage] = useState('');
-  const [processingTime, setProcessingTime] = useState(0);
   // The operation spent its daily voice budget (HTTP 429 from the backend). Not an error the
   // farmer caused and not something retrying fixes, so it replaces the recorder rather than
   // flashing a toast.
@@ -99,9 +83,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const [processVoiceEventWithAI, { isLoading: isProcessingVoice }] =
     useProcessVoiceEventWithAIMutation();
   const [getDeepgramToken] = useGetDeepgramTokenMutation();
-
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   // ── Web Speech API (fallback) ──
   const {
@@ -223,7 +204,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
   const startListening = async () => {
     setParsedData(null);
-    setProcessingTime(0);
 
     if (useDeepgram) {
       deepgramReset();
@@ -272,7 +252,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
       const endTime = Date.now();
       const processingTimeMs = endTime - startTime;
-      setProcessingTime(processingTimeMs);
 
       // Store the raw AI response - parent component handles mapping
       setParsedData({
@@ -326,7 +305,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     } else {
       webSpeechResetTranscript();
     }
-    setProcessingTime(0);
   };
 
   /**
@@ -442,17 +420,14 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // with no route back to the form, which is the same trap `onClose` was left in. Every exit
   // carries its own way out.
   const exitNotice = (status: 'warning' | 'info', messageId: string) => (
-    <Alert status={status} alignItems="start">
-      <AlertIcon />
-      <HStack justify="space-between" align="start" flex={1} spacing={3}>
-        <Text fontSize="sm">{intl.formatMessage({ id: messageId })}</Text>
-        {onClose && (
-          <Button size="sm" variant="ghost" minH="44px" flexShrink={0} onClick={onClose}>
-            {intl.formatMessage({ id: 'voice.close' })}
-          </Button>
-        )}
-      </HStack>
-    </Alert>
+    <StandardAlert status={status} mb={0}>
+      <Text fontSize="sm">{intl.formatMessage({ id: messageId })}</Text>
+      {onClose && (
+        <Button size="sm" variant="ghost" colorScheme="gray" minH="44px" onClick={onClose}>
+          {intl.formatMessage({ id: 'voice.close' })}
+        </Button>
+      )}
+    </StandardAlert>
   );
 
   if (dailyLimitReached) {
@@ -467,11 +442,25 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const mapping = parsedData ? mapVoiceTypeToTemplate(parsedData.type) : null;
 
   return (
-    <Card bg={bgColor} borderColor={borderColor}>
-      <CardHeader>
-        <HStack justify="space-between">
+    /*
+      ONE container. This panel used to be a <Card> mounted inside the step-2 <Card>, with a
+      green.50 result <Box> (2px border) inside that and a tinted confidence <Box> inside
+      THAT — four nested surfaces for one interaction. Regions are separated by a rule now,
+      not by another card.
+    */
+    <Box
+      borderWidth="1px"
+      borderColor="gray.200"
+      borderRadius="lg"
+      bg="white"
+      p={{ base: 4, md: 5 }}>
+      <VStack spacing={4} align="stretch">
+        <HStack justify="space-between" align="start" spacing={3}>
           <VStack align="start" spacing={1}>
-            <Text fontSize="lg" fontWeight="bold" color="green.700">
+            {/* Not green. Sibling headings on this page ("Activity details", "Activity
+                Basics") are gray.800; a green one here reads as a different hierarchy and
+                spends the brand colour on a label instead of on an action. */}
+            <Text fontSize="md" fontWeight="semibold" color="gray.800">
               {intl.formatMessage({ id: 'voice.title' })}
             </Text>
             <Text fontSize="sm" color="gray.600">
@@ -484,12 +473,17 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
               A close control DOES belong here. `onClose` was declared as a prop and passed
               by NewEvent, and nothing ever called it — so opening "Fill by voice" started
-              the microphone with no way back to the form short of leaving the page. */}
+              the microphone with no way back to the form short of leaving the page.
+
+              Grey, not green: green is for the actions in this panel, and a bare green word
+              in the corner competes with the one button the farmer is meant to press. */}
           {onClose && (
             <Button
               size="sm"
               variant="ghost"
+              colorScheme="gray"
               minH="44px"
+              flexShrink={0}
               onClick={() => {
                 if (listening) stopListening();
                 onClose();
@@ -499,284 +493,245 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             </Button>
           )}
         </HStack>
-      </CardHeader>
 
-      <CardBody>
-        <VStack spacing={4} align="stretch" pt={4}>
-          {/* Microphone permission blocked */}
-          {micBlocked && (
-            <Alert status="warning">
-              <AlertIcon />
-              <Text fontSize="sm">{intl.formatMessage({ id: 'voice.microphoneBlocked' })}</Text>
-            </Alert>
-          )}
+        {/* Microphone permission blocked */}
+        {micBlocked && (
+          <StandardAlert
+            status="warning"
+            mb={0}
+            description={intl.formatMessage({ id: 'voice.microphoneBlocked' })}
+          />
+        )}
 
-          {/* Recording Button */}
-          <HStack justify="center" spacing={4}>
-            {/* No Tooltip: the button carries its own visible label, so a tooltip repeating
-                it is announced twice by a screen reader and tells a sighted user nothing. */}
-            <Button
-              leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
-              colorScheme="green"
-              onClick={listening ? stopListening : startListening}
-              isDisabled={
-                !isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked
-              }
-              size="lg"
-              variant={listening ? 'solid' : 'outline'}
-              animation={listening ? `${pulseRing} 1.5s ease-out infinite` : undefined}
-              _hover={{
-                transform: 'scale(1.05)',
-                boxShadow: 'lg'
-              }}
-              transition="all 0.2s">
-              {intl.formatMessage({ id: listening ? 'voice.stop' : 'voice.start' })}
-            </Button>
-          </HStack>
+        {/* The one action. It was `variant="outline"` while idle and solid only once
+            recording, i.e. the panel's primary control looked secondary exactly when it was
+            the only thing to do. No `_hover` scale either — the theme owns hover, and
+            frontend.md requires it to DARKEN rather than grow. */}
+        <StandardButton
+          variant={listening ? 'secondary' : 'primary'}
+          leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
+          onClick={listening ? stopListening : startListening}
+          isDisabled={
+            !isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked
+          }
+          size="lg"
+          w="full"
+          animation={listening ? `${pulseRing} 1.5s ease-out infinite` : undefined}>
+          {intl.formatMessage({ id: listening ? 'voice.stop' : 'voice.start' })}
+        </StandardButton>
 
-          {/* Processing indicator */}
-          {(isProcessing || isProcessingVoice) && (
-            <Box p={3} bg="green.50" borderRadius="md">
-              <VStack spacing={2}>
-                <Progress value={75} colorScheme="green" size="sm" w="full" isIndeterminate />
-                <Text fontSize="sm" color="green.700">
-                  {processingStage ||
-                    intl.formatMessage({
-                      id: isProcessingVoice ? 'voice.stage.processing' : 'voice.stage.generic'
-                    })}
-                </Text>
-              </VStack>
-            </Box>
-          )}
+        {/* Processing — a transient state, not a success. It was a green.50 panel, which is
+            the colour this system reserves for done. */}
+        {(isProcessing || isProcessingVoice) && (
+          <VStack spacing={2} align="stretch">
+            <Progress colorScheme="green" size="xs" isIndeterminate borderRadius="full" />
+            <Text fontSize="sm" color="gray.700" textAlign="center">
+              {processingStage ||
+                intl.formatMessage({
+                  id: isProcessingVoice ? 'voice.stage.processing' : 'voice.stage.generic'
+                })}
+            </Text>
+          </VStack>
+        )}
 
-          {/* Listening indicator */}
-          {listening && (
-            <Box p={3} bg="green.50" borderRadius="md" borderWidth="2px" borderColor="green.200">
-              <VStack spacing={2}>
-                <HStack spacing={2}>
-                  <Box
-                    w="10px"
-                    h="10px"
-                    borderRadius="full"
-                    bg="green.500"
-                    animation={`${pulseDot} 1.2s ease-in-out infinite`}
-                  />
-                  <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                    {intl.formatMessage({ id: 'voice.listening' })}
-                  </Text>
-                </HStack>
-                {displayTranscript && (
-                  <Text fontSize="sm" fontStyle="italic" color="gray.700">
-                    “{displayTranscript}”
-                  </Text>
+        {/* Listening — same reasoning: no green ground. The pulsing dot is green.600, which
+            clears the 3:1 non-text floor; green.500 does not. */}
+        {listening && (
+          <VStack spacing={2} align="center">
+            <HStack spacing={2}>
+              <Box
+                w="10px"
+                h="10px"
+                borderRadius="full"
+                bg="green.600"
+                animation={`${pulseDot} 1.2s ease-in-out infinite`}
+              />
+              <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                {intl.formatMessage({ id: 'voice.listening' })}
+              </Text>
+            </HStack>
+            {displayTranscript && (
+              <Text fontSize="sm" fontStyle="italic" color="gray.700" textAlign="center">
+                “{displayTranscript}”
+              </Text>
+            )}
+            <Text fontSize="xs" color="gray.500">
+              {intl.formatMessage({ id: 'voice.speakNaturally' })}
+            </Text>
+          </VStack>
+        )}
+
+        {/* Result */}
+        {parsedData && mapping && (
+          <VStack spacing={3} align="stretch" borderTopWidth="1px" borderColor="gray.200" pt={4}>
+            {/* No check icon and no latency badge.
+                - The check asserted CORRECTNESS the parser cannot claim; it was rendered in
+                  green.500 at 70%+ and yellow.500 below, i.e. a success glyph tinted with a
+                  warning, on a green ground that said the opposite of the copy under it.
+                - "⚡ 5687ms" was developer telemetry in a farmer's field of view, dressed as
+                  a green (= good) badge while reporting five and a half seconds. The number
+                  is still measured and still posted to the backend as `processing_time`. */}
+            <Text fontWeight="semibold" color="gray.800" fontSize="md">
+              {intl.formatMessage(
+                { id: 'voice.understood' },
+                { activity: intl.formatMessage({ id: voiceActivityLabelKey(mapping) }) }
+              )}
+            </Text>
+
+            {/* Cut short by MAX_SESSION_MS rather than by a pause. Say so, or the
+                farmer reads a half-captured note as a transcription failure. */}
+            {deepgramStoppedAtLimit && (
+              <Text fontSize="xs" color="gray.700">
+                {intl.formatMessage({ id: 'voice.stoppedAtLimit' })}
+              </Text>
+            )}
+
+            {/* Original transcript */}
+            <Text fontSize="sm" color="gray.600" fontStyle="italic">
+              “{parsedData.original_transcript || parsedData.description}”
+            </Text>
+
+            {/* What we heard, as facts. These were painted green / blue / purple / teal /
+                cyan / orange BY CATEGORY — six hues carrying no meaning in a system where
+                colour means status (frontend.md), and four of them from palettes this theme
+                does not define. A heard value is a plain fact: `variant="neutral"`. */}
+            {(formatAmountsForDisplay(parsedData.detected_amounts).length > 0 ||
+              parsedData.detected_products?.length > 0 ||
+              parsedData.npk_ratio) && (
+              <Flex flexWrap="wrap" gap={2}>
+                {formatAmountsForDisplay(parsedData.detected_amounts).map(
+                  (amount: string, index: number) => (
+                    <Badge key={`amt-${index}`} variant="neutral" px={3} py={1} borderRadius="full">
+                      {amount}
+                    </Badge>
+                  )
                 )}
-                <Text fontSize="xs" color="gray.500">
-                  {intl.formatMessage({ id: 'voice.speakNaturally' })}
-                </Text>
-              </VStack>
-            </Box>
-          )}
-
-          {/* Results Card - Simplified, farmer-friendly */}
-          {parsedData && mapping && (
-            <Box p={4} bg="green.50" borderRadius="md" borderWidth="2px" borderColor="green.200">
-              <VStack spacing={3} align="stretch">
-                {/* Event type header with confidence indicator */}
-                <HStack justify="space-between">
-                  <HStack spacing={2}>
-                    <Icon
-                      as={FaCheckCircle}
-                      color={parsedData.confidence >= 70 ? 'green.500' : 'yellow.500'}
-                      boxSize={5}
-                    />
-                    <Text fontWeight="bold" color="green.700" fontSize="md">
-                      {intl.formatMessage(
-                        { id: 'voice.understood' },
-                        { activity: intl.formatMessage({ id: voiceActivityLabelKey(mapping) }) }
-                      )}
-                    </Text>
-                  </HStack>
-                  {processingTime > 0 && (
-                    <Badge colorScheme="green" size="sm">
-                      <HStack spacing={1}>
-                        <Icon as={FaBolt} boxSize={3} />
-                        <Text>{processingTime}ms</Text>
-                      </HStack>
+                {parsedData.detected_products
+                  ?.filter(
+                    (product: string) =>
+                      !(
+                        parsedData.npk_ratio &&
+                        /^NPK[\s\d-]*$/i.test(
+                          product.replace(/with values|values|fertilizer/gi, '').trim()
+                        )
+                      )
+                  )
+                  .map((product: string, index: number) => (
+                    <Badge
+                      key={`prod-${index}`}
+                      variant="neutral"
+                      px={3}
+                      py={1}
+                      borderRadius="full">
+                      {product}
+                    </Badge>
+                  ))}
+                {parsedData.npk_ratio && (
+                  <Badge variant="neutral" px={3} py={1} borderRadius="full">
+                    NPK {parsedData.npk_ratio}
+                  </Badge>
+                )}
+                {parsedData.application_method && (
+                  <Badge variant="neutral" px={3} py={1} borderRadius="full">
+                    {parsedData.application_method}
+                  </Badge>
+                )}
+                {parsedData.water_source && (
+                  <Badge variant="neutral" px={3} py={1} borderRadius="full">
+                    {parsedData.water_source}
+                  </Badge>
+                )}
+                {parsedData.commercial_name &&
+                  !parsedData.detected_products?.some(
+                    (p: string) => p.toLowerCase() === parsedData.commercial_name?.toLowerCase()
+                  ) && (
+                    <Badge variant="neutral" px={3} py={1} borderRadius="full">
+                      {parsedData.commercial_name}
                     </Badge>
                   )}
-                </HStack>
+                {parsedData.detected_systems
+                  ?.filter((system: string) => {
+                    const sysLower = system.toLowerCase();
+                    const methodLower = (parsedData.application_method || '').toLowerCase();
+                    // Skip if it overlaps with application_method (e.g., "drip irrigation" vs "drip")
+                    if (
+                      methodLower &&
+                      (sysLower.includes(methodLower) || methodLower.includes(sysLower))
+                    )
+                      return false;
+                    // Skip generic low-value systems
+                    if (['pump', 'engine', 'motor', 'hose'].includes(sysLower)) return false;
+                    return true;
+                  })
+                  .map((system: string, index: number) => (
+                    <Badge key={`sys-${index}`} variant="neutral" px={3} py={1} borderRadius="full">
+                      {system}
+                    </Badge>
+                  ))}
+              </Flex>
+            )}
 
-                {/* Cut short by MAX_SESSION_MS rather than by a pause. Say so, or the
-                    farmer reads a half-captured note as a transcription failure. */}
-                {deepgramStoppedAtLimit && (
-                  <Text fontSize="xs" color="gray.700">
-                    {intl.formatMessage({ id: 'voice.stoppedAtLimit' })}
-                  </Text>
-                )}
-
-                {/* Original transcript */}
-                <Text fontSize="sm" color="gray.600" fontStyle="italic">
-                  “{parsedData.original_transcript || parsedData.description}”
-                </Text>
-
-                {/* Detected values - inline badges */}
-                {(formatAmountsForDisplay(parsedData.detected_amounts).length > 0 ||
-                  parsedData.detected_products?.length > 0 ||
-                  parsedData.npk_ratio) && (
-                  <Flex flexWrap="wrap" gap={2}>
-                    {formatAmountsForDisplay(parsedData.detected_amounts).map(
-                      (amount: string, index: number) => (
-                        <Badge
-                          key={`amt-${index}`}
-                          colorScheme="green"
-                          px={3}
-                          py={1}
-                          borderRadius="full"
-                          fontSize="sm">
-                          {amount}
-                        </Badge>
-                      )
-                    )}
-                    {parsedData.detected_products
-                      ?.filter(
-                        (product: string) =>
-                          !(
-                            parsedData.npk_ratio &&
-                            /^NPK[\s\d-]*$/i.test(
-                              product.replace(/with values|values|fertilizer/gi, '').trim()
-                            )
-                          )
-                      )
-                      .map((product: string, index: number) => (
-                        <Badge
-                          key={`prod-${index}`}
-                          colorScheme="blue"
-                          px={3}
-                          py={1}
-                          borderRadius="full"
-                          fontSize="sm">
-                          {product}
-                        </Badge>
-                      ))}
-                    {parsedData.npk_ratio && (
-                      <Badge colorScheme="purple" px={3} py={1} borderRadius="full" fontSize="sm">
-                        NPK {parsedData.npk_ratio}
-                      </Badge>
-                    )}
-                    {parsedData.application_method && (
-                      <Badge colorScheme="teal" px={3} py={1} borderRadius="full" fontSize="sm">
-                        {parsedData.application_method}
-                      </Badge>
-                    )}
-                    {parsedData.water_source && (
-                      <Badge colorScheme="cyan" px={3} py={1} borderRadius="full" fontSize="sm">
-                        {parsedData.water_source}
-                      </Badge>
-                    )}
-                    {parsedData.commercial_name &&
-                      !parsedData.detected_products?.some(
-                        (p: string) => p.toLowerCase() === parsedData.commercial_name?.toLowerCase()
-                      ) && (
-                        <Badge colorScheme="orange" px={3} py={1} borderRadius="full" fontSize="sm">
-                          {parsedData.commercial_name}
-                        </Badge>
-                      )}
-                    {parsedData.detected_systems
-                      ?.filter((system: string) => {
-                        const sysLower = system.toLowerCase();
-                        const methodLower = (parsedData.application_method || '').toLowerCase();
-                        // Skip if it overlaps with application_method (e.g., "drip irrigation" vs "drip")
-                        if (
-                          methodLower &&
-                          (sysLower.includes(methodLower) || methodLower.includes(sysLower))
-                        )
-                          return false;
-                        // Skip generic low-value systems
-                        if (['pump', 'engine', 'motor', 'hose'].includes(sysLower)) return false;
-                        return true;
-                      })
-                      .map((system: string, index: number) => (
-                        <Badge
-                          key={`sys-${index}`}
-                          colorScheme="teal"
-                          px={3}
-                          py={1}
-                          borderRadius="full"
-                          fontSize="sm">
-                          {system}
-                        </Badge>
-                      ))}
-                  </Flex>
-                )}
-
-                {/* Confidence banner */}
-                {parsedData.confidence >= 70 ? (
-                  <Box p={2} bg="green.100" borderRadius="md">
-                    <Text fontSize="sm" color="green.700" textAlign="center">
-                      {intl.formatMessage(
-                        { id: 'voice.confidenceHigh' },
-                        { confidence: parsedData.confidence }
-                      )}
-                    </Text>
-                  </Box>
-                ) : (
-                  <Box p={2} bg="yellow.100" borderRadius="md">
-                    <Text fontSize="sm" color="yellow.700" textAlign="center">
-                      {intl.formatMessage(
-                        { id: 'voice.confidenceLow' },
-                        { confidence: parsedData.confidence }
-                      )}
-                    </Text>
-                  </Box>
-                )}
-
-                {/* Action buttons */}
-                <HStack spacing={3}>
-                  <Button
-                    leftIcon={<FaArrowRight />}
-                    colorScheme="green"
-                    onClick={handleContinueToReview}
-                    size="md"
-                    flex={1}>
-                    {intl.formatMessage({ id: 'events.voice.continueToReview' })}
-                  </Button>
-                  <Button
-                    leftIcon={<FaRedo />}
-                    variant="outline"
-                    colorScheme="gray"
-                    onClick={handleTryAgain}
-                    size="md">
-                    {intl.formatMessage({ id: 'voice.tryAgain' })}
-                  </Button>
-                </HStack>
-              </VStack>
-            </Box>
-          )}
-
-          {/* Voice command examples — hide when actively recording */}
-          {!listening && !isProcessing && !isProcessingVoice && !parsedData && (
-            <Box p={3} bg="gray.50" borderRadius="md">
-              <Text fontSize="sm" fontWeight="semibold" color="gray.700" mb={2}>
-                {intl.formatMessage({ id: 'voice.trySaying' })}
+            {/* What to do next.
+                The percentage is gone from the farmer's screen. "30% confidence" is the
+                model's internal number, it is not actionable, and false precision on a
+                record a certifier will read is the wrong kind of confidence to display. The
+                two states differ in what they ASK FOR, which is the part that changes what
+                the farmer does.
+                Low is a real warning and now looks like every other warning in the app
+                (theme accent bar + amber ground). It used to be `yellow.100`/`yellow.700` —
+                Chakra's yellow, a palette this theme does not define. */}
+            {parsedData.confidence >= 70 ? (
+              <Text fontSize="sm" color="gray.700">
+                {intl.formatMessage({ id: 'voice.confidenceHigh' })}
               </Text>
-              <List spacing={1} fontSize="xs" color="gray.600">
-                <ListItem>
-                  <ListIcon as={FaMicrophone} color="green.400" />
-                  {intl.formatMessage({ id: 'voice.example.fertilizer' })}
-                </ListItem>
-                <ListItem>
-                  <ListIcon as={FaMicrophone} color="green.400" />
-                  {intl.formatMessage({ id: 'voice.example.irrigation' })}
-                </ListItem>
-                <ListItem>
-                  <ListIcon as={FaMicrophone} color="green.400" />
-                  {intl.formatMessage({ id: 'voice.example.equipment' })}
-                </ListItem>
-              </List>
-            </Box>
-          )}
-        </VStack>
-      </CardBody>
-    </Card>
+            ) : (
+              <StandardAlert
+                status="warning"
+                mb={0}
+                description={intl.formatMessage({ id: 'voice.confidenceLow' })}
+              />
+            )}
+
+            {/* Continue leads; the arrow trails the label, matching the wizard's own
+                Continue button rather than pointing backwards into it. */}
+            <HStack spacing={3}>
+              <StandardButton
+                variant="primary"
+                rightIcon={<Icon as={FaArrowRight} />}
+                onClick={handleContinueToReview}
+                flex={1}>
+                {intl.formatMessage({ id: 'events.voice.continueToReview' })}
+              </StandardButton>
+              <StandardButton
+                variant="outline"
+                leftIcon={<Icon as={FaRedo} />}
+                onClick={handleTryAgain}>
+                {intl.formatMessage({ id: 'voice.tryAgain' })}
+              </StandardButton>
+            </HStack>
+          </VStack>
+        )}
+
+        {/* Examples — three identical microphone bullets in green.400 (2.2:1) were decoration
+            repeating the icon on the button above. The examples are the content; the quotes
+            already mark them as speech. */}
+        {!listening && !isProcessing && !isProcessingVoice && !parsedData && (
+          <VStack align="stretch" spacing={1} borderTopWidth="1px" borderColor="gray.200" pt={4}>
+            <Text fontSize="sm" fontWeight="semibold" color="gray.700">
+              {intl.formatMessage({ id: 'voice.trySaying' })}
+            </Text>
+            {[
+              'voice.example.fertilizer',
+              'voice.example.irrigation',
+              'voice.example.equipment'
+            ].map((id) => (
+              <Text key={id} fontSize="sm" color="gray.600" fontStyle="italic">
+                {intl.formatMessage({ id })}
+              </Text>
+            ))}
+          </VStack>
+        )}
+      </VStack>
+    </Box>
   );
 };

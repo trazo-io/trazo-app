@@ -18,6 +18,7 @@ import {
   Box,
   Flex,
   Grid,
+  Icon,
   Table,
   Tbody,
   Td,
@@ -25,6 +26,7 @@ import {
   Th,
   Thead,
   Tr,
+  useColorMode,
   useDisclosure,
   VStack,
   Wrap,
@@ -57,6 +59,7 @@ import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
 import { ActivityDetailModal } from './ActivityDetailModal';
 import { ActivityListItem, TYPE_BADGE } from './ActivityListItem';
+import { CALENDAR_FAMILY, TYPE_ICON } from 'config/events/eventTypeAppearance';
 
 /**
  * Verb → event_type mapping now lives in the SHARED config (config/activityVerbs) so
@@ -144,6 +147,14 @@ const rangeToWindow = (
 
 const ActivitiesPage = () => {
   const intl = useIntl();
+  /* One hook, not one per chip: `useColorModeValue` cannot be called inside the day loop, and
+     the family tokens carry their own light/dark pair (see theme/styles.js `colors.family`). */
+  const { colorMode } = useColorMode();
+  const familyKey = (t: number) => CALENDAR_FAMILY[t] ?? 'other';
+  const familyBg = (t: number) =>
+    `family.${familyKey(t)}.${colorMode === 'dark' ? 'bgDark' : 'bg'}`;
+  const familyFg = (t: number) =>
+    `family.${familyKey(t)}.${colorMode === 'dark' ? 'fgDark' : 'fg'}`;
   const navigate = useNavigate();
   const { farmId } = useParams();
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
@@ -654,10 +665,32 @@ const ActivitiesPage = () => {
                                     { id: 'activities.openEvent' },
                                     { title: activityTitle(row, intl), date: dayLabel }
                                   )}>
+                                  {/* CAL 3 — hue AND glyph (2026-08-29).
+                                      The month view is the one surface where this chip stands
+                                      alone: no icon beside it, no title, no description, and a
+                                      label that truncates. The single tonal green the timeline
+                                      uses turns a month into identical pills, so the family
+                                      needs a discriminator here — but NOT colour on its own.
+                                      The glyph carries identification, the hue carries the
+                                      glance, and neither has to be right by itself, which is
+                                      the never-colour-alone rule already applied to status.
+                                      Hues, their measurements and the mnemonic-not-evaluative
+                                      rule live in theme/styles.js `colors.family`. */}
                                   <Badge
-                                    variant={TYPE_BADGE[row.event_type]}
+                                    variant="neutral"
+                                    bg={familyBg(row.event_type)}
+                                    color={familyFg(row.event_type)}
                                     fontSize="11px"
-                                    maxW="full">
+                                    maxW="full"
+                                    display="flex"
+                                    alignItems="center"
+                                    gap={1}>
+                                    <Icon
+                                      as={TYPE_ICON[row.event_type] ?? TYPE_ICON[3]}
+                                      boxSize="11px"
+                                      flexShrink={0}
+                                      aria-hidden
+                                    />
                                     <Text isTruncated fontSize="11px">
                                       {activityTitle(row, intl)}
                                     </Text>

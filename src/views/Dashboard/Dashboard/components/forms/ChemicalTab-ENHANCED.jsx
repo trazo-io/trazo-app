@@ -1279,13 +1279,6 @@ const ChemicalTab = forwardRef(
               agricultural practices" — a general-benefit consumer claim, and the wrong frame for
               October, which sells the record a certifier reviews at renewal.
             */}
-            <StandardAlert
-              status="info"
-              title={intl.formatMessage({ id: 'events.callout.chemical.title' })}>
-              <Text fontSize="sm">
-                {intl.formatMessage({ id: 'events.callout.chemical.body' })}
-              </Text>
-            </StandardAlert>
 
             {/* Quick-pick: products recently used on this establishment */}
             {recentInputs && recentInputs.length > 0 && (
@@ -1341,9 +1334,18 @@ const ChemicalTab = forwardRef(
                 {/* The "EPA/USDA-Sourced" badge is gone: the callout above already states it,
                     and purple carries no meaning in this system (see .claude/rules/frontend.md —
                     status colour is meaning, never decoration). Icon moved to the brand green. */}
+                {/* Not "Chemical Application Details". EVENT_TYPE_NAMES[2] is "Chemical
+                    Application", and the farmer reached this form by tapping "Input
+                    application" — on a certified-organic operation the record is often an
+                    OMRI-listed fish fertiliser, which is not a "chemical" in any sense the
+                    grower or their certifier uses. Same retired-family defect as
+                    ProductionTab's first heading, and hardcoded English besides.
+
+                    "Input Identification" names what the group holds: type, subtype, how it
+                    is verified for organic use, commercial name, active ingredient. */}
                 <SectionHeader
                   icon={FaFlask}
-                  title="Chemical Application Details"
+                  title={intl.formatMessage({ id: 'events.section.chemical.identification' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
                 <VStack spacing={4} align="stretch">
@@ -2277,7 +2279,7 @@ const ChemicalTab = forwardRef(
               <SectionBox>
                 <SectionHeader
                   icon={FaCalculator}
-                  title="Application Rate & Coverage"
+                  title={intl.formatMessage({ id: 'events.section.chemical.rate' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   description="Rate and area are what a certifier checks a label maximum against, and what § 205.103(b)(2) means by records detailed enough to be audited."
                 />{' '}
@@ -2907,7 +2909,7 @@ const ChemicalTab = forwardRef(
               <SectionBox>
                 <SectionHeader
                   icon={FaLeaf}
-                  title="Environmental Context"
+                  title={intl.formatMessage({ id: 'events.section.chemical.environment' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />{' '}
                 <VStack spacing={4} align="stretch">
@@ -3067,7 +3069,7 @@ const ChemicalTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaTruck}
-                    title="Supplier & Purchase Tracking"
+                    title={intl.formatMessage({ id: 'events.section.chemical.supplier' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                     description="Document input suppliers and purchase records for organic mass-balance audits. The #1 non-conformance finding nationally is inadequate mass-balance documentation."
                   />
@@ -3222,7 +3224,7 @@ const ChemicalTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaClock}
-                    title="Legal Spray Record"
+                    title={intl.formatMessage({ id: 'events.section.chemical.sprayRecord' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.caPesticideReport' })}
                     description="Optional fields that make this entry a complete legal pesticide-use record — GLOBALG.A.P. FV-GFS 32.02.01 and the CA monthly Pesticide Use Report (DPR-PML-017C)."
                   />
@@ -3616,7 +3618,7 @@ const ChemicalTab = forwardRef(
                     <SectionBox>
                       <SectionHeader
                         icon={FaFileInvoiceDollar}
-                        title="CA DPR Restricted Materials Permit"
+                        title={intl.formatMessage({ id: 'events.section.chemical.dprPermit' })}
                         badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                         description="This input is a California county-restricted material (3 CCR 6400 et seq.). Even when NOP-allowed under 7 CFR 205.601, a county Ag Commissioner permit is required before application."
                       />
@@ -3678,7 +3680,7 @@ const ChemicalTab = forwardRef(
               {!isSummaryMode && (
                 <CollapsibleSection
                   icon={FaBolt}
-                  title="Application Equipment & Fuel Usage"
+                  title={intl.formatMessage({ id: 'events.section.chemical.equipmentFuel' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.optionalCarbon' })}
                   description={intl.formatMessage({ id: 'events.section.desc.carbonOptional' })}
                   badgeTone="optional">
@@ -3819,7 +3821,7 @@ const ChemicalTab = forwardRef(
                 <SectionBox>
                   <SectionHeader
                     icon={FaUserShield}
-                    title="Safety & Compliance"
+                    title={intl.formatMessage({ id: 'events.section.chemical.safety' })}
                     badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                   />
                   <VStack spacing={4} align="stretch">
@@ -4119,7 +4121,7 @@ const ChemicalTab = forwardRef(
               <SectionBox>
                 <SectionHeader
                   icon={FaSeedling}
-                  title="Farmer's Field Notes & Consumer Transparency"
+                  title={intl.formatMessage({ id: 'events.section.fieldNotes' })}
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <StandardField

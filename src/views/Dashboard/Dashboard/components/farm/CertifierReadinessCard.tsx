@@ -61,6 +61,7 @@ import {
 } from 'react-icons/fa';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
+import { STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
 import {
   CertifierReadinessFinding,
   useGetCertifierReadinessQuery
@@ -85,13 +86,13 @@ function statusStyle(status: CertifierReadinessFinding['status']) {
         badgeVariant: 'danger',
         accent: 'red',
         icon: FaExclamationCircle,
-        iconColor: 'red.500'
+        iconColor: STATUS_URGENCY_TOKENS.crit.icon
       }
     : {
         badgeVariant: 'warning',
         accent: 'orange',
         icon: FaInfoCircle,
-        iconColor: 'orange.400'
+        iconColor: STATUS_URGENCY_TOKENS.warn.icon
       };
 }
 
@@ -118,6 +119,20 @@ export default function CertifierReadinessCard({
   const headingNeutral = useColorModeValue('gray.700', 'gray.200');
   const textColor = useColorModeValue('gray.700', 'gray.300');
   const mutedColor = useColorModeValue('gray.500', 'gray.400');
+  /**
+   * The header icon, one step BELOW `headingNeutral` — the SAME token and the same reasoning as
+   * CertifierDeadlinesStrip, the peer card directly above this one; the long note lives there.
+   *
+   * The defect this settles (MEASURED 2026-08-27) was that the two peer cards disagreed: this
+   * one's icon was `mutedColor` (`gray.500`, 4.61:1) while the deadlines card's was `gray.700`
+   * (10.05:1). Both now step down to `gray.600` (6.19:1) under a `gray.700` title. Unifying the
+   * other way — darkening this one to the title's colour — was tried first and made the two the
+   * loudest glyphs on the page, above even the sidebar's meaning-carrying nav icons at 5.13:1.
+   *
+   * Applies to the NEUTRAL state only. The all-clear `titleColor` green stays matched to its
+   * heading: that glyph is a state signal, not decoration, so it is not the same question.
+   */
+  const headerIconColor = useColorModeValue('gray.600', 'gray.400');
   const rowBg = useColorModeValue('gray.50', 'gray.700');
   const rowBorder = useColorModeValue('gray.200', 'gray.600');
   const clearBg = useColorModeValue('green.50', 'green.900');
@@ -231,7 +246,7 @@ export default function CertifierReadinessCard({
             <HStack spacing={3} align="start">
               <Icon
                 as={totalOpen ? FaClipboardList : FaClipboardCheck}
-                color={totalOpen ? mutedColor : titleColor}
+                color={totalOpen ? headerIconColor : titleColor}
                 boxSize={5}
                 mt={1}
               />
@@ -253,7 +268,10 @@ export default function CertifierReadinessCard({
                   })}
                 </Heading>
               </VStack>
-              <Text fontSize="xl" fontWeight="bold" color={totalOpen ? 'orange.500' : titleColor}>
+              <Text
+                fontSize="xl"
+                fontWeight="bold"
+                color={totalOpen ? STATUS_URGENCY_TOKENS.warn.text : titleColor}>
                 {totalOpen}
               </Text>
             </HStack>
@@ -264,13 +282,19 @@ export default function CertifierReadinessCard({
                 border="1px solid"
                 borderColor={rowBorder}
                 borderLeft="4px solid"
-                borderLeftColor={topIsUrgent ? 'red.400' : 'orange.400'}
+                borderLeftColor={
+                  topIsUrgent ? STATUS_URGENCY_TOKENS.crit.bar : STATUS_URGENCY_TOKENS.warn.bar
+                }
                 borderRadius="md"
                 p={3}>
                 <HStack spacing={2} align="start">
                   <Icon
                     as={topIsUrgent ? FaExclamationCircle : FaInfoCircle}
-                    color={topIsUrgent ? 'red.500' : 'orange.400'}
+                    color={
+                      topIsUrgent
+                        ? STATUS_URGENCY_TOKENS.crit.icon
+                        : STATUS_URGENCY_TOKENS.warn.icon
+                    }
                     boxSize={4}
                     mt={0.5}
                     flexShrink={0}
@@ -317,7 +341,7 @@ export default function CertifierReadinessCard({
           <HStack spacing={3} align="start">
             <Icon
               as={totalOpen ? FaClipboardList : FaClipboardCheck}
-              color={totalOpen ? mutedColor : titleColor}
+              color={totalOpen ? headerIconColor : titleColor}
               boxSize={5}
               mt={1}
             />
@@ -352,7 +376,7 @@ export default function CertifierReadinessCard({
                 fontSize="2xl"
                 fontWeight="bold"
                 lineHeight="1.1"
-                color={totalOpen ? 'orange.500' : titleColor}>
+                color={totalOpen ? STATUS_URGENCY_TOKENS.warn.text : titleColor}>
                 {totalOpen}
               </Text>
               <Text fontSize="xs" color={mutedColor}>
@@ -385,13 +409,21 @@ export default function CertifierReadinessCard({
                   border="1px solid"
                   borderColor={rowBorder}
                   borderLeft="4px solid"
-                  borderLeftColor={item.status === 'blocker' ? 'red.400' : 'orange.400'}
+                  borderLeftColor={
+                    item.status === 'blocker'
+                      ? STATUS_URGENCY_TOKENS.crit.bar
+                      : STATUS_URGENCY_TOKENS.warn.bar
+                  }
                   borderRadius="md"
                   p={3}>
                   <HStack spacing={2} align="start">
                     <Icon
                       as={item.status === 'blocker' ? FaExclamationCircle : FaInfoCircle}
-                      color={item.status === 'blocker' ? 'red.500' : 'orange.400'}
+                      color={
+                        item.status === 'blocker'
+                          ? STATUS_URGENCY_TOKENS.crit.icon
+                          : STATUS_URGENCY_TOKENS.warn.icon
+                      }
                       boxSize={4}
                       mt={0.5}
                       flexShrink={0}

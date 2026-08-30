@@ -9,6 +9,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody.tsx';
 import Shimmer from 'components/Shimmer/Shimmer';
 import { useIntl } from 'react-intl';
+import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
 
 // Utility function to calculate polygon center
 const calculatePolygonCenter = (points) => {
@@ -79,8 +80,6 @@ const calculatePolygonZoom = (points) => {
 // Export utilities for reuse in forms and other components
 export { calculatePolygonCenter, calculatePolygonZoom };
 
-const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-
 const CardWithMap = ({ polygon, zoom, center }) => {
   const intl = useIntl();
   // See the note beside the early return below.
@@ -96,9 +95,10 @@ const CardWithMap = ({ polygon, zoom, center }) => {
     };
   }, []);
 
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey
-  });
+  // Language follows the APP's locale, not the browser's — see mapsLoaderOptions. Memoised on
+  // `intl.locale` because useLoadScript re-reads its options on every render.
+  const loaderOptions = React.useMemo(() => googleMapsLoaderOptions(intl.locale), [intl.locale]);
+  const { isLoaded, loadError } = useLoadScript(loaderOptions);
 
   // Enhanced map centering logic - PRIORITIZE POLYGON CENTER OVER PROVIDED CENTER
   const [mapZoom, setMapZoom] = useState(() => {

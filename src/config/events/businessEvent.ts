@@ -22,6 +22,15 @@ const BUSINESS_TYPE_LABELS: Record<string, string> = {
   compliance: 'Regulatory Compliance'
 };
 
+/**
+ * DISPLAY map — deliberately wider than what the form offers.
+ *
+ * `carbon_neutral` and `sustainable_agriculture` were retired from the picker on 2026-08-27
+ * (see BusinessTab-SIMPLIFIED.jsx) but stay here: a farmer who logged one has a
+ * § 205.103(b)(2) record, and dropping the label would render the raw slug on their own
+ * timeline. Retiring an option is a WRITE-path decision; the read path still has to explain
+ * what is already on file.
+ */
 const CERTIFICATION_TYPE_LABELS: Record<string, string> = {
   organic_usda: 'USDA Organic',
   regenerative: 'Regenerative Organic Certified (ROC)',
