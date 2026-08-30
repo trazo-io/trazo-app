@@ -468,6 +468,21 @@ interface ConsumerEventCardProps {
   };
 }
 
+/**
+ * Timeline geometry, in CSS pixels.
+ *
+ * The node circle and the connector line are positioned by two independent rules that have to
+ * agree; as separate literals they drifted apart. Everything the connector needs is computed
+ * from these, so resizing the node moves the line with it.
+ *
+ * TIMELINE_LIST_GAP_MD is the ONE value this card cannot see for itself — it is the gap of the
+ * list that stacks the cards. It must stay equal to the proof list's `spacing={{ md: 4 }}` in
+ * UltraMobileProductionJourney; `consumerTimelineConnector.test.ts` fails if the two drift.
+ */
+const TIMELINE_NODE_SIZE = { base: 40, md: 48 };
+const TIMELINE_LINE_WIDTH = 2;
+const TIMELINE_LIST_GAP_MD = 16;
+
 export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   event,
   isLast = false,
@@ -933,14 +948,23 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
 
   return (
     <Box ref={cardRef} position="relative">
-      {/* Timeline connector - DESKTOP ONLY, hidden when inside a group */}
+      {/* Timeline connector - DESKTOP ONLY, hidden when inside a group.
+          Every number is DERIVED from the node it connects, never guessed: the segment starts
+          on this card's node bottom edge and runs exactly one list gap past the card, so it
+          lands on the next card's node top edge. It used to be
+          `left: 24px; top: 60px; bottom: -20px` against a 48px node — 1px right of the node's
+          centre, starting 12px BELOW it, and overshooting the next node by 4px. The thread
+          read as detached from the marks it threads. */}
       {!isLast && !isGrouped && (
         <Box
           position="absolute"
-          left={{ base: '20px', md: '24px' }}
-          top="60px"
-          bottom="-20px"
-          width="2px"
+          left={{
+            base: `${(TIMELINE_NODE_SIZE.base - TIMELINE_LINE_WIDTH) / 2}px`,
+            md: `${(TIMELINE_NODE_SIZE.md - TIMELINE_LINE_WIDTH) / 2}px`
+          }}
+          top={{ base: `${TIMELINE_NODE_SIZE.base}px`, md: `${TIMELINE_NODE_SIZE.md}px` }}
+          bottom={`-${TIMELINE_LIST_GAP_MD}px`}
+          width={`${TIMELINE_LINE_WIDTH}px`}
           bg={borderColor}
           zIndex={0}
           display={{ base: 'none', md: 'block' }}
@@ -972,7 +996,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
               What survives is what a reader can actually use: where this event sits in the
               sequence, and which kind of event it is. */}
           <Circle
-            size={{ base: '40px', md: '48px' }}
+            size={{
+              base: `${TIMELINE_NODE_SIZE.base}px`,
+              md: `${TIMELINE_NODE_SIZE.md}px`
+            }}
             bg={bgColor}
             border="3px solid"
             borderColor={accentColor}>

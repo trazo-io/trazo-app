@@ -46,6 +46,7 @@ import {
   getQRAccessMetadata
 } from 'utils/qrParser';
 import { useIntl } from 'react-intl';
+import { GuidanceNote } from 'components/Design/StandardComponents';
 import { useSelector } from 'react-redux';
 import { setAuthRedirectAction } from '../../../utils/authRedirect';
 import { MdTimeline } from 'react-icons/md';
@@ -923,6 +924,7 @@ function ProductDetail() {
                 certifiedLabel={certifiedLabel}
                 certifierName={oidVerifiedCert?.certifier_name}
                 practicesCount={completeData?.timeline?.length ?? 0}
+                specimen={Boolean((completeData as any)?.specimen?.is_specimen)}
                 lotId={lotId}
                 isLoading={isCompleteLoading}
                 onLearnMore={() => handleEducationOpen('transparency_impact')}
@@ -956,6 +958,33 @@ function ProductDetail() {
           {/* Main Content Column */}
           <Box>
             <VStack spacing={8} align="stretch">
+              {/* The explaining half of the provenance mark. The hero carries the half that
+                  TRAVELS — a chip welded to the farm name, which any crop of the identity
+                  takes with it. This is the half that TELLS: the full sentence, for the
+                  person who is actually on the page.
+
+                  Placed here rather than at the top of the page for two reasons. The consumer
+                  navbar is `position: fixed` at `top: 30px, zIndex: 1000` — a frosted pill
+                  deliberately designed to float over the hero photo — so an in-flow banner at
+                  the top of ProductDetail renders UNDERNEATH it and loses its body text, which
+                  is exactly what the first version of this did. And a banner above the hero is
+                  cropped out of every screenshot of the hero, which is the screenshot people
+                  take.
+
+                  GuidanceNote, not StandardAlert: `<Alert>` requires a status, and this has
+                  none. "These records are invented" is a permanent fact about the record, not
+                  a transient warning — amber would say `in progress`, and per
+                  `STATUS_URGENCY_TOKENS` the theme's amber cannot legibly carry text anyway.
+                  It also avoids `role="alert"`, an assertive live region, for content present
+                  on first paint that never changes. */}
+              {(completeData as any)?.specimen?.is_specimen && (
+                <GuidanceNote>
+                  <Text as="span" fontWeight="semibold">
+                    {intl.formatMessage({ id: 'consumer.specimen.title' })}
+                  </Text>{' '}
+                  {intl.formatMessage({ id: 'consumer.specimen.body' })}
+                </GuidanceNote>
+              )}
               {/* Farm Identity block — company-first hierarchy (replaced the
                   generic "What This Farmer Shares" welcome card, 2026-06).
                   Tier 1: the farmer's own stored "about" text.

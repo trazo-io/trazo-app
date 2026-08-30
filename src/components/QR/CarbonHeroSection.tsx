@@ -94,6 +94,19 @@ interface CarbonHeroSectionProps {
   certifierName?: string;
   practicesCount?: number;
   lotId?: string;
+  /**
+   * Set when this lot's records are FABRICATED (`Establishment.is_demo`, served as
+   * `specimen` on the transparency payload). Draws the provenance mark ON the hero.
+   *
+   * The mark belongs here, not in a banner above the page, because the hero is what
+   * gets cropped out and sent on: the photo, the farm name, the lot number and the
+   * practice count are the whole identity of the record, and a strip above them is
+   * absent from every screenshot that does not happen to include the top of the page.
+   * `common/specimen.py` reached the same conclusion for exports and draws its mark on
+   * EVERY page rather than the cover, because packets are "excerpted and printed a
+   * section at a time". A web page is excerpted harder than a PDF.
+   */
+  specimen?: boolean;
 }
 
 export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
@@ -108,7 +121,8 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   certifiedLabel,
   certifierName,
   practicesCount,
-  lotId
+  lotId,
+  specimen = false
 }) => {
   const intl = useIntl();
   const [visibleElements, setVisibleElements] = useState(0);
@@ -292,6 +306,30 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
           />
         )}
 
+        {/* Specimen hatch — the wide-crop half of the provenance mark.
+            Diagonal repeating stripes rather than repeated wordmark text: a wash has to
+            survive at any crop size and any zoom, and tiled text becomes unreadable noise
+            at both extremes. Kept at low contrast because it is the BACKUP signal — the
+            chip beside the farm name is the one that states the fact in words. Colour-alone
+            never carries meaning here (`.claude/rules/frontend.md`); this only has to make
+            an excerpt visibly not-a-normal-record so the reader looks for the label.
+
+            `pointerEvents="none"` so it never intercepts a tap on the photo or the badge. */}
+        {specimen && (
+          <Box
+            position="absolute"
+            inset={0}
+            pointerEvents="none"
+            aria-hidden
+            zIndex={1}
+            // PAIRED light/dark hairlines, not white alone. A white-only wash is invisible
+            // over a dark photograph — which is precisely the crop it has to survive — and a
+            // black-only one disappears over a bright sky. Each light stripe carries a dark
+            // twin, so one of the two always registers whatever the underlying luminance.
+            backgroundImage="repeating-linear-gradient(-45deg, rgba(255,255,255,0.11) 0px, rgba(255,255,255,0.11) 2px, rgba(0,0,0,0.11) 2px, rgba(0,0,0,0.11) 4px, transparent 4px, transparent 15px)"
+          />
+        )}
+
         {/* Overlay container — constrains farm name + score badge to the
             same maxW as the pillars below. Photo stays full-bleed, but the
             overlays align with the rest of the page content on desktop. */}
@@ -315,6 +353,32 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
             spacing={1}
             color={heroPhotoUrl ? 'white' : 'gray.800'}
             pointerEvents="auto">
+            {/* Provenance chip. Placed INSIDE the identity stack, above the farm name, so it
+                cannot be separated from the thing it qualifies — crop to the farm name and the
+                chip comes with it. That is the property a banner at the top of the page does
+                not have, and it is why this is not styled as a warning: it states what the
+                record IS, permanently, rather than flagging a transient problem. Solid neutral
+                ink at full opacity (not amber, which `STATUS_URGENCY_TOKENS` documents as a
+                fill ramp that cannot carry text) reads as a stamp, and stays legible over any
+                photograph. */}
+            {specimen && (
+              <Box
+                bg="gray.900"
+                color="white"
+                px={2.5}
+                py={1}
+                borderRadius="sm"
+                fontSize="xs"
+                fontWeight="bold"
+                letterSpacing="0.08em"
+                textTransform="uppercase"
+                mb={1}>
+                {intl.formatMessage({
+                  id: 'consumer.specimen.heroChip',
+                  defaultMessage: 'Not a real farm'
+                })}
+              </Box>
+            )}
             <Text
               as="h1"
               fontSize={{ base: '2xl', md: '4xl' }}

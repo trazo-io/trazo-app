@@ -120,13 +120,11 @@ const MethodologyPage: React.FC = () => {
               on file for this production. It measures how thoroughly the farm documented its work.
             </Body>
             <NotClaim>
-              Documentation counts and transparency scores are based on farmer-reported records.
-              They are not independently audited, and they are not a quality or safety grade for the
-              food itself.
+              Documentation counts are based on farmer-reported records. They are not independently
+              audited, and they are not a quality or safety grade for the food itself.
             </NotClaim>
             <Body>
-              Records that include photos and timestamps are stronger evidence than text alone, and
-              the score weighs them accordingly.
+              Records that include photos and timestamps are stronger evidence than text alone.
             </Body>
           </Section>
 

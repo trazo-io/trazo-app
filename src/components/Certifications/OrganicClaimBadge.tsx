@@ -122,6 +122,20 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
     return intl.formatMessage({ id: key }, params);
   })();
 
+  // Same treatment as the label above, and more load-bearing than the label: this line IS the
+  // 16 CFR 260.6(d) qualification. It rendered raw server English inside an otherwise Spanish
+  // page, which means an es-419 shopper saw a regulated claim they could read qualified by a
+  // sentence they could not. A qualification the reader cannot read does not qualify anything.
+  //
+  // Falls back to the English string when the key is absent (older backend) or missing from
+  // this bundle — never to a bare message id, and never to nothing: dropping the disclaimer
+  // would leave the claim standing unqualified, which is worse than showing it in English.
+  const localisedDisclaimer = (() => {
+    const key = claim.disclaimer_key;
+    if (!key || !intl.messages[key]) return claim.disclaimer;
+    return intl.formatMessage({ id: key });
+  })();
+
   // Transition progress: "X of 36 months documented."
   const progressText = (() => {
     if (claim.status !== 'transitioning') return null;
@@ -194,7 +208,7 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
           <Collapse in={isOpen} animateOpacity>
             <Box pt={2}>
               <Text fontSize="xs" color={subtextColor} lineHeight="1.5">
-                {claim.disclaimer}
+                {localisedDisclaimer}
               </Text>
               {claim.status === 'certified_organic' && !lotSuppressed && (
                 <Link

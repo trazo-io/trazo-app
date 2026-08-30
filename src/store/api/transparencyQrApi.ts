@@ -140,25 +140,6 @@ export interface TransparencyResponse {
   response_timestamp: string;
 }
 
-// Consumer education content
-export interface TransparencyExplanation {
-  title: string;
-  overview: string;
-  scoring_levels: {
-    [key: string]: {
-      range: string;
-      description: string;
-      consumer_message: string;
-    };
-  };
-  why_transparency_matters: string[];
-  what_we_track: string[];
-  carbon_vs_transparency: {
-    carbon_score: string;
-    transparency_score: string;
-    together: string;
-  };
-}
 
 // Buyer/retailer documentation request (public endpoint, no auth)
 export interface BuyerDocRequestPayload {
@@ -219,15 +200,6 @@ const transparencyQrApi = baseApi.injectEndpoints({
       ]
     }),
 
-    // Consumer education about transparency scoring
-    getTransparencyExplanation: build.query<TransparencyExplanation, void>({
-      query: () => ({
-        url: `/transparency/explanation/`,
-        method: 'GET'
-      }),
-      providesTags: [{ type: 'TransparencyExplanation', id: 'explanation' }]
-    }),
-
     // Blockchain integrity verification
     verifyBlockchainIntegrity: build.query<BlockchainIntegrityResponse, string>({
       query: (productionId) => ({
@@ -265,7 +237,6 @@ const transparencyQrApi = baseApi.injectEndpoints({
 // Export hooks following Trazo conventions
 export const {
   useGetTransparencyDetailsQuery,
-  useGetTransparencyExplanationQuery,
   useVerifyBlockchainIntegrityQuery,
   useRecordTransparencyScanMutation,
   useCreateBuyerDocRequestMutation

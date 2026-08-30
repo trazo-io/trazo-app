@@ -132,7 +132,14 @@ export interface OrganicClaim {
   display_label_key?: string | null;
   /** Interpolation values. `methodKey` is itself a message id, resolved before use. */
   display_label_params?: Record<string, string | number> | null;
+  /**
+   * English, composed server-side. FALLBACK ONLY — prefer `disclaimer_key`.
+   * Same defect as `display_label`, on the line that carries the 16 CFR 260.6(d)
+   * qualification: it rendered raw English under a Spanish claim.
+   */
   disclaimer: string;
+  /** react-intl message id — the source of truth for the qualification a consumer reads. */
+  disclaimer_key?: string | null;
   status: OrganicClaimStatus;
   status_color: OrganicClaimColor;
   reason: string;
