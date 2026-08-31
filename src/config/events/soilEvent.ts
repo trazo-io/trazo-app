@@ -139,7 +139,7 @@ const formatAmendmentType = (v: unknown): string | null => {
 };
 
 // Soil texture labels — match SoilManagementTab.jsx dropdown
-const SOIL_TEXTURE_LABELS: Record<string, string> = {
+export const SOIL_TEXTURE_LABELS: Record<string, string> = {
   clay: 'Clay',
   clay_loam: 'Clay Loam',
   loam: 'Loam',

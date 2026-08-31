@@ -12,6 +12,7 @@
 import { getDefaultFieldValues } from '../config/quickEventFields';
 import { PREFILLABLE_FIELDS } from '../config/events/templateAccelerators';
 import { getFieldNamesForSurface, getSubtypes } from '../config/events';
+import type { VoiceFieldRequest } from '../config/events/voiceFields';
 import type { AnySubtype, EventTypeCode } from '../config/events';
 
 /** Structured amount from AI response */
@@ -41,6 +42,14 @@ export interface ParsedVoiceData {
   processing_time?: number;
   source?: string;
   original_transcript?: string;
+  /**
+   * Per-activity fields, keyed by the form's own field names — the answer to the field list
+   * the client asked for (buildVoiceFieldRequests). Everything in here is validated against
+   * that request before it can reach a form: see sanitizeActivityFields.
+   */
+  activity_fields?: Record<string, unknown>;
+  /** True when the parser could not name an activity and used the one the farmer chose. */
+  activity_from_context?: boolean;
 }
 
 /** Voice-to-template mapping result */
@@ -386,18 +395,32 @@ export function voiceTypeForActivity(
   eventTypeId: number,
   subtypeCode?: string | null
 ): string | null {
-  for (const [slug, mapping] of Object.entries(VOICE_TYPE_MAP)) {
-    if (mapping.backendEventType !== eventTypeId) continue;
-    if (subtypeCode) {
-      if (mapping.backendSubtype === subtypeCode) return slug;
-      continue;
+  // Pass 1 — an entry for this exact (event type, subtype).
+  if (subtypeCode) {
+    for (const [slug, mapping] of Object.entries(VOICE_TYPE_MAP)) {
+      if (mapping.backendEventType === eventTypeId && mapping.backendSubtype === subtypeCode) {
+        return slug;
+      }
     }
-    // No subtype in hand. Only an entry that HAS no subtype of its own (general documentation)
-    // names an activity on its own terms; anything else would be picking one of several
-    // subtypes for the farmer — soil, pest and business ask theirs inside the tab, and a guess
-    // in the prompt is worse than no context at all.
-    if (!mapping.backendSubtype) return slug;
   }
+
+  // Pass 2 — an entry for this event type that has NO subtype of its own, i.e. the event type
+  // IS one activity.
+  //
+  // This pass is not just the "subtype unknown" case, and treating it that way was a bug:
+  // GeneralTab's `type` field is REQUIRED and holds an activity_type value ("meeting",
+  // "maintenance"), so `eventFormData.type` is a non-empty string that matches no mapping
+  // subtype. Pass 1 fails, and gating pass 2 on `!subtypeCode` then returned null — which
+  // silently disabled both the chosen-activity context and the whole general field list
+  // (activity_type, duration, people_involved) for every General activity.
+  //
+  // Production, chemical and soil are unaffected: every one of their entries declares a
+  // subtype, so this pass finds nothing and the answer stays null rather than becoming a guess
+  // between eleven production activities.
+  for (const [slug, mapping] of Object.entries(VOICE_TYPE_MAP)) {
+    if (mapping.backendEventType === eventTypeId && !mapping.backendSubtype) return slug;
+  }
+
   return null;
 }
 
@@ -496,9 +519,86 @@ export function extractStructuredAmounts(
  *
  * Merges AI-extracted values on top of template defaults.
  */
+/**
+ * Accept ONLY what was asked for, in the shape it was asked for.
+ *
+ * The model answers `activity_fields` as a flat object keyed by form field names. Three ways
+ * that can be wrong, and all three end the same way — the key is dropped, never coerced:
+ *
+ *  - a key nobody requested (a hallucinated field, or one from a previous prompt). The render
+ *    gate downstream would drop most of these anyway, but "most" is not a safety property:
+ *    `gateVoiceOverridesToForm` asks whether the FORM renders a field, and plenty of fields the
+ *    form renders are ones this pipeline must never write (see VOICE_NEVER_FILLS). The request
+ *    list is the narrower and correct check.
+ *  - a number that is not a number. `parseFloat('about twenty')` is NaN and `Number('')` is 0 —
+ *    and a silent 0 on a certifier record is the "missing input becomes a default" failure that
+ *    put 151.2 kg of CO₂e onto an event nobody reported fuel for.
+ *  - an enum value outside its catalogue. A dropdown that renders nine options and receives a
+ *    tenth stores a value no form can display and no export can label.
+ */
+function sanitizeActivityFields(
+  answered: Record<string, unknown> | undefined,
+  requested: readonly VoiceFieldRequest[]
+): Record<string, unknown> {
+  const clean: Record<string, unknown> = {};
+  if (!answered || typeof answered !== 'object' || requested.length === 0) return clean;
+
+  for (const field of requested) {
+    const raw = answered[field.name];
+    if (raw === undefined || raw === null || raw === '') continue;
+
+    if (field.type === 'number') {
+      const value = typeof raw === 'number' ? raw : parseFloat(String(raw).replace(/,/g, ''));
+      if (!Number.isFinite(value)) continue;
+      clean[field.name] = value;
+      continue;
+    }
+
+    if (field.type === 'enum') {
+      const value = String(raw).trim();
+      const options = field.options ?? [];
+      if (options.includes(value)) {
+        clean[field.name] = value;
+        continue;
+      }
+      // The prompt asks for the exact stored value ("wind_machine"), and a model handed a list
+      // of snake_case tokens still sometimes answers with the words ("Wind machine"). Match
+      // those back rather than discarding a correct answer over its punctuation.
+      //
+      // Two forgiving passes, each of which must land on exactly ONE option:
+      //   1. separators normalised — "Wind machine" -> wind_machine;
+      //   2. separators dropped entirely — this is what lets a block dictated letter by letter
+      //      come back, since speech-to-text writes "BGA" as "B G A".
+      //
+      // Both stay exact ON THE CHARACTERS, so "VGA" never becomes "BGA", and both REFUSE an
+      // ambiguous catalogue (one holding both "A B" and "A-B") rather than let array order pick
+      // the answer. A coin flip is not a match.
+      const uniqueMatch = (transform: (v: string) => string): string | null => {
+        const target = transform(value);
+        if (!target) return null;
+        const hits = options.filter((option) => transform(option) === target);
+        return hits.length === 1 ? hits[0] : null;
+      };
+
+      const matched =
+        uniqueMatch((v) => v.toLowerCase().replace(/[\s-]+/g, '_')) ??
+        uniqueMatch((v) => v.toLowerCase().replace(/[^a-z0-9]/g, ''));
+      if (matched) clean[field.name] = matched;
+      continue;
+    }
+
+    const value = String(raw).trim();
+    if (!value) continue;
+    clean[field.name] = value;
+  }
+
+  return clean;
+}
+
 export function mapVoiceDataToFieldValues(
   parsedData: ParsedVoiceData,
-  templateId: string
+  templateId: string,
+  requestedFields: readonly VoiceFieldRequest[] = []
 ): VoiceFieldMappingResult {
   // Start with template defaults — but only the operational ones. See PREFILLABLE_FIELDS.
   const defaults = getDefaultFieldValues(templateId);
@@ -683,6 +783,20 @@ export function mapVoiceDataToFieldValues(
       }
     }
   }
+
+  // Per-activity fields, asked for by name and answered by name — applied LAST, on purpose.
+  //
+  // Everything above is the LEGACY structured mapping: a fixed set of ~12 response keys,
+  // hand-branched per template, filling the same eight fields on every activity. That is why
+  // `protection_method` and `low_temperature` — the two facts a frost record exists for — could
+  // not be written at all.
+  //
+  // Where the two can produce the SAME key, the explicit answer wins. `irrigation_depth` is the
+  // one live overlap (`voiceFieldOverlap` in voiceRenderGate.test.ts pins the exact set, so a
+  // new one has to be looked at rather than discovered): the legacy branch infers it by hunting
+  // the amounts array for a `depth` category, while this path is the model answering the
+  // question "what was the irrigation depth" by name. An answer beats an inference.
+  Object.assign(overrides, sanitizeActivityFields(parsedData.activity_fields, requestedFields));
 
   // Merge: defaults < AI-extracted overrides
   return {

@@ -75,7 +75,7 @@ const ELECTRICITY_SOURCE_LABELS: Record<string, string> = {
   mixed: 'Mixed Sources'
 };
 
-const EQUIPMENT_OPERATION_TYPE_LABELS: Record<string, string> = {
+export const EQUIPMENT_OPERATION_TYPE_LABELS: Record<string, string> = {
   FC: 'Fuel Consumption',
   MN: 'Maintenance',
   RE: 'Repair',
@@ -126,7 +126,7 @@ const HARVEST_METHOD_LABELS: Record<string, string> = {
 
 // Post-Harvest processing type dropdown (PH subtype).
 // Mirrors ProductionTab.jsx:1854-1887 options (emojis stripped for consumer display).
-const PROCESSING_TYPE_LABELS: Record<string, string> = {
+export const PROCESSING_TYPE_LABELS: Record<string, string> = {
   washing: 'Washing',
   cooling: 'Cooling / Pre-cooling',
   drying: 'Drying',
@@ -236,7 +236,7 @@ const formatProcessingType = (v: unknown): string | null => lookupLabel(PROCESSI
 
 // Batch 3 (2026-06): Frost Protection (FP) method + Mowing (MO) floor-management
 // type dropdowns. Mirror ProductionTab.jsx option values.
-const PROTECTION_METHOD_LABELS: Record<string, string> = {
+export const PROTECTION_METHOD_LABELS: Record<string, string> = {
   wind_machine: 'Wind machine',
   orchard_heater: 'Orchard heater(s)',
   under_tree_sprinkler: 'Under-tree sprinklers',
@@ -252,7 +252,7 @@ const PROTECTION_METHOD_LABELS: Record<string, string> = {
 // explain to their certifier. It stays in THIS map on purpose — display labels must keep
 // covering values that already exist in the database, or previously-saved events render
 // the raw slug "herbicide_strip" on the consumer card and in the audit modal.
-const FLOOR_MANAGEMENT_LABELS: Record<string, string> = {
+export const FLOOR_MANAGEMENT_LABELS: Record<string, string> = {
   mow: 'Mow',
   mulch: 'Mulch',
   cover_crop_mgmt: 'Cover-crop management',

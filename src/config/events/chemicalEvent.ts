@@ -87,7 +87,7 @@ const formatOrganicApproved = (v: unknown): string | null => {
 };
 
 // Weather conditions labels — match ChemicalTab-ENHANCED.jsx dropdown labels (sans emoji/description)
-const WEATHER_CONDITIONS_LABELS: Record<string, string> = {
+export const WEATHER_CONDITIONS_LABELS: Record<string, string> = {
   calm_dry: 'Calm & Dry',
   overcast_humid: 'Overcast & Humid',
   light_wind: 'Light Wind',
@@ -101,7 +101,7 @@ const formatWeatherConditions = (v: unknown): string | null => {
 };
 
 // Application timing labels — match ChemicalTab-ENHANCED.jsx dropdown labels (sans emoji)
-const APPLICATION_TIMING_LABELS: Record<string, string> = {
+export const APPLICATION_TIMING_LABELS: Record<string, string> = {
   dormant: 'Dormant Season',
   pre_plant: 'Pre-Planting',
   post_emergence: 'Post-Emergence',

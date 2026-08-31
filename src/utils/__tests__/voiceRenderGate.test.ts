@@ -346,6 +346,25 @@ describe('the activity the farmer already chose reaches the parser', () => {
     expect(voiceTypeForActivity(VOICE_TYPE_MAP.general.backendEventType, null)).toBe('general');
   });
 
+  it('still resolves General when its own `type` field is filled in', () => {
+    // MEASURED 2026-08-30, and the reason this test exists: GeneralTab's `type` field is
+    // REQUIRED and holds an activity_type value ("meeting", "maintenance"), so
+    // `eventFormData.type` is a non-empty string matching no mapping subtype. Gating the
+    // subtype-less lookup on "no subtype in hand" therefore returned null for every General
+    // activity — silently disabling the chosen-activity context AND the whole general field
+    // list (activity_type, duration, people_involved) that had just been written for it.
+    const GENERAL = VOICE_TYPE_MAP.general.backendEventType;
+    expect(voiceTypeForActivity(GENERAL, 'meeting')).toBe('general');
+    expect(voiceTypeForActivity(GENERAL, 'facility_maintenance')).toBe('general');
+  });
+
+  it('does not fall back to a family name for an event type made of subtypes', () => {
+    // The other half of that fix: production is eleven different activities, so an unknown
+    // subtype must stay null rather than resolve to whichever entry is listed first.
+    expect(voiceTypeForActivity(PRODUCTION, 'NOT_A_SUBTYPE')).toBeNull();
+    expect(voiceTypeForActivity(CHEMICAL, 'NOT_A_SUBTYPE')).toBeNull();
+  });
+
   it('the panel actually sends it', () => {
     // Grep USAGE, not definition: a helper nothing calls is the orphaned-feature class.
     const capture = readFileSync(
@@ -359,9 +378,20 @@ describe('the activity the farmer already chose reaches the parser', () => {
       join(__dirname, '../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
       'utf8'
     );
-    expect(newEvent, 'the wizard never passes the chosen activity').toMatch(
-      /knownActivity=\{voiceTypeForActivity\(activeEventType, eventFormData\.type\)\}/
+    // Derived from the activity the wizard already holds, and handed to the panel. Asserted as
+    // two steps rather than one inline expression so a refactor into a memo does not read as a
+    // regression — what matters is the source of the value and that the panel receives it.
+    expect(newEvent, 'the wizard never derives the chosen activity').toMatch(
+      /voiceTypeForActivity\(activeEventType, eventFormData\.type\)/
     );
+    expect(newEvent, 'the wizard never passes the chosen activity').toMatch(
+      /knownActivity=\{voiceActivitySlug\}/
+    );
+    // ...and the per-activity field list built from the display registry.
+    expect(newEvent, 'the wizard never passes the field list').toMatch(
+      /fieldRequests=\{voiceFieldRequests\}/
+    );
+    expect(newEvent).toMatch(/buildVoiceFieldRequests\(/);
   });
 
   it('a context-defaulted activity is never presented as a detection', () => {
@@ -374,6 +404,48 @@ describe('the activity the farmer already chose reaches the parser', () => {
     );
     expect(capture).toMatch(/activity_from_context === true/);
     expect(capture).toMatch(/isRecognizedVoiceType\(parsedData\.type\) && !activityFromContext/);
+  });
+});
+
+describe('the panel does not narrate what the farmer already chose', () => {
+  const capture = readFileSync(
+    join(__dirname, '../../components/Events/VoiceEventCapture.tsx'),
+    'utf8'
+  );
+
+  it('announces the heard activity ONLY when it disagrees with the one being logged', () => {
+    // "Sounds like: Frost Protection" on a page titled "Log activity — Frost protection", at
+    // step 2 of 3, restates a choice made one step earlier. It is a leftover from when voice
+    // ran BEFORE the activity was known. It is news in exactly one case — the words describe a
+    // different activity — which is the case the switch offer exists for.
+    expect(capture).toMatch(/showHeardActivity[\s\S]{0,200}voice\.understood/);
+    // ...and "nothing to disagree with" counts: soil/pest/business ask their subtype in-tab, so
+    // voice can run before the activity is known and the heard activity is the only statement of
+    // what was understood.
+    expect(capture).toMatch(/recognized && \(!chosenMapping \|\| disagreesWithChosenActivity\)/);
+  });
+
+  it('compares the activities by mapping, not by slug', () => {
+    // `fertilization` and `fertilizer` are two names for one activity; comparing names would
+    // report a disagreement with itself.
+    expect(capture).toMatch(/mapping\.backendSubtype !== chosenMapping\.backendSubtype/);
+  });
+
+  it('no longer offers to continue to a step that does not exist', () => {
+    // The wizard is Activity & date → Activity details → Photos. There is no Review step: the
+    // button fills the form in place. "Continue to Review" named a screen from the era when
+    // voice was its own flow.
+    expect(capture).not.toMatch(/continueToReview/);
+    expect(Object.keys(enUS)).not.toContain('events.voice.continueToReview');
+    expect(Object.keys(es419)).not.toContain('events.voice.continueToReview');
+    expect(enUS).toHaveProperty('events.voice.useTheseDetails');
+    expect(es419).toHaveProperty('events.voice.useTheseDetails');
+  });
+
+  it('drops the how-to subtitle once a result is on screen', () => {
+    // Otherwise "You review every field before saving" sits eight lines above "review every
+    // field before saving" in the low-confidence warning.
+    expect(capture).toMatch(/\{!parsedData && \([\s\S]{0,200}voice\.subtitle/);
   });
 });
 

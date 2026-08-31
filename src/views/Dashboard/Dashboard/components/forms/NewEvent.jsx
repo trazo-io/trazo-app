@@ -86,6 +86,7 @@ import {
   useUpdateEventMutation
 } from 'store/api/historyApi';
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
+import { useGetParcelQuery } from 'store/api/productApi';
 import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
@@ -99,6 +100,7 @@ import {
   verbForKey
 } from 'config/activityVerbs';
 import { getFieldConfig, getSubtypes } from 'config/events';
+import { buildVoiceFieldRequests } from 'config/events/voiceFields';
 import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
@@ -108,7 +110,8 @@ import {
   mapVoiceTypeToTemplate,
   gateVoiceOverridesToForm,
   shouldOfferActivitySwitch,
-  voiceTypeForActivity
+  voiceTypeForActivity,
+  VOICE_UNIT_COMPANIONS
 } from 'utils/voiceDataMapper';
 import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
 import { nowLocalDateTimeInput } from 'utils/dateOnly';
@@ -1316,7 +1319,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // switch. Suggest → confirm, the same line the season plan and the OSP §11 panel draw.
   const applyVoiceData = (eventData, eventTypeId, subtypeCode) => {
     const mapping = mapVoiceTypeToTemplate(eventData.type);
-    const result = mapVoiceDataToFieldValues(eventData, mapping.templateId);
+    // `requested_fields` rides along on the result (see VoiceEventCapture) — the answer is
+    // validated against what was actually asked for, so a key nobody requested is dropped
+    // before the render gate ever sees it.
+    const result = mapVoiceDataToFieldValues(
+      eventData,
+      mapping.templateId,
+      eventData.requested_fields || []
+    );
     const detected = {};
     result.overriddenFields.forEach((key) => {
       detected[key] = result.values[key];
@@ -1337,7 +1347,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
       detected,
       banner: {
         transcript: eventData.original_transcript || eventData.description || '',
-        count: Object.keys(kept).length,
         // WHICH fields, not just how many. "1 fields filled" with nothing visibly changed is
         // what a farmer sees when the only thing voice could keep was `observation` — the
         // notes box, which sits below the fold on every activity. A count alone cannot be
@@ -1389,11 +1398,47 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // So hold them, and re-gate the moment the subtype arrives.
   const pendingVoiceRef = useRef(null);
 
+  // What voice is allowed to ask for on THIS activity, resolved from the display registry.
+  // Both are derived here, in the one place that owns the activity: the panel receives facts,
+  // not the registry.
+  const voiceActivitySlug = useMemo(
+    () => voiceTypeForActivity(activeEventType, eventFormData.type),
+    [activeEventType, eventFormData.type]
+  );
+  // The blocks this parcel has actually used. Same source the chips under the Block/Section
+  // input read (`BlockIdField`), so voice offers the grower their own vocabulary instead of
+  // transcribing an identifier letter by letter.
+  const { data: voiceParcel } = useGetParcelQuery(
+    { companyId: currentCompany?.id, farmId, parcelId },
+    { skip: !currentCompany?.id || !farmId || !parcelId }
+  );
+  const knownBlockIds = useMemo(
+    () => (Array.isArray(voiceParcel?.known_block_ids) ? voiceParcel.known_block_ids : []),
+    [voiceParcel]
+  );
+
+  const voiceFieldRequests = useMemo(
+    () =>
+      buildVoiceFieldRequests(
+        activeEventType,
+        eventFormData.type || undefined,
+        voiceActivitySlug,
+        (labelKey) => intl.formatMessage({ id: labelKey, defaultMessage: '' }),
+        { knownBlockIds }
+      ),
+    [activeEventType, eventFormData.type, voiceActivitySlug, intl, knownBlockIds]
+  );
+
   // Labels for the fields voice actually wrote, resolved through the display registry so the
   // banner uses the same words the form does. A field with no registry label (or one whose
   // labelKey is missing from the catalogue) is skipped rather than printed as a raw key.
   const voiceFilledLabels = useMemo(() => {
-    const names = voiceBanner?.keptFields || [];
+    // Unit companions (`area_unit`, `fuel_unit`, `yield_unit`…) are excluded from BOTH the
+    // count and the names, and they have to be excluded from the same place or the banner
+    // contradicts itself: they have no display-registry entry of their own, so counting them
+    // produced "8 fields filled" above a list of five names. A unit is part of a value, not a
+    // fact the farmer needs to go and check.
+    const names = (voiceBanner?.keptFields || []).filter((name) => !VOICE_UNIT_COMPANIONS[name]);
     return names
       .map((name) => {
         const cfg = getFieldConfig(activeEventType, name);
@@ -1451,7 +1496,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
       prev
         ? {
             ...prev,
-            count: prev.count + added,
             keptFields: [...(prev.keptFields || []), ...Object.keys(fresh)],
             droppedCount: dropped.length
           }
@@ -2879,7 +2923,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
                              its trigger sits in step 2, and step 1 is where the verb tile
                              and the production subtype are chosen. Passing it lets the
                              backend prompt extract FIELDS instead of guessing the activity. */
-                          knownActivity={voiceTypeForActivity(activeEventType, eventFormData.type)}
+                          knownActivity={voiceActivitySlug}
+                          fieldRequests={voiceFieldRequests}
                           autoStart={true}
                           onClose={() => setShowVoiceCapture(false)}
                         />
@@ -2964,7 +3009,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               <Text fontSize="sm" fontWeight="semibold" color="green.700">
                                 {intl.formatMessage(
                                   { id: 'events.voice.applied' },
-                                  { count: voiceBanner.count }
+                                  { count: voiceFilledLabels.length }
                                 )}
                               </Text>
                               {/* Name them. The count on its own is unverifiable: when the
@@ -2973,7 +3018,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   changed — the notes box is below the fold on every
                                   activity. Labels come from the display registry, so they
                                   are the same words the field itself carries. */}
-                              {voiceBanner.count > 0 && voiceFilledLabels.length > 0 && (
+                              {voiceFilledLabels.length > 0 && (
                                 <Text fontSize="xs" color="gray.700">
                                   {intl.formatMessage(
                                     { id: 'events.voice.filledFields' },

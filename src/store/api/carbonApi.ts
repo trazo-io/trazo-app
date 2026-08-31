@@ -1406,6 +1406,8 @@ export const carbonApi = baseApi.injectEndpoints({
          * printing "Sounds like: X" over it.
          */
         activity_from_context?: boolean;
+        /** Per-activity values, keyed by form field name — the answer to `requested_fields`. */
+        activity_fields?: Record<string, unknown>;
         // Metadata
         processing_time?: number;
         source?: string;
@@ -1421,6 +1423,18 @@ export const carbonApi = baseApi.injectEndpoints({
          * mismatch stays visible. See voiceTypeForActivity / shouldOfferActivitySwitch.
          */
         known_activity?: string;
+        /**
+         * The fields that activity records, from the display registry. Sent so the prompt can
+         * ask for what this form actually holds instead of one generic set for all seventeen
+         * activities; echoed back through `activity_fields` and validated against this list
+         * before anything reaches a form.
+         */
+        requested_fields?: Array<{
+          name: string;
+          label: string;
+          type: 'number' | 'text' | 'enum';
+          options?: string[];
+        }>;
         language?: string;
         timestamp?: string;
       }

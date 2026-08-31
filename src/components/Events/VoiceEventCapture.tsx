@@ -8,6 +8,7 @@ import {
   Icon,
   Badge,
   Progress,
+  Stack,
   useToast,
   Flex
 } from '@chakra-ui/react';
@@ -25,10 +26,15 @@ import {
   postProcessTranscript,
   isRecognizedVoiceType,
   mapVoiceTypeToTemplate,
-  voiceActivityLabelKey
+  voiceActivityLabelKey,
+  VOICE_TYPE_MAP
 } from 'utils/voiceDataMapper';
 import { useDeepgramTranscription } from 'hooks/useDeepgramTranscription';
 import { voiceLanguageFor } from 'config/voiceLanguages';
+import type { VoiceFieldRequest } from 'config/events/voiceFields';
+
+// Stable identity: a fresh `[]` default would be a new prop object on every render.
+const EMPTY_FIELD_REQUESTS: VoiceFieldRequest[] = [];
 
 // Pulse animation for recording state
 const pulseRing = keyframes`
@@ -59,6 +65,14 @@ interface VoiceEventCaptureProps {
    * a switch instead of being quietly bent to fit.
    */
   knownActivity?: string | null;
+  /**
+   * The fields THIS activity records, built from the display registry
+   * (`buildVoiceFieldRequests`). Sent with the request so the model is asked for
+   * `low_temperature` and `protection_method` on a frost night instead of the same eight
+   * generic keys it is asked for everywhere, and used again on the way back to validate the
+   * answer before any of it reaches a form.
+   */
+  fieldRequests?: VoiceFieldRequest[];
   autoStart?: boolean;
   onClose?: () => void;
 }
@@ -68,6 +82,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   isActive,
   cropType,
   knownActivity = null,
+  fieldRequests = EMPTY_FIELD_REQUESTS,
   autoStart = false,
   onClose
 }) => {
@@ -257,6 +272,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         transcript: processedText,
         crop_type: cropType,
         known_activity: knownActivity || undefined,
+        requested_fields: fieldRequests.length ? fieldRequests : undefined,
         // The backend keys its GPT prompts by language FAMILY (prompt_key_for), so the raw
         // app locale is what it wants — no third code to keep in step.
         language: intl.locale,
@@ -311,7 +327,10 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
    */
   const handleContinueToReview = () => {
     if (parsedData) {
-      onEventDetected(parsedData);
+      // The request list travels WITH the result: the parent validates `activity_fields`
+      // against what was actually asked for, and a value nobody asked for never reaches a
+      // form. Recomputing it there would be a second source of truth for the same fact.
+      onEventDetected({ ...parsedData, requested_fields: fieldRequests });
       if (useDeepgram) {
         deepgramReset();
       } else {
@@ -322,12 +341,21 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   };
 
   const handleTryAgain = () => {
+    // Clear AND start listening again. This used to only clear, which was half an action: the
+    // farmer pressed "Try again", the result vanished, and the thing that actually re-records
+    // was a second button ("Start voice input") sitting above it. Two controls for one
+    // intention — and the panel is now down to one, so this has to complete the job.
     setParsedData(null);
     if (useDeepgram) {
       deepgramReset();
     } else {
       webSpeechResetTranscript();
     }
+    // Same guard the recorder button carries in `isDisabled`. Without it "Try again" would
+    // open the microphone in the one state where the button itself refuses to — a blocked
+    // mic — and the farmer would be left on a cleared panel with no recorder in sight.
+    if (micBlocked || isLoadingConfig) return;
+    startListening();
   };
 
   /**
@@ -429,11 +457,17 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   /** Format detected amounts for display */
   const formatAmountsForDisplay = (amounts: any[]): string[] => {
     if (!amounts || amounts.length === 0) return [];
-    return amounts.map((a) => {
-      if (typeof a === 'string') return a;
-      if (a.value && a.unit) return `${a.value} ${a.unit}`;
-      return String(a);
-    });
+    // Deduplicated: "apply 200 pounds ... apply it, 200 pounds" is one fact said twice, and it
+    // rendered as two identical "200 lbs" chips, which reads as two hundred-pound applications.
+    return [
+      ...new Set(
+        amounts.map((a) => {
+          if (typeof a === 'string') return a;
+          if (a.value && a.unit) return `${a.value} ${a.unit}`;
+          return String(a);
+        })
+      )
+    ];
   };
 
   // Spent for the day. Says what still works: voice is an accelerator, and the form and the
@@ -476,6 +510,21 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // structured fields — no amounts, no method, no duration — so a farmer comparing what they
   // said against what arrived has no way to tell a degraded parse from a bad one.
   const keywordFallback = parsedData?.source === 'pattern_matching_fallback';
+  // Compared as (event type, subtype), never as slugs: `fertilization` and `fertilizer` are two
+  // names for the same activity, and comparing the names would call that a disagreement.
+  const chosenMapping = knownActivity ? VOICE_TYPE_MAP[knownActivity] : null;
+  const disagreesWithChosenActivity =
+    recognized &&
+    !!mapping &&
+    !!chosenMapping &&
+    (mapping.backendEventType !== chosenMapping.backendEventType ||
+      mapping.backendSubtype !== chosenMapping.backendSubtype);
+  // Name the heard activity when it DISAGREES with the one being logged — or when there is
+  // nothing to disagree with. Soil, pest and business ask their subtype inside the tab, so voice
+  // can run before the activity is known; there "Sounds like: Compost application" is the only
+  // statement of what was understood, and suppressing it as "something you already know" would
+  // be suppressing something the farmer has not been told.
+  const showHeardActivity = recognized && (!chosenMapping || disagreesWithChosenActivity);
 
   return (
     /*
@@ -499,9 +548,15 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             <Text fontSize="md" fontWeight="semibold" color="gray.800">
               {intl.formatMessage({ id: 'voice.title' })}
             </Text>
-            <Text fontSize="sm" color="gray.600">
-              {intl.formatMessage({ id: 'voice.subtitle' })}
-            </Text>
+            {/* Instructions for the state before recording. Once a result is on screen the
+                farmer has already done this, and leaving it up put "You review every field
+                before saving" on the same panel as "review every field before saving" in the
+                low-confidence warning — the same sentence twice, eight lines apart. */}
+            {!parsedData && (
+              <Text fontSize="sm" color="gray.600">
+                {intl.formatMessage({ id: 'voice.subtitle' })}
+              </Text>
+            )}
           </VStack>
 
           {/* No language selector by design: speech follows the app locale the farmer
@@ -539,22 +594,33 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
           />
         )}
 
-        {/* The one action. It was `variant="outline"` while idle and solid only once
-            recording, i.e. the panel's primary control looked secondary exactly when it was
-            the only thing to do. No `_hover` scale either — the theme owns hover, and
-            frontend.md requires it to DARKEN rather than grow. */}
-        <StandardButton
-          variant={listening ? 'secondary' : 'primary'}
-          leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
-          onClick={listening ? stopListening : startListening}
-          isDisabled={
-            !isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked
-          }
-          size="lg"
-          w="full"
-          animation={listening ? `${pulseRing} 1.5s ease-out infinite` : undefined}>
-          {intl.formatMessage({ id: listening ? 'voice.stop' : 'voice.start' })}
-        </StandardButton>
+        {/* ONE primary per surface, and it moves.
+            Before a result exists this IS the only thing to do, so it is the primary. Once a
+            result arrives it is hidden: "Try again" below does the same job, and leaving both
+            on screen put two full-width solid greens in one panel with the loud one attached
+            to the action the farmer had already taken. The panel then has exactly one primary —
+            "Continue to Review".
+
+            Not full-width past mobile either. A 1500px button with a centred label is a phone
+            pattern rendered on a laptop; the size of a control should track its importance,
+            not the width of its container. */}
+        {!parsedData && (
+          <Flex justify="center">
+            <StandardButton
+              variant={listening ? 'secondary' : 'primary'}
+              leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
+              onClick={listening ? stopListening : startListening}
+              isDisabled={
+                !isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked
+              }
+              size="lg"
+              w={{ base: 'full', smd: 'auto' }}
+              px={{ smd: 10 }}
+              animation={listening ? `${pulseRing} 1.5s ease-out infinite` : undefined}>
+              {intl.formatMessage({ id: listening ? 'voice.stop' : 'voice.start' })}
+            </StandardButton>
+          </Flex>
+        )}
 
         {/* Processing — a transient state, not a success. It was a green.50 panel, which is
             the colour this system reserves for done. */}
@@ -607,14 +673,34 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 - "⚡ 5687ms" was developer telemetry in a farmer's field of view, dressed as
                   a green (= good) badge while reporting five and a half seconds. The number
                   is still measured and still posted to the backend as `processing_time`. */}
+            {/* "Sounds like: Frost Protection" on a page titled "Log activity — Frost
+                protection", at step 2 of 3, tells the farmer something they chose themselves
+                one step ago. It is a leftover from when voice ran BEFORE the activity was
+                known and its job was to announce the detection.
+                It still earns its place in exactly one case: when the words describe a
+                DIFFERENT activity than the one being logged. That is the case the switch offer
+                exists for, and naming it here is the first the farmer hears of it. Otherwise
+                the heading introduces what follows — the transcript and what was picked out of
+                it — instead of restating the page title. */}
             <Text fontWeight="semibold" color="gray.800" fontSize="md">
-              {recognized
+              {!recognized
+                ? intl.formatMessage({ id: 'voice.notUnderstood' })
+                : showHeardActivity
                 ? intl.formatMessage(
                     { id: 'voice.understood' },
                     { activity: intl.formatMessage({ id: voiceActivityLabelKey(mapping) }) }
                   )
-                : intl.formatMessage({ id: 'voice.notUnderstood' })}
+                : intl.formatMessage({ id: 'voice.heardHeading' })}
             </Text>
+
+            {/* Degraded parse. Named, because it changes what the farmer should expect: the
+                keyword pass fills almost nothing, and silence here reads as "voice is bad"
+                rather than "the assistant is down". */}
+            {keywordFallback && (
+              <Text fontSize="xs" color="gray.700">
+                {intl.formatMessage({ id: 'voice.keywordFallbackNote' })}
+              </Text>
+            )}
 
             {/* We are using the farmer's own choice because the words did not name an
                 activity. Said out loud, so "Frost Protection" on screen is never mistaken for
@@ -625,15 +711,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                   { id: 'voice.activityFromContext' },
                   { activity: intl.formatMessage({ id: voiceActivityLabelKey(mapping) }) }
                 )}
-              </Text>
-            )}
-
-            {/* Degraded parse. Named, because it changes what the farmer should expect: the
-                keyword pass fills almost nothing, and silence here reads as "voice is bad"
-                rather than "the assistant is down". */}
-            {keywordFallback && (
-              <Text fontSize="xs" color="gray.700">
-                {intl.formatMessage({ id: 'voice.keywordFallbackNote' })}
               </Text>
             )}
 
@@ -738,8 +815,15 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 the farmer does.
                 Low is a real warning and now looks like every other warning in the app
                 (theme accent bar + amber ground). It used to be `yellow.100`/`yellow.700` —
-                Chakra's yellow, a palette this theme does not define. */}
-            {!recognized ? null : parsedData.confidence >= 70 ? (
+                Chakra's yellow, a palette this theme does not define.
+
+                ⛔ Nothing here during the keyword fallback. That path scores by counting
+                matched keywords and caps at 75 against a 70 threshold, so the amber warning was
+                effectively PERMANENT while OpenAI was unreachable — a caution the farmer cannot
+                act on, sitting directly under a line that already told them what to expect
+                ("matched on keywords alone — expect fewer fields filled"). Two warnings in
+                three lines teaches people to read neither. */}
+            {!recognized || keywordFallback ? null : parsedData.confidence >= 70 ? (
               <Text fontSize="sm" color="gray.700">
                 {intl.formatMessage({ id: 'voice.confidenceHigh' })}
               </Text>
@@ -753,21 +837,26 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
             {/* Continue leads; the arrow trails the label, matching the wizard's own
                 Continue button rather than pointing backwards into it. */}
-            <HStack spacing={3}>
+            {/* `flex={1}` stretched Continue to ~1270px beside a 230px Try again — a 5:1 ratio
+                that read as "the other one barely counts", on a panel whose own headline may be
+                saying it could not tell what the farmer said. Natural widths; full width only
+                on a phone, where a thumb needs the target. */}
+            <Stack direction={{ base: 'column', smd: 'row' }} spacing={3}>
               <StandardButton
                 variant="primary"
                 rightIcon={<Icon as={FaArrowRight} />}
                 onClick={handleContinueToReview}
-                flex={1}>
-                {intl.formatMessage({ id: 'events.voice.continueToReview' })}
+                w={{ base: 'full', smd: 'auto' }}>
+                {intl.formatMessage({ id: 'events.voice.useTheseDetails' })}
               </StandardButton>
               <StandardButton
                 variant="outline"
                 leftIcon={<Icon as={FaRedo} />}
-                onClick={handleTryAgain}>
+                onClick={handleTryAgain}
+                w={{ base: 'full', smd: 'auto' }}>
                 {intl.formatMessage({ id: 'voice.tryAgain' })}
               </StandardButton>
-            </HStack>
+            </Stack>
           </VStack>
         )}
 
