@@ -1188,12 +1188,22 @@ function ProductDetail() {
                           Server-side ConsumerClaimValidator decides what may be shown. */}
                       <OrganicClaimBadge claim={organicClaim} />
 
-                      {/* USDA Organic attribution — compact source + certifier line */}
+                      {/* USDA Organic attribution — compact source + certifier line.
+                          🔴 2026-08-30: the source line reads "Verified via USDA Organic Integrity
+                          Database" and was gated ONLY on a USDA Organic certificate existing, so
+                          it asserted a database match for certificates that had never been matched
+                          — including ones whose own `status` on this same payload is
+                          `self_reported`. `CertificationBadge.tsx:54` gates the identical string on
+                          `verified_via_database`; this sibling never got that gate. The certifier
+                          line below stays either way: naming who issued the certificate on file is
+                          a fact about the operation, not a claim about our checking. */}
                       {usdaOrganicCert && (
                         <VStack align="start" spacing={0.5} pl={1}>
-                          <Text fontSize="xs" color="gray.500">
-                            {intl.formatMessage({ id: 'certification.badge.verified' })}
-                          </Text>
+                          {usdaOrganicCert.status === 'verified_via_database' && (
+                            <Text fontSize="xs" color="gray.500">
+                              {intl.formatMessage({ id: 'certification.badge.verified' })}
+                            </Text>
+                          )}
                           {usdaOrganicCert.certifier_name && (
                             <Text fontSize="xs" color="gray.500">
                               {intl.formatMessage({ id: 'certification.manage.certifier' })}:{' '}

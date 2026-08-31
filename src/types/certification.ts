@@ -140,6 +140,17 @@ export interface OrganicClaim {
   disclaimer: string;
   /** react-intl message id — the source of truth for the qualification a consumer reads. */
   disclaimer_key?: string | null;
+  /**
+   * True ONLY when this operation's certificate was matched against Trazo's copy of the USDA
+   * Organic Integrity Database.
+   *
+   * Gates every "Verified" presentation, because the public /methodology page promises
+   * exactly that: a certification shows "Verified" only when we match it, and anything we
+   * cannot match is labeled "Self-Reported". `status: 'certified_organic'` is a weaker fact
+   * — it means an active certificate row exists — and using it to paint "Verified" broke
+   * that published promise in three places.
+   */
+  oid_matched?: boolean;
   status: OrganicClaimStatus;
   status_color: OrganicClaimColor;
   reason: string;

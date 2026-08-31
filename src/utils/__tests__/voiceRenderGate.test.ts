@@ -28,6 +28,8 @@ import {
   voiceActivityLabelKey,
   mapVoiceDataToFieldValues,
   mapVoiceTypeToTemplate,
+  shouldOfferActivitySwitch,
+  voiceTypeForActivity,
   VOICE_TYPE_MAP,
   VOICE_UNIT_COMPANIONS
 } from '../voiceDataMapper';
@@ -304,6 +306,144 @@ describe('voice mismatch notice can always be rendered', () => {
       expect(enUS, `en-US missing ${k}`).toHaveProperty(k);
       expect(es419, `es-419 missing ${k}`).toHaveProperty(k);
     }
+  });
+});
+
+describe('the activity the farmer already chose reaches the parser', () => {
+  // The voice trigger sits inside step 2, which is only reachable once step 1 has collected
+  // the verb tile and (for production) the subtype. So the activity is known before the
+  // microphone opens, and the prompt can extract FIELDS instead of guessing the activity.
+  it('resolves every production subtype the wizard can be on', () => {
+    expect(voiceTypeForActivity(PRODUCTION, 'FP')).toBe('frost_protection');
+    expect(voiceTypeForActivity(PRODUCTION, 'IR')).toBe('irrigation');
+    expect(voiceTypeForActivity(PRODUCTION, 'HA')).toBe('harvest');
+    expect(voiceTypeForActivity(CHEMICAL, 'FE')).toBe('fertilization');
+  });
+
+  it('agrees with the forward map for every entry', () => {
+    // The inverse must not invent a pairing the forward map does not hold. Aliases
+    // (fertilization/fertilizer → FE) may resolve to either key, so assert the MAPPING
+    // round-trips rather than the slug.
+    for (const [slug, mapping] of Object.entries(VOICE_TYPE_MAP)) {
+      const resolved = voiceTypeForActivity(mapping.backendEventType, mapping.backendSubtype);
+      expect(resolved, `${slug} did not resolve`).toBeTruthy();
+      const back = VOICE_TYPE_MAP[resolved!];
+      expect(back.backendEventType, `${slug} → ${resolved}`).toBe(mapping.backendEventType);
+      expect(back.backendSubtype, `${slug} → ${resolved}`).toBe(mapping.backendSubtype);
+    }
+  });
+
+  it('returns null while the subtype is unknown', () => {
+    // Soil, pest and business ask their subtype inside the tab. Sending a family name as if it
+    // were the chosen activity would put a guess into the prompt: production alone is eleven
+    // different activities.
+    expect(voiceTypeForActivity(PRODUCTION, null)).toBeNull();
+    expect(voiceTypeForActivity(PRODUCTION, '')).toBeNull();
+  });
+
+  it('resolves an event type that has no subtype of its own', () => {
+    // General documentation is one activity, not a family — there is nothing to guess.
+    expect(voiceTypeForActivity(VOICE_TYPE_MAP.general.backendEventType, null)).toBe('general');
+  });
+
+  it('the panel actually sends it', () => {
+    // Grep USAGE, not definition: a helper nothing calls is the orphaned-feature class.
+    const capture = readFileSync(
+      join(__dirname, '../../components/Events/VoiceEventCapture.tsx'),
+      'utf8'
+    );
+    expect(capture, 'known_activity is not in the request body').toMatch(
+      /known_activity: knownActivity/
+    );
+    const newEvent = readFileSync(
+      join(__dirname, '../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
+      'utf8'
+    );
+    expect(newEvent, 'the wizard never passes the chosen activity').toMatch(
+      /knownActivity=\{voiceTypeForActivity\(activeEventType, eventFormData\.type\)\}/
+    );
+  });
+
+  it('a context-defaulted activity is never presented as a detection', () => {
+    // `activity_from_context` means the parser could not name an activity and the form's own
+    // answer was used. Printing "Sounds like: Frost protection" over that credits the
+    // microphone with something it never worked out.
+    const capture = readFileSync(
+      join(__dirname, '../../components/Events/VoiceEventCapture.tsx'),
+      'utf8'
+    );
+    expect(capture).toMatch(/activity_from_context === true/);
+    expect(capture).toMatch(/isRecognizedVoiceType\(parsedData\.type\) && !activityFromContext/);
+  });
+});
+
+describe('the switch offer is judged on the ACTIVITY, not the backend event type', () => {
+  // MEASURED 2026-08-30. Farmer is on Frost Protection and says "irrigated the field for six
+  // hours with the drip system". Irrigation (IR) and Frost Protection (FP) are both PRODUCTION,
+  // so the old `backendEventType !== eventTypeId` test was FALSE and no mismatch was ever
+  // shown: the panel announced "Sounds like: Irrigation" over a Frost Protection form, the
+  // render gate silently dropped every irrigation field, and the banner reported "1 fields
+  // filled" — the transcript, landing in the notes box.
+  const IRRIGATION = VOICE_TYPE_MAP.irrigation;
+  const FROST = VOICE_TYPE_MAP.frost_protection;
+
+  it('the premise holds: these are distinct activities sharing one event type', () => {
+    // Without this the tests below could pass vacuously after a taxonomy change.
+    expect(IRRIGATION.backendEventType).toBe(FROST.backendEventType);
+    expect(IRRIGATION.backendSubtype).not.toBe(FROST.backendSubtype);
+    expect(IRRIGATION.verbKey).not.toBe(FROST.verbKey);
+  });
+
+  it('offers the switch for irrigation heard on a frost-protection form', () => {
+    expect(
+      shouldOfferActivitySwitch(IRRIGATION, 'irrigation', PRODUCTION, 'FP', 'frost_protection')
+    ).toBe(true);
+  });
+
+  it('stays quiet when the heard activity IS the one being logged', () => {
+    expect(
+      shouldOfferActivitySwitch(IRRIGATION, 'irrigation', PRODUCTION, 'IR', 'irrigation')
+    ).toBe(false);
+  });
+
+  it('still offers the switch across event types', () => {
+    // The original case this rule existed for: a fertilizer utterance on a production form.
+    expect(
+      shouldOfferActivitySwitch(
+        VOICE_TYPE_MAP.fertilization,
+        'fertilization',
+        PRODUCTION,
+        'FP',
+        'frost_protection'
+      )
+    ).toBe(true);
+  });
+
+  it('stays quiet on an unrecognised utterance', () => {
+    // `general` is ignorance. Offering to switch the farmer OFF the right form because the
+    // parser could not place their words is advice generated from nothing.
+    expect(
+      shouldOfferActivitySwitch(IRRIGATION, 'general', PRODUCTION, 'FP', 'frost_protection')
+    ).toBe(false);
+  });
+
+  it('stays quiet while the subtype is still unknown', () => {
+    // Soil, pest and business ask their subtype INSIDE the tab, so voice can run before one
+    // exists — there is nothing yet to disagree with.
+    expect(shouldOfferActivitySwitch(IRRIGATION, 'irrigation', PRODUCTION, undefined, null)).toBe(
+      false
+    );
+    expect(shouldOfferActivitySwitch(IRRIGATION, 'irrigation', PRODUCTION, '', null)).toBe(false);
+  });
+
+  it('stays quiet for a different subtype under the SAME verb tile', () => {
+    // field_work covers CU/TH/MO — three subtypes, one tile. "It sounded like Field work,
+    // which is a different activity than the one you are logging" would name the tile the
+    // farmer is already on. The tile's own subtype select is where that gets corrected.
+    const mowing = VOICE_TYPE_MAP.mowing;
+    const cultivation = VOICE_TYPE_MAP.cultivation;
+    expect(mowing.verbKey).toBe(cultivation.verbKey);
+    expect(shouldOfferActivitySwitch(mowing, 'mowing', PRODUCTION, 'CU', 'field_work')).toBe(false);
   });
 });
 

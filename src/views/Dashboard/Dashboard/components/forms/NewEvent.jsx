@@ -98,7 +98,7 @@ import {
   verbForEvent,
   verbForKey
 } from 'config/activityVerbs';
-import { getSubtypes } from 'config/events';
+import { getFieldConfig, getSubtypes } from 'config/events';
 import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
 import { VerbPickerGrid } from 'components/Events/VerbPickerGrid';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
@@ -107,7 +107,8 @@ import {
   mapVoiceDataToFieldValues,
   mapVoiceTypeToTemplate,
   gateVoiceOverridesToForm,
-  isRecognizedVoiceType
+  shouldOfferActivitySwitch,
+  voiceTypeForActivity
 } from 'utils/voiceDataMapper';
 import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
 import { nowLocalDateTimeInput } from 'utils/dateOnly';
@@ -1337,17 +1338,41 @@ function NewEvent({ isEdit = false, eventId = null }) {
       banner: {
         transcript: eventData.original_transcript || eventData.description || '',
         count: Object.keys(kept).length,
+        // WHICH fields, not just how many. "1 fields filled" with nothing visibly changed is
+        // what a farmer sees when the only thing voice could keep was `observation` — the
+        // notes box, which sits below the fold on every activity. A count alone cannot be
+        // checked; a name can.
+        keptFields: Object.keys(kept),
         droppedCount: dropped.length,
-        // Only a real cross-activity mismatch earns the switch offer. Two things disqualify
-        // one: the same event type with a different subtype (Harvest heard on a Pruning
-        // form) — the gate already handles that, nothing unseen is written either way — and
-        // an UNRECOGNISED utterance, which arrives as `general` and is ignorance, not a
-        // detection. See isRecognizedVoiceType: the eight newest production subtypes are in
-        // no prompt enum, so a correct Transport record would otherwise be told to switch.
-        suggestion:
-          isRecognizedVoiceType(eventData.type) && mapping.backendEventType !== eventTypeId
-            ? mapping
-            : null,
+        // A mismatch is judged on the ACTIVITY, not on the backend event type.
+        //
+        // MEASURED 2026-08-30: farmer on Frost Protection says "irrigated the field for six
+        // hours with the drip system". Irrigation and Frost Protection are both PRODUCTION
+        // (event type 1), so `backendEventType !== eventTypeId` was false, no switch was
+        // offered, and the panel simply announced "Sounds like: Irrigation" over a Frost
+        // Protection form. The gate then dropped every irrigation field and the banner
+        // reported "1 fields filled" — the transcript in the notes box. Nothing on screen
+        // said the activity itself was wrong. Since the activity-verb pivot the farmer picks
+        // a VERB (Irrigation and Frost protection are two separate tiles), so the subtype is
+        // the activity and has to be part of this comparison.
+        //
+        // Two things still disqualify an offer:
+        //   - an UNRECOGNISED utterance, which arrives as `general`: that is ignorance, not a
+        //     detection (isRecognizedVoiceType);
+        //   - a different subtype UNDER THE SAME VERB TILE (field_work covers CU/TH/MO), where
+        //     the tile is already right and its own subtype select is the place to correct it,
+        //     not a "switch activity" button that would name the tile the farmer is on.
+        // An unknown subtype (soil/pest/business before the in-tab select) also stays quiet —
+        // there is nothing yet to disagree with.
+        suggestion: shouldOfferActivitySwitch(
+          mapping,
+          eventData.type,
+          eventTypeId,
+          subtypeCode,
+          pickedVerbKey
+        )
+          ? mapping
+          : null,
         raw: eventData
       }
     };
@@ -1363,6 +1388,21 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // activity does not record it", which is false: it does, we just could not know it yet.
   // So hold them, and re-gate the moment the subtype arrives.
   const pendingVoiceRef = useRef(null);
+
+  // Labels for the fields voice actually wrote, resolved through the display registry so the
+  // banner uses the same words the form does. A field with no registry label (or one whose
+  // labelKey is missing from the catalogue) is skipped rather than printed as a raw key.
+  const voiceFilledLabels = useMemo(() => {
+    const names = voiceBanner?.keptFields || [];
+    return names
+      .map((name) => {
+        const cfg = getFieldConfig(activeEventType, name);
+        if (!cfg?.labelKey) return null;
+        const label = intl.formatMessage({ id: cfg.labelKey, defaultMessage: '' });
+        return label || null;
+      })
+      .filter(Boolean);
+  }, [voiceBanner, activeEventType, intl]);
 
   const handleVoiceEventDetected = (eventData) => {
     const subtype = eventFormData.type;
@@ -1408,7 +1448,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
     const added = Object.keys(fresh).length;
     setVoiceBanner((prev) =>
-      prev ? { ...prev, count: prev.count + added, droppedCount: dropped.length } : prev
+      prev
+        ? {
+            ...prev,
+            count: prev.count + added,
+            keptFields: [...(prev.keptFields || []), ...Object.keys(fresh)],
+            droppedCount: dropped.length
+          }
+        : prev
     );
     if (added === 0) return;
     setEventFormData((prev) => ({ ...prev, ...fresh }));
@@ -2828,6 +2875,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           onEventDetected={handleVoiceEventDetected}
                           isActive={true}
                           cropType={voiceCropType}
+                          /* The activity is already decided by the time this panel exists —
+                             its trigger sits in step 2, and step 1 is where the verb tile
+                             and the production subtype are chosen. Passing it lets the
+                             backend prompt extract FIELDS instead of guessing the activity. */
+                          knownActivity={voiceTypeForActivity(activeEventType, eventFormData.type)}
                           autoStart={true}
                           onClose={() => setShowVoiceCapture(false)}
                         />
@@ -2915,6 +2967,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   { count: voiceBanner.count }
                                 )}
                               </Text>
+                              {/* Name them. The count on its own is unverifiable: when the
+                                  only field voice could keep is `observation`, the farmer
+                                  reads "1 field filled", looks at the form, and sees nothing
+                                  changed — the notes box is below the fold on every
+                                  activity. Labels come from the display registry, so they
+                                  are the same words the field itself carries. */}
+                              {voiceBanner.count > 0 && voiceFilledLabels.length > 0 && (
+                                <Text fontSize="xs" color="gray.700">
+                                  {intl.formatMessage(
+                                    { id: 'events.voice.filledFields' },
+                                    { fields: voiceFilledLabels.join(', ') }
+                                  )}
+                                </Text>
+                              )}
                               {voiceBanner.transcript ? (
                                 <Text fontSize="xs" color="gray.600" noOfLines={2}>
                                   “{voiceBanner.transcript}”

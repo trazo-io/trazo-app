@@ -1400,6 +1400,12 @@ export const carbonApi = baseApi.injectEndpoints({
         area_covered?: { value: number; unit: string } | string | null;
         duration?: { value: number; unit: string } | string | null;
         fuel_amount?: { value: number; unit: string } | null;
+        /**
+         * True when the parser could not name an activity from the words and fell back to the
+         * one the farmer chose in step 1. NOT a detection — the panel says so rather than
+         * printing "Sounds like: X" over it.
+         */
+        activity_from_context?: boolean;
         // Metadata
         processing_time?: number;
         source?: string;
@@ -1409,6 +1415,12 @@ export const carbonApi = baseApi.injectEndpoints({
       {
         transcript: string;
         crop_type: string;
+        /**
+         * VOICE_TYPE_MAP slug for the activity the farmer already chose at step 1. Context for
+         * the extraction prompt — the response still carries the model's own `type`, so a
+         * mismatch stays visible. See voiceTypeForActivity / shouldOfferActivitySwitch.
+         */
+        known_activity?: string;
         language?: string;
         timestamp?: string;
       }

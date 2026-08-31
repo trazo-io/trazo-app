@@ -136,6 +136,10 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
     return intl.formatMessage({ id: key });
   })();
 
+  // Whether this claim may present as VERIFIED BY TRAZO. Only the certified tier can, and only
+  // on a real Organic Integrity Database match; every other status keeps its own styling.
+  const showsVerified = claim.status !== 'certified_organic' || claim.oid_matched === true;
+
   // Transition progress: "X of 36 months documented."
   const progressText = (() => {
     if (claim.status !== 'transitioning') return null;
@@ -166,14 +170,36 @@ const OrganicClaimBadge: React.FC<OrganicClaimBadgeProps> = ({ claim }) => {
             <Text fontWeight="bold" fontSize="sm" color={textColor}>
               {localisedClaimLabel}
             </Text>
+            {/* The pill states OUR verification, not the farm's status — `osp.claim.certifiedOrganic`
+                is literally the word "Verified". The public /methodology page promises that a
+                certification shows "Verified" ONLY when we match it against the USDA Organic
+                Integrity Database, and that anything we cannot match is labeled "Self-Reported".
+                `claim.status === 'certified_organic'` is the weaker fact — an active certificate
+                row exists, which a manual admin edit or an import can create — so painting the
+                pill from it broke a promise the product publishes. `oid_matched` is the fact the
+                promise is written about.
+
+                The LABEL beside it still reads "USDA Certified Organic": the operation does hold a
+                certificate, and demoting that would be the opposite error. What changes is only
+                who is vouching. */}
             <Badge
-              colorScheme={style.colorScheme}
+              colorScheme={showsVerified ? style.colorScheme : 'gray'}
               variant="subtle"
               fontSize="xs"
               borderRadius="full"
               px={2}>
               {intl.formatMessage({
-                id: lotSuppressed ? 'osp.claim.lotNotOrganic' : style.labelId
+                id: lotSuppressed
+                  ? 'osp.claim.lotNotOrganic'
+                  : showsVerified
+                  ? style.labelId
+                  : // "Self-Reported", not `osp.claim.selfReported` ("Farmer-reported"). The two
+                    // are different vocabularies and `consumer.trust.ftcDisclaimer` draws the line
+                    // itself: "Practice records are farmer-reported … Certifications are labeled
+                    // separately as Verified or Self-Reported." A certificate issued by an
+                    // accredited agent is not the farmer's report — what is unconfirmed is Trazo's
+                    // match of it — and /methodology promises this exact word for that case.
+                    'certification.badge.selfReportedShort'
               })}
             </Badge>
           </HStack>

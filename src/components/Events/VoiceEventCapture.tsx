@@ -23,6 +23,7 @@ import {
 } from 'store/api/carbonApi';
 import {
   postProcessTranscript,
+  isRecognizedVoiceType,
   mapVoiceTypeToTemplate,
   voiceActivityLabelKey
 } from 'utils/voiceDataMapper';
@@ -45,6 +46,19 @@ interface VoiceEventCaptureProps {
   onEventDetected: (eventData: any) => void;
   isActive: boolean;
   cropType: string;
+  /**
+   * The activity the farmer already picked, as a VOICE_TYPE_MAP slug ("frost_protection").
+   *
+   * The trigger for this panel lives inside step 2, which the farmer only reaches after
+   * choosing a verb tile (and a production subtype) at step 1 — so the activity is known
+   * before the microphone opens. Sending it turns the model's job from "work out what this
+   * is" into "pull the fields this activity records out of these words".
+   *
+   * ⛔ Context, never the answer: the backend still asks what the words describe, so an
+   * irrigation sentence spoken into a Frost Protection form is still caught and offered as
+   * a switch instead of being quietly bent to fit.
+   */
+  knownActivity?: string | null;
   autoStart?: boolean;
   onClose?: () => void;
 }
@@ -53,6 +67,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   onEventDetected,
   isActive,
   cropType,
+  knownActivity = null,
   autoStart = false,
   onClose
 }) => {
@@ -241,6 +256,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       const result = await processVoiceEventWithAI({
         transcript: processedText,
         crop_type: cropType,
+        known_activity: knownActivity || undefined,
         // The backend keys its GPT prompts by language FAMILY (prompt_key_for), so the raw
         // app locale is what it wants — no third code to keep in step.
         language: intl.locale,
@@ -271,6 +287,13 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       // Fallback to local processing if AI fails
       setProcessingStage(intl.formatMessage({ id: 'voice.stage.fallback' }));
       const fallbackEvent = parseVoiceWithFallback(text);
+      // Same rule the backend fallback follows: when the keywords name nothing, defer to the
+      // activity the farmer already chose rather than answering "general" and filling in
+      // nothing at all — and flag that it came from the form, not from the words.
+      if (fallbackEvent.type === 'general' && knownActivity) {
+        fallbackEvent.type = knownActivity;
+        fallbackEvent.activity_from_context = true;
+      }
 
       const endTime = Date.now();
       fallbackEvent.processing_time = endTime - startTime;
@@ -440,6 +463,19 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   }
 
   const mapping = parsedData ? mapVoiceTypeToTemplate(parsedData.type) : null;
+  // The backend could not place the words either, and answered with the activity the farmer
+  // picked in step 1 rather than with "general". That is the honest default — the farmer did
+  // tell us — but it is NOT a detection, and printing "Sounds like: Frost protection" over it
+  // would credit the parser with something it never worked out.
+  const activityFromContext = parsedData?.activity_from_context === true;
+  // `general` is what the parser answers when it could not place the utterance at all — it
+  // is ignorance, not a detection, and "Sounds like: Other activity" read as the latter.
+  const recognized = !!parsedData && isRecognizedVoiceType(parsedData.type) && !activityFromContext;
+  // The backend answers with keyword matching when OpenAI is unreachable (and the panel has
+  // its own local fallback for a failed request). Both produce a real-looking result with no
+  // structured fields — no amounts, no method, no duration — so a farmer comparing what they
+  // said against what arrived has no way to tell a degraded parse from a bad one.
+  const keywordFallback = parsedData?.source === 'pattern_matching_fallback';
 
   return (
     /*
@@ -572,11 +608,34 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                   a green (= good) badge while reporting five and a half seconds. The number
                   is still measured and still posted to the backend as `processing_time`. */}
             <Text fontWeight="semibold" color="gray.800" fontSize="md">
-              {intl.formatMessage(
-                { id: 'voice.understood' },
-                { activity: intl.formatMessage({ id: voiceActivityLabelKey(mapping) }) }
-              )}
+              {recognized
+                ? intl.formatMessage(
+                    { id: 'voice.understood' },
+                    { activity: intl.formatMessage({ id: voiceActivityLabelKey(mapping) }) }
+                  )
+                : intl.formatMessage({ id: 'voice.notUnderstood' })}
             </Text>
+
+            {/* We are using the farmer's own choice because the words did not name an
+                activity. Said out loud, so "Frost Protection" on screen is never mistaken for
+                something the microphone worked out. */}
+            {activityFromContext && (
+              <Text fontSize="xs" color="gray.700">
+                {intl.formatMessage(
+                  { id: 'voice.activityFromContext' },
+                  { activity: intl.formatMessage({ id: voiceActivityLabelKey(mapping) }) }
+                )}
+              </Text>
+            )}
+
+            {/* Degraded parse. Named, because it changes what the farmer should expect: the
+                keyword pass fills almost nothing, and silence here reads as "voice is bad"
+                rather than "the assistant is down". */}
+            {keywordFallback && (
+              <Text fontSize="xs" color="gray.700">
+                {intl.formatMessage({ id: 'voice.keywordFallbackNote' })}
+              </Text>
+            )}
 
             {/* Cut short by MAX_SESSION_MS rather than by a pause. Say so, or the
                 farmer reads a half-captured note as a transcription failure. */}
@@ -680,7 +739,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 Low is a real warning and now looks like every other warning in the app
                 (theme accent bar + amber ground). It used to be `yellow.100`/`yellow.700` —
                 Chakra's yellow, a palette this theme does not define. */}
-            {parsedData.confidence >= 70 ? (
+            {!recognized ? null : parsedData.confidence >= 70 ? (
               <Text fontSize="sm" color="gray.700">
                 {intl.formatMessage({ id: 'voice.confidenceHigh' })}
               </Text>

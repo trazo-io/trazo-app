@@ -342,6 +342,81 @@ export function isRecognizedVoiceType(voiceType: string): boolean {
   return normalized !== 'general' && normalized !== '';
 }
 
+/**
+ * Does what voice heard describe a DIFFERENT ACTIVITY than the one being logged — i.e. does
+ * the farmer deserve the "switch to X" offer?
+ *
+ * MEASURED 2026-08-30. The caller used to ask only `mapping.backendEventType !== eventTypeId`.
+ * A farmer on Frost Protection said "irrigated the field for six hours with the drip system":
+ * Irrigation (IR) and Frost Protection (FP) are BOTH production, event type 1, so that test
+ * was false, no notice appeared, and the panel announced "Sounds like: Irrigation" over a
+ * Frost Protection form. The render gate then dropped every irrigation field and the banner
+ * said "1 fields filled" — the transcript, in the notes box. Nothing said the activity itself
+ * was wrong.
+ *
+ * Since the activity-verb pivot the farmer picks a VERB, and eleven of the seventeen tiles are
+ * production subtypes: the subtype IS the activity, so it has to be part of this comparison.
+ *
+ * Three cases stay silent, each for its own reason:
+ *   - `general` — ignorance, not a detection (see isRecognizedVoiceType above);
+ *   - an unknown current subtype — soil, pest and business ask theirs INSIDE the tab, so voice
+ *     can run before one exists, and there is nothing yet to disagree with;
+ *   - a different subtype under the SAME verb tile (field_work is CU/TH/MO) — the tile is
+ *     already right, and the notice would name the activity the farmer is on. Its own subtype
+ *     select is where that gets corrected.
+ */
+/**
+ * The INVERSE of VOICE_TYPE_MAP: which voice-type slug names the activity the farmer already
+ * picked. Derived from that map rather than written out again, so the two cannot drift.
+ *
+ * Why this exists: since the voice trigger moved INSIDE step 2, the activity is already known
+ * when the microphone opens — the farmer chose a verb tile (and, for production, a subtype) at
+ * step 1. The parser was still being asked to work it out from the words alone, and the render
+ * gate then threw away everything that did not belong to the activity actually being logged.
+ * Telling the model what is being logged turns a classification problem into an extraction one.
+ *
+ * ⛔ It is passed as CONTEXT, never as the answer — see the backend prompt. The model still
+ * reports what it heard, which is what keeps `shouldOfferActivitySwitch` able to catch an
+ * irrigation sentence spoken into a frost-protection form.
+ *
+ * Aliases (fertilization/fertilizer both → FE) resolve to whichever key VOICE_TYPE_MAP declares
+ * first; `voiceTypeForActivityIsStable` in the tests pins that they agree on the mapping.
+ */
+export function voiceTypeForActivity(
+  eventTypeId: number,
+  subtypeCode?: string | null
+): string | null {
+  for (const [slug, mapping] of Object.entries(VOICE_TYPE_MAP)) {
+    if (mapping.backendEventType !== eventTypeId) continue;
+    if (subtypeCode) {
+      if (mapping.backendSubtype === subtypeCode) return slug;
+      continue;
+    }
+    // No subtype in hand. Only an entry that HAS no subtype of its own (general documentation)
+    // names an activity on its own terms; anything else would be picking one of several
+    // subtypes for the farmer — soil, pest and business ask theirs inside the tab, and a guess
+    // in the prompt is worse than no context at all.
+    if (!mapping.backendSubtype) return slug;
+  }
+  return null;
+}
+
+export function shouldOfferActivitySwitch(
+  mapping: VoiceTemplateMapping,
+  voiceType: string,
+  eventTypeId: number,
+  subtypeCode?: string | null,
+  pickedVerbKey?: string | null
+): boolean {
+  if (!isRecognizedVoiceType(voiceType)) return false;
+  const sameActivity =
+    mapping.backendEventType === eventTypeId &&
+    (!mapping.backendSubtype || !subtypeCode || mapping.backendSubtype === subtypeCode);
+  if (sameActivity) return false;
+  if (pickedVerbKey && mapping.verbKey === pickedVerbKey) return false;
+  return true;
+}
+
 // ============================================================================
 // AMOUNT EXTRACTION
 // ============================================================================
