@@ -1876,7 +1876,7 @@ function ProductDetail() {
                     <Heading size={{ base: 'sm', smd: 'md', lg: 'lg' }} color="gray.800">
                       {intl.formatMessage({
                         id: 'consumer.detail.meetFarmers',
-                        defaultMessage: 'Meet Your Transparent Farmers'
+                        defaultMessage: 'The Farm Behind This Lot'
                       })}
                     </Heading>
                     <Text color="gray.600" maxW="md" fontSize="sm">
@@ -1907,7 +1907,7 @@ function ProductDetail() {
                       <Text>
                         {intl.formatMessage({
                           id: 'consumer.detail.documentedFarm',
-                          defaultMessage: 'Documented Farm'
+                          defaultMessage: 'Farm'
                         })}
                       </Text>
                     </HStack>

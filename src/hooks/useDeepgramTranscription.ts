@@ -21,6 +21,36 @@ import { getKeytermsForLanguage } from 'config/agriculturalKeyterms';
  */
 export const MAX_SESSION_MS = 90_000;
 
+/**
+ * The audio container this browser can actually produce.
+ *
+ * ⛔ NOT "webm, or webm". MEASURED 2026-09-01 on an iPhone against app.trazo.io: this asked for
+ * `audio/webm;codecs=opus`, found it unsupported, and fell back to `audio/webm` — which iOS
+ * Safari does not support either. `new MediaRecorder(stream, { mimeType: 'audio/webm' })` throws
+ * NotSupportedError there, and it threw inside `ws.onopen`, so the socket stayed open with
+ * nothing ever sent down it until Deepgram closed it for silence. The farmer allowed the
+ * microphone and was told "the connection to the transcription service dropped" — a message
+ * about the one thing that had not gone wrong.
+ *
+ * Safari records `audio/mp4` (AAC). The list is ordered by what Deepgram handles most happily,
+ * and ends with `''` meaning "no mimeType option at all", which asks the browser for its own
+ * default rather than asserting a format nobody supports.
+ */
+export function pickRecorderMimeType(): string | null {
+  if (typeof MediaRecorder === 'undefined') return null;
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/ogg;codecs=opus',
+    'audio/mp4;codecs=mp4a.40.2',
+    'audio/mp4'
+  ];
+  const supported = candidates.find((type) => MediaRecorder.isTypeSupported(type));
+  // `''` is meaningful: MediaRecorder accepts being constructed with no mimeType and picks the
+  // platform default. `null` is the genuinely hopeless case — no MediaRecorder at all.
+  return supported ?? '';
+}
+
 interface UseDeepgramTranscriptionOptions {
   language: string;
   onTranscriptComplete: (text: string) => void;
@@ -39,6 +69,7 @@ interface UseDeepgramTranscriptionOptions {
 export type DeepgramErrorId =
   | 'voice.tokenFailed'
   | 'voice.microphoneBlocked'
+  | 'voice.recorderUnsupported'
   | 'voice.connectionFailed';
 
 interface UseDeepgramTranscriptionReturn {
@@ -144,7 +175,16 @@ export function useDeepgramTranscription({
       return;
     }
 
-    // 2. Get microphone
+    // 2. Can this browser record at all? Checked BEFORE the socket and before the microphone
+    // prompt, so a browser that cannot record never asks the farmer for permission it has no use
+    // for — and never reports the failure as a dropped connection.
+    const mimeType = pickRecorderMimeType();
+    if (mimeType === null) {
+      setError('voice.recorderUnsupported');
+      return;
+    }
+
+    // 3. Get microphone
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -156,7 +196,7 @@ export function useDeepgramTranscription({
     }
     streamRef.current = stream;
 
-    // 3. Build WebSocket URL with Deepgram params
+    // 4. Build WebSocket URL with Deepgram params
     const keyterms = getKeytermsForLanguage(language);
     const params = new URLSearchParams({
       model: 'nova-3',
@@ -172,19 +212,26 @@ export function useDeepgramTranscription({
 
     const wsUrl = `wss://api.deepgram.com/v1/listen?${params.toString()}`;
 
-    // 4. Open WebSocket — authenticate via subprotocol ['token', key]
+    // 5. Open WebSocket — authenticate via subprotocol ['token', key]
     const ws = new WebSocket(wsUrl, ['token', token]);
     wsRef.current = ws;
 
     ws.onopen = () => {
       setIsListening(true);
 
-      // Start MediaRecorder
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : 'audio/webm';
-
-      const recorder = new MediaRecorder(stream, { mimeType });
+      // Start MediaRecorder. Wrapped because this ran inside an event handler: a throw here
+      // does not reject anything the caller awaits, it just leaves a live socket and a silent
+      // microphone, which is exactly how this looked like a network fault for a week.
+      let recorder: MediaRecorder;
+      try {
+        recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[voice] MediaRecorder rejected', mimeType, err);
+        setError('voice.recorderUnsupported');
+        cleanup();
+        return;
+      }
       recorderRef.current = recorder;
 
       recorder.ondataavailable = (event) => {
