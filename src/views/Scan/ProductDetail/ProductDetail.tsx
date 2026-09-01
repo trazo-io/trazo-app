@@ -1557,48 +1557,70 @@ function ProductDetail() {
                 <HarvestInfoCard harvestDetails={completeData.harvestDetails} />
               )}
 
-              {/* Production Images Gallery - Visual proof of farming practices */}
-              {completeData?.images && completeData.images.length > 0 ? (
-                <Box
-                  bg="white"
-                  borderRadius="xl"
-                  border="1px solid"
-                  borderColor="gray.200"
-                  p={{ base: 4, smd: 6 }}
-                  mb={6}>
-                  <StandardImageGallery
-                    images={completeData.images}
-                    title={intl.formatMessage({
-                      id: 'consumer.detail.productionPhotos',
-                      defaultMessage: 'Production Photos'
-                    })}
-                    variant="consumer"
-                    enablePreview={true}
-                    showImageCount={true}
-                    maxDisplayImages={3}
-                    aspectRatio="16/9"
-                  />
-                </Box>
-              ) : (
-                /* Explicit empty state — a 0-photo batch used to make the whole gallery card
+              {/* Production Images Gallery - Visual proof of farming practices.
+                  🔴 2026-09-01 — sourced from the season's EVENT albums, not `completeData.images`.
+                  That array is every photo on the record, the farm's establishment profile
+                  picture included, so a lot with zero production photos still rendered a card
+                  titled "Production Photos" containing the farm's profile shot — which is also
+                  already the hero image at the top of the page. Mislabelled and duplicated at
+                  once, and it suppressed the honest empty state below, which exists precisely
+                  for this case.
+                  Same defect as the photo COUNT on the "How This Food Was Grown" card
+                  (fixed 2026-08-30): one merged array feeding a surface that promises something
+                  narrower. Computed as a plain const, not a useMemo — this sits below the
+                  component's early returns, and a hook here would violate the rule
+                  `src/__tests__/hooksBeforeReturns.test.ts` guards. */}
+              {(() => {
+                const productionPhotos: string[] = Array.from(
+                  new Set(
+                    (((completeData as any)?.timeline as any[]) || [])
+                      .flatMap((ev: any) => (ev?.album?.images as any[]) || [])
+                      .map((img: any) => img?.image)
+                      .filter(Boolean)
+                  )
+                );
+                return productionPhotos.length > 0 ? (
+                  <Box
+                    bg="white"
+                    borderRadius="xl"
+                    border="1px solid"
+                    borderColor="gray.200"
+                    p={{ base: 4, smd: 6 }}
+                    mb={6}>
+                    <StandardImageGallery
+                      images={productionPhotos}
+                      title={intl.formatMessage({
+                        id: 'consumer.detail.productionPhotos',
+                        defaultMessage: 'Production Photos'
+                      })}
+                      variant="consumer"
+                      enablePreview={true}
+                      showImageCount={true}
+                      maxDisplayImages={3}
+                      aspectRatio="16/9"
+                    />
+                  </Box>
+                ) : (
+                  /* Explicit empty state — a 0-photo batch used to make the whole gallery card
                    vanish silently (2026-06 audit P2-9). One muted line is clearer. */
-                <Box
-                  bg="gray.50"
-                  borderRadius="xl"
-                  border="1px dashed"
-                  borderColor="gray.200"
-                  p={{ base: 4, smd: 5 }}
-                  mb={6}
-                  textAlign="center">
-                  <Text fontSize="sm" color="gray.500">
-                    {intl.formatMessage({
-                      id: 'consumer.detail.noPhotos',
-                      defaultMessage:
-                        'No photos for this batch — the written records below still document the season.'
-                    })}
-                  </Text>
-                </Box>
-              )}
+                  <Box
+                    bg="gray.50"
+                    borderRadius="xl"
+                    border="1px dashed"
+                    borderColor="gray.200"
+                    p={{ base: 4, smd: 5 }}
+                    mb={6}
+                    textAlign="center">
+                    <Text fontSize="sm" color="gray.500">
+                      {intl.formatMessage({
+                        id: 'consumer.detail.noPhotos',
+                        defaultMessage:
+                          'No photos for this batch — the written records below still document the season.'
+                      })}
+                    </Text>
+                  </Box>
+                );
+              })()}
 
               <Divider borderColor="gray.200" />
 

@@ -28,6 +28,7 @@ import {
   voiceActivityLabelKey,
   mapVoiceDataToFieldValues,
   mapVoiceTypeToTemplate,
+  amountsActuallySpoken,
   shouldOfferActivitySwitch,
   voiceTypeForActivity,
   VOICE_TYPE_MAP,
@@ -460,6 +461,83 @@ describe('a real parse that the mapper used to choke on', () => {
     expect(parse('bushels').wrote).not.toContain('irrigation_depth');
     expect(parse('bushels').wrote).not.toContain('irrigation_depth_unit');
     expect(parse('centimetros').wrote).toContain('irrigation_depth');
+  });
+});
+
+describe('an amount is only an amount if its unit was said', () => {
+  // MEASURED 2026-09-01 from a real dictation: speech-to-text wrote "Kocide 3000-O" as "Kocide
+  // three thousand dot o", the parser read the 3000 out of the PRODUCT NAME as a quantity, and
+  // then supplied a unit for it — `{value: 3000, unit: "gallons"}` from a sentence in which
+  // nobody said gallons. It showed the farmer a "3000 gallons" chip next to the real "3.5 lbs",
+  // and on an utterance with no weight in it that invented volume is what reaches
+  // `volume_applied`.
+  const SAID =
+    'Apply at spray Kocide three thousand dot o on the east block three and a half pound Acre, air air blast for walnut blight.';
+
+  it('keeps the amount the farmer spoke a unit for', () => {
+    const kept = amountsActuallySpoken(
+      [
+        { value: 3.5, unit: 'lbs', category: 'weight' },
+        { value: 3000, unit: 'gallons', category: 'volume' }
+      ],
+      SAID
+    );
+    expect(kept).toEqual([{ value: 3.5, unit: 'lbs', category: 'weight' }]);
+  });
+
+  it('matches a unit through its synonyms', () => {
+    // The farmer said "pound"; the parser answered "lbs".
+    expect(
+      amountsActuallySpoken([{ value: 3.5, unit: 'lbs' }], 'three and a half pound')
+    ).toHaveLength(1);
+    expect(amountsActuallySpoken([{ value: 2, unit: 'acres' }], 'two Acre')).toHaveLength(1);
+  });
+
+  it('fails OPEN when it recognises no unit at all', () => {
+    // Units arrive in the farmer's language and only some are in the synonym map. Filtering
+    // against a vocabulary we half-speak would drop every amount in Spanish, which is far worse
+    // than one bogus chip.
+    const spanish = [{ value: 5, unit: 'centimetros', category: 'depth' }];
+    expect(amountsActuallySpoken(spanish, 'regamos unos cinco centimetros')).toHaveLength(1);
+  });
+
+  it('the bogus volume never reaches the form', () => {
+    // ⚠️ NO weight in this payload, on purpose. With one present the chemical mapper prefers it
+    // and the test passes whether or not the filter exists — which is exactly how the first
+    // version of this test was vacuous. The dangerous utterance is the one where the invented
+    // volume is the ONLY amount, because then it is what lands in `volume_applied`.
+    const parsed = {
+      type: 'fungicide',
+      description: '',
+      confidence: 90,
+      detected_amounts: [{ value: 3000, unit: 'gallons', category: 'volume' }],
+      detected_products: ['Kocide'],
+      detected_systems: [],
+      original_transcript: 'sprayed Kocide three thousand dot o on the east block, one pound'
+    } as never;
+    const result = mapVoiceDataToFieldValues(parsed, 'fungicide');
+    // ⚠️ Asserted on `overriddenFields`, NOT on `values`: the fungicide template prefills a
+    // volume of its own, so `values.volume_applied` is a number whether or not voice wrote one.
+    // Asking `values` "did voice write this?" answers yes for a field voice never touched.
+    expect(result.overriddenFields).not.toContain('volume_applied');
+  });
+
+  it('...and a volume the farmer DID say still reaches it', () => {
+    // The other half: a filter that drops everything would "pass" the test above while killing
+    // the feature.
+    const parsed = {
+      type: 'fungicide',
+      description: '',
+      confidence: 90,
+      detected_amounts: [{ value: 40, unit: 'gallons', category: 'volume' }],
+      detected_products: ['Kocide'],
+      detected_systems: [],
+      original_transcript: 'sprayed forty gallons of Kocide on the east block'
+    } as never;
+    const result = mapVoiceDataToFieldValues(parsed, 'fungicide');
+    expect(result.overriddenFields).toContain('volume_applied');
+    expect(result.values.volume_applied).toBe(40);
+    expect(result.values.volume_unit).toBe('gal');
   });
 });
 

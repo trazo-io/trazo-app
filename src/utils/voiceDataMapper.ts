@@ -477,6 +477,45 @@ const UNIT_NORMALIZE: Record<string, string> = {
 /**
  * Parses detected amounts into structured data with proper categorization.
  */
+/**
+ * Drop amounts whose UNIT the farmer never said.
+ *
+ * MEASURED 2026-09-01 from a real dictation. Speech-to-text wrote "Kocide 3000-O" as
+ * "Kocide three thousand dot o", and the parser read the 3000 out of the PRODUCT NAME as a
+ * quantity — then supplied a unit for it, answering `{value: 3000, unit: "gallons",
+ * category: "volume"}` from a sentence in which nobody said gallons. It rendered to the farmer as
+ * a "3000 gallons" chip beside the real "3.5 lbs", and on an utterance with no weight in it that
+ * invented volume is what would reach `volume_applied`.
+ *
+ * The test is the same one `wasSpoken` applies to a block: a unit is a word the farmer used, so
+ * if it is absent from the transcript the amount was assembled rather than heard.
+ *
+ * ⚠️ Fails OPEN when the transcript contains no unit this map knows. Units arrive in the
+ * farmer's language ("centímetros", "quilos") and only some are in UNIT_NORMALIZE; filtering
+ * against a vocabulary we only half-speak would silently drop every amount in Spanish and
+ * Portuguese, which is far worse than one bogus chip.
+ */
+export function amountsActuallySpoken<T extends { unit?: string } | string>(
+  amounts: readonly T[] | null | undefined,
+  transcript: string
+): T[] {
+  if (!Array.isArray(amounts) || amounts.length === 0) return [];
+  const canonical = (unit: string) => UNIT_NORMALIZE[unit.toLowerCase()] ?? unit.toLowerCase();
+
+  const tokens = (transcript || '').toLowerCase().match(/[a-z]+/g) ?? [];
+  const spokenUnits = new Set(
+    tokens.filter((token) => token in UNIT_NORMALIZE).map((token) => UNIT_NORMALIZE[token])
+  );
+  if (spokenUnits.size === 0) return [...amounts];
+
+  return amounts.filter((amount) => {
+    if (typeof amount === 'string') return true;
+    const unit = (amount as { unit?: string }).unit;
+    if (!unit) return true;
+    return spokenUnits.has(canonical(unit));
+  });
+}
+
 export function extractStructuredAmounts(
   detectedAmounts: Array<StructuredAmount | string> | null | undefined
 ): StructuredAmount[] {
@@ -658,8 +697,6 @@ export function mapVoiceDataToFieldValues(
   });
   const overrides: Record<string, unknown> = {};
 
-  const amounts = extractStructuredAmounts(parsedData.detected_amounts);
-
   // The transcript belongs in the notes box, on EVERY activity.
   //
   // Three subtypes are still unroutable — canopy management, buffer use and seed search —
@@ -683,6 +720,13 @@ export function mapVoiceDataToFieldValues(
   // `description`: it promotes machine copy into the grower's quoted voice.
   const spokenNotes = (parsedData.original_transcript || '').trim();
   if (spokenNotes) overrides.observation = spokenNotes;
+
+  // Amounts, filtered to the ones whose UNIT the farmer actually said — see
+  // amountsActuallySpoken. Declared here rather than at the top of the function because it needs
+  // the transcript above it; every consumer of `amounts` is further down.
+  const amounts = extractStructuredAmounts(
+    amountsActuallySpoken(parsedData.detected_amounts, spokenNotes)
+  );
 
   // ── Chemical events (fertilization, pest_control, herbicide, fungicide) ──
   if (['fertilization', 'pest_control', 'herbicide', 'fungicide'].includes(templateId)) {

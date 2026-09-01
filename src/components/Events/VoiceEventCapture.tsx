@@ -23,6 +23,7 @@ import {
   useGetDeepgramTokenMutation
 } from 'store/api/carbonApi';
 import {
+  amountsActuallySpoken,
   postProcessTranscript,
   isRecognizedVoiceType,
   mapVoiceTypeToTemplate,
@@ -457,6 +458,11 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   /** Format detected amounts for display */
   const formatAmountsForDisplay = (amounts: any[]): string[] => {
     if (!amounts || amounts.length === 0) return [];
+    // Same filter the form values go through: an amount whose UNIT was never spoken was
+    // assembled, not heard. MEASURED 2026-09-01 — "Kocide three thousand dot o" (the product
+    // name, as speech-to-text wrote "Kocide 3000-O") produced a "3000 gallons" chip beside the
+    // real "3.5 lbs", from a sentence in which nobody said gallons.
+    amounts = amountsActuallySpoken(amounts, parsedData?.original_transcript || '');
     // Deduplicated: "apply 200 pounds ... apply it, 200 pounds" is one fact said twice, and it
     // rendered as two identical "200 lbs" chips, which reads as two hundred-pound applications.
     return [

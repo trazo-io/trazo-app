@@ -137,6 +137,32 @@ describe('"Verified" requires a real Organic Integrity Database match', () => {
     }
   });
 
+  it('the Production Photos gallery is fed by event photos, not the merged array', () => {
+    // Third instance of one class: `completeData.images` is EVERY photo on the record — the
+    // farm's establishment profile picture included — and it kept being handed to surfaces that
+    // promise something narrower.
+    //
+    //   2026-08-30  the photo COUNT read "{n} Photos Across Farming Events" off it
+    //   2026-09-01  the GALLERY titled "Production Photos" rendered it, so a lot with zero
+    //               production photos showed a card containing the farm's profile shot — the
+    //               same image already used as the page hero — and suppressed the honest
+    //               "No photos for this batch" empty state that exists for exactly that case.
+    const code = codeOf(read('views/Scan/ProductDetail/ProductDetail.tsx'));
+    const galleryIdx = code.indexOf("id: 'consumer.detail.productionPhotos'");
+    expect(galleryIdx, 'the gallery moved — this would pass vacuously').toBeGreaterThan(-1);
+
+    const above = code.slice(Math.max(0, galleryIdx - 300), galleryIdx);
+    expect(
+      above,
+      'the "Production Photos" gallery must not be fed `completeData.images` — that array ' +
+        'carries the establishment profile photo, so the card promises production photos and ' +
+        "delivers the farm's headshot"
+    ).not.toMatch(/images=\{completeData\??\.images\}/);
+    expect(above, 'the gallery should be fed photos derived from the season timeline').toMatch(
+      /productionPhotos/
+    );
+  });
+
   it('the disclaimer never claims Trazo does not check', () => {
     // The over-correction fence. Trazo does check; only THIS certificate went unmatched.
     const en = JSON.parse(read('i18n/lang/en-US.json'));
