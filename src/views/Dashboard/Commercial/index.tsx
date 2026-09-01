@@ -162,7 +162,7 @@ const CustomerQualityAnalytics = ({ scansData, isLoading }: CustomerQualityAnaly
         title={intl.formatMessage({ id: 'commercial.customerQualityAnalytics' })}
         variant="elevated">
         <Flex justify="center" align="center" h="200px">
-          <CircularProgress isIndeterminate color="green.500" />
+          <CircularProgress isIndeterminate color="green.700" />
         </Flex>
       </StandardCard>
     );
@@ -1004,7 +1004,7 @@ export default function CommercialView() {
                 <Box w="100%" h={{ base: '300px', md: '350px' }} overflow="hidden">
                   {isFetching ? (
                     <Flex justify="center" align="center" h="100%">
-                      <CircularProgress isIndeterminate color="green.500" />
+                      <CircularProgress isIndeterminate color="green.700" />
                     </Flex>
                   ) : !dataEstablishmentScansVsSaleInfo?.scans_vs_reviews ? (
                     <Flex justify="center" align="center" h="100%">
@@ -1046,7 +1046,7 @@ export default function CommercialView() {
                 <Box w="100%" h={{ base: '300px', md: '350px' }} overflow="hidden">
                   {isFetchingEstablishmentProductsReputation ? (
                     <Flex justify="center" align="center" h="100%">
-                      <CircularProgress isIndeterminate color="green.500" />
+                      <CircularProgress isIndeterminate color="green.700" />
                     </Flex>
                   ) : (
                     <ModernBarChart

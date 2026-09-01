@@ -102,19 +102,20 @@ const TrackList = ({ amount }) => {
   // (can't reference `data` in the same hook's options)
   const [eventsPolling, setEventsPolling] = useState(false);
 
-  const { data, error, isLoading, isFetching, refetch } = useGetCurrentHistoryQuery(
-    {
-      companyId: currentCompany?.id,
-      farmId,
-      parcelId: parcelId || ''
-    },
-    {
-      skip: !parcelId || !currentCompany || !farmId || currentCompany?.id === undefined,
-      refetchOnMountOrArgChange: true,
-      refetchOnFocus: false,
-      pollingInterval: eventsPolling ? 3000 : 0
-    }
-  );
+  const { data, error, isLoading, isFetching, isUninitialized, refetch } =
+    useGetCurrentHistoryQuery(
+      {
+        companyId: currentCompany?.id,
+        farmId,
+        parcelId: parcelId || ''
+      },
+      {
+        skip: !parcelId || !currentCompany || !farmId || currentCompany?.id === undefined,
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: false,
+        pollingInterval: eventsPolling ? 3000 : 0
+      }
+    );
 
   // Clear Redux state when parcel changes to prevent stale data
   useEffect(() => {
@@ -310,9 +311,12 @@ const TrackList = ({ amount }) => {
             }
           }}>
           <Flex direction="column" width={'100%'} pb={4}>
-            {isLoading || isFetching ? (
+            {/* `isUninitialized` — see HistoryCard: a skip gated on `currentCompany?.id`
+                reports `isLoading: false` before it has ever run, which reached the empty
+                state below and claimed this parcel has no current production. */}
+            {isLoading || isFetching || isUninitialized ? (
               <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
-                <CircularProgress isIndeterminate color="green.500" size="40px" />
+                <CircularProgress isIndeterminate color="green.700" size="40px" />
               </Flex>
             ) : (
               <>

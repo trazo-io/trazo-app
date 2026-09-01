@@ -43,7 +43,7 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
   const companyId = currentCompany?.id != null ? String(currentCompany.id) : '';
 
-  const { data, isFetching, isError } = useGetEventQuery(
+  const { data, isFetching, isUninitialized, isError } = useGetEventQuery(
     {
       companyId,
       farmId,
@@ -79,7 +79,11 @@ export const ActivityDetailModal: React.FC<ActivityDetailModalProps> = ({
             {intl.formatMessage({ id: 'activities.detail.title' })}
           </Text>
         }>
-        {isError || (!isFetching && !event) ? (
+        {/* `!isUninitialized`: the skip waits on `companyId`, and a skipped query is not
+            fetching and has no data — which read as "could not be loaded" before anything had
+            been attempted. Narrow in practice (the row must already exist to be clicked) but
+            the same shape as the ProfileParcel flash, and free to close. */}
+        {isError || (!isFetching && !isUninitialized && !event) ? (
           <VStack py={6} spacing={2}>
             <Text fontSize="sm" color="gray.600" textAlign="center">
               {intl.formatMessage({ id: 'activities.detail.error' })}

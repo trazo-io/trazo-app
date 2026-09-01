@@ -30,7 +30,8 @@ import { useGetUserReviewsQuery } from '../../../store/api/historyApi';
 import {
   StandardPage,
   StandardCard,
-  StandardButton
+  StandardButton,
+  StandardQueryError
 } from '../../../components/Design/StandardComponents';
 
 export default function ConsumerProfile() {
@@ -41,11 +42,40 @@ export default function ConsumerProfile() {
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
 
   // Fetch user data
-  const { data: user, isLoading: userLoading } = useGetMeQuery();
-  const { data: impactData, isLoading: impactLoading } = useGetImpactDashboardQuery();
-  const { data: reviews, isLoading: reviewsLoading } = useGetUserReviewsQuery();
+  const {
+    data: user,
+    isLoading: userLoading,
+    isError: userError,
+    isFetching: userFetching,
+    refetch: refetchUser
+  } = useGetMeQuery();
+  const {
+    data: impactData,
+    isLoading: impactLoading,
+    isError: impactError,
+    isFetching: impactFetching,
+    refetch: refetchImpact
+  } = useGetImpactDashboardQuery();
+  const {
+    data: reviews,
+    isLoading: reviewsLoading,
+    isError: reviewsError,
+    isFetching: reviewsFetching,
+    refetch: refetchReviews
+  } = useGetUserReviewsQuery();
 
   const isLoading = userLoading || impactLoading || reviewsLoading;
+  // There was no error path here at all. Every value on this page is read with `?.` and a
+  // `|| 0` fallback, so a failed request did not blank the page — it rendered a COMPLETE,
+  // confident profile in which the person had scanned nothing, reviewed nothing and saved
+  // no impact. Zeroes are a claim; a request that never landed cannot make it.
+  const isError = userError || impactError || reviewsError;
+  const isRetrying = userFetching || impactFetching || reviewsFetching;
+  const retryAll = () => {
+    refetchUser();
+    refetchImpact();
+    refetchReviews();
+  };
 
   if (isLoading) {
     return (
@@ -111,6 +141,17 @@ export default function ConsumerProfile() {
             </VStack>
           </StandardCard>
         </VStack>
+      </StandardPage>
+    );
+  }
+
+  // Loaded, but not successfully. Rendering the profile shell here would state zeroes as
+  // facts about this person's account (see the note beside `isError`), so the page says what
+  // happened instead and offers the retry.
+  if (isError) {
+    return (
+      <StandardPage title="Profile" showBackButton onBack={() => navigate(-1)}>
+        <StandardQueryError onRetry={retryAll} isRetrying={isRetrying} />
       </StandardPage>
     );
   }

@@ -53,6 +53,12 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
 
   'A business or compliance record was filed for this crop':
     'Se archivó un registro comercial o de cumplimiento para este cultivo',
+  // Contamination-incident copy (eventDescriptions.ts). Overrides whatever `activity_type`
+  // wording the record was filed under — see the note there.
+  'A contamination incident was recorded for this block':
+    'Se registró un incidente de contaminación en este bloque',
+  'The farm recorded this incident itself, along with where it came from and how much of the block it reached.':
+    'La finca registró este incidente por su cuenta, junto con su origen y qué parte del bloque alcanzó.',
   'Carbon credits were issued or transferred for this operation':
     'Se emitieron o transfirieron créditos de carbono para esta operación',
   'An audit of the operation was carried out and recorded':
@@ -275,8 +281,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'El compost alimenta el suelo en el que crece este cultivo, en lugar de alimentar directamente a la planta.',
   'Compost was spread on the block': 'Se esparció compost en el lote',
   'Composting Operation': 'Operación de compostaje',
-  'Composting turns orchard waste back into soil, and the organic matter it adds helps the ground hold water.':
-    'El compostaje convierte los residuos del huerto nuevamente en suelo, y la materia orgánica que aporta ayuda a que la tierra retenga agua.',
+  'Recording the amount, the area and the composting process is what makes soil building checkable rather than asserted.':
+    'Registrar la cantidad, la superficie y el proceso de compostaje es lo que permite verificar la mejora del suelo en lugar de afirmarla.',
   'Comprehensive audit ensuring environmental and social sustainability standards':
     'Auditoría integral que garantiza normas de sostenibilidad ambiental y social',
   'Comprehensive soil analysis to optimize growing conditions and ensure healthy crop development':
@@ -387,8 +393,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Condiciones de baja humedad monitoreadas para evaluar el estrés de las plantas y ajustar las estrategias de riego',
   'Maintained farm infrastructure and equipment for optimal operations':
     'Se mantuvo la infraestructura y el equipo de la finca para operaciones óptimas',
-  'Managed pollinators placed to support crop growth, a natural, zero-emission process':
-    'Polinizadores manejados ubicados para favorecer el crecimiento del cultivo, un proceso natural y sin emisiones',
+  'Managed pollinators were brought in to pollinate the crop':
+    'Se trajeron polinizadores manejados para polinizar el cultivo',
   'Mechanical cultivation for weed control and soil aeration':
     'Cultivo mecánico para el control de malezas y la aireación del suelo',
   'Mechanical cultivation for weed control and soil aeration to optimize crop growth':
@@ -423,8 +429,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Professional agricultural treatment applied according to sustainable farming practices':
     'Tratamiento agrícola profesional aplicado según prácticas de agricultura sostenible',
   'Pruning Operation': 'Operación de poda',
-  'Prunings are chipped back onto the orchard floor, returning the material to the soil instead of hauling it away.':
-    'Los restos de poda se trituran y se devuelven al suelo del huerto, en lugar de retirarlos del campo.',
+  'Each pruning pass is dated and on record, which is how canopy work is evidenced rather than asserted.':
+    'Cada pasada de poda queda fechada y registrada, que es la forma de evidenciar el trabajo de copa en lugar de afirmarlo.',
   'Recording the date, volume and grade is what lets a batch be traced back to one block and one week.':
     'Registrar la fecha, el volumen y la categoría es lo que permite rastrear un lote hasta una parcela y una semana concretas.',
   'Recording the product and the rate is what makes over-application visible rather than invisible.':
@@ -548,8 +554,6 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'La divulgación agrícola promueve la comprensión de la agricultura sostenible y fortalece la resiliencia de la comunidad local.',
   'Biological pest control builds sustainable farming systems that work with nature to maintain crop health and biodiversity.':
     'El control biológico de plagas construye sistemas agrícolas sostenibles que trabajan con la naturaleza para mantener la salud del cultivo y la biodiversidad.',
-  'Climate-adaptive farming practices help crops thrive despite changing weather patterns.':
-    'Las prácticas agrícolas adaptadas al clima ayudan a que los cultivos prosperen a pesar de los patrones climáticos cambiantes.',
   'Collaborative planning promotes best practices and continuous improvement in farming operations.':
     'La planificación colaborativa promueve las mejores prácticas y la mejora continua en las operaciones agrícolas.',
   'Community engagement builds connections between farmers and consumers, strengthening local food systems.':
@@ -572,8 +576,6 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'La prevención de enfermedades protege el rendimiento del cultivo y reduce el desperdicio agrícola.',
   'Disease prevention reduces crop losses and food waste, contributing to more efficient resource use.':
     'La prevención de enfermedades reduce las pérdidas de cultivo y el desperdicio de alimentos, contribuyendo a un uso más eficiente de los recursos.',
-  'Disease prevention through environmental monitoring reduces the need for chemical treatments.':
-    'La prevención de enfermedades mediante el monitoreo ambiental reduce la necesidad de tratamientos químicos.',
   'Documented equipment operations demonstrate transparent farming practices and operational efficiency.':
     'Las operaciones de equipo documentadas demuestran prácticas agrícolas transparentes y eficiencia operativa.',
   'Documented soil management demonstrates commitment to soil health and environmental stewardship.':
@@ -584,8 +586,6 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Las decisiones basadas en umbrales económicos evitan el tratamiento excesivo, reduciendo el impacto ambiental a la vez que mantienen una agricultura rentable.',
   'Effective weed control supports healthy crop growth and optimal resource utilization.':
     'El control eficaz de malezas favorece un crecimiento saludable del cultivo y un uso óptimo de los recursos.',
-  'Efficient water management during dry conditions helps conserve water resources.':
-    'El manejo eficiente del agua durante las condiciones secas ayuda a conservar los recursos hídricos.',
   'Environmental conditions are closely monitored to ensure optimal crop management and food quality.':
     'Las condiciones ambientales se monitorean de cerca para asegurar un manejo óptimo del cultivo y la calidad de los alimentos.',
   'Frost protection measures help preserve crop quality and prevent damage that could affect harvest yields.':
@@ -600,14 +600,14 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'El tratamiento con herbicida maneja las malezas que compiten con los cultivos por recursos esenciales.',
   'High wind monitoring helps assess crop damage and implement protective measures to maintain harvest quality.':
     'El monitoreo de vientos fuertes ayuda a evaluar los daños al cultivo e implementar medidas de protección para mantener la calidad de la cosecha.',
-  'Humidity monitoring helps prevent fungal diseases that could compromise crop health and safety.':
-    'El monitoreo de la humedad ayuda a prevenir enfermedades fúngicas que podrían comprometer la salud y la inocuidad del cultivo.',
+  'Long humid spells are when fungal disease gets its chance, which is why the farm logs them.':
+    'Los períodos largos de humedad son cuando la enfermedad fúngica encuentra su oportunidad, por eso la finca los registra.',
   'Independent verification building consumer trust in sustainable practices with traceable documentation':
     'Verificación independiente que genera la confianza del consumidor en las prácticas sostenibles con documentación trazable',
   'Integrated pest management reduces chemical dependency through biological controls, monitoring, and targeted interventions.':
     'El manejo integrado de plagas reduce la dependencia de químicos mediante controles biológicos, monitoreo e intervenciones dirigidas.',
-  'Low humidity management ensures crops receive adequate moisture for optimal growth and quality.':
-    'El manejo de la baja humedad asegura que los cultivos reciban la humedad adecuada para un crecimiento y una calidad óptimos.',
+  'Dry air pulls moisture out of a crop faster, so it changes how much water the block needed.':
+    'El aire seco extrae humedad del cultivo más rápido, así que cambia cuánta agua necesitó el bloque.',
   'Monitoring traps provide early warning of pest populations, enabling targeted responses that protect crop quality.':
     'Las trampas de monitoreo brindan una alerta temprana de las poblaciones de plagas, permitiendo respuestas dirigidas que protegen la calidad del cultivo.',
   'Natural pest control reduces reliance on synthetic pesticides, promoting biodiversity and soil health.':
@@ -634,16 +634,12 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'El mantenimiento preventivo prolonga la vida útil del equipo, reduce el consumo de combustible y minimiza la huella de carbono operativa.',
   'Preventive maintenance reduces equipment breakdowns, extends machinery life, and minimizes environmental impact from repairs.':
     'El mantenimiento preventivo reduce las averías del equipo, prolonga la vida útil de la maquinaria y minimiza el impacto ambiental de las reparaciones.',
-  'Proactive frost monitoring reduces crop losses and food waste, supporting efficient resource utilization.':
-    'El monitoreo proactivo de heladas reduce las pérdidas de cultivo y el desperdicio de alimentos, favoreciendo un uso eficiente de los recursos.',
   'Proactive scouting prevents pest outbreaks and supports precision agriculture practices that minimize environmental impact.':
     'El monitoreo proactivo previene brotes de plagas y respalda prácticas de agricultura de precisión que minimizan el impacto ambiental.',
   'Professional pesticide application protects crops from harmful pests while following strict safety protocols.':
     'La aplicación profesional de pesticidas protege los cultivos de plagas dañinas siguiendo estrictos protocolos de seguridad.',
   'Prompt damage repair minimizes crop loss and maintains farm resilience against weather events.':
     'La reparación oportuna de daños minimiza la pérdida de cultivo y mantiene la resiliencia de la finca ante los eventos climáticos.',
-  'Quick response to hail damage minimizes crop losses and reduces the need for replanting, saving resources.':
-    'La respuesta rápida a los daños por granizo minimiza las pérdidas de cultivo y reduce la necesidad de resembrar, ahorrando recursos.',
   'Rapid breakdown response minimizes operational delays and prevents resource waste from extended equipment downtime.':
     'La respuesta rápida ante averías minimiza las demoras operativas y evita el desperdicio de recursos por el tiempo de inactividad prolongado del equipo.',
   'Rapid damage assessment after hail events helps farmers implement recovery strategies to maintain crop quality.':
@@ -656,16 +652,14 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'El monitoreo periódico de plagas ayuda a detectar problemas a tiempo, previniendo daños y reduciendo la necesidad de intervenciones químicas.',
   'Regular safety inspections ensure farm operations meet high standards for worker safety and food quality.':
     'Las inspecciones de seguridad periódicas aseguran que las operaciones de la finca cumplan altos estándares de seguridad de los trabajadores y calidad de los alimentos.',
-  'Resilient farming practices help minimize weather-related crop losses and maintain food security.':
-    'Las prácticas agrícolas resilientes ayudan a minimizar las pérdidas de cultivo relacionadas con el clima y a mantener la seguridad alimentaria.',
   'Safety protocols protect workers and the environment while maintaining sustainable operational standards.':
     'Los protocolos de seguridad protegen a los trabajadores y al medio ambiente mientras mantienen estándares operativos sostenibles.',
   'Scientific soil analysis enables precision agriculture and reduces unnecessary inputs through data-driven decisions.':
     'El análisis científico del suelo permite la agricultura de precisión y reduce los insumos innecesarios mediante decisiones basadas en datos.',
   'Species-specific pest management reduces unnecessary treatments and supports integrated approaches that preserve beneficial organisms.':
     'El manejo de plagas específico por especie reduce los tratamientos innecesarios y respalda enfoques integrados que preservan los organismos benéficos.',
-  'Storm damage assessment ensures only healthy, undamaged produce reaches consumers.':
-    'La evaluación de daños por tormenta asegura que solo productos sanos y sin daños lleguen a los consumidores.',
+  'Storms bruise and drop fruit, so a season with one in it looks different by harvest.':
+    'Las tormentas golpean y tiran fruta, así que una temporada con una se nota distinta en la cosecha.',
   'Strategic farm planning optimizes resource allocation and ensures efficient crop management throughout the season.':
     'La planificación estratégica de la finca optimiza la asignación de recursos y asegura un manejo eficiente del cultivo durante toda la temporada.',
   'Targeted fertilizer application provides essential nutrients for healthy plant growth and optimal fruit quality.':
@@ -696,16 +690,12 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Las reparaciones oportunas del equipo previenen averías, reducen el desperdicio por equipos dañados y mantienen la eficiencia operativa.',
   'Trap monitoring reduces pesticide applications by providing precise timing for control measures only when needed.':
     'El monitoreo con trampas reduce las aplicaciones de pesticidas al brindar el momento preciso para las medidas de control solo cuando se necesitan.',
-  'Water-smart farming practices during drought conditions help conserve this precious resource for future generations.':
-    'Las prácticas agrícolas eficientes en el uso del agua durante las condiciones de sequía ayudan a conservar este recurso valioso para las generaciones futuras.',
   'Weather monitoring enables precise agricultural decisions that optimize resource use and minimize environmental impact.':
     'El monitoreo del clima permite tomar decisiones agrícolas precisas que optimizan el uso de recursos y minimizan el impacto ambiental.',
   'Weed control without tillage leaves soil structure intact, though it relies on a synthetic input to do it.':
     'El control de malezas sin laboreo mantiene intacta la estructura del suelo, aunque depende de un insumo sintético para lograrlo.',
   'Well-maintained equipment uses less fuel, applies inputs more accurately, and is documented alongside the field records.':
     'Un equipo bien mantenido consume menos combustible, aplica los insumos con mayor precisión y queda documentado junto con los registros de campo.',
-  'Wind damage assessment enables quick response to protect crops and minimize agricultural losses.':
-    'La evaluación de daños por viento permite una respuesta rápida para proteger los cultivos y minimizar las pérdidas agrícolas.',
 
   // Static sustainabilityBenefit assigned with backticks (no interpolation)
   'Documented cultivation practices demonstrate sustainable weed management and soil health maintenance.':
@@ -856,16 +846,16 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   // --- Production sub-types that had no consumer copy: PO, PH, FP, CM — 2026-07 ---
   'Honey bee hives were brought into the orchard during bloom so the crop could set fruit.':
     'Se llevaron colmenas de abejas al huerto durante la floración para que el cultivo pudiera cuajar fruto.',
-  'Managed pollination supports bee colonies and is documented alongside the spray record, so applications can be timed away from bloom.':
-    'La polinización manejada sostiene las colonias de abejas y se documenta junto al registro de aplicaciones, para poder programarlas fuera de la floración.',
+  'Hive placement is on record beside the spray log, so applications can be checked against the days bees were on the block.':
+    'La colocación de colmenas queda registrada junto al registro de aplicaciones, así se puede verificar cada aplicación frente a los días en que las abejas estuvieron en el bloque.',
   'After picking, the crop was hulled, dried or cooled to keep it sound on the way to you.':
     'Después de la recolección, el cultivo se descascaró, secó o enfrió para que llegue en buen estado hasta ti.',
   'Documented post-harvest handling reduces spoilage and waste, and records the temperature and sanitation steps the crop passed through.':
     'El manejo poscosecha documentado reduce el deterioro y el desperdicio, y registra los pasos de temperatura y sanitización por los que pasó el cultivo.',
   'The crop was protected through a cold night so the season’s fruit was not lost to frost.':
     'El cultivo se protegió durante una noche fría para que la fruta de la temporada no se perdiera por la helada.',
-  'Protecting an established crop avoids the far larger footprint of losing a harvest and regrowing it.':
-    'Proteger un cultivo ya establecido evita la huella mucho mayor de perder una cosecha y volver a producirla.',
+  'The night, the method and the low temperature are on record, so frost protection is documented rather than assumed.':
+    'La noche, el método y la temperatura mínima quedan registrados, así la protección contra heladas queda documentada y no supuesta.',
   'The tree canopy was managed to let light and air reach the fruit, which improves ripening and reduces disease.':
     'Se manejó la copa del árbol para que la luz y el aire lleguen a la fruta, lo que mejora la maduración y reduce las enfermedades.',
   'An open canopy dries faster after rain, lowering disease pressure and the need for fungicide applications.':

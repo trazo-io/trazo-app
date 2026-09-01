@@ -9,6 +9,7 @@
  * the dossier is regenerated on every open (never stale), the link can be
  * revoked, and the farmer can see whether their certifier actually opened it.
  */
+import { StandardQueryError } from 'components/Design';
 import React, { useState } from 'react';
 import {
   Badge,
@@ -131,7 +132,15 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
   const [openLog, setOpenLog] = useState<number | null>(null);
   const [period, setPeriod] = useState<PeriodChoice>('current_year');
 
-  const { data: links = [], isLoading } = useGetCertifierLinksQuery({ companyId, farmId });
+  // `= []` is a rendering convenience, not a fact: on a failed request it made the card
+  // state "no active links" for a farm that may well have several. Read `isError`.
+  const {
+    data: links = [],
+    isLoading,
+    isError,
+    isFetching,
+    refetch
+  } = useGetCertifierLinksQuery({ companyId, farmId });
   const [createLink, { isLoading: creating }] = useCreateCertifierLinkMutation();
   const [revokeLink] = useRevokeCertifierLinkMutation();
   // The backend refuses to mint over a blocker; this mirrors that verdict so the
@@ -327,7 +336,9 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
             note saying creation is part of Compliance, so the card told the farmer to do the one
             thing it had just told them they could not. The upsell above already explains the
             empty case; a second, contradictory sentence adds nothing. */}
-        {!isLoading && canMintLinks && activeLinks.length === 0 && (
+        {isError && <StandardQueryError onRetry={refetch} isRetrying={isFetching} />}
+
+        {!isLoading && !isError && canMintLinks && activeLinks.length === 0 && (
           <Text fontSize="sm" color="gray.500">
             {intl.formatMessage({
               id: 'certifierLink.empty',

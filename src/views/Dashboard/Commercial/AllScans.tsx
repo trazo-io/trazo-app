@@ -72,6 +72,7 @@ const AllScansView = () => {
   const {
     data: scansPaginatedData,
     isLoading,
+    isUninitialized,
     error
   } = useGetFarmScansPaginatedQuery(
     {
@@ -456,10 +457,13 @@ const AllScansView = () => {
                 </Tr>
               </Thead>
               <Tbody>
-                {isLoading ? (
+                {/* `isUninitialized` — a skip gated on `currentCompany?.id` reports
+                    `isLoading: false` before it has ever run, which fell through to the
+                    "no scans" row. */}
+                {isLoading || isUninitialized ? (
                   <Tr>
                     <Td colSpan={7} textAlign="center" py={8}>
-                      <CircularProgress isIndeterminate color="green.500" size="40px" />
+                      <CircularProgress isIndeterminate color="green.700" size="40px" />
                     </Td>
                   </Tr>
                 ) : error ? (

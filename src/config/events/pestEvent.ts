@@ -14,6 +14,7 @@ import type { EventRegistryEntry, FieldConfig, PestManagementSubtype } from './r
 import {
   formatArea,
   formatBoolean,
+  formatDate,
   formatDurationHours,
   formatFuelConsumption,
   formatNumber,
@@ -221,7 +222,10 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     labelKey: 'events.pest.fields.thresholdRationale',
     placeholderKey: 'events.pest.fields.thresholdRationalePlaceholder',
     valueType: 'text',
-    visibleForSubtypes: ['TA', 'IP', 'SC'],
+    // Ungated for the same reason as `ipm_strategy` above — the form renders the two together
+    // in one section whose own copy says "on every pest event, whatever its type", and the
+    // § 205.206(e) packet check reads them the same way. The old ['TA','IP','SC'] silently
+    // dropped it on trap monitoring, beneficial release and pest identification.
     surfaces: {
       modal: 'secondary',
       form: 'immediate',
@@ -392,7 +396,17 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     name: 'ipm_strategy',
     labelKey: 'events.pest.fields.ipmStrategy',
     valueType: 'text',
-    visibleForSubtypes: ['IP', 'TA'],
+    // No subtype gate (2026-08-31). PestManagementTab renders this on EVERY pest event, on
+    // purpose and with its reason written beside it: the audit export runs the § 205.206(a)
+    // check over all pest events and prints "0/N have IPM strategy" on page 1 of the dossier,
+    // so gating the only input would leave that finding unclearable. The registry kept the old
+    // ['IP','TA'], which made it write-only on the two events an organic orchard logs most —
+    // a grower filled in the IPM narrative on a scouting record, it saved, it satisfied the
+    // packet check, and their own detail modal rendered nothing back.
+    //
+    // `formAndDisplayGatesAgree.test.ts` is the guard for exactly this and did not catch it:
+    // it only read ProductionTab + productionEvent.ts, the family where the defect was first
+    // found. It now covers this pair too.
     surfaces: {
       modal: 'immediate',
       form: 'immediate',
@@ -418,10 +432,18 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     labelKey: 'events.pest.fields.chemicalFreePeriod',
     valueType: 'number',
     formatter: (v) => (v != null ? `${v} days` : null),
+    // NO consumer_card (2026-08-31). "Chemical-Free Period: 34 days" is a number the grower
+    // typed into a box, published to a shopper as a fact about the food in their hand — it
+    // reads as a residue or pre-harvest interval claim, and nothing corroborates it.
+    //
+    // The packet's own rule already says this: `phi_days` is in
+    // PublicHistorySerializer._CERTIFIER_ONLY_EVENT_FIELDS precisely because an interval on a
+    // consumer surface implies a consumer hazard and carries no consumer meaning. A
+    // farmer-asserted interval is the same claim with less behind it than the regulated one.
+    // It stays on the modal and the form, where the certifier reads it.
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
 
@@ -476,6 +498,38 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     labelKey: 'events.common.fields.observation',
     valueType: 'text',
     surfaces: { form: 'details', consumer_card: 'secondary' }
+  },
+  // ---- FSMA § 112.161(b) supervisor sign-off (CommonEvent, ALL subtypes) ----
+  //
+  // 🔴 2026-08-31 — declared in chemicalEvent.ts and NOWHERE else, while this family's form
+  // collects it on every subtype. A grower ticked "Supervisor review", named the reviewer and
+  // dated it; the record saved all three and the modal showed none of them. The certifier
+  // packet prints the sign-off in its attestation section, so the only reader who could not
+  // see it was the operation itself.
+  //
+  // Producer/certifier surfaces only: who countersigned a farm record is not a shopper's fact.
+  {
+    name: 'reviewed',
+    labelKey: 'events.common.fields.reviewed',
+    valueType: 'boolean',
+    formatter: formatBoolean,
+    // Only when true — BooleanField(default=False) would otherwise print "Supervisor
+    // reviewed: ✗" on every unreviewed record. Bug Pattern #6.
+    visibleWhen: (e) => e.reviewed === true || e.reviewed === 'true',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'reviewer_name',
+    labelKey: 'events.common.fields.reviewerName',
+    valueType: 'string',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'review_date',
+    labelKey: 'events.common.fields.reviewDate',
+    valueType: 'date',
+    formatter: formatDate,
+    surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     name: 'performed_by',

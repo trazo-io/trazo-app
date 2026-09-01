@@ -236,79 +236,91 @@ const CustomFieldsForm: React.FC<CustomFieldsFormProps> = ({
             border="1px solid"
             borderColor="green.300"
             bg={useColorModeValue('green.50', 'gray.800')}>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <VStack spacing={4} align="stretch">
-                {/* Field Name Input */}
-                <StandardField
-                  label="Field Name"
-                  required
-                  error={errors.label?.message}
-                  helpText="Brief name for this information">
-                  <Controller
-                    name="label"
-                    control={control}
-                    render={({ field }) => (
-                      <StandardInput
-                        {...field}
-                        placeholder="e.g., Soil Type, Irrigation Source"
-                        size="md"
-                        autoFocus
-                      />
-                    )}
-                  />
-                </StandardField>
+            {/* Deliberately NOT a <form>. Every one of the five tabs that renders this
+                component (Production, Soil, Weather, Chemical, Business) already wraps its
+                whole body in a <form>, so this was a nested form -- invalid HTML, and React
+                logs a validateDOMNesting warning for it.
 
-                {/* Value Input */}
-                <StandardField
-                  label="Value"
-                  error={errors.value?.message}
-                  helpText="Details for this field">
-                  <Controller
-                    name="value"
-                    control={control}
-                    render={({ field }) => (
-                      <StandardInput
-                        {...field}
-                        placeholder="e.g., Loamy soil, Well water"
-                        size="md"
-                      />
-                    )}
-                  />
-                </StandardField>
+                It was also load-bearing for nothing: both buttons below are StandardButtons,
+                which default to type="button", and they call handleSubmit(onSubmit) through
+                onClick. With no submit control and more than one field, implicit submission
+                cannot fire either, so the element never received a submit event.
 
-                {/* Visibility Checkbox */}
-                <Box>
-                  <Controller
-                    name="is_consumer_visible"
-                    control={control}
-                    render={({ field }) => (
-                      <Checkbox
-                        isChecked={field.value === 'true'}
-                        onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
-                        size="md"
-                        colorScheme="green">
-                        <Text fontSize="sm" fontWeight="500" color="gray.700">
-                          Visible to consumers
-                        </Text>
-                      </Checkbox>
-                    )}
-                  />
-                  <Text fontSize="xs" color="gray.500" mt={1} ml={6}>
-                    Show this information on public transparency pages
-                  </Text>
-                </Box>
+                What it WAS is a trap. A submit event dispatched here bubbles to the outer
+                form's onSubmit -- react-hook-form's handleSubmit calls preventDefault but not
+                stopPropagation -- so the day someone adds a type="submit" button to this
+                block, adding a custom field posts the half-filled activity instead. */}
+            <VStack spacing={4} align="stretch">
+              {/* Field Name Input */}
+              <StandardField
+                label="Field Name"
+                required
+                error={errors.label?.message}
+                helpText="Brief name for this information">
+                <Controller
+                  name="label"
+                  control={control}
+                  render={({ field }) => (
+                    <StandardInput
+                      {...field}
+                      placeholder="e.g., Soil Type, Irrigation Source"
+                      size="md"
+                      autoFocus
+                    />
+                  )}
+                />
+              </StandardField>
 
-                {/* Action Buttons */}
-                <HStack spacing={3} justify="flex-end" pt={2}>
-                  <StandardButton variant="outline" onClick={handleCancelAdd} size="md">
-                    {intl.formatMessage({ id: 'app.cancel' })}
-                  </StandardButton>
-                  <StandardButton variant="primary" onClick={handleSubmit(onSubmit)} size="md">
-                    Add Field
-                  </StandardButton>
-                </HStack>
-              </VStack>
-            </form>
+              {/* Value Input */}
+              <StandardField
+                label="Value"
+                error={errors.value?.message}
+                helpText="Details for this field">
+                <Controller
+                  name="value"
+                  control={control}
+                  render={({ field }) => (
+                    <StandardInput
+                      {...field}
+                      placeholder="e.g., Loamy soil, Well water"
+                      size="md"
+                    />
+                  )}
+                />
+              </StandardField>
+
+              {/* Visibility Checkbox */}
+              <Box>
+                <Controller
+                  name="is_consumer_visible"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      isChecked={field.value === 'true'}
+                      onChange={(e) => field.onChange(e.target.checked ? 'true' : 'false')}
+                      size="md"
+                      colorScheme="green">
+                      <Text fontSize="sm" fontWeight="500" color="gray.700">
+                        Visible to consumers
+                      </Text>
+                    </Checkbox>
+                  )}
+                />
+                <Text fontSize="xs" color="gray.500" mt={1} ml={6}>
+                  Show this information on public transparency pages
+                </Text>
+              </Box>
+
+              {/* Action Buttons */}
+              <HStack spacing={3} justify="flex-end" pt={2}>
+                <StandardButton variant="outline" onClick={handleCancelAdd} size="md">
+                  {intl.formatMessage({ id: 'app.cancel' })}
+                </StandardButton>
+                <StandardButton variant="primary" onClick={handleSubmit(onSubmit)} size="md">
+                  Add Field
+                </StandardButton>
+              </HStack>
+            </VStack>
           </Box>
         )}
 

@@ -478,8 +478,13 @@ const UNIT_NORMALIZE: Record<string, string> = {
  * Parses detected amounts into structured data with proper categorization.
  */
 export function extractStructuredAmounts(
-  detectedAmounts: Array<StructuredAmount | string>
+  detectedAmounts: Array<StructuredAmount | string> | null | undefined
 ): StructuredAmount[] {
+  // MEASURED 2026-09-01: the parser returned `detected_amounts: null` for a perfectly ordinary
+  // frost-protection sentence, and this function called `.map` on it — so pressing "Use these
+  // details" threw and nothing was applied. The backend now coerces nulls at the source; this
+  // guard is the second half, because a null here is a crash and an empty list is a no-op.
+  if (!Array.isArray(detectedAmounts) || detectedAmounts.length === 0) return [];
   return detectedAmounts
     .map((amount) => {
       // Already structured — still normalize units to match form dropdown values
@@ -536,9 +541,40 @@ export function extractStructuredAmounts(
  *  - an enum value outside its catalogue. A dropdown that renders nine options and receives a
  *    tenth stores a value no form can display and no export can label.
  */
+/**
+ * Did the farmer actually say this value? Mirrors `match_known_block` on the backend: tokens,
+ * plus runs of single characters joined so a block dictated "B G A" counts as "BGA".
+ */
+function wasSpoken(transcript: string, value: string): boolean {
+  const squash = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const key = squash(value);
+  if (key.length < 2) return false;
+
+  // Typed explicitly: `String.match` returns `RegExpMatchArray | null`, and `|| []` alone infers
+  // the empty branch as `never[]`, which makes `.includes` a type error.
+  const tokens: string[] = (transcript || '').toLowerCase().match(/[a-z0-9]+/g) ?? [];
+  if (tokens.length === 0) return false;
+
+  const letterRuns: string[] = [];
+  let run: string[] = [];
+  for (const token of tokens) {
+    if (token.length === 1) run.push(token);
+    else if (run.length) {
+      letterRuns.push(run.join(''));
+      run = [];
+    }
+  }
+  if (run.length) letterRuns.push(run.join(''));
+
+  if (tokens.includes(key) || letterRuns.includes(key)) return true;
+  // Multi-word names ("Ridge Block") arrive as separate tokens.
+  return key.length >= 4 && tokens.join('').includes(key);
+}
+
 function sanitizeActivityFields(
   answered: Record<string, unknown> | undefined,
-  requested: readonly VoiceFieldRequest[]
+  requested: readonly VoiceFieldRequest[],
+  transcript: string
 ): Record<string, unknown> {
   const clean: Record<string, unknown> = {};
   if (!answered || typeof answered !== 'object' || requested.length === 0) return clean;
@@ -557,22 +593,11 @@ function sanitizeActivityFields(
     if (field.type === 'enum') {
       const value = String(raw).trim();
       const options = field.options ?? [];
-      if (options.includes(value)) {
-        clean[field.name] = value;
-        continue;
-      }
-      // The prompt asks for the exact stored value ("wind_machine"), and a model handed a list
-      // of snake_case tokens still sometimes answers with the words ("Wind machine"). Match
-      // those back rather than discarding a correct answer over its punctuation.
-      //
-      // Two forgiving passes, each of which must land on exactly ONE option:
-      //   1. separators normalised — "Wind machine" -> wind_machine;
-      //   2. separators dropped entirely — this is what lets a block dictated letter by letter
-      //      come back, since speech-to-text writes "BGA" as "B G A".
-      //
-      // Both stay exact ON THE CHARACTERS, so "VGA" never becomes "BGA", and both REFUSE an
-      // ambiguous catalogue (one holding both "A B" and "A-B") rather than let array order pick
-      // the answer. A coin flip is not a match.
+
+      // One resolution, three increasingly forgiving passes, and ONE place that accepts. The
+      // exact-match case used to return early, which quietly skipped the identity check below —
+      // caught by `drops a real block the farmer never mentioned`, because the model's favourite
+      // wrong answer is a perfectly-spelled catalogue value.
       const uniqueMatch = (transform: (v: string) => string): string | null => {
         const target = transform(value);
         if (!target) return null;
@@ -580,10 +605,35 @@ function sanitizeActivityFields(
         return hits.length === 1 ? hits[0] : null;
       };
 
-      const matched =
-        uniqueMatch((v) => v.toLowerCase().replace(/[\s-]+/g, '_')) ??
-        uniqueMatch((v) => v.toLowerCase().replace(/[^a-z0-9]/g, ''));
-      if (matched) clean[field.name] = matched;
+      const matched = options.includes(value)
+        ? value
+        : // separators normalised — "Wind machine" -> wind_machine
+          uniqueMatch((v) => v.toLowerCase().replace(/[\s-]+/g, '_')) ??
+          // separators dropped — a block dictated letter by letter, "B G A" -> BGA
+          uniqueMatch((v) => v.toLowerCase().replace(/[^a-z0-9]/g, ''));
+
+      if (!matched) continue;
+
+      // ⛔ An IDENTITY must have been said out loud.
+      //
+      // MEASURED 2026-09-01: "irrigated the NORTH RIDGE block", on a parcel whose only block is
+      // "Ridge Block", came back as `block_id: "Ridge Block"`. The value passes every other check
+      // because it IS in the catalogue — the substitution happened upstream, in the model.
+      // Hardening the prompt against it did not stop it (the same edit DID stop the model
+      // inventing `protection_method: "other"`), so this cannot rely on the model's restraint.
+      //
+      // Only `block_id` is policed this way. Every other enum is a CLASSIFICATION, where
+      // paraphrase is the point — "going to the packing house" legitimately becomes `handler`.
+      // A block is not a classification: the value IS the words, so if the words are absent the
+      // answer came from somewhere other than the farmer.
+      //
+      // ⚠️ Residual, stated rather than hidden: a catalogue name that is a SUBSTRING of what was
+      // said ("Ridge Block" inside "North Ridge block") still passes — at that point the two
+      // readings are genuinely ambiguous, and the farmer confirms the form before saving. What
+      // this stops is a block that was never mentioned at all.
+      if (field.name === 'block_id' && !wasSpoken(transcript, matched)) continue;
+
+      clean[field.name] = matched;
       continue;
     }
 
@@ -650,7 +700,7 @@ export function mapVoiceDataToFieldValues(
       overrides.commercial_name = cleanName;
     } else if (parsedData.npk_ratio && templateId === 'fertilization') {
       overrides.commercial_name = `NPK ${parsedData.npk_ratio} Fertilizer`;
-    } else if (parsedData.detected_products.length > 0) {
+    } else if ((parsedData.detected_products || []).length > 0) {
       let product = parsedData.detected_products[0];
       // Clean NPK-only product entries for fertilization: "NPK 15-9-12" → "NPK 15-9-12 Fertilizer"
       if (
@@ -765,11 +815,29 @@ export function mapVoiceDataToFieldValues(
         else if (system.includes('furrow')) overrides.irrigation_method = 'furrow';
       }
       // Irrigation depth (e.g., "2 inches of water")
+      //
+      // ⛔ NO SILENT DEFAULT UNIT. This used to read `unit === 'cm' ? 'cm' : 'inches'`, so every
+      // unit the mapper did not recognise became INCHES. MEASURED 2026-09-01 on a Spanish
+      // utterance — "unos cinco centímetros" arrived as `{value: 5, unit: "centimetros"}` and was
+      // recorded as 5 INCHES: 12.7 cm of water on a certifier record, from a farmer who said 5.
+      // Bilingual is a shipped feature, so the units arrive in the farmer's language too.
+      //
+      // An unrecognised unit now drops the VALUE as well. A depth with the wrong unit is worse
+      // than no depth: the farmer sees a blank field and fills it, instead of seeing a plausible
+      // number that is off by 2.5x. (`.claude/rules/backend.md` and the 2026-08-20 carbon sweep
+      // both land on the same rule: a missing input must never become a default.)
       const depthAmount = amounts.find((a) => a.category === 'depth');
       if (depthAmount) {
-        overrides.irrigation_depth = depthAmount.value;
-        if (depthAmount.unit === 'cm') overrides.irrigation_depth_unit = 'cm';
-        else overrides.irrigation_depth_unit = 'inches';
+        const spokenUnit = String(depthAmount.unit || '').toLowerCase();
+        const depthUnit = /^(cm|cms|centimet(er|re)s?|centimetros?|centímetros?)$/.test(spokenUnit)
+          ? 'cm'
+          : /^(in|ins|inch|inches|pulgadas?|polegadas?)$/.test(spokenUnit)
+          ? 'inches'
+          : null;
+        if (depthUnit) {
+          overrides.irrigation_depth = depthAmount.value;
+          overrides.irrigation_depth_unit = depthUnit;
+        }
       }
     }
 
@@ -796,7 +864,10 @@ export function mapVoiceDataToFieldValues(
   // new one has to be looked at rather than discovered): the legacy branch infers it by hunting
   // the amounts array for a `depth` category, while this path is the model answering the
   // question "what was the irrigation depth" by name. An answer beats an inference.
-  Object.assign(overrides, sanitizeActivityFields(parsedData.activity_fields, requestedFields));
+  Object.assign(
+    overrides,
+    sanitizeActivityFields(parsedData.activity_fields, requestedFields, spokenNotes)
+  );
 
   // Merge: defaults < AI-extracted overrides
   return {

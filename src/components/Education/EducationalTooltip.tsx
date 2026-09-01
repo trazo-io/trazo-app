@@ -148,6 +148,24 @@ export const EducationalTooltip: React.FC<EducationalTooltipProps> = ({
   const intl = useIntl();
   const config = tooltipConfig[term.toLowerCase()];
 
+  // 🔴 2026-08-31 — every hook ABOVE the `!config` guard.
+  //
+  // These four sat below it, so an unrecognised term rendered one hook (useIntl) and a
+  // recognised one rendered five. React counts hooks per render: the moment a mounted
+  // instance's `term` moved between those two sets — a mapped list re-rendering with
+  // different terms in the same position is enough — the count changed and React tore the
+  // tree down with "Rendered fewer hooks than expected".
+  //
+  // `config` is optional here by construction, so the example tint falls back rather than
+  // reading `.color` off undefined.
+  const bgColor = useColorModeValue('white', 'gray.800');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const exampleBg = useColorModeValue(
+    `${config?.color ?? 'gray'}.50`,
+    `${config?.color ?? 'gray'}.900`
+  );
+
   if (!config) {
     return <>{children}</>;
   }
@@ -155,11 +173,6 @@ export const EducationalTooltip: React.FC<EducationalTooltipProps> = ({
   const definition = intl.formatMessage({ id: `${config.i18nPrefix}.definition` });
   const explanation = intl.formatMessage({ id: `${config.i18nPrefix}.explanation` });
   const example = intl.formatMessage({ id: `${config.i18nPrefix}.example` });
-
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const textColor = useColorModeValue('gray.800', 'white');
-  const exampleBg = useColorModeValue(`${config.color}.50`, `${config.color}.900`);
 
   const tooltipContent = (
     <VStack align="start" spacing={3} maxW="280px" p={2}>

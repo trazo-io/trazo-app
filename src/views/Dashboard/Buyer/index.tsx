@@ -139,7 +139,11 @@ const BuyerPage = () => {
 
   useTour('buyer-page', { enabled: !!companyId && !!farmId });
 
-  const { data: productions, isLoading } = useGetBuyerFarmProductionsQuery(
+  const {
+    data: productions,
+    isLoading,
+    isUninitialized
+  } = useGetBuyerFarmProductionsQuery(
     { companyId, farmId: farmId || '' },
     { skip: !companyId || !farmId }
   );
@@ -308,7 +312,11 @@ const BuyerPage = () => {
     }
   };
 
-  if (isLoading) {
+  // `isUninitialized`: `companyId` hydrates async, so this query is skipped on a cold load
+  // and reports `isLoading: false` with no productions — rendering the buyer page as though
+  // the farm has published nothing. This page exists to be shown to a BUYER; an empty one is
+  // the worst possible first impression to paint from a request that never ran.
+  if (isLoading || isUninitialized) {
     return (
       <StandardPage title={intl.formatMessage({ id: 'buyer.pageTitle' })}>
         <StandardPageLoading />

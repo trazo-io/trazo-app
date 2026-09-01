@@ -12,6 +12,21 @@
 
 import type { FieldFormatter } from './registry';
 
+/**
+ * One reading of a boolean-ish flag, for every surface that gates on the same one.
+ *
+ * WHY (2026-08-31): a flag reaches this registry as a real boolean from the API, but as a
+ * STRING from form and `extra_data` paths — live rows carry `"is_summary": "false"`. The two
+ * obvious spellings are both wrong in opposite directions: `Boolean(v)` treats the string
+ * `'false'` as TRUE, and `v === true` misses the string `'true'`. On the contamination
+ * disclosure that divergence is not cosmetic — the registry's `visibleWhen` and the consumer
+ * copy in eventDescriptions.ts gate on the SAME flag, so a value either of them read
+ * differently would render the incident rows under the reassuring activity copy the incident
+ * wording exists to replace.
+ */
+export const isAffirmativeFlag = (value: unknown): boolean =>
+  value === true || value === 1 || value === 'true' || value === 'yes' || value === 'Yes';
+
 // ============================================================================
 // Enum fallback
 // ============================================================================
@@ -138,6 +153,61 @@ export const formatDate: FieldFormatter<string> = (value) => {
     return parsed.toLocaleDateString(undefined, DATE_DISPLAY_OPTS);
   } catch {
     return String(value);
+  }
+};
+
+/**
+ * A timestamp that keeps its TIME.
+ *
+ * `formatDate` calls `toLocaleDateString`, which silently drops the clock. That is right for a
+ * purchase date or a review date, and wrong for the two fields that exist to bound a window:
+ * an application recorded 06:15 -> 09:20 printed as "Mar 18, 2026" twice, so the certifier
+ * modal showed a start and an end that looked identical and said nothing about duration.
+ *
+ * Falls back to the date alone when the value carries no time component, so a bare
+ * "2026-03-18" is not dressed up with a fake midnight.
+ *
+ * Rendered in UTC, deliberately. These timestamps come from `datetime-local` inputs, which
+ * carry NO offset, and the API stores that wall clock verbatim as UTC. Formatting it in the
+ * reader's zone therefore shifts it by their offset and shows a time nobody entered: an
+ * application typed as 06:15 read back "3:15 AM" on a UTC-3 machine the moment these fields
+ * started showing their time at all. Same principle `formatDate` already applies to bare dates
+ * — display the wall clock the grower typed.
+ *
+ * ⚠️ DO NOT "fix" this by sending an offset on the write path alone. Investigated 2026-08-31:
+ * the wall-clock-as-UTC convention is system-wide and coherent, not an accident here.
+ * `TIME_ZONE = "UTC"` with `USE_TZ = True`, so DRF makes an offset-less value aware AS UTC;
+ * `cogpro_import._as_event_datetime` and `pur_export_service` both already depend on it (the
+ * CA PUR filing prints boxes 17/18 as the grower typed them, which is what DPR wants). These
+ * two columns have exactly two consumers — this display and that filing. Nothing computes an
+ * interval from them: § 205.203(c)'s safe-harvest date works off `manure_application_date`, a
+ * DateField, and REI/PHI are stored durations, not differences between timestamps.
+ *
+ * Adding an offset on write WITHOUT converting on every read shifts the whole system by that
+ * offset: a 14:30 application starts printing 21:30 in the certifier packet and the PUR
+ * export. The real fix is a per-establishment timezone (no such column exists) plus a
+ * migration for stored rows plus farm-local rendering everywhere — a project, and one that
+ * silently rewrites compliance records if done by halves. Leaving it alone is the correct
+ * call until that is worth doing; a reader in another zone seeing the farm's local wall clock
+ * is the honest reading of an offset-less value.
+ */
+export const formatDateTime: FieldFormatter<string> = (value) => {
+  if (!value) return null;
+  const str = String(value).trim();
+  // No time component recorded — defer to the date formatter rather than inventing 00:00.
+  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(str)) return formatDate(str, {});
+  try {
+    const parsed = new Date(str);
+    if (Number.isNaN(parsed.getTime())) return str;
+    const date = parsed.toLocaleDateString(undefined, { ...DATE_DISPLAY_OPTS, timeZone: 'UTC' });
+    const time = parsed.toLocaleTimeString(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'UTC'
+    });
+    return `${date}, ${time}`;
+  } catch {
+    return str;
   }
 };
 
@@ -501,8 +571,16 @@ export const formatConsumerActionThreshold: FieldFormatter<boolean | string> = (
  */
 export const formatConsumerContaminationIncident: FieldFormatter<boolean | string> = (value) => {
   if (value === null || value === undefined || value === '') return null;
-  const yes = value === true || value === 'true' || value === 'Yes' || value === 'yes';
-  return yes ? 'Yes, recorded by the farm with the follow-up below' : null;
+  const yes = isAffirmativeFlag(value);
+  // 2026-08-31 — was "…with the follow-up below". There is no follow-up below on a consumer
+  // card: `corrective_action_taken` and `certifier_notified` are owner-gated in
+  // PublicHistorySerializer because the narrative names the certifier, the lab and the
+  // neighbouring operation the drift came from. The line pointed at a section shoppers can
+  // never see, which reads as a missing disclosure rather than a withheld one. What IS public
+  // beside it is the source, the affected area and the resolution date.
+  // No dash, per noEmDashInConsumerCopy.test.ts: that gate walks getConsumerEventDescription
+  // and the Spanish catalogue, not this file, but the rule is about what a shopper reads.
+  return yes ? 'Yes, recorded by the farm, with the source and area shown here' : null;
 };
 
 /**

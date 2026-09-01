@@ -3,7 +3,7 @@ import { Flex, CircularProgress } from '@chakra-ui/react';
 
 const SubscriptionLoadingState = () => (
   <Flex width="100%" height="100vh" alignItems="center" justifyContent="center" bg="white">
-    <CircularProgress isIndeterminate color="green.500" />
+    <CircularProgress isIndeterminate color="green.700" />
   </Flex>
 );
 

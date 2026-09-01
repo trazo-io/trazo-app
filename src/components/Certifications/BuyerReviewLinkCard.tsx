@@ -14,6 +14,7 @@
  * listing and revoking are not (a lapsed farm must still be able to withdraw
  * live tokens).
  */
+import { StandardQueryError } from 'components/Design';
 import React, { useState } from 'react';
 import { Box, HStack, Icon, Link, Text, Tooltip, VStack, useToast } from '@chakra-ui/react';
 import { FaCopy, FaEye, FaLink } from 'react-icons/fa';
@@ -49,7 +50,15 @@ const BuyerReviewLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) =
   const canMintLinks = useComplianceExports();
   const [label, setLabel] = useState('');
 
-  const { data: links = [], isLoading } = useGetCertifierLinksQuery({ companyId, farmId });
+  // `= []` is a rendering convenience, not a fact: on a failed request it made the card
+  // state "no active links" for a farm that may well have several. Read `isError`.
+  const {
+    data: links = [],
+    isLoading,
+    isError,
+    isFetching,
+    refetch
+  } = useGetCertifierLinksQuery({ companyId, farmId });
   const [createLink, { isLoading: creating }] = useCreateCertifierLinkMutation();
   const [revokeLink] = useRevokeCertifierLinkMutation();
 
@@ -145,7 +154,9 @@ const BuyerReviewLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) =
           </Text>
         )}
 
-        {!isLoading && canMintLinks && activeLinks.length === 0 && (
+        {isError && <StandardQueryError onRetry={refetch} isRetrying={isFetching} />}
+
+        {!isLoading && !isError && canMintLinks && activeLinks.length === 0 && (
           <Text fontSize="sm" color="gray.500">
             {intl.formatMessage({ id: 'buyerLink.empty' })}
           </Text>

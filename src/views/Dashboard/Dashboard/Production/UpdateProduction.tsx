@@ -222,7 +222,7 @@ function UpdateProduction({ isEdit = false }: UpdateProductionProps) {
   if (isEdit && isLoadingProduction) {
     return (
       <Box p={8} display="flex" justifyContent="center" alignItems="center" minH="400px">
-        <CircularProgress isIndeterminate color="green.500" />
+        <CircularProgress isIndeterminate color="green.700" />
       </Box>
     );
   }

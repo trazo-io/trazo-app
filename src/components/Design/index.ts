@@ -15,6 +15,7 @@ export {
   StandardPageLoading,
   StandardSpinner,
   StandardSkeleton,
+  StandardQueryError,
   StandardGrid,
   StandardSection,
   StandardStepper,

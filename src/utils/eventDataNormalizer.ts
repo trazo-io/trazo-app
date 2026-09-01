@@ -22,12 +22,23 @@ import {
 } from '../types/standardizedEvents';
 import { getFieldMapping, getStandardizedFieldName } from './eventFieldMapping';
 import { getConsumerEventDescription } from './eventDescriptions';
-import { productionEventRegistry } from 'src/config/events/productionEvent';
+import { productionEventRegistry } from '../config/events/productionEvent';
+// Barrel import, deliberately: `getFieldNamesForSurface` reads a registry that only
+// `src/config/events/index.ts` populates (it calls `_setRegistry`), and the resolver THROWS
+// rather than degrading if it is missing. Importing the barrel here makes initialization a
+// property of this module's own import graph instead of an ordering assumption.
+import { getFieldNamesForSurface } from '../config/events';
+import type { AnySubtype, DisplaySurface, EventTypeCode } from '../config/events';
 
 /**
- * Keys the production normalizer OWNS: it rewrites, renames or re-labels them rather than
- * copying them through. The registry-driven carry-over must leave these alone, or it would
- * restore the raw value on top of the normalized one.
+ * Keys a normalizer OWNS: it rewrites, renames or re-labels them rather than copying them
+ * through. The registry-driven carry-over must leave these alone, or it would restore the raw
+ * value on top of the normalized one.
+ *
+ * The names are production's (that carry-over came first, 2026-08-15), but the set is applied
+ * by the consumer pass across all eight families too — safely, because every family either
+ * produces these keys itself (`equipment_type` -> "🚜 Tractor") or has no consumer-surface
+ * claim on them, so the guard never decides whether a field survives, only which copy wins.
  */
 const NORMALIZER_OWNED_KEYS: ReadonlySet<string> = new Set([
   'name', // -> production_name
@@ -39,6 +50,68 @@ const NORMALIZER_OWNED_KEYS: ReadonlySet<string> = new Set([
   'observation',
   'description'
 ]);
+
+/**
+ * Consumer surfaces whose declared field list this normalizer must not silently truncate.
+ *
+ * See `carryOverRegistryDeclaredFields` for the why. Scoped to the two consumer surfaces
+ * because that is where the truncation was MEASURED and where the compliance cost of a
+ * dropped field lands; the producer surface that was checked alongside it, EventDetailsModal,
+ * resolves against the raw API event and so was never affected. If a producer surface is ever
+ * found rendering normalized events, widen this list rather than re-patching keys one by one.
+ */
+const CONSUMER_SURFACES: readonly DisplaySurface[] = ['consumer_card', 'consumer_timeline'];
+
+/**
+ * `${eventTypeCode}|${subtype}` -> the union of field names declared on CONSUMER_SURFACES.
+ *
+ * The registry is static, so this is computed once per type/subtype pair instead of twice per
+ * EVENT. A finished season is hundreds of events and the QR page has a sub-500ms budget
+ * (CLAUDE.md §Performance), which is the only reason a cache is here at all.
+ */
+const consumerFieldNameCache = new Map<string, ReadonlySet<string>>();
+
+function consumerDeclaredFieldNames(
+  eventType: EventTypeCode,
+  subtype: AnySubtype | undefined
+): ReadonlySet<string> {
+  const cacheKey = `${eventType}|${subtype ?? ''}`;
+  const cached = consumerFieldNameCache.get(cacheKey);
+  if (cached) return cached;
+
+  const names = new Set<string>();
+  for (const surface of CONSUMER_SURFACES) {
+    for (const name of getFieldNamesForSurface(eventType, subtype ?? undefined, surface)) {
+      names.add(name);
+    }
+  }
+  consumerFieldNameCache.set(cacheKey, names);
+  return names;
+}
+
+/**
+ * Copy registry-declared fields the hand-written normalizer lists left behind.
+ *
+ * Additive ONLY — a key already produced by the normalizer always wins, so a value that was
+ * renamed, re-labelled or reformatted ("150" -> "150 L", "FC" -> "Fuel Consumption") can never
+ * be clobbered by its raw counterpart. `ownedKeys` covers the other direction: a key the
+ * normalizer deliberately RENAMES is absent from the target, so without the guard the raw
+ * value would be restored under a name nothing should carry.
+ */
+function carryOverRegistryDeclaredFields(
+  target: Record<string, unknown>,
+  rawData: Record<string, unknown>,
+  fieldNames: Iterable<string>,
+  ownedKeys: ReadonlySet<string>
+): void {
+  for (const name of fieldNames) {
+    if (ownedKeys.has(name)) continue;
+    if (target[name] !== undefined) continue;
+    const value = rawData[name];
+    if (value === undefined || value === null || value === '') continue;
+    target[name] = value;
+  }
+}
 
 /**
  * Convert technical fuel type codes to display names
@@ -165,6 +238,32 @@ export function normalizeEventData(
     const resolved = extractSubtypeCode(normalized);
     if (resolved) normalized.subtype = resolved;
   }
+
+  // 🔴 2026-08-31 — the same class the production carry-over below closed, for the other seven
+  // families.
+  //
+  // Every `normalize*EventData` is a hand-written copy list, and `preserveOriginal: false`
+  // means anything it forgets is GONE before ConsumerEventCard calls the resolver. So a field
+  // could be declared `consumer_card: 'secondary'` in the registry, served by the API, and
+  // still render nothing — with no error anywhere, because both halves are individually
+  // correct.
+  //
+  // MEASURED on production 711: `normalizeGeneralEventData` copies five keys, while
+  // generalEvent.ts declares `is_contamination_incident`, `contamination_source`,
+  // `contamination_affected_area`, `corrective_action_taken` and `corrective_action_date` on
+  // the consumer card. A logged spray-drift incident therefore reached the buyer page as a
+  // bare "Emergency · 3 hours · 2 people", with the source and the affected area — the whole
+  // point of the disclosure — dropped in transit. ProductDetail's hand re-adding of `album`,
+  // `verification_level` and `is_highlight` at the call site is the same bug, patched per key.
+  //
+  // Runs AFTER the subtype resolution above because `getFieldNamesForSurface` applies the
+  // subtype gate: a field the display hides for this subtype must not be carried either.
+  carryOverRegistryDeclaredFields(
+    normalized as unknown as Record<string, unknown>,
+    (rawData ?? {}) as Record<string, unknown>,
+    consumerDeclaredFieldNames(eventType as EventTypeCode, normalized.subtype as AnySubtype),
+    NORMALIZER_OWNED_KEYS
+  );
 
   return normalized;
 }
@@ -1402,24 +1501,17 @@ function normalizeProductionEventData(
 
   // Explicit copies above still win — this only fills what they left behind.
 
-  for (const field of productionEventRegistry.fields) {
-    // Never touch a key this normalizer deliberately TRANSFORMS rather than copies. The
-    // registry names the raw column; the normalizer may have rewritten it into a display form
-    // ("150" + unit -> "150 L"), renamed it (`name` -> `production_name`) or mapped a code to
-    // a label ("FC" -> "Fuel Consumption"). Copying the raw value back over that would quietly
-    // undo the normalization the rest of the app depends on.
-    if (NORMALIZER_OWNED_KEYS.has(field.name)) continue;
-
-    const key = field.name as keyof typeof productionData;
-
-    if ((productionData as Record<string, unknown>)[key as string] !== undefined) continue;
-
-    const value = (rawData as Record<string, unknown>)[field.name];
-
-    if (value === undefined || value === null || value === '') continue;
-
-    (productionData as Record<string, unknown>)[field.name] = value;
-  }
+  // Never touches a key this normalizer deliberately TRANSFORMS rather than copies (see
+  // NORMALIZER_OWNED_KEYS). Unlike the consumer pass in `normalizeEventData`, this one carries
+  // EVERY declared field regardless of surface or subtype, which is what the production
+  // registry's producer-side surfaces rely on; the two are additive and order-independent
+  // because both skip a key that already has a value.
+  carryOverRegistryDeclaredFields(
+    productionData as unknown as Record<string, unknown>,
+    (rawData ?? {}) as Record<string, unknown>,
+    productionEventRegistry.fields.map((field) => field.name),
+    NORMALIZER_OWNED_KEYS
+  );
 
   return productionData;
 }
@@ -1815,7 +1907,14 @@ function normalizeGeneralEventData(
     'activity_name',
     'duration_raw',
     'people_involved',
-    'activity_notes'
+    'activity_notes',
+    // Listed explicitly even though the registry carry-over in `normalizeEventData` would also
+    // bring it: `getConsumerEventDescription` BRANCHES on this flag to replace the "emergency
+    // cleanup and damage repair" copy with incident wording. That branch is a claim-safety
+    // guarantee, so it must not silently revert to praising a contamination report the day
+    // someone edits a `consumer_card` tier in generalEvent.ts. The other incident fields are
+    // display-only and the carry-over is the right owner for them.
+    'is_contamination_incident'
   ];
 
   mapFields(rawData, generalData, generalFields, fieldMapping);
@@ -2449,8 +2548,6 @@ function normalizeBusinessEventData(
     'carbon_credits_unit',
     'verification_status',
     'sustainability_practice',
-    'trust_impact',
-    'transparency_benefit',
     'business_observation',
     // Sprint 3 Epic 3.2: Consumer Trust Fields
     'verified_certifier_name',

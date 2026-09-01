@@ -315,28 +315,35 @@ export default function DashboardView() {
   const iconBoxInside = useColorModeValue('white', 'white');
   let mainText = useColorModeValue('gray.700', 'gray.200');
 
-  // Early check for subscription when component first renders
-  // This helps catch cases before useEffect runs
-  if (
+  // 🔴 2026-08-31 — this block used to REDIRECT AND RETURN right here, above eight hooks.
+  //
+  // Two defects in one:
+  //
+  // 1. `window.location.href = …` fired during RENDER. React re-runs a render freely, so a
+  //    navigation was being dispatched from inside one. Side effects belong in an effect.
+  // 2. The early return sat above `useEffect` x5, `useMemo` and `useBatchS3Images`. On a cold
+  //    load `isLoadingCompany` is true, the condition is false, and all eight run. When the
+  //    company then resolves WITHOUT a subscription the condition flips true, the component
+  //    returns early, and React sees eight fewer hooks than the render before —
+  //    "Rendered fewer hooks than expected", i.e. the whole dashboard replaced by the error
+  //    boundary. Exactly the `activeCompany: null -> resolved` transition every deep link makes.
+  //
+  // The condition is now a plain boolean computed here (no hook, no side effect), the
+  // navigation happens in an effect below, and the placeholder is returned AFTER every hook has
+  // run — so the hook count no longer depends on subscription state.
+  const needsPricingRedirect =
     !isLoadingCompany &&
     activeCompany &&
     Object.keys(activeCompany).length > 0 &&
     'id' in activeCompany &&
     (!subscription || activeCompany.has_subscription === false) &&
     !location.pathname.includes('/pricing') &&
-    !location.pathname.includes('/stripe-success')
-  ) {
-    console.log('DashboardView immediate check - redirecting to pricing');
-    const redirectUrl = `/admin/dashboard/pricing?new_company=false&company_id=${activeCompany.id}`;
-    // Use window.location for most direct redirect
-    window.location.href = redirectUrl;
-    // Return loading indicator to prevent rendering the rest of the component
-    return (
-      <Flex justify="center" align="center" h="100vh">
-        {intl.formatMessage({ id: 'app.redirecting' })}
-      </Flex>
-    );
-  }
+    !location.pathname.includes('/stripe-success');
+
+  useEffect(() => {
+    if (!needsPricingRedirect) return;
+    window.location.href = `/admin/dashboard/pricing?new_company=false&company_id=${activeCompany.id}`;
+  }, [needsPricingRedirect, activeCompany]);
 
   // verifies if routeName is the one active (in browser input)
   const activeRoute = (routeName, isDashboard = false) => {
@@ -478,6 +485,15 @@ export default function DashboardView() {
   // Return null while loading - keeps app-level loading visible
   if (isLoadingCompany) {
     return null;
+  }
+
+  // Placed after every hook, for the reason given at `needsPricingRedirect` above.
+  if (needsPricingRedirect) {
+    return (
+      <Flex justify="center" align="center" h="100vh">
+        {intl.formatMessage({ id: 'app.redirecting' })}
+      </Flex>
+    );
   }
 
   return (

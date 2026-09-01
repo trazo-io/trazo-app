@@ -57,7 +57,18 @@ const TABS = [
  */
 const COLLECTED_ELSEWHERE = new Set([
   // Wizard step 0 collects this once for every event type (NewEvent.jsx).
-  'performed_by'
+  'performed_by',
+  // FSMA § 112.161(b) sign-off, collected by the SHARED `components/Forms/SupervisorSignOff`
+  // component that ProductionTab, SoilManagementTab and PestManagementTab all mount — so the
+  // names never appear in the tab source this test greps. (ChemicalTab-ENHANCED is the odd one
+  // out: it has its own inline inputs, which is why chemical passed without this entry.)
+  //
+  // Added 2026-08-31 with the registry declarations. The three fields were declared in
+  // chemicalEvent.ts only, so a grower who signed off a production, soil or pest record saw
+  // nothing of it in their own modal even though the certifier packet prints it.
+  'reviewed',
+  'reviewer_name',
+  'review_date'
 ]);
 
 /**

@@ -191,13 +191,21 @@ const validatePercentageFormat = (input: string): ConcentrationValidationResult 
   const percentage = parseFloat(match[1]);
   const unit = match[2] ? match[2].trim().toUpperCase() : '%';
 
-  // Validate concentration range based on unit
-  if (percentage < 0) {
-    errors.push('Concentration cannot be negative');
-  }
-
+  // Validate concentration range based on unit.
+  //
+  // The negative check used to sit HERE, above the split, with one generic message
+  // ("Concentration cannot be negative") for both units — while the two checks either side of
+  // it in each branch name their unit ("Percentage cannot be zero", "EC concentration should
+  // not exceed 50 lbs/gal"). So a grower entering -5% got a sentence in a different voice from
+  // the one they got for 0% or 150%, and the field's own test had been asserting the
+  // unit-specific wording since it was written. Moved into both branches: the same single
+  // condition, stated in the unit the grower is actually typing, and checked FIRST in each so
+  // a negative always reads as negative rather than as whichever range check happens to run.
   if (unit === 'EC') {
     // EC format validation (Emulsifiable Concentrate - pounds per gallon)
+    if (percentage < 0) {
+      errors.push('EC concentration cannot be negative');
+    }
     if (percentage > 50) {
       errors.push('EC concentration should not exceed 50 lbs/gal');
     }
@@ -207,11 +215,14 @@ const validatePercentageFormat = (input: string): ConcentrationValidationResult 
     if (percentage > 25) {
       suggestions.push('Very high EC concentration - verify this is correct');
     }
-    if (percentage < 0.01) {
+    if (percentage > 0 && percentage < 0.01) {
       suggestions.push('Very low EC concentration - verify this is correct');
     }
   } else {
     // Percentage format validation
+    if (percentage < 0) {
+      errors.push('Percentage cannot be negative');
+    }
     if (percentage > 100) {
       errors.push('Percentage cannot exceed 100%');
     }
@@ -221,7 +232,7 @@ const validatePercentageFormat = (input: string): ConcentrationValidationResult 
     if (percentage > 90) {
       suggestions.push('Very high concentration - verify this is correct');
     }
-    if (percentage < 0.1) {
+    if (percentage > 0 && percentage < 0.1) {
       suggestions.push('Very low concentration - verify this is correct');
     }
   }

@@ -181,7 +181,7 @@ export const CancelSubscriptionModal = ({
             </Box>
 
             {exceeds.length > 0 && (
-              <Alert status="warning" borderRadius="md" alignItems="flex-start">
+              <Alert status="warning">
                 <AlertIcon />
                 <Box>
                   <AlertTitle fontSize="sm">

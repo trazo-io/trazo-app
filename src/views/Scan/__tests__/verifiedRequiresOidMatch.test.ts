@@ -111,6 +111,32 @@ describe('"Verified" requires a real Organic Integrity Database match', () => {
     ).toEqual([]);
   });
 
+  it('the photo count never claims field evidence the array cannot support', () => {
+    // `completeData.images` is every photo on the record, the farm's establishment profile
+    // picture included. It read "{count} Photos Across Farming Events" over "Visual evidence
+    // from the field" — so a lot with one profile photo and no event photos rendered
+    // "1 Photos Across Farming Events" with a green tick. Two defects in six words: a claim the
+    // data does not support, and a plural agreement bug.
+    const en = JSON.parse(read('i18n/lang/en-US.json'));
+    const label = en['consumer.howGrown.photosIncluded'];
+    expect(label).toBeTruthy();
+    expect(label, 'the label must not claim the photos are attached to farming events').not.toMatch(
+      /across farming events/i
+    );
+    expect(label, 'must pluralise — the count can legitimately be 1').toMatch(/plural,/);
+    expect(
+      en['consumer.howGrown.photosSubtitle'],
+      'a farm profile picture is not field evidence for this lot'
+    ).not.toMatch(/from the field/i);
+  });
+
+  it('both locales pluralise the photo count', () => {
+    for (const loc of ['en-US', 'es-419']) {
+      const bundle = JSON.parse(read(`i18n/lang/${loc}.json`));
+      expect(bundle['consumer.howGrown.photosIncluded'], loc).toMatch(/plural,/);
+    }
+  });
+
   it('the disclaimer never claims Trazo does not check', () => {
     // The over-correction fence. Trazo does check; only THIS certificate went unmatched.
     const en = JSON.parse(read('i18n/lang/en-US.json'));

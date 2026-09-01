@@ -21,7 +21,12 @@ import {
 } from 'react-icons/fa';
 import { format } from 'date-fns';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { StandardPage, StandardCard } from '../../../components/Design/StandardComponents';
+import {
+  StandardPage,
+  StandardCard,
+  StandardPageLoading,
+  StandardQueryError
+} from '../../../components/Design/StandardComponents';
 import { useGetUserProductionScansQuery } from 'store/api/historyApi';
 
 const ITEMS_PER_PAGE = 10;
@@ -31,7 +36,15 @@ export default function AllScans() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // API query for data
-  const { data: productions, isLoading } = useGetUserProductionScansQuery();
+  // `isError` read, not dropped: without it a failed request left `productions` undefined
+  // and the screen told the user they have no scans — a claim only a 200 can license.
+  const {
+    data: productions,
+    isLoading,
+    isError,
+    isFetching,
+    refetch
+  } = useGetUserProductionScansQuery();
 
   // Calculate pagination
   const totalCount = productions?.length || 0;
@@ -68,9 +81,9 @@ export default function AllScans() {
       <StandardCard title={`Product Scans (${totalCount})`} variant="elevated">
         <VStack spacing={3}>
           {isLoading ? (
-            <Box textAlign="center" py={8}>
-              <Text color="gray.500">Loading scans...</Text>
-            </Box>
+            <StandardPageLoading />
+          ) : isError ? (
+            <StandardQueryError onRetry={refetch} isRetrying={isFetching} />
           ) : paginatedData.length > 0 ? (
             <>
               {paginatedData.map((production: any, index: number) => {

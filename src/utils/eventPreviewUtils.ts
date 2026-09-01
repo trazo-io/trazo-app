@@ -100,8 +100,6 @@ export interface PreviewEventData {
   carbon_credits_unit?: string;
   verification_status?: string;
   sustainability_practice?: string;
-  trust_impact?: string;
-  transparency_benefit?: string;
   business_observation?: string;
   // Pest management fields
   pest_management_type?: string;
@@ -932,15 +930,6 @@ export function transformFormDataToEvent(
 
       if (formData.sustainability_practice) {
         event.sustainability_practice = formData.sustainability_practice;
-      }
-
-      // Trust and Transparency Information (secondary display fields)
-      if (formData.trust_impact) {
-        event.trust_impact = formData.trust_impact;
-      }
-
-      if (formData.transparency_benefit) {
-        event.transparency_benefit = formData.transparency_benefit;
       }
 
       // Consumer Trust Certification fields

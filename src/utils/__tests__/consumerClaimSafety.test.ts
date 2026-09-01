@@ -34,7 +34,31 @@ const CLAIM_PATTERNS: Array<[string, RegExp]> = [
   ['health claim', /health(ier|y) (food|produce|crop)|nutritious|safer for you|better for your/i],
   // Self-applied sustainability labels — EU ECGT 2024/825.
   ['self-applied sustainability label', /\bsustainab\w+\b|\bregenerativ\w+\b/i],
-  ['carbon claim', /carbon neutral|zero emissions|climate[- ]friendly/i],
+  // "zero-emission" (hyphen, singular) slipped past `zero emissions` for months on the
+  // pollination subtitle — hives that arrive on a truck, described as an emission-free process.
+  // `climate-adaptive` is the same family: a benefit asserted about farming, on a WEATHER
+  // record that holds no practice at all.
+  [
+    'carbon claim',
+    /carbon neutral|zero[- ]emissions?\b|climate[- ]friendly|climate[- ]adaptive/i
+  ],
+  // 🔴 2026-08-31 — asserting a PRACTICE the record cannot hold. Each of these shipped:
+  // pruning copy said the brush was "chipped back onto the orchard floor" (no field records
+  // brush disposition); compost copy said composting "turns orchard waste back into soil" on
+  // records whose own `compost_feedstock` named a supplier's green waste; the weather family
+  // credited "quick response", "proactive monitoring" and "resilient farming practices" to
+  // events that contain a temperature and nothing else.
+  //
+  // The test cannot know what a record holds, so it bans the specific asserted-practice phrases
+  // that were found shipping. A new one needs a new pattern — the rule to apply when writing
+  // the copy is in the header: say what is ON RECORD.
+  [
+    'asserts an unrecorded practice',
+    /chipped back|turns orchard waste|quick response|proactive \w+ monitoring|resilient farming|water-smart/i
+  ],
+  // Comparative environmental claims need substantiation (16 CFR 260.6). "avoids the far larger
+  // footprint of losing a harvest" was on a frost record whose own fuel field holds propane.
+  ['unsubstantiated comparative', /far larger footprint|much lower (impact|footprint)/i],
   ['superiority claim', /\bsuperior\b|\bhighest quality\b|\bpurest\b|industry best practices/i],
   ['implied third-party verification', /\bverified\b|\bcertified by\b|\bguarantee/i]
 ];

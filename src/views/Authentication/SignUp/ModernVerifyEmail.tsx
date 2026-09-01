@@ -31,8 +31,20 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
   const toast = useToast();
   const [searchParams] = useSearchParams();
 
-  // Colors based on user type
-  const primaryColor = userType === 'producer' ? 'green.500' : 'blue.500';
+  // Colors based on user type.
+  //
+  // `.700`, not `.500` (2026-08-31). This one variable does five jobs on this page: the
+  // page-level verifying <Spinner> (:204), a focusBorderColor and a boxShadow ring (:327,
+  // :342-343) — and the "Resend code" BUTTON LABEL (:382) and the back-link hover colour
+  // (:399). The last two render glyphs, so the whole variable owes 4.5:1, and the highest
+  // bar wins for a shared token.
+  //
+  // MEASURED on white: green.500 #4CAF50 2.78 ⛔ (fails even the 3.0 non-text floor, so the
+  // spinner failed too), blue.500 #2196F3 3.12 ⛔ as text. green.700 #2E7D32 5.13 ✓,
+  // blue.700 #1976D2 4.60 ✓. Per .claude/rules/frontend.md: if it renders glyphs, it is
+  // the .700 step — and grep the DECLARATION, because that is where this hid from the
+  // call-site sweep.
+  const primaryColor = userType === 'producer' ? 'green.700' : 'blue.700';
   const primaryGradient =
     userType === 'producer'
       ? 'linear(to-r, green.500, green.600)'

@@ -27,7 +27,12 @@ import {
   useVerifyCertificationMutation
 } from '../../store/api/certificationApi';
 import { Certification, CertificationType, CreateCertificationData } from 'types/certification';
-import { ResponsiveModal, StandardInput, StandardSelect } from 'components/Design';
+import {
+  ResponsiveModal,
+  StandardInput,
+  StandardSelect,
+  StandardQueryError
+} from 'components/Design';
 import CertificationStatusBadge from './CertificationStatusBadge';
 
 /**
@@ -101,7 +106,15 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
     notes: ''
   });
 
-  const { data: certifications, isLoading } = useGetCertificationsQuery({
+  // Without `isError`, a failed request rendered "no certifications on file" — a claim
+  // about an organic operation's paperwork that only a successful response can license.
+  const {
+    data: certifications,
+    isLoading,
+    isError,
+    isFetching,
+    refetch
+  } = useGetCertificationsQuery({
     companyId,
     farmId
   });
@@ -238,6 +251,8 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
         <HStack justify="center" py={4}>
           <Spinner size="sm" />
         </HStack>
+      ) : isError ? (
+        <StandardQueryError onRetry={refetch} isRetrying={isFetching} />
       ) : !certifications || certifications.length === 0 ? (
         <Text fontSize="sm" color="gray.500" textAlign="center" py={4}>
           {intl.formatMessage({ id: 'certification.manage.none' })}

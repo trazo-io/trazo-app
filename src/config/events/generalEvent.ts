@@ -12,7 +12,8 @@ import {
   formatDurationHours,
   formatNumber,
   lookupEnumLabel,
-  formatConsumerContaminationIncident
+  formatConsumerContaminationIncident,
+  isAffirmativeFlag
 } from './formatters';
 
 type GeneralData = Record<string, unknown>;
@@ -175,14 +176,16 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     // A consumer surface must not report an incident as a bare "✓". The glyph reads as
     // POSITIVE — the one place a checkmark is exactly backwards — and "Is Contamination
     // Incident" is internal phrasing. The field is gated to render only when true, so the
-    // consumer wording states plainly that something was recorded; the source, affected area
-    // and corrective action render beside it. Withholding it was never an option: an incident
-    // the grower logged is precisely what a transparency record exists to carry.
+    // consumer wording states plainly that something was recorded; the source, the affected
+    // area and the resolution date render beside it. (NOT the corrective-action narrative —
+    // that is owner-gated server-side, which is why it lost its consumer tier below.)
+    // Withholding it was never an option: an incident the grower logged is precisely what a
+    // transparency record exists to carry.
     consumerLabelKey: 'events.consumer.fields.contaminationIncident',
     consumerFormatter: formatConsumerContaminationIncident,
     valueType: 'boolean',
     formatter: formatBoolean,
-    visibleWhen: (e) => Boolean(e.is_contamination_incident),
+    visibleWhen: (e) => isAffirmativeFlag(e.is_contamination_incident),
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -194,7 +197,7 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     labelKey: 'events.general.fields.contaminationSource',
     valueType: 'enum',
     enumSource: 'contamination_sources',
-    visibleWhen: (e) => Boolean(e.is_contamination_incident),
+    visibleWhen: (e) => isAffirmativeFlag(e.is_contamination_incident),
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -206,7 +209,7 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     labelKey: 'events.general.fields.contaminationAffectedArea',
     valueType: 'number',
     formatter: formatNumber,
-    visibleWhen: (e) => Boolean(e.is_contamination_incident),
+    visibleWhen: (e) => isAffirmativeFlag(e.is_contamination_incident),
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -218,21 +221,32 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     labelKey: 'events.general.fields.correctiveActionTaken',
     placeholderKey: 'events.general.fields.correctiveActionTakenPlaceholder',
     valueType: 'text',
-    visibleWhen: (e) => Boolean(e.is_contamination_incident),
+    visibleWhen: (e) => isAffirmativeFlag(e.is_contamination_incident),
+    // NO consumer_card, matching its sibling `certifier_notified` below. The server never
+    // sends this to a shopper: PublicHistorySerializer owner-gates it because the operator's
+    // narrative routinely names the certifier, the lab and the neighbouring farm the drift
+    // came from. Declaring a consumer tier for a value the API always nulls did nothing on the
+    // card itself — but the producer's EventDetailsModal derives its "On your buyer page"
+    // badge from exactly this map, so the grower was told a field was published that never
+    // could be. A tier here is a promise about the payload, not a preference.
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
   {
     name: 'corrective_action_date',
     labelKey: 'events.general.fields.correctiveActionDate',
+    // "Corrective Action Date" is the right label beside the corrective action. On a consumer
+    // card there IS no corrective action — the narrative is owner-gated above — so that label
+    // points at something the shopper cannot see and reads as a missing row. What the date
+    // actually tells them is when the incident was resolved, which is a fact on its own.
+    consumerLabelKey: 'events.consumer.fields.contaminationResolvedOn',
     valueType: 'date',
     // Without this the raw ISO string ("2026-03-17") renders verbatim — `valueType: 'date'`
     // is metadata, not behaviour; the resolver's defaultFormatter just stringifies.
     formatter: formatDate,
-    visibleWhen: (e) => Boolean(e.is_contamination_incident),
+    visibleWhen: (e) => isAffirmativeFlag(e.is_contamination_incident),
     surfaces: {
       modal: 'secondary',
       form: 'secondary',
@@ -244,7 +258,7 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     labelKey: 'events.general.fields.certifierNotified',
     valueType: 'boolean',
     formatter: formatBoolean,
-    visibleWhen: (e) => Boolean(e.is_contamination_incident),
+    visibleWhen: (e) => isAffirmativeFlag(e.is_contamination_incident),
     surfaces: {
       modal: 'secondary',
       form: 'secondary'
@@ -255,7 +269,7 @@ const GENERAL_FIELDS: readonly FieldConfig<unknown, GeneralData>[] = [
     labelKey: 'events.general.fields.certifierNotificationDate',
     valueType: 'date',
     formatter: formatDate,
-    visibleWhen: (e) => Boolean(e.is_contamination_incident),
+    visibleWhen: (e) => isAffirmativeFlag(e.is_contamination_incident),
     surfaces: {
       modal: 'secondary',
       form: 'secondary'

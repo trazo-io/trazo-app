@@ -56,7 +56,8 @@ import {
   StandardPageLoading,
   StandardPagination,
   StandardSearchInput,
-  StandardSelect
+  StandardSelect,
+  StandardQueryError
 } from 'components/Design/StandardComponents';
 import { useGetFarmProductionsQuery } from 'store/api/historyApi';
 import { DOCUMENT_DOWNLOAD_URL, RECORDS_EXPORT_URL } from 'config';
@@ -200,7 +201,17 @@ const DocumentsPage = () => {
   // unpaginated either way, so a folder param saved no payload on the default ("All") view —
   // and filtering here is what makes the per-folder counts on the chips free, and makes
   // switching folders instant instead of a round-trip each click.
-  const { data: documents, isLoading } = useGetFarmDocumentsQuery(
+  // `isError` read: a failed request left `documents` undefined, `groups` empty, and the
+  // shelf stated that this farm has no documents on file — on the screen a certifier's
+  // paperwork lives on, that is the worst possible thing to say by accident.
+  const {
+    data: documents,
+    isLoading,
+    isUninitialized,
+    isError,
+    isFetching,
+    refetch
+  } = useGetFarmDocumentsQuery(
     { companyId, farmId: farmId || '', search: debouncedSearch || undefined },
     { skip: !companyId || !farmId }
   );
@@ -715,8 +726,13 @@ const DocumentsPage = () => {
         {/* Anchored on the CONTAINER, not the table: on a farm with no documents yet only the
             empty state renders, and a tour step whose target is missing is dropped silently. */}
         <Box data-tour="documents-list" w="full">
-          {isLoading ? (
+          {/* `isUninitialized`: `companyId` hydrates async, so the skipped window reported
+              `isLoading: false` with no documents and the shelf stated this farm has none —
+              on the screen a certifier's paperwork lives on. */}
+          {isLoading || isUninitialized ? (
             <StandardPageLoading />
+          ) : isError ? (
+            <StandardQueryError onRetry={refetch} isRetrying={isFetching} />
           ) : !groups.length ? (
             <StandardCard>
               <VStack py={8} spacing={3}>

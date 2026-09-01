@@ -318,6 +318,36 @@ export const productApi = baseApi.injectEndpoints({
         credentials: 'include'
       })
     }),
+    /**
+     * How precisely a parcel may be located on the PUBLIC consumer page.
+     *
+     * Its own endpoint, not a field on the parcel form. The dialog that collects this answer
+     * renders two buttons, and `.claude/rules/frontend.md` requires a payload to send only what
+     * its UI renders — folding it into the parcel form would make a one-question prompt write
+     * forty unrelated fields.
+     *
+     * Narrowing here never touches `Parcel.polygon`. The parcel application, the dashboard map
+     * and the add/update parcel form all read the boundary directly; only the consumer page
+     * consults the disclosure level.
+     */
+    /** Current disclosure state plus the lot to preview it on. */
+    getParcelLocationDisclosure: build.query({
+      query: (parcelId) => ({
+        url: `/parcels/${parcelId}/location-disclosure/`,
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (result, error, parcelId) => [{ type: 'Parcel', parcelId }]
+    }),
+    setParcelLocationDisclosure: build.mutation({
+      query: ({ parcelId, level }) => ({
+        url: `/parcels/${parcelId}/location-disclosure/`,
+        method: 'PATCH',
+        credentials: 'include',
+        body: { location_disclosure_level: level }
+      }),
+      invalidatesTags: (result, error, { parcelId }) => [{ type: 'Parcel', parcelId }]
+    }),
     getParcelCropHistory: build.query({
       query: (parcelId) => ({
         url: `/parcel-crop-history/?parcel=${parcelId}`,
@@ -366,6 +396,8 @@ export const {
   useGetFarmHistoriesQuery,
   useGetFarmScansVsSalesChartInfoQuery,
   useGetParcelCropHistoryQuery,
+  useGetParcelLocationDisclosureQuery,
+  useSetParcelLocationDisclosureMutation,
   useCreateParcelCropHistoryMutation,
   useDeleteParcelCropHistoryMutation,
   useUpdateParcelCropHistoryMutation

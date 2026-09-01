@@ -1004,7 +1004,7 @@ function UnifiedSubscriptionDashboard() {
                             only thing that tells them to fix the card before it runs out.
                             `warning`, not `error`: nothing is broken yet. */}
                         {subscription?.status === 'past_due' && (
-                          <Alert status="warning" mb={4} borderRadius="md" alignItems="flex-start">
+                          <Alert status="warning" mb={4}>
                             <AlertIcon />
                             <Box>
                               <AlertTitle fontSize="sm">
@@ -1029,7 +1029,7 @@ function UnifiedSubscriptionDashboard() {
                         {/* The farm has lapsed to Starter. Says what SURVIVED, because the
                             previous behaviour deleted nothing but behaved as though it had. */}
                         {isFreeForever && subscription?.cancellation_requested_at && (
-                          <Alert status="info" mb={4} borderRadius="md" alignItems="flex-start">
+                          <Alert status="info" mb={4}>
                             <AlertIcon />
                             <Box>
                               <AlertTitle fontSize="sm">

@@ -407,6 +407,62 @@ describe('the activity the farmer already chose reaches the parser', () => {
   });
 });
 
+describe('a real parse that the mapper used to choke on', () => {
+  it('survives null arrays instead of throwing', () => {
+    // MEASURED 2026-09-01 on "Cold night last night, got down to about twenty seven, had the wind
+    // machines going from two till six over in Ridge Block": the parser answered
+    // `detected_amounts: null` rather than omitting the key, and `extractStructuredAmounts` called
+    // `.map` on it. Pressing "Use these details" threw and applied nothing.
+    //
+    // The backend now coerces at the source (`.get(k) or []` — `.get(k, [])` returns None for a
+    // key that is PRESENT and null, which is what bit us). This is the client half.
+    const parsed = {
+      type: 'frost_protection',
+      description: 'frost protection',
+      confidence: 90,
+      detected_amounts: null,
+      detected_products: null,
+      detected_systems: null,
+      original_transcript: 'cold night, ran the wind machines'
+    } as never;
+    const mapping = mapVoiceTypeToTemplate('frost_protection');
+    expect(() => mapVoiceDataToFieldValues(parsed, mapping.templateId)).not.toThrow();
+    const result = mapVoiceDataToFieldValues(parsed, mapping.templateId);
+    expect(result.values.observation).toBe('cold night, ran the wind machines');
+  });
+
+  it('never guesses the unit of a spoken depth', () => {
+    // "unos cinco centímetros" arrived as {value: 5, unit: "centimetros"} and was recorded as 5
+    // INCHES, because anything the mapper did not recognise fell through to inches. 12.7cm of
+    // water on a certifier record, from a farmer who said 5.
+    const parse = (unit: string) => {
+      const parsed = {
+        type: 'irrigation',
+        description: '',
+        confidence: 90,
+        detected_amounts: [{ value: 5, unit, category: 'depth' }],
+        detected_products: [],
+        detected_systems: [],
+        original_transcript: 'riego'
+      } as never;
+      const result = mapVoiceDataToFieldValues(parsed, 'irrigation');
+      // `values` also carries the TEMPLATE defaults (irrigation ships a 1.0 depth), so asking it
+      // "did voice write this?" answers yes for a field voice never touched. `overriddenFields`
+      // is the list of what the utterance actually produced.
+      return { values: result.values, wrote: result.overriddenFields };
+    };
+
+    expect(parse('centimetros').values.irrigation_depth_unit).toBe('cm');
+    expect(parse('inches').values.irrigation_depth_unit).toBe('inches');
+    expect(parse('pulgadas').values.irrigation_depth_unit).toBe('inches');
+    // ...and an unrecognised unit drops the VALUE too: a blank field the farmer fills beats a
+    // plausible number that is off by 2.5x.
+    expect(parse('bushels').wrote).not.toContain('irrigation_depth');
+    expect(parse('bushels').wrote).not.toContain('irrigation_depth_unit');
+    expect(parse('centimetros').wrote).toContain('irrigation_depth');
+  });
+});
+
 describe('the panel does not narrate what the farmer already chose', () => {
   const capture = readFileSync(
     join(__dirname, '../../components/Events/VoiceEventCapture.tsx'),

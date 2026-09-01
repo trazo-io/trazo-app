@@ -463,8 +463,6 @@ export interface StandardizedBusinessEvent extends StandardizedEventBase {
   sustainability_practice?: string;
 
   // Trust and transparency (secondary priority)
-  trust_impact?: string;
-  transparency_benefit?: string;
 
   // Documentation (details priority)
   business_observation?: string;

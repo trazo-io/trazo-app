@@ -51,6 +51,8 @@ import { eventTypeAppearance } from 'config/events/eventTypeAppearance';
 import { eventTitle, subtypeOf as sharedSubtypeOf } from 'config/events/narrative';
 import { buyerPageWithheldReasonId } from 'utils/consumerDisplay';
 import { buyerVisibleFieldNames } from 'utils/buyerPageVisibility';
+import { filterEmptyCustomFields } from 'utils/customFieldsUtils';
+import type { CustomField } from 'utils/customFieldsUtils';
 import { useIntl } from 'react-intl';
 import type { IntlShape } from 'react-intl';
 // Event Field Registry (Phase 5 — feature-flagged)
@@ -575,6 +577,75 @@ const renderSharedEventFields = (
   textColor: string,
   intl: IntlShape
 ) => <RegistryFieldRendererBridge event={event} cardBg={cardBg} textColor={textColor} />;
+
+/**
+ * The grower's own custom fields, on the grower's own record view.
+ *
+ * Styling mirrors RegistryFieldRenderer's `FieldItem` deliberately — same Box, same label and
+ * value treatment — so a custom field is indistinguishable from a standard one, which is the
+ * stated contract in customFieldsUtils (`mergeCustomFieldsWithEventDisplay`: "no visual
+ * distinction"). It cannot reuse that component because a custom field has no `labelKey`.
+ */
+const CustomFieldsBlock: React.FC<{
+  event: Event;
+  cardBg: string;
+  textColor: string;
+  headingColor: string;
+}> = ({ event, cardBg, textColor, headingColor }) => {
+  const intl = useIntl();
+  // BOTH shapes, per the precedent in utils/fieldDisplayUtils.ts:750 — "eventDataNormalizer
+  // saves to event.custom_fields (for preview); backend data may have
+  // event.extra_data.custom_fields". MEASURED 2026-08-31: `/api/histories/<id>/public_history/`
+  // and the carbon `complete` endpoint both put them ONLY in `extra_data`, so reading the top
+  // level alone renders this block on the production page (whose event is pre-promoted) and
+  // silently nothing on TrackList and ActivityDetailModal, which pass the API event straight
+  // through. That is the same silent-drop this block was added to fix.
+  const raw = event as unknown as {
+    custom_fields?: CustomField[];
+    extra_data?: { custom_fields?: CustomField[] };
+  };
+  // `||`, not `??`: an empty top-level array is not an answer, and `??` would accept it and
+  // never look in extra_data. Matches utils/fieldDisplayUtils.ts, which uses `||` here.
+  const fields = filterEmptyCustomFields(raw.custom_fields || raw.extra_data?.custom_fields);
+  if (fields.length === 0) return null;
+
+  return (
+    <>
+      <Divider />
+      <Box>
+        <Text fontSize="lg" fontWeight="bold" mb={4} color={headingColor}>
+          {intl.formatMessage({ id: 'events.section.additionalInfo' })}
+        </Text>
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          {fields.map((field) => (
+            <Box key={field.id || field.label} p={4} bg={cardBg} borderRadius="lg">
+              <HStack spacing={1} mb={1}>
+                <Text fontSize="sm" color="gray.500">
+                  {field.label}
+                </Text>
+                {/* Same authority the registry fields use: a custom field reaches the buyer
+                    page when the grower marked it `consumer` (getCustomFieldsForConsumerCard
+                    filters on exactly this), so the badge is not a second opinion. */}
+                {field.visibility === 'consumer' && (
+                  <Badge
+                    colorScheme="green"
+                    fontSize="11px"
+                    variant="subtle"
+                    title={intl.formatMessage({ id: 'producer.event.fieldOnBuyerPageHelp' })}>
+                    {intl.formatMessage({ id: 'producer.event.buyerPageBadge' })}
+                  </Badge>
+                )}
+              </HStack>
+              <Text fontWeight="medium" color={textColor} whiteSpace="pre-wrap">
+                {String(field.value)}
+              </Text>
+            </Box>
+          ))}
+        </SimpleGrid>
+      </Box>
+    </>
+  );
+};
 
 /**
  * Bridge component: wraps useEventFields hook (hooks can't be called conditionally).
@@ -1127,6 +1198,30 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               </Box>
             </>
           )}
+
+          {/*
+            🔴 2026-08-31 — the grower's OWN custom fields were the one thing this modal did
+            not show. `grep -n custom_fields` on this file returned nothing: ConsumerEventCard
+            merges them, EventPreviewModal merges them, the certifier packet prints every one —
+            and the producer's full-record view, the surface whose entire job is showing a
+            record back, dropped them. A farmer who added "Nursery certificate number" saw it on
+            the buyer page and nowhere in their own records.
+
+            Rendered here rather than inside RegistryFieldRenderer because the display registry
+            has no notion of a farmer-authored field (ConsumerEventCard says the same and merges
+            them on its own path): there is no labelKey to resolve — the label IS the grower's
+            text, so passing it through the registry's i18n resolver would both mangle it
+            ("pH reading" -> "p H reading") and log a missing-translation error per field.
+
+            ALL visibilities, unlike the consumer path which filters to `consumer`. This is the
+            producer's own record; the badge says which ones a shopper also gets.
+          */}
+          <CustomFieldsBlock
+            event={event}
+            cardBg={cardBg}
+            textColor={textColor}
+            headingColor={textColor}
+          />
 
           <Divider />
 

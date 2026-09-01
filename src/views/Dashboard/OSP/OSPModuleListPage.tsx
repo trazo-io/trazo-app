@@ -31,7 +31,8 @@ import {
   StandardButton,
   StandardCard,
   StandardPage,
-  StandardPageLoading
+  StandardPageLoading,
+  StandardQueryError
 } from 'components/Design/StandardComponents';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import { selectWorkingOsp } from './selectWorkingOsp';
@@ -235,10 +236,14 @@ const OSPModuleListPage = () => {
     currentCompany?.establishments?.find((e: any) => String(e.id) === String(farmId))?.parcels ||
     [];
 
-  const { data: osps, isLoading: ospsLoading } = useGetOSPsQuery(
-    { companyId, farmId: farmId || '' },
-    { skip: !companyId || !farmId }
-  );
+  const {
+    data: osps,
+    isLoading: ospsLoading,
+    isUninitialized: ospsUninitialized,
+    isError: ospsError,
+    isFetching: ospsFetching,
+    refetch: refetchOsps
+  } = useGetOSPsQuery({ companyId, farmId: farmId || '' }, { skip: !companyId || !farmId });
   // Not `osps[0]` — see selectWorkingOsp for why index 0 was a Postgres null-ordering
   // default wearing a product decision's clothes.
   const latestOsp = selectWorkingOsp(osps);
@@ -317,7 +322,24 @@ const OSPModuleListPage = () => {
     }
   };
 
-  if (ospsLoading) return <StandardPageLoading />;
+  // Loading, or never started. `companyId` is `currentCompany?.id` and hydrates
+  // asynchronously, so on a cold load this query is SKIPPED and reports `isLoading: false`
+  // with `data: undefined` — which fell straight through to the "Start my OSP" first-run
+  // card below. Same defect as OSPView, and the note under `ospsError` was only half right:
+  // a skipped query does keep `isError` false, but it was never the error branch that caught
+  // it. `isUninitialized` is what names that state.
+  if (ospsLoading || ospsUninitialized) return <StandardPageLoading />;
+
+  // A failed OSPs request left `osps` undefined, so `selectWorkingOsp` returned nothing and
+  // this page rendered its "Start my OSP" first-run card — telling a farm that may already
+  // have a submitted plan on file that it has none, and inviting them to start a second one.
+  if (ospsError) {
+    return (
+      <StandardPage title={intl.formatMessage({ id: 'osp.modules.pageTitle' })}>
+        <StandardQueryError onRetry={refetchOsps} isRetrying={ospsFetching} />
+      </StandardPage>
+    );
+  }
 
   return (
     <StandardPage

@@ -198,7 +198,7 @@ const SmartUsageCard = ({
         borderRadius="15px"
         boxShadow="0px 3.5px 5.5px rgba(0, 0, 0, 0.02)">
         <Flex justify="center" align="center" h="full">
-          <CircularProgress isIndeterminate color="green.500" size="40px" />
+          <CircularProgress isIndeterminate color="green.700" size="40px" />
         </Flex>
       </Card>
     );

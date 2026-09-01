@@ -11,7 +11,6 @@ import {
   SimpleGrid,
   Text,
   useColorModeValue,
-  CircularProgress,
   useToast,
   Badge,
   VStack,
@@ -61,7 +60,13 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 
 // Import Trazo Design System
-import { StandardPage, StandardButton, StandardAlert, StandardSection } from 'components/Design';
+import {
+  StandardPage,
+  StandardButton,
+  StandardAlert,
+  StandardSection,
+  StandardPageLoading
+} from 'components/Design';
 
 // Lazy Stripe loader. The previous module-level loadStripe() executed on
 // EVERY app load — including the consumer QR page, where the key is empty —
@@ -115,9 +120,17 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
   // restructure the self-serve lineup is Starter (free) + Compliance ($249/yr) — the old
   // monthly/yearly toggle hid the ONLY paid tier on its default tab, because Compliance
   // exists solely as a yearly plan.
+  //
+  // `isError` is read, not dropped (2026-08-31). Without it a failed request left
+  // `loading` false and `plans` [], which fell through to the length-0 branch and printed
+  // "You're already on the highest plan — contact sales for something custom". A backend
+  // that is DOWN rendered as a packaging fact about the farm's account, and the operator's
+  // only real option (retry) was nowhere on the page. Three states, three branches.
   const {
     data: plans = [],
     isLoading: loading,
+    isFetching,
+    isError,
     refetch
   } = useGetPlansQuery(undefined, {
     refetchOnMountOrArgChange: true,
@@ -572,15 +585,28 @@ function Pricing({ inDashboard = false, companyId: directCompanyId = null }) {
             tier on its default tab. */}
         <VStack spacing={8} w="full">
           {/* Plans Grid */}
+          {/* Three distinct states, and the Refresh button belongs to exactly ONE of them.
+              It used to live inside the LOADING branch with `isLoading={loading}` — a prop
+              that is unconditionally true wherever that branch renders. Chakra answers
+              `isLoading` with no `loadingText` by swapping the label out for a spinner and
+              disabling the control, so the page showed a big spinner, "Loading plans...",
+              and beneath it a second spinner in an empty, permanently-dead outline box.
+              Retry is what you offer when loading has FAILED, never while it is working. */}
           {loading ? (
-            <VStack spacing={4} py={12}>
-              <CircularProgress isIndeterminate color="green.700" />
-              <Text color="gray.500">{t('app.loadingPlans')}</Text>
+            <StandardPageLoading label={t('app.loadingPlans')} />
+          ) : isError ? (
+            <VStack spacing={4} py={4} w="full">
+              <StandardAlert
+                status="error"
+                title={t('app.pricingLoadFailedTitle')}
+                description={t('app.pricingLoadFailedDescription')}
+              />
               <StandardButton
                 variant="outline"
                 size="sm"
                 onClick={() => refetch()}
-                isLoading={loading}>
+                isLoading={isFetching}
+                loadingText={t('app.loadingPlans')}>
                 {t('app.refreshPricing')}
               </StandardButton>
             </VStack>

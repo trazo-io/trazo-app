@@ -131,7 +131,7 @@ const ExpandableChartModal: React.FC<ExpandableChartModalProps> = ({
           <Box w="100%">
             {isLoading ? (
               <Flex justify="center" align="center" h={{ base: '300px', md: '400px' }}>
-                <CircularProgress isIndeterminate color="green.500" size="40px" />
+                <CircularProgress isIndeterminate color="green.700" size="40px" />
                 <Text ml={4} color={textColor} fontSize="sm">
                   {intl.formatMessage({ id: 'commercial.loadingChartData' })}
                 </Text>

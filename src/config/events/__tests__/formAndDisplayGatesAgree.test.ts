@@ -24,6 +24,14 @@
  * ⚠️ The assertion is CONTAINMENT, not equality. A registry gate may legitimately be wider
  * than the form's — a field can be seeded by an importer or written by the backend and still
  * deserve a display surface. It may never be NARROWER: that is the write-only defect above.
+ *
+ * 🔴 2026-08-31 — this guard was itself family-shaped, and the defect walked into the next
+ * family over. It read ProductionTab + productionEvent.ts and nothing else, because that is
+ * where the SS/TP/BU instance was found. Meanwhile PestManagementTab was rendering the two
+ * § 205.206 narratives on every pest event while pestEvent.ts still gated them to ['IP','TA']
+ * and ['TA','IP','SC'] — a grower filled in the IPM strategy on a scouting record, the packet
+ * counted it, and their own modal showed nothing back. A guard scoped to the family it was
+ * born in only proves that family innocent.
  */
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -197,5 +205,114 @@ describe('production: form gate and display gate agree', () => {
       `these subtypes resolve only the universal fields, so their detail modal says nothing ` +
         `about the activity: ${bare.join(', ')}`
     ).toEqual([]);
+  });
+});
+
+/**
+ * Pest: the two § 205.206 narratives the form asks on EVERY event.
+ *
+ * PestManagementTab renders `ipm_strategy` and `threshold_rationale` outside every subtype and
+ * summary-mode conditional, and says so in the section's own description — because the audit
+ * export runs its § 205.206(a) / (e) checks over all pest events and prints the shortfall on
+ * page 1 of the certifier dossier. A registry gate narrower than "all" therefore makes the
+ * input write-only for the subtypes it excludes.
+ *
+ * Anchored on the rendered description rather than a hand-typed subtype list: that sentence IS
+ * the form's claim about who is asked, so if it changes this fails loudly and someone has to
+ * re-decide, which is the same contract the production groups above use.
+ */
+const PEST_TAB = join(
+  __dirname,
+  '../../../views/Dashboard/Dashboard/components/forms/PestManagementTab.jsx'
+);
+const PEST_REGISTRY = join(__dirname, '../pestEvent.ts');
+
+describe('pest: form gate and display gate agree', () => {
+  const pestTabSrc = readFileSync(PEST_TAB, 'utf8');
+  const pestRegistrySrc = readFileSync(PEST_REGISTRY, 'utf8');
+
+  /** Same extraction as `registryGates`, against the pest registry. */
+  const pestGates = (): Map<string, string[] | null> => {
+    const marks = [...pestRegistrySrc.matchAll(/name:\s*'([a-z0-9_]+)'/g)];
+    const gates = new Map<string, string[] | null>();
+    marks.forEach((m, i) => {
+      const chunk = pestRegistrySrc.slice(m.index!, marks[i + 1]?.index ?? pestRegistrySrc.length);
+      const g = /visibleForSubtypes:\s*\[([^\]]*)\]/.exec(chunk);
+      gates.set(m[1], g ? subtypesIn(g[1]) : null);
+    });
+    return gates;
+  };
+
+  const UNIVERSAL_PEST_FIELDS = ['ipm_strategy', 'threshold_rationale'];
+
+  it('the form still declares these universal', () => {
+    expect(
+      pestTabSrc.includes('on every pest event, whatever its type'),
+      'PestManagementTab no longer states that these two are asked on every pest event — if the ' +
+        'form narrowed, narrow the registry with it rather than deleting this test'
+    ).toBe(true);
+    for (const field of UNIVERSAL_PEST_FIELDS) {
+      expect(
+        pestTabSrc.includes(`register('${field}')`),
+        `${field} is no longer registered by PestManagementTab`
+      ).toBe(true);
+    }
+  });
+
+  it('displays them for every pest subtype', () => {
+    const gates = pestGates();
+    for (const field of UNIVERSAL_PEST_FIELDS) {
+      expect(
+        gates.has(field),
+        `${field} is collected by the form but absent from the registry`
+      ).toBe(true);
+      expect(
+        gates.get(field),
+        `${field} is asked on every pest event but displayable only for ` +
+          `${(gates.get(field) || []).join(', ')} — the grower fills it, the certifier packet ` +
+          'counts it, and the detail modal renders nothing back.'
+      ).toBeNull();
+    }
+  });
+});
+
+/**
+ * Chemical: an adjuvant is a material applied to the crop, whatever it rides with.
+ *
+ * ChemicalTab offers "Add adjuvant" on every subtype — a spreader-sticker in a foliar FERTILIZER
+ * tank is an ordinary mix — while the registry gated `tank_mix_partners` to ['PE','FU','HE'].
+ * On a fertilizer that made it write-only twice over: the modal would not show it, and the CA
+ * PUR export does not report fertilizers at all (DPR-PML-017C box 23), so nothing did.
+ */
+describe('chemical: adjuvants are displayable wherever they can be recorded', () => {
+  // `ChemicalTab-ENHANCED.jsx`, not `ChemicalTab.jsx` — NewEvent imports it under the shorter
+  // alias (`import ChemicalTab from './ChemicalTab-ENHANCED'`) and no file by the plain name
+  // exists. Resolved from the import rather than hard-coded so a rename fails here loudly.
+  const CHEM_TAB = join(
+    __dirname,
+    '../../../views/Dashboard/Dashboard/components/forms/ChemicalTab-ENHANCED.jsx'
+  );
+  const chemRegistrySrc = readFileSync(join(__dirname, '../chemicalEvent.ts'), 'utf8');
+
+  it('the form offers adjuvants without a subtype gate', () => {
+    const src = readFileSync(CHEM_TAB, 'utf8');
+    expect(/tank_mix_partners/.test(src), 'ChemicalTab no longer collects tank_mix_partners').toBe(
+      true
+    );
+  });
+
+  it('the registry does not gate tank_mix_partners by subtype', () => {
+    const marks = [...chemRegistrySrc.matchAll(/name:\s*'([a-z0-9_]+)'/g)];
+    const idx = marks.findIndex((m) => m[1] === 'tank_mix_partners');
+    expect(idx, 'tank_mix_partners is absent from chemicalEvent.ts').toBeGreaterThan(-1);
+    const chunk = chemRegistrySrc.slice(
+      marks[idx].index!,
+      marks[idx + 1]?.index ?? chemRegistrySrc.length
+    );
+    expect(
+      /visibleForSubtypes:/.test(chunk),
+      'tank_mix_partners is gated by subtype again — the form offers it on every chemical ' +
+        'subtype, so any gate here makes the adjuvant write-only on the excluded ones'
+    ).toBe(false);
   });
 });

@@ -1739,20 +1739,121 @@ export const GuidanceNote = ({ children }: GuidanceNoteProps) => (
 );
 
 // Loading States
+//
+// `green.700`, NOT `green.500` (2026-08-31). A spinner is a graphical object that carries
+// the whole meaning of the screen while it turns, so WCAG 1.4.11 asks it for 3.0:1 against
+// its background. `green.500` #4CAF50 on white measures 2.78:1 — it fails the NON-TEXT floor,
+// not just the 4.5 text one, which is why .claude/rules/frontend.md bans it for anything that
+// has to be seen rather than merely tinted. Every page that hand-rolled its own loader in
+// `green.700` was more accessible than the component it was supposed to be reusing.
+//
+// A loader also has to SAY something. A bare turning ring is announced as nothing at all by a
+// screen reader, and "the page is blank" is indistinguishable from "the page is working" —
+// so `label` is rendered as visible text inside a `role="status"` live region. It is optional
+// only because a spinner sitting inside an already-labelled card is not owed a second label;
+// prefer passing one.
+
+interface StandardLoadingProps {
+  /** Visible, announced status text, e.g. "Loading plans...". Always i18n. */
+  label?: string;
+}
 
 // Full-page loading - use when loading replaces the entire page content
-export const StandardPageLoading = () => (
-  <Flex justify="center" align="center" py={20} minH="200px">
-    <CircularProgress isIndeterminate color="green.500" />
+export const StandardPageLoading = ({ label }: StandardLoadingProps) => (
+  <Flex
+    direction="column"
+    justify="center"
+    align="center"
+    py={20}
+    minH="200px"
+    gap={4}
+    role="status"
+    aria-live="polite">
+    <CircularProgress isIndeterminate color="green.700" />
+    {label && <Text color="gray.600">{label}</Text>}
   </Flex>
 );
 
 // Section/inline loading - use within cards, tables, sections
-export const StandardSpinner = () => (
-  <Flex justify="center" align="center" py={8}>
-    <CircularProgress isIndeterminate color="green.500" size="40px" />
+export const StandardSpinner = ({ label }: StandardLoadingProps) => (
+  <Flex
+    direction="column"
+    justify="center"
+    align="center"
+    py={8}
+    gap={3}
+    role="status"
+    aria-live="polite">
+    <CircularProgress isIndeterminate color="green.700" size="40px" />
+    {label && (
+      <Text color="gray.600" fontSize="sm">
+        {label}
+      </Text>
+    )}
   </Flex>
 );
+
+/**
+ * The FAILED state — the third branch that a two-branch screen keeps forgetting.
+ *
+ * The shape this exists to kill (found on 15 screens, 2026-08-31):
+ *
+ *   const { data: rows = [], isLoading } = useGetThingsQuery();
+ *   …
+ *   {isLoading ? <StandardPageLoading /> : rows.length === 0 ? <EmptyState … /> : <List />}
+ *
+ * `isError` is never destructured, so a 500, a dropped connection and an expired session all
+ * land in `rows = []` — and the screen states, as a fact about the user's account, that they
+ * have no scans / no reviews / no documents / no certifications. On Select Your Plan the same
+ * omission printed "You're already on the highest plan" while the plans endpoint was down.
+ *
+ * An empty state is a CLAIM about the data ("there is none"). Only a successful response
+ * licenses it. When the request failed, the honest screen says so and offers the retry — which
+ * is also the only place a retry belongs, never inside the loading branch.
+ *
+ * `onRetry` is optional but pass RTK Query's `refetch` whenever you have it; without a way
+ * forward the operator's only recourse is a full page reload.
+ */
+interface StandardQueryErrorProps {
+  /** What failed to load, already translated. Defaults to a generic line. */
+  title?: string;
+  description?: string;
+  /** RTK Query's `refetch`. Omit only when there is genuinely nothing to retry. */
+  onRetry?: () => void;
+  /** `isFetching` — so the retry button spins on the RETRY, not on the original failure. */
+  isRetrying?: boolean;
+}
+
+export const StandardQueryError = ({
+  title,
+  description,
+  onRetry,
+  isRetrying = false
+}: StandardQueryErrorProps) => {
+  const intl = useIntl();
+  return (
+    // No `role="alert"` here: Chakra's <Alert> already carries one, and a live region
+    // nested inside a live region gets announced twice.
+    <VStack spacing={4} py={8} w="full">
+      <StandardAlert
+        status="error"
+        mb={0}
+        title={title ?? intl.formatMessage({ id: 'app.queryErrorTitle' })}
+        description={description ?? intl.formatMessage({ id: 'app.queryErrorDescription' })}
+      />
+      {onRetry && (
+        <StandardButton
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+          isLoading={isRetrying}
+          loadingText={intl.formatMessage({ id: 'app.queryErrorRetrying' })}>
+          {intl.formatMessage({ id: 'app.queryErrorRetry' })}
+        </StandardButton>
+      )}
+    </VStack>
+  );
+};
 
 export const StandardSkeleton = ({ count = 3 }: { count?: number }) => (
   <VStack spacing={4}>
@@ -2863,7 +2964,7 @@ export const AutoSaveStatus = ({ lastSaved, isSaving }: AutoSaveStatusProps) => 
     <HStack spacing={2} fontSize="xs" color="gray.500">
       {isSaving ? (
         <>
-          <Spinner size="xs" color="green.500" />
+          <Spinner size="xs" color="green.700" />
           <Text>
             {intl.formatMessage({ id: 'events.draft.saving', defaultMessage: 'Saving draft…' })}
           </Text>

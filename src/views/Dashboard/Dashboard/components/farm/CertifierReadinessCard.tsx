@@ -138,7 +138,7 @@ export default function CertifierReadinessCard({
   const clearBg = useColorModeValue('green.50', 'green.900');
   const clearBorder = useColorModeValue('green.200', 'green.700');
 
-  const { data, isLoading, isError } = useGetCertifierReadinessQuery(
+  const { data, isLoading, isUninitialized, isError } = useGetCertifierReadinessQuery(
     { companyId, farmId },
     { skip: !companyId || !farmId }
   );
@@ -146,7 +146,11 @@ export default function CertifierReadinessCard({
   // Operation-level readiness. Non-blocking on purpose: if this endpoint fails or the
   // operation is not NOP-scoped (`applicable === false`, e.g. a conventional farm), the card
   // still renders the season findings rather than disappearing.
-  const { data: operation, isLoading: operationLoading } = useGetOperationReadinessQuery(
+  const {
+    data: operation,
+    isLoading: operationLoading,
+    isUninitialized: operationUninitialized
+  } = useGetOperationReadinessQuery(
     { companyId: String(companyId), farmId: String(farmId) },
     { skip: !companyId || !farmId }
   );
@@ -171,7 +175,12 @@ export default function CertifierReadinessCard({
   // operation blockers would flash "Start a production to see what your certifier will ask
   // for" — the opposite of the truth — before the blockers arrive. RTK clears isLoading on
   // error too, so a failing operation endpoint cannot wedge this.
-  if (isLoading || operationLoading) {
+  // `isUninitialized` on BOTH: `companyId` hydrates asynchronously, so on a cold farm
+  // dashboard both queries are skipped and report `isLoading: false` with no data. That fell
+  // through to the "Start a production to see what your certifier will ask for" state below —
+  // told to a farm that already has one, on the screen whose whole job is to say what the
+  // certifier will ask for.
+  if (isLoading || operationLoading || isUninitialized || operationUninitialized) {
     return (
       <Card>
         <CardBody>

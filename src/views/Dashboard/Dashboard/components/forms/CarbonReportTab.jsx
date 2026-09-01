@@ -31,7 +31,12 @@ import { useForm } from 'react-hook-form';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
-import { StandardInput, StandardSelect } from 'components/Design/StandardComponents';
+import {
+  StandardInput,
+  StandardSelect,
+  StandardPageLoading,
+  StandardQueryError
+} from 'components/Design/StandardComponents';
 
 const CarbonReportTab = ({ farmId }) => {
   const toast = useToast();
@@ -44,6 +49,8 @@ const CarbonReportTab = ({ farmId }) => {
   const {
     data: reports = [],
     isLoading: loadingReports,
+    isError: reportsError,
+    isFetching: reportsFetching,
     refetch
   } = useGetCarbonReportsQuery({ farmId, year: selectedYear });
 
@@ -99,11 +106,13 @@ const CarbonReportTab = ({ farmId }) => {
 
   // Loading state
   if (loadingReports) {
-    return (
-      <Flex align="center" justify="center" minH="200px">
-        <CircularProgress isIndeterminate color="green.500" />
-      </Flex>
-    );
+    return <StandardPageLoading />;
+  }
+
+  // `reports = []` on a failed request rendered the table's "no reports for this year" row,
+  // which is a statement about the farm's records rather than about the request.
+  if (reportsError) {
+    return <StandardQueryError onRetry={refetch} isRetrying={reportsFetching} />;
   }
 
   return (

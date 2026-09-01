@@ -307,7 +307,7 @@ export const TrazoGlobalSearch: React.FC<TrazoGlobalSearchProps> = ({
                 {isLoading ? (
                   <Flex justify="center" align="center" py={8}>
                     <VStack spacing={3}>
-                      <Spinner size="md" color="green.500" />
+                      <Spinner size="md" color="green.700" />
                       <Text fontSize="sm" color="gray.500">
                         Searching...
                       </Text>

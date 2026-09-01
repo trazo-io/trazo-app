@@ -99,7 +99,7 @@ const BuyerReview: React.FC = () => {
   if (loading) {
     return (
       <Center minH="60vh">
-        <Spinner size="lg" color="green.500" />
+        <Spinner size="lg" color="green.700" />
       </Center>
     );
   }

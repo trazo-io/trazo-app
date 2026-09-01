@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { StandardParcelFormTransparency } from '../../../../components/Forms/StandardParcelForm_Transparency';
 import { WriteAccessGuard } from 'components/Guards/WriteAccessGuard';
+import { StandardPage, StandardPageLoading } from 'components/Design';
 import {
   useCreateParcelMutation,
   useUpdateParcelMutation,
@@ -297,20 +298,6 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
     navigate(`/admin/dashboard/farm/${farmId}`);
   };
 
-  // Show loading state while fetching parcel data in edit mode
-  if (isEdit && isLoadingParcel) {
-    return (
-      <StandardParcelFormTransparency
-        onSubmit={() => {}}
-        onCancel={handleCancel}
-        isLoading={true}
-        isEdit={true}
-        establishmentName={establishmentData?.name || currentEstablishment?.name || ''}
-        establishmentCoordinates={establishmentCoordinates}
-      />
-    );
-  }
-
   // Toast + redirect on a failed fetch, in an EFFECT.
   //
   // Both calls used to sit in the render body, guarded only by `if (isEdit && parcelError)`.
@@ -318,6 +305,20 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
   // repeatedly and dispatched a router navigation from inside another component's render —
   // the "Cannot update a component while rendering a different component" warning. Moving it
   // into an effect also means it runs exactly once per error, after commit.
+  //
+  // 🔴 2026-08-31 — AND IT MUST STAY ABOVE THE EARLY RETURNS BELOW.
+  //
+  // It sat after the `isLoadingParcel` guard, so on a COLD load the guard returned before this
+  // hook was reached, and the next render — fetch landed, guard passes — reached it. React's
+  // hook count changed between renders and tore the tree down: "Rendered fewer hooks than
+  // expected", caught by the error boundary as "We hit a snag loading this page".
+  //
+  // In-app navigation never showed it because RTK Query already has the parcel cached, so
+  // `isLoadingParcel` is never true and the guard never fires. What DOES hit it is a cold load
+  // of this URL: a refresh while editing, a bookmark, a new tab, session restore.
+  //
+  // Every hook in this component belongs above every conditional return. That is not a style
+  // preference here; it is the rule React enforces at runtime.
   useEffect(() => {
     if (!isEdit || !parcelError) return;
     toast({
@@ -330,6 +331,30 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
     });
     navigate(`/admin/dashboard/farm/${farmId}`);
   }, [isEdit, parcelError, farmId, intl, navigate, toast]);
+
+  // Show loading state while fetching parcel data in edit mode.
+  //
+  // This used to render the WHOLE FORM SHELL with `isLoading={true}` hardcoded. That prop
+  // lands on the form's submit button (StandardParcelForm_Transparency.tsx:944), which
+  // carries `loadingText="Updating..."` — so while the parcel was still being FETCHED the
+  // operator was shown an empty form under a spinning, disabled "Updating..." button. The
+  // screen asserted a write in progress before a single field had arrived, and the empty
+  // inputs beneath it read as the parcel's real, now-blank values.
+  //
+  // Same class as the Select Your Plan defect: a control rendered only while loading must
+  // not also be DRIVEN by loading. Here the whole form was the control. AddFarm.tsx already
+  // solved this shape — keep the page chrome so the title and Back button do not vanish and
+  // the layout does not jump when the fetch lands, and put the standard loader inside it.
+  if (isEdit && isLoadingParcel) {
+    return (
+      <StandardPage
+        title={intl.formatMessage({ id: 'parcelForm.page.editTitle' })}
+        showBackButton
+        onBack={handleCancel}>
+        <StandardPageLoading />
+      </StandardPage>
+    );
+  }
 
   if (isEdit && parcelError) {
     return null;

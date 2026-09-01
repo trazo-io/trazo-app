@@ -6,7 +6,6 @@ import {
   useColorModeValue,
   Stack,
   Badge,
-  CircularProgress,
   Progress,
   Icon,
   Image
@@ -16,6 +15,7 @@ import Card from 'components/Card/Card';
 import CardHeader from 'components/Card/CardHeader';
 import CardBody from 'components/Card/CardBody';
 import { useGetUserProductionScansQuery } from 'store/api/historyApi';
+import { StandardSpinner, StandardQueryError } from 'components/Design';
 import { format } from 'date-fns';
 import { NavLink } from 'react-router-dom';
 import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
@@ -24,7 +24,14 @@ import { HSeparator } from 'components/Separator/Separator';
 export default function ScannedProductsView() {
   const textColor = useColorModeValue('gray.700', 'white');
   const cardColor = useColorModeValue('white', 'gray.700');
-  const { data: productions, isLoading } = useGetUserProductionScansQuery();
+  // A failed fetch used to render an EMPTY <Stack> — no list, no message, no way to retry.
+  const {
+    data: productions,
+    isLoading,
+    isError,
+    isFetching,
+    refetch
+  } = useGetUserProductionScansQuery();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -60,9 +67,9 @@ export default function ScannedProductsView() {
         </CardHeader>
         <CardBody px="5px">
           {isLoading ? (
-            <Flex justify="center" align="center" py={8}>
-              <CircularProgress isIndeterminate color="green.500" size="40px" />
-            </Flex>
+            <StandardSpinner />
+          ) : isError ? (
+            <StandardQueryError onRetry={refetch} isRetrying={isFetching} />
           ) : (
             <Stack width="100%" spacing={8}>
               {productions?.map((production, index) => (

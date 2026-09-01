@@ -48,7 +48,11 @@ import { useMemo, useState } from 'react';
 import { useGetParcelHistoriesQuery } from 'store/api/historyApi';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
-import { StandardEmptyState } from 'components/Design/StandardComponents';
+import {
+  StandardEmptyState,
+  StandardSpinner,
+  StandardQueryError
+} from 'components/Design/StandardComponents';
 import CardHeader from 'components/Card/CardHeader';
 import { useUserRole } from 'hooks/useUserRole';
 import { formatDateFromTimestamp } from 'utils/dateOnly';
@@ -85,13 +89,16 @@ const HistoryCard = ({ amount }) => {
 
   const { parcelId, farmId } = useParams();
 
-  const { data, isLoading, isFetching } = useGetParcelHistoriesQuery(
-    { companyId: currentCompany?.id, farmId, parcelId },
-    {
-      skip: !parcelId || !farmId || !currentCompany || currentCompany?.id === undefined,
-      refetchOnMountOrArgChange: true
-    }
-  );
+  // `isError` read: on a failed request `data` stays undefined and the card fell through to
+  // its StandardEmptyState, telling the operator this parcel has no production history.
+  const { data, isLoading, isFetching, isUninitialized, isError, refetch } =
+    useGetParcelHistoriesQuery(
+      { companyId: currentCompany?.id, farmId, parcelId },
+      {
+        skip: !parcelId || !farmId || !currentCompany || currentCompany?.id === undefined,
+        refetchOnMountOrArgChange: true
+      }
+    );
 
   // Calculate production statistics with enhanced status logic
   const productionStats = useMemo(() => {
@@ -494,10 +501,14 @@ const HistoryCard = ({ amount }) => {
         </Flex>
       </CardHeader>
 
-      {isLoading || isFetching ? (
-        <Flex width={'100%'} height={'120px'} justifyContent={'center'} alignItems="center">
-          <CircularProgress isIndeterminate color="green.500" size="40px" />
-        </Flex>
+      {/* `isUninitialized`: the skip waits on `currentCompany?.id`, which hydrates from Redux
+          after first paint. Skipped reports `isLoading: false` with no data, so without this
+          the card fell through to its StandardEmptyState and stated that this parcel has no
+          production history. */}
+      {isLoading || isFetching || isUninitialized ? (
+        <StandardSpinner />
+      ) : isError ? (
+        <StandardQueryError onRetry={refetch} />
       ) : (
         <CardBody p="0px" pb={4}>
           {data && data.length > 0 ? (

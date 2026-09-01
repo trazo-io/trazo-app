@@ -85,68 +85,49 @@ import type { AnySubtype, EventTypeCode } from './registry';
 export const VOICE_ACTIVITY_FIELDS: Record<string, readonly string[]> = {
   // ── Chemical family ────────────────────────────────────────────────────────
   fertilization: [
-    'active_ingredient',
     'nitrogen_percentage',
     'phosphorus_percentage',
     'potassium_percentage',
-    'application_purpose',
-    'application_timing',
-    'weather_conditions'
+    'application_purpose'
   ],
   fertilizer: [
-    'active_ingredient',
     'nitrogen_percentage',
     'phosphorus_percentage',
     'potassium_percentage',
-    'application_purpose',
-    'application_timing',
-    'weather_conditions'
+    'application_purpose'
   ],
-  pesticide: [
-    'active_ingredient',
-    'target_pest_disease',
-    'application_purpose',
-    'application_timing',
-    'weather_conditions',
-    'rei_hours',
-    'phi_days'
-  ],
-  herbicide: [
-    'active_ingredient',
-    'target_pest_disease',
-    'application_purpose',
-    'application_timing',
-    'weather_conditions',
-    'rei_hours',
-    'phi_days'
-  ],
-  fungicide: [
-    'active_ingredient',
-    'target_pest_disease',
-    'application_purpose',
-    'application_timing',
-    'weather_conditions',
-    'rei_hours',
-    'phi_days'
-  ],
+  pesticide: ['target_pest_disease', 'application_purpose'],
+  herbicide: ['target_pest_disease', 'application_purpose'],
+  fungicide: ['target_pest_disease', 'application_purpose'],
 
   // ── Production family ──────────────────────────────────────────────────────
-  irrigation: ['water_volume_total', 'irrigation_depth', 'electricity_source'],
+  // `water_volume_total` is NOT here: it renders only in Irrigation Summary Mode
+  // (`visibleWhen: is_summary`), and a field the farmer cannot see is a field they cannot
+  // correct. Summary mode is a different way of logging — several irrigations at once — and the
+  // farmer turns it on deliberately; voice describing one pass has no business filling it.
+  // `irrigation_depth` is NOT here, and neither are `transportation_distance` or
+  // `working_depth` below: each pairs with a separate unit field, and a request cannot carry the
+  // pair (see the `unitField` skip in buildVoiceFieldRequests). Depth still fills from the spoken
+  // amount when the farmer names a unit the mapper recognises — that path keeps them together.
+  irrigation: ['electricity_source'],
+  // `storage_location` and `storage_temperature_f` are NOT here: both render only once
+  // `harvest_destination` says the crop was stored. Voice fills a whole payload at once, so they
+  // MIGHT become visible — and might not, if the model reads the destination differently. A
+  // field whose reviewability depends on the model getting a second field right is not reviewable.
   harvest: [
     'harvest_quality_grade',
     'brix_level',
     'dry_matter_percentage',
     'grain_moisture',
-    'harvest_destination',
-    'storage_location',
-    'storage_temperature_f'
+    'harvest_destination'
   ],
   // `temperature_control` is deliberately absent: it is a boolean, and there is no such thing
   // as a low-confidence yes/no on a certifier record.
   post_harvest: ['processing_type', 'processing_duration_hours'],
   planting: ['plants_established', 'plant_spacing', 'rootstock', 'variety', 'method'],
   transplanting: ['plants_established', 'plant_spacing', 'rootstock', 'variety', 'method'],
-  pruning: ['pruning_passes', 'method'],
+  // `pruning_passes` is summary-mode only (`visibleWhen: is_summary`), like water volume.
+  pruning: ['method'],
   cultivation: ['method'],
   thinning: ['method'],
   mowing: ['floor_management_type', 'method'],
@@ -155,20 +136,16 @@ export const VOICE_ACTIVITY_FIELDS: Record<string, readonly string[]> = {
   // Placement and removal DATES are excluded on purpose — see group 4 above. The count and the
   // kind of pollinator are what a grower says; the dates get typed.
   pollination: ['pollinator_type', 'hive_count'],
-  transport: ['harvest_destination', 'quantity_sent_to_handler', 'transportation_distance'],
-  equipment: [
-    'equipment_type',
-    'equipment_operation_type',
-    'cleaning_method',
-    'cleaning_materials_used',
-    'purge_material',
-    'purge_quantity',
-    'sanitizer_name',
-    'sanitizer_ppm'
-  ],
+  // `quantity_sent_to_handler` renders conditionally; see the visibleWhen rule above.
+  transport: ['harvest_destination'],
+  // Four cleaning fields are gone from this list — `cleaning_method`, `cleaning_materials_used`,
+  // `purge_material`, `purge_quantity` — because each renders only for the matching operation
+  // type. That leaves equipment thin on purpose: a cleanout record's details are worth typing
+  // where the farmer can see the form decide what to ask.
+  equipment: ['equipment_type', 'equipment_operation_type', 'sanitizer_name', 'sanitizer_ppm'],
 
   // ── Soil ───────────────────────────────────────────────────────────────────
-  soil_management: ['soil_ph', 'organic_matter_percentage', 'working_depth', 'soil_texture'],
+  soil_management: ['soil_ph', 'organic_matter_percentage', 'soil_texture'],
 
   // ── General ────────────────────────────────────────────────────────────────
   general: ['activity_type', 'duration', 'people_involved']
@@ -207,6 +184,29 @@ export const VOICE_NEVER_FILLS: Record<string, string> = {
   buffer_disposition_evidence: '§ 205.202 buffer-crop disposition evidence',
   sanitizer_nop_reference: 'cites a National List entry',
   cleaning_protocol_reference: 'cites a written protocol',
+
+  // 1b. Values the MODEL knows and the farmer did not say.
+  //
+  // MEASURED 2026-09-01, twice, on the same demo utterance ("Sprayed Kocide 3000-O on the east
+  // block, three and a half pounds an acre, air-blast, for walnut blight"): the parser returned
+  // rei_hours=24, phi_days=0 on one run and phi_days=14 on the next — from a sentence containing
+  // no interval at all. It recognised the product and recalled its label, helpfully and wrongly,
+  // and disagreed with itself between runs. A prompt rule forbidding it ("do not use product
+  // knowledge") fixed one run and not the other, which is the whole argument: an instruction is
+  // not a control.
+  //
+  // These are the fields where that recall is most dangerous, because each is read as the
+  // operator's own statement: REI and PHI are regulatory intervals an inspector checks, weather
+  // is what a drift complaint turns on, and the active ingredient decides whether a material is
+  // restricted under § 205.601. A farmer who does say "twelve hour REI" now types it — that is
+  // the cost, and it is smaller than a remembered number on a spray record.
+  rei_hours: "label value the model recalls; regulatory interval read as the operator's statement",
+  phi_days: "label value the model recalls; regulatory interval read as the operator's statement",
+  weather_conditions:
+    'invented on every run from sentences with no weather in them; drift-relevant',
+  application_timing: 'inferred from the practice rather than heard',
+  active_ingredient:
+    'a property of the product, not of the event — the input catalogue is the verified source',
 
   // 2. Paperwork identifiers — speech-to-text is least reliable exactly here
   chemical_lot_number: 'identifier an inspector traces',
@@ -302,9 +302,19 @@ export function buildVoiceFieldRequests(
   translate: (labelKey: string) => string,
   options: { knownBlockIds?: readonly string[] } = {}
 ): VoiceFieldRequest[] {
+  // No activity, no context: soil, pest and business ask their subtype inside the tab, and a
+  // request built against a guess is worse than no request.
   if (!activitySlug) return [];
+
+  // Two different "nothing"s, and they are not the same answer.
+  //
+  // An activity this file does not know is one we cannot ask about at all — including its block.
+  // But an activity that IS known and simply lists no fields must still get the block question,
+  // because `block_id` is appended after the loop below: an early `return []` on an empty list
+  // would have silently stopped asking for it the first time somebody emptied a list. That nearly
+  // happened this week, when five recall-prone fields were retired from the chemical lists.
   const wanted = VOICE_ACTIVITY_FIELDS[activitySlug];
-  if (!wanted || wanted.length === 0) return [];
+  if (!wanted) return [];
 
   const rendered = new Set(getFieldNamesForSurface(eventType, subtype, 'form'));
   const requests: VoiceFieldRequest[] = [];
@@ -313,6 +323,34 @@ export function buildVoiceFieldRequests(
     if (!rendered.has(name)) continue;
     const cfg = getFieldConfig(eventType, name);
     if (!cfg) continue;
+
+    // ⛔ A field whose visibility depends on OTHER form state cannot be asked for.
+    //
+    // MEASURED 2026-09-01 against the live form: `water_volume_total` is listed on the `form`
+    // surface for irrigation, so `getFieldNamesForSurface` returns it and the render gate keeps
+    // it — but its `visibleWhen` predicate is `is_summary`, so it renders only in Irrigation
+    // Summary Mode. With the toggle off the model answered it anyway (2, from "two inches of
+    // water" — which is a DEPTH, so the value was wrong as well as invisible) and it would have
+    // been written to a record the farmer never saw. That is the exact failure the gate exists
+    // to prevent, and the gate cannot catch it: `visibleWhen` is a runtime predicate over an
+    // event object that does not exist yet at request time.
+    //
+    // The rule is not about this one field. Anything conditional is unreviewable at the moment
+    // we ask, so it is never asked for — `voiceFieldRequests.test.ts` fails if one is listed.
+    if (cfg.visibleWhen) continue;
+
+    // ⛔ A bare number is not an amount when the form stores its unit separately.
+    //
+    // MEASURED 2026-09-01 on a Spanish utterance: "unos cinco centímetros" came back as
+    // `irrigation_depth: 5`, with no unit. The form pairs that field with
+    // `irrigation_depth_unit`, which defaults to inches — so 5 cm would have been recorded as
+    // 5 INCHES, a 2.5x error on a certifier record, and a plausible-looking one.
+    //
+    // Unit companions have no display-registry entry of their own (the form renders them inline
+    // beside the value), so there is nothing to ASK for alongside the number. Until a request can
+    // carry the pair, the number is not askable: `irrigation_depth`, `transportation_distance`
+    // and `working_depth` are typed, and the farmer sees the unit while they do it.
+    if (cfg.unitField) continue;
 
     let type: VoiceFieldRequest['type'];
     if (cfg.valueType === 'number') type = 'number';

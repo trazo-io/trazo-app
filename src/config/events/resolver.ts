@@ -13,7 +13,7 @@
 
 import { getEnumLabel } from './enums';
 import type { EnumSourceKey } from './enums';
-import { defaultFormatter } from './formatters';
+import { defaultFormatter, formatNumber } from './formatters';
 import type {
   AnySubtype,
   DisplaySurface,
@@ -257,6 +257,45 @@ export function getFieldsForSurface(
         rawValue === rawValue.toLowerCase()
       ) {
         formattedValue = rawValue.charAt(0).toUpperCase() + rawValue.slice(1).replace(/_/g, ' ');
+      }
+    }
+
+    // 🔴 2026-08-31 — honour `unitField`.
+    //
+    // `FieldConfig.unitField` is documented as "companion unit field (e.g. 'volume_numeric'
+    // pairs with 'volume_unit')" and is declared 24 times across six registries — and nothing
+    // read it. Its only consumer was `makeUnitPairFormatter`, which a field has to opt into
+    // SEPARATELY, so a field that declared `unitField` and no formatter rendered a bare number:
+    // the chemical detail modal printed "Quantity Purchased 55.00" with no gal/lb anywhere, and
+    // the same shape reached the compost record's "Quantity Purchased 136.00".
+    //
+    // A declaration that does nothing is worse than none — it reads as handled. Applied only
+    // when the field did NOT supply its own formatter, so `makeUnitPairFormatter` and every
+    // other bespoke formatter still win and no unit is appended twice.
+    if (field.unitField && !activeFormatter && formattedValue != null && formattedValue !== '') {
+      // Same lookup the VALUE gets a few lines up (`event ?? extraData`). A companion unit that
+      // lives in extra_data while its quantity is a column — or the reverse — would otherwise
+      // read as "no unit recorded" and silently drop the suffix, which is the exact
+      // found-the-value-missed-the-companion shape this block exists to fix.
+      const unit =
+        (event as Record<string, unknown>)[field.unitField] ??
+        (extraData as Record<string, unknown>)[field.unitField];
+      if (typeof unit === 'string' && unit.trim() && !formattedValue.includes(unit.trim())) {
+        // Group the digits while we are here. These quantities arrive as Decimal STRINGS
+        // ("182000.00"), which `defaultFormatter` passes through untouched, so the modal read
+        // "Quantity Sent 182000.00 lbs" three rows under a "Yield 182,000 lbs" that has its own
+        // formatter. Same treatment as `formatNumber` gives everywhere else.
+        const numeric =
+          typeof rawValue === 'number'
+            ? rawValue
+            : typeof rawValue === 'string' && /^-?\d+(\.\d+)?$/.test(rawValue.trim())
+            ? Number(rawValue)
+            : null;
+        const base =
+          numeric != null && Number.isFinite(numeric)
+            ? formatNumber(numeric, event) ?? formattedValue
+            : formattedValue;
+        formattedValue = `${base} ${unit.trim()}`;
       }
     }
 

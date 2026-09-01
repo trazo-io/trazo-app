@@ -39,7 +39,8 @@ import {
   StandardAlert,
   StandardMetricCard,
   StandardSectionTabs,
-  ConsumerTooltip
+  ConsumerTooltip,
+  StandardQueryError
 } from '../../../components/Design/StandardComponents';
 import { useGetUserProductionScansQuery, useGetUserReviewsQuery } from 'store/api/historyApi';
 
@@ -53,8 +54,22 @@ export default function CarbonJourney() {
   const [activeTab, setActiveTab] = useState(0);
 
   // API queries for data
-  const { data: productions, isLoading: scansLoading } = useGetUserProductionScansQuery();
-  const { data: reviews, isLoading: reviewsLoading } = useGetUserReviewsQuery();
+  // Two independent queries, so two independent failures — one can fail while the other
+  // succeeds, and each empty state must answer for its OWN request rather than for the page.
+  const {
+    data: productions,
+    isLoading: scansLoading,
+    isError: scansError,
+    isFetching: scansFetching,
+    refetch: refetchScans
+  } = useGetUserProductionScansQuery();
+  const {
+    data: reviews,
+    isLoading: reviewsLoading,
+    isError: reviewsError,
+    isFetching: reviewsFetching,
+    refetch: refetchReviews
+  } = useGetUserReviewsQuery();
 
   // Journey statistics
   const [shopStats, setShopStats] = useState({
@@ -341,8 +356,12 @@ export default function CarbonJourney() {
                     </StandardButton>
                   )}
 
+                  {scansError && (
+                    <StandardQueryError onRetry={refetchScans} isRetrying={scansFetching} />
+                  )}
+
                   {/* Empty State */}
-                  {!scansLoading && (!productions || productions.length === 0) && (
+                  {!scansLoading && !scansError && (!productions || productions.length === 0) && (
                     <Box textAlign="center" py={8}>
                       <Circle size="60px" bg="gray.100" mx="auto" mb={4}>
                         <Icon as={FaQrcode} color="gray.400" boxSize={6} />
@@ -471,8 +490,12 @@ export default function CarbonJourney() {
                     </StandardButton>
                   )}
 
+                  {reviewsError && (
+                    <StandardQueryError onRetry={refetchReviews} isRetrying={reviewsFetching} />
+                  )}
+
                   {/* Empty State */}
-                  {!reviewsLoading && (!reviews || reviews.length === 0) && (
+                  {!reviewsLoading && !reviewsError && (!reviews || reviews.length === 0) && (
                     <Box textAlign="center" py={8}>
                       <Circle size="60px" bg="gray.100" mx="auto" mb={4}>
                         <Icon as={FaStar} color="gray.400" boxSize={6} />

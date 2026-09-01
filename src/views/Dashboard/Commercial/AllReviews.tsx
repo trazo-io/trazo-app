@@ -66,6 +66,7 @@ const AllReviewsView = () => {
   const {
     data: reviewsPaginatedData,
     isLoading,
+    isUninitialized,
     error
   } = useGetFarmReviewsPaginatedQuery(
     {
@@ -295,9 +296,10 @@ const AllReviewsView = () => {
         variant="elevated"
         padding={{ base: 0, md: 4 }}>
         <VStack spacing={{ base: 3, md: 6 }} align="stretch">
-          {isLoading ? (
+          {/* `isUninitialized` — see AllScans: skipped is not the same as "answered, empty". */}
+          {isLoading || isUninitialized ? (
             <Flex justify="center" align="center" py={12}>
-              <CircularProgress isIndeterminate color="green.500" size="40px" />
+              <CircularProgress isIndeterminate color="green.700" size="40px" />
             </Flex>
           ) : error ? (
             <Flex justify="center" align="center" py={12}>

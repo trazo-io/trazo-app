@@ -24,7 +24,9 @@ import {
   StandardNumberInput,
   StandardInput,
   StandardSelect,
-  StandardTextarea
+  StandardTextarea,
+  StandardSpinner,
+  StandardQueryError
 } from 'components/Design/StandardComponents';
 import {
   useGetParcelCropHistoryQuery,
@@ -105,7 +107,15 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
 
-  const { data: historyEntries = [], isLoading } = useGetParcelCropHistoryQuery(parcelId, {
+  // `= []` on a failed request made this read as "no field history recorded" — a §205.202(b)
+  // land-history claim that only a successful response can support.
+  const {
+    data: historyEntries = [],
+    isLoading,
+    isError,
+    isFetching,
+    refetch
+  } = useGetParcelCropHistoryQuery(parcelId, {
     skip: !parcelId
   });
 
@@ -514,9 +524,9 @@ const FieldHistorySection: React.FC<FieldHistorySectionProps> = ({ parcelId, can
 
           {/* Table or empty state */}
           {isLoading ? (
-            <Text fontSize="sm" color="gray.500" textAlign="center" py={4}>
-              Loading field history...
-            </Text>
+            <StandardSpinner />
+          ) : isError ? (
+            <StandardQueryError onRetry={refetch} isRetrying={isFetching} />
           ) : entries.length === 0 ? (
             <Box
               p={{ base: 4, md: 6 }}

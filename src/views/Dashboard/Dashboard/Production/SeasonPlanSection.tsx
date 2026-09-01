@@ -92,7 +92,7 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
   // there the checklist is doing its job.
   const [showFinishedPlan, setShowFinishedPlan] = useState(false);
 
-  const { data, isLoading } = useGetSeasonPlanQuery(
+  const { data, isLoading, isError } = useGetSeasonPlanQuery(
     { historyId: productionId },
     { skip: !productionId }
   );
@@ -104,6 +104,14 @@ export const SeasonPlanSection: React.FC<SeasonPlanSectionProps> = ({
 
   // A production started without a crop template has no plan, and that is a perfectly good
   // way to work — the card simply does not render rather than nagging for one.
+  //
+  // ⚠️ `isError` is checked FIRST and separately. Without it a failed request also produced
+  // `items.length === 0` and this same `return null`, so the season plan vanished from the
+  // production page with no spinner, no message and no trace — the operator had no way to
+  // tell "this season has no plan" from "the plan did not load". Silence is the one thing a
+  // failure must never look like. There is no retry here because the card renders nothing
+  // to hang one on; the surrounding page's own refresh covers it.
+  if (isError) return null;
   if (!isLoading && items.length === 0) return null;
 
   // A plan is a FORWARD-looking artifact; its job ends when the season closes. On a

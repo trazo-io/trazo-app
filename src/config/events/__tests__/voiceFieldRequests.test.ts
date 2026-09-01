@@ -92,6 +92,40 @@ describe('every requested field is real, rendered, and safe', () => {
     }
   });
 
+  it('never asks for a field whose visibility depends on other form state', () => {
+    // MEASURED 2026-09-01 on the live form: `water_volume_total` is on irrigation's `form`
+    // surface, so the registry — and therefore the render gate — says it is visible. Its
+    // `visibleWhen` predicate says otherwise unless Irrigation Summary Mode is on. Asking for it
+    // put a model-supplied number on a field the farmer could not see or correct.
+    for (const [slug, fields] of Object.entries(VOICE_ACTIVITY_FIELDS)) {
+      const mapping = VOICE_TYPE_MAP[slug];
+      for (const field of fields) {
+        const cfg = getFieldConfig(mapping.backendEventType, field);
+        expect(
+          cfg?.visibleWhen,
+          `${slug}: ${field} renders conditionally, so it cannot be reviewed where it is asked`
+        ).toBeUndefined();
+      }
+    }
+  });
+
+  it('never asks for a number whose unit lives in another field', () => {
+    // The builder skips these defensively, but a list that NAMES a field we never ask for is a
+    // lie in the one place someone reads to find out what we ask for. MEASURED 2026-09-01: a
+    // Spanish "cinco centímetros" came back as a bare 5 and was recorded as 5 INCHES, because a
+    // request cannot carry the value and its unit together.
+    for (const [slug, fields] of Object.entries(VOICE_ACTIVITY_FIELDS)) {
+      const mapping = VOICE_TYPE_MAP[slug];
+      for (const field of fields) {
+        const cfg: { unitField?: string } | null = getFieldConfig(mapping.backendEventType, field);
+        expect(
+          cfg?.unitField,
+          `${slug}: ${field} stores its unit in ${cfg?.unitField}, which no request can carry`
+        ).toBeUndefined();
+      }
+    }
+  });
+
   it('the never-fill list actually names real fields', () => {
     // A reason written against a field that no longer exists is a comment pretending to be a
     // guard. Checked loosely — the same name may live on several event types.
@@ -115,11 +149,12 @@ describe('voiceFieldOverlap: which fields two paths can both produce', () => {
   // principle, write the same key. That is allowed — the explicit answer is applied last and
   // wins — but the SET of overlaps has to be a decision, not a discovery. This test fails when
   // a new one appears, which is the moment to ask which source should own that field.
-  const KNOWN_OVERLAPS: Record<string, readonly string[]> = {
-    // The legacy branch infers depth by hunting the amounts array for a `depth` category; the
-    // request asks the model for it by name. The named answer wins.
-    irrigation: ['irrigation_depth']
-  };
+  // Empty, and that is the goal: ONE source per field. `irrigation_depth` used to be here —
+  // asked for by name AND inferred from the amounts array — until the unit rule took it out of
+  // the ask list, leaving the legacy path (which carries the unit alongside the value) as its
+  // only writer. An entry here is not a bug, but it is a decision: whoever adds one has to say
+  // which source wins and why.
+  const KNOWN_OVERLAPS: Record<string, readonly string[]> = {};
 
   // Every key the legacy mapping can emit, taken from a maximally generous parse.
   const RICH = {
@@ -159,7 +194,9 @@ describe('voiceFieldOverlap: which fields two paths can both produce', () => {
     }
   });
 
-  it('the explicit answer wins where they overlap', () => {
+  it('the explicit answer still wins wherever an overlap is reintroduced', () => {
+    // No activity currently asks for a field the legacy mapping also writes, but the ordering
+    // rule outlives that: `activity_fields` is applied last, so a named answer beats an inference.
     const requested = [
       { name: 'irrigation_depth', label: 'Irrigation depth', type: 'number' as const }
     ];
@@ -312,7 +349,9 @@ describe('the request the model receives', () => {
     const requested = buildVoiceFieldRequests(1, 'IR', 'irrigation', translate, {
       knownBlockIds: ['BGA']
     });
-    const parse = (spoken: string) =>
+    // The transcript matters now: an identity the farmer never said is dropped even when it is a
+    // real catalogue value, because the substitution happens upstream in the model.
+    const parse = (spoken: string, transcript = `irrigated ${spoken} this morning`) =>
       mapVoiceDataToFieldValues(
         {
           type: 'irrigation',
@@ -321,6 +360,7 @@ describe('the request the model receives', () => {
           detected_amounts: [],
           detected_products: [],
           detected_systems: [],
+          original_transcript: transcript,
           activity_fields: { block_id: spoken }
         } as never,
         'irrigation',
@@ -336,6 +376,66 @@ describe('the request the model receives', () => {
     // ...but a block this parcel has never used is not guessed at
     expect(parse('VGA')).toBeUndefined();
     expect(parse('Block 9')).toBeUndefined();
+  });
+
+  it('drops a real block the farmer never mentioned', () => {
+    // MEASURED 2026-09-01: the model answered `block_id: "Ridge Block"` for "irrigated the NORTH
+    // RIDGE block" — a substitution, and hardening the prompt did not stop it. Every check before
+    // this one passes, because the value IS in the catalogue; the only evidence that it is wrong
+    // is that the farmer did not say it.
+    const requested = [
+      { name: 'block_id', label: 'Block', type: 'enum' as const, options: ['BGA'] }
+    ];
+    const parse = (transcript: string) =>
+      mapVoiceDataToFieldValues(
+        {
+          type: 'irrigation',
+          description: '',
+          confidence: 90,
+          detected_amounts: [],
+          detected_products: [],
+          detected_systems: [],
+          original_transcript: transcript,
+          activity_fields: { block_id: 'BGA' }
+        } as never,
+        'irrigation',
+        requested
+      ).values.block_id;
+
+    expect(parse('irrigated BGA for six hours')).toBe('BGA');
+    expect(parse('irrigated the b g a block')).toBe('BGA');
+    // no block named at all — the answer came from somewhere other than the farmer
+    expect(parse('irrigated for six hours this morning')).toBeUndefined();
+    // a different block named
+    expect(parse('irrigated the west orchard for six hours')).toBeUndefined();
+  });
+
+  it('does not police classification enums the same way', () => {
+    // A block is the words; a classification is a paraphrase of them. "going to the packing
+    // house" legitimately becomes `handler`, and requiring the literal value would break it.
+    const requested = [
+      {
+        name: 'harvest_destination',
+        label: 'Destination',
+        type: 'enum' as const,
+        options: ['handler', 'storage']
+      }
+    ];
+    const result = mapVoiceDataToFieldValues(
+      {
+        type: 'harvest',
+        description: '',
+        confidence: 90,
+        detected_amounts: [],
+        detected_products: [],
+        detected_systems: [],
+        original_transcript: 'took it straight to the packing house',
+        activity_fields: { harvest_destination: 'handler' }
+      } as never,
+      'harvest',
+      requested
+    );
+    expect(result.values.harvest_destination).toBe('handler');
   });
 
   it('refuses a separator-insensitive match that is ambiguous', () => {
@@ -359,6 +459,31 @@ describe('the request the model receives', () => {
       requested
     );
     expect(result.values.block_id).toBeUndefined();
+  });
+
+  it('still asks for the block when an activity lists no other fields', () => {
+    // `block_id` is appended after the per-activity loop, so an early return on an empty list
+    // would have stopped asking for it — silently, and only for the activity someone had just
+    // emptied. Five fields were retired from the chemical lists this week; that is how close
+    // this was.
+    const requests = buildVoiceFieldRequests(1, 'IR', 'not_an_activity_with_fields', translate, {
+      knownBlockIds: ['BGA']
+    });
+    // an unknown slug still asks for nothing at all...
+    expect(requests).toEqual([]);
+
+    // ...but a known activity whose list is empty must still get the block question. Simulated by
+    // pointing at an activity and stripping its list.
+    const original = VOICE_ACTIVITY_FIELDS.irrigation;
+    try {
+      (VOICE_ACTIVITY_FIELDS as Record<string, readonly string[]>).irrigation = [];
+      const emptied = buildVoiceFieldRequests(1, 'IR', 'irrigation', translate, {
+        knownBlockIds: ['BGA']
+      });
+      expect(emptied.map((r) => r.name)).toEqual(['block_id']);
+    } finally {
+      (VOICE_ACTIVITY_FIELDS as Record<string, readonly string[]>).irrigation = original;
+    }
   });
 
   it('asks for nothing when the activity is unknown', () => {

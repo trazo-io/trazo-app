@@ -97,17 +97,48 @@ describe('consumer_card tier policy — the fields that were re-homed', () => {
     expect(names).toContain('lab_name');
   });
 
-  it('kept the organic-integrity signal visible to shoppers', () => {
-    const result = getFieldsForSurface(1, 'EM' as any, 'consumer_card', {
-      type: 'EM',
-      equipment_operation_type: 'CL',
+  /**
+   * 🔴 2026-08-31 — this assertion was INVERTED, deliberately.
+   *
+   * It used to require `shared_with_conventional` on the consumer card for EM, on the reading
+   * that "shared with a conventional operation, and here is the cleaning evidence" is a
+   * positive integrity disclosure. Two things were wrong with that:
+   *
+   *   1. It could never reach a shopper anyway. An EM cleanout event is withheld from every
+   *      consumer surface WHOLESALE by
+   *      `claim_authority._CONSUMER_WITHHELD_PRODUCTION_SUBTYPES['EM']`, so this test was
+   *      pinning a resolver result for a card the public payload never contains.
+   *   2. The field's own consumer wording asserts the cleaning ("Yes — and it was cleaned
+   *      before use here"). The flag was then ungated to every production subtype, because
+   *      ProductionTab posts it on all of them — and on those, nothing links a cleaning at all.
+   *      One real season carried the flag on nine operations with a documented prior cleaning
+   *      on two; the packet prints that ratio on page 1.
+   *
+   * So the disclosure now lives where its evidence lives: the producer modal and the certifier
+   * packet. Re-adding a consumer surface means gating on a resolved `equipment_cleaning_event`,
+   * not on the flag alone.
+   */
+  it('keeps the shared-equipment flag off the consumer card until its evidence can travel with it', () => {
+    const result = getFieldsForSurface(1, 'HA' as any, 'consumer_card', {
+      type: 'HA',
       shared_with_conventional: true
     } as Record<string, unknown>);
     const names = [...result.hero, ...result.immediate, ...result.secondary, ...result.details].map(
       (f) => f.name
     );
-    // "This equipment was shared with a conventional operation, and here is the cleaning
-    // evidence" is a positive integrity disclosure, not operator noise.
+    expect(names).not.toContain('shared_with_conventional');
+  });
+
+  it('still shows the shared-equipment flag to the producer and the certifier', () => {
+    // The disclosure is not deleted — it moved. A grower must see what they ticked, and the
+    // packet's § 205.272 check counts exactly these.
+    const modal = getFieldsForSurface(1, 'HA' as any, 'modal', {
+      type: 'HA',
+      shared_with_conventional: true
+    } as Record<string, unknown>);
+    const names = [...modal.hero, ...modal.immediate, ...modal.secondary, ...modal.details].map(
+      (f) => f.name
+    );
     expect(names).toContain('shared_with_conventional');
   });
 });

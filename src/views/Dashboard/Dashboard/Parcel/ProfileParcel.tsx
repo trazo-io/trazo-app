@@ -76,11 +76,13 @@ import {
   StandardButton,
   StandardPage,
   StandardPageLoading,
-  StandardSection
+  StandardSection,
+  StandardQueryError
 } from 'components/Design/StandardComponents';
 import { InfoRow, FieldGroup, PageHeaderMeta } from 'components/Design/ProfileField';
 import { StandardImageGallery } from 'components/ImageGallery';
 import { useGetParcelQuery } from 'store/api/productApi';
+import LocationDisclosureSetting from 'components/Parcel/LocationDisclosureSetting';
 import FieldHistorySection from './FieldHistorySection';
 import AdjoiningLandSection from './AdjoiningLandSection';
 import LandownerAffidavitSection from './LandownerAffidavitSection';
@@ -193,7 +195,40 @@ function ProfileParcel(): React.ReactElement {
   const establishments = currentCompany?.establishments || [];
   const currentParcel = useSelector((state: RootState) => state.product.currentParcel);
 
-  const { data: parcelData, isLoading: isParcelLoading } = useGetParcelQuery(
+  /**
+   * "We cannot ask yet" is a THIRD state, and it is not failure.
+   *
+   * `currentCompany` is hydrated into Redux asynchronously, so on a cold load — a hard
+   * refresh, or a pasted/bookmarked deep link, which is exactly how a certifier opens one of
+   * these — `currentCompany?.id` is `undefined` for the first few hundred milliseconds and
+   * this query is SKIPPED. A skipped RTK Query reports `isLoading: false` with
+   * `data: undefined`: indistinguishable, to a two-branch component, from a request that ran
+   * and came back empty. So the page fell past its loading guard into `!parcel` and rendered
+   * "This parcel could not be loaded." over a parcel that exists and loads fine a moment
+   * later.
+   *
+   * MEASURED on /farm/160/parcel/284/profile with the fetch delayed 1.5s:
+   *   blank 119ms → LOADING 766ms → blank 947ms → **ERROR 1050ms** → LOADING 1293ms → LOADED 3051ms
+   * i.e. ~243ms of a false failure claim, mid-load.
+   *
+   * Same root cause as the OSP module deep-link (2026-08-27), which is the mirror image of
+   * this: there a `!data` guard on a skipped query spun forever, here it accuses. Both come
+   * from reading a skipped query as an answer.
+   *
+   * The flag for it is `isUninitialized` — RTK Query's own "this has never run". ProfileFarm
+   * (Farm/ProfileFarm.tsx:241) already guards `isLoading || isUninitialized` for exactly this
+   * reason; this page is its sibling and simply never got the same treatment. Preferred over
+   * re-deriving the precondition here, because it stays true for every reason the query has
+   * not run, including ones this component does not know about.
+   */
+  const {
+    data: parcelData,
+    isLoading: isParcelLoading,
+    isFetching: isParcelFetching,
+    isUninitialized: isParcelUninitialized,
+    isError: isParcelError,
+    refetch: refetchParcel
+  } = useGetParcelQuery(
     {
       companyId: currentCompany?.id || '',
       farmId: farmId || '',
@@ -219,16 +254,6 @@ function ProfileParcel(): React.ReactElement {
     }
   }, [farmId, establishments]);
 
-  if (isParcelLoading) {
-    return (
-      <StandardPage
-        showBackButton
-        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
-        <StandardPageLoading />
-      </StandardPage>
-    );
-  }
-
   /**
    * Read through a fallback, never straight from the query.
    *
@@ -242,12 +267,47 @@ function ProfileParcel(): React.ReactElement {
    * a string, so `===` is never true. That makes it a trap armed for whoever tightens that
    * comparison. Falling back to the Redux copy is what the skip always implied, and it is
    * correct whether or not the skip ever starts firing.
+   *
+   * Computed BEFORE the guards below, because each of them needs to know whether we already
+   * hold a parcel — the loading guard must not spin over a parcel Redux can already show.
    */
   const parcel = parcelData ?? currentParcel;
 
-  // No parcel and not loading = the fetch failed or the id is wrong. Say so, rather than
-  // painting a header with an empty <h1> and three empty sections. ProfileFarm has the
-  // equivalent guard; this page had none.
+  // Still loading, in flight, or never started. The `isParcelUninitialized` term is the fix
+  // for the false-error flash: while the company is hydrating this query is skipped, so
+  // `isParcelLoading` is false even though nothing has been attempted yet.
+  //
+  // ⚠️ `&& !parcel` is load-bearing, and is the one thing this page needs that ProfileFarm
+  // does not. The skip ALSO fires when Redux already holds this parcel
+  // (`currentParcel?.id === parcelId`) — a state that is uninitialized and complete at the
+  // same time. A bare `isUninitialized` guard would spin forever on it, which is precisely
+  // the failure this page's twin has (OSP module deep-link, 2026-08-27). Uninitialized is
+  // only "loading" when there is nothing to show yet.
+  if (isParcelLoading || isParcelFetching || (isParcelUninitialized && !parcel)) {
+    return (
+      <StandardPage
+        showBackButton
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
+        <StandardPageLoading />
+      </StandardPage>
+    );
+  }
+
+  // The request ran and FAILED. Distinct from the branch below, which is a parcel that is
+  // genuinely absent — one is worth retrying, the other never will be.
+  if (isParcelError && !parcel) {
+    return (
+      <StandardPage
+        showBackButton
+        onBack={() => navigate(`/admin/dashboard/farm/${farmId}/parcel/${parcelId}`)}>
+        <StandardQueryError onRetry={refetchParcel} isRetrying={isParcelFetching} />
+      </StandardPage>
+    );
+  }
+
+  // Asked, answered, and there is nothing here — a wrong id, or a parcel this account cannot
+  // see. Say so, rather than painting a header with an empty <h1> and three empty sections.
+  // ProfileFarm has the equivalent guard; this page had none.
   if (!parcel) {
     return (
       <StandardPage
@@ -256,8 +316,8 @@ function ProfileParcel(): React.ReactElement {
         <Box py={20} textAlign="center">
           <Text color="red.700">
             {intl.formatMessage({
-              id: 'parcel.errorLoading',
-              defaultMessage: 'This parcel could not be loaded.'
+              id: 'parcel.notFound',
+              defaultMessage: 'This parcel was not found.'
             })}
           </Text>
         </Box>
@@ -448,6 +508,22 @@ function ProfileParcel(): React.ReactElement {
             />
           </Box>
         )}
+
+        {/* ── §0 PUBLIC LOCATION ───────────────────────────────────────────────
+            The permanent control, as opposed to the one-time consent prompt that lives on the
+            parcel dashboard. Until 2026-08-31 `location_disclosure_level` had no UI anywhere,
+            so a farm could neither see what its public page was publishing nor change it — while
+            the marketing site described the level as their setting. A prompt that disappears
+            once answered does not close that; this does. */}
+        <StandardSection title={intl.formatMessage({ id: 'parcel.disclosureSetting.title' })}>
+          <StandardCard variant="outline" padding={{ base: 0, md: 4 }} mb={0}>
+            <LocationDisclosureSetting
+              parcelId={parcelId as string}
+              level={(parcel as any)?.location_disclosure_level}
+              hasBoundary={Boolean((parcel as any)?.polygon)}
+            />
+          </StandardCard>
+        </StandardSection>
 
         {/* ── §1 ORGANIC COMPLIANCE (7 CFR 205.202) ────────────────────────────
             Promoted from positions 11-13. §205.202 is written about LAND, which makes this

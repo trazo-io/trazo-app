@@ -14,7 +14,12 @@ import {
 import { FaStar, FaChevronRight, FaChevronLeft } from 'react-icons/fa';
 import { format } from 'date-fns';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { StandardPage, StandardCard } from '../../../components/Design/StandardComponents';
+import {
+  StandardPage,
+  StandardCard,
+  StandardPageLoading,
+  StandardQueryError
+} from '../../../components/Design/StandardComponents';
 import { useGetUserReviewsQuery } from 'store/api/historyApi';
 
 const ITEMS_PER_PAGE = 10;
@@ -24,7 +29,8 @@ export default function AllReviews() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // API query for data
-  const { data: reviews, isLoading } = useGetUserReviewsQuery();
+  // See AllScans: an empty list is a CLAIM, and only a successful response licenses it.
+  const { data: reviews, isLoading, isError, isFetching, refetch } = useGetUserReviewsQuery();
 
   // Calculate pagination
   const totalCount = reviews?.length || 0;
@@ -48,9 +54,9 @@ export default function AllReviews() {
       <StandardCard title={`Your Reviews (${totalCount})`} variant="elevated">
         <VStack spacing={3}>
           {isLoading ? (
-            <Box textAlign="center" py={8}>
-              <Text color="gray.500">Loading reviews...</Text>
-            </Box>
+            <StandardPageLoading />
+          ) : isError ? (
+            <StandardQueryError onRetry={refetch} isRetrying={isFetching} />
           ) : paginatedData.length > 0 ? (
             <>
               {paginatedData.map((review: any, index: number) => {

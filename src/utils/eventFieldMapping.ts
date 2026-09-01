@@ -441,8 +441,6 @@ export const BUSINESS_FIELD_MAPPING: DataSourceMapping = {
     carbon_credits_unit: 'carbon_credits_unit',
     verification_status: 'verification_status',
     sustainability_practice: 'sustainability_practice',
-    trust_impact: 'trust_impact',
-    transparency_benefit: 'transparency_benefit',
     observation: 'business_observation'
   },
   backend: {
@@ -460,8 +458,6 @@ export const BUSINESS_FIELD_MAPPING: DataSourceMapping = {
     carbon_credits_unit: 'carbon_credits_unit',
     verification_status: 'verification_status',
     sustainability_practice: 'sustainability_practice',
-    trust_impact: 'trust_impact',
-    transparency_benefit: 'transparency_benefit',
     business_observation: 'business_observation',
     observation: 'observation',
     description: 'description'

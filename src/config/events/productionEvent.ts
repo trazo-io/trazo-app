@@ -611,11 +611,19 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'events.production.fields.appliedScope',
     valueType: 'enum',
     enumSource: 'applied_scopes',
-    // PL removed 2026-08-15: ProductionTab renders these ONLY inside its `productionType ===
-    // 'HA'` block, so declaring PL put a value on the Planting modal that no input could set
-    // or clear. `block_id` already answers "which part of the parcel" for a planting, and
-    // better. Registry narrowed to match the form, rather than widening the form to match it.
-    visibleForSubtypes: ['HA'],
+    // Re-widened to ['HA','PL','PH'] on 2026-08-31 — MEASURED against the form, not assumed.
+    //
+    // The 2026-08-15 note below was true when written and is not now: ProductionTab's payload
+    // gate reads `['HA','PL','PH'].includes(data.type)` and its Coverage / "Which Rows, Blocks
+    // or Area" inputs render for all three. A real planting event stored
+    // `applied_scope: 'part'` with `applied_scope_detail: 'Rows 12-18, northeast corner'` and
+    // the modal showed neither — the § 205.103(b)(2) partial-area fact, which the certifier
+    // packet prints in its own table, was invisible on the record the grower typed it into.
+    //
+    // Superseded: "PL removed 2026-08-15: ProductionTab renders these ONLY inside its
+    // `productionType === 'HA'` block, so declaring PL put a value on the Planting modal that
+    // no input could set or clear." The form moved; the registry did not follow.
+    visibleForSubtypes: ['HA', 'PL', 'PH'],
     surfaces: {
       form: 'secondary',
       modal: 'secondary'
@@ -625,11 +633,19 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'applied_scope_detail',
     labelKey: 'events.production.fields.appliedScopeDetail',
     valueType: 'string',
-    // PL removed 2026-08-15: ProductionTab renders these ONLY inside its `productionType ===
-    // 'HA'` block, so declaring PL put a value on the Planting modal that no input could set
-    // or clear. `block_id` already answers "which part of the parcel" for a planting, and
-    // better. Registry narrowed to match the form, rather than widening the form to match it.
-    visibleForSubtypes: ['HA'],
+    // Re-widened to ['HA','PL','PH'] on 2026-08-31 — MEASURED against the form, not assumed.
+    //
+    // The 2026-08-15 note below was true when written and is not now: ProductionTab's payload
+    // gate reads `['HA','PL','PH'].includes(data.type)` and its Coverage / "Which Rows, Blocks
+    // or Area" inputs render for all three. A real planting event stored
+    // `applied_scope: 'part'` with `applied_scope_detail: 'Rows 12-18, northeast corner'` and
+    // the modal showed neither — the § 205.103(b)(2) partial-area fact, which the certifier
+    // packet prints in its own table, was invisible on the record the grower typed it into.
+    //
+    // Superseded: "PL removed 2026-08-15: ProductionTab renders these ONLY inside its
+    // `productionType === 'HA'` block, so declaring PL put a value on the Planting modal that
+    // no input could set or clear." The form moved; the registry did not follow.
+    visibleForSubtypes: ['HA', 'PL', 'PH'],
     // Accept the raw value AND its display label (normalizer may rewrite it).
     visibleWhen: (e) => {
       const v = String(e.applied_scope ?? '').toLowerCase();
@@ -1300,7 +1316,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'shared_with_conventional',
     labelKey: 'events.production.fields.sharedWithConventional',
     valueType: 'boolean',
-    visibleForSubtypes: ['EM'],
+    // No subtype gate (2026-08-31). ProductionTab renders the toggle on every production
+    // subtype and posts it ungated (`shared_with_conventional: data.shared_with_conventional
+    // === 'true'`), so gating display to EM made it write-only everywhere else: a planting, a
+    // harvest and a transport all carried the flag and none of them showed it back.
     visibleWhen: (e) => {
       // shared_with_conventional is a BooleanField(default=False) — only render
       // when truthy. Bug Pattern #6.
@@ -1311,12 +1330,26 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     // `visibleWhen` already restricts this to the TRUE case, so the consumer form can be a
     // plain sentence — and saying it outright is better for the farmer than a tick a shopper
     // has to decode.
+    // 🔴 consumer_card REMOVED 2026-08-31, together with the subtype widening above.
+    //
+    // The consumer sentence asserted the cleaning: "Yes — and it was cleaned before use here".
+    // On the EM cleanout record that was safe, because the cleaning IS that record. Ungating
+    // the flag to every subtype would have put the same sentence on records where no cleaning
+    // is linked at all — a real season had the flag on nine operations and a documented prior
+    // cleaning on two, and the packet says so on page 1 ("2/9 shared-equipment operation(s)
+    // reference a documented prior cleaning"). Publishing "it was cleaned" for the other seven
+    // is a claim the record refutes.
+    //
+    // Withholding costs a genuine integrity disclosure, and that is the lesser harm: the
+    // cleanout record that would substantiate it is itself withheld from shoppers by
+    // `claim_authority._CONSUMER_WITHHELD_PRODUCTION_SUBTYPES['EM']`, so the consumer page has
+    // no way to show the evidence beside the claim. Re-adding a consumer surface means gating
+    // it on a resolved `equipment_cleaning_event`, not on the flag alone.
     consumerFormatter: () => 'Yes — and it was cleaned before use here',
     requiresVerificationBadge: true,
     surfaces: {
       modal: 'secondary',
-      form: 'secondary',
-      consumer_card: 'secondary'
+      form: 'secondary'
     }
   },
   {
@@ -1474,18 +1507,33 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   {
     // How many hives, and of what — the two facts an almond or tree-fruit grower is asked for
     // at renewal, since § 205.206(a) counts managed pollinators as a pest/production practice.
+    // 🔴 consumer_card added 2026-08-31. The pollination card had NO key details at all — a
+    // shopper saw the title, the date and a line asserting "Honey bee hives were brought into
+    // the orchard during bloom", with not one of the three facts that back it. Bees on the
+    // block are among the most legible practices on the page and these are plain counted facts,
+    // not a claim: what kind, how many, and the window they were there.
     name: 'pollinator_type',
     labelKey: 'production.pollination.pollinatorType',
     valueType: 'string',
     visibleForSubtypes: ['PO'],
-    surfaces: { timeline: 'immediate', modal: 'immediate', form: 'immediate' }
+    surfaces: {
+      timeline: 'immediate',
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate'
+    }
   },
   {
     name: 'hive_count',
     labelKey: 'production.pollination.hiveCount',
     valueType: 'number',
     visibleForSubtypes: ['PO'],
-    surfaces: { timeline: 'immediate', modal: 'immediate', form: 'immediate' }
+    surfaces: {
+      timeline: 'immediate',
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate'
+    }
   },
   {
     // Placement and removal bound the window the hives were on the block. Without them the
@@ -1493,15 +1541,21 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     name: 'placement_date',
     labelKey: 'production.pollination.placementDate',
     valueType: 'date',
+    // `valueType: 'date'` is metadata, not behaviour — the resolver's default formatter just
+    // stringifies, so without this the consumer card printed the raw ISO "2026-03-30".
+    // (Same note as generalEvent.ts's corrective_action_date.) Surfaced the moment these got a
+    // consumer surface on 2026-08-31.
+    formatter: formatDate,
     visibleForSubtypes: ['PO'],
-    surfaces: { modal: 'secondary', form: 'secondary' }
+    surfaces: { modal: 'secondary', form: 'secondary', consumer_card: 'secondary' }
   },
   {
     name: 'removal_date',
     labelKey: 'production.pollination.removalDate',
     valueType: 'date',
+    formatter: formatDate,
     visibleForSubtypes: ['PO'],
-    surfaces: { modal: 'secondary', form: 'secondary' }
+    surfaces: { modal: 'secondary', form: 'secondary', consumer_card: 'secondary' }
   },
   {
     name: 'canopy_operation',
@@ -1781,6 +1835,38 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       preview: 'secondary',
       consumer_card: 'secondary'
     }
+  },
+  // ---- FSMA § 112.161(b) supervisor sign-off (CommonEvent, ALL subtypes) ----
+  //
+  // 🔴 2026-08-31 — declared in chemicalEvent.ts and NOWHERE else, while this family's form
+  // collects it on every subtype. A grower ticked "Supervisor review", named the reviewer and
+  // dated it; the record saved all three and the modal showed none of them. The certifier
+  // packet prints the sign-off in its attestation section, so the only reader who could not
+  // see it was the operation itself.
+  //
+  // Producer/certifier surfaces only: who countersigned a farm record is not a shopper's fact.
+  {
+    name: 'reviewed',
+    labelKey: 'events.common.fields.reviewed',
+    valueType: 'boolean',
+    formatter: formatBoolean,
+    // Only when true — BooleanField(default=False) would otherwise print "Supervisor
+    // reviewed: ✗" on every unreviewed record. Bug Pattern #6.
+    visibleWhen: (e) => e.reviewed === true || e.reviewed === 'true',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'reviewer_name',
+    labelKey: 'events.common.fields.reviewerName',
+    valueType: 'string',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'review_date',
+    labelKey: 'events.common.fields.reviewDate',
+    valueType: 'date',
+    formatter: formatDate,
+    surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     name: 'performed_by',

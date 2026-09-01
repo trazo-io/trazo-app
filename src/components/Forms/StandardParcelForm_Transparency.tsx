@@ -647,7 +647,12 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
           {/* 🎯 STEP 1: Location (Same as original - works well) */}
           {currentStep === 1 && (
-            <StandardCard title="Parcel Location" subtitle="Define boundaries for transparency">
+            <StandardCard
+              title={intl.formatMessage({ id: 'parcel.boundary.stepTitle' })}
+              // Was "Define boundaries for transparency" — same false premise as the alert
+              // below: the boundary is withheld from every public page by default, so
+              // "transparency" is the one thing it does not serve.
+              subtitle={intl.formatMessage({ id: 'parcel.boundary.stepSubtitle' })}>
               <VStack spacing={6} align="stretch">
                 <Box borderRadius="lg" overflow="hidden" border="1px solid" borderColor="gray.200">
                   {loadError ? (
@@ -741,10 +746,26 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   )}
                 </Box>
 
+                {/* 🔴 2026-08-31 — was "Location Transparency / Geographic boundaries help
+                    consumers see exactly where their food comes from, building trust through
+                    location transparency."
+
+                    Both halves were false. New parcels default to
+                    `location_disclosure_level: "approximate"`, and `public_parcel_geo` publishes
+                    NO boundary at that level — so a boundary drawn today never reaches a
+                    consumer at all. The copy sold a benefit the product's own default forbids,
+                    and asked for the most effortful step in onboarding on that basis.
+
+                    What the boundary is actually for is the CERTIFIER:
+                    `parcel_application_status.has_map` is satisfied by a polygon or an uploaded
+                    map document, and `operation_readiness_service` raises a finding for parcels
+                    with neither. Naming the real reason is also the more persuasive ask — a
+                    grower drawing a block for their renewal packet has a reason to be accurate
+                    about it, which "consumers will see this" never gave them. */}
                 <StandardAlert
                   status="info"
-                  title="Location Transparency"
-                  description="Geographic boundaries help consumers see exactly where their food comes from, building trust through location transparency."
+                  title={intl.formatMessage({ id: 'parcel.boundary.whyTitle' })}
+                  description={intl.formatMessage({ id: 'parcel.boundary.whyBody' })}
                 />
 
                 {getPolygonLength() > 0 && (
@@ -782,7 +803,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                       {intl.formatMessage({
                         id: 'parcel.skipBoundary.caption',
                         defaultMessage:
-                          "A field boundary improves the map on your consumer page, but it isn't required to start logging events."
+                          "You can start logging events right away. Your certifier's parcel application needs a map of this block, so Trazo will ask for it again before your renewal packet is complete."
                       })}
                     </Text>
                   </VStack>

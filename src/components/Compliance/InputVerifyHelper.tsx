@@ -160,7 +160,7 @@ const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ re
   return (
     <VStack align="stretch" spacing={2} mt={2}>
       {nlProhibited && (
-        <Alert status="error" fontSize="xs" mt={0} alignItems="flex-start">
+        <Alert status="error" fontSize="xs" mt={0}>
           <AlertIcon />
           <VStack align="start" spacing={1}>
             <Text fontWeight="semibold">

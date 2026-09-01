@@ -1,3 +1,4 @@
+import { StandardQueryError } from 'components/Design';
 import {
   Box,
   Flex,
@@ -39,7 +40,10 @@ export default function ReviewsListView() {
   const textColor = useColorModeValue('gray.700', 'white');
   const cardColor = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const { data: reviews, isLoading } = useGetUserReviewsQuery();
+  // A failed fetch used to render nothing at all — `!isLoading && reviews?.map(…)` on an
+  // undefined `reviews` is a silent no-op, so a 500 and "you have written no reviews"
+  // looked identical, and neither said so.
+  const { data: reviews, isLoading, isError, isFetching, refetch } = useGetUserReviewsQuery();
 
   // Image modal state
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -84,6 +88,7 @@ export default function ReviewsListView() {
           />
 
           <VStack spacing={4} align="stretch">
+            {isError && <StandardQueryError onRetry={refetch} isRetrying={isFetching} />}
             {!isLoading &&
               reviews?.map((review, index) => (
                 <NavLink key={index} to={`/production/${review.history.public_id}/`}>

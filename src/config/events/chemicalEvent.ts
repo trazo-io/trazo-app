@@ -30,6 +30,7 @@ import {
   defaultFormatter,
   formatBoolean,
   formatDate,
+  formatDateTime,
   formatDurationDays,
   formatDurationHours,
   formatNPK,
@@ -298,6 +299,23 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     name: 'concentration',
     labelKey: 'events.chemical.fields.concentration',
     valueType: 'string',
+    // On a FERTILIZER the form labels this input "NPK Ratio" and writes the very value the
+    // grouped nitrogen/phosphorus/potassium field renders, so the modal printed "2-3-1" twice
+    // under two different labels ("Concentration" and "NPK Ratio"). Hidden only when that
+    // grouped row will actually render — if the grower typed a ratio here and left the three
+    // percentages blank, this stays and the value is not lost.
+    visibleWhen: (e) => {
+      // `chemical_type` FIRST. On a normalized event `type` has been overwritten with the
+      // family name ('chemical') — see createBaseEvent — so reading it first would compare
+      // 'chemical' to 'FE' and never match. Same resolution order `extractSubtypeCode` uses.
+      const subtype = String(e.chemical_type ?? e.type ?? '');
+      if (subtype !== 'FE') return true;
+      const hasNpkTrio =
+        e.nitrogen_percentage != null &&
+        e.phosphorus_percentage != null &&
+        e.potassium_percentage != null;
+      return !hasNpkTrio;
+    },
     surfaces: {
       modal: 'immediate',
       form: 'immediate',
@@ -819,14 +837,17 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     name: 'application_start',
     labelKey: 'events.chemical.fields.applicationStart',
     valueType: 'date',
-    formatter: formatDate,
+    // formatDateTime, not formatDate (2026-08-31): these two exist to bound a WINDOW, and
+    // `toLocaleDateString` dropped the clock — an application recorded 06:15 -> 09:20 printed
+    // "Mar 18, 2026" as both its start and its end.
+    formatter: formatDateTime,
     surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     name: 'application_end',
     labelKey: 'events.chemical.fields.applicationEnd',
     valueType: 'date',
-    formatter: formatDate,
+    formatter: formatDateTime,
     surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
@@ -841,6 +862,73 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     labelKey: 'events.chemical.fields.operatorId',
     valueType: 'string',
     surfaces: { modal: 'details', form: 'secondary' }
+  },
+  {
+    // 🔴 2026-08-31 — the CA PUR location identifiers were not in the registry at all, so a
+    // grower who filled Section / Township / Range / Base & Meridian on the form saw County,
+    // Operator ID and Site ID come back in Technical Details and these four vanish. They DO
+    // reach the state: pur_export_service writes them to DPR-PML-017C. They just never came
+    // back to the person who typed them.
+    //
+    // Rendered as ONE row via `groupWith`, the way MTRS is actually read and written — four
+    // separate rows for "14", "21S", "27E", "M" is four fragments of one designator. Same
+    // mechanism the NPK trio uses.
+    name: 'mtrs_section',
+    labelKey: 'events.chemical.fields.mtrs',
+    valueType: 'string',
+    groupWith: ['mtrs_township', 'mtrs_range', 'mtrs_base_meridian'],
+    formatter: (_v, event) => {
+      const part = (k: string) => {
+        const raw = (event as Record<string, unknown>)[k];
+        return typeof raw === 'string' ? raw.trim() : raw != null ? String(raw).trim() : '';
+      };
+      const section = part('mtrs_section');
+      const township = part('mtrs_township');
+      const range = part('mtrs_range');
+      // The single letter is a PUR code, meaningless on its own — name the meridian.
+      const meridians: Record<string, string> = {
+        H: 'Humboldt',
+        M: 'Mount Diablo',
+        S: 'San Bernardino'
+      };
+      const meridianRaw = part('mtrs_base_meridian');
+      const meridian = meridians[meridianRaw] ?? meridianRaw;
+      const parts = [
+        section && `S${section}`,
+        township && `T${township}`,
+        range && `R${range}`,
+        meridian && `${meridian} meridian`
+      ].filter(Boolean);
+      return parts.length ? parts.join(' · ') : null;
+    },
+    surfaces: { modal: 'details', form: 'secondary' }
+  },
+  // Group members. They carry ONLY a `form` surface: the display side is rendered once by
+  // `mtrs_section` above (which reads all four off the event, so a record with no Section still
+  // shows its Township and Range), and the form side needs them because ChemicalTab has four
+  // separate inputs — `getFieldNamesForSurface` deliberately does not consume group members on
+  // form surfaces for exactly that reason.
+  {
+    name: 'mtrs_township',
+    labelKey: 'events.chemical.fields.mtrsTownship',
+    valueType: 'string',
+    surfaces: { form: 'secondary' }
+  },
+  {
+    name: 'mtrs_range',
+    labelKey: 'events.chemical.fields.mtrsRange',
+    valueType: 'string',
+    surfaces: { form: 'secondary' }
+  },
+  {
+    name: 'mtrs_base_meridian',
+    labelKey: 'events.chemical.fields.mtrsBaseMeridian',
+    // 'string', not 'enum': an `enum` here would promise an `enumSource` this field does not
+    // have (ChemicalTab hand-rolls the H/M/S select), and the resolver's enum branch would then
+    // fall back to de-underscoring the raw code. The meridian is named by the group formatter
+    // above, which is the only place it displays.
+    valueType: 'string',
+    surfaces: { form: 'secondary' }
   },
   {
     name: 'site_id',
@@ -862,7 +950,15 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     name: 'tank_mix_partners',
     labelKey: 'events.chemical.fields.tankMixPartners',
     valueType: 'string',
-    visibleForSubtypes: ['PE', 'FU', 'HE'],
+    // No subtype gate (2026-08-31). It was ['PE','FU','HE'], but ChemicalTab offers "Add
+    // adjuvant" on EVERY subtype and a spreader-sticker riding with a foliar FERTILIZER is an
+    // ordinary tank mix. The result was a write-only field: a grower recorded the adjuvant, the
+    // record stored it, and their own detail modal then refused to show it back — while CA PUR
+    // does not report fertilizers at all, so nothing else displayed it either.
+    //
+    // Widening is safe without a `visibleWhen`: the formatter below returns null for an empty
+    // or absent list, and the resolver skips a null-valued field, so a record with no partners
+    // renders no row.
     surfaces: { modal: 'details' },
     formatter: (value) => {
       if (!Array.isArray(value) || value.length === 0) return null;
@@ -893,20 +989,24 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
   },
   {
     name: 'reviewer_name',
-    labelKey: 'events.chemical.fields.reviewerName',
+    // Common key, not a chemical-specific one (2026-08-31): the same three sign-off fields are
+    // now declared on production, soil and pest too, and the chemical duplicates were
+    // title-cased ("Reviewed By" / "Supervisor Reviewed") where every other common label is
+    // sentence case. One field, one label, whatever the event family.
+    labelKey: 'events.common.fields.reviewerName',
     valueType: 'string',
     surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     name: 'review_date',
-    labelKey: 'events.chemical.fields.reviewDate',
+    labelKey: 'events.common.fields.reviewDate',
     valueType: 'date',
     formatter: formatDate,
     surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     name: 'reviewed',
-    labelKey: 'events.chemical.fields.reviewed',
+    labelKey: 'events.common.fields.reviewed',
     valueType: 'boolean',
     formatter: formatBoolean,
     // Only surface when true (a positive sign-off signal); avoids "Reviewed: ✗" noise.

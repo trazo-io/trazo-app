@@ -891,10 +891,25 @@ const SoilManagementTab = forwardRef(
         // Store tillage-specific fields in extra_data for backend compatibility
         // Ensure all values are JSON-serializable (convert any potential Decimal objects to strings)
         extra_data: {
-          tillage_type: tillage_type || '',
-          tillage_intensity: tillage_intensity || '',
-          tillage_direction: tillage_direction || '',
-          residue_management: residue_management || '',
+          // 🔴 2026-08-31 — these four were written UNCONDITIONALLY, so every soil event of
+          // every subtype carried `tillage_type: ''`, `tillage_intensity: ''`,
+          // `tillage_direction: ''` and `residue_management: ''`. Measured on a real compost
+          // record: eight empty keys in `extra_data`, four of them from here and the rest from
+          // form fields the subtype never rendered (the serializer files unknown top-level keys
+          // into extra_data, so anything RHF holds is posted whether or not it was shown).
+          //
+          // That is the clobber class `.claude/rules/frontend.md` names: "a mutation/form
+          // payload sends ONLY fields its UI renders". Empty strings are not harmless here —
+          // the backend MERGES extra_data, so a blank from one subtype's form can overwrite a
+          // real value stored by another.
+          ...(data.type === 'TI'
+            ? {
+                tillage_type: tillage_type || '',
+                tillage_intensity: tillage_intensity || '',
+                tillage_direction: tillage_direction || '',
+                residue_management: residue_management || ''
+              }
+            : {}),
           // Include any existing extra data, ensuring JSON serialization
           ...(data.extra_data ? JSON.parse(JSON.stringify(data.extra_data)) : {})
         }
@@ -970,6 +985,21 @@ const SoilManagementTab = forwardRef(
           delete processedData.extra_data.structure_notes;
         }
       }
+
+      // ⚠️ Deleting a key from `processedData` does NOT keep it out of the request.
+      //
+      // MEASURED 2026-08-31: NewEvent submits `{ ...eventFormData, ...data }`, and
+      // `eventFormData` accumulates the entire form state through `onDataChange` — so every key
+      // deleted here is put straight back by that spread. The habitat block above has had this
+      // shape since it was written and never actually stripped anything on the create path; a
+      // compost event still stored `species_planted: ""`, `wildlife_observed: ""` and
+      // `structure_notes: ""`.
+      //
+      // The gate that works is in the serializer, where the value is filed into extra_data
+      // (`UpdateSoilManagementEventSerializer.to_internal_value` — empties are skipped on create
+      // and still honoured on update, so clearing a stored value keeps working). What this tab
+      // CAN do is not fabricate keys in the first place, which is why the tillage fields are
+      // built conditionally above rather than deleted here.
 
       // §E-2: sample_matrix belongs to a lab analysis only. Send null (not a bare delete) for
       // every other subtype so editing an LA event to, say, Tillage actually clears the stored

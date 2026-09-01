@@ -188,7 +188,7 @@ const AcceptInvitation: React.FC = () => {
                   thickness="3px"
                   speed="0.8s"
                   emptyColor={useColorModeValue('gray.200', 'gray.600')}
-                  color="green.500"
+                  color="green.700"
                   size="lg"
                 />
               </VStack>

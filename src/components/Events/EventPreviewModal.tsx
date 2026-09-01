@@ -265,7 +265,19 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                 warning in the app. `status="warning"` maps to amber through the theme, which
                 is the whole reason that mapping exists.
               */}
-              {hasEnoughData && (
+              {/*
+                🔴 2026-08-31 — `!isWithheld` added. This notice sat OUTSIDE the withheld branch
+                above, so a cleanout, transport, buffer-use or seed-search preview showed
+                "Certifier-only record — not shown on your buyer page" and then, directly under
+                it, "Your notes will be public. Notes are published as written." Two statements
+                about the same record, one of them false, in one modal.
+
+                Suppressed rather than reworded: the alert above already tells the grower where
+                this record goes, and the note scanner's whole purpose is to catch what a
+                SHOPPER would read. On a record no shopper receives, its warnings are noise that
+                teaches people to ignore it on the records where it matters.
+              */}
+              {hasEnoughData && !isWithheld && (
                 <Box mt={4}>
                   <StandardAlert
                     status={noteFindings.length > 0 ? 'warning' : 'info'}

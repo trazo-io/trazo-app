@@ -315,7 +315,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
         <Card size="sm" bg={bgColor} borderRadius="md">
           <CardBody>
             <HStack spacing={3}>
-              <Spinner size="sm" color="green.500" thickness="3px" />
+              <Spinner size="sm" color="green.700" thickness="3px" />
               <Text fontSize="sm" color={textColor}>
                 Calculating carbon impact...
               </Text>

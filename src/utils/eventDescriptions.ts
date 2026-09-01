@@ -1,6 +1,7 @@
 // Event descriptions and transparency details for consumer-facing displays
 
 import { CONSUMER_DESCRIPTION_ES } from './eventDescriptions.es';
+import { isAffirmativeFlag } from '../config/events/formatters';
 
 export interface EventDescriptionData {
   title: string;
@@ -833,26 +834,22 @@ export function getConsumerEventDescription(
       PO: {
         title: 'Pollination',
         icon: '🐝',
-        description:
-          'Managed pollinators placed to support crop growth, a natural, zero-emission process'
+        description: 'Managed pollinators were brought in to pollinate the crop'
       },
       'production.PO': {
         title: 'Pollination',
         icon: '🐝',
-        description:
-          'Managed pollinators placed to support crop growth, a natural, zero-emission process'
+        description: 'Managed pollinators were brought in to pollinate the crop'
       },
       'event.production.pollination': {
         title: 'Pollination',
         icon: '🐝',
-        description:
-          'Managed pollinators placed to support crop growth, a natural, zero-emission process'
+        description: 'Managed pollinators were brought in to pollinate the crop'
       },
       pollination: {
         title: 'Pollination',
         icon: '🐝',
-        description:
-          'Managed pollinators placed to support crop growth, a natural, zero-emission process'
+        description: 'Managed pollinators were brought in to pollinate the crop'
       },
       // PH (Post-Harvest Processing)
       PH: {
@@ -1085,7 +1082,11 @@ export function getConsumerEventDescription(
     } else if (eventType.includes('pruning') || eventType === 'PR') {
       consumerImpact =
         'An open canopy dries faster after rain, so the fruit needs less spraying to stay healthy.';
-      sustainabilityBenefit = `Prunings are chipped back onto the orchard floor, returning the material to the soil instead of hauling it away.`;
+      // Was: "Prunings are chipped back onto the orchard floor, returning the material to the
+      // soil instead of hauling it away." Nothing on a pruning record says what happened to
+      // the brush — chipped, burned or hauled — so the page asserted a practice from an event
+      // that cannot hold it. Same shape as the cultivation line below: describe the record.
+      sustainabilityBenefit = `Each pruning pass is dated and on record, which is how canopy work is evidenced rather than asserted.`;
     } else if (eventType.includes('cultivation') || eventType === 'CU') {
       consumerImpact =
         'Weeds pulled under by a machine are weeds not sprayed: the same job done with steel instead of chemistry.';
@@ -1101,7 +1102,7 @@ export function getConsumerEventDescription(
       consumerImpact =
         'Honey bee hives were brought into the orchard during bloom so the crop could set fruit.';
       sustainabilityBenefit =
-        'Managed pollination supports bee colonies and is documented alongside the spray record, so applications can be timed away from bloom.';
+        'Hive placement is on record beside the spray log, so applications can be checked against the days bees were on the block.';
     } else if (eventType.includes('post_harvest') || eventType === 'PH') {
       consumerImpact =
         'After picking, the crop was hulled, dried or cooled to keep it sound on the way to you.';
@@ -1109,8 +1110,11 @@ export function getConsumerEventDescription(
         'Documented post-harvest handling reduces spoilage and waste, and records the temperature and sanitation steps the crop passed through.';
     } else if (eventType.includes('frost') || eventType === 'FP') {
       consumerImpact = 'Without that night of work there would be no fruit from this block at all.';
+      // Was: "avoids the far larger footprint of losing a harvest and regrowing it" — a
+      // comparative environmental claim with no substantiation behind it, on a record whose own
+      // fuel field commonly holds tens of gallons of propane. 16 CFR 260.6 governs exactly this.
       sustainabilityBenefit =
-        'Protecting an established crop avoids the far larger footprint of losing a harvest and regrowing it.';
+        'The night, the method and the low temperature are on record, so frost protection is documented rather than assumed.';
     } else if (eventType.includes('canopy') || eventType === 'CM') {
       consumerImpact =
         'The tree canopy was managed to let light and air reach the fruit, which improves ripening and reduces disease.';
@@ -1387,48 +1391,53 @@ export function getConsumerEventDescription(
     // Create consumer impact and sustainability benefit messages based on weather type
     let consumerImpact =
       'Weather is the one thing a farm cannot control, and it is logged here beside everything it can.';
+    // 🔴 2026-08-31 — every weather sub-type used to override this with a claim about a
+    // RESPONSE: "proactive frost monitoring", "quick response to hail damage", "resilient
+    // farming practices", "climate-adaptive farming practices help crops thrive". A weather
+    // record holds a type, a magnitude, a start, an end and the farmer's note. It contains no
+    // response at all, so each of those was an unsubstantiated general environmental-benefit
+    // claim (FTC 16 CFR 260.6) rendered under a heading reading ENVIRONMENTAL BENEFIT — and on
+    // a heat event that also burned irrigation, the page was crediting the farm for it.
+    //
+    // The overrides are gone rather than reworded: a passive observation of the weather has no
+    // environmental benefit to claim, and this family fallback is already listed in
+    // ConsumerEventCard's GENERIC_FALLBACK_COPY, so the block is suppressed entirely rather
+    // than filled with something truer but still empty. The per-type `consumerImpact` lines
+    // stay — those describe what the weather did to the crop, which the record does support.
     let sustainabilityBenefit =
       'Weather monitoring enables precise agricultural decisions that optimize resource use and minimize environmental impact.';
 
     if (weatherTypeCode === 'FR') {
       consumerImpact =
         'Cold nights decide how much fruit sets, so this is the weather the crop actually grew in.';
-      sustainabilityBenefit =
-        'Proactive frost monitoring reduces crop losses and food waste, supporting efficient resource utilization.';
     } else if (weatherTypeCode === 'DR') {
       consumerImpact =
         'Water is the scarcest input in California agriculture, so what a crop needed in a dry year is worth knowing.';
-      sustainabilityBenefit =
-        'Water-smart farming practices during drought conditions help conserve this precious resource for future generations.';
     } else if (weatherTypeCode === 'HL') {
       consumerImpact =
         'Hail leaves marks and smaller fruit rather than a safety problem, and the farm logged the storm instead of quietly dropping it.';
-      sustainabilityBenefit =
-        'Quick response to hail damage minimizes crop losses and reduces the need for replanting, saving resources.';
     } else if (weatherTypeCode === 'HT') {
       consumerImpact = 'Extreme heat shows up later as smaller fruit or sunburn marks on the skin.';
-      sustainabilityBenefit =
-        'Climate-adaptive farming practices help crops thrive despite changing weather patterns.';
     } else if (weatherTypeCode === 'TS') {
+      // Was "Storm damage assessment ensures only healthy, undamaged produce reaches consumers"
+      // — a food-quality GUARANTEE derived from a weather observation. Nothing on this record
+      // sorts fruit or assesses damage; the same 2026-08-31 sweep that emptied the benefit lines
+      // below applies to the impact line above them.
       consumerImpact =
-        'Storm damage assessment ensures only healthy, undamaged produce reaches consumers.';
-      sustainabilityBenefit =
-        'Resilient farming practices help minimize weather-related crop losses and maintain food security.';
+        'Storms bruise and drop fruit, so a season with one in it looks different by harvest.';
     } else if (weatherTypeCode === 'HW') {
       consumerImpact =
         'A rough weather day is in this record rather than left out of it, so you are seeing the season as it actually went.';
-      sustainabilityBenefit =
-        'Wind damage assessment enables quick response to protect crops and minimize agricultural losses.';
     } else if (weatherTypeCode === 'HH') {
+      // Was "Humidity monitoring helps prevent fungal diseases…" — asserts a prevention outcome
+      // from a record that contains a humidity reading.
       consumerImpact =
-        'Humidity monitoring helps prevent fungal diseases that could compromise crop health and safety.';
-      sustainabilityBenefit =
-        'Disease prevention through environmental monitoring reduces the need for chemical treatments.';
+        'Long humid spells are when fungal disease gets its chance, which is why the farm logs them.';
     } else if (weatherTypeCode === 'LH') {
+      // Was "Low humidity management ensures crops receive adequate moisture…" — asserts both a
+      // management practice and its outcome. A weather event records neither.
       consumerImpact =
-        'Low humidity management ensures crops receive adequate moisture for optimal growth and quality.';
-      sustainabilityBenefit =
-        'Efficient water management during dry conditions helps conserve water resources.';
+        'Dry air pulls moisture out of a crop faster, so it changes how much water the block needed.';
     }
 
     // For weather events, use the standardized description without prepending user observations
@@ -1476,10 +1485,7 @@ export function getConsumerEventDescription(
     };
     const typeCodeForName = event.chemical_type || event.type;
     const productName =
-      event.commercial_name ||
-      event.equipment ||
-      CHEMICAL_GENERIC_NAME[typeCodeForName] ||
-      'Crop input application';
+      event.commercial_name || CHEMICAL_GENERIC_NAME[typeCodeForName] || 'Crop input application';
 
     // Determine chemical type - PRIORITY: Use form field type (FE, PE, FU, HE) over product name detection
     let chemicalType = 'chemical application';
@@ -1664,7 +1670,7 @@ export function getConsumerEventDescription(
     // Skip the purpose suffix when the name IS the generic type-derived fallback — a title
     // reading "Fertilizer application — soil nutrition" says the same thing twice, and the
     // bare generic name is a single string the ES dictionary can actually translate.
-    const usedGenericName = !event.commercial_name && !event.equipment;
+    const usedGenericName = !event.commercial_name;
     // Middle dot, not an em dash: it is the separator already used elsewhere on the card
     // ("Farmer-provided photos · 1 photo"), and the em dash reads as machine-written.
     const enhancedTitle = purpose && !usedGenericName ? `${productName} · ${purpose}` : productName;
@@ -1869,8 +1875,12 @@ export function getConsumerEventDescription(
     } else if (soilType === 'CO' || soilType.includes('Compost')) {
       consumerImpact =
         'Compost feeds the soil this crop grows in, rather than feeding the plant directly.';
+      // Was: "Composting turns orchard waste back into soil…". The event carries
+      // `compost_feedstock`, and on real records it reads "green waste, yard trimmings and horse
+      // bedding" from a supplier — so the copy asserted an origin the record often refutes. The
+      // server draws the same line for the practice chip (`_compost_was_bought_in`).
       sustainabilityBenefit =
-        'Composting turns orchard waste back into soil, and the organic matter it adds helps the ground hold water.';
+        'Recording the amount, the area and the composting process is what makes soil building checkable rather than asserted.';
     } else if (soilType === 'GR' || soilType.includes('Grazing')) {
       consumerImpact =
         'Animals eat the weeds and leave manure behind, which is weed control and fertiliser in one pass.';
@@ -2244,6 +2254,32 @@ export function getConsumerEventDescription(
     icon = typeInfo.icon;
     impactLevel = typeInfo.impact;
 
+    // 🔴 2026-08-31 — a logged contamination incident is NOT the activity it was filed under.
+    //
+    // Until now this record reached the buyer page wearing whatever `activity_type` copy it
+    // happened to carry. Filed as `emergency` — the closest thing the picker offers — a
+    // § 205.201(b) spray-drift report was described to a shopper as "Responded to emergency
+    // conditions with cleanup and damage repair", told them "Rapid emergency response protects
+    // crops and farm infrastructure, ensuring continued quality production", and credited the
+    // farm under an ENVIRONMENTAL BENEFIT heading for "resilience against weather events".
+    // Storm tidy-up wording over a drift incident, with praise attached.
+    //
+    // Keys off the incident flag rather than `activity_type` deliberately: an incident may be
+    // filed under any activity, and this flag is the only thing that makes it one.
+    //
+    // The wording states what the PUBLIC payload actually carries — the fact, the source, the
+    // affected area and the resolution date. The corrective-action narrative and the
+    // certifier's identity are owner-only in PublicHistorySerializer (they name third parties),
+    // so this must not promise a follow-up the card has no way to show.
+    //
+    // `isAffirmativeFlag` is the same predicate the registry's `visibleWhen` uses, on purpose:
+    // the rows and the wording gate on ONE flag, so reading it two ways would render the
+    // incident fields under the reassuring activity copy this override exists to replace.
+    const isContaminationIncident = isAffirmativeFlag(event.is_contamination_incident);
+    const incidentShortDescription = isContaminationIncident
+      ? 'A contamination incident was recorded for this block'
+      : null;
+
     // Build transparency details from general event data
     const generalDetails: string[] = [];
 
@@ -2279,7 +2315,7 @@ export function getConsumerEventDescription(
     // Create detailed description
     const detailsText = generalDetails.length > 0 ? ` • ${generalDetails.join(' • ')}` : '';
 
-    const fullDescription = typeInfo.description + detailsText;
+    const fullDescription = (incidentShortDescription ?? typeInfo.description) + detailsText;
 
     // Create personalized consumer messages based on activity type
     let consumerImpact =
@@ -2334,6 +2370,18 @@ export function getConsumerEventDescription(
         'Collaborative planning promotes best practices and continuous improvement in farming operations.';
     }
 
+    // Last, so it overrides whichever activity branch ran above (see the incident note near
+    // `incidentShortDescription`). `sustainabilityBenefit` is emptied rather than reworded:
+    // ConsumerEventCard's `isGenericCopy` suppresses the ENVIRONMENTAL BENEFIT block on an
+    // empty string, and there is no environmental benefit to claim from a contamination event.
+    // Claiming one is exactly the FTC 16 CFR 260.6 general-benefit failure the rest of this
+    // file has been pruned of.
+    if (isContaminationIncident) {
+      consumerImpact =
+        'The farm recorded this incident itself, along with where it came from and how much of the block it reached.';
+      sustainabilityBenefit = '';
+    }
+
     // Enhanced title resolution for general events
     const getGeneralTitle = (event: any, typeInfo: any): string => {
       // Priority 1: Event name (primary title set by farmer in the form)
@@ -2360,7 +2408,7 @@ export function getConsumerEventDescription(
     return {
       title: transparencyTitle,
       description: fullDescription,
-      shortDescription: typeInfo.description,
+      shortDescription: incidentShortDescription ?? typeInfo.description,
       icon,
       impact: impactLevel,
       consumerMessage: 'Farm management activity following operational best practices',
@@ -3030,8 +3078,20 @@ export function getConsumerEventDescription(
     if (event.commercial_name) {
       title = event.commercial_name;
     }
-    // Priority 2: Backend-provided equipment name
-    else if (event.equipment) {
+    // Priority 2: the equipment name -- ONLY on an equipment event.
+    // Until 2026-08-31 four other families overloaded `equipment` with something that was
+    // not equipment (product name, amendment type, certification, pest SPECIES), and this
+    // branch reaches for that key second. Measured: none of the four actually got here --
+    // each is claimed by an earlier per-family branch ("Pest & scouting", "Soil work",
+    // "Certification & compliance", "Crop input application"), identical output with this
+    // check present and absent. So the pest binomial leaked into the payload but was never
+    // rendered as a title.
+    //
+    // The branch is still LIVE for any family those earlier branches do not claim, which is
+    // what the check is for and the only shape its test can use. The backend has stopped
+    // sending the mis-mapped keys (that is the real fix); this keeps a stale, cached or
+    // replayed payload from reopening the hole. Guard: utils/__tests__/equipmentKeyTitleGate.
+    else if (event.equipment && event.type === 'equipment') {
       title = event.equipment;
     }
     // Priority 3: Specific activity type based on backend event type
@@ -3101,7 +3161,7 @@ export function getImpactLevel(event: any): 'HIGH' | 'MEDIUM' | 'LOW' {
 
   // Chemical events - assess based on product type and application rate
   if (event.type === 'chemical') {
-    const productName = event.equipment?.toLowerCase() || '';
+    const productName = (event.commercial_name || event.equipment)?.toLowerCase() || '';
 
     // Organic treatments
     if (productName.includes('neem') || productName.includes('organic')) {

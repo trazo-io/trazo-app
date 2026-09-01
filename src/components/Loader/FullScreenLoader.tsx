@@ -48,7 +48,7 @@ const FullScreenLoader = ({ message }: FullScreenLoaderProps) => {
       justifyContent="center"
       gap={4}
       bg="white">
-      <CircularProgress isIndeterminate color="green.500" />
+      <CircularProgress isIndeterminate color="green.700" />
       {message && (
         <Text fontSize="sm" color="gray.600">
           {message}

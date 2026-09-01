@@ -655,32 +655,23 @@ const BusinessTab = forwardRef(
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecordAndBuyer' })}
                 />
                 <VStack spacing={4} align="stretch">
-                  <StandardField
-                    label={
-                      businessType === 'certification' ? 'Inspector / Auditor Name' : 'Performed By'
-                    }
-                    error={errors.performed_by?.message}
-                    helpText={
-                      businessType === 'certification'
-                        ? 'Name and role of the certifying inspector (e.g., Sarah Chen, CCOF Inspector). Required for NOP audit trail.'
-                        : 'Name and role of the person who performed this activity'
-                    }>
-                    <Controller
-                      name="performed_by"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardInput
-                          {...field}
-                          placeholder={
-                            businessType === 'certification'
-                              ? 'e.g., Sarah Chen (CCOF Inspector)'
-                              : 'e.g., John Doe (Farm Manager)'
-                          }
-                        />
-                      )}
-                    />
-                  </StandardField>
+                  {/*
+                    🔴 2026-08-31 — the second ask of `performed_by` was REMOVED from here.
+                    Step 1 of the wizard already collects it for every event type, and this
+                    input wrote the same column a second time, so whatever was typed here
+                    silently replaced the step-1 answer.
 
+                    Worse than a duplicate: on `certification` it relabelled itself "Inspector /
+                    Auditor Name", so one column held two different people depending on which
+                    box the grower filled last. A real inspection recorded "R. Alvarez, CCOF
+                    inspector" in the column that means FARM STAFF, and the consumer card duly
+                    published the certifier's inspector as "Farm team (R.A.)" — the masking that
+                    exists to protect a worker's name applied to an outside auditor.
+
+                    ⛔ Re-adding an inspector field means a REAL column (and a packet + serializer
+                    that read it), never a second writer of `performed_by`. The certifying BODY
+                    already has its own field, `verified_certifier_name`, above.
+                  */}
                   <StandardField
                     label={intl.formatMessage({ id: 'app.observations' }) || 'Observations & Notes'}
                     error={errors.observation?.message}

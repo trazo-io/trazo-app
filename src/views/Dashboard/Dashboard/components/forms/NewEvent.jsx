@@ -1159,14 +1159,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // SOIL MANAGEMENT: amendment_unit stored in extra_data (no model column)
         ...(existingEvent.extra_data?.amendment_unit && {
           amendment_unit: existingEvent.extra_data.amendment_unit
-        }),
-
-        // BUSINESS EVENT: trust_impact and transparency_benefit stored in extra_data (no model columns)
-        ...(existingEvent.extra_data?.trust_impact && {
-          trust_impact: existingEvent.extra_data.trust_impact
-        }),
-        ...(existingEvent.extra_data?.transparency_benefit && {
-          transparency_benefit: existingEvent.extra_data.transparency_benefit
         })
       };
 
@@ -1322,10 +1314,25 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // `requested_fields` rides along on the result (see VoiceEventCapture) — the answer is
     // validated against what was actually asked for, so a key nobody requested is dropped
     // before the render gate ever sees it.
+    // Per-activity answers are answers to the question WE asked, and we asked about the activity
+    // the farmer chose. If the model heard a different activity, they answer the wrong question.
+    //
+    // MEASURED 2026-09-01: an irrigation sentence spoken on a Frost Protection form came back
+    // with `protection_method: "other"` — a value the farmer never uttered, supplied because the
+    // key was on the list. The mismatch notice is the right response to that utterance; carrying
+    // its field answers onto the form as well is not. (The transcript still reaches the notes,
+    // and the switch offer still lets them move to the activity they described.)
+    const heardADifferentActivity = shouldOfferActivitySwitch(
+      mapping,
+      eventData.type,
+      eventTypeId,
+      subtypeCode,
+      pickedVerbKey
+    );
     const result = mapVoiceDataToFieldValues(
       eventData,
       mapping.templateId,
-      eventData.requested_fields || []
+      heardADifferentActivity ? [] : eventData.requested_fields || []
     );
     const detected = {};
     result.overriddenFields.forEach((key) => {
@@ -1373,15 +1380,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         //     not a "switch activity" button that would name the tile the farmer is on.
         // An unknown subtype (soil/pest/business before the in-tab select) also stays quiet —
         // there is nothing yet to disagree with.
-        suggestion: shouldOfferActivitySwitch(
-          mapping,
-          eventData.type,
-          eventTypeId,
-          subtypeCode,
-          pickedVerbKey
-        )
-          ? mapping
-          : null,
+        suggestion: heardADifferentActivity ? mapping : null,
         raw: eventData
       }
     };
@@ -2575,7 +2574,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
               third inset inside the card's forced 14px and this body's 16px — 42px each
               side on a 375px screen. */}
           <Flex justify="center" align="center" py={8}>
-            <CircularProgress isIndeterminate color="green.500" />
+            <CircularProgress isIndeterminate color="green.700" />
           </Flex>
         </StandardCard>
       )}
@@ -2684,7 +2683,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                  to fix — this is the one Chakra convention blue still carries
                                  (frontend.md). A warning fill next to a control the farmer
                                  cannot act on reads as an error they caused. */
-                              <Alert status="info" mb={4} borderRadius="md">
+                              <Alert status="info" mb={4}>
                                 <AlertIcon />
                                 <Text fontSize="sm">
                                   {intl.formatMessage({ id: 'app.eventTypeCannotBeChanged' })}

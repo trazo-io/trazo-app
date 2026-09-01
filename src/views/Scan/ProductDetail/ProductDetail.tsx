@@ -123,7 +123,7 @@ const CarbonExplainerLoader = () => (
   <Card bg="white" shadow="lg" borderRadius="xl" p={{ base: 4, smd: 6 }}>
     <VStack spacing={4}>
       <HStack spacing={3} justify="center">
-        <Spinner size="md" color="green.500" thickness="3px" />
+        <Spinner size="md" color="green.700" thickness="3px" />
         <Text fontSize="sm" color="gray.600">
           Loading carbon impact details...
         </Text>
@@ -1285,7 +1285,7 @@ function ProductDetail() {
                         const iconFor = (key: string) =>
                           key === 'cover_crops'
                             ? FaSeedling
-                            : key === 'on_farm_compost'
+                            : key === 'on_farm_compost' || key === 'compost_applied'
                             ? FaRecycle
                             : FaLeaf;
                         // Localize raw codes (sheep, hedgerow, barn_owl_box, …) → readable, translated
@@ -1340,6 +1340,17 @@ function ProductDetail() {
                             return intl.formatMessage({
                               id: 'consumer.practices.compost',
                               defaultMessage: 'On-farm compost'
+                            });
+                          }
+                          // Compost the operation BOUGHT rather than built. The server decides
+                          // which key an event earns (`_compost_was_bought_in`); publishing both
+                          // under the "on-farm" label is what made this a claim the record
+                          // contradicted. Same icon — the practice is the same, the provenance
+                          // claim is not.
+                          if (p.key === 'compost_applied') {
+                            return intl.formatMessage({
+                              id: 'consumer.practices.compostApplied',
+                              defaultMessage: 'Compost applied'
                             });
                           }
                           if (p.key === 'habitat_development') {
@@ -1489,7 +1500,21 @@ function ProductDetail() {
                         empty state and advertised the absence of evidence. */}
                     {(() => {
                       // Same source as the RECORDS pillar + gallery (P1-6): count the photos
-                      // the consumer can actually see, not events-with-photos.
+                      // the consumer can actually see, not events-with-photos. That decision is
+                      // kept — one number, matching the gallery — but the LABEL was wrong for it.
+                      //
+                      // 🔴 2026-08-30. This array is every photo on the record, INCLUDING the
+                      // farm's establishment profile picture, and the string read "{count} Photos
+                      // Across Farming Events" over the subtitle "Visual evidence from the field".
+                      // After the demo photo prune left a lot with zero event photos and one
+                      // profile photo, production rendered "1 Photos Across Farming Events" with a
+                      // green tick — a claim of field evidence that did not exist, and a plural
+                      // agreement bug in the same six words.
+                      //
+                      // Fixed on the copy rather than the count: reintroducing an events-only
+                      // number here is exactly the 24-vs-20 mismatch P1-6 removed. The label now
+                      // says what the array is, and attributes it — the farm uploaded these, no
+                      // one checked them.
                       const photoEventCount = (completeData as any)?.images?.length ?? 0;
                       if (photoEventCount === 0) return null;
                       return (

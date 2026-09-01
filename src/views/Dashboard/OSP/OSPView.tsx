@@ -287,6 +287,7 @@ const OSPView: React.FC = () => {
   const {
     data: ospSummaries,
     isLoading: listLoading,
+    isUninitialized: listUninitialized,
     isError: listError
   } = useGetOSPsQuery(
     { companyId: companyId || '', farmId: farmId || '' },
@@ -560,7 +561,16 @@ const OSPView: React.FC = () => {
   };
 
   // --- Render -------------------------------------------------------------
-  if (listLoading) return <StandardPageLoading />;
+  //
+  // `listUninitialized` is not decoration. `companyId` is `currentCompany?.id`, hydrated into
+  // Redux asynchronously, so on a cold load this query is SKIPPED — and a skipped RTK Query
+  // reports `isLoading: false` with `data: undefined`. Without this term the first two guards
+  // both fall through and the EMPTY STATE below renders: a farm with a submitted Organic
+  // System Plan is shown the first-time "you have no OSP, create one" page, which is both a
+  // false compliance claim and an invitation to file a duplicate plan. OSPModuleWizard
+  // already defends against exactly this (its `ospsResolved`, and the note there about a
+  // second click creating a second plan); this view never got the same treatment.
+  if (listLoading || listUninitialized) return <StandardPageLoading />;
 
   // Error state: list fetch failed. Without it, we'd spin forever on "Detail pending".
   if (listError) {

@@ -268,7 +268,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
             {/* Completeness preview */}
             {isPreviewing ? (
               <HStack justify="center" py={6}>
-                <Spinner color="green.500" />
+                <Spinner color="green.700" />
                 <Text fontSize="sm" color="gray.500">
                   {intl.formatMessage({ id: 'app.pur.loadingPreview' })}
                 </Text>

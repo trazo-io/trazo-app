@@ -163,7 +163,7 @@ const StripeSuccessRedirect: React.FC = () => {
       justifyContent="center"
       flexDirection="column"
       bg={bgColor}>
-      <CircularProgress isIndeterminate color="green.500" />
+      <CircularProgress isIndeterminate color="green.700" />
       <Text mt={4} fontSize="lg" fontWeight="medium" color={textColor}>
         {intl.formatMessage({
           id: isNewCompany ? 'subscription.processingNewCompany' : 'subscription.processingGeneric'

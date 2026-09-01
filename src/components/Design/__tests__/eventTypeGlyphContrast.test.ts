@@ -141,26 +141,69 @@ describe('event-type glyph colour', () => {
     ).toEqual([]);
   });
 
-  it("keeps NewEvent's selected tile legible", () => {
-    /*
-     * That tile interpolates ONE step across every hue (`${eventType.color}.800`) and puts a
-     * white label on it, so the weakest hue sets the bar: yellow.800 at 5.54. `.700` is not
-     * enough — yellow.700 is 3.64, under the 4.5 that text owes.
-     */
-    const code = codeOf(
-      readFileSync(join(SRC, 'views/Dashboard/Dashboard/components/forms/NewEvent.jsx'), 'utf8')
-    );
-    const steps = [...code.matchAll(/\$\{eventType\.color\}\.(\d+)/g)].map((m) => Number(m[1]));
-    expect(steps.length, 'the selector tiles moved — this would pass vacuously').toBeGreaterThan(2);
+  /*
+   * 🔄 2026-08-31 — REPOINTED, and the original concern is now moot by design.
+   *
+   * This used to read NewEvent.jsx for `${eventType.color}.<step>`, the seven-hue selector
+   * tile, and assert the interpolated step never fell below 600. Its own vacuity guard
+   * ("the selector tiles moved") started failing because they did: the picker is now
+   * `components/Events/VerbPickerGrid.tsx`, part of the activity-verb pivot, and it dropped
+   * the per-hue tile entirely — one green for every verb instead of seven hues in one modal.
+   * `eventType.color` no longer appears anywhere under src/.
+   *
+   * So there is no weakest hue left to set the bar, and the guard that mattered is simpler:
+   * the selected tile is a WHITE LABEL on a green fill, which is text and owes 4.5. green.700
+   * is 5.13; green.600 is 4.12 and green.500 is 2.78, both of which fail — and `green.600` is
+   * exactly the "safe dark green" that `.claude/rules/frontend.md` documents spreading to 75
+   * text call sites. Hover must darken, not lighten.
+   */
+  it('keeps the selected verb tile legible', () => {
+    const code = codeOf(readFileSync(join(SRC, 'components/Events/VerbPickerGrid.tsx'), 'utf8'));
+
+    // Split by ROLE, because the thresholds differ: the fill sits behind a white LABEL and
+    // owes 4.5, the borders owe only the 3.0 non-text floor. Asserting 4.5 on all four
+    // `isSelected ? 'green.N'` sites would fail a hover border set to green.600 — which
+    // `.claude/rules/frontend.md` says is the RIGHT colour for a boundary.
+    const WHITE_TEXT_SAFE = ['green.700', 'green.800', 'green.900'];
+
+    const fill = code.match(/bg=\{isSelected \? '(green\.\d+)'/);
     expect(
-      Math.min(...steps),
-      `every interpolated step must be 600+ (hover border) and the white-label fill 800+; ` +
-        `found ${JSON.stringify(steps)}`
-    ).toBeGreaterThanOrEqual(600);
-    // the focus ring must be the shared token, not a per-hue tint that varies by event type
-    expect(code, 'focus ring must use the theme `outline` shadow').not.toMatch(
-      /--chakra-colors-\$\{eventType\.color\}-\d+/
-    );
+      fill,
+      'the selected tile no longer sets bg from isSelected — this would pass vacuously'
+    ).not.toBeNull();
+    expect(
+      WHITE_TEXT_SAFE,
+      `selected tile fills with ${fill?.[1]} behind a white label; green.600 is 4.12 and ` +
+        'green.500 is 2.78, both under the 4.5 that text owes'
+    ).toContain(fill?.[1]);
+
+    // The 4.5 above is only the right threshold while everything ON that fill is white.
+    // matchAll, not match: the tile sets `color` twice (the label and the glyph inside it),
+    // and `match` returns whichever comes first — so changing the OTHER one passed silently.
+    // `[\w.]+` so a dotted token like `gray.100` is captured and fails, rather than not
+    // matching at all and disappearing.
+    const onFill = [...code.matchAll(/color=\{isSelected \? '([\w.]+)'/g)].map((m) => m[1]);
+    expect(
+      onFill.length,
+      'nothing on the selected tile keys its colour off isSelected — this would pass vacuously'
+    ).toBeGreaterThan(1);
+    for (const token of onFill) {
+      expect(token, `${token} sits on the selected fill; it must be white`).toBe('white');
+    }
+
+    // Borders (base, hover, focus) owe 3.0, so green.600 passes and green.500 (4.12 vs 2.78
+    // on white) does not.
+    const borders = [...code.matchAll(/borderColor[:=]\s*\{?\s*isSelected \? '(green\.(\d+))'/g)];
+    expect(borders.length, 'selected borders no longer key off isSelected').toBeGreaterThan(1);
+    for (const [, token, step] of borders) {
+      expect(
+        Number(step),
+        `selected border uses ${token}; a boundary needs 600+ (green.500 is 2.78 on white)`
+      ).toBeGreaterThanOrEqual(600);
+    }
+
+    // The hue must not come back per-verb: seven hues in one modal is what the pivot removed.
+    expect(code, 'verb tiles must not reintroduce a per-verb hue').not.toMatch(/verb\.color/);
   });
 });
 

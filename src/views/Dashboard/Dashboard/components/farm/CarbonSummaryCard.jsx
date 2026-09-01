@@ -46,6 +46,7 @@ const TransparencySummaryCard = ({ farmId }) => {
     data: comprehensiveData,
     isLoading: isLoadingComprehensive,
     isFetching: isFetchingComprehensive,
+    isUninitialized: isUninitializedComprehensive,
     isError: isErrorComprehensive
   } = useGetFarmComprehensiveDashboardQuery(
     { companyId, farmId },
@@ -67,7 +68,12 @@ const TransparencySummaryCard = ({ farmId }) => {
   // fallback formula that was its only consumer. Each remaining reader picks its source
   // explicitly, so no caller can silently read a carbon payload where it expected a
   // transparency one.
-  const isLoading = isLoadingComprehensive || isLoadingCarbon;
+  // `isUninitialized` folded into the loading flag. `companyId` hydrates from Redux after
+  // first paint, so on a cold farm dashboard this query is SKIPPED — `isLoading: false`,
+  // no data — and the card rendered its ZEROES. On a card whose own docstring is about not
+  // publishing a grade Trazo invented, "0 recorded" sourced from a request that never ran
+  // is the same failure in a quieter voice.
+  const isLoading = isLoadingComprehensive || isLoadingCarbon || isUninitializedComprehensive;
   const isFetching = isFetchingComprehensive || isFetchingCarbon;
   const isError = isErrorComprehensive && isErrorCarbon;
 
@@ -181,7 +187,7 @@ const TransparencySummaryCard = ({ farmId }) => {
     return (
       <Card bg={bgColor} p={6} borderRadius="15px">
         <Flex justify="center" align="center" py={4}>
-          <CircularProgress isIndeterminate color="green.500" size="40px" />
+          <CircularProgress isIndeterminate color="green.700" size="40px" />
         </Flex>
       </Card>
     );

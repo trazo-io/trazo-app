@@ -230,8 +230,14 @@ describe('activity form section titles', () => {
     const keys = [
       ...modal.matchAll(/<Text fontSize="lg" fontWeight="bold"[\s\S]{0,120}?id: '([^']+)'/g)
     ].map((m) => m[1]);
-    // Four sections: field notes, photos, detailed information, carbon impact.
-    expect(keys.length, 'the modal heading shape changed and is no longer scanned').toBe(4);
+    // Five sections: field notes, photos, detailed information, the grower's own custom
+    // fields (added 2026-08-31 — the modal had never rendered them), and carbon impact.
+    //
+    // The count is asserted, not just scanned, because the whole point of this check is that
+    // these headings are plain <Text>, not SectionHeader: a sweep would find nothing and pass.
+    // A change here should be a deliberate edit by whoever added or removed a section, which
+    // is exactly what a hardcoded number forces.
+    expect(keys.length, 'the modal heading shape changed and is no longer scanned').toBe(5);
     for (const key of keys) {
       expect(EN[key], `modal heading ${key} missing from en-US`).toBeTruthy();
       expect(ES[key], `modal heading ${key} missing from es-419`).toBeTruthy();

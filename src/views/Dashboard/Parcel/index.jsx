@@ -27,6 +27,7 @@ import imageMap from 'assets/img/imageMap.png';
 import imageParcel1 from 'assets/img/ImageParcel1.png';
 import { setParcel } from 'store/features/productSlice';
 import { useGetParcelQuery } from 'store/api/productApi';
+import LocationDisclosurePrompt from 'components/Parcel/LocationDisclosurePrompt';
 import { useIntl } from 'react-intl';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTour } from 'hooks/useTour';
@@ -110,6 +111,18 @@ export default function ParcelView() {
       w="100%"
       maxW="100%"
       overflow="hidden">
+      {/* Mounted HERE, not on the parcel profile page. Profile is a drill-down at
+          /parcel/:id/profile that a farmer reaches deliberately; this is the parcel dashboard
+          they land on, and it is the page that draws the map. A consent prompt on a page nobody
+          routinely opens collects no consent — the first version of this shipped on profile and
+          simply never appeared. */}
+      <LocationDisclosurePrompt
+        parcelId={parcelId}
+        level={data?.location_disclosure_level}
+        choiceMade={data?.location_disclosure_choice_made}
+        hasBoundary={Boolean(data?.polygon)}
+      />
+
       <Flex
         mb={{ base: '16px', md: '24px' }}
         justify="space-between"

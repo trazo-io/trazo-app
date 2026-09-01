@@ -16,6 +16,7 @@
 import type { EventRegistryEntry, FieldConfig, SoilManagementSubtype } from './registry';
 import {
   formatArea,
+  formatBoolean,
   formatConsumerOrganicStatus,
   formatDate,
   lookupEnumLabel,
@@ -679,6 +680,79 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       consumer_card: 'secondary'
     }
   },
+  // 🔴 2026-08-31 — the § 205.203(c)(2) / NOP 5021 EVIDENCE was absent from the registry
+  // entirely, so it could not render on any surface. The form collects all five, the model
+  // stores them, and the certifier packet prints the temperature log in its own table — but
+  // the grower's own record view showed a compost event with its peak temperature and turning
+  // count and NONE of the things that make those numbers attributable: which pile they came
+  // from, how the reading was taken, what the pile was made of.
+  //
+  // `compost_feedstock` matters twice over: it is the NOP 5021 source record, and it is the
+  // field that tells a reader whether the compost was made here or bought in — the same
+  // distinction `_compost_was_bought_in` uses server-side to decide whether the buyer page may
+  // say "On-farm compost".
+  //
+  // Modal + form only, deliberately. A shopper already gets the outcome (peak temp, days at
+  // temp, turnings, method, C:N); a raw reading log, a pile ID and an instrument description
+  // are operator data of exactly the class the 2026-07-31 consumer-card review swept out.
+  {
+    name: 'compost_feedstock',
+    labelKey: 'events.soil.fields.compostFeedstock',
+    helpKey: 'events.soil.fields.compostFeedstockHelp',
+    valueType: 'string',
+    visibleForSubtypes: ['CO'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'immediate'
+    }
+  },
+  {
+    name: 'compost_unit_id',
+    labelKey: 'events.soil.fields.compostUnitId',
+    helpKey: 'events.soil.fields.compostUnitIdHelp',
+    valueType: 'string',
+    visibleForSubtypes: ['CO'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'immediate'
+    }
+  },
+  {
+    name: 'compost_temp_reading_method',
+    labelKey: 'events.soil.fields.compostTempReadingMethod',
+    helpKey: 'events.soil.fields.compostTempReadingMethodHelp',
+    valueType: 'string',
+    visibleForSubtypes: ['CO'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'immediate'
+    }
+  },
+  {
+    name: 'compost_temperature_log',
+    labelKey: 'events.soil.fields.compostTemperatureLog',
+    helpKey: 'events.soil.fields.compostTemperatureLogHelp',
+    valueType: 'text',
+    visibleForSubtypes: ['CO'],
+    surfaces: {
+      modal: 'secondary',
+      form: 'immediate'
+    }
+  },
+  {
+    // The amendment's own nitrogen content, on the wet basis the tonnage uses. Grouped with the
+    // other amendment-purchase facts rather than the compost-process ones, hence the wider gate.
+    name: 'amendment_nitrogen_percentage',
+    labelKey: 'events.soil.fields.amendmentNitrogenPercentage',
+    helpKey: 'events.soil.fields.amendmentNitrogenPercentageHelp',
+    valueType: 'number',
+    visibleForSubtypes: ['PA', 'OM', 'CC', 'CO'],
+    formatter: formatPercentage,
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
   {
     name: 'compost_method',
     labelKey: 'events.soil.fields.compostMethod',
@@ -1130,6 +1204,38 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       form: 'details',
       consumer_card: 'secondary'
     }
+  },
+  // ---- FSMA § 112.161(b) supervisor sign-off (CommonEvent, ALL subtypes) ----
+  //
+  // 🔴 2026-08-31 — declared in chemicalEvent.ts and NOWHERE else, while this family's form
+  // collects it on every subtype. A grower ticked "Supervisor review", named the reviewer and
+  // dated it; the record saved all three and the modal showed none of them. The certifier
+  // packet prints the sign-off in its attestation section, so the only reader who could not
+  // see it was the operation itself.
+  //
+  // Producer/certifier surfaces only: who countersigned a farm record is not a shopper's fact.
+  {
+    name: 'reviewed',
+    labelKey: 'events.common.fields.reviewed',
+    valueType: 'boolean',
+    formatter: formatBoolean,
+    // Only when true — BooleanField(default=False) would otherwise print "Supervisor
+    // reviewed: ✗" on every unreviewed record. Bug Pattern #6.
+    visibleWhen: (e) => e.reviewed === true || e.reviewed === 'true',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'reviewer_name',
+    labelKey: 'events.common.fields.reviewerName',
+    valueType: 'string',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'review_date',
+    labelKey: 'events.common.fields.reviewDate',
+    valueType: 'date',
+    formatter: formatDate,
+    surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     name: 'performed_by',
