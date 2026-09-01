@@ -187,6 +187,24 @@ export const S3Image: React.FC<S3ImageProps> = ({
     }
 
     if (needsPresignedUrl(src)) {
+      // 🔴 2026-09-01 — fall back to the RAW bucket URL when presigning fails, not to
+      // `fallbackSrc` and not to nothing.
+      //
+      // `get-presigned-read-url/` requires authentication. Anonymous visitors get a 401, and
+      // this branch used to hand back `fallbackSrc` (usually undefined) while
+      // `shouldShowLoading` stayed true — so the <img> sat at `complete: false` forever: a grey
+      // placeholder with no error and, in a production build, no console trace either. Every
+      // photograph on every buyer page was unreachable for the logged-out shopper the page
+      // exists to serve.
+      //
+      // `publicObject` is the explicit opt-out for surfaces that KNOW their objects are public.
+      // This is the safety net for the ones that don't: the bucket objects are publicly
+      // readable, so the unsigned URL is what a signature would have resolved to anyway. If an
+      // object genuinely is private the browser gets a 403 and `onError` fires — a visible
+      // failure, which is strictly better than an invisible one.
+      if (apiError) {
+        return src;
+      }
       const url = presignedData?.presigned_url || fallbackSrc;
       console.log('🔄 [S3Image] Using INDIVIDUAL presigned URL or fallback:', url);
       return url;
@@ -220,7 +238,7 @@ export const S3Image: React.FC<S3ImageProps> = ({
   // Loading state - only show loading for URLs that actually need presigning
   const needsPresigning = src ? needsPresignedUrl(src) : false;
   const shouldShowLoading =
-    !isInView || (needsPresigning && isLoading && !presignedData && !presignedUrl);
+    !isInView || (needsPresigning && isLoading && !presignedData && !presignedUrl && !apiError);
 
   // Debug loading state
   console.log('🔍 [S3Image] Loading state check:', {
@@ -252,8 +270,18 @@ export const S3Image: React.FC<S3ImageProps> = ({
     );
   }
 
-  // Error state
-  if (apiError || imageError) {
+  // Error state.
+  //
+  // 🔴 2026-09-01 — `apiError` alone no longer counts. It means the PRESIGN call failed, which
+  // for an anonymous visitor is simply a 401 from an endpoint that needs auth — not evidence
+  // that the photograph is unavailable. Treating it as a render error is what produced the grey
+  // icon on every consumer photo: this box IS the placeholder people were seeing, drawn because
+  // a signature request failed for an object that never needed one.
+  //
+  // Only `imageError` gates it now: the <img> itself was attempted against the raw bucket URL
+  // and genuinely failed. A real private object still lands here via the 403, so a true failure
+  // is still visible — it just is not assumed in advance.
+  if (imageError) {
     return (
       <Box
         ref={containerRef}

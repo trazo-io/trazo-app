@@ -9,13 +9,17 @@ import { S3Image } from '../S3Image';
 // Mock the mediaApi
 const mockGetPresignedReadUrl = vi.fn();
 
+let mockApiError: unknown = null;
+
 vi.mock('store/api/mediaApi', () => ({
   useLazyGetPresignedReadUrlQuery: () => [
     mockGetPresignedReadUrl,
     {
       data: null,
       isLoading: false,
-      error: null
+      get error() {
+        return mockApiError;
+      }
     }
   ]
 }));
@@ -51,6 +55,7 @@ Object.defineProperty(window, 'IntersectionObserver', {
 
 describe('S3Image Component', () => {
   beforeEach(() => {
+    mockApiError = null;
     vi.clearAllMocks();
   });
 
@@ -335,6 +340,21 @@ describe('S3Image Error Handling', () => {
         </TestWrapper>
       );
       const img = await screen.findByAltText('orchard');
+      expect(img).toHaveAttribute('src', S3_URL);
+    });
+
+    it('falls back to the raw bucket URL when presigning fails', async () => {
+      // The SAFETY NET, distinct from `publicObject`. Call sites that never opted in — the
+      // event card reached its photo through a third S3Image nobody had flagged — must still
+      // recover. Before this, a 401 left `shouldShowLoading` true and the <img> pending
+      // forever: a grey box with no error anywhere.
+      mockApiError = { status: 401, data: 'Unauthorized' };
+      render(
+        <TestWrapper>
+          <S3Image src={S3_URL} alt="fallback-orchard" lazy={false} />
+        </TestWrapper>
+      );
+      const img = await screen.findByAltText('fallback-orchard');
       expect(img).toHaveAttribute('src', S3_URL);
     });
 

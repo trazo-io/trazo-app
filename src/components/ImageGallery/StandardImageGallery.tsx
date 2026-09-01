@@ -217,6 +217,10 @@ const StandardImageGallery = ({
             h="100%"
             objectFit="cover"
             fallbackSrc={fallbackImage}
+            // The third S3Image in this file, and the one the consumer EVENT CARD renders
+            // through — missed on the first pass, which fixed the grid and the lightbox and
+            // left the single-image path showing the same grey box.
+            publicObject={variant === 'consumer'}
             presignedUrl={presignedUrls[imageData.url]}
           />
 
