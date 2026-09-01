@@ -332,6 +332,11 @@ const StandardImageGallery = ({
                   objectFit="cover"
                   fallbackSrc={fallbackImage}
                   lazy={true}
+                  // The consumer product page has no logged-in viewer, and
+                  // `get-presigned-read-url/` requires auth. Presigning there 401s and leaves
+                  // every photograph as a permanent grey placeholder — the bucket objects are
+                  // public, so the signature buys nothing and costs the whole gallery.
+                  publicObject={variant === 'consumer'}
                   presignedUrl={presignedUrls[imageData.url]}
                   onError={() => markFailed(index)}
                 />
@@ -478,6 +483,9 @@ const StandardImageGallery = ({
                   borderRadius="lg"
                   boxShadow="2xl"
                   lazy={false}
+                  // Same reason as the thumbnail above: this lightbox opens on the anonymous
+                  // consumer page too, and a 401 there is a full-screen grey box.
+                  publicObject={variant === 'consumer'}
                   presignedUrl={presignedUrls[processedImages[currentImageIndex]?.url]}
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   cursor="default"

@@ -301,6 +301,54 @@ describe('S3Image Error Handling', () => {
     // In tests, this may not be visible as an attribute, but the prop is set
     expect(image).toHaveAttribute('alt', 'Image with fallback');
   });
+
+  describe('publicObject — anonymous consumer surfaces', () => {
+    /*
+     * 🔴 2026-09-01. `get-presigned-read-url/` requires authentication. The consumer product
+     * page has no logged-in viewer, so every photograph routed through this component fired
+     * that endpoint, took a 401, and left its <img> at `complete: false` — a permanent grey
+     * placeholder with no error and nothing in the console (production strips the debug logs).
+     *
+     * Measured on production: three 401s, zero requests for the images themselves, while all
+     * three objects fetched fine unauthenticated at HTTP 200. The signature bought nothing and
+     * cost the entire gallery, on every farm's page rather than only the demo's.
+     */
+
+    const S3_URL =
+      'https://trazo-media.s3.us-east-2.amazonaws.com/gallery_images/dormant-pruning.jpg';
+
+    it('does not request a presigned URL for a public object', async () => {
+      render(
+        <TestWrapper>
+          <S3Image src={S3_URL} alt="orchard" publicObject lazy={false} />
+        </TestWrapper>
+      );
+      await waitFor(() => {
+        expect(mockGetPresignedReadUrl).not.toHaveBeenCalled();
+      });
+    });
+
+    it('renders the bucket URL directly', async () => {
+      render(
+        <TestWrapper>
+          <S3Image src={S3_URL} alt="orchard" publicObject lazy={false} />
+        </TestWrapper>
+      );
+      const img = await screen.findByAltText('orchard');
+      expect(img).toHaveAttribute('src', S3_URL);
+    });
+
+    it('still presigns when the flag is absent', () => {
+      // The counterpart. Authenticated surfaces keep the existing behaviour, so this fix
+      // cannot quietly expose a private object by skipping a signature it actually needed.
+      render(
+        <TestWrapper>
+          <S3Image src={S3_URL} alt="orchard" lazy={false} />
+        </TestWrapper>
+      );
+      expect(mockGetPresignedReadUrl).toHaveBeenCalled();
+    });
+  });
 });
 
 export {};

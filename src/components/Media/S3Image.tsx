@@ -21,6 +21,19 @@ export interface S3ImageProps extends Omit<ImageProps, 'src' | 'onLoad' | 'onErr
   objectFit?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
   /** Enable lazy loading (default: true) */
   lazy?: boolean;
+  /**
+   * The object is publicly readable, so skip presigning entirely.
+   *
+   * 🔴 2026-09-01 — `get-presigned-read-url/` requires authentication. On the consumer product
+   * page the visitor is anonymous by definition, so every image routed through this component
+   * fired that endpoint, took a 401, and left the `<img>` at `complete: false` forever: a grey
+   * placeholder, no error, nothing in the console. Photo evidence could not display for a
+   * logged-out shopper on ANY farm's page, not only the demo.
+   *
+   * The bucket objects are publicly readable — they fetch unauthenticated with HTTP 200 — so the
+   * presign was never needed here. It only added a round-trip that cannot succeed.
+   */
+  publicObject?: boolean;
   /** Callback when image loads successfully */
   onLoad?: () => void;
   /** Callback when image fails to load */
@@ -58,6 +71,7 @@ export const S3Image: React.FC<S3ImageProps> = ({
   placeholder,
   objectFit = 'cover',
   lazy = true,
+  publicObject = false,
   onLoad,
   onError,
   boxSize,
@@ -105,9 +119,17 @@ export const S3Image: React.FC<S3ImageProps> = ({
   }, [lazy, isInView]);
 
   // Check if URL needs presigned conversion
-  const needsPresignedUrl = useCallback((url: string) => {
-    return url && S3_BUCKET_PATTERN.test(url) && !PRESIGNED_URL_PATTERN.test(url);
-  }, []);
+  const needsPresignedUrl = useCallback(
+    (url: string) => {
+      // `publicObject` short-circuits every downstream branch — the individual fallback
+      // request, the display-URL resolver, the error retry and the loading state all funnel
+      // through this one predicate, which is why the flag belongs here rather than at each
+      // call site.
+      if (publicObject) return false;
+      return url && S3_BUCKET_PATTERN.test(url) && !PRESIGNED_URL_PATTERN.test(url);
+    },
+    [publicObject]
+  );
 
   // Get presigned URL for S3 images (fallback to individual requests)
   useEffect(() => {
