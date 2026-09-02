@@ -22,6 +22,7 @@ import { subtypeQuestionFor, verbForKey } from '../../activityVerbs';
 import { getSubtypes } from '../index';
 
 const ALL = getSubtypes(1).map((s) => s.code as string);
+const ALL_CHEMICAL = getSubtypes(2).map((s) => s.code as string);
 
 /** Defaults describe the ordinary create path; each test overrides only what it is about. */
 const ask = (over: Partial<Parameters<typeof subtypeQuestionFor>[0]> = {}) =>
@@ -31,7 +32,7 @@ const ask = (over: Partial<Parameters<typeof subtypeQuestionFor>[0]> = {}) =>
     verb: undefined,
     fromPlanItem: false,
     planItem: undefined,
-    allProductionSubtypes: ALL,
+    allSubtypesForType: ALL,
     ...over
   });
 
@@ -44,10 +45,14 @@ describe('subtypeQuestionFor', () => {
     expect(ask({ isEdit: true, verb: verbForKey('field_work') })).toEqual([]);
   });
 
-  it('asks nothing for a non-production event type', () => {
-    // Soil, pest, weather, business, chemical and general ask inside their own tab.
+  it('asks nothing for an event type whose tab owns its own subtype', () => {
+    // Soil, pest, weather, business and general ask inside their own tab. Chemical does NOT —
+    // it is hoisted, and has its own cases below.
     expect(ask({ eventType: 5, verb: verbForKey('soil') })).toEqual([]);
     expect(ask({ eventType: 0, verb: verbForKey('weather') })).toEqual([]);
+    expect(ask({ eventType: 6, verb: verbForKey('pest') })).toEqual([]);
+    expect(ask({ eventType: 7, verb: verbForKey('business') })).toEqual([]);
+    expect(ask({ eventType: 3, verb: verbForKey('other') })).toEqual([]);
     expect(ask({ eventType: null })).toEqual([]);
   });
 
@@ -128,8 +133,8 @@ describe('subtypeQuestionFor — the edit path', () => {
     expect(asked).toContain('SS');
   });
 
-  it('never asks for a non-production record — its tab owns its own subtype', () => {
-    for (const eventType of [0, 2, 3, 5, 6, 7]) {
+  it('never asks for a record whose tab owns its own subtype', () => {
+    for (const eventType of [0, 3, 5, 6, 7]) {
       expect(
         ask({ isEdit: true, isCorrecting: true, eventType }),
         `event_type ${eventType}`
@@ -185,8 +190,22 @@ describe('subtypeQuestionFor — "Log this again"', () => {
     ]);
   });
 
-  it('never applies to a non-production repeat — that tab owns its own subtype', () => {
-    expect(ask({ fromRepeat: true, knownSubtype: 'FE', eventType: 2 })).toEqual([]);
+  it('never applies to a repeat whose tab owns its own subtype', () => {
+    expect(ask({ fromRepeat: true, knownSubtype: 'HD', eventType: 5 })).toEqual([]);
+  });
+
+  it('answers a CHEMICAL repeat from the source record too', () => {
+    // Hoisted since 2026-09-01, so the repeat branch runs for it: the row says FE, and asking
+    // "fertilizer or pesticide?" about a record that names one is the wizard doubting itself.
+    expect(
+      ask({
+        fromRepeat: true,
+        knownSubtype: 'FE',
+        eventType: 2,
+        verb: verbForKey('input_application'),
+        allSubtypesForType: ALL_CHEMICAL
+      })
+    ).toEqual([]);
   });
 
   it('does not disturb the edit or plan branches', () => {
@@ -194,5 +213,65 @@ describe('subtypeQuestionFor — "Log this again"', () => {
     expect(
       ask({ fromPlanItem: true, planItem: { event_subtype: 'PR' }, knownSubtype: 'PR' })
     ).toEqual([]);
+  });
+});
+
+describe('subtypeQuestionFor — chemical, hoisted 2026-09-01', () => {
+  /*
+   * "Input application" names no practice on its own, and FE/PE/FU/HE decide which half of
+   * ChemicalTab's 45 fields the next step renders (`visibleForSubtypes`) — the same criterion
+   * the production families are hoisted on. Before this the question was a four-option select
+   * in hardcoded English two steps down, inside the tab whose shape it decides.
+   */
+  const chem = (over: Partial<Parameters<typeof subtypeQuestionFor>[0]> = {}) =>
+    ask({ eventType: 2, allSubtypesForType: ALL_CHEMICAL, ...over });
+
+  it('is not vacuous — the registry knows all four codes', () => {
+    expect(ALL_CHEMICAL).toEqual(['FE', 'PE', 'FU', 'HE']);
+  });
+
+  it('asks the four input types once the tile is tapped', () => {
+    expect(chem({ verb: verbForKey('input_application') })).toEqual(['FE', 'PE', 'FU', 'HE']);
+  });
+
+  it('⛔ pins NO default — the tile must not answer for the farmer', () => {
+    /*
+     * `handleVerbSelect` seeds `verb.subtype` the instant a tile is tapped. A default here
+     * would file a restricted-use spray as a fertilizer for anyone who tapped Continue without
+     * looking — and unlike a production family, the four chemical codes change what the record
+     * CLAIMS, not merely which fields are asked. The certifier packet and the CA PUR export
+     * both read it.
+     */
+    expect(verbForKey('input_application')?.subtype).toBeUndefined();
+  });
+
+  it('asks nothing while the verb grid is still on screen', () => {
+    expect(chem({ verb: undefined })).toEqual([]);
+  });
+
+  it('asks nothing once the farmer has answered — one ask, not two', () => {
+    // The chooser stays mounted with its selection; what must never happen is the tab asking
+    // again. That half is pinned by subtypeAskedOnce.test.tsx, rendered.
+    expect(chem({ verb: verbForKey('input_application') })).toEqual(ALL_CHEMICAL);
+  });
+
+  it('offers all four when correcting a saved record, and nothing until asked', () => {
+    expect(chem({ isEdit: true, verb: verbForKey('input_application') })).toEqual([]);
+    expect(
+      chem({ isEdit: true, isCorrecting: true, verb: verbForKey('input_application') })
+    ).toEqual(ALL_CHEMICAL);
+  });
+
+  it('asks rather than defaulting for a plan item with no subtype', () => {
+    expect(chem({ fromPlanItem: true, planItem: { event_subtype: null } })).toEqual(ALL_CHEMICAL);
+    expect(chem({ fromPlanItem: true, planItem: { event_subtype: 'PE' } })).toEqual([]);
+  });
+
+  it('never offers production codes on a chemical record', () => {
+    // The fallback list is per-type for exactly this: sixteen production codes on a chemical
+    // record would be a worse question than none.
+    const asked = chem({ isEdit: true, isCorrecting: true });
+    expect(asked).not.toContain('HA');
+    expect(asked).not.toContain('PL');
   });
 });

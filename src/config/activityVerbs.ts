@@ -68,7 +68,12 @@ export interface ActivityVerb {
    */
   subtype?: string;
   /**
-   * The subtypes a FAMILY verb covers, `subtype` first.
+   * The subtypes a FAMILY verb covers, `subtype` first when the tile carries one.
+   *
+   * ⚠️ `subtype` is OPTIONAL alongside this. A family whose codes only change which fields are
+   * asked may pre-select one (production's do); a family whose codes change what the record
+   * CLAIMS must not (chemical's do not — see `input_application`), because the pre-selection is
+   * an answer the farmer never gave.
    *
    * Present only when one tile honestly stands for more than one record shape: "Field work"
    * is cultivation, thinning or mowing, and which one it was decides half the fields the next
@@ -90,7 +95,26 @@ export interface ActivityVerb {
 
 export const ACTIVITY_VERBS: ActivityVerb[] = [
   { key: 'planting', eventType: 1, subtype: 'PL', subtypeChoices: ['PL', 'TR'], icon: FaSeedling },
-  { key: 'input_application', eventType: 2, icon: FaFlask },
+  /*
+   * Chemical is the SECOND family verb (2026-09-01). "Input application" names no practice on
+   * its own — a fertigation pass and a restricted-use spray are the same tile — and the four
+   * codes decide which half of ChemicalTab's 45 fields the next step renders
+   * (`visibleForSubtypes` in config/events/chemicalEvent.ts): FE brings NPK and fertigation,
+   * PE/FU/HE bring target pest, REI/PHI, RUP and applicator certification. That is the same
+   * criterion the production family verbs are hoisted on.
+   *
+   * ⛔ NO default `subtype`. `handleVerbSelect` seeds `verb.subtype` the instant the tile is
+   * tapped, so a default here is an ANSWER the farmer never gave — and the wrong one is a
+   * pesticide filed as a fertilizer, which changes what the certifier packet and the CA PUR
+   * export assert. The production families can carry a default because their codes differ in
+   * which fields are asked, not in what the record claims about a restricted substance.
+   */
+  {
+    key: 'input_application',
+    eventType: 2,
+    subtypeChoices: ['FE', 'PE', 'FU', 'HE'],
+    icon: FaFlask
+  },
   { key: 'irrigation', eventType: 1, subtype: 'IR', icon: FaTint },
   {
     key: 'field_work',
@@ -185,6 +209,23 @@ export const verbForEvent = (
 export const subtypeChoicesFor = (verb: ActivityVerb | undefined): readonly string[] =>
   verb?.subtypeChoices && verb.subtypeChoices.length > 1 ? verb.subtypeChoices : [];
 
+/**
+ * Event types whose subtype is asked in STEP 0 rather than inside their own tab.
+ *
+ * A type earns a place here on two conditions, both of them:
+ *   1. Its verb tile cannot name the practice — "Field work" is three record shapes,
+ *      "Input application" is four.
+ *   2. The subtype gates which fields the next step renders, so answering it late means the
+ *      farmer meets a form that changes shape under them.
+ *
+ * Production (1) and Chemical (2) qualify. Soil, pest, weather, business and general do NOT:
+ * their tiles name the practice and their tabs are small, so their single in-tab select is
+ * already one ask in the right place. ⛔ Adding a type here is only half the change — its tab
+ * must also stop rendering its own `type` control, or the result is the double-ask this whole
+ * mechanism was built to remove (see config/events/__tests__/subtypeAskedOnce.test.tsx).
+ */
+export const HOISTED_SUBTYPE_EVENT_TYPES: readonly number[] = [1, 2];
+
 export interface SubtypeQuestionInput {
   /** Editing a saved record rather than creating one. */
   isEdit: boolean;
@@ -213,8 +254,14 @@ export interface SubtypeQuestionInput {
    * any tile, so nothing is asked once it is known.
    */
   knownSubtype?: string | null;
-  /** Every production subtype the display registry knows, for the fallback. */
-  allProductionSubtypes: readonly string[];
+  /**
+   * Every subtype the display registry knows FOR `eventType`, for the fallback branches.
+   *
+   * Per-type, not production's list: the fallback is what gets asked when nothing upstream
+   * answered, and offering sixteen production codes on a chemical record would be worse than
+   * asking nothing.
+   */
+  allSubtypesForType: readonly string[];
 }
 
 /**
@@ -235,12 +282,11 @@ export const subtypeQuestionFor = ({
   planItem,
   fromRepeat = false,
   knownSubtype,
-  allProductionSubtypes
+  allSubtypesForType
 }: SubtypeQuestionInput): readonly string[] => {
-  // Production is the only event type with family verbs today; every other tab asks its own
-  // subtype exactly once, inside itself, so there is nothing to hoist into step 0. True on the
-  // edit path too: a Chemical record's subtype is ChemicalTab's single ask and stays there.
-  if (eventType !== 1) return [];
+  // Only a HOISTED type has a step-0 subtype question; every other tab asks its own subtype
+  // exactly once, inside itself, so there is nothing to hoist. True on the edit path too.
+  if (!HOISTED_SUBTYPE_EVENT_TYPES.includes(eventType as number)) return [];
 
   /*
    * EDIT asks the same question, in the same place, in the same words.
@@ -256,7 +302,7 @@ export const subtypeQuestionFor = ({
    * farmer correcting a saved record may have tapped the wrong tile outright — Seed search
    * when they meant Harvest — and both live under the same event_type.
    */
-  if (isEdit) return isCorrecting ? allProductionSubtypes : [];
+  if (isEdit) return isCorrecting ? allSubtypesForType : [];
 
   if (fromRepeat) {
     // 🔴 2026-08-27: "Log this again" carries `?repeat=` and `event_type=` but no `verb=`, so
@@ -268,14 +314,14 @@ export const subtypeQuestionFor = ({
     // subtype must produce a QUESTION, never ProductionTab's default. It should be unreachable
     // (`type` is required on the model) and it is also what renders if the loading gate above
     // this ever regresses, which is the safer of the two failures.
-    return knownSubtype ? [] : allProductionSubtypes;
+    return knownSubtype ? [] : allSubtypesForType;
   }
 
   if (fromPlanItem) {
     // Still in flight, or one that already names the practice — nothing to ask.
     if (!planItem || planItem.event_subtype) return [];
     // A plan item with no subtype would otherwise be saved as the tab's 'PL' default.
-    return allProductionSubtypes;
+    return allSubtypesForType;
   }
 
   // No verb means the GRID is on screen asking "What did you do?". Asking "which one exactly"
@@ -287,6 +333,8 @@ export const subtypeQuestionFor = ({
   if (fromVerb.length) return fromVerb;
   // The tile pinned it. The page title is the only place that answer is shown.
   if (verb.subtype) return [];
-  // A production verb that pins nothing — same silent-'PL' hazard as the plan branch.
-  return allProductionSubtypes;
+  // A hoisted verb that pins nothing and offers no family — same silent-'PL' hazard as the
+  // plan branch. (Chemical's tile pins nothing DELIBERATELY, but it does offer a family, so it
+  // returns above; this stays the fallback for a verb added with neither.)
+  return allSubtypesForType;
 };

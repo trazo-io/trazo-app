@@ -9,7 +9,7 @@
  * told "the connection to the transcription service dropped" — the one thing that had not failed.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { pickRecorderMimeType } from '../useDeepgramTranscription';
+import { pickRecorderMimeType, shouldUseRawPcm } from '../useDeepgramTranscription';
 
 const install = (supported: string[] | null) => {
   if (supported === null) {
@@ -49,5 +49,28 @@ describe('pickRecorderMimeType', () => {
   it('reports null only when the browser cannot record at all', () => {
     install(null);
     expect(pickRecorderMimeType()).toBeNull();
+  });
+});
+
+describe('shouldUseRawPcm', () => {
+  // MEASURED 2026-09-01, the second failure on the same iPhone: with the codec picker in place
+  // Safari recorded `audio/mp4` and the socket STILL closed — Deepgram's live endpoint does not
+  // take Safari's fragmented-MP4 chunks. Containers are the problem, so Safari stops using one.
+  it('keeps MediaRecorder where Opus works (Chrome, Android)', () => {
+    expect(shouldUseRawPcm('audio/webm;codecs=opus')).toBe(false);
+    expect(shouldUseRawPcm('audio/webm')).toBe(false);
+    expect(shouldUseRawPcm('audio/ogg;codecs=opus')).toBe(false);
+  });
+
+  it('switches Safari to raw PCM rather than gambling on its container', () => {
+    expect(shouldUseRawPcm('audio/mp4')).toBe(true);
+    expect(shouldUseRawPcm('audio/mp4;codecs=mp4a.40.2')).toBe(true);
+  });
+
+  it('treats an unnameable platform default as raw PCM too', () => {
+    // `''` means "MediaRecorder exists but named no supported type". Sending whatever it happens
+    // to produce is the gamble this path exists to avoid.
+    expect(shouldUseRawPcm('')).toBe(true);
+    expect(shouldUseRawPcm(null)).toBe(true);
   });
 });

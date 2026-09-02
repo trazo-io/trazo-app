@@ -3,9 +3,10 @@
  *
  * A verb tile answers "what did you do". Most tiles answer it completely (Irrigation is IR and
  * nothing else). A few honestly stand for several record shapes — "Field work" is cultivation,
- * thinning or mowing — and which one it was decides half the fields the next step renders. This
- * is where that is asked: step 0 of the wizard, before any subtype-scoped field has been shown,
- * in the same farmer vocabulary as the tiles.
+ * thinning or mowing; "Input application" is fertilizer, pesticide, fungicide or herbicide — and
+ * which one it was decides half the fields the next step renders. This is where that is asked:
+ * step 0 of the wizard, before any subtype-scoped field has been shown, in the same farmer
+ * vocabulary as the tiles.
  *
  * ⛔ It is NOT a re-run of ProductionTab's `type` select. Until 2026-08-22 that select rendered
  * on every path, so a farmer who tapped "Harvest" was asked again — in developer wording
@@ -29,7 +30,7 @@ import { getSubtypes } from 'config/events';
 import type { EventTypeCode } from 'config/events';
 
 interface ActivitySubtypeChooserProps {
-  /** Backend event_type the verb routed to (only production, 1, has family verbs today). */
+  /** Backend event_type the verb routed to — see HOISTED_SUBTYPE_EVENT_TYPES (production, chemical). */
   eventType: EventTypeCode;
   /** Subtype codes this verb covers, in display order. */
   choices: readonly string[];
@@ -62,9 +63,21 @@ export const ActivitySubtypeChooser: React.FC<ActivitySubtypeChooserProps> = ({
    * it packs instead.
    */
   const dense = choices.length > 4;
+  /*
+   * A short list never leaves exactly ONE option on the last row.
+   *
+   * MEASURED 2026-09-01 at 1440px with chemical's four: `smd: min(n, 3)` laid them out 3 + 1,
+   * and a lone tile on its own row reads as a different KIND of option rather than the fourth
+   * peer — the four are equals, and the grid was saying otherwise. Four wraps 2 x 2 from the
+   * tablet breakpoint and sits in one row of four once there is width for it.
+   */
   const columns = dense
     ? { base: 2, smd: 3, md: 4 }
-    : { base: 1, smd: Math.min(choices.length, 3) };
+    : {
+        base: 1,
+        smd: choices.length === 4 ? 2 : Math.min(choices.length, 3),
+        md: Math.min(choices.length, 4)
+      };
 
   return (
     <SimpleGrid columns={columns} spacing={3} width="100%">

@@ -21,6 +21,7 @@ import { resolve } from 'node:path';
 import { render, act, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import baseApi from 'store/api/baseApi';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { ChakraProvider } from '@chakra-ui/react';
 import { IntlProvider } from 'react-intl';
@@ -40,6 +41,7 @@ vi.mock('store/api/productApi', () => ({
 import enUS from '../../../i18n/lang/en-US.json';
 import es419 from '../../../i18n/lang/es-419.json';
 import ProductionTab from 'views/Dashboard/Dashboard/components/forms/ProductionTab';
+import ChemicalTab from 'views/Dashboard/Dashboard/components/forms/ChemicalTab-ENHANCED';
 import { ActivitySubtypeChooser } from 'components/Events/ActivitySubtypeChooser';
 import { subtypeChoicesFor, verbForEvent, verbForKey } from '../../activityVerbs';
 
@@ -51,8 +53,13 @@ const testStore = () =>
           id: 1,
           establishments: [{ id: 1, name: 'Test Farm', state: 'CA', country: 'US' }]
         }
-      })
-    }
+      }),
+      // RTK Query slice + middleware — same reason as formRenderConformance: the receipt-file
+      // picker calls useGetFarmDocumentsQuery inside ChemicalTab, and a store without the api
+      // middleware turns that into a thrown warning that fails the render.
+      [baseApi.reducerPath]: baseApi.reducer
+    },
+    middleware: (getDefault) => getDefault().concat(baseApi.middleware)
   });
 
 const renderTab = (props: Record<string, unknown>, locale = 'en-US') => {
@@ -172,6 +179,148 @@ describe('production subtype: one ask on the create path', () => {
       /hideSubtypeSelect=\{!isEdit\}/.test(src),
       'the edit path must not re-enable ProductionTab\u2019s raw `type` select'
     ).toBe(false);
+  });
+});
+
+const renderChemicalTab = (props: Record<string, unknown>, locale = 'en-US') => {
+  const messages = (locale === 'en-US' ? enUS : es419) as unknown as Record<string, string>;
+  const result = render(
+    <Provider store={testStore()}>
+      <MemoryRouter initialEntries={['/admin/dashboard/farm/1/parcel/2/event/add']}>
+        <Routes>
+          <Route
+            path="/admin/dashboard/farm/:farmId/parcel/:parcelId/event/add"
+            element={
+              <ChakraProvider>
+                <IntlProvider locale={locale} messages={messages} onError={() => {}}>
+                  <ChemicalTab hideActions onSubmitHandler={() => {}} {...props} />
+                </IntlProvider>
+              </ChakraProvider>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    </Provider>
+  );
+  act(() => {});
+  return result;
+};
+
+/** Enough to clear the zod schema; the assertions are all about `type`. */
+const VALID_CHEMICAL = {
+  commercial_name: 'Kocide 3000',
+  // A label STRENGTH, not a rate — the schema rejects a rate here on purpose.
+  concentration: '46.1%',
+  application_method: 'foliar_spray',
+  volume_numeric: '10',
+  volume_unit: 'gal',
+  area_numeric: '4',
+  area_unit: 'acres',
+  date: '2026-09-01T09:00'
+};
+
+describe('chemical subtype: one ask, hoisted to step 0 (2026-09-01)', () => {
+  /*
+   * "Input application" names no practice on its own, and FE/PE/FU/HE decide which half of this
+   * tab's 45 fields render (`visibleForSubtypes`). The ask moved to step 0's
+   * ActivitySubtypeChooser — same criterion, same mechanism and the same trap as production:
+   * hiding the control must not unregister the field. `type` here also picks the carbon factor
+   * and decides what the certifier packet and the CA PUR export assert, so a dropped one is
+   * worse than a dropped production subtype, not better.
+   */
+  it('renders no type control when the wizard already asked', () => {
+    const { container } = renderChemicalTab({
+      initialValues: { type: 'FE' },
+      hideTypeSelect: true
+    });
+    expect(
+      subtypeControls(container).length,
+      'step 0 answered this; a second control here is the double-ask'
+    ).toBe(0);
+  });
+
+  it('still submits the type it was given', async () => {
+    const onSubmitHandler = vi.fn();
+    const { container } = renderChemicalTab({
+      initialValues: { ...VALID_CHEMICAL, type: 'PE' },
+      hideTypeSelect: true,
+      onSubmitHandler
+    });
+    const form = container.querySelector('form');
+    expect(form, 'ChemicalTab renders a form').not.toBeNull();
+    await act(async () => {
+      fireEvent.submit(form as HTMLFormElement);
+    });
+    await waitFor(() => expect(onSubmitHandler).toHaveBeenCalled());
+    expect(
+      onSubmitHandler.mock.calls[0][0].type,
+      'hiding the control must not unregister the field \u2014 the record would save as ' +
+        'whatever the serializer defaults to, and a pesticide filed as a fertilizer is a ' +
+        'false claim on the packet and on the PUR export'
+    ).toBe('PE');
+  });
+
+  it('keeps the select for a caller the wizard is not driving', () => {
+    const { container } = renderChemicalTab({ initialValues: { type: 'FE' } });
+    expect(subtypeControls(container).length).toBe(1);
+  });
+
+  it('names its options from the registry, not four hardcoded English strings', () => {
+    const { container } = renderChemicalTab({ initialValues: { type: 'FE' } }, 'es-419');
+    const select = subtypeControls(container)[0] as HTMLSelectElement;
+    const labels = [...select.querySelectorAll('option')]
+      .map((o) => o.textContent)
+      .filter((t) => t && t.length > 0);
+    expect(labels).toContain('Fertilizante');
+    expect(labels).toContain('Herbicida');
+    expect(labels, 'the hardcoded list this replaced was English on every locale').not.toContain(
+      'Fertilizer - Nutrient application'
+    );
+  });
+
+  it('the WIZARD hides it \u2014 grep the call site, not the prop default', () => {
+    const src = readFileSync(
+      resolve(__dirname, '../../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
+      'utf8'
+    );
+    expect(src).toContain('hideTypeSelect');
+    expect(
+      /hideTypeSelect=\{!isEdit\}/.test(src),
+      'the edit path must not re-enable the raw `type` select \u2014 edit corrects through the ' +
+        'same step-0 chooser, behind the "Not Fertilizer?" link'
+    ).toBe(false);
+    // …and the correction link must reach chemical, or an edit has no way back to the question.
+    expect(
+      src.includes('HOISTED_SUBTYPE_EVENT_TYPES.includes(activeEventType)'),
+      'the edit correction affordance is still gated to production only'
+    ).toBe(true);
+  });
+
+  /*
+   * 🔴 The hole hoisting chemical OPENS, and the reason this assertion exists.
+   *
+   * A production family verb seeds its default subtype the instant the tile is tapped, so
+   * `type` is never empty by the time Continue is pressed. Chemical deliberately seeds
+   * nothing — a pesticide filed as a fertilizer is a false claim on the packet and on the CA
+   * PUR export, not a missing field — so the farmer CAN reach Continue with the question
+   * open. With the tab's own select now hidden, letting that through lands them on a form
+   * that rejects a required field it does not render: an unfixable dead end two steps in.
+   */
+  it('step 0 refuses to advance while the subtype question is unanswered', () => {
+    const src = readFileSync(
+      resolve(__dirname, '../../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx'),
+      'utf8'
+    );
+    const basic = /const onSubmitBasic = \(data\) => \{([\s\S]{0,1200}?)\n {2}\};/.exec(src);
+    expect(basic, 'onSubmitBasic moved or was renamed').not.toBeNull();
+    const body = (basic as RegExpExecArray)[1];
+    expect(body, 'the guard must read the SAME list the chooser renders').toContain(
+      'pendingSubtypeChoices.length > 0'
+    );
+    expect(body, 'and must actually stop, not just flag').toContain('return;');
+    // A refusal nobody can see is a page that silently did not move.
+    expect(src).toContain('activities.subtype.required');
+    expect(src).toContain('role="alert"');
   });
 });
 

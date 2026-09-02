@@ -94,6 +94,7 @@ import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 import {
+  HOISTED_SUBTYPE_EVENT_TYPES,
   subtypeChoicesFor,
   subtypeQuestionFor,
   verbForEvent,
@@ -369,6 +370,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const [correctingActivity, setCorrectingActivity] = useState(false);
 
   /*
+   * Step 0 refused to advance because the subtype question is still open.
+   *
+   * 🔴 Reachable only since chemical was hoisted (2026-09-01). The production families seed a
+   * default the moment their tile is tapped, so `type` is never empty there; chemical
+   * deliberately seeds nothing — a pesticide filed as a fertilizer is a false claim, not a
+   * missing field — which means the farmer CAN reach Continue with the question unanswered.
+   * With the tab's own select now hidden, letting that through lands them on a form that
+   * rejects a required field it does not render. Refuse here, where the control is.
+   */
+  const [subtypeUnanswered, setSubtypeUnanswered] = useState(false);
+
+  /*
    * "Log this again" answers the activity question the same way a plan item does.
    *
    * 🔴 2026-08-27: `?repeat=639&event_type=1` carries no `verb=`, so `typePresetFromVerb` was
@@ -473,7 +486,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
          */
         fromRepeat: isRepeat && !pickedVerbKey,
         knownSubtype: eventFormData.type,
-        allProductionSubtypes: getSubtypes(1).map((entry) => entry.code)
+        /* The list for the type IN FORCE, not production's. The fallback branches ask this
+           when nothing upstream answered, and sixteen production codes on a chemical record
+           would be a worse question than none. */
+        allSubtypesForType:
+          activeEventType == null ? [] : getSubtypes(activeEventType).map((entry) => entry.code)
       }),
     [
       isEdit,
@@ -1224,6 +1241,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // Form submission handlers
   const onSubmitBasic = (data) => {
+    // See `subtypeUnanswered`: a hoisted type whose chooser is open and unanswered has no
+    // second surface to answer on, so advancing strands the farmer on a form that demands a
+    // field it does not render.
+    if (pendingSubtypeChoices.length > 0 && !eventFormData.type) {
+      setSubtypeUnanswered(true);
+      return;
+    }
+    setSubtypeUnanswered(false);
     const updatedData = { ...eventFormData, ...data, event_type: activeEventType };
     setEventFormData(updatedData);
 
@@ -1569,6 +1594,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
    * and friends only read them on mount).
    */
   const handleSubtypeSelect = (code) => {
+    setSubtypeUnanswered(false);
     if (eventFormData.type === code) return;
     setEventFormData((prev) => {
       const kept = {};
@@ -2740,14 +2766,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               </HStack>
                             )}
 
-                            {/* Edit's correction affordance, production only.
-                                  Every other tab owns its subtype as its single in-tab ask, so
-                                  there is nothing to correct from here; production's ask lives
-                                  in step 0 on both paths, which is why this is the one type
-                                  that needs a way back to it. Hidden while the chooser is
+                            {/* Edit's correction affordance — HOISTED types only.
+                                  A type whose subtype is asked in step 0 has no in-tab control
+                                  left to correct it with, so this link is the only way back to
+                                  the question; a type that still owns its subtype as a single
+                                  in-tab ask needs nothing here. Hidden while the chooser is
                                   open — the grid below IS the control. */}
                             {isEdit &&
-                              activeEventType === 1 &&
+                              HOISTED_SUBTYPE_EVENT_TYPES.includes(activeEventType) &&
                               !correctingActivity &&
                               editVerbLabel && (
                                 <Box mt={3}>
@@ -2774,6 +2800,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             <SectionHeader
                               icon={FaTasks}
                               title={intl.formatMessage({ id: 'activities.subtype.title' })}
+                              /* Required on the ASK only, same rule as the verb grid above:
+                                 edit RESTATES a saved answer and has nothing to fill in. */
+                              badge={isEdit ? undefined : 'Required'}
                               description={intl.formatMessage({ id: 'activities.subtype.hint' })}
                             />
                             {/* One chooser, two clearing contracts. Create wipes the fields
@@ -2785,6 +2814,22 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               value={eventFormData.type || null}
                               onChange={isEdit ? handleCorrectSubtype : handleSubtypeSelect}
                             />
+                            {/* Refused Continue. `role="alert"` because the message appears
+                                after the press, above the button the farmer just used — with
+                                nothing announcing it, a screen-reader user gets silence and a
+                                page that simply did not move. MEASURED on SectionBox's white:
+                                red.700 #D32F2F is 4.98:1 ✓; red.600 is 4.23 and misses the
+                                4.5 text floor. */}
+                            {subtypeUnanswered && (
+                              <Text
+                                role="alert"
+                                mt={3}
+                                fontSize="sm"
+                                fontWeight="medium"
+                                color="red.700">
+                                {intl.formatMessage({ id: 'activities.subtype.required' })}
+                              </Text>
+                            )}
                           </SectionBox>
                         )}
 
@@ -3124,6 +3169,16 @@ function NewEvent({ isEdit = false, eventId = null }) {
                       onPrev={goToPreviousStep}
                       initialValues={eventFormData}
                       hideActions={true}
+                      /* Same contract as ProductionTab's hideSubtypeSelect, and unconditional
+                         for the same reason: the wizard owns the activity question on BOTH
+                         paths — create in the verb grid + step 0's ActivitySubtypeChooser,
+                         edit in that same chooser behind the "Not Fertilizer?" link — so a
+                         `type` select down here is a second surface for one fact whichever
+                         path renders it.
+                         ⛔ Hiding the control must never unregister the field: `type` still has
+                         to reach onSubmit, and it gates the payload branches, the carbon
+                         factor and what the PUR export asserts. */
+                      hideTypeSelect
                       carbonCalculation={carbonCalculation}
                       isCalculatingCarbon={isCalculatingCarbon || isCalculating}
                     />

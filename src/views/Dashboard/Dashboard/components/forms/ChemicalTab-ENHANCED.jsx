@@ -53,7 +53,14 @@ import {
   FaTrash
 } from 'react-icons/fa';
 import { FormProvider, useForm, Controller, useFieldArray } from 'react-hook-form';
-import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  forwardRef,
+  useImperativeHandle
+} from 'react';
 import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
 import { ReceiptDocumentSelect } from 'components/Forms/ReceiptDocumentSelect';
 import InputVerifyHelper from 'components/Compliance/InputVerifyHelper';
@@ -62,6 +69,7 @@ import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 import { APPLICATION_PURPOSES, retiredOrganicApprovedLabelKey } from 'config/events/enums';
+import { getSubtypes } from 'config/events';
 // Event Field Registry (Phase 5G — form integration)
 import { useFormFields } from 'src/hooks/useFormFields';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
@@ -349,6 +357,20 @@ const ChemicalTab = forwardRef(
       onPrev,
       initialValues = {},
       hideActions = false,
+      /**
+       * Hide the raw chemical-type select because the wizard already asked (2026-09-01).
+       *
+       * "Input application" names no practice on its own, and FE/PE/FU/HE decide which half of
+       * this tab's fields render — so the question moved to step 0's ActivitySubtypeChooser,
+       * in the registry's farmer vocabulary and in the active locale. The options here were
+       * four hardcoded English strings.
+       *
+       * ⛔ Hiding it does NOT stop `type` being posted: the field stays in `defaultValues`
+       * (seeded from `initialValues.type`), so zod validation, every `visibleForSubtypes` gate,
+       * the carbon factor and the PUR export keep reading it. It removes a SECOND ask, not the
+       * answer. NewEvent passes this on every path — create and edit alike.
+       */
+      hideTypeSelect = false,
       carbonCalculation = null,
       isCalculatingCarbon = false
     },
@@ -828,6 +850,20 @@ const ChemicalTab = forwardRef(
     } = useFieldArray({ control: methods.control, name: 'tank_mix_partners' });
 
     const chemicalType = watch('type');
+
+    /*
+     * "My products" scoped to the type in force — see the comment at the render site.
+     *
+     * Before the type is known (a non-wizard caller whose select is still blank) the whole
+     * list stands, which is the pre-2026-09-01 behaviour: with nothing to contradict, there
+     * is nothing to scope to.
+     */
+    const typeScopedRecentInputs = useMemo(() => {
+      const rows = recentInputs || [];
+      if (!chemicalType) return rows;
+      return rows.filter((product) => product.type === chemicalType);
+    }, [recentInputs, chemicalType]);
+
     const areaValue = watch('area_numeric') || watch('area_treated');
     const volumeValue = watch('volume_numeric') || watch('volume_applied');
     const concentrationValue = watch('concentration');
@@ -1280,8 +1316,15 @@ const ChemicalTab = forwardRef(
               October, which sells the record a certifier reviews at renewal.
             */}
 
-            {/* Quick-pick: products recently used on this establishment */}
-            {recentInputs && recentInputs.length > 0 && (
+            {/* Quick-pick: products recently used on this establishment.
+                Scoped to the type the wizard already answered (2026-09-01). A chip prefills
+                `commercial_name`, `active_ingredient`, `concentration`, `organic_approved` and
+                the EPA registration number, so a fungicide chip tapped on a Fertilizer record
+                writes a fungicide's identity into it — `handleRecentInputPick` guards `type`
+                itself (it only fills a blank one) and nothing guarded the other five.
+                A row carrying no type is dropped rather than shown: it cannot be matched, and
+                an unmatchable row is exactly the one that would prefill the wrong identity. */}
+            {typeScopedRecentInputs.length > 0 && (
               <Box>
                 <HStack spacing={2} mb={2} flexWrap="wrap">
                   <Icon as={FaFlask} color="green.500" boxSize={3.5} />
@@ -1293,7 +1336,7 @@ const ChemicalTab = forwardRef(
                   </Text>
                 </HStack>
                 <Wrap spacing={2}>
-                  {recentInputs.slice(0, 6).map((product, index) => (
+                  {typeScopedRecentInputs.slice(0, 6).map((product, index) => (
                     <WrapItem key={`${product.commercial_name}-${index}`}>
                       <Button
                         size="sm"
@@ -1349,24 +1392,39 @@ const ChemicalTab = forwardRef(
                   badge={intl.formatMessage({ id: 'events.section.badge.certifierRecord' })}
                 />
                 <VStack spacing={4} align="stretch">
-                  <StandardField
-                    label="Chemical Type"
-                    required
-                    error={errors.type?.message}
-                    helpText="What kind of input this is. Your certifier reads this alongside the product name to check it against the National List.">
-                    <Controller
-                      name="type"
-                      control={methods.control}
-                      render={({ field }) => (
-                        <StandardSelect {...field} placeholder="Select chemical type...">
-                          <option value="FE">Fertilizer - Nutrient application</option>
-                          <option value="PE">Pesticide - Pest control</option>
-                          <option value="FU">Fungicide - Disease prevention</option>
-                          <option value="HE">Herbicide - Weed management</option>
-                        </StandardSelect>
-                      )}
-                    />
-                  </StandardField>
+                  {/* Chemical Type — only for a caller the wizard is not driving.
+                        The wizard asks it in step 0 (ActivitySubtypeChooser), in the display
+                        registry's vocabulary and in the active locale; the four options below
+                        were hardcoded English and are the fourth copy of a list the registry
+                        already owns. See hideTypeSelect above for why hiding must not
+                        unregister the field. */}
+                  {!hideTypeSelect && (
+                    <StandardField
+                      label={intl.formatMessage({ id: 'events.chemical.fields.type' })}
+                      required
+                      error={errors.type?.message}
+                      helpText={intl.formatMessage({
+                        id: 'events.chemical.fields.typeHelp'
+                      })}>
+                      <Controller
+                        name="type"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardSelect
+                            {...field}
+                            placeholder={intl.formatMessage({
+                              id: 'events.chemical.fields.typePlaceholder'
+                            })}>
+                            {getSubtypes(2).map((entry) => (
+                              <option key={entry.code} value={entry.code}>
+                                {intl.formatMessage({ id: entry.labelKey })}
+                              </option>
+                            ))}
+                          </StandardSelect>
+                        )}
+                      />
+                    </StandardField>
+                  )}
 
                   {/* Chemical Subtype - Conditional based on chemical type for accurate emission factors */}
                   {chemicalType && (
