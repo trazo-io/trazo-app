@@ -187,8 +187,46 @@ const PORTUGUESE_KEYTERMS = [
 ];
 
 /**
- * Returns combined common + language-specific keyterms.
- * Deepgram recommends staying under ~500 tokens total.
+ * Deepgram's ceiling is 500 TOKENS across every keyterm on the request — not 500 keyterms.
+ * Exceeding it is not a soft degradation: the request is REFUSED.
+ *
+ * 400 leaves headroom for the estimate below being approximate, and for the next few terms
+ * somebody adds without reading this.
+ */
+export const KEYTERM_TOKEN_BUDGET = 400;
+
+/**
+ * A deliberately PESSIMISTIC token estimate: three characters per token, plus one for the term
+ * itself. Real English averages closer to four, and the terms here are the worst case for that
+ * average — "10-10-10", "Kocide 3000-O" and "Bacillus thuringiensis" all split into far more
+ * tokens than their length suggests. Overestimating costs a few keyterms; underestimating costs
+ * the whole request.
+ */
+export function estimateKeytermTokens(term: string): number {
+  return Math.ceil(term.length / 3) + 1;
+}
+
+/**
+ * Combined common + language-specific keyterms, capped to fit Deepgram's budget.
+ *
+ * ⛔ THE CAP IS THE POINT. This function's own comment used to say "Deepgram recommends staying
+ * under ~500 tokens total" and then nothing checked it. MEASURED 2026-09-01 from Deepgram's
+ * request log, on a farmer's iPhone against production:
+ *
+ *   language=es-419, 123 keyterms, 2,641-character URL
+ *   → "Bad Request: Keyterm limit exceeded. The maximum number of tokens across all keyterms
+ *      is 500."
+ *
+ * Every Spanish voice session had been failing since keyterms were added, and the farmer was
+ * told "the connection to the transcription service dropped" — which is what a 400 looks like
+ * from inside a WebSocket. English (84 terms) fitted under the ceiling and worked, so the bug
+ * was invisible in English and total in Spanish.
+ *
+ * Language-specific terms come FIRST for a non-English speaker: those are the words that
+ * language actually needs boosted, and if anything has to be dropped it should be the English
+ * generics rather than "fertilizante" or "riego por goteo". Product names live in COMMON and
+ * survive either way — they are spelled the same in every language, which is exactly why the
+ * feature exists.
  */
 export function getKeytermsForLanguage(language: string): string[] {
   const langPrefix = language.toLowerCase().slice(0, 2);
@@ -201,5 +239,15 @@ export function getKeytermsForLanguage(language: string): string[] {
   }
 
   // Deduplicate (some terms overlap across languages)
-  return [...new Set([...COMMON_KEYTERMS, ...languageSpecific])];
+  const ordered = [...new Set([...languageSpecific, ...COMMON_KEYTERMS])];
+
+  const kept: string[] = [];
+  let spent = 0;
+  for (const term of ordered) {
+    const cost = estimateKeytermTokens(term);
+    if (spent + cost > KEYTERM_TOKEN_BUDGET) continue;
+    kept.push(term);
+    spent += cost;
+  }
+  return kept;
 }

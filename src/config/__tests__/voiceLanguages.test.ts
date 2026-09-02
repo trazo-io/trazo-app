@@ -62,8 +62,15 @@ describe('voice language resolution', () => {
     // unreachable because the language was pinned to en-US.
     const es = getKeytermsForLanguage(voiceLanguageFor('es-419').deepgram);
     const en = getKeytermsForLanguage(voiceLanguageFor('en-US').deepgram);
-    expect(es.length).toBeGreaterThan(en.length);
+
+    // ⚠️ NOT `es.length > en.length` any more, and the change is the point. That assertion held
+    // only while the Spanish list was English PLUS Spanish — which is exactly the request
+    // Deepgram refused on 2026-09-01 ("Keyterm limit exceeded... maximum number of tokens across
+    // all keyterms is 500"). Both lists are now capped, so counting them compares two budgets
+    // rather than testing anything. What matters is that Spanish words reach the boost at all.
     expect(es).toContain('fertilizante');
+    expect(en).not.toContain('fertilizante');
+    expect(es.length).toBeGreaterThan(10);
   });
 });
 
@@ -71,7 +78,15 @@ describe('voice error ids are real, translated messages', () => {
   // The hook returns message ids now, and VoiceEventCapture feeds them straight to
   // `intl.formatMessage`. An id with no key renders as the raw id in a toast in front of
   // the farmer, so the union and the locale files have to agree.
-  const ERROR_IDS = ['voice.tokenFailed', 'voice.microphoneBlocked', 'voice.connectionFailed'];
+  const ERROR_IDS = [
+    'voice.tokenFailed',
+    'voice.microphoneBlocked',
+    // Added 2026-09-01: iOS Safari cannot record webm, and the old code asked for nothing else,
+    // so `new MediaRecorder` threw and the farmer was told the CONNECTION dropped. A failure
+    // that cannot be named gets reported as whichever failure already had a message.
+    'voice.recorderUnsupported',
+    'voice.connectionFailed'
+  ];
 
   it('the hook declares exactly these ids', () => {
     const hook = readFileSync(join(__dirname, '../../hooks/useDeepgramTranscription.ts'), 'utf8');
