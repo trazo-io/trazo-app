@@ -196,16 +196,7 @@ export function useDeepgramTranscription({
     setInterimTranscript('');
     transcriptRef.current = '';
 
-    // 1. Get temporary token
-    let token: string;
-    try {
-      token = await fetchToken();
-    } catch {
-      setError('voice.tokenFailed');
-      return;
-    }
-
-    // 2. Can this browser record at all? Checked BEFORE the socket and before the microphone
+    // 1. Can this browser record at all? Checked BEFORE the socket and before the microphone
     // prompt, so a browser that cannot record never asks the farmer for permission it has no use
     // for — and never reports the failure as a dropped connection.
     const mimeType = pickRecorderMimeType();
@@ -229,7 +220,7 @@ export function useDeepgramTranscription({
       return;
     }
 
-    // 3. Get microphone
+    // 2. Get microphone
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({
@@ -240,6 +231,28 @@ export function useDeepgramTranscription({
       return;
     }
     streamRef.current = stream;
+
+    // ⛔ TOKEN LAST, and this order is load-bearing.
+    //
+    // The temporary Deepgram key lives for SIXTY SECONDS (`deepgram_token`, time_to_live_in_
+    // seconds: 60). It used to be minted FIRST — before `getUserMedia` — so the clock started
+    // ticking and then the farmer was shown a permission dialog and asked to read it. On a
+    // desktop that already granted permission there is no dialog and no delay, which is exactly
+    // why every test here passed; on a phone seeing the prompt for the first time, on a field
+    // connection, the key can be dead before the socket is opened. Deepgram then refuses the
+    // connection, and the farmer is told the transcription service dropped the call.
+    //
+    // Nothing is spent by asking for the microphone first: a farmer who declines costs us a
+    // permission prompt, not an API key.
+    let token: string;
+    try {
+      token = await fetchToken();
+    } catch {
+      stream.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+      setError('voice.tokenFailed');
+      return;
+    }
 
     // 4. Build WebSocket URL with Deepgram params
     // The context is created here, inside the click that started this, because iOS only allows
