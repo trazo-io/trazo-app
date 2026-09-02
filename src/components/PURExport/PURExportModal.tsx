@@ -1,57 +1,73 @@
 /**
  * CA Pesticide Use Report (PUR / DPR-PML-017C) export modal.
  *
- * Establishment + month scoped. Mirrors AuditExportModal's standards (Chakra Modal,
- * fetch+blob download with credentials, StandardButton, toast, i18n, `smd` breakpoint,
- * `export_format` query param — NOT `format`, which DRF reserves). Adds a month/year
- * picker and a JSON completeness preview so the farmer sees which DPR boxes are still
- * blank before downloading the CSV to file with the County Ag Commissioner.
+ * Establishment + month scoped. Backend:
+ *   GET /api/histories/pur-export/?establishment_id=&month=&year=&export_format=json|csv
+ * (`export_format`, NOT `format` — DRF reserves that query param; ?format=csv 404s.)
  *
- * Backend: GET /api/histories/pur-export/?establishment_id=&month=&year=&export_format=
+ * Rebuilt 2026-09-01 on the design system instead of on its sibling. The first version
+ * "mirrored AuditExportModal's standards" and so inherited that modal's hand-rolled Chakra
+ * <Modal>, its blue.700-on-blue.50 note box (4.03:1) and its green.500 link (2.43:1), then
+ * added its own: an English month array, an ISO deadline in prose, orange.500 gap text
+ * (3.39:1), a nested 220px scroll region that clipped rows, and two identical rows with no
+ * date and no way to open the event the copy told the farmer to open. A sibling is a
+ * precedent, not a standard — the standard is ResponsiveModal / StandardField /
+ * GuidanceNote / STATUS_URGENCY_TOKENS, and every contrast number is measured, not assumed.
+ *
+ * Gaps arrive as DPR box KEYS (`missing`) and coded findings (`flags`) and are labelled
+ * here in the farmer's locale. The CSV keeps its English `notes` column for the county
+ * commissioner; that sentence is deliberately never rendered in the preview.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Badge, Box, HStack, Icon, Link, Stack, Text, VStack, useToast } from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
-  Box,
-  HStack,
-  VStack,
-  Text,
-  Icon,
-  Badge,
-  Divider,
-  Spinner,
-  Link,
-  useColorModeValue,
-  useToast
-} from '@chakra-ui/react';
-import {
-  FiDownload,
-  FiFileText,
   FiAlertTriangle,
   FiCheckCircle,
-  FiExternalLink
+  FiDownload,
+  FiEdit2,
+  FiExternalLink,
+  FiFileText
 } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
-import { StandardButton, StandardSelect } from 'components/Design/StandardComponents';
+import { ResponsiveModal } from 'components/Design/ResponsiveModal';
+import {
+  GuidanceNote,
+  STATUS_URGENCY_TOKENS,
+  StandardButton,
+  StandardEmptyState,
+  StandardField,
+  StandardQueryError,
+  StandardSelect,
+  StandardSpinner
+} from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
 
+interface PURFlag {
+  code: string;
+  county?: string;
+  partners?: string;
+  primary?: string;
+}
+
 interface PURRow {
+  event_id: number;
+  event_type: number;
+  parcel_id: number | null;
+  /** ISO datetime of the event's own `date` — always present, unlike box 17. */
+  event_date: string;
   product_and_manufacturer?: string;
-  application_start?: string;
   application_method?: string;
-  notes?: string;
+  /** DPR box keys still blank (server REQUIRED_KEYS + ffm_code). */
+  missing: string[];
+  flags: PURFlag[];
 }
 
 interface PURSummary {
   application_count: number;
   complete_count: number;
   incomplete_count: number;
+  /** YYYY-MM-DD — the 10th of the following month (3 CCR 6626). */
   filing_deadline: string;
   form: string;
   rows: PURRow[];
@@ -64,20 +80,51 @@ interface PURExportModalProps {
   establishmentName?: string;
 }
 
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December'
-];
+/**
+ * DPR box key → i18n id. Keys mirror PUR_COLUMNS in pur_export_service.py. A key the server
+ * adds that is not listed here renders as its raw key — visible and honest — rather than as
+ * nothing. Every id is a literal so the used-keys gate can see it.
+ */
+const BOX_LABEL_IDS: Record<string, string> = {
+  operator_id: 'app.pur.box.operator_id',
+  operator_name: 'app.pur.box.operator_name',
+  address: 'app.pur.box.address',
+  city: 'app.pur.box.city',
+  zip_code: 'app.pur.box.zip_code',
+  site_id: 'app.pur.box.site_id',
+  planted_area: 'app.pur.box.planted_area',
+  county: 'app.pur.box.county',
+  section: 'app.pur.box.section',
+  township: 'app.pur.box.township',
+  range: 'app.pur.box.range',
+  base_meridian: 'app.pur.box.base_meridian',
+  commodity: 'app.pur.box.commodity',
+  field_location: 'app.pur.box.field_location',
+  application_start: 'app.pur.box.application_start',
+  application_end: 'app.pur.box.application_end',
+  acreage_treated: 'app.pur.box.acreage_treated',
+  application_method: 'app.pur.box.application_method',
+  ffm_code: 'app.pur.box.ffm_code',
+  epa_registration_number: 'app.pur.box.epa_registration_number',
+  total_product_used: 'app.pur.box.total_product_used',
+  product_and_manufacturer: 'app.pur.box.product_and_manufacturer'
+};
+
+const FLAG_LABEL_IDS: Record<string, string> = {
+  county_unrecognized: 'app.pur.flag.county_unrecognized',
+  tank_mix_unexported: 'app.pur.flag.tank_mix_unexported',
+  aggregate_event: 'app.pur.flag.aggregate_event',
+  adjuvant_line: 'app.pur.flag.adjuvant_line'
+};
+
+/**
+ * `YYYY-MM-DD` → local Date at midnight. `new Date('2026-05-10')` parses a date-only string
+ * as UTC, which prints as the 9th anywhere west of Greenwich — i.e. all of California.
+ */
+const parseISODate = (value: string): Date | null => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+};
 
 const PURExportModal: React.FC<PURExportModalProps> = ({
   isOpen,
@@ -87,23 +134,31 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
 }) => {
   const intl = useIntl();
   const toast = useToast();
+  const navigate = useNavigate();
 
+  // Default to LAST month. A month's PUR is due by the 10th of the following month
+  // (3 CCR 6626), so the month a farmer can actually file is the one that just closed; the
+  // current one is still being logged. Opening on the current month showed "0 applications"
+  // for the first week of every month.
   const now = new Date();
-  const [month, setMonth] = useState<number>(now.getMonth() + 1);
-  const [year, setYear] = useState<number>(now.getFullYear());
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const [month, setMonth] = useState<number>(lastMonth.getMonth() + 1);
+  const [year, setYear] = useState<number>(lastMonth.getFullYear());
   const [summary, setSummary] = useState<PURSummary | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const sectionBorder = useColorModeValue('gray.200', 'gray.600');
-  const sectionBg = useColorModeValue('gray.50', 'gray.700');
-  const infoBg = useColorModeValue('blue.50', 'blue.900');
-  const infoBorder = useColorModeValue('blue.100', 'blue.700');
-  const infoText = useColorModeValue('blue.700', 'blue.200');
-  const labelColor = useColorModeValue('gray.700', 'gray.200');
-  const rowBg = useColorModeValue('white', 'gray.800');
-
   const yearOptions = [now.getFullYear(), now.getFullYear() - 1, now.getFullYear() - 2];
+
+  // Locale month names. The previous hardcoded English array showed "April" under es-419.
+  const monthNames = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) =>
+        intl.formatDate(new Date(2000, i, 1), { month: 'long' })
+      ),
+    [intl]
+  );
 
   const baseUrl = useCallback(
     (exportFormat: string) =>
@@ -116,13 +171,16 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
     if (!establishmentId || !isOpen) return;
     setIsPreviewing(true);
     setSummary(null);
+    setPreviewError(null);
     try {
       const response = await fetch(baseUrl('json'), { credentials: 'include' });
       if (!response.ok) {
         let msg = intl.formatMessage({ id: 'app.pur.previewFailed' });
         try {
           const err = await response.json();
-          msg = err?.error || err?.detail || msg;
+          // `detail` is the human sentence, `error` the machine slug — same order as
+          // AuditExportModal, where farmers were shown the slug because it was reversed.
+          msg = err?.detail || err?.error || msg;
         } catch {
           // not JSON
         }
@@ -130,17 +188,13 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
       }
       setSummary(await response.json());
     } catch (error) {
-      toast({
-        title: intl.formatMessage({ id: 'app.pur.previewFailed' }),
-        description: error instanceof Error ? error.message : '',
-        status: 'error',
-        duration: 4000,
-        isClosable: true
-      });
+      // Inline, not a toast: a failed preview is a STATE of this dialog, and the download
+      // button stays disabled because of it — the reason has to be on screen with it.
+      setPreviewError(error instanceof Error ? error.message : '');
     } finally {
       setIsPreviewing(false);
     }
-  }, [baseUrl, establishmentId, isOpen, intl, toast]);
+  }, [baseUrl, establishmentId, isOpen, intl]);
 
   // Auto-load preview when opened or when month/year changes.
   useEffect(() => {
@@ -155,7 +209,7 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
         let msg = intl.formatMessage({ id: 'app.exportFailed' });
         try {
           const err = await response.json();
-          msg = err?.error || err?.detail || msg;
+          msg = err?.detail || err?.error || msg;
         } catch {
           // not JSON
         }
@@ -193,204 +247,70 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
     if (!isDownloading) onClose();
   };
 
+  /** "Open the event to complete them" — the row now carries what that needs. */
+  const openEvent = (row: PURRow) => {
+    if (row.parcel_id == null) return;
+    onClose();
+    navigate(
+      `/admin/dashboard/farm/${establishmentId}/parcel/${row.parcel_id}/event/${row.event_id}/change?event_type=${row.event_type}`
+    );
+  };
+
+  // Stored datetimes are the farmer's wall clock labelled UTC (system-wide, 2026-08-31), so
+  // format in UTC or a 6 a.m. spray anywhere west of Greenwich prints on the previous day.
+  const formatEventDate = (iso: string) =>
+    iso
+      ? intl.formatDate(iso, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })
+      : '';
+
+  const labelForBox = (key: string) =>
+    BOX_LABEL_IDS[key] ? intl.formatMessage({ id: BOX_LABEL_IDS[key] }) : key;
+
+  const labelForFlag = (flag: PURFlag) =>
+    FLAG_LABEL_IDS[flag.code]
+      ? intl.formatMessage(
+          { id: FLAG_LABEL_IDS[flag.code] },
+          { county: flag.county, partners: flag.partners, primary: flag.primary }
+        )
+      : flag.code;
+
   const hasApps = !!summary && summary.application_count > 0;
 
+  const deadline = summary ? parseISODate(summary.filing_deadline) : null;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const deadlinePassed = !!deadline && deadline < today;
+  const deadlineText = deadline
+    ? intl.formatDate(deadline, { year: 'numeric', month: 'long', day: 'numeric' })
+    : summary?.filing_deadline ?? '';
+
+  const warn = STATUS_URGENCY_TOKENS.warn;
+
   return (
-    <Modal
+    <ResponsiveModal
       isOpen={isOpen}
       onClose={handleClose}
-      size={{ base: 'full', smd: 'lg' }}
-      isCentered
-      scrollBehavior="inside">
-      <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
-      <ModalContent
-        borderRadius={{ base: 'none', smd: '2xl' }}
-        mx={{ base: 0, smd: 4 }}
-        my={{ base: 0, smd: 'auto' }}>
-        <ModalHeader
-          pb={3}
-          fontSize={{ base: 'md', md: 'lg' }}
-          fontWeight="bold"
-          color={labelColor}
-          borderBottom="1px solid"
-          borderColor={sectionBorder}>
-          <HStack spacing={2}>
-            <Icon as={FiFileText} color="green.500" boxSize={5} />
-            <Text>{intl.formatMessage({ id: 'app.pur.title' })}</Text>
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton isDisabled={isDownloading} top={3} />
-
-        <ModalBody py={5}>
-          <VStack spacing={5} align="stretch">
-            <Text fontSize="sm" color={labelColor}>
-              {intl.formatMessage({ id: 'app.pur.subtitle' })}
+      size="lg"
+      isCloseDisabled={isDownloading}
+      header={
+        <HStack spacing={3} align="flex-start">
+          <Icon as={FiFileText} color="green.700" boxSize={5} mt="3px" aria-hidden="true" />
+          <Box>
+            <Text fontSize="lg" fontWeight="bold" color="gray.800" lineHeight="short">
+              {intl.formatMessage({ id: 'app.pur.title' })}
             </Text>
-
-            {/* Month + year selectors */}
-            <HStack spacing={3} align="flex-end">
-              <Box flex={2}>
-                <Text fontSize="xs" fontWeight="semibold" color="gray.500" mb={1}>
-                  {intl.formatMessage({ id: 'app.pur.month' })}
-                </Text>
-                <StandardSelect
-                  value={month}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    setMonth(Number(e.target.value))
-                  }>
-                  {MONTHS.map((label, idx) => (
-                    <option key={label} value={idx + 1}>
-                      {label}
-                    </option>
-                  ))}
-                </StandardSelect>
-              </Box>
-              <Box flex={1}>
-                <Text fontSize="xs" fontWeight="semibold" color="gray.500" mb={1}>
-                  {intl.formatMessage({ id: 'app.pur.year' })}
-                </Text>
-                <StandardSelect
-                  value={year}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    setYear(Number(e.target.value))
-                  }>
-                  {yearOptions.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </StandardSelect>
-              </Box>
-            </HStack>
-
-            <Divider />
-
-            {/* Completeness preview */}
-            {isPreviewing ? (
-              <HStack justify="center" py={6}>
-                <Spinner color="green.700" />
-                <Text fontSize="sm" color="gray.500">
-                  {intl.formatMessage({ id: 'app.pur.loadingPreview' })}
-                </Text>
-              </HStack>
-            ) : summary ? (
-              <VStack spacing={3} align="stretch">
-                <HStack spacing={3} wrap="wrap">
-                  <Badge colorScheme="gray" fontSize="sm" px={2} py={1} borderRadius="md">
-                    {intl.formatMessage(
-                      { id: 'app.pur.applications' },
-                      { count: summary.application_count }
-                    )}
-                  </Badge>
-                  {summary.complete_count > 0 && (
-                    <Badge colorScheme="green" fontSize="sm" px={2} py={1} borderRadius="md">
-                      <HStack spacing={1}>
-                        <Icon as={FiCheckCircle} boxSize={3} />
-                        <Text>
-                          {intl.formatMessage(
-                            { id: 'app.pur.complete' },
-                            { count: summary.complete_count }
-                          )}
-                        </Text>
-                      </HStack>
-                    </Badge>
-                  )}
-                  {summary.incomplete_count > 0 && (
-                    <Badge colorScheme="orange" fontSize="sm" px={2} py={1} borderRadius="md">
-                      <HStack spacing={1}>
-                        <Icon as={FiAlertTriangle} boxSize={3} />
-                        <Text>
-                          {intl.formatMessage(
-                            { id: 'app.pur.incomplete' },
-                            { count: summary.incomplete_count }
-                          )}
-                        </Text>
-                      </HStack>
-                    </Badge>
-                  )}
-                </HStack>
-
-                {hasApps ? (
-                  <VStack
-                    spacing={2}
-                    align="stretch"
-                    maxH="220px"
-                    overflowY="auto"
-                    bg={sectionBg}
-                    borderRadius="lg"
-                    p={3}>
-                    {summary.rows.map((row, idx) => (
-                      <Box
-                        key={idx}
-                        p={2}
-                        borderRadius="md"
-                        borderLeft="3px solid"
-                        borderColor={row.notes ? 'orange.300' : 'green.300'}
-                        bg={rowBg}>
-                        <Text fontSize="sm" fontWeight="semibold" color={labelColor}>
-                          {row.product_and_manufacturer || '—'}
-                        </Text>
-                        <Text fontSize="xs" color="gray.500">
-                          {[row.application_start, row.application_method]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </Text>
-                        {row.notes && (
-                          <Text fontSize="xs" color="orange.500" mt={1}>
-                            {row.notes}
-                          </Text>
-                        )}
-                      </Box>
-                    ))}
-                  </VStack>
-                ) : (
-                  <Box
-                    bg={infoBg}
-                    border="1px solid"
-                    borderColor={infoBorder}
-                    borderRadius="lg"
-                    p={3}>
-                    <Text fontSize="sm" color={infoText}>
-                      {intl.formatMessage({ id: 'app.pur.noApplications' })}
-                    </Text>
-                  </Box>
-                )}
-
-                <Box
-                  bg={infoBg}
-                  border="1px solid"
-                  borderColor={infoBorder}
-                  borderRadius="lg"
-                  p={3}>
-                  <Text fontSize="xs" color={infoText} lineHeight="1.6">
-                    {intl.formatMessage(
-                      { id: 'app.pur.deadlineNote' },
-                      { deadline: summary.filing_deadline, form: summary.form }
-                    )}
-                  </Text>
-                  <Text fontSize="xs" color={infoText} lineHeight="1.6" mt={2}>
-                    {intl.formatMessage({ id: 'app.pur.filingHelp' })}{' '}
-                    <Link
-                      href="https://www.calagpermits.org/"
-                      isExternal
-                      color="green.500"
-                      fontWeight="semibold">
-                      calagpermits.org
-                      <Icon as={FiExternalLink} boxSize={3} ml={1} verticalAlign="middle" />
-                    </Link>
-                  </Text>
-                </Box>
-              </VStack>
-            ) : null}
-          </VStack>
-        </ModalBody>
-
-        <ModalFooter
-          borderTop="1px solid"
-          borderColor={sectionBorder}
-          gap={3}
-          flexDirection={{ base: 'column', smd: 'row' }}
-          pt={4}>
+            {establishmentName && (
+              <Text fontSize="sm" fontWeight="normal" color="gray.600" mt={0.5}>
+                {establishmentName}
+              </Text>
+            )}
+          </Box>
+        </HStack>
+      }
+      footer={
+        <Stack
+          direction={{ base: 'column', smd: 'row' }}
+          spacing={3}
+          w={{ base: 'full', smd: 'auto' }}>
           <StandardButton
             variant="outline"
             size="md"
@@ -410,9 +330,223 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
             w={{ base: 'full', smd: 'auto' }}>
             {intl.formatMessage({ id: 'app.pur.downloadCsv' })}
           </StandardButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </Stack>
+      }>
+      <VStack spacing={5} align="stretch">
+        <Text fontSize="sm" color="gray.700">
+          {intl.formatMessage({ id: 'app.pur.subtitle' })}
+        </Text>
+
+        {/* Month + year. StandardField binds the label to the control — the previous bare
+            <Text> labels left both selects without an accessible name. */}
+        <Stack direction={{ base: 'column', smd: 'row' }} spacing={3}>
+          <Box flex={2}>
+            <StandardField label={intl.formatMessage({ id: 'app.pur.month' })}>
+              <StandardSelect
+                value={month}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setMonth(Number(e.target.value))
+                }>
+                {monthNames.map((label, idx) => (
+                  <option key={idx} value={idx + 1}>
+                    {label}
+                  </option>
+                ))}
+              </StandardSelect>
+            </StandardField>
+          </Box>
+          <Box flex={1}>
+            <StandardField label={intl.formatMessage({ id: 'app.pur.year' })}>
+              <StandardSelect
+                value={year}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  setYear(Number(e.target.value))
+                }>
+                {yearOptions.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </StandardSelect>
+            </StandardField>
+          </Box>
+        </Stack>
+
+        {isPreviewing ? (
+          <StandardSpinner label={intl.formatMessage({ id: 'app.pur.loadingPreview' })} />
+        ) : previewError !== null ? (
+          <StandardQueryError
+            title={intl.formatMessage({ id: 'app.pur.previewFailed' })}
+            description={previewError || undefined}
+            onRetry={loadPreview}
+            isRetrying={isPreviewing}
+          />
+        ) : summary ? (
+          <VStack spacing={4} align="stretch">
+            {/* Counts. A count is a fact (neutral); "need details" is a warning state. */}
+            <HStack spacing={2} wrap="wrap">
+              <Badge variant="neutral">
+                {intl.formatMessage(
+                  { id: 'app.pur.applications' },
+                  { count: summary.application_count }
+                )}
+              </Badge>
+              {summary.complete_count > 0 && (
+                <Badge>
+                  <HStack as="span" spacing={1}>
+                    <Icon as={FiCheckCircle} boxSize={3} aria-hidden="true" />
+                    <Text as="span">
+                      {intl.formatMessage(
+                        { id: 'app.pur.complete' },
+                        { count: summary.complete_count }
+                      )}
+                    </Text>
+                  </HStack>
+                </Badge>
+              )}
+              {summary.incomplete_count > 0 && (
+                <Badge variant="warning">
+                  <HStack as="span" spacing={1}>
+                    <Icon as={FiAlertTriangle} boxSize={3} aria-hidden="true" />
+                    <Text as="span">
+                      {intl.formatMessage(
+                        { id: 'app.pur.incomplete' },
+                        { count: summary.incomplete_count }
+                      )}
+                    </Text>
+                  </HStack>
+                </Badge>
+              )}
+            </HStack>
+
+            {/* Deadline: a fact about this month, in the farmer's date format. Once it has
+                passed it is an urgency, and says so in words — not only in colour. */}
+            <HStack spacing={2} align="flex-start">
+              {deadlinePassed && (
+                <Icon
+                  as={FiAlertTriangle}
+                  color={warn.icon}
+                  boxSize={4}
+                  mt="2px"
+                  flexShrink={0}
+                  aria-hidden="true"
+                />
+              )}
+              <Text fontSize="sm" color={deadlinePassed ? warn.text : 'gray.700'}>
+                {deadlinePassed
+                  ? intl.formatMessage({ id: 'app.pur.deadlinePassed' }, { date: deadlineText })
+                  : intl.formatMessage({ id: 'app.pur.dueBy' }, { date: deadlineText })}
+              </Text>
+            </HStack>
+
+            {hasApps ? (
+              // No inner maxH/overflow: the dialog body already scrolls, and the nested
+              // 220px region clipped the second row mid-sentence with no affordance.
+              <VStack spacing={2} align="stretch">
+                {summary.rows.map((row, idx) => {
+                  const incomplete = row.missing.length > 0;
+                  return (
+                    <Box
+                      key={`${row.event_id}-${idx}`}
+                      p={3}
+                      borderRadius="lg"
+                      border="1px solid"
+                      borderColor="gray.200"
+                      borderLeft="4px solid"
+                      borderLeftColor={incomplete ? warn.bar : 'green.600'}
+                      bg="white">
+                      <Stack
+                        direction={{ base: 'column', smd: 'row' }}
+                        justify="space-between"
+                        align={{ base: 'stretch', smd: 'flex-start' }}
+                        spacing={2}>
+                        <Box minW={0}>
+                          <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                            {row.product_and_manufacturer || '—'}
+                          </Text>
+                          {/* The event's own date, always — box 17 is one of the boxes that
+                              can be blank, and two "Kocide 3000-O" rows with no date were
+                              indistinguishable. */}
+                          <Text fontSize="xs" color="gray.600">
+                            {[formatEventDate(row.event_date), row.application_method]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </Text>
+                        </Box>
+                        {row.parcel_id != null && (
+                          <StandardButton
+                            variant="outline"
+                            size="sm"
+                            leftIcon={<Icon as={FiEdit2} />}
+                            onClick={() => openEvent(row)}
+                            flexShrink={0}
+                            alignSelf={{ base: 'flex-start', smd: 'auto' }}>
+                            {intl.formatMessage({ id: 'app.pur.openEvent' })}
+                          </StandardButton>
+                        )}
+                      </Stack>
+                      <HStack spacing={1.5} align="flex-start" mt={2}>
+                        <Icon
+                          as={incomplete ? FiAlertTriangle : FiCheckCircle}
+                          color={incomplete ? warn.icon : 'green.700'}
+                          boxSize={3.5}
+                          mt="2px"
+                          flexShrink={0}
+                          aria-hidden="true"
+                        />
+                        <Text fontSize="xs" color={incomplete ? warn.text : 'gray.600'}>
+                          {incomplete
+                            ? `${intl.formatMessage({ id: 'app.pur.missingBoxes' })}: ${row.missing
+                                .map(labelForBox)
+                                .join(', ')}`
+                            : intl.formatMessage({ id: 'app.pur.rowComplete' })}
+                        </Text>
+                      </HStack>
+                      {row.flags.map((flag, i) => (
+                        <Text key={`${flag.code}-${i}`} fontSize="xs" color="gray.600" mt={1}>
+                          {labelForFlag(flag)}
+                        </Text>
+                      ))}
+                    </Box>
+                  );
+                })}
+              </VStack>
+            ) : (
+              <StandardEmptyState
+                icon={FiFileText}
+                size="sm"
+                title={intl.formatMessage({ id: 'app.pur.noApplicationsTitle' })}
+                description={intl.formatMessage({ id: 'app.pur.noApplications' })}
+              />
+            )}
+
+            {/* Static filing guidance — neutral, not a tinted "info" box. green.700 on the
+                note's gray.50 ground is 4.91:1; the old green.500 on blue.50 was 2.43. */}
+            <GuidanceNote>
+              {summary.incomplete_count > 0 && (
+                <>{intl.formatMessage({ id: 'app.pur.needDetailsHelp' })} </>
+              )}
+              {intl.formatMessage({ id: 'app.pur.filingHelp' })}{' '}
+              <Link
+                href="https://www.calagpermits.org/"
+                isExternal
+                color="green.700"
+                fontWeight="semibold"
+                textDecoration="underline">
+                calagpermits.org
+                <Icon
+                  as={FiExternalLink}
+                  boxSize={3}
+                  ml={1}
+                  verticalAlign="middle"
+                  aria-hidden="true"
+                />
+              </Link>
+            </GuidanceNote>
+          </VStack>
+        ) : null}
+      </VStack>
+    </ResponsiveModal>
   );
 };
 

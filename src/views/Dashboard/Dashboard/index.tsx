@@ -237,6 +237,10 @@ export default function DashboardView() {
    * the one place that reads it from the API; repeating it in a tooltip is how a stale
    * number ends up in the UI the next time it changes.
    */
+  // Width: the tile is 72px on `base`, not the 60px of its "+ New" sibling (they never render
+  // together). MEASURED at 375px, Roboto 500 12px: "Límite de" is 50px, so a 60px tile with
+  // 2px borders and 4px padding (48px inner) broke the label into THREE lines. 72px gives
+  // 60px inner: "Límite de" / "fincas" and "Farm" / "limit" on two.
   const renderFarmLimitTile = (width: any, height: any) => (
     <Tooltip
       label={intl.formatMessage({ id: 'app.farmLimitReachedHelp' }, { limit: farmCapacity.limit })}
@@ -247,12 +251,17 @@ export default function DashboardView() {
         w={width}
         h={height}
         minW={width}
+        px={1}
         flexShrink={0}
         bg="transparent"
         color="gray.600"
         borderRadius="xl"
         border="2px dashed"
         borderColor="gray.300"
+        // Chakra's Button base style is `whiteSpace: nowrap`. Inside a 60px tile that
+        // pushed "Límite de fincas" (~85px) clean through the dashed border and left
+        // "Farm limit" touching both edges. The label has to wrap, not overflow.
+        whiteSpace="normal"
         _hover={{ bg: 'gray.50', borderColor: 'gray.400' }}
         aria-label={intl.formatMessage(
           { id: 'app.farmLimitReachedHelp' },
@@ -261,7 +270,12 @@ export default function DashboardView() {
         onClick={() => navigate('/admin/dashboard/subscription')}>
         <Flex direction="column" align="center" justify="center" gap={0.5}>
           <Icon as={FaLock} color="gray.600" fontSize={{ base: '12px', md: '16px' }} />
-          <Text fontSize="xs" fontWeight="medium" color="gray.600" textAlign="center">
+          <Text
+            fontSize="xs"
+            fontWeight="medium"
+            color="gray.600"
+            textAlign="center"
+            lineHeight="1.2">
             {intl.formatMessage({ id: 'app.farmLimitReached' })}
           </Text>
         </Flex>
@@ -642,7 +656,7 @@ export default function DashboardView() {
                           ))}
                           {canWrite &&
                             farmCapacity.atLimit &&
-                            renderFarmLimitTile({ base: '60px', md: '100px' }, cardHeight)}
+                            renderFarmLimitTile({ base: '72px', md: '100px' }, cardHeight)}
                           {canWrite && canCreateEstablishment && (
                             <Button
                               p="0px"
@@ -760,7 +774,7 @@ export default function DashboardView() {
                       {canWrite &&
                         farmCapacity.atLimit &&
                         renderFarmLimitTile(
-                          { base: '60px', md: '77px' },
+                          { base: '72px', md: '77px' },
                           {
                             base: '70px',
                             md: '90px'

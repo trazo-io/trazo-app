@@ -5,6 +5,7 @@
 import {
   Flex,
   HStack,
+  Stack,
   Box,
   VStack,
   Badge,
@@ -64,7 +65,7 @@ import React, {
 import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
 import { ReceiptDocumentSelect } from 'components/Forms/ReceiptDocumentSelect';
 import InputVerifyHelper from 'components/Compliance/InputVerifyHelper';
-import { object, string, array } from 'zod';
+import { object, string, array, number } from 'zod';
 import CustomFieldsForm from './CustomFieldsForm';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
@@ -103,6 +104,10 @@ const formSchemaMainInfo = object({
   // Different subtypes have different manufacturing emission factors
   chemical_subtype: string().optional(),
   commercial_name: string().min(2, 'Commercial name must be at least 2 characters'),
+  // OMRI catalog row the grower ATTACHED via "Use this listing" in InputVerifyHelper.
+  // Never auto-populated: a fuzzy name match is a suggestion, the FK is a claim
+  // (memory: consumer-omri-listing-leak-2026-08-09). Declared here so zod does not strip it.
+  omri_product: number().nullable().optional(),
   active_ingredient: string().optional(),
   // In summary mode, per-application fields are hidden and replaced by aggregate totals.
   // Validation is enforced conditionally via superRefine below.
@@ -491,6 +496,8 @@ const ChemicalTab = forwardRef(
         application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
         application_fuel_unit: initialValues.application_fuel_unit || 'gal',
         custom_fields: initialValues.custom_fields || [],
+        omri_product:
+          typeof initialValues.omri_product === 'number' ? initialValues.omri_product : null,
         // Sprint 5: Aggregate Fertilizer Support
         // FIX: Use strict comparison — string "false" is truthy in JS!
         is_summary:
@@ -570,6 +577,10 @@ const ChemicalTab = forwardRef(
       // Only set the chemical type when the farmer hasn't chosen one yet
       if (!methods.getValues('type') && ['FE', 'PE', 'FU', 'HE'].includes(product.type)) {
         methods.setValue('type', product.type, { shouldDirty: true });
+      }
+      // A prefilled name is a new name: whatever listing was attached belonged to the old one.
+      if (methods.getValues('omri_product') != null) {
+        methods.setValue('omri_product', null, { shouldDirty: true });
       }
       RECENT_INPUT_PREFILL_FIELDS.forEach((field) => {
         if (product[field] !== null && product[field] !== undefined && product[field] !== '') {
@@ -802,6 +813,8 @@ const ChemicalTab = forwardRef(
           application_fuel_consumed: initialValues.application_fuel_consumed?.toString() || '',
           application_fuel_unit: initialValues.application_fuel_unit || 'gal',
           custom_fields: initialValues.custom_fields || [],
+          omri_product:
+            typeof initialValues.omri_product === 'number' ? initialValues.omri_product : null,
           // Sprint 5: Aggregate Fertilizer Support
           // FIX: Use strict comparison — string "false" is truthy in JS!
           is_summary:
@@ -2310,9 +2323,23 @@ const ChemicalTab = forwardRef(
                         <>
                           <StandardInput
                             {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              // The attached listing is for the name that was looked up. Editing
+                              // the name detaches it; the grower looks the new name up again.
+                              if (methods.getValues('omri_product') != null) {
+                                methods.setValue('omri_product', null, { shouldDirty: true });
+                              }
+                            }}
                             placeholder="e.g., Kocide 3000, Neptune's Harvest Fish &amp; Seaweed"
                           />
-                          <InputVerifyHelper name={field.value || ''} />
+                          <InputVerifyHelper
+                            name={field.value || ''}
+                            attachedOmriPk={methods.watch('omri_product')}
+                            onAttachOmri={(pk) =>
+                              methods.setValue('omri_product', pk, { shouldDirty: true })
+                            }
+                          />
                         </>
                       )}
                     />
@@ -3467,9 +3494,20 @@ const ChemicalTab = forwardRef(
                       borderRadius="md"
                       border="1px solid"
                       borderColor="gray.200">
-                      <HStack mb={2} justify="space-between">
-                        <HStack>
-                          <Icon as={FaFlask} color="gray.600" />
+                      {/* An HStack is a single non-wrapping row, and Chakra's Button base style is
+                          `whiteSpace: nowrap`. At 375px the Spanish title ("Coadyuvantes /
+                          adherentes de mezcla en tanque") wrapped to three lines while "Agregar
+                          coadyuvante" stayed on one and ran straight through the panel's right
+                          border, printing ON TOP of the title. The header stacks on mobile and
+                          only becomes a row once there is width for both. */}
+                      <Stack
+                        direction={{ base: 'column', smd: 'row' }}
+                        align={{ base: 'stretch', smd: 'center' }}
+                        justify="space-between"
+                        spacing={2}
+                        mb={2}>
+                        <HStack align="flex-start">
+                          <Icon as={FaFlask} color="gray.600" mt="2px" flexShrink={0} />
                           <Text fontSize="sm" fontWeight="semibold" color="gray.700">
                             {intl.formatMessage({
                               id: 'events.chemical.adjuvants.title',
@@ -3480,6 +3518,8 @@ const ChemicalTab = forwardRef(
                         <StandardButton
                           size="sm"
                           variant="outline"
+                          flexShrink={0}
+                          alignSelf={{ base: 'flex-start', smd: 'auto' }}
                           leftIcon={<FaPlus />}
                           onClick={() =>
                             appendAdjuvant({
@@ -3496,7 +3536,7 @@ const ChemicalTab = forwardRef(
                             defaultMessage: 'Add adjuvant'
                           })}
                         </StandardButton>
-                      </HStack>
+                      </Stack>
                       <Text fontSize="xs" color="gray.600" mb={3}>
                         {intl.formatMessage({
                           id: 'events.chemical.adjuvants.help',

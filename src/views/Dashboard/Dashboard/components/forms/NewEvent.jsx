@@ -239,6 +239,34 @@ const useWizardSteps = (intl) =>
 // the four chemical fields of v1 and never grew when the backend added `quantity_purchased` and
 // the five § 205.204 seed fields, which is six of ten keys leaking raw. The invariant is a
 // backend test, not this comment: history/tests/test_completeness_gap_label_parity.py.
+/**
+ * An attached OMRI listing belongs to the PRODUCT NAME it was looked up under.
+ *
+ * `ChemicalEvent.omri_product` is what lets the audit dossier print a bare "OMRI Listed"
+ * (instead of "OMRI Listed — grower-selected, no listing on file") and what lets the buyer
+ * page speak OMRI's name at all, so it is only ever written by the grower tapping "Use this
+ * listing" in `InputVerifyHelper` — see `consumer-omri-listing-leak-2026-08-09`, and the
+ * guard in `components/Compliance/__tests__/omriAttachIsExplicit.test.tsx`.
+ *
+ * The tab keeps the pk and the name consistent because it owns both. Voice does not: it
+ * merges a PARTIAL payload into `eventFormData` and then bumps `voiceSeq`, which remounts the
+ * tab so it re-reads `initialValues`. So a listing attached to "Kocide 3000-O" before the
+ * grower dictates "Entrust SC" would be reset straight back into the form beside the new
+ * name and saved — a § 205.601 listing claim for a product that does not hold one, which is
+ * the 08-09 leak one field over.
+ *
+ * Every voice merge runs through here. Type/subtype changes do not need it: they allow-list
+ * what survives (`date`, `performed_by`), so the name and the pk are dropped together.
+ * Template accelerators do not either: `PREFILLABLE_FIELDS` deliberately excludes
+ * `commercial_name`.
+ */
+const withOmriAttachmentChecked = (prev, merged) =>
+  merged.omri_product != null &&
+  typeof merged.commercial_name === 'string' &&
+  merged.commercial_name !== prev.commercial_name
+    ? { ...merged, omri_product: null }
+    : merged;
+
 const COMPLETENESS_GAP_LABELS = {
   // CHEMICAL_EVENT_REQUIRED_FIELDS
   commercial_name: { id: 'app.completenessGap.commercialName', defaultMessage: 'Product name' },
@@ -1462,7 +1490,25 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // contradicts itself: they have no display-registry entry of their own, so counting them
     // produced "8 fields filled" above a list of five names. A unit is part of a value, not a
     // fact the farmer needs to go and check.
-    const names = (voiceBanner?.keptFields || []).filter((name) => !VOICE_UNIT_COMPANIONS[name]);
+    const named = (voiceBanner?.keptFields || []).filter((name) => !VOICE_UNIT_COMPANIONS[name]);
+
+    // Fields the registry renders as ONE thing are named once here too.
+    //
+    // MEASURED 2026-09-01 on a farmer's phone, in Spanish: "NPK 10 guion 10 guion 10" filled
+    // nitrogen, phosphorus and potassium, and the banner listed
+    // "Relacion NPK, Fósforo (%), Potasio (%)" — three entries, one of them wearing the GROUP's
+    // name because `nitrogen_percentage` is the group leader (`groupWith`, formatted by
+    // formatNPK). So the farmer was told about a field called "NPK ratio" and never told about
+    // nitrogen at all. The registry's own rule is that a group "is rendered by a single formatter
+    // and the other fields are automatically hidden from their own render slots"; this banner is
+    // another render slot.
+    const absorbed = new Set();
+    named.forEach((name) => {
+      const cfg = getFieldConfig(activeEventType, name);
+      (cfg?.groupWith || []).forEach((member) => absorbed.add(member));
+    });
+    const names = named.filter((name) => !absorbed.has(name));
+
     return names
       .map((name) => {
         const cfg = getFieldConfig(activeEventType, name);
@@ -1485,7 +1531,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // re-apply itself onto whatever type the farmer switched to next.
     pendingVoiceRef.current = holding ? { detected, eventType: activeEventType } : null;
 
-    setEventFormData((prev) => ({ ...prev, ...kept }));
+    setEventFormData((prev) => withOmriAttachmentChecked(prev, { ...prev, ...kept }));
     setVoiceBanner(holding ? { ...banner, droppedCount: 0 } : banner);
     setShowVoiceCapture(false);
     setVoiceSeq((s) => s + 1);
@@ -1526,7 +1572,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         : prev
     );
     if (added === 0) return;
-    setEventFormData((prev) => ({ ...prev, ...fresh }));
+    setEventFormData((prev) => withOmriAttachmentChecked(prev, { ...prev, ...fresh }));
     // The tabs read initialValues on mount only — same remount the template accelerator uses.
     setVoiceSeq((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1550,11 +1596,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
     setPickedVerbKey(pending.verbKey);
     pendingVoiceRef.current = null;
     const { kept, banner } = applyVoiceData(raw, pending.backendEventType, subtype);
-    setEventFormData((prev) => ({
-      ...prev,
-      ...(subtype ? { type: subtype } : {}),
-      ...kept
-    }));
+    setEventFormData((prev) =>
+      withOmriAttachmentChecked(prev, {
+        ...prev,
+        ...(subtype ? { type: subtype } : {}),
+        ...kept
+      })
+    );
     setVoiceBanner({ ...banner, suggestion: null });
     setVoiceSeq((s) => s + 1);
   };

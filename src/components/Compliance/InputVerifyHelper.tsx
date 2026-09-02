@@ -15,8 +15,17 @@
  *     Approved Inputs panel. No new backend work.
  *
  * Usage: drop the component beneath the input it verifies, and pass `name`
- * (current field value) from the form. The farmer clicks "Verify" — we call
+ * (current field value) from the form. The farmer taps "Look up" — we call
  * the endpoint and render the result inline.
+ *
+ * Attaching a listing (2026-09-01). A catalog hit is a SUGGESTION. It becomes part of the
+ * record only when the grower taps "Use this listing", which hands the OMRI row's pk to the
+ * form (`onAttachOmri`) and from there to `ChemicalEvent.omri_product`. Nothing is written
+ * on render and nothing is written by the lookup itself — the fuzzy matcher that resolves
+ * "Kocide 3000" to "Kocide 3000-O" is right for search and wrong as a persisted claim
+ * (memory: consumer-omri-listing-leak-2026-08-09). The FK is what lets the dossier print
+ * "OMRI Listed" without the "grower-selected, no listing on file" suffix, and what lets the
+ * buyer page say OMRI's name at all — so it has to be the grower's act, not the matcher's.
  */
 
 import React from 'react';
@@ -27,12 +36,35 @@ import {
   Box,
   Button,
   HStack,
+  Flex,
   Icon,
   Link,
+  Stack,
   Text,
   VStack
 } from '@chakra-ui/react';
 import { FaCheckCircle, FaExclamationTriangle, FaExternalLinkAlt, FaSearch } from 'react-icons/fa';
+
+/**
+ * Extend a compact control's HIT AREA to the 44px touch minimum without growing it visually —
+ * the technique the "look up" button below already used, lifted to a constant so the attach
+ * controls share it. MEASURED 2026-09-01 at 390px: setting `minH="44px"` instead made the
+ * OMRI row 62px against the WSDA row's 48px and squeezed the product name down to
+ * "Entrust SC…", on the one card the demo film holds on.
+ */
+const TOUCH_TARGET = {
+  position: 'relative' as const,
+  _before: {
+    content: '""',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '100%',
+    minWidth: '44px',
+    height: '44px'
+  }
+};
 import { useIntl } from 'react-intl';
 
 import { useLazyVerifyInputQuery } from 'store/api/ospApi';
@@ -41,11 +73,23 @@ import type { InputVerifyResult } from 'types/osp';
 interface InputVerifyHelperProps {
   /** Current value of the input field the farmer is about to save. */
   name: string;
-  /** Optional override of the user-visible "Verify" button label. */
+  /** Optional override of the user-visible "Look up" button label. */
   buttonLabel?: string;
+  /** The OMRI catalog pk currently attached to the record (form state), if any. */
+  attachedOmriPk?: number | null;
+  /**
+   * Called ONLY on the grower's tap: with the OMRI pk to attach it, with `null` to detach.
+   * When omitted the card is read-only and no listing can be attached from here.
+   */
+  onAttachOmri?: (pk: number | null) => void;
 }
 
-const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({ name, buttonLabel }) => {
+const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({
+  name,
+  buttonLabel,
+  attachedOmriPk,
+  onAttachOmri
+}) => {
   const intl = useIntl();
   const [verify, { data, isFetching, isUninitialized, error }] = useLazyVerifyInputQuery();
 
@@ -59,11 +103,22 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({ name, buttonLabel
 
   return (
     <Box mt={2}>
-      <HStack spacing={2} align="center">
+      {/*
+        Flex + wrap, not HStack.
+        MEASURED 2026-09-01 at 320px (`sm`, the narrowest breakpoint this app supports): the
+        row squeezed the button to 183px around a 206px label, and Chakra's Button is
+        `white-space: nowrap; overflow: visible` — so "Look up in OMRI / WSDA / National List"
+        painted straight through its own green border instead of being clipped or wrapped.
+        Pre-existing (the old "Verify against …" label was a character longer), surfaced by a
+        screenshot of the phone shot the demo film holds on. The button keeps its intrinsic
+        width and "Checked just now" drops to the next line when there is no room for both.
+      */}
+      <Flex gap={2} align="center" wrap="wrap">
         <Button
           size="xs"
           variant="outline"
           colorScheme="green"
+          flexShrink={0}
           leftIcon={<FaSearch />}
           onClick={handleClick}
           isLoading={isFetching}
@@ -73,21 +128,11 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({ name, buttonLabel
           // allowed, tapped standing in an orchard. Extend the HIT AREA without changing the
           // visual size (same technique as the consumer page's info triggers), so the compact
           // inline layout this sits in is preserved.
-          position="relative"
-          _before={{
-            content: '""',
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '100%',
-            minWidth: '44px',
-            height: '44px'
-          }}>
+          {...TOUCH_TARGET}>
           {buttonLabel ||
             intl.formatMessage({
               id: 'inputVerify.button',
-              defaultMessage: 'Verify against OMRI / WSDA / National List'
+              defaultMessage: 'Look up in OMRI / WSDA / National List'
             })}
         </Button>
         {!isUninitialized && data && (
@@ -95,7 +140,7 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({ name, buttonLabel
             {intl.formatMessage({ id: 'inputVerify.checked', defaultMessage: 'Checked just now' })}
           </Text>
         )}
-      </HStack>
+      </Flex>
 
       {error && (
         <Alert status="error" fontSize="xs" mt={2}>
@@ -110,14 +155,28 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({ name, buttonLabel
         </Alert>
       )}
 
-      {!isUninitialized && data && <ResultCard result={data} query={trimmed} />}
+      {!isUninitialized && data && (
+        <ResultCard
+          result={data}
+          query={trimmed}
+          attachedOmriPk={attachedOmriPk}
+          onAttachOmri={onAttachOmri}
+        />
+      )}
     </Box>
   );
 };
 
-const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ result, query }) => {
+const ResultCard: React.FC<{
+  result: InputVerifyResult;
+  query: string;
+  attachedOmriPk?: number | null;
+  onAttachOmri?: (pk: number | null) => void;
+}> = ({ result, query, attachedOmriPk, onAttachOmri }) => {
   const intl = useIntl();
   const hasOMRI = result.omri_product_pk != null;
+  const omriAttached =
+    hasOMRI && attachedOmriPk != null && attachedOmriPk === result.omri_product_pk;
   const hasWSDA = result.wsda_material_pk != null;
   const hasNL = result.national_list_substance_pk != null;
   const noMatch = !hasOMRI && !hasWSDA && !hasNL;
@@ -193,6 +252,40 @@ const ResultCard: React.FC<{ result: InputVerifyResult; query: string }> = ({ re
           badgeColor="purple"
           title={result.omri_product_name || ''}
           subtitle={result.omri_product_id ? `OMRI #${result.omri_product_id}` : undefined}
+          action={
+            onAttachOmri ? (
+              omriAttached ? (
+                <HStack spacing={2}>
+                  <Text fontSize="xs" color="green.700" fontWeight="semibold" whiteSpace="nowrap">
+                    {intl.formatMessage({
+                      id: 'inputVerify.attached',
+                      defaultMessage: 'Attached to this record'
+                    })}
+                  </Text>
+                  <Button
+                    size="xs"
+                    variant="link"
+                    colorScheme="gray"
+                    {...TOUCH_TARGET}
+                    onClick={() => onAttachOmri(null)}>
+                    {intl.formatMessage({ id: 'inputVerify.detach', defaultMessage: 'Remove' })}
+                  </Button>
+                </HStack>
+              ) : (
+                <Button
+                  size="xs"
+                  variant="outline"
+                  colorScheme="green"
+                  {...TOUCH_TARGET}
+                  onClick={() => onAttachOmri(result.omri_product_pk as number)}>
+                  {intl.formatMessage({
+                    id: 'inputVerify.attach',
+                    defaultMessage: 'Use this listing'
+                  })}
+                </Button>
+              )
+            ) : undefined
+          }
         />
       )}
       {hasWSDA && (
@@ -260,48 +353,68 @@ const MatchRow: React.FC<{
   title: string;
   subtitle?: string;
   tone?: 'allowed' | 'prohibited';
-}> = ({ badgeLabel, badgeColor, title, subtitle, tone = 'allowed' }) => (
-  <HStack
+  /** Grower action for this row (attach / detach). Rendered after the text, never before. */
+  action?: React.ReactNode;
+}> = ({ badgeLabel, badgeColor, title, subtitle, tone = 'allowed', action }) => (
+  /*
+   * Column below 480px, row above.
+   *
+   * MEASURED 2026-09-01 at 390px: inline, the attach button left ~150px for the title and
+   * "Entrust SC Naturalyte Insect Control" rendered as "Entrust SC Naturalyte Insect…". The
+   * product name is the evidence on this card — it is what the grower checks against the label
+   * in their hand — so the action drops beneath it rather than truncating it. With no action
+   * the Stack has a single child and column vs row is indistinguishable, so rows without one
+   * are unchanged.
+   */
+  <Stack
+    direction={{ base: 'column', smd: 'row' }}
+    spacing={2}
+    align={{ base: 'stretch', smd: 'center' }}
     p={2}
     bg={tone === 'prohibited' ? 'red.50' : 'green.50'}
     borderWidth="1px"
     borderColor={tone === 'prohibited' ? 'red.500' : 'green.200'}
     borderRadius="md"
-    align="center"
-    spacing={2}
     _dark={
       tone === 'prohibited'
         ? { bg: 'red.900', borderColor: 'red.600' }
         : { bg: 'green.900', borderColor: 'green.700' }
     }
     data-tone={tone}>
-    <Icon
-      as={tone === 'prohibited' ? FaExclamationTriangle : FaCheckCircle}
-      color={tone === 'prohibited' ? 'red.800' : 'green.500'}
-      // Dark mode is not reachable in this app today (no ColorModeScript, no toggle), but the
-      // `_dark` background above is already declared — and red.800/red.900 glyphs on a red.900
-      // ground would be the same colour twice. Declared light so the trap is not waiting.
-      _dark={{ color: tone === 'prohibited' ? 'red.100' : 'green.200' }}
-    />
-    <Badge colorScheme={badgeColor} fontSize="11px">
-      {badgeLabel}
-    </Badge>
-    <Box flex={1} minW={0}>
-      <Text fontSize="sm" fontWeight="semibold" noOfLines={1}>
-        {title}
-      </Text>
-      {subtitle && (
-        <Text
-          fontSize="xs"
-          color={tone === 'prohibited' ? 'red.900' : 'gray.600'}
-          _dark={{ color: tone === 'prohibited' ? 'red.100' : 'gray.300' }}
-          fontWeight={tone === 'prohibited' ? 'semibold' : 'normal'}
-          noOfLines={1}>
-          {subtitle}
+    <HStack spacing={2} align="center" flex={1} minW={0}>
+      <Icon
+        as={tone === 'prohibited' ? FaExclamationTriangle : FaCheckCircle}
+        color={tone === 'prohibited' ? 'red.800' : 'green.500'}
+        // Dark mode is not reachable in this app today (no ColorModeScript, no toggle), but the
+        // `_dark` background above is already declared — and red.800/red.900 glyphs on a red.900
+        // ground would be the same colour twice. Declared light so the trap is not waiting.
+        _dark={{ color: tone === 'prohibited' ? 'red.100' : 'green.200' }}
+      />
+      <Badge colorScheme={badgeColor} fontSize="11px">
+        {badgeLabel}
+      </Badge>
+      <Box flex={1} minW={0}>
+        <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
+          {title}
         </Text>
-      )}
-    </Box>
-  </HStack>
+        {subtitle && (
+          <Text
+            fontSize="xs"
+            color={tone === 'prohibited' ? 'red.900' : 'gray.600'}
+            _dark={{ color: tone === 'prohibited' ? 'red.100' : 'gray.300' }}
+            fontWeight={tone === 'prohibited' ? 'semibold' : 'normal'}
+            noOfLines={1}>
+            {subtitle}
+          </Text>
+        )}
+      </Box>
+    </HStack>
+    {action && (
+      <Box flexShrink={0} alignSelf={{ base: 'flex-start', smd: 'center' }}>
+        {action}
+      </Box>
+    )}
+  </Stack>
 );
 
 export default InputVerifyHelper;

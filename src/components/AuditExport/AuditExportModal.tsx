@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
   VStack,
   HStack,
   Text,
@@ -15,14 +8,14 @@ import {
   Stack,
   Box,
   Icon,
-  Divider,
   useColorModeValue,
   useToast
 } from '@chakra-ui/react';
 import { FiDownload, FiFile, FiTable } from 'react-icons/fi';
 import { useIntl } from 'react-intl';
 
-import { StandardButton } from 'components/Design/StandardComponents';
+import { ResponsiveModal } from 'components/Design/ResponsiveModal';
+import { GuidanceNote, StandardButton } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
 
 interface AuditExportModalProps {
@@ -83,10 +76,6 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
 
   const sectionBorder = useColorModeValue('gray.200', 'gray.600');
   const sectionBg = useColorModeValue('gray.50', 'gray.700');
-  const infoBg = useColorModeValue('blue.50', 'blue.900');
-  const infoBorder = useColorModeValue('blue.100', 'blue.700');
-  const infoText = useColorModeValue('blue.700', 'blue.200');
-  const labelColor = useColorModeValue('gray.700', 'gray.200');
   const radioLabelColor = useColorModeValue('gray.800', 'gray.100');
 
   const handleDownload = async () => {
@@ -176,133 +165,30 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
   };
 
   return (
-    <Modal
+    /*
+     * 2026-09-01 — ResponsiveModal, not a hand-rolled <Modal>. This file was the template
+     * PURExportModal copied, so its shell, its blue.700-on-blue.50 note box (4.03:1) and its
+     * green.500 header icon (2.78:1) shipped twice. See ResponsiveModal.tsx: "new dialogs
+     * should use this instead of hand-rolling a ninth copy."
+     */
+    <ResponsiveModal
       isOpen={isOpen}
       onClose={handleClose}
-      size={{ base: 'full', smd: 'md' }}
-      isCentered
-      scrollBehavior="inside">
-      <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
-      <ModalContent
-        borderRadius={{ base: 'none', smd: '2xl' }}
-        mx={{ base: 0, smd: 4 }}
-        my={{ base: 0, smd: 'auto' }}>
-        <ModalHeader
-          pb={3}
-          fontSize={{ base: 'md', md: 'lg' }}
-          fontWeight="bold"
-          color={labelColor}
-          borderBottom="1px solid"
-          borderColor={sectionBorder}>
-          <HStack spacing={2}>
-            <Icon as={FiDownload} color="green.500" boxSize={5} />
-            <Text>{intl.formatMessage({ id: 'app.exportAuditTitle' })}</Text>
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton isDisabled={isLoading} top={3} />
-
-        <ModalBody py={5}>
-          <VStack spacing={5} align="stretch">
-            {/*
-              ⛔ THE STANDARD PICKER WAS REMOVED 2026-08-29. This export is USDA Organic, always.
-
-              Measured, not assumed: every non-organic set was a strict SUBSET of `organic`,
-              except that `roc`, `scs` and `all` each added exactly one section — `carbon` — and
-              `fsma204` added `traceability`. `globalgap` added nothing whatsoever. So the picker
-              offered LESS information under brands Trazo cannot substantiate, plus the one
-              section the organic export deliberately omits (emissions data in an audit PDF is a
-              greenwashing-by-association risk, and inspectors do not grade on it).
-
-              The brands did not survive research: SCS-001 §2.5.1.2 requires a GFSI or USDA GAP
-              certification Trazo publicly says it does not do, §3.4.1.1 requires an SCS-approved
-              carbon calculator Trazo is not on, and SCS-001 is outside ANAB's accredited scope
-              for its own issuer. FDA's FAQ TF.1 states FSMA 204 has no Key Data Elements for the
-              growing stage, and §1.1320(a) puts the lot code on the initial packer, not the
-              grower. The GlobalG.A.P. copy already conceded the missing hygiene, water-risk and
-              worker-training data.
-
-              The backend still accepts `certification_type` and every section set is intact, so
-              restoring a standard is re-adding a control — not rebuilding a feature. Do not
-              restore one without a named grower asking.
-            */}
-            <Divider />
-
-            {/* Format selector */}
-            <Box>
-              <Text
-                fontSize="xs"
-                fontWeight="semibold"
-                textTransform="uppercase"
-                color="gray.500"
-                mb={3}
-                letterSpacing="0.05em">
-                {intl.formatMessage({ id: 'app.exportFormat' })}
-              </Text>
-              <RadioGroup value={format} onChange={(val) => setFormat(val as FormatKey)}>
-                <Stack direction={{ base: 'column', smd: 'row' }} spacing={3}>
-                  {FORMAT_OPTIONS.map((opt) => (
-                    <Box
-                      key={opt.value}
-                      as="label"
-                      flex={1}
-                      cursor="pointer"
-                      p={3}
-                      borderRadius="xl"
-                      border="2px solid"
-                      borderColor={format === opt.value ? 'green.400' : sectionBorder}
-                      bg={format === opt.value ? 'green.50' : sectionBg}
-                      transition="all 0.15s"
-                      _hover={{ borderColor: 'green.300' }}
-                      minH="60px"
-                      display="flex"
-                      alignItems="center">
-                      <Radio value={opt.value} colorScheme="green" size="md" w="full">
-                        <HStack spacing={2} ml={1}>
-                          <Icon
-                            as={opt.icon}
-                            boxSize={4}
-                            color={format === opt.value ? 'green.600' : 'gray.500'}
-                          />
-                          <Text
-                            fontSize="sm"
-                            fontWeight={format === opt.value ? 'semibold' : 'normal'}
-                            color={format === opt.value ? 'green.700' : radioLabelColor}>
-                            {intl.formatMessage({ id: opt.labelKey })}
-                          </Text>
-                        </HStack>
-                      </Radio>
-                    </Box>
-                  ))}
-                </Stack>
-              </RadioGroup>
-            </Box>
-
-            {/* Info text — describes what the selected cert export contains */}
-            <Box bg={infoBg} border="1px solid" borderColor={infoBorder} borderRadius="lg" p={3}>
-              <Text fontSize="xs" color={infoText} lineHeight="1.6">
-                {intl.formatMessage({ id: 'app.exportInfoOrganic' })}
-              </Text>
-            </Box>
-            {/*
-              Trazo has THREE certifier-facing exports and their names do not distinguish them:
-              this one (a season), the Operation Audit Dossier (every parcel and production) and
-              the OSP renewal packet (the filing). Until 2026-08-29 this modal's own copy called
-              itself "the full renewal packet" — the exact phrase used elsewhere for the OSP ZIP,
-              which is what a grower actually files. One line here, one on the farm card, both
-              naming all three.
-            */}
-            <Text fontSize="xs" color="gray.600" lineHeight="1.6">
-              {intl.formatMessage({ id: 'app.exportScopeNote' })}
-            </Text>
-          </VStack>
-        </ModalBody>
-
-        <ModalFooter
-          borderTop="1px solid"
-          borderColor={sectionBorder}
-          gap={3}
-          flexDirection={{ base: 'column', smd: 'row' }}
-          pt={4}>
+      size="md"
+      isCloseDisabled={isLoading}
+      header={
+        <HStack spacing={2}>
+          <Icon as={FiDownload} color="green.700" boxSize={5} aria-hidden="true" />
+          <Text fontSize="lg" fontWeight="bold" color="gray.800">
+            {intl.formatMessage({ id: 'app.exportAuditTitle' })}
+          </Text>
+        </HStack>
+      }
+      footer={
+        <Stack
+          direction={{ base: 'column', smd: 'row' }}
+          spacing={3}
+          w={{ base: 'full', smd: 'auto' }}>
           <StandardButton
             variant="outline"
             size="md"
@@ -321,9 +207,99 @@ const AuditExportModal: React.FC<AuditExportModalProps> = ({
             w={{ base: 'full', smd: 'auto' }}>
             {intl.formatMessage({ id: 'app.exportDownload' })}
           </StandardButton>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+        </Stack>
+      }>
+      <VStack spacing={5} align="stretch">
+        {/*
+          ⛔ THE STANDARD PICKER WAS REMOVED 2026-08-29. This export is USDA Organic, always.
+
+          Measured, not assumed: every non-organic set was a strict SUBSET of `organic`,
+          except that `roc`, `scs` and `all` each added exactly one section — `carbon` — and
+          `fsma204` added `traceability`. `globalgap` added nothing whatsoever. So the picker
+          offered LESS information under brands Trazo cannot substantiate, plus the one
+          section the organic export deliberately omits (emissions data in an audit PDF is a
+          greenwashing-by-association risk, and inspectors do not grade on it).
+
+          The brands did not survive research: SCS-001 §2.5.1.2 requires a GFSI or USDA GAP
+          certification Trazo publicly says it does not do, §3.4.1.1 requires an SCS-approved
+          carbon calculator Trazo is not on, and SCS-001 is outside ANAB's accredited scope
+          for its own issuer. FDA's FAQ TF.1 states FSMA 204 has no Key Data Elements for the
+          growing stage, and §1.1320(a) puts the lot code on the initial packer, not the
+          grower. The GlobalG.A.P. copy already conceded the missing hygiene, water-risk and
+          worker-training data.
+
+          The backend still accepts `certification_type` and every section set is intact, so
+          restoring a standard is re-adding a control — not rebuilding a feature. Do not
+          restore one without a named grower asking.
+        */}
+
+        {/* Format selector */}
+        <Box>
+          <Text
+            fontSize="xs"
+            fontWeight="semibold"
+            textTransform="uppercase"
+            color="gray.600"
+            mb={3}
+            letterSpacing="0.05em">
+            {intl.formatMessage({ id: 'app.exportFormat' })}
+          </Text>
+          <RadioGroup value={format} onChange={(val) => setFormat(val as FormatKey)}>
+            <Stack direction={{ base: 'column', smd: 'row' }} spacing={3}>
+              {FORMAT_OPTIONS.map((opt) => (
+                <Box
+                  key={opt.value}
+                  as="label"
+                  flex={1}
+                  cursor="pointer"
+                  p={3}
+                  borderRadius="xl"
+                  border="2px solid"
+                  borderColor={format === opt.value ? 'green.600' : sectionBorder}
+                  bg={format === opt.value ? 'green.50' : sectionBg}
+                  transition="all 0.15s"
+                  _hover={{ borderColor: 'green.600' }}
+                  minH="60px"
+                  display="flex"
+                  alignItems="center">
+                  <Radio value={opt.value} colorScheme="green" size="md" w="full">
+                    <HStack spacing={2} ml={1}>
+                      <Icon
+                        as={opt.icon}
+                        boxSize={4}
+                        color={format === opt.value ? 'green.700' : 'gray.600'}
+                        aria-hidden="true"
+                      />
+                      <Text
+                        fontSize="sm"
+                        fontWeight={format === opt.value ? 'semibold' : 'normal'}
+                        color={format === opt.value ? 'green.700' : radioLabelColor}>
+                        {intl.formatMessage({ id: opt.labelKey })}
+                      </Text>
+                    </HStack>
+                  </Radio>
+                </Box>
+              ))}
+            </Stack>
+          </RadioGroup>
+        </Box>
+
+        {/* What the export contains — static teaching copy, so a neutral GuidanceNote, not a
+            tinted "info" box (frontend.md: blue survives only in Alert status="info"). */}
+        <GuidanceNote>{intl.formatMessage({ id: 'app.exportInfoOrganic' })}</GuidanceNote>
+        {/*
+          Trazo has THREE certifier-facing exports and their names do not distinguish them:
+          this one (a season), the Operation Audit Dossier (every parcel and production) and
+          the OSP renewal packet (the filing). Until 2026-08-29 this modal's own copy called
+          itself "the full renewal packet" — the exact phrase used elsewhere for the OSP ZIP,
+          which is what a grower actually files. One line here, one on the farm card, both
+          naming all three.
+        */}
+        <Text fontSize="xs" color="gray.600" lineHeight="1.6">
+          {intl.formatMessage({ id: 'app.exportScopeNote' })}
+        </Text>
+      </VStack>
+    </ResponsiveModal>
   );
 };
 
