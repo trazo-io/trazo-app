@@ -1,7 +1,15 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-function scrollAllToTop() {
+/**
+ * Scroll every scroll container the dashboard uses back to the top.
+ *
+ * Exported (2026-09-03) so a wizard can land a STEP change the way a route change lands.
+ * Which container actually scrolls depends on the layout — MEASURED on the activity wizard
+ * at 375px, `window` moved (916px, then 8790px on the details step) while `MainPanel`
+ * (`overflowY="auto"`) stayed at 0 — so this resets all of them and no caller has to know.
+ */
+export function scrollAllToTop() {
   window.scrollTo(0, 0);
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;

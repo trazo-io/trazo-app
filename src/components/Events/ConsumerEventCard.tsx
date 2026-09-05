@@ -69,11 +69,7 @@ import {
 } from 'utils/consumerDisplay';
 import { extractSubtypeCode } from 'utils/eventDataNormalizer';
 
-import {
-  getVerificationBadgeConfig,
-  getVerificationColor,
-  type VerificationLevel
-} from 'utils/verificationTierHelpers';
+import { getRecordProvenance, type VerificationLevel } from 'utils/verificationTierHelpers';
 import { StandardImageGallery } from 'components/ImageGallery';
 
 /**
@@ -281,13 +277,23 @@ const ORGANIC_STATUS_KEYS: Record<string, string> = {
 // the tooltip even where the label was later softened.
 const ORGANIC_TOOLTIP_KEYS: Record<string, string> = {
   omri_listed: 'consumer.eventCard.organic.tooltipOmri',
+  // WSDA runs its own registration programme and CCOF accepts it in place of OMRI, so a
+  // `wsda_material` FK is co-equal evidence — but it is WSDA's determination, never OMRI's,
+  // and the two are never spoken with one voice.
+  wsda_listed: 'consumer.eventCard.organic.tooltipWsda',
   national_list_allowed: 'consumer.eventCard.organic.tooltipNationalList',
   // A § 205.602 entry the CFR permits for ONE stated use (calcium chloride as a foliar spray
   // for a calcium-uptake disorder). Before 2026-08-20 the server chipped these
   // `conventional_documented`, so an organic block's bitter-pit calcium programme — the very
   // exception the regulation writes out — read to shoppers as a conventional input.
   national_list_conditional: 'consumer.eventCard.organic.tooltipNationalListConditional',
-  organic_approved: 'consumer.eventCard.organic.tooltipGrowerReported'
+  organic_approved: 'consumer.eventCard.organic.tooltipGrowerReported',
+  // PREVIEW ONLY. `resolve_input_status` never emits this; the activity wizard's
+  // EventPreviewModal injects it while the server's dry run is in flight or unreachable
+  // (see /api/input-status-preview/). It exists because the alternatives on that screen are
+  // both lies: "grower-reported" beside an attached OMRI listing is a false negative, and a
+  // listing claim decided in the browser is the 2026-08-09 defect this whole module ends.
+  listing_pending: 'consumer.eventCard.organic.tooltipListingPending'
 };
 
 // Comprehensive event interface that includes all possible fields across all event types
@@ -316,14 +322,18 @@ interface ConsumerEventData {
   data_integrity_score?: number;
   usda_factors_used?: boolean;
   carbon_impact?: number;
-  // MVP Photo Verification: Tiered verification levels
-  verification_level?:
-    | 'self_reported'
-    | 'photo_documented'
-    | 'photo_verified'
-    | 'data_verified'
-    | 'certified';
-  photo_verified_count?: number;
+  /**
+   * What the record contains, from the server. Retained on the interface because other
+   * consumers of this shape still read it; this card no longer branches on it (see the
+   * provenance chip below).
+   *
+   * `photo_verified_count` used to sit here and render as a bare "(3)" beside the tier badge.
+   * The public payload renames the field to `photo_documented_count`
+   * (`history/transparency_views.py`) and a regression test asserts the old name is absent,
+   * so the branch had been dead on the consumer page for some time — and an unlabelled count
+   * in parentheses said nothing to a shopper anyway.
+   */
+  verification_level?: VerificationLevel;
 
   // Photo/media data
   photo_count?: number;
@@ -776,52 +786,18 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
     network: productionBlockchain?.network || 'polygon'
   };
 
-  // Photo documentation processing (MVP: photo count + metadata determines documentation tier)
+  // Photo evidence, as a COUNT.
+  //
+  // This object used to carry two more fields — `verificationLevel` ('strong' | 'moderate' |
+  // 'none') and `trustMessage` — that mapped the retired five-rung tier ladder onto a
+  // three-rung one, in hardcoded English, including a "Blockchain-recorded" string for a
+  // withdrawn add-on. Nothing read either of them: the JSX below uses `hasPhotos` and
+  // `photoCount` only. Removed rather than repaired — see `verificationTierHelpers.ts`.
   const photoVerification = {
     hasPhotos:
       Boolean(event.album?.images?.length) ||
       (event.type === 'production' && (event.photo_count ?? 0) > 0),
-    photoCount: event.album?.images?.length || 0,
-    isPhotoVerified: Boolean(event.album?.images?.length && event.album.images?.length >= 1),
-    verificationLevel: (() => {
-      // MVP Photo Documentation: Use the backend-calculated verification_level
-      // Maps tiered verification to visual strength levels
-      const verificationLevel = event.verification_level || 'self_reported';
-      switch (verificationLevel) {
-        case 'certified':
-          return 'strong'; // 100% trust - blockchain-recorded production
-        case 'data_verified':
-          return 'strong'; // 85% trust - documented with photos + metadata
-        case 'photo_verified':
-          return 'strong'; // 80% trust - 2+ photos with GPS/timestamp
-        case 'photo_documented':
-          return 'moderate'; // 65% trust - 1+ photo documented
-        case 'self_reported':
-        default:
-          return 'none'; // 50% trust - no photo evidence
-      }
-    })(),
-    trustMessage: (() => {
-      // MVP Photo Documentation: tier descriptions based on photo count + metadata
-      const verificationLevel = event.verification_level || 'self_reported';
-      const photoCount = event.album?.images?.length || 0;
-
-      switch (verificationLevel) {
-        case 'certified':
-          return `Blockchain-recorded (${photoCount} photo${photoCount !== 1 ? 's' : ''} included)`;
-        case 'data_verified':
-          return 'Documented with photo evidence and metadata';
-        case 'photo_verified':
-          return `Photo documented (${photoCount} photo${
-            photoCount !== 1 ? 's' : ''
-          } with metadata)`;
-        case 'photo_documented':
-          return `Photo documented (${photoCount} photo${photoCount !== 1 ? 's' : ''} included)`;
-        case 'self_reported':
-        default:
-          return 'Farmer-reported documentation';
-      }
-    })()
+    photoCount: event.album?.images?.length || 0
   };
 
   // NOTE: a `requiresPhotoVerification` flag used to be computed here from the sub-type.
@@ -830,21 +806,11 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
   // actually drives the UI comes from the registry (`getPhotoTier`) via
   // PhotoRecommendationsBox on the producer side. Removed rather than repaired.
 
-  // Trust level based on actual verification (blockchain) and data quality
-  const getVerificationLevel = () => {
-    const hasBlockchain = blockchainData.verified && blockchainData.transaction;
-    const hasUSDAFactors = event.usda_factors_used || event.usda_factors_based;
-    const highConfidence = blockchainData.confidence >= 90;
-
-    // Blockchain is actual verification (immutable on-chain record)
-    // USDA factors is a methodology indicator, not independent verification
-    if (hasBlockchain && highConfidence) return 'ultimate';
-    if (hasBlockchain && hasUSDAFactors) return 'high';
-    if (hasBlockchain) return 'medium';
-    return 'basic';
-  };
-
-  const verificationLevel = getVerificationLevel();
+  // NOTE: a second, blockchain-derived ladder used to live here — `getVerificationLevel()`
+  // returning 'ultimate' | 'high' | 'medium' | 'basic', with a comment asserting "Blockchain
+  // is actual verification". No JSX ever read it, `BLOCKCHAIN_ENABLED` is False and the
+  // add-on is withdrawn, and `may_claim_blockchain` is the only thing entitled to that
+  // decision. Removed rather than repaired.
 
   // Unified event type icon/color (matches EnhancedTimelineRow, NewEvent, UltraMobileProductionJourney)
   const getEventTypeIcon = (eventType?: number) => {
@@ -1257,9 +1223,13 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     );
                 const hasOrganicStatus = serverInput?.status
                   ? serverInput.status === 'omri_listed' ||
+                    serverInput.status === 'wsda_listed' ||
                     serverInput.status === 'national_list_allowed' ||
                     serverInput.status === 'national_list_conditional' ||
-                    serverInput.status === 'organic_approved'
+                    serverInput.status === 'organic_approved' ||
+                    // Preview only, and it must render: the whole point is that the farmer sees
+                    // SOMETHING honest where the decided chip will be.
+                    serverInput.status === 'listing_pending'
                   : organicStatus &&
                     organicStatus !== 'not_organic' &&
                     organicStatus !== 'no' &&
@@ -1272,10 +1242,19 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 const serverStatusKey = serverInput?.status
                   ? {
                       omri_listed: 'consumer.eventCard.organic.omriListed',
+                      // 🔴 Missing until 2026-09-02, the day `wsda_listed` was added as a
+                      // server status: an unmapped status falls through to
+                      // `serverInput.label`, which is the BACKEND'S ENGLISH — the exact defect
+                      // the note above records ("the one string a shopper reads to judge an
+                      // input was the only untranslated thing on the card"). Adding a status
+                      // without adding its key here re-opens it silently, because English on
+                      // an English page looks correct.
+                      wsda_listed: 'consumer.eventCard.organic.wsdaListed',
                       national_list_allowed: 'consumer.eventCard.organic.nationalListAllowed',
                       national_list_conditional:
                         'consumer.eventCard.organic.nationalListConditional',
-                      organic_approved: 'consumer.eventCard.organic.growerReported'
+                      organic_approved: 'consumer.eventCard.organic.growerReported',
+                      listing_pending: 'consumer.eventCard.organic.listingPending'
                     }[serverInput.status]
                   : undefined;
                 const organicStatusKey = ORGANIC_STATUS_KEYS[organicStatus];
@@ -1289,7 +1268,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 // A grower-reported input is the grower's record and is styled as one
                 // (subtle, not a badge of approval) — self-reported trust signals must not
                 // look like verification.
-                const isVerifiedListing = serverInput?.status === 'omri_listed';
+                const isVerifiedListing =
+                  serverInput?.status === 'omri_listed' || serverInput?.status === 'wsda_listed';
                 const organicTooltipKey =
                   (serverInput?.status && ORGANIC_TOOLTIP_KEYS[serverInput.status]) ??
                   'consumer.eventCard.organic.tooltipGrowerReported';
@@ -1317,19 +1297,39 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                             renders. */}
                         <Badge
                           variant={isVerifiedListing ? 'solid' : 'outline'}
-                          bg={isVerifiedListing ? 'green.500' : 'transparent'}
+                          // MEASURED on the live buyer page 2026-09-01: white on `green.500`
+                          // #4CAF50 is **2.78:1** — this 12px chip owes 4.5, and 2.78 misses
+                          // even the 3.0 non-text floor. It is the banned pair named in
+                          // `.claude/rules/frontend.md` ("NEVER put white text or a white icon
+                          // on green.500"), and it was sitting on the one chip that speaks a
+                          // third party's name. `green.700` #2E7D32 measures 5.13:1.
+                          bg={isVerifiedListing ? 'green.700' : 'transparent'}
                           color={isVerifiedListing ? 'white' : secondaryText}
-                          borderColor={isVerifiedListing ? 'green.500' : 'gray.300'}
+                          borderColor={isVerifiedListing ? 'green.700' : 'gray.300'}
                           fontSize="xs"
                           px={3}
                           py={1}
                           borderRadius="full"
-                          cursor="pointer">
+                          cursor="pointer"
+                          // The chip carries an explanation and nothing said so: on a phone
+                          // there is no cursor to change, so the tooltip was undiscoverable on
+                          // the surface it matters most. Every other claim on this page has a
+                          // visible "What this means" affordance; this one now has its own.
+                          tabIndex={0}
+                          aria-label={`${organicChipText} — ${intl.formatMessage({
+                            id: organicTooltipKey
+                          })}`}>
                           <HStack spacing={1}>
                             {isVerifiedListing && (
                               <Icon as={FaLeaf} aria-hidden="true" boxSize={3} />
                             )}
                             <Text>{organicChipText}</Text>
+                            <Icon
+                              as={FaInfoCircle}
+                              aria-hidden="true"
+                              boxSize={2.5}
+                              opacity={0.8}
+                            />
                           </HStack>
                         </Badge>
                       </Tooltip>
@@ -1399,95 +1399,112 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   as a crypto signal. Record integrity renders once at the
                   Production Journey footer. */}
               <HStack spacing={2} flexWrap="wrap">
-                {/* MVP Photo Verification: Tiered verification badge.
-                    Slim chapter cards de-wallpaper this: every card carrying
-                    the same "Data Documented" chip says nothing. There, the
-                    chip renders only when it differentiates — a photo count
-                    when photos exist, otherwise nothing (the proof view and
-                    expanded state keep the full tier badge). */}
-                {event.verification_level &&
-                  (() => {
-                    const photoCount = event.album?.images?.length ?? 0;
-                    // 🔴 2026-08-20 — the collapsed card is what a shopper actually reads, and
-                    // suppressing the tier badge there is right for an ordinary event (a "Data
-                    // Documented" chip on every card says nothing). It is WRONG on a card whose
-                    // body makes a THIRD-PARTY claim: a certification or audit event renders
-                    // "An outside body reviewed this operation against a written standard", and
-                    // the code that writes that line (eventDescriptions.ts) explicitly relies on
-                    // "the Verified / Self-Reported badge alongside" to carry the qualifier.
-                    //
-                    // With no photos the badge returned null, so the strong claim showed in the
-                    // default view and the word "Self Reported" was hidden behind "See More
-                    // Details". FTC 16 CFR 260.6 wants a qualification clear and conspicuous;
-                    // a disclosure behind an expander is the textbook case of one that is not.
-                    const makesThirdPartyClaim =
-                      event.event_type === 7 || event.type === 'business';
-                    if (slim && !isExpanded && !makesThirdPartyClaim) {
-                      if (photoCount === 0) return null;
-                      return (
-                        <Badge
-                          colorScheme="green"
-                          variant="subtle"
-                          fontSize="xs"
-                          px={3}
-                          py={1}
-                          borderRadius="full"
-                          display="flex"
-                          alignItems="center"
-                          gap={1}>
-                          <Icon as={FaCamera} aria-hidden="true" boxSize={3} />
-                          <Text>
-                            {intl.formatMessage(
-                              {
-                                id: 'consumer.eventCard.photoCount',
-                                defaultMessage: '{count, plural, one {# photo} other {# photos}}'
-                              },
-                              { count: photoCount }
-                            )}
-                          </Text>
-                        </Badge>
-                      );
-                    }
-                    const config = getVerificationBadgeConfig(
-                      event.verification_level as VerificationLevel
-                    );
-                    const colorScheme = getVerificationColor(
-                      event.verification_level as VerificationLevel
-                    );
-                    return (
+                {/* Evidence chips: a photo count on every card, and the record-provenance
+                    chip ONLY where a claim needs qualifying.
+
+                    Was a five-rung "verification tier" badge whose colour carried a grade the
+                    words refused to state (teal `photo_documented` and blue `photo_verified`
+                    both read "Photo Documented"; `data_verified` was a green tick awarded for
+                    a withdrawn blockchain add-on). See `verificationTierHelpers.ts` for the
+                    ECGT/FTC reasoning and `claim_authority.record_evidence_level` for the
+                    server side.
+
+                    ⚠️ WHERE, not just what. "Every record here is the grower's own" applies
+                    to EVERY card on this page, and a disclosure that applies to everything
+                    belongs ONCE, at the level it applies to — which it already does, at the
+                    top of the page, in `TrustSummaryHeader`: "Practice records are
+                    farmer-reported, not independently audited." Repeating it per card does
+                    not make it more conspicuous, it makes it wallpaper, and it costs vertical
+                    space on a page budgeted for a 20-40 second read.
+
+                    A QUALIFIER is different from a disclosure: it belongs next to the
+                    specific claim it qualifies. So the chip renders on exactly one kind of
+                    card — one whose BODY makes a third-party claim. A certification or audit
+                    event renders "An outside body reviewed this operation against a written
+                    standard", and `eventDescriptions.ts` writes that line relying on the
+                    qualifier alongside it. FTC 16 CFR 260.6 wants a qualification clear and
+                    conspicuous NEAR THE CLAIM; a footer line twelve cards below does not
+                    qualify it, and neither does a chip behind "See More Details".
+
+                    Between 2026-09-02 and this change the chip also rendered on every
+                    EXPANDED ordinary card — the same mistake in a smaller dose. */}
+                {(() => {
+                  const photoCount = event.album?.images?.length ?? 0;
+                  // Business/certification events are the only cards whose BODY asserts a
+                  // third party did something, so they are the only cards that owe a
+                  // qualifier beside it. `slim` / `isExpanded` no longer gate this: the chip
+                  // is either needed on a card or it is not, and that does not change when
+                  // the reader opens the card.
+                  const makesThirdPartyClaim = event.event_type === 7 || event.type === 'business';
+
+                  const photoChip = photoCount > 0 && (
+                    <Badge
+                      colorScheme="gray"
+                      variant="outline"
+                      fontSize="xs"
+                      px={3}
+                      py={1}
+                      borderRadius="full"
+                      display="flex"
+                      alignItems="center"
+                      gap={1}>
+                      <Icon as={FaCamera} aria-hidden="true" boxSize={3} />
+                      <Text>
+                        {intl.formatMessage(
+                          {
+                            id: 'consumer.eventCard.photoCount',
+                            defaultMessage: '{count, plural, one {# photo} other {# photos}}'
+                          },
+                          { count: photoCount }
+                        )}
+                      </Text>
+                    </Badge>
+                  );
+
+                  if (!makesThirdPartyClaim) return photoChip || null;
+
+                  const provenance = getRecordProvenance();
+                  return (
+                    <>
                       <Tooltip
                         label={intl.formatMessage({
-                          id: config.tooltipKey,
-                          defaultMessage: config.tooltip
+                          id: provenance.tooltipKey,
+                          defaultMessage: provenance.tooltip
                         })}
                         placement="top">
                         <Badge
-                          colorScheme={colorScheme}
-                          variant="subtle"
+                          colorScheme="gray"
+                          variant="outline"
                           fontSize="xs"
                           px={3}
                           py={1}
                           borderRadius="full"
                           display="flex"
                           alignItems="center"
-                          gap={1}>
-                          <Icon as={config.icon} aria-hidden="true" boxSize={3} />
+                          gap={1}
+                          /* The chip carries an explanation and, on a phone, there is no
+                             cursor to reveal it — same fix as the OMRI chip above. */
+                          tabIndex={0}
+                          aria-label={`${intl.formatMessage({
+                            id: provenance.labelKey,
+                            defaultMessage: provenance.label
+                          })} — ${intl.formatMessage({
+                            id: provenance.tooltipKey,
+                            defaultMessage: provenance.tooltip
+                          })}`}>
+                          <Icon as={FaInfoCircle} aria-hidden="true" boxSize={3} />
                           <Text>
                             {intl.formatMessage({
-                              id: config.labelKey,
-                              defaultMessage: config.label
+                              id: provenance.labelKey,
+                              defaultMessage: provenance.label
                             })}
                           </Text>
-                          {event.photo_verified_count !== undefined &&
-                            event.photo_verified_count > 0 && (
-                              <Text fontSize="xs" ml={1}>
-                                ({event.photo_verified_count})
-                              </Text>
-                            )}
                         </Badge>
                       </Tooltip>
-                    );
-                  })()}
+                      {photoChip}
+                    </>
+                  );
+                })()}
 
                 {/* 🔴 2026-08-20 — the certificate number, on the collapsed card.
                     `eventDescriptions.ts` tells the shopper "the certificate number is
@@ -1500,7 +1517,8 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                     farmer-entered (`public_certifier_name()` withholds the farmer-typed
                     certifier name for exactly that reason), so this is a reference a buyer can
                     take to the issuer, not evidence Trazo has checked anything. Neutral pill,
-                    tabular figures, next to the Self-Reported badge that qualifies it. */}
+                    tabular figures, next to the "Grower record" provenance chip that qualifies
+                    it (that chip replaced the "Self Reported" tier badge on 2026-09-02). */}
                 {(event.event_type === 7 || event.type === 'business') &&
                   (event as any).certificate_number &&
                   String((event as any).certificate_number).trim() && (
@@ -1650,7 +1668,18 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   <Box w="full">
                     {/* Quiet label, matching the fact sections (2026-08-01). Was a blue globe
                         with a bold heading — the last piece of coloured chrome in the expanded
-                        card, and blue meant nothing here. */}
+                        card, and blue meant nothing here.
+
+                        The heading itself read ENVIRONMENTAL BENEFIT until 2026-09-02, and the
+                        heading is the claim a regulator reads. The copy underneath is mostly
+                        about the RECORD ("Recording the source and method makes water use
+                        checkable instead of assumed") — a documentation statement, correctly
+                        written and deliberately modest, sitting under a header that promised an
+                        environmental benefit it never asserted. That gap is an unqualified
+                        general environmental benefit claim (FTC 16 CFR 260.6) manufactured by
+                        the label alone, which is the same reason the sixteen generic
+                        "environmental stewardship" fallbacks above are suppressed rather than
+                        rewritten. The header now says what the sentence actually does. */}
                     <Text
                       mb={1}
                       fontSize="xs"
@@ -1660,7 +1689,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                       color={mutedColor}>
                       {intl.formatMessage({
                         id: 'consumer.eventCard.envBenefit',
-                        defaultMessage: 'Environmental Benefit'
+                        defaultMessage: 'Why this is recorded'
                       })}
                     </Text>
                     <Text fontSize="sm" color={secondaryText}>
@@ -1830,10 +1859,17 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           {/* Phase 3: Show volume_numeric for individual (non-aggregate) chemical events */}
                           {!event.is_summary && (event.volume_numeric ?? event.volume_applied) && (
                             <Box>
+                              {/* Was two hardcoded English strings picked by unit ("Amount
+                                  Applied" for kg/lb/oz, "Volume Applied" otherwise) — untranslated
+                                  on a bilingual buyer page, and both wrong in the same way: the
+                                  field holds the amount of PRODUCT, and "volume" is what a grower
+                                  calls the tank. One registry label, translated, and it says which
+                                  of the two numbers this is. */}
                               <Text fontSize="xs" color="gray.500">
-                                {['kg', 'lbs', 'oz'].includes(event.volume_unit)
-                                  ? 'Amount Applied'
-                                  : 'Volume Applied'}
+                                {intl.formatMessage({
+                                  id: 'events.chemical.fields.volumeApplied',
+                                  defaultMessage: 'Product Amount Applied'
+                                })}
                               </Text>
                               <Text fontSize="sm" fontWeight="medium">
                                 {aggValue(

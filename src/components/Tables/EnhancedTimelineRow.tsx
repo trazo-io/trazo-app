@@ -80,7 +80,7 @@ import {
   FaClipboardList
 } from 'react-icons/fa';
 import { MdEco } from 'react-icons/md';
-import { getVerificationBadgeConfig, VerificationLevel } from '../../utils/verificationTierHelpers';
+import type { VerificationLevel } from '../../utils/verificationTierHelpers';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 
 // Real interfaces matching API data
@@ -1410,54 +1410,26 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                         </Tooltip>
                       )}
 
-                      {/* Verification Badge - COMPACT PRIMARY (Optimized Space) */}
-                      {event.verification_level && (
-                        <Tooltip
-                          label={(() => {
-                            // Resolve the tier keys here rather than reading the English
-                            // fallbacks: getVerificationBadgeConfig is a pure helper and
-                            // returns labelKey/tooltipKey for exactly this reason.
-                            const tier = getVerificationBadgeConfig(event.verification_level);
-                            return intl.formatMessage({
-                              id: tier.tooltipKey,
-                              defaultMessage: tier.tooltip
-                            });
-                          })()}
-                          hasArrow
-                          placement="top">
-                          <Badge
-                            colorScheme={
-                              getVerificationBadgeConfig(event.verification_level).color.split(
-                                '.'
-                              )[0]
-                            }
-                            variant="solid"
-                            fontSize="xs"
-                            px={2}
-                            py={1}
-                            fontWeight="600"
-                            borderRadius="6px"
-                            display="flex"
-                            alignItems="center"
-                            gap={1}
-                            boxShadow="0 1px 2px rgba(0,0,0,0.08)"
-                            cursor="help">
-                            <Icon
-                              as={getVerificationBadgeConfig(event.verification_level).icon}
-                              boxSize={3}
-                            />
-                            <Text display={{ base: 'none', md: 'inline' }}>
-                              {(() => {
-                                const tier = getVerificationBadgeConfig(event.verification_level);
-                                return intl.formatMessage({
-                                  id: tier.labelKey,
-                                  defaultMessage: tier.label
-                                });
-                              })()}
-                            </Text>
-                          </Badge>
-                        </Tooltip>
-                      )}
+                      {/* NO record-provenance chip here, deliberately.
+                          A "Grower record" chip belongs on the BUYER page, where a shopper
+                          does not know who authored the row. On the producer's own timeline
+                          every record is the grower's by construction, so the chip was
+                          identical on every row — zero information — and its tooltip
+                          ("Trazo publishes the record; it does not inspect the farm") is
+                          addressed to a shopper, told to the person who typed the record.
+
+                          It was briefly added here on 2026-09-02 when the five-rung trust
+                          ladder was retired, by copying the buyer card's words AND its
+                          placement. The words were right; the placement was not. The ladder
+                          it replaced at least VARIED per row (Photo Documented / Self
+                          Reported), so a constant chip was strictly worse than what it
+                          replaced.
+
+                          Same failure mode the amber photo dot below documents: a signal on
+                          every row stops being a signal. Photo presence — the one fact that
+                          actually varies here — is already carried by the camera glyph in
+                          the footer, and the engagement nudge lives in the completeness
+                          toast and the transparency KPI. */}
 
                       {/* EPA/USDA-sourced Badge - ULTRA-COMPACT SECONDARY (Optimized Space).
                           Requires actual emissions (2026-08-04): the badge states that the

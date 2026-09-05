@@ -43,6 +43,7 @@ import {
 } from '../Design';
 import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { normalizeState } from 'utils/usStates';
 import { object, string, boolean, number, array } from 'zod';
 import { useIntl } from 'react-intl';
 import {
@@ -169,6 +170,8 @@ const establishmentSchema = object({
   city: string().optional(),
   zone: string().optional(),
   zipCode: string().optional(),
+  // CA DPR Operator ID / restricted-materials permit number (PUR box 3). California only.
+  caOperatorId: string().max(30).optional(),
   description: string().optional(),
   custom_message: string().optional(),
   establishmentType: string().optional(),
@@ -203,6 +206,7 @@ interface EstablishmentFormData {
   city?: string;
   zone?: string;
   zipCode?: string;
+  caOperatorId?: string;
   description?: string;
   custom_message?: string;
   establishmentType?: string;
@@ -752,6 +756,28 @@ export const StandardFarmForm: React.FC<StandardFarmFormProps> = ({
                       )}
                     />
                   </StandardField>
+                  {/* CA DPR Operator ID — issued to the OPERATOR by the County Agricultural
+                      Commissioner (3 CCR 6622) and printed as box 3 on every Pesticide Use
+                      Report line, so it is a farm fact, not a per-spray one. Every spray
+                      record inherits it unless it carries its own. Rendered only for a
+                      California farm: nowhere else has the form. */}
+                  {normalizeState(watch('state')) === 'CA' && (
+                    <StandardField
+                      label={intl.formatMessage({ id: 'farm.form.caOperatorId.label' })}
+                      error={errors.caOperatorId?.message}
+                      helpText={t('farm.form.caOperatorId.helpText')}>
+                      <Controller
+                        name="caOperatorId"
+                        control={methods.control}
+                        render={({ field }) => (
+                          <StandardInput
+                            {...field}
+                            placeholder={t('farm.form.caOperatorId.placeholder')}
+                          />
+                        )}
+                      />
+                    </StandardField>
+                  )}
                 </SimpleGrid>
 
                 {/* Zone */}

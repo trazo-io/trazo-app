@@ -28,6 +28,12 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   'ca_dpr_permit_expires',
   'applicator_name',
   'applicator_certification',
+  // Who made the application, when it was a hired pest control business (2026-09-05). Same
+  // class as `applicator_name`: a trading partner of record and a regulated act attributed
+  // to a named party. Stripped server-side; mirrored here so the producer's "how shoppers
+  // will see this" preview does not show a business the public page never names.
+  'applied_by_pcb',
+  'pcb_name',
   'buffer_zone_meters',
   // Agronomic audit detail
   'concentration',
@@ -77,7 +83,19 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   // The producer still sees it where it belongs: `EventDetailsModal` renders the flag as a
   // warning with "replace with a field photo", reading the event directly rather than through
   // `toConsumerVisibleEvent`, so this strip does not touch it.
-  'photo_content_flag'
+  'photo_content_flag',
+  // 🔴 Added to the backend tuple 2026-08-31 in the payload/renderer parity sweep, and the
+  // mirror was missed again — `test_certifier_only_list_parity` has been red since. Found while
+  // fixing the preview's input chip (2026-09-03), on the same modal: the producer's "how
+  // shoppers will see this" preview was showing three fields the anonymous payload strips.
+  //
+  // `block_id` is internal operator data (swept off the consumer card 2026-07-31);
+  // `identification_method` is scouting methodology; `shared_with_conventional` is the
+  // § 205.272 split-operation signal, whose consumer wording asserts a cleaning that a flag
+  // alone does not evidence.
+  'block_id',
+  'identification_method',
+  'shared_with_conventional'
 ];
 
 /**

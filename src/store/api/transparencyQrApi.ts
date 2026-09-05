@@ -9,35 +9,22 @@
  */
 import { baseApi } from './baseApi';
 
-// IMMEDIATE LOAD (2 seconds) - Most critical consumer info
-export interface TransparencyQuickView {
-  // Owner-only: stripped entirely for anonymous callers (claim safety), so treat as optional.
-  transparency_score?: {
-    percentage: number;
-    message: string;
-    // `status` removed 2026-08-02 — it carried the invented benchmark level
-    // ("certification"/"minimum"/"below_minimum"). Nothing rendered it.
-  };
-}
+// IMMEDIATE LOAD (2 seconds). The self-graded `transparency_score` left this block for EVERY
+// caller on 2026-09-05 (owner included — no producer surface rendered it). Kept as an empty
+// object on the wire for compatibility.
+export type TransparencyQuickView = Record<string, never>;
 
 // STANDARD LOAD (10 seconds) - Core transparency details
 export interface TransparencyStandardView {
   /**
-   * Anonymous callers receive FACTS about the farm and nothing Trazo authored to measure it
-   * against. `completeness_score`, `expected_events`, and the per-category `expected_count` /
-   * `completeness_percentage` / `status` were removed from the public payload on 2026-08-11:
-   * publishing a numerator with its denominator republishes the self-assigned grade that
-   * EU ECGT 2024/825 bans, whatever the field is called.
-   *
-   * They are still served to the authenticated OWNER (the producer dashboard KPI), which is
-   * why they remain here as OPTIONAL rather than deleted — this interface covers both callers.
-   * Anything reading them must handle undefined; `TrustSummaryHeader` already does, and falls
-   * back from "12 of 13" to "12 events" when the denominator is absent.
+   * FACTS about the farm and nothing Trazo authored to measure it against. `completeness_score`,
+   * `expected_events`, and the per-category `expected_count` / `completeness_percentage` /
+   * `status` were removed from the public payload on 2026-08-11 (a numerator with its
+   * denominator republishes the grade EU ECGT 2024/825 bans) and from the OWNER payload on
+   * 2026-09-05 (no producer surface rendered them). Every caller now gets the same shape.
    */
   transparency_details: {
-    completeness_score?: number;
     actual_events: number;
-    expected_events?: number;
     farming_approach: 'organic' | 'conventional' | 'biodynamic';
     category_breakdown: {
       [category: string]: {
@@ -45,9 +32,6 @@ export interface TransparencyStandardView {
         /** Farmer-uploaded photographs. "Documented", never "verified" — nobody checked them. */
         photo_documented_count?: number;
         photo_documentation_rate?: number;
-        expected_count?: number;
-        completeness_percentage?: number;
-        status?: 'excellent' | 'good' | 'partial' | 'limited';
       };
     };
   };
@@ -59,43 +43,6 @@ export interface TransparencyStandardView {
   organic_claim?: import('../../types/certification').OrganicClaim | null;
   certifications?: import('../../types/certification').ConsumerCertification[];
   organic_summary?: string;
-}
-
-// DETAILED LOAD (30+ seconds) - Deep insights for engaged consumers
-export interface TransparencyDetailedView {
-  transparency_insights: {
-    current_score: number;
-    recommendations: string[];
-    missing_categories: Array<{
-      category: string;
-      status: string;
-      suggestion: string;
-    }>;
-    strong_categories: string[];
-  };
-  // Replaced `benchmark_comparison` / `improvement_suggestions` (2026-08-02). Those described
-  // hardcoded "industry_minimum 60 / certification_standard 90" thresholds that Trazo invented;
-  // progress is now measured only against the farm's own previous finished seasons.
-  // Owner-only — the backend computes it just for the owner and drops the whole detailed_view
-  // for anonymous callers, so it is absent on a consumer scan.
-  own_history_comparison?: {
-    current_score: number;
-    previous_best: number | null;
-    previous_seasons_scored: number;
-    delta_vs_previous_best: number | null;
-    is_personal_best: boolean;
-  } | null;
-  verification_status: {
-    organic_certified: boolean;
-    third_party_audited: boolean;
-    blockchain_verified: boolean;
-    transparency_verified: boolean;
-  };
-  data_quality_indicators: {
-    last_updated?: string;
-    data_freshness: 'very_fresh' | 'fresh' | 'recent' | 'archived' | 'ongoing';
-    completeness_trend: string;
-  };
 }
 
 // Timeline event structure for photo display
@@ -124,7 +71,6 @@ export interface TimelineEvent {
 export interface TransparencyResponse {
   quick_view: TransparencyQuickView;
   standard_view: TransparencyStandardView;
-  detailed_view: TransparencyDetailedView;
   timeline?: TimelineEvent[]; // Production events for journey display
   images?: string[]; // Production images from farmer's finish production form
   carbon_impact: {

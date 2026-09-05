@@ -146,21 +146,65 @@ the field's JSX in the appropriate section:
 
 ```jsx
 <StandardField
-  label="Active Ingredient %"
+  label={intl.formatMessage({
+    id: 'events.chemical.form.activeIngredientPercentage',
+    defaultMessage: 'Active Ingredient %'
+  })}
   error={errors.active_ingredient_percentage?.message}
-  helpText="Percentage of active ingredient in the product"
+  helpText={intl.formatMessage({
+    id: 'events.chemical.form.activeIngredientPercentageHelp',
+    defaultMessage: 'Percentage of active ingredient in the product'
+  })}
 >
   <Controller
     name="active_ingredient_percentage"
     control={methods.control}
     render={({ field }) => (
-      <StandardInput {...field} type="number" step="0.1" placeholder="e.g., 25.5" />
+      <StandardInput
+        {...field}
+        type="number"
+        step="0.1"
+        placeholder={intl.formatMessage({
+          id: 'events.chemical.form.activeIngredientPercentagePlaceholder',
+          defaultMessage: 'e.g., 25.5'
+        })}
+      />
     )}
   />
 </StandardField>
 ```
 
-### Step 7: Decide whether the TEMPLATE flow should carry it
+> **⛔ Every user-facing string goes through `intl`, and the key goes in BOTH catalogues**
+> (`src/i18n/lang/en-US.json` and `es-419.json`). This example used to show a bare
+> `label="Active Ingredient %"`, and the form tabs followed it: measured 2026-09-04,
+> `ChemicalTab-ENHANCED.jsx` alone held ~295 hardcoded strings against 107 translated ones,
+> so a Spanish-speaking grower met a form that was mostly English.
+>
+> None of the three i18n gates could see it. `parity.test.ts` proves en ↔ es symmetry,
+> `used-keys.test.ts` proves a referenced key exists, `default-message-keys.test.ts` proves a
+> key used with a `defaultMessage` is catalogued — all three read the CATALOGUES, and a string
+> that never entered one is invisible to every one of them. They were green the whole time.
+>
+> Two shapes hide from a string sweep as well, so watch for them by hand:
+> - **A `label:` inside a module-scope array** (`FUEL_TYPES`) is not a JSX prop. Store a
+>   `labelKey` and resolve it at render.
+> - **A zod/yup `message:` at module scope** is beyond `intl` BY CONSTRUCTION. Export a
+>   `buildXSchema(intl)` and `useMemo` it in the component, as `buildChemicalSchema` does.
+
+### Step 7: ~~Decide whether the TEMPLATE flow should carry it~~ — OBSOLETE (2026-08-19)
+
+> ⛔ **This step no longer applies, and the file it describes no longer exists.** A crop template
+> now writes a season PLAN (`ProductionPlanItem` rows carrying an agronomic WINDOW), never dated
+> event records — `_create_single_template_event` and `_template_extra_fields` were deleted with
+> the 533 lines of template→event mapping. A plan item carries NO field values at all, so a new
+> field cannot reach a record through a template and there is nothing to decide here.
+>
+> The render-verified way to prefill values is `config/events/templateAccelerators.ts`, which the
+> farmer picks explicitly. Kept below for the history, because the failure it records — a field
+> passing every other step and still being unreachable from the path growers actually use — is
+> the reason to check where a new field can and cannot arrive from.
+
+### Step 7 (historical): the TEMPLATE flow
 
 Events created from a crop template do **not** go through the form or the serializers. They are
 built in `trazo-back/history/views.py::_create_single_template_event`, one hand-written kwarg

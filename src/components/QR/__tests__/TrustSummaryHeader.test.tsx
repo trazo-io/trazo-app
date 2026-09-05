@@ -30,7 +30,6 @@ const renderHeader = (props: Partial<TrustSummaryHeaderProps> = {}) => {
     certifications: [
       { status: 'verified_via_database', certifier_name: 'CCOF', display_name: 'USDA Organic' }
     ] as any,
-    transparencyScore: 100,
     documentedEventsCount: 20,
     expectedEventsCount: 15,
     blockchainStatus: 'verified',

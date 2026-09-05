@@ -210,80 +210,6 @@ export interface EventCarbonCalculationRequest {
   event_data: Record<string, any>;
 }
 
-export interface QRCodeSummary {
-  carbonScore: number;
-  totalEmissions: number;
-  totalOffsets: number;
-  netFootprint: number;
-  relatableFootprint: string; // e.g., "like driving 1 mile"
-  industryPercentile: number;
-  industryAverage: number;
-  isUsdaVerified?: boolean;
-  verificationDate?: string;
-  // Enhanced blockchain verification data
-  blockchainVerification?: {
-    verified: boolean;
-    transaction_hash?: string;
-    record_hash?: string;
-    verification_url?: string;
-    network?: string;
-    verification_date?: string;
-    compliance_status?: boolean;
-    eligible_for_credits?: boolean;
-    mock_data?: boolean;
-    fallback_data?: boolean;
-  };
-  reports?: Array<{
-    id: string;
-    period_start: string;
-    period_end: string;
-    total_emissions: number;
-    total_offsets: number;
-    net_footprint: number;
-    document: string | null;
-    report_type: string;
-  }>;
-  badges: Array<{
-    id: string;
-    name: string;
-    description: string;
-    icon: string;
-  }>;
-  farmer?: {
-    id: string;
-    name: string;
-    location: string;
-    description: string;
-    photo?: string;
-    email?: string;
-    phone?: string;
-    website?: string;
-    certifications?: Array<{
-      name: string;
-      icon?: string;
-      description?: string;
-    }>;
-  };
-  farmerStory?: string;
-  timeline?: Array<{
-    date: string;
-    title: string;
-    description: string;
-    icon?: string;
-  }>;
-  emissionsByCategory?: Record<string, number>;
-  emissionsBySource?: Record<string, number>;
-  offsetsByAction?: Record<string, number>;
-  recommendations?: string[];
-  socialProof?: {
-    totalScans: number;
-    reviewsCount: number;
-    totalOffsets: number;
-    totalUsers: number;
-    averageRating: number;
-  };
-}
-
 // Phase 2 Optimization: Unified Complete Summary Interface
 export interface CompleteSummary {
   // Essential product info
@@ -306,7 +232,7 @@ export interface CompleteSummary {
     harvest_method?: string;
   };
 
-  // Carbon metrics (complete from qr-summary)
+  // Carbon metrics
   carbonScore: number;
   totalEmissions: number;
   totalOffsets: number;
@@ -935,29 +861,6 @@ export const carbonApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       providesTags: ['CarbonBenchmarks']
-    }),
-
-    // Phase 1 Optimization: Quick carbon score for progressive loading
-    getQRCodeQuickScore: builder.query<
-      { carbonScore: number; totalEmissions: number; totalOffsets: number; cache_hit?: boolean },
-      string
-    >({
-      query: (productionId) => ({
-        url: `carbon/public/productions/${productionId}/qr-summary/?quick=true`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['CarbonSummary']
-    }),
-
-    // Consumer endpoints
-    getQRCodeSummary: builder.query<QRCodeSummary, string>({
-      query: (productionId) => ({
-        url: `carbon/public/productions/${productionId}/qr-summary/`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      providesTags: ['CarbonSummary']
     }),
 
     getPublicCarbonSummary: builder.query<CarbonSummary, string>({
@@ -1855,8 +1758,6 @@ export const {
   useGetFarmCarbonSummaryQuery,
   useGetProductionCarbonSummaryQuery,
   useGetCarbonBenchmarksQuery,
-  useGetQRCodeQuickScoreQuery,
-  useGetQRCodeSummaryQuery,
   useGetPublicCarbonSummaryQuery,
   useGetProductionTimelineQuery,
   useCreateOffsetMutation,

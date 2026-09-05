@@ -7,6 +7,8 @@
  * backend API, etc.).
  */
 
+import type { VerificationLevel } from '../utils/verificationTierHelpers';
+
 /**
  * Base interface containing fields common to all event types
  */
@@ -50,14 +52,16 @@ export interface StandardizedEventBase {
   data_integrity_score?: number;
   usda_factors_used?: boolean;
 
-  // MVP Photo Verification: Tiered verification levels
-  verification_level?:
-    | 'self_reported'
-    | 'photo_documented'
-    | 'photo_verified'
-    | 'data_verified'
-    | 'certified';
-  photo_verified_count?: number;
+  /**
+   * What the record contains, from the server. The five-rung ladder this union enumerated was
+   * retired on 2026-09-02 (see `utils/verificationTierHelpers.ts`); the union itself lives
+   * there now, so the deprecated values are documented in ONE place rather than re-declared
+   * wherever an event shape is written down.
+   *
+   * `photo_verified_count` sat beside it and is gone: the public payload renames the field to
+   * `photo_documented_count` (`history/transparency_views.py`), so nothing ever populated it.
+   */
+  verification_level?: VerificationLevel;
 
   // Carbon calculation
   carbon_impact?: number;

@@ -22,6 +22,8 @@ import { useIntl } from 'react-intl';
 import { StandardCard } from 'components/Design/StandardComponents';
 import { useGetOperationReadinessQuery, type ReadinessItem } from 'store/api/certifierLinkApi';
 
+import { resolveReadinessItem } from './readinessMessages';
+
 interface Props {
   companyId: string;
   farmId: string;
@@ -29,7 +31,11 @@ interface Props {
 }
 
 const ItemRow: React.FC<{ item: ReadinessItem }> = ({ item }) => {
+  const intl = useIntl();
   const isBlocker = item.status === 'blocker';
+  // The server sends a `code` and the values; the sentence is written in the viewer's locale.
+  // Its English `title`/`detail`/`fix` stay on the wire for the packet — see readinessMessages.ts.
+  const words = resolveReadinessItem(item, intl);
   return (
     <Box borderLeftWidth="3px" borderLeftColor={isBlocker ? 'red.500' : 'orange.400'} pl={3} py={1}>
       <HStack align="flex-start" spacing={2}>
@@ -42,16 +48,16 @@ const ItemRow: React.FC<{ item: ReadinessItem }> = ({ item }) => {
         />
         <Box>
           <Text fontSize="sm" fontWeight="semibold" color="gray.800">
-            {item.title}
+            {words.title}
           </Text>
-          {item.detail && (
+          {words.detail && (
             <Text fontSize="xs" color="gray.600">
-              {item.detail}
+              {words.detail}
             </Text>
           )}
-          {item.fix && (
+          {words.fix && (
             <Text fontSize="xs" color="green.700" fontWeight="medium" mt={0.5}>
-              {item.fix}
+              {words.fix}
             </Text>
           )}
         </Box>

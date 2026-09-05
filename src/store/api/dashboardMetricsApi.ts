@@ -111,12 +111,8 @@ export interface FarmDashboardMetrics {
   consumer_reach: number;
   monthly_scans: number;
   scan_growth_percentage: number;
-  // Transparency (PRIMARY).
-  // `null` when the farm has no FINISHED, published season — an absence of a verdict, not a
-  // zero. Only finished seasons are averaged, so starting a new production no longer drags
-  // the farm's headline down. Never coerce null to 0 (`Math.round(null) === 0`).
-  transparency_score: number | null;
-  // How many finished seasons the score averages over (0 when transparency_score is null).
+  // Finished, published seasons — a COUNT. The farm-level `transparency_score` average and its
+  // `transparency_tier` label left this payload on 2026-09-05 (nothing rendered them).
   scored_productions: number;
   total_documented_events: number;
   // Production counts
@@ -125,8 +121,6 @@ export interface FarmDashboardMetrics {
   // a finished-but-unpublished season is neither scored nor underway.
   productions_in_progress: number;
   blockchain_verified_count: number;
-  // Score-tier label (non-comparative, derived from farm's own score)
-  transparency_tier: 'excellent' | 'strong' | 'good' | 'solid' | 'developing' | 'not_started';
   // Subscription
   subscription_usage_percentage: number;
 }

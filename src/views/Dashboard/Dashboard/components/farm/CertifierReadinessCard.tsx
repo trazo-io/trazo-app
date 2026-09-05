@@ -61,6 +61,7 @@ import {
 } from 'react-icons/fa';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
+import { resolveReadinessItem } from 'components/Certifications/readinessMessages';
 import { STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
 import {
   CertifierReadinessFinding,
@@ -243,7 +244,12 @@ export default function CertifierReadinessCard({
     const topFinding: CertifierReadinessFinding | undefined =
       findings.find((f) => f.status === 'FAIL') ?? findings[0];
 
-    const topLabel = topOperationItem?.title ?? topFinding?.label ?? null;
+    // The operation item's words come from `readinessMessages`; the season finding's
+    // `label` is still raw backend prose (`compliance_snapshot_rows()`, 45 rows, and the
+    // same strings page 1 of the audit PDF prints — a separate conversion).
+    const topLabel = topOperationItem
+      ? resolveReadinessItem(topOperationItem, intl).title
+      : topFinding?.label ?? null;
     const topIsUrgent = topOperationItem
       ? topOperationItem.status === 'blocker'
       : topFinding?.status === 'FAIL';
@@ -411,64 +417,70 @@ export default function CertifierReadinessCard({
                   </Badge>
                 )}
               </HStack>
-              {operationItems.map((item) => (
-                <Box
-                  key={item.key}
-                  bg={rowBg}
-                  border="1px solid"
-                  borderColor={rowBorder}
-                  borderLeft="4px solid"
-                  borderLeftColor={
-                    item.status === 'blocker'
-                      ? STATUS_URGENCY_TOKENS.crit.bar
-                      : STATUS_URGENCY_TOKENS.warn.bar
-                  }
-                  borderRadius="md"
-                  p={3}>
-                  <HStack spacing={2} align="start">
-                    <Icon
-                      as={item.status === 'blocker' ? FaExclamationCircle : FaInfoCircle}
-                      color={
-                        item.status === 'blocker'
-                          ? STATUS_URGENCY_TOKENS.crit.icon
-                          : STATUS_URGENCY_TOKENS.warn.icon
-                      }
-                      boxSize={4}
-                      mt={0.5}
-                      flexShrink={0}
-                    />
-                    <VStack align="start" spacing={1} flex={1} minW={0}>
-                      <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                        {item.title}
-                      </Text>
-                      {item.detail && (
-                        <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
-                          {item.detail}
+              {operationItems.map((item) => {
+                // The server sends a `code` and the VALUES; the sentence is written here, in
+                // the viewer's locale. `title`/`detail`/`fix` on the wire stay English because
+                // the certifier packet prints them — see `readinessMessages.ts`.
+                const words = resolveReadinessItem(item, intl);
+                return (
+                  <Box
+                    key={item.key}
+                    bg={rowBg}
+                    border="1px solid"
+                    borderColor={rowBorder}
+                    borderLeft="4px solid"
+                    borderLeftColor={
+                      item.status === 'blocker'
+                        ? STATUS_URGENCY_TOKENS.crit.bar
+                        : STATUS_URGENCY_TOKENS.warn.bar
+                    }
+                    borderRadius="md"
+                    p={3}>
+                    <HStack spacing={2} align="start">
+                      <Icon
+                        as={item.status === 'blocker' ? FaExclamationCircle : FaInfoCircle}
+                        color={
+                          item.status === 'blocker'
+                            ? STATUS_URGENCY_TOKENS.crit.icon
+                            : STATUS_URGENCY_TOKENS.warn.icon
+                        }
+                        boxSize={4}
+                        mt={0.5}
+                        flexShrink={0}
+                      />
+                      <VStack align="start" spacing={1} flex={1} minW={0}>
+                        <Text fontSize="sm" fontWeight="semibold" color={textColor}>
+                          {words.title}
                         </Text>
-                      )}
-                      {item.fix && (
-                        <Text fontSize="xs" color="green.700" fontWeight="medium">
-                          {item.fix}
-                        </Text>
-                      )}
-                      {/* A finding must be a task, not a puzzle: route the
+                        {words.detail && (
+                          <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
+                            {words.detail}
+                          </Text>
+                        )}
+                        {words.fix && (
+                          <Text fontSize="xs" color="green.700" fontWeight="medium">
+                            {words.fix}
+                          </Text>
+                        )}
+                        {/* A finding must be a task, not a puzzle: route the
                           farmer to the editor that clears it (2026-08-10 —
                           fix text alone made them map prose to navigation). */}
-                      {FINDING_ROUTES[item.key] && (
-                        <Link
-                          as={RouterLink}
-                          to={FINDING_ROUTES[item.key](farmId)}
-                          fontSize="xs"
-                          fontWeight="semibold"
-                          color="green.700"
-                          textDecoration="underline">
-                          {intl.formatMessage({ id: 'certifierReadiness.fixNow' })} →
-                        </Link>
-                      )}
-                    </VStack>
-                  </HStack>
-                </Box>
-              ))}
+                        {FINDING_ROUTES[item.key] && (
+                          <Link
+                            as={RouterLink}
+                            to={FINDING_ROUTES[item.key](farmId)}
+                            fontSize="xs"
+                            fontWeight="semibold"
+                            color="green.700"
+                            textDecoration="underline">
+                            {intl.formatMessage({ id: 'certifierReadiness.fixNow' })} →
+                          </Link>
+                        )}
+                      </VStack>
+                    </HStack>
+                  </Box>
+                );
+              })}
             </VStack>
           )}
 

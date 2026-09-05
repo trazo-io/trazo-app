@@ -2826,7 +2826,11 @@ export function getConsumerEventDescription(
       // and worse than the filler it replaced.
       //
       // So: say the farm RECORDED it, and explain what certification means in general. The
-      // Verified / Self-Reported badge alongside carries the qualifier.
+      // provenance chip alongside carries the qualifier — "Grower record" since 2026-09-02,
+      // when the five-rung "Self Reported → … → Certified" trust ladder was retired (it was a
+      // self-assigned grade; see utils/verificationTierHelpers.ts). ConsumerEventCard keeps
+      // that chip visible on the COLLAPSED card for business events precisely because of this
+      // line — do not let the two drift apart.
       // ⛔ NOT "check it with the issuing body". The issuing body is DELIBERATELY withheld from
       // the consumer payload — `verified_certifier_name` is farmer-typed free text and
       // `public_certifier_name()` (history/serializers.py) suppresses it unless a USDA Organic
@@ -2839,7 +2843,8 @@ export function getConsumerEventDescription(
     } else if (businessType === 'verification') {
       // Same correction: the audit BODY is not on the wire for a consumer (see above), so the
       // page cannot say it is "on record" for them. What is on record here is the farm's own
-      // account of the audit and its date, carrying the Self-Reported badge beside it.
+      // account of the audit and its date, carrying the "Grower record" provenance chip beside
+      // it (was "Self-Reported" until the trust ladder was retired on 2026-09-02).
       consumerImpact =
         "The date and the farm's own account of the audit are on record here, labelled as the farm reported them.";
     } else if (businessType === 'transparency') {

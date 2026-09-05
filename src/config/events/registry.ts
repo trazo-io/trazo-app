@@ -22,6 +22,8 @@
 
 import type { ZodType } from 'zod';
 
+import type { EnumSourceKey } from './enums';
+
 // ============================================================================
 // Event type & subtype codes (mirror backend history/constants.py)
 // ============================================================================
@@ -240,8 +242,18 @@ export interface FieldConfig<
   /** Runtime value shape */
   valueType: FieldValueType;
 
-  /** For valueType='enum', references a shared enum options key (see enums.ts) */
-  enumSource?: string;
+  /**
+   * For valueType='enum', references a shared enum options key (see enums.ts).
+   *
+   * ⛔ Typed as `EnumSourceKey`, not `string`, since 2026-09-02. As a bare `string` it let two
+   * keys ship that ENUM_OPTIONS did not define — `chemical_subtypes_by_main_type` and
+   * `compost_methods` — and NEITHER failed anything: `getEnumLabel` returns null (the resolver
+   * then prints a de-underscored slug, missing the authored label AND its Spanish translation)
+   * and `getEnumOptions` returns [] (RegistryFormField renders an EMPTY select). A dangling
+   * key is silent in both directions, so the type is the only thing that can catch it.
+   * `enums.ts` imports nothing, so this creates no cycle.
+   */
+  enumSource?: EnumSourceKey;
 
   // --- Subtype-conditional visibility ---
   /**

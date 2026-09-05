@@ -937,6 +937,14 @@ function ProfileFarm() {
                       label={intl.formatMessage({ id: 'establishment.zipCode' })}
                       value={establishmentData.zip_code}
                     />
+                    {/* PUR box 3 on every line this farm files; the spray form inherits it. */}
+                    {isCalifornia && (
+                      <InfoRow
+                        icon={FaFileAlt}
+                        label={intl.formatMessage({ id: 'establishment.caOperatorId' })}
+                        value={establishmentData.ca_operator_id}
+                      />
+                    )}
                     <InfoRow
                       icon={FaMapMarkerAlt}
                       label={intl.formatMessage({

@@ -38,9 +38,11 @@ import {
   useGetCertifierLinksQuery,
   useGetOperationReadinessQuery,
   useRevokeCertifierLinkMutation,
-  type CertifierAccessLink
+  type CertifierAccessLink,
+  type ReadinessItem
 } from 'store/api/certifierLinkApi';
 import OperationReadinessPanel from './OperationReadinessPanel';
+import { resolveReadinessItem } from './readinessMessages';
 import { formatDateOnly } from 'utils/dateOnly';
 import {
   ComplianceExportsUpsell,
@@ -171,9 +173,16 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
       // The readiness guard returns {readiness, blockers:[...]}; String()-ing that
       // object rendered a literal "[object Object]" to the farmer. Name the
       // blockers instead, and fall back to a plain string for anything else.
+      //
+      // 🌐 2026-09-02: `.title` alone put the server's ENGLISH sentence in the toast of a
+      // Spanish-locale farmer — the same defect the dashboard card had. The blockers here are
+      // `ReadinessItem`s off the same service, so they carry the same `code`/`params` and
+      // resolve through the same mapper; `.title` survives only as its fallback.
       const data = (err as { data?: Record<string, unknown> })?.data;
       const blockers = Array.isArray(data?.blockers)
-        ? (data?.blockers as Array<{ title?: string }>).map((b) => b.title).filter(Boolean)
+        ? (data?.blockers as ReadinessItem[])
+            .map((b) => resolveReadinessItem(b, intl).title)
+            .filter(Boolean)
         : [];
       const description = blockers.length
         ? blockers.join('; ')

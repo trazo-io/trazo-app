@@ -574,22 +574,6 @@ function ProductDetail() {
     };
   }, [completeData]);
 
-  // Helper function to get proper transparency score from backend TransparencyCalculator.
-  // Returns null when absent — the score is now a FARMER-dashboard KPI and is gated out of
-  // the anonymous consumer payload (claim-safety, 2026-06). null means "no score on this
-  // surface", NOT 0; consumer color/tone fallbacks must treat null as neutral, never as 0%.
-  const getTransparencyScore = (): number | null => {
-    const pct = completeData?.quick_view?.transparency_score?.percentage;
-    return pct !== undefined && pct !== null ? pct : null;
-  };
-
-  // Helper function for consistent consumer-facing display (whole numbers).
-  // Passes null straight through so downstream components render no graded number.
-  const getDisplayTransparencyScore = (): number | null => {
-    const rawScore = getTransparencyScore();
-    return rawScore == null ? null : Math.round(rawScore);
-  };
-
   // Helper function to calculate blockchain verification score
   const getBlockchainScore = (): {
     score: number;
@@ -865,7 +849,6 @@ function ProductDetail() {
           // double-counted vs the gallery (pillar showed 24 while the gallery showed 20) —
           // 2026-06 audit P1-6. All photo counts now agree with what the consumer can see.
           const totalPhotoEvidenceCount = (completeData as any)?.images?.length ?? 0;
-          const transparencyDetails = (completeData as any)?.standard_view?.transparency_details;
 
           // Claim-safe hero badge inputs: lead with the OID-verified
           // certification (third-party), never the self-created score.
@@ -895,14 +878,12 @@ function ProductDetail() {
             <>
               <CarbonHeroSection
                 carbonData={{
-                  score: getDisplayTransparencyScore(),
                   footprint: getAccurateCarbonFootprint(),
                   relatableFootprint: completeData?.relatableFootprint,
                   grade: undefined,
                   level: 'transparency'
                 }}
                 trustData={{
-                  confidenceScore: getDisplayTransparencyScore(),
                   isUSDAVerified: completeData?.isUsdaVerified || false,
                   // Hard zero, not the payload value: the hero star rating renders only when
                   // reviewsCount > 0, and consumer reviews were removed 2026-08-06 (§10.5).
@@ -910,8 +891,7 @@ function ProductDetail() {
                   // is not a consumer rating, so a farm with no reviews could still show stars.
                   reviewsCount: 0,
                   averageRating: null,
-                  scansCount: 0,
-                  transparencyScore: getDisplayTransparencyScore()
+                  scansCount: 0
                 }}
                 productData={{
                   name: productData?.name || 'Product',
@@ -938,9 +918,7 @@ function ProductDetail() {
                 lotId={lotId}
                 organicClaim={organicClaim}
                 certifications={heroCertifications}
-                transparencyScore={getDisplayTransparencyScore()}
                 documentedEventsCount={completeData?.timeline?.length ?? 0}
-                expectedEventsCount={transparencyDetails?.expected_events}
                 blockchainStatus={blockchainStatus}
                 totalPhotoEvidenceCount={totalPhotoEvidenceCount}
                 onMethodologyClick={() => handleEducationOpen('transparency_impact')}
@@ -1813,7 +1791,6 @@ function ProductDetail() {
                         <UltraMobileProductionJourney
                           events={timelineEvents}
                           audience="consumer"
-                          transparencyScore={getDisplayTransparencyScore()}
                           productionBlockchain={(completeData as any)?.blockchain_verification}
                           productionId={productionId || undefined}
                           // Same source as the certification narrative above, so the

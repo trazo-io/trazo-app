@@ -80,38 +80,9 @@ const SmartUsageCard = ({
 
   const getSmartInsights = () => {
     if (!metrics) return getDefaultInsight();
-
-    const isHighEngagement = metrics.monthly_scans > 1000;
-    // transparency_score is null until a season is finished. Compare explicitly: `null < 70`
-    // is TRUE in JS, which would tell a farm with no finished season to "document more events"
-    // on the basis of a score that does not exist yet.
-    const hasFinishedSeasonScore =
-      metrics.transparency_score !== null && metrics.transparency_score !== undefined;
-    const isTopPerformer = hasFinishedSeasonScore && metrics.transparency_score >= 80;
-    const isUnderDocumented = hasFinishedSeasonScore && metrics.transparency_score < 70;
-    const isGrowingFast = metrics.scan_growth_percentage > 25;
-
-    if (isHighEngagement && isTopPerformer && isGrowingFast) {
-      return {
-        status: intl.formatMessage({ id: 'dashboard.exceptionalPerformance' }),
-        insight: intl.formatMessage({ id: 'dashboard.exceptionalInsight' }),
-        action: intl.formatMessage({ id: 'dashboard.viewConsumerImpact' }),
-        actionIcon: FaChartLine,
-        actionColor: successColor,
-        priority: 'celebration'
-      };
-    }
-
-    if (isHighEngagement && isUnderDocumented) {
-      return {
-        status: intl.formatMessage({ id: 'dashboard.highDemandOpportunity' }),
-        insight: intl.formatMessage({ id: 'dashboard.highDemandInsight' }),
-        action: intl.formatMessage({ id: 'dashboard.documentMoreEvents' }),
-        actionIcon: FaLeaf,
-        actionColor: successColor,
-        priority: 'growth'
-      };
-    }
+    // The two score-gated nudges ("exceptional performance", "high demand, thin documentation")
+    // left with the farm-level score on 2026-09-05: `dashboard_metrics` no longer carries
+    // `transparency_score`, and neither branch could fire below 1,000 monthly scans anyway.
 
     if (metrics.subscription_usage_percentage > 80) {
       return {
@@ -181,12 +152,9 @@ const SmartUsageCard = ({
   // 2026-08-11 the last producer-facing score (the parcel card's "avg score" and per-season "%")
   // was retired too, and the transparency page was deleted. The score is now backend-only.
   //
-  // Precisely what remains: `metrics.transparency_tier` is no longer read at all.
-  // `metrics.transparency_score` IS still read — but only inside `getSmartInsights()` above, as a
-  // GATE on the engagement nudges ("high demand, thin documentation → document more events"),
-  // never as something rendered. No number, no tier, no letter reaches this card. That nudge is
-  // the core loop and it only fires for farms already past 1,000 monthly scans, so it is a
-  // prompt about what to do next rather than a verdict on the farm.
+  // 2026-09-05: `dashboard_metrics` stopped shipping `transparency_score` and `transparency_tier`
+  // altogether (the farm-level average ran the full calculator over every finished season on
+  // every dashboard load and nothing rendered it). This card reads counts only.
   const scoredProductions = metrics ? metrics.scored_productions ?? 0 : 0;
 
   if (isLoading) {

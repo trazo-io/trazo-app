@@ -68,7 +68,6 @@ export interface TrustSummaryHeaderProps {
   lotId?: string;
   organicClaim?: OrganicClaim | null;
   certifications?: ConsumerCertification[];
-  transparencyScore?: number | null;
   documentedEventsCount?: number;
   expectedEventsCount?: number;
   blockchainStatus?: 'verified' | 'submitted' | 'pending' | 'tampered' | null;
@@ -278,9 +277,9 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps, intl: IntlShape): 
  * Always renders — falls back to "Limited Data" when no events on file.
  */
 function buildEventsPillar(props: TrustSummaryHeaderProps, intl: IntlShape): PillarData | null {
-  const { transparencyScore, documentedEventsCount = 0, expectedEventsCount, productName } = props;
+  const { documentedEventsCount = 0, expectedEventsCount, productName } = props;
 
-  if (transparencyScore == null && documentedEventsCount === 0) {
+  if (documentedEventsCount === 0) {
     return {
       pillarName: intl.formatMessage({
         id: 'consumer.trust.pillarEvents',

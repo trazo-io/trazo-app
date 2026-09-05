@@ -6,6 +6,7 @@
  */
 
 import {
+  INPUT_STATUS_PREVIEW_URL,
   INPUT_VERIFY_URL,
   OSP_ACTIVATE_URL,
   OSP_ADD_APPROVED_INPUT_URL,
@@ -405,12 +406,47 @@ const ospApi = baseApi.injectEndpoints({
         params: omri_id ? { name, omri_id } : { name },
         credentials: 'include'
       })
+    }),
+
+    /**
+     * What the buyer page will say about this input, decided by the SERVER, for a draft the
+     * wizard has not saved yet.
+     *
+     * 🔴 2026-09-03 — the wizard's Preview renders the consumer card over form values, and the
+     * organic chip is the one thing on it the client may not decide: `ORGANIC_STATUS_KEYS` maps
+     * every `organic_approved` value to the grower-reported wording, because the browser cannot
+     * see the OMRI or WSDA catalogs. So a grower who had just attached the Entrust OMRI listing
+     * opened Preview and read "Organic-approved · grower-reported" — a false negative on the
+     * screen whose whole purpose is to show what the saved page shows.
+     *
+     * A POST rather than a GET: the draft is the input, there is no resource to address, and
+     * a product name does not belong in a URL that could end up in a log. It is nonetheless a
+     * `build.query` — it reads, caches on the draft, and must not invalidate anything.
+     */
+    previewInputStatus: build.query<
+      { status: string; label: string },
+      {
+        commercial_name?: string;
+        active_ingredient?: string;
+        organic_approved?: string;
+        restricted_use_pesticide?: boolean;
+        omri_product?: number | null;
+        wsda_material?: number | null;
+      }
+    >({
+      query: (draft) => ({
+        url: INPUT_STATUS_PREVIEW_URL,
+        method: 'POST',
+        body: draft,
+        credentials: 'include'
+      })
     })
   })
 });
 
 export const {
   useGetOSPsQuery,
+  usePreviewInputStatusQuery,
   useGetOSPQuery,
   useCreateOSPMutation,
   useUpdateOSPMutation,

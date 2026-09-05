@@ -30,7 +30,7 @@ import {
   FaLeaf,
   FaDollarSign,
   FaLightbulb,
-  FaCheckCircle,
+  FaInfoCircle,
   FaExclamationTriangle,
   FaCertificate,
   FaShieldAlt,
@@ -42,11 +42,7 @@ import { format, parseISO } from 'date-fns';
 import { useIntl } from 'react-intl';
 import { getReadableFieldValue } from '../../utils/fieldDisplayUtils';
 import { formatCO2e } from '../../utils/carbonDisplayUtils';
-import {
-  getVerificationBadgeConfig,
-  getVerificationColor,
-  type VerificationLevel
-} from '../../utils/verificationTierHelpers';
+import { getRecordProvenance, type VerificationLevel } from '../../utils/verificationTierHelpers';
 
 interface CarbonCalculation {
   co2e: number;
@@ -86,14 +82,16 @@ interface EnhancedTimelineEvent {
   equipment?: string;
   chemical_subtype?: string; // Added 2025-01-21: organic vs synthetic differentiation
   carbon_data?: CarbonCalculation;
-  // MVP Photo Verification: Tiered verification levels
-  verification_level?:
-    | 'self_reported'
-    | 'photo_documented'
-    | 'photo_verified'
-    | 'data_verified'
-    | 'certified';
-  photo_verified_count?: number;
+  /**
+   * What the record contains, from the server. The five-rung ladder this union enumerated was
+   * retired on 2026-09-02 (see `utils/verificationTierHelpers.ts`); the union itself lives
+   * there now, so the deprecated values are documented in ONE place rather than re-declared
+   * wherever an event shape is written down.
+   *
+   * `photo_verified_count` sat beside it and is gone: the public payload renames the field to
+   * `photo_documented_count` (`history/transparency_views.py`), so nothing ever populated it.
+   */
+  verification_level?: VerificationLevel;
 }
 
 interface EnhancedEventDetailModalProps {
@@ -174,38 +172,54 @@ export const EnhancedEventDetailModal: React.FC<EnhancedEventDetailModalProps> =
               <Badge colorScheme="gray" size="sm">
                 {config.name}
               </Badge>
-              {/* MVP Photo Verification: Display tiered verification badge */}
-              {event.verification_level &&
+              {/* Record provenance — ONLY on a card whose body makes a third-party claim.
+                  This modal is a CONSUMER surface (opened from UltraMobileProductionJourney
+                  on the buyer page), so it carried the same five-rung colour ladder as the
+                  card — and rendered the helper's ENGLISH fallbacks rather than its i18n
+                  keys, so a Spanish shopper read "Photo Documented" in the middle of a
+                  Spanish page.
+
+                  The gate matches ConsumerEventCard exactly, and for the same reason: "every
+                  record here is the grower's own" is a DISCLOSURE about the whole page, and
+                  the page already carries it once, in `TrustSummaryHeader`. What belongs
+                  beside an individual record is a QUALIFIER, and only a certification or
+                  audit event asserts something a third party did. A sibling surface that
+                  disagrees on this is how the last four claim defects survived their own
+                  fixes. */}
+              {(event.type === 'business' || (event as any).event_type === 7) &&
                 (() => {
-                  const config = getVerificationBadgeConfig(
-                    event.verification_level as VerificationLevel
-                  );
-                  const colorScheme = getVerificationColor(
-                    event.verification_level as VerificationLevel
-                  );
+                  const provenance = getRecordProvenance();
                   return (
-                    <Tooltip label={config.tooltip} placement="top">
+                    <Tooltip
+                      label={intl.formatMessage({
+                        id: provenance.tooltipKey,
+                        defaultMessage: provenance.tooltip
+                      })}
+                      placement="top">
                       <Badge
-                        colorScheme={colorScheme}
-                        variant="subtle"
+                        colorScheme="gray"
+                        variant="outline"
                         size="sm"
                         display="flex"
                         alignItems="center"
-                        gap={1}>
-                        <Icon as={config.icon} boxSize={3} />
-                        <Text>{config.label}</Text>
+                        gap={1}
+                        tabIndex={0}>
+                        <Icon as={FaInfoCircle} aria-hidden="true" boxSize={3} />
+                        <Text>
+                          {intl.formatMessage({
+                            id: provenance.labelKey,
+                            defaultMessage: provenance.label
+                          })}
+                        </Text>
                       </Badge>
                     </Tooltip>
                   );
                 })()}
-              {event.certified && (
-                <Badge colorScheme="green" size="sm">
-                  <HStack spacing={1}>
-                    <Icon as={FaCheckCircle} boxSize={3} />
-                    <Text>Documented</Text>
-                  </HStack>
-                </Badge>
-              )}
+              {/* `event.certified` rendered a solid GREEN badge with a check icon reading
+                  "Documented" — green + tick is the success/verified signal, spent here on a
+                  boolean the operation sets about itself. A third-party certification is
+                  stated by the OMRI/WSDA chip and the certificate number, both of which name
+                  the body that said it. Removed. */}
             </HStack>
           </VStack>
         </HStack>

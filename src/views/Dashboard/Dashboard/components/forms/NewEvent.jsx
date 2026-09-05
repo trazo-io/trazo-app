@@ -57,6 +57,7 @@ import {
 import { useEventDraft } from 'src/hooks/useEventDraft';
 import { TrazoImageUpload } from 'components/Upload';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
+import { scrollAllToTop } from 'components/Utils/ScrollToTop';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import CardHeader from 'components/Card/CardHeader';
@@ -240,7 +241,8 @@ const useWizardSteps = (intl) =>
 // the five § 205.204 seed fields, which is six of ten keys leaking raw. The invariant is a
 // backend test, not this comment: history/tests/test_completeness_gap_label_parity.py.
 /**
- * An attached OMRI listing belongs to the PRODUCT NAME it was looked up under.
+ * An attached catalog listing — OMRI or WSDA — belongs to the PRODUCT NAME it was looked up
+ * under.
  *
  * `ChemicalEvent.omri_product` is what lets the audit dossier print a bare "OMRI Listed"
  * (instead of "OMRI Listed — grower-selected, no listing on file") and what lets the buyer
@@ -260,11 +262,11 @@ const useWizardSteps = (intl) =>
  * Template accelerators do not either: `PREFILLABLE_FIELDS` deliberately excludes
  * `commercial_name`.
  */
-const withOmriAttachmentChecked = (prev, merged) =>
-  merged.omri_product != null &&
+const withListingAttachmentChecked = (prev, merged) =>
+  (merged.omri_product != null || merged.wsda_material != null) &&
   typeof merged.commercial_name === 'string' &&
   merged.commercial_name !== prev.commercial_name
-    ? { ...merged, omri_product: null }
+    ? { ...merged, omri_product: null, wsda_material: null }
     : merged;
 
 const COMPLETENESS_GAP_LABELS = {
@@ -430,8 +432,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const repeatVerb = isRepeat ? verbForEvent(activeEventType, eventFormData.type) : undefined;
   const typePresetFromRepeat = isRepeat && !!repeatVerb;
 
+  /*
+   * An in-page tile pick answers the question the same way a preset does.
+   *
+   * Until 2026-09-03 only the three presets counted, so a tap INSIDE the wizard left all
+   * fourteen tiles on screen and pushed the subtype ask and the date below them — on a
+   * 375px phone the farmer scrolled past two screens of tiles they had already chosen
+   * from, then scrolled back up after Continue. The page title carries the answer
+   * (`activeVerbKey` below re-titles on a pick) and the "Not {verb}?" link is the way
+   * back — on this path exactly as on the preset paths, one behaviour for four entries.
+   */
   const typeChooserAnswered =
-    (typePresetFromVerb || typePresetFromPlan || typePresetFromRepeat) && !chooserReopened;
+    (typePresetFromVerb || typePresetFromPlan || typePresetFromRepeat || !!pickedVerbKey) &&
+    !chooserReopened;
 
   // The verb in force: an in-page pick always wins over the URL, so re-choosing after
   // "Change activity" re-titles the page instead of leaving the old verb in the header.
@@ -612,6 +625,48 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // Step management
   const [activeStep, setActiveStep] = useState(0);
+
+  // The heading of whichever step card is mounted. One ref, three headings — only one
+  // step renders at a time, so the ref always points at the visible one.
+  const stepHeadingRef = useRef(null);
+
+  /*
+   * A step change is a page change to the farmer, so it lands like one: at the top, with
+   * focus on the new step's heading.
+   *
+   * Until 2026-09-03 `setActiveStep` swapped the card's content at the SAME scroll offset.
+   * Continue sits at the bottom of step 0 and the details card is longer, so the farmer
+   * landed mid-form in "Application Rate & Coverage" and scrolled up two screens to find
+   * the start (375px). Back had the mirror problem. `ScrollToTop` only fires on a pathname
+   * change, which a step is not.
+   *
+   * Instant, not smooth — same as a route change, so nothing to gate on
+   * prefers-reduced-motion. Focus moves so assistive tech announces the step it is now on
+   * (WCAG 2.4.3) instead of staying on a Continue button that no longer exists;
+   * `preventScroll` keeps the focus jump from fighting the scroll. Second call inside the
+   * frame callback: the ref points at the OLD heading until the swap has rendered.
+   */
+  const focusStepHeading = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    scrollAllToTop();
+    window.requestAnimationFrame(() => {
+      scrollAllToTop();
+      try {
+        stepHeadingRef.current?.focus({ preventScroll: true });
+      } catch {
+        /* nothing focusable mounted — the scroll already did the useful part */
+      }
+    });
+  }, []);
+
+  // Skipped on first mount: that landing is ScrollToTop's, and stealing focus onto a
+  // heading before the farmer has touched anything is wrong.
+  const prevStepRef = useRef(activeStep);
+  useEffect(() => {
+    if (prevStepRef.current === activeStep) return;
+    prevStepRef.current = activeStep;
+    focusStepHeading();
+  }, [activeStep, focusStepHeading]);
 
   // D9 — persist the in-progress event so a refresh, a locked phone or a stray Back does not
   // discard a half-filled chemical application. Scoped per parcel and per create/edit target.
@@ -1531,7 +1586,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // re-apply itself onto whatever type the farmer switched to next.
     pendingVoiceRef.current = holding ? { detected, eventType: activeEventType } : null;
 
-    setEventFormData((prev) => withOmriAttachmentChecked(prev, { ...prev, ...kept }));
+    setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...kept }));
     setVoiceBanner(holding ? { ...banner, droppedCount: 0 } : banner);
     setShowVoiceCapture(false);
     setVoiceSeq((s) => s + 1);
@@ -1572,7 +1627,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
         : prev
     );
     if (added === 0) return;
-    setEventFormData((prev) => withOmriAttachmentChecked(prev, { ...prev, ...fresh }));
+    setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...fresh }));
     // The tabs read initialValues on mount only — same remount the template accelerator uses.
     setVoiceSeq((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1597,7 +1652,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
     pendingVoiceRef.current = null;
     const { kept, banner } = applyVoiceData(raw, pending.backendEventType, subtype);
     setEventFormData((prev) =>
-      withOmriAttachmentChecked(prev, {
+      withListingAttachmentChecked(prev, {
         ...prev,
         ...(subtype ? { type: subtype } : {}),
         ...kept
@@ -1625,6 +1680,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
     if (verb.subtype) {
       setEventFormData((prev) => ({ ...prev, type: verb.subtype }));
     }
+    // Re-collapse after "Change activity": the reopened grid has done its job once a tile
+    // is tapped. Left true, a farmer who corrected a preset kept the grid for the rest of
+    // step 0 while a first-time picker did not.
+    setChooserReopened(false);
+    // The grid the farmer just tapped in unmounts under them and the page shortens by a
+    // few phone screens. Land them on the next question, not wherever the clamp lands.
+    focusStepHeading();
   };
 
   /**
@@ -2705,7 +2767,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
             {activeStep === 0 && (
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                 <CardHeader pb={2} px={{ base: 0, md: 6 }}>
-                  <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+                  {/* `tabIndex={-1}` + ref: programmatic focus target for focusStepHeading. */}
+                  <Text
+                    ref={stepHeadingRef}
+                    tabIndex={-1}
+                    fontSize="lg"
+                    fontWeight="semibold"
+                    color={textColor}>
                     {/* Not "Basic Event Info". This card carries the activity identity and
                         the date/operator pair; "event" is the backend model's word, and the
                         farmer chose an ACTIVITY to get here. */}
@@ -2992,7 +3060,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
             {activeStep === 1 && (
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                 <CardHeader pb={2} px={{ base: 0, md: 6 }}>
-                  <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+                  <Text
+                    ref={stepHeadingRef}
+                    tabIndex={-1}
+                    fontSize="lg"
+                    fontWeight="semibold"
+                    color={textColor}>
                     {/* The step-0 card names itself with its own step title; this one now
                         does the same. "Event Details" named the backend MODEL — the same
                         defect the stepper labels were fixed for, left standing on the card
@@ -3369,7 +3442,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
             {activeStep === 2 && (
               <Card boxShadow="lg" bg={bgColor} borderRadius="xl">
                 <CardHeader pb={2} px={{ base: 0, md: 6 }}>
-                  <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+                  <Text
+                    ref={stepHeadingRef}
+                    tabIndex={-1}
+                    fontSize="lg"
+                    fontWeight="semibold"
+                    color={textColor}>
                     {intl.formatMessage({ id: 'app.mediaAndDocumentation' }) ||
                       'Media & Documentation'}
                   </Text>

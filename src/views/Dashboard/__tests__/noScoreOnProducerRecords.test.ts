@@ -15,8 +15,9 @@
  * its component were deleted 2026-08-11.
  *
  * WHAT IS AND IS NOT BANNED. `transparency_score` is still a legitimate backend field: it ships
- * in the parcel-histories payload, `TransparencyCalculator` still computes it, and
- * `SmartUsageCard.getSmartInsights()` still reads it as a GATE on engagement nudges. None of that
+ * in the parcel-histories payload and `TransparencyCalculator` still stores it on every event
+ * write. (Until 2026-09-05 `SmartUsageCard.getSmartInsights()` also read it as a GATE on
+ * engagement nudges; the farm-metrics payload no longer carries a score at all.) None of that
  * is a claim. What is banned is RENDERING it — a number, a percentage, a grade, a tier, a
  * threshold-derived colour — on the producer record screens. Banning the identifier outright
  * would fight a field the product still maintains, and a guard that fights its own codebase gets

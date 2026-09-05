@@ -118,6 +118,7 @@ export function useDeepgramTranscription({
   const [stoppedAtLimit, setStoppedAtLimit] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
+  const startingRef = useRef(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   // The Safari/iOS path — see startListening. Kept in refs for the same reason the recorder is:
   // cleanup has to be able to tear them down from anywhere, including an unmount mid-recording.
@@ -190,263 +191,277 @@ export function useDeepgramTranscription({
   }, [cleanup, onTranscriptComplete]);
 
   const startListening = useCallback(async () => {
-    setError(null);
-    setStoppedAtLimit(false);
-    setTranscript('');
-    setInterimTranscript('');
-    transcriptRef.current = '';
-
-    // 1. Can this browser record at all? Checked BEFORE the socket and before the microphone
-    // prompt, so a browser that cannot record never asks the farmer for permission it has no use
-    // for — and never reports the failure as a dropped connection.
-    const mimeType = pickRecorderMimeType();
-
-    // WHICH TRANSPORT, and why there are two.
-    //
-    // MEASURED 2026-09-01 on an iPhone against app.trazo.io, twice. First the recorder itself
-    // threw, because the code only ever asked for webm. Fixing that got Safari as far as
-    // recording `audio/mp4` — and the socket then closed anyway: Deepgram's live endpoint does
-    // not take Safari's fragmented-MP4 chunks, so the farmer saw "the connection dropped" for a
-    // second, different reason.
-    //
-    // Containers are the problem, so the iOS path stops using one. Web Audio gives raw samples,
-    // which we send as `linear16` with the sample rate spelled out in the query string — the
-    // format Deepgram documents for exactly this case, and the one that cannot be misparsed.
-    // Chrome and Android keep MediaRecorder + Opus: it is proven here, and it is far cheaper on
-    // battery and bandwidth than shipping uncompressed audio.
-    const useRawPcm = shouldUseRawPcm(mimeType);
-    if (mimeType === null && typeof AudioContext === 'undefined') {
-      setError('voice.recorderUnsupported');
-      return;
-    }
-
-    // 2. Get microphone
-    let stream: MediaStream;
+    // ⛔ One session at a time. The panel auto-starts 300 ms after it opens, and a tap on the
+    // mic button inside that window used to open a SECOND socket on the same microphone. Both
+    // sessions heard the same audio and both appended their finals to one transcript, so every
+    // phrase came back twice ("Sprayed Entrust… Sprayed Entrust…") — seen on camera 2026-09-02.
+    // `startingRef` covers the token fetch and the permission prompt, before a socket exists;
+    // `wsRef` covers an open one. Cleanup clears both.
+    if (startingRef.current || wsRef.current) return;
+    startingRef.current = true;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true }
-      });
-    } catch {
-      setError('voice.microphoneBlocked');
-      return;
-    }
-    streamRef.current = stream;
+      setError(null);
+      setStoppedAtLimit(false);
+      setTranscript('');
+      setInterimTranscript('');
+      transcriptRef.current = '';
 
-    // ⛔ TOKEN LAST, and this order is load-bearing.
-    //
-    // The temporary Deepgram key lives for SIXTY SECONDS (`deepgram_token`, time_to_live_in_
-    // seconds: 60). It used to be minted FIRST — before `getUserMedia` — so the clock started
-    // ticking and then the farmer was shown a permission dialog and asked to read it. On a
-    // desktop that already granted permission there is no dialog and no delay, which is exactly
-    // why every test here passed; on a phone seeing the prompt for the first time, on a field
-    // connection, the key can be dead before the socket is opened. Deepgram then refuses the
-    // connection, and the farmer is told the transcription service dropped the call.
-    //
-    // Nothing is spent by asking for the microphone first: a farmer who declines costs us a
-    // permission prompt, not an API key.
-    let token: string;
-    try {
-      token = await fetchToken();
-    } catch {
-      stream.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-      setError('voice.tokenFailed');
-      return;
-    }
+      // 1. Can this browser record at all? Checked BEFORE the socket and before the microphone
+      // prompt, so a browser that cannot record never asks the farmer for permission it has no use
+      // for — and never reports the failure as a dropped connection.
+      const mimeType = pickRecorderMimeType();
 
-    // 4. Build WebSocket URL with Deepgram params
-    // The context is created here, inside the click that started this, because iOS only allows
-    // an AudioContext to start from a user gesture — and because its sample rate (48k on iPhone,
-    // 44.1k elsewhere) has to go in the URL below. Resampling to a fixed 16k would be another
-    // place to be subtly wrong; Deepgram accepts whatever rate we declare.
-    let audioContext: AudioContext | null = null;
-    if (useRawPcm) {
-      try {
-        const Ctor =
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        audioContext = new Ctor();
-        if (audioContext.state === 'suspended') await audioContext.resume();
-      } catch {
+      // WHICH TRANSPORT, and why there are two.
+      //
+      // MEASURED 2026-09-01 on an iPhone against app.trazo.io, twice. First the recorder itself
+      // threw, because the code only ever asked for webm. Fixing that got Safari as far as
+      // recording `audio/mp4` — and the socket then closed anyway: Deepgram's live endpoint does
+      // not take Safari's fragmented-MP4 chunks, so the farmer saw "the connection dropped" for a
+      // second, different reason.
+      //
+      // Containers are the problem, so the iOS path stops using one. Web Audio gives raw samples,
+      // which we send as `linear16` with the sample rate spelled out in the query string — the
+      // format Deepgram documents for exactly this case, and the one that cannot be misparsed.
+      // Chrome and Android keep MediaRecorder + Opus: it is proven here, and it is far cheaper on
+      // battery and bandwidth than shipping uncompressed audio.
+      const useRawPcm = shouldUseRawPcm(mimeType);
+      if (mimeType === null && typeof AudioContext === 'undefined') {
         setError('voice.recorderUnsupported');
-        stream.getTracks().forEach((t) => t.stop());
         return;
       }
-      audioContextRef.current = audioContext;
-    }
 
-    const keyterms = getKeytermsForLanguage(language);
-    const params = new URLSearchParams({
-      model: 'nova-3',
-      language: language,
-      smart_format: 'true',
-      interim_results: 'true',
-      utterance_end_ms: '1500',
-      endpointing: '300',
-      punctuate: 'true'
-    });
-    // Raw samples carry no header saying what they are, so the stream has to be described.
-    if (useRawPcm && audioContext) {
-      params.set('encoding', 'linear16');
-      params.set('sample_rate', String(Math.round(audioContext.sampleRate)));
-      params.set('channels', '1');
-    }
+      // 2. Get microphone
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true }
+        });
+      } catch {
+        setError('voice.microphoneBlocked');
+        return;
+      }
+      streamRef.current = stream;
 
-    // Keyterms must be single words or short phrases without special chars
-    keyterms.forEach((term) => params.append('keyterm', term));
+      // ⛔ TOKEN LAST, and this order is load-bearing.
+      //
+      // The temporary Deepgram key lives for SIXTY SECONDS (`deepgram_token`, time_to_live_in_
+      // seconds: 60). It used to be minted FIRST — before `getUserMedia` — so the clock started
+      // ticking and then the farmer was shown a permission dialog and asked to read it. On a
+      // desktop that already granted permission there is no dialog and no delay, which is exactly
+      // why every test here passed; on a phone seeing the prompt for the first time, on a field
+      // connection, the key can be dead before the socket is opened. Deepgram then refuses the
+      // connection, and the farmer is told the transcription service dropped the call.
+      //
+      // Nothing is spent by asking for the microphone first: a farmer who declines costs us a
+      // permission prompt, not an API key.
+      let token: string;
+      try {
+        token = await fetchToken();
+      } catch {
+        stream.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        setError('voice.tokenFailed');
+        return;
+      }
 
-    const wsUrl = `wss://api.deepgram.com/v1/listen?${params.toString()}`;
-
-    // 5. Open WebSocket — authenticate via subprotocol ['token', key]
-    const ws = new WebSocket(wsUrl, ['token', token]);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setIsListening(true);
-
-      if (useRawPcm && audioContext) {
-        // ── Safari / iOS: raw linear16, no container ─────────────────────────────────────
-        //
-        // ScriptProcessorNode is deprecated in favour of AudioWorklet, and it is still the right
-        // choice here: a worklet needs its processor loaded from a separate module URL, which on
-        // iOS means a Blob URL and a second thing to get wrong on the one platform this exists to
-        // rescue. This runs on the main thread for at most 90 seconds (MAX_SESSION_MS) while the
-        // farmer is looking at a recording indicator, not in a background tab.
-        const source = audioContext.createMediaStreamSource(stream);
-        const processor = audioContext.createScriptProcessor(4096, 1, 1);
-        sourceRef.current = source;
-        processorRef.current = processor;
-
-        processor.onaudioprocess = (event) => {
-          if (ws.readyState !== WebSocket.OPEN) return;
-          const input = event.inputBuffer.getChannelData(0);
-          // Float32 [-1,1] → Int16 little-endian, which is what `linear16` means. Clamped
-          // because a sample slightly outside the range wraps to the opposite sign and lands as
-          // a click in the audio.
-          const pcm = new Int16Array(input.length);
-          for (let i = 0; i < input.length; i += 1) {
-            const clamped = Math.max(-1, Math.min(1, input[i]));
-            pcm[i] = clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff;
-          }
-          ws.send(pcm.buffer);
-        };
-
-        source.connect(processor);
-        // ⚠️ The processor MUST reach the destination or Safari never fires onaudioprocess. It is
-        // connected through a muted gain node so the farmer does not hear themselves echoed back.
-        const mute = audioContext.createGain();
-        mute.gain.value = 0;
-        processor.connect(mute);
-        mute.connect(audioContext.destination);
-      } else {
-        // ── Chrome / Android: Opus in WebM, via MediaRecorder ────────────────────────────
-        //
-        // Wrapped because this runs inside an event handler: a throw here does not reject
-        // anything the caller awaits, it just leaves a live socket and a silent microphone —
-        // which is exactly how the iOS failure looked like a network fault.
-        let recorder: MediaRecorder;
+      // 4. Build WebSocket URL with Deepgram params
+      // The context is created here, inside the click that started this, because iOS only allows
+      // an AudioContext to start from a user gesture — and because its sample rate (48k on iPhone,
+      // 44.1k elsewhere) has to go in the URL below. Resampling to a fixed 16k would be another
+      // place to be subtly wrong; Deepgram accepts whatever rate we declare.
+      let audioContext: AudioContext | null = null;
+      if (useRawPcm) {
         try {
-          recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-        } catch (err) {
-          // eslint-disable-next-line no-console
-          console.error('[voice] MediaRecorder rejected', mimeType, err);
+          const Ctor =
+            window.AudioContext ||
+            (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          audioContext = new Ctor();
+          if (audioContext.state === 'suspended') await audioContext.resume();
+        } catch {
           setError('voice.recorderUnsupported');
-          cleanup();
+          stream.getTracks().forEach((t) => t.stop());
           return;
         }
-        recorderRef.current = recorder;
-
-        recorder.ondataavailable = (event) => {
-          if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
-            ws.send(event.data);
-          }
-        };
-
-        recorder.start(250); // 250ms chunks
+        audioContextRef.current = audioContext;
       }
 
-      // Keep-alive every 8 seconds. Deepgram closes a socket that has gone 10s without
-      // audio, so this interval is deliberately under that.
-      keepAliveRef.current = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'KeepAlive' }));
-        }
-      }, 8000);
+      const keyterms = getKeytermsForLanguage(language);
+      const params = new URLSearchParams({
+        model: 'nova-3',
+        language: language,
+        smart_format: 'true',
+        interim_results: 'true',
+        utterance_end_ms: '1500',
+        endpointing: '300',
+        punctuate: 'true'
+      });
+      // Raw samples carry no header saying what they are, so the stream has to be described.
+      if (useRawPcm && audioContext) {
+        params.set('encoding', 'linear16');
+        params.set('sample_rate', String(Math.round(audioContext.sampleRate)));
+        params.set('channels', '1');
+      }
 
-      // Hard stop. Ends the stream the same way the farmer would, so whatever was said so
-      // far is still flushed, transcribed and handed to onTranscriptComplete — a cap that
-      // threw the work away would be worse than the runaway it prevents.
-      maxDurationRef.current = setTimeout(() => {
-        setStoppedAtLimit(true);
-        stopListening();
-      }, MAX_SESSION_MS);
-    };
+      // Keyterms must be single words or short phrases without special chars
+      keyterms.forEach((term) => params.append('keyterm', term));
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
+      const wsUrl = `wss://api.deepgram.com/v1/listen?${params.toString()}`;
 
-        if (data.type === 'Results') {
-          const alt = data.channel?.alternatives?.[0];
-          if (!alt) return;
+      // 5. Open WebSocket — authenticate via subprotocol ['token', key]
+      const ws = new WebSocket(wsUrl, ['token', token]);
+      wsRef.current = ws;
 
-          const text = alt.transcript || '';
-          if (!text) return;
+      ws.onopen = () => {
+        setIsListening(true);
 
-          if (data.is_final) {
-            // Append final segment to transcript
-            transcriptRef.current = transcriptRef.current
-              ? `${transcriptRef.current} ${text}`
-              : text;
-            setTranscript(transcriptRef.current);
-            setInterimTranscript('');
-            onInterimTranscript?.('');
-          } else {
-            // Update interim display
-            setInterimTranscript(text);
-            onInterimTranscript?.(text);
+        if (useRawPcm && audioContext) {
+          // ── Safari / iOS: raw linear16, no container ─────────────────────────────────────
+          //
+          // ScriptProcessorNode is deprecated in favour of AudioWorklet, and it is still the right
+          // choice here: a worklet needs its processor loaded from a separate module URL, which on
+          // iOS means a Blob URL and a second thing to get wrong on the one platform this exists to
+          // rescue. This runs on the main thread for at most 90 seconds (MAX_SESSION_MS) while the
+          // farmer is looking at a recording indicator, not in a background tab.
+          const source = audioContext.createMediaStreamSource(stream);
+          const processor = audioContext.createScriptProcessor(4096, 1, 1);
+          sourceRef.current = source;
+          processorRef.current = processor;
+
+          processor.onaudioprocess = (event) => {
+            if (ws.readyState !== WebSocket.OPEN) return;
+            const input = event.inputBuffer.getChannelData(0);
+            // Float32 [-1,1] → Int16 little-endian, which is what `linear16` means. Clamped
+            // because a sample slightly outside the range wraps to the opposite sign and lands as
+            // a click in the audio.
+            const pcm = new Int16Array(input.length);
+            for (let i = 0; i < input.length; i += 1) {
+              const clamped = Math.max(-1, Math.min(1, input[i]));
+              pcm[i] = clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff;
+            }
+            ws.send(pcm.buffer);
+          };
+
+          source.connect(processor);
+          // ⚠️ The processor MUST reach the destination or Safari never fires onaudioprocess. It is
+          // connected through a muted gain node so the farmer does not hear themselves echoed back.
+          const mute = audioContext.createGain();
+          mute.gain.value = 0;
+          processor.connect(mute);
+          mute.connect(audioContext.destination);
+        } else {
+          // ── Chrome / Android: Opus in WebM, via MediaRecorder ────────────────────────────
+          //
+          // Wrapped because this runs inside an event handler: a throw here does not reject
+          // anything the caller awaits, it just leaves a live socket and a silent microphone —
+          // which is exactly how the iOS failure looked like a network fault.
+          let recorder: MediaRecorder;
+          try {
+            recorder = mimeType
+              ? new MediaRecorder(stream, { mimeType })
+              : new MediaRecorder(stream);
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('[voice] MediaRecorder rejected', mimeType, err);
+            setError('voice.recorderUnsupported');
+            cleanup();
+            return;
           }
+          recorderRef.current = recorder;
+
+          recorder.ondataavailable = (event) => {
+            if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+              ws.send(event.data);
+            }
+          };
+
+          recorder.start(250); // 250ms chunks
         }
 
-        if (data.type === 'UtteranceEnd') {
-          // Speech pause detected — auto-stop
+        // Keep-alive every 8 seconds. Deepgram closes a socket that has gone 10s without
+        // audio, so this interval is deliberately under that.
+        keepAliveRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'KeepAlive' }));
+          }
+        }, 8000);
+
+        // Hard stop. Ends the stream the same way the farmer would, so whatever was said so
+        // far is still flushed, transcribed and handed to onTranscriptComplete — a cap that
+        // threw the work away would be worse than the runaway it prevents.
+        maxDurationRef.current = setTimeout(() => {
+          setStoppedAtLimit(true);
           stopListening();
+        }, MAX_SESSION_MS);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === 'Results') {
+            const alt = data.channel?.alternatives?.[0];
+            if (!alt) return;
+
+            const text = alt.transcript || '';
+            if (!text) return;
+
+            if (data.is_final) {
+              // Append final segment to transcript
+              transcriptRef.current = transcriptRef.current
+                ? `${transcriptRef.current} ${text}`
+                : text;
+              setTranscript(transcriptRef.current);
+              setInterimTranscript('');
+              onInterimTranscript?.('');
+            } else {
+              // Update interim display
+              setInterimTranscript(text);
+              onInterimTranscript?.(text);
+            }
+          }
+
+          if (data.type === 'UtteranceEnd') {
+            // Speech pause detected — auto-stop
+            stopListening();
+          }
+        } catch {
+          // Ignore non-JSON messages
         }
-      } catch {
-        // Ignore non-JSON messages
-      }
-    };
+      };
 
-    ws.onerror = () => {
-      // Said "Falling back to browser speech recognition" until 2026-08-25, and then did
-      // not: this handler tears the socket down and stops. Nothing re-routes to the Web
-      // Speech API, so the farmer waited for a recovery that was never coming. The caller
-      // surfaces this string verbatim in a toast, so it has to describe what happened.
-      setError('voice.connectionFailed');
-      cleanup();
-      setIsListening(false);
-    };
-
-    ws.onclose = (event) => {
-      // Log the close FRAME, not just the fact of it. Deepgram states its reason there — an
-      // unsupported encoding, a bad rate, an auth problem all arrive as different codes — and
-      // without it every failure on a phone looks identical: "the connection dropped". Two days
-      // of this bug were spent unable to tell a thrown MediaRecorder from a rejected container.
-      if (!stoppingRef.current) {
-        // eslint-disable-next-line no-console
-        console.error(
-          '[voice] Deepgram socket closed unexpectedly',
-          JSON.stringify({
-            code: event.code,
-            reason: event.reason,
-            wasClean: event.wasClean,
-            transport: useRawPcm ? `linear16@${audioContext?.sampleRate ?? '?'}` : mimeType
-          })
-        );
+      ws.onerror = () => {
+        // Said "Falling back to browser speech recognition" until 2026-08-25, and then did
+        // not: this handler tears the socket down and stops. Nothing re-routes to the Web
+        // Speech API, so the farmer waited for a recovery that was never coming. The caller
+        // surfaces this string verbatim in a toast, so it has to describe what happened.
+        setError('voice.connectionFailed');
         cleanup();
         setIsListening(false);
-      }
-    };
+      };
+
+      ws.onclose = (event) => {
+        // Log the close FRAME, not just the fact of it. Deepgram states its reason there — an
+        // unsupported encoding, a bad rate, an auth problem all arrive as different codes — and
+        // without it every failure on a phone looks identical: "the connection dropped". Two days
+        // of this bug were spent unable to tell a thrown MediaRecorder from a rejected container.
+        if (!stoppingRef.current) {
+          // eslint-disable-next-line no-console
+          console.error(
+            '[voice] Deepgram socket closed unexpectedly',
+            JSON.stringify({
+              code: event.code,
+              reason: event.reason,
+              wasClean: event.wasClean,
+              transport: useRawPcm ? `linear16@${audioContext?.sampleRate ?? '?'}` : mimeType
+            })
+          );
+          cleanup();
+          setIsListening(false);
+        }
+      };
+    } finally {
+      startingRef.current = false;
+    }
   }, [language, fetchToken, onInterimTranscript, stopListening, cleanup]);
 
   // Release the microphone and the socket if this unmounts mid-recording.

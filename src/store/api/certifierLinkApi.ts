@@ -45,8 +45,22 @@ export interface CertifierAccessLink {
 }
 
 export interface ReadinessItem {
+  /** Which EDITOR clears this. Not unique per item — `ofpp` covers three outcomes. */
   key: string;
+  /**
+   * Which SENTENCE this is. Unique per outcome, and the thing `readinessMessages.ts`
+   * translates. `READINESS_CODES` in `operation_readiness_service.py` is the other half of
+   * this contract; a typo on either side degrades to the English `title` below.
+   */
+  code?: string;
+  /** Values the sentence interpolates. Lists arrive as arrays — see `readinessMessages.ts`. */
+  params?: Record<string, unknown>;
   status: 'blocker' | 'warning' | 'ok';
+  /**
+   * The server's English sentence. Kept, and deliberately the LAST resort: the certifier
+   * packet prints these (it is an English document for a US certifying agent), and a code
+   * the mapper has not learned yet degrades to a sentence that is at least TRUE.
+   */
   title: string;
   detail: string;
   /** The concrete action. A blocker without one is a puzzle, not a task. */

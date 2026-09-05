@@ -10,7 +10,8 @@ import {
   Progress,
   Stack,
   useToast,
-  Flex
+  Flex,
+  Checkbox
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
@@ -33,6 +34,7 @@ import {
 import { useDeepgramTranscription } from 'hooks/useDeepgramTranscription';
 import { voiceLanguageFor } from 'config/voiceLanguages';
 import type { VoiceFieldRequest } from 'config/events/voiceFields';
+import { applicationMethodLabelKey } from 'config/events/enums';
 
 // Stable identity: a fresh `[]` default would be a new prop object on every render.
 const EMPTY_FIELD_REQUESTS: VoiceFieldRequest[] = [];
@@ -95,6 +97,16 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // farmer caused and not something retrying fixes, so it replaces the recorder rather than
   // flashing a toast.
   const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  /**
+   * Does the farmer want what they said copied into the public field notes?
+   *
+   * Defaults OFF, and that default is the fix. `observation` is published VERBATIM on the buyer
+   * page as "Farmer's Field Notes"; voice used to fill it with the whole utterance, so a rate
+   * and a tank volume the record strips as structured fields walked onto the shopper's page in
+   * prose. The transcript is quoted above either way — this decides only whether it is also
+   * PUBLISHED. See the notes block in voiceDataMapper.mapVoiceDataToFieldValues.
+   */
+  const [addTranscriptToNotes, setAddTranscriptToNotes] = useState(false);
   const hasAutoStarted = useRef(false);
   const toast = useToast();
   const intl = useIntl();
@@ -331,13 +343,20 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       // The request list travels WITH the result: the parent validates `activity_fields`
       // against what was actually asked for, and a value nobody asked for never reaches a
       // form. Recomputing it there would be a second source of truth for the same fact.
-      onEventDetected({ ...parsedData, requested_fields: fieldRequests });
+      onEventDetected({
+        ...parsedData,
+        requested_fields: fieldRequests,
+        // The tick, carried with the result. The mapper writes `observation` on this and
+        // nothing else — a transcript is never published because it exists.
+        note_opt_in: addTranscriptToNotes
+      });
       if (useDeepgram) {
         deepgramReset();
       } else {
         webSpeechResetTranscript();
       }
       setParsedData(null);
+      setAddTranscriptToNotes(false);
     }
   };
 
@@ -347,6 +366,9 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     // was a second button ("Start voice input") sitting above it. Two controls for one
     // intention — and the panel is now down to one, so this has to complete the job.
     setParsedData(null);
+    // A new utterance is a new decision. Carrying the tick over would publish a sentence the
+    // farmer has not read yet.
+    setAddTranscriptToNotes(false);
     if (useDeepgram) {
       deepgramReset();
     } else {
@@ -456,6 +478,26 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   };
 
   /** Format detected amounts for display */
+  /**
+   * The application method, in the farmer's language.
+   *
+   * 🔴 MEASURED 2026-09-03 on a Spanish record: the chip read **air_blast**. The farmer had said
+   * "con nebulizadora"; this panel is headed "Esto es lo que escuchamos", and what it showed
+   * them was our internal enum key. It looked fine until that morning only because the parser
+   * used to answer free text — the farmer's own word — so there was never anything to translate.
+   * Teaching it to answer catalogue values (so the method could actually reach the form) turned
+   * a passthrough into a leak.
+   *
+   * Falls back to the raw string for anything outside the catalogue, which is legacy free text
+   * and therefore already the grower's own wording.
+   */
+  const applicationMethodLabel = (value: string | null | undefined): string => {
+    if (!value) return '';
+    const labelKey = applicationMethodLabelKey(value);
+    return labelKey ? intl.formatMessage({ id: labelKey, defaultMessage: value }) : value;
+  };
+  const applicationMethodChip = applicationMethodLabel(parsedData?.application_method);
+
   const formatAmountsForDisplay = (amounts: any[]): string[] => {
     if (!amounts || amounts.length === 0) return [];
     // Same filter the form values go through: an amount whose UNIT was never spoken was
@@ -733,6 +775,33 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
               “{parsedData.original_transcript || parsedData.description}”
             </Text>
 
+            {/* Publishing the sentence is a SEPARATE act from saying it.
+                The box is unticked, and it says what ticking it does: field notes are the one
+                thing the buyer page prints in the grower's own words, verbatim. Voice used to
+                do this silently, which is how a spray rate and a tank volume reached shoppers
+                in prose on a record that strips both as columns.
+                44px on the label row rather than a taller control: the touch target is the
+                whole line, which is what a thumb finds in an orchard. */}
+            {(parsedData.original_transcript || '').trim() && (
+              <Checkbox
+                isChecked={addTranscriptToNotes}
+                onChange={(e) => setAddTranscriptToNotes(e.target.checked)}
+                colorScheme="green"
+                alignItems="flex-start"
+                sx={{ '.chakra-checkbox__control': { marginTop: '2px' } }}
+                minH="44px"
+                py={1}>
+                <VStack align="start" spacing={0}>
+                  <Text fontSize="sm" color="gray.800">
+                    {intl.formatMessage({ id: 'voice.notesOptIn.label' })}
+                  </Text>
+                  <Text fontSize="xs" color="gray.600">
+                    {intl.formatMessage({ id: 'voice.notesOptIn.help' })}
+                  </Text>
+                </VStack>
+              </Checkbox>
+            )}
+
             {/* What we heard, as facts. These were painted green / blue / purple / teal /
                 cyan / orange BY CATEGORY — six hues carrying no meaning in a system where
                 colour means status (frontend.md), and four of them from palettes this theme
@@ -773,9 +842,9 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                     NPK {parsedData.npk_ratio}
                   </Badge>
                 )}
-                {parsedData.application_method && (
+                {applicationMethodChip && (
                   <Badge variant="neutral" px={3} py={1} borderRadius="full">
-                    {parsedData.application_method}
+                    {applicationMethodChip}
                   </Badge>
                 )}
                 {parsedData.water_source && (
@@ -794,7 +863,10 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 {parsedData.detected_systems
                   ?.filter((system: string) => {
                     const sysLower = system.toLowerCase();
-                    const methodLower = (parsedData.application_method || '').toLowerCase();
+                    // Compare against the LABEL, not just the stored code. Since the parser
+                    // started answering with catalogue values, `air_blast` no longer overlaps
+                    // with the Spanish word the farmer used, so the same fact would print twice.
+                    const methodLower = (applicationMethodChip || '').toLowerCase();
                     // Skip if it overlaps with application_method (e.g., "drip irrigation" vs "drip")
                     if (
                       methodLower &&
@@ -813,33 +885,31 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
               </Flex>
             )}
 
-            {/* What to do next.
-                The percentage is gone from the farmer's screen. "30% confidence" is the
-                model's internal number, it is not actionable, and false precision on a
-                record a certifier will read is the wrong kind of confidence to display. The
-                two states differ in what they ASK FOR, which is the part that changes what
-                the farmer does.
-                Low is a real warning and now looks like every other warning in the app
-                (theme accent bar + amber ground). It used to be `yellow.100`/`yellow.700` —
-                Chakra's yellow, a palette this theme does not define.
+            {/*
+              ⛔ NOTHING between the chips and the buttons. There used to be a confidence
+              block here: a plain line at >= 70 ("Review and confirm the details below before
+              saving") and an amber alert below it ("Some details may be wrong or missing —
+              review every field before saving").
 
-                ⛔ Nothing here during the keyword fallback. That path scores by counting
-                matched keywords and caps at 75 against a 70 threshold, so the amber warning was
-                effectively PERMANENT while OpenAI was unreachable — a caution the farmer cannot
-                act on, sitting directly under a line that already told them what to expect
-                ("matched on keywords alone — expect fewer fields filled"). Two warnings in
-                three lines teaches people to read neither. */}
-            {!recognized || keywordFallback ? null : parsedData.confidence >= 70 ? (
-              <Text fontSize="sm" color="gray.700">
-                {intl.formatMessage({ id: 'voice.confidenceHigh' })}
-              </Text>
-            ) : (
-              <StandardAlert
-                status="warning"
-                mb={0}
-                description={intl.formatMessage({ id: 'voice.confidenceLow' })}
-              />
-            )}
+              Removed 2026-09-03, on the screen, because the two branches ASK FOR THE SAME
+              THING. Both say review before saving, which is what this wizard is: voice
+              suggests, the farmer confirms every field on the form, and nothing here is saved
+              until they do. So the alert was not information about this parse — it was the
+              product's own contract, restated in amber, and it changed nothing the farmer
+              would do.
+
+              It also cost the most on the screen it mattered least on. The panel already
+              carries three real, specific notices for the states that DO change what to expect
+              (`keywordFallbackNote`, `activityFromContext`, `stoppedAtLimit`), each one plain
+              xs text. This one alone was a full alert box, and with the field-notes checkbox
+              added above it the result panel had four stacked blocks of prose around two
+              buttons. The file's own note two comments up is the rule being applied: "two
+              warnings in three lines teaches people to read neither."
+
+              `parsedData.confidence` is still parsed and still posted; it simply has no
+              renderer. Bringing one back means finding a state where the farmer would act
+              differently, and saying THAT.
+            */}
 
             {/* Continue leads; the arrow trails the label, matching the wizard's own
                 Continue button rather than pointing backwards into it. */}

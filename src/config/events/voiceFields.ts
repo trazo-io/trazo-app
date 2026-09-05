@@ -84,21 +84,21 @@ import type { AnySubtype, EventTypeCode } from './registry';
  */
 export const VOICE_ACTIVITY_FIELDS: Record<string, readonly string[]> = {
   // ── Chemical family ────────────────────────────────────────────────────────
-  fertilization: [
-    'nitrogen_percentage',
-    'phosphorus_percentage',
-    'potassium_percentage',
-    'application_purpose'
-  ],
-  fertilizer: [
-    'nitrogen_percentage',
-    'phosphorus_percentage',
-    'potassium_percentage',
-    'application_purpose'
-  ],
-  pesticide: ['target_pest_disease', 'application_purpose'],
-  herbicide: ['target_pest_disease', 'application_purpose'],
-  fungicide: ['target_pest_disease', 'application_purpose'],
+  // `application_purpose` is NOT here — see VOICE_NEVER_FILLS. It is answered from the ACTIVITY
+  // rather than from the words, every single run.
+  fertilization: ['nitrogen_percentage', 'phosphorus_percentage', 'potassium_percentage'],
+  fertilizer: ['nitrogen_percentage', 'phosphorus_percentage', 'potassium_percentage'],
+  pesticide: ['target_pest_disease'],
+  herbicide: ['target_pest_disease'],
+  fungicide: ['target_pest_disease'],
+  // ⛔ `application_rate` is NOT here and must not be added. It pairs with
+  // `application_rate_unit`, so `buildVoiceFieldRequests` would skip it anyway (see the
+  // unitField rule below) — but the deeper reason is that it does not need asking. The mapper
+  // already detects a rate DETERMINISTICALLY, from the words: `spokenRateDenominator` finds the
+  // "an acre" that makes six fluid ounces a rate, and `rateUnitCode` turns the pair into one
+  // catalogue value. Asking the model for the same fact would replace a test over the transcript
+  // with a second opinion about it, on the field whose whole existence is a rate being mistaken
+  // for a total.
 
   // ── Production family ──────────────────────────────────────────────────────
   // `water_volume_total` is NOT here: it renders only in Irrigation Summary Mode
@@ -205,6 +205,21 @@ export const VOICE_NEVER_FILLS: Record<string, string> = {
   weather_conditions:
     'invented on every run from sentences with no weather in them; drift-relevant',
   application_timing: 'inferred from the practice rather than heard',
+  // MEASURED 2026-09-02, five utterances, three activities, zero variation: the answer is the
+  // ACTIVITY SLUG restated as an enum value. "Sprayed Entrust on the east block. Six fluid
+  // ounces an acre, airblast." — a sentence containing no reason at all — returned
+  // `pest_management`; the same sentence under `fungicide` returned `disease_management`, under
+  // `herbicide` `weed_management`. The model is not hearing a purpose, it is reading the tile
+  // the farmer already tapped in step 1 and echoing it back.
+  //
+  // Two reasons that is worse than leaving it blank. It carries NO information from the farmer,
+  // so the "N fields filled" count overstates what voice actually heard — and the farmer skims
+  // that list instead of the form. And on a § 205.601 material this field is the operator's
+  // stated JUSTIFICATION for using a restricted input, which a certifier reads as their word.
+  // What the farmer genuinely says about why lands in `target_pest_disease` ("for walnut
+  // blight", "for codling moth"), which is still requested and still fills from the words.
+  application_purpose:
+    "restates the chosen activity, not the words; read as the operator's § 205.601 justification",
   active_ingredient:
     'a property of the product, not of the event — the input catalogue is the verified source',
 
@@ -234,6 +249,9 @@ export const VOICE_NEVER_FILLS: Record<string, string> = {
   site_id: 'regulatory identifier (CA PUR)',
   application_county: 'regulatory jurisdiction (CA PUR)',
   operator_is_custom: 'who ran the pass — see the custom-operator section of the form',
+  applied_by_pcb:
+    'attributes a regulated act to a pest control business, and it changes who files the CA PUR',
+  pcb_name: 'trading partner of record, and it changes who files the CA PUR',
   name: 'auto-generated from the activity; not dictated',
 
   // 4. Dates other than the event's own
@@ -271,6 +289,40 @@ const FORMATTER_ENUM_VALUES: Record<string, readonly string[]> = {
   weather_conditions: Object.keys(WEATHER_CONDITIONS_LABELS),
   soil_texture: Object.keys(SOIL_TEXTURE_LABELS)
 };
+
+/**
+ * Enums whose VALUE is the farmer's own word, so the word has to be in the sentence.
+ *
+ * Most enums are CLASSIFICATIONS and paraphrase is the point — "going to the packing house"
+ * legitimately becomes `harvest_destination: handler`, and nothing in that answer is echoed in
+ * the words. Demanding an echo there would break the feature.
+ *
+ * These are the other kind: the option list is the vocabulary of the practice itself, so an
+ * answer with no trace in the sentence did not come from the farmer.
+ *
+ * MEASURED 2026-09-02, deterministic across runs and across two utterances chosen to contain no
+ * mowing verb at all:
+ *
+ *   "Went through the middles this morning with the tractor."  -> floor_management_type: "mow"
+ *   "Took care of the orchard floor on the east block today."  -> floor_management_type: "mow"
+ *
+ * The model was answering from the tile tapped in step 1, not from the words. Two prompt rules
+ * aimed straight at it changed nothing — the same lesson `block_id` already carries: an
+ * instruction is not a control.
+ *
+ * Retiring the field was the other option and it is the wrong one. Given actual evidence the
+ * model is RIGHT, and right about the answers that matter most:
+ *
+ *   "Mowed down the cover crop between the rows."  -> cover_crop_mgmt   ✓
+ *   "Mulched the middles with the chipper."        -> mulch             ✓
+ *   "Flail mowed the middles."                     -> mow               ✓
+ *
+ * ⚠️ `protection_method` is deliberately NOT here, though it looks like the same shape. A
+ * grower says "ran the fans", and `wind_machine` shares no word with "fans" — this gate would
+ * throw away a correct answer. Its own failure (an invented "other") was fixed by the catalogue
+ * rule instead. Add a field here only after measuring that its real phrasings survive.
+ */
+export const VOICE_ENUMS_MUST_ECHO_WORDS: ReadonlySet<string> = new Set(['floor_management_type']);
 
 /** One field, described to the model in the form's own terms. */
 export interface VoiceFieldRequest {

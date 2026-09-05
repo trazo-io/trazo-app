@@ -131,8 +131,6 @@ interface StandardFinishProductionFormProps {
       useDefaultUnits falls back to establishments[0], so a multi-farm company got
       farm #1's measurement system on every farm. */
   establishmentId?: string | number | null;
-  /** Real transparency score (0-100) for the live consumer preview. */
-  previewScore?: number;
   /** Harvest date ISO string for the live consumer preview. */
   harvestDate?: string;
   /** First event-timeline photo. When the farmer uploads no production
@@ -152,7 +150,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   parcelName = '',
   farmName = '',
   establishmentId,
-  previewScore,
   harvestDate,
   fallbackImageUrl
 }) => {
@@ -770,7 +767,6 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                         imageCount={uploadedImageUrls.length}
                         farmName={farmName}
                         productName={productName}
-                        score={previewScore}
                         harvestDate={harvestDate}
                         fallbackImageUrl={fallbackImageUrl}
                       />

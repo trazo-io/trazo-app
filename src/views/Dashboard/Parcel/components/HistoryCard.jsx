@@ -614,8 +614,9 @@ const HistoryCard = ({ amount }) => {
                             // `production.transparency_score` is still in this payload. It is
                             // deliberately not read here. Reintroducing it would also revive the
                             // source conflict: this column is stale-until-`update_trust_metrics()`,
-                            // while the farm dashboard and `carbon/productions-flat/` each
-                            // recompute the same number live.
+                            // while the farm dashboard recomputes the same number live
+                            // (`carbon/productions-flat/` stopped shipping it on 2026-09-05 — it
+                            // cost the full calculator per production on every page load).
 
                             // CRITICAL: No hardcoded fallbacks - show only real backend data
 

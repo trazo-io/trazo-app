@@ -12,6 +12,14 @@
 import { getDefaultFieldValues } from '../config/quickEventFields';
 import { PREFILLABLE_FIELDS } from '../config/events/templateAccelerators';
 import { getFieldNamesForSurface, getSubtypes } from '../config/events';
+import {
+  APPLICATION_METHODS,
+  APPLICATION_METHODS_BY_CHEMICAL_TYPE,
+  APPLICATION_RATE_UNITS,
+  IRRIGATION_METHODS,
+  WATER_SOURCES
+} from '../config/events/enums';
+import { VOICE_ENUMS_MUST_ECHO_WORDS } from '../config/events/voiceFields';
 import type { VoiceFieldRequest } from '../config/events/voiceFields';
 import type { AnySubtype, EventTypeCode } from '../config/events';
 
@@ -36,6 +44,8 @@ export interface ParsedVoiceData {
   commercial_name?: string | null;
   application_method?: string | null;
   water_source?: string | null;
+  /** Answered as an IRRIGATION_METHODS value; see the irrigation branch. */
+  irrigation_method?: string | null;
   area_covered?: { value: number; unit: string } | string | null;
   duration?: { value: number; unit: string } | string | null;
   fuel_amount?: { value: number; unit: string } | null;
@@ -50,6 +60,13 @@ export interface ParsedVoiceData {
   activity_fields?: Record<string, unknown>;
   /** True when the parser could not name an activity and used the one the farmer chose. */
   activity_from_context?: boolean;
+  /**
+   * The farmer ticked "add what I said to my field notes" in the voice panel.
+   *
+   * ⛔ Absent or false means the transcript stays in the panel and NOTHING is written to
+   * `observation`. See the notes block in mapVoiceDataToFieldValues for why the default flipped.
+   */
+  note_opt_in?: boolean;
 }
 
 /** Voice-to-template mapping result */
@@ -502,7 +519,10 @@ export function amountsActuallySpoken<T extends { unit?: string } | string>(
   if (!Array.isArray(amounts) || amounts.length === 0) return [];
   const canonical = (unit: string) => UNIT_NORMALIZE[unit.toLowerCase()] ?? unit.toLowerCase();
 
-  const tokens = (transcript || '').toLowerCase().match(/[a-z]+/g) ?? [];
+  // Typed explicitly for the same reason `wasSpoken` states below: `?? []` alone infers the
+  // empty branch as `never[]`, and `tokens.includes(word)` on the resulting union is a type
+  // error. (Introduced 2026-09-03 with the word-level unit check at the end of this function.)
+  const tokens: string[] = (transcript || '').toLowerCase().match(/[a-z]+/g) ?? [];
   const spokenUnits = new Set(
     tokens.filter((token) => token in UNIT_NORMALIZE).map((token) => UNIT_NORMALIZE[token])
   );
@@ -512,8 +532,458 @@ export function amountsActuallySpoken<T extends { unit?: string } | string>(
     if (typeof amount === 'string') return true;
     const unit = (amount as { unit?: string }).unit;
     if (!unit) return true;
-    return spokenUnits.has(canonical(unit));
+    if (spokenUnits.has(canonical(unit))) return true;
+
+    // 🔴 ...and the same question asked ACROSS LANGUAGES.
+    //
+    // MEASURED 2026-09-03 in Spanish: "3 libras y media por acre" parsed correctly as
+    // {3.5, "lbs"} — the model answers units in English whatever the farmer speaks. The
+    // transcript says "libras", the amount says "lbs", and neither of the tests around this one
+    // can bridge that: `UNIT_NORMALIZE` has no "libras" (so the canonical check fails) and the
+    // two words share no letters worth matching (so the word check below fails). The rate was
+    // dropped, the chip vanished, and `application_rate` never filled — on the language half of
+    // the demo.
+    //
+    // RATE_NUMERATOR already carries the three-language vocabulary for exactly this pairing
+    // (libras/lbs/pounds all resolve to `lb`), so it is the bridge rather than a fourth map.
+    const identity = (value: string) => RATE_NUMERATOR[value.toLowerCase().trim()];
+    const unitIdentity = identity(unit);
+    if (unitIdentity && tokens.some((token) => identity(token) === unitIdentity)) return true;
+
+    // 🔴 ...and the same question asked of the unit's own WORDS.
+    //
+    // MEASURED 2026-09-03: "Sprayed Entrust on the east block, six fluid ounces an acre, 40
+    // gallons total, airblast." The panel showed chips for "40 gallons", "Entrust" and
+    // "airblast" — and none for the six fluid ounces, which is the number the label is written
+    // in. UNIT_NORMALIZE has no entry for "fluid ounces" (nor ounces, pints, quarts, grams), so
+    // the canonical check above answered "never spoken" about a unit the farmer plainly said.
+    //
+    // Worse, it only fails this way in company: with no recognisable unit in the sentence the
+    // function bails out early and keeps everything, so the bug appears exactly when ANOTHER
+    // amount happens to use a known unit. That is why the missing chip showed up only once
+    // "40 gallons total" was added to the utterance.
+    //
+    // The words are the evidence, so ask about the words: the unit counts as spoken if any word
+    // of its name is in the transcript. That still drops the failure this filter was built for —
+    // "Kocide three thousand dot o" produced `{3000, "gallons"}` from a sentence containing no
+    // form of "gallon" — because the test is the transcript, not a vocabulary list.
+    return unit
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .some((word) => word.length >= 3 && tokens.includes(word));
   });
+}
+
+/**
+ * Land units a rate is quoted AGAINST. Not the same list as UNIT_NORMALIZE: "per tree" and
+ * "per plant" are rates too, and neither is a unit any amount is ever measured in.
+ */
+const RATE_DENOMINATORS = new Set([
+  'acre',
+  'acres',
+  'hectare',
+  'hectares',
+  'hectarea',
+  'hectareas',
+  'hectárea',
+  'hectáreas',
+  'ha',
+  'tree',
+  'trees',
+  'arbol',
+  'arboles',
+  'árbol',
+  'árboles',
+  'plant',
+  'plants',
+  'planta',
+  'plantas',
+  'vine',
+  'vines',
+  'row',
+  'rows',
+  'hilera',
+  'hileras',
+  'block',
+  'blocks',
+  'cuadra',
+  'cuadras',
+  'pe',
+  'pes'
+]);
+
+/** The word that turns a quantity into a per-something rate, in the three spoken languages. */
+const RATE_MARKERS = new Set(['per', 'a', 'an', 'por', 'cada', 'each', 'pro']);
+
+/** Words we may find a spoken unit under, beyond the ones UNIT_NORMALIZE canonicalises. */
+const EXTRA_UNIT_WORDS = new Set([
+  'ounce',
+  'ounces',
+  'oz',
+  'fluid',
+  'quart',
+  'quarts',
+  'pint',
+  'pints',
+  'gram',
+  'grams',
+  'g',
+  'libra',
+  'libras',
+  'quilo',
+  'quilos',
+  'onza',
+  'onzas',
+  'galon',
+  'galones',
+  'galão',
+  'litro',
+  'litros',
+  'tonelada',
+  'toneladas'
+]);
+
+/**
+ * Is this quantity a RATE — "three and a half pounds AN ACRE" — rather than a total?
+ *
+ * MEASURED 2026-09-02 on the October demo line itself: "Sprayed Kocide 3000-O on the east
+ * block, three and a half pounds an acre, air-blast, for walnut blight" put **3.5** into
+ * `volume_applied`, whose own help text reads "Total volume of product applied". 3.5 lb is the
+ * rate; the total is 3.5 × however many acres were sprayed. The number is wrong by the whole
+ * acreage, it prints on the certifier packet and it is what CA PUR box 20 is filled from.
+ *
+ * The backend prompt already refuses to read the "1" out of "per acre" as an AREA (added
+ * 2026-09-01, all three languages). This is the other half of the same sentence and the prompt
+ * cannot fix it: the model is right that 3.5 pounds was said, and right about the unit. What it
+ * cannot know is that the field on the other side holds a total. So the test lives here, in
+ * code, against the transcript — an instruction is not a control.
+ *
+ * Two tiers, because the anchor is not always findable:
+ *  1. Anchor on the spoken unit and read the THREE tokens after it. "pounds | an acre" is a
+ *     rate; "gallons | of Entrust across" is not. This keeps a genuine total in a sentence
+ *     that also quotes a rate.
+ *  2. No anchor — the unit was said in words this file does not know ("six FLUID OUNCES an
+ *     acre") — and the sentence contains a rate phrase anyway. Then we cannot tell which
+ *     quantity it attaches to, and the safe reading is "rate". Over-dropping leaves a box for
+ *     the farmer to fill; under-dropping writes a wrong total onto a regulated record.
+ */
+export function amountIsSpokenAsRate(transcript: string, unit: string | undefined): boolean {
+  return spokenRateDenominator(transcript, unit) !== null;
+}
+
+/**
+ * WHICH land unit the rate is quoted against — "acre" out of "three pounds an acre" — or null
+ * when the quantity is not a rate at all.
+ *
+ * Split out of `amountIsSpokenAsRate` on 2026-09-03, when `application_rate` gave the number
+ * somewhere honest to live. Detecting the rate is what stops it landing in a TOTAL; naming the
+ * denominator is what lets it land in the rate field, as `6 fl oz/ac` rather than a bare 6.
+ */
+export function spokenRateDenominator(transcript: string, unit: string | undefined): string | null {
+  const tokens: string[] = (transcript || '').toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  if (tokens.length === 0) return null;
+
+  const denominatorAfter = (from: number): string | null => {
+    // The article is often missing. MEASURED 2026-09-01 from a real dictation: Deepgram wrote
+    // "three and a half pounds an acre" as "three and a half pound Acre" — the "an" simply did
+    // not survive. A land unit sitting directly after a quantity's unit is a rate either way.
+    if (from < tokens.length && RATE_DENOMINATORS.has(tokens[from])) return tokens[from];
+    for (let i = from; i < Math.min(from + 3, tokens.length - 1); i++) {
+      if (RATE_MARKERS.has(tokens[i]) && RATE_DENOMINATORS.has(tokens[i + 1])) {
+        return tokens[i + 1];
+      }
+    }
+    return null;
+  };
+
+  const spokenUnit = (unit || '').toLowerCase();
+  const canonicalUnit = UNIT_NORMALIZE[spokenUnit] ?? spokenUnit;
+  if (!canonicalUnit) return null;
+
+  // Where in the sentence THIS amount's unit was said. Two ways a token can be that unit:
+  // it canonicalises to the same thing ("pounds" -> lb, unit "lbs" -> lb), or it is a unit word
+  // this file does not canonicalise and the two names overlap ("ounces" inside "fluid ounces").
+  const anchors = tokens.reduce<number[]>((found, token, index) => {
+    const canonicalToken = UNIT_NORMALIZE[token];
+    const isSameUnit = canonicalToken
+      ? canonicalToken === canonicalUnit
+      : EXTRA_UNIT_WORDS.has(token) &&
+        (canonicalUnit.includes(token) || token.includes(canonicalUnit));
+    if (isSameUnit) found.push(index);
+    return found;
+  }, []);
+
+  // Tier 1: the unit is in the sentence — decide from what follows THAT word. `every`, not
+  // `some`: "200 gallons of water at 3.5 pounds an acre" says gallons once as a total, and one
+  // total is enough to keep the amount.
+  if (anchors.length > 0) {
+    const denominators = anchors.map((index) => denominatorAfter(index + 1));
+    return denominators.every((d) => d !== null) ? denominators[0] : null;
+  }
+
+  // Tier 2: no anchor for THIS unit. If the sentence quotes a rate at all, treat it as one.
+  for (let i = 0; i < tokens.length - 1; i++) {
+    if (RATE_MARKERS.has(tokens[i]) && RATE_DENOMINATORS.has(tokens[i + 1])) return tokens[i + 1];
+  }
+  return null;
+}
+
+/**
+ * The rate unit's NUMERATOR, from whatever the parser called the unit.
+ *
+ * Deliberately wider than UNIT_NORMALIZE: that map exists to decide whether a unit was SPOKEN,
+ * and it is half-populated on purpose (see `amountsActuallySpoken`). This one decides what a
+ * rate is measured in, so it has to know "fluid ounces" — the unit the Entrust label is written
+ * in, and the one whose absence from UNIT_NORMALIZE is the only reason the first rate bug did
+ * not fire on the Entrust dictation.
+ */
+const RATE_NUMERATOR: Record<string, string> = {
+  'fluid ounces': 'fl_oz',
+  'fluid ounce': 'fl_oz',
+  'fl oz': 'fl_oz',
+  floz: 'fl_oz',
+  'onzas liquidas': 'fl_oz',
+  'onzas líquidas': 'fl_oz',
+  ounce: 'oz',
+  ounces: 'oz',
+  oz: 'oz',
+  onza: 'oz',
+  onzas: 'oz',
+  pint: 'pt',
+  pints: 'pt',
+  pt: 'pt',
+  quart: 'qt',
+  quarts: 'qt',
+  qt: 'qt',
+  gallon: 'gal',
+  gallons: 'gal',
+  gal: 'gal',
+  galon: 'gal',
+  galones: 'gal',
+  pound: 'lb',
+  pounds: 'lb',
+  lb: 'lb',
+  lbs: 'lb',
+  libra: 'lb',
+  libras: 'lb',
+  ton: 'ton',
+  tons: 'ton',
+  tonne: 't',
+  tonnes: 't',
+  gram: 'g',
+  grams: 'g',
+  g: 'g',
+  gramo: 'g',
+  gramos: 'g',
+  kilogram: 'kg',
+  kilograms: 'kg',
+  kg: 'kg',
+  kilo: 'kg',
+  kilos: 'kg',
+  quilo: 'kg',
+  quilos: 'kg',
+  liter: 'L',
+  liters: 'L',
+  litre: 'L',
+  litres: 'L',
+  l: 'L',
+  litro: 'L',
+  litros: 'L',
+  milliliter: 'mL',
+  milliliters: 'mL',
+  ml: 'mL',
+  mililitro: 'mL',
+  mililitros: 'mL'
+};
+
+/** The rate unit's DENOMINATOR, from the land word the farmer actually said. */
+const RATE_DENOMINATOR_CODE: Record<string, string> = {
+  acre: 'ac',
+  acres: 'ac',
+  hectare: 'ha',
+  hectares: 'ha',
+  hectarea: 'ha',
+  hectareas: 'ha',
+  hectárea: 'ha',
+  hectáreas: 'ha',
+  ha: 'ha'
+};
+
+/**
+ * Turn a spoken quantity and its land word into one `application_rate_unit` code.
+ *
+ * Returns null unless BOTH halves resolve AND the pair is a real option on the form. "twenty
+ * gallons a tree" is a rate and is correctly kept out of the total — but there is no per-tree
+ * option in the catalogue, so it is not written as a rate either. An enum value the dropdown
+ * cannot render is a value the farmer cannot correct.
+ */
+export function rateUnitCode(unit: string | undefined, denominator: string | null): string | null {
+  if (!unit || !denominator) return null;
+  const numerator = RATE_NUMERATOR[unit.toLowerCase().trim()];
+  const denom = RATE_DENOMINATOR_CODE[denominator.toLowerCase()];
+  if (!numerator || !denom) return null;
+  const code = `${numerator}_${denom}`;
+  return APPLICATION_RATE_UNITS.some((option) => option.value === code) ? code : null;
+}
+
+/**
+ * The quantity that is the PRODUCT AMOUNT, out of the ones NOT spoken as a rate — or null when
+ * the sentence cannot say which fact the number is.
+ *
+ * 🔴 MEASURED 2026-09-03 on camera. "Sprayed Entrust on the east block. Six fluid ounces an
+ * acre, 40 gallons total, airblast." The six fluid ounces is a rate and is correctly routed to
+ * `application_rate`; the 40 gallons is the TANK, the carrier volume the product was mixed into.
+ * The leftover-amount rule took it as the product total, so the record said forty gallons of
+ * Entrust — a number that prints in the certifier packet's "Amount / Rate" column, feeds CA PUR
+ * (DPR-PML-017C) box 20 and the CCOF materials form, and is wrong by three orders of magnitude.
+ *
+ * The rate and the total are two statements about the SAME product, so a grower who says both
+ * says them in the same unit ("six fluid ounces an acre, seventy-five fluid ounces total").
+ * A quantity in a DIFFERENT unit beside a rate is a different fact — a tank volume, a water
+ * volume, a load — and there is no way to tell which from the words alone.
+ *
+ * ⛔ Deliberately NOT a vocabulary of tank words ("total", "in the tank", "of water"). "40
+ * gallons TOTAL" is the sentence that broke it, and `total` is the very word the field's own
+ * help text used to use. Pattern-matching prose to classify a regulated number is how the wrong
+ * number gets written confidently; the unit is evidence the farmer actually supplied.
+ *
+ * Over-dropping leaves a box for the farmer to fill. Under-dropping writes a spray volume onto
+ * a § 205.103(b)(2) record as the amount of pesticide applied.
+ */
+export function productTotalFromAmounts(
+  amounts: readonly StructuredAmount[],
+  spokenRateUnit: string | undefined
+): StructuredAmount | null {
+  const candidates = amounts.filter((a) => a.category === 'weight' || a.category === 'volume');
+  if (candidates.length === 0) return null;
+  if (!spokenRateUnit) return candidates[0];
+
+  const canonical = (unit: string | undefined) =>
+    RATE_NUMERATOR[
+      String(unit ?? '')
+        .toLowerCase()
+        .trim()
+    ] ?? null;
+  const rateCode = canonical(spokenRateUnit);
+  // An unrecognised rate unit is not a licence to take the leftover: we know a rate was spoken
+  // and we cannot check the total against it.
+  if (!rateCode) return null;
+  return candidates.find((a) => canonical(a.unit) === rateCode) ?? null;
+}
+
+/**
+ * What PHYSICAL DIMENSION is this unit — decided by the unit, not by the model.
+ *
+ * 🔴 MEASURED 2026-09-03, from a real dictation. "Sprayed Entrust on the east block. Six fluid
+ * ounces an acre, 40 gallons total, airblast." — the farmer stated the total explicitly, and
+ * Volume Applied came out EMPTY. The parse was correct and the mapper was correct; what varied
+ * was the model's own bookkeeping. Across four runs of the identical sentence it answered
+ *
+ *   {value: 6, unit: "fluid ounces", category: "volume"}   // and, on another run,
+ *   {value: 6, unit: "fluid ounces"}                       // no category at all
+ *
+ * and every consumer of this array SELECTS on the category — `find(a => a.category === 'volume')`
+ * for the total, `'area'` for the area, `'depth'` for irrigation depth, `'weight'` for yield. So
+ * one missing key, on a field the model was never really answering, silently costs the record a
+ * number the farmer said out loud. It is also unfalsifiable from the farmer's side: the banner
+ * simply does not mention the field.
+ *
+ * The unit already carries the answer, deterministically, so the category is derived from it and
+ * the model's label is used only for units this map does not know (`fuel`, `count` and anything
+ * else the parser invents). Same rule as the rest of this file: where the words decide the
+ * answer, do not ask the model for a second opinion about them.
+ *
+ * ⚠️ Depth is here on purpose. "Two inches of water" is a depth, and the irrigation branch finds
+ * it by category — deriving from cm/inches keeps that working without trusting the label.
+ */
+function categoryForUnit(unit: string | undefined): string | null {
+  const u = String(unit ?? '')
+    .toLowerCase()
+    .trim();
+  if (!u) return null;
+  if (
+    /^(lb|lbs|pounds?|kg|kilograms?|kilos?|quilos?|g|grams?|gramos?|tons?|tonnes?|t|libras?|toneladas?)$/.test(
+      u
+    )
+  ) {
+    return 'weight';
+  }
+  if (
+    /^(gal|gallons?|galones?|l|liters?|litres?|litros?|ml|milliliters?|mililitros?|oz|ounces?|onzas?|fl oz|fluid ounces?|pt|pints?|qt|quarts?)$/.test(
+      u
+    )
+  ) {
+    return 'volume';
+  }
+  if (/^(acres?|ha|hectares?|hect[aá]reas?|m2|km2)$/.test(u)) return 'area';
+  if (/^(hours?|hrs?|horas?|minutes?|mins?|minutos?)$/.test(u)) return 'time';
+  if (
+    /^(in|ins|inch|inches|pulgadas?|polegadas?|cm|cms|centimet(er|re)s?|centimetros?|cent[ií]metros?|mm)$/.test(
+      u
+    )
+  ) {
+    return 'depth';
+  }
+  return null;
+}
+
+/**
+ * The chemical subtype each voice template records against — the axis the application-method
+ * catalogue is keyed on. Read from VOICE_TYPE_MAP rather than retyped: `backendSubtype` is
+ * already the answer, and a second copy is how a dropdown and its validator drift.
+ */
+const CHEMICAL_SUBTYPE_FOR_TEMPLATE: Record<string, string> = Object.values(VOICE_TYPE_MAP).reduce(
+  (acc, mapping) => {
+    if (mapping.backendEventType === 2 && mapping.backendSubtype) {
+      acc[mapping.templateId] = mapping.backendSubtype;
+    }
+    return acc;
+  },
+  {} as Record<string, string>
+);
+
+/**
+ * Resolve a spoken application method to a value this subtype's dropdown can render, or null.
+ *
+ * A method outside the catalogue is the enum failure this file already refuses everywhere else:
+ * "a dropdown that renders nine options and receives a tenth stores a value no form can display
+ * and no export can label."
+ */
+export function matchApplicationMethod(spoken: string, templateId: string): string | null {
+  const subtype = CHEMICAL_SUBTYPE_FOR_TEMPLATE[templateId];
+  const options = subtype
+    ? APPLICATION_METHODS_BY_CHEMICAL_TYPE[subtype] ?? APPLICATION_METHODS
+    : APPLICATION_METHODS;
+  return matchCatalogueValue(spoken, options);
+}
+
+/**
+ * Resolve a spoken value to one this dropdown can render, or null.
+ *
+ * MEASURED 2026-09-03, three fields with one shape. `application_method` took "airblast" and
+ * "nebulizadora" straight from the parser; `water_source` and `irrigation_method` take free text
+ * the same way. All three are `valueType: 'enum'`, so anything outside the catalogue is
+ * "a dropdown that renders nine options and receives a tenth" — a value no form can display and
+ * no export can label, sitting in state while the select shows its placeholder.
+ *
+ * Separator-insensitive so "air blast", "airblast" and "Air-Blast" all reach `air_blast`. It is
+ * deliberately NOT fuzzy: the parser is asked (in every language) to answer with a catalogue
+ * value, and anything it does not is dropped for the farmer to pick. A near-match here would be
+ * the substitution `block_id` already refuses.
+ */
+export function matchCatalogueValue(
+  spoken: string | null | undefined,
+  options: readonly { value: string }[]
+): string | null {
+  const raw = String(spoken ?? '').trim();
+  if (!raw) return null;
+  const values = options.map((option) => option.value);
+  if (values.includes(raw)) return raw;
+  const squash = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const target = squash(raw);
+  if (!target) return null;
+  const hits = values.filter((value) => squash(value) === target);
+  return hits.length === 1 ? hits[0] : null;
 }
 
 export function extractStructuredAmounts(
@@ -526,10 +996,16 @@ export function extractStructuredAmounts(
   if (!Array.isArray(detectedAmounts) || detectedAmounts.length === 0) return [];
   return detectedAmounts
     .map((amount) => {
-      // Already structured — still normalize units to match form dropdown values
+      // Already structured — normalize the unit to the form's dropdown values, and re-derive
+      // the CATEGORY from that unit. See categoryForUnit: the model's own label is a guess,
+      // and every consumer of this array selects on the category.
       if (typeof amount !== 'string') {
         const normalizedUnit = UNIT_NORMALIZE[amount.unit?.toLowerCase()] || amount.unit;
-        return { ...amount, unit: normalizedUnit };
+        return {
+          ...amount,
+          unit: normalizedUnit,
+          category: categoryForUnit(normalizedUnit) ?? amount.category ?? 'unknown'
+        };
       }
 
       // Parse string amounts like "200 pounds" or "2.5 hectares"
@@ -538,14 +1014,7 @@ export function extractStructuredAmounts(
         const value = parseFloat(match[1]);
         const rawUnit = match[2].trim().toLowerCase();
         const unit = UNIT_NORMALIZE[rawUnit] || rawUnit;
-
-        let category: string = 'unknown';
-        if (['lb', 'kg', 'tons'].includes(unit)) category = 'weight';
-        else if (['gal', 'L', 'mL'].includes(unit)) category = 'volume';
-        else if (['acres', 'ha', 'm2', 'km2'].includes(unit)) category = 'area';
-        else if (['hours', 'minutes'].includes(unit)) category = 'time';
-
-        return { value, unit, category };
+        return { value, unit, category: categoryForUnit(unit) ?? 'unknown' };
       }
 
       return { value: 0, unit: '', category: 'unknown' };
@@ -610,21 +1079,78 @@ function wasSpoken(transcript: string, value: string): boolean {
   return key.length >= 4 && tokens.join('').includes(key);
 }
 
+/**
+ * Does the sentence contain the words this enum answer is made of?
+ *
+ * Stem-matched on PREFIXES, because the farmer conjugates and the catalogue does not: the value
+ * `mow` has to match "mowed" and "mowing", `mulch` has to match "mulched". Multi-word values
+ * carry their own vocabulary — `cover_crop_mgmt` is satisfied by "cover crop", which is exactly
+ * how a grower says it.
+ *
+ * ⛔ The VALUE only, never the field's label. The first version of this counted label tokens too,
+ * and "Floor Management" let "took care of the orchard FLOOR" satisfy an answer of `mow` — the
+ * field label describes the QUESTION, so matching it proves the farmer talked about the subject,
+ * not that they gave this answer. Caught by its own test.
+ *
+ * Tokens under three characters are ignored: "mgmt" is a real word here, "of" and "a" are not,
+ * and a two-letter prefix matches most of the sentence.
+ */
+function enumValueEchoedInWords(transcript: string, value: string): boolean {
+  const spoken: string[] = (transcript || '').toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  if (spoken.length === 0) return false;
+  const wanted = value
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter((token) => token.length >= 3);
+  if (wanted.length === 0) return false;
+  return wanted.some((token) =>
+    spoken.some((word) => word.startsWith(token) || token.startsWith(word))
+  );
+}
+
 function sanitizeActivityFields(
   answered: Record<string, unknown> | undefined,
   requested: readonly VoiceFieldRequest[],
-  transcript: string
+  transcript: string,
+  rateValues: ReadonlySet<number> = new Set()
 ): Record<string, unknown> {
   const clean: Record<string, unknown> = {};
   if (!answered || typeof answered !== 'object' || requested.length === 0) return clean;
+
+  const squashLabel = (v: string) => v.toLowerCase().replace(/[^a-z0-9]/g, '');
 
   for (const field of requested) {
     const raw = answered[field.name];
     if (raw === undefined || raw === null || raw === '') continue;
 
+    // ⛔ An answer that IS the question.
+    //
+    // MEASURED 2026-09-02, deterministic across runs: "Ran the tractor through the east block"
+    // on a Cultivation form came back `method: "Operation Method"` — the label this file sent
+    // in the request, handed straight back as the value. `method` is free text, so every other
+    // check passes and the farmer finds "Operation Method" typed into the Method box.
+    //
+    // Cheap and general: no field's value is ever its own label. This catches the whole
+    // echo-the-request class, not the one field that exposed it.
+    if (squashLabel(String(raw)) === squashLabel(field.label)) continue;
+
     if (field.type === 'number') {
       const value = typeof raw === 'number' ? raw : parseFloat(String(raw).replace(/,/g, ''));
       if (!Number.isFinite(value)) continue;
+
+      // ⛔ The same rate-is-not-a-total rule, on the path that does NOT go through `amounts`.
+      //
+      // MEASURED 2026-09-02: "Planted the east block, a hundred trees an acre" answered
+      // `plants_established: 100`. That is a planting DENSITY; the field is a count of trees
+      // actually put in the ground, and 100 is wrong by the acreage. The rate filter over
+      // `amounts` cannot see this — activity fields are answered by name, not derived from the
+      // amounts array.
+      //
+      // The cross-check is evidence, not a classification of which fields are "totals": the
+      // model also emitted this number in `detected_amounts`, where the transcript showed it
+      // was spoken as a rate. Same number, same sentence, so the same reading applies.
+      if (rateValues.has(value)) continue;
+
       clean[field.name] = value;
       continue;
     }
@@ -672,6 +1198,15 @@ function sanitizeActivityFields(
       // this stops is a block that was never mentioned at all.
       if (field.name === 'block_id' && !wasSpoken(transcript, matched)) continue;
 
+      // ⛔ ...and the same demand, for the enums whose values ARE the practice's own words.
+      // See VOICE_ENUMS_MUST_ECHO_WORDS for what qualifies and why `protection_method` does not.
+      if (
+        VOICE_ENUMS_MUST_ECHO_WORDS.has(field.name) &&
+        !enumValueEchoedInWords(transcript, matched)
+      ) {
+        continue;
+      }
+
       clean[field.name] = matched;
       continue;
     }
@@ -697,21 +1232,30 @@ export function mapVoiceDataToFieldValues(
   });
   const overrides: Record<string, unknown> = {};
 
-  // The transcript belongs in the notes box, on EVERY activity.
+  // The transcript reaches the notes box ONLY when the farmer asks for it.
   //
-  // Three subtypes are still unroutable — canopy management, buffer use and seed search —
-  // and for those the parser answers `general`, which produces no field overrides at all:
-  // voice transcribed the farmer perfectly and then filled in nothing. The words themselves
-  // are the useful output there, and `observation` is exactly the field for them. It renders
-  // on the form for every subtype of every event type (verified against
-  // getFieldNamesForSurface), so the gate always lets it through.
+  // 🔴 2026-09-03, found on camera. `observation` is published VERBATIM on the buyer page as
+  // "Farmer's Field Notes", and voice auto-filled it with the whole utterance. So
+  // "Sprayed Entrust on the east block. Six fluid ounces an acre, 40 gallons total, airblast."
+  // put the rate and the tank volume in front of a shopper in prose — while the SAME record's
+  // structured `application_rate` / `volume` were being stripped for that exact reason by
+  // `PublicHistorySerializer._CERTIFIER_ONLY_EVENT_FIELDS`. The withholding policy is
+  // categorical for columns and silent for prose, so the strip was decorative on the one path
+  // that mattered.
   //
-  // ⚠️ This is the ONE place voice writes prose rather than a measurement, and `observation`
-  // is what ConsumerEventCard quotes as "Farmer's Field Notes". That is defensible precisely
-  // because a transcript IS the farmer's own words — unlike `description`, which on a legacy
-  // row may be AI-template output and is deliberately never seeded into this box. The farmer
-  // still reads and edits it in the form before saving, and NewEvent will not overwrite notes
-  // they have already typed.
+  // ⛔ The fix is NOT a scrubber. Regexing quantities out of a grower's sentence mangles their
+  // words and cannot recognise what else is in there. It is not a second, private notes field
+  // either: two prose boxes hand the farm editorial control over what its buyer page says, and
+  // `.claude/rules/transparency-first.md` draws that line explicitly — the page's value is that
+  // no farm can curate it. So the transcript stays where the farmer can read it (the voice
+  // panel quotes it back under "what we heard") and the public box stays empty unless they
+  // deliberately put it there. Suggest → confirm, the same red line the season plan and the OSP
+  // §11 panel draw.
+  //
+  // The utility this used to carry is preserved by the tick, not by the default: canopy
+  // management, buffer use and seed search still parse to `general` and produce no field
+  // overrides, so for those activities the words ARE the output — and one tap keeps them.
+  //
   // ⛔ `original_transcript` ONLY — never `description`. They look interchangeable and are
   // not: the GPT prompt asks for "a clean, professional description of the activity", so
   // `description` is MACHINE-AUTHORED prose, while `original_transcript` is what the farmer
@@ -719,14 +1263,35 @@ export function mapVoiceDataToFieldValues(
   // Notes", and NewEvent's own notes-field comment records why the box is never seeded from
   // `description`: it promotes machine copy into the grower's quoted voice.
   const spokenNotes = (parsedData.original_transcript || '').trim();
-  if (spokenNotes) overrides.observation = spokenNotes;
+  if (spokenNotes && parsedData.note_opt_in === true) overrides.observation = spokenNotes;
 
   // Amounts, filtered to the ones whose UNIT the farmer actually said — see
   // amountsActuallySpoken. Declared here rather than at the top of the function because it needs
   // the transcript above it; every consumer of `amounts` is further down.
-  const amounts = extractStructuredAmounts(
+  //
+  // ⛔ Rates are dropped HERE and not from the chips. `VoiceEventCapture` renders "3.5 lbs" from
+  // the same `detected_amounts`, and that chip is truthful — the farmer did say it. What must
+  // not happen is the rate landing in a field whose label says TOTAL. So the display keeps the
+  // heard quantity and the form keeps the empty box.
+  const spokenAmounts = extractStructuredAmounts(
     amountsActuallySpoken(parsedData.detected_amounts, spokenNotes)
   );
+  const amounts = spokenAmounts.filter((amount) => !amountIsSpokenAsRate(spokenNotes, amount.unit));
+  // The VALUES that were spoken as a rate. Handed to `sanitizeActivityFields` so a number the
+  // model ALSO answered by name ("a hundred trees an acre" -> plants_established: 100) gets the
+  // same reading as the amount it came from.
+  //
+  // ⚠️ Built from the RAW amounts, not from `spokenAmounts`. MEASURED 2026-09-02: "a hundred
+  // trees an acre" produced `{100, trees}`, which `amountsActuallySpoken` drops because "trees"
+  // is not in the unit map — and the value still came back by name as `plants_established: 100`.
+  // Filtering first left the cross-check with nothing to check against, and the density landed.
+  const spokenRates = extractStructuredAmounts(parsedData.detected_amounts)
+    .map((amount) => ({
+      amount,
+      denominator: spokenRateDenominator(spokenNotes, amount.unit)
+    }))
+    .filter((entry) => entry.denominator !== null);
+  const rateValues = new Set(spokenRates.map((entry) => entry.amount.value));
 
   // ── Chemical events (fertilization, pest_control, herbicide, fungicide) ──
   if (['fertilization', 'pest_control', 'herbicide', 'fungicide'].includes(templateId)) {
@@ -764,18 +1329,54 @@ export function mapVoiceDataToFieldValues(
       overrides.concentration = parsedData.concentration;
     }
 
-    // Application method
-    if (parsedData.application_method) {
-      overrides.application_method = parsedData.application_method;
-    } else if (parsedData.detected_systems && parsedData.detected_systems.length > 0) {
-      overrides.application_method = parsedData.detected_systems[0];
+    // Application method — VALIDATED against the dropdown this subtype actually renders.
+    //
+    // 🔴 MEASURED 2026-09-03: "…airblast" wrote `application_method: "airblast"`. The PE
+    // dropdown's value is `air_blast`, so the select fell back to its placeholder — "Select
+    // application method…" — while the form state held a value no option can display. The
+    // banner said Application Method was filled. Both statements cannot be true, and the one
+    // the farmer can see is the empty select.
+    //
+    // This is the same rule `sanitizeActivityFields` applies to every enum it accepts; this
+    // branch is LEGACY and had no catalogue check at all, which is why it took a value straight
+    // from `detected_systems`. Separator-insensitive, so "airblast", "air blast" and
+    // "Air-Blast" all resolve to `air_blast`; anything with no unique match is dropped and the
+    // farmer picks, which is strictly better than a dropdown that looks untouched.
+    const spokenMethod =
+      parsedData.application_method ||
+      (parsedData.detected_systems && parsedData.detected_systems.length > 0
+        ? parsedData.detected_systems[0]
+        : '');
+    if (spokenMethod) {
+      const method = matchApplicationMethod(spokenMethod, templateId);
+      if (method) overrides.application_method = method;
     }
 
-    // Volume applied (weight or volume amounts)
-    const volumeAmount = amounts.find((a) => a.category === 'weight' || a.category === 'volume');
-    if (volumeAmount) {
-      overrides.volume_applied = volumeAmount.value;
-      overrides.volume_unit = volumeAmount.unit;
+    // The label rate — the number that used to be thrown away.
+    //
+    // "Six fluid ounces an acre" is the sentence a grower actually speaks, and until
+    // `application_rate` existed it had two possible endings: land in `volume_applied` and be
+    // wrong by the whole acreage, or be dropped so the record lost it. Both halves must resolve
+    // to a real dropdown option (`rateUnitCode`), so "twenty gallons a tree" — a rate with no
+    // catalogue entry — is still kept out of the total and still not written here.
+    const rate = spokenRates.find((entry) => rateUnitCode(entry.amount.unit, entry.denominator));
+    if (rate) {
+      overrides.application_rate = rate.amount.value;
+      overrides.application_rate_unit = rateUnitCode(rate.amount.unit, rate.denominator);
+    }
+
+    // The product TOTAL — read AFTER the rate, and only when the words can say it is the same
+    // product. See productTotalFromAmounts: the 40 gallons in "six fluid ounces an acre, 40
+    // gallons total" is the tank, and this field is what the certifier packet, CA PUR and the
+    // CCOF materials form all print as the amount of product applied.
+    //
+    // `spokenRates[0]`, not `rate`: a rate the catalogue cannot express ("twenty gallons a
+    // tree") is still a rate that was spoken, and it still disqualifies a leftover in another
+    // unit from being read as the total.
+    const productTotal = productTotalFromAmounts(amounts, spokenRates[0]?.amount.unit);
+    if (productTotal) {
+      overrides.volume_applied = productTotal.value;
+      overrides.volume_unit = productTotal.unit;
     }
 
     // Area treated
@@ -848,16 +1449,26 @@ export function mapVoiceDataToFieldValues(
 
     // Irrigation-specific
     if (templateId === 'irrigation') {
-      if (parsedData.water_source) {
-        overrides.water_source = parsedData.water_source;
-      }
-      if (parsedData.detected_systems && parsedData.detected_systems.length > 0) {
-        const system = parsedData.detected_systems[0].toLowerCase();
-        if (system.includes('drip')) overrides.irrigation_method = 'drip';
-        else if (system.includes('sprinkler')) overrides.irrigation_method = 'sprinkler';
-        else if (system.includes('flood')) overrides.irrigation_method = 'flood';
-        else if (system.includes('furrow')) overrides.irrigation_method = 'furrow';
-      }
+      // Both of these are `valueType: 'enum'` on the irrigation form, and both used to take the
+      // parser's free text verbatim — the same defect `application_method` showed as an
+      // `air_blast` chip on a Spanish record, except here it would reach the select silently.
+      const waterSource = matchCatalogueValue(parsedData.water_source, WATER_SOURCES);
+      if (waterSource) overrides.water_source = waterSource;
+      // The parser's own answer first, then the system it named.
+      //
+      // This used to be four English `includes` checks — drip / sprinkler / flood / furrow —
+      // against nine catalogue values. `micro_sprinkler`, `center_pivot`, `sub_irrigation`,
+      // `hand_watering` and `rain_fed` were unreachable in ANY language, and a Spanish grower
+      // saying "por goteo" or "aspersión" matched nothing at all. Asking the parser for a
+      // catalogue value makes it a translation task, which it does well; the match below is what
+      // keeps a wrong answer out.
+      const spokenIrrigation =
+        parsedData.irrigation_method ||
+        (parsedData.detected_systems && parsedData.detected_systems.length > 0
+          ? parsedData.detected_systems[0]
+          : '');
+      const irrigationMethod = matchCatalogueValue(spokenIrrigation, IRRIGATION_METHODS);
+      if (irrigationMethod) overrides.irrigation_method = irrigationMethod;
       // Irrigation depth (e.g., "2 inches of water")
       //
       // ⛔ NO SILENT DEFAULT UNIT. This used to read `unit === 'cm' ? 'cm' : 'inches'`, so every
@@ -910,7 +1521,7 @@ export function mapVoiceDataToFieldValues(
   // question "what was the irrigation depth" by name. An answer beats an inference.
   Object.assign(
     overrides,
-    sanitizeActivityFields(parsedData.activity_fields, requestedFields, spokenNotes)
+    sanitizeActivityFields(parsedData.activity_fields, requestedFields, spokenNotes, rateValues)
   );
 
   // Merge: defaults < AI-extracted overrides
@@ -950,6 +1561,7 @@ export function mapVoiceDataToFieldValues(
  */
 export const VOICE_UNIT_COMPANIONS: Readonly<Record<string, readonly string[]>> = {
   volume_unit: ['volume_applied'],
+  application_rate_unit: ['application_rate'],
   area_unit: ['area_treated', 'area_covered'],
   fuel_unit: ['fuel_consumed'],
   yield_unit: ['yield_quantity'],

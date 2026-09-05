@@ -1,7 +1,7 @@
 /**
  * HeroPreviewCard — miniature of the consumer QR hero.
  *
- * Mirrors `CarbonHeroSection`'s photo + farm overlay + glass score badge
+ * Mirrors `CarbonHeroSection`'s photo + farm overlay
  * so farmers see in the Finish Production flow what shoppers will see
  * when they scan the QR code. The Trazo navbar pill is intentionally
  * omitted to avoid double branding when the uploaded photo already has
@@ -22,10 +22,6 @@ interface HeroPreviewCardProps {
   farmName?: string;
   /** Product name overlaid bottom-left (line 2). */
   productName?: string;
-  /** Real transparency score (0-100). Optional; when undefined, the
-      glass score badge is hidden entirely so the preview never shows
-      a misleading or empty score number. */
-  score?: number;
   /** Harvest date ISO string. When supplied, appended after product name
       ("Avocado · Harvested Mar 18, 2026") to mirror the live hero. */
   harvestDate?: string;
@@ -36,20 +32,11 @@ interface HeroPreviewCardProps {
   fallbackImageUrl?: string;
 }
 
-const getScoreColor = (score: number) => {
-  if (score >= 80) return 'green.500';
-  if (score >= 60) return 'green.400';
-  if (score >= 40) return 'yellow.400';
-  if (score >= 20) return 'orange.400';
-  return 'red.500';
-};
-
 export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
   imageUrl,
   imageCount = 0,
   farmName,
   productName,
-  score,
   harvestDate,
   fallbackImageUrl
 }) => {
@@ -146,11 +133,10 @@ export const HeroPreviewCard: React.FC<HeroPreviewCardProps> = ({
           <Box
             position="absolute"
             inset={0}
-            bgGradient={
-              typeof score === 'number' && !Number.isNaN(score)
-                ? `linear(135deg, ${getScoreColor(score)}30 0%, ${getScoreColor(score)}10 100%)`
-                : 'linear(135deg, gray.50 0%, gray.100 100%)'
-            }
+            // Neutral placeholder. Was tinted by the transparency score until 2026-09-05 — the
+            // score left the API for every caller, and a grade-coloured preview of a badge
+            // shoppers never see was the last producer surface still deriving colour from it.
+            bgGradient="linear(135deg, gray.50 0%, gray.100 100%)"
             display="flex"
             alignItems="center"
             justifyContent="center">

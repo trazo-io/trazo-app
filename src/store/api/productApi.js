@@ -260,10 +260,21 @@ export const productApi = baseApi.injectEndpoints({
         // for these (CreateParcelSerializer._BLANKABLE_PUMP_FIELDS), so a stale pump
         // test can actually be CLEARED. An out-of-date efficiency is weaker evidence
         // than none, so clearing has to be possible.
-        fd.append('pump_efficiency_pct', compliance.pump_efficiency_pct ?? '');
-        fd.append('system_pressure_psi', compliance.system_pressure_psi ?? '');
-        fd.append('pump_test_date', compliance.pump_test_date ?? '');
-        fd.append('pump_test_provider', compliance.pump_test_provider ?? '');
+        //
+        // Only the keys the caller PROVIDES are sent (2026-09-05). The card now has a second
+        // editor block — the CA DPR Site ID — and appending the four pump keys unconditionally
+        // would have cleared a pump test on every Site ID save: the "" -> None coercion below
+        // is what makes clearing possible, so it must be reachable only on purpose.
+        for (const key of [
+          'pump_efficiency_pct',
+          'system_pressure_psi',
+          'pump_test_date',
+          'pump_test_provider',
+          // CA DPR Site ID (PUR box 8) — parcel-level; the PUR export falls back to it.
+          'ca_site_id'
+        ]) {
+          if (key in compliance) fd.append(key, compliance[key] ?? '');
+        }
         return {
           url: PARCEL_URL(companyId, farmId, parcelId),
           method: 'PATCH',

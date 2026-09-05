@@ -67,21 +67,6 @@ const REQUEST_BADGE: Record<string, string> = {
 };
 
 /**
- * `HistoryScan.scan_type` values that have a label.
- *
- * The model's own `choices` are qr / feedback / review / share — but the column also holds
- * **`transparency_api`** (945 of 2,332 rows), written by a path that never went through those
- * choices. So the set on screen is wider than the set in the model, and interpolating the raw
- * value into a message id (`buyer.scanType.${value}`) puts the literal string
- * "buyer.scanType.feedback" in a badge the moment one of the unlabelled values shows up —
- * `MISSING_TRANSLATION` is swallowed by design in `I18n.tsx`, so it fails silently and visibly.
- * Anything unrecognised falls back to a generic label rather than leaking a key.
- */
-const SCAN_TYPE_KEYS = new Set(['qr', 'transparency_api', 'review', 'feedback', 'share']);
-const scanTypeKey = (scanType: string): string =>
-  SCAN_TYPE_KEYS.has(scanType) ? `buyer.scanType.${scanType}` : 'buyer.scanType.other';
-
-/**
  * Server-side scan filters. Keys are the endpoint's own query parameters, and each value is the
  * id the endpoint hands back on every row (`production_id`, `product_id`, `parcel_id`) — the
  * client filters with keys it was given, never ones it derived.
@@ -637,10 +622,11 @@ const BuyerPage = () => {
               // field is not a writer. It also made the UI worse — `w="100%"` on a column whose
               // every cell was an em dash left half the card blank.
               //
-              // `scan_type` is never shown as a fact: `public_history` leaves it at the model
-              // default "qr" for every page view, and `_determine_scan_type` returns anything else
-              // only when a comment or share flag is present — "qr" is its else-branch, not a
-              // detection. Only a deliberately-set value earns a badge.
+              // `scan_type` is not shown at all (badge removed 2026-09-02). `public_history`
+              // leaves it at the model default "qr" for every page view; the "review"/"feedback"
+              // values came only from the consumer reviews product retired 2026-08-06, and
+              // "transparency_api" from a legacy write path. Nothing writes a non-"qr" value
+              // today, so a "Review" badge on a live farm could only ever be seeded data.
               <Box overflowX="auto">
                 {/* nowrap on the headers stops them stacking, but only `minW` makes the
                     wrapper scroll rather than compress the row on a phone. */}
@@ -737,11 +723,6 @@ const BuyerPage = () => {
                           <Text fontSize="sm" as="span">
                             {scan.parcel || '—'}
                           </Text>
-                          {scan.scan_type && scan.scan_type !== 'qr' ? (
-                            <Badge variant="neutral" fontSize="11px" ml={2}>
-                              {intl.formatMessage({ id: scanTypeKey(scan.scan_type) })}
-                            </Badge>
-                          ) : null}
                         </Td>
                       </Tr>
                     ))}

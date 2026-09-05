@@ -63,7 +63,6 @@ function FinishProduction() {
   // consumer hero exactly.
   const harvestDate: string | undefined =
     (transparency as any)?.finish_date || (production as any)?.finish_date || undefined;
-  const previewScore: number | undefined = transparency?.quick_view?.transparency_score?.percentage;
 
   // Fallback cover used by ProductDetail when farmer uploads no photos:
   // first event-timeline photo. Surface it here so the preview shows the
@@ -220,7 +219,6 @@ function FinishProduction() {
         parcelName={parcelName}
         farmName={farmName}
         establishmentId={farmId}
-        previewScore={previewScore}
         harvestDate={harvestDate}
         fallbackImageUrl={fallbackImageUrl}
       />

@@ -138,6 +138,114 @@ const newEventCode = newEventSource
   })
   .join('\n');
 
+const AMBIGUOUS = {
+  ...OMRI_HIT,
+  // What the endpoint returns for a brand-only query: the matcher's single pick is the 2-4-1,
+  // while the grower may be holding the 2-3-1. Both are real catalog rows.
+  omri_product_pk: 46,
+  omri_product_id: 'nhf-0644',
+  omri_product_name: "Neptune's Harvest Organic Fish Fertilizer 2-4-1",
+  omri_candidates: [
+    {
+      pk: 46,
+      omri_id: 'nhf-0644',
+      product_name: "Neptune's Harvest Organic Fish Fertilizer 2-4-1"
+    },
+    {
+      pk: 47,
+      omri_id: 'nhf-3041',
+      product_name: "Neptune's Harvest Organic Fish and Seaweed Fertilizer 2-3-1"
+    }
+  ]
+};
+
+describe('InputVerifyHelper — an ambiguous query is a choice, never a one-tap guess', () => {
+  it('lists every candidate instead of presenting the top match as the answer', () => {
+    renderWith(AMBIGUOUS, { onAttachOmri: vi.fn(), attachedOmriPk: null });
+    expect(screen.getByText(/2 products match/i)).toBeTruthy();
+    expect(screen.getByText(/Fish Fertilizer 2-4-1/)).toBeTruthy();
+    expect(screen.getByText(/Fish and Seaweed Fertilizer 2-3-1/)).toBeTruthy();
+    // One attach control per candidate — and no extra one for the "winner" rendered twice.
+    expect(screen.getAllByRole('button', { name: /Use this listing/i })).toHaveLength(2);
+  });
+
+  it('attaches the pk the grower picked, not the one the matcher preferred', () => {
+    const onAttachOmri = vi.fn();
+    renderWith(AMBIGUOUS, { onAttachOmri, attachedOmriPk: null });
+    // The second row is the product on the label; the matcher had ranked it below.
+    fireEvent.click(screen.getAllByRole('button', { name: /Use this listing/i })[1]);
+    expect(onAttachOmri).toHaveBeenCalledWith(47);
+    expect(onAttachOmri).not.toHaveBeenCalledWith(46);
+  });
+
+  it('marks only the picked row as attached', () => {
+    renderWith(AMBIGUOUS, { onAttachOmri: vi.fn(), attachedOmriPk: 47 });
+    expect(screen.getByText(/Attached to this record/i)).toBeTruthy();
+    // The other candidate keeps its attach control, so the choice stays changeable.
+    expect(screen.getAllByRole('button', { name: /Use this listing/i })).toHaveLength(1);
+  });
+
+  it('a single candidate is not a chooser', () => {
+    renderWith(
+      {
+        ...OMRI_HIT,
+        omri_candidates: [{ pk: 17, omri_id: 'ttc-17486', product_name: 'Kocide 3000-O' }]
+      },
+      { onAttachOmri: vi.fn(), attachedOmriPk: null }
+    );
+    expect(screen.queryByText(/products match/i)).toBeNull();
+    expect(screen.getAllByRole('button', { name: /Use this listing/i })).toHaveLength(1);
+  });
+});
+
+const WSDA_HIT = {
+  found: true,
+  status: 'matched',
+  omri_product_pk: null,
+  national_list_substance_pk: null,
+  wsda_material_pk: 21,
+  wsda_material_id: 'WSDA-REG-FERT-2025-001',
+  wsda_material_name: "Neptune's Harvest Fish & Seaweed 2-3-1",
+  wsda_material_category: 'fertilizer'
+};
+
+describe('InputVerifyHelper — a WSDA listing is attachable too', () => {
+  it('offers the attach on a WSDA row', () => {
+    const onAttachWsda = vi.fn();
+    renderWith(WSDA_HIT, { onAttachWsda, attachedWsdaPk: null });
+    expect(screen.getByText(/Fish & Seaweed 2-3-1/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Use this listing/i }));
+    expect(onAttachWsda).toHaveBeenCalledWith(21);
+  });
+
+  it('marks it attached and offers Remove', () => {
+    const onAttachWsda = vi.fn();
+    renderWith(WSDA_HIT, { onAttachWsda, attachedWsdaPk: 21 });
+    expect(screen.getByText(/Attached to this record/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /^Remove$/i }));
+    expect(onAttachWsda).toHaveBeenCalledWith(null);
+  });
+
+  it('renders no attach when the form does not accept one (read-only card)', () => {
+    renderWith(WSDA_HIT);
+    expect(screen.queryByRole('button', { name: /Use this listing/i })).toBeNull();
+  });
+
+  it('does not call the OMRI handler — separate catalogues, separate columns', () => {
+    const onAttachOmri = vi.fn();
+    const onAttachWsda = vi.fn();
+    renderWith(WSDA_HIT, {
+      onAttachOmri,
+      onAttachWsda,
+      attachedOmriPk: null,
+      attachedWsdaPk: null
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Use this listing/i }));
+    expect(onAttachWsda).toHaveBeenCalledWith(21);
+    expect(onAttachOmri).not.toHaveBeenCalled();
+  });
+});
+
 /** The full `setEventFormData( … )` call starting at `from`, by balanced parentheses.
  *  A fixed-width window is not good enough here: 260 chars past `onDataChange`'s merge runs
  *  into the next statement and picks up `...eventFormDataRef.current` as if it were part of
@@ -169,11 +277,13 @@ describe('NewEvent — a voice merge never carries a listing onto a new product 
    */
   const SAFE_PARTIALS = ['data', 'templatePrefillValues'];
 
-  it('defines the guard, and it nulls the listing rather than keeping it', () => {
-    expect(newEventCode).toMatch(/const withOmriAttachmentChecked\s*=/);
-    const body = newEventCode.slice(newEventCode.indexOf('const withOmriAttachmentChecked'));
-    expect(body.slice(0, 400)).toMatch(/omri_product:\s*null/);
-    expect(body.slice(0, 400)).toMatch(/commercial_name\s*!==\s*prev\.commercial_name/);
+  it('defines the guard, and it nulls BOTH listings rather than keeping them', () => {
+    expect(newEventCode).toMatch(/const withListingAttachmentChecked\s*=/);
+    const body = newEventCode.slice(newEventCode.indexOf('const withListingAttachmentChecked'));
+    expect(body.slice(0, 500)).toMatch(/omri_product:\s*null/);
+    // WSDA is a second attachable catalogue; a name change invalidates it identically.
+    expect(body.slice(0, 500)).toMatch(/wsda_material:\s*null/);
+    expect(body.slice(0, 500)).toMatch(/commercial_name\s*!==\s*prev\.commercial_name/);
   });
 
   it('guards every merge that carries an unknown partial over existing state', () => {
@@ -189,11 +299,11 @@ describe('NewEvent — a voice merge never carries a listing onto a new product 
     });
 
     expect(risky.length, 'expected the three voice merges to be found').toBe(3);
-    const unguarded = risky.filter((c) => !c.includes('withOmriAttachmentChecked'));
+    const unguarded = risky.filter((c) => !c.includes('withListingAttachmentChecked'));
     expect(
       unguarded,
       'A setEventFormData merge spreads a partial payload over existing state without ' +
-        'withOmriAttachmentChecked(). If it can carry commercial_name it must be wrapped; ' +
+        'withListingAttachmentChecked(). If it can carry commercial_name it must be wrapped; ' +
         'if it provably cannot, add its name to SAFE_PARTIALS with the reason.'
     ).toEqual([]);
   });

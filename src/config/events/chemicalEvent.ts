@@ -25,7 +25,14 @@
  * Generated types: components['schemas']['ChemicalEvent'] (api.generated.ts)
  */
 
-import type { ChemicalSubtype, EventRegistryEntry, FieldConfig, SubtypeEntry } from './registry';
+import type {
+  ChemicalSubtype,
+  EventRegistryEntry,
+  FieldConfig,
+  FieldFormatter,
+  SubtypeEntry
+} from './registry';
+import { APPLICATION_RATE_UNIT_SYMBOLS } from './enums';
 import {
   defaultFormatter,
   formatBoolean,
@@ -174,6 +181,25 @@ const formatAreaTreated = makeUnitPairFormatter('area_unit');
 const formatAppFuel = makeUnitPairFormatter('application_fuel_unit');
 const formatMicronutrientRate = makeUnitPairFormatter('micronutrient_rate_unit');
 
+/**
+ * The label rate — "6 fl oz/ac", not "6 fl_oz_ac".
+ *
+ * Not `makeUnitPairFormatter`, which prints the stored unit verbatim: these values are compound
+ * enum CODES (`fl_oz_ac`), and a record reading "6 fl_oz_ac" on the certifier packet is the same
+ * class of defect as the raw `waste_reduction` a shopper once saw.
+ */
+const formatApplicationRate: FieldFormatter<number | string> = (value, event) => {
+  if (value == null || value === '') return null;
+  const numeric = typeof value === 'string' ? parseFloat(value) : value;
+  if (!Number.isFinite(numeric)) return null;
+  const code = event.application_rate_unit;
+  const symbol = typeof code === 'string' ? APPLICATION_RATE_UNIT_SYMBOLS[code] : undefined;
+  const formatted = numeric.toLocaleString(undefined, { maximumFractionDigits: 3 });
+  // ⛔ No unit, no rate. A bare "6" beside "Application Rate" is unreadable and, on a spray
+  // record, unfalsifiable — the whole point of the field is the denominator.
+  return symbol ? `${formatted} ${symbol}` : null;
+};
+
 // §E-3 — micronutrient labels. English here + es-419 in utils/fieldValues.es.ts, matching the
 // other enum maps in this file (getFieldsForSurface has no `intl`, so a formatter returning an
 // i18n key would render the raw key; localizeFieldValue maps the English string downstream).
@@ -224,7 +250,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     name: 'chemical_subtype',
     labelKey: 'events.chemical.fields.chemicalSubtype',
     valueType: 'enum',
-    enumSource: 'chemical_subtypes_by_main_type',
+    enumSource: 'chemical_subtypes',
     surfaces: {
       modal: 'immediate',
       form: 'immediate',
@@ -278,6 +304,26 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
       preview: 'immediate',
       consumer_card: 'immediate',
       consumer_timeline: 'immediate'
+    }
+  },
+  {
+    // The RATE, beside the total — the number the grower says and the label prints.
+    //
+    // ⛔ Deliberately NOT on any consumer surface. A shopper cannot tell a high rate from a low
+    // one without the label to compare it against, so the number reads as a virtue signal in
+    // whichever direction it happens to point — the self-graded-claim shape ECGT 2024/825 and
+    // FTC 16 CFR 260.6 both bite on. It is producer and certifier data: a certifier checks it
+    // against the label, and that is a question a shopper has no way to ask.
+    name: 'application_rate',
+    labelKey: 'events.chemical.fields.applicationRate',
+    valueType: 'number',
+    unitField: 'application_rate_unit',
+    formatter: formatApplicationRate,
+    surfaces: {
+      card: 'secondary',
+      modal: 'immediate',
+      form: 'immediate',
+      preview: 'immediate'
     }
   },
   {
@@ -941,6 +987,26 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     labelKey: 'events.chemical.fields.applicationCounty',
     valueType: 'string',
     surfaces: { modal: 'details', form: 'secondary' }
+  },
+  {
+    // Who made the application. A hired pass by a licensed pest control business is the
+    // BUSINESS's to report on the CA PUR (3 CCR 6626(b); PUE Compendium 4-8), so the PUR export
+    // leaves it out and lists it separately — and the grower's own record must say so, or the
+    // absence reads as a missing spray. Shown only when true: "Applied by a business: No" on
+    // every self-applied record is noise.
+    name: 'applied_by_pcb',
+    labelKey: 'events.chemical.fields.appliedByPcb',
+    valueType: 'boolean',
+    formatter: formatBoolean,
+    visibleWhen: (e) => e.applied_by_pcb === true || e.applied_by_pcb === 'true',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+  {
+    name: 'pcb_name',
+    labelKey: 'events.chemical.fields.pcbName',
+    valueType: 'string',
+    visibleWhen: (e) => e.applied_by_pcb === true || e.applied_by_pcb === 'true',
+    surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     // Tank-mix partners (adjuvants/spreader-stickers). Audit/modal display only —

@@ -51,6 +51,7 @@ import {
   FaBug,
   FaClipboard,
   FaCloudRain,
+  FaTint,
   FaClipboardList,
   FaLayerGroup
 } from 'react-icons/fa';
@@ -88,6 +89,7 @@ import {
   localizeConsumerDescription
 } from 'utils/eventDescriptions';
 import { PhotoDocumentationTooltip } from 'components/Education/EducationalTooltip';
+import type { VerificationLevel } from 'utils/verificationTierHelpers';
 
 // Buyer documentation CTA — proof view only, lazy so the story view (the
 // default consumer landing) doesn't pay for the form chunk.
@@ -158,6 +160,8 @@ interface TimelineEvent {
   verification_timestamp?: string;
   data_integrity_score?: number;
   usda_factors_used?: boolean;
+  /** What the record contains, from the server. See `utils/verificationTierHelpers.ts`. */
+  verification_level?: VerificationLevel;
   extra_data?: {
     blockchain_verified?: boolean;
     blockchain_transaction?: string;
@@ -199,7 +203,6 @@ interface UltraMobileProductionJourneyProps {
    */
   onViewEvent?: (event: any) => void;
   productionId?: string;
-  transparencyScore?: number;
   /** Production-level blockchain verification data */
   productionBlockchain?: {
     tx_hash?: string;
@@ -228,7 +231,6 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
   onCorrectEvent,
   onViewEvent,
   productionId,
-  // transparencyScore prop retained in the interface (parent still passes it)
   // but no longer rendered — the numeric score left the stats strip 2026-06.
   productionBlockchain,
   organicSummary
@@ -833,8 +835,16 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       colorScheme: 'yellow'
     },
     {
+      // Droplet, NOT a rain cloud. A rain cloud is precipitation — water that
+      // FELL — and this chapter is overwhelmingly water the grower APPLIED
+      // (CARE_CODES: irrigation, pruning, cultivation, thinning, frost
+      // protection, mowing). It also collided: FaCloudRain is the weather
+      // event-card icon (see the getEventIcon fallbacks below and
+      // eventTypeAppearance type 0), and WEATHER_CODES route INTO this
+      // chapter, so the header wore the icon of one class of its own rows.
+      // The title carries the "& Care" half; the icon carries the water half.
       key: 'care',
-      icon: FaCloudRain,
+      icon: FaTint,
       title: intl.formatMessage({
         id: 'consumer.journey.chapterCareTitle',
         defaultMessage: 'Water & Care'
@@ -1101,7 +1111,10 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
       // when it is absent — older payloads, preview data — defaulting to 'self_reported'
       // understated events that plainly have photo evidence attached.
       verification_level: event.verification_level || derivePhotoTierLevel(event),
-      photo_verified_count: event.photo_verified_count || 0,
+      // `photo_verified_count` used to be passed here and rendered as a bare "(3)" next to
+      // the retired tier badge. The public payload calls the field `photo_documented_count`
+      // (history/transparency_views.py) and a regression test asserts the old name is absent,
+      // so this was reading `undefined` and passing 0. The card counts `album.images` itself.
       area_covered: event.area_covered,
       yield_quantity: event.yield_quantity,
       fuel_consumed: event.fuel_consumed,
@@ -1539,10 +1552,17 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
                       {/* Evidence chips */}
                       {(ch.photoCount > 0 || ch.allInputsOrganic) && (
                         <HStack spacing={2} mt={2} flexWrap="wrap">
+                          {/* A COUNT, so it is neutral. It was `colorScheme="green"`, which made
+                              it identical to the "All inputs organic-approved" chip sitting
+                              beside it — and that one IS a claim, resolved server-side from
+                              `organic_summary`. Two different kinds of thing wearing the same
+                              green is how a plain fact borrows a claim's authority. Green stays
+                              reserved for a third-party-backed statement, which is the rule the
+                              OMRI chip and the event card's provenance chip already follow. */}
                           {ch.photoCount > 0 && (
                             <Badge
-                              variant="subtle"
-                              colorScheme="green"
+                              variant="outline"
+                              colorScheme="gray"
                               fontSize="xs"
                               borderRadius="full"
                               px={2}>

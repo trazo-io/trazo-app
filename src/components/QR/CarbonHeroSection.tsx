@@ -50,7 +50,6 @@ const slideInUp = keyframes`
 `;
 
 interface CarbonScoreData {
-  score: number;
   footprint: number;
   relatableFootprint?: string;
   grade?: string;
@@ -58,12 +57,10 @@ interface CarbonScoreData {
 }
 
 interface TrustIndicatorData {
-  confidenceScore: number;
   isUSDAVerified: boolean;
   reviewsCount: number;
   averageRating?: number | null;
   scansCount: number;
-  transparencyScore: number;
 }
 
 interface ProductBasicData {
@@ -155,7 +152,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
   // Farm — complete growing story… you can see it all") made unsubstantiated
   // completeness claims and implied a ranking. One neutral, factual message
   // regardless of score.
-  const getTransparencyMessage = (_score: number) => {
+  const getTransparencyMessage = () => {
     return {
       primary: intl.formatMessage({
         id: 'consumer.hero.documentedStoryHeading',
@@ -169,13 +166,6 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
       action: ''
     };
   };
-
-  // The consumer page always renders in transparency mode (ProductDetail passes
-  // level:'transparency'). The old score-tiered ladder below this returned unqualified
-  // environmental-benefit claims ("excellent environmental stewardship", "Sustainable
-  // Farming Practices") derived from a self-reported score — FTC 16 CFR 260.4 / EU ECGT
-  // point 4a risk — so it has been removed. One neutral, factual message regardless of score.
-  const getConsumerMessage = (score: number) => getTransparencyMessage(score);
 
   // NOTE: a `getRelatableComparison()` helper used to live here. It was already dead
   // (defined, never called), but it built a four-tier verdict ladder off the self-reported
@@ -228,8 +218,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
     );
   }
 
-  const score = carbonData.score || 0;
-  const message = getConsumerMessage(score);
+  const message = getTransparencyMessage();
 
   // Format harvest date for hero overlay (e.g. "Harvested Mar 18, 2026").
   // Falls back to nothing when missing — never renders "Recently harvested"
@@ -375,7 +364,7 @@ export const CarbonHeroSection: React.FC<CarbonHeroSectionProps> = ({
                 mb={1}>
                 {intl.formatMessage({
                   id: 'consumer.specimen.heroChip',
-                  defaultMessage: 'Not a real farm'
+                  defaultMessage: 'Demo farm'
                 })}
               </Box>
             )}

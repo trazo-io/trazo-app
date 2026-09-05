@@ -56,7 +56,7 @@ import {
   TabPanels,
   TabPanel
 } from '@chakra-ui/react';
-import type { ButtonProps } from '@chakra-ui/react';
+import type { ButtonProps, FormControlProps } from '@chakra-ui/react';
 import { S3Image } from '../Media/S3Image';
 import { ReactNode, ReactElement, useState, useEffect, useCallback } from 'react';
 import {
@@ -1064,6 +1064,19 @@ interface StandardFieldProps {
   error?: string;
   helpText?: string;
   children: ReactNode;
+  /* LAYOUT ONLY, and deliberately an allowlist rather than `...rest`.
+     Call sites have been writing `flex={2}` / `mt={4}` on this component since it was
+     introduced and every one of them was silently dropped — 10 `flex` props on the chemical
+     tab alone, which is why its "Product Amount / Unit" rows rendered as two equal columns
+     instead of 2:1. A blanket rest-spread would have fixed those and broken others: several
+     call sites carry `colorScheme` / `variant` / `size` meant for a Badge inside the label
+     fragment, and FormControl feeds exactly those three into its field theming context, so
+     forwarding them would restyle the control. Layout props cannot do that. */
+  flex?: FormControlProps['flex'];
+  mt?: FormControlProps['mt'];
+  minW?: FormControlProps['minW'];
+  maxW?: FormControlProps['maxW'];
+  w?: FormControlProps['w'];
 }
 
 export const StandardField = ({
@@ -1071,10 +1084,22 @@ export const StandardField = ({
   required = false,
   error,
   helpText,
-  children
+  children,
+  flex,
+  mt,
+  minW,
+  maxW,
+  w
 }: StandardFieldProps) => {
   return (
-    <FormControl isRequired={required} isInvalid={!!error}>
+    <FormControl
+      isRequired={required}
+      isInvalid={!!error}
+      flex={flex}
+      mt={mt}
+      minW={minW}
+      maxW={maxW}
+      w={w}>
       <FormLabel
         fontWeight="semibold"
         color="gray.700"

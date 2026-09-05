@@ -26,6 +26,7 @@ import {
   StandardField,
   StandardInput
 } from 'components/Design/StandardComponents';
+import { useFarmState } from 'hooks/useMeasurementSystem';
 import { useUpdateParcelComplianceMutation } from 'store/api/productApi';
 
 interface BufferRow {
@@ -42,6 +43,7 @@ interface ParcelLike {
   buffer_zones?: BufferRow[];
   apn?: string;
   section_township_range?: string;
+  ca_site_id?: string;
   date_began_managing?: string;
   treated_lumber_present?: boolean;
   treated_lumber_description?: string;
@@ -78,6 +80,42 @@ const ParcelComplianceCard: React.FC<Props> = ({
     pump_test_date: '',
     pump_test_provider: ''
   });
+
+  // CA DPR Site ID (PUR box 8). Issued per SITE by the County Agricultural Commissioner
+  // (3 CCR 6622), so it is a parcel fact: every spray on this parcel inherits it on the
+  // monthly Pesticide Use Report unless the record carries its own. Not a § 205.202 fact,
+  // so this card — not the Parcel Application wizard — is its one editor. California only.
+  const isCalifornia = useFarmState(farmId) === 'CA';
+  const [siteId, setSiteId] = useState('');
+  useEffect(() => {
+    setSiteId(parcel?.ca_site_id || '');
+  }, [parcel]);
+
+  const handleSaveSiteId = async () => {
+    try {
+      // ONLY the Site ID: the mutation sends the keys it is given, so this cannot clear
+      // the pump test saved by the block below.
+      await updateParcelCompliance({
+        companyId,
+        farmId,
+        parcelId,
+        compliance: { ca_site_id: siteId.trim() }
+      }).unwrap();
+      toast({
+        status: 'success',
+        title: intl.formatMessage({ id: 'parcel.dpr.toast.saved', defaultMessage: 'Site ID saved' })
+      });
+    } catch (err: unknown) {
+      toast({
+        status: 'error',
+        title: intl.formatMessage({
+          id: 'parcel.compliance.toast.error',
+          defaultMessage: 'Could not save parcel compliance records'
+        }),
+        description: String((err as { data?: unknown })?.data || err)
+      });
+    }
+  };
 
   useEffect(() => {
     if (!parcel) return;
@@ -230,6 +268,50 @@ const ParcelComplianceCard: React.FC<Props> = ({
             defaultMessage: 'Open Parcel Application'
           })}
         </StandardButton>
+
+        {isCalifornia && (
+          <>
+            <Divider />
+            <Box>
+              <Text fontSize="md" fontWeight="semibold" color="gray.700" mb={1}>
+                {intl.formatMessage({
+                  id: 'parcel.dpr.title',
+                  defaultMessage: 'California Pesticide Use Report identifiers'
+                })}
+              </Text>
+              <Text fontSize="sm" color="gray.600" mb={3}>
+                {intl.formatMessage({
+                  id: 'parcel.dpr.help',
+                  defaultMessage:
+                    'The Site ID your County Agricultural Commissioner issued for this parcel (box 8 on the Pesticide Use Report, 1–8 characters exactly as issued). Saved once here; every spray on this parcel uses it unless the record carries its own.'
+                })}
+              </Text>
+              <SimpleGrid columns={{ base: 1, smd: 2 }} spacing={4}>
+                <StandardField
+                  label={intl.formatMessage({
+                    id: 'parcel.dpr.siteId',
+                    defaultMessage: 'CA DPR Site ID'
+                  })}>
+                  <StandardInput
+                    value={siteId}
+                    maxLength={8}
+                    isDisabled={!canWrite}
+                    onChange={(e) => setSiteId(e.target.value)}
+                    placeholder={intl.formatMessage({
+                      id: 'parcel.dpr.siteIdPlaceholder',
+                      defaultMessage: 'e.g., 0001A'
+                    })}
+                  />
+                </StandardField>
+              </SimpleGrid>
+              {canWrite && (
+                <StandardButton size="sm" mt={3} onClick={handleSaveSiteId} isLoading={isLoading}>
+                  {intl.formatMessage({ id: 'parcel.dpr.save', defaultMessage: 'Save Site ID' })}
+                </StandardButton>
+              )}
+            </Box>
+          </>
+        )}
 
         <Divider />
 

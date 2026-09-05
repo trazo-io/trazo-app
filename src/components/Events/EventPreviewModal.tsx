@@ -30,6 +30,7 @@ import {
   type VerificationLevel
 } from '../../utils/verificationTierHelpers';
 import { useIntl } from 'react-intl';
+import { usePreviewInputStatusQuery } from 'store/api/ospApi';
 
 interface EventPreviewModalProps {
   isOpen: boolean;
@@ -66,15 +67,13 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
     (formData as { acceptedFiles?: unknown[] })?.acceptedFiles?.length ??
     formData?.album?.images?.length ??
     0;
-  const hasGpsData = !!(formData?.latitude || formData?.longitude || formData?.gps_coordinates);
-  const hasTimestamp = !!(formData?.timestamp || formData?.date);
-
-  const mockVerificationLevel: VerificationLevel = calculatePreviewVerificationLevel(
-    photoCount,
-    hasGpsData,
-    hasTimestamp,
-    activeEventType
-  );
+  // GPS and timestamp used to feed this too. They fed the retired trust ladder's
+  // `photo_verified` rung, which claimed metadata "verifies" an event — it records where a
+  // CAMERA was, not whether the practice happened — and the buyer page rendered that rung
+  // with the same words as the one below it, differing only in colour. The preview's job is
+  // to show the farmer exactly what a shopper will see, and a shopper now sees one neutral
+  // provenance chip plus a photo count.
+  const mockVerificationLevel: VerificationLevel = calculatePreviewVerificationLevel(photoCount);
 
   // Transform form data to standardized event format.
   //
@@ -91,9 +90,7 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
         ...normalizeFormEventData(activeEventType, formData, {
           generateMockVerification: true
         }),
-        // MVP Photo Verification: Add calculated verification level for preview
-        verification_level: mockVerificationLevel,
-        photo_verified_count: photoCount > 0 ? photoCount : undefined
+        verification_level: mockVerificationLevel
       })
     : ({
         id: 'preview-event',
@@ -125,6 +122,49 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
    * above could promise "how consumers will see your event" for an activity the backend
    * withholds from the buyer page entirely — the banner had no way to know.
    */
+  /**
+   * What the buyer page will say about this INPUT, decided where it is allowed to be decided.
+   *
+   * 🔴 2026-09-03, on camera. The grower attached the Entrust OMRI listing, opened Preview, and
+   * the chip read "Organic-approved · grower-reported" — under a heading promising "how shoppers
+   * will see this activity". The card is right to refuse: `ORGANIC_STATUS_KEYS` maps every
+   * `organic_approved` value to the grower-reported wording precisely because the browser cannot
+   * see the OMRI or WSDA catalogs, and a self-report spoken in a third party's name is the
+   * 2026-08-09 defect `claim_authority` exists to end. So the preview could not tell the truth
+   * in either direction, and the direction it happened to fail in was a FALSE NEGATIVE right
+   * after the grower did the thing that earns the claim.
+   *
+   * Asking the server is the only honest fix. `/api/input-status-preview/` runs the same
+   * National List classifier and the same `resolve_input_status` the saved record will run,
+   * over the draft, and returns the same `{status, label}` object the public payload carries.
+   *
+   * While that is in flight or unreachable the chip says so (`listing_pending`) rather than
+   * falling back to a claim. A preview that overstates what is published is worse than no
+   * preview; so is one that understates it.
+   */
+  const chemicalDraft = {
+    commercial_name: String(formData?.commercial_name ?? ''),
+    active_ingredient: String(formData?.active_ingredient ?? ''),
+    organic_approved: String(formData?.organic_approved ?? ''),
+    restricted_use_pesticide:
+      formData?.restricted_use_pesticide === true || formData?.restricted_use_pesticide === 'true',
+    omri_product: typeof formData?.omri_product === 'number' ? formData.omri_product : null,
+    wsda_material: typeof formData?.wsda_material === 'number' ? formData.wsda_material : null
+  };
+  // 2 is CHEMICAL_EVENT_TYPE. Nothing else on the wizard carries an input listing.
+  const checksListing =
+    activeEventType === 2 &&
+    hasEnoughData &&
+    Boolean(
+      chemicalDraft.commercial_name ||
+        chemicalDraft.organic_approved ||
+        chemicalDraft.omri_product ||
+        chemicalDraft.wsda_material
+    );
+  const { data: serverInputStatus } = usePreviewInputStatusQuery(chemicalDraft, {
+    skip: !checksListing
+  });
+
   const withheldReasonId = buyerPageWithheldReasonId({
     ...(previewEvent as unknown as Record<string, unknown>),
     event_type: activeEventType
@@ -250,7 +290,23 @@ export const EventPreviewModal: React.FC<EventPreviewModalProps> = ({
                     borderColor={previewCardBorder}
                     overflow="hidden"
                     p={4}>
-                    <ConsumerEventCard event={previewEvent as any} isLast={true} />
+                    <ConsumerEventCard
+                      event={
+                        checksListing
+                          ? ({
+                              ...(previewEvent as unknown as Record<string, unknown>),
+                              // No claim until the server has made one. `listing_pending` is
+                              // rendered by ConsumerEventCard as a neutral chip and is a status
+                              // `resolve_input_status` never emits, so it cannot reach a shopper.
+                              input_status: serverInputStatus ?? {
+                                status: 'listing_pending',
+                                label: ''
+                              }
+                            } as any)
+                          : (previewEvent as any)
+                      }
+                      isLast={true}
+                    />
                   </Box>
                 );
               })()}

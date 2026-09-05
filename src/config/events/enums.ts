@@ -33,6 +33,54 @@ export const AREA_UNITS: readonly EnumOption[] = [
   { value: 'km2', labelKey: 'events.units.area.squareKilometers' }
 ] as const;
 
+/**
+ * Application-rate units — a quantity PER unit of land.
+ *
+ * ⛔ Mirrors `UNIT_APPLICATION_RATE` in `trazo-back/common/field_registry.py`. The value strings
+ * are the model's `choices`, so a value here that is not there is rejected on save.
+ *
+ * The labels are SYMBOLS, and identical in both locales on purpose: "fl oz/ac" is how the
+ * product label prints it in English and in Spanish, and a translated unit ("onzas líquidas por
+ * acre") is longer, less recognisable to the person holding the jug, and a new way for the two
+ * locales to disagree about what a number means.
+ */
+export const APPLICATION_RATE_UNITS: readonly EnumOption[] = [
+  { value: 'fl_oz_ac', labelKey: 'events.units.rate.flOzPerAcre' },
+  { value: 'pt_ac', labelKey: 'events.units.rate.ptPerAcre' },
+  { value: 'qt_ac', labelKey: 'events.units.rate.qtPerAcre' },
+  { value: 'gal_ac', labelKey: 'events.units.rate.galPerAcre' },
+  { value: 'oz_ac', labelKey: 'events.units.rate.ozPerAcre' },
+  { value: 'lb_ac', labelKey: 'events.units.rate.lbPerAcre' },
+  { value: 'ton_ac', labelKey: 'events.units.rate.tonPerAcre' },
+  { value: 'mL_ha', labelKey: 'events.units.rate.mlPerHectare' },
+  { value: 'L_ha', labelKey: 'events.units.rate.lPerHectare' },
+  { value: 'g_ha', labelKey: 'events.units.rate.gPerHectare' },
+  { value: 'kg_ha', labelKey: 'events.units.rate.kgPerHectare' },
+  { value: 't_ha', labelKey: 'events.units.rate.tPerHectare' }
+] as const;
+
+/**
+ * The printed form of each rate unit, for read-only surfaces.
+ *
+ * Display surfaces resolve values through formatters, which have no `intl` — the same reason
+ * MICRONUTRIENT_LABELS and FLOOR_MANAGEMENT_LABELS exist as plain maps beside their formatter.
+ * These are symbols, so there is nothing to localise and no es-419 twin is needed.
+ */
+export const APPLICATION_RATE_UNIT_SYMBOLS: Record<string, string> = {
+  fl_oz_ac: 'fl oz/ac',
+  pt_ac: 'pt/ac',
+  qt_ac: 'qt/ac',
+  gal_ac: 'gal/ac',
+  oz_ac: 'oz/ac',
+  lb_ac: 'lb/ac',
+  ton_ac: 'ton/ac',
+  mL_ha: 'mL/ha',
+  L_ha: 'L/ha',
+  g_ha: 'g/ha',
+  kg_ha: 'kg/ha',
+  t_ha: 't/ha'
+};
+
 /** Volume units — liquid/solid chemicals, fertilizers */
 export const VOLUME_UNITS: readonly EnumOption[] = [
   { value: 'L', labelKey: 'events.units.volume.liters' },
@@ -135,7 +183,11 @@ export const APPLICATION_METHODS_BY_CHEMICAL_TYPE: Record<string, readonly EnumO
     { value: 'aerial', labelKey: 'events.applicationMethods.aerial' },
     { value: 'chemigation', labelKey: 'events.applicationMethods.chemigation' },
     { value: 'seed_treatment', labelKey: 'events.applicationMethods.seedTreatment' },
-    { value: 'soil_incorporation', labelKey: 'events.applicationMethods.soilIncorporation' }
+    { value: 'soil_incorporation', labelKey: 'events.applicationMethods.soilIncorporation' },
+    // Fumigation was in the backend choices and in the PUR exporter (box 21 "Fume" + the
+    // FFM-code requirement) but in no form list, so the FFM input — rendered only when the
+    // method is fumigation — could never appear and box 21a was dead code (2026-09-05).
+    { value: 'fumigation', labelKey: 'events.applicationMethods.fumigation' }
   ],
   HE: [
     { value: 'ground_spray', labelKey: 'events.applicationMethods.groundSpray' },
@@ -143,7 +195,11 @@ export const APPLICATION_METHODS_BY_CHEMICAL_TYPE: Record<string, readonly EnumO
     { value: 'aerial', labelKey: 'events.applicationMethods.aerial' },
     { value: 'chemigation', labelKey: 'events.applicationMethods.chemigation' },
     { value: 'seed_treatment', labelKey: 'events.applicationMethods.seedTreatment' },
-    { value: 'soil_incorporation', labelKey: 'events.applicationMethods.soilIncorporation' }
+    { value: 'soil_incorporation', labelKey: 'events.applicationMethods.soilIncorporation' },
+    // Fumigation was in the backend choices and in the PUR exporter (box 21 "Fume" + the
+    // FFM-code requirement) but in no form list, so the FFM input — rendered only when the
+    // method is fumigation — could never appear and box 21a was dead code (2026-09-05).
+    { value: 'fumigation', labelKey: 'events.applicationMethods.fumigation' }
   ],
   FU: [
     { value: 'ground_spray', labelKey: 'events.applicationMethods.groundSpray' },
@@ -151,7 +207,11 @@ export const APPLICATION_METHODS_BY_CHEMICAL_TYPE: Record<string, readonly EnumO
     { value: 'aerial', labelKey: 'events.applicationMethods.aerial' },
     { value: 'chemigation', labelKey: 'events.applicationMethods.chemigation' },
     { value: 'seed_treatment', labelKey: 'events.applicationMethods.seedTreatment' },
-    { value: 'soil_incorporation', labelKey: 'events.applicationMethods.soilIncorporation' }
+    { value: 'soil_incorporation', labelKey: 'events.applicationMethods.soilIncorporation' },
+    // Fumigation was in the backend choices and in the PUR exporter (box 21 "Fume" + the
+    // FFM-code requirement) but in no form list, so the FFM input — rendered only when the
+    // method is fumigation — could never appear and box 21a was dead code (2026-09-05).
+    { value: 'fumigation', labelKey: 'events.applicationMethods.fumigation' }
   ]
 } as const;
 
@@ -377,6 +437,31 @@ export const retiredOrganicApprovedLabelKey = (value?: string | null): string | 
   return keys[value] ?? null;
 };
 
+/**
+ * The i18n key for one application-method VALUE, across every subtype's list.
+ *
+ * Needed because the voice panel echoes the method back to the farmer, and since 2026-09-03 the
+ * parser answers with the catalogue CODE rather than the farmer's own word — so a Spanish
+ * grower who said "nebulizadora" was shown a chip reading **air_blast**. A raw enum key in the
+ * UI is the `waste_reduction` failure again: the value is correct and the presentation is not
+ * language at all.
+ *
+ * Returns null for anything not in the catalogue — legacy free text, which is the farmer's own
+ * wording and should be shown exactly as it is.
+ */
+const APPLICATION_METHOD_LABEL_KEYS: Record<string, string> = [
+  ...APPLICATION_METHODS,
+  ...Object.values(APPLICATION_METHODS_BY_CHEMICAL_TYPE).flat()
+].reduce((acc, option) => {
+  acc[option.value] = option.labelKey;
+  return acc;
+}, {} as Record<string, string>);
+
+export function applicationMethodLabelKey(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return APPLICATION_METHOD_LABEL_KEYS[value] ?? null;
+}
+
 // ============================================================================
 // EQUIPMENT
 // ============================================================================
@@ -600,6 +685,60 @@ export const CONTAMINATION_SOURCES: readonly EnumOption[] = [
   { value: 'other', labelKey: 'enums.contamination_sources.other' }
 ] as const;
 
+/**
+ * ChemicalEvent.chemical_subtype — the product's COMPOSITION, which is what decides the
+ * manufacturing emission factor (organic fertilizer is ~83% below synthetic;
+ * carbon/services/verified_emission_factors.py holds the numbers).
+ *
+ * 🔴 2026-09-02: `chemicalEvent.ts` declared `enumSource: 'chemical_subtypes_by_main_type'`
+ * and NO such key existed — `enumSource?: string` was untyped, so it compiled, `getEnumLabel`
+ * returned null, and the resolver fell through to its de-underscore-and-capitalise fallback.
+ * That produced "Copper Fungicide" where the authored label said "Copper-Based Fungicide",
+ * and since `FIELD_VALUE_ES` is an EXACT-STRING map keyed to the authored labels, six of the
+ * thirteen values rendered in English on the Spanish consumer card. Two parallel label maps
+ * (utils/fieldDisplayUtils VALUE_MAPPINGS and utils/fieldValues.es) and neither was the one
+ * the display path actually read.
+ *
+ * Values mirror CHEMICAL_SUBTYPE in common/field_registry.py, which IS the column's
+ * `choices` (history/models.py ChemicalEvent.chemical_subtype). The four per-type
+ * `*_SUBTYPE_CHOICES` lists beside it use SHORT forms ("copper", "organic") and do not feed
+ * this column; `neonicotinoid` is read by eventDescriptions but is not a model choice, so it
+ * is not offered here.
+ */
+export const CHEMICAL_SUBTYPES: readonly EnumOption[] = [
+  // Fertilizer
+  { value: 'synthetic_fertilizer', labelKey: 'enums.chemical_subtypes.synthetic_fertilizer' },
+  { value: 'organic_fertilizer', labelKey: 'enums.chemical_subtypes.organic_fertilizer' },
+  { value: 'slow_release_fertilizer', labelKey: 'enums.chemical_subtypes.slow_release_fertilizer' },
+  // Pesticide
+  { value: 'synthetic_pesticide', labelKey: 'enums.chemical_subtypes.synthetic_pesticide' },
+  { value: 'organic_pesticide', labelKey: 'enums.chemical_subtypes.organic_pesticide' },
+  { value: 'biological_pesticide', labelKey: 'enums.chemical_subtypes.biological_pesticide' },
+  // Herbicide
+  { value: 'synthetic_herbicide', labelKey: 'enums.chemical_subtypes.synthetic_herbicide' },
+  { value: 'organic_herbicide', labelKey: 'enums.chemical_subtypes.organic_herbicide' },
+  // Fungicide
+  { value: 'synthetic_fungicide', labelKey: 'enums.chemical_subtypes.synthetic_fungicide' },
+  { value: 'organic_fungicide', labelKey: 'enums.chemical_subtypes.organic_fungicide' },
+  { value: 'copper_fungicide', labelKey: 'enums.chemical_subtypes.copper_fungicide' },
+  { value: 'sulfur_fungicide', labelKey: 'enums.chemical_subtypes.sulfur_fungicide' },
+  { value: 'biological_fungicide', labelKey: 'enums.chemical_subtypes.biological_fungicide' }
+] as const;
+
+/**
+ * SoilEvent.compost_method — 7 CFR 205.203(c)(2).
+ *
+ * Second dangling `enumSource` found in the same 2026-09-02 sweep (`'compost_methods'`).
+ * Harmless in DISPLAY, because the field also declares a bespoke `formatter` and the
+ * resolver prefers it — but a dangling key makes `RegistryFormField` render an EMPTY
+ * `<select>`, so it was one registry-driven form away from a field with no options.
+ */
+export const COMPOST_METHODS: readonly EnumOption[] = [
+  { value: 'windrow', labelKey: 'enums.compost_methods.windrow' },
+  { value: 'static_aerated', labelKey: 'enums.compost_methods.static_aerated' },
+  { value: 'in_vessel', labelKey: 'enums.compost_methods.in_vessel' }
+] as const;
+
 // ============================================================================
 // ENUM REGISTRY (keyed access for FieldConfig.enumSource)
 // ============================================================================
@@ -613,6 +752,7 @@ export const ENUM_OPTIONS = {
   // Units
   area_units: AREA_UNITS,
   volume_units: VOLUME_UNITS,
+  application_rate_units: APPLICATION_RATE_UNITS,
   fuel_units: FUEL_UNITS,
   yield_units: YIELD_UNITS,
   distance_units: DISTANCE_UNITS,
@@ -654,6 +794,8 @@ export const ENUM_OPTIONS = {
   manure_forms: MANURE_FORMS,
   manure_origins: MANURE_ORIGINS,
   nitrogen_sources: NITROGEN_SOURCES,
+  chemical_subtypes: CHEMICAL_SUBTYPES,
+  compost_methods: COMPOST_METHODS,
   application_purposes: APPLICATION_PURPOSES,
   seed_treatment_bases: SEED_TREATMENT_BASES,
   seed_nonavailability_reasons: SEED_NONAVAILABILITY_REASONS,

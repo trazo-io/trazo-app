@@ -48,6 +48,24 @@ interface PURFlag {
   county?: string;
   partners?: string;
   primary?: string;
+  from?: string;
+}
+
+/** A hired application: listed, never exported — the business files it (3 CCR 6626(b)). */
+interface PURExcluded {
+  event_id: number;
+  event_type: number;
+  parcel_id: number | null;
+  event_date: string;
+  product: string;
+  pcb_name: string;
+}
+
+interface PURCounty {
+  /** DPR 2-digit county code, '' when the row has no recognised county. */
+  code: string;
+  name: string;
+  count: number;
 }
 
 interface PURRow {
@@ -70,6 +88,10 @@ interface PURSummary {
   /** YYYY-MM-DD — the 10th of the following month (3 CCR 6626). */
   filing_deadline: string;
   form: string;
+  /** Per-county row counts; more than one means more than one filing (3 CCR 6626(a)). */
+  counties?: PURCounty[];
+  pcb_excluded_count?: number;
+  pcb_excluded?: PURExcluded[];
   rows: PURRow[];
 }
 
@@ -114,7 +136,8 @@ const FLAG_LABEL_IDS: Record<string, string> = {
   county_unrecognized: 'app.pur.flag.county_unrecognized',
   tank_mix_unexported: 'app.pur.flag.tank_mix_unexported',
   aggregate_event: 'app.pur.flag.aggregate_event',
-  adjuvant_line: 'app.pur.flag.adjuvant_line'
+  adjuvant_line: 'app.pur.flag.adjuvant_line',
+  area_converted_from_ha: 'app.pur.flag.area_converted_from_ha'
 };
 
 /**
@@ -270,9 +293,22 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
     FLAG_LABEL_IDS[flag.code]
       ? intl.formatMessage(
           { id: FLAG_LABEL_IDS[flag.code] },
-          { county: flag.county, partners: flag.partners, primary: flag.primary }
+          { county: flag.county, partners: flag.partners, primary: flag.primary, from: flag.from }
         )
       : flag.code;
+
+  /** Row identity for a hired application — same navigation as a reported row. */
+  const openExcluded = (item: PURExcluded) => {
+    if (item.parcel_id == null) return;
+    onClose();
+    navigate(
+      `/admin/dashboard/farm/${establishmentId}/parcel/${item.parcel_id}/event/${item.event_id}/change?event_type=${item.event_type}`
+    );
+  };
+
+  const counties = summary?.counties ?? [];
+  const multiCounty = counties.length > 1;
+  const excluded = summary?.pcb_excluded ?? [];
 
   const hasApps = !!summary && summary.application_count > 0;
 
@@ -439,6 +475,37 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
               </Text>
             </HStack>
 
+            {/* One filing per county (3 CCR 6626(a)). Said in words with the list, not only
+                by the grouping of the rows below, which is invisible in a two-row month. */}
+            {multiCounty && (
+              <HStack spacing={2} align="flex-start">
+                <Icon
+                  as={FiAlertTriangle}
+                  color={warn.icon}
+                  boxSize={4}
+                  mt="2px"
+                  flexShrink={0}
+                  aria-hidden="true"
+                />
+                <Text fontSize="sm" color={warn.text}>
+                  {intl.formatMessage(
+                    { id: 'app.pur.counties.multi' },
+                    {
+                      count: counties.length,
+                      list: counties
+                        .map(
+                          (c) =>
+                            `${c.code ? `${c.code} ` : ''}${
+                              c.name || intl.formatMessage({ id: 'app.pur.counties.unknown' })
+                            } (${c.count})`
+                        )
+                        .join(', ')
+                    }
+                  )}
+                </Text>
+              </HStack>
+            )}
+
             {hasApps ? (
               // No inner maxH/overflow: the dialog body already scrolls, and the nested
               // 220px region clipped the second row mid-sentence with no affordance.
@@ -518,6 +585,67 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
                 title={intl.formatMessage({ id: 'app.pur.noApplicationsTitle' })}
                 description={intl.formatMessage({ id: 'app.pur.noApplications' })}
               />
+            )}
+
+            {/* Hired applications: NOT the grower's to report (PUE Compendium Vol. 1 Ch. 4 p. 4-8).
+                Listed so the absence from the rows above reads as a decision, not a missing
+                spray, and openable so a wrong flag can be corrected on the record. */}
+            {excluded.length > 0 && (
+              <VStack spacing={2} align="stretch">
+                <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                  {intl.formatMessage({ id: 'app.pur.pcbExcluded.title' })}
+                </Text>
+                <Text fontSize="xs" color="gray.600">
+                  {intl.formatMessage({ id: 'app.pur.pcbExcluded.help' })}
+                </Text>
+                {excluded.map((item, idx) => (
+                  <Box
+                    key={`${item.event_id}-${idx}`}
+                    p={3}
+                    borderRadius="lg"
+                    border="1px solid"
+                    borderColor="gray.200"
+                    borderLeft="4px solid"
+                    borderLeftColor="gray.300"
+                    bg="white">
+                    <Stack
+                      direction={{ base: 'column', smd: 'row' }}
+                      justify="space-between"
+                      align={{ base: 'stretch', smd: 'flex-start' }}
+                      spacing={2}>
+                      <Box minW={0}>
+                        <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                          {item.product || '—'}
+                        </Text>
+                        <Text fontSize="xs" color="gray.600">
+                          {[
+                            formatEventDate(item.event_date),
+                            item.pcb_name
+                              ? intl.formatMessage(
+                                  { id: 'app.pur.pcbExcluded.by' },
+                                  { name: item.pcb_name }
+                                )
+                              : intl.formatMessage({ id: 'app.pur.pcbExcluded.byUnknown' })
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </Text>
+                      </Box>
+                      {item.parcel_id != null && (
+                        <StandardButton
+                          variant="outline"
+                          size="sm"
+                          leftIcon={<Icon as={FiEdit2} />}
+                          onClick={() => openExcluded(item)}
+                          flexShrink={0}
+                          alignSelf={{ base: 'flex-start', smd: 'auto' }}>
+                          {intl.formatMessage({ id: 'app.pur.openEvent' })}
+                        </StandardButton>
+                      )}
+                    </Stack>
+                  </Box>
+                ))}
+              </VStack>
             )}
 
             {/* Static filing guidance — neutral, not a tinted "info" box. green.700 on the

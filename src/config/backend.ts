@@ -296,6 +296,13 @@ export const OSP_ATTACHMENTS_URL = (companyId: string, farmId: string, ospId: st
 // free-text product name to NationalListSubstance and/or OMRIProduct PKs.
 export const INPUT_VERIFY_URL = `${ROOT_URL}certifications/verify-input/`;
 
+// Dry run of the buyer-page input claim, for a draft the wizard has not saved.
+// The chip on the preview card may only ever say what the SERVER decides
+// (history/services/claim_authority.may_claim_input_listing) — the client cannot see the OMRI
+// or WSDA catalogs, so it cannot know whether a listing claim is earned. POST, because the
+// whole draft is the input and there is nothing to address with a URL.
+export const INPUT_STATUS_PREVIEW_URL = `${ROOT_URL}input-status-preview/`;
+
 // User URLs
 export const USER_URL = (userId: string) =>
   userId ? `${ROOT_URL}users/${userId}/` : `${ROOT_URL}users/`;

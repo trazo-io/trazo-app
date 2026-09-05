@@ -168,6 +168,22 @@ export interface InputVerifyResult {
   omri_product_pk: number | null;
   omri_product_id: string | null;
   omri_product_name: string | null;
+  /**
+   * Every catalog row the query matched, best first. One entry (or none) means the answer is
+   * unambiguous; more than one means the grower must pick, because a one-tap attach on a
+   * guessed row writes a third-party listing claim for a product they may not have applied.
+   */
+  omri_candidates?: {
+    pk: number;
+    omri_id: string | null;
+    product_name: string;
+    manufacturer?: string | null;
+  }[];
+  /**
+   * How many rows matched in total. NOT `omri_candidates.length`, which is capped for display
+   * — a grower told "6 products match" when 7 do may never see the one on their label.
+   */
+  omri_candidate_count?: number;
   national_list_substance_pk: number | null;
   national_list_substance_name: string | null;
   national_list_cfr_section: string | null;

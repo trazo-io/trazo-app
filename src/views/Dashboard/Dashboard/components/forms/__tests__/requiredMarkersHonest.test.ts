@@ -18,6 +18,17 @@ import { describe, expect, it } from 'vitest';
 const FORMS = join(__dirname, '..');
 const read = (name: string) => readFileSync(join(FORMS, name), 'utf-8');
 
+/**
+ * `req('field'` with the argument possibly on its own line.
+ *
+ * The literal `toContain("req('x'")` broke the day ChemicalTab's messages moved into
+ * `intl.formatMessage(...)`: the call got long, prettier wrapped it to
+ * `req(\n  'applicator_certification',\n  intl.formatMessage({…})`, and a guard about
+ * whether a field is ENFORCED started failing over where the line break landed. The
+ * enforcement is the thing being pinned, so match the call shape, not the formatting.
+ */
+const enforces = (src: string, field: string) => new RegExp(`req\\(\\s*'${field}'`).test(src);
+
 describe('required markers are honest', () => {
   it('no form uses the dead isRequired prop (StandardField only knows `required`)', () => {
     for (const file of [
@@ -48,9 +59,12 @@ describe('required markers are honest', () => {
 
   it('ChemicalTab enforces RUP certification and summary periods in the schema', () => {
     const src = read('ChemicalTab-ENHANCED.jsx');
-    expect(src).toContain("req('applicator_certification'");
-    expect(src).toContain("req('nitrogen_total_kg'");
-    expect(src).toContain("req('active_ingredient_total_kg'");
+    expect(enforces(src, 'applicator_certification'), 'RUP cert not enforced').toBe(true);
+    expect(enforces(src, 'nitrogen_total_kg'), 'summary nitrogen not enforced').toBe(true);
+    expect(
+      enforces(src, 'active_ingredient_total_kg'),
+      'summary active ingredient not enforced'
+    ).toBe(true);
     // The units the superRefine requires must show their errors.
     expect(src).toContain('error={errors.volume_unit?.message}');
     expect(src).toContain('error={errors.area_unit?.message}');

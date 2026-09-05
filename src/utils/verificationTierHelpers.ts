@@ -1,294 +1,108 @@
 /**
- * Verification Tier Helper Functions
+ * Record evidence helpers
  *
- * Provides utility functions for rendering verification tiers across event cards,
- * previews, and consumer displays. Ensures consistent verification badge styling
- * and information across all event verification displays.
+ * What an event record CONTAINS, said as a fact — never a grade.
+ *
+ * Until 2026-09-02 this file was a five-rung trust ladder: `self_reported` (trustScore 50)
+ * → `photo_documented` (65) → `photo_verified` (80) → `data_verified` (85) → `certified`
+ * (100), each rung with its own colour (gray → teal → blue → green-with-a-tick →
+ * purple-with-a-star) and a `formatVerificationDisplay()` that printed
+ * `"Photo Documented (80% Trust)"`.
+ *
+ * That is a self-assigned sustainability grade — the thing EU ECGT 2024/825 (live
+ * 2026-09-27) bans and FTC 16 CFR 260.6 treats as an unqualified general claim. It is the
+ * same defect the 2026-06 pivot fixed by withholding the transparency score from consumers;
+ * the ladder survived because it was expressed as a badge rather than a number. Three
+ * specifics made it worse than merely self-graded:
+ *
+ *  - `photo_documented` and `photo_verified` rendered the SAME words ("Photo Documented") in
+ *    DIFFERENT colours, so the grade the words refused to state moved into the palette. That
+ *    is the defect already removed from this card's border colour (see the note in
+ *    ConsumerEventCard around the retired "SCI" corner badge).
+ *  - `data_verified` and `certified` were awarded for `extra_data.blockchain_verified` — a
+ *    green tick and a purple "Blockchain-Recorded" star for a feature whose flag is off and
+ *    whose add-on is withdrawn, bypassing the server's `may_claim_blockchain` chokepoint.
+ *  - teal / blue / purple are not theme tokens (the theme defines `green` and `amber`), so
+ *    the ladder's colours resolved to Chakra's defaults — a foreign palette, the same trap
+ *    `orange` sets in `.claude/rules/frontend.md`.
+ *
+ * What replaces it: ONE neutral provenance statement, identical on every event, plus
+ * ADDITIVE factual chips the caller renders from facts it already holds — photo count, an
+ * OMRI/WSDA catalog match, a certificate number. A count is a fact, so it is styled
+ * `neutral`; solid green stays reserved for a real third-party listing, which is the rule
+ * the input chips already follow.
+ *
+ * The server-side authority is `history.services.claim_authority.record_evidence_level`.
  */
 
-import { FaCamera, FaCheck, FaStar, FaInfoCircle } from 'react-icons/fa';
-
 /**
- * Verification tier configuration for consistent UI display
+ * Values the server may send in `verification_level`.
+ *
+ * The server now emits only the first two. The retired three stay in the union because rows
+ * serialized before 2026-09-02 and any un-migrated caller can still put them on the wire —
+ * and because presentation does NOT vary by value, a stale one renders correctly rather than
+ * falling through to nothing.
  */
 export type VerificationLevel =
   | 'self_reported'
   | 'photo_documented'
+  /** @deprecated retired 2026-09-02 — accepted from the wire, never displayed differently. */
   | 'photo_verified'
+  /** @deprecated retired 2026-09-02 — see the module note; was a blockchain claim. */
   | 'data_verified'
+  /** @deprecated retired 2026-09-02 — see the module note; was a blockchain claim. */
   | 'certified';
 
 /**
- * Badge configuration for each verification tier
+ * The one provenance statement every event record carries.
+ *
+ * i18n keys, not strings: this module is a pure helper with no hook access, so the caller
+ * resolves them. The English fallbacks exist so a caller that has not been localized yet
+ * renders readable text instead of a raw dotted key.
  */
-export interface VerificationBadgeConfig {
-  level: VerificationLevel;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  icon: any;
-  /**
-   * i18n key for the badge text. Resolve with `intl.formatMessage` at the call site — this
-   * module is a pure helper and must stay renderer-agnostic (no hook access here).
-   */
+export interface RecordProvenance {
   labelKey: string;
-  /** i18n key for the badge tooltip. Same contract as `labelKey`. */
   tooltipKey: string;
-  /**
-   * English fallbacks. Kept so a caller that has not been localized yet still renders
-   * readable text rather than a raw dotted key, and so `defaultMessage` can be supplied.
-   */
   label: string;
   tooltip: string;
-  trustScore: number;
 }
 
 /**
- * Get complete badge configuration for a verification level
- * Returns: color, icon, text, tooltip, trust score for consistent display
- */
-export function getVerificationBadgeConfig(
-  level: VerificationLevel | undefined
-): VerificationBadgeConfig {
-  const configs: Record<VerificationLevel, VerificationBadgeConfig> = {
-    self_reported: {
-      level: 'self_reported',
-      labelKey: 'consumer.eventCard.tier.self_reported',
-      tooltipKey: 'consumer.eventCard.tierTooltip.self_reported',
-      color: 'gray.600',
-      bgColor: 'gray.50',
-      borderColor: 'gray.300',
-      icon: FaInfoCircle,
-      label: 'Self Reported',
-      tooltip: 'Event information provided by the farmer. Carbon data calculated based on input.',
-      trustScore: 50
-    },
-    photo_documented: {
-      level: 'photo_documented',
-      labelKey: 'consumer.eventCard.tier.photo_documented',
-      tooltipKey: 'consumer.eventCard.tierTooltip.photo_documented',
-      color: 'teal.600',
-      bgColor: 'teal.50',
-      borderColor: 'teal.300',
-      icon: FaCamera,
-      label: 'Photo Documented',
-      tooltip:
-        'Event includes at least 1 photo from the farm. Increases trust in the documented information.',
-      trustScore: 65
-    },
-    photo_verified: {
-      level: 'photo_verified',
-      labelKey: 'consumer.eventCard.tier.photo_verified',
-      tooltipKey: 'consumer.eventCard.tierTooltip.photo_verified',
-      color: 'blue.600',
-      bgColor: 'blue.50',
-      borderColor: 'blue.300',
-      icon: FaCamera,
-      label: 'Photo Documented',
-      tooltip:
-        'Event includes 2+ photos with GPS and timestamp metadata. Strong documentation of farming activity.',
-      trustScore: 80
-    },
-    data_verified: {
-      level: 'data_verified',
-      labelKey: 'consumer.eventCard.tier.data_verified',
-      tooltipKey: 'consumer.eventCard.tierTooltip.data_verified',
-      color: 'green.600',
-      bgColor: 'green.50',
-      borderColor: 'green.300',
-      icon: FaCheck,
-      label: 'Data Documented',
-      tooltip:
-        'Event documented with multiple photos and metadata. Strong evidence of farming activity.',
-      trustScore: 85
-    },
-    certified: {
-      level: 'certified',
-      labelKey: 'consumer.eventCard.tier.certified',
-      tooltipKey: 'consumer.eventCard.tierTooltip.certified',
-      color: 'purple.600',
-      bgColor: 'purple.50',
-      borderColor: 'purple.300',
-      icon: FaStar,
-      label: 'Blockchain-Recorded',
-      tooltip: 'Event is part of a blockchain-recorded production. Data immutability guaranteed.',
-      trustScore: 100
-    }
-  };
-
-  return configs[level || 'self_reported'];
-}
-
-/**
- * Get Chakra UI color scheme for verification level
- * Used for badge coloring and styling
- */
-export function getVerificationColor(level: VerificationLevel | undefined): string {
-  const colorMap: Record<VerificationLevel, string> = {
-    self_reported: 'gray',
-    photo_documented: 'teal',
-    photo_verified: 'blue',
-    data_verified: 'green',
-    certified: 'purple'
-  };
-  return colorMap[level || 'self_reported'];
-}
-
-/**
- * Get icon component for verification level
- */
-export function getVerificationIcon(level: VerificationLevel | undefined): any {
-  const iconMap: Record<VerificationLevel, any> = {
-    self_reported: FaInfoCircle,
-    photo_documented: FaCamera,
-    photo_verified: FaCamera,
-    data_verified: FaCheck,
-    certified: FaStar
-  };
-  return iconMap[level || 'self_reported'];
-}
-
-/**
- * Get human-readable label for verification level
- */
-export function getVerificationLabel(level: VerificationLevel | undefined): string {
-  const labelMap: Record<VerificationLevel, string> = {
-    self_reported: 'Self Reported',
-    photo_documented: 'Photo Documented',
-    photo_verified: 'Photo Documented',
-    data_verified: 'Data Documented',
-    certified: 'Blockchain-Recorded'
-  };
-  return labelMap[level || 'self_reported'];
-}
-
-/**
- * Get trust score (0-100) for verification level
- * Used for visual indicators and consumer communication
- */
-export function getTrustScore(level: VerificationLevel | undefined): number {
-  const scoreMap: Record<VerificationLevel, number> = {
-    self_reported: 50,
-    photo_documented: 65,
-    photo_verified: 80,
-    data_verified: 85,
-    certified: 100
-  };
-  return scoreMap[level || 'self_reported'];
-}
-
-/**
- * Get consumer-friendly tooltip explaining verification level
- */
-export function getVerificationTooltip(level: VerificationLevel | undefined): string {
-  return getVerificationBadgeConfig(level).tooltip;
-}
-
-/**
- * Determine verification level based on photo count and data completeness
- * Used for EventPreviewModal to show likely verification tier
+ * Provenance of an event record. Takes no argument ON PURPOSE.
  *
- * MVP Photo Verification: Now checks if photos have valid agricultural content.
- * Photos with AI-generated, stock, or non-agricultural content downgrade to self_reported.
+ * A function that accepted the tier and ignored it would read like an oversight and invite
+ * someone to "restore" the branch. There is no branch: every event on the page is the
+ * grower's own record, and saying so once, plainly, is the disclosure FTC 16 CFR 260.6 asks
+ * for. Evidence that a particular record holds MORE than that is additive and rendered
+ * separately by the caller.
+ */
+export function getRecordProvenance(): RecordProvenance {
+  return {
+    labelKey: 'consumer.eventCard.provenance.label',
+    tooltipKey: 'consumer.eventCard.provenance.tooltip',
+    label: 'Grower record',
+    tooltip:
+      'Logged by the grower as part of this operation’s own farm records. Trazo publishes the record; it does not inspect the farm.'
+  };
+}
+
+/**
+ * Does this event have photo evidence, for the producer-side preview?
  *
- * @param photoCount - Number of photos attached
- * @param hasGpsData - Whether event has GPS coordinates
- * @param hasTimestamp - Whether event has timestamp
- * @param eventType - Event type (0-7) for auto-upgrade logic
- * @param hasValidPhotoContent - Whether photos contain valid agricultural content (optional)
- *        If false, verification level downgrades to self_reported
- *        If true or undefined, proceeds with normal verification logic
+ * Was `calculatePreviewVerificationLevel(photoCount, hasGpsData, hasTimestamp, eventType,
+ * hasValidPhotoContent)` — five arguments that picked a rung of the retired ladder, including
+ * an `autoUpgradeTypes = [0, 4, 5, 7]` branch that promoted weather, equipment, soil and
+ * business events to `data_verified` purely for BEING that type. GPS metadata never belonged
+ * in it either: it records where a camera was, not whether the practice happened.
+ *
+ * The preview must show the farmer exactly what a shopper will see, so it answers the only
+ * question the buyer page now asks.
  */
 export function calculatePreviewVerificationLevel(
   photoCount: number,
-  hasGpsData: boolean,
-  hasTimestamp: boolean,
-  eventType?: number,
-  hasValidPhotoContent: boolean = true // Default: assume valid for preview
+  hasValidPhotoContent: boolean = true
 ): VerificationLevel {
-  // Weather, equipment, soil, business events can auto-upgrade to data_verified
-  const autoUpgradeTypes = [0, 4, 5, 7]; // Weather, Equipment, Soil, Business
-  const isAutoUpgradeType = eventType !== undefined && autoUpgradeTypes.includes(eventType);
-
-  // MVP Photo Verification: If photos exist but don't have valid agricultural content, downgrade
-  if (photoCount > 0 && !hasValidPhotoContent) {
-    return 'self_reported';
-  }
-
-  if (photoCount === 0) {
-    return 'self_reported';
-  } else if (photoCount === 1) {
-    return 'photo_documented';
-  } else if (photoCount >= 2) {
-    if (hasGpsData && hasTimestamp) {
-      if (isAutoUpgradeType) {
-        return 'data_verified';
-      }
-      return 'photo_verified';
-    }
-    return 'photo_documented';
-  }
-
-  return 'self_reported';
-}
-
-/**
- * Format verification tier display text for consumer interfaces
- * Example: "Photo Verified (80% Trust)"
- */
-export function formatVerificationDisplay(level: VerificationLevel | undefined): string {
-  const config = getVerificationBadgeConfig(level);
-  return `${config.label} (${config.trustScore}% Trust)`;
-}
-
-/**
- * Get color variant string for Chakra UI Badge component
- * Returns 'solid', 'subtle', 'outline' based on verification level
- */
-export function getBadgeVariant(
-  level: VerificationLevel | undefined
-): 'solid' | 'subtle' | 'outline' {
-  const variantMap: Record<VerificationLevel, 'solid' | 'subtle' | 'outline'> = {
-    self_reported: 'outline',
-    photo_documented: 'subtle',
-    photo_verified: 'subtle',
-    data_verified: 'solid',
-    certified: 'solid'
-  };
-  return variantMap[level || 'self_reported'];
-}
-
-/**
- * Validate that a verification level is a valid tier
- */
-export function isValidVerificationLevel(level: any): level is VerificationLevel {
-  const validLevels: VerificationLevel[] = [
-    'self_reported',
-    'photo_documented',
-    'photo_verified',
-    'data_verified',
-    'certified'
-  ];
-  return typeof level === 'string' && validLevels.includes(level as VerificationLevel);
-}
-
-/**
- * Get verification progression message for consumer display
- * Shows how photos move an event through verification tiers
- */
-export function getVerificationProgressionMessage(
-  photoCount: number,
-  level: VerificationLevel | undefined
-): string {
-  if (photoCount === 0) {
-    return 'Add photos to verify this event and build consumer trust';
-  } else if (photoCount === 1) {
-    return '1 photo documented - add more to increase verification strength';
-  } else if (photoCount === 2) {
-    return '2+ photos verified - strong evidence of farming activity';
-  } else {
-    return `${photoCount} photos verified - excellent documentation`;
-  }
+  return photoCount > 0 && hasValidPhotoContent ? 'photo_documented' : 'self_reported';
 }
 
 /**

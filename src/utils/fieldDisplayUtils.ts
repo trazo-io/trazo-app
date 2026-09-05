@@ -511,7 +511,11 @@ export function getReadableFieldValue(field: string, value: string): string {
       // Fertilizer subtypes (organic = 83% lower carbon than synthetic)
       synthetic_fertilizer: 'Synthetic Fertilizer',
       organic_fertilizer: 'Organic Fertilizer',
-      slow_release_fertilizer: '⏳ Slow-Release Fertilizer',
+      // No emoji. One of the thirteen carried an hourglass, so the detail modal read
+      // "⏳ Slow-Release Fertilizer" while the consumer card read "Slow-Release Fertilizer" —
+      // and the ES map is keyed by the exact English string, which is why localizeFieldValue
+      // needs its leading-emoji strip at all. Caught by chemicalSubtypeLabels.test.ts.
+      slow_release_fertilizer: 'Slow-Release Fertilizer',
       // Generic/short-form subtypes (backend may send without type suffix)
       synthetic: 'Synthetic Chemical',
       organic: 'Organic/Natural',

@@ -36,7 +36,11 @@ const INCOMPLETE_ROW = {
   application_start: '',
   application_method: 'Ground (air-blast)',
   missing: ['operator_id', 'site_id'],
-  flags: [{ code: 'county_unrecognized', county: 'Maricopa' }],
+  flags: [{ code: 'county_unrecognized', county: 'Maricopa' }] as Array<{
+    code: string;
+    county?: string;
+    from?: string;
+  }>,
   // The CSV's English prose — must never be what the preview renders.
   notes: 'Missing required: 3. Operator ID/Permit No., 8. Site ID No.'
 };
@@ -64,8 +68,12 @@ const summaryWith = (rows: Array<typeof INCOMPLETE_ROW>) => ({
   rows
 });
 
-const renderModal = (locale: 'en-US' | 'es-419', rows = [INCOMPLETE_ROW, COMPLETE_ROW]) => {
-  const summary = summaryWith(rows);
+const renderModal = (
+  locale: 'en-US' | 'es-419',
+  rows = [INCOMPLETE_ROW, COMPLETE_ROW],
+  extra: Record<string, unknown> = {}
+) => {
+  const summary = { ...summaryWith(rows), ...extra };
   vi.stubGlobal(
     'fetch',
     vi.fn(async () => ({ ok: true, json: async () => summary }))
@@ -130,6 +138,50 @@ describe('PURExportModal', () => {
       '/admin/dashboard/farm/160/parcel/5/event/42/change?event_type=2'
     );
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('lists a hired application as NOT on the report, with the business and a way to open it', async () => {
+    // PUE Compendium Vol. 1 Ch. 4 p. 4-8: the grower "should not include applications made by
+    // pest control businesses on his/her use report". Listed, so the absence is a decision.
+    renderModal('en-US', [COMPLETE_ROW], {
+      pcb_excluded_count: 1,
+      pcb_excluded: [
+        {
+          event_id: 77,
+          event_type: 2,
+          parcel_id: 5,
+          event_date: '2026-04-09T05:00:00Z',
+          product: 'Metam CLR',
+          pcb_name: 'Valley Ag Spray Inc.'
+        }
+      ]
+    });
+    await screen.findByText('Not on this report — applied by a pest control business');
+    expect(screen.getByText('Metam CLR')).toBeTruthy();
+    expect(screen.getByText(/Applied by Valley Ag Spray Inc\./)).toBeTruthy();
+    expect(screen.getByText(/3 CCR 6626\(b\)/)).toBeTruthy();
+    const buttons = screen.getAllByRole('button', { name: /Open event/ });
+    fireEvent.click(buttons[buttons.length - 1]);
+    expect(navigateMock).toHaveBeenCalledWith(
+      '/admin/dashboard/farm/160/parcel/5/event/77/change?event_type=2'
+    );
+  });
+
+  it('warns, in words, when the month spans more than one county', async () => {
+    renderModal('es-419', [COMPLETE_ROW], {
+      counties: [
+        { code: '48', name: 'Solano', count: 1 },
+        { code: '57', name: 'Yolo', count: 2 }
+      ]
+    });
+    await screen.findByText(/Este mes abarca 2 condados: 48 Solano \(1\), 57 Yolo \(2\)/);
+  });
+
+  it('labels the hectare conversion flag with the original figure', async () => {
+    renderModal('en-US', [
+      { ...COMPLETE_ROW, flags: [{ code: 'area_converted_from_ha', from: '10 ha' }] }
+    ]);
+    await screen.findByText(/Acres converted from hectares \(10 ha\)/);
   });
 
   it('shows the empty state and keeps the download disabled when there is nothing to report', async () => {

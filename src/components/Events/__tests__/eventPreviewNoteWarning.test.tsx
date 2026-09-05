@@ -18,22 +18,42 @@ import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
+import { Provider } from 'react-redux';
+import { configureStore } from '@reduxjs/toolkit';
 
 import { EventPreviewModal } from '../EventPreviewModal';
+import baseApi from 'store/api/baseApi';
 import enUS from '../../../i18n/lang/en-US.json';
+
+/**
+ * Real reducer, real middleware, no server.
+ *
+ * The modal asks the backend what the buyer page will say about the input
+ * (`usePreviewInputStatusQuery` → /api/input-status-preview/, added 2026-09-03), so it needs a
+ * store. The request itself never resolves here, which is the state that matters most: the chip
+ * must render its neutral "listing check runs when you save" wording rather than falling back to
+ * a claim the client is not allowed to make.
+ */
+const testStore = () =>
+  configureStore({
+    reducer: { [baseApi.reducerPath]: baseApi.reducer },
+    middleware: (getDefault) => getDefault().concat(baseApi.middleware)
+  });
 
 const renderModal = (formData: Record<string, unknown>, activeEventType = 2) =>
   render(
-    <ChakraProvider>
-      <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
-        <EventPreviewModal
-          isOpen
-          onClose={() => undefined}
-          activeEventType={activeEventType}
-          formData={formData as never}
-        />
-      </IntlProvider>
-    </ChakraProvider>
+    <Provider store={testStore()}>
+      <ChakraProvider>
+        <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+          <EventPreviewModal
+            isOpen
+            onClose={() => undefined}
+            activeEventType={activeEventType}
+            formData={formData as never}
+          />
+        </IntlProvider>
+      </ChakraProvider>
+    </Provider>
   );
 
 // A chemical event with enough data for the preview to consider itself usable.

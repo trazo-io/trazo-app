@@ -77,18 +77,28 @@ interface InputVerifyHelperProps {
   buttonLabel?: string;
   /** The OMRI catalog pk currently attached to the record (form state), if any. */
   attachedOmriPk?: number | null;
+  /** The WSDA Materials List pk currently attached to the record (form state), if any. */
+  attachedWsdaPk?: number | null;
   /**
    * Called ONLY on the grower's tap: with the OMRI pk to attach it, with `null` to detach.
    * When omitted the card is read-only and no listing can be attached from here.
    */
   onAttachOmri?: (pk: number | null) => void;
+  /**
+   * Same contract, for the WSDA Materials List. Separate from OMRI because they are separate
+   * catalogues and separate columns on the record: CCOF accepts either, and merging them
+   * would put one organisation's name on the other's determination.
+   */
+  onAttachWsda?: (pk: number | null) => void;
 }
 
 const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({
   name,
   buttonLabel,
   attachedOmriPk,
-  onAttachOmri
+  attachedWsdaPk,
+  onAttachOmri,
+  onAttachWsda
 }) => {
   const intl = useIntl();
   const [verify, { data, isFetching, isUninitialized, error }] = useLazyVerifyInputQuery();
@@ -160,7 +170,9 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({
           result={data}
           query={trimmed}
           attachedOmriPk={attachedOmriPk}
+          attachedWsdaPk={attachedWsdaPk}
           onAttachOmri={onAttachOmri}
+          onAttachWsda={onAttachWsda}
         />
       )}
     </Box>
@@ -171,10 +183,17 @@ const ResultCard: React.FC<{
   result: InputVerifyResult;
   query: string;
   attachedOmriPk?: number | null;
+  attachedWsdaPk?: number | null;
   onAttachOmri?: (pk: number | null) => void;
-}> = ({ result, query, attachedOmriPk, onAttachOmri }) => {
+  onAttachWsda?: (pk: number | null) => void;
+}> = ({ result, query, attachedOmriPk, attachedWsdaPk, onAttachOmri, onAttachWsda }) => {
   const intl = useIntl();
   const hasOMRI = result.omri_product_pk != null;
+  const omriCandidates = result.omri_candidates ?? [];
+  // The true match count, which the shown list may be capped below.
+  const omriMatchCount = result.omri_candidate_count ?? omriCandidates.length;
+  const omriTruncated = omriMatchCount > omriCandidates.length;
+  const ambiguousOmri = omriCandidates.length > 1;
   const omriAttached =
     hasOMRI && attachedOmriPk != null && attachedOmriPk === result.omri_product_pk;
   const hasWSDA = result.wsda_material_pk != null;
@@ -246,7 +265,94 @@ const ResultCard: React.FC<{
           </VStack>
         </Alert>
       )}
-      {hasOMRI && (
+      {/*
+        Ambiguous query — every match, and no one-tap attach on a guess.
+        MEASURED 2026-09-01: "Neptune" satisfies six catalog rows and the matcher's
+        "prefer the shorter name" tiebreaker returns *Organic Fish Fertilizer 2-4-1*, while the
+        grower may be holding *Organic Fish and Seaweed Fertilizer 2-3-1* — a different product,
+        also in the catalog. That is the example `consumer-omri-listing-leak-2026-08-09` uses,
+        and one tap would have persisted it. When the answer is not unique the row is not an
+        answer, so the alternatives are shown and the grower picks their own.
+      */}
+      {ambiguousOmri && (
+        <VStack align="stretch" spacing={2}>
+          <Text fontSize="xs" color="gray.700" fontWeight="medium">
+            {intl.formatMessage(
+              {
+                id: 'inputVerify.multipleMatches',
+                defaultMessage:
+                  '{count} products match "{query}". Pick the one on your label — or type the full name.'
+              },
+              // The TOTAL, not the number of rows drawn — saying "6 match" while showing 6 of
+              // 7 hides the possibility that the seventh is theirs.
+              { count: omriMatchCount, query }
+            )}
+          </Text>
+          {omriTruncated && (
+            <Text fontSize="xs" color="gray.600">
+              {intl.formatMessage(
+                {
+                  id: 'inputVerify.matchesTruncated',
+                  defaultMessage:
+                    'Showing the closest {shown}. Type more of the name to see the rest.'
+                },
+                { shown: omriCandidates.length }
+              )}
+            </Text>
+          )}
+          {omriCandidates.map((candidate) => (
+            <MatchRow
+              key={candidate.pk}
+              badgeLabel="OMRI"
+              badgeColor="purple"
+              title={candidate.product_name}
+              subtitle={candidate.omri_id ? `OMRI #${candidate.omri_id}` : undefined}
+              action={
+                onAttachOmri ? (
+                  attachedOmriPk === candidate.pk ? (
+                    <HStack spacing={2}>
+                      <Text
+                        fontSize="xs"
+                        color="green.700"
+                        fontWeight="semibold"
+                        whiteSpace="nowrap">
+                        {intl.formatMessage({
+                          id: 'inputVerify.attached',
+                          defaultMessage: 'Attached to this record'
+                        })}
+                      </Text>
+                      <Button
+                        size="xs"
+                        variant="link"
+                        colorScheme="gray"
+                        {...TOUCH_TARGET}
+                        onClick={() => onAttachOmri(null)}>
+                        {intl.formatMessage({
+                          id: 'inputVerify.detach',
+                          defaultMessage: 'Remove'
+                        })}
+                      </Button>
+                    </HStack>
+                  ) : (
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      colorScheme="green"
+                      {...TOUCH_TARGET}
+                      onClick={() => onAttachOmri(candidate.pk)}>
+                      {intl.formatMessage({
+                        id: 'inputVerify.attach',
+                        defaultMessage: 'Use this listing'
+                      })}
+                    </Button>
+                  )
+                ) : undefined
+              }
+            />
+          ))}
+        </VStack>
+      )}
+      {hasOMRI && !ambiguousOmri && (
         <MatchRow
           badgeLabel="OMRI"
           badgeColor="purple"
@@ -296,6 +402,47 @@ const ResultCard: React.FC<{
           subtitle={[result.wsda_material_id, result.wsda_material_category]
             .filter(Boolean)
             .join(' · ')}
+          /*
+            Attachable since 2026-09-02. It was not, and the record had no WSDA column — so a
+            product listed only by WSDA (23 of the 42 seeded brands: Feather Meal 13-0-0,
+            AzaMax, Kaligreen, Madex HP …) could never be more than "grower-reported", and a
+            grower after the stronger chip was quietly pushed to attach a neighbouring OMRI
+            row instead. CCOF accepts either listing; the record now holds either.
+          */
+          action={
+            onAttachWsda ? (
+              attachedWsdaPk != null && attachedWsdaPk === result.wsda_material_pk ? (
+                <HStack spacing={2}>
+                  <Text fontSize="xs" color="green.700" fontWeight="semibold" whiteSpace="nowrap">
+                    {intl.formatMessage({
+                      id: 'inputVerify.attached',
+                      defaultMessage: 'Attached to this record'
+                    })}
+                  </Text>
+                  <Button
+                    size="xs"
+                    variant="link"
+                    colorScheme="gray"
+                    {...TOUCH_TARGET}
+                    onClick={() => onAttachWsda(null)}>
+                    {intl.formatMessage({ id: 'inputVerify.detach', defaultMessage: 'Remove' })}
+                  </Button>
+                </HStack>
+              ) : (
+                <Button
+                  size="xs"
+                  variant="outline"
+                  colorScheme="green"
+                  {...TOUCH_TARGET}
+                  onClick={() => onAttachWsda(result.wsda_material_pk as number)}>
+                  {intl.formatMessage({
+                    id: 'inputVerify.attach',
+                    defaultMessage: 'Use this listing'
+                  })}
+                </Button>
+              )
+            ) : undefined
+          }
         />
       )}
       {hasNL && (
