@@ -59,6 +59,7 @@ export const useTourStore = create<TourStoreState>()(
       activeTourId: null,
       activeStepIndex: 0,
       checklistDismissed: false,
+      checklistCompleted: false,
       celebratedMilestones: {},
       visitedPages: {},
       restartRequested: false,
@@ -105,6 +106,7 @@ export const useTourStore = create<TourStoreState>()(
       setStepIndex: (index: number) => set({ activeStepIndex: index }),
 
       dismissChecklist: () => set({ checklistDismissed: true }),
+      markChecklistCompleted: () => set({ checklistCompleted: true }),
 
       celebrateMilestone: (milestoneId: string) =>
         set((state) => ({
@@ -131,6 +133,7 @@ export const useTourStore = create<TourStoreState>()(
           activeTourId: null,
           activeStepIndex: 0,
           checklistDismissed: false,
+          checklistCompleted: false,
           celebratedMilestones: {},
           visitedPages: {},
           restartRequested: true

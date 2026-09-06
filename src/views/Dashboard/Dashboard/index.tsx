@@ -834,7 +834,11 @@ export default function DashboardView() {
           CDFA renewals. The score was retired from producer UI outright on 2026-08-11. */}
       {establishment?.id && activeCompany?.id && (
         <Box width="100%" mt={{ base: 4, md: 6 }}>
-          <CertifierDeadlinesStrip companyId={activeCompany.id} farmId={establishment.id} />
+          <CertifierDeadlinesStrip
+            companyId={activeCompany.id}
+            farmId={establishment.id}
+            state={establishment.state}
+          />
         </Box>
       )}
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { RootState } from 'store';
@@ -125,6 +125,11 @@ export function resolveWriterCompletion({
 export function useOnboardingChecklist() {
   const { canWrite } = useUserRole();
   const checklistDismissed = useTourStore((s) => s.checklistDismissed);
+  const checklistCompleted = useTourStore((s) => s.checklistCompleted);
+  const markChecklistCompleted = useTourStore((s) => s.markChecklistCompleted);
+  // Dismissed or already complete: the widget cannot render, so its two requests must not fire.
+  // Before 2026-09-06 they did, on EVERY admin page load, for every established farm.
+  const checklistSettled = checklistDismissed || checklistCompleted;
   const visitedPages = useTourStore((s) => s.visitedPages);
   const dismissChecklist = useTourStore((s) => s.dismissChecklist);
 
@@ -149,7 +154,7 @@ export function useOnboardingChecklist() {
   const estIdNum = farmId ? Number(farmId) : 0;
   const { data: productions, isLoading: isLoadingProductions } = useGetProductionsByFarmQuery(
     { farmId: estIdNum },
-    { skip: !estIdNum || isNaN(estIdNum) }
+    { skip: checklistSettled || !estIdNum || isNaN(estIdNum) }
   );
 
   // OSP existence for the current farm. Same "completed only from real data" rule as the season
@@ -159,7 +164,7 @@ export function useOnboardingChecklist() {
   // OSPScope declares both ids as strings (they are interpolated straight into the URL).
   const { data: osps } = useGetOSPsQuery(
     { companyId: String(company?.id ?? ''), farmId: String(estIdNum) },
-    { skip: !canWrite || !company?.id || !estIdNum || isNaN(estIdNum) }
+    { skip: checklistSettled || !canWrite || !company?.id || !estIdNum || isNaN(estIdNum) }
   );
 
   // Detect writer item completion from REAL data
@@ -221,6 +226,15 @@ export function useOnboardingChecklist() {
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const allComplete = completedCount === totalCount;
 
+  // Remember completion so later loads skip the data requests entirely. Writer items are judged
+  // from fetched data, so only a loaded answer may set the flag; viewer items come from visited
+  // pages and need no data.
+  useEffect(() => {
+    if (!allComplete || checklistCompleted) return;
+    if (variant === 'writer' && productions === undefined) return;
+    markChecklistCompleted();
+  }, [allComplete, checklistCompleted, variant, productions, markChecklistCompleted]);
+
   /**
    * ⚠️ THE 30-DAY EXPIRY IS NOT IN FORCE, and cannot be from here.
    *
@@ -248,6 +262,7 @@ export function useOnboardingChecklist() {
     hasCompany &&
     hasEstablishments &&
     !checklistDismissed &&
+    !checklistCompleted &&
     !allComplete &&
     isNewEnough &&
     !isLoadingProductions;

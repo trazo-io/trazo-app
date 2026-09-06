@@ -35,6 +35,7 @@ import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
 import { STATUS_URGENCY_TOKENS } from 'components/Design/StandardComponents';
 import { useGetOperationReadinessQuery } from 'store/api/certifierLinkApi';
+import { hasStateOrganicProgram } from '../../../OSP/StateOrganicRegistrationCard';
 import { useGetCertificationsQuery } from 'store/api/certificationApi';
 import { useGetOSPAnnualUpdatesQuery } from 'store/api/ospAnnualUpdateApi';
 import { useGetStateOrganicRegistrationsQuery } from 'store/api/stateOrganicRegistrationApi';
@@ -115,7 +116,10 @@ function describeDelta(days: number, intl: ReturnType<typeof useIntl>): string {
 const CertifierDeadlinesStrip: React.FC<{
   companyId: number | string;
   farmId: number | string;
-}> = ({ companyId, farmId }) => {
+  /** Farm's state code. Only states with a State Organic Program (see STATE_ORGANIC_PROGRAMS) are
+      asked for registrations — an Oregon farm paid that request on every dashboard load. */
+  state?: string | null;
+}> = ({ companyId, farmId, state }) => {
   const intl = useIntl();
   const navigate = useNavigate();
   const scope = { companyId: String(companyId), farmId: String(farmId) };
@@ -148,7 +152,9 @@ const CertifierDeadlinesStrip: React.FC<{
   // Only the annual-update query needs a load flag — the cert and registration rows are driven by
   // dates being PRESENT, so an unloaded query simply contributes no rows and claims nothing.
   const { data: certifications } = useGetCertificationsQuery(scope, skip);
-  const { data: registrations } = useGetStateOrganicRegistrationsQuery(scope, skip);
+  const { data: registrations } = useGetStateOrganicRegistrationsQuery(scope, {
+    skip: skip.skip || !hasStateOrganicProgram(state)
+  });
   const { data: annualUpdates, isSuccess: updatesLoaded } = useGetOSPAnnualUpdatesQuery(
     scope,
     skip

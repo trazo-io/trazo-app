@@ -31,6 +31,14 @@ export const STATE_ORGANIC_PROGRAMS: Record<string, string> = {
   CA: 'CDFA State Organic Program'
 };
 
+/** Whether a farm's state runs a State Organic Program. An UNKNOWN state answers true, so a
+    farm with no state on file is never silently excluded; only a known state outside the
+    table (e.g. "OR") is. */
+export function hasStateOrganicProgram(state: string | null | undefined): boolean {
+  const code = (state || '').trim().toUpperCase();
+  return !code || !!STATE_ORGANIC_PROGRAMS[code];
+}
+
 interface Props {
   companyId: string;
   farmId: string;

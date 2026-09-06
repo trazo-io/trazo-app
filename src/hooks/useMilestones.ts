@@ -45,6 +45,13 @@ const MILESTONES: MilestoneDefinition[] = [
 
 type MilestoneId = (typeof MILESTONES)[number]['id'];
 
+/** True once every milestone has been celebrated — nothing left to detect, so the productions
+    request that feeds detection can be skipped (it fired on every admin page load before
+    2026-09-06). */
+export function allMilestonesCelebrated(celebrated: Record<string, string>): boolean {
+  return MILESTONES.every((milestone) => !!celebrated[milestone.id]);
+}
+
 /**
  * Which milestones the farm's productions say are done.
  *
@@ -98,6 +105,10 @@ export function pickCelebration({
 export function useMilestones() {
   const celebratedMilestones = useTourStore((s) => s.celebratedMilestones);
   const celebrateMilestone = useTourStore((s) => s.celebrateMilestone);
+  const allCelebrated = useMemo(
+    () => allMilestonesCelebrated(celebratedMilestones),
+    [celebratedMilestones]
+  );
   const [activeMilestone, setActiveMilestone] = useState<MilestoneDefinition | null>(null);
 
   // Company data for detecting milestones
@@ -127,7 +138,7 @@ export function useMilestones() {
   const farmIdNum = farmId ? Number(farmId) : 0;
   const { data: productions } = useGetProductionsByFarmQuery(
     { farmId: farmIdNum },
-    { skip: !farmIdNum || Number.isNaN(farmIdNum) }
+    { skip: allCelebrated || !farmIdNum || Number.isNaN(farmIdNum) }
   );
 
   // Compute which milestones are now achieved

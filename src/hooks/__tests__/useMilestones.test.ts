@@ -14,7 +14,11 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { resolveAchievedMilestones, pickCelebration } from '../useMilestones';
+import {
+  resolveAchievedMilestones,
+  pickCelebration,
+  allMilestonesCelebrated
+} from '../useMilestones';
 
 const none = new Set<string>();
 
@@ -151,5 +155,22 @@ describe('pickCelebration', () => {
       farmId: '999'
     });
     expect(again?.actionPath).toBe('/admin/dashboard/farm/999/activities');
+  });
+});
+
+describe('allMilestonesCelebrated', () => {
+  it('is false while any milestone is still uncelebrated', () => {
+    expect(allMilestonesCelebrated({})).toBe(false);
+    expect(allMilestonesCelebrated({ 'first-event': '2026-09-01T00:00:00Z' })).toBe(false);
+  });
+
+  it('is true once every milestone id has a celebration timestamp', () => {
+    const achieved = resolveAchievedMilestones([
+      { finish_date: '2026-07-01', published: true, events_count: 12 }
+    ]);
+    const celebrated = Object.fromEntries(
+      Object.keys(achieved).map((id) => [id, '2026-09-01T00:00:00Z'])
+    );
+    expect(allMilestonesCelebrated(celebrated)).toBe(true);
   });
 });

@@ -103,6 +103,9 @@ export interface TourStoreState {
 
   // Checklist state
   checklistDismissed: boolean;
+  /** Set once every checklist item was observed complete, so the two requests that feed the
+      checklist (`productions-flat`, `osps`) stop firing on every admin page load (2026-09-06). */
+  checklistCompleted: boolean;
 
   // Milestone celebration tracking
   celebratedMilestones: Record<string, string>; // milestoneId -> celebratedAt ISO
@@ -121,6 +124,7 @@ export interface TourStoreState {
   endTour: () => void;
   setStepIndex: (index: number) => void;
   dismissChecklist: () => void;
+  markChecklistCompleted: () => void;
   celebrateMilestone: (milestoneId: string) => void;
   trackPageVisit: (pageKey: string) => void;
   clearRestartFlag: () => void;
