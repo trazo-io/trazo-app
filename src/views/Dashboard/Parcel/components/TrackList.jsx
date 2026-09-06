@@ -111,7 +111,9 @@ const TrackList = ({ amount }) => {
       },
       {
         skip: !parcelId || !currentCompany || !farmId || currentCompany?.id === undefined,
-        refetchOnMountOrArgChange: true,
+        // 30 s, not `true`: a result the boot prefetch fetched a second ago is fresh, and every
+        // event write invalidates the 'History' tag anyway (2026-09-06).
+        refetchOnMountOrArgChange: 30,
         refetchOnFocus: false,
         pollingInterval: eventsPolling ? 3000 : 0
       }

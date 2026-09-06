@@ -96,7 +96,9 @@ const HistoryCard = ({ amount }) => {
       { companyId: currentCompany?.id, farmId, parcelId },
       {
         skip: !parcelId || !farmId || !currentCompany || currentCompany?.id === undefined,
-        refetchOnMountOrArgChange: true
+        // 30 s, not `true`: a result the boot prefetch fetched a second ago is fresh, and every
+        // event write invalidates the 'History' tag anyway (2026-09-06).
+        refetchOnMountOrArgChange: 30
       }
     );
 

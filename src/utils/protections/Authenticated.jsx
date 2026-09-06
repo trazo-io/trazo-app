@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation, useMatch, useNavigate, useParams } from 'react-router-dom';
 import { PRODUCER, SUPERUSER, CONSUMER, ROLE_DISPLAY_COMPANY_ADMIN } from '../../config';
 import React, { useEffect, useState } from 'react';
+import { rememberCompanyForBoot } from 'utils/bootPrefetch';
 
 import { LOGIN_PAGE_URL } from 'config/routes';
 import { useSelector } from 'react-redux';
@@ -19,6 +20,12 @@ const Authenticated = ({ allowedRoles, mustBeCompanyAdmin = false }) => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const isLoading = useSelector((state) => state.auth.isLoading);
   const currentCompany = useSelector((state) => state.company.currentCompany);
+
+  // Persist the company id so the next cold load can prefetch its dashboard data alongside
+  // users/me instead of after it (utils/bootPrefetch.ts).
+  useEffect(() => {
+    rememberCompanyForBoot(currentCompany?.id);
+  }, [currentCompany?.id]);
   const [subdomain, setSubDomain] = useState('');
   const { pathname } = useLocation();
   const navigate = useNavigate();

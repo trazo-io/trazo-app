@@ -14,6 +14,7 @@ import I18n from 'i18n/I18n';
 import { Provider } from 'react-redux';
 import { createRoot } from 'react-dom/client';
 import { store } from './store';
+import { runBootPrefetch } from './utils/bootPrefetch';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
 import theme from 'theme/theme';
 import { emotionCache } from 'theme/emotion-cache';
@@ -25,6 +26,13 @@ const root = createRoot(container!);
 // Performance monitoring initialization
 if (process.env.NODE_ENV === 'development') {
   console.log('📊 Performance monitoring enabled for development');
+}
+
+// Warm the dashboard's own requests before React boots — see utils/bootPrefetch.ts.
+try {
+  runBootPrefetch(store);
+} catch {
+  /* never let a prefetch block boot */
 }
 
 root.render(
