@@ -5290,7 +5290,7 @@
   "operationAudit.notReadyTitle": "This dossier will be stamped \"DO NOT SUBMIT\"",
   "operationAudit.scopeNote": "Covers every parcel and production. For one season on its own, use Export for your certifier on that production. Neither of these is your renewal filing — that is the OSP packet, generated from Organic System Plan.",
   "operationAudit.subtitle": "One combined NOP records PDF across every parcel and production — for your annual inspection.",
-  "operationAudit.success": "Operation audit dossier downloaded",
+  "operationAudit.success": "Operation audit dossier ready",
   "operationAudit.title": "Operation Audit Dossier",
   "operationAudit.window.title": "Audit window",
   "operationAudit.window.help": "Leave both blank to cover every season. Certifiers ask for records back to the previous inspection.",

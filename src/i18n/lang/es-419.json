@@ -5290,7 +5290,7 @@
   "operationAudit.notReadyTitle": "Este expediente saldrá marcado \"NO ENVIAR\"",
   "operationAudit.scopeNote": "Cubre todas las parcelas y producciones. Para una sola temporada, usa Exportar para tu certificador en esa producción. Ninguno de estos dos es tu presentación de renovación — esa es el paquete del OSP, que se genera desde Plan Orgánico del Sistema.",
   "operationAudit.subtitle": "Un PDF combinado de registros NOP de todas las parcelas y producciones — para tu inspección anual.",
-  "operationAudit.success": "Expediente de auditoría de la operación descargado",
+  "operationAudit.success": "Expediente de auditoría de la operación listo",
   "operationAudit.title": "Expediente de auditoría de la operación",
   "operationAudit.window.title": "Período de auditoría",
   "operationAudit.window.help": "Deja ambas fechas en blanco para cubrir todas las temporadas. Los certificadores piden registros desde la inspección anterior.",

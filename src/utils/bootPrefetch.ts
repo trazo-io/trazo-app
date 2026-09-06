@@ -37,10 +37,21 @@ const HOLD_MS = 30_000;
 
 export type PrefetchEntry = [endpoint: string, args: unknown];
 
-export function parseAdminRoute(pathname: string): { farmId?: string; parcelId?: string } {
-  const match = pathname.match(/^\/admin\/dashboard\/farm\/(\d+)(?:\/parcel\/(\d+))?(?:\/|$)/);
-  if (!match) return {};
-  return { farmId: match[1], parcelId: match[2] };
+export type AdminRoute = { farmId?: string; parcelId?: string; view: 'farm' | 'parcel' | 'other' };
+
+/**
+ * Which producer view a path lands on. `view` is what decides the plan: the farm cards render
+ * ONLY on the farm dashboard itself and the parcel record calls ONLY on the parcel page — a
+ * production page under a parcel needs neither, and warming them there just adds contention
+ * (MEASURED: it pushed the parcel page's own two record calls from ~1.6 s to ~3 s in-page).
+ */
+export function parseAdminRoute(pathname: string): AdminRoute {
+  const match = pathname.match(/^\/admin\/dashboard\/farm\/(\d+)(?:\/parcel\/(\d+))?(\/.*)?$/);
+  if (!match) return { view: 'other' };
+  const [, farmId, parcelId, rest] = match;
+  const trailing = (rest || '').replace(/\/+$/, '');
+  if (trailing) return { farmId, parcelId, view: 'other' };
+  return { farmId, parcelId, view: parcelId ? 'parcel' : 'farm' };
 }
 
 /**
@@ -50,21 +61,21 @@ export function parseAdminRoute(pathname: string): { farmId?: string; parcelId?:
 export function bootPrefetchPlan(pathname: string, companyHint: string | null): PrefetchEntry[] {
   const companyId = Number(companyHint);
   if (!companyHint || !Number.isInteger(companyId) || companyId <= 0) return [];
-  const { farmId, parcelId } = parseAdminRoute(pathname);
+  const { farmId, parcelId, view } = parseAdminRoute(pathname);
   // authApi initiates getCompany with the numeric id from users/me.
   const plan: PrefetchEntry[] = [['getCompany', companyId]];
   if (!farmId) return plan;
-  const farmIdNum = Number(farmId);
-  const numericScope = { companyId, farmId: farmIdNum }; // SmartUsageCard, CertifierReadinessCard
-  const stringScope = { companyId: String(companyId), farmId }; // CertifierDeadlinesStrip `scope`
-  plan.push(
-    ['getFarmDashboardMetrics', numericScope],
-    ['getCertifierReadiness', numericScope],
-    ['getOperationReadiness', stringScope],
-    ['getCertifications', stringScope],
-    ['getOSPAnnualUpdates', stringScope]
-  );
-  if (parcelId) {
+  if (view === 'farm') {
+    const numericScope = { companyId, farmId: Number(farmId) }; // SmartUsageCard, CertifierReadinessCard
+    const stringScope = { companyId: String(companyId), farmId }; // CertifierDeadlinesStrip `scope`
+    plan.push(
+      ['getFarmDashboardMetrics', numericScope],
+      ['getCertifierReadiness', numericScope],
+      ['getOperationReadiness', stringScope],
+      ['getCertifications', stringScope],
+      ['getOSPAnnualUpdates', stringScope]
+    );
+  } else if (view === 'parcel' && parcelId) {
     // Parcel page: `useParams` strings for farm/parcel, numeric company id from redux.
     plan.push(
       ['getParcel', { parcelId, farmId, companyId }],

@@ -25,23 +25,14 @@
  * what the certifier would.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  AlertIcon,
-  Box,
-  HStack,
-  Icon,
-  Progress,
-  Text,
-  VStack,
-  useToast
-} from '@chakra-ui/react';
+import { Box, HStack, Icon, Progress, Text, useToast } from '@chakra-ui/react';
 import { FaDownload, FaExclamationTriangle, FaFilePdf, FaFolderOpen } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  StandardAlert,
   StandardButton,
   StandardCard,
   StandardField,
@@ -120,7 +111,7 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
         status: 'success',
         title: intl.formatMessage({
           id: 'operationAudit.success',
-          defaultMessage: 'Operation audit dossier downloaded'
+          defaultMessage: 'Operation audit dossier ready'
         })
       });
     }
@@ -240,7 +231,10 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
         {intl.formatMessage({ id: 'operationAudit.window.help' })}
       </Text>
       <HStack gap={3} align="flex-start" flexDirection={{ base: 'column', smd: 'row' }} mb={3}>
-        <StandardField label={intl.formatMessage({ id: 'operationAudit.window.start' })} w="full">
+        <StandardField
+          label={intl.formatMessage({ id: 'operationAudit.window.start' })}
+          w="full"
+          maxW={{ base: 'full', smd: '260px' }}>
           <StandardInput
             type="date"
             value={start}
@@ -254,7 +248,8 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
           error={
             windowInvalid ? intl.formatMessage({ id: 'operationAudit.window.invalid' }) : undefined
           }
-          w="full">
+          w="full"
+          maxW={{ base: 'full', smd: '260px' }}>
           <StandardInput
             type="date"
             value={end}
@@ -281,66 +276,52 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
       )}
 
       {job?.status === 'succeeded' && job.document_id && companyId && farmId && (
-        <Alert status="success" borderRadius="md" mb={3} alignItems="flex-start">
-          <AlertIcon mt="2px" />
-          <VStack align="flex-start" spacing={2} w="full">
-            <Box>
-              <Text fontSize="sm" fontWeight="semibold">
-                {intl.formatMessage({ id: 'operationAudit.ready' })}
-              </Text>
-              <Text fontSize="sm">
-                {intl.formatMessage(
-                  { id: 'operationAudit.readyDetail' },
-                  {
-                    title:
-                      job.document_title ||
-                      intl.formatMessage({
-                        id: 'operationAudit.title',
-                        defaultMessage: 'Operation Audit Dossier'
-                      }),
-                    size: sizeMb
-                  }
-                )}
-              </Text>
-            </Box>
-            <HStack gap={2} flexWrap="wrap">
-              {/* Plain anchor: cookie auth rides along and the browser streams the PDF to disk. */}
-              <StandardButton
-                as="a"
-                href={env.getApiUrl(DOCUMENT_DOWNLOAD_URL(companyId, farmId, job.document_id))}
-                size="sm"
-                leftIcon={<FaDownload />}>
-                {intl.formatMessage({
-                  id: 'operationAudit.download',
-                  defaultMessage: 'Download Operation Dossier'
-                })}
-              </StandardButton>
-              <StandardButton
-                size="sm"
-                variant="outline"
-                leftIcon={<FaFolderOpen />}
-                onClick={() => navigate(documentsPath)}>
-                {intl.formatMessage({ id: 'operationAudit.openDocuments' })}
-              </StandardButton>
-            </HStack>
-          </VStack>
-        </Alert>
+        <StandardAlert
+          status="success"
+          mb={3}
+          title={intl.formatMessage({ id: 'operationAudit.ready' })}
+          description={intl.formatMessage(
+            { id: 'operationAudit.readyDetail' },
+            {
+              title:
+                job.document_title ||
+                intl.formatMessage({
+                  id: 'operationAudit.title',
+                  defaultMessage: 'Operation Audit Dossier'
+                }),
+              size: sizeMb
+            }
+          )}>
+          <HStack gap={2} flexWrap="wrap" pt={1}>
+            {/* Plain anchor: cookie auth rides along and the browser streams the PDF to disk. */}
+            <StandardButton
+              as="a"
+              href={env.getApiUrl(DOCUMENT_DOWNLOAD_URL(companyId, farmId, job.document_id))}
+              size="sm"
+              leftIcon={<FaDownload />}>
+              {intl.formatMessage({
+                id: 'operationAudit.download',
+                defaultMessage: 'Download Operation Dossier'
+              })}
+            </StandardButton>
+            <StandardButton
+              size="sm"
+              variant="outline"
+              leftIcon={<FaFolderOpen />}
+              onClick={() => navigate(documentsPath)}>
+              {intl.formatMessage({ id: 'operationAudit.openDocuments' })}
+            </StandardButton>
+          </HStack>
+        </StandardAlert>
       )}
 
       {job?.status === 'failed' && (
-        <Alert status="error" borderRadius="md" mb={3} alignItems="flex-start">
-          <AlertIcon mt="2px" />
-          <Box>
-            <Text fontSize="sm" fontWeight="semibold">
-              {intl.formatMessage({ id: 'operationAudit.failed' })}
-            </Text>
-            {job.error && (
-              <Text fontSize="sm" mt={1}>
-                {job.error}
-              </Text>
-            )}
-          </Box>
-        </Alert>
+        <StandardAlert
+          status="error"
+          mb={3}
+          title={intl.formatMessage({ id: 'operationAudit.failed' })}
+          description={job.error || undefined}
+        />
       )}
 
       <HStack
@@ -349,6 +330,9 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
         flexDirection={{ base: 'column', smd: 'row' }}>
         <StandardButton
           size="sm"
+          // ONE primary action at a time: while a finished build sits above with its own
+          // Download button, starting another is the secondary act.
+          variant={job?.status === 'succeeded' ? 'outline' : undefined}
           leftIcon={<FaFilePdf />}
           onClick={handlePrepare}
           isLoading={building}
@@ -360,9 +344,11 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
             : intl.formatMessage({ id: 'operationAudit.prepare' })}
         </StandardButton>
       </HStack>
-      <Text fontSize="xs" color="gray.600" mt={3}>
-        {intl.formatMessage({ id: 'operationAudit.asyncNote' })}
-      </Text>
+      {job?.status !== 'succeeded' && (
+        <Text fontSize="xs" color="gray.600" mt={3}>
+          {intl.formatMessage({ id: 'operationAudit.asyncNote' })}
+        </Text>
+      )}
       {/*
         What the chosen standard actually covers — and, for ROC and GlobalG.A.P., what it does
         NOT. The per-production modal has said this since 2026-08-22; this dropdown offered the
