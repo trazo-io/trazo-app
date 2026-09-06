@@ -212,6 +212,11 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ navb
 
   const getCommercialDashboardPath = (notification: Notification): string | null => {
     const farmId = notification.extra_data?.establishment_id;
+    // A finished background build ("your dossier is ready") lives on the Documents shelf, not
+    // the commercial dashboard — backend: documents/services/export_jobs.py `_notify`.
+    if (farmId && notification.extra_data?.kind === 'export_ready') {
+      return `/admin/dashboard/farm/${farmId}/documents`;
+    }
     if (farmId) {
       const params = new URLSearchParams();
       if (notification.extra_data?.parcel_id)

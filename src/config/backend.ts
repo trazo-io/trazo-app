@@ -197,6 +197,14 @@ export const OSP_NEW_VERSION_URL = (companyId: string, farmId: string, ospId: st
 export const ACTIVITY_FEED_URL = (companyId: string, farmId: string) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/activity-feed/`;
 
+// Background document builds (documents/services/export_jobs.py). POST the collection to
+// start one; GET a job by public id to poll it. The finished file is a DMS row — download it
+// through DOCUMENT_DOWNLOAD_URL, never through these.
+export const EXPORT_JOBS_URL = (companyId: string, farmId: string, jobId?: string) =>
+  jobId != null
+    ? `${ROOT_URL}companies/${companyId}/establishments/${farmId}/export-jobs/${jobId}/`
+    : `${ROOT_URL}companies/${companyId}/establishments/${farmId}/export-jobs/`;
+
 // Documents / DMS — WS-3
 export const DOCUMENTS_URL = (companyId: string, farmId: string, docId?: string | number) =>
   docId != null

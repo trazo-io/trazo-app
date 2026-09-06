@@ -28,6 +28,7 @@ import {
   Heading,
   HStack,
   Icon,
+  Progress,
   Spinner,
   Text,
   VStack,
@@ -46,6 +47,7 @@ import { useParams } from 'react-router-dom';
 import { StandardButton } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
 import { formatDateOnly } from 'utils/dateOnly';
+import { awaitCertifierDossier, describeProgress, type ExportJob } from 'utils/exportJobs';
 
 interface ReviewMetadata {
   operation_name: string;
@@ -97,6 +99,12 @@ const CertifierReview: React.FC = () => {
   const [readiness, setReadiness] = useState<ReadinessResponse | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
+  // The dossier is built at most once per change of the records (backend:
+  // certifier_review_dossier). When the filed build is current the click downloads at once;
+  // otherwise the server answers 202 with a job and this page shows its progress.
+  const [building, setBuilding] = useState(false);
+  const [buildJob, setBuildJob] = useState<ExportJob | null>(null);
+  const [buildError, setBuildError] = useState<'failed' | 'timeout' | null>(null);
 
   const rowBg = useColorModeValue('gray.50', 'gray.700');
   const rowBorder = useColorModeValue('gray.200', 'gray.600');
@@ -140,9 +148,30 @@ const CertifierReview: React.FC = () => {
     };
   }, [apiRoot, token]);
 
-  const handleDownload = useCallback(() => {
-    window.location.href = `${apiRoot}/certifier-review/${token}/dossier/`;
-  }, [apiRoot, token]);
+  const handleDownload = useCallback(async () => {
+    if (building) return;
+    setBuilding(true);
+    setBuildError(null);
+    setBuildJob(null);
+    const dossierUrl = `${apiRoot}/certifier-review/${token}/dossier/`;
+    try {
+      const outcome = await awaitCertifierDossier({
+        dossierUrl,
+        statusUrl: `${apiRoot}/certifier-review/${token}/dossier/status/`,
+        onProgress: setBuildJob
+      });
+      if (outcome.kind === 'download') {
+        // A navigation, not a fetch: the browser streams a possibly large PDF straight to disk.
+        window.location.href = outcome.url;
+      } else {
+        setBuildError(outcome.kind);
+      }
+    } catch {
+      setBuildError('failed');
+    } finally {
+      setBuilding(false);
+    }
+  }, [apiRoot, token, building]);
 
   if (loading) {
     return (
@@ -342,19 +371,74 @@ const CertifierReview: React.FC = () => {
           </>
         )}
 
-        <StandardButton leftIcon={<FaDownload />} onClick={handleDownload}>
+        <StandardButton leftIcon={<FaDownload />} onClick={handleDownload} isLoading={building}>
           {intl.formatMessage({
             id: 'certifierReview.download',
             defaultMessage: 'Download audit dossier (PDF)'
           })}
         </StandardButton>
 
+        {building && (
+          <Box w="full" role="status" aria-live="polite">
+            <Text fontSize="sm" color={textColor} mb={2}>
+              {(() => {
+                const p = describeProgress(buildJob);
+                if (p.total > 0 && p.current >= p.total) {
+                  return intl.formatMessage({
+                    id: 'certifierReview.progressLayout',
+                    defaultMessage: 'Laying out the pages…'
+                  });
+                }
+                if (p.total > 0 && p.current > 0) {
+                  return intl.formatMessage(
+                    {
+                      id: 'certifierReview.progressProduction',
+                      defaultMessage: 'Production {current} of {total}'
+                    },
+                    { current: p.current, total: p.total }
+                  );
+                }
+                return intl.formatMessage({
+                  id: 'certifierReview.preparing',
+                  defaultMessage: 'Preparing the dossier from the operation’s current records…'
+                });
+              })()}
+            </Text>
+            <Progress
+              size="sm"
+              colorScheme="green"
+              borderRadius="full"
+              isIndeterminate={describeProgress(buildJob).fraction === null}
+              value={(describeProgress(buildJob).fraction ?? 0) * 100}
+            />
+          </Box>
+        )}
+
+        {buildError && (
+          <Alert status={buildError === 'timeout' ? 'warning' : 'error'} borderRadius="md">
+            <AlertIcon />
+            <Text fontSize="sm">
+              {buildError === 'timeout'
+                ? intl.formatMessage({
+                    id: 'certifierReview.buildTimeout',
+                    defaultMessage:
+                      'This is taking longer than expected. Reload the page to try again.'
+                  })
+                : intl.formatMessage({
+                    id: 'certifierReview.buildFailed',
+                    defaultMessage:
+                      'The dossier could not be generated right now. Please try again shortly.'
+                  })}
+            </Text>
+          </Alert>
+        )}
+
         <Text fontSize="xs" color="gray.500">
           {intl.formatMessage(
             {
               id: 'certifierReview.freshness',
               defaultMessage:
-                'Generated from the operation’s current records each time it is downloaded. This link expires {date}.'
+                'Built from the operation’s current records; a new copy is generated whenever the records change. This link expires {date}.'
             },
             { date: formatDate(meta.expires_at) }
           )}

@@ -1,24 +1,58 @@
 /**
- * Operation-wide audit export trigger. Downloads ONE combined NOP dossier across every parcel ×
- * production for the establishment (vs one PDF per production). Backend:
- * GET /companies/{companyId}/establishments/{farmId}/operation-audit-export/?certification=…
+ * Operation-wide audit dossier — asked for, built in the background, filed in Documents.
  *
- * Readiness guard (2026-08-10): the backend deliberately never refuses this download — a
- * not-ready operation gets its PDF stamped with a red "[NON-COMPLIANT DOSSIER — DO NOT SUBMIT
- * TO CERTIFIER]" banner instead. Before this guard, nothing ON SCREEN said so: the certifier
- * LINK card checks readiness and disables its button, but this card streamed the stamped PDF
- * silently. Now the same readiness query paints a warning with the blocker titles first, and
- * the download stays available — the farmer may legitimately want the stamped draft to see
- * exactly what the certifier would.
+ * Until 2026-09-05 this card fetched the PDF inline: one GET that, on a 12-production farm,
+ * ran ~2,750 queries and laid out ~400 pages — about a minute in production, against an edge
+ * that drops requests at ~100 s, with a spinner and then a bare "Export failed". Now:
+ *
+ *   POST /companies/{c}/establishments/{f}/export-jobs/     → job (queued)
+ *   GET  /companies/{c}/establishments/{f}/export-jobs/{id}/ → polled every 3 s until terminal
+ *
+ * The finished PDF is a DMS row under Documents › Exports, downloaded with cookies through the
+ * ordinary document download route; the farmer also gets an in-app notification and an email
+ * carrying a LINK (never the file — see documents/services/export_jobs.py). They can leave the
+ * page mid-build.
+ *
+ * Audit window (2026-09-05): CCOF's inspection checklist asks for "input material applications
+ * going back at least to the previous inspection", not every season ever. The two date fields
+ * bound the productions included (active in the window); both blank = every season, which is
+ * the old behaviour.
+ *
+ * Readiness guard (2026-08-10): the backend never refuses this build — a not-ready operation
+ * gets its PDF stamped with a red "[NON-COMPLIANT DOSSIER — DO NOT SUBMIT TO CERTIFIER]" banner
+ * instead. The same readiness query paints a warning with the blocker titles first, and the
+ * build stays available — the farmer may legitimately want the stamped draft to see exactly
+ * what the certifier would.
  */
-import React, { useState } from 'react';
-import { Box, HStack, Icon, Text, useToast } from '@chakra-ui/react';
-import { FaExclamationTriangle, FaFilePdf } from 'react-icons/fa';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Alert,
+  AlertIcon,
+  Box,
+  HStack,
+  Icon,
+  Progress,
+  Text,
+  VStack,
+  useToast
+} from '@chakra-ui/react';
+import { FaDownload, FaExclamationTriangle, FaFilePdf, FaFolderOpen } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
-import { StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardField,
+  StandardInput
+} from 'components/Design/StandardComponents';
+import { DOCUMENT_DOWNLOAD_URL } from 'config';
+import { env } from 'config/environment';
+import baseApi from 'store/api/baseApi';
 import { useGetOperationReadinessQuery } from 'store/api/certifierLinkApi';
-import { config } from 'config/environment';
+import { useCreateExportJobMutation, useGetExportJobQuery } from 'store/api/exportJobsApi';
+import { EXPORT_JOB_POLL_MS, describeProgress, isTerminal } from 'utils/exportJobs';
 
 interface Props {
   companyId?: string;
@@ -35,13 +69,6 @@ interface Props {
  * ("USDA inspectors do not grade on environmental footprint, and including emissions data in an
  * audit PDF risks greenwashing-by-association claims").
  *
- * The brands did not survive research either: SCS-001 §2.5.1.2 requires a GFSI or USDA GAP
- * certification Trazo publicly says it does not do, §3.4.1.1 requires an SCS-approved carbon
- * calculator Trazo is not on, and SCS-001 is not in ANAB's accredited scope. FDA's own FAQ says
- * FSMA 204 has no Key Data Elements for the growing stage and the initial packer — not the
- * grower — assigns the lot code. The GlobalG.A.P. copy already conceded Trazo lacks its hygiene,
- * water-risk and worker-training data.
- *
  * The backend still accepts `certification_type` and the section sets are intact, so restoring a
  * standard is re-adding a control, not rebuilding a feature. Do not restore one without a named
  * grower asking for it.
@@ -51,7 +78,16 @@ const CERTIFICATION = 'organic';
 const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
   const intl = useIntl();
   const toast = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [jobId, setJobId] = useState<string | null>(null);
+  // Polling is a flag, not a derivation from the poll's own result (TypeScript would see the
+  // query reference itself). Set when a build starts, cleared by the effect that sees it end.
+  const [polling, setPolling] = useState(false);
+  const announcedRef = useRef<string | null>(null);
 
   const { data: readiness } = useGetOperationReadinessQuery(
     { companyId: companyId || '', farmId: farmId || '' },
@@ -59,33 +95,27 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
   );
   const blockers = readiness?.applicable ? readiness.blockers || [] : [];
 
-  const handleDownload = async () => {
-    if (!companyId || !farmId) return;
-    setIsLoading(true);
-    try {
-      const url =
-        `${config.API_BASE_URL}/companies/${companyId}/establishments/${farmId}/operation-audit-export/` +
-        `?certification=${CERTIFICATION}`;
-      const response = await fetch(url, { credentials: 'include' });
-      if (!response.ok) {
-        let msg = intl.formatMessage({ id: 'app.exportFailed', defaultMessage: 'Export failed' });
-        try {
-          const err = await response.json();
-          msg = err?.detail || err?.error || msg;
-        } catch {
-          /* non-JSON error body */
-        }
-        throw new Error(msg);
-      }
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `trazo-operation-audit-${farmId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
+  const [createJob, { isLoading: starting }] = useCreateExportJobMutation();
+  const { data: job } = useGetExportJobQuery(
+    { companyId: companyId || '', farmId: farmId || '', jobId: jobId || '' },
+    {
+      skip: !companyId || !farmId || !jobId,
+      // Poll while the build runs; stop the moment it is terminal.
+      pollingInterval: polling ? EXPORT_JOB_POLL_MS : 0
+    }
+  );
+
+  const windowInvalid = Boolean(start && end && start > end);
+  const building = starting || Boolean(jobId && job && !isTerminal(job)) || Boolean(jobId && !job);
+
+  // One toast per finished build, and the Documents shelf refetches so the new row is there
+  // when the farmer clicks through.
+  useEffect(() => {
+    if (!job || !isTerminal(job) || announcedRef.current === job.public_id) return;
+    announcedRef.current = job.public_id;
+    setPolling(false);
+    if (job.status === 'succeeded') {
+      dispatch(baseApi.util.invalidateTags([{ type: 'FarmDocuments', id: farmId || '' }]));
       toast({
         status: 'success',
         title: intl.formatMessage({
@@ -93,16 +123,65 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
           defaultMessage: 'Operation audit dossier downloaded'
         })
       });
+    }
+  }, [job, dispatch, farmId, intl, toast]);
+
+  const handlePrepare = async () => {
+    if (!companyId || !farmId || windowInvalid) return;
+    try {
+      const created = await createJob({
+        companyId,
+        farmId,
+        data: {
+          kind: 'operation_dossier',
+          certification: CERTIFICATION,
+          ...(start ? { start } : {}),
+          ...(end ? { end } : {})
+        }
+      }).unwrap();
+      announcedRef.current = null;
+      setJobId(created.public_id);
+      setPolling(!isTerminal(created));
     } catch (error) {
+      const data = (error as { data?: { detail?: string; error?: string } })?.data;
       toast({
         status: 'error',
         title: intl.formatMessage({ id: 'app.exportFailed', defaultMessage: 'Export failed' }),
-        description: error instanceof Error ? error.message : undefined
+        description: data?.detail || data?.error || undefined
       });
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  const progress = describeProgress(job);
+  const progressText = (() => {
+    if (progress.total > 0 && progress.current >= progress.total) {
+      return intl.formatMessage(
+        {
+          id: 'operationAudit.progressLayout',
+          defaultMessage: 'Laying out the pages for {total} productions…'
+        },
+        { total: progress.total }
+      );
+    }
+    if (progress.total > 0 && progress.current > 0) {
+      return intl.formatMessage(
+        {
+          id: 'operationAudit.progressProduction',
+          defaultMessage: 'Production {current} of {total}: {label}'
+        },
+        { current: progress.current, total: progress.total, label: progress.label }
+      );
+    }
+    return intl.formatMessage({
+      id: 'operationAudit.progressGathering',
+      defaultMessage: 'Gathering operation-wide records…'
+    });
+  })();
+
+  const documentsPath = `/admin/dashboard/farm/${farmId}/documents`;
+  const sizeMb = job?.document_size_bytes
+    ? (job.document_size_bytes / (1024 * 1024)).toFixed(1)
+    : '0.0';
 
   return (
     // Title and subtitle come from StandardCard's own props. They used to be hand-rolled as
@@ -152,6 +231,118 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
           </Box>
         </HStack>
       )}
+
+      {/* Audit window — both blank covers every season. */}
+      <Text fontSize="sm" fontWeight="semibold" color="gray.700" mb={1}>
+        {intl.formatMessage({ id: 'operationAudit.window.title' })}
+      </Text>
+      <Text fontSize="xs" color="gray.600" mb={2}>
+        {intl.formatMessage({ id: 'operationAudit.window.help' })}
+      </Text>
+      <HStack gap={3} align="flex-start" flexDirection={{ base: 'column', smd: 'row' }} mb={3}>
+        <StandardField label={intl.formatMessage({ id: 'operationAudit.window.start' })} w="full">
+          <StandardInput
+            type="date"
+            value={start}
+            max={end || undefined}
+            onChange={(e) => setStart(e.target.value)}
+            isDisabled={building}
+          />
+        </StandardField>
+        <StandardField
+          label={intl.formatMessage({ id: 'operationAudit.window.end' })}
+          error={
+            windowInvalid ? intl.formatMessage({ id: 'operationAudit.window.invalid' }) : undefined
+          }
+          w="full">
+          <StandardInput
+            type="date"
+            value={end}
+            min={start || undefined}
+            onChange={(e) => setEnd(e.target.value)}
+            isDisabled={building}
+          />
+        </StandardField>
+      </HStack>
+
+      {building && (
+        <Box mb={3} role="status" aria-live="polite">
+          <Text fontSize="sm" color="gray.700" mb={2}>
+            {job ? progressText : intl.formatMessage({ id: 'operationAudit.preparing' })}
+          </Text>
+          <Progress
+            size="sm"
+            colorScheme="green"
+            borderRadius="full"
+            isIndeterminate={progress.fraction === null}
+            value={(progress.fraction ?? 0) * 100}
+          />
+        </Box>
+      )}
+
+      {job?.status === 'succeeded' && job.document_id && companyId && farmId && (
+        <Alert status="success" borderRadius="md" mb={3} alignItems="flex-start">
+          <AlertIcon mt="2px" />
+          <VStack align="flex-start" spacing={2} w="full">
+            <Box>
+              <Text fontSize="sm" fontWeight="semibold">
+                {intl.formatMessage({ id: 'operationAudit.ready' })}
+              </Text>
+              <Text fontSize="sm">
+                {intl.formatMessage(
+                  { id: 'operationAudit.readyDetail' },
+                  {
+                    title:
+                      job.document_title ||
+                      intl.formatMessage({
+                        id: 'operationAudit.title',
+                        defaultMessage: 'Operation Audit Dossier'
+                      }),
+                    size: sizeMb
+                  }
+                )}
+              </Text>
+            </Box>
+            <HStack gap={2} flexWrap="wrap">
+              {/* Plain anchor: cookie auth rides along and the browser streams the PDF to disk. */}
+              <StandardButton
+                as="a"
+                href={env.getApiUrl(DOCUMENT_DOWNLOAD_URL(companyId, farmId, job.document_id))}
+                size="sm"
+                leftIcon={<FaDownload />}>
+                {intl.formatMessage({
+                  id: 'operationAudit.download',
+                  defaultMessage: 'Download Operation Dossier'
+                })}
+              </StandardButton>
+              <StandardButton
+                size="sm"
+                variant="outline"
+                leftIcon={<FaFolderOpen />}
+                onClick={() => navigate(documentsPath)}>
+                {intl.formatMessage({ id: 'operationAudit.openDocuments' })}
+              </StandardButton>
+            </HStack>
+          </VStack>
+        </Alert>
+      )}
+
+      {job?.status === 'failed' && (
+        <Alert status="error" borderRadius="md" mb={3} alignItems="flex-start">
+          <AlertIcon mt="2px" />
+          <Box>
+            <Text fontSize="sm" fontWeight="semibold">
+              {intl.formatMessage({ id: 'operationAudit.failed' })}
+            </Text>
+            {job.error && (
+              <Text fontSize="sm" mt={1}>
+                {job.error}
+              </Text>
+            )}
+          </Box>
+        </Alert>
+      )}
+
       <HStack
         gap={3}
         align={{ base: 'stretch', smd: 'flex-end' }}
@@ -159,17 +350,19 @@ const OperationAuditExportButton: React.FC<Props> = ({ companyId, farmId }) => {
         <StandardButton
           size="sm"
           leftIcon={<FaFilePdf />}
-          onClick={handleDownload}
-          isLoading={isLoading}
-          isDisabled={!companyId || !farmId}
+          onClick={handlePrepare}
+          isLoading={building}
+          isDisabled={!companyId || !farmId || windowInvalid}
           w={{ base: 'full', smd: 'auto' }}
           flexShrink={0}>
-          {intl.formatMessage({
-            id: 'operationAudit.download',
-            defaultMessage: 'Download Operation Dossier'
-          })}
+          {job && isTerminal(job)
+            ? intl.formatMessage({ id: 'operationAudit.prepareAgain' })
+            : intl.formatMessage({ id: 'operationAudit.prepare' })}
         </StandardButton>
       </HStack>
+      <Text fontSize="xs" color="gray.600" mt={3}>
+        {intl.formatMessage({ id: 'operationAudit.asyncNote' })}
+      </Text>
       {/*
         What the chosen standard actually covers — and, for ROC and GlobalG.A.P., what it does
         NOT. The per-production modal has said this since 2026-08-22; this dropdown offered the
