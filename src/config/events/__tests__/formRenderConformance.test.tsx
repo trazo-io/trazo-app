@@ -238,7 +238,7 @@ const KNOWN_DIVERGENCE: Record<string, string[]> = {
   // IR is not missing a fuel input — it deliberately REPLACES one. For irrigation on anything
   // other than a diesel pump, ProductionTab renders an explanatory panel instead: energy is
   // auto-calculated from water volume and water source using USDA NRCS pump efficiency
-  // (0.39 kg CO2/kWh, the figure in .claude/rules/carbon-methodology.md). The input appears
+  // (0.365 kg CO2e/kWh, the figure in .claude/rules/carbon-methodology.md). The input appears
   // once the grower selects Diesel, which makes it value-conditional in a way the registry
   // cannot express with `visibleWhen` without weakening the check for the eleven subtypes
   // where fuel IS unconditional.
