@@ -69,3 +69,33 @@ minify = true
 
 [context.branch-deploy]
   command = "npm ci --legacy-peer-deps && npm run build"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Deploy previews. ADDED 2026-09-07 — purely additive; nothing above is changed,
+# and the [build.processing.css] block is untouched (it is one of the four files
+# CLAUDE.md protects for the CSS production build).
+#
+# WHY: there was no [context.deploy-preview] at all, so every PR preview
+# inherited [build.environment] wholesale — including
+# VITE_APP_BACKEND_URL = https://api.trazo.io/api. Preview builds therefore talk
+# to the PRODUCTION API. With no staging backend to point at (there is exactly
+# one DigitalOcean app, trazo-api), that cannot simply be redirected; the honest
+# move is to make it VISIBLE rather than pretend it is fixed.
+#
+# What this block does buy, today:
+#   VITE_DEPLOY_CONTEXT lets the app tell a preview from production at runtime.
+#   Vite exposes only VITE_-prefixed vars, so Netlify's own CONTEXT variable is
+#   not reachable from client code without re-exporting it like this. Sentry
+#   reads it (src/config/sentry.ts) so preview errors stop being reported as
+#   `production` and polluting real error data — previously guaranteed, because
+#   Sentry used import.meta.env.MODE, which is "production" in ANY Vite
+#   production build regardless of Netlify context.
+#
+# ⚠️ STILL TRUE AFTER THIS: previews read and WRITE against the production API.
+# Before pilots, when QR scan counts and farm records start meaning something,
+# this needs a real staging backend. Tracked in ADR-010.
+[context.deploy-preview]
+  command = "npm ci --legacy-peer-deps && npm run build"
+
+[context.deploy-preview.environment]
+  VITE_DEPLOY_CONTEXT = "deploy-preview"
