@@ -387,7 +387,54 @@ export interface OSPAttachmentSummary {
   needs_your_answer: number;
   /** The form permits a blank, or the sheet's own opt-out declaration covers it. NOT work. */
   optional_blanks: number;
+  /**
+   * Which columns are blank, and where each is answered. Optional blanks are excluded — the
+   * form permits them, so listing them would put back as a to-do exactly what the three counts
+   * stopped presenting as work.
+   */
+  blanks?: OSPAttachmentBlank[];
   error: boolean;
+}
+
+/** One blank column on a generated attachment. */
+export interface OSPAttachmentBlank {
+  /** Verbatim USDA column header. */
+  header: string;
+  count: number;
+  kind: 'record' | 'operator';
+  /**
+   * Where in Trazo this column is answered. Empty means nowhere — legitimate for an `operator`
+   * blank (it is on the supplier's own certificate) and a bug for a `record` one.
+   */
+  fix: string;
+}
+
+/** One product on the Materials List, merged from the plan and the records. */
+export interface OSPMaterialListRow {
+  name: string;
+  manufacturer: string;
+  reason: string;
+  /** '' when the operator has not said; otherwise PlanMaterialEntry.status. */
+  status: '' | 'planned' | 'in_use';
+  in_use: boolean;
+  intended_for_use: boolean;
+  /** 'plan' — declared only · 'records' — applied only · 'both'. */
+  source: 'plan' | 'records' | 'both';
+  /** The plan row's listing identifier, when it has one. */
+  listing: string;
+  /** PlanMaterialEntry pk when the operator already has a row of their own for this product. */
+  entry_id: number | null;
+}
+
+export interface OSPMaterialsListResponse {
+  materials: OSPMaterialListRow[];
+}
+
+export interface OSPMaterialAnswer {
+  name: string;
+  reason_for_use?: string;
+  status?: 'planned' | 'in_use';
+  manufacturer?: string;
 }
 
 /** One thing the operation's dated records did after the plan's newest answer. */

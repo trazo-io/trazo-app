@@ -53,6 +53,7 @@ import {
 } from '@chakra-ui/react';
 import { FaDownload, FaFileAlt, FaInfoCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
+import { useNavigate } from 'react-router-dom';
 
 import { StandardAlert, StandardButton, StandardCard } from 'components/Design/StandardComponents';
 import config from 'config/environment';
@@ -67,6 +68,15 @@ import { OSP, OSPAttachmentSummary, OSPRecordType } from 'types/osp';
 interface OSPRecordTypesPanelProps {
   companyId: string;
   farmId: string;
+  /**
+   * Run before this panel navigates away, and abort the navigation if it resolves false.
+   *
+   * The module wizard autosaves answers ON PAGE ADVANCE, not on change, so a link out of an
+   * embedded panel discards everything typed on the current page — and this panel sits on
+   * G8.0 page A alongside five questions of its own. The wizard passes its own flush here; a
+   * caller with nothing pending may leave it out.
+   */
+  onNavigateAway?: () => Promise<boolean> | boolean;
   osp: OSP;
 }
 
@@ -83,8 +93,37 @@ const FLUSH_DELAY_MS = 600;
 /** Mirrors `common_osp_records.FREE_TEXT_LABEL_MAX` — the server refuses anything longer. */
 const FREE_TEXT_MAX_LENGTH = 200;
 
-const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, farmId, osp }) => {
+/**
+ * Where in Trazo each blank attachment column is answered.
+ *
+ * A count with no destination is what this closes: the panel reported "47 cells to fill in
+ * Trazo" while the product had no screen on which to fill them, which reads to a farmer as a
+ * fault in their own records. `route` null means there is genuinely nowhere in Trazo — true of
+ * a supplier's own organic certificate, and the sentence says so instead of pointing at a page
+ * that cannot help.
+ */
+const FIX_DESTINATIONS: Record<string, { route: ((farmId: string) => string) | null }> = {
+  parcel: { route: (farmId) => `/admin/dashboard/farm/${farmId}/osp` },
+  field_history: { route: (farmId) => `/admin/dashboard/farm/${farmId}/osp` },
+  materials_list: {
+    route: (farmId) => `/admin/dashboard/farm/${farmId}/osp/module/materials_application`
+  },
+  season: { route: null },
+  event_records: { route: null },
+  supplier_certificate: { route: null }
+};
+
+/** The USDA header as a phrase: verbatim wording, minus the form's punctuation and line break. */
+const columnLabel = (header: string) => header.replace(/\s+/g, ' ').replace(/:$/, '').trim();
+
+const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
+  companyId,
+  farmId,
+  osp,
+  onNavigateAway
+}) => {
   const intl = useIntl();
+  const navigate = useNavigate();
   const toast = useToast();
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
@@ -622,7 +661,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                 {attachments.workbooks.map((wb) => (
                   <Flex
                     key={wb.key}
-                    align="center"
+                    align="flex-start"
                     justify="space-between"
                     gap={3}
                     px={3}
@@ -661,6 +700,63 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                               }
                             )}
                       </Text>
+
+                      {/* WHICH columns are blank, and where each one is answered. The totals
+                          above are honest but not actionable on their own: the operator was
+                          told a number and left to find the screen. Optional blanks are never
+                          listed — the form permits them, and listing them would put back as a
+                          to-do exactly what the counts stopped presenting as work. */}
+                      {(wb.blanks ?? []).map((blank, index) => {
+                        // No token means the backend named no destination for this column. It
+                        // renders as the count alone rather than as `osp.attachments.fix.`,
+                        // which react-intl would print back as the raw message id.
+                        const destination = blank.fix ? FIX_DESTINATIONS[blank.fix] : undefined;
+                        return (
+                          <Flex
+                            key={`${blank.header}:${index}`}
+                            align="baseline"
+                            gap={2}
+                            wrap="wrap"
+                            mt={1}
+                            fontSize="xs"
+                            color={mutedColor}>
+                            <Text>
+                              {intl.formatMessage(
+                                {
+                                  id: 'osp.attachments.blankLine',
+                                  defaultMessage:
+                                    '{column} — {count, plural, one {# blank cell} other {# blank cells}}'
+                                },
+                                { column: columnLabel(blank.header), count: blank.count }
+                              )}
+                            </Text>
+                            {!blank.fix ? null : destination?.route ? (
+                              // ⛔ NOT variant="link": StandardButton maps its own variant
+                              // names onto Chakra pairs, and a name outside that map falls
+                              // through and renders unstyled — the documented inert-prop class.
+                              <StandardButton
+                                size="xs"
+                                variant="ghost"
+                                height="auto"
+                                minW={0}
+                                px={1}
+                                onClick={async () => {
+                                  // Save the page first. Without this, sending the operator to
+                                  // the screen that answers a blank throws away the answers
+                                  // they just typed next to it.
+                                  if (onNavigateAway && (await onNavigateAway()) === false) return;
+                                  navigate(destination.route!(farmId));
+                                }}>
+                                {intl.formatMessage({ id: `osp.attachments.fix.${blank.fix}` })}
+                              </StandardButton>
+                            ) : (
+                              <Text>
+                                {intl.formatMessage({ id: `osp.attachments.fix.${blank.fix}` })}
+                              </Text>
+                            )}
+                          </Flex>
+                        );
+                      })}
                     </Stack>
                     <StandardButton
                       size="xs"

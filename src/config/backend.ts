@@ -276,6 +276,19 @@ export const OSP_PLAN_MATERIAL_DETAIL_URL = (
 ) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/plan-materials/${entryId}/`;
 
+// The Materials List attachment as editable rows, and the operator's two per-row answers
+// (reason for use, in use vs intended). Same reading the generated workbook uses, so the
+// editor and the attachment cannot disagree about which cells are blank.
+export const OSP_MATERIALS_LIST_URL = (companyId: string, farmId: string, ospId: string | number) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/materials-list/`;
+
+export const OSP_MATERIALS_LIST_ANSWER_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/materials-list/answer/`;
+
 // NOP 2615 §3.4 — Notification of Changes (7 CFR 205.400(f)). GET list + POST create.
 export const OSP_CHANGE_NOTIFICATIONS_URL = (
   companyId: string,

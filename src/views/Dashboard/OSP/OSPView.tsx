@@ -82,6 +82,8 @@ import StateOrganicRegistrationCard, {
   STATE_ORGANIC_PROGRAMS
 } from './StateOrganicRegistrationCard';
 import OSPAnnualUpdateCard from './OSPAnnualUpdateCard';
+import { selectPlanOnFile } from './selectPlanOnFile';
+import { selectWorkingOsp } from './selectWorkingOsp';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
 import { todayLocalISODate } from 'utils/dateOnly';
 
@@ -306,6 +308,25 @@ const OSPView: React.FC = () => {
   const [selectedOspId, setSelectedOspId] = useState<number | null>(null);
 
   const focusedOspId = selectedOspId ?? newestSummaryId;
+
+  // The § 205.406 filing continues the plan the CERTIFIER holds, which is not the version the
+  // page is focused on. Focus defaults to the newest version — the working draft — and the
+  // annual update card used to post exactly that as `prior_osp`, recording "the changes to
+  // v4" against a plan the agent has never seen. The fallback to the working plan is for an
+  // operation that has never taken one out of draft, and mirrors the server: a draft
+  // `prior_osp` is refused only when a non-draft version exists to file against.
+  const annualUpdateTarget = useMemo(() => {
+    const onFile = selectPlanOnFile(ospSummaries);
+    return onFile ?? selectWorkingOsp(ospSummaries) ?? null;
+  }, [ospSummaries]);
+
+  // The draft the filing will be recorded as producing, when the operator has already started
+  // the next version. Server-side, `link_filing_to_open_draft` writes that link on save.
+  const annualUpdateProducesDraft = useMemo(() => {
+    const working = selectWorkingOsp(ospSummaries);
+    if (!working || working.status !== 'draft') return null;
+    return working.id === annualUpdateTarget?.id ? null : working;
+  }, [ospSummaries, annualUpdateTarget]);
 
   // Fetch the detail for the focused OSP. The hook handles caching.
   const { data: fetchedOsp, isFetching: detailLoading } = useGetOSPQuery(
@@ -1126,7 +1147,8 @@ const OSPView: React.FC = () => {
         <OSPAnnualUpdateCard
           companyId={companyId}
           farmId={farmId}
-          ospId={focusedOspId ?? fetchedOsp?.id ?? null}
+          planOnFile={annualUpdateTarget}
+          producesDraft={annualUpdateProducesDraft}
           currentYear={new Date().getFullYear()}
         />
       )}

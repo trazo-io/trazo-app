@@ -71,6 +71,7 @@ import type { OSP } from 'types/osp';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
+import OSPMaterialsListPanel from './OSPMaterialsListPanel';
 import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
@@ -211,7 +212,8 @@ const QuestionField = ({
   companyId,
   farmId,
   moduleKey,
-  osp
+  osp,
+  onNavigateAway
 }: {
   question: ModuleQuestion;
   value: AnswerValue;
@@ -223,6 +225,12 @@ const QuestionField = ({
   farmId: string;
   moduleKey: string;
   osp?: OSP;
+  /**
+   * Threaded down to the embedded panels so a link OUT of one saves this page first. Answers
+   * autosave on page advance, never on change, so an unguarded link inside an embed discards
+   * everything typed beside it.
+   */
+  onNavigateAway?: () => Promise<boolean> | boolean;
 }) => {
   const intl = useIntl();
   const label = pickText(question.label, locale);
@@ -245,9 +253,23 @@ const QuestionField = ({
         question.embed && osp ? (
           <Box mt={2}>
             {question.embed === 'approved_inputs' ? (
-              <OSPApprovedInputsPanel companyId={companyId} farmId={farmId} osp={osp} />
+              // Two panels, one embed: WHICH materials are on the plan, then the three
+              // columns the Materials List attachment asks about each of them (reason,
+              // manufacturer, in use vs intended). They belong together — the attestation
+              // directly below this embed says every material in use is entered in this
+              // list, and until 2026-09-07 "in use" was a question with no control anywhere
+              // in the product.
+              <Stack spacing={4}>
+                <OSPApprovedInputsPanel companyId={companyId} farmId={farmId} osp={osp} />
+                <OSPMaterialsListPanel companyId={companyId} farmId={farmId} osp={osp} />
+              </Stack>
             ) : question.embed === 's11_record_types' ? (
-              <OSPRecordTypesPanel companyId={companyId} farmId={farmId} osp={osp} />
+              <OSPRecordTypesPanel
+                companyId={companyId}
+                farmId={farmId}
+                osp={osp}
+                onNavigateAway={onNavigateAway}
+              />
             ) : question.embed === 'post_harvest_facilities' ? (
               <OSPHandlerFacilitiesPanel companyId={companyId} farmId={farmId} />
             ) : null}
@@ -1023,6 +1045,7 @@ const OSPModuleWizard = () => {
                                 farmId={farmId || ''}
                                 moduleKey={moduleKey || ''}
                                 osp={fullOsp}
+                                onNavigateAway={flushDirty}
                               />
                               {showSuggestion && (
                                 <Box

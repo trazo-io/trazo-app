@@ -38,6 +38,13 @@ vi.mock('react-router-dom', () => ({
   useNavigate: () => vi.fn()
 }));
 
+// The packet control reads the § 205.406 filings to say whether the annual update travels
+// with the version it exports. `react-redux` is stubbed above, so the real RTK hook has no
+// store to subscribe to — this page's own assertions are about module locking, not the packet.
+vi.mock('store/api/ospAnnualUpdateApi', () => ({
+  useGetOSPAnnualUpdatesQuery: () => ({ data: [] })
+}));
+
 const DEFINITIONS = {
   modules: [
     {

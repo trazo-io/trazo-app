@@ -14,6 +14,8 @@ import {
   OSP_PLAN_MATERIALS_URL,
   OSP_CHANGE_NOTIFICATIONS_URL,
   OSP_ATTACHMENTS_URL,
+  OSP_MATERIALS_LIST_ANSWER_URL,
+  OSP_MATERIALS_LIST_URL,
   OSP_REVIEW_URL,
   OSP_MODULE_DEFINITIONS_URL,
   OSP_MODULE_URL,
@@ -35,6 +37,8 @@ import {
   OSPReview,
   OSPRecordTypesResponse,
   OSPSummary,
+  OSPMaterialAnswer,
+  OSPMaterialsListResponse,
   PlanMaterialEntry,
   PlanMaterialInput,
   UpdateOSPData
@@ -218,6 +222,36 @@ const ospApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { ospId }) => [
         { type: 'OSP', id: Number(ospId) },
         { type: 'OSP', id: 'LIST' }
+      ]
+    }),
+
+    // The Materials List attachment, as rows the operator can finish. The three columns a
+    // catalog cannot answer — manufacturer, reason for use, in use vs intended — had no control
+    // anywhere in Trazo, while the attachments panel counted them as "cells to fill in Trazo".
+    getOSPMaterialsList: build.query<OSPMaterialsListResponse, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_MATERIALS_LIST_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSP', id: Number(ospId) }]
+    }),
+
+    // Writing an answer can put a logged-but-undeclared material ON the plan, so this
+    // invalidates the attachment counts as well: the blank it filled is one of the numbers the
+    // § 11 panel prints, and leaving that stale is how a farmer fills a cell and is told again
+    // that it is empty.
+    answerOSPMaterial: build.mutation<unknown, OSPOne & { body: OSPMaterialAnswer }>({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_MATERIALS_LIST_ANSWER_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSP', id: 'LIST' },
+        { type: 'OSPRecordTypes', id: Number(ospId) }
       ]
     }),
 
@@ -458,8 +492,10 @@ export const {
   useActivateOSPMutation,
   useNewOSPVersionMutation,
   useAddApprovedInputMutation,
+  useAnswerOSPMaterialMutation,
   useAddPlanMaterialMutation,
   useDeletePlanMaterialMutation,
+  useGetOSPMaterialsListQuery,
   useGetPlanMaterialsQuery,
   useRemoveApprovedInputMutation,
   useGetOSPChangeNotificationsQuery,

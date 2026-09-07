@@ -36,11 +36,27 @@ import {
   useGetOSPAnnualUpdatesQuery,
   useUpdateOSPAnnualUpdateMutation
 } from 'store/api/ospAnnualUpdateApi';
+import type { OSPSummary } from 'types/osp';
 
 interface Props {
   companyId?: string;
   farmId?: string;
-  ospId?: number | null;
+  /**
+   * The plan this filing CONTINUES — the version the certifier holds, not the version the
+   * screen happens to be focused on.
+   *
+   * 🔴 2026-09-07. This was `ospId`, wired to `focusedOspId`, which defaults to the newest
+   * version — the working DRAFT. So a filing made from this card recorded
+   * `prior_osp = v4`: "the changes to v4", against a plan the certifying agent has never
+   * seen, while § 205.406(a)(1) asks for the changes to the PREVIOUS plan. It read correctly
+   * on screen and was wrong in the lineage an inspector follows.
+   *
+   * Undefined only for an operation that has never taken a plan out of draft; the caller
+   * falls back to the working plan there, matching the server's rule.
+   */
+  planOnFile?: OSPSummary | null;
+  /** The draft this filing will be recorded as producing, when one is open. */
+  producesDraft?: OSPSummary | null;
   currentYear: number;
 }
 
@@ -168,7 +184,14 @@ const parseApiErrors = (err: unknown): { fields: FieldErrors; general: string | 
   return { fields, general: general.length ? general.join(' ') : null };
 };
 
-const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, currentYear }) => {
+const OSPAnnualUpdateCard: React.FC<Props> = ({
+  companyId,
+  farmId,
+  planOnFile,
+  producesDraft,
+  currentYear
+}) => {
+  const ospId = planOnFile?.id ?? null;
   const intl = useIntl();
   const toast = useToast();
   const { data: updates = [] } = useGetOSPAnnualUpdatesQuery(
@@ -586,6 +609,26 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({ companyId, farmId, ospId, curren
         {ospId != null && (
           <Box p={3} borderWidth="1px" borderColor="green.200" borderRadius="md">
             <VStack align="stretch" spacing={3}>
+              {/* Which version this filing attaches to, said out loud. The card used to post
+                  the focused version's id and show nothing, so the farmer had no way to know
+                  the record named a draft their certifier has never seen. */}
+              {planOnFile ? (
+                <Text fontSize="sm" color="gray.700">
+                  {intl.formatMessage(
+                    { id: 'osp.annual.continuing' },
+                    { version: planOnFile.version_number }
+                  )}
+                  {producesDraft ? (
+                    <>
+                      {' '}
+                      {intl.formatMessage(
+                        { id: 'osp.annual.producesDraft' },
+                        { version: producesDraft.version_number }
+                      )}
+                    </>
+                  ) : null}
+                </Text>
+              ) : null}
               <Box
                 maxW="200px"
                 ref={(el: HTMLDivElement | null) => {

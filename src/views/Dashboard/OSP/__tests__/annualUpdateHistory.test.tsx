@@ -67,7 +67,12 @@ const renderCard = () =>
   render(
     <ChakraProvider>
       <IntlProvider locale="en" onError={() => {}}>
-        <OSPAnnualUpdateCard companyId="1" farmId="2" ospId={61} currentYear={2026} />
+        <OSPAnnualUpdateCard
+          companyId="1"
+          farmId="2"
+          planOnFile={{ id: 61, version_number: 3, status: 'active' } as any}
+          currentYear={2026}
+        />
       </IntlProvider>
     </ChakraProvider>
   );

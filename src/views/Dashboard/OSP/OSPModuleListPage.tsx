@@ -36,9 +36,10 @@ import {
 } from 'components/Design/StandardComponents';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import OSPPlanReviewPanel from './OSPPlanReviewPanel';
+import PacketDownloadControl from './PacketDownloadControl';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { pickText } from 'config/osp/types';
-import { OSP_MODULE_PDF_URL, OSP_PACKET_URL } from 'config';
+import { OSP_MODULE_PDF_URL } from 'config';
 import { env } from 'config/environment';
 import type { ModuleDefinition, ModuleProgressRow, ModuleStatus } from 'config/osp/types';
 import {
@@ -347,21 +348,15 @@ const OSPModuleListPage = () => {
       title={intl.formatMessage({ id: 'osp.modules.pageTitle' })}
       description={intl.formatMessage({ id: 'osp.modules.pageDescription' })}
       rightAction={
+        // Secondary, deliberately. On a farm with 0 of 19 modules answered this was the biggest,
+        // greenest button on the page — the most prominent thing the OSP offered a new grower
+        // was "download the empty version of the document you have not written yet". Exporting
+        // is a utility here; answering modules is the work.
+        //
+        // It also used to export `selectWorkingOsp(osps)` — the highest-numbered DRAFT — through
+        // a bare href, naming no version anywhere. See PacketDownloadControl for what that cost.
         ospId != null ? (
-          // Secondary, deliberately. On a farm with 0 of 19 modules answered this was the biggest,
-          // greenest button on the page — the most prominent thing the OSP offered a new grower
-          // was "download the empty version of the document you have not written yet". Exporting
-          // is a utility here; answering modules is the work.
-          <Box data-tour="osp-packet">
-            <StandardButton
-              as="a"
-              href={env.getApiUrl(OSP_PACKET_URL(companyId, farmId || '', ospId))}
-              minH="44px"
-              variant="outline"
-              leftIcon={<FaFileAlt />}>
-              {intl.formatMessage({ id: 'osp.modules.downloadPacket' })}
-            </StandardButton>
-          </Box>
+          <PacketDownloadControl companyId={companyId} farmId={farmId || ''} osps={osps} />
         ) : undefined
       }>
       {!latestOsp ? (

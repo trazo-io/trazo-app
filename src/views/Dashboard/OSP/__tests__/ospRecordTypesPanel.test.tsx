@@ -18,6 +18,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
+import { MemoryRouter } from 'react-router-dom';
 
 import enUS from '../../../../i18n/lang/en-US.json';
 
@@ -95,6 +96,14 @@ vi.mock('store/api/ospApi', () => ({
           missing_from_records: 6,
           needs_your_answer: 0,
           optional_blanks: 0,
+          blanks: [
+            {
+              header: 'Name and Application Date of Last Prohibited Input:',
+              count: 6,
+              kind: 'record',
+              fix: 'field_history'
+            }
+          ],
           error: false
         },
         {
@@ -115,6 +124,14 @@ vi.mock('store/api/ospApi', () => ({
           missing_from_records: 1,
           needs_your_answer: 16,
           optional_blanks: 32,
+          blanks: [
+            {
+              header: 'Certifier\n(indicate nonorganic if not a certified product)',
+              count: 16,
+              kind: 'operator',
+              fix: 'supplier_certificate'
+            }
+          ],
           error: false
         }
       ]
@@ -124,16 +141,23 @@ vi.mock('store/api/ospApi', () => ({
 
 const { default: OSPRecordTypesPanel } = await import('../OSPRecordTypesPanel');
 
+const flushDirty = vi.fn<[], Promise<boolean>>(() => Promise.resolve(true));
+
 const renderPanel = () =>
   render(
+    // Router, because the attachments block links each blank column to the screen that
+    // answers it — a count with no destination was the defect that closed on 2026-09-07.
     <ChakraProvider>
-      <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
-        <OSPRecordTypesPanel
-          companyId="7"
-          farmId="3"
-          osp={{ id: '11', status: 'draft', version_number: 1 } as never}
-        />
-      </IntlProvider>
+      <MemoryRouter>
+        <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
+          <OSPRecordTypesPanel
+            companyId="7"
+            farmId="3"
+            osp={{ id: '11', status: 'draft', version_number: 1 } as never}
+            onNavigateAway={flushDirty}
+          />
+        </IntlProvider>
+      </MemoryRouter>
     </ChakraProvider>
   );
 
@@ -189,6 +213,53 @@ describe('OSP § 11 registry panel', () => {
     expect(
       screen.getByText('16 rows · 1 cell to fill in Trazo · 16 cells only you can answer')
     ).toBeInTheDocument();
+  });
+
+  it('sends every blank it counts somewhere it can be answered', () => {
+    renderPanel();
+    // 🔴 The defect: "6 cells to fill in Trazo" with nowhere in Trazo to fill them. A count is
+    // only useful attached to the screen that answers it.
+    expect(
+      screen.getByText('Name and Application Date of Last Prohibited Input — 6 blank cells')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open the Parcel Application' })).toBeInTheDocument();
+  });
+
+  it('does not point at a screen for a blank no Trazo screen can fill', () => {
+    renderPanel();
+    // The supplier's own organic certificate. Saying so beats a link to a page that cannot help,
+    // and the newline the USDA header carries must not print as a broken line either.
+    expect(
+      screen.getByText(
+        'Certifier (indicate nonorganic if not a certified product) — 16 blank cells'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {
+        name: /From each supplier's own organic certificate/
+      })
+    ).toBeNull();
+    expect(screen.getByText(/From each supplier's own organic certificate/)).toBeInTheDocument();
+  });
+
+  it('saves the page before sending the operator to another screen', async () => {
+    // 🔴 The wizard autosaves answers on PAGE ADVANCE, never on change, and this panel sits on
+    // G8.0 page A beside five questions of its own. An unguarded link out of it discarded
+    // everything typed next to the count it was pointing at.
+    renderPanel();
+    flushDirty.mockClear();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open the Parcel Application' }));
+    });
+    expect(flushDirty).toHaveBeenCalledTimes(1);
+  });
+
+  it('never lists an optional blank as work', () => {
+    renderPanel();
+    // The Crop/Livestock Product List has 36 optional blanks and no breakdown line: the form
+    // permits them, so listing them would put back exactly what the counts stopped calling work.
+    expect(screen.queryByText(/Comments — /)).toBeNull();
+    expect(screen.queryByText(/Directly Exporting/)).toBeNull();
   });
 
   it('will not confirm the free-text row until the operator names it', async () => {
