@@ -46,6 +46,7 @@
     "match-sorter": "6.3.0",
     "moment": "^2.29.1",
     "nouislider": "15.0.0",
+    "posthog-js": "^1.428.1",
     "react": "^18.2.0",
     "react-bootstrap-sweetalert": "5.2.0",
     "react-cookie": "^4.1.1",
@@ -98,7 +99,10 @@
     "typegen": "bash scripts/typegen.sh",
     "typegen:check": "bash scripts/typegen.sh --check",
     "lint:baseline": "node scripts/lint-gate.mjs --update",
-    "lint:raw": "eslint . --ext .js,.jsx,.ts,.tsx"
+    "lint:raw": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
   },
   "optionalDependencies": {
     "@babel/core": "7.14.0",
@@ -107,6 +111,7 @@
   "devDependencies": {
     "@babel/plugin-transform-react-jsx-source": "^7.14.5",
     "@emotion/babel-plugin": "^11.13.5",
+    "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.6.1",

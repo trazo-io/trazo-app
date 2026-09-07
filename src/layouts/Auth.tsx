@@ -15,6 +15,7 @@ import React, { Suspense } from 'react';
 import { Route as RouteType } from 'types/common';
 import theme from 'theme/theme';
 import { ConsentBanner } from '../components/Privacy/ConsentBanner';
+import { grantAnalyticsConsent, revokeAnalyticsConsent } from 'config/posthog';
 
 type AuthLayoutProps = {
   /**
@@ -148,7 +149,7 @@ export default function Pages({ plainNav = false }: AuthLayoutProps) {
           exists to keep navigation reachable during a long scroll. These pages are one short
           task, so the pinned logo bought nothing and cost a collision — MEASURED at 1440x800,
           the fixed logo overlapped card content at 11 of 16 scroll positions, running straight
-          through "Build Your Farm's Brand", then the subtitle, then the Create/Join buttons.
+          through the create-account heading, then the subtitle, then the Create/Join buttons.
           It was survivable only while the navbar painted an opaque pill over what it covered;
           removing that chrome for the centered-card redesign exposed it. Linear, Stripe,
           Vercel, Notion and Clerk all put the wordmark in flow and let it scroll away.
@@ -174,8 +175,13 @@ export default function Pages({ plainNav = false }: AuthLayoutProps) {
           </Suspense>
         </Box>
       </Box>
-      {/* Privacy consent banner for GDPR compliance */}
-      <ConsentBanner />
+      {/* Privacy consent banner for GDPR compliance.
+          onConsentChange is what actually reaches PostHog — see ConsumerProductLayout. */}
+      <ConsentBanner
+        onConsentChange={(consent) =>
+          consent ? grantAnalyticsConsent() : revokeAnalyticsConsent()
+        }
+      />
     </Box>
     //   </ChakraProvider>
     // </CacheProvider>

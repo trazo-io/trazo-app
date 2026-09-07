@@ -1,0 +1,84 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // WHY THIS EXISTS (2026-09-07)
+  //
+  // This repo had no CI and no dependency channel at all. Measured on 2026-09-07:
+  //   react     18.2   (19.x current)
+  //   vite      4.5    (7.x current)
+  //   vitest    0.34   (3.x current — a 0.x pin, three majors back)
+  //   eslint    8.53   (9.x current; 8 is the reason `eslint .` defaulted to --ext .js
+  //                     and visited 18 of 521 files)
+  //
+  // Meanwhile trazo-landing runs Next 16 / React 19 / Tailwind 4. Same product, two eras.
+  // See documentation/adr/010-platform-tooling-and-dependency-currency.md
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  extends: ['config:recommended'],
+
+  timezone: 'America/Montevideo',
+  schedule: ['before 6am on monday'],
+
+  // OFF deliberately. The typecheck gate and unit tests are continue-on-error in CI, so a
+  // green check does not mean what automerge assumes. Revisit when those flip to blocking.
+  automerge: false,
+
+  prConcurrentLimit: 3,
+  prHourlyLimit: 2,
+
+  labels: ['dependencies'],
+  rangeStrategy: 'bump',
+  semanticCommits: 'enabled',
+
+  vulnerabilityAlerts: {
+    enabled: true,
+    schedule: ['at any time'],
+    labels: ['dependencies', 'security'],
+  },
+
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ['before 6am on the first day of the month'],
+  },
+
+  packageRules: [
+    {
+      // React 18 -> 19 drags react-dom, the @types, and every library with a peer range on
+      // React. One grouped PR, one test run, one review.
+      groupName: 'react ecosystem',
+      matchPackageNames: [
+        'react',
+        'react-dom',
+        '@types/react',
+        '@types/react-dom',
+        'react-router-dom',
+      ],
+    },
+    {
+      // Chakra v2 -> v3 is a rewrite of the props API. The theme tokens in
+      // .claude/rules/frontend.md (green.700 text / green.600 boundary, the custom sm=320px
+      // breakpoint scale) are all expressed through it, so this upgrade is a design review
+      // as much as a dependency bump. Never batch it with anything.
+      groupName: 'chakra ui',
+      matchPackageNames: ['@chakra-ui/react', '@chakra-ui/icons', '@emotion/react', '@emotion/styled', 'framer-motion'],
+      dependencyDashboardApproval: true,
+    },
+    {
+      // Build/test toolchain moves together: a Vite major usually needs the matching vitest.
+      groupName: 'build and test toolchain',
+      matchPackageNames: ['vite', 'vitest', '@vitejs/plugin-react', '@vitest/coverage-v8', 'jsdom'],
+    },
+    {
+      matchUpdateTypes: ['major'],
+      dependencyDashboardApproval: true,
+      labels: ['dependencies', 'major'],
+      minimumReleaseAge: '7 days',
+    },
+    {
+      matchUpdateTypes: ['patch', 'minor'],
+      groupName: 'npm patch and minor',
+      minimumReleaseAge: '3 days',
+    },
+  ],
+}

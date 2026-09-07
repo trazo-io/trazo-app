@@ -1,0 +1,156 @@
+# Trazo app CI — the first automated check this repository has actually had.
+#
+# WHY THIS FILE MOVED HERE (2026-09-07)
+# -------------------------------------
+# The frontend job below was written on 2026-08-11 at `~/dev/trazo/.github/workflows/ci.yml`,
+# against a monorepo layout that does not exist. `~/dev/trazo` is not a git repository —
+# `trazo-app`, `trazo-back` and `trazo-landing` are three separate repos with three separate
+# remotes, and that file was tracked by none of them. GitHub never saw it. **None of these
+# steps has ever run.** The `working-directory: trazo-app` and `trazo-app/package-lock.json`
+# in the original are the tell: they only resolve from a root that is never checked out.
+#
+# So the 2026-08-11 finding — "the typecheck gate was 52 errors past baseline because nothing
+# ran it" — was only half fixed. The gate got written. It still ran nowhere.
+#
+# ORIGINAL RATIONALE, preserved
+# -----------------------------
+# `vercel.json` calls `npm run build`, and Vite strips types without checking them, so `build`
+# stays green while source files are unparseable and tsc silently checks almost nothing.
+# `npm run build` being green proves nothing about types.
+#
+# ENFORCEMENT POSTURE — measured 2026-08-11, carried forward unchanged
+# -------------------------------------------------------------------
+#   BLOCKING:
+#     (nothing yet — see below)
+#
+#   NON-BLOCKING (red on arrival, exact count recorded so drift stays visible):
+#     lint gate ......... MEASURED 2026-09-07: 67 new errors over baseline, in 20 files that
+#                         are ALREADY COMMITTED — none of them from the change that added this
+#                         workflow. The gate was written blocking on 2026-08-11 when the tree
+#                         was clean; the tree has drifted since, and nothing ran the gate to
+#                         say so (that is this whole workflow's reason for existing).
+#                         Breakdown: 43 prettier/prettier (auto-fixable with
+#                         `npm run lint:fix`), 19 @typescript-eslint/no-unused-vars, 5 other.
+#                         ⛔ Do NOT run `npm run lint:baseline` to clear it — that freezes the
+#                         new errors in permanently, which is the one thing the per-file
+#                         baseline exists to prevent.
+#                         Flip back to blocking once the 67 reach zero. The clean-up is a
+#                         mechanical commit of its own and does not belong to whoever is
+#                         adding CI.
+#     typecheck ......... 5 new errors over baseline, down from 52. The remaining five need
+#                         type reconciliations, not patches: Sidebar's generated routes omit
+#                         the required `Route.id` and map a `Farm[]` through an
+#                         `EstablishmentType` callback (2), and pestEvent (1) / soilEvent (2)
+#                         have a FieldFormatter generic-variance issue. Flip to blocking when
+#                         those land.
+#     unit tests ........ 33 failing of 895, across 12 files. Needs its own triage.
+#     npm audit ......... new step, count unknown until first run.
+#
+# Do NOT add `npm run typecheck &&` to vercel.json's buildCommand until the gate is green;
+# a red required check on the deploy path gets routed around, not fixed.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend — typecheck, lint, unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      # 2026-08-12: the caveat that used to sit here — "this only checks 18 JS files" — is
+      # now closed, because a gate quoted as evidence while checking 3.5% of the tree is a
+      # liability. Two compounding blind spots, both fixed:
+      #
+      #   ESLint 8's `eslint .` defaults to --ext .js  -> 18 of 521 files visited
+      #   no @typescript-eslint parser configured      -> all 458 .ts/.tsx files parse-error,
+      #                                                   which yields ZERO rule coverage
+      #
+      # Honest count went 1 -> 4,133. `npm run lint` is now a per-file baseline gate
+      # (scripts/lint-gate.mjs), identical in shape to the typecheck gate: new errors fail,
+      # the backlog is tolerated, and a PARSE error fails unconditionally since that is the
+      # exact blindness this replaced. ~71% of the backlog is prettier/prettier and clears
+      # with `npm run lint:fix` — a mechanical sweep that deserves its own commit.
+      # Non-blocking as of 2026-09-07 — 67 new errors over baseline in already-committed
+      # files. See the posture note in the header for the breakdown and the flip condition.
+      # The step still prints the full per-file diff, so a regression from 67 to 300 is
+      # visible in the log even while it cannot fail the build.
+      - name: Lint gate (non-blocking — 67 new over baseline)
+        continue-on-error: true
+        run: npm run lint
+
+      # Per-FILE baseline, so "fixed 5 in A, added 5 in B" still fails. Never run
+      # `npm run typecheck:update` to make this pass — that freezes the new errors in.
+      # Non-blocking until the last 5 land; the step still prints the full diff, so a
+      # regression from 4 to 40 is visible in the log even while it cannot fail the build.
+      - name: Typecheck gate (non-blocking — 5 new over baseline)
+        continue-on-error: true
+        run: npm run typecheck
+
+      # Non-blocking: 33 of 895 failing as of 2026-08-11, pre-existing and untriaged.
+      - name: Unit tests (non-blocking — 33 known failures)
+        continue-on-error: true
+        run: npx vitest run --watch=false
+
+  # Dependency currency. Non-blocking on arrival for the same reason the backend audit is:
+  # a job that is red the day it lands is a job people learn to scroll past. The count is
+  # printed either way, which is the point — drift becomes visible before it becomes a
+  # failure. Flip `continue-on-error` off once the backlog is triaged to zero HIGH/CRITICAL.
+  audit:
+    name: Dependency audit (non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      # Production dependencies only. A dev-only advisory in a build tool is real but is not
+      # the same risk as one in code that ships to a farmer's browser, and mixing them is how
+      # the number becomes noise nobody reads.
+      - name: npm audit (production deps)
+        run: |
+          npm audit --omit=dev --audit-level=high 2>&1 | tee audit.txt || true
+          echo "=== full count, all severities, including dev ==="
+          npm audit --json > audit-full.json 2>/dev/null || true
+          # Distinguish "audit ran and found N" from "audit could not run". An audit that
+          # errored out (registry 4xx, offline runner) otherwise prints a benign-looking
+          # message and the step goes green — the same shape as a clean result, which is how
+          # a dependency check quietly stops checking anything.
+          node -e "
+            let j;
+            try { j = require('./audit-full.json'); }
+            catch (e) { console.log('::warning title=npm audit unreadable::' + e.message); process.exit(0); }
+            if (j && j.metadata && j.metadata.vulnerabilities) {
+              console.log('vulnerabilities:', JSON.stringify(j.metadata.vulnerabilities));
+            } else {
+              console.log('::warning title=npm audit did not run::' + (j && j.message ? j.message : 'unexpected JSON shape - no metadata.vulnerabilities'));
+            }
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-report
+          path: |
+            audit.txt
+            audit-full.json
+          if-no-files-found: ignore

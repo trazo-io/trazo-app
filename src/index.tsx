@@ -1,6 +1,12 @@
 // Sentry must be initialized before any other imports
 import './config/sentry';
 
+// PostHog is inert unless VITE_POSTHOG_KEY is set, and captures NOTHING until the visitor
+// accepts via the consent banner (opt_out_capturing_by_default). See config/posthog.ts.
+import { initPostHog } from './config/posthog';
+
+initPostHog();
+
 // Import minimal essential CSS
 import 'assets/css/trazo-colors.css';
 import 'assets/css/trazo-dashboard-styles.css';
