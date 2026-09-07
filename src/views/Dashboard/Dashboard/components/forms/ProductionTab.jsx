@@ -105,7 +105,7 @@ const FUEL_TYPES = [
   { value: 'gasoline', label: 'Gasoline', factor: '2.32 kg CO₂e/L' },
   { value: 'natural_gas', label: 'Natural Gas', factor: '1.92 kg CO₂e/m³' },
   { value: 'propane', label: 'LPG / Propane', factor: '1.51 kg CO₂e/L' },
-  { value: 'electric', label: 'Electric', factor: '0.39 kg CO₂e/kWh' },
+  { value: 'electric', label: 'Electric', factor: '0.365 kg CO₂e/kWh' },
   { value: 'biodiesel', label: 'Biodiesel', factor: '2.31 kg CO₂e/L' },
   { value: 'none', label: 'No Fuel / Manual', factor: '0 kg CO₂e' }
 ];
@@ -4300,7 +4300,7 @@ const ProductionTab = forwardRef(
                                     Electric Equipment:
                                   </Text>{' '}
                                   Enter energy consumption in kilowatt-hours (kWh). Grid electricity
-                                  uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero
+                                  uses 0.365 kg CO₂e/kWh. Solar/wind powered equipment has zero
                                   emissions.
                                 </Text>
                               </Box>

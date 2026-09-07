@@ -1490,7 +1490,7 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
                                         <Text fontSize="xs" color="orange.600" pl={2}>
                                           • Fuel type:{' '}
                                           {calculation.breakdown.fuel_type === 'electric'
-                                            ? 'Electric (0.39 kg CO₂e/kWh)'
+                                            ? 'Electric (0.365 kg CO₂e/kWh)'
                                             : calculation.breakdown.fuel_type === 'diesel'
                                             ? 'Diesel (2.70 kg CO₂e/L)'
                                             : calculation.breakdown.fuel_type === 'gasoline'
