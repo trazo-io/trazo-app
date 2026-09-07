@@ -2984,7 +2984,7 @@
   "drift.banner.body": "Per 7 CFR 205.400(f)(2), you must immediately notify your certifier of any change to your operation that may affect its organic status. Add the input to your OSP or file a change-notification with the certifier.",
   "drift.banner.hide": "Hide details",
   "drift.banner.nextStep": "To clear a finding: add the input to your OSP's approved list, or document the change-notification you submitted to the certifier.",
-  "drift.banner.provisional.body": "You have no approved plan yet, so these were compared against your draft. Add each material to the plan before you submit it — nothing here needs to be reported to a certifier.",
+  "drift.banner.provisional.body": "You have no approved plan yet, so these were compared against your draft. Add each material to the plan before you submit it — a draft has no filed change for a certifier to be notified about under § 205.400(f)(2).",
   "drift.banner.provisional.title": "{count, plural, one {# input not yet on your draft plan} other {# inputs not yet on your draft plan}}",
   "drift.banner.show": "Show details",
   "drift.banner.title": "{count, plural, one {# event references an input not in your active OSP} other {# events reference inputs not in your active OSP}}",

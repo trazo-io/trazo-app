@@ -132,12 +132,49 @@ describe('DriftFindingsBanner — the CDFA badge carries no number and asserts n
 
   it('renders a legacy "missing" row the same way — it always meant unchecked', () => {
     wrap(
-      <DriftFindingsBanner
-        events={[finding({ status: 'missing', cdfa_oim_reg_number: null })]}
-      />
+      <DriftFindingsBanner events={[finding({ status: 'missing', cdfa_oim_reg_number: null })]} />
     );
     open();
     expect(screen.getByText(/CDFA OIM not checked/)).toBeTruthy();
     expect(screen.queryByText(/CDFA OIM missing/)).toBeNull();
+  });
+});
+
+describe('provisional copy never states a compliance conclusion Trazo did not check', () => {
+  /**
+   * 🔴 Caught on re-read, 2026-09-07. The provisional banner said "nothing here needs to be
+   * reported to a certifier."
+   *
+   * True of THESE findings under § 205.400(f)(2) — a draft plan has no filed change to
+   * notify. False as an absolute. A § 205.602 prohibited substance actually applied is
+   * § 205.400(f)(1), an IMMEDIATE notification regardless of plan status, and it travels on a
+   * different channel (`organic_approved__in=("not_organic","no")`) that this banner's
+   * all-provisional check cannot see. The same screen could have told a grower nothing needed
+   * reporting while a real obligation sat elsewhere on the page.
+   *
+   * A surface may state what it checked. It may not conclude that nothing else applies.
+   */
+  const enMessages = enUS as Record<string, string>;
+
+  it('does not tell the grower that nothing needs reporting', () => {
+    const body = enMessages['drift.banner.provisional.body'];
+    expect(body).toBeTruthy();
+    expect(body.toLowerCase()).not.toContain('nothing here needs to be reported');
+    expect(body.toLowerCase()).not.toContain('nothing needs to be reported');
+  });
+
+  it('scopes the reassurance to the regulation it is actually about', () => {
+    expect(enMessages['drift.banner.provisional.body']).toContain('205.400(f)(2)');
+  });
+
+  it('never claims a draft finding is approved, verified or compliant', () => {
+    const provisional = Object.entries(enMessages).filter(([k]) => k.includes('.provisional.'));
+    expect(provisional.length).toBeGreaterThan(0);
+    for (const [key, text] of provisional) {
+      const lowered = text.toLowerCase();
+      for (const forbidden of ['approved by', 'verified', 'compliant', 'certified']) {
+        expect(lowered, `${key} over-claims: ${forbidden}`).not.toContain(forbidden);
+      }
+    }
   });
 });

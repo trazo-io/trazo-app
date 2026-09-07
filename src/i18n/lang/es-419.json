@@ -2984,7 +2984,7 @@
   "drift.banner.body": "Según 7 CFR 205.400(f)(2), debes notificar de inmediato a tu certificador cualquier cambio en tu operación que pueda afectar el estatus orgánico. Agrega el insumo a tu OSP o envía una notificación de cambio al certificador.",
   "drift.banner.hide": "Ocultar detalles",
   "drift.banner.nextStep": "Para resolver un hallazgo: agrega el insumo a la lista aprobada de tu OSP, o documenta la notificación de cambio que enviaste al certificador.",
-  "drift.banner.provisional.body": "Todavía no tienes un plan aprobado, así que esto se comparó con tu borrador. Agrega cada material al plan antes de enviarlo — nada de esto hay que reportarlo a un certificador.",
+  "drift.banner.provisional.body": "Todavía no tienes un plan aprobado, así que esto se comparó con tu borrador. Agrega cada material al plan antes de enviarlo — un borrador no tiene ningún cambio presentado que haya que notificar a un certificador según § 205.400(f)(2).",
   "drift.banner.provisional.title": "{count, plural, one {# insumo aún no está en tu plan borrador} other {# insumos aún no están en tu plan borrador}}",
   "drift.banner.show": "Ver detalles",
   "drift.banner.title": "{count, plural, one {# evento referencia un insumo que no está en tu OSP activo} other {# eventos referencian insumos que no están en tu OSP activo}}",
