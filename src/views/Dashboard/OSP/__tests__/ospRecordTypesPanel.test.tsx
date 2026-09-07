@@ -80,7 +80,46 @@ vi.mock('store/api/ospApi', () => ({
     isError: false
   }),
   useConfirmOSPRecordTypesMutation: () => [confirmRecordTypes, { isLoading: false }],
-  useGetOSPAttachmentsQuery: () => ({ data: undefined })
+  // Attachments are RENDERED here on purpose. Their row label is the most intricate ICU string
+  // in the panel — nested plurals with a `select` separator and a zero-case — and nothing
+  // exercised it, so a malformed message would have thrown at runtime in front of a farmer and
+  // passed every test.
+  useGetOSPAttachmentsQuery: () => ({
+    data: {
+      workbooks: [
+        {
+          key: 'field_and_crop_information',
+          title: 'Field and Crop Information Form',
+          rows: 6,
+          blank_cells: 6,
+          missing_from_records: 6,
+          needs_your_answer: 0,
+          optional_blanks: 0,
+          error: false
+        },
+        {
+          key: 'crop_livestock_product_list',
+          title: 'Crop/Livestock Product List',
+          rows: 4,
+          blank_cells: 0,
+          missing_from_records: 0,
+          needs_your_answer: 0,
+          optional_blanks: 36,
+          error: false
+        },
+        {
+          key: 'supplier_list',
+          title: 'Supplier List',
+          rows: 16,
+          blank_cells: 17,
+          missing_from_records: 1,
+          needs_your_answer: 16,
+          optional_blanks: 32,
+          error: false
+        }
+      ]
+    }
+  })
 }));
 
 const { default: OSPRecordTypesPanel } = await import('../OSPRecordTypesPanel');
@@ -138,6 +177,18 @@ describe('OSP § 11 registry panel', () => {
       keys: ['harvest_records', 'planting_records', 'tillage'],
       confirmed: true
     });
+  });
+
+  it('counts only work that is actually work', () => {
+    renderPanel();
+    // 36 optional blanks — the export-equivalency columns a domestic grower opts out of on the
+    // sheet's own declaration, plus Comments. Reporting them as homework is what made this
+    // panel read as noise.
+    expect(screen.getByText('4 rows · nothing left to fill')).toBeInTheDocument();
+    expect(screen.getByText('6 rows · 6 cells to fill in Trazo')).toBeInTheDocument();
+    expect(
+      screen.getByText('16 rows · 1 cell to fill in Trazo · 16 cells only you can answer')
+    ).toBeInTheDocument();
   });
 
   it('will not confirm the free-text row until the operator names it', async () => {

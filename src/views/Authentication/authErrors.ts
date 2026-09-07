@@ -63,6 +63,11 @@ export interface AuthErrorResolution {
 export const EMAIL_EXISTS_VERIFIED = 'email_exists_verified';
 export const EMAIL_EXISTS_UNVERIFIED = 'email_exists_unverified';
 
+/** `verify_email` outcomes. Added 2026-09-07 with the verification-code TTL. */
+export const VERIFICATION_CODE_INVALID = 'verification_code_invalid';
+export const VERIFICATION_CODE_EXPIRED = 'verification_code_expired';
+export const ALREADY_VERIFIED = 'already_verified';
+
 /**
  * DRF's `as_serializer_error` wraps a bare string value in a list, so `data.code` arrives as
  * `["email_exists_unverified"]` — but `data.detail` does not. Every field on an error body
@@ -77,7 +82,7 @@ const first = (value: unknown): string | undefined => {
   return typeof value === 'string' ? value : undefined;
 };
 
-interface RtkError {
+export interface RtkError {
   status?: number | string;
   data?: Record<string, unknown>;
 }
@@ -180,6 +185,47 @@ export const resolveSignInError = (err: RtkError | undefined): AuthErrorResoluti
 
   const transport = transportError(err);
   return { ...transport, messageId: transport.messageId ?? 'auth.error.signin.generic' };
+};
+
+/**
+ * The verify-email screen.
+ *
+ * ⚠️ This screen used to decide what had happened by comparing the server's ENGLISH sentence
+ * — `error?.data?.error === 'User is already verified'` — which is the exact defect the codes
+ * above exist to remove, still alive one screen over. It stayed invisible because that branch
+ * is the SUCCESS path (an already-verified user is sent to the dashboard), so on a Spanish
+ * locale the comparison simply never matched and the user was shown "verification failed"
+ * for an account that was fine.
+ *
+ * `already_verified` is deliberately NOT handled here: it is not an error on this screen, and
+ * the caller checks for it before resolving. Returning a red box for it would be a lie.
+ */
+export const resolveVerifyEmailError = (err: RtkError | undefined): AuthErrorResolution => {
+  const data = err?.data ?? {};
+  const code = first(data.code);
+
+  if (code === VERIFICATION_CODE_EXPIRED) {
+    // Resend is the ONLY way out of an expired code — the server deletes the row on
+    // rejection, so retyping the same six characters can never work again.
+    return {
+      messageId: 'auth.error.verify.expired',
+      action: { kind: 'resendVerification' },
+      fieldsInvalid: []
+    };
+  }
+
+  if (code === VERIFICATION_CODE_INVALID) {
+    // Offering resend here leaks nothing: `resend_verification_email` answers
+    // "if an account exists…" for every address, and a farmer who mistyped one character
+    // should not have to guess whether the code or the mailbox is the problem.
+    return {
+      messageId: 'auth.error.verify.invalid',
+      action: { kind: 'resendVerification' },
+      fieldsInvalid: []
+    };
+  }
+
+  return resolveGenericAuthError(err, 'auth.error.verify.generic');
 };
 
 export const resolveGenericAuthError = (

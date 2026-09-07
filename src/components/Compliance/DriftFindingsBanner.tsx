@@ -31,7 +31,7 @@ import {
   useColorModeValue,
   VStack
 } from '@chakra-ui/react';
-import { FaExclamationTriangle, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaExclamationTriangle, FaExternalLinkAlt, FaInfoCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 
 import type { DriftWarning } from 'types/standardizedEvents';
@@ -83,7 +83,15 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
   const localizedReason = (dw: DriftWarning): string => {
     const code = dw.reason_code;
     if (!code) return dw.reason;
-    const id = `drift.reason.${code}`;
+    // A finding against a draft plan says the same THING and prescribes a different ACTION:
+    // add it to the plan you are writing, never "notify your certifier" about a plan nobody
+    // has read. Prefer the provisional wording, fall back to the filed-plan wording, then to
+    // the server prose for legacy findings written before either existed.
+    const provisionalId = `drift.reason.provisional.${code}`;
+    const id =
+      dw.provisional && (intl.messages as Record<string, unknown>)[provisionalId]
+        ? provisionalId
+        : `drift.reason.${code}`;
     if (!(intl.messages as Record<string, unknown>)[id]) return dw.reason;
     const params: Record<string, unknown> = { ...(dw.reason_params ?? {}) };
     if (code === 'approved_with_issues') {
@@ -103,9 +111,20 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
 
   // Use Chakra `yellow.*` tokens — matches the existing compliance-warning
   // palette already used by the audit export "warning" style on the backend.
-  const bg = useColorModeValue('yellow.50', 'yellow.900');
-  const border = useColorModeValue('yellow.400', 'yellow.600');
-  const headerFg = useColorModeValue('yellow.800', 'yellow.100');
+  const warnBg = useColorModeValue('yellow.50', 'yellow.900');
+  const warnBorder = useColorModeValue('yellow.400', 'yellow.600');
+  const warnHeaderFg = useColorModeValue('yellow.800', 'yellow.100');
+  // ⛔ A PROVISIONAL set gets the NEUTRAL register, not the warning one.
+  //
+  // `.claude/rules/frontend.md`: status colour = meaning, never decoration. Warning means
+  // "something needs attention" about a filed plan. A first-renewal grower is WRITING their
+  // plan; every material they log before adding it to the draft is an ordinary step in that
+  // work, not a fault. Painting it amber tells the cohort least able to judge severity that
+  // they are failing, and the predictable response is to stop logging — which costs them the
+  // records the plan is made from. Gray, an info glyph, and copy that names the next action.
+  const neutralBg = useColorModeValue('gray.50', 'gray.700');
+  const neutralBorder = useColorModeValue('gray.500', 'gray.400');
+  const neutralHeaderFg = useColorModeValue('gray.800', 'gray.100');
   const bodyFg = useColorModeValue('gray.700', 'gray.200');
   const detailBg = useColorModeValue('white', 'gray.800');
   const labelFg = useColorModeValue('gray.500', 'gray.400');
@@ -119,6 +138,13 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
   if (findings.length === 0) return null;
 
   const count = findings.length;
+  // Only when EVERY finding is provisional. One filed-plan finding in the set means a real
+  // § 205.400(f)(2) obligation is present, and the whole banner keeps the warning register —
+  // softening it would bury the one that matters.
+  const allProvisional = findings.every((e) => e.drift_warning?.provisional === true);
+  const bg = allProvisional ? neutralBg : warnBg;
+  const border = allProvisional ? neutralBorder : warnBorder;
+  const headerFg = allProvisional ? neutralHeaderFg : warnHeaderFg;
 
   return (
     <Box
@@ -135,17 +161,31 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
       w="full">
       <HStack align="start" justify="space-between" spacing={3} flexWrap="wrap">
         <HStack align="start" spacing={3} flex={1} minW={0}>
-          <Icon as={FaExclamationTriangle} color={border} mt={1} boxSize={5} />
+          <Icon
+            as={allProvisional ? FaInfoCircle : FaExclamationTriangle}
+            color={border}
+            mt={1}
+            boxSize={5}
+          />
           <VStack align="start" spacing={1} flex={1} minW={0}>
             <Text fontWeight="bold" fontSize="sm" color={headerFg}>
-              {intl.formatMessage({ id: 'drift.banner.title' }, { count })}
+              {intl.formatMessage(
+                { id: allProvisional ? 'drift.banner.provisional.title' : 'drift.banner.title' },
+                { count }
+              )}
             </Text>
             <Text fontSize="xs" color={bodyFg}>
-              {intl.formatMessage({ id: 'drift.banner.body' })}
+              {intl.formatMessage({
+                id: allProvisional ? 'drift.banner.provisional.body' : 'drift.banner.body'
+              })}
             </Text>
           </VStack>
         </HStack>
-        <Button size="sm" variant="outline" colorScheme="yellow" onClick={() => setOpen((v) => !v)}>
+        <Button
+          size="sm"
+          variant="outline"
+          colorScheme={allProvisional ? 'gray' : 'yellow'}
+          onClick={() => setOpen((v) => !v)}>
           {intl.formatMessage({
             id: open ? 'drift.banner.hide' : 'drift.banner.show'
           })}

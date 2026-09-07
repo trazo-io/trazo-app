@@ -20,6 +20,14 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { FiMail, FiCheck, FiAlertCircle, FiRefreshCw } from 'react-icons/fi';
 import { useVerifyEmailMutation, useResendVerificationEmailMutation } from 'store/api/authApi';
 
+import { AuthErrorAlert } from '../AuthErrorAlert';
+import {
+  ALREADY_VERIFIED,
+  resolveGenericAuthError,
+  resolveVerifyEmailError
+} from '../authErrors';
+import type { AuthErrorResolution, RtkError } from '../authErrors';
+
 interface VerifyEmailProps {
   userType?: 'producer' | 'consumer';
 }
@@ -58,6 +66,17 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
   const [canResend, setCanResend] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [redirectProgress, setRedirectProgress] = useState(0);
+  /**
+   * The failure, resolved once and rendered in ONE place.
+   *
+   * This used to be a toast carrying `error?.data?.error` — the server's English sentence,
+   * on a screen whose locale may be Spanish, disappearing after four seconds, and offering
+   * no way out of the failure it announced. `AuthErrorAlert` is the shared surface every
+   * other auth screen already renders: translated, `role="alert"`, and carrying the resend
+   * action this page already had a handler for.
+   */
+  const [errorResolution, setErrorResolution] = useState<AuthErrorResolution | null>(null);
+  const [resendSent, setResendSent] = useState(false);
 
   // 🚀 2025 Best Practice: Company joining context from navigation state
   const isCompanyJoin = location.state?.companyJoin || false;
@@ -136,7 +155,12 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
         }
       }, 100); // Complete in 2 seconds (20 intervals * 100ms)
     } else if (isError) {
-      if (error?.data?.error === 'User is already verified') {
+      // Read the CODE, never the sentence. This branch is the success path for someone whose
+      // account is already verified, and it used to be selected by string-comparing English:
+      // on a Spanish locale it never matched, so a perfectly fine account was shown
+      // "Verification failed" and left there.
+      const code = error?.data?.code;
+      if (code === ALREADY_VERIFIED) {
         setStep('success');
         // For already verified users, also redirect to dashboard instead of sign-in
         setTimeout(() => {
@@ -146,16 +170,11 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
         }, 1000);
       } else {
         setStep('error');
-        toast({
-          title: 'Verification failed',
-          description: error?.data?.error || 'Please try again.',
-          status: 'error',
-          duration: 4000,
-          isClosable: true
-        });
+        setResendSent(false);
+        setErrorResolution(resolveVerifyEmailError(error));
       }
     }
-  }, [isSuccess, isError, error, navigate, toast]);
+  }, [isSuccess, isError, error, navigate]);
 
   // Resend cooldown timer
   const startResendCooldown = () => {
@@ -185,22 +204,26 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
   const handleResendEmail = async () => {
     try {
       await resendVerificationEmail({ email }).unwrap();
+      setResendSent(true);
+      // A new code invalidates the old one server-side, so the screen must come back to the
+      // input rather than stay on "Verification failed" with a code the user cannot use.
+      setStep('enter-code');
+      setVerificationCode('');
       toast({
-        title: 'Verification email sent',
-        description: 'Please check your inbox for a new verification code.',
+        title: intl.formatMessage({ id: 'auth.verifyEmail.resent.title' }),
+        description: intl.formatMessage({ id: 'auth.verifyEmail.resent.body' }),
         status: 'success',
         duration: 3000,
         isClosable: true
       });
       startResendCooldown();
-    } catch (error) {
-      toast({
-        title: 'Failed to resend email',
-        description: error?.data?.error || 'Please try again later.',
-        status: 'error',
-        duration: 4000,
-        isClosable: true
-      });
+    } catch (resendError) {
+      setResendSent(false);
+      // `unwrap()` rejects with `unknown`; the mapper reads only `status` and `data`, and its
+      // own `first()` unwrapper tolerates anything on either.
+      setErrorResolution(
+        resolveGenericAuthError(resendError as RtkError, 'auth.error.verify.resendFailed')
+      );
     }
   };
 
@@ -309,15 +332,23 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
 
           <VStack spacing={2}>
             <Text fontSize="xl" fontWeight="600" color="gray.700">
-              {step === 'error' ? 'Verification failed' : 'Check your email'}
-            </Text>
-            <Text fontSize="sm" color="gray.500" textAlign="center">
               {step === 'error'
-                ? 'Please check your code and try again, or request a new verification email.'
-                : isCompanyJoin
-                ? `We sent a verification code to ${email}. Once verified, you'll automatically join the company team.`
-                : `We sent a verification code to ${email}. Enter the 6-digit code below.`}
+                ? intl.formatMessage({ id: 'auth.verifyEmail.failedTitle' })
+                : 'Check your email'}
             </Text>
+            {/*
+              On the error step this used to repeat "check your code and try again, or request
+              a new verification email" — the alert below now says what actually went wrong AND
+              carries the resend button, so a second, vaguer copy of it is noise pointing at a
+              control it does not have.
+            */}
+            {step !== 'error' && (
+              <Text fontSize="sm" color="gray.500" textAlign="center">
+                {isCompanyJoin
+                  ? `We sent a verification code to ${email}. Once verified, you'll automatically join the company team.`
+                  : `We sent a verification code to ${email}. Enter the 6-character code below.`}
+              </Text>
+            )}
             {isCompanyJoin && step !== 'error' && (
               <Text fontSize="xs" color="green.700" textAlign="center" mt={2} px={4}>
                 After verification, you'll have immediate access to your team's dashboard and
@@ -326,15 +357,48 @@ const ModernVerifyEmail: React.FC<VerifyEmailProps> = ({ userType = 'producer' }
             )}
           </VStack>
 
+          {/*
+            ONE error surface, rendered on BOTH steps: the failure that put the page into
+            `error` and a wrong code typed on the way in are the same event to the person,
+            and splitting them across a toast and a heading is how the resend action went
+            missing from the case that needs it most.
+          */}
+          <AuthErrorAlert
+            resolution={errorResolution}
+            signInPath="/auth/signin"
+            onResendVerification={handleResendEmail}
+            isResending={isResending}
+            resendSent={resendSent}
+          />
+
           {/* Code Input */}
           {step !== 'error' && (
             <VStack spacing={4} w="full">
               <HStack spacing={3} justify="center">
+                {/*
+                  🔴 `type="alphanumeric"` is LOAD-BEARING, not a nicety (2026-09-07).
+
+                  Chakra's PinInput defaults to `type="number"`, which SILENTLY DROPS any
+                  character that is not a digit — and `users.signals.generate_verification_code`
+                  builds the code from `ascii_letters + digits`, uppercased. MEASURED on the
+                  live page: typing `ABC123` left the fields holding `1`, `2`, `3` and the
+                  Verify button disabled. The odds of a code this screen can accept are
+                  (10/36)^6, about one in two million.
+
+                  It stayed invisible because the emailed LINK carries `?code=` and verifies
+                  automatically, so the screen only fails on the path it exists for: someone
+                  typing the code by hand, which is what the copy tells them to do and the
+                  only option when the link is mangled or they are on a second device.
+
+                  `.toUpperCase()` for the same reason: the server compares the code exactly,
+                  and the code it mailed is uppercase.
+                */}
                 <PinInput
                   size="lg"
+                  type="alphanumeric"
                   value={verificationCode}
-                  onChange={setVerificationCode}
-                  onComplete={handleCodeSubmit}
+                  onChange={(value) => setVerificationCode(value.toUpperCase())}
+                  onComplete={(value) => verifyEmail({ email, code: value.toUpperCase() })}
                   placeholder="_"
                   focusBorderColor={primaryColor}
                   errorBorderColor="red.300">

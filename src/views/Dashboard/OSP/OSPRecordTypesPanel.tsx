@@ -604,14 +604,18 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
               <Text fontSize="sm" fontWeight="semibold" mb={1}>
                 {intl.formatMessage({
                   id: 'osp.attachments.title',
-                  defaultMessage: 'Required attachments'
+                  defaultMessage: 'Attachments'
                 })}
               </Text>
+              {/* "Required" was unconditional; the Common OSP says required WHEN APPLICABLE (a
+                  Materials List only when a nonorganic input is used). And these copies are the
+                  same bytes the packet already contains — so the subtitle now says what
+                  downloading is FOR, which nothing on this screen did. */}
               <Text fontSize="xs" color={mutedColor} mb={3}>
                 {intl.formatMessage({
                   id: 'osp.attachments.subtitle',
                   defaultMessage:
-                    'The four forms the Common OSP asks you to attach, filled in from your records. Blank cells are answers we could not find — complete them before you send anything.'
+                    'The Common OSP attachments (your certifier may call them by their own names), built from your records. These same files are already inside your packet — download one to see the blanks, or to send that form on its own.'
                 })}
               </Text>
               <Stack spacing={1}>
@@ -638,9 +642,23 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                               {
                                 id: 'osp.attachments.rowMeta',
                                 defaultMessage:
-                                  '{rows, plural, one {# row} other {# rows}} · {blanks, plural, =0 {nothing left blank} one {# cell for you to fill} other {# cells for you to fill}}'
+                                  '{rows, plural, one {# row} other {# rows}} · {missing, plural, =0 {} one {# cell to fill in Trazo} other {# cells to fill in Trazo}}{both, select, yes { · } other {}}{yours, plural, =0 {} one {# cell only you can answer} other {# cells only you can answer}}{none, select, yes {nothing left to fill} other {}}'
                               },
-                              { rows: wb.rows, blanks: wb.blank_cells }
+                              {
+                                // `?? 0` because a plural argument of `undefined` throws inside
+                                // the formatter, and these three fields are newer than the
+                                // component — a cached response from before they shipped would
+                                // take the whole panel down rather than show one stale count.
+                                rows: wb.rows ?? 0,
+                                missing: wb.missing_from_records ?? 0,
+                                yours: wb.needs_your_answer ?? 0,
+                                both:
+                                  (wb.missing_from_records ?? 0) > 0 &&
+                                  (wb.needs_your_answer ?? 0) > 0
+                                    ? 'yes'
+                                    : 'no',
+                                none: (wb.blank_cells ?? 0) === 0 ? 'yes' : 'no'
+                              }
                             )}
                       </Text>
                     </Stack>

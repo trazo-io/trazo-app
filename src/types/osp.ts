@@ -379,7 +379,14 @@ export interface OSPAttachmentSummary {
   key: string;
   title: string;
   rows: number;
+  /** Work remaining: `missing_from_records` + `needs_your_answer`. Never a completeness score. */
   blank_cells: number;
+  /** Trazo fills this column from a record and the record is empty — fixable IN Trazo. */
+  missing_from_records: number;
+  /** Only the operator can supply it (a supplier's own certifier). Real work, not ours. */
+  needs_your_answer: number;
+  /** The form permits a blank, or the sheet's own opt-out declaration covers it. NOT work. */
+  optional_blanks: number;
   error: boolean;
 }
 

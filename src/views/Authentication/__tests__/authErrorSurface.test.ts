@@ -16,7 +16,12 @@ import { describe, expect, it } from 'vitest';
 
 import enUS from '../../../i18n/lang/en-US.json';
 import es419 from '../../../i18n/lang/es-419.json';
-import { resolveSignInError, resolveSignUpError, resolveGenericAuthError } from '../authErrors';
+import {
+  resolveSignInError,
+  resolveSignUpError,
+  resolveGenericAuthError,
+  resolveVerifyEmailError
+} from '../authErrors';
 
 const AUTH_DIR = resolve(__dirname, '..');
 
@@ -52,7 +57,7 @@ const SCREENS = [...screens(AUTH_DIR), ...SHARED_FORMS].map((path) => ({
  * Derived, never listed. A screen that resolves an auth error MUST render the shared alert;
  * anything else means it resolved one and then displayed it some other way.
  */
-const USES_MAPPER = /\bresolve(SignUp|SignIn|Generic)(Auth)?Error\(/;
+const USES_MAPPER = /\bresolve(SignUp|SignIn|VerifyEmail|Generic)(Auth)?Error\(/;
 const RESOLVERS = SCREENS.filter(({ source }) => USES_MAPPER.test(source));
 
 describe('auth error surface', () => {
@@ -62,7 +67,10 @@ describe('auth error surface', () => {
     // The six form-level error surfaces: four auth screens plus the shared forgot-password
     // form, which covers two routes. A count floor rather than a name list, so a refactor
     // that MOVES a surface is allowed and one that DELETES a surface is not.
-    expect(RESOLVERS.length).toBeGreaterThanOrEqual(5);
+    // Six: four auth screens, the shared forgot-password form (two routes), and the
+    // verify-email screen, joined 2026-09-07 when verification codes gained an expiry and
+    // the page had to tell "expired" apart from "wrong" without comparing English.
+    expect(RESOLVERS.length).toBeGreaterThanOrEqual(6);
     expect(SCREENS.map((s) => s.path)).toContain('SignUp/AppSignUp.tsx');
     expect(SCREENS.map((s) => s.path)).toContain('../../components/Forms/ForgotPasswordForm.tsx');
   });
@@ -168,6 +176,44 @@ describe('authErrors mapper', () => {
     expect(resolution.messageId).toBe('auth.error.emailExists.unverified');
     expect(resolution.action).toEqual({ kind: 'resendVerification' });
     expect(resolution.fieldsInvalid).toContain('email');
+  });
+
+  it('an expired verification code is told apart from a wrong one', () => {
+    /*
+     * These are the same screen and the same red box, and they need DIFFERENT words: an
+     * expired code is deleted server-side on rejection, so retyping it can never work and
+     * resend is the only exit. Collapsing them was the pre-TTL behaviour — one message,
+     * "Verification code is invalid", for a code that was right and a code that was wrong.
+     */
+    const expired = resolveVerifyEmailError({
+      status: 400,
+      data: { error: '…', code: 'verification_code_expired' }
+    });
+    expect(expired.messageId).toBe('auth.error.verify.expired');
+    expect(expired.action).toEqual({ kind: 'resendVerification' });
+
+    const invalid = resolveVerifyEmailError({
+      status: 400,
+      data: { error: '…', code: 'verification_code_invalid' }
+    });
+    expect(invalid.messageId).toBe('auth.error.verify.invalid');
+    expect(invalid.messageId).not.toBe(expired.messageId);
+  });
+
+  it('an unknown verify failure still says something true', () => {
+    // DRF wraps a bare string in a list on some paths and not others; both must resolve.
+    const listWrapped = resolveVerifyEmailError({
+      status: 400,
+      data: { code: ['verification_code_expired'] }
+    });
+    expect(listWrapped.messageId).toBe('auth.error.verify.expired');
+
+    const unknown = resolveVerifyEmailError({ status: 400, data: { error: 'Email is required' } });
+    expect(unknown.messageId).toBe('auth.error.passthrough');
+    expect(unknown.values?.text).toBe('Email is required');
+
+    const offline = resolveVerifyEmailError({ status: 'FETCH_ERROR' });
+    expect(offline.messageId).toBe('auth.error.network');
   });
 
   it('a verified duplicate offers the sign-in', () => {

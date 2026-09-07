@@ -106,6 +106,16 @@ export interface DriftWarning {
    */
   reason_code?: string | null;
   reason_params?: Record<string, unknown> | null;
+  /**
+   * The finding was measured against a DRAFT plan, not a certifier-approved one.
+   *
+   * A first-renewal operation cannot have an active OSP until after the renewal it is
+   * preparing, so before 2026-09-07 it got no comparison at all. It now gets a real one —
+   * but nothing has been FILED, so this is a § 205.201(a)(2) completeness matter (the plan's
+   * own input list is incomplete), never a § 205.400(f)(2) change notification. `cfr_reference`
+   * carries whichever applies; this flag is what lets a surface pick its register.
+   */
+  provisional?: boolean;
   resolved_via:
     | 'omri'
     | 'national_list'
@@ -134,7 +144,24 @@ export interface DriftWarning {
  * unregistered, which is itself a California state-law violation for CA farms.
  */
 export interface DriftCDFAStatus {
-  status: 'registered' | 'missing';
+  /**
+   * `unknown` added 2026-09-07 to match what the backend actually sends.
+   *
+   * `missing` used to be the DEFAULT return, so a product simply absent from Trazo's small
+   * CDFA reference set was reported to a California certifier as unregistered — an assertion
+   * about state law drawn from an incomplete file. The detector now distinguishes "we hold it
+   * as registered" from "we did not check", and `missing` is reserved for a case that is not
+   * reachable until the full published list is ingested.
+   *
+   * The union had not been widened, so the component's `unknown` branch typechecked as dead
+   * code — one refactor away from being deleted as unreachable.
+   */
+  status: 'registered' | 'missing' | 'unknown';
+  /**
+   * Legacy only. CDFA's published Registered OIM Products list has three columns — Firm,
+   * Product Name, Annotations — and no identifier at all, so every value ever held here was
+   * invented. Nothing renders it any more; the field remains only to type old payloads.
+   */
   cdfa_oim_reg_number?: string | null;
 }
 
