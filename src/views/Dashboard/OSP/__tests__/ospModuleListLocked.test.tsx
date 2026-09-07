@@ -66,7 +66,22 @@ vi.mock('store/api/ospApi', () => ({
     isLoading: false
   }),
   useCreateOSPMutation: () => [createOSP, { isLoading: false }],
-  useNewOSPVersionMutation: () => [newVersion, { isLoading: false }]
+  useNewOSPVersionMutation: () => [newVersion, { isLoading: false }],
+  // The page renders the plan-review panel (2026-09-07): the review belongs where the modules
+  // are answered and the packet is downloaded, not only on the demoted narrative view. Clean
+  // here — this suite is about the LOCK, and a review with findings would be noise in it.
+  useGetOSPReviewQuery: () => ({
+    data: {
+      answers_as_of: null,
+      reference_date: '2026-09-07',
+      is_clean: true,
+      findings: [],
+      stale_modules: [],
+      parcels_not_named: []
+    },
+    isLoading: false,
+    isError: false
+  })
 }));
 
 const { default: OSPModuleListPage } = await import('../OSPModuleListPage');

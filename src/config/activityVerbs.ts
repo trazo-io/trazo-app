@@ -90,6 +90,17 @@ export interface ActivityVerb {
    * opening a "Field work" record and re-answering a select.
    */
   subtypeChoices?: readonly string[];
+  /**
+   * Field values the tile's NAME already answers, seeded into the form the moment it is tapped.
+   *
+   * Not a prefill: a preset here must be part of the activity's identity, never a fact about
+   * the operation (that is the template→record red line). "Cleanout" is the one case so far —
+   * the tile routes to Equipment Maintenance (EM), whose form then asked "what kind of
+   * equipment operation was this?" with Fuel Consumption listed first, and a farmer who tapped
+   * Cleanout could file a fuel record. The cleaning fields (§ 205.272 log) render only under
+   * `equipment_operation_type === 'CL'`, so the wrong answer also hid the whole point of the tile.
+   */
+  presetFields?: Readonly<Record<string, string>>;
   icon: IconType;
 }
 
@@ -138,7 +149,13 @@ export const ACTIVITY_VERBS: ActivityVerb[] = [
   { key: 'harvest', eventType: 1, subtype: 'HA', subtypeChoices: ['HA', 'PH'], icon: FaBoxOpen },
   { key: 'pollination', eventType: 1, subtype: 'PO', icon: FaSpa },
   { key: 'frost_protection', eventType: 1, subtype: 'FP', icon: FaSnowflake },
-  { key: 'cleanout', eventType: 1, subtype: 'EM', icon: FaBroom },
+  {
+    key: 'cleanout',
+    eventType: 1,
+    subtype: 'EM',
+    presetFields: { equipment_operation_type: 'CL' },
+    icon: FaBroom
+  },
   // Parity with the activities Quick Organics offers a crop operation. Each of these was
   // recordable only as a field on some other event, so a farmer told to "log a buffer use"
   // had nowhere to go — and the underlying record is not owned by the event it was buried in:

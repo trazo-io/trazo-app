@@ -52,6 +52,21 @@ import { FaCheckCircle, FaExclamationTriangle, FaExternalLinkAlt, FaSearch } fro
  * OMRI row 62px against the WSDA row's 48px and squeezed the product name down to
  * "Entrust SC…", on the one card the demo film holds on.
  */
+/**
+ * A real WSDA identifier is the list's `WSDA Product #` column, and it holds a BARE
+ * INTEGER (1123, 2948, 3376). The `WSDA-REG-BIOAG-2025-001` shape Trazo seeded is not
+ * something WSDA issues, so a grower who takes one to WSDA finds nothing — which is
+ * worse than showing no identifier at all.
+ *
+ * Mirrors `wsda_product_number` in
+ * trazo-back/certifications/services/registry_identifiers.py. Keep the two in step.
+ */
+const WSDA_PRODUCT_NUMBER_RE = /^\d+$/;
+const wsdaProductNumber = (raw?: string | null): string => {
+  const value = (raw ?? '').trim();
+  return WSDA_PRODUCT_NUMBER_RE.test(value) ? value : '';
+};
+
 const TOUCH_TARGET = {
   position: 'relative' as const,
   _before: {
@@ -399,7 +414,18 @@ const ResultCard: React.FC<{
           badgeLabel="WSDA"
           badgeColor="teal"
           title={result.wsda_material_name || ''}
-          subtitle={[result.wsda_material_id, result.wsda_material_category]
+          subtitle={[
+            wsdaProductNumber(result.wsda_material_id)
+              ? intl.formatMessage(
+                  {
+                    id: 'inputVerify.wsdaProductNumber',
+                    defaultMessage: 'WSDA Product #{number}'
+                  },
+                  { number: wsdaProductNumber(result.wsda_material_id) }
+                )
+              : '',
+            result.wsda_material_category
+          ]
             .filter(Boolean)
             .join(' · ')}
           /*

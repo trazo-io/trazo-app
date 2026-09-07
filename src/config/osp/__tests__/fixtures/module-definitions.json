@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.08.28",
+  "content_version": "2026.09.6",
   "registry": {
-    "content_version": "2026.08.28",
+    "content_version": "2026.09.6",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -7624,6 +7624,173 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "records_location",
+                "kind": "radio",
+                "label": {
+                  "en": "Are all of your organic records kept at your primary business location?",
+                  "es": "¿Todos sus registros orgánicos se conservan en la ubicación principal de su negocio?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "primary_only",
+                    "label": {
+                      "en": "Yes — all records are at the primary location",
+                      "es": "Sí — todos los registros están en la ubicación principal"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "multiple_locations",
+                    "label": {
+                      "en": "No — some records are kept somewhere else",
+                      "es": "No — algunos registros se conservan en otro lugar"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "additional_records_locations",
+                "kind": "textarea",
+                "label": {
+                  "en": "Which records are kept elsewhere, and where are they?",
+                  "es": "¿Qué registros se conservan en otro lugar y dónde están?"
+                },
+                "coaching": {
+                  "en": "Name the record types and the location for each. Your certifier may also ask for their own additional-facilities form; this answer is what tells them whether it is needed.",
+                  "es": "Indique los tipos de registro y la ubicación de cada uno. Su agencia certificadora puede además pedir su propio formulario de instalaciones adicionales; esta respuesta es la que les indica si hace falta."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "records_location",
+                    "op": "eq",
+                    "value": "multiple_locations"
+                  }
+                ],
+                "nop_cite": "§ 205.103(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": 1000
+              },
+              {
+                "key": "primary_contact_records_access",
+                "kind": "radio",
+                "label": {
+                  "en": "Can your primary contact readily access every record relating to certification?",
+                  "es": "¿Su contacto principal puede acceder fácilmente a todos los registros relacionados con la certificación?"
+                },
+                "coaching": null,
+                "options": [
+                  {
+                    "value": "yes",
+                    "label": {
+                      "en": "Yes — the primary contact can reach all of them",
+                      "es": "Sí — el contacto principal puede acceder a todos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "no",
+                    "label": {
+                      "en": "No — someone else holds or maintains some records",
+                      "es": "No — otra persona conserva o mantiene algunos registros"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "records_access_delegate",
+                "kind": "textarea",
+                "label": {
+                  "en": "Who else maintains or holds those records, and which record types are they?",
+                  "es": "¿Quién más mantiene o conserva esos registros y de qué tipos de registro se trata?"
+                },
+                "coaching": {
+                  "en": "An inspector arriving on the day needs one name to ask for. A bookkeeper, a packing house, or a family member all count.",
+                  "es": "Un inspector que llega ese día necesita un nombre a quien preguntar. Un contador, una empacadora o un familiar cuentan."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "primary_contact_records_access",
+                    "op": "eq",
+                    "value": "no"
+                  }
+                ],
+                "nop_cite": "§ 205.103(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": 1000
+              },
+              {
+                "key": "records_maintained_as",
+                "kind": "checkbox_group",
+                "label": {
+                  "en": "How are your records kept?",
+                  "es": "¿Cómo se conservan sus registros?"
+                },
+                "coaching": {
+                  "en": "Tick both if paper source documents — delivery tickets, scale tickets, handwritten spray logs — are filed as well as entered here.",
+                  "es": "Marque ambas si además conserva documentos en papel — boletas de entrega, tiquetes de báscula, registros de aplicación escritos a mano — aparte de lo que registra aquí."
+                },
+                "options": [
+                  {
+                    "value": "electronic",
+                    "label": {
+                      "en": "Electronic",
+                      "es": "Electrónicos"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "hardcopy",
+                    "label": {
+                      "en": "Hardcopy / paper",
+                      "es": "Copia impresa / papel"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.103(b)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -9635,17 +9802,26 @@
       "visible_questions": [
         "s11_records",
         "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
         "lot_numbering",
         "audit_trail_exhibit",
         "import_export_activity"
       ],
       "missing_required": [
         "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
         "lot_numbering",
         "import_export_activity"
       ],
       "missing_required_na": [
         "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
         "lot_numbering",
         "import_export_activity"
       ]
@@ -9659,6 +9835,9 @@
       "visible_questions": [
         "s11_records",
         "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
         "lot_numbering",
         "lot_numbering_description",
         "audit_trail_exhibit",
@@ -9666,11 +9845,17 @@
       ],
       "missing_required": [
         "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
         "lot_numbering_description",
         "import_export_activity"
       ],
       "missing_required_na": [
         "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
         "lot_numbering_description",
         "import_export_activity"
       ]
@@ -9684,16 +9869,25 @@
       "visible_questions": [
         "s11_records",
         "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
         "lot_numbering",
         "audit_trail_exhibit",
         "import_export_activity"
       ],
       "missing_required": [
         "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
         "import_export_activity"
       ],
       "missing_required_na": [
         "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
         "import_export_activity"
       ]
     }

@@ -10,7 +10,12 @@
  * this file only reports it.
  */
 
-import type { EventRegistryEntry, FieldConfig, PestManagementSubtype } from './registry';
+import type {
+  EventRegistryEntry,
+  FieldConfig,
+  FieldFormatter,
+  PestManagementSubtype
+} from './registry';
 import {
   formatArea,
   formatBoolean,
@@ -25,6 +30,12 @@ import {
 } from './formatters';
 
 type PestData = Record<string, unknown>;
+
+/** Summary-mode flag — a STRING from the form and from extra_data ("true"), a boolean on the wire. */
+const isSummaryRecord = (e: Record<string, unknown>): boolean => {
+  const raw = e.is_summary ?? (e.extra_data as Record<string, unknown> | undefined)?.is_summary;
+  return raw === true || raw === 'true';
+};
 
 // Pest pressure level labels — match PestManagementTab.jsx dropdown
 // NOTE: The form stores CAPITALIZED values ("Low", "High") for non-scouting types,
@@ -543,6 +554,76 @@ const PEST_FIELDS: readonly FieldConfig<unknown, PestData>[] = [
     valueType: 'enum',
     enumSource: 'growth_stages',
     surfaces: { modal: 'details', form: 'details' }
+  },
+  {
+    // Legacy rows only. PestManagementTab always collected the stage as `crop_growth_stage`
+    // and wrote it to extra_data; the CommonEvent column `growth_stage` stayed empty, and the
+    // entry above (which reads the column) rendered nothing — the per-tile sweep of 2026-09-06
+    // found "Seedling" on the form, in the API and in the packet, and absent from the modal.
+    // The tab now writes the column too; this entry reads the old key for rows written before.
+    name: 'crop_growth_stage',
+    labelKey: 'events.common.fields.growthStage',
+    valueType: 'enum',
+    enumSource: 'growth_stages',
+    visibleWhen: (e) => !e.growth_stage,
+    surfaces: { modal: 'details' }
+  },
+  {
+    // Every event type's form asks it; only this registry lacked it (2026-09-06 sweep).
+    name: 'variety',
+    labelKey: 'events.common.fields.variety',
+    valueType: 'string',
+    surfaces: { modal: 'details', form: 'details' }
+  },
+  {
+    // The scout's next step. The packet deliberately prints the threshold DECISION
+    // (`action_threshold_met` + `threshold_rationale`) and not this note; the producer's own
+    // record should still show what they wrote. Not a shopper's fact.
+    name: 'action_recommended',
+    labelKey: 'events.pest.fields.actionRecommended',
+    valueType: 'string',
+    surfaces: { modal: 'secondary', form: 'secondary' }
+  },
+
+  // ---- Scouting summary mode (SC, is_summary) — the season aggregates the tab collects ----
+  // Producer surfaces only: ConsumerEventCard renders its own aggregate tile from these keys.
+  {
+    name: 'pest_species_observed',
+    labelKey: 'events.pest.fields.pestSpeciesObserved',
+    valueType: 'string',
+    visibleForSubtypes: ['SC'],
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'average_pest_pressure',
+    labelKey: 'events.pest.fields.averagePestPressure',
+    valueType: 'enum',
+    formatter: formatPestPressure,
+    visibleForSubtypes: ['SC'],
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'area_covered_total',
+    labelKey: 'events.pest.fields.areaCoveredTotal',
+    valueType: 'number',
+    unitField: 'area_unit',
+    formatter: formatArea as FieldFormatter<unknown, PestData>,
+    visibleForSubtypes: ['SC'],
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'fuel_consumed_total',
+    labelKey: 'events.pest.fields.fuelConsumedTotal',
+    valueType: 'number',
+    unitField: 'fuel_unit',
+    formatter: formatFuelConsumption as FieldFormatter<unknown, PestData>,
+    carbonRelevant: true,
+    visibleForSubtypes: ['SC'],
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     // Farm block / row / section beneath the parcel. Present on CommonEvent, so every event

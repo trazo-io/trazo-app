@@ -53,17 +53,21 @@ export interface ApprovedOMRIInput {
   omri_id: string | null;
   manufacturer: string | null;
   is_cdfa_oim_registered?: boolean;
-  cdfa_oim_reg_number?: string | null;
 }
 
 export interface ApprovedWSDAInput {
   id: number;
   brand_name: string;
+  /**
+   * A real WSDA Product # — a bare integer — or null. The seeded catalogue also held
+   * placeholders shaped `WSDA-REG-BIOAG-2025-001`, which WSDA issues nothing like; the
+   * serializer now sends null rather than a registration a certifier would look up and
+   * not find.
+   */
   wsda_id: string | null;
   manufacturer: string | null;
   category: string | null;
   is_cdfa_oim_registered?: boolean;
-  cdfa_oim_reg_number?: string | null;
 }
 
 /**
@@ -188,11 +192,39 @@ export interface InputVerifyResult {
   national_list_substance_name: string | null;
   national_list_cfr_section: string | null;
   national_list_status: string | null;
+  /**
+   * Every § 205.601/602 entry the query could mean, best first. `status` travels PER ROW
+   * because the catalogue holds prohibited substances alongside allowed ones and both answer
+   * the same search — reading the status of whichever row ranked first would put an ordinary
+   * Add button next to a substance banned in organic production.
+   */
+  national_list_candidates?: {
+    pk: number;
+    substance_name: string;
+    cfr_section: string | null;
+    subsection: string | null;
+    status: string | null;
+    restriction_notes: string | null;
+  }[];
+  national_list_candidate_count?: number;
   // WSDA Materials List — co-equal with OMRI per CCOF. Phase 1 additive fields.
   wsda_material_pk?: number | null;
   wsda_material_id?: string | null;
   wsda_material_name?: string | null;
   wsda_material_category?: string | null;
+  /**
+   * Same shortlist contract as `omri_candidates`, ported to WSDA on 2026-09-06. Until then
+   * WSDA answered with one row, so a search for "Serenade" showed a single brand while the
+   * plan's own Serenade Opti sat unreachable.
+   */
+  wsda_candidates?: {
+    pk: number;
+    wsda_id: string | null;
+    brand_name: string;
+    manufacturer?: string | null;
+    category?: string | null;
+  }[];
+  wsda_candidate_count?: number;
 }
 
 /**
@@ -308,12 +340,20 @@ export interface OSPRecordType {
   basis: string;
   /** Trazo structurally cannot see this record type (weigh tickets, contracts, ...). */
   external_by_design: boolean;
+  /** The operator names this row themselves — both source forms end their lists with "Other:".
+   *  It cannot be confirmed without a label (the server refuses), and it is never suggested. */
+  free_text: boolean;
+  /** What the operator called it. Printed in the packet after the form's own line. */
+  custom_label: string | null;
   /** Evidence exists AND the operator has not confirmed yet. Render as a suggestion, not a tick. */
   suggested: boolean;
   /** The operator's own assertion — the ONLY thing that may render as a ticked checkbox. */
   confirmed: boolean;
   confirmed_at: string | null;
   confirmed_by: number | null;
+  /** Set when this answer came across from an earlier plan version and nobody has re-stated it
+   *  on this one. The row is still confirmed — it is the FRESHNESS that is open. */
+  carried_from_version: number | null;
 }
 
 export interface OSPRecordTypesSummary {
@@ -323,6 +363,9 @@ export interface OSPRecordTypesSummary {
   awaiting_confirmation: number;
   external_by_design: number;
   evidence_check_failed: number;
+  /** Confirmed on an earlier plan, not re-stated on this one. Counted separately from
+   *  `confirmed` rather than deducted from it — they are confirmed answers. */
+  carried_forward: number;
 }
 
 export interface OSPRecordTypesResponse {

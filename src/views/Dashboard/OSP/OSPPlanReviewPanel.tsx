@@ -26,12 +26,13 @@ import { useIntl } from 'react-intl';
 
 import { StandardAlert, StandardCard } from 'components/Design/StandardComponents';
 import { useGetOSPReviewQuery } from 'store/api/ospApi';
-import { OSP } from 'types/osp';
-
 interface OSPPlanReviewPanelProps {
   companyId: string | number;
   farmId: string | number;
-  osp: OSP;
+  /** Only the id is read — the review is derived server-side. Typed as the minimum so the
+   *  panel takes an `OSPSummary` from the module list as readily as a full `OSP` from the
+   *  narrative view, rather than forcing a cast at one call site. */
+  osp: { id: string | number };
 }
 
 const MAX_DETAILS = 6;

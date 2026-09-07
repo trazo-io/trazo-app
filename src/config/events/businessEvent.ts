@@ -165,12 +165,13 @@ const BUSINESS_FIELDS: readonly FieldConfig<unknown, BusinessData>[] = [
     valueType: 'enum',
     formatter: formatVerificationStatus,
     requiresVerificationBadge: true,
+    // NO consumer_card (2026-09-06 review): a self-reported verification status is exactly the
+    // claim the public serializer withholds (_CERTIFIER_ONLY_EVENT_FIELDS); the tier never rendered.
     surfaces: {
       timeline: 'immediate',
       card: 'immediate',
       modal: 'immediate',
-      form: 'immediate',
-      consumer_card: 'immediate'
+      form: 'immediate'
     }
   },
   {

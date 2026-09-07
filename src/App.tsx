@@ -106,7 +106,6 @@ const UpdateProduction = lazyWithRetry(
 const QuickStartProduction = lazyWithRetry(
   () => import('views/Dashboard/Dashboard/Production/QuickStartProduction')
 );
-import VerifyEmail from './views/Authentication/SignUp/VerifyEmail';
 import { useSelector } from 'react-redux';
 const VerifyEmailConsumer = lazyWithRetry(
   () => import('views/Authentication/SignUp/VerifyEmailConsumer')

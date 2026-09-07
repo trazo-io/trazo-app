@@ -5,7 +5,8 @@
  * CC(Cover Crop), TI(Tillage), CO(Composting), GR(Grazing), LA(Lab Analysis).
  *
  * GR (Grazing) has unique fields: animal_type, animal_count, grazing_duration_days.
- * TI (Tillage) has unique fields: working_depth, depth_unit.
+ * TI (Tillage) has unique fields: working_depth, depth_unit, tillage_type, tillage_intensity,
+ * tillage_direction, residue_management. The last four persist in extra_data, not as columns.
  * LA (Lab Analysis) has sample_matrix + the lab_* results, which the backend flattens out of
  * the test_results JSONField so the resolver can reach them; ST shares the lab_* block.
  *
@@ -13,7 +14,12 @@
  * registered here — see D4.
  */
 
-import type { EventRegistryEntry, FieldConfig, SoilManagementSubtype } from './registry';
+import type {
+  EventRegistryEntry,
+  FieldConfig,
+  FieldFormatter,
+  SoilManagementSubtype
+} from './registry';
 import {
   formatArea,
   formatBoolean,
@@ -39,6 +45,12 @@ const formatTemperatureF = (v: unknown): string | null => {
 };
 
 type SoilData = Record<string, unknown>;
+
+/** Summary-mode flag — a STRING from the form and from extra_data ("true"), a boolean on the wire. */
+const isSummaryRecord = (e: Record<string, unknown>): boolean => {
+  const raw = e.is_summary ?? (e.extra_data as Record<string, unknown> | undefined)?.is_summary;
+  return raw === true || raw === 'true';
+};
 
 // Hoisted: building this inside the field formatter re-created it on every render of every
 // amendment row.
@@ -167,6 +179,88 @@ const formatSoilMoisture = (v: unknown): string | null => {
   if (typeof v !== 'string' || v === '') return null;
   return SOIL_MOISTURE_LABELS[v] ?? v;
 };
+
+// ---- Tillage practice labels (TI) -------------------------------------------------------
+//
+// 🔴 2026-09-06. These four fields were collected by SoilManagementTab, written to
+// `extra_data` by NewEvent, printed in the certifier packet and read by the carbon
+// calculator — and declared NOWHERE in this registry, so the producer detail modal and the
+// buyer card both rendered a tillage pass as a date, a label and an acreage. The farmer
+// answered "Minimum till / residue incorporated" and the only two screens that quote the
+// record back showed neither.
+//
+// The registry is the sole gate on the display surfaces: resolver.ts falls back to
+// `extra_data` only for fields it already knows, so an undeclared key renders nowhere and
+// says nothing while it does. Same shape as `soil_moisture` above, inverted.
+//
+// LABELS ARE THE BACKEND'S, not the form's. SoilManagementTab's <option> text carries a
+// benefit half — "Minimum Till - Conservation", "Surface Left - Protective cover",
+// "Across Slope - Erosion control". audit_export_service.TILLAGE_PRACTICE_LABELS already
+// strips those for the certifier packet, and the same reason applies harder to a shopper:
+// "Conservation" is a self-assigned environmental verdict on the grower's own pass, which is
+// the FTC 16 CFR 260.6 / EU ECGT 2024-825 class. Keep these two maps byte-aligned with
+// `TILLAGE_PRACTICE_LABELS` in trazo-back/history/services/audit_export_service.py.
+export const TILLAGE_TYPE_LABELS: Record<string, string> = {
+  conventional_plow: 'Conventional plow',
+  chisel_plow: 'Chisel plow',
+  disk_harrow: 'Disk harrow',
+  no_till: 'No-till',
+  strip_till: 'Strip till',
+  minimum_till: 'Minimum till',
+  subsoiling: 'Subsoiling',
+  cultivator: 'Cultivator'
+};
+
+const formatTillageType = (v: unknown): string | null => lookupEnumLabel(TILLAGE_TYPE_LABELS, v);
+
+// PRODUCER/CERTIFIER ONLY — see the `tillage_intensity` field config for why this one has no
+// consumer surface and is off the anonymous wire.
+const TILLAGE_INTENSITY_LABELS: Record<string, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+  conservation: 'Conservation'
+};
+
+const formatTillageIntensity = (v: unknown): string | null =>
+  lookupEnumLabel(TILLAGE_INTENSITY_LABELS, v);
+
+// PRODUCER/CERTIFIER ONLY — see the `tillage_direction` field config.
+const TILLAGE_DIRECTION_LABELS: Record<string, string> = {
+  across_slope: 'Across slope',
+  up_down_slope: 'Up/down slope',
+  contour: 'Contour',
+  random: 'Random'
+};
+
+const formatTillageDirection = (v: unknown): string | null =>
+  lookupEnumLabel(TILLAGE_DIRECTION_LABELS, v);
+
+export const RESIDUE_MANAGEMENT_LABELS: Record<string, string> = {
+  incorporated: 'Incorporated into soil',
+  surface_left: 'Left on surface',
+  removed: 'Removed',
+  mulched: 'Mulched in place',
+  partial_removal: 'Partially removed'
+};
+
+const formatResidueManagement = (v: unknown): string | null =>
+  lookupEnumLabel(RESIDUE_MANAGEMENT_LABELS, v);
+
+// Shopper voicing of the same five values. "Residue" is the grower's and the inspector's
+// word; a person holding the bag is being told what happened to last crop's plant material,
+// which is the one thing in this event they can actually picture. Facts only — no version of
+// these says the choice was good.
+const RESIDUE_MANAGEMENT_CONSUMER_LABELS: Record<string, string> = {
+  incorporated: 'Mixed back into the soil',
+  surface_left: 'Left on the surface',
+  removed: 'Taken off the field',
+  mulched: 'Chopped and left in place',
+  partial_removal: 'Partly taken off the field'
+};
+
+const formatResidueManagementForConsumer = (v: unknown): string | null =>
+  lookupEnumLabel(RESIDUE_MANAGEMENT_CONSUMER_LABELS, v);
 
 // Animal type labels — match SoilManagementTab.jsx GR (Grazing) dropdown
 const ANIMAL_TYPE_LABELS: Record<string, string> = {
@@ -952,6 +1046,85 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       form: 'immediate'
     }
   },
+
+  // ---- Tillage practice (TI) — the four facts that make a pass THIS pass ----------------
+  // See TILLAGE_TYPE_LABELS at the top of this file for why all four were invisible until
+  // 2026-09-06 and why the labels are the packet's, not the form's.
+  //
+  // The consumer split is deliberate and is the whole decision here:
+  //
+  //   tillage_type       → shopper YES. "No-till" / "Minimum till" / "Conventional plow" is a
+  //                        named practice class, checkable against the same season's other
+  //                        records, and it is the answer to the question the card's own
+  //                        description raises ("the ground was worked" — how?).
+  //   residue_management → shopper YES. What happened to last crop's plant material. Plain,
+  //                        physical, and the fact the grower's own field notes lead with.
+  //   tillage_intensity  → shopper NO. High/Medium/Low/Conservation is a grower-assigned
+  //                        RATING of their own soil disturbance against no published
+  //                        criteria — the `production_efficiency` shape this registry already
+  //                        withholds from the card, and "Conservation" as a self-awarded grade
+  //                        is the EU ECGT 2024/825 self-created-label risk exactly.
+  //   tillage_direction  → shopper NO. "Across slope" is meaningless without the block's slope,
+  //                        which the buyer page does not publish, and its form label sells the
+  //                        benefit ("Erosion control") rather than stating the fact.
+  //
+  // The two withheld from the card are ALSO off the anonymous payload as of the same change
+  // (ALLOWED_EXTRA_DATA_KEYS in trazo-back/history/serializers.py). The project's rule from
+  // transparency_views is that "the key name travels on the wire and is scrapable whatever the
+  // UI renders, so it is the claim" — the same rule that removed storage_location (2026-08-09)
+  // and block_id/growth_stage (2026-08-15). Withholding a field from the card while still
+  // publishing it is not a withholding.
+  {
+    name: 'tillage_type',
+    labelKey: 'events.soil.fields.tillageType',
+    consumerLabelKey: 'events.consumer.fields.tillageType',
+    valueType: 'enum',
+    formatter: formatTillageType,
+    visibleForSubtypes: ['TI'],
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'secondary'
+    }
+  },
+  {
+    name: 'residue_management',
+    labelKey: 'events.soil.fields.residueManagement',
+    consumerLabelKey: 'events.consumer.fields.residueManagement',
+    valueType: 'enum',
+    formatter: formatResidueManagement,
+    consumerFormatter: formatResidueManagementForConsumer,
+    visibleForSubtypes: ['TI'],
+    surfaces: {
+      modal: 'immediate',
+      form: 'immediate',
+      consumer_card: 'immediate'
+    }
+  },
+  {
+    name: 'tillage_intensity',
+    labelKey: 'events.soil.fields.tillageIntensity',
+    valueType: 'enum',
+    formatter: formatTillageIntensity,
+    visibleForSubtypes: ['TI'],
+    // NO consumer_card — grower-assigned rating, see the block comment above.
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
+  {
+    name: 'tillage_direction',
+    labelKey: 'events.soil.fields.tillageDirection',
+    valueType: 'enum',
+    formatter: formatTillageDirection,
+    visibleForSubtypes: ['TI'],
+    // NO consumer_card — unreadable without slope, benefit-framed label. See above.
+    surfaces: {
+      modal: 'secondary',
+      form: 'secondary'
+    }
+  },
   {
     // MEASURED subtypes only. SoilManagementTab gates these behind
     // `!['GR','HD','NS','TI'].includes(type)` and that exclusion is deliberate: a sheep
@@ -1035,6 +1208,30 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
       form: 'immediate',
       consumer_card: 'secondary'
     }
+  },
+
+  // ---- Grazing summary mode (GR, is_summary) — season totals the tab collects ----------
+  // Declared 2026-09-06; until then a grower who logged a season of grazing passes as one record
+  // saw neither total on any surface. Producer surfaces only — the buyer card's aggregate tile
+  // already reads area_covered_total.
+  {
+    name: 'total_grazing_days',
+    labelKey: 'events.soil.fields.totalGrazingDays',
+    valueType: 'number',
+    formatter: formatDurationDays as FieldFormatter<unknown, SoilData>,
+    visibleForSubtypes: ['GR'],
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'area_covered_total',
+    labelKey: 'events.soil.fields.areaCoveredTotal',
+    valueType: 'number',
+    unitField: 'area_unit',
+    formatter: formatArea as FieldFormatter<unknown, SoilData>,
+    visibleForSubtypes: ['GR'],
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
   },
 
   // ---- Biodiversity / Habitat (HD = developed habitat, NS = nesting/shelter) ----

@@ -415,7 +415,7 @@ const CertifierReview: React.FC = () => {
         )}
 
         {buildError && (
-          <Alert status={buildError === 'timeout' ? 'warning' : 'error'} borderRadius="md">
+          <Alert status={buildError === 'timeout' ? 'warning' : 'error'}>
             <AlertIcon />
             <Text fontSize="sm">
               {buildError === 'timeout'

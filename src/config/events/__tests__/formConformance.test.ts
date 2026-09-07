@@ -16,6 +16,21 @@
  *   1. Add the field to the form tab (it was supposed to be collected), or
  *   2. Drop `form` from that field's `surfaces` (it is display-only).
  * Adding it to KNOWN_GAPS is only for drift already scheduled for a named fix.
+ *
+ * 🔴 2026-09-06 — THE OTHER DIRECTION. Everything above guards
+ * "registry promises a form field that does not exist". Nothing guarded the inverse, which is
+ * the one that loses the farmer's work: the FORM collects a field, the value saves, and no
+ * registry entry declares it, so it renders on no surface at all.
+ *
+ * Found live on a production tillage record. SoilManagementTab collected `tillage_type`,
+ * `tillage_intensity`, `tillage_direction` and `residue_management`; NewEvent wrote all four to
+ * `extra_data`; the certifier packet printed them and the carbon calculator read them — and
+ * soilEvent.ts declared none of them. The producer's own detail modal and the buyer card both
+ * showed the pass as a date, a label and an acreage. The grower answered the question and the
+ * two screens that quote the record back said nothing. resolver.ts falls back to `extra_data`
+ * only for fields it already knows, so an undeclared key fails silently and permanently.
+ *
+ * The second `describe` below is that check. It is the same crude text match, run backwards.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -23,6 +38,7 @@ import { join } from 'node:path';
 
 import { businessEventRegistry } from '../businessEvent';
 import { chemicalEventRegistry } from '../chemicalEvent';
+import { equipmentEventRegistry } from '../equipmentEvent';
 import { generalEventRegistry } from '../generalEvent';
 import { pestEventRegistry } from '../pestEvent';
 import { productionEventRegistry } from '../productionEvent';
@@ -179,5 +195,144 @@ describe('every registry field with a `form` surface is collected by its form ta
     const stale = Object.keys(KNOWN_GAPS).filter((key) => !declared.has(key));
 
     expect(stale, `KNOWN_GAPS entries no longer in the registry: ${stale.join(', ')}`).toEqual([]);
+  });
+});
+
+// ============================================================================
+// Reverse direction: the form collects it → the registry must declare it
+// ============================================================================
+
+/**
+ * Names bound by a tab that render OUTSIDE the registry's fact grid, so having no field
+ * config is correct. Each was checked against EventDetailsModal.tsx, not assumed.
+ */
+const RENDERED_OUTSIDE_THE_FACT_GRID: Record<string, string> = {
+  name: 'the record title — getEventDisplayName() reads it (and extra_data.name/event_name)',
+  type: 'the SUBTYPE selector; it picks which fields resolve, it is not one of them',
+  is_summary: 'drives the "N activities" header badge (EventDetailsModal)',
+  event_count: 'the number inside that badge',
+  date_start: 'summary date RANGE in the modal header, printed instead of the single date',
+  date_end: 'the other half of that range'
+};
+
+/**
+ * Form-local input names that are deliberately different from the registry/serializer name.
+ * These are the same aliases KNOWN_GAPS documents from the registry side — listed again here
+ * because this direction reads the FORM's vocabulary, and neither list can see the other's.
+ * Renaming either half means editing both.
+ */
+const FORM_ONLY_ALIASES: Record<string, string> = {
+  production_method: 'registry `method` (production)',
+  area_numeric: 'registry `area_treated` (chemical)',
+  volume_numeric: 'registry `volume_applied` (chemical)',
+  depth: 'registry `working_depth` (soil)',
+  amendment_amount: 'registry `amendment_amount_numeric` (soil, legacy pair)',
+  crop_growth_stage:
+    'registry `growth_stage` (pest) — PestManagementTab writes the CommonEvent column from it ' +
+    'since 2026-09-06; the pest registry also reads the legacy extra_data key for older rows',
+  duration_hours: 'registry `duration` (general), remapped in NewEvent.onSubmit',
+  participants: 'registry `people_involved` (general), remapped in NewEvent.onSubmit',
+  // Rendered through a companion the read serializer derives, not through the raw input.
+  equipment_cleaning_event:
+    'a FK id; the modal renders `equipment_cleaning_event_label` (history/serializers.py)',
+  receipt_document:
+    'a FK id; the modal renders `receipt_document_title` (chemical + soil registries)',
+  water_test_summary:
+    'ProductionTab derives `water_test_results` from it at submit; the registry renders those'
+};
+
+/**
+ * ⚠️ REAL GAPS, of the same class as the tillage block — a form collects the value and no
+ * display surface declares it, so the farmer's answer renders nowhere. Surfaced by this test
+ * on the day it was written and left listed rather than fixed blind: each needs its own
+ * consumer/producer decision, and a wrong `consumer_card` is worse than a missing one.
+ *
+ * ⛔ This list only shrinks. An entry here is an admission, not a category.
+ */
+const UNDECLARED_OPEN: Record<string, string> = {
+  // 2026-09-06: emptied. The summary-mode totals (chemical ×7, soil ×2, pest ×4), ffm_code,
+  // action_recommended, pest variety, total_grazing_days and operation_efficiency are now
+  // declared; economic_threshold_met was a second ask for the same fact as
+  // action_threshold_met and the input was removed; the four FK / derived inputs are
+  // FORM_ONLY_ALIASES. Add an entry here only with the fix that will remove it.
+};
+
+/** Every field name the registry knows about, across ALL event types. */
+const ALL_DECLARED_NAMES = new Set(
+  [
+    businessEventRegistry,
+    chemicalEventRegistry,
+    equipmentEventRegistry,
+    generalEventRegistry,
+    pestEventRegistry,
+    productionEventRegistry,
+    soilEventRegistry,
+    weatherEventRegistry
+  ].flatMap((r) => r.fields.map((f) => f.name))
+);
+
+/**
+ * Names a tab binds an input to. Same two shapes `collectsField` matches, and the same
+ * comment strip — a commented-out input is not an input.
+ */
+const boundFieldNames = (source: string): string[] => {
+  const code = stripComments(source);
+  const names = new Set<string>();
+  for (const re of [
+    /register\(\s*['"`]([A-Za-z0-9_]+)['"`]/g,
+    /name=\{?\s*['"`]([A-Za-z0-9_]+)['"`]/g
+  ]) {
+    for (const m of code.matchAll(re)) names.add(m[1]);
+  }
+  return [...names];
+};
+
+describe('every field a form tab collects is declared in the registry', () => {
+  for (const tab of TABS) {
+    it(`${tab.name} (${tab.file})`, () => {
+      const source = readFileSync(join(FORMS_DIR, tab.file), 'utf8');
+
+      const undeclared = boundFieldNames(source)
+        // Companion units never render as their own row — `unitField` /
+        // makeUnitPairFormatter append them to the value they belong to.
+        .filter((name) => !name.endsWith('_unit'))
+        .filter((name) => !RENDERED_OUTSIDE_THE_FACT_GRID[name])
+        .filter((name) => !FORM_ONLY_ALIASES[name])
+        .filter((name) => !ALL_DECLARED_NAMES.has(name))
+        .filter((name) => !UNDECLARED_OPEN[`${tab.name}.${name}`])
+        .sort();
+
+      expect(
+        undeclared,
+        `${tab.file} collects these fields and no event registry declares them: ` +
+          `${undeclared.join(', ')}. The value will save and render on NO surface — not the ` +
+          `producer's detail modal, not the buyer card — because resolver.ts only falls back ` +
+          `to extra_data for fields it already knows. Declare the field (choose its surfaces ` +
+          `deliberately: a consumer_card tier is a publishing decision), or, if it really is ` +
+          `form-internal, say so in FORM_ONLY_ALIASES / RENDERED_OUTSIDE_THE_FACT_GRID with ` +
+          `the reason.`
+      ).toEqual([]);
+    });
+  }
+
+  it('every UNDECLARED_OPEN entry is still an actual gap', () => {
+    // The list only shrinks. An entry that got declared, or whose input was deleted, must
+    // leave — otherwise it stops being an admission and becomes camouflage.
+    const stale: string[] = [];
+    for (const key of Object.keys(UNDECLARED_OPEN)) {
+      const [tabName, fieldName] = key.split(/\.(.*)/);
+      const tab = TABS.find((t) => t.name === tabName);
+      if (!tab) {
+        stale.push(`${key} (no such tab)`);
+        continue;
+      }
+      const source = readFileSync(join(FORMS_DIR, tab.file), 'utf8');
+      if (ALL_DECLARED_NAMES.has(fieldName)) stale.push(`${key} (now declared — remove)`);
+      else if (!collectsField(source, fieldName)) stale.push(`${key} (no longer collected)`);
+    }
+
+    expect(stale, `UNDECLARED_OPEN entries that are no longer gaps: ${stale.join(', ')}`).toEqual(
+      []
+    );
   });
 });

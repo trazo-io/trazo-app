@@ -378,7 +378,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // seed it so ProductionTab opens on the right type instead of the PL default.
   const [eventFormData, setEventFormData] = useState(() => {
     const presetVerb = typePresetFromVerb ? verbForKey(verbFromUrl) : undefined;
-    return presetVerb?.subtype ? { type: presetVerb.subtype } : {};
+    // `presetFields` (config/activityVerbs) — the tile's own identity, e.g. Cleanout ⇒ the
+    // Equipment Maintenance operation type is "Cleaning". See the interface comment there.
+    return presetVerb?.subtype
+      ? { type: presetVerb.subtype, ...(presetVerb.presetFields || {}) }
+      : {};
   });
   // Verb picked in-page (no URL preset) — drives title + tile selection state.
   const [pickedVerbKey, setPickedVerbKey] = useState(null);
@@ -1678,7 +1682,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
     handleEventTypeChange(verb.eventType);
     setPickedVerbKey(verb.key);
     if (verb.subtype) {
-      setEventFormData((prev) => ({ ...prev, type: verb.subtype }));
+      setEventFormData((prev) => {
+        // Drop every OTHER tile's presets first: a farmer who taps Cleanout, then "Not
+        // Cleanout?", then Harvest must not carry `equipment_operation_type: 'CL'` around.
+        // Named prev*: this IS the carried-forward state (omriAttachIsExplicit.test.tsx reads
+        // the spread names), and presets are tile identity — never a product name or listing.
+        const prevWithoutPresets = { ...prev };
+        ACTIVITY_VERBS.forEach((v) => {
+          if (v.key !== verb.key) {
+            Object.keys(v.presetFields || {}).forEach((k) => delete prevWithoutPresets[k]);
+          }
+        });
+        return { ...prevWithoutPresets, type: verb.subtype, ...(verb.presetFields || {}) };
+      });
     }
     // Re-collapse after "Change activity": the reopened grid has done its job once a tile
     // is tapped. Left true, a farmer who corrected a preset kept the grid for the rest of

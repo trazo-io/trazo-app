@@ -35,6 +35,7 @@ import {
   StandardQueryError
 } from 'components/Design/StandardComponents';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
+import OSPPlanReviewPanel from './OSPPlanReviewPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { pickText } from 'config/osp/types';
 import { OSP_MODULE_PDF_URL, OSP_PACKET_URL } from 'config';
@@ -436,6 +437,22 @@ const OSPModuleListPage = () => {
               </StandardButton>
             </HStack>
           </Flex>
+
+          {/* Plan review, on the OSP LANDING rather than only on the demoted narrative page.
+              Its own docstring says it is "in front of them at the moment the decision is
+              made" — true of the packet cover, and not true in the app: it rendered on
+              /osp/narratives only, which the October cuts made a secondary view behind one
+              outline button. This page is where modules are answered and where the packet is
+              downloaded from, so it is where "here is what your records did since these
+              answers" belongs. It reports itself clean when there is nothing, never blocks. */}
+          {latestOsp &&
+            (latestOsp.status === 'draft' ||
+              latestOsp.status === 'submitted' ||
+              latestOsp.status === 'active') && (
+              <Box mb={4}>
+                <OSPPlanReviewPanel companyId={companyId} farmId={farmId || ''} osp={latestOsp} />
+              </Box>
+            )}
 
           <Box data-tour="osp-modules-grid">
             <Text fontWeight="semibold" mb={1}>

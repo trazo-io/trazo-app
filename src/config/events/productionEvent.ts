@@ -1562,7 +1562,9 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
     labelKey: 'production.canopy.operation',
     valueType: 'string',
     visibleForSubtypes: ['CM'],
-    surfaces: { modal: 'immediate', form: 'immediate' }
+    // consumer_card since 2026-09-06: the operation IS the activity ("leaf pulling", "hedging")
+    // and the card for a canopy pass read as a date, an acreage and nothing else.
+    surfaces: { modal: 'immediate', form: 'immediate', consumer_card: 'immediate' }
   },
   {
     name: 'pass_number',
@@ -1708,10 +1710,10 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       return `${Number(raw)} °C`;
     },
     visibleForSubtypes: ['FP'],
-    surfaces: {
-      modal: 'secondary',
-      form: 'secondary'
-    }
+    // consumer_card since 2026-09-06: the card's own copy says "the night, the method and the
+    // low temperature are on record" and then showed only the method. A measured temperature
+    // is the WHY of the record and a plain fact.
+    surfaces: { modal: 'secondary', form: 'secondary', consumer_card: 'secondary' }
   },
   {
     name: 'floor_management_type',
@@ -1802,6 +1804,59 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
   },
 
   // ---- Efficiency & context ----
+  {
+    // The equipment-condition rating ProductionTab collects inside its "Fuel Consumption &
+    // Equipment Data — optional, carbon only" section, on EVERY subtype, and writes to
+    // extra_data. Declared nowhere until 2026-09-06, so a grower who rated their tractor saw
+    // nothing of it on the record. A carbon-model input and a self-assigned grade: producer
+    // surfaces only, never the buyer card (the same reason `production_efficiency` below has
+    // no consumer_card).
+    name: 'operation_efficiency',
+    labelKey: 'events.equipment.fields.operationEfficiency',
+    valueType: 'enum',
+    enumSource: 'production_efficiency',
+    carbonRelevant: true,
+    // Every subtype except HA: on a harvest the same rating is the `production_efficiency`
+    // column, declared below, and the modal would print it twice.
+    visibleForSubtypes: [
+      'PL',
+      'IR',
+      'PR',
+      'TR',
+      'EM',
+      'CU',
+      'TH',
+      'PO',
+      'PH',
+      'CM',
+      'FP',
+      'MO',
+      'TP',
+      'BU',
+      'SS'
+    ],
+    // Only a rating the grower actually chose. The form seeds "normal" for every record and the
+    // column defaults to "normal", so an untouched select would otherwise print
+    // "Operation Efficiency: Normal" on every production event — a self-awarded grade nobody
+    // awarded. (A deliberate "normal" is indistinguishable from the default by construction.)
+    visibleWhen: (e) => {
+      const raw =
+        e.operation_efficiency ??
+        (e.extra_data as Record<string, unknown> | undefined)?.operation_efficiency;
+      return Boolean(raw) && raw !== 'normal';
+    },
+    surfaces: { modal: 'details', form: 'details' }
+  },
+  {
+    // The Equipment Maintenance cleanout that covers this pass (§ 205.272). The form's select
+    // stores a bare FK id (`equipment_cleaning_event`); the read serializers add this
+    // "date · name" label so the record can SAY which cleanout it links to. Producer surfaces
+    // only — a shopper cannot use an internal record reference.
+    name: 'equipment_cleaning_event_label',
+    labelKey: 'events.production.fields.equipmentCleaningEvent',
+    valueType: 'string',
+    surfaces: { modal: 'secondary' }
+  },
   {
     name: 'production_efficiency',
     labelKey: 'events.common.fields.productionEfficiency',
@@ -1935,6 +1990,27 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       modal: 'secondary',
       form: 'secondary',
       consumer_card: 'secondary'
+    }
+  },
+  {
+    // Same column, every OTHER production subtype, producer surfaces only.
+    //
+    // 🔴 2026-09-06 — ProductionTab asks "Crop Variety" on all sixteen subtypes and the entry
+    // above gates it to the five where a shopper cares. On the other eleven the value was
+    // write-only: the per-tile sweep typed a variety into an irrigation, a pruning, a frost
+    // night, a pollination, a transport and a buffer-use record, and the producer's own detail
+    // modal showed none of them. A second entry with the complementary gate is the only way the
+    // registry can say "modal everywhere the form asks, buyer card only where it means
+    // something" — one FieldConfig has one `visibleForSubtypes` for all its surfaces.
+    name: 'variety',
+    labelKey: 'events.common.fields.variety',
+    valueType: 'string',
+    // EM is absent on purpose: the cleanout form does not ask a variety (the mounted-form guard,
+    // formRenderConformance.test.tsx, holds the registry to what each tab actually renders).
+    visibleForSubtypes: ['IR', 'PR', 'CU', 'TH', 'PO', 'CM', 'FP', 'MO', 'TP', 'BU'],
+    surfaces: {
+      modal: 'details',
+      form: 'details'
     }
   },
   {

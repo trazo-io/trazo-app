@@ -48,6 +48,7 @@ import { FaCheckCircle, FaExclamationTriangle, FaFlask, FaPlus } from 'react-ico
 import { useIntl } from 'react-intl';
 
 import {
+  GuidanceNote,
   StandardAlert,
   StandardButton,
   StandardCard,
@@ -191,6 +192,15 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   const sectionBg = useColorModeValue('gray.50', 'gray.700');
 
   const [query, setQuery] = useState('');
+  /**
+   * The term the last search actually ran on — NOT the live input value.
+   *
+   * `handleAddOwnMaterial` read `query.trim()` at click time, so typing a no-match term,
+   * then editing the box without re-searching, POSTed the new, never-resolved string while
+   * the results below still described the old one. The row that reaches the OSP has to be
+   * the row the grower was looking at.
+   */
+  const [searchedTerm, setSearchedTerm] = useState('');
   const [certRef, setCertRef] = useState('');
   const [verify, { data: verifyResult, isFetching: searching, isUninitialized }] =
     useLazyVerifyInputQuery();
@@ -235,6 +245,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
     if (!trimmed) return;
     try {
       await verify({ name: trimmed }).unwrap();
+      setSearchedTerm(trimmed);
     } catch (err: any) {
       toast({
         status: 'error',
@@ -246,7 +257,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   };
 
   const handleAddOwnMaterial = async () => {
-    const name = query.trim();
+    const name = searchedTerm;
     if (!name) return;
     try {
       await addPlanMaterial({
@@ -259,6 +270,7 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         body: { product_name: name, listing_basis: 'none_unlisted' }
       }).unwrap();
       setQuery('');
+      setSearchedTerm('');
       toast({
         status: 'success',
         title: intl.formatMessage({ id: 'osp.approvedInputs.own.added' }, { name }),
@@ -345,219 +357,283 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
     }
   };
 
+  /**
+   * One search hit, rendered identically whichever catalogue it came from.
+   *
+   * Every row in the results list is the same shape — badge, identifier, name, one action on
+   * the right — so "add this material in your own words" can be the LAST row of the list
+   * rather than an alert box shouting at the grower (see `renderNoMatch`). The three
+   * catalogues previously each had their own copy of this markup, which is how the WSDA row
+   * ended up rendering a raw `category` string and the OMRI row did not.
+   */
+  const MatchRow = ({
+    badge,
+    badgeScheme,
+    identifier,
+    name,
+    action
+  }: {
+    badge: string;
+    badgeScheme: string;
+    identifier?: string | null;
+    name: string;
+    action: React.ReactNode;
+  }) => (
+    <Flex
+      p={3}
+      bg={sectionBg}
+      borderRadius="md"
+      justify="space-between"
+      align="center"
+      gap={3}
+      wrap="wrap">
+      <VStack align="start" spacing={0} minW={0} flex={1}>
+        <HStack spacing={2}>
+          <Badge colorScheme={badgeScheme} fontSize="11px">
+            {badge}
+          </Badge>
+          {identifier && (
+            <Text fontSize="xs" color={subtextColor}>
+              {identifier}
+            </Text>
+          )}
+        </HStack>
+        <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
+          {name}
+        </Text>
+      </VStack>
+      {action}
+    </Flex>
+  );
+
+  const alreadyAddedTag = (
+    <HStack color="green.700" fontSize="sm">
+      <Icon as={FaCheckCircle} />
+      <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
+    </HStack>
+  );
+
+  const addButton = (kind: ApprovedInputKind, id: number, label: string) => (
+    <StandardButton
+      size="sm"
+      leftIcon={<FaPlus />}
+      isLoading={adding}
+      onClick={() => handleAdd(kind, id, label)}>
+      {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
+    </StandardButton>
+  );
+
+  /**
+   * A truncation notice, shown only when the server capped the list.
+   *
+   * The count comes from `*_candidate_count`, which is the TRUE number of matches — not the
+   * length of the capped array. Reporting the capped length would tell a grower "12 products
+   * match" when 14 do, and the two left out could be theirs.
+   */
+  const cappedNotice = (shown: number, total?: number) =>
+    total != null && total > shown ? (
+      <Text fontSize="xs" color={subtextColor}>
+        {intl.formatMessage({ id: 'osp.approvedInputs.search.capped' }, { shown, total })}
+      </Text>
+    ) : null;
+
+  /**
+   * No catalogue matched — and that is an ordinary outcome, not a fault.
+   *
+   * This used to be a `StandardAlert status="warning"`: an amber panel, an orange accent bar
+   * and a warning triangle, wrapped around a full-bleed primary button. Three things were
+   * wrong with it.
+   *
+   * 1. SEMANTICS. `.claude/rules/frontend.md`: status colour = meaning, never decoration.
+   *    Warning means "something needs attention". Trazo holds a reference subset of a
+   *    ~10,000-product list, so "no match" is the COMMON case for a real grower — and the
+   *    alert's own copy says so ("does not mean it is prohibited"). Painting the expected
+   *    outcome as a warning contradicts the sentence inside it, and spends the amber that
+   *    ought to mean something the next time it appears.
+   * 2. HIERARCHY. The action sat inside the alert at full width, so the fallback route was
+   *    the largest, loudest control on the panel — louder than the Add buttons on a real
+   *    catalogue match. It now renders as the LAST ROW OF THE RESULTS LIST, in the same
+   *    shape as every match: badge, name, one right-aligned `size="sm"` action.
+   * 3. A11Y. `<Alert>` is `role="alert"`, an assertive live region. A search result is not an
+   *    interruption; announcing it as one talks over the screen-reader user.
+   *
+   * What survives is the teaching copy, moved into `GuidanceNote` — the neutral gray aside
+   * the design system provides for exactly this: text that explains a screen rather than
+   * reporting an event.
+   */
+  const renderNoMatch = () => (
+    <VStack align="stretch" spacing={2} mt={3}>
+      <Text fontSize="xs" color={subtextColor}>
+        {intl.formatMessage({ id: 'osp.approvedInputs.search.noMatch' })}
+      </Text>
+      {isEditable && searchedTerm && (
+        <MatchRow
+          badge={intl.formatMessage({ id: 'osp.approvedInputs.own.badge' })}
+          badgeScheme="gray"
+          // The same phrase the row will carry once it exists — `listing_statement` is
+          // server-computed and this screen prints it verbatim, so the preview must not
+          // promise a different one.
+          identifier={intl.formatMessage({ id: 'osp.approvedInputs.own.noListing' })}
+          name={searchedTerm}
+          action={
+            <StandardButton
+              size="sm"
+              leftIcon={<FaPlus />}
+              isLoading={isAddingOwn}
+              onClick={handleAddOwnMaterial}>
+              {intl.formatMessage({ id: 'osp.approvedInputs.own.addAction' })}
+            </StandardButton>
+          }
+        />
+      )}
+      <GuidanceNote>
+        {intl.formatMessage({ id: 'osp.approvedInputs.search.noMatchNextStep' })}
+      </GuidanceNote>
+    </VStack>
+  );
+
   const renderSearchResult = (result: InputVerifyResult) => {
     if (!result) return null;
-    const omriAlreadyApproved =
-      result.omri_product_pk != null && omriList.some((p) => p.id === result.omri_product_pk);
-    const nlAlreadyApproved =
-      result.national_list_substance_pk != null &&
-      nlList.some((s) => s.id === result.national_list_substance_pk);
-    const wsdaAlreadyApproved =
-      result.wsda_material_pk != null && wsdaList.some((w) => w.id === result.wsda_material_pk);
 
-    const hasOMRI = result.omri_product_pk != null;
-    const hasNL = result.national_list_substance_pk != null;
-    const hasWSDA = result.wsda_material_pk != null;
+    // Every match, not just the winner. Until 2026-09-06 this screen rendered ONE row per
+    // catalogue off `*_pk`, so a search for "Serenade" offered Serenade ASO and silently hid
+    // Serenade MAX and the plan's own Serenade Opti. The singular fields are still read as a
+    // fallback so a cached response from before the shortlist shipped still renders.
+    const omriRows =
+      result.omri_candidates && result.omri_candidates.length
+        ? result.omri_candidates
+        : result.omri_product_pk != null
+        ? [
+            {
+              pk: result.omri_product_pk,
+              omri_id: result.omri_product_id,
+              product_name: result.omri_product_name || ''
+            }
+          ]
+        : [];
+    const wsdaRows =
+      result.wsda_candidates && result.wsda_candidates.length
+        ? result.wsda_candidates
+        : result.wsda_material_pk != null
+        ? [
+            {
+              pk: result.wsda_material_pk,
+              wsda_id: result.wsda_material_id,
+              brand_name: result.wsda_material_name || ''
+            }
+          ]
+        : [];
+    const nlRows =
+      result.national_list_candidates && result.national_list_candidates.length
+        ? result.national_list_candidates
+        : result.national_list_substance_pk != null
+        ? [
+            {
+              pk: result.national_list_substance_pk,
+              substance_name: result.national_list_substance_name || '',
+              cfr_section: result.national_list_cfr_section,
+              subsection: null,
+              status: result.national_list_status,
+              restriction_notes: null
+            }
+          ]
+        : [];
+
+    const hasOMRI = omriRows.length > 0;
+    const hasNL = nlRows.length > 0;
+    const hasWSDA = wsdaRows.length > 0;
+    const totalShown = omriRows.length + nlRows.length + wsdaRows.length;
     // The National List catalogue holds § 205.601 allowed AND § 205.602 prohibited substances,
-    // and both answer the same search. `national_list_status` was served from day one and read
-    // nowhere, so an ordinary Add button sat next to a substance banned in organic production.
-    const nlProhibited =
-      hasNL && (result.national_list_status || '').toLowerCase() === 'prohibited';
+    // and both answer the same search. `status` therefore has to be read PER ROW: reading it
+    // from whichever entry ranked first would put an ordinary Add button next to a substance
+    // banned in organic production the moment a query matched one of each.
+    const isProhibited = (row: { status?: string | null }) =>
+      (row.status || '').toLowerCase() === 'prohibited';
 
     if (!hasOMRI && !hasNL && !hasWSDA) {
-      // Trazo's OMRI catalog is a licensed reference subset, not the full
-      // ~6,000-product listing, so "no match" is the COMMON case for a real
-      // grower, not the exception. The old copy stated the consequence
-      // (events keep flagging as drift) and offered no action — a dead end on
-      // the flagship feature. Name the two routes that actually work.
-      return (
-        <StandardAlert status="warning" mb={0}>
-          <VStack align="stretch" spacing={2}>
-            <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.noMatch' })}</Text>
-            <Text fontSize="xs" color={subtextColor}>
-              {intl.formatMessage({ id: 'osp.approvedInputs.search.noMatchNextStep' })}
-            </Text>
-            {isEditable && (
-              <StandardButton
-                size="sm"
-                leftIcon={<FaPlus />}
-                isLoading={isAddingOwn}
-                onClick={handleAddOwnMaterial}>
-                {intl.formatMessage(
-                  { id: 'osp.approvedInputs.own.addAction' },
-                  { name: query.trim() }
-                )}
-              </StandardButton>
-            )}
-          </VStack>
-        </StandardAlert>
-      );
+      return renderNoMatch();
     }
 
     return (
       <VStack align="stretch" spacing={2} mt={3}>
         <Text fontSize="xs" color={subtextColor}>
-          {intl.formatMessage({ id: 'osp.approvedInputs.search.results' })}
+          {intl.formatMessage({ id: 'osp.approvedInputs.search.results' }, { count: totalShown })}
         </Text>
-        {hasOMRI && (
-          <Flex
-            p={3}
-            bg={sectionBg}
-            borderRadius="md"
-            justify="space-between"
-            align="center"
-            gap={3}
-            wrap="wrap">
-            <VStack align="start" spacing={0} minW={0} flex={1}>
-              <HStack spacing={2}>
-                <Badge colorScheme="purple" fontSize="11px">
-                  OMRI
-                </Badge>
-                {result.omri_product_id && (
-                  <Text fontSize="xs" color={subtextColor}>
-                    #{result.omri_product_id}
+
+        {omriRows.map((row) => (
+          <MatchRow
+            key={`omri-${row.pk}`}
+            badge="OMRI"
+            badgeScheme="purple"
+            identifier={row.omri_id ? `#${row.omri_id}` : null}
+            name={row.product_name}
+            action={
+              omriList.some((p) => p.id === row.pk)
+                ? alreadyAddedTag
+                : addButton('omri', row.pk, row.product_name)
+            }
+          />
+        ))}
+        {cappedNotice(omriRows.length, result.omri_candidate_count)}
+
+        {nlRows.map((row) => (
+          <MatchRow
+            key={`nl-${row.pk}`}
+            badge={intl.formatMessage({ id: 'osp.approvedInputs.kind.national_list' })}
+            badgeScheme="blue"
+            identifier={row.cfr_section}
+            name={row.substance_name}
+            action={
+              isProhibited(row) ? (
+                // The server refuses this too (add_approved_input). The control is removed here
+                // so the operator is told why BEFORE they act, rather than by an error after.
+                <HStack color="red.800" fontSize="sm" maxW="320px" align="flex-start">
+                  <Icon as={FaExclamationTriangle} mt="2px" />
+                  <Text>
+                    {intl.formatMessage(
+                      { id: 'osp.approvedInputs.search.prohibited' },
+                      {
+                        section: row.cfr_section ? `\u00a7 ${row.cfr_section}` : '\u00a7 205.602'
+                      }
+                    )}
                   </Text>
-                )}
-              </HStack>
-              <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
-                {result.omri_product_name}
-              </Text>
-            </VStack>
-            {omriAlreadyApproved ? (
-              <HStack color="green.700" fontSize="sm">
-                <Icon as={FaCheckCircle} />
-                <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
-              </HStack>
-            ) : (
-              <StandardButton
-                size="sm"
-                leftIcon={<FaPlus />}
-                isLoading={adding}
-                onClick={() =>
-                  handleAdd(
-                    'omri',
-                    result.omri_product_pk as number,
-                    result.omri_product_name || ''
+                </HStack>
+              ) : nlList.some((s) => s.id === row.pk) ? (
+                alreadyAddedTag
+              ) : (
+                addButton('national_list', row.pk, row.substance_name)
+              )
+            }
+          />
+        ))}
+        {cappedNotice(nlRows.length, result.national_list_candidate_count)}
+
+        {wsdaRows.map((row) => (
+          <MatchRow
+            key={`wsda-${row.pk}`}
+            badge="WSDA"
+            badgeScheme="teal"
+            // ⛔ Only a REAL WSDA Product # — a bare integer — may be shown. Trazo's seeded
+            // catalogue also holds ids of the shape `WSDA-REG-BIOAG-2025-003`, which is not a
+            // format WSDA issues; printing one invites a certifier to look up a registration
+            // that does not exist. When the id is not a product number, show none.
+            identifier={
+              row.wsda_id && /^\d+$/.test(row.wsda_id)
+                ? intl.formatMessage(
+                    { id: 'osp.approvedInputs.search.wsdaProductNumber' },
+                    { number: row.wsda_id }
                   )
-                }>
-                {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
-              </StandardButton>
-            )}
-          </Flex>
-        )}
-        {hasNL && (
-          <Flex
-            p={3}
-            bg={sectionBg}
-            borderRadius="md"
-            justify="space-between"
-            align="center"
-            gap={3}
-            wrap="wrap">
-            <VStack align="start" spacing={0} minW={0} flex={1}>
-              <HStack spacing={2}>
-                <Badge colorScheme="blue" fontSize="11px">
-                  {intl.formatMessage({ id: 'osp.approvedInputs.kind.national_list' })}
-                </Badge>
-                {result.national_list_cfr_section && (
-                  <Text fontSize="xs" color={subtextColor}>
-                    {result.national_list_cfr_section}
-                  </Text>
-                )}
-              </HStack>
-              <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
-                {result.national_list_substance_name}
-              </Text>
-            </VStack>
-            {nlProhibited ? (
-              // The server refuses this too (add_approved_input). The control is removed here so
-              // the operator is told why BEFORE they act, rather than by an error afterwards.
-              <HStack color="red.800" fontSize="sm" maxW="320px" align="flex-start">
-                <Icon as={FaExclamationTriangle} mt="2px" />
-                <Text>
-                  {intl.formatMessage(
-                    { id: 'osp.approvedInputs.search.prohibited' },
-                    {
-                      section: result.national_list_cfr_section
-                        ? `\u00a7 ${result.national_list_cfr_section}`
-                        : '\u00a7 205.602'
-                    }
-                  )}
-                </Text>
-              </HStack>
-            ) : nlAlreadyApproved ? (
-              <HStack color="green.700" fontSize="sm">
-                <Icon as={FaCheckCircle} />
-                <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
-              </HStack>
-            ) : (
-              <StandardButton
-                size="sm"
-                leftIcon={<FaPlus />}
-                isLoading={adding}
-                onClick={() =>
-                  handleAdd(
-                    'national_list',
-                    result.national_list_substance_pk as number,
-                    result.national_list_substance_name || ''
-                  )
-                }>
-                {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
-              </StandardButton>
-            )}
-          </Flex>
-        )}
-        {hasWSDA && (
-          <Flex
-            p={3}
-            bg={sectionBg}
-            borderRadius="md"
-            justify="space-between"
-            align="center"
-            gap={3}
-            wrap="wrap">
-            <VStack align="start" spacing={0} minW={0} flex={1}>
-              <HStack spacing={2}>
-                <Badge colorScheme="teal" fontSize="11px">
-                  WSDA
-                </Badge>
-                {result.wsda_material_id && (
-                  <Text fontSize="xs" color={subtextColor}>
-                    {result.wsda_material_id}
-                  </Text>
-                )}
-                {result.wsda_material_category && (
-                  <Text fontSize="xs" color={subtextColor} textTransform="capitalize">
-                    {result.wsda_material_category}
-                  </Text>
-                )}
-              </HStack>
-              <Text fontSize="sm" fontWeight="semibold" noOfLines={2}>
-                {result.wsda_material_name}
-              </Text>
-            </VStack>
-            {wsdaAlreadyApproved ? (
-              <HStack color="green.700" fontSize="sm">
-                <Icon as={FaCheckCircle} />
-                <Text>{intl.formatMessage({ id: 'osp.approvedInputs.search.alreadyAdded' })}</Text>
-              </HStack>
-            ) : (
-              <StandardButton
-                size="sm"
-                leftIcon={<FaPlus />}
-                isLoading={adding}
-                onClick={() =>
-                  handleAdd(
-                    'wsda',
-                    result.wsda_material_pk as number,
-                    result.wsda_material_name || ''
-                  )
-                }>
-                {intl.formatMessage({ id: 'osp.approvedInputs.search.add' })}
-              </StandardButton>
-            )}
-          </Flex>
-        )}
+                : null
+            }
+            name={row.brand_name}
+            action={
+              wsdaList.some((w) => w.id === row.pk)
+                ? alreadyAddedTag
+                : addButton('wsda', row.pk, row.brand_name)
+            }
+          />
+        ))}
+        {cappedNotice(wsdaRows.length, result.wsda_candidate_count)}
       </VStack>
     );
   };

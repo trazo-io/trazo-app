@@ -1462,12 +1462,18 @@ const ProductionTab = forwardRef(
           : undefined,
         // Storage fields ride the "stored" destination only — a location typed and then
         // orphaned by switching the destination to sold_direct must not submit.
+        //
+        // 🔴 2026-09-06 — HA AND TP. The JSX renders the storage inputs for both (the
+        // destination select follows RECORDS_HANDLER), but this gate said `type === 'HA'`, so a
+        // Transport record "to storage" showed a location and a temperature, saved neither, and
+        // the packet's Harvest & Transport table printed "—" under Storage for the load. Render
+        // gate ≠ payload gate, per field — the class the pilot rehearsal named.
         storage_location:
-          data.type === 'HA' && data.harvest_destination === 'stored'
+          RECORDS_HANDLER && data.harvest_destination === 'stored'
             ? data.storage_location || undefined
             : undefined,
         storage_temperature_f:
-          data.type === 'HA' && data.harvest_destination === 'stored' && data.storage_temperature_f
+          RECORDS_HANDLER && data.harvest_destination === 'stored' && data.storage_temperature_f
             ? parseFloat(data.storage_temperature_f)
             : undefined,
         harvest_contract_number: RECORDS_HANDLER

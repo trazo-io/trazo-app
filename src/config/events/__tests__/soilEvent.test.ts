@@ -75,7 +75,15 @@ const SAMPLE_EVENTS: Record<SoilManagementSubtype, Record<string, unknown>> = {
     name: 'Shallow Tillage',
     soil_management_type: 'TI',
     working_depth: 4,
-    depth_unit: 'inches'
+    depth_unit: 'inches',
+    // The four TI practice facts persist in extra_data (SoilManagementEvent has no columns
+    // for them), which is where the resolver has to find them.
+    extra_data: {
+      tillage_type: 'minimum_till',
+      tillage_intensity: 'medium',
+      tillage_direction: 'across_slope',
+      residue_management: 'incorporated'
+    }
   },
   CO: {
     ...base,
@@ -209,5 +217,87 @@ describe('Soil Management: subtype gating on consumer_card', () => {
     const result = getFieldsForSurface('soil_management', 'OM', 'consumer_card', SAMPLE_EVENTS.OM);
     const names = allFields(result).map((f) => f.name);
     expect(names).toContain('manure_harvest_interval');
+  });
+});
+
+// ============================================================================
+// Tillage (TI) practice fields — 2026-09-06
+// ============================================================================
+
+/**
+ * All four were collected by SoilManagementTab, written to extra_data by NewEvent, printed in
+ * the certifier packet and read by the carbon calculator — and declared in no registry, so
+ * the producer detail modal and the buyer card both rendered a tillage pass as a date, a
+ * label and an acreage. Found live in production.
+ *
+ * The consumer split is a publishing decision, not a layout one, which is why it is pinned
+ * here and not left to whichever surface happens to be looked at:
+ *   PUBLIC   tillage_type, residue_management — named, checkable practice facts
+ *   WITHHELD tillage_intensity (grower-assigned rating of their own disturbance),
+ *            tillage_direction (meaningless without slope the page does not publish)
+ */
+describe('Soil Management: tillage practice fields (TI)', () => {
+  const modalNames = () =>
+    allFields(getFieldsForSurface('soil_management', 'TI', 'modal', SAMPLE_EVENTS.TI)).map(
+      (f) => f.name
+    );
+  const consumerFields = () =>
+    allFields(getFieldsForSurface('soil_management', 'TI', 'consumer_card', SAMPLE_EVENTS.TI));
+
+  it('puts all four practice facts on the producer modal', () => {
+    const names = modalNames();
+    for (const name of [
+      'tillage_type',
+      'tillage_intensity',
+      'tillage_direction',
+      'residue_management'
+    ]) {
+      expect(names, `${name} missing from the tillage detail modal`).toContain(name);
+    }
+  });
+
+  it('reads the values out of extra_data and labels them without the benefit half', () => {
+    const byName = Object.fromEntries(
+      allFields(getFieldsForSurface('soil_management', 'TI', 'modal', SAMPLE_EVENTS.TI)).map(
+        (f) => [f.name, f.formattedValue]
+      )
+    );
+    // The form's <option> text is "Minimum Till - Conservation" / "Incorporated - Mixed into
+    // soil". The trailing benefit clause is a self-assigned environmental verdict and is
+    // stripped here exactly as audit_export_service.TILLAGE_PRACTICE_LABELS strips it.
+    expect(byName.tillage_type).toBe('Minimum till');
+    expect(byName.residue_management).toBe('Incorporated into soil');
+    expect(byName.tillage_intensity).toBe('Medium');
+    expect(byName.tillage_direction).toBe('Across slope');
+  });
+
+  it("publishes the practice facts to shoppers in the shopper's words", () => {
+    const byName = Object.fromEntries(consumerFields().map((f) => [f.name, f.formattedValue]));
+    expect(byName.tillage_type).toBe('Minimum till');
+    expect(byName.residue_management).toBe('Mixed back into the soil');
+  });
+
+  it('withholds the self-assigned rating and the direction from the buyer page', () => {
+    const names = consumerFields().map((f) => f.name);
+    expect(
+      names,
+      'tillage_intensity is a grower-assigned rating (high/medium/low/CONSERVATION) of their ' +
+        'own soil disturbance — the production_efficiency shape this registry withholds'
+    ).not.toContain('tillage_intensity');
+    expect(
+      names,
+      'tillage_direction is unreadable without the slope the buyer page does not publish'
+    ).not.toContain('tillage_direction');
+  });
+
+  it('shows tillage fields only for TI', () => {
+    const stNames = allFields(
+      getFieldsForSurface('soil_management', 'ST', 'modal', {
+        ...SAMPLE_EVENTS.ST,
+        extra_data: { tillage_type: 'no_till', residue_management: 'removed' }
+      })
+    ).map((f) => f.name);
+    expect(stNames).not.toContain('tillage_type');
+    expect(stNames).not.toContain('residue_management');
   });
 });

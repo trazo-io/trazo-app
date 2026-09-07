@@ -1591,7 +1591,7 @@ export function getConsumerEventDescription(
         event.extra_data?.is_fertigation === 'true';
       sustainabilityBenefit = isFertigationFlag
         ? 'Fertigation (fertilizer through irrigation) maximizes nutrient uptake efficiency and reduces runoff. Application fuel excluded from carbon calculation to avoid double-counting with irrigation events.'
-        : 'Recording the product and the rate is what makes over-application visible rather than invisible.';
+        : 'The product, the date and the area treated are on record, so the certifier can check the application against the label.';
     } else if (chemicalType === 'pesticide application') {
       // Check chemical_subtype FIRST before product name detection
       // This ensures user's explicit selection takes precedence over product name inference

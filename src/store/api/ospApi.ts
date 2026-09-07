@@ -352,15 +352,19 @@ const ospApi = baseApi.injectEndpoints({
     }),
 
     // Record the OPERATOR's confirmation for one or more § 11 record types. This is the only
-    // path from evidence to an assertion — never call it from a derivation or a bulk action.
+    // path from evidence to an assertion — never call it from a derivation, and never from a
+    // "confirm everything" control: several keys in one request is the panel BATCHING boxes the
+    // operator ticked one at a time, not a shortcut past ticking them.
+    // `label` names the free-text "Other" row and is required to confirm it (the server refuses
+    // an unnamed one); it applies to exactly that one key.
     confirmOSPRecordTypes: build.mutation<
       OSPRecordTypesResponse,
-      OSPOne & { keys: string[]; confirmed?: boolean }
+      OSPOne & { keys: string[]; confirmed?: boolean; label?: string }
     >({
-      query: ({ companyId, farmId, ospId, keys, confirmed = true }) => ({
+      query: ({ companyId, farmId, ospId, keys, confirmed = true, label }) => ({
         url: OSP_RECORD_TYPES_URL(companyId, farmId, ospId),
         method: 'POST',
-        body: { keys, confirmed },
+        body: label === undefined ? { keys, confirmed } : { keys, confirmed, label },
         credentials: 'include'
       }),
       invalidatesTags: (_r, _e, { ospId }) => [

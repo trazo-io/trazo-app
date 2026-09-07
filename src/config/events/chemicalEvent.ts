@@ -229,6 +229,19 @@ const formatMicronutrientType = (v: unknown): string | null => {
 // Common event data object type for predicates
 type ChemicalEventData = Record<string, unknown>;
 
+/** Summary-mode flag — a STRING from the form and from extra_data ("true"), a boolean on the wire. */
+const isSummaryRecord = (e: Record<string, unknown>): boolean => {
+  const raw = e.is_summary ?? (e.extra_data as Record<string, unknown> | undefined)?.is_summary;
+  return raw === true || raw === 'true';
+};
+
+const formatKilograms = (v: unknown): string | null => {
+  if (v == null || v === '') return null;
+  const n = typeof v === 'number' ? v : parseFloat(String(v));
+  if (Number.isNaN(n)) return null;
+  return `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} kg`;
+};
+
 const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
   // ---- Core identity (ALL subtypes) ----
   {
@@ -278,6 +291,9 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     valueType: 'number',
     unitField: 'volume_unit',
     formatter: formatVolumeApplied,
+    // NO consumer_card (2026-09-06 review). PublicHistorySerializer._CERTIFIER_ONLY_EVENT_FIELDS
+    // strips `volume` / `volume_unit` from every anonymous payload — an amount is a certifier's
+    // detail — so a card tier here rendered nothing while reading as if it did.
     surfaces: {
       timeline: 'immediate',
       card: 'immediate',
@@ -285,7 +301,6 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
       form: 'immediate',
       quick_form: 'immediate',
       preview: 'immediate',
-      consumer_card: 'immediate',
       consumer_timeline: 'immediate'
     }
   },
@@ -377,13 +392,14 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     visibleForSubtypes: ['FE'],
     groupWith: ['phosphorus_percentage', 'potassium_percentage'],
     formatter: formatNPK,
+    // NO consumer_card (2026-09-06 review): the NPK percentages are certifier-only on the public
+    // payload (see _CERTIFIER_ONLY_EVENT_FIELDS), so this tier never rendered.
     surfaces: {
       card: 'immediate',
       modal: 'immediate',
       form: 'immediate',
       quick_form: 'immediate',
-      preview: 'immediate',
-      consumer_card: 'immediate'
+      preview: 'immediate'
     }
   },
   {
@@ -1132,6 +1148,84 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
       modal: 'secondary',
       form: 'secondary'
     }
+  },
+  {
+    // CA DPR box 21 / 3 CCR 6624(c)(8) — collected in ChemicalTab's Legal Spray Record block and
+    // declared nowhere until 2026-09-06 (UNDECLARED_OPEN in formConformance.test.ts). It reaches
+    // the CA PUR worksheet; the producer's own record should show it too.
+    name: 'ffm_code',
+    labelKey: 'events.chemical.form.ffmCode',
+    valueType: 'string',
+    // modal only: the input exists in ChemicalTab but renders solely for a fumigation method,
+    // and the mounted-form guard reads `form` as "an input on every subtype".
+    surfaces: { modal: 'details' }
+  },
+
+  // ---- Summary-mode season totals (is_summary) ------------------------------------------
+  // ChemicalTab collects these when the grower logs a season of applications as ONE record.
+  // They were never declared, so a farm on summary mode saw its season totals on no surface —
+  // the certifier packet had the same hole and closed it first (test_subtype_detail_coverage).
+  // Producer surfaces only: ConsumerEventCard already renders the aggregate tile from the same
+  // keys, so a consumer_card tier here would print each total twice.
+  {
+    name: 'area_treated_total',
+    labelKey: 'events.chemical.form.totalAreaTreated',
+    valueType: 'number',
+    unitField: 'area_unit',
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'volume_applied_total',
+    labelKey: 'events.chemical.form.totalProductAmount',
+    valueType: 'number',
+    unitField: 'volume_unit',
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'active_ingredient_total_kg',
+    labelKey: 'events.chemical.form.totalActiveIngredient',
+    valueType: 'number',
+    formatter: formatKilograms,
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'nitrogen_total_kg',
+    labelKey: 'events.chemical.form.totalNitrogen',
+    valueType: 'number',
+    formatter: formatKilograms,
+    visibleForSubtypes: ['FE'],
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'phosphorus_total_kg',
+    labelKey: 'events.chemical.form.totalPhosphorus',
+    valueType: 'number',
+    formatter: formatKilograms,
+    visibleForSubtypes: ['FE'],
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'potassium_total_kg',
+    labelKey: 'events.chemical.form.totalPotassium',
+    valueType: 'number',
+    formatter: formatKilograms,
+    visibleForSubtypes: ['FE'],
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'immediate', form: 'immediate' }
+  },
+  {
+    name: 'fuel_consumption_total',
+    labelKey: 'events.chemical.form.totalFuelConsumed',
+    valueType: 'number',
+    unitField: 'application_fuel_unit',
+    carbonRelevant: true,
+    visibleWhen: isSummaryRecord,
+    surfaces: { modal: 'secondary', form: 'secondary' }
   },
   {
     name: 'block_id',

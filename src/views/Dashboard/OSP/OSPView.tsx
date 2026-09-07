@@ -77,7 +77,6 @@ import OSPActivateModal from './OSPActivateModal';
 import { StartNewVersionButton } from './OSPLockedNotice';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
 import OSPChangeNotificationsPanel from './OSPChangeNotificationsPanel';
-import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import OSPPlanReviewPanel from './OSPPlanReviewPanel';
 import StateOrganicRegistrationCard, {
   STATE_ORGANIC_PROGRAMS
@@ -1058,11 +1057,47 @@ const OSPView: React.FC = () => {
           <OSPPlanReviewPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
         )}
 
-      {/* Common OSP § 11 "Records Maintained" — evidence derived from logged events, with an
-          explicit operator-confirm gate. Sits directly under the § 205.201(a) narratives
-          because it is the section a certifier reads next. */}
-      {companyId && farmId && (
-        <OSPRecordTypesPanel companyId={companyId} farmId={farmId} osp={editableOsp} />
+      {/* The § 11 record-type registry USED to render here as well as inside G8.0 Record
+          Keeping, page A. One panel, two homes — and only one of them has the attestation the
+          registry is the evidence for ("do you maintain the records confirmed above, keep them
+          five years, and make them available at inspection?", gated on the list being non-empty
+          by services/attestation_gates.py).
+
+          Here it was 40-odd checkboxes with nothing to be the evidence FOR, which is how a
+          statutory answer reads as busywork. The pointer stays, because a farmer who came
+          looking for it on this page must land somewhere. */}
+      {farmId && (
+        <StandardCard mt={4}>
+          <Flex align="center" justify="space-between" gap={3} wrap="wrap">
+            <Box>
+              <Text fontWeight="semibold">
+                {intl.formatMessage({
+                  id: 'osp.recordTypes.title',
+                  defaultMessage: 'Records you maintain'
+                })}
+              </Text>
+              <Text fontSize="sm" color="gray.600">
+                {intl.formatMessage({
+                  id: 'osp.recordTypes.movedToModule',
+                  defaultMessage:
+                    'Confirm your record types in G8.0 Record Keeping, where they sit with the attestation your certifier reads them under.'
+                })}
+              </Text>
+            </Box>
+            <StandardButton
+              variant="outline"
+              size="sm"
+              minH="44px"
+              onClick={() =>
+                navigate(`/admin/dashboard/farm/${farmId}/osp/module/g8_0_record_keeping`)
+              }>
+              {intl.formatMessage({
+                id: 'osp.recordTypes.openModule',
+                defaultMessage: 'Open G8.0 Record Keeping'
+              })}
+            </StandardButton>
+          </Flex>
+        </StandardCard>
       )}
 
       {/* Approved inputs panel — drives the drift detector (Sprint 5.1). */}

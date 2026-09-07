@@ -22,9 +22,19 @@
  * Rows Trazo structurally cannot see (weigh tickets, packing slips, settlement statements,
  * contracts, delivery slips, inventory) are marked "kept outside Trazo" rather than shown as
  * gaps — the farm may well keep them in a drawer, and saying so is the honest framing.
+ *
+ * WHERE THIS PANEL LIVES: inside G8.0 Record Keeping, page A, directly above the attestation it
+ * is the subject of ("do you maintain the records confirmed above..."). It used to render a
+ * second time on the legacy narrative page, where the attestation is not — a list of 40-odd
+ * boxes with nothing to be the evidence FOR, which is why it read as busywork there.
+ *
+ * NO "CONFIRM ALL SUGGESTED" CONTROL, ever. The panel batches ticks into one request after a
+ * short delay (see FLUSH_DELAY_MS) because the round-trips are expensive; that is transport.
+ * A single control that ticks rows the operator has not read is the auto-attestation this whole
+ * module exists to refuse, and it would be indistinguishable in the packet from one they did.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Badge,
   Box,
@@ -33,6 +43,7 @@ import {
   Flex,
   HStack,
   Icon,
+  Input,
   Skeleton,
   Stack,
   Text,
@@ -59,6 +70,19 @@ interface OSPRecordTypesPanelProps {
   osp: OSP;
 }
 
+/**
+ * How long a tick waits before it is sent. Long enough that ticking a run of rows costs ONE
+ * request instead of one per row (each response re-derives all 46 rows from the season's events,
+ * so the round-trips are not free), short enough that a single tick still feels immediate.
+ *
+ * This batches TRANSPORT, never intent: every key in a flushed request is a box the operator
+ * ticked. There is deliberately no "confirm all suggested" control — see the module docstring.
+ */
+const FLUSH_DELAY_MS = 600;
+
+/** Mirrors `common_osp_records.FREE_TEXT_LABEL_MAX` — the server refuses anything longer. */
+const FREE_TEXT_MAX_LENGTH = 200;
+
 const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, farmId, osp }) => {
   const intl = useIntl();
   const toast = useToast();
@@ -75,6 +99,15 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
   const { data: attachments } = useGetOSPAttachmentsQuery({ companyId, farmId, ospId: osp.id });
   const [downloading, setDownloading] = useState<string | null>(null);
 
+  // Ticks not yet sent. Rendered as the row's state so the checkbox answers the tap immediately;
+  // cleared when the server's own rows come back, or reverted if the save fails.
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+  const flushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queued = useRef<Record<string, boolean>>({});
+
+  // What the operator is typing into the free-text "Other" row, before they save it.
+  const [otherDraft, setOtherDraft] = useState<string | null>(null);
+
   // Submitted/active/superseded plans are read-only everywhere else in this view; editing a
   // plan the certifier already received would rewrite what they were sent.
   const isEditable = osp.status === 'draft' || osp.status === 'active';
@@ -89,25 +122,105 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
     return groups;
   }, [data]);
 
-  const handleToggle = async (row: OSPRecordType) => {
+  const showSaveError = useCallback(() => {
+    toast({
+      title: intl.formatMessage({
+        id: 'osp.recordTypes.error',
+        defaultMessage: 'Could not save that change'
+      }),
+      status: 'error',
+      duration: 4000,
+      isClosable: true
+    });
+  }, [intl, toast]);
+
+  const flush = useCallback(async () => {
+    const batch = queued.current;
+    queued.current = {};
+    flushTimer.current = null;
+    const keysOf = (value: boolean) => Object.keys(batch).filter((key) => batch[key] === value);
+
+    try {
+      // Two requests at most — the server takes a list of keys and ONE confirmed value, and a
+      // tick and an untick in the same 600ms window are two different statements.
+      for (const confirmed of [true, false]) {
+        const keys = keysOf(confirmed);
+        if (keys.length) {
+          await confirmRecordTypes({ companyId, farmId, ospId: osp.id, keys, confirmed }).unwrap();
+        }
+      }
+    } catch {
+      showSaveError();
+    } finally {
+      // Drop exactly what was in flight, whether it landed or not: on success the refetched rows
+      // are the truth, on failure the row must snap back rather than keep showing a tick nobody
+      // stored. Keys queued while this was in flight survive.
+      setPending((current) => {
+        const next = { ...current };
+        for (const key of Object.keys(batch)) delete next[key];
+        return next;
+      });
+    }
+  }, [companyId, confirmRecordTypes, farmId, osp.id, showSaveError]);
+
+  // A queued tick must not be lost because the operator navigated away mid-timer.
+  //
+  // Held through a ref with an EMPTY dependency list on purpose. With `[flush]` the effect
+  // re-runs whenever `flush` changes identity — and its cleanup is the flush — so any hook above
+  // it that returns a fresh function per render (Chakra's useToast is one) would fire the batch
+  // on the very next render, which is the render `setPending` itself causes. The batching would
+  // then silently degrade to one request per tick: still correct, never observably broken, and
+  // exactly the kind of thing that comes back.
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+  useEffect(() => {
+    return () => {
+      if (flushTimer.current) {
+        clearTimeout(flushTimer.current);
+        void flushRef.current();
+      }
+    };
+  }, []);
+
+  const handleToggle = (row: OSPRecordType) => {
+    const next = !(row.key in pending ? pending[row.key] : row.confirmed);
+    setPending((current) => ({ ...current, [row.key]: next }));
+    queued.current[row.key] = next;
+    if (flushTimer.current) clearTimeout(flushTimer.current);
+    // Through the ref, like the unmount path: a timer set on one render must not fire a
+    // `flush` closed over a stale render's props.
+    flushTimer.current = setTimeout(() => void flushRef.current(), FLUSH_DELAY_MS);
+  };
+
+  /** The free-text row saves on its own — it carries a label, and an empty one is refused. */
+  const handleSaveOther = async (row: OSPRecordType, label: string) => {
     try {
       await confirmRecordTypes({
         companyId,
         farmId,
         ospId: osp.id,
         keys: [row.key],
-        confirmed: !row.confirmed
+        confirmed: true,
+        label
       }).unwrap();
+      setOtherDraft(null);
     } catch {
-      toast({
-        title: intl.formatMessage({
-          id: 'osp.recordTypes.error',
-          defaultMessage: 'Could not save that change'
-        }),
-        status: 'error',
-        duration: 4000,
-        isClosable: true
-      });
+      showSaveError();
+    }
+  };
+
+  const handleClearOther = async (row: OSPRecordType) => {
+    try {
+      await confirmRecordTypes({
+        companyId,
+        farmId,
+        ospId: osp.id,
+        keys: [row.key],
+        confirmed: false
+      }).unwrap();
+      setOtherDraft(null);
+    } catch {
+      showSaveError();
     }
   };
 
@@ -145,6 +258,85 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
     }
   };
 
+  /**
+   * The "Other" line both source forms end on. It is a checkbox everywhere else in this panel and
+   * a NAMED entry here, because a tick with no name is a statement with nothing under it — the
+   * server refuses one, and this row must not offer the operator a control the server will reject.
+   */
+  const renderFreeTextRow = (row: OSPRecordType, isConfirmed: boolean) => {
+    const draft = otherDraft ?? row.custom_label ?? '';
+    const canSave = draft.trim().length > 0 && draft.trim() !== (row.custom_label ?? '');
+
+    return (
+      <Flex
+        key={row.key}
+        align="flex-start"
+        direction={{ base: 'column', smd: 'row' }}
+        justify="space-between"
+        gap={3}
+        px={3}
+        py={2}
+        borderWidth="1px"
+        borderColor={borderColor}
+        borderRadius="md">
+        <Stack spacing={1} flex="1" minW={0} w="100%">
+          <Text fontSize="sm">{row.label}</Text>
+          <Text fontSize="xs" color={mutedColor}>
+            {row.cfr_cite}
+          </Text>
+          {isEditable ? (
+            <Input
+              size="sm"
+              value={draft}
+              maxLength={FREE_TEXT_MAX_LENGTH}
+              onChange={(event) => setOtherDraft(event.target.value)}
+              placeholder={intl.formatMessage({
+                id: 'osp.recordTypes.otherPlaceholder',
+                defaultMessage: 'Name the record type, e.g. pool closings from the huller'
+              })}
+            />
+          ) : (
+            <Text fontSize="sm" color={mutedColor}>
+              {row.custom_label ||
+                intl.formatMessage({
+                  id: 'osp.recordTypes.otherEmpty',
+                  defaultMessage: 'Nothing named'
+                })}
+            </Text>
+          )}
+        </Stack>
+        {isEditable && (
+          <HStack spacing={2} flexShrink={0} pt={{ base: 0, smd: 6 }}>
+            <StandardButton
+              size="xs"
+              variant="outline"
+              isDisabled={!canSave}
+              isLoading={isConfirming}
+              onClick={() => handleSaveOther(row, draft.trim())}>
+              {isConfirmed
+                ? intl.formatMessage({
+                    id: 'osp.recordTypes.otherRename',
+                    defaultMessage: 'Rename'
+                  })
+                : intl.formatMessage({
+                    id: 'osp.recordTypes.confirm',
+                    defaultMessage: 'Confirm'
+                  })}
+            </StandardButton>
+            {isConfirmed && (
+              <StandardButton size="xs" variant="ghost" onClick={() => handleClearOther(row)}>
+                {intl.formatMessage({
+                  id: 'osp.recordTypes.otherRemove',
+                  defaultMessage: 'Remove'
+                })}
+              </StandardButton>
+            )}
+          </HStack>
+        )}
+      </Flex>
+    );
+  };
+
   if (isError) {
     return (
       <StandardCard>
@@ -174,7 +366,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
         subtitle={intl.formatMessage({
           id: 'osp.recordTypes.subtitle',
           defaultMessage:
-            'Common OSP § 11 · 7 CFR 205.103. We show what your logs already evidence — you confirm what your operation actually keeps.'
+            "The recordkeeping section of your certifier's form — Common OSP § 11, CCOF G8.0 A, WSDA AGR 2121-O. We show what your logs already evidence; you confirm what your operation actually keeps."
         })}>
         <Stack spacing={4}>
           {summary && (
@@ -196,6 +388,17 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                   )}
                 </Badge>
               )}
+              {summary.carried_forward > 0 && (
+                <Badge variant="warning">
+                  {intl.formatMessage(
+                    {
+                      id: 'osp.recordTypes.carriedCount',
+                      defaultMessage: '{n} carried from an earlier plan'
+                    },
+                    { n: summary.carried_forward }
+                  )}
+                </Badge>
+              )}
               {summary.evidence_check_failed > 0 && (
                 <Badge colorScheme="red" variant="subtle">
                   {intl.formatMessage(
@@ -212,7 +415,13 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
 
           {/* When the plan is locked, say SO — 34 disabled checkboxes with no explanation is
               how a farmer concludes the feature is broken. The attestation note only makes
-              sense while they can actually tick something, so the two are exclusive. */}
+              sense while they can actually tick something, so the two are exclusive.
+
+              The note says WHERE a tick goes, not only that it is theirs. A farmer looking at
+              40 checkboxes and no stated consequence has been told what the control means and
+              not what it does — and the answer ("it prints in the packet you send your
+              certifier, and what you leave unticked is left out") is the whole reason to
+              spend five minutes here. */}
           {isEditable ? (
             <StandardAlert
               status="info"
@@ -220,7 +429,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
               description={intl.formatMessage({
                 id: 'osp.recordTypes.attestationNote',
                 defaultMessage:
-                  'Nothing here is checked for you. What your logs show is a suggestion; ticking a box is your statement to your certifier.'
+                  'Nothing here is checked for you — what your logs show is a suggestion, and ticking a box is your statement to your certifier. Every box you tick prints in your renewal packet, under G8.0 Record Keeping and in your plan’s recordkeeping section; anything left unticked is left out.'
               })}
             />
           ) : (
@@ -231,6 +440,23 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                 id: 'osp.recordTypes.locked',
                 defaultMessage:
                   'This plan has already gone to your certifier, so these answers are locked. Start a new version to change them. What your records show is still shown below.'
+              })}
+            />
+          )}
+
+          {/* The zero state is the one the operator actually meets, and it used to say nothing.
+              Confirming nothing is a legitimate state right up until the packet is generated,
+              at which point G8.0 prints "No record types have been confirmed…" and the server
+              refuses the attestation below — so the consequence belongs HERE, before the work,
+              not as a validation error after it. */}
+          {isEditable && summary?.confirmed === 0 && (
+            <StandardAlert
+              status="warning"
+              mb={0}
+              description={intl.formatMessage({
+                id: 'osp.recordTypes.noneConfirmed',
+                defaultMessage:
+                  'Nothing is confirmed yet. Until you tick at least one, your packet will tell your certifier that no record types have been confirmed, and the attestation below cannot be answered “yes”.'
               })}
             />
           )}
@@ -249,75 +475,116 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({ companyId, fa
                 {group}
               </Text>
               <Stack spacing={1}>
-                {rows.map((row) => (
-                  <Flex
-                    key={row.key}
-                    align="flex-start"
-                    justify="space-between"
-                    gap={3}
-                    px={3}
-                    py={2}
-                    borderWidth="1px"
-                    borderStyle={row.suggested ? 'dashed' : 'solid'}
-                    borderColor={row.suggested ? 'green.300' : borderColor}
-                    bg={row.suggested ? suggestedBg : 'transparent'}
-                    borderRadius="md">
-                    <Checkbox
-                      isChecked={row.confirmed}
-                      onChange={() => handleToggle(row)}
-                      isDisabled={!isEditable || isConfirming}
-                      colorScheme="green"
-                      alignItems="flex-start">
-                      <Stack spacing={0}>
-                        <Text fontSize="sm">{row.label}</Text>
-                        <HStack spacing={2} flexWrap="wrap">
-                          <Text fontSize="xs" color={mutedColor}>
-                            {row.cfr_cite}
-                          </Text>
-                          {row.basis && (
-                            <Text fontSize="xs" color="green.700">
-                              {row.basis}
-                            </Text>
-                          )}
-                          {row.external_by_design && !row.basis && (
+                {rows.map((row) => {
+                  // A queued tick renders as ticked. `pending` is transport state, so a row the
+                  // operator just ticked stops looking like a suggestion straight away.
+                  const isConfirmed = row.key in pending ? pending[row.key] : row.confirmed;
+                  const isSuggested = row.suggested && !isConfirmed;
+                  if (row.free_text) {
+                    return renderFreeTextRow(row, isConfirmed);
+                  }
+                  return (
+                    <Flex
+                      key={row.key}
+                      align="flex-start"
+                      justify="space-between"
+                      gap={3}
+                      px={3}
+                      py={2}
+                      borderWidth="1px"
+                      borderStyle={isSuggested ? 'dashed' : 'solid'}
+                      borderColor={isSuggested ? 'green.300' : borderColor}
+                      bg={isSuggested ? suggestedBg : 'transparent'}
+                      borderRadius="md">
+                      <Checkbox
+                        isChecked={isConfirmed}
+                        onChange={() => handleToggle(row)}
+                        isDisabled={!isEditable}
+                        colorScheme="green"
+                        alignItems="flex-start">
+                        <Stack spacing={0}>
+                          <Text fontSize="sm">{row.label}</Text>
+                          <HStack spacing={2} flexWrap="wrap">
                             <Text fontSize="xs" color={mutedColor}>
-                              {intl.formatMessage({
-                                id: 'osp.recordTypes.outsideTrazo',
-                                defaultMessage: 'Kept outside Trazo — tick it if you keep these'
-                              })}
+                              {row.cfr_cite}
                             </Text>
-                          )}
-                          {row.status === 'evidence_check_failed' && (
-                            <Tooltip
-                              label={intl.formatMessage({
-                                id: 'osp.recordTypes.checkFailedHelp',
-                                defaultMessage:
-                                  'We could not check your records for this one. That is not the same as finding none — answer from what your operation actually keeps.'
-                              })}>
-                              <Box as="span">
-                                <Icon as={FaInfoCircle} color="red.400" boxSize={3} />
-                              </Box>
-                            </Tooltip>
-                          )}
-                        </HStack>
-                      </Stack>
-                    </Checkbox>
+                            {row.basis && (
+                              <Text fontSize="xs" color="green.700">
+                                {row.basis}
+                              </Text>
+                            )}
+                            {row.external_by_design && !row.basis && (
+                              <Text fontSize="xs" color={mutedColor}>
+                                {intl.formatMessage({
+                                  id: 'osp.recordTypes.outsideTrazo',
+                                  defaultMessage: 'Kept outside Trazo — tick it if you keep these'
+                                })}
+                              </Text>
+                            )}
+                            {/* WHEN they said it. A confirmed row with no date reads as current
+                              at any age, and a renewal clones these answers forward — so the
+                              farmer had no way to see that a tick belonged to last year's
+                              plan. The carried case says so outright rather than leaving them
+                              to read a stale date and work it out.
 
-                    {row.suggested && isEditable && (
-                      <StandardButton
-                        size="xs"
-                        variant="outline"
-                        onClick={() => handleToggle(row)}
-                        isDisabled={isConfirming}
-                        flexShrink={0}>
-                        {intl.formatMessage({
-                          id: 'osp.recordTypes.confirm',
-                          defaultMessage: 'Confirm'
-                        })}
-                      </StandardButton>
-                    )}
-                  </Flex>
-                ))}
+                              No colour on the carried case: `amber.700` is 2.57:1 and that ramp
+                              only clears 3.0 at 900 (measured in theme/components/progress.js),
+                              so the warning would arrive as a contrast failure. The sentence
+                              carries the meaning; colour here would be decoration. */}
+                            {isConfirmed && row.confirmed_at && (
+                              <Text fontSize="xs" color={mutedColor}>
+                                {row.carried_from_version
+                                  ? intl.formatMessage(
+                                      {
+                                        id: 'osp.recordTypes.carriedOn',
+                                        defaultMessage:
+                                          'Confirmed {date} on plan v{version} — not re-stated on this plan'
+                                      },
+                                      {
+                                        date: row.confirmed_at.slice(0, 10),
+                                        version: row.carried_from_version
+                                      }
+                                    )
+                                  : intl.formatMessage(
+                                      {
+                                        id: 'osp.recordTypes.confirmedOn',
+                                        defaultMessage: 'Confirmed {date}'
+                                      },
+                                      { date: row.confirmed_at.slice(0, 10) }
+                                    )}
+                              </Text>
+                            )}
+                            {row.status === 'evidence_check_failed' && (
+                              <Tooltip
+                                label={intl.formatMessage({
+                                  id: 'osp.recordTypes.checkFailedHelp',
+                                  defaultMessage:
+                                    'We could not check your records for this one. That is not the same as finding none — answer from what your operation actually keeps.'
+                                })}>
+                                <Box as="span">
+                                  <Icon as={FaInfoCircle} color="red.400" boxSize={3} />
+                                </Box>
+                              </Tooltip>
+                            )}
+                          </HStack>
+                        </Stack>
+                      </Checkbox>
+
+                      {isSuggested && isEditable && (
+                        <StandardButton
+                          size="xs"
+                          variant="outline"
+                          onClick={() => handleToggle(row)}
+                          flexShrink={0}>
+                          {intl.formatMessage({
+                            id: 'osp.recordTypes.confirm',
+                            defaultMessage: 'Confirm'
+                          })}
+                        </StandardButton>
+                      )}
+                    </Flex>
+                  );
+                })}
               </Stack>
               <Divider mt={3} />
             </Box>

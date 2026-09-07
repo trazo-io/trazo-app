@@ -433,8 +433,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Cada pasada de poda queda fechada y registrada, que es la forma de evidenciar el trabajo de copa en lugar de afirmarlo.',
   'Recording the date, volume and grade is what lets a batch be traced back to one block and one week.':
     'Registrar la fecha, el volumen y la categoría es lo que permite rastrear un lote hasta una parcela y una semana concretas.',
-  'Recording the product and the rate is what makes over-application visible rather than invisible.':
-    'Registrar el producto y la dosis es lo que hace visible una sobreaplicación en vez de invisible.',
+  'The product, the date and the area treated are on record, so the certifier can check the application against the label.':
+    'El producto, la fecha y el área tratada quedan registrados, así el certificador puede cotejar la aplicación con la etiqueta.',
   'Recording the source and method makes water use checkable instead of assumed.':
     'Registrar la fuente y el método hace que el uso del agua sea verificable en lugar de supuesto.',
   'Recording the target pest shows the treatment answered a specific problem rather than a calendar.':

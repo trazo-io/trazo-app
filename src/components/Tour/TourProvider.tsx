@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useIntl } from 'react-intl';
-import { driver, type DriveStep, type Driver } from 'driver.js';
-import 'driver.js/dist/driver.css';
+import type { DriveStep, Driver } from 'driver.js';
 
 import { useTourStore } from '../../store/tourStore';
 import { getTour } from '../../tours/registry';
@@ -202,130 +201,142 @@ const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     const messages = intl.messages as Record<string, string>;
     const totalSteps = visibleSteps.length;
 
-    const driverObj = driver({
-      steps,
-      animate: true,
-      overlayColor: '#000',
-      overlayOpacity: 0.45,
-      stagePadding: 12,
-      stageRadius: 14,
-      allowClose: false,
-      disableActiveInteraction: false,
-      smoothScroll: true,
-      popoverClass: 'trazo-tour-popover',
-      popoverOffset: 28,
+    // driver.js and its stylesheet load only when a tour actually starts. They sat in the
+    // entry chunk for every visitor, tour or not (2026-09-06 bundle audit).
+    let cancelled = false;
+    let created: Driver | null = null;
+    Promise.all([import('driver.js'), import('driver.js/dist/driver.css')]).then(([mod]) => {
+      if (cancelled) return;
+      const driverObj = mod.driver({
+        steps,
+        animate: true,
+        overlayColor: '#000',
+        overlayOpacity: 0.45,
+        stagePadding: 12,
+        stageRadius: 14,
+        allowClose: false,
+        disableActiveInteraction: false,
+        smoothScroll: true,
+        popoverClass: 'trazo-tour-popover',
+        popoverOffset: 28,
 
-      // Override all button behavior — we handle navigation through Zustand
-      showButtons: [],
-      showProgress: false,
+        // Override all button behavior — we handle navigation through Zustand
+        showButtons: [],
+        showProgress: false,
 
-      onPopoverRender: (popover) => {
-        const stepIndex = driverObj.getActiveIndex() ?? 0;
-        const step = visibleSteps[stepIndex];
-        if (!step || !popover?.wrapper) return;
+        onPopoverRender: (popover) => {
+          const stepIndex = driverObj.getActiveIndex() ?? 0;
+          const step = visibleSteps[stepIndex];
+          if (!step || !popover?.wrapper) return;
 
-        renderTrazoTooltip(
-          { wrapper: popover.wrapper, description: popover.description },
-          {
-            stepIndex,
-            totalSteps,
-            titleKey: step.titleKey,
-            contentKey: step.contentKey,
-            onNext: handleNext,
-            onPrev: handlePrev,
-            onClose: handleClose,
-            locale,
-            messages
-          }
-        );
-
-        // After React renders, reposition the popover with correct dimensions.
-        // For tall elements, manually position to avoid overlap.
-        const targetEl = document.querySelector(step.target);
-        if (targetEl) {
-          requestAnimationFrame(() => {
-            if (!driverObj.isActive()) return;
-            const elRect = targetEl.getBoundingClientRect();
-            const isTall = elRect.height > window.innerHeight * 0.4;
-
-            if (isTall) {
-              const popoverRect = popover.wrapper.getBoundingClientRect();
-              const arrow = popover.arrow;
-              const offset = 28; // same as popoverOffset
-              const padding = 12; // same as stagePadding
-
-              // Helper to update arrow direction
-              const setArrowSide = (side: string) => {
-                arrow.className = 'driver-popover-arrow';
-                arrow.classList.add(`driver-popover-arrow-side-${side}`);
-                arrow.classList.add('driver-popover-arrow-align-center');
-              };
-
-              // Try to position to the right of the element, vertically centered in viewport
-              const rightSpace = window.innerWidth - elRect.right - padding;
-              const leftSpace = elRect.left - padding;
-
-              if (rightSpace >= popoverRect.width + offset) {
-                // Popover to the right → arrow points left (arrow-side-right = arrow on left edge)
-                popover.wrapper.style.left = `${elRect.right + padding + offset}px`;
-                popover.wrapper.style.right = 'auto';
-                popover.wrapper.style.top = `${Math.max(
-                  20,
-                  (window.innerHeight - popoverRect.height) / 2
-                )}px`;
-                popover.wrapper.style.bottom = 'auto';
-                setArrowSide('right');
-              } else if (leftSpace >= popoverRect.width + offset) {
-                // Popover to the left → arrow points right (arrow-side-left = arrow on right edge)
-                popover.wrapper.style.left = 'auto';
-                popover.wrapper.style.right = `${
-                  window.innerWidth - elRect.left + padding + offset
-                }px`;
-                popover.wrapper.style.top = `${Math.max(
-                  20,
-                  (window.innerHeight - popoverRect.height) / 2
-                )}px`;
-                popover.wrapper.style.bottom = 'auto';
-                setArrowSide('left');
-              } else {
-                // Fallback: fixed position bottom-center of viewport, no arrow
-                popover.wrapper.style.position = 'fixed';
-                popover.wrapper.style.bottom = '20px';
-                popover.wrapper.style.top = 'auto';
-                popover.wrapper.style.left = `${(window.innerWidth - popoverRect.width) / 2}px`;
-                popover.wrapper.style.right = 'auto';
-                arrow.className = 'driver-popover-arrow driver-popover-arrow-none';
-              }
-            } else {
-              // Non-tall elements: fix horizontal centering without changing the side.
-              // refresh() would recalculate and might pick a different side.
-              const wrapperRect = popover.wrapper.getBoundingClientRect();
-              const center = elRect.left + elRect.width / 2;
-              const newLeft = Math.max(
-                10,
-                Math.min(center - wrapperRect.width / 2, window.innerWidth - wrapperRect.width - 10)
-              );
-              popover.wrapper.style.left = `${newLeft}px`;
-              popover.wrapper.style.right = 'auto';
+          renderTrazoTooltip(
+            { wrapper: popover.wrapper, description: popover.description },
+            {
+              stepIndex,
+              totalSteps,
+              titleKey: step.titleKey,
+              contentKey: step.contentKey,
+              onNext: handleNext,
+              onPrev: handlePrev,
+              onClose: handleClose,
+              locale,
+              messages
             }
-          });
-        }
-      },
+          );
 
-      onDestroyStarted: () => {
-        // User pressed ESC or clicked overlay
-        handleClose();
-      }
+          // After React renders, reposition the popover with correct dimensions.
+          // For tall elements, manually position to avoid overlap.
+          const targetEl = document.querySelector(step.target);
+          if (targetEl) {
+            requestAnimationFrame(() => {
+              if (!driverObj.isActive()) return;
+              const elRect = targetEl.getBoundingClientRect();
+              const isTall = elRect.height > window.innerHeight * 0.4;
+
+              if (isTall) {
+                const popoverRect = popover.wrapper.getBoundingClientRect();
+                const arrow = popover.arrow;
+                const offset = 28; // same as popoverOffset
+                const padding = 12; // same as stagePadding
+
+                // Helper to update arrow direction
+                const setArrowSide = (side: string) => {
+                  arrow.className = 'driver-popover-arrow';
+                  arrow.classList.add(`driver-popover-arrow-side-${side}`);
+                  arrow.classList.add('driver-popover-arrow-align-center');
+                };
+
+                // Try to position to the right of the element, vertically centered in viewport
+                const rightSpace = window.innerWidth - elRect.right - padding;
+                const leftSpace = elRect.left - padding;
+
+                if (rightSpace >= popoverRect.width + offset) {
+                  // Popover to the right → arrow points left (arrow-side-right = arrow on left edge)
+                  popover.wrapper.style.left = `${elRect.right + padding + offset}px`;
+                  popover.wrapper.style.right = 'auto';
+                  popover.wrapper.style.top = `${Math.max(
+                    20,
+                    (window.innerHeight - popoverRect.height) / 2
+                  )}px`;
+                  popover.wrapper.style.bottom = 'auto';
+                  setArrowSide('right');
+                } else if (leftSpace >= popoverRect.width + offset) {
+                  // Popover to the left → arrow points right (arrow-side-left = arrow on right edge)
+                  popover.wrapper.style.left = 'auto';
+                  popover.wrapper.style.right = `${
+                    window.innerWidth - elRect.left + padding + offset
+                  }px`;
+                  popover.wrapper.style.top = `${Math.max(
+                    20,
+                    (window.innerHeight - popoverRect.height) / 2
+                  )}px`;
+                  popover.wrapper.style.bottom = 'auto';
+                  setArrowSide('left');
+                } else {
+                  // Fallback: fixed position bottom-center of viewport, no arrow
+                  popover.wrapper.style.position = 'fixed';
+                  popover.wrapper.style.bottom = '20px';
+                  popover.wrapper.style.top = 'auto';
+                  popover.wrapper.style.left = `${(window.innerWidth - popoverRect.width) / 2}px`;
+                  popover.wrapper.style.right = 'auto';
+                  arrow.className = 'driver-popover-arrow driver-popover-arrow-none';
+                }
+              } else {
+                // Non-tall elements: fix horizontal centering without changing the side.
+                // refresh() would recalculate and might pick a different side.
+                const wrapperRect = popover.wrapper.getBoundingClientRect();
+                const center = elRect.left + elRect.width / 2;
+                const newLeft = Math.max(
+                  10,
+                  Math.min(
+                    center - wrapperRect.width / 2,
+                    window.innerWidth - wrapperRect.width - 10
+                  )
+                );
+                popover.wrapper.style.left = `${newLeft}px`;
+                popover.wrapper.style.right = 'auto';
+              }
+            });
+          }
+        },
+
+        onDestroyStarted: () => {
+          // User pressed ESC or clicked overlay
+          handleClose();
+        }
+      });
+
+      driverRef.current = driverObj;
+      created = driverObj;
+
+      // Start the tour
+      driverObj.drive(activeStepIndex);
     });
 
-    driverRef.current = driverObj;
-
-    // Start the tour
-    driverObj.drive(activeStepIndex);
-
     return () => {
-      if (driverObj.isActive()) {
-        driverObj.destroy();
+      cancelled = true;
+      if (created?.isActive()) {
+        created.destroy();
       }
       cleanupTooltipRoot();
       driverRef.current = null;

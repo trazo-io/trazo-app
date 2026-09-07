@@ -194,18 +194,34 @@ const DriftFindingsBanner: React.FC<DriftFindingsBannerProps> = ({ events }) => 
                       fontSize="11px">
                       {resolutionKey ? intl.formatMessage({ id: resolutionKey }) : dw.resolved_via}
                     </Badge>
-                    {/* CA-only: CDFA OIM registration sub-finding. */}
-                    {dw.cdfa_oim_status && dw.cdfa_oim_status.status === 'missing' && (
-                      <Badge colorScheme="red" fontSize="11px">
-                        {intl.formatMessage({ id: 'drift.resolution.cdfa_oim_missing' })}
-                      </Badge>
-                    )}
+                    {/* CA-only: CDFA OIM registration sub-finding.
+
+                        No registration NUMBER is rendered (2026-09-06). CDFA's published
+                        Registered OIM Products list has three columns — Firm, Product Name,
+                        Annotations — and carries no identifier, so every `CDFA-OIM-…` value
+                        Trazo held was invented. A registered row says "registered" and stops.
+
+                        And `unknown` is not `missing`: Trazo's CDFA reference set is a small
+                        slice of that list, so a product absent from it is UNCHECKED, not
+                        unregistered. Legacy findings written before this change carry the old
+                        `missing` default and mean the same thing, so they render the same way —
+                        neutral grey, because "we did not check" is a fact, not an error. */}
+                    {dw.cdfa_oim_status &&
+                      (dw.cdfa_oim_status.status === 'unknown' ||
+                        dw.cdfa_oim_status.status === 'missing') && (
+                        <Badge colorScheme="gray" fontSize="11px">
+                          {intl.formatMessage({
+                            id: 'drift.resolution.cdfa_oim_unknown',
+                            defaultMessage: 'CDFA OIM not checked (CA)'
+                          })}
+                        </Badge>
+                      )}
                     {dw.cdfa_oim_status && dw.cdfa_oim_status.status === 'registered' && (
                       <Badge colorScheme="green" fontSize="11px">
-                        {intl.formatMessage(
-                          { id: 'drift.resolution.cdfa_oim_registered' },
-                          { reg: dw.cdfa_oim_status.cdfa_oim_reg_number || '—' }
-                        )}
+                        {intl.formatMessage({
+                          id: 'drift.resolution.cdfa_oim_registered',
+                          defaultMessage: 'CDFA OIM registered'
+                        })}
                       </Badge>
                     )}
                     {/* CA-only: DPR Restricted Materials Permit sub-finding. */}

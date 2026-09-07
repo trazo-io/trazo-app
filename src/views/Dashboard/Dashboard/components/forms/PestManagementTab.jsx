@@ -48,6 +48,19 @@ import { BlockIdField } from 'components/Fields/BlockIdField';
 
 // Sprint 3 Epic 3.1: Fuel types with EPA-verified emission factors (aligned with Production/Soil forms)
 // UPDATED 2026-02-15: All factors corrected to match EPA 40 CFR Part 98 Table C-1
+/**
+ * Pest scouting stage → CommonEvent.growth_stage (common/field_registry.py GROWTH_STAGE).
+ * The form's annual-crop vocabulary maps onto the column's orchard one where a stage means the
+ * same thing; a stage with no equivalent is kept in extra_data.crop_growth_stage only.
+ */
+const CROP_STAGE_TO_COMMON = {
+  vegetative: 'vegetative',
+  flowering: 'bloom',
+  fruit_development: 'fruit_set',
+  maturity: 'maturation',
+  harvest: 'harvest_ready'
+};
+
 const FUEL_TYPES = [
   { value: 'diesel', label: 'Diesel', factor: '2.70 kg CO₂e/L' },
   { value: 'gasoline', label: 'Gasoline', factor: '2.32 kg CO₂e/L' },
@@ -85,7 +98,6 @@ const pestSchema = object({
   // Agricultural decision fields
   crop_growth_stage: string().optional(),
   weather_conditions: string().optional(),
-  economic_threshold_met: string().optional(), // Changed to string for StandardSelect
   action_recommended: string().optional(),
   // Existing pest management fields
   pest_species: string().optional(),
@@ -206,7 +218,6 @@ const PestManagementTab = forwardRef(
         // Agricultural decision fields
         crop_growth_stage: initialValues.crop_growth_stage || '',
         weather_conditions: initialValues.weather_conditions || '',
-        economic_threshold_met: initialValues.economic_threshold_met?.toString() || '',
         action_recommended: initialValues.action_recommended || '',
         // Existing pest management fields
         pest_species: initialValues.pest_species || '',
@@ -222,7 +233,11 @@ const PestManagementTab = forwardRef(
         trap_type: initialValues.trap_type || '',
         pest_catch_count: initialValues.pest_catch_count?.toString() || '',
         damage_percentage: initialValues.damage_percentage?.toString() || '',
-        action_threshold_met: initialValues.action_threshold_met?.toString() || '',
+        action_threshold_met:
+          initialValues.action_threshold_met?.toString() ||
+          initialValues.economic_threshold_met?.toString() ||
+          initialValues.extra_data?.economic_threshold_met?.toString() ||
+          '',
         ipm_strategy: initialValues.ipm_strategy || '',
         observation: initialValues.observation || '',
         reviewed:
@@ -310,7 +325,6 @@ const PestManagementTab = forwardRef(
           // Agricultural decision fields
           crop_growth_stage: initialValues.crop_growth_stage || '',
           weather_conditions: initialValues.weather_conditions || '',
-          economic_threshold_met: initialValues.economic_threshold_met?.toString() || '',
           action_recommended: initialValues.action_recommended || '',
           // Existing pest management fields
           pest_species: initialValues.pest_species || '',
@@ -321,7 +335,11 @@ const PestManagementTab = forwardRef(
           release_quantity: initialValues.release_quantity || '',
           trap_count: initialValues.trap_count?.toString() || '',
           damage_percentage: initialValues.damage_percentage?.toString() || '',
-          action_threshold_met: initialValues.action_threshold_met?.toString() || '',
+          action_threshold_met:
+            initialValues.action_threshold_met?.toString() ||
+            initialValues.economic_threshold_met?.toString() ||
+            initialValues.extra_data?.economic_threshold_met?.toString() ||
+            '',
           ipm_strategy: initialValues.ipm_strategy || '',
           observation: initialValues.observation || '',
           reviewed:
@@ -381,7 +399,6 @@ const PestManagementTab = forwardRef(
       'observation',
       'pest_species',
       'crop_growth_stage',
-      'economic_threshold_met',
       'action_recommended',
       'action_threshold_met',
       'beneficial_species',
@@ -464,6 +481,14 @@ const PestManagementTab = forwardRef(
         cultural_practice: data.type === 'CU' ? data.cultural_practice || null : null,
         identified_by: data.identified_by || null,
         identification_method: data.identification_method || null,
+        // The stage is a CommonEvent column. It was written ONLY to extra_data.crop_growth_stage
+        // (kept below for the packet's legacy fallback), so the registry's `growth_stage` entry
+        // — which reads the column — rendered nothing on the producer's own record (2026-09-06).
+        // The column's vocabulary is the orchard one (common/field_registry.py GROWTH_STAGE);
+        // this form speaks the annual-crop one. Translate where a stage has an equivalent and
+        // leave the column empty where it does not — "seedling" has none, and posting it raised
+        // a 400. The original word always stays in extra_data.crop_growth_stage.
+        growth_stage: CROP_STAGE_TO_COMMON[data.crop_growth_stage] || null,
         // Sprint 5: Aggregate Pest Scouting Support
         extra_data: {
           // Existing extra_data fields (if any)
@@ -472,9 +497,6 @@ const PestManagementTab = forwardRef(
           ...(data.name && { name: data.name }),
           // Agricultural context fields (no model columns - persist in extra_data)
           ...(data.crop_growth_stage && { crop_growth_stage: data.crop_growth_stage }),
-          ...(data.economic_threshold_met && {
-            economic_threshold_met: data.economic_threshold_met
-          }),
           ...(data.action_recommended && { action_recommended: data.action_recommended }),
           // Sprint 5: Aggregate Pest Scouting Support
           ...(isSummaryEvent && {
@@ -1032,15 +1054,12 @@ const PestManagementTab = forwardRef(
                   {/* Sprint 2 Epic 2.2: Removed weather_conditions field - duplicates Weather event
                   Pest pressure is tracked via pest_pressure_level dropdown in the assessment section */}
 
-                  <StandardField
-                    label="Economic Threshold Status"
-                    helpText="Has economic threshold been reached?">
-                    <StandardSelect {...methods.register('economic_threshold_met')}>
-                      <option value="">Select status</option>
-                      <option value="true">Yes - Economic threshold met, action recommended</option>
-                      <option value="false">No - Below economic threshold</option>
-                    </StandardSelect>
-                  </StandardField>
+                  {/* "Economic Threshold Status" used to sit here — a second yes/no for the same
+                      fact as "Action Threshold Met" below (both asked whether the economic
+                      threshold was reached; only `action_threshold_met` reaches the registry, the
+                      buyer card and the certifier packet, and this one was written to extra_data
+                      and read by nothing). Removed 2026-09-06; a legacy answer is folded into
+                      action_threshold_met when the record is opened for edit. */}
 
                   <StandardField
                     label="Action Recommended"

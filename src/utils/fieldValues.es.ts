@@ -541,5 +541,26 @@ export const FIELD_VALUE_ES: Record<string, string> = {
     'Sí — el equipo se enjuagó después de desinfectarlo',
   'Chlorine — the same treatment used in drinking water, and permitted for washing organic produce':
     'Cloro — el mismo tratamiento que se usa en el agua potable, y permitido para lavar productos orgánicos',
-  '1 hour': '1 hora'
+  '1 hour': '1 hora',
+
+  // --- Tillage practice values (soilEvent.ts, TI). Added 2026-09-06 with the four tillage
+  // fields, which had no display declaration at all until then. `Cultivator` is deliberately
+  // ABSENT: it is already keyed further up as 'Cultivadora' (equipment types), and this file
+  // is last-wins, so a second entry would be dead and could silently contradict it. ---
+  'Conventional plow': 'Arado convencional',
+  'Chisel plow': 'Arado cincel',
+  'Disk harrow': 'Rastra de discos',
+  'No-till': 'Sin laboreo',
+  'Strip till': 'Laboreo en franjas',
+  'Minimum till': 'Laboreo mínimo',
+  Subsoiling: 'Subsolado',
+
+  // Residue values in the SHOPPER's voice (consumerFormatter). The producer/certifier
+  // wording ('Incorporated into soil', 'Left on surface') never reaches a consumer card,
+  // so it is not keyed here.
+  'Mixed back into the soil': 'Incorporado nuevamente al suelo',
+  'Left on the surface': 'Dejado en la superficie',
+  'Taken off the field': 'Retirado del campo',
+  'Chopped and left in place': 'Picado y dejado en el lugar',
+  'Partly taken off the field': 'Retirado parcialmente del campo'
 };
