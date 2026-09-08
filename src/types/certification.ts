@@ -60,6 +60,15 @@ export interface Certification {
 export interface ConsumerCertification {
   display_name: string;
   certifier_name?: string;
+  /**
+   * True when the OPERATION's records are fabricated (`Establishment.is_demo`).
+   *
+   * The server already refuses `verified_via_database` for a specimen, so the green badge is
+   * gone by the time this reaches the client. This field exists so the card can say WHY:
+   * without it a seeded farm reads as "Reported by Producer", which implies a real producer
+   * made a real statement.
+   */
+  specimen?: boolean;
   status: string; // 'verified_via_database' | 'self_reported' | 'inactive' | 'pending'
   effective_date?: string;
   expiry_date?: string;
