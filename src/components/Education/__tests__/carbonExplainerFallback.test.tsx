@@ -60,14 +60,26 @@ describe('CarbonImpactExplainer — no empty card', () => {
     // NOT "Your Impact": this is the farm's whole season, and reusing the per-kg card's
     // heading would tell a shopper that 412 kg is their share of it.
     expect(screen.queryByText('Your Impact')).not.toBeInTheDocument();
-    expect(screen.getByText('kg in direct farm emissions')).toBeInTheDocument();
+    expect(screen.getByText('kg from farm activity and purchased inputs')).toBeInTheDocument();
     expect(screen.getByText(/Like driving 1,?160\.1 miles/)).toBeInTheDocument();
 
     // FTC 16 CFR 260.4(c): the boundary travels with the number, in the same block, never
     // only behind the expander.
-    expect(
-      screen.getByText(/Not a full life-cycle footprint: transport, packaging, and retail/)
-    ).toBeInTheDocument();
+    //
+    // ⚠️ Asserts the CLAIM, not the sentence. This used to pin the exact wording
+    // "Not a full life-cycle footprint: transport, packaging, and retail", which made it a prose
+    // snapshot: it failed when that copy was corrected on 2026-09-08 and it would have passed
+    // unchanged if the boundary had been made FALSER, so long as the words survived.
+    expect(screen.getByText(/Not a full life-cycle footprint/)).toBeInTheDocument();
+
+    // 🔴 And the two claims that must never come back. The card lists "Crop nutrient production"
+    // and "Crop protection product manufacturing" among its own categories, so it cannot also say
+    // it excludes the supply chain — and P2O5/K2O are `PROVENANCE_INTERNAL_ESTIMATE` ("Trazo
+    // conservative estimate") with crop protection from Audsley et al. 2009, so "all factors
+    // sourced from EPA and USDA" attributes our own numbers to a federal agency.
+    expect(container.textContent).not.toMatch(/direct farm emissions/i);
+    expect(container.textContent).not.toMatch(/not supply chain|not full supply chain/i);
+    expect(container.textContent).not.toMatch(/all emission factors (are )?sourced from/i);
 
     expect(container.textContent).not.toContain('app.carbonExplainer');
   });
