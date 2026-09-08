@@ -1326,7 +1326,7 @@ export const UltraMobileProductionJourney: React.FC<UltraMobileProductionJourney
 
                 {/* Carbon tonnage cell removed (2026-06): a raw "21.5t Carbon"
                     figure with no boundary context is an environmental claim
-                    without methodology (FTC 260.7) and violated our own
+                    without methodology (FTC 260.4(c)) and violated our own
                     progressive-disclosure rule. Carbon lives in the
                     Environmental Impact explainer with per-kg framing. */}
 

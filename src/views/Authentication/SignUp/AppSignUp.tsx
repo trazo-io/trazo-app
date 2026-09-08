@@ -5,6 +5,7 @@ import {
   Box,
   VStack,
   HStack,
+  Heading,
   Text,
   Divider,
   useToast,
@@ -457,7 +458,16 @@ const AppSignUp: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}>
-                    <Text
+                    {/*
+                      A real <h1>, not a <Text>. Same defect the sign-in card was fixed for on
+                      2026-08-25 and this page was missed: `querySelectorAll('h1,h2,h3,h4')`
+                      returned ZERO for the whole signup screen, so a screen reader's heading
+                      navigation had nothing to land on and the document stated no topic
+                      (WCAG 1.3.1 Level A / 2.4.6). The `key` on the parent MotionBox swaps the
+                      create/join copy, so this stays ONE h1 in either mode.
+                    */}
+                    <Heading
+                      as="h1"
                       fontSize="xl"
                       fontWeight="600"
                       color={useColorModeValue('gray.900', 'white')}>
@@ -466,7 +476,7 @@ const AppSignUp: React.FC = () => {
                           ? 'auth.signup.title.join'
                           : 'auth.signup.title.create'
                       })}
-                    </Text>
+                    </Heading>
                   </MotionBox>
                   <MotionBox
                     key={joinExistingCompany ? 'join-sub' : 'create-sub'} // Forces re-render for animation
@@ -1120,7 +1130,7 @@ const AppSignUp: React.FC = () => {
                             {
                               tos: (
                                 <a
-                                  href="https://trazo.io/terms-conditions"
+                                  href="https://trazo.io/terms-of-service"
                                   target="_blank"
                                   rel="noopener noreferrer">
                                   <Text
@@ -1402,12 +1412,18 @@ const AppSignUp: React.FC = () => {
 
               {/* Main Content */}
               <VStack spacing={4} mb={8} textAlign="center">
-                <Text
+                {/*
+                  The other half of the same zero-headings defect: this branch REPLACES the
+                  form, so when it renders it is the page's only topic and owes an <h1>. The
+                  ternary guarantees exactly one h1 is mounted at a time.
+                */}
+                <Heading
+                  as="h1"
                   fontSize={{ base: 'xl', md: '2xl' }}
                   fontWeight="bold"
                   color={useColorModeValue('gray.800', 'white')}>
                   Check your email
-                </Text>
+                </Heading>
 
                 <Text
                   fontSize="md"
