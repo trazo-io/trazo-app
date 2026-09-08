@@ -3211,12 +3211,42 @@ export function getImpactLevel(event: any): 'HIGH' | 'MEDIUM' | 'LOW' {
 /**
  * Format event date for consumer display
  */
+/**
+ * A relative "N days ago" label for an event date.
+ *
+ * ⚠️ SCOPE, measured 2026-09-08. On the consumer card this is only ever a FALLBACK
+ * (`ConsumerEventCard` lines ~563 and ~610 prefer `formatDateRangeForConsumer` and
+ * `formatHarvestDate`, both locale-aware), and those return a value for any parseable date — so
+ * the English strings below are effectively unreachable there. They are left in English rather
+ * than given i18n plumbing a dead path would not exercise; a caller that needs a user-visible
+ * relative date should use a locale-aware formatter instead of this one.
+ *
+ * 🔴 What WAS wrong and is fixed: `Math.abs` on the difference, which made a FUTURE-dated event
+ * read as "3 days ago" — and Trazo accepts future dates (a planned application, a post-harvest
+ * record dated after the season closed). And the ≥365-day fallback called
+ * `toLocaleDateString()` with neither a locale nor a time zone, so it rendered a stored UTC
+ * wall clock in the viewer's zone and could name the previous day, disagreeing with the
+ * certifier packet for the same record.
+ */
 export function formatEventDate(dateString: string): string {
   try {
     const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return dateString;
+    // Explicit zone: these are stored UTC wall clocks (see datetime-wall-clock-utc), so
+    // rendering in the viewer's zone would name a different day from the packet and the CSV.
+    const asCalendarDate = () =>
+      date.toLocaleDateString('en-US', {
+        timeZone: 'UTC',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const elapsedMs = now.getTime() - date.getTime();
+    // A future date is not "ago". Report the calendar date rather than inventing a tense.
+    if (elapsedMs < 0) return asCalendarDate();
+    const diffDays = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
       return 'Today';
@@ -3231,7 +3261,7 @@ export function formatEventDate(dateString: string): string {
       const months = Math.floor(diffDays / 30);
       return `${months} month${months > 1 ? 's' : ''} ago`;
     } else {
-      return date.toLocaleDateString();
+      return asCalendarDate();
     }
   } catch (error) {
     console.error('Error formatting date:', error);
