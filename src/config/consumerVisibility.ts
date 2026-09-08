@@ -63,7 +63,7 @@ export const CONSUMER_VISIBLE_FARM_FIELDS: ReadonlySet<string> = new Set([
  *   - named-person / contact PII (2026-06 P2-6): contact_*, email, phone
  *   - claim safety: farming_method is a free-text self-declared label
  *     ("Sustainable", "Regenerative Agriculture"). Publishing it is an FTC
- *     16 CFR 260.6 general-benefit claim and an EU ECGT 2024/825 self-created
+ *     16 CFR 260.4 general-benefit claim and an EU ECGT 2024/825 self-created
  *     label. Organic status must come from the Certification table instead.
  *   - never public: the OFPP and split-operation attestations are certifier material
  */

@@ -57,3 +57,4 @@ export declare const useUpgradeScanConsentMutation: MutationHook;
 export declare const useClaimScansMutation: MutationHook;
 export declare const useCreateSalesRecordMutation: MutationHook;
 export declare const useDeleteSalesRecordMutation: MutationHook;
+export declare const useVoidSalesRecordMutation: MutationHook;

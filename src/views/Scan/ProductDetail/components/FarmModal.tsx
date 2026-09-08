@@ -15,6 +15,9 @@ interface ConsumerCertification {
   display_name?: string;
   certifier_name?: string;
   status?: 'verified_via_database' | 'self_reported' | 'inactive' | 'pending';
+  /** Fabricated operation (`Establishment.is_demo`) — names the demo instead of implying a
+   *  real producer reported something. The server never sends `verified_via_database` here. */
+  specimen?: boolean;
   effective_date?: string | null;
   expiry_date?: string | null;
   verification_source_url?: string | null;
@@ -671,7 +674,9 @@ export const FarmModal: React.FC<FarmModalProps> = ({ isOpen, onClose, establish
                       whiteSpace="normal"
                       textAlign="right">
                       {intl.formatMessage({
-                        id: isDatabaseVerified
+                        id: cert.specimen
+                          ? 'certification.badge.specimen'
+                          : isDatabaseVerified
                           ? 'certification.badge.verified'
                           : 'certification.badge.selfReported'
                       })}

@@ -150,7 +150,7 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
   // NOTE: a "Transparency Score: n/100" preview card used to live here. Removed
   // 2026-07 — a self-assigned sustainability grade on a consumer surface is the
   // self-created-label class banned by EU ECGT 2024/825 (live 2026-09-27) and an
-  // FTC 16 CFR 260.6 general-benefit risk. The score is a PRODUCER-dashboard KPI
+  // FTC 16 CFR 260.4 general-benefit risk. The score is a PRODUCER-dashboard KPI
   // only. See .claude/rules/transparency-first.md and compliance.md.
 
   // Content Structure Skeletons
