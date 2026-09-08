@@ -1568,44 +1568,12 @@ export const carbonApi = baseApi.injectEndpoints({
       invalidatesTags: ['EvidencePhotos', 'CarbonSummary']
     }),
 
-    // Gas Optimization Endpoints
-    estimateGasCosts: builder.mutation<
-      {
-        gas_estimation: any;
-        recommended_strategy: string;
-        current_gas_prices: any;
-      },
-      {
-        operation_type: string;
-        operation_data?: any;
-      }
-    >({
-      query: (data) => ({
-        url: 'carbon/blockchain/gas-estimate/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      })
-    }),
-
-    optimizeTransactionGas: builder.mutation<
-      {
-        optimization_result: any;
-        gas_savings: number;
-        optimized_transactions: any[];
-      },
-      {
-        transactions: any[];
-        strategy?: string;
-      }
-    >({
-      query: (data) => ({
-        url: 'carbon/blockchain/optimize-transaction/',
-        method: 'POST',
-        body: data,
-        credentials: 'include'
-      })
-    }),
+    // ⛔ 2026-09-08 — `estimateGasCosts` and `optimizeTransactionGas` removed with their
+    // backend routes (`carbon/blockchain/gas-estimate/`, `carbon/blockchain/optimize-transaction/`).
+    // Polygon gas estimation for a chain this product no longer writes to: the blockchain
+    // add-on was withdrawn 2026-08-03 and BLOCKCHAIN_ENABLED has defaulted False since
+    // 2026-08-06. Both hooks were exported and had zero call sites in the entire app.
+    // Guard: trazo-back `carbon/tests/test_retired_claim_routes_stay_retired.py`.
 
     // Phase 6: Advanced Carbon Analytics Endpoint
     getAdvancedAnalytics: builder.query<
@@ -1803,8 +1771,6 @@ export const {
   useGetEvidencePhotosQuery,
   useValidatePhotoEvidenceMutation,
   // Gas Optimization hooks
-  useEstimateGasCostsMutation,
-  useOptimizeTransactionGasMutation,
   // Phase 6: Advanced Analytics hook
   useGetAdvancedAnalyticsQuery,
   // Phase 3: Enhanced Dashboard hooks
