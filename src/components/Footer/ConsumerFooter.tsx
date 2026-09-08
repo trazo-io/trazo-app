@@ -47,7 +47,7 @@ export default function ConsumerFooter() {
           {intl.formatMessage({ id: 'app.privacyPolicy' })}
         </Link>
         <Link
-          href={`${LANDING_URL}/terms-conditions`}
+          href={`${LANDING_URL}/terms-of-service`}
           color="gray.400"
           fontSize="sm"
           isExternal

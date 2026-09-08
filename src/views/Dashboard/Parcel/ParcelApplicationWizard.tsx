@@ -77,6 +77,7 @@ import { env } from 'config/environment';
 import type { BufferZoneRow } from 'store/api/parcelApplicationApi';
 import { useUserRole } from 'hooks/useUserRole';
 import type { RootState } from 'store/index';
+import { useComplianceExports } from 'components/Guards/ComplianceExportsGuard';
 
 const STATUS_BADGE: Record<string, string> = {
   not_started: 'neutral',
@@ -584,6 +585,9 @@ const ParcelApplicationWizard = () => {
   const { canWrite } = useUserRole();
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
   const companyId = currentCompany?.id != null ? String(currentCompany.id) : '';
+  // The parcel-application PDF is a module PDF, gated by `subscriptions/gating.py` like the rest
+  // of the certifier documents. The wizard itself stays open on Starter — only the export goes.
+  const hasComplianceExports = useComplianceExports();
   const locale = intl.locale;
 
   const args = { companyId, farmId: farmId || '', parcelId: parcelId || '' };
@@ -860,7 +864,7 @@ const ParcelApplicationWizard = () => {
               {intl.formatMessage({ id: `parcelApp.status.${status.state}` })}
             </Badge>
           ) : null}
-          {ospId != null ? (
+          {ospId != null && hasComplianceExports ? (
             <StandardButton
               as="a"
               href={env.getApiUrl(

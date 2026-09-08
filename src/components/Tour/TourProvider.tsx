@@ -186,11 +186,20 @@ const TourProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     }
     visibleStepCountRef.current = visibleSteps.length;
 
+    // 🔴 2026-09-07 — driver.js paints THIS content itself; `renderTrazoTooltip` then replaces it
+    // in `onPopoverRender`. Handing driver.js the raw i18n KEY meant the frame before that
+    // replacement showed the farmer `tour.osp.step1.title` — observed on the OSP tour. Resolve
+    // the message here so the pre-render frame, and any render the bridge does not reach, is
+    // readable text. Falling back to the key keeps a missing translation debuggable instead of
+    // blank.
+    const tourText = (key: string): string =>
+      ((intl.messages as Record<string, string>)[key] as string) || key;
+
     const steps: DriveStep[] = visibleSteps.map((step) => ({
       element: step.target,
       popover: {
-        title: step.titleKey,
-        description: step.contentKey,
+        title: tourText(step.titleKey),
+        description: tourText(step.contentKey),
         side: step.placement === 'auto' || !step.placement ? undefined : (step.placement as any),
         align: 'center' as const
       }

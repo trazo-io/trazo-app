@@ -1552,7 +1552,7 @@ function normalizeChemicalEventData(
     'nitrogen_total_kg',
     'phosphorus_total_kg',
     'potassium_total_kg',
-    // §E-3 Micronutrients (FE) — 7 CFR 205.601(j)(6). Same allow-list rule as the soil lab
+    // §E-3 Micronutrients (FE) — 7 CFR 205.601(j)(7). Same allow-list rule as the soil lab
     // fields: without these names the registry FieldConfigs resolve nothing on the card.
     // micronutrient_rate/_unit are already stripped from the anonymous payload by the backend;
     // they are listed so the producer preview and modal can still show them.
