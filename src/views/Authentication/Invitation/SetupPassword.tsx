@@ -936,7 +936,7 @@ const SetupPassword: React.FC = () => {
                       <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
                         I agree to the{' '}
                         <a
-                          href="https://trazo.io/terms-conditions"
+                          href="https://trazo.io/terms-of-service"
                           target="_blank"
                           rel="noopener noreferrer">
                           <Text
