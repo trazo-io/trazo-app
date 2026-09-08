@@ -31,7 +31,7 @@ import {
   ComplianceExportsUpsell,
   useComplianceExports
 } from 'components/Guards/ComplianceExportsGuard';
-import { formatDateOnly } from 'utils/dateOnly';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 
 interface Props {
   companyId: string;
@@ -41,8 +41,6 @@ interface Props {
 
 /** The buyer opens this, not the authenticated API path. */
 const buyerReviewUrl = (token: string) => `${window.location.origin}/buyer-review/${token}`;
-
-const formatDate = (value?: string | null) => formatDateOnly(value) ?? null;
 
 const BuyerReviewLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => {
   const intl = useIntl();
@@ -179,7 +177,7 @@ const BuyerReviewLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) =
                       link.last_accessed_at
                         ? intl.formatMessage(
                             { id: 'certifierLink.lastOpened' },
-                            { date: formatDate(link.last_accessed_at) }
+                            { date: formatDateFromTimestamp(link.last_accessed_at) }
                           )
                         : intl.formatMessage({ id: 'certifierLink.neverOpened' })
                     }>
@@ -191,7 +189,7 @@ const BuyerReviewLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) =
                   <Text fontSize="xs" color="gray.500">
                     {intl.formatMessage(
                       { id: 'buyerLink.expires' },
-                      { date: formatDate(link.expires_at) ?? '' }
+                      { date: formatDateFromTimestamp(link.expires_at) ?? '' }
                     )}
                   </Text>
                 </HStack>

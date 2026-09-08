@@ -133,7 +133,11 @@ const FUEL_TYPES = [
     factor: '1.92 kg CO₂e/m³'
   },
   { value: 'propane', labelKey: 'events.chemical.fuelTypes.propane', factor: '1.51 kg CO₂e/L' },
-  { value: 'electric', labelKey: 'events.chemical.fuelTypes.electric', factor: '0.365 kg CO₂e/kWh' },
+  {
+    value: 'electric',
+    labelKey: 'events.chemical.fuelTypes.electric',
+    factor: '0.365 kg CO₂e/kWh'
+  },
   { value: 'biodiesel', labelKey: 'events.chemical.fuelTypes.biodiesel', factor: '2.31 kg CO₂e/L' },
   { value: 'none', labelKey: 'events.chemical.fuelTypes.none', factor: '0 kg CO₂e' }
 ];
@@ -4960,9 +4964,27 @@ const ChemicalTab = forwardRef(
               )}
 
               {/* Section 3.6: CA DPR Restricted Materials Permit (P0-3) */}
-              {/* Shown whenever commercial_name matches a CA county-restricted keyword.
-                    Drift detector gates the actual CA-only finding server-side. */}
+              {/*
+                🔴 2026-09-08 — now gated on the FARM'S STATE as well as the product name.
+                It was keyword-only, so an Oregon grower spraying sulfur, Entrust or a copper
+                fungicide — all ordinary organic inputs, all on the keyword list — was shown a
+                California county Restricted Materials Permit section asking for a permit number,
+                county and expiry that do not exist outside California. That is the audit's T05
+                finding in its most concrete form: a form asking a farmer to interpret a field
+                that cannot apply to them.
+
+                `useFarmState` returns null when the state is unknown and the block then stays
+                hidden, which is the right default: inventing a Californian obligation for a farm
+                whose state we cannot read is worse than omitting an optional section. The
+                identity block above (operator/site/county, DPR-PML-017C boxes 3/8/10) has always
+                been gated this way; this section was the sibling that was not.
+
+                The fields stay in the schema and the payload allow-list, so an existing CA record
+                still round-trips, and the drift detector keeps gating the actual finding
+                server-side.
+              */}
               {!isSummaryMode &&
+                farmState === 'CA' &&
                 (() => {
                   const name = (methods.watch('commercial_name') || '').toLowerCase();
                   const CA_RESTRICTED_KEYWORDS = [

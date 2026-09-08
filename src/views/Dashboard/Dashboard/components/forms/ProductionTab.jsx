@@ -27,6 +27,7 @@ import {
   StandardNumberInput
 } from 'components/Design/StandardComponents';
 import { CarbonImpactPreview } from 'components/Events/CarbonImpactPreview';
+import { maturityMeasuresForCrop } from 'config/harvestMaturity';
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -621,6 +622,12 @@ const ProductionTab = forwardRef(
       currentProduction?.crop_type?.name ||
       currentProduction?.product ||
       '';
+    // Which maturity measures this crop actually has. 🔴 Audit T05: grain moisture, Brix and
+    // avocado/nut dry matter rendered on EVERY harvest form, so a carrot pick asked for all
+    // three with "Leave blank if N/A" — the instruction the audit called evidence that the
+    // interface should hide the field by context. An unmapped crop still gets all three.
+    const maturity = maturityMeasuresForCrop(harvestCropName);
+
     // Whether the operator picked "Other" and is typing a grade the catalogue does not carry.
     // State, not derived from the value, so the empty box right after choosing "Other" does
     // not snap the select back to the placeholder.
@@ -2622,32 +2629,34 @@ const ProductionTab = forwardRef(
                         </StandardField>
                       </Box>
 
-                      <Box flex={1}>
-                        <StandardField
-                          label={intl.formatMessage({
-                            id: 'events.production.fields.grainMoisture'
-                          })}
-                          error={errors.grain_moisture?.message}
-                          helpText={intl.formatMessage({
-                            id: 'production.field.grainMoistureHelp'
-                          })}>
-                          <Controller
-                            name="grain_moisture"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardNumberInput
-                                min={0}
-                                max={100}
-                                precision={1}
-                                step={0.1}
-                                value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}
-                                placeholder="Leave blank if N/A"
-                              />
-                            )}
-                          />
-                        </StandardField>
-                      </Box>
+                      {maturity.grainMoisture && (
+                        <Box flex={1}>
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.production.fields.grainMoisture'
+                            })}
+                            error={errors.grain_moisture?.message}
+                            helpText={intl.formatMessage({
+                              id: 'production.field.grainMoistureHelp'
+                            })}>
+                            <Controller
+                              name="grain_moisture"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardNumberInput
+                                  min={0}
+                                  max={100}
+                                  precision={1}
+                                  step={0.1}
+                                  value={field.value || ''}
+                                  onChange={(valueString) => field.onChange(valueString)}
+                                  placeholder="Leave blank if N/A"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        </Box>
+                      )}
                     </HStack>
 
                     {/* Phase 2: Harvest Method & Brix Levels for Quick Add parity */}
@@ -2679,55 +2688,59 @@ const ProductionTab = forwardRef(
                         </StandardField>
                       </Box>
 
-                      <Box flex={1}>
-                        <StandardField
-                          label={intl.formatMessage({ id: 'production.brixLevel' })}
-                          error={errors.brix_level?.message}
-                          helpText={intl.formatMessage({ id: 'production.brixLevelHelp' })}>
-                          <Controller
-                            name="brix_level"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardNumberInput
-                                min={0}
-                                max={45}
-                                precision={1}
-                                step={0.1}
-                                value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}
-                                placeholder="Leave blank if N/A"
-                              />
-                            )}
-                          />
-                        </StandardField>
-                      </Box>
+                      {maturity.brix && (
+                        <Box flex={1}>
+                          <StandardField
+                            label={intl.formatMessage({ id: 'production.brixLevel' })}
+                            error={errors.brix_level?.message}
+                            helpText={intl.formatMessage({ id: 'production.brixLevelHelp' })}>
+                            <Controller
+                              name="brix_level"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardNumberInput
+                                  min={0}
+                                  max={45}
+                                  precision={1}
+                                  step={0.1}
+                                  value={field.value || ''}
+                                  onChange={(valueString) => field.onChange(valueString)}
+                                  placeholder="Leave blank if N/A"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        </Box>
+                      )}
 
                       {/* F43: Dry matter % — the correct maturity metric for avocado & nuts (the
                             CA orchard ICP). Brix is for citrus/sugar fruit; grain moisture is grain-only. */}
-                      <Box flex={1}>
-                        <StandardField
-                          label={intl.formatMessage({
-                            id: 'events.production.fields.dryMatterPercentage'
-                          })}
-                          error={errors.dry_matter_percentage?.message}
-                          helpText={intl.formatMessage({ id: 'production.field.dryMatterHelp' })}>
-                          <Controller
-                            name="dry_matter_percentage"
-                            control={methods.control}
-                            render={({ field }) => (
-                              <StandardNumberInput
-                                min={0}
-                                max={100}
-                                precision={1}
-                                step={0.1}
-                                value={field.value || ''}
-                                onChange={(valueString) => field.onChange(valueString)}
-                                placeholder="Leave blank if N/A"
-                              />
-                            )}
-                          />
-                        </StandardField>
-                      </Box>
+                      {maturity.dryMatter && (
+                        <Box flex={1}>
+                          <StandardField
+                            label={intl.formatMessage({
+                              id: 'events.production.fields.dryMatterPercentage'
+                            })}
+                            error={errors.dry_matter_percentage?.message}
+                            helpText={intl.formatMessage({ id: 'production.field.dryMatterHelp' })}>
+                            <Controller
+                              name="dry_matter_percentage"
+                              control={methods.control}
+                              render={({ field }) => (
+                                <StandardNumberInput
+                                  min={0}
+                                  max={100}
+                                  precision={1}
+                                  step={0.1}
+                                  value={field.value || ''}
+                                  onChange={(valueString) => field.onChange(valueString)}
+                                  placeholder="Leave blank if N/A"
+                                />
+                              )}
+                            />
+                          </StandardField>
+                        </Box>
+                      )}
                     </HStack>
                   </VStack>
                 </SectionBox>
