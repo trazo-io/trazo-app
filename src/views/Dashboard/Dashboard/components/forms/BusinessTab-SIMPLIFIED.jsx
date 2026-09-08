@@ -43,6 +43,7 @@ const formSchemaMainInfo = object({
   verification_status: string().optional(),
   sustainability_practice: string().optional(),
   observation: string().optional(),
+  private_note: string().optional(),
   // Sprint 3 Epic 3.2: Consumer Trust Field for transparency
   verified_certifier_name: string().optional(), // Name of the certifying organization
   certificate_number: string().optional(), // Certificate reference number
@@ -100,6 +101,7 @@ const BusinessTab = forwardRef(
         verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
         sustainability_practice: initialValues.sustainability_practice || '',
         observation: initialValues.observation || '',
+        private_note: initialValues.private_note || '',
         // Sprint 3 Epic 3.2: Consumer Trust Field
         verified_certifier_name: initialValues.verified_certifier_name || '',
         certificate_number: initialValues.certificate_number || '',
@@ -151,6 +153,7 @@ const BusinessTab = forwardRef(
           verification_status: initialValues.verification_status || 'pending', // F13: backend default; '' fails non-blank ChoiceField (400)
           sustainability_practice: initialValues.sustainability_practice || '',
           observation: initialValues.observation || '',
+          private_note: initialValues.private_note || '',
           // Sprint 3 Epic 3.2: Consumer Trust Field
           verified_certifier_name: initialValues.verified_certifier_name || '',
           certificate_number: initialValues.certificate_number || '',
@@ -196,6 +199,7 @@ const BusinessTab = forwardRef(
       'verification_status',
       'sustainability_practice',
       'observation',
+      'private_note',
       'verified_certifier_name',
       'certificate_number',
       'performed_by'
@@ -688,6 +692,21 @@ const BusinessTab = forwardRef(
                               'Optional: Describe how this certification or business activity improves transparency, e.g., Certification process improved carbon tracking accuracy, new practice reduced emissions by 15%...'
                           })}
                           rows={4}
+                        />
+                      )}
+                    />
+                  </StandardField>
+                  <StandardField
+                    label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
+                    helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
+                    <Controller
+                      name="private_note"
+                      control={methods.control}
+                      render={({ field }) => (
+                        <StandardTextarea
+                          {...field}
+                          placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                          rows={3}
                         />
                       )}
                     />

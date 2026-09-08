@@ -168,6 +168,7 @@ const formSchemaSoilManagement = object({
   processed_manure_temp_f: string().optional(),
   processed_manure_attestation: string().optional(),
   observation: string().optional(),
+  private_note: string().optional(),
   // FSMA PSR § 112.161(b) sign-off. Soil amendments are part-112 records (§ 112.60).
   reviewed: string().optional(), // 'true' / 'false' string for the Switch
   reviewer_name: string().optional(),
@@ -497,6 +498,7 @@ const SoilManagementTab = forwardRef(
         processed_manure_temp_f: initialValues.processed_manure_temp_f || '',
         processed_manure_attestation: initialValues.processed_manure_attestation || '',
         observation: initialValues.observation || '',
+        private_note: initialValues.private_note || '',
         reviewed:
           initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
         reviewer_name: initialValues.reviewer_name || '',
@@ -750,6 +752,7 @@ const SoilManagementTab = forwardRef(
       // 🔍 Debug: Check if observation field is being captured
       console.log('🔍 [SoilManagement] Form submission data:', {
         observation: data.observation,
+        private_note: data.private_note,
         // Boolean on the model, 'true'/'false' string on the Switch — coerce at the boundary.
         reviewed: data.reviewed === 'true' || data.reviewed === true,
         reviewer_name: data.reviewer_name || null,
@@ -2623,6 +2626,15 @@ const SoilManagementTab = forwardRef(
                     placeholder="Optional: Describe your soil management approach, goals for soil health, organic practices used, sustainability goals, etc. These details help consumers understand your farming methods."
                     rows={4}
                     {...register('observation')}
+                  />
+                </StandardField>
+                <StandardField
+                  label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
+                  helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
+                  <StandardTextarea
+                    placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                    rows={3}
+                    {...register('private_note')}
                   />
                 </StandardField>
 

@@ -119,6 +119,7 @@ const pestSchema = object({
   action_threshold_met: string().optional(), // Changed to string for StandardSelect
   ipm_strategy: string().optional(),
   observation: string().optional(),
+  private_note: string().optional(),
   // FSMA PSR § 112.161(b) sign-off. Harvest/packing (§ 112.140) and animal-intrusion
   // monitoring (§ 112.83) are part-112 records. `reviewed` rides the `...data` spread as a
   // 'true'/'false' STRING, so it is coerced to a real boolean just below.
@@ -240,6 +241,7 @@ const PestManagementTab = forwardRef(
           '',
         ipm_strategy: initialValues.ipm_strategy || '',
         observation: initialValues.observation || '',
+        private_note: initialValues.private_note || '',
         reviewed:
           initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
         reviewer_name: initialValues.reviewer_name || '',
@@ -342,6 +344,7 @@ const PestManagementTab = forwardRef(
             '',
           ipm_strategy: initialValues.ipm_strategy || '',
           observation: initialValues.observation || '',
+          private_note: initialValues.private_note || '',
           reviewed:
             initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
           reviewer_name: initialValues.reviewer_name || '',
@@ -397,6 +400,7 @@ const PestManagementTab = forwardRef(
       'release_quantity',
       'trap_count',
       'observation',
+      'private_note',
       'pest_species',
       'crop_growth_stage',
       'action_recommended',
@@ -1544,6 +1548,15 @@ const PestManagementTab = forwardRef(
                     {...methods.register('observation')}
                     placeholder="Optional: Describe your IPM approach, beneficial insect populations observed, organic methods used, sustainability goals, etc. These details help consumers understand your natural pest management methods."
                     rows={4}
+                  />
+                </StandardField>
+                <StandardField
+                  label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
+                  helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
+                  <StandardTextarea
+                    placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                    rows={3}
+                    {...methods.register('private_note')}
                   />
                 </StandardField>
 

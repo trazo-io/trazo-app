@@ -101,6 +101,7 @@ const formSchemaMainInfo = object({
   duration_hours: string().optional(),
   participants: string().optional(),
   observation: string().optional(),
+  private_note: string().optional(),
   // NOP Compliance: Contamination Incident Reporting (7 CFR 205.272).
   // Booleans are stored as 'true'/'false' strings to match the Switch
   // controller pattern used in ChemicalTab; NewEvent.jsx converts to real
@@ -159,6 +160,7 @@ const GeneralTab = forwardRef(
         duration_hours: initialValues.duration_hours || '',
         participants: initialValues.participants || '',
         observation: initialValues.observation || initialValues.description || '',
+        private_note: initialValues.private_note || '',
         // NOP contamination incident fields
         is_contamination_incident: boolToString(initialValues.is_contamination_incident),
         contamination_source: initialValues.contamination_source || '',
@@ -215,6 +217,7 @@ const GeneralTab = forwardRef(
           duration_hours: initialValues.duration_hours || '',
           participants: initialValues.participants || '',
           observation: initialValues.observation || initialValues.description || '',
+          private_note: initialValues.private_note || '',
           is_contamination_incident: boolToString(initialValues.is_contamination_incident),
           contamination_source: initialValues.contamination_source || '',
           contamination_affected_area:
@@ -248,6 +251,7 @@ const GeneralTab = forwardRef(
       'duration_hours',
       'participants',
       'observation',
+      'private_note',
       'is_contamination_incident',
       'contamination_source',
       'contamination_affected_area',
@@ -274,6 +278,7 @@ const GeneralTab = forwardRef(
               'duration_hours',
               'participants',
               'observation',
+              'private_note',
               'is_contamination_incident',
               'contamination_source',
               'contamination_affected_area',
@@ -500,6 +505,21 @@ const GeneralTab = forwardRef(
                             'Optional: Describe the purpose of this activity, how it contributes to farm operations, quality improvements made, or any interesting observations that consumers might find valuable.'
                         })}
                         rows={4}
+                      />
+                    )}
+                  />
+                </StandardField>
+                <StandardField
+                  label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
+                  helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
+                  <Controller
+                    name="private_note"
+                    control={mainInfoMethods.control}
+                    render={({ field }) => (
+                      <StandardTextarea
+                        {...field}
+                        placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                        rows={3}
                       />
                     )}
                   />

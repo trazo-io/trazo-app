@@ -1891,6 +1891,24 @@ const PRODUCTION_FIELDS: readonly FieldConfig<unknown, ProductionData>[] = [
       consumer_card: 'secondary'
     }
   },
+  {
+    // The PRIVATE half of the note pair. `observation` above publishes in the grower's own words;
+    // this is the box for everything they need recorded and no buyer should read.
+    //
+    // ⛔ No `preview`, no `consumer_card`, no `timeline`:
+    //   - `consumer_card` would publish it, the one thing it must never do (the server also
+    //     strips it — `PublicHistorySerializer._CERTIFIER_ONLY_EVENT_FIELDS`).
+    //   - `preview` is the "how consumers will see this event" card built from RAW WIZARD DATA,
+    //     so showing it there would tell the grower a shopper is about to read it.
+    name: 'private_note',
+    labelKey: 'events.common.fields.privateNote',
+    helpKey: 'events.common.help.privateNoteAudience',
+    valueType: 'text',
+    surfaces: {
+      form: 'immediate',
+      modal: 'secondary'
+    }
+  },
   // ---- FSMA § 112.161(b) supervisor sign-off (CommonEvent, ALL subtypes) ----
   //
   // 🔴 2026-08-31 — declared in chemicalEvent.ts and NOWHERE else, while this family's form

@@ -144,7 +144,28 @@ const EQUIPMENT_FIELDS: readonly FieldConfig<unknown, EquipmentData>[] = [
     labelKey: 'events.common.fields.observation',
     valueType: 'text',
     surfaces: { modal: 'details' }
-  }
+  },
+  {
+    // The PRIVATE half of the note pair. `observation` above publishes in the grower's own words;
+    // this is the box for everything they need recorded and no buyer should read.
+    //
+    // ⛔ No `preview`, no `consumer_card`, no `timeline`:
+    //   - `consumer_card` would publish it, the one thing it must never do (the server also
+    //     strips it — `PublicHistorySerializer._CERTIFIER_ONLY_EVENT_FIELDS`).
+    //   - `preview` is the "how consumers will see this event" card built from RAW WIZARD DATA,
+    //     so showing it there would tell the grower a shopper is about to read it.
+    //
+    // ⛔ And no `form` either, unlike the other seven families: Equipment has no form tab of its
+    // own — it is merged into Production in the UI — so declaring one would promise an input no
+    // tab can render, which is exactly what `formConformance` exists to catch.
+    name: 'private_note',
+    labelKey: 'events.common.fields.privateNote',
+    helpKey: 'events.common.help.privateNoteAudience',
+    valueType: 'text',
+    surfaces: {
+      modal: 'secondary'
+    }
+  },
 ];
 
 export const equipmentEventRegistry: EventRegistryEntry<EquipmentSubtype, EquipmentData> = {
