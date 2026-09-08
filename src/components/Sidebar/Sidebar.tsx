@@ -351,8 +351,10 @@ function Sidebar(props: SidebarProps) {
                         my="auto"
                         fontSize="sm"
                         display={sidebarWidth === 275 ? 'block' : 'none'}
-                        noOfLines={1}
+                        noOfLines={2}
                         maxW="180px"
+                        lineHeight="1.3"
+                        textAlign="left"
                         title={
                           Object.keys(intl?.messages).includes(`app.${prop.id}`)
                             ? intl.formatMessage({ id: `app.${prop.id}` })
@@ -432,8 +434,10 @@ function Sidebar(props: SidebarProps) {
                             my="auto"
                             fontSize="sm"
                             display={sidebarWidth === 275 ? 'block' : 'none'}
-                            noOfLines={1}
+                            noOfLines={2}
                             maxW="180px"
+                            lineHeight="1.3"
+                            textAlign="left"
                             title={
                               Object.keys(intl?.messages).includes(`app.${prop.id}`)
                                 ? intl.formatMessage({ id: `app.${prop.id}` })

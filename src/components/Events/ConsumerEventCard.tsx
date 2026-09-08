@@ -1676,7 +1676,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                         checkable instead of assumed") — a documentation statement, correctly
                         written and deliberately modest, sitting under a header that promised an
                         environmental benefit it never asserted. That gap is an unqualified
-                        general environmental benefit claim (FTC 16 CFR 260.6) manufactured by
+                        general environmental benefit claim (FTC 16 CFR 260.4) manufactured by
                         the label alone, which is the same reason the sixteen generic
                         "environmental stewardship" fallbacks above are suppressed rather than
                         rewritten. The header now says what the sentence actually does. */}
