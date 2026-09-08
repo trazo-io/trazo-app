@@ -731,7 +731,7 @@ export function getConsumerEventDescription(
       IR: {
         title: 'Irrigation Event',
         icon: '💧',
-        description: 'The block was irrigated, from a recorded water source'
+        description: 'The block was irrigated'
       },
       'event.production.pruning': {
         title: 'Pruning Operation',
@@ -933,22 +933,22 @@ export function getConsumerEventDescription(
       MO: {
         title: 'Orchard-Floor Management',
         icon: '🌱',
-        description: 'The orchard floor was mown between the tree rows'
+        description: 'Ground cover between the rows was mown'
       },
       'production.MO': {
         title: 'Orchard-Floor Management',
         icon: '🌱',
-        description: 'The orchard floor was mown between the tree rows'
+        description: 'Ground cover between the rows was mown'
       },
       'event.production.mowing': {
         title: 'Orchard-Floor Management',
         icon: '🌱',
-        description: 'The orchard floor was mown between the tree rows'
+        description: 'Ground cover between the rows was mown'
       },
       mowing: {
         title: 'Orchard-Floor Management',
         icon: '🌱',
-        description: 'The orchard floor was mown between the tree rows'
+        description: 'Ground cover between the rows was mown'
       }
     };
 
@@ -1140,12 +1140,12 @@ export function getConsumerEventDescription(
         (event as any).floor_management_type || (event as any).extra_data?.floor_management_type;
       if (floorType === 'flame_weed') {
         consumerImpact =
-          'Weeds were controlled with heat instead of chemicals, using a propane flamer along the tree rows.';
+          'Weeds were controlled with heat instead of chemicals, using a propane flamer.';
         sustainabilityBenefit =
           'Flame weeding removes weeds without synthetic herbicides, leaving no chemical residue in the soil or on the crop.';
       } else {
         consumerImpact =
-          'Cutting ground cover is mechanical weed control, and it leaves a clean surface for fruit that is picked up off the floor.';
+          'Cutting ground cover is mechanical weed control rather than a herbicide application.';
         sustainabilityBenefit =
           'Managed ground cover protects soil from erosion, feeds pollinators and beneficial insects, and reduces the need for herbicides.';
       }
