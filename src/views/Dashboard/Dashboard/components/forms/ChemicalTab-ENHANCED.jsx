@@ -132,7 +132,7 @@ const FUEL_TYPES = [
     factor: '1.92 kg CO₂e/m³'
   },
   { value: 'propane', labelKey: 'events.chemical.fuelTypes.propane', factor: '1.51 kg CO₂e/L' },
-  { value: 'electric', labelKey: 'events.chemical.fuelTypes.electric', factor: '0.39 kg CO₂e/kWh' },
+  { value: 'electric', labelKey: 'events.chemical.fuelTypes.electric', factor: '0.365 kg CO₂e/kWh' },
   { value: 'biodiesel', labelKey: 'events.chemical.fuelTypes.biodiesel', factor: '2.31 kg CO₂e/L' },
   { value: 'none', labelKey: 'events.chemical.fuelTypes.none', factor: '0 kg CO₂e' }
 ];
@@ -5155,7 +5155,7 @@ const ChemicalTab = forwardRef(
                           {intl.formatMessage({
                             id: 'events.chemical.electricEquipment.body',
                             defaultMessage:
-                              'Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.39 kg CO₂/kWh. Solar/wind powered equipment has zero emissions.'
+                              'Enter energy consumption in kilowatt-hours (kWh). Grid electricity uses 0.365 kg CO₂e/kWh. Solar/wind powered equipment has zero emissions.'
                           })}
                         </Text>
                       </Box>

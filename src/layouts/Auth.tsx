@@ -14,8 +14,6 @@ import AuthNavbar from 'components/Navbars/AuthNavbar';
 import React, { Suspense } from 'react';
 import { Route as RouteType } from 'types/common';
 import theme from 'theme/theme';
-import { ConsentBanner } from '../components/Privacy/ConsentBanner';
-import { grantAnalyticsConsent, revokeAnalyticsConsent } from 'config/posthog';
 
 type AuthLayoutProps = {
   /**
@@ -175,13 +173,14 @@ export default function Pages({ plainNav = false }: AuthLayoutProps) {
           </Suspense>
         </Box>
       </Box>
-      {/* Privacy consent banner for GDPR compliance.
-          onConsentChange is what actually reaches PostHog — see ConsumerProductLayout. */}
-      <ConsentBanner
-        onConsentChange={(consent) =>
-          consent ? grantAnalyticsConsent() : revokeAnalyticsConsent()
-        }
-      />
+      {/* ⛔ No consent banner here, deliberately (2026-09-08).
+          This is the PRODUCER sign-in surface. Analytics for an authenticated producer runs
+          on the Terms they accept, disclosed in the Privacy Policy — see the posture note in
+          config/posthog.ts — and is switched on by startProducerAnalytics() in layouts/Admin.
+          A banner on this page was actively harmful: declining here and then being captured
+          seconds later, after sign-in, is a promise visibly broken.
+          The banner belongs on the ANONYMOUS surfaces — ConsumerProductLayout (the QR page)
+          keeps it, and it also gates public_scans geolocation there. */}
     </Box>
     //   </ChakraProvider>
     // </CacheProvider>
