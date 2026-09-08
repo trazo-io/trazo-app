@@ -21,6 +21,7 @@ import {
   Button
 } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
+import { publicNoteMentionsASupplier } from 'utils/supplierNameNudge';
 import { useGetRecentInputsQuery } from 'store/api/historyApi';
 import {
   StandardCard,
@@ -53,7 +54,7 @@ import {
   FaPlus,
   FaTrash
 } from 'react-icons/fa';
-import { FormProvider, useForm, Controller, useFieldArray } from 'react-hook-form';
+import { FormProvider, useForm, useWatch, Controller, useFieldArray } from 'react-hook-form';
 import React, {
   useEffect,
   useMemo,
@@ -498,6 +499,40 @@ export const buildChemicalSchema = (intl) =>
       });
     }
   });
+
+/**
+ * Warns while the farmer is typing that the box which PUBLISHES appears to name a supplier.
+ *
+ * Deliberately NOT a guarantee. The server redacts a supplier name out of the public note only
+ * when it matches a name recorded in a supplier FIELD, on an exact word-boundary match; it
+ * cannot recognise an abbreviation, a misspelling, or a supplier entered nowhere else. Saying
+ * that while the note is being written is more honest than a promise the redactor cannot keep,
+ * and it is why the privacy copy calls the match a safeguard rather than a removal guarantee.
+ *
+ * ⛔ `manufacturer` is NOT one of the inputs. An input's maker is legitimate public product
+ * information — `history/services/privacy.py` excludes it from `VENDOR_NAME_FIELDS` in so many
+ * words, because "redacting it out of a description would mangle honest copy to protect
+ * something that was never withheld". Warning about it here would tell farmers to remove
+ * something Trazo publishes on purpose.
+ *
+ * ⛔ `useWatch` in its own component, never `methods.watch(...)` in the tab body: this form is
+ * ~5,600 lines and a top-level watch re-renders all of it on every keystroke in the note. Same
+ * reasoning as the measured `useWatch` note in WeatherTab.
+ */
+const PublicNoteSupplierHint = ({ control }) => {
+  const intl = useIntl();
+  const note = useWatch({ control, name: 'observation', defaultValue: '' });
+  const supplierName = useWatch({ control, name: 'supplier_name', defaultValue: '' });
+
+  if (!publicNoteMentionsASupplier(note, [supplierName])) return null;
+  return (
+    <StandardAlert
+      status="info"
+      mb={0}
+      description={intl.formatMessage({ id: 'events.common.help.publicNoteSupplierWarning' })}
+    />
+  );
+};
 
 const ChemicalTab = forwardRef(
   (
@@ -5641,6 +5676,14 @@ const ChemicalTab = forwardRef(
                       />
                     )}
                   />
+                  {/* Write-time hint, deliberately NOT a guarantee. The server redacts a
+                      supplier name out of this box only when it matches a name recorded in a
+                      supplier FIELD, on an exact word-boundary match — it cannot recognise an
+                      abbreviation, a misspelling, or a supplier entered nowhere else. Saying so
+                      while the farmer types is more honest than a promise the redactor cannot
+                      keep, and it is the reason the privacy copy describes the match as a
+                      safeguard rather than a removal guarantee. */}
+                  <PublicNoteSupplierHint control={methods.control} />
                 </StandardField>
               </SectionBox>
             </>

@@ -9,15 +9,7 @@ import {
   useColorModeValue,
   Flex
 } from '@chakra-ui/react';
-import {
-  FaBoxes,
-  FaClipboardCheck,
-  FaTractor,
-  FaLeaf,
-  FaBarcode,
-  FaUserTie,
-  FaSeedling
-} from 'react-icons/fa';
+import { FaBoxes, FaLeaf, FaBarcode, FaUserTie, FaSeedling } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import Card from 'components/Card/Card';
 import CardBody from 'components/Card/CardBody';
@@ -29,8 +21,13 @@ interface HarvestDetails {
   amount?: number;
   unit?: string;
   lot_number?: string;
-  quality_grade?: string;
-  harvest_method?: string;
+  // ⛔ `quality_grade` and `harvest_method` are deliberately NOT declared here.
+  //
+  // The season-close form collects both under a section whose own label reads "Printed in your
+  // certifier packet alongside the lot number and yield. Not shown to consumers." They were on
+  // the anonymous payload and rendered on this card, so the form was making a promise the page
+  // broke. The server stopped sending them (`transparency_views.py`, harvestDetails); leaving
+  // them off the type means adding a render branch back would not typecheck.
   farmer_notes?: string;
   production_method?: string;
 }
@@ -38,12 +35,6 @@ interface HarvestDetails {
 interface HarvestInfoCardProps {
   harvestDetails?: HarvestDetails;
 }
-
-// Humanize snake_case values to Title Case
-const humanize = (value: string): string => {
-  if (!value) return '';
-  return value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-};
 
 export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails }) => {
   const intl = useIntl();
@@ -60,8 +51,6 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
 
   const hasAmount = harvestDetails.amount !== undefined && harvestDetails.amount > 0;
   const hasLot = harvestDetails.lot_number;
-  const hasQuality = harvestDetails.quality_grade;
-  const hasMethod = harvestDetails.harvest_method;
   const hasFarmerNotes = harvestDetails.farmer_notes;
   const hasProductionMethod = harvestDetails.production_method;
 
@@ -71,14 +60,7 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
     !harvestDetails.production_method?.toLowerCase().includes('conventional');
 
   // Don't render if no meaningful data
-  if (
-    !hasAmount &&
-    !hasLot &&
-    !hasQuality &&
-    !hasMethod &&
-    !hasFarmerNotes &&
-    !hasProductionMethod
-  ) {
+  if (!hasAmount && !hasLot && !hasFarmerNotes && !hasProductionMethod) {
     return null;
   }
 
@@ -172,39 +154,8 @@ export const HarvestInfoCard: React.FC<HarvestInfoCardProps> = ({ harvestDetails
             </Box>
           )}
 
-          {/* Quality Grade */}
-          {hasQuality && (
-            <Box
-              bg={useColorModeValue('gray.50', 'gray.700')}
-              p={3}
-              borderRadius="lg"
-              textAlign="center">
-              <Icon as={FaClipboardCheck} color="green.500" boxSize={4} mb={1} />
-              <Text fontSize="sm" fontWeight="bold" color="green.700">
-                {localizeFieldValue(humanize(harvestDetails.quality_grade || ''), intl.locale)}
-              </Text>
-              <Text fontSize="xs" color={mutedColor} textTransform="uppercase">
-                {intl.formatMessage({ id: 'app.quality' })}
-              </Text>
-            </Box>
-          )}
-
-          {/* Harvest Method */}
-          {hasMethod && (
-            <Box
-              bg={useColorModeValue('gray.50', 'gray.700')}
-              p={3}
-              borderRadius="lg"
-              textAlign="center">
-              <Icon as={FaTractor} color="green.500" boxSize={4} mb={1} />
-              <Text fontSize="xs" fontWeight="medium" color={textColor}>
-                {localizeFieldValue(humanize(harvestDetails.harvest_method || ''), intl.locale)}
-              </Text>
-              <Text fontSize="xs" color={mutedColor} textTransform="uppercase">
-                {intl.formatMessage({ id: 'app.harvestMethod' })}
-              </Text>
-            </Box>
-          )}
+          {/* Quality grade and harvest method are deliberately absent — see the note on the
+              HarvestDetails type. The farmer was told they are not shown to consumers. */}
         </SimpleGrid>
 
         {/* Farmer Notes - Direct message from farmer to consumers */}

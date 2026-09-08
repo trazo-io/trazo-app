@@ -35,6 +35,20 @@ interface CertificationBadgeProps {
   variant?: 'card' | 'inline';
 }
 
+/**
+ * Which label a certification card may show.
+ *
+ * A specimen operation is never `verified_via_database` (the server refuses it), so without
+ * this it would fall through to "Reported by Producer" — which says a real producer reported
+ * something. Naming the demonstration data is the honest third state.
+ */
+const certStatusLabelKey = (cert: ConsumerCertification): string => {
+  if (cert.specimen) return 'certification.badge.specimen';
+  return cert.status === 'verified_via_database'
+    ? 'certification.badge.verified'
+    : 'certification.badge.selfReported';
+};
+
 const CertificationBadge: React.FC<CertificationBadgeProps> = ({
   certifications,
   compact = false,
@@ -54,6 +68,10 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
   const verifiedCerts = certifications.filter((c) => c.status === 'verified_via_database');
   const selfReportedCerts = certifications.filter((c) => c.status === 'self_reported');
   const hasVerified = verifiedCerts.length > 0;
+  // A fabricated operation can never be `verified_via_database` (the server refuses it), so
+  // without this every summary line below falls through to "Reported by Producer" — which
+  // asserts that a real producer reported something about a real farm.
+  const hasSpecimen = certifications.some((c) => c.specimen);
 
   // Primary cert to display on the card — pick the most meaningful one:
   // 1. Verified certs first (most valuable to show)
@@ -96,9 +114,7 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
               px={2}
               py={0.5}
               borderRadius="full">
-              {cert.status === 'verified_via_database'
-                ? intl.formatMessage({ id: 'certification.badge.verified' })
-                : intl.formatMessage({ id: 'certification.badge.selfReported' })}
+              {intl.formatMessage({ id: certStatusLabelKey(cert) })}
             </Badge>
           </VStack>
         </HStack>
@@ -257,6 +273,9 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
               <Text fontWeight="semibold" fontSize="sm" color={textColor}>
                 {primaryCert.display_name}
               </Text>
+              {/* Grey whenever `hasVerified` is false, which now includes every specimen
+                  operation: solid green is reserved for a third-party-backed statement and a
+                  specimen has none. */}
               <Badge
                 colorScheme={hasVerified ? 'green' : 'gray'}
                 variant="subtle"
@@ -265,12 +284,19 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
                 px={2}>
                 {hasVerified
                   ? intl.formatMessage({ id: 'certification.badge.verifiedShort' })
+                  : hasSpecimen
+                  ? intl.formatMessage({ id: 'certification.badge.specimenShort' })
                   : intl.formatMessage({ id: 'certification.badge.selfReportedShort' })}
               </Badge>
             </HStack>
             {hasVerified && (
               <Text fontSize="xs" color={subtextColor}>
                 {intl.formatMessage({ id: 'certification.badge.verified' })}
+              </Text>
+            )}
+            {!hasVerified && hasSpecimen && (
+              <Text fontSize="xs" color={subtextColor}>
+                {intl.formatMessage({ id: 'certification.badge.specimen' })}
               </Text>
             )}
             {primaryCert.certifier_name && (
@@ -328,6 +354,8 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
                 <Text fontSize="xs" color={subtextColor}>
                   {hasVerified
                     ? intl.formatMessage({ id: 'certification.badge.verified' })
+                    : hasSpecimen
+                    ? intl.formatMessage({ id: 'certification.badge.specimen' })
                     : certifications.length === 1
                     ? intl.formatMessage({ id: 'certification.badge.selfReported' })
                     : `${certifications.length} ${intl

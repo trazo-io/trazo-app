@@ -623,7 +623,18 @@ export function getConsumerEventDescription(
   eventDescription: string,
   event?: any
 ): EventDescriptionData {
-  const lowerDesc = eventDescription.toLowerCase();
+  // 🔴 2026-09-08 — the seed is no longer the farmer's prose.
+  //
+  // The public payload's `description` used to carry `event.description` (and, on general and
+  // business events, `event.name`) — unbounded farmer free text on an anonymous surface. It now
+  // carries a CONTROLLED SUBTYPE LABEL from the backend: "Frost", "Fertilizer", "Harvesting",
+  // "Cover Crop", "Scouting". Those are strictly better input for the keyword branches below
+  // than a real description ("Applied 12 gal to the north rows") ever was.
+  //
+  // Defensive coercion because the seed may now be absent entirely on a cached or older
+  // payload, and `undefined.toLowerCase()` would take the whole card down.
+  const safeDescription = typeof eventDescription === 'string' ? eventDescription : '';
+  const lowerDesc = safeDescription.toLowerCase();
 
   // For production events (event_type: 1), create specific descriptions based on production data
   if (event && (event.event_type === 1 || event.type?.includes('production'))) {
@@ -1288,12 +1299,19 @@ export function getConsumerEventDescription(
     // Check for weather-specific fields
     event.way_of_protection !== undefined;
 
+  // NOTE on the keyword tests below, now that `safeDescription` is a subtype LABEL rather than
+  // farmer prose: they are a fallback and nothing more. `hasSpecificWeatherType` is already
+  // true whenever the event carries a `type` (any value other than the literal "weather"),
+  // which every weather record on the payload does, so "Drought" and "High Winds" enter this
+  // branch on the type alone despite matching none of the keywords. A subtype-code test was
+  // tried here and removed: it changed no outcome, and a redundant guard carrying a rationale
+  // for a defect that never existed is worse than none.
   if (
     isWeatherEvent &&
     (hasSpecificWeatherType ||
-      eventDescription.toLowerCase().includes('weather') ||
-      eventDescription.toLowerCase().includes('frost') ||
-      eventDescription.toLowerCase().includes('temperature'))
+      safeDescription.toLowerCase().includes('weather') ||
+      safeDescription.toLowerCase().includes('frost') ||
+      safeDescription.toLowerCase().includes('temperature'))
   ) {
     // Weather event type mapping
     const weatherTypeMap: Record<
@@ -1368,11 +1386,11 @@ export function getConsumerEventDescription(
         event.way_of_protection.toLowerCase().includes('cover')
       ) {
         weatherInfo = weatherTypeMap['FR']; // Frost protection
-      } else if (eventDescription.toLowerCase().includes('frost')) {
+      } else if (safeDescription.toLowerCase().includes('frost')) {
         weatherInfo = weatherTypeMap['FR'];
-      } else if (eventDescription.toLowerCase().includes('drought')) {
+      } else if (safeDescription.toLowerCase().includes('drought')) {
         weatherInfo = weatherTypeMap['DR'];
-      } else if (eventDescription.toLowerCase().includes('temperature')) {
+      } else if (safeDescription.toLowerCase().includes('temperature')) {
         weatherInfo = weatherTypeMap['HT']; // Heat
       } else {
         // Generic weather fallback
