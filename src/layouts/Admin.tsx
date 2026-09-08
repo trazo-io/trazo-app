@@ -39,6 +39,7 @@ import OnboardingChecklist from 'components/Tour/OnboardingChecklist';
 import { MilestoneCelebrationModal, useMilestoneToast } from 'components/Tour/MilestoneCelebration';
 import { useMilestones } from 'hooks/useMilestones';
 import { OfflineQueueIndicator } from 'components/Upload/OfflineQueueIndicator';
+import { startProducerAnalytics } from 'config/posthog';
 
 // Define Company interface
 interface Company {
@@ -116,6 +117,22 @@ export default function Dashboard(props: any) {
 
     setRoutes(routes);
   }, [currentUser]);
+
+  // Product analytics for an authenticated producer.
+  //
+  // There is no consent banner on this layout, deliberately — a signed-in farm accepted the
+  // Terms and requested the service, so analytics runs on legitimate interest disclosed in the
+  // Privacy Policy, the same posture every comparable B2B product uses. The full argument and
+  // the masking guarantees are in config/posthog.ts; the short version is that session replay
+  // records a WIREFRAME (maskAllText + maskTextSelector '*'), never a worker name, a parcel
+  // location or a figure.
+  //
+  // Inert unless VITE_POSTHOG_KEY is set, so this is a no-op in dev and in every build until
+  // the key is added for the first pilot. Only `user.id` is sent — never an email or a name.
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    startProducerAnalytics(currentUser.id, currentUser?.companies?.length);
+  }, [currentUser?.id, currentUser?.companies?.length]);
 
   // functions for changing the states from components
 
@@ -354,7 +371,11 @@ export default function Dashboard(props: any) {
               </PanelContainer>
             </PanelContent>
           ) : null}
-          <Footer />
+          {/* No "Privacy Settings" link: this layout has no ConsentBanner to re-trigger,
+              so the link cleared the consent cookie and then nothing rendered — the producer
+              was left unable to grant consent again without signing out. Producer analytics
+              is governed by the Terms + Privacy Policy, not a cookie modal. */}
+          <Footer showPrivacySettings={false} />
           <OnboardingChecklist />
           {/*
             The floating settings puck was removed 2026-08-21.

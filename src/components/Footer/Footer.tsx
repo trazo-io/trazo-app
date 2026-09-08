@@ -6,7 +6,25 @@ import LanguageToggle from './LanguageToggle';
 
 const LANDING_URL = 'https://trazo.io';
 
-export default function Footer() {
+type FooterProps = {
+  /**
+   * Whether to offer the "Privacy Settings" link, which clears the consent cookie and lets
+   * `ConsentBanner` render again.
+   *
+   * ⚠️ This footer is shared: `ConsumerProductLayout` (the anonymous QR page, which HAS a
+   * banner) and `layouts/Admin` (the producer dashboard, which deliberately does NOT — see
+   * config/posthog.ts). On the producer side the link was a dead end: it cleared the cookie
+   * and then nothing re-rendered, so the producer could not grant consent again without
+   * signing out.
+   *
+   * Defaults to `true` on purpose. Forgetting it on a new ANONYMOUS surface would strip a
+   * visitor's only way to change their mind, which is the worse of the two failures;
+   * forgetting it on an authenticated one only leaves an inert link.
+   */
+  showPrivacySettings?: boolean;
+};
+
+export default function Footer({ showPrivacySettings = true }: FooterProps) {
   const intl = useIntl();
   // The /methodology route is registered on the consumer subdomain only —
   // this footer is shared with the producer app, where the link would 404.
@@ -56,7 +74,7 @@ export default function Footer() {
           {intl.formatMessage({ id: 'app.privacyPolicy' })}
         </Link>
         <Link
-          href={`${LANDING_URL}/terms-conditions`}
+          href={`${LANDING_URL}/terms-of-service`}
           color="gray.400"
           fontSize="sm"
           isExternal
@@ -79,17 +97,19 @@ export default function Footer() {
           _hover={{ color: 'green.500' }}>
           {intl.formatMessage({ id: 'app.contactUs' })}
         </Link>
-        <Link
-          as="button"
-          color="gray.400"
-          fontSize="sm"
-          _hover={{ color: 'green.500' }}
-          onClick={() => resetConsent()}>
-          {intl.formatMessage({
-            id: 'consumer.footer.privacySettings',
-            defaultMessage: 'Privacy Settings'
-          })}
-        </Link>
+        {showPrivacySettings && (
+          <Link
+            as="button"
+            color="gray.400"
+            fontSize="sm"
+            _hover={{ color: 'green.500' }}
+            onClick={() => resetConsent()}>
+            {intl.formatMessage({
+              id: 'consumer.footer.privacySettings',
+              defaultMessage: 'Privacy Settings'
+            })}
+          </Link>
+        )}
       </Flex>
     </Flex>
   );
