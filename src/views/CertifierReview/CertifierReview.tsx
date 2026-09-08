@@ -46,7 +46,12 @@ import { useParams } from 'react-router-dom';
 
 import { StandardButton } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
-import { formatDateOnly } from 'utils/dateOnly';
+import { formatDateOnly, formatDateFromTimestamp } from 'utils/dateOnly';
+import {
+  classifyReviewLinkFailure,
+  parseReviewLinkResponse,
+  type ReviewLinkFailure
+} from 'utils/reviewLinkFailure';
 import { awaitCertifierDossier, describeProgress, type ExportJob } from 'utils/exportJobs';
 
 interface ReviewMetadata {
@@ -97,7 +102,7 @@ const CertifierReview: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const [meta, setMeta] = useState<ReviewMetadata | null>(null);
   const [readiness, setReadiness] = useState<ReadinessResponse | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [failure, setFailure] = useState<ReviewLinkFailure | null>(null);
   const [loading, setLoading] = useState(true);
   // The dossier is built at most once per change of the records (backend:
   // certifier_review_dossier). When the filed build is current the click downloads at once;
@@ -120,10 +125,9 @@ const CertifierReview: React.FC = () => {
     let cancelled = false;
     // No credentials on either request: this page is anonymous by design, and sending
     // cookies would tie the certifier's view to whatever Trazo session their browser holds.
-    const metaRequest = fetch(`${apiRoot}/certifier-review/${token}/`).then((res) => {
-      if (!res.ok) throw new Error(String(res.status));
-      return res.json();
-    });
+    const metaRequest = fetch(`${apiRoot}/certifier-review/${token}/`).then(
+      (res) => parseReviewLinkResponse(res) as Promise<ReviewMetadata>
+    );
     // Readiness is fetched independently and allowed to fail quietly (caught below): the
     // operation identity is the part that must render for the page to make sense at all;
     // a findings-fetch failure degrades to "no findings shown" rather than the whole page.
@@ -137,8 +141,11 @@ const CertifierReview: React.FC = () => {
         setMeta(metaData);
         setReadiness(readinessData);
       })
-      .catch(() => {
-        if (!cancelled) setNotFound(true);
+      .catch((error) => {
+        // Only a 404 may be reported as a link that is gone. Anything else — throttling, a
+        // gateway error, a blocked preflight — is a condition on our side, and saying "no
+        // longer available" for those tells the reviewer the operation withdrew it.
+        if (!cancelled) setFailure(classifyReviewLinkFailure(error));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -181,26 +188,26 @@ const CertifierReview: React.FC = () => {
     );
   }
 
-  if (notFound || !meta) {
+  if (failure || !meta) {
+    // `!meta` with no recorded failure means a 200 whose body did not parse: not evidence the
+    // link is gone, so it degrades to the temporary message.
+    const isGone = failure === 'gone';
     return (
       <Center minH="60vh" px={4}>
-        <Alert status="warning" maxW="lg">
+        <Alert status={isGone ? 'warning' : 'info'} maxW="lg">
           <AlertIcon />
           <Box>
             <Text fontWeight="semibold">
               {intl.formatMessage({
-                id: 'certifierReview.unavailable.title',
-                defaultMessage: 'This link is no longer available'
+                id: isGone ? 'certifierReview.unavailable.title' : 'certifierReview.temporary.title'
               })}
             </Text>
             <Text fontSize="sm">
-              {/* Expired and revoked are deliberately indistinguishable here — the
-                  farmer can tell them apart on their own dashboard, an anonymous
-                  visitor should not be able to. */}
+              {/* When the link IS gone, expired and revoked stay deliberately
+                  indistinguishable: the farmer can tell them apart on their own dashboard, an
+                  anonymous visitor should not be able to. */}
               {intl.formatMessage({
-                id: 'certifierReview.unavailable.body',
-                defaultMessage:
-                  'It may have expired or been withdrawn. Ask the operation for a new link.'
+                id: isGone ? 'certifierReview.unavailable.body' : 'certifierReview.temporary.body'
               })}
             </Text>
           </Box>
@@ -440,7 +447,7 @@ const CertifierReview: React.FC = () => {
               defaultMessage:
                 'Built from the operation’s current records; a new copy is generated whenever the records change. This link expires {date}.'
             },
-            { date: formatDate(meta.expires_at) }
+            { date: formatDateFromTimestamp(meta.expires_at) }
           )}
         </Text>
       </VStack>

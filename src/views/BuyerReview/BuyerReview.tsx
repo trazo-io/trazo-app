@@ -33,7 +33,12 @@ import { useParams } from 'react-router-dom';
 
 import { StandardButton } from 'components/Design/StandardComponents';
 import { config } from 'config/environment';
-import { formatDateOnly } from 'utils/dateOnly';
+import { formatDateOnly, formatDateFromTimestamp } from 'utils/dateOnly';
+import {
+  classifyReviewLinkFailure,
+  parseReviewLinkResponse,
+  type ReviewLinkFailure
+} from 'utils/reviewLinkFailure';
 
 interface BuyerSeason {
   public_id: string;
@@ -63,7 +68,7 @@ const BuyerReview: React.FC = () => {
   const intl = useIntl();
   const { token } = useParams<{ token: string }>();
   const [meta, setMeta] = useState<BuyerReviewMetadata | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [failure, setFailure] = useState<ReviewLinkFailure | null>(null);
   const [loading, setLoading] = useState(true);
 
   const rowBg = useColorModeValue('gray.50', 'gray.700');
@@ -78,15 +83,14 @@ const BuyerReview: React.FC = () => {
     // No credentials: anonymous by design, like CertifierReview — sending cookies
     // would tie the buyer's view to whatever Trazo session their browser holds.
     fetch(`${apiRoot}/buyer-review/${token}/`)
-      .then((res) => {
-        if (!res.ok) throw new Error(String(res.status));
-        return res.json();
-      })
+      .then((res) => parseReviewLinkResponse(res) as Promise<BuyerReviewMetadata>)
       .then((data) => {
         if (!cancelled) setMeta(data);
       })
-      .catch(() => {
-        if (!cancelled) setNotFound(true);
+      .catch((error) => {
+        // Only a 404 means the link is gone. A throttle, a gateway error or a blocked
+        // preflight must not be reported to a buyer as the grower having withdrawn it.
+        if (!cancelled) setFailure(classifyReviewLinkFailure(error));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -104,12 +108,23 @@ const BuyerReview: React.FC = () => {
     );
   }
 
-  if (notFound || !meta) {
+  if (failure || !meta) {
+    // `!meta` with no recorded failure is a 200 whose body did not parse — not evidence the
+    // link is gone, so it degrades to the temporary message.
+    const isGone = failure === 'gone';
     return (
       <Center minH="60vh" px={6}>
         <VStack spacing={3} maxW="lg" textAlign="center">
-          <Heading size="md">{intl.formatMessage({ id: 'buyerReview.notFound.title' })}</Heading>
-          <Text color={mutedColor}>{intl.formatMessage({ id: 'buyerReview.notFound.body' })}</Text>
+          <Heading size="md">
+            {intl.formatMessage({
+              id: isGone ? 'buyerReview.notFound.title' : 'buyerReview.temporary.title'
+            })}
+          </Heading>
+          <Text color={mutedColor}>
+            {intl.formatMessage({
+              id: isGone ? 'buyerReview.notFound.body' : 'buyerReview.temporary.body'
+            })}
+          </Text>
         </VStack>
       </Center>
     );
@@ -203,7 +218,7 @@ const BuyerReview: React.FC = () => {
         <Text fontSize="xs" color={mutedColor}>
           {intl.formatMessage(
             { id: 'buyerReview.expires' },
-            { date: formatDate(meta.expires_at) ?? '' }
+            { date: formatDateFromTimestamp(meta.expires_at) ?? '' }
           )}
         </Text>
       </VStack>

@@ -43,7 +43,7 @@ import {
 } from 'store/api/certifierLinkApi';
 import OperationReadinessPanel from './OperationReadinessPanel';
 import { resolveReadinessItem } from './readinessMessages';
-import { formatDateOnly } from 'utils/dateOnly';
+import { formatDateOnly, formatDateFromTimestamp } from 'utils/dateOnly';
 import {
   ComplianceExportsUpsell,
   useComplianceExports
@@ -67,11 +67,26 @@ const reviewUrl = (token: string) => `${window.location.origin}/certifier-review
  * "Current year" is the default because that is what an annual inspection and an
  * OSP update are scoped to.
  */
-type PeriodChoice = 'current_year' | 'last_12_months' | 'all';
+export type PeriodChoice = 'current_year' | 'last_12_months' | 'all';
 
-const iso = (d: Date) => d.toISOString().slice(0, 10);
+/**
+ * A LOCAL calendar date as `YYYY-MM-DD`.
+ *
+ * 🔴 2026-09-08 — this was `d.toISOString().slice(0, 10)`. `new Date(y, 0, 1)` is local midnight
+ * on 1 January; `toISOString()` converts that to UTC, so anywhere EAST of Greenwich it becomes
+ * 23:00 on 31 December and the review window was sent to the certifier starting in the WRONG
+ * YEAR. `new Date(y, 11, 31)` lost a day the same way. Same class as the two date helpers in
+ * `utils/dateOnly.ts`: a calendar date must never be round-tripped through an instant.
+ */
+const iso = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(
+    2,
+    '0'
+  )}`;
 
-const periodDates = (choice: PeriodChoice): { period_start?: string; period_end?: string } => {
+export const periodDates = (
+  choice: PeriodChoice
+): { period_start?: string; period_end?: string } => {
   const now = new Date();
   if (choice === 'current_year') {
     return {
@@ -87,8 +102,14 @@ const periodDates = (choice: PeriodChoice): { period_start?: string; period_end?
   return {};
 };
 
-// Byte-identical twin of the CertifierReview helper; same DateField inputs, same one-day shift.
+// `period_start` / `period_end` are backend DateFields — `formatDateOnly` is correct for them.
 const formatDate = (value?: string | null) => formatDateOnly(value) ?? null;
+
+// `expires_at` and `last_accessed_at` are DateTimeFields. 🔴 2026-09-08 — they were going through
+// `formatDateOnly`, whose `YYYY-MM-DD` pattern does not match an ISO datetime, so they fell
+// through to `new Date(...)` and rendered in the VIEWER's zone: an expiry of 2026-12-31T00:00:00Z
+// showed as "Dec 30" for every US grower. Exactly the defect `formatDateFromTimestamp` exists for.
+const formatTimestampDate = (value?: string | null) => formatDateFromTimestamp(value) ?? null;
 
 // Access-log rows need the time as well as the date: two opens on the same afternoon are a
 // certifier working through the records, which a date alone flattens into one indistinguishable
@@ -391,7 +412,7 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                                 id: 'certifierLink.lastOpened',
                                 defaultMessage: 'Last opened {date}'
                               },
-                              { date: formatDate(link.last_accessed_at) }
+                              { date: formatTimestampDate(link.last_accessed_at) }
                             )
                           : intl.formatMessage({
                               id: 'certifierLink.neverOpened',
@@ -418,14 +439,14 @@ const CertifierLinkCard: React.FC<Props> = ({ companyId, farmId, canWrite }) => 
                       <Text fontSize="xs" color="gray.400">
                         {intl.formatMessage(
                           { id: 'certifierLink.expires', defaultMessage: 'Expires {date}' },
-                          { date: formatDate(link.expires_at) }
+                          { date: formatTimestampDate(link.expires_at) }
                         )}
                       </Text>
                     ) : (
                       <Badge variant={expiryTone}>
                         {intl.formatMessage(
                           { id: 'certifierLink.expires', defaultMessage: 'Expires {date}' },
-                          { date: formatDate(link.expires_at) }
+                          { date: formatTimestampDate(link.expires_at) }
                         )}
                       </Badge>
                     )}

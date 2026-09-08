@@ -25,6 +25,16 @@ export default defineConfig({
     // UTC, which is the direction that exposes the "midnight UTC renders as yesterday" class.
     env: { TZ: 'America/Los_Angeles' },
     environment: 'jsdom',
+    // 🔴 2026-09-08 — `e2e/` is PLAYWRIGHT's, not vitest's.
+    //
+    // Vitest was collecting the specs under `e2e/`, where `test()` is Playwright's and throws
+    // "Playwright Test did not expect test() to be called here". Every one of them counted as a
+    // failed suite, so `npx vitest run` reported "5 files failed" on a tree whose unit tests
+    // were entirely green — and that number was carried into a review as though it described
+    // product code. A gate whose headline number is phantom failures is one people learn to
+    // read past, which is the whole reason this file already carries three other notes about
+    // vacuous passes.
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
     setupFiles: ['./src/test/setup.ts'],
     css: true,
     coverage: {

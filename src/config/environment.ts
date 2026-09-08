@@ -102,7 +102,19 @@ function createEnvironmentConfig(): EnvironmentConfig {
 
     // API Configuration - Always explicit URLs
     API_BASE_URL: getApiBaseUrl(),
-    API_ROOT_URL: isDevelopment ? 'http://localhost:8000' : getApiBaseUrl().replace(/\/api$/, ''),
+    // Origin WITHOUT the /api suffix. Used by the anonymous review pages, which are the only
+    // fetches that do not go through the same-origin dev proxy and so need an absolute origin.
+    //
+    // 🔴 2026-09-08 — this hardcoded `http://localhost:8000` in development and ignored
+    // `VITE_APP_BACKEND_URL` entirely, which `getApiBaseUrl()` above honours. Anyone running the
+    // backend anywhere else (a LAN address for phone testing, a tunnel, a second port) had the
+    // review pages alone fail their CORS preflight while every other request worked — and the
+    // pages rendered that failure as "This link is no longer available", i.e. as a revoked link.
+    API_ROOT_URL: env.VITE_APP_BACKEND_URL
+      ? env.VITE_APP_BACKEND_URL.replace(/\/api\/?$/, '')
+      : isDevelopment
+      ? 'http://localhost:8000'
+      : getApiBaseUrl().replace(/\/api$/, ''),
     API_TIMEOUT: parseInt(env.VITE_API_TIMEOUT || '30000', 10),
     API_RETRY_ATTEMPTS: parseInt(env.VITE_API_RETRY_ATTEMPTS || '3', 10),
 
