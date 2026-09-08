@@ -358,6 +358,21 @@ export const historyApi = baseApi.injectEndpoints({
       invalidatesTags: (result, error, { productionId }) => [
         { type: 'SalesRecords', id: productionId }
       ]
+    }),
+    // Void, not delete. Once the season is finished the server refuses a DELETE
+    // (7 CFR 205.103(b)(4) — the sale is the far end of the audit trail), so this is the
+    // correction path: the row stays on the record with the operator's reason and stops
+    // counting as a sale.
+    voidSalesRecord: build.mutation({
+      query: ({ recordId, voidReason }) => ({
+        url: `sales_records/${recordId}/void/`,
+        method: 'POST',
+        credentials: 'include',
+        body: { void_reason: voidReason }
+      }),
+      invalidatesTags: (result, error, { productionId }) => [
+        { type: 'SalesRecords', id: productionId }
+      ]
     })
   }),
   overrideExisting: false
@@ -390,7 +405,8 @@ export const {
   useGetSalesRecordsQuery,
   useGetHarvestLotsQuery,
   useCreateSalesRecordMutation,
-  useDeleteSalesRecordMutation
+  useDeleteSalesRecordMutation,
+  useVoidSalesRecordMutation
 } = historyApi;
 
 // Backward-compat aliases for renamed hooks

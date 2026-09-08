@@ -24,6 +24,25 @@ import enUS from '../../../../i18n/lang/en-US.json';
 
 const confirmRecordTypes = vi.fn();
 
+/**
+ * The panel reads the plan's export entitlement (2026-09-07): the workbooks stream from the
+ * `attachments` route, which `subscriptions/gating.py` gates, so the Excel buttons must not be
+ * offered on Starter. Default TRUE here — this suite is about the § 11 registry, and the
+ * blank-by-blank readout it asserts is deliberately NOT gated.
+ */
+let complianceExports = true;
+
+vi.mock('react-redux', () => ({
+  useSelector: (fn: (s: unknown) => unknown) =>
+    fn({
+      company: {
+        currentCompany: {
+          subscription: { status: 'active', effective_limits: { compliance_exports: complianceExports } }
+        }
+      }
+    })
+}));
+
 const row = (over: Record<string, unknown>) => ({
   key: 'harvest_records',
   label: 'Harvest records',
@@ -166,6 +185,7 @@ describe('OSP § 11 registry panel', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     confirmRecordTypes.mockReset();
     confirmRecordTypes.mockReturnValue({ unwrap: () => Promise.resolve({}) });
+    complianceExports = true;
   });
 
   it('offers no way to confirm rows in bulk', () => {
@@ -285,5 +305,30 @@ describe('OSP § 11 registry panel', () => {
         label: 'Pool closings from the huller'
       })
     );
+  });
+
+  /**
+   * The workbook download is one of the seven doors in `subscriptions/gating.py`. Ungated in the
+   * UI it produced a generic "Could not prepare that file" toast on Starter — a fault in Trazo,
+   * said where a plan boundary was. The blank-by-blank readout is NOT gated: that is the farm
+   * reading its own records.
+   */
+  it('offers no workbook download on a plan that cannot produce one, and says why', () => {
+    complianceExports = false;
+    renderPanel();
+    expect(screen.queryByRole('button', { name: 'Excel' })).toBeNull();
+    expect(
+      screen.getByText(enUS['osp.attachments.complianceOnly' as keyof typeof enUS] as string)
+    ).toBeInTheDocument();
+    // Still readable — the section keeps its own diagnosis of what is blank.
+    expect(screen.getByText('Field and Crop Information Form')).toBeInTheDocument();
+  });
+
+  it('hands the workbooks back the moment the plan carries them', () => {
+    renderPanel();
+    expect(screen.getAllByRole('button', { name: 'Excel' }).length).toBeGreaterThan(0);
+    expect(
+      screen.queryByText(enUS['osp.attachments.complianceOnly' as keyof typeof enUS] as string)
+    ).toBeNull();
   });
 });

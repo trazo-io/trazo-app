@@ -1611,7 +1611,7 @@ export function getConsumerEventDescription(
         // Claim-safety re-voice (2026-08-01): this branch said "provides natural protection
         // WITHOUT SYNTHETIC CHEMICALS, supporting HEALTHIER FOOD PRODUCTION" — an absolute
         // composition claim plus an unsupported health benefit, from a record that only knows
-        // one product was applied. Both are FTC 16 CFR 260.6 general-benefit territory, and
+        // one product was applied. Both are FTC 16 CFR 260.4 general-benefit territory, and
         // the first is not even reliably true (organic-approved does not mean non-synthetic;
         // 7 CFR 205.601 lists synthetics that are allowed). Says what happened and what the
         // approval means instead.
@@ -2374,7 +2374,7 @@ export function getConsumerEventDescription(
     // `incidentShortDescription`). `sustainabilityBenefit` is emptied rather than reworded:
     // ConsumerEventCard's `isGenericCopy` suppresses the ENVIRONMENTAL BENEFIT block on an
     // empty string, and there is no environmental benefit to claim from a contamination event.
-    // Claiming one is exactly the FTC 16 CFR 260.6 general-benefit failure the rest of this
+    // Claiming one is exactly the FTC 16 CFR 260.4 general-benefit failure the rest of this
     // file has been pruned of.
     if (isContaminationIncident) {
       consumerImpact =
@@ -2761,7 +2761,7 @@ export function getConsumerEventDescription(
       };
 
       // The fallback described ANY unrecognised certification as "validating sustainable
-      // practices" — an unqualified general environmental benefit claim (16 CFR 260.6) applied
+      // practices" — an unqualified general environmental benefit claim (16 CFR 260.4) applied
       // to a value nobody had reviewed. State the record, claim nothing.
       const certDesc =
         certificationTypes[event.certification_type] ||

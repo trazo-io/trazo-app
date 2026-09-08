@@ -21,7 +21,7 @@ export default function AuthFooter() {
 
   const links = [
     { href: `${LANDING_URL}/privacy-policy`, id: 'app.privacyPolicy' },
-    { href: `${LANDING_URL}/terms-conditions`, id: 'app.termsOfService' },
+    { href: `${LANDING_URL}/terms-of-service`, id: 'app.termsOfService' },
     { href: LANDING_URL, id: 'app.about' },
     { href: `${LANDING_URL}/contact`, id: 'app.contactUs' }
   ];

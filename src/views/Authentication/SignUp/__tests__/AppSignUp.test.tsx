@@ -143,9 +143,17 @@ describe('AppSignUp Component', () => {
     expect(screen.getByText('Create Business Account')).toBeInTheDocument();
     // Anchored on the form's own title, not the marketing panel: the hero copy has been
     // rewritten twice since this file was written and is not what the case is about.
-    expect(screen.getByText("Build Your Farm's Brand")).toBeInTheDocument();
+    expect(screen.getByText('Set up your farm records')).toBeInTheDocument();
     expect(screen.getByText('Create New Company')).toBeInTheDocument();
     expect(screen.getByText('Join Existing Company')).toBeInTheDocument();
+
+    // The title must be a real <h1>, not a <Text> (= <p>). This whole screen returned ZERO
+    // for `querySelectorAll('h1,h2,h3,h4')` until 2026-09-07 — heading navigation had nothing
+    // to land on and the document stated no topic (WCAG 1.3.1 / 2.4.6, Level A). Asserting
+    // the ROLE, not the text, is what stops a future Text/Heading swap from passing.
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Set up your farm records'
+    );
   });
 
   it('switches to join company mode when toggle is clicked', async () => {
@@ -512,7 +520,7 @@ describe('AppSignUp Component', () => {
     expect(screen.getByText('Create Business Account')).toBeInTheDocument();
     // Anchored on the form's own title, not the marketing panel: the hero copy has been
     // rewritten twice since this file was written and is not what the case is about.
-    expect(screen.getByText("Build Your Farm's Brand")).toBeInTheDocument();
+    expect(screen.getByText("Set up your farm records")).toBeInTheDocument();
   });
 
   it('is accessible', async () => {

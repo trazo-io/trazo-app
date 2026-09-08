@@ -420,7 +420,7 @@ const CHEMICAL_FIELDS: readonly FieldConfig<unknown, ChemicalEventData>[] = [
     surfaces: { form: 'immediate' },
     formatter: formatPercentage
   },
-  // ---- Micronutrients (FE only) — §E-3, 7 CFR 205.601(j)(6) -----------------------------
+  // ---- Micronutrients (FE only) — §E-3, 7 CFR 205.601(j)(7) -----------------------------
   // Synthetic micronutrients are permitted ONLY where a soil or plant-tissue deficiency is
   // documented, and never as a defoliant/herbicide/desiccant. WHICH nutrient is plain language
   // ("zinc") so it reaches the consumer card; the RATE is an application detail of the same

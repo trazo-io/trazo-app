@@ -614,8 +614,20 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                   the record named a draft their certifier has never seen. */}
               {planOnFile ? (
                 <Text fontSize="sm" color="gray.700">
+                  {/* 🔴 2026-09-07 — "the plan your certifier holds" is only TRUE of a plan that
+                      has left draft. On a first-year operation nothing has, `selectPlanOnFile`
+                      returns nothing and the card falls back to the working draft — and the
+                      sentence then told the farmer their certifier holds a plan nobody has ever
+                      sent. Verified live on a farm created from scratch the same day. The
+                      fallback is still the right TARGET (there is no other version to continue);
+                      it is the claim about the certifier that has to go. */}
                   {intl.formatMessage(
-                    { id: 'osp.annual.continuing' },
+                    {
+                      id:
+                        planOnFile.status === 'draft'
+                          ? 'osp.annual.continuingDraft'
+                          : 'osp.annual.continuing'
+                    },
                     { version: planOnFile.version_number }
                   )}
                   {producesDraft ? (

@@ -500,7 +500,7 @@ const SOIL_FIELDS: readonly FieldConfig<unknown, SoilData>[] = [
     visibleForSubtypes: ['ST', 'LA'],
     surfaces: { modal: 'secondary', form: 'immediate' }
   },
-  // Micronutrient results — the documented deficiency that 7 CFR 205.601(j)(6) requires
+  // Micronutrient results — the documented deficiency that 7 CFR 205.601(j)(7) requires
   // before a micronutrient may be applied (see chemicalEvent.ts micronutrient_type).
   {
     name: 'lab_zinc_ppm',
