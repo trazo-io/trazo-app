@@ -4,6 +4,7 @@ import { Outlet, useSearchParams } from 'react-router-dom';
 import Footer from '../Footer/Footer';
 import AuthNavbar from 'components/Navbars/AuthNavbar';
 import { ConsentBanner } from '../Privacy/ConsentBanner';
+import { grantAnalyticsConsent, revokeAnalyticsConsent } from 'config/posthog';
 
 interface ConsumerProductLayoutProps {
   children?: React.ReactNode;
@@ -30,8 +31,17 @@ export const ConsumerProductLayout: React.FC<ConsumerProductLayoutProps> = ({ ch
         <AuthNavbar secondary={false} logoText="trazo" logo="" forceDefaultLogo />
       </Portal>
 
-      {/* Privacy Consent Banner for consumer analytics */}
-      {!isBuyerReviewOpen && <ConsentBanner />}
+      {/* Privacy Consent Banner for consumer analytics.
+          onConsentChange is what actually reaches PostHog. Without it the banner still
+          records the decision in localStorage, but capture stays off until the next page
+          load — the feature would look wired and not be. */}
+      {!isBuyerReviewOpen && (
+        <ConsentBanner
+          onConsentChange={(consent) =>
+            consent ? grantAnalyticsConsent() : revokeAnalyticsConsent()
+          }
+        />
+      )}
 
       <Flex direction="column" minH="100vh" bg="gray.50">
         {/* Main Content - Full width for product detail */}

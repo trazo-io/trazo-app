@@ -39,3 +39,9 @@ stats.html
 # Temporary files
 .tmp/
 .cache/
+e2e/.auth/
+test-results/
+playwright-report/
+blob-report/
+audit.txt
+audit-full.json
