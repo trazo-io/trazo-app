@@ -189,10 +189,10 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Vientos fuertes cruzaron el lote y después se revisó el cultivo en busca de daños',
   'A rough weather day is in this record rather than left out of it, so you are seeing the season as it actually went.':
     'Un día de mal tiempo está en este registro en lugar de quedar fuera: estás viendo la temporada tal como ocurrió.',
-  'The orchard floor was mown between the tree rows':
-    'Se cortó la cubierta del suelo entre las filas de árboles',
-  'Cutting ground cover is mechanical weed control, and it leaves a clean surface for fruit that is picked up off the floor.':
-    'Cortar la cubierta vegetal es control mecánico de malezas y deja una superficie limpia para la fruta que se recoge del suelo.',
+  'Ground cover between the rows was mown':
+    'Se cortó la cubierta vegetal entre las filas',
+  'Cutting ground cover is mechanical weed control rather than a herbicide application.':
+    'Cortar la cubierta vegetal es control mecánico de malezas, no una aplicación de herbicida.',
   'Lime or sulfur was worked into the ground to correct the soil pH':
     'Se incorporó cal o azufre al terreno para corregir el pH del suelo',
   'Soil at the right pH releases nutrients the crop can actually take up, so less fertilizer is needed to feed it.':
@@ -480,8 +480,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   Thinning: 'Raleo de frutos',
   'Testing before feeding means only what the soil is short of gets added.':
     'Analizar antes de fertilizar significa que solo se agrega aquello de lo que el suelo carece.',
-  'The block was irrigated, from a recorded water source':
-    'Se regó el lote, desde una fuente de agua registrada',
+  'The block was irrigated':
+    'Se regó el lote',
   'The crop was picked, weighed and graded': 'Se cosechó, pesó y clasificó el cultivo',
   'The farm logged work on its equipment as part of this crop’s record.':
     'La finca registró trabajos en su maquinaria como parte del historial de este cultivo.',
@@ -862,7 +862,7 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Una copa abierta se seca más rápido después de la lluvia, lo que reduce la presión de enfermedades y la necesidad de aplicar fungicidas.',
 
   // --- Orchard-floor management (MO), incl. flame weeding — 2026-07 ---
-  'Weeds were controlled with heat instead of chemicals, using a propane flamer along the tree rows.':
+  'Weeds were controlled with heat instead of chemicals, using a propane flamer.':
     'Las malezas se controlaron con calor en lugar de químicos, usando un flameador de propano a lo largo de las hileras de árboles.',
   'Flame weeding removes weeds without synthetic herbicides, leaving no chemical residue in the soil or on the crop.':
     'El deshierbe con llama elimina las malezas sin herbicidas sintéticos, sin dejar residuos químicos en el suelo ni en el cultivo.',
