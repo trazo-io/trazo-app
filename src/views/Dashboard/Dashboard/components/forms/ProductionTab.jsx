@@ -309,6 +309,7 @@ const formSchemaMainInfo = object({
   // instead of USDA blanket mechanical averages (~150 kg for thinning, ~600 kg for pruning).
   production_method: string().optional(),
   observation: string().optional(),
+  private_note: string().optional(),
   // FSMA PSR § 112.161(b) sign-off. Harvest/packing (§ 112.140) and animal-intrusion
   // monitoring (§ 112.83) are part-112 records. `reviewed` rides the `...data` spread as a
   // 'true'/'false' STRING, so it is coerced to a real boolean just below.
@@ -737,6 +738,7 @@ const ProductionTab = forwardRef(
           initialValues.extra_data?.method ||
           '',
         observation: initialValues.observation || '',
+        private_note: initialValues.private_note || '',
         reviewed:
           initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
         reviewer_name: initialValues.reviewer_name || '',
@@ -905,6 +907,7 @@ const ProductionTab = forwardRef(
           transportation_unit: initialValues.transportation_unit || 'km',
           production_efficiency: initialValues.production_efficiency || 'normal',
           observation: initialValues.observation || '',
+          private_note: initialValues.private_note || '',
           reviewed:
             initialValues.reviewed === true || initialValues.reviewed === 'true' ? 'true' : 'false',
           reviewer_name: initialValues.reviewer_name || '',
@@ -1182,6 +1185,7 @@ const ProductionTab = forwardRef(
       'operation_efficiency',
       'equipment_hours',
       'observation',
+      'private_note',
       // Sprint 3 Epic 3.2: Consumer Trust Fields for preview
       'seeds_source',
       'custom_fields',
@@ -1263,6 +1267,7 @@ const ProductionTab = forwardRef(
             'transportation_distance',
             'transportation_unit',
             'observation',
+            'private_note',
             // Phase 2.3: Added custom fields for farmer-created data
             'custom_fields',
             // Sprint 3 Epic 3.2: Consumer Trust Fields for preview
@@ -5266,6 +5271,21 @@ const ProductionTab = forwardRef(
                         {...field}
                         placeholder="Optional: Describe the conditions that affected this production activity, efficiency measures taken, or any observations that consumers might find valuable."
                         rows={4}
+                      />
+                    )}
+                  />
+                </StandardField>
+                <StandardField
+                  label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
+                  helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
+                  <Controller
+                    name="private_note"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardTextarea
+                        {...field}
+                        placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                        rows={3}
                       />
                     )}
                   />

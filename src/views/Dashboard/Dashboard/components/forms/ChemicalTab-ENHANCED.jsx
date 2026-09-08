@@ -217,6 +217,7 @@ export const buildChemicalSchema = (intl) =>
     application_timing: string().optional(),
     target_pest_disease: string().optional(),
     observation: string().optional(),
+    private_note: string().optional(),
     // EPA Worker Protection Standard (WPS) Compliance Fields - 40 CFR 170.309
     applicator_name: string().optional(),
     // F21 — GG authorizer (FV-GFS 32.02.01 #10) + FSMA supervisor review (112.161(b))
@@ -631,6 +632,7 @@ const ChemicalTab = forwardRef(
         target_pest_disease:
           initialValues.target_pest_disease || initialValues.extra_data?.target_pest_disease || '',
         observation: initialValues.observation || '',
+        private_note: initialValues.private_note || '',
         // EPA WPS Compliance Fields
         applicator_name: initialValues.applicator_name || '',
         // F21 — authorizer (GG) + supervisor review (FSMA)
@@ -1004,6 +1006,7 @@ const ChemicalTab = forwardRef(
             initialValues.extra_data?.target_pest_disease ||
             '',
           observation: initialValues.observation || '',
+          private_note: initialValues.private_note || '',
           // EPA WPS Compliance Fields
           applicator_name: initialValues.applicator_name || '',
           // F21 — authorizer (GG) + supervisor review (FSMA)
@@ -1224,6 +1227,7 @@ const ChemicalTab = forwardRef(
       'application_timing',
       'target_pest_disease',
       'observation',
+      'private_note',
       'applicator_name',
       'epa_registration_number',
       'restricted_use_pesticide',
@@ -1288,6 +1292,7 @@ const ChemicalTab = forwardRef(
             'application_timing',
             'target_pest_disease',
             'observation',
+            'private_note',
             'applicator_name',
             'epa_registration_number',
             'restricted_use_pesticide',
@@ -5706,6 +5711,21 @@ const ChemicalTab = forwardRef(
                       keep, and it is the reason the privacy copy describes the match as a
                       safeguard rather than a removal guarantee. */}
                   <PublicNoteSupplierHint control={methods.control} />
+                </StandardField>
+                <StandardField
+                  label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
+                  helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
+                  <Controller
+                    name="private_note"
+                    control={methods.control}
+                    render={({ field }) => (
+                      <StandardTextarea
+                        {...field}
+                        placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                        rows={3}
+                      />
+                    )}
+                  />
                 </StandardField>
               </SectionBox>
             </>

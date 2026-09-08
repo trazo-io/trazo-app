@@ -150,6 +150,7 @@ const formSchemaMainInfo = object({
     .transform((val) => (val ? Number(val) : undefined)),
   crop_impact: string().optional(),
   observation: string().optional(),
+  private_note: string().optional(),
   custom_fields: array(
     object({
       id: string().optional(),
@@ -229,6 +230,7 @@ const WeatherTab = forwardRef(
         humidity_level: initialValues.humidity_level?.toString() || '',
         crop_impact: initialValues.crop_impact || '',
         observation: initialValues.observation || '',
+        private_note: initialValues.private_note || '',
         custom_fields: initialValues.custom_fields || []
       }
     });
@@ -298,6 +300,7 @@ const WeatherTab = forwardRef(
           humidity_level: initialValues.humidity_level?.toString() || '',
           crop_impact: initialValues.crop_impact || '',
           observation: initialValues.observation || '',
+          private_note: initialValues.private_note || '',
           custom_fields: initialValues.custom_fields || []
         });
         isInitialMount.current = false; // Mark as initialized - skip future resets
@@ -397,6 +400,7 @@ const WeatherTab = forwardRef(
           'humidity_level',
           'crop_impact',
           'observation',
+          'private_note',
           'custom_fields'
         ];
 
@@ -443,14 +447,16 @@ const WeatherTab = forwardRef(
             lower_temperature: data.lower_temperature,
             temperature_unit: data.temperature_unit || 'F',
             way_of_protection: data.way_of_protection,
-            observation: data.observation
+            observation: data.observation,
+            private_note: data.private_note
           };
           break;
         case 'DR':
           data = {
             type: data.type,
             water_deficit: data.water_deficit,
-            observation: data.observation
+            observation: data.observation,
+            private_note: data.private_note
           };
           break;
         case 'HL':
@@ -459,7 +465,8 @@ const WeatherTab = forwardRef(
             type: data.type,
             duration: data.duration,
             way_of_protection: data.way_of_protection,
-            observation: data.observation
+            observation: data.observation,
+            private_note: data.private_note
           };
           break;
         case 'HT':
@@ -469,7 +476,8 @@ const WeatherTab = forwardRef(
             temperature_unit: data.temperature_unit || 'F',
             start_date: data.start_date || null,
             end_date: data.end_date || null,
-            observation: data.observation
+            observation: data.observation,
+            private_note: data.private_note
           };
           break;
         case 'TS':
@@ -479,7 +487,8 @@ const WeatherTab = forwardRef(
             precipitation_amount: data.precipitation_amount,
             duration: data.duration,
             damage_assessment: data.damage_assessment,
-            observation: data.observation
+            observation: data.observation,
+            private_note: data.private_note
           };
           break;
         case 'HW':
@@ -488,7 +497,8 @@ const WeatherTab = forwardRef(
             wind_speed: data.wind_speed,
             duration: data.duration,
             protection_measures: data.protection_measures,
-            observation: data.observation
+            observation: data.observation,
+            private_note: data.private_note
           };
           break;
         case 'HH':
@@ -498,13 +508,15 @@ const WeatherTab = forwardRef(
             humidity_level: data.humidity_level,
             duration: data.duration,
             crop_impact: data.crop_impact,
-            observation: data.observation
+            observation: data.observation,
+            private_note: data.private_note
           };
           break;
         default:
           data = {
             type: data.type,
-            observation: data.observation
+            observation: data.observation,
+            private_note: data.private_note
           };
           break;
       }
@@ -1046,6 +1058,15 @@ const WeatherTab = forwardRef(
                     })}
                     rows={4}
                     {...register('observation')}
+                  />
+                </StandardField>
+                <StandardField
+                  label={intl.formatMessage({ id: 'events.common.fields.privateNote' })}
+                  helpText={intl.formatMessage({ id: 'events.common.help.privateNoteAudience' })}>
+                  <StandardTextarea
+                    placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                    rows={3}
+                    {...register('private_note')}
                   />
                 </StandardField>
               </SectionBox>
