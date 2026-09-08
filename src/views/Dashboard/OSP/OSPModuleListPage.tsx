@@ -34,6 +34,10 @@ import {
   StandardPageLoading,
   StandardQueryError
 } from 'components/Design/StandardComponents';
+import {
+  ComplianceExportsUpsell,
+  useComplianceExports
+} from 'components/Guards/ComplianceExportsGuard';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import OSPPlanReviewPanel from './OSPPlanReviewPanel';
 import PacketDownloadControl from './PacketDownloadControl';
@@ -233,6 +237,11 @@ const OSPModuleListPage = () => {
   const navigate = useNavigate();
   const { farmId } = useParams();
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
+  // Starter is bounded by what it can PRODUCE (`subscriptions/gating.py`). Both exports on this
+  // page — the packet ZIP and the per-module PDFs — are behind that gate, and both were plain
+  // <a href>s onto the API: on Starter the click left the app and landed the grower on the DRF
+  // browsable 403 page, raw JSON and all. The boundary has to be a state of the page.
+  const hasComplianceExports = useComplianceExports();
   const companyId = currentCompany?.id != null ? String(currentCompany.id) : '';
   const farmParcels =
     currentCompany?.establishments?.find((e: any) => String(e.id) === String(farmId))?.parcels ||
@@ -355,9 +364,11 @@ const OSPModuleListPage = () => {
         //
         // It also used to export `selectWorkingOsp(osps)` — the highest-numbered DRAFT — through
         // a bare href, naming no version anywhere. See PacketDownloadControl for what that cost.
-        ospId != null ? (
+        ospId == null ? undefined : hasComplianceExports ? (
           <PacketDownloadControl companyId={companyId} farmId={farmId || ''} osps={osps} />
-        ) : undefined
+        ) : (
+          <ComplianceExportsUpsell compact messageId="osp.packet.complianceOnly" />
+        )
       }>
       {!latestOsp ? (
         <StandardCard>
@@ -470,7 +481,7 @@ const OSPModuleListPage = () => {
                       navigate(`/admin/dashboard/farm/${farmId}/osp/module/${definition.key}`)
                     }
                     downloadHref={
-                      ospId != null
+                      ospId != null && hasComplianceExports
                         ? env.getApiUrl(
                             OSP_MODULE_PDF_URL(companyId, farmId || '', ospId, definition.key)
                           )

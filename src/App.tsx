@@ -73,7 +73,7 @@ const RedirectToPrivacy = () => {
   return null;
 };
 const RedirectToTerms = () => {
-  window.location.replace(`${LANDING_URL}/terms-conditions`);
+  window.location.replace(`${LANDING_URL}/terms-of-service`);
   return null;
 };
 // Lazy load QR scanning components for mobile performance

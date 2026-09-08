@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
+  Badge,
   Box,
   VStack,
   HStack,
@@ -20,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogOverlay
 } from '@chakra-ui/react';
-import { FaCheckCircle, FaFileInvoiceDollar, FaTrashAlt, FaTruck } from 'react-icons/fa';
+import { FaBan, FaCheckCircle, FaFileInvoiceDollar, FaTrashAlt, FaTruck } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import {
   StandardButton,
@@ -33,7 +34,8 @@ import {
   useGetSalesRecordsQuery,
   useGetHarvestLotsQuery,
   useCreateSalesRecordMutation,
-  useDeleteSalesRecordMutation
+  useDeleteSalesRecordMutation,
+  useVoidSalesRecordMutation
 } from 'store/api/historyApi';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
 
@@ -57,6 +59,14 @@ interface SalesRecord {
   prior_products_transported?: string;
   transport_inspected_free_of?: string[];
   transport_notes?: string;
+  /**
+   * Void state. A voided sale is KEPT on the record (7 CFR 205.103(b)(4)) and stops counting
+   * as a sale; it is not a deleted row and must still render, marked.
+   */
+  is_voided?: boolean;
+  void_reason?: string;
+  voided_at?: string | null;
+  voided_by_name?: string;
   /** Lot codes of the harvest passes this sale drew from, read-only from the API. */
   harvest_lot_codes?: string[];
   harvest_events?: number[];
@@ -80,6 +90,13 @@ interface SalesRecordsSectionProps {
   establishmentId?: string | number | null;
   /** The production's own harvest unit (History.production_unit), when it has finished. */
   harvestUnit?: string | null;
+  /**
+   * Whether the season is closed. Once it is, the server refuses to DELETE a sale
+   * (7 CFR 205.103(b)(4) — the sale is the far end of the audit trail), so the correction
+   * offered here becomes Void rather than Delete. The server enforces it either way; this
+   * only decides which control the operator is shown.
+   */
+  isFinished?: boolean;
 }
 
 // MUST stay identical to the harvest form's UNIT_OPTIONS (StandardFinishProductionForm) and to
@@ -203,6 +220,11 @@ const describeApiError = (err: unknown): string | undefined => {
   const data = (err as { data?: unknown })?.data;
   if (typeof data === 'string') return data;
   if (!data || typeof data !== 'object') return undefined;
+  // A DRF `detail` is the whole sentence; the retention refusal (423) also carries
+  // `production_id` and `retention_until`, and joining every string value would append a UUID
+  // to the message the farmer reads. Prefer the sentence when there is one.
+  const detail = (data as { detail?: unknown }).detail;
+  if (typeof detail === 'string' && detail.trim()) return detail;
   const messages = Object.values(data as Record<string, unknown>)
     .flatMap((value) => (Array.isArray(value) ? value : [value]))
     .filter((value): value is string => typeof value === 'string');
@@ -213,7 +235,8 @@ export function SalesRecordsSection({
   productionId,
   canWrite,
   establishmentId,
-  harvestUnit
+  harvestUnit,
+  isFinished = false
 }: SalesRecordsSectionProps) {
   const intl = useIntl();
   const toast = useToast();
@@ -274,6 +297,13 @@ export function SalesRecordsSection({
 
   const [createSalesRecord, { isLoading: isCreating }] = useCreateSalesRecordMutation();
   const [deleteSalesRecord, { isLoading: isDeleting }] = useDeleteSalesRecordMutation();
+  const [voidSalesRecord, { isLoading: isVoiding }] = useVoidSalesRecordMutation();
+  // Void, not delete: once the season is finished the server refuses a DELETE under
+  // 7 CFR 205.103(b)(4). The row has to stay on the record, so the correction is a void with
+  // a stated reason — which is also why the reason is required before the button enables.
+  const [pendingVoidId, setPendingVoidId] = useState<number | null>(null);
+  const [voidReason, setVoidReason] = useState('');
+  const cancelVoidRef = useRef<HTMLButtonElement>(null);
 
   // Which conditional fields the form is actually RENDERING. Derived once and used for both the
   // render and the payload, because a field the grower cannot see must not be able to submit —
@@ -386,6 +416,34 @@ export function SalesRecordsSection({
     }
   };
 
+  const handleVoid = async () => {
+    if (pendingVoidId === null) return;
+    try {
+      await voidSalesRecord({
+        recordId: pendingVoidId,
+        productionId,
+        voidReason: voidReason.trim()
+      }).unwrap();
+      toast({
+        title: intl.formatMessage({ id: 'sales.records.toast.voided' }),
+        status: 'success',
+        duration: 3000,
+        isClosable: true
+      });
+    } catch (err) {
+      toast({
+        title: intl.formatMessage({ id: 'sales.records.toast.error' }),
+        description: describeApiError(err),
+        status: 'error',
+        duration: 9000,
+        isClosable: true
+      });
+    } finally {
+      setPendingVoidId(null);
+      setVoidReason('');
+    }
+  };
+
   const handleDelete = async () => {
     if (pendingDeleteId === null) return;
     try {
@@ -396,11 +454,16 @@ export function SalesRecordsSection({
         duration: 3000,
         isClosable: true
       });
-    } catch {
+    } catch (err) {
+      // A 423 here is not a failure the farmer can retry — it is the § 205.103(b)(4)
+      // retention rule, and the server sends the reason. Showing "something went wrong"
+      // instead teaches them the app is broken rather than that the record is kept.
+      const detail = describeApiError(err);
       toast({
         title: intl.formatMessage({ id: 'sales.records.toast.error' }),
+        description: detail,
         status: 'error',
-        duration: 3000,
+        duration: detail ? 9000 : 3000,
         isClosable: true
       });
     } finally {
@@ -432,9 +495,22 @@ export function SalesRecordsSection({
                 spacing={2}>
                 <Box minW={0}>
                   <HStack spacing={2} flexWrap="wrap">
-                    <Text fontSize="sm" fontWeight="semibold" noOfLines={1}>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="semibold"
+                      noOfLines={1}
+                      textDecoration={record.is_voided ? 'line-through' : undefined}
+                      color={record.is_voided ? labelFg : undefined}>
                       {record.buyer_name}
                     </Text>
+                    {/* A voided sale stays on the record (7 CFR 205.103(b)(4)) and must READ as
+                        retracted, not merely look faded — strike-through alone is a colour-ish
+                        signal, so the state is also said in words. */}
+                    {record.is_voided && (
+                      <Badge variant="neutral" fontSize="xs" flexShrink={0}>
+                        {intl.formatMessage({ id: 'sales.records.voided.badge' })}
+                      </Badge>
+                    )}
                     {record.organic_on_invoice && (
                       <Tooltip
                         hasArrow
@@ -470,6 +546,16 @@ export function SalesRecordsSection({
                           style: 'currency',
                           currency: 'USD'
                         })}
+                      </Text>
+                    )}
+                    {/* The reason is the half that makes a voided row readable instead of just
+                        missing — the same thing the certifier dossier prints beside it. */}
+                    {record.is_voided && record.void_reason && (
+                      <Text fontSize="xs" color={labelFg} noOfLines={2}>
+                        {intl.formatMessage(
+                          { id: 'sales.records.voided.reason' },
+                          { reason: record.void_reason }
+                        )}
                       </Text>
                     )}
                     {(record.harvest_lot_codes?.length ?? 0) > 0 && (
@@ -524,14 +610,18 @@ export function SalesRecordsSection({
                     </HStack>
                   )}
                 </Box>
-                {canWrite && (
+                {canWrite && !record.is_voided && (
                   <IconButton
-                    aria-label={intl.formatMessage({ id: 'sales.records.action.delete' })}
-                    icon={<FaTrashAlt />}
+                    aria-label={intl.formatMessage({
+                      id: isFinished ? 'sales.records.action.void' : 'sales.records.action.delete'
+                    })}
+                    icon={isFinished ? <FaBan /> : <FaTrashAlt />}
                     size="sm"
                     variant="ghost"
-                    colorScheme="red"
-                    onClick={() => setPendingDeleteId(record.id)}
+                    colorScheme={isFinished ? 'gray' : 'red'}
+                    onClick={() =>
+                      isFinished ? setPendingVoidId(record.id) : setPendingDeleteId(record.id)
+                    }
                   />
                 )}
               </HStack>
@@ -945,6 +1035,62 @@ export function SalesRecordsSection({
           </>
         )}
       </VStack>
+
+      {/* Void confirmation — a reason is required, because a void with no reason is a
+          deletion with extra steps: the row survives but the record stops saying what
+          happened. */}
+      <AlertDialog
+        isOpen={pendingVoidId !== null}
+        leastDestructiveRef={cancelVoidRef}
+        onClose={() => {
+          setPendingVoidId(null);
+          setVoidReason('');
+        }}
+        isCentered>
+        <AlertDialogOverlay>
+          <AlertDialogContent mx={4}>
+            <AlertDialogHeader fontSize="md" fontWeight="bold">
+              {intl.formatMessage({ id: 'sales.records.voidConfirm.title' })}
+            </AlertDialogHeader>
+            <AlertDialogBody fontSize="sm">
+              <Text mb={3}>{intl.formatMessage({ id: 'sales.records.voidConfirm.body' })}</Text>
+              <StandardField
+                label={intl.formatMessage({ id: 'sales.records.voidConfirm.reasonLabel' })}
+                required>
+                <StandardInput
+                  value={voidReason}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setVoidReason(e.target.value)
+                  }
+                  placeholder={intl.formatMessage({
+                    id: 'sales.records.voidConfirm.reasonPlaceholder'
+                  })}
+                />
+              </StandardField>
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button
+                ref={cancelVoidRef}
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setPendingVoidId(null);
+                  setVoidReason('');
+                }}>
+                {intl.formatMessage({ id: 'sales.records.voidConfirm.cancel' })}
+              </Button>
+              <StandardButton
+                size="sm"
+                onClick={handleVoid}
+                isLoading={isVoiding}
+                isDisabled={!voidReason.trim()}
+                ml={2}>
+                {intl.formatMessage({ id: 'sales.records.voidConfirm.confirm' })}
+              </StandardButton>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
 
       {/* Delete confirmation */}
       <AlertDialog

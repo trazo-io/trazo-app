@@ -86,7 +86,7 @@ export default function ImpactDashboard() {
                 // farm. This card previously led with the average transparency score, which is
                 // a PRODUCER-dashboard KPI — putting it in front of a shopper is the
                 // self-created sustainability label banned by ECGT 2024/825 (live 2026-09-27)
-                // and an FTC 16 CFR 260.6 general-benefit risk. See
+                // and an FTC 16 CFR 260.4 general-benefit risk. See
                 // .claude/rules/transparency-first.md.
                 value={impactMetrics?.total_scans || 0}
                 label="Products Scanned"
