@@ -4,7 +4,7 @@
  * The transparency/carbon score is a PRODUCER-dashboard KPI. Rendering it, or any verdict,
  * badge, letter grade or colour scale derived from it, on a public page is the self-created
  * sustainability-label class banned by EU ECGT Directive 2024/825 (live 2026-09-27) and an
- * FTC 16 CFR 260.6 general-benefit risk. See .claude/rules/transparency-first.md and
+ * FTC 16 CFR 260.4 general-benefit risk. See .claude/rules/transparency-first.md and
  * .claude/rules/compliance.md.
  *
  * WHY THIS WALKS THE IMPORT GRAPH: the first version of this guard scanned two fixed

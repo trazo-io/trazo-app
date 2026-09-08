@@ -58,7 +58,14 @@ interface Props {
  * already holds. Wrapping that whole card in the Guard would have honoured the paywall and broken
  * the revocation path in the same stroke.
  */
-export const ComplianceExportsUpsell: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
+export const ComplianceExportsUpsell: React.FC<{ compact?: boolean; messageId?: string }> = ({
+  compact = false,
+  // WHICH document is behind the wall, said in the compact line. The default names the
+  // certifier link because that was the first surface to use it; the OSP page passes its own,
+  // because "Creating a new certifier link is part of the Compliance plan" above a Download
+  // packet button answers a question the grower did not ask.
+  messageId = 'app.complianceExports.compact'
+}) => {
   const intl = useIntl();
   const navigate = useNavigate();
 
@@ -76,7 +83,7 @@ export const ComplianceExportsUpsell: React.FC<{ compact?: boolean }> = ({ compa
     return (
       <HStack gap={2} align="center" flexWrap="wrap">
         <Text fontSize="sm" color="gray.600">
-          {intl.formatMessage({ id: 'app.complianceExports.compact' })}
+          {intl.formatMessage({ id: messageId })}
         </Text>
         {/* `ghost`, not `link`: StandardButton's variant union is
             'primary' | 'secondary' | 'outline' | 'ghost' — a `link` variant does not exist and

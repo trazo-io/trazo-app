@@ -34,6 +34,7 @@ import OSPAnnualUpdateCard from '../OSPAnnualUpdateCard';
 
 const V3 = { id: 65, version_number: 3, status: 'active' } as any;
 const V4_DRAFT = { id: 66, version_number: 4, status: 'draft' } as any;
+const V1_DRAFT = { id: 70, version_number: 1, status: 'draft' } as any;
 
 const renderCard = (props: Record<string, unknown> = {}) =>
   render(
@@ -68,6 +69,26 @@ describe('annual update files against the plan on file', () => {
   it('says nothing about a draft when none is open', () => {
     renderCard();
     expect(screen.queryByText(/will be recorded as producing/)).toBeNull();
+  });
+
+  /*
+   * 🔴 2026-09-07 — found by walking a brand-new operation through signup, farm setup and its
+   * first OSP. Nothing had left draft, so `selectPlanOnFile` returns nothing and the card falls
+   * back to the working draft — correct, there is no other version to continue. But the sentence
+   * is unconditional, so the screen told a farmer whose plan had never been sent anywhere that
+   * their certifier holds it. The fallback TARGET is right; the claim about the certifier is not.
+   */
+  it('does not claim the certifier holds a plan that is still a draft', () => {
+    renderCard({ planOnFile: V1_DRAFT });
+    expect(screen.queryByText(/the plan your certifier holds/)).toBeNull();
+    expect(
+      screen.getByText(/It has not been submitted to your certifier yet\./)
+    ).toBeInTheDocument();
+  });
+
+  it('still names the version a first-year filing continues', () => {
+    renderCard({ planOnFile: V1_DRAFT });
+    expect(screen.getByText(/This filing continues OSP v1/)).toBeInTheDocument();
   });
 
   it('posts the plan on file as prior_osp, never the draft', () => {

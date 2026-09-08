@@ -168,6 +168,24 @@ interface SectionStatus {
  * returning it in the badge closes the Day-1 UX loop where a farmer
  * submits, gets a cryptic 400, and never understands why.
  */
+/**
+ * The DAY a section was last written, whatever shape the stamp arrived in.
+ *
+ * 🔴 2026-09-07 — `last_updated` has two authors: the module compiler stamps a full ISO-8601
+ * datetime (`2026-09-07T16:49:10.093478+00:00`), the section editor a plain `2026-09-07`. This
+ * list printed whichever it found, raw, so a module-authored section sat next to a hand-edited
+ * one reading like machine output. The dossier normalised this on 2026-08-19 and the packet's
+ * document 01 on 2026-09-07; this is the third renderer of the same field.
+ *
+ * An unparseable stamp is returned untouched — a date we cannot read is still evidence of when
+ * something moved, and blanking it would be worse than showing it.
+ */
+function sectionDay(value: string): string {
+  const text = (value || '').trim();
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(text);
+  return match ? match[1] : text;
+}
+
 function sectionStatus(narrative: string): SectionStatus {
   const trimmed = (narrative || '').trim();
   const charCount = trimmed.length;
@@ -989,7 +1007,7 @@ const OSPView: React.FC = () => {
                         </Text>
                         <Text fontSize="xs" color={subtextColor}>
                           {intl.formatMessage({ id: `osp.section.cfr.${key}` })}
-                          {section.last_updated ? ` · ${section.last_updated}` : ''}
+                          {section.last_updated ? ` · ${sectionDay(section.last_updated)}` : ''}
                         </Text>
                       </Stack>
                     </HStack>

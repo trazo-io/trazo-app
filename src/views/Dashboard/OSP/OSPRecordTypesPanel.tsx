@@ -59,6 +59,10 @@ import { StandardAlert, StandardButton, StandardCard } from 'components/Design/S
 import config from 'config/environment';
 import { OSP_ATTACHMENTS_URL } from 'config';
 import {
+  ComplianceExportsUpsell,
+  useComplianceExports
+} from 'components/Guards/ComplianceExportsGuard';
+import {
   useConfirmOSPRecordTypesMutation,
   useGetOSPAttachmentsQuery,
   useGetOSPRecordTypesQuery
@@ -136,6 +140,11 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
   });
   const [confirmRecordTypes, { isLoading: isConfirming }] = useConfirmOSPRecordTypesMutation();
   const { data: attachments } = useGetOSPAttachmentsQuery({ companyId, farmId, ospId: osp.id });
+  // The workbooks stream from a route the compliance gate covers (`subscriptions/gating.py`
+  // lists `attachments` among its seven doors). Without this the Starter grower got the generic
+  // "Could not prepare that file" toast — which names a fault in Trazo for what is actually a
+  // plan boundary, and tells them nothing about how to change the answer.
+  const hasComplianceExports = useComplianceExports();
   const [downloading, setDownloading] = useState<string | null>(null);
 
   // Ticks not yet sent. Rendered as the row's state so the checkbox answers the tap immediately;
@@ -657,6 +666,14 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                     'The Common OSP attachments (your certifier may call them by their own names), built from your records. These same files are already inside your packet — download one to see the blanks, or to send that form on its own.'
                 })}
               </Text>
+              {/* The blank-by-blank readout below stays on Starter — it is the farm reading its
+                  OWN records, and it is what makes the section worth answering. Only the file
+                  that leaves Trazo is behind the plan. */}
+              {!hasComplianceExports && (
+                <Box mb={3}>
+                  <ComplianceExportsUpsell compact messageId="osp.attachments.complianceOnly" />
+                </Box>
+              )}
               <Stack spacing={1}>
                 {attachments.workbooks.map((wb) => (
                   <Flex
@@ -758,19 +775,21 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                         );
                       })}
                     </Stack>
-                    <StandardButton
-                      size="xs"
-                      variant="outline"
-                      flexShrink={0}
-                      leftIcon={<Icon as={FaDownload} boxSize={3} />}
-                      isDisabled={wb.error || downloading === wb.key}
-                      isLoading={downloading === wb.key}
-                      onClick={() => handleDownload(wb)}>
-                      {intl.formatMessage({
-                        id: 'osp.attachments.download',
-                        defaultMessage: 'Excel'
-                      })}
-                    </StandardButton>
+                    {hasComplianceExports ? (
+                      <StandardButton
+                        size="xs"
+                        variant="outline"
+                        flexShrink={0}
+                        leftIcon={<Icon as={FaDownload} boxSize={3} />}
+                        isDisabled={wb.error || downloading === wb.key}
+                        isLoading={downloading === wb.key}
+                        onClick={() => handleDownload(wb)}>
+                        {intl.formatMessage({
+                          id: 'osp.attachments.download',
+                          defaultMessage: 'Excel'
+                        })}
+                      </StandardButton>
+                    ) : null}
                   </Flex>
                 ))}
               </Stack>

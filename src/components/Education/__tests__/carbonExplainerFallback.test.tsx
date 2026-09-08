@@ -63,7 +63,7 @@ describe('CarbonImpactExplainer — no empty card', () => {
     expect(screen.getByText('kg in direct farm emissions')).toBeInTheDocument();
     expect(screen.getByText(/Like driving 1,?160\.1 miles/)).toBeInTheDocument();
 
-    // FTC 16 CFR 260.7: the boundary travels with the number, in the same block, never
+    // FTC 16 CFR 260.4(c): the boundary travels with the number, in the same block, never
     // only behind the expander.
     expect(
       screen.getByText(/Not a full life-cycle footprint: transport, packaging, and retail/)

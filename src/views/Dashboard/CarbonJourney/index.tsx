@@ -114,7 +114,7 @@ export default function CarbonJourney() {
     // This used to bucket the farm into high/medium/low and map that to a green/blue/gray
     // badge. Even with no words attached, a colour ladder keyed to thresholds Trazo invented
     // is a self-assigned grade on a consumer surface: the label class ECGT 2024/825 bans
-    // (live 2026-09-27) and an FTC 16 CFR 260.6 general-benefit risk. The badge still shows
+    // (live 2026-09-27) and an FTC 16 CFR 260.4 general-benefit risk. The badge still shows
     // the event COUNT, which is verifiable; the colour is now constant so it ranks nothing.
     return { eventsCount, color: 'gray', hasVerification, hasPhotos };
   };
