@@ -374,27 +374,33 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
   // Watch form values for reactive validation
   const watchedValues = watch(['production_amount', 'production_unit', 'lot_id', 'finish_date']);
 
-  // Step validation
-  const isStep0Valid = React.useMemo(() => {
-    const currentValues = getValues();
-    const effectiveValues = { ...savedFormData, ...currentValues };
-
-    const amount = effectiveValues.production_amount;
-    const unit = effectiveValues.production_unit;
-    const lotId = effectiveValues.lot_id;
-    const finishDate = effectiveValues.finish_date;
-
-    return !!(
-      amount &&
-      unit &&
-      lotId &&
-      finishDate &&
-      String(amount).trim() !== '' &&
-      String(unit).trim() !== '' &&
-      String(lotId).trim() !== '' &&
-      String(finishDate).trim() !== ''
-    );
+  /**
+   * Which required fields are still empty — and therefore WHY Continue is disabled.
+   *
+   * 🔴 REPRODUCED 2026-09-08 in the browser, closing the audit's unresolved observation
+   * ("Test form values entered; Continue remained disabled; session reset before cause
+   * resolved"). The cause is `finish_date`, which is a `datetime-local` input: a browser
+   * reports an EMPTY value until BOTH halves are complete, so a farmer who types the date and
+   * tabs away sees "09/08/2026" sitting in the field while `value === ''`. Every field looks
+   * filled, Continue stays disabled, and nothing on screen says which one is the problem.
+   *
+   * Naming the missing fields is the fix that belongs in this slice. Changing the input to a
+   * date-only control would alter what `History.finish_date` stores and is deliberately held
+   * for the operation-timezone decision (D11).
+   */
+  const missingRequired = React.useMemo(() => {
+    const effectiveValues = { ...savedFormData, ...getValues() };
+    const isBlank = (value: unknown) => !value || String(value).trim() === '';
+    return [
+      // The SAME message ids the fields render, so the hint names what the farmer is looking at.
+      isBlank(effectiveValues.production_amount) && 'app.productionAmount',
+      isBlank(effectiveValues.production_unit) && 'finishProduction.unit.label',
+      isBlank(effectiveValues.lot_id) && 'app.lotNumber',
+      isBlank(effectiveValues.finish_date) && 'app.finishDate'
+    ].filter((key): key is string => typeof key === 'string');
   }, [watchedValues, savedFormData]);
+
+  const isStep0Valid = missingRequired.length === 0;
 
   // Get completed steps
   const getCompletedSteps = () => {
@@ -706,6 +712,22 @@ export const StandardFinishProductionForm: React.FC<StandardFinishProductionForm
                     </SectionBox>
                   </VStack>
                 </Box>
+
+                {/* A disabled button with no stated reason is what left the auditor stuck: the
+                    completion date reads as empty until BOTH halves of the datetime are filled,
+                    so the form can look complete while it is not. Name what is still needed. */}
+                {missingRequired.length > 0 && (
+                  <Text fontSize="sm" color="gray.600" textAlign={{ base: 'left', md: 'right' }}>
+                    {intl.formatMessage(
+                      { id: 'finishProduction.stillNeeded' },
+                      {
+                        fields: missingRequired
+                          .map((key) => intl.formatMessage({ id: key }))
+                          .join(', ')
+                      }
+                    )}
+                  </Text>
+                )}
 
                 {/* Step Navigation */}
                 <HStack spacing={4} justify="flex-end" pt={4}>
