@@ -95,7 +95,13 @@ export const CERTIFIER_ONLY_EVENT_FIELDS: readonly string[] = [
   // alone does not evidence.
   'block_id',
   'identification_method',
-  'shared_with_conventional'
+  'shared_with_conventional',
+  // The private half of the note pair. `observation` publishes in the grower's own words and is
+  // labelled as public; `private_note` is where everything else goes. It matters here because
+  // EventPreviewModal builds its "how consumers will see this event" card from RAW WIZARD DATA,
+  // never through the public API — so without this entry the preview would show the grower their
+  // own private note as though a shopper were about to read it.
+  'private_note'
 ];
 
 /**
