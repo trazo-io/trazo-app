@@ -105,7 +105,15 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   const boundaryLine = intl.formatMessage({
     id: 'app.carbonExplainer.scopeBoundary',
     defaultMessage:
-      'Counts direct on-farm emissions only — fuel, fertilizer, and equipment use, based on EPA/USDA factors. Not a full life-cycle footprint: transport, packaging, and retail are not included.'
+      // 🔴 The previous default made TWO false claims in one sentence. "direct on-farm
+      // emissions only" — the calculator includes fertilizer and crop-protection
+      // MANUFACTURING, which is upstream and off-farm (Scope 3, not Scope 1). And "based on
+      // EPA/USDA factors" — true for fuel, electricity and nitrogen, but P2O5 and K2O are
+      // `PROVENANCE_INTERNAL_ESTIMATE` ("Trazo conservative estimate") and crop protection
+      // comes from Audsley et al. 2009 / Hillier et al. 2009, i.e. academic LCA. Attributing
+      // our own estimates to a government agency is the exact claim shape compliance.md
+      // forbids, and the landing methodology table listed the manufacturing rows all along.
+      'Counts the fuel and electricity this operation burns, plus the manufacturing of the fertilizer and crop-protection products it buys. Not a full life-cycle footprint: transport to the farm, packaging, equipment manufacturing and retail are excluded. Fuel and electricity factors are EPA-published; phosphorus and potassium are Trazo estimates where published values are sparse. Each factor shows its own source.'
   });
 
   // Emission categories for methodology section
