@@ -1290,13 +1290,24 @@ const AppSignUp: React.FC = () => {
                   it promised on signup exactly what the farm profile would later refuse. Replaced
                   with a claim that is true on Starter today: unlimited logging.
 
-                  ⚠️ OPEN GAP, not fixed here: Trazo has NO plain data-portability export. The
-                  only exports in the codebase are the three certifier artifacts, so "get your own
-                  records out" is currently only possible as an audit PDF/CSV — which is now paid.
-                  That is an anti-lock-in hole that predates the gate (it was equally true when
-                  every export was free-but-only-certifier-shaped), and it sits directly against
-                  the COG Pro migration promise. A free "download my records as CSV" belongs on
-                  Starter; until it exists, do not re-add an export claim to this line.
+                  ✅ CLOSED 2026-09-08. The paragraph above used to end with a standing
+                  instruction — "A free 'download my records as CSV' belongs on Starter; until it
+                  exists, do not re-add an export claim to this line" — describing an open
+                  anti-lock-in hole. That export SHIPPED on 2026-08-25: `.../records-export/`, a
+                  free ungated ZIP of raw CSVs, pinned by
+                  `history/tests/test_records_export.py::test_no_compliance_gate_in_the_view`.
+
+                  ⛔ The prohibition outlived the gap by three weeks, on the first screen a new
+                  grower sees, aimed at exactly the COG Pro refugees the claim is for. That is the
+                  cost of writing a ban rather than a condition: nobody re-reads a rule to ask
+                  whether its reason still holds. `hero.tsx` was corrected the day the export
+                  shipped; this line, three landing pages and the `gating.py` comment they all
+                  cited were not.
+
+                  So the claim is back — with the distinction the original wording lacked. "Export
+                  your records anytime" is TRUE and free. What must never be claimed here is the
+                  certifier ARTEFACTS (audit dossier, OSP renewal packet, PUR export), which are
+                  Compliance. Raw records free, paperwork paid: state both or neither.
                 */}
               <Box textAlign="center" mt={6}>
                 <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')}>

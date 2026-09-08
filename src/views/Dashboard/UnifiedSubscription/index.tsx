@@ -424,7 +424,11 @@ function UnifiedSubscriptionDashboard() {
     },
     {
       icon: FaLeaf,
-      name: 'app.productions',
+      // Its OWN label, not the shared `app.productions` (which HistoryCard also renders as a
+      // plain heading). The limit is `max_productions_per_year` and the count is what the quota
+      // gate counts — productions CREATED in the current calendar year — so a bare "Productions"
+      // invited a farmer with two lifetime seasons to read this as a lifetime total.
+      name: 'subscription.usage.productionsThisYear',
       used: Math.max(0, subscription?.used_productions || 0),
       limit: formatLimit(features?.max_productions_per_year ?? 0),
       colorScheme: 'green'
