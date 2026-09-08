@@ -95,6 +95,12 @@ import { useGoogleMap } from '@react-google-maps/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useIntl } from 'react-intl';
 import {
+  // 🔴 `ACTIVITY_VERBS` was USED at the preset-clearing loop below and never imported, so
+  // tapping any verb tile INSIDE the wizard threw `ReferenceError: ACTIVITY_VERBS is not
+  // defined` and the error boundary rendered "We hit a snag loading this page". Reaching a form
+  // through the Activities-page picker worked (it navigates with `?verb=`), which is why the
+  // crash sat on the one path nobody re-tested. Found 2026-09-08 while verifying private_note.
+  ACTIVITY_VERBS,
   HOISTED_SUBTYPE_EVENT_TYPES,
   subtypeChoicesFor,
   subtypeQuestionFor,
