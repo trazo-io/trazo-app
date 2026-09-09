@@ -27,6 +27,7 @@ const NETLIFY = join(ROOT, 'netlify.toml');
 const VERCEL = join(ROOT, 'vercel.json');
 const INDEX_HTML = join(ROOT, 'index.html');
 const SOCIAL_AUTH = join(ROOT, 'src/utils/socialAuth.ts');
+const POSTHOG = join(ROOT, 'src/config/posthog.ts');
 
 /** Pull the CSP string out of each host config. */
 const CSP_SOURCES: Array<[string, () => string]> = [
@@ -87,6 +88,23 @@ const inlineScriptHashes = (): string[] => {
   return hashes;
 };
 
+/**
+ * The two hosts PostHog needs, derived from `config/posthog.ts` the same way posthog-js
+ * derives them at runtime.
+ *
+ * Only ONE of them is written down anywhere: the `api_host` fallback in that file. The other
+ * is invented by the SDK, which rewrites `us.i.posthog.com` -> `us-assets.i.posthog.com` for
+ * `config.js` and `static/recorder.js` — and recorder.js IS session replay. An allowlist
+ * written by reading the config therefore misses the asset host every time.
+ */
+const posthogOrigins = (): { ingest: string; assets: string } => {
+  const src = readFileSync(POSTHOG, 'utf8');
+  const m = src.match(/['"`](https:\/\/[a-z0-9.-]*posthog\.com)['"`]/i);
+  if (!m) throw new Error('no PostHog api_host fallback in config/posthog.ts');
+  const ingest = new URL(m[1]).origin;
+  return { ingest, assets: ingest.replace('://us.', '://us-assets.') };
+};
+
 describe.each(CSP_SOURCES)('%s CSP', (_name, readCsp) => {
   it('allowlists every SDK host the loader code injects, in script-src', () => {
     const scriptSrc = directive(readCsp(), 'script-src');
@@ -111,5 +129,35 @@ describe.each(CSP_SOURCES)('%s CSP', (_name, readCsp) => {
     for (const hash of hashes) {
       expect(scriptSrc).toContain(`'sha256-${hash}'`);
     }
+  });
+});
+
+/**
+ * PostHog was fully configured — key set in Netlify, `VITE_POSTHOG_REPLAY=true`, the right
+ * options inlined in the production bundle — and captured NOTHING for as long as the CSP
+ * omitted its hosts. The failure is silent on both sides: the app renders fine, and the
+ * PostHog dashboard just says "Session replay isn't receiving data yet", which reads as an
+ * unset key. Only the browser console named the cause.
+ *
+ * This is the second CSP incident of the same shape after the Google Identity Services one
+ * above, so it gets the same treatment: assert per-DIRECTIVE, derive the hosts from the code.
+ */
+describe.each(CSP_SOURCES)('%s CSP — PostHog', (_name, readCsp) => {
+  it('allows the ingest host in connect-src', () => {
+    const { ingest } = posthogOrigins();
+    expect(directive(readCsp(), 'connect-src').split(/\s+/)).toContain(ingest);
+  });
+
+  it('allows the derived asset host in BOTH script-src and connect-src', () => {
+    const { assets } = posthogOrigins();
+
+    // Sanity: the rewrite actually produced a different host, or both assertions below
+    // would pass by testing the ingest host twice.
+    expect(assets).not.toBe(posthogOrigins().ingest);
+
+    // config.js and static/recorder.js are <script> loads; the remote-config fetch to the
+    // same host is an XHR. Miss either directive and replay is dead.
+    expect(directive(readCsp(), 'script-src').split(/\s+/)).toContain(assets);
+    expect(directive(readCsp(), 'connect-src').split(/\s+/)).toContain(assets);
   });
 });
