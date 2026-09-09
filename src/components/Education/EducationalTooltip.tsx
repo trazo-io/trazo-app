@@ -132,11 +132,9 @@ const tooltipConfig: Record<
     icon: FaLeaf,
     color: 'green'
   },
-  transparency_score: {
-    i18nPrefix: 'tooltip.transparencyScore',
-    icon: FaBalanceScale,
-    color: 'green'
-  }
+  // ⛔ The `transparency_score` term was removed 2026-09-08 with the three
+  // `tooltip.transparencyScore.*` messages it pointed at. The score is retired as a CONCEPT, so
+  // there is nothing left to define for a reader. Do not re-add a term here for it.
 };
 
 export const EducationalTooltip: React.FC<EducationalTooltipProps> = ({
@@ -249,9 +247,5 @@ export const BlockchainTooltip: React.FC<{ children: React.ReactNode }> = ({ chi
 export const PhotoDocumentationTooltip: React.FC<{ children: React.ReactNode }> = ({
   children
 }) => <EducationalTooltip term="photo_documentation">{children}</EducationalTooltip>;
-
-export const TransparencyScoreTooltip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <EducationalTooltip term="transparency_score">{children}</EducationalTooltip>
-);
 
 export default EducationalTooltip;
