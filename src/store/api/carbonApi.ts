@@ -805,7 +805,6 @@ export interface EducationContent {
   quick_facts?: string[];
   related_topics?: Array<
     | 'usda-methodology'
-    | 'carbon-scoring'
     | 'regional-benchmarks'
     | 'trust-indicators'
     | 'farming-practices'
