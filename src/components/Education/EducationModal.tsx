@@ -65,7 +65,6 @@ import CardBody from 'components/Card/CardBody';
 
 export type EducationTopic =
   | 'usda-methodology'
-  | 'carbon-scoring'
   | 'regional-benchmarks'
   | 'trust-indicators'
   | 'farming-practices'
@@ -84,7 +83,6 @@ interface EducationModalProps {
 
 const topicIcons = {
   'usda-methodology': FiShield,
-  'carbon-scoring': FiActivity,
   'regional-benchmarks': FiMapPin,
   'trust-indicators': FiCheckCircle,
   'farming-practices': FiTarget,
