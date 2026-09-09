@@ -1574,10 +1574,10 @@ const EducationTopicDetail: React.FC = () => {
                 <Text>
                   <strong>
                     {intl.formatMessage({
-                      id: 'education.detail.firstProduction.transparencyScoreLabel'
+                      id: 'education.detail.firstProduction.seasonFileLabel'
                     })}
                   </strong>{' '}
-                  {intl.formatMessage({ id: 'education.detail.firstProduction.transparencyScore' })}
+                  {intl.formatMessage({ id: 'education.detail.firstProduction.seasonFile' })}
                 </Text>
               </VStack>
             </Box>
