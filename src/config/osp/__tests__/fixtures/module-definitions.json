@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.09.6",
+  "content_version": "2026.09.9",
   "registry": {
-    "content_version": "2026.09.6",
+    "content_version": "2026.09.9",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -2605,6 +2605,92 @@
                 "max_length": null
               },
               {
+                "key": "raw_manure_source",
+                "kind": "radio",
+                "label": {
+                  "en": "Where does the raw manure come from?",
+                  "es": "¿De dónde proviene el estiércol crudo?"
+                },
+                "coaching": {
+                  "en": "Manure bought in or hauled from another operation may have been treated with a prohibited substance before it reached you. Say where it comes from; a purchased source is asked for a label or supplier statement below.",
+                  "es": "El estiércol comprado o traído de otra operación puede haber sido tratado con una sustancia prohibida antes de llegar a usted. Indique su origen; para una fuente comprada se pide abajo una etiqueta o declaración del proveedor."
+                },
+                "options": [
+                  {
+                    "value": "own_operation",
+                    "label": {
+                      "en": "Produced by livestock on this operation",
+                      "es": "Producido por el ganado de esta operación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "off_farm",
+                    "label": {
+                      "en": "Purchased or brought in from another operation",
+                      "es": "Comprado o traído de otra operación"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "both",
+                    "label": {
+                      "en": "Both — some produced here, some brought in",
+                      "es": "Ambos — una parte producida aquí y otra traída de fuera"
+                    },
+                    "exclusive": false
+                  }
+                ],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes",
+                    "value": "raw_manure"
+                  }
+                ],
+                "nop_cite": "§ 205.203(c)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "raw_manure_supplier_statement",
+                "kind": "boolean",
+                "label": {
+                  "en": "For manure brought in from off the operation, is a product label or supplier statement on file confirming it has not been treated with prohibited substances?",
+                  "es": "Para el estiércol traído de fuera de la operación, ¿tiene archivada una etiqueta del producto o una declaración del proveedor que confirme que no fue tratado con sustancias prohibidas?"
+                },
+                "coaching": null,
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "materials_applied",
+                    "op": "includes",
+                    "value": "raw_manure"
+                  },
+                  {
+                    "question": "raw_manure_source",
+                    "op": "one_of",
+                    "value": [
+                      "off_farm",
+                      "both"
+                    ]
+                  }
+                ],
+                "nop_cite": "§ 205.105",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
                 "key": "raw_manure_water_risk",
                 "kind": "textarea",
                 "label": {
@@ -4713,6 +4799,34 @@
                 "embed": null,
                 "placeholder": null,
                 "max_length": null
+              },
+              {
+                "key": "nonorganic_system_materials",
+                "kind": "textarea",
+                "label": {
+                  "en": "List the materials used in your non-organic production — general product types are enough (treated seed, fertilizers, pesticides, post-harvest sanitizers).",
+                  "es": "Enumere los materiales usados en su producción no orgánica — basta con tipos generales de producto (semilla tratada, fertilizantes, plaguicidas, sanitizantes de poscosecha)."
+                },
+                "coaching": {
+                  "en": "This is the conventional side's list, kept apart from the organic materials list on purpose: a prohibited product belongs here, never there. Brand names are not required.",
+                  "es": "Esta es la lista del lado convencional, separada a propósito de la lista de materiales orgánicos: un producto prohibido va aquí, nunca allá. No se requieren marcas."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "split_operation",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.201(a)(5)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
               }
             ]
           },
@@ -5073,6 +5187,56 @@
                 "required": true,
                 "visible_when": [],
                 "nop_cite": "§ 205.400(f)(1)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "runoff_risk_present",
+                "kind": "boolean",
+                "label": {
+                  "en": "Is there a risk of runoff carrying prohibited materials onto your organic land from neighbouring ground?",
+                  "es": "¿Existe riesgo de que la escorrentía arrastre materiales prohibidos hacia su tierra orgánica desde terrenos vecinos?"
+                },
+                "coaching": {
+                  "en": "Drift is airborne; runoff is water-borne. A parcel downhill from a conventional field or an irrigation return can receive a prohibited substance without a drop of spray crossing the line.",
+                  "es": "La deriva viaja por el aire; la escorrentía, por el agua. Una parcela cuesta abajo de un campo convencional o de un retorno de riego puede recibir una sustancia prohibida sin que una gota de aspersión cruce el límite."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [],
+                "nop_cite": "§ 205.202(c)",
+                "prefill": null,
+                "parcel_field": null,
+                "establishment_field": null,
+                "embed": null,
+                "placeholder": null,
+                "max_length": null
+              },
+              {
+                "key": "runoff_mitigation_plan",
+                "kind": "textarea",
+                "label": {
+                  "en": "Describe your plan to keep runoff from reaching organic crops or soil.",
+                  "es": "Describa su plan para evitar que la escorrentía llegue a los cultivos o al suelo orgánicos."
+                },
+                "coaching": {
+                  "en": "Diversion ditches, berms, vegetated filter strips, timing of irrigation relative to a neighbour's applications, and monitoring after storms are the usual measures.",
+                  "es": "Zanjas de desvío, bordos, franjas filtrantes con vegetación, el momento del riego respecto de las aplicaciones del vecino y el monitoreo tras las tormentas son las medidas habituales."
+                },
+                "options": [],
+                "required": true,
+                "visible_when": [
+                  {
+                    "question": "runoff_risk_present",
+                    "op": "truthy",
+                    "value": null
+                  }
+                ],
+                "nop_cite": "§ 205.202(c)",
                 "prefill": null,
                 "parcel_field": null,
                 "establishment_field": null,
@@ -5931,6 +6095,14 @@
                     "label": {
                       "en": "No — nobody off this operation handles our crop",
                       "es": "No — nadie fuera de esta operación manipula nuestro cultivo"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "yes_ownership_transfers",
+                    "label": {
+                      "en": "Yes — but ownership of the crop transfers to that operation before or upon delivery",
+                      "es": "Sí — pero la propiedad del cultivo pasa a esa operación antes de la entrega o al entregarlo"
                     },
                     "exclusive": false
                   },
