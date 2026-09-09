@@ -168,8 +168,10 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
       //
       // A farmer typing "we apply compost" was recorded as ALSO running a cover-crop
       // management programme. `Parcel.is_transparency_ready()` and `get_transparency_score()`
-      // then read either key as independent evidence, so one sentence counted twice. That is
-      // fabrication, not mapping — the farmer said one thing.
+      // (both removed 2026-09-09) then read either key as independent evidence, so one
+      // sentence counted twice. That is fabrication, not mapping — the farmer said one thing.
+      // The duplication is still wrong without them: `get_sustainability_practices()` and the
+      // carbon-readiness checks read the same three keys.
       //
       // `sustainability_practices` is the canonical key: it is the first one
       // product/models.py checks in every reader. The legacy pair is still READ on hydration
@@ -205,9 +207,13 @@ function AddParcel({ isEdit = false }: AddParcelProps) {
         // CertificationManager; a self-reported boolean is not a second place to assert one.
         //
         // `transparency_ready` removed 2026-08-17: it is NOT a model field.
-        // `Parcel.is_transparency_ready()` is a computed method exposed through a
-        // SerializerMethodField, so the hardcoded `true` this form sent was discarded on
-        // arrival — it asserted readiness and changed nothing.
+        //
+        // ⚠️ CORRECTED 2026-09-09 — this note said the hardcoded `true` "was discarded on
+        // arrival … and changed nothing". It was not: `CreateParcelSerializer` declared
+        // `transparency_ready` as a write-only BooleanField and moved it into
+        // `agricultural_details`, so the form's self-assertion was STORED. Both the write-only
+        // field and the `Parcel.is_transparency_ready()` / `get_transparency_score()` pair are
+        // now gone — the score is retired as a concept, not merely unsent.
         //
         // `carbon_calculation_enabled` removed 2026-08-17: a real BooleanField, but this form
         // derived it from whether two prose boxes happened to be non-empty. Writing text into

@@ -87,9 +87,13 @@ describe('parcel form — no key the UI does not render', () => {
    *                                   schema AND its interface — so every create shipped
    *                                   `certified: false`. Certifications are structured
    *                                   records; a form that never asks must not assert one.
-   *   transparency_ready              is NOT a model field. `Parcel.is_transparency_ready()`
-   *                                   is computed and exposed through a SerializerMethodField,
-   *                                   so the hardcoded `true` was discarded on arrival.
+   *   transparency_ready              is NOT a model field — but this note's claim that the
+   *                                   hardcoded `true` "was discarded on arrival" was WRONG
+   *                                   (corrected 2026-09-09): CreateParcelSerializer declared
+   *                                   it write-only and moved it into agricultural_details, so
+   *                                   the client's self-assertion was stored. The serializer
+   *                                   field and `Parcel.is_transparency_ready()` are now both
+   *                                   gone — the score is retired as a CONCEPT.
    *   carbon_calculation_enabled      IS a real BooleanField, but the form derived it from
    *                                   whether two prose boxes were non-empty.
    *
@@ -106,6 +110,17 @@ describe('parcel form — no key the UI does not render', () => {
     const source = read('views/Dashboard/Dashboard/Parcel/AddParcel.tsx');
     for (const key of UNRENDERED) {
       expect(writesKey(source, key), `AddParcel payload carries ${key}`).toBe(false);
+    }
+  });
+
+  it('neither does the RTK layer underneath it', () => {
+    // 🔴 2026-09-09: this suite only ever read AddParcel.tsx, so it passed for a year while
+    // productApi.js appended `transparency_ready` to BOTH the create and the update FormData
+    // whenever a caller happened to supply it. The form is not the only writer of a payload —
+    // the endpoint that builds it is one too.
+    const source = read('store/api/productApi.js');
+    for (const key of UNRENDERED) {
+      expect(writesKey(source, key), `productApi appends ${key}`).toBe(false);
     }
   });
 

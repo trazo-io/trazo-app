@@ -187,8 +187,9 @@ interface CompanyFarmInfoProps {
     transparency_description?: string;
     sustainability_practices?: string;
     primary_crop?: string;
-    transparency_score?: number;
-    transparency_ready?: boolean;
+    // `transparency_score` / `transparency_ready` removed 2026-09-09 with the Parcel methods
+    // behind them. Neither was ever rendered here, and `_build_public_parcel` never put them
+    // on the wire — but a declared prop is an invitation, and this is a consumer component.
   };
 }
 

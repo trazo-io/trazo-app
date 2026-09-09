@@ -2038,8 +2038,10 @@ function ProductDetail() {
                   // a scoring/carbon decision, not a claim-safety one. Leave it.
                   sustainability_practices: (completeData as any)?.parcel?.sustainability_practices,
                   primary_crop: (completeData as any)?.parcel?.primary_crop,
-                  transparency_score: (completeData as any)?.parcel?.transparency_score,
-                  transparency_ready: (completeData as any)?.parcel?.transparency_ready,
+                  // `transparency_score` / `transparency_ready` removed 2026-09-09. The backend
+                  // stopped serving both on the same day; this was the line that carried the
+                  // self-graded verdict from the authenticated QR payload into the consumer
+                  // farm/parcel components.
                   // Parcel images from album
                   images: (completeData as any)?.parcel?.images,
                   // Address for location details

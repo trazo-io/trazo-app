@@ -88,10 +88,10 @@ export const productApi = baseApi.injectEndpoints({
           formData.append('agricultural_details', JSON.stringify(parcelData.agricultural_details));
         }
 
-        // ✅ NEW: Carbon Calculation Flags
-        if (parcelData.carbon_calculation_enabled !== undefined) {
-          formData.append('carbon_calculation_enabled', parcelData.carbon_calculation_enabled);
-        }
+        // `carbon_calculation_enabled` removed 2026-09-09. A real BooleanField, but no
+        // control offers the farmer that choice — the parcel form derived it from whether two
+        // prose boxes were non-empty and stopped sending it on 2026-08-17. Conditional, so it
+        // no longer fired; removed so the path cannot be picked up again.
         if (parcelData.usda_compliance_eligible !== undefined) {
           formData.append('usda_compliance_eligible', parcelData.usda_compliance_eligible);
         }
@@ -103,9 +103,9 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.sustainability_practices) {
           formData.append('sustainability_practices', parcelData.sustainability_practices);
         }
-        if (parcelData.transparency_ready !== undefined) {
-          formData.append('transparency_ready', parcelData.transparency_ready);
-        }
+        // `transparency_ready` removed 2026-09-09. It was a client-asserted self-grade that
+        // CreateParcelSerializer stored into agricultural_details; the serializer no longer
+        // accepts it, and the mutation-payload rule bans sending a key no UI renders.
 
         console.log('🚀 CREATE FormData contents being sent to backend:');
         for (let [key, value] of formData.entries()) {
@@ -151,7 +151,17 @@ export const productApi = baseApi.injectEndpoints({
         formData.append('name', parcelData.name);
         formData.append('description', parcelData.description);
         formData.append('area', parcelData.area || '0'); // Ensure area is a string number
-        formData.append('certified', parcelData.certified || false);
+        // 🔴 `certified` removed 2026-09-09 — found by extending the payload guard from
+        // AddParcel.tsx to this file.
+        //
+        // The 2026-08-17 fix pulled `certified` out of the FORM's payload as a claim field no
+        // control asks for, but left this line, which appends it UNCONDITIONALLY as
+        // `parcelData.certified || false`. No caller supplies it, so every parcel edit wrote
+        // `certified = false` — pinning a real BooleanField permanently false and wiping any
+        // value set from the admin or an import on the next save. The clobber class exactly.
+        //
+        // Certifications are structured records (CertificationManager); a self-reported
+        // boolean is not a second place to assert one.
         formData.append('polygon', JSON.stringify(parcelData.polygon || []));
         formData.append('map_metadata', JSON.stringify(parcelData.map_metadata || {}));
         // §205.202 facts (buffer_zones, apn, section_township_range,
@@ -171,9 +181,9 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.unique_code) {
           formData.append('unique_code', parcelData.unique_code);
         }
-        if (parcelData.certification_type) {
-          formData.append('certification_type', parcelData.certification_type);
-        }
+        // `certification_type` removed 2026-09-09 with `certified`. Conditional, so unlike
+        // `certified` it never actually fired — no caller supplies it — but it is the same
+        // banned claim key, and a dead write path is how the next caller finds it.
 
         // ✅ FIXED: Contact fields - Send ALL contact fields (even if empty)
         formData.append('contact_person', parcelData.contact_person || '');
@@ -189,10 +199,10 @@ export const productApi = baseApi.injectEndpoints({
           formData.append('agricultural_details', JSON.stringify(parcelData.agricultural_details));
         }
 
-        // ✅ NEW: Carbon Calculation Flags
-        if (parcelData.carbon_calculation_enabled !== undefined) {
-          formData.append('carbon_calculation_enabled', parcelData.carbon_calculation_enabled);
-        }
+        // `carbon_calculation_enabled` removed 2026-09-09. A real BooleanField, but no
+        // control offers the farmer that choice — the parcel form derived it from whether two
+        // prose boxes were non-empty and stopped sending it on 2026-08-17. Conditional, so it
+        // no longer fired; removed so the path cannot be picked up again.
         if (parcelData.usda_compliance_eligible !== undefined) {
           formData.append('usda_compliance_eligible', parcelData.usda_compliance_eligible);
         }
@@ -204,9 +214,9 @@ export const productApi = baseApi.injectEndpoints({
         if (parcelData.sustainability_practices) {
           formData.append('sustainability_practices', parcelData.sustainability_practices);
         }
-        if (parcelData.transparency_ready !== undefined) {
-          formData.append('transparency_ready', parcelData.transparency_ready);
-        }
+        // `transparency_ready` removed 2026-09-09. It was a client-asserted self-grade that
+        // CreateParcelSerializer stored into agricultural_details; the serializer no longer
+        // accepts it, and the mutation-payload rule bans sending a key no UI renders.
 
         console.log('🚀 UPDATE FormData contents being sent to backend:');
         for (let [key, value] of formData.entries()) {
@@ -244,7 +254,7 @@ export const productApi = baseApi.injectEndpoints({
     }),
     // Compliance-only PATCH: sends ONLY the parcel organic-compliance fields (buffer
     // zones + identity). This is deliberately separate from updateParcel, which
-    // UNCONDITIONALLY appends name/description/area/certified/polygon/map_metadata/
+    // UNCONDITIONALLY appends name/description/area/polygon/map_metadata/
     // contact_*/address — calling that from the compliance card would blank the parcel's
     // map geometry + contacts. The viewset's partial_update (partial=True) only touches
     // the fields present here, so nothing else is disturbed.

@@ -131,7 +131,6 @@ interface ParcelData {
   unique_code?: string;
   carbon_calculation_enabled?: boolean;
   usda_compliance_eligible?: boolean;
-  transparency_ready?: boolean;
   transparency_score?: number;
   transparency_description?: string;
   sustainability_practices?: string;
@@ -464,13 +463,16 @@ function ProfileParcel(): React.ReactElement {
                     })}
                   </Badge>
                 )}
-                {parcel?.transparency_ready && (
-                  <Badge variant="neutral" borderRadius="full" fontSize="xs">
-                    {intl.formatMessage({ id: 'parcel.consumerReady' })}
-                  </Badge>
-                )}
                 {/* The transparency SCORE badge used to sit here. Removed 2026-08-07 — see
-                    the file docstring. */}
+                    the file docstring.
+
+                    Its "Consumer Ready" sibling followed on 2026-09-09, with
+                    `Parcel.is_transparency_ready()` behind it. Same artefact, one bit instead
+                    of seven: "description AND (practices OR photos)" over the operation's own
+                    self-reported text, printed as a verdict. Retiring the score as a CONCEPT
+                    means the boolean goes too — a grade with the number filed off is still a
+                    grade. What a producer surface may show is a COUNT or a checklist naming
+                    the specific missing document; `application_missing` above does that. */}
               </HStack>
             </VStack>
             {canWrite && (
