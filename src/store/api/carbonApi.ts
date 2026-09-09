@@ -1575,51 +1575,6 @@ export const carbonApi = baseApi.injectEndpoints({
     // 2026-08-06. Both hooks were exported and had zero call sites in the entire app.
     // Guard: trazo-back `carbon/tests/test_retired_claim_routes_stay_retired.py`.
 
-    // Phase 6: Advanced Carbon Analytics Endpoint
-    getAdvancedAnalytics: builder.query<
-      {
-        production_id: number;
-        production_name: string;
-        crop_type: string;
-        analytics: {
-          carbon_timeline: any[];
-          carbon_flow_diagram: any;
-          carbon_hotspots: any[];
-          carbon_efficiency_score: number;
-          carbon_intensity: number;
-          carbon_roi: any;
-          market_value_impact: any;
-          carbon_credit_potential: any;
-          premium_pricing_opportunity: any;
-          industry_benchmarking: any;
-          regional_comparison: any;
-          peer_ranking: any;
-          future_projections: any;
-          optimization_roadmap: any[];
-          seasonal_patterns: any;
-          consumer_impact_story: any;
-          trust_indicators: any;
-          transparency_score: number;
-          ai_recommendations: any[];
-          pattern_recognition: any;
-          risk_assessment: any;
-          improvement_tracking: any;
-          success_metrics: any;
-        };
-        generated_at: string;
-        version: string;
-        message: string;
-      },
-      number
-    >({
-      query: (productionId) => ({
-        url: `carbon/analytics/${productionId}/`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      keepUnusedDataFor: 300, // Cache for 5 minutes
-      providesTags: (result, error, productionId) => [{ type: 'CarbonAnalytics', id: productionId }]
-    }),
 
     // Phase 3: Enhanced Dashboard Endpoints
     getDashboardComprehensive: builder.query<
@@ -1772,7 +1727,6 @@ export const {
   useValidatePhotoEvidenceMutation,
   // Gas Optimization hooks
   // Phase 6: Advanced Analytics hook
-  useGetAdvancedAnalyticsQuery,
   // Phase 3: Enhanced Dashboard hooks
   useGetDashboardComprehensiveQuery,
   useGetCarbonScopeBreakdownQuery
