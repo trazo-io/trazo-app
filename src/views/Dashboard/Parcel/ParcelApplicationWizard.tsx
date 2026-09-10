@@ -836,30 +836,172 @@ const ParcelApplicationWizard = () => {
             />
           </VStack>
         );
-      case 'landowner_affidavit':
+      case 'landowner_affidavit': {
+        // 2026-09-09 — mirrors what the parcel PDF prints in §F (the manager table and the
+        // 36-month accounting) from the same backend summary, so the operator reads the facts
+        // the certifier will read rather than a bare "affidavit on file" glyph. Built from the
+        // structured fields, never from the server's English sentence (i18n).
+        const lh = data?.land_history;
+        const fmt = (iso: string | null) =>
+          iso
+            ? intl.formatDate(new Date(`${iso}T00:00:00`), {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              })
+            : intl.formatMessage({ id: 'parcelApp.managers.notRecorded' });
+        const cov = lh?.coverage;
+        const coverageText = !cov
+          ? null
+          : cov.complete === null
+          ? intl.formatMessage({ id: 'parcelApp.managers.coverage.unknown' })
+          : cov.complete && lh?.prior_managers.length === 0
+          ? intl.formatMessage(
+              { id: 'parcelApp.managers.coverage.full' },
+              { since: fmt(lh?.current_manager.period_start ?? null) }
+            )
+          : cov.complete
+          ? intl.formatMessage(
+              { id: 'parcelApp.managers.coverage.complete' },
+              { start: fmt(cov.window_start), end: fmt(cov.window_end) }
+            )
+          : intl.formatMessage(
+              { id: 'parcelApp.managers.coverage.gaps' },
+              {
+                count: cov.gaps.length,
+                start: fmt(cov.window_start),
+                end: fmt(cov.window_end),
+                ranges: cov.gaps.map(([a, b]) => `${fmt(a)} – ${fmt(b)}`).join('; ')
+              }
+            );
+        const accounted = cov?.complete === true;
         return (
           <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
-            <HStack spacing={3}>
-              {/* green.700 / gray.500, not green.500 / gray.300 (2.78 and 1.94). This glyph is the
-                  state marker for "affidavit on file", so it is a non-text graphic carrying
-                  meaning and owes 3.0. */}
-              <Box as={FaCheckCircle} color={data?.has_affidavit ? 'green.700' : 'gray.500'} />
-              <Text fontSize="sm">
-                {data?.has_affidavit
-                  ? intl.formatMessage({ id: 'parcelApp.affidavit.onFile' })
-                  : intl.formatMessage({ id: 'parcelApp.affidavit.none' })}
-              </Text>
-            </HStack>
+            <Stack spacing={2}>
+              <HStack spacing={3} align="flex-start">
+                {/* green.700 / gray.500, not green.500 / gray.300 (2.78 and 1.94). This glyph is
+                    the state marker for "the window is accounted for", so it is a non-text
+                    graphic carrying meaning and owes 3.0. */}
+                <Box as={FaCheckCircle} color={accounted ? 'green.700' : 'gray.500'} mt={1} />
+                <Text fontSize="sm">
+                  {coverageText ??
+                    (data?.has_affidavit
+                      ? intl.formatMessage({ id: 'parcelApp.affidavit.onFile' })
+                      : intl.formatMessage({ id: 'parcelApp.affidavit.none' }))}
+                </Text>
+              </HStack>
+              {lh ? (
+                <Stack spacing={1} pl={8}>
+                  <Text fontSize="sm" color="gray.700">
+                    {intl.formatMessage(
+                      { id: 'parcelApp.managers.current' },
+                      {
+                        name: lh.current_manager.name,
+                        since: fmt(lh.current_manager.period_start)
+                      }
+                    )}
+                  </Text>
+                  {lh.prior_managers.length === 0 ? (
+                    <Text fontSize="sm" color="gray.600">
+                      {intl.formatMessage({ id: 'parcelApp.managers.priorNone' })}
+                    </Text>
+                  ) : (
+                    lh.prior_managers.map((m, i) => (
+                      <Text key={`${m.name}-${i}`} fontSize="sm" color="gray.700">
+                        {intl.formatMessage(
+                          { id: 'parcelApp.managers.prior' },
+                          {
+                            name: m.name,
+                            from: fmt(m.period_start),
+                            to: fmt(m.period_end),
+                            attached: m.attached
+                              ? intl.formatMessage({ id: 'parcelApp.managers.attached' })
+                              : intl.formatMessage({ id: 'parcelApp.managers.notAttached' })
+                          }
+                        )}
+                      </Text>
+                    ))
+                  )}
+                </Stack>
+              ) : null}
+            </Stack>
           </Box>
         );
-      case 'certificate_of_record':
-        // Printed on the certifier packet from the operation's certificate on file; nothing to
-        // edit here, so the card says where the line comes from rather than showing a blank.
+      }
+      case 'certificate_of_record': {
+        // Printed on the certifier packet from the operation's certificate on file; the card shows
+        // that exact line (or that there is none) so the operator sees what the certifier will read.
+        const cert = data?.land_history?.certificate;
         return (
-          <Text fontSize="sm" color="gray.600">
-            {intl.formatMessage({ id: 'parcelApp.certificateCard.note' })}
-          </Text>
+          <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+            <Stack spacing={1}>
+              <Text fontSize="sm" fontWeight="600">
+                {cert
+                  ? intl.formatMessage(
+                      { id: 'parcelApp.certificate.onFile' },
+                      { number: cert.number, agent: cert.agent }
+                    )
+                  : intl.formatMessage({ id: 'parcelApp.certificate.none' })}
+              </Text>
+              {cert?.effective ? (
+                <Text fontSize="sm" color="gray.700">
+                  {intl.formatMessage(
+                    { id: 'parcelApp.certificate.effective' },
+                    {
+                      date: intl.formatDate(new Date(`${cert.effective}T00:00:00`), {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })
+                    }
+                  )}
+                </Text>
+              ) : null}
+              <Text fontSize="sm" color="gray.600">
+                {intl.formatMessage({ id: 'parcelApp.certificateCard.note' })}
+              </Text>
+            </Stack>
+          </Box>
         );
+      }
+      case 'adjoining_land_affidavit': {
+        // Was a bare label: no case here, so the card printed its title and nothing else.
+        const rows = data?.adjoining_affidavits ?? [];
+        return (
+          <Box p={4} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+            {rows.length === 0 ? (
+              <Text fontSize="sm" color="gray.600">
+                {intl.formatMessage({ id: 'parcelApp.adjoining.none' })}
+              </Text>
+            ) : (
+              <Stack spacing={1}>
+                {rows.map((r, i) => (
+                  <Text key={`${r.neighbor_name}-${i}`} fontSize="sm" color="gray.700">
+                    {intl.formatMessage(
+                      { id: 'parcelApp.adjoining.row' },
+                      {
+                        side:
+                          r.border_side ||
+                          intl.formatMessage({ id: 'parcelApp.managers.notRecorded' }),
+                        name: r.neighbor_farm_name
+                          ? `${r.neighbor_name} (${r.neighbor_farm_name})`
+                          : r.neighbor_name,
+                        signed: r.signed
+                          ? intl.formatDate(new Date(`${r.signed}T00:00:00`), {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })
+                          : intl.formatMessage({ id: 'parcelApp.adjoining.unsigned' })
+                      }
+                    )}
+                  </Text>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        );
+      }
       default:
         return null;
     }
