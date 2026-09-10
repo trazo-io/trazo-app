@@ -7699,5 +7699,10 @@
   "voice.tryAgain": "Intentar de nuevo",
   "voice.trySaying": "Prueba diciendo:",
   "voice.unavailableInBrowser": "La entrada de voz no está disponible en este navegador. Usa el formulario o una plantilla en su lugar.",
-  "voice.understood": "Parece: {activity}"
+  "voice.understood": "Parece: {activity}",
+  "inputVerify.nonsynthetic": "No sintético",
+  "inputVerify.nonsyntheticNote": "permitido sin una entrada en la Lista Nacional",
+  "osp.approvedInputs.kind.nonsynthetic": "No sintético",
+  "osp.approvedInputs.section.nonsynthetic": "Sustancias no sintéticas (sin entrada en la Lista Nacional)",
+  "osp.approvedInputs.nonsyntheticTooltip": "No sintética: permitida en la producción orgánica sin una entrada en la Lista Nacional"
 }
