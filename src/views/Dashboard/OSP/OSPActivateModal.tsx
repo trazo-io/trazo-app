@@ -16,7 +16,7 @@
  * Only rendered when status === 'submitted' (same precondition as backend).
  */
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { HStack, Icon, Text, useToast, VStack } from '@chakra-ui/react';
 import { FaFileUpload } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
@@ -28,6 +28,7 @@ import {
   StandardInput
 } from 'components/Design/StandardComponents';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
+import CertifyingAgentPicker from 'components/Certifications/CertifyingAgentPicker';
 import { useActivateOSPMutation } from 'store/api/ospApi';
 import type { OSP } from 'types/osp';
 
@@ -73,6 +74,13 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
   const [certifierName, setCertifierName] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Opens on the agent the plan already names (or the certificate of record names). The operator
+  // still confirms it: the gate keeps the field required, and this is only its starting value.
+  const suggestedAgent = osp.certifier_name || osp.packet_agent?.name || '';
+  useEffect(() => {
+    if (isOpen) setCertifierName((current) => current || suggestedAgent);
+  }, [isOpen, suggestedAgent]);
 
   const resetForm = () => {
     setFile(null);
@@ -272,10 +280,10 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
           error={fieldErrors.approval_certifier_name}
           label={intl.formatMessage({ id: 'osp.activateModal.certifierName.label' })}
           helpText={intl.formatMessage({ id: 'osp.activateModal.certifierName.hint' })}>
-          <StandardInput
+          <CertifyingAgentPicker
             value={certifierName}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              setCertifierName(e.target.value);
+            onChange={(name) => {
+              setCertifierName(name);
               if (fieldErrors.approval_certifier_name) {
                 setFieldErrors((prev) => {
                   const { approval_certifier_name, ...rest } = prev;
@@ -283,10 +291,6 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
                 });
               }
             }}
-            placeholder={intl.formatMessage({
-              id: 'osp.activateModal.certifierName.placeholder'
-            })}
-            maxLength={200}
           />
         </StandardField>
       </VStack>

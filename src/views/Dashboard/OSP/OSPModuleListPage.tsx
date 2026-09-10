@@ -30,14 +30,17 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   StandardButton,
   StandardCard,
+  StandardField,
   StandardPage,
   StandardPageLoading,
   StandardQueryError
 } from 'components/Design/StandardComponents';
+import CertifyingAgentPicker from 'components/Certifications/CertifyingAgentPicker';
 import {
   ComplianceExportsUpsell,
   useComplianceExports
 } from 'components/Guards/ComplianceExportsGuard';
+import OSPCertifyingAgentCard from './OSPCertifyingAgentCard';
 import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import OSPPlanReviewPanel from './OSPPlanReviewPanel';
 import PacketDownloadControl from './PacketDownloadControl';
@@ -276,6 +279,9 @@ const OSPModuleListPage = () => {
   );
   const [createOSP, { isLoading: creating }] = useCreateOSPMutation();
   const [showAllParcels, setShowAllParcels] = React.useState(false);
+  // Asked before the plan exists: the packet is numbered to this agent's forms, and a first-year
+  // applicant has no certificate for it to be read from. Optional; editable until submission.
+  const [startAgent, setStartAgent] = React.useState('');
 
   // Outstanding applications first; everything else keeps the order the API returned. A cap that
   // buries unfinished work would turn a shortened list into a hidden to-do list — and the
@@ -323,7 +329,12 @@ const OSPModuleListPage = () => {
 
   const handleStartOsp = async () => {
     try {
-      await createOSP({ companyId, farmId: farmId || '', data: {} }).unwrap();
+      const certifierName = startAgent.trim();
+      await createOSP({
+        companyId,
+        farmId: farmId || '',
+        data: certifierName ? { certifier_name: certifierName } : {}
+      }).unwrap();
     } catch {
       toast({
         title: intl.formatMessage({ id: 'osp.modules.createFailed' }),
@@ -380,6 +391,13 @@ const OSPModuleListPage = () => {
             <Text fontSize="sm" color="gray.600" textAlign="center" maxW="lg">
               {intl.formatMessage({ id: 'osp.modules.emptyBody' })}
             </Text>
+            <Box w="full" maxW="md">
+              <StandardField
+                label={intl.formatMessage({ id: 'osp.modules.startAgentLabel' })}
+                helpText={intl.formatMessage({ id: 'osp.modules.startAgentHint' })}>
+                <CertifyingAgentPicker value={startAgent} onChange={setStartAgent} showNumbering />
+              </StandardField>
+            </Box>
             <StandardButton minH="44px" onClick={handleStartOsp} isLoading={creating}>
               {intl.formatMessage({ id: 'osp.modules.startOsp' })}
             </StandardButton>
@@ -443,6 +461,13 @@ const OSPModuleListPage = () => {
               </StandardButton>
             </HStack>
           </Flex>
+
+          <OSPCertifyingAgentCard
+            companyId={companyId}
+            farmId={farmId || ''}
+            osp={latestOsp}
+            isLocked={isLocked}
+          />
 
           {/* Plan review, on the OSP LANDING rather than only on the demoted narrative page.
               Its own docstring says it is "in front of them at the moment the decision is

@@ -34,6 +34,7 @@ import {
   StandardQueryError
 } from 'components/Design';
 import CertificationStatusBadge from './CertificationStatusBadge';
+import CertifyingAgentPicker from './CertifyingAgentPicker';
 
 /**
  * Offered certification types, in the backend's own order.
@@ -421,11 +422,22 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
             <Text fontSize="sm" mb={1} fontWeight="medium">
               {intl.formatMessage({ id: 'certification.manage.certifier' })}
             </Text>
-            <StandardInput
-              placeholder="e.g., Oregon Tilth, CCOF"
-              value={formData.certifier_name}
-              onChange={(e) => setFormData({ ...formData, certifier_name: e.target.value })}
-            />
+            {/* USDA Organic is issued by an accredited certifying agent, and the renewal packet is
+                numbered to that agent's forms, so it is picked from the same list the packet
+                resolves against. Other schemes name a certification body the packet never reads. */}
+            {formData.certification_type === 'usda_organic' ? (
+              <CertifyingAgentPicker
+                value={formData.certifier_name ?? ''}
+                onChange={(name) => setFormData({ ...formData, certifier_name: name })}
+                ariaLabel={intl.formatMessage({ id: 'certification.manage.certifier' })}
+              />
+            ) : (
+              <StandardInput
+                placeholder="e.g., Oregon Tilth, CCOF"
+                value={formData.certifier_name}
+                onChange={(e) => setFormData({ ...formData, certifier_name: e.target.value })}
+              />
+            )}
           </Box>
 
           <HStack w="100%" spacing={3}>

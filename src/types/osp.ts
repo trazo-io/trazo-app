@@ -25,6 +25,19 @@ export interface OSPSection {
 
 export type OSPSections = Record<OSPSectionKey, OSPSection>;
 
+/**
+ * `packet_agent_payload` in certifications/serializers.py — the SAME functions the packet's
+ * coverage page calls, so what the plan page promises is what the reviewer reads.
+ *   source: 'plan' (this plan's own answer) · 'certificate' (the certificate of record) ·
+ *           'records' (another record names one) · '' (nothing names an agent)
+ */
+export interface PacketAgent {
+  name: string;
+  slug: string | null;
+  source: 'plan' | 'certificate' | 'records' | '';
+  own_numbering: boolean;
+}
+
 export interface OSPSummary {
   id: number;
   public_id: string;
@@ -34,6 +47,10 @@ export interface OSPSummary {
   effective_date: string | null;
   submitted_at: string | null;
   approved_at: string | null;
+  /** The certifying agent this plan is filed with, as the operator picked or typed it. */
+  certifier_name: string;
+  /** Which agent the packet is for and whether it speaks that agent's form numbers. */
+  packet_agent: PacketAgent;
   certifier_template_name: string | null;
   section_completion: number; // 0..1
   created_at: string;
@@ -288,6 +305,8 @@ export interface ActivateOSPPayload {
 
 export interface CreateOSPData {
   certification?: number | null;
+  /** The certifying agent this plan is filed with (the picker at plan start / on the plan page). */
+  certifier_name?: string;
   sections?: Partial<OSPSections>;
   effective_date?: string | null;
   certifier_template_name?: string | null;

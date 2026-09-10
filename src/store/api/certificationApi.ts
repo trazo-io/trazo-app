@@ -1,5 +1,5 @@
-import { CERTIFICATION_URL, CERTIFICATION_VERIFY_URL } from 'config';
-import { Certification, CreateCertificationData } from 'types/certification';
+import { CERTIFICATION_URL, CERTIFICATION_VERIFY_URL, CERTIFYING_AGENTS_URL } from 'config';
+import { Certification, CertifyingAgentOption, CreateCertificationData } from 'types/certification';
 import baseApi from './baseApi';
 
 interface CertificationQueryParams {
@@ -64,6 +64,13 @@ const certificationApi = baseApi.injectEndpoints({
       invalidatesTags: ['Certification', 'Farm']
     }),
 
+    // Static per deploy (it changes when an agent is added or a register ships), so it is
+    // fetched once per session rather than on every picker mount.
+    getCertifyingAgents: build.query<CertifyingAgentOption[], void>({
+      query: () => ({ url: CERTIFYING_AGENTS_URL, method: 'GET', credentials: 'include' }),
+      keepUnusedDataFor: 3600
+    }),
+
     verifyCertification: build.mutation<
       { status: string; certification_id: number },
       CertificationVerifyParams
@@ -83,7 +90,8 @@ export const {
   useAddCertificationMutation,
   useUpdateCertificationMutation,
   useDeleteCertificationMutation,
-  useVerifyCertificationMutation
+  useVerifyCertificationMutation,
+  useGetCertifyingAgentsQuery
 } = certificationApi;
 
 export default certificationApi;
