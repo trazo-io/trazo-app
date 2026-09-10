@@ -213,6 +213,9 @@ const ResultCard: React.FC<{
     hasOMRI && attachedOmriPk != null && attachedOmriPk === result.omri_product_pk;
   const hasWSDA = result.wsda_material_pk != null;
   const hasNL = result.national_list_substance_pk != null;
+  // Nonsynthetic (spinosad, Bt, d-limonene): allowed without a National List entry, so it is never
+  // badged "National List" and prints no section.
+  const nlNonsynthetic = hasNL && result.national_list_is_entry === false;
   const noMatch = !hasOMRI && !hasWSDA && !hasNL;
   // 33 of the 97 seeded National List rows are prohibited, and they answer ordinary searches:
   // "manure" returns "Ash from manure burning" (§ 205.602).
@@ -473,15 +476,27 @@ const ResultCard: React.FC<{
       )}
       {hasNL && (
         <MatchRow
-          badgeLabel={intl.formatMessage({
-            id: 'inputVerify.nationalList',
-            defaultMessage: 'National List'
-          })}
-          badgeColor="blue"
+          badgeLabel={
+            nlNonsynthetic
+              ? intl.formatMessage({
+                  id: 'inputVerify.nonsynthetic',
+                  defaultMessage: 'Nonsynthetic'
+                })
+              : intl.formatMessage({
+                  id: 'inputVerify.nationalList',
+                  defaultMessage: 'National List'
+                })
+          }
+          badgeColor={nlNonsynthetic ? 'gray' : 'blue'}
           title={result.national_list_substance_name || ''}
           tone={nlProhibited ? 'prohibited' : 'allowed'}
           subtitle={[
-            result.national_list_cfr_section,
+            nlNonsynthetic
+              ? intl.formatMessage({
+                  id: 'inputVerify.nonsyntheticNote',
+                  defaultMessage: 'allowed without a National List entry'
+                })
+              : result.national_list_citation || result.national_list_cfr_section,
             // Two static ids, not one interpolated one: a dynamic message id is invisible to the
             // locale-parity test and shows up as a runtime "missing message" instead.
             nlProhibited

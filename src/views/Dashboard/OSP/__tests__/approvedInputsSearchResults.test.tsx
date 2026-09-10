@@ -35,10 +35,7 @@ const verifyResult: Record<string, unknown> = {};
 // declared below it — only over one it reads lazily at call time, like `verifyResult`.
 // Everything else is defined inside.
 vi.mock('store/api/ospApi', () => {
-  const mutation = () => [
-    () => ({ unwrap: () => Promise.resolve({}) }),
-    { isLoading: false }
-  ];
+  const mutation = () => [() => ({ unwrap: () => Promise.resolve({}) }), { isLoading: false }];
   return {
     useLazyVerifyInputQuery: () => [
       () => undefined,
@@ -63,14 +60,14 @@ const OSP = {
   approved_wsda_materials: []
 };
 
-const renderPanel = (result: Record<string, unknown>) => {
+const renderPanel = (result: Record<string, unknown>, osp: Record<string, unknown> = OSP) => {
   Object.keys(verifyResult).forEach((k) => delete verifyResult[k]);
   Object.assign(verifyResult, result);
   return render(
     <ChakraProvider>
       <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <OSPApprovedInputsPanel companyId="1" farmId="1" osp={OSP as any} />
+        <OSPApprovedInputsPanel companyId="1" farmId="1" osp={osp as any} />
       </IntlProvider>
     </ChakraProvider>
   );
@@ -218,5 +215,88 @@ describe('approved-inputs search — "no match" is an outcome, not a warning', (
     // certifier's approval letter reference; until then its events will keep flagging as
     // drift" — printed directly above the button that IS the route.
     expect(screen.queryByText(/Notification of Changes below/i)).toBeNull();
+  });
+});
+
+/**
+ * 🔴 2026-09-10 — spinosad, Bt and d-limonene were catalogued at § 205.601, which lists SYNTHETICS;
+ * none of the three is there (eCFR). The backend now files them as nonsynthetic (`cfr_section`
+ * "nonsyn", `is_national_list_entry: false`, empty `citation`). This panel built "§ {cfr_section}"
+ * itself and filed every catalogue row under "National List", so the fix would have printed
+ * "nonsyn" under a National List badge.
+ */
+describe('approved-inputs — a nonsynthetic substance is never presented as a National List entry', () => {
+  it('badges a nonsynthetic search hit as such and prints no section for it', () => {
+    renderPanel({
+      found: true,
+      status: 'matched',
+      omri_product_pk: null,
+      wsda_material_pk: null,
+      national_list_substance_pk: 7,
+      national_list_candidates: [
+        {
+          pk: 7,
+          substance_name: 'Spinosad',
+          cfr_section: 'nonsyn',
+          citation: '',
+          is_national_list_entry: false,
+          status: 'allowed'
+        },
+        {
+          pk: 8,
+          substance_name: 'Elemental sulfur',
+          cfr_section: '205.601',
+          citation: '§ 205.601(e)',
+          is_national_list_entry: true,
+          status: 'allowed'
+        }
+      ]
+    });
+
+    expect(screen.getByText('Spinosad')).toBeTruthy();
+    expect(screen.getByText('Nonsynthetic')).toBeTruthy();
+    expect(screen.queryByText(/nonsyn\b/)).toBeNull();
+    // The real § 205.601 row keeps its badge and prints the citation the server gave it.
+    expect(screen.getByText('§ 205.601(e)')).toBeTruthy();
+  });
+
+  it('files an approved nonsynthetic substance in its own group, not under National List', () => {
+    renderPanel(
+      {
+        found: false,
+        status: 'not_found',
+        omri_product_pk: null,
+        national_list_substance_pk: null,
+        wsda_material_pk: null
+      },
+      {
+        ...OSP,
+        approved_national_list_substances: [
+          {
+            id: 1,
+            substance_name: 'Spinosad',
+            cfr_section: 'nonsyn',
+            citation: '',
+            is_national_list_entry: false,
+            status: 'allowed'
+          },
+          {
+            id: 2,
+            substance_name: 'Elemental sulfur',
+            cfr_section: '205.601',
+            citation: '§ 205.601(e)',
+            is_national_list_entry: true,
+            status: 'allowed'
+          }
+        ]
+      }
+    );
+
+    const listed = screen.getByText(/National List substances/i).textContent || '';
+    expect(listed).toMatch(/\(1\)/);
+    const nonsyn =
+      screen.getByText(/Nonsynthetic substances \(no National List entry\)/i).textContent || '';
+    expect(nonsyn).toMatch(/\(1\)/);
+    expect(screen.getByText('Spinosad')).toBeTruthy();
   });
 });

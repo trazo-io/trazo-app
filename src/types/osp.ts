@@ -61,6 +61,10 @@ export interface ApprovedNationalListInput {
   id: number;
   substance_name: string;
   cfr_section: string | null;
+  /** "§ 205.601(e)", or "" for a nonsynthetic row. Print this, never a § built from `cfr_section`. */
+  citation?: string | null;
+  /** False for a nonsynthetic substance: allowed without a National List entry, so never filed under one. */
+  is_national_list_entry?: boolean;
   status: string | null;
 }
 
@@ -208,6 +212,8 @@ export interface InputVerifyResult {
   national_list_substance_pk: number | null;
   national_list_substance_name: string | null;
   national_list_cfr_section: string | null;
+  national_list_citation?: string | null;
+  national_list_is_entry?: boolean | null;
   national_list_status: string | null;
   /**
    * Every § 205.601/602 entry the query could mean, best first. `status` travels PER ROW
@@ -219,6 +225,8 @@ export interface InputVerifyResult {
     pk: number;
     substance_name: string;
     cfr_section: string | null;
+    citation?: string | null;
+    is_national_list_entry?: boolean;
     subsection: string | null;
     status: string | null;
     restriction_notes: string | null;

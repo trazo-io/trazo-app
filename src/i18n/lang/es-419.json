@@ -7715,5 +7715,10 @@
   "osp.agent.fromCertificate": "Tomada de tu certificado registrado: {agent}. Elige una aquí solo si este plan va a otra certificadora.",
   "osp.agent.fromRecords": "Tomada de los registros de tu finca: {agent}. Elige una aquí para nombrarla en este plan.",
   "osp.modules.startAgentLabel": "¿Qué certificadora revisará tu plan?",
-  "osp.modules.startAgentHint": "Opcional. Puedes cambiarla hasta que envíes el plan."
+  "osp.modules.startAgentHint": "Opcional. Puedes cambiarla hasta que envíes el plan.",
+  "inputVerify.nonsynthetic": "No sintético",
+  "inputVerify.nonsyntheticNote": "permitido sin una entrada en la Lista Nacional",
+  "osp.approvedInputs.kind.nonsynthetic": "No sintético",
+  "osp.approvedInputs.section.nonsynthetic": "Sustancias no sintéticas (sin entrada en la Lista Nacional)",
+  "osp.approvedInputs.nonsyntheticTooltip": "No sintética: permitida en la producción orgánica sin una entrada en la Lista Nacional"
 }
