@@ -86,18 +86,20 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 /**
- * Which lettered section owns each completion check. Left side = page keys from
+ * Which lettered section owns each completion check (a section may own several). Left side = page keys from
  * `certifications/osp_modules/parcel_application.py`; right side = the missing-keys emitted
  * by `product/services/parcel_application_status.py`. Add a row here when a check is added
  * there, or the new gap shows in the header badge with no section pointing at it.
  * `c_livestock` owns no check on purpose — it has no live-model evidence to read.
  */
-const PAGE_STATUS_CHECK: Record<string, string> = {
-  a_location: 'identity',
-  b_transition: 'transition',
-  d_buffers: 'buffers',
-  e_map: 'map',
-  f_land_history: 'land_history'
+const PAGE_STATUS_CHECK: Record<string, string[]> = {
+  a_location: ['identity'],
+  b_transition: ['transition'],
+  d_buffers: ['buffers'],
+  e_map: ['map'],
+  // Two checks since 2026-09-09: the 36-month history AND the "currently certified organic?"
+  // answer that decides which evidence the parcel page prints (certificate vs. history table).
+  f_land_history: ['land_history', 'certification_status']
 };
 
 const DIRECTIONS = ['North', 'South', 'East', 'West'];
@@ -656,9 +658,13 @@ const ParcelApplicationWizard = () => {
     // every section green the moment the status field went missing.
     const openChecks = status ? new Set(status.missing || []) : null;
     return pages.map((page) => {
-      const check = PAGE_STATUS_CHECK[page.key];
+      const checks = PAGE_STATUS_CHECK[page.key];
       const state: SectionTabStatus =
-        !check || !openChecks ? 'none' : openChecks.has(check) ? 'incomplete' : 'complete';
+        !checks || !openChecks
+          ? 'none'
+          : checks.some((check) => openChecks.has(check))
+          ? 'incomplete'
+          : 'complete';
       return {
         key: page.key,
         label: pickText(page.title, locale),
@@ -845,6 +851,14 @@ const ParcelApplicationWizard = () => {
               </Text>
             </HStack>
           </Box>
+        );
+      case 'certificate_of_record':
+        // Printed on the certifier packet from the operation's certificate on file; nothing to
+        // edit here, so the card says where the line comes from rather than showing a blank.
+        return (
+          <Text fontSize="sm" color="gray.600">
+            {intl.formatMessage({ id: 'parcelApp.certificateCard.note' })}
+          </Text>
         );
       default:
         return null;
