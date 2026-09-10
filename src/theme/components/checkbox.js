@@ -35,7 +35,14 @@ const checkedControl = (props) => {
 
 export const checkboxStyles = {
   components: {
+    // ⛔ 2026-09-09 — MEASURED on the Parcel Application and OSP wizards: every checked radio
+    // rendered rgb(25,118,210) = blue.700, not green.700. `props.colorScheme || 'green'` above
+    // never fell back, because Chakra's own component theme sets `defaultProps.colorScheme:
+    // 'blue'` and passes it in — the fallback only covered a prop Chakra always supplies. The
+    // guard test passed forever because it supplied `colorScheme: 'green'` itself. Same
+    // mechanism as Badge: extendTheme deep-merges defaultProps, so ours has to say green.
     Checkbox: {
+      defaultProps: { colorScheme: 'green' },
       baseStyle: (props) => ({
         control: {
           _checked: checkedControl(props),
@@ -46,6 +53,7 @@ export const checkboxStyles = {
       })
     },
     Radio: {
+      defaultProps: { colorScheme: 'green' },
       baseStyle: (props) => ({
         control: {
           _checked: checkedControl(props)
@@ -53,6 +61,7 @@ export const checkboxStyles = {
       })
     },
     Switch: {
+      defaultProps: { colorScheme: 'green' },
       baseStyle: (props) => ({
         track: {
           _checked: {

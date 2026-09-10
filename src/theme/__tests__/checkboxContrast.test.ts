@@ -41,6 +41,16 @@ describe('checked control contrast', () => {
     expect(resolve('Checkbox', 'dark').control._checked.bg).toBe('green.300');
   });
 
+  it.each(['Checkbox', 'Radio', 'Switch'])(
+    '%s defaults to the green colorScheme — Chakra supplies blue otherwise, so the fallback never fired',
+    (component) => {
+      // MEASURED 2026-09-09: checked radios rendered rgb(25,118,210) (blue.700) on the wizards.
+      // `props.colorScheme || 'green'` cannot rescue a prop Chakra always passes; only
+      // defaultProps can. This test reads what the THEME declares, not what a caller supplies.
+      expect((theme as any).components[component].defaultProps?.colorScheme).toBe('green');
+    }
+  );
+
   it('respects an explicit non-green colorScheme rather than hardcoding green', () => {
     const baseStyle = (theme as any).components.Checkbox.baseStyle;
     const checked = baseStyle({ colorScheme: 'red', colorMode: 'light', theme }).control._checked;

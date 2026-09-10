@@ -47,7 +47,48 @@ export interface ParcelApplicationResponse {
   polygon?: Array<{ lat: number; lng: number }> | null;
   map_metadata?: Record<string, unknown> | null;
   has_affidavit: boolean;
+  /** The facts the parcel PDF prints in §F — certificate of record, managers, 36-month accounting. */
+  land_history?: LandHistorySummary;
+  /** § 205.202(c) neighbour-signed boundary attestations on file. */
+  adjoining_affidavits?: Array<{
+    neighbor_name: string;
+    neighbor_farm_name: string;
+    border_side: string;
+    signed: string | null;
+  }>;
   status: { state: 'not_started' | 'in_progress' | 'complete'; missing: string[] };
+}
+
+export interface LandHistoryManager {
+  name: string;
+  role: 'current manager' | 'prior manager';
+  period_start: string | null;
+  period_end: string | null;
+  last_prohibited: string | null;
+  declared: string;
+  signed: string | null;
+  attached: boolean;
+  contradiction: boolean;
+}
+
+export interface LandHistorySummary {
+  certificate: {
+    number: string;
+    agent: string;
+    effective: string | null;
+    expiry: string | null;
+    document_url: string;
+  } | null;
+  current_manager: LandHistoryManager;
+  prior_managers: LandHistoryManager[];
+  coverage: {
+    window_start: string;
+    window_end: string;
+    complete: boolean | null;
+    gaps: Array<[string, string]>;
+    unplaced: number;
+    text: string;
+  };
 }
 
 interface ParcelArgs {
