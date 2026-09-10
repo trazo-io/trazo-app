@@ -1,15 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {
-  VStack,
-  HStack,
-  SimpleGrid,
-  useToast,
-  Text,
-  Box,
-  Flex,
-  Badge,
-  Input
-} from '@chakra-ui/react';
+import { VStack, HStack, SimpleGrid, useToast, Text, Box, Flex } from '@chakra-ui/react';
 import {
   StandardPage,
   StandardCard,
@@ -22,6 +12,7 @@ import { FormProvider, useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { object, string, number, array } from 'zod';
 import { useIntl } from 'react-intl';
+import type { IntlShape } from 'react-intl';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
 import { GoogleMap, Polygon, Marker, useLoadScript } from '@react-google-maps/api';
 import { TrazoImageUpload } from '../Upload';
@@ -36,27 +27,35 @@ import {
 } from 'react-icons/fa';
 import { MdInfo } from 'react-icons/md';
 import {
-  StandardNumberInput,
   StandardInput,
   StandardTextarea,
   StandardDecimalInput
 } from 'components/Design/StandardComponents';
 
-// 🎯 CARBON TRANSPARENCY FOCUSED SCHEMA
-const transparencyParcelSchema = object({
-  // Step 1: Identity (Required)
-  name: string().min(1, 'Parcel name is required').max(100, 'Name too long'),
-  area: number().min(0.01, 'Area must be greater than 0'),
+// A zod schema at MODULE SCOPE is untranslatable by construction — its messages are frozen
+// at import, before any locale exists, and they surface twice: under the field via
+// `errors.<field>.message` and inside the onInvalidSubmit toast. Built from `intl` instead,
+// memoised on locale.
+const buildParcelSchema = (intl: IntlShape) =>
+  object({
+    // Step 1: Identity (Required)
+    name: string()
+      .min(1, intl.formatMessage({ id: 'parcel.validation.nameRequired' }))
+      .max(100, intl.formatMessage({ id: 'parcel.validation.nameTooLong' })),
+    area: number().min(0.01, intl.formatMessage({ id: 'parcel.validation.areaPositive' })),
 
-  // Step 2: Location (polygon validated separately)
+    // Step 2: Location (polygon validated separately)
 
-  // Step 3: Parcel description (Required)
-  transparency_description: string().min(3, 'Describe this parcel'),
-  sustainability_practices: string().optional(),
+    // Step 3: Parcel description (Required)
+    transparency_description: string().min(
+      3,
+      intl.formatMessage({ id: 'parcel.validation.descriptionRequired' })
+    ),
+    sustainability_practices: string().optional(),
 
-  // Step 4: Visual Documentation (Optional)
-  images: array(string()).max(5).optional()
-});
+    // Step 4: Visual Documentation (Optional)
+    images: array(string()).max(5).optional()
+  });
 
 // Utility functions for polygon calculations (same as original)
 const calculatePolygonCenter = (points: Array<{ lat: number; lng: number }>) => {
@@ -167,6 +166,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   establishmentCoordinates,
   preFormAlert
 }) => {
+  const intl = useIntl();
+  // Rebuilt when the locale changes, so a language switch retranslates the field errors.
+  const transparencyParcelSchema = useMemo(() => buildParcelSchema(intl), [intl]);
+
   const methods = useForm<TransparencyParcelFormData>({
     resolver: zodResolver(transparencyParcelSchema),
     defaultValues: {
@@ -240,7 +243,6 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const currentImages = watch('images') || [];
-  const intl = useIntl();
   const toast = useToast();
   const polygonRef = useRef<google.maps.Polygon>();
   const listenersRef = useRef<google.maps.MapsEventListener[]>([]);
@@ -254,28 +256,30 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   // there is room. Without it these two wrap past the two-line clamp and lose words.
   const steps = [
     {
-      title: 'Parcel Identity',
-      shortTitle: 'Identity',
-      description: 'Name & area',
+      title: intl.formatMessage({ id: 'parcel.wizard.step.identityTitle' }),
+      shortTitle: intl.formatMessage({ id: 'parcel.wizard.step.identityShort' }),
+      description: intl.formatMessage({ id: 'parcel.wizard.step.identityDesc' }),
       icon: FaBuilding,
       required: true
     },
     {
-      title: 'Location',
-      description: 'Map boundaries',
+      title: intl.formatMessage({ id: 'parcel.wizard.step.locationTitle' }),
+      description: intl.formatMessage({ id: 'parcel.wizard.step.locationDesc' }),
       icon: FaMapMarkedAlt,
-      required: true
+      // The boundary is deferrable — `nextStep` records the deferral instead of blocking.
+      // Marking it required here would print a red asterisk over a step you may skip.
+      required: false
     },
     {
-      title: 'Description',
-      description: 'What this block is',
+      title: intl.formatMessage({ id: 'parcel.wizard.step.descriptionTitle' }),
+      description: intl.formatMessage({ id: 'parcel.wizard.step.descriptionDesc' }),
       icon: MdInfo,
       required: true
     },
     {
-      title: 'Visual Documentation',
-      shortTitle: 'Photos',
-      description: 'Photos of this block',
+      title: intl.formatMessage({ id: 'parcel.wizard.step.photosTitle' }),
+      shortTitle: intl.formatMessage({ id: 'parcel.wizard.step.photosShort' }),
+      description: intl.formatMessage({ id: 'parcel.wizard.step.photosDesc' }),
       icon: FaCamera,
       required: false
     }
@@ -320,17 +324,18 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
   const blockingReason = (stepNumber: number, formData: any): string | null => {
     switch (stepNumber) {
       case 0:
-        if (!formData.name || !formData.name.trim()) return 'Enter a parcel name.';
-        if (!(formData.area > 0)) return 'Enter the parcel area in acres.';
+        if (!formData.name || !formData.name.trim())
+          return intl.formatMessage({ id: 'parcel.wizard.blocked.name' });
+        if (!(formData.area > 0)) return intl.formatMessage({ id: 'parcel.wizard.blocked.area' });
         return null;
-      case 1:
-        return isValidPolygon() || boundarySkipped
-          ? null
-          : 'Draw the parcel boundary on the map, or choose to add it later.';
+      // case 1 (map) is deliberately absent: the boundary is deferrable, so Continue must
+      // never bounce here. Until 2026-09-08 it did — and the ghost "Continue without
+      // boundary" link below the map was the ONLY control that actually advanced. The
+      // primary button looked like the way forward and was the dead one.
       case 2:
         return (formData.transparency_description || '').trim().length >= 3
           ? null
-          : 'Add a short description of what grows on this parcel.';
+          : intl.formatMessage({ id: 'parcel.wizard.blocked.description' });
       default:
         return null;
     }
@@ -343,13 +348,20 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
       if (reason) {
         toast({
-          title: 'Almost there',
+          title: intl.formatMessage({ id: 'parcel.wizard.blocked.title' }),
           description: reason,
           status: 'warning',
           duration: 4000,
           isClosable: true
         });
         return;
+      }
+
+      // Leaving the map step without a closed outline records the deferral (and drops any
+      // 1-2 stray points, which `safePolygon` would discard at submit anyway) so the
+      // boundary nudge on the parcel profile knows to ask again.
+      if (currentStep === 1 && !isValidPolygon()) {
+        deferBoundary();
       }
 
       setCurrentStep(currentStep + 1);
@@ -362,9 +374,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     }
   };
 
-  // Skip boundary drawing: mark map step satisfied with an empty polygon and advance.
-  // The boundary improves the consumer page map but is not required to start logging events.
-  const handleSkipBoundary = () => {
+  // Record that the parcel is being saved without a closed boundary. Not a navigation
+  // action — `nextStep` owns advancing, so there is exactly one Continue on this step.
+  const deferBoundary = () => {
     setBoundarySkipped(true);
     setPolygon([]);
     setValue('polygon', []);
@@ -372,9 +384,17 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       center: mapCenter,
       zoom: mapZoom
     });
-    if (currentStep === 1) {
-      setCurrentStep(2);
-    }
+  };
+
+  const undoLastPoint = () => {
+    const next = polygon.slice(0, -1);
+    setPolygon(next);
+    setValue('polygon', next);
+  };
+
+  const clearBoundary = () => {
+    setPolygon([]);
+    setValue('polygon', []);
   };
 
   const goToStep = (stepNumber: number) => {
@@ -472,9 +492,9 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     }
 
     toast({
-      title: 'Check your details',
+      title: intl.formatMessage({ id: 'parcel.invalid.title' }),
       description:
-        formErrors[badField]?.message || 'Some required information is missing or invalid.',
+        formErrors[badField]?.message || intl.formatMessage({ id: 'parcel.invalid.generic' }),
       status: 'error',
       duration: 5000,
       isClosable: true
@@ -507,8 +527,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     } catch (error) {
       console.error('❌ Form submission error:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to save parcel. Please try again.',
+        title: intl.formatMessage({ id: 'app.error' }),
+        description: intl.formatMessage({ id: 'parcel.saveError' }),
         status: 'error',
         duration: 5000,
         isClosable: true
@@ -518,10 +538,24 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
   return (
     <StandardPage
-      title={isEdit ? 'Edit Parcel' : 'Add New Parcel'}
-      description={`${isEdit ? 'Update' : 'Create'} a parcel for carbon transparency${
-        establishmentName ? ` in ${establishmentName}` : ''
-      }`}
+      title={intl.formatMessage({
+        id: isEdit ? 'parcel.page.editTitle' : 'parcel.page.addTitle'
+      })}
+      // Was "Create a parcel for carbon transparency" — carbon is background work here
+      // (progressive disclosure), and nothing on these four steps is a carbon input.
+      description={[
+        intl.formatMessage({
+          id: isEdit ? 'parcel.page.editSubtitle' : 'parcel.page.addSubtitle'
+        }),
+        establishmentName
+          ? intl.formatMessage(
+              { id: 'parcel.page.inEstablishment' },
+              { establishment: establishmentName }
+            )
+          : ''
+      ]
+        .filter(Boolean)
+        .join(' ')}
       showBackButton
       onBack={onCancel}>
       {/* Optional pre-flight alert (e.g., subscription limit warning) */}
@@ -540,17 +574,21 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
         <form onSubmit={handleSubmit(onSubmitForm, onInvalidSubmit)}>
           {/* 🎯 STEP 0: Parcel Identity */}
           {currentStep === 0 && (
-            <StandardCard title="Parcel Identity" subtitle="Basic information for transparency">
+            <StandardCard
+              title={intl.formatMessage({ id: 'parcel.wizard.step.identityTitle' })}
+              subtitle={intl.formatMessage({ id: 'parcel.step.identity.cardSubtitle' })}>
               <VStack spacing={6} align="stretch">
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
                   <StandardField
-                    label="Parcel Name"
+                    label={intl.formatMessage({ id: 'parcel.step.identity.nameLabel' })}
                     required
                     error={errors.name?.message}
-                    helpText="Consumer-friendly name for this parcel">
+                    helpText={intl.formatMessage({ id: 'parcel.step.identity.nameHelp' })}>
                     <StandardInput
                       {...methods.register('name')}
-                      placeholder="e.g., North Avocado Grove, Organic Block A"
+                      placeholder={intl.formatMessage({
+                        id: 'parcel.step.identity.namePlaceholder'
+                      })}
                     />
                   </StandardField>
 
@@ -629,8 +667,10 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     wholesale grower's buyer is a packer, not a shopper. */}
                 <StandardAlert
                   status="info"
-                  title="Why this matters"
-                  description="Your certifier identifies each field by name, area and crop — these are the details that tie your records to the right block."
+                  title={intl.formatMessage({ id: 'parcel.step.identity.whyTitle' })}
+                  // "…by name, area and crop" — this step collects no crop, so the sentence
+                  // named a field the form never asks for.
+                  description={intl.formatMessage({ id: 'parcel.step.identity.whyBody' })}
                 />
 
                 <HStack spacing={3} justify="flex-end" pt={4}>
@@ -654,11 +694,17 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
               // "transparency" is the one thing it does not serve.
               subtitle={intl.formatMessage({ id: 'parcel.boundary.stepSubtitle' })}>
               <VStack spacing={6} align="stretch">
+                {/* The map carried no instructions at all: clicking it adds a point, and
+                    nothing on screen said so. */}
+                <Text fontSize="sm" color="gray.600">
+                  {intl.formatMessage({ id: 'parcel.boundary.drawHint' })}
+                </Text>
+
                 <Box borderRadius="lg" overflow="hidden" border="1px solid" borderColor="gray.200">
                   {loadError ? (
                     <Flex h="400px" align="center" justify="center" bg="red.50" direction="column">
                       <Text color="red.700" mb={2}>
-                        Failed to load Google Maps
+                        {intl.formatMessage({ id: 'parcel.boundary.mapError' })}
                       </Text>
                       <Text fontSize="sm" color="red.700">
                         {loadError.message}
@@ -666,7 +712,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     </Flex>
                   ) : !isLoaded ? (
                     <Flex h="400px" align="center" justify="center" bg="gray.100">
-                      <Text>Loading map...</Text>
+                      <Text>{intl.formatMessage({ id: 'parcel.boundary.mapLoading' })}</Text>
                     </Flex>
                   ) : (
                     <GoogleMap
@@ -768,46 +814,61 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                   description={intl.formatMessage({ id: 'parcel.boundary.whyBody' })}
                 />
 
-                {getPolygonLength() > 0 && (
-                  <Box p={4} bg="green.50" borderRadius="lg">
-                    <Text fontWeight="semibold" color="green.700" mb={2}>
-                      Polygon Points: {getPolygonLength()}
+                {/* One STATUS strip, no second CTA. What used to sit here was a green
+                    "Polygon Points / Valid Polygon" box (jargon, and a `Badge colorScheme`
+                    that the theme ignores) plus a ghost "Continue without boundary" button
+                    that competed with the footer's own Continue for the same destination.
+                    State is reported here; advancing is the footer's single job. */}
+                <Box
+                  p={4}
+                  borderRadius="lg"
+                  bg={
+                    isValidPolygon() ? 'green.50' : getPolygonLength() > 0 ? 'amber.50' : 'gray.50'
+                  }>
+                  <VStack align="start" spacing={2}>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="semibold"
+                      // amber.800/900 over amber.50 measures 2.90:1 / 3.57:1 — both under the
+                      // 4.5 floor for 14px, so the amber tint carries the status and the
+                      // glyphs stay on a dark neutral. The sentence states the state outright,
+                      // so nothing here is signalled by colour alone.
+                      color={isValidPolygon() ? 'green.700' : 'gray.800'}>
+                      {isValidPolygon()
+                        ? intl.formatMessage(
+                            { id: 'parcel.boundary.statusDone' },
+                            { count: getPolygonLength() }
+                          )
+                        : getPolygonLength() > 0
+                        ? intl.formatMessage(
+                            { id: 'parcel.boundary.statusPartial' },
+                            { count: getPolygonLength() }
+                          )
+                        : intl.formatMessage({ id: 'parcel.boundary.statusNone' })}
                     </Text>
-                    <HStack>
-                      <Badge colorScheme="green" variant="solid">
-                        {isValidPolygon() ? 'Valid Polygon' : 'Need more points'}
-                      </Badge>
-                      {getPolygonLength() > 0 && (
+
+                    {!isValidPolygon() && (
+                      <Text fontSize="xs" color="gray.600">
+                        {intl.formatMessage({ id: 'parcel.skipBoundary.caption' })}
+                      </Text>
+                    )}
+
+                    {getPolygonLength() > 0 && (
+                      <HStack spacing={2} pt={1}>
+                        <StandardButton size="sm" variant="outline" onClick={undoLastPoint}>
+                          {intl.formatMessage({ id: 'parcel.boundary.undo' })}
+                        </StandardButton>
                         <StandardButton
                           size="sm"
                           variant="outline"
                           leftIcon={<FaTrash />}
-                          onClick={() => setPolygon([])}>
-                          Clear Points
+                          onClick={clearBoundary}>
+                          {intl.formatMessage({ id: 'parcel.boundary.clear' })}
                         </StandardButton>
-                      )}
-                    </HStack>
-                  </Box>
-                )}
-
-                {/* Escape hatch: boundary drawing is the primary flow, but farmers can skip it */}
-                {!isValidPolygon() && (
-                  <VStack spacing={1} align="center" pt={2}>
-                    <StandardButton variant="ghost" size="sm" onClick={handleSkipBoundary}>
-                      {intl.formatMessage({
-                        id: 'parcel.skipBoundary.action',
-                        defaultMessage: 'Continue without boundary — draw it later'
-                      })}
-                    </StandardButton>
-                    <Text fontSize="xs" color="gray.500" textAlign="center" maxW="420px">
-                      {intl.formatMessage({
-                        id: 'parcel.skipBoundary.caption',
-                        defaultMessage:
-                          "You can start logging events right away. Your certifier's parcel application needs a map of this block, so Trazo will ask for it again before your renewal packet is complete."
-                      })}
-                    </Text>
+                      </HStack>
+                    )}
                   </VStack>
-                )}
+                </Box>
 
                 <HStack spacing={3} justify="space-between" pt={4}>
                   <StandardButton
@@ -843,17 +904,23 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                is what the profile header renders and what scores 40 of the 100 readiness
                points. So the field stays; only the framing changes. */
             <StandardCard
-              title="Parcel description"
-              subtitle="What this block is, in your own words">
+              title={intl.formatMessage({ id: 'parcel.step.description.cardTitle' })}
+              subtitle={intl.formatMessage({ id: 'parcel.step.description.cardSubtitle' })}>
               <VStack spacing={6} align="stretch">
                 <StandardField
-                  label="Describe this parcel"
+                  label={intl.formatMessage({ id: 'parcel.step.description.label' })}
                   required
                   error={errors.transparency_description?.message}
-                  helpText="Crop, plantings, irrigation, anything that distinguishes this block from your others. 100+ characters recommended.">
+                  // "100+ characters recommended" dropped: its only basis was
+                  // `Parcel.get_transparency_score()`, where a 100-character description
+                  // scores 40 of 100. The score is retired as a concept, so a threshold
+                  // derived from it does not get restated as writing advice.
+                  helpText={intl.formatMessage({ id: 'parcel.step.description.help' })}>
                   <StandardTextarea
                     {...methods.register('transparency_description')}
-                    placeholder="e.g., 12.5-acre Hass avocado block on the east slope, planted 2011 on Dusa rootstock. Drip irrigation from the deep well, cover cropped between rows over winter..."
+                    placeholder={intl.formatMessage({
+                      id: 'parcel.step.description.placeholder'
+                    })}
                     minH="150px"
                   />
                 </StandardField>
@@ -865,12 +932,14 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     with no destination is the setup-wizard inversion §10.4 calls out. */}
                 <SimpleGrid columns={1} spacing={6}>
                   <StandardField
-                    label="Soil & conservation practices"
+                    label={intl.formatMessage({ id: 'parcel.step.description.practicesLabel' })}
                     error={errors.sustainability_practices?.message}
-                    helpText="Cover cropping, compost, buffer plantings — the practices your certifier asks about under 7 CFR 205.203.">
+                    helpText={intl.formatMessage({ id: 'parcel.step.description.practicesHelp' })}>
                     <StandardTextarea
                       {...methods.register('sustainability_practices')}
-                      placeholder="e.g., Water conservation through drip irrigation, soil health improvement through cover crops, biodiversity support through native plant borders..."
+                      placeholder={intl.formatMessage({
+                        id: 'parcel.step.description.practicesPlaceholder'
+                      })}
                       minH="120px"
                     />
                   </StandardField>
@@ -878,8 +947,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
                 <StandardAlert
                   status="info"
-                  title="Where this goes"
-                  description="Your description appears on this parcel's profile and in the records you share with your certifier."
+                  title={intl.formatMessage({ id: 'parcel.step.description.whereTitle' })}
+                  description={intl.formatMessage({ id: 'parcel.step.description.whereBody' })}
                 />
 
                 <HStack spacing={3} justify="space-between" pt={4}>
@@ -906,12 +975,20 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
           {/* 🎯 STEP 3: Visual Documentation */}
           {currentStep === 3 && (
             <StandardCard
-              title="Visual Documentation"
-              subtitle="Photos of this block — certifications are managed as records on the farm profile">
+              title={intl.formatMessage({ id: 'parcel.wizard.step.photosTitle' })}
+              subtitle={intl.formatMessage({ id: 'parcel.step.photos.cardSubtitle' })}>
               <VStack spacing={6} align="stretch">
                 <StandardField
-                  label="Parcel Images"
-                  helpText="Upload high-quality images that show consumers the practices in action (3+ images recommended for full points)">
+                  label={intl.formatMessage({ id: 'parcel.step.photos.label' })}
+                  // Was "images that show consumers the practices in action (3+ images
+                  // recommended for full points)". Both halves were false. `_build_public_parcel`
+                  // returns name/area/polygon/map_metadata/location_disclosure_level and NO
+                  // images, and every other reader of `parcel.album` is behind IsAuthenticated —
+                  // so a parcel photo reaches no shopper. "Full points" was
+                  // `Parcel.get_transparency_score()`, a retired concept. Same class as the
+                  // boundary copy corrected on the map step: the ask was justified by a
+                  // destination the product does not have.
+                  helpText={intl.formatMessage({ id: 'parcel.step.photos.help' })}>
                   <TrazoImageUpload
                     maxFiles={5}
                     maxSize={5 * 1024 * 1024} // 5MB
@@ -923,8 +1000,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
                 <StandardAlert
                   status="info"
-                  title="Visual Trust Building"
-                  description="Images help consumers see the real practices behind their food, building confidence in their purchasing decisions."
+                  title={intl.formatMessage({ id: 'parcel.step.photos.whereTitle' })}
+                  description={intl.formatMessage({ id: 'parcel.step.photos.whereBody' })}
                 />
 
                 <HStack spacing={3} justify="space-between" pt={4}>
@@ -942,9 +1019,13 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
                     <StandardButton
                       type="submit"
                       isLoading={isLoading}
-                      loadingText={isEdit ? 'Updating...' : 'Creating...'}
+                      loadingText={intl.formatMessage({
+                        id: isEdit ? 'app.updating' : 'app.creating'
+                      })}
                       leftIcon={<FaCheckCircle />}>
-                      {isEdit ? 'Update Parcel' : 'Create Parcel'}
+                      {intl.formatMessage({
+                        id: isEdit ? 'parcel.submit.update' : 'parcel.submit.create'
+                      })}
                     </StandardButton>
                   </HStack>
                 </HStack>

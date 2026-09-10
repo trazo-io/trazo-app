@@ -112,8 +112,7 @@ interface ParcelMapInfoProps {
     transparency_description?: string;
     sustainability_practices?: string;
     primary_crop?: string;
-    transparency_score?: number;
-    transparency_ready?: boolean;
+    // `transparency_score` / `transparency_ready` removed 2026-09-09 — see CompanyFarmInfo.
   };
 }
 
