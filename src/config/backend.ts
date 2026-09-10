@@ -316,6 +316,9 @@ export const OSP_ATTACHMENTS_URL = (companyId: string, farmId: string, ospId: st
 // NOP input verifier — reused by the OSP Approved Inputs typeahead. Resolves a
 // free-text product name to NationalListSubstance and/or OMRIProduct PKs.
 export const INPUT_VERIFY_URL = `${ROOT_URL}certifications/verify-input/`;
+// The certifier picker's list: agents by Organic Integrity Database spelling, each flagged with
+// whether the renewal packet is numbered to that agent's own forms.
+export const CERTIFYING_AGENTS_URL = `${ROOT_URL}certifications/certifying-agents/`;
 
 // Dry run of the buyer-page input claim, for a draft the wizard has not saved.
 // The chip on the preview card may only ever say what the SERVER decides

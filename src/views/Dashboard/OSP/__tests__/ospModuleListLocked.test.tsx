@@ -15,7 +15,7 @@
  * the suites that only assert what it forbids.
  */
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
@@ -25,6 +25,7 @@ import enUS from '../../../../i18n/lang/en-US.json';
 const createOSP = vi.fn();
 const newVersion = vi.fn();
 let ospStatus = 'active';
+let noPlan = false;
 
 vi.mock('react-redux', () => ({
   useSelector: (fn: (s: unknown) => unknown) =>
@@ -45,6 +46,15 @@ vi.mock('store/api/ospAnnualUpdateApi', () => ({
   useGetOSPAnnualUpdatesQuery: () => ({ data: [] })
 }));
 
+const CERTIFYING_AGENTS = [
+  {
+    slug: 'wsda',
+    name: 'Washington State Department of Agriculture',
+    short_name: 'WSDA',
+    own_numbering: true
+  }
+];
+
 const DEFINITIONS = {
   modules: [
     {
@@ -57,10 +67,16 @@ const DEFINITIONS = {
   ]
 };
 
+// The certifying-agent card and the first-run picker read the agent list. `react-redux` is
+// stubbed, so the real RTK hook has no store; an empty list renders the plain picker.
+vi.mock('store/api/certificationApi', () => ({
+  useGetCertifyingAgentsQuery: () => ({ data: CERTIFYING_AGENTS, isLoading: false, isError: false })
+}));
+
 vi.mock('store/api/ospApi', () => ({
   useGetOSPsQuery: () => ({
     useGetOSPQuery: () => ({ data: undefined }),
-    data: [{ id: '11', version_number: 2, status: ospStatus }],
+    data: noPlan ? [] : [{ id: '11', version_number: 2, status: ospStatus }],
     isLoading: false
   }),
   useGetOSPModuleDefinitionsQuery: () => ({ data: DEFINITIONS, isLoading: false }),
@@ -73,6 +89,7 @@ vi.mock('store/api/ospApi', () => ({
     isLoading: false
   }),
   useCreateOSPMutation: () => [createOSP, { isLoading: false }],
+  useUpdateOSPMutation: () => [vi.fn(), { isLoading: false }],
   useNewOSPVersionMutation: () => [newVersion, { isLoading: false }],
   // The page renders the plan-review panel (2026-09-07): the review belongs where the modules
   // are answered and the packet is downloaded, not only on the demoted narrative view. Clean
@@ -164,5 +181,43 @@ describe('OSPModuleListPage — a locked plan', () => {
     expect(screen.queryByText('View module')).toBeNull();
     expect(screen.queryByText('Start a new version')).toBeNull();
     expect(screen.queryByText('View only')).toBeNull();
+  });
+});
+
+/**
+ * 🔴 2026-09-10 — the packet numbers itself to the plan's certifying agent, and a first-year
+ * applicant had nowhere to name one: "Start my OSP" posted an empty body, so every new plan began
+ * with no agent and its packet spoke CCOF's form numbers.
+ */
+describe('OSPModuleListPage — no plan yet', () => {
+  beforeEach(() => {
+    createOSP.mockReset();
+    createOSP.mockReturnValue({ unwrap: () => Promise.resolve({ id: '1' }) });
+    noPlan = true;
+  });
+  afterEach(() => {
+    noPlan = false;
+  });
+
+  it('asks who will review the plan, and starts it with that agent', async () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText('Who will review your plan?'), {
+      target: { value: 'Washington State Department of Agriculture' }
+    });
+    expect(
+      screen.getByText("The renewal packet is numbered to WSDA's own forms.")
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Start my OSP'));
+    await waitFor(() => expect(createOSP).toHaveBeenCalled());
+    expect(createOSP.mock.calls[0][0].data).toEqual({
+      certifier_name: 'Washington State Department of Agriculture'
+    });
+  });
+
+  it('still starts a plan when no agent is picked, without inventing one', async () => {
+    renderPage();
+    fireEvent.click(screen.getByText('Start my OSP'));
+    await waitFor(() => expect(createOSP).toHaveBeenCalled());
+    expect(createOSP.mock.calls[0][0].data).toEqual({});
   });
 });

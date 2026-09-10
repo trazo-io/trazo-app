@@ -168,3 +168,15 @@ export interface OrganicClaim {
   lot_eligibility?: LotOrganicEligibility;
   evidence?: ClaimEvidence;
 }
+
+/**
+ * One entry of the certifier picker — `certifying_agents` in certifications/views.py.
+ * `own_numbering`: the renewal packet lists its documents against this agent's own form
+ * numbers. False means it falls back to the Common OSP (CCOF) numbering and says so.
+ */
+export interface CertifyingAgentOption {
+  slug: string;
+  name: string;
+  short_name: string;
+  own_numbering: boolean;
+}

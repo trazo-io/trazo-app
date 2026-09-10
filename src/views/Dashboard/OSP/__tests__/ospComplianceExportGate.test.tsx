@@ -53,6 +53,15 @@ vi.mock('store/api/ospAnnualUpdateApi', () => ({
   useGetOSPAnnualUpdatesQuery: () => ({ data: [] })
 }));
 
+const CERTIFYING_AGENTS = [
+  {
+    slug: 'wsda',
+    name: 'Washington State Department of Agriculture',
+    short_name: 'WSDA',
+    own_numbering: true
+  }
+];
+
 const DEFINITIONS = {
   modules: [
     {
@@ -64,6 +73,12 @@ const DEFINITIONS = {
     }
   ]
 };
+
+// The certifying-agent card and the first-run picker read the agent list. `react-redux` is
+// stubbed, so the real RTK hook has no store; an empty list renders the plain picker.
+vi.mock('store/api/certificationApi', () => ({
+  useGetCertifyingAgentsQuery: () => ({ data: CERTIFYING_AGENTS, isLoading: false, isError: false })
+}));
 
 vi.mock('store/api/ospApi', () => ({
   useGetOSPsQuery: () => ({
@@ -80,6 +95,7 @@ vi.mock('store/api/ospApi', () => ({
     isLoading: false
   }),
   useCreateOSPMutation: () => [vi.fn(), { isLoading: false }],
+  useUpdateOSPMutation: () => [vi.fn(), { isLoading: false }],
   useNewOSPVersionMutation: () => [vi.fn(), { isLoading: false }],
   useGetOSPReviewQuery: () => ({
     data: {
