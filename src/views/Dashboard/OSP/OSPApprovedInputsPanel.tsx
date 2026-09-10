@@ -226,6 +226,10 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
   const isEditable = osp.status === 'draft' || osp.status === 'active';
 
   const nlList = osp.approved_national_list_substances || [];
+  // A nonsynthetic catalogue row (spinosad, Bt, d-limonene) is allowed without any National List
+  // entry. Filed under the "National List" heading it reads as a listing, so it gets its own group.
+  const nlListed = nlList.filter((s) => s.is_national_list_entry !== false);
+  const nonsynList = nlList.filter((s) => s.is_national_list_entry === false);
   const omriList = osp.approved_omri_products || [];
   const wsdaList = osp.approved_wsda_materials || [];
 
@@ -356,6 +360,33 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
       setRemoveCertRef('');
     }
   };
+
+  /** One approved catalogue substance, removable while the plan is editable. */
+  const renderNationalListChip = (
+    s: { id: number; substance_name: string },
+    scheme: string,
+    tooltip: string | undefined
+  ) => (
+    <Tooltip key={`nl-${s.id}`} label={tooltip} hasArrow>
+      <Tag size="md" colorScheme={scheme} borderRadius="md">
+        <TagLabel>{s.substance_name}</TagLabel>
+        <TagCloseButton
+          isDisabled={!isEditable}
+          onClick={() =>
+            setPendingRemove({
+              kind: 'national_list',
+              id: s.id,
+              label: s.substance_name
+            })
+          }
+          aria-label={intl.formatMessage(
+            { id: 'osp.approvedInputs.removeAria' },
+            { name: s.substance_name }
+          )}
+        />
+      </Tag>
+    </Tooltip>
+  );
 
   /**
    * One search hit, rendered identically whichever catalogue it came from.
@@ -532,6 +563,8 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
               pk: result.national_list_substance_pk,
               substance_name: result.national_list_substance_name || '',
               cfr_section: result.national_list_cfr_section,
+              citation: result.national_list_citation ?? null,
+              is_national_list_entry: result.national_list_is_entry !== false,
               subsection: null,
               status: result.national_list_status,
               restriction_notes: null
@@ -579,9 +612,16 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
         {nlRows.map((row) => (
           <MatchRow
             key={`nl-${row.pk}`}
-            badge={intl.formatMessage({ id: 'osp.approvedInputs.kind.national_list' })}
-            badgeScheme="blue"
-            identifier={row.cfr_section}
+            badge={intl.formatMessage({
+              id:
+                row.is_national_list_entry === false
+                  ? 'osp.approvedInputs.kind.nonsynthetic'
+                  : 'osp.approvedInputs.kind.national_list'
+            })}
+            badgeScheme={row.is_national_list_entry === false ? 'gray' : 'blue'}
+            identifier={
+              row.is_national_list_entry === false ? null : row.citation || row.cfr_section
+            }
             name={row.substance_name}
             action={
               isProhibited(row) ? (
@@ -749,39 +789,41 @@ const OSPApprovedInputsPanel: React.FC<OSPApprovedInputsPanelProps> = ({
           <Text fontWeight="semibold" fontSize="sm" mb={2}>
             {intl.formatMessage({ id: 'osp.approvedInputs.section.national_list' })}
             <Text as="span" color={subtextColor} fontWeight="normal" ml={2}>
-              ({nlList.length})
+              ({nlListed.length})
             </Text>
           </Text>
-          {nlList.length === 0 ? (
+          {nlListed.length === 0 ? (
             <Text fontSize="xs" color={subtextColor}>
               {intl.formatMessage({ id: 'osp.approvedInputs.empty.national_list' })}
             </Text>
           ) : (
             <Flex wrap="wrap" gap={2}>
-              {nlList.map((s) => (
-                <Tooltip key={`nl-${s.id}`} label={s.cfr_section || undefined} hasArrow>
-                  <Tag size="md" colorScheme="blue" borderRadius="md">
-                    <TagLabel>{s.substance_name}</TagLabel>
-                    <TagCloseButton
-                      isDisabled={!isEditable}
-                      onClick={() =>
-                        setPendingRemove({
-                          kind: 'national_list',
-                          id: s.id,
-                          label: s.substance_name
-                        })
-                      }
-                      aria-label={intl.formatMessage(
-                        { id: 'osp.approvedInputs.removeAria' },
-                        { name: s.substance_name }
-                      )}
-                    />
-                  </Tag>
-                </Tooltip>
-              ))}
+              {nlListed.map((s) =>
+                renderNationalListChip(s, 'blue', s.citation || s.cfr_section || undefined)
+              )}
             </Flex>
           )}
         </Box>
+
+        {nonsynList.length > 0 && (
+          <Box>
+            <Text fontWeight="semibold" fontSize="sm" mb={2}>
+              {intl.formatMessage({ id: 'osp.approvedInputs.section.nonsynthetic' })}
+              <Text as="span" color={subtextColor} fontWeight="normal" ml={2}>
+                ({nonsynList.length})
+              </Text>
+            </Text>
+            <Flex wrap="wrap" gap={2}>
+              {nonsynList.map((s) =>
+                renderNationalListChip(
+                  s,
+                  'gray',
+                  intl.formatMessage({ id: 'osp.approvedInputs.nonsyntheticTooltip' })
+                )
+              )}
+            </Flex>
+          </Box>
+        )}
 
         <Box>
           <Text fontWeight="semibold" fontSize="sm" mb={2}>

@@ -7699,5 +7699,10 @@
   "voice.tryAgain": "Try again",
   "voice.trySaying": "Try saying:",
   "voice.unavailableInBrowser": "Voice input isn't available in this browser — use the form or a template instead.",
-  "voice.understood": "Sounds like: {activity}"
+  "voice.understood": "Sounds like: {activity}",
+  "inputVerify.nonsynthetic": "Nonsynthetic",
+  "inputVerify.nonsyntheticNote": "allowed without a National List entry",
+  "osp.approvedInputs.kind.nonsynthetic": "Nonsynthetic",
+  "osp.approvedInputs.section.nonsynthetic": "Nonsynthetic substances (no National List entry)",
+  "osp.approvedInputs.nonsyntheticTooltip": "Nonsynthetic: allowed in organic production without a National List entry"
 }
