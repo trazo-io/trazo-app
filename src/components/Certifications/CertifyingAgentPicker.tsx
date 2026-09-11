@@ -67,8 +67,10 @@ const CertifyingAgentPicker = ({
 
   // 🔴 2026-09-11 — 42 agencies in one alphabetical list is right for NAMING and wrong for
   // CHOOSING: a Washington farm's realistic answers are three. Three groups:
-  //   1. the agencies whose own forms the packet speaks: always shown, because Oregon Tilth
-  //      files no physical address in the USDA snapshot and would never rank by state;
+  //   1. the agencies whose own forms the packet speaks: always shown, and ALPHABETICAL, because
+  //      Oregon Tilth files no physical address in the USDA snapshot and never ranks by state.
+  //      Ordered by rank, an Oregon farm saw CCOF, WSDA, then Oregon Tilth last, in the one state
+  //      where it is the most common agency;
   //   2. up to six others common in the farm's state (`in_state_rank`, only with a state);
   //   3. everything else, alphabetical.
   const groups = React.useMemo(() => {
@@ -77,7 +79,7 @@ const CertifyingAgentPicker = ({
       certifyingAgentLabel(a).localeCompare(certifyingAgentLabel(b));
     const byRank = (a: CertifyingAgentOption, b: CertifyingAgentOption) =>
       (a.in_state_rank ?? Infinity) - (b.in_state_rank ?? Infinity) || byLabel(a, b);
-    const own = list.filter((a) => a.own_numbering).sort(byRank);
+    const own = list.filter((a) => a.own_numbering).sort(byLabel);
     const common = list
       .filter((a) => !a.own_numbering && a.in_state_rank != null)
       .sort(byRank)
