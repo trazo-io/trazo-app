@@ -66,8 +66,15 @@ const certificationApi = baseApi.injectEndpoints({
 
     // Static per deploy (it changes when an agent is added or a register ships), so it is
     // fetched once per session rather than on every picker mount.
-    getCertifyingAgents: build.query<CertifyingAgentOption[], void>({
-      query: () => ({ url: CERTIFYING_AGENTS_URL, method: 'GET', credentials: 'include' }),
+    // `state` (the farm's) adds `in_state_rank`; cached per state for the session.
+    getCertifyingAgents: build.query<CertifyingAgentOption[], string | undefined>({
+      query: (state) => ({
+        url: state
+          ? `${CERTIFYING_AGENTS_URL}?state=${encodeURIComponent(state)}`
+          : CERTIFYING_AGENTS_URL,
+        method: 'GET',
+        credentials: 'include'
+      }),
       keepUnusedDataFor: 3600
     }),
 

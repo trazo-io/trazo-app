@@ -55,6 +55,8 @@ interface OSPActivateModalProps {
   farmId: string;
   osp: OSP;
   onActivated: (updated: OSP) => void;
+  /** The farm's state, so the picker lists the agencies common there first. */
+  farmState?: string;
 }
 
 const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
@@ -63,7 +65,8 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
   companyId,
   farmId,
   osp,
-  onActivated
+  onActivated,
+  farmState
 }) => {
   const intl = useIntl();
   const toast = useToast();
@@ -284,6 +287,7 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
           label={intl.formatMessage({ id: 'osp.activateModal.certifierName.label' })}
           helpText={intl.formatMessage({ id: 'osp.activateModal.certifierName.hint' })}>
           <CertifyingAgentPicker
+            state={farmState}
             value={certifierName}
             onChange={(name) => {
               setCertifierName(name);

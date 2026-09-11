@@ -57,6 +57,7 @@ import {
 } from 'store/api/ospApi';
 import type { RootState } from 'store/index';
 import { useTour } from 'hooks/useTour';
+import { useFarmState } from 'hooks/useMeasurementSystem';
 
 // Theme badge variants are SEMANTIC, and that is why they are used here rather than a
 // colorScheme. NOTE: colorScheme is NOT inert — the `brand` variant reads `paletteOf(props)`
@@ -282,6 +283,8 @@ const OSPModuleListPage = () => {
   // Asked before the plan exists: the packet is numbered to this agent's forms, and a first-year
   // applicant has no certificate for it to be read from. Optional; editable until submission.
   const [startAgent, setStartAgent] = React.useState('');
+  // Orders the picker: agencies common in the farm's state come first.
+  const farmState = useFarmState(farmId);
 
   // Outstanding applications first; everything else keeps the order the API returned. A cap that
   // buries unfinished work would turn a shortened list into a hidden to-do list — and the
@@ -395,7 +398,12 @@ const OSPModuleListPage = () => {
               <StandardField
                 label={intl.formatMessage({ id: 'osp.modules.startAgentLabel' })}
                 helpText={intl.formatMessage({ id: 'osp.modules.startAgentHint' })}>
-                <CertifyingAgentPicker value={startAgent} onChange={setStartAgent} showNumbering />
+                <CertifyingAgentPicker
+                  value={startAgent}
+                  onChange={setStartAgent}
+                  showNumbering
+                  state={farmState ?? undefined}
+                />
               </StandardField>
             </Box>
             <StandardButton minH="44px" onClick={handleStartOsp} isLoading={creating}>
@@ -467,6 +475,7 @@ const OSPModuleListPage = () => {
             farmId={farmId || ''}
             osp={latestOsp}
             isLocked={isLocked}
+            farmState={farmState ?? undefined}
           />
 
           {/* Plan review, on the OSP LANDING rather than only on the demoted narrative page.

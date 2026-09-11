@@ -7731,5 +7731,8 @@
   "osp.approvedInputs.section.nonsynthetic": "Nonsynthetic substances (no National List entry)",
   "osp.approvedInputs.nonsyntheticTooltip": "Nonsynthetic: allowed in organic production without a National List entry",
   "osp.agent.fromCertificateLocked": "From your certificate on file.",
-  "osp.agent.fromRecordsLocked": "From your farm's records."
+  "osp.agent.fromRecordsLocked": "From your farm's records.",
+  "certifyingAgent.groupOwnForms": "Your packet uses their own forms",
+  "certifyingAgent.groupInState": "Also common in your state",
+  "certifyingAgent.groupOthers": "All other agencies"
 }

@@ -20,6 +20,7 @@ import { useGetCertifyingAgentsQuery } from 'store/api/certificationApi';
 import type { CertifyingAgentOption } from 'types/certification';
 
 const OTHER = '__other__';
+const IN_STATE_SHOWN = 6;
 
 // Short name FIRST. A closed native select shows one line and clips the rest, so at 375px
 // "Washington State Department of Agr…" hid the very abbreviation growers use; "WSDA — Washington
@@ -36,6 +37,8 @@ interface CertifyingAgentPickerProps {
   showNumbering?: boolean;
   /** Accessible name when the picker is not inside a `StandardField`, whose label names it. */
   ariaLabel?: string;
+  /** The farm's state (code or name). Groups the agencies common there at the top of the list. */
+  state?: string;
 }
 
 const CertifyingAgentPicker = ({
@@ -43,13 +46,14 @@ const CertifyingAgentPicker = ({
   onChange,
   isDisabled = false,
   showNumbering = false,
-  ariaLabel
+  ariaLabel,
+  state
 }: CertifyingAgentPickerProps) => {
   const intl = useIntl();
   // Inside a StandardField both controls would otherwise inherit the FormControl's one id, and
   // the label would point at whichever rendered first.
   const otherId = React.useId();
-  const { data: agents, isLoading, isError } = useGetCertifyingAgentsQuery();
+  const { data: agents, isLoading, isError } = useGetCertifyingAgentsQuery(state || undefined);
   const [choseOther, setChoseOther] = useState(false);
 
   const trimmed = value.trim();
@@ -60,6 +64,32 @@ const CertifyingAgentPicker = ({
   const isOther = !picked && (choseOther || trimmed !== '');
 
   const otherPlaceholder = intl.formatMessage({ id: 'certifyingAgent.otherPlaceholder' });
+
+  // 🔴 2026-09-11 — 42 agencies in one alphabetical list is right for NAMING and wrong for
+  // CHOOSING: a Washington farm's realistic answers are three. Three groups:
+  //   1. the agencies whose own forms the packet speaks: always shown, because Oregon Tilth
+  //      files no physical address in the USDA snapshot and would never rank by state;
+  //   2. up to six others common in the farm's state (`in_state_rank`, only with a state);
+  //   3. everything else, alphabetical.
+  const groups = React.useMemo(() => {
+    const list = agents ?? [];
+    const byLabel = (a: CertifyingAgentOption, b: CertifyingAgentOption) =>
+      certifyingAgentLabel(a).localeCompare(certifyingAgentLabel(b));
+    const byRank = (a: CertifyingAgentOption, b: CertifyingAgentOption) =>
+      (a.in_state_rank ?? Infinity) - (b.in_state_rank ?? Infinity) || byLabel(a, b);
+    const own = list.filter((a) => a.own_numbering).sort(byRank);
+    const common = list
+      .filter((a) => !a.own_numbering && a.in_state_rank != null)
+      .sort(byRank)
+      .slice(0, IN_STATE_SHOWN);
+    const shown = new Set([...own, ...common].map((a) => a.slug));
+    const rest = list.filter((a) => !shown.has(a.slug)).sort(byLabel);
+    return [
+      { labelId: 'certifyingAgent.groupOwnForms', agents: own },
+      { labelId: 'certifyingAgent.groupInState', agents: common },
+      { labelId: 'certifyingAgent.groupOthers', agents: rest }
+    ].filter((group) => group.agents.length > 0);
+  }, [agents]);
 
   if (isError || (!isLoading && !agents)) {
     return (
@@ -90,13 +120,15 @@ const CertifyingAgentPicker = ({
             id: isLoading ? 'certifyingAgent.loading' : 'certifyingAgent.placeholder'
           })}
         </option>
-        {[...(agents ?? [])]
-          .sort((a, b) => certifyingAgentLabel(a).localeCompare(certifyingAgentLabel(b)))
-          .map((agent) => (
-            <option key={agent.slug} value={agent.name}>
-              {certifyingAgentLabel(agent)}
-            </option>
-          ))}
+        {groups.map((group) => (
+          <optgroup key={group.labelId} label={intl.formatMessage({ id: group.labelId })}>
+            {group.agents.map((agent) => (
+              <option key={agent.slug} value={agent.name}>
+                {certifyingAgentLabel(agent)}
+              </option>
+            ))}
+          </optgroup>
+        ))}
         <option value={OTHER}>{intl.formatMessage({ id: 'certifyingAgent.other' })}</option>
       </StandardSelect>
 

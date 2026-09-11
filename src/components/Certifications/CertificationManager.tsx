@@ -35,6 +35,7 @@ import {
 } from 'components/Design';
 import CertificationStatusBadge from './CertificationStatusBadge';
 import CertifyingAgentPicker from './CertifyingAgentPicker';
+import { useFarmState } from 'hooks/useMeasurementSystem';
 
 /**
  * Offered certification types, in the backend's own order.
@@ -93,6 +94,8 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
   const toast = useToast();
   const internalDisclosure = useDisclosure();
   const { isOpen, onOpen, onClose } = addDisclosure ?? internalDisclosure;
+  // Orders the certifying-agent picker: agencies common in the farm's state come first.
+  const farmState = useFarmState(farmId);
   const deleteDisclosure = useDisclosure();
   const deleteRef = React.useRef<HTMLButtonElement>(null);
   const [deleteTarget, setDeleteTarget] = useState<Certification | null>(null);
@@ -430,6 +433,7 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                 value={formData.certifier_name ?? ''}
                 onChange={(name) => setFormData({ ...formData, certifier_name: name })}
                 ariaLabel={intl.formatMessage({ id: 'certification.manage.certifier' })}
+                state={farmState ?? undefined}
               />
             ) : (
               <StandardInput
