@@ -1266,7 +1266,12 @@ export const carbonApi = baseApi.injectEndpoints({
     }),
 
     // Voice Configuration & Deepgram Token Endpoints
-    getVoiceConfig: builder.query<{ provider: 'deepgram' | 'web_speech_api' }, void>({
+    // `language_mode` is absent on a backend older than 2026-09-10; the client treats that as
+    // 'locale' (pinned), so the two can deploy in either order.
+    getVoiceConfig: builder.query<
+      { provider: 'deepgram' | 'web_speech_api'; language_mode?: 'multi' | 'locale' },
+      void
+    >({
       query: () => ({
         url: 'carbon/voice-config/',
         method: 'GET',
@@ -1573,7 +1578,6 @@ export const carbonApi = baseApi.injectEndpoints({
     // add-on was withdrawn 2026-08-03 and BLOCKCHAIN_ENABLED has defaulted False since
     // 2026-08-06. Both hooks were exported and had zero call sites in the entire app.
     // Guard: trazo-back `carbon/tests/test_retired_claim_routes_stay_retired.py`.
-
 
     // Phase 3: Enhanced Dashboard Endpoints
     getDashboardComprehensive: builder.query<

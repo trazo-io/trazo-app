@@ -22,8 +22,50 @@
  * "English and Spanish".
  */
 
+/**
+ * Deepgram's language-DETECTING mode — OPT-IN (`language_mode: 'multi'` from voice-config).
+ *
+ * ⛔ NOT the default, and the order the evidence arrived in is the lesson. Direct tests against
+ * Deepgram on 2026-09-10 made it look strictly better: Spanish spoken into the English app came
+ * back EMPTY when pinned (8 clips of 8) and right under `multi`; "spray de Kocide" became "spray de
+ * cocina" under `es-419`. Then the same comparison through the REAL app — Chrome's own capture
+ * and encoder — dropped a word from Spanish notes 5 runs in 5, usually the block: "en el bloque
+ * norte esta mañana" → "en el bloque esta mañana". Pinned `es-419` was exact 3 in 3. On English it
+ * was as good or better ("Entrust" heard 2 in 3, where `en-US` heard "and trusted").
+ *
+ * A records product cannot default to a mode that silently deletes the block from a spray record,
+ * so recognition stays pinned to the app locale. Re-run the in-app A/B when Deepgram ships a new
+ * multilingual model before flipping it.
+ */
+export const DEEPGRAM_AUTO_LANGUAGE = 'multi';
+
+/** The languages the app serves. Deepgram's `multi` detects ten; the parser and the UI speak two. */
+export type SpokenLanguage = 'en' | 'es';
+
+/**
+ * The locale the parser should read a transcript as — chosen by the language it was SPOKEN in,
+ * not the one the app is set to. The backend picks its prompt, its spoken-number table and its
+ * fallback keywords by this; a Spanish sentence read with the English prompt loses mappings like
+ * "nebulizadora" → air_blast.
+ */
+export const LOCALE_FOR_SPOKEN: Readonly<Record<SpokenLanguage, string>> = {
+  en: 'en-US',
+  es: 'es-419'
+};
+
+/**
+ * The spoken language an app locale implies — what voice listens for until the farmer says
+ * otherwise with the panel's language switch.
+ */
+export function spokenLanguageFor(locale: string | undefined | null): SpokenLanguage {
+  return (locale || '').split('-')[0].toLowerCase() === 'es' ? 'es' : 'en';
+}
+
 export interface VoiceLanguage {
-  /** Deepgram Nova-3 `language` query param. */
+  /**
+   * Deepgram Nova-3 `language` when recognition is pinned to the locale (the server's kill
+   * switch), and the keyterm prior under DEEPGRAM_AUTO_LANGUAGE.
+   */
   deepgram: string;
   /** BCP-47 tag for `SpeechRecognition.lang`. */
   webSpeech: string;

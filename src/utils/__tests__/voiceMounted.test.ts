@@ -61,7 +61,7 @@ describe('voice capture is reachable from the activity wizard', () => {
 
   it('caps how long ONE recording can stream', () => {
     // The cost tail is a session with no end, not a busy day. `UtteranceEnd` only fires on
-    // 1.5s of silence, and silence is the assumption that fails on a farm — a tractor idling
+    // a gap in speech, and silence is the assumption that fails on a farm — a tractor idling
     // or wind in the mic can keep endpointing from ever triggering, and the 8s KeepAlive
     // holds the socket open while MediaRecorder keeps pushing audio. Without this cap the
     // daily session ceiling bounded nothing in minutes.
