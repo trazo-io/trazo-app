@@ -7720,5 +7720,7 @@
   "inputVerify.nonsyntheticNote": "permitido sin una entrada en la Lista Nacional",
   "osp.approvedInputs.kind.nonsynthetic": "No sintético",
   "osp.approvedInputs.section.nonsynthetic": "Sustancias no sintéticas (sin entrada en la Lista Nacional)",
-  "osp.approvedInputs.nonsyntheticTooltip": "No sintética: permitida en la producción orgánica sin una entrada en la Lista Nacional"
+  "osp.approvedInputs.nonsyntheticTooltip": "No sintética: permitida en la producción orgánica sin una entrada en la Lista Nacional",
+  "osp.agent.fromCertificateLocked": "Tomada de tu certificado registrado.",
+  "osp.agent.fromRecordsLocked": "Tomada de los registros de tu finca."
 }

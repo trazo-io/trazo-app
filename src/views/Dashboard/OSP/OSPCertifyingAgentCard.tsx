@@ -72,15 +72,16 @@ const OSPCertifyingAgentCard = ({
     savedLines.push(intl.formatMessage({ id: 'osp.agent.none' }));
   } else {
     if (agent.source === 'certificate' || agent.source === 'records') {
-      savedLines.push(
-        intl.formatMessage(
-          {
-            id:
-              agent.source === 'certificate' ? 'osp.agent.fromCertificate' : 'osp.agent.fromRecords'
-          },
-          { agent: agent.name }
-        )
-      );
+      // A locked plan offers no picker, so it gets the source alone: "Pick an agent here" was an
+      // instruction with no control behind it, and the name is already the card's heading.
+      const id = isLocked
+        ? agent.source === 'certificate'
+          ? 'osp.agent.fromCertificateLocked'
+          : 'osp.agent.fromRecordsLocked'
+        : agent.source === 'certificate'
+        ? 'osp.agent.fromCertificate'
+        : 'osp.agent.fromRecords';
+      savedLines.push(intl.formatMessage({ id }, { agent: agent.name }));
     }
     savedLines.push(
       intl.formatMessage(

@@ -33,6 +33,8 @@ export type OSPSections = Record<OSPSectionKey, OSPSection>;
  */
 export interface PacketAgent {
   name: string;
+  /** The picker's spelling of a recognised agent; '' when the name is no agent Trazo knows. */
+  canonical_name: string;
   slug: string | null;
   source: 'plan' | 'certificate' | 'records' | '';
   own_numbering: boolean;
