@@ -102,4 +102,16 @@ describe('voice capture is reachable from the activity wizard', () => {
     expect(src).toMatch(/gateVoiceOverridesToForm/);
     expect(src).not.toMatch(/\.\.\.prev,\s*\.\.\.detected\b/);
   });
+
+  it('offers a block the farmer named, and only the tap writes it', () => {
+    // 2026-09-11: "…en el bloque 4…" left the block empty because the parcel had no block 4.
+    // The fix OFFERS the spoken block; a block is the lot a record belongs to, so it must never
+    // ride the voice merge itself.
+    expect(src).toMatch(/voiceBlockSuggestion\(transcript, knownBlockIds\)/);
+    // not on an activity without the field, not over a block already filled or typed
+    expect(src).toMatch(/formHasBlock && !kept\.block_id && !String\(eventFormData\.block_id/);
+    expect(src).toMatch(/onClick=\{handleVoiceBlockAccept\}/);
+    expect(src).toMatch(/block_id: suggestion\.value/);
+    expect(src.match(/block_id: suggestion\.value/g), 'one writer').toHaveLength(1);
+  });
 });

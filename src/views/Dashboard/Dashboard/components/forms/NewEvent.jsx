@@ -121,6 +121,7 @@ import {
   voiceTypeForActivity,
   VOICE_UNIT_COMPANIONS
 } from 'utils/voiceDataMapper';
+import { voiceBlockSuggestion } from 'utils/spokenBlock';
 import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
 import { nowLocalDateTimeInput } from 'utils/dateOnly';
 
@@ -1466,12 +1467,30 @@ function NewEvent({ isEdit = false, eventId = null }) {
       delete kept.observation;
     }
 
+    // A block the farmer NAMED that voice could not fill — OFFERED, never written.
+    //
+    // Voice fills `block_id` only from the parcel's own blocks, and only when their exact name
+    // was said. MEASURED 2026-09-11 in production: "…en el bloque 4, 10 libras por acre…" filled
+    // product, method and rate and silently left the block — the parcel had no block 4 yet, and a
+    // Spanish "bloque 4" could never have matched an English "Block 4" either. `spokenBlock`
+    // lifts the block out of the words by pattern, so it can only be something said, and the
+    // banner shows it as a button: the farmer's tap is what writes it (handleVoiceBlockAccept).
+    // Never offered over a block the farmer already typed, or on an activity with no block field.
+    const transcript = eventData.original_transcript || eventData.description || '';
+    const formHasBlock =
+      'block_id' in gateVoiceOverridesToForm({ block_id: '_' }, eventTypeId, subtypeCode).kept;
+    const blockSuggestion =
+      formHasBlock && !kept.block_id && !String(eventFormData.block_id ?? '').trim()
+        ? voiceBlockSuggestion(transcript, knownBlockIds)
+        : null;
+
     return {
       mapping,
       kept,
       detected,
       banner: {
-        transcript: eventData.original_transcript || eventData.description || '',
+        transcript,
+        blockSuggestion,
         // WHICH fields, not just how many. "1 fields filled" with nothing visibly changed is
         // what a farmer sees when the only thing voice could keep was `observation` — the
         // notes box, which sits below the fold on every activity. A count alone cannot be
@@ -1642,6 +1661,27 @@ function NewEvent({ isEdit = false, eventId = null }) {
     setVoiceSeq((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeEventType, eventFormData.type]);
+
+  // The farmer tapped the block voice heard. This is the only way a voice-heard block that was
+  // not already on the parcel (or not said in the grower's own spelling) reaches the record.
+  const handleVoiceBlockAccept = () => {
+    const suggestion = voiceBanner?.blockSuggestion;
+    if (!suggestion) return;
+    setEventFormData((prev) =>
+      withListingAttachmentChecked(prev, { ...prev, block_id: suggestion.value })
+    );
+    setVoiceBanner((prev) =>
+      prev
+        ? {
+            ...prev,
+            blockSuggestion: null,
+            keptFields: [...(prev.keptFields || []), 'block_id']
+          }
+        : prev
+    );
+    // The tabs read initialValues on mount only — same remount the voice merge uses.
+    setVoiceSeq((n) => n + 1);
+  };
 
   // The farmer accepted the switch. Change the event type through the SAME handler a manual
   // change uses (it clears type-specific fields — see handleEventTypeChange), seed the
@@ -3254,6 +3294,43 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                           id: `activities.verb.${voiceBanner.suggestion.verbKey}`
                                         })
                                       }
+                                    )}
+                                  </Button>
+                                </VStack>
+                              )}
+                              {/* The block the farmer named, as an offer. A block is the lot a
+                                  record belongs to (CA PUR box 22), so voice never writes one
+                                  it had to work out — the tap does. */}
+                              {voiceBanner.blockSuggestion && (
+                                <VStack align="start" spacing={2} pt={1}>
+                                  <Text fontSize="xs" color="gray.700">
+                                    {voiceBanner.blockSuggestion.kind === 'new'
+                                      ? intl.formatMessage(
+                                          { id: 'events.voice.blockNew' },
+                                          { block: voiceBanner.blockSuggestion.value }
+                                        )
+                                      : intl.formatMessage(
+                                          { id: 'events.voice.blockKnown' },
+                                          {
+                                            spoken: voiceBanner.blockSuggestion.spoken,
+                                            block: voiceBanner.blockSuggestion.value
+                                          }
+                                        )}
+                                  </Text>
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    colorScheme="green"
+                                    minH="44px"
+                                    onClick={handleVoiceBlockAccept}>
+                                    {intl.formatMessage(
+                                      {
+                                        id:
+                                          voiceBanner.blockSuggestion.kind === 'new'
+                                            ? 'events.voice.blockAddNew'
+                                            : 'events.voice.blockUseKnown'
+                                      },
+                                      { block: voiceBanner.blockSuggestion.value }
                                     )}
                                   </Button>
                                 </VStack>
