@@ -21,8 +21,12 @@ import type { CertifyingAgentOption } from 'types/certification';
 
 const OTHER = '__other__';
 
+// Short name FIRST. A closed native select shows one line and clips the rest, so at 375px
+// "Washington State Department of Agr…" hid the very abbreviation growers use; "WSDA — Washington
+// State…" keeps it visible. Every short name shares its agent's initial, so sorting by this label
+// leaves the list where a grower scanning for their agency's name expects it.
 export const certifyingAgentLabel = (agent: CertifyingAgentOption) =>
-  agent.short_name ? `${agent.name} (${agent.short_name})` : agent.name;
+  agent.short_name ? `${agent.short_name} — ${agent.name}` : agent.name;
 
 interface CertifyingAgentPickerProps {
   value: string;
@@ -86,11 +90,13 @@ const CertifyingAgentPicker = ({
             id: isLoading ? 'certifyingAgent.loading' : 'certifyingAgent.placeholder'
           })}
         </option>
-        {(agents ?? []).map((agent) => (
-          <option key={agent.slug} value={agent.name}>
-            {certifyingAgentLabel(agent)}
-          </option>
-        ))}
+        {[...(agents ?? [])]
+          .sort((a, b) => certifyingAgentLabel(a).localeCompare(certifyingAgentLabel(b)))
+          .map((agent) => (
+            <option key={agent.slug} value={agent.name}>
+              {certifyingAgentLabel(agent)}
+            </option>
+          ))}
         <option value={OTHER}>{intl.formatMessage({ id: 'certifyingAgent.other' })}</option>
       </StandardSelect>
 
