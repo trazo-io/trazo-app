@@ -157,7 +157,7 @@ describe('CertifyingAgentPicker — grouped for the farm', () => {
     query = { data: AGENTS, isLoading: false, isError: false };
   });
 
-  it('puts the agencies whose forms the packet speaks first, most common in the state first', () => {
+  it('puts the agencies whose forms the packet speaks first, alphabetically', () => {
     renderPicker();
     const groups = Array.from(select().querySelectorAll('optgroup'));
     expect(groups.map((g) => g.label)).toEqual([
@@ -167,10 +167,11 @@ describe('CertifyingAgentPicker — grouped for the farm', () => {
     ]);
     const labels = (g: Element) =>
       Array.from(g.querySelectorAll('option')).map((o) => o.textContent);
-    // WSDA ranks in the state; Oregon Tilth never ranks (no physical address) and still shows.
+    // Alphabetical, not by rank: Oregon Tilth never ranks (no physical address in the USDA
+    // snapshot), so ranking would put it last even in Oregon, where it is the most common agency.
     expect(labels(groups[0])).toEqual([
-      'WSDA — Washington State Department of Agriculture',
-      'OTCO — Oregon Tilth Certified Organic'
+      'OTCO — Oregon Tilth Certified Organic',
+      'WSDA — Washington State Department of Agriculture'
     ]);
     expect(labels(groups[1])).toEqual(['QAI — Quality Assurance International']);
     expect(labels(groups[2])).toEqual([
