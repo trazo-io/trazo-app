@@ -14,9 +14,14 @@ import {
   Checkbox
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
-import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
+import {
+  StandardAlert,
+  StandardButton,
+  StandardSegmentedControl
+} from 'components/Design/StandardComponents';
 import { FaMicrophone, FaMicrophoneSlash, FaArrowRight, FaRedo } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import {
   useProcessVoiceEventWithAIMutation,
@@ -31,13 +36,30 @@ import {
   voiceActivityLabelKey,
   VOICE_TYPE_MAP
 } from 'utils/voiceDataMapper';
-import { useDeepgramTranscription } from 'hooks/useDeepgramTranscription';
-import { voiceLanguageFor } from 'config/voiceLanguages';
+import { MIN_NOTE_CHARS, useDeepgramTranscription } from 'hooks/useDeepgramTranscription';
+import {
+  DEEPGRAM_AUTO_LANGUAGE,
+  LOCALE_FOR_SPOKEN,
+  spokenLanguageFor,
+  voiceLanguageFor,
+  type SpokenLanguage
+} from 'config/voiceLanguages';
+import {
+  readVoiceLanguagePreference,
+  writeVoiceLanguagePreference
+} from 'utils/voiceLanguagePreference';
 import type { VoiceFieldRequest } from 'config/events/voiceFields';
 import { applicationMethodLabelKey } from 'config/events/enums';
 
 // Stable identity: a fresh `[]` default would be a new prop object on every render.
 const EMPTY_FIELD_REQUESTS: VoiceFieldRequest[] = [];
+
+// A language's name in the APP's language, for sentences ("…in Spanish"). The switch itself uses
+// endonyms (`voice.languageEndonym.*`). Literal ids so a key search finds every use.
+const LANGUAGE_NAME_ID: Readonly<Record<SpokenLanguage, string>> = {
+  en: 'voice.languageName.en',
+  es: 'voice.languageName.es'
+};
 
 // Pulse animation for recording state
 const pulseRing = keyframes`
@@ -107,20 +129,50 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
    * PUBLISHED. See the notes block in voiceDataMapper.mapVoiceDataToFieldValues.
    */
   const [addTranscriptToNotes, setAddTranscriptToNotes] = useState(false);
+  /**
+   * Why the last recording was not parsed, when it was not: nothing heard, too little to read, or
+   * words in a language the app does not serve. `null` when there is nothing to say.
+   *
+   * ⛔ Until 2026-09-10 a short transcript was dropped with no word to the farmer. MEASURED that
+   * day through the running app: "Oh, [pause] we sprayed Entrust…" came back as "Oh,", which the
+   * length gate discarded, and the panel went back to "Start voice input" as though nothing had
+   * happened — reported as "it does not recognise English". A gate may refuse to spend a parse
+   * on three characters; it may not do so silently.
+   */
+  const [voiceNotice, setVoiceNotice] = useState<{
+    kind: 'nothing' | 'tooLittle' | 'unclear';
+    heard: string;
+  } | null>(null);
   const hasAutoStarted = useRef(false);
   const toast = useToast();
   const intl = useIntl();
 
-  // The farmer's own locale drives speech recognition. This used to be
-  // `useState('en-US')` with a setter nothing ever called and a selector hidden behind
-  // "English only" for MVP — so a Spanish-speaking crew got English transcription while
-  // the landing site advertised "English and Spanish". See config/voiceLanguages.ts for
-  // why Deepgram and the Web Speech API need different codes for the same locale.
-  const voiceLanguage = voiceLanguageFor(intl.locale);
-
   // Determine which voice provider to use (deepgram vs web speech API)
   const { data: voiceConfig, isLoading: isLoadingConfig } = useGetVoiceConfigQuery();
   const useDeepgram = voiceConfig?.provider === 'deepgram';
+  // Recognition is pinned to ONE language unless the server opts in to detection
+  // (DEEPGRAM_AUTO_LANGUAGE — see config/voiceLanguages.ts for why it is not the default). An older
+  // backend sends no `language_mode`; that means pinned, the behaviour it was tested with.
+  const detectSpokenLanguage = useDeepgram && voiceConfig?.language_mode === 'multi';
+
+  /**
+   * The language voice LISTENS for — the farmer's own choice, else the app's language.
+   *
+   * It used to be the app's language, full stop (and before 2026-08-25 a hard-coded `en-US`). But
+   * the app a person reads and the language they speak are different facts: Spanish spoken into
+   * the English app comes back EMPTY, 8 clips in 8. Detection could not replace the choice — it
+   * dropped the block from Spanish notes in the real app — so the farmer states it once with the
+   * switch below and it is remembered per user on this device (utils/voiceLanguagePreference).
+   */
+  const currentUserId = useSelector(
+    (state: { userState?: { user?: { id?: number } | null } }) => state.userState?.user?.id
+  );
+  const [pickedLanguage, setPickedLanguage] = useState<SpokenLanguage | null>(null);
+  const listenLanguage: SpokenLanguage =
+    pickedLanguage ?? readVoiceLanguagePreference(currentUserId) ?? spokenLanguageFor(intl.locale);
+  // The codes each backend wants for it, and for the app locale (the keyterm prior under detection).
+  const listenCodes = voiceLanguageFor(LOCALE_FOR_SPOKEN[listenLanguage]);
+  const appCodes = voiceLanguageFor(intl.locale);
 
   // RTK Query mutation hooks
   const [processVoiceEventWithAI, { isLoading: isProcessingVoice }] =
@@ -152,35 +204,60 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     }
   }, [getDeepgramToken]);
 
-  const handleDeepgramComplete = useCallback(
-    (text: string) => {
-      if (text && text.length > 10) {
-        processVoiceInput(text);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cropType, voiceLanguage.deepgram]
-  );
+  /**
+   * One recording's worth of text, from either provider.
+   *
+   * Same threshold the hook uses to decide a pause cannot end the note yet — one number. Below
+   * it the farmer is told what was caught instead of the panel silently resetting.
+   *
+   * ⛔ A plain function, NOT a useCallback. The Deepgram handler was memoised on
+   * `[cropType, voiceLanguage]` with exhaustive-deps switched off, so it kept calling the
+   * `processVoiceInput` of an old render — one that posted the `knownActivity` and
+   * `fieldRequests` from before the farmer answered an in-tab subtype (soil, pest, business).
+   * The hook reads its callback through a ref, so a fresh identity each render costs nothing.
+   */
+  const handleTranscript = (text: string, spokenLanguage?: SpokenLanguage | 'other' | null) => {
+    if (!text || text.length <= MIN_NOTE_CHARS) {
+      setVoiceNotice({ kind: text ? 'tooLittle' : 'nothing', heard: text });
+      return;
+    }
+    // Most words came back in a language the app does not serve — the detector's miss, not the
+    // farmer's words (a heavily accented English clip was tagged Italian). Parsing it would turn
+    // gibberish into field values; saying so and offering the retry is the honest answer.
+    if (spokenLanguage === 'other') {
+      setVoiceNotice({ kind: 'unclear', heard: text });
+      return;
+    }
+    // Pinned: the words are in the language we listened for. Detecting: in the one Deepgram
+    // reported, or — when it could not tell — the app locale (processVoiceInput's fallback).
+    processVoiceInput(text, spokenLanguage ?? (detectSpokenLanguage ? null : listenLanguage));
+  };
 
   const {
     isListening: deepgramListening,
+    isStarting: deepgramStarting,
     stoppedAtLimit: deepgramStoppedAtLimit,
     transcript: deepgramTranscript,
     interimTranscript: deepgramInterim,
     error: deepgramError,
     startListening: deepgramStart,
     stopListening: deepgramStop,
+    cancelListening: deepgramCancel,
     resetTranscript: deepgramReset
   } = useDeepgramTranscription({
-    language: voiceLanguage.deepgram,
-    onTranscriptComplete: handleDeepgramComplete,
+    language: detectSpokenLanguage ? DEEPGRAM_AUTO_LANGUAGE : listenCodes.deepgram,
+    keytermLanguage: detectSpokenLanguage ? appCodes.deepgram : listenCodes.deepgram,
+    onTranscriptComplete: handleTranscript,
     fetchToken
   });
 
   // ── Unified state ──
   const listening = useDeepgram ? deepgramListening : webSpeechListening;
+  // Everything heard so far, not just the segment in progress. `interim || transcript` showed
+  // only the current segment, so "Oh," was replaced on screen by "We sprayed and…" — the farmer
+  // never saw the text that would actually be sent.
   const displayTranscript = useDeepgram
-    ? deepgramInterim || deepgramTranscript
+    ? [deepgramTranscript, deepgramInterim].filter(Boolean).join(' ')
     : webSpeechTranscript;
 
   // Graceful degradation: neither Deepgram configured nor Web Speech API supported
@@ -196,17 +273,18 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     ? deepgramError === 'voice.microphoneBlocked'
     : !isMicrophoneAvailable;
 
-  // Web Speech API: auto-process when speech stops
+  // Web Speech API: auto-process when speech stops. Short results go through the same notice as
+  // Deepgram's — this fallback dropped them silently too (the voice-config endpoint failing, e.g.
+  // a 403 for a company without the voice feature, is enough to land a farmer here).
   useEffect(() => {
     if (useDeepgram) return; // Deepgram handles this via onTranscriptComplete
     if (
       webSpeechTranscript &&
       webSpeechTranscript !== lastProcessedTranscript &&
-      !webSpeechListening &&
-      webSpeechTranscript.length > 10
+      !webSpeechListening
     ) {
-      processVoiceInput(webSpeechTranscript);
       setLastProcessedTranscript(webSpeechTranscript);
+      handleTranscript(webSpeechTranscript);
     }
   }, [webSpeechTranscript, webSpeechListening, useDeepgram]);
 
@@ -247,6 +325,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
   const startListening = async () => {
     setParsedData(null);
+    setVoiceNotice(null);
 
     if (useDeepgram) {
       deepgramReset();
@@ -255,7 +334,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       webSpeechResetTranscript();
       SpeechRecognition.startListening({
         continuous: false,
-        language: voiceLanguage.webSpeech
+        language: listenCodes.webSpeech
       });
     }
   };
@@ -268,7 +347,42 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     }
   };
 
-  const processVoiceInput = async (text: string) => {
+  // Set when a switch interrupted a live recording, so the effect below can start it again once
+  // the hook has re-rendered with the new language (starting it here would reuse the old one).
+  const restartAfterSwitchRef = useRef(false);
+
+  /**
+   * The farmer picked the language they will speak.
+   *
+   * Mid-recording it starts over in the new language: the panel auto-starts, so the natural
+   * moment to notice "it's listening in English" is while it listens, and making the farmer stop,
+   * wait for a result that cannot be right, and start again would be three taps for one intent.
+   * What was said so far went to the wrong model, so it is discarded, never parsed.
+   */
+  const switchListenLanguage = (next: SpokenLanguage) => {
+    if (next === listenLanguage) return;
+    writeVoiceLanguagePreference(currentUserId, next);
+    const recording = useDeepgram ? deepgramListening || deepgramStarting : webSpeechListening;
+    if (recording) {
+      if (useDeepgram) {
+        deepgramCancel();
+      } else {
+        webSpeechResetTranscript();
+        SpeechRecognition.abortListening();
+      }
+      restartAfterSwitchRef.current = true;
+    }
+    setVoiceNotice(null);
+    setPickedLanguage(next);
+  };
+
+  useEffect(() => {
+    if (!restartAfterSwitchRef.current) return;
+    restartAfterSwitchRef.current = false;
+    startListening();
+  }, [listenLanguage]);
+
+  const processVoiceInput = async (text: string, spokenLanguage: SpokenLanguage | null = null) => {
     const startTime = Date.now();
     setIsProcessing(true);
     setProcessingStage(intl.formatMessage({ id: 'voice.stage.processing' }));
@@ -286,9 +400,11 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         crop_type: cropType,
         known_activity: knownActivity || undefined,
         requested_fields: fieldRequests.length ? fieldRequests : undefined,
-        // The backend keys its GPT prompts by language FAMILY (prompt_key_for), so the raw
-        // app locale is what it wants — no third code to keep in step.
-        language: intl.locale,
+        // The language the words were SPOKEN in, when Deepgram could tell — the backend picks its
+        // prompt, spoken-number table and fallback keywords by it (prompt_key_for, by language
+        // FAMILY), and a Spanish sentence read with the English prompt loses mappings like
+        // "nebulizadora" → air_blast. Otherwise the app locale, as before.
+        language: spokenLanguage ? LOCALE_FOR_SPOKEN[spokenLanguage] : intl.locale,
         timestamp: new Date().toISOString()
       }).unwrap();
 
@@ -607,10 +723,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             )}
           </VStack>
 
-          {/* No language selector by design: speech follows the app locale the farmer
-              already chose, so there is no second place to set the same fact.
-
-              A close control DOES belong here. `onClose` was declared as a prop and passed
+          {/* A close control DOES belong here. `onClose` was declared as a prop and passed
               by NewEvent, and nothing ever called it — so opening "Fill by voice" started
               the microphone with no way back to the form short of leaving the page.
 
@@ -632,6 +745,30 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             </Button>
           )}
         </HStack>
+
+        {/* The language to SPEAK in (listenLanguage). Above the button because it decides what
+            the button does, and visible while recording so the farmer can see what it is
+            listening for — changing it then starts over in the new language.
+            Names are ENDONYMS ("Español" in the English app too): a switch is for the person who
+            cannot use the current language, so each option has to be readable to its speakers.
+            Hidden when the server has recognition detect the language itself. */}
+        {!detectSpokenLanguage && (
+          <HStack justify="center" spacing={3} flexWrap="wrap">
+            <Text fontSize="sm" color="gray.700">
+              {intl.formatMessage({ id: 'voice.speakIn' })}
+            </Text>
+            <StandardSegmentedControl<SpokenLanguage>
+              options={[
+                { key: 'en', label: intl.formatMessage({ id: 'voice.languageEndonym.en' }) },
+                { key: 'es', label: intl.formatMessage({ id: 'voice.languageEndonym.es' }) }
+              ]}
+              value={listenLanguage}
+              onChange={switchListenLanguage}
+              ariaLabel={intl.formatMessage({ id: 'voice.speakIn' })}
+              stretchOnMobile={false}
+            />
+          </HStack>
+        )}
 
         {/* Microphone permission blocked */}
         {micBlocked && (
@@ -668,6 +805,29 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
               {intl.formatMessage({ id: listening ? 'voice.stop' : 'voice.start' })}
             </StandardButton>
           </Flex>
+        )}
+
+        {/* Why the last recording was not read — said, never swallowed. Directly under the
+            button that fixes it. "Nothing" names the language it listened for and points at the
+            switch, because the likeliest cause is speaking the other one (Spanish into the
+            English model comes back empty); under detection a mismatch cannot be the cause. */}
+        {voiceNotice && !listening && !parsedData && !isProcessing && (
+          <StandardAlert
+            status="warning"
+            mb={0}
+            description={
+              voiceNotice.kind === 'tooLittle'
+                ? intl.formatMessage({ id: 'voice.heardTooLittle' }, { heard: voiceNotice.heard })
+                : voiceNotice.kind === 'unclear'
+                ? intl.formatMessage({ id: 'voice.heardUnclear' })
+                : detectSpokenLanguage
+                ? intl.formatMessage({ id: 'voice.heardNothingAuto' })
+                : intl.formatMessage(
+                    { id: 'voice.heardNothing' },
+                    { language: intl.formatMessage({ id: LANGUAGE_NAME_ID[listenLanguage] }) }
+                  )
+            }
+          />
         )}
 
         {/* Processing — a transient state, not a success. It was a green.50 panel, which is

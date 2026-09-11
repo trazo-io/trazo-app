@@ -16,7 +16,14 @@ import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
 import { locales } from '../../i18n/i18n-config';
-import { DEFAULT_VOICE_LANGUAGE, VOICE_LANGUAGES, voiceLanguageFor } from '../voiceLanguages';
+import {
+  DEEPGRAM_AUTO_LANGUAGE,
+  DEFAULT_VOICE_LANGUAGE,
+  LOCALE_FOR_SPOKEN,
+  VOICE_LANGUAGES,
+  spokenLanguageFor,
+  voiceLanguageFor
+} from '../voiceLanguages';
 import { getKeytermsForLanguage } from '../agriculturalKeyterms';
 import enUS from '../../i18n/lang/en-US.json';
 import es419 from '../../i18n/lang/es-419.json';
@@ -71,6 +78,28 @@ describe('voice language resolution', () => {
     expect(es).toContain('fertilizante');
     expect(en).not.toContain('fertilizante');
     expect(es.length).toBeGreaterThan(10);
+  });
+});
+
+describe('detecting the spoken language', () => {
+  it('asks Deepgram for its language-detecting mode', () => {
+    expect(DEEPGRAM_AUTO_LANGUAGE).toBe('multi');
+  });
+
+  it('defaults the spoken language to the app language, by family', () => {
+    expect(spokenLanguageFor('es-419')).toBe('es');
+    expect(spokenLanguageFor('es-MX')).toBe('es');
+    expect(spokenLanguageFor('en-US')).toBe('en');
+    expect(spokenLanguageFor(undefined)).toBe('en');
+  });
+
+  it('reads every detected language as a locale the app ships', () => {
+    // The parser is told the SPOKEN language as an app locale. One the app does not ship would
+    // reach the backend's prompt table as an unknown family and silently fall back to English.
+    for (const [spoken, locale] of Object.entries(LOCALE_FOR_SPOKEN)) {
+      expect(locales, `spoken ${spoken} maps to unshipped ${locale}`).toHaveProperty(locale);
+      expect(locale.split('-')[0]).toBe(spoken);
+    }
   });
 });
 
