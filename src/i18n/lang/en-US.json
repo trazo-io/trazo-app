@@ -7720,5 +7720,7 @@
   "inputVerify.nonsyntheticNote": "allowed without a National List entry",
   "osp.approvedInputs.kind.nonsynthetic": "Nonsynthetic",
   "osp.approvedInputs.section.nonsynthetic": "Nonsynthetic substances (no National List entry)",
-  "osp.approvedInputs.nonsyntheticTooltip": "Nonsynthetic: allowed in organic production without a National List entry"
+  "osp.approvedInputs.nonsyntheticTooltip": "Nonsynthetic: allowed in organic production without a National List entry",
+  "osp.agent.fromCertificateLocked": "From your certificate on file.",
+  "osp.agent.fromRecordsLocked": "From your farm's records."
 }

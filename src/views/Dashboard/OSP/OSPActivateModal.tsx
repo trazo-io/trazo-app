@@ -77,7 +77,10 @@ const OSPActivateModal: React.FC<OSPActivateModalProps> = ({
 
   // Opens on the agent the plan already names (or the certificate of record names). The operator
   // still confirms it: the gate keeps the field required, and this is only its starting value.
-  const suggestedAgent = osp.certifier_name || osp.packet_agent?.name || '';
+  // `canonical_name` first: a certificate spelling ("…Agriculture Organic Program") is not the
+  // list's, and prefilled as-is it opened under "Other" for an agent the list carries.
+  const suggestedAgent =
+    osp.certifier_name || osp.packet_agent?.canonical_name || osp.packet_agent?.name || '';
   useEffect(() => {
     if (isOpen) setCertifierName((current) => current || suggestedAgent);
   }, [isOpen, suggestedAgent]);

@@ -43,7 +43,13 @@ const osp = (over: Record<string, unknown> = {}) => ({
   version_number: 2,
   status: 'draft',
   certifier_name: '',
-  packet_agent: { name: WSDA, slug: 'wsda', source: 'certificate', own_numbering: true },
+  packet_agent: {
+    name: WSDA,
+    canonical_name: WSDA,
+    slug: 'wsda',
+    source: 'certificate',
+    own_numbering: true
+  },
   ...over
 });
 
@@ -123,5 +129,14 @@ describe('OSPCertifyingAgentCard', () => {
     );
     expect(screen.queryByRole('combobox')).toBeNull();
     expect(screen.getByText(WSDA)).toBeTruthy();
+  });
+
+  it('never tells a locked plan to pick an agent it cannot pick', () => {
+    // 🔴 Found rendering the submitted Cascade Ridge plan: the locked card said "Pick an agent
+    // here only if this plan goes to a different one" with no picker on screen.
+    renderCard(osp({ status: 'submitted' }), true);
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.queryByText(/Pick an agent here/)).toBeNull();
+    expect(screen.getByText('From your certificate on file.')).toBeTruthy();
   });
 });
