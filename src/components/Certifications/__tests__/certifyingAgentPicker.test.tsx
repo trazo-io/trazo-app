@@ -75,9 +75,15 @@ describe('CertifyingAgentPicker', () => {
   it('offers every agent by its Integrity DB name and short name, plus Other', () => {
     renderPicker();
     const labels = Array.from(select().options).map((o) => o.textContent);
-    expect(labels).toContain('Organic Certifiers, Inc. (OCI)');
-    expect(labels).toContain('Washington State Department of Agriculture (WSDA)');
+    expect(labels).toContain('OCI — Organic Certifiers, Inc.');
+    expect(labels).toContain('WSDA — Washington State Department of Agriculture');
     expect(labels).toContain('Other (not on this list)');
+  });
+
+  it('leads with the short name, so a clipped closed select still shows it', () => {
+    renderPicker();
+    fireEvent.change(select(), { target: { value: 'Washington State Department of Agriculture' } });
+    expect(select().selectedOptions[0].textContent?.startsWith('WSDA')).toBe(true);
   });
 
   it('stores the Integrity DB spelling, not the label shown', () => {
