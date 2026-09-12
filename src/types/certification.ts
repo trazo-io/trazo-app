@@ -179,4 +179,10 @@ export interface CertifyingAgentOption {
   name: string;
   short_name: string;
   own_numbering: boolean;
+  /**
+   * 1 = the agent certifying the most operations in the farm's state (USDA Organic Integrity
+   * Database snapshot); null when the state is unknown or the agent has fewer than 5 there.
+   * ⚠️ Oregon Tilth files no physical address, so it never ranks — see `certifying_agents`.
+   */
+  in_state_rank: number | null;
 }

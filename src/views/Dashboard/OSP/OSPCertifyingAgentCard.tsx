@@ -25,13 +25,16 @@ interface OSPCertifyingAgentCardProps {
   farmId: string;
   osp: OSPSummary;
   isLocked: boolean;
+  /** The farm's state, so the picker lists the agencies common there first. */
+  farmState?: string;
 }
 
 const OSPCertifyingAgentCard = ({
   companyId,
   farmId,
   osp,
-  isLocked
+  isLocked,
+  farmState
 }: OSPCertifyingAgentCardProps) => {
   const intl = useIntl();
   const toast = useToast();
@@ -119,6 +122,7 @@ const OSPCertifyingAgentCard = ({
                 showNumbering={dirty}
                 isDisabled={saving}
                 ariaLabel={title}
+                state={farmState}
               />
             </Box>
             {dirty ? (

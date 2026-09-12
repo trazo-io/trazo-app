@@ -1238,6 +1238,7 @@ const OSPView: React.FC = () => {
           farmId={farmId}
           osp={editableOsp}
           onActivated={(fresh) => setEditableOsp(fresh)}
+          farmState={farmState ?? undefined}
         />
       )}
     </StandardPage>
