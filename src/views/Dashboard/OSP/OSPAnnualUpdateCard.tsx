@@ -100,8 +100,20 @@ const SECTION_LABELS: Record<string, { id: string; defaultMessage: string }> = {
   }
 };
 
+/**
+ * § 205.406(a)(3) — additions to or deletions from the § 205.401(b) application information:
+ * the business name, address and telephone number, the person responsible for the operation
+ * and, for a company, the person authorized to act on its behalf.
+ *
+ * It rides with the section attestations because it is the same kind of statement — the
+ * operator saying, on a dated filing, that something has not changed — but it is NOT one of the
+ * six § 205.201(a) sections, so it is ticked on its own and never by "Mark all unchanged".
+ * Until it existed, the packet's (a)(3) paragraph had no answer to print.
+ */
+const APPLICATION_INFO_KEY = 'application_information';
+
 const emptyAttestation = (): Record<string, boolean> =>
-  OSP_SECTION_KEYS.reduce((acc, key) => ({ ...acc, [key]: false }), {});
+  [...OSP_SECTION_KEYS, APPLICATION_INFO_KEY].reduce((acc, key) => ({ ...acc, [key]: false }), {});
 
 /**
  * The fields a save error can be attributed to. Anything the API rejects under a key
@@ -649,7 +661,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                 <StandardField
                   label={intl.formatMessage({
                     id: 'osp.annual.reportingYear',
-                    defaultMessage: 'Reporting Year'
+                    defaultMessage: 'Continuation year'
                   })}
                   error={fieldErrors.reporting_year}>
                   <StandardInput
@@ -737,6 +749,18 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                     })}
                   />
                 </StandardField>
+                {/*
+                  "Reporting Year" read as the year being reported ON, and the packet prints this
+                  number as the year the operation continues ("Continuation for 2026"). One
+                  meaning, said once (2026-09-11).
+                */}
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  {intl.formatMessage({
+                    id: 'osp.annual.reportingYearHelp',
+                    defaultMessage:
+                      'The certification year this filing continues. A renewal due 1 March 2026 continues 2026 and reports on the 2025 season.'
+                  })}
+                </Text>
               </Box>
               <Divider />
 
@@ -788,6 +812,27 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                     </Checkbox>
                   ))}
                 </SimpleGrid>
+                <Checkbox
+                  mt={3}
+                  size="sm"
+                  colorScheme="green"
+                  isChecked={Boolean(form.sections_unchanged[APPLICATION_INFO_KEY])}
+                  onChange={(e) => setSection(APPLICATION_INFO_KEY, e.target.checked)}>
+                  <Text fontSize="sm">
+                    {intl.formatMessage({
+                      id: 'osp.annual.applicationInfoUnchanged',
+                      defaultMessage:
+                        'Business name, address, telephone and the person responsible for the operation are unchanged (7 CFR 205.406(a)(3))'
+                    })}
+                  </Text>
+                </Checkbox>
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  {intl.formatMessage({
+                    id: 'osp.annual.applicationInfoUnchangedHelp',
+                    defaultMessage:
+                      'Leave it unticked if any of them changed, and tell your certifying agent what changed. The filing prints your answer either way.'
+                  })}
+                </Text>
               </Box>
 
               <Divider />
