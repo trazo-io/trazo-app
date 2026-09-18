@@ -205,6 +205,12 @@ export interface InputVerifyResult {
     omri_id: string | null;
     product_name: string;
     manufacturer?: string | null;
+    /**
+     * ISO date of the PUBLISHED EDITION this row was imported from. OMRI republishes its lists
+     * daily, so a listing rendered without its edition date can go stale on screen with nobody
+     * able to tell. Null for a row imported before the column was populated.
+     */
+    list_edition_date?: string | null;
   }[];
   /**
    * How many rows matched in total. NOT `omri_candidates.length`, which is capped for display

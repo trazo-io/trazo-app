@@ -203,6 +203,31 @@ const ResultCard: React.FC<{
   onAttachWsda?: (pk: number | null) => void;
 }> = ({ result, query, attachedOmriPk, attachedWsdaPk, onAttachOmri, onAttachWsda }) => {
   const intl = useIntl();
+  /**
+   * "OMRI #1234-A · List of 12 Mar 2026". The EDITION DATE belongs beside the listing, not
+   * only in the database: OMRI republishes daily, so a row shown without it can go stale on
+   * screen with nobody able to tell. Falls back to the ID alone when the row predates the
+   * column, and to undefined when there is no ID either — NEVER invents "current".
+   */
+  const omriSubtitle = (candidate: {
+    omri_id: string | null;
+    list_edition_date?: string | null;
+  }) => {
+    const id = candidate.omri_id ? `OMRI #${candidate.omri_id}` : null;
+    const edition = candidate.list_edition_date
+      ? intl.formatMessage(
+          { id: 'inputVerify.omriEdition', defaultMessage: 'List of {date}' },
+          {
+            date: intl.formatDate(candidate.list_edition_date, {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            })
+          }
+        )
+      : null;
+    return [id, edition].filter(Boolean).join(' · ') || undefined;
+  };
   const hasOMRI = result.omri_product_pk != null;
   const omriCandidates = result.omri_candidates ?? [];
   // The true match count, which the shown list may be capped below.
@@ -324,7 +349,7 @@ const ResultCard: React.FC<{
               badgeLabel="OMRI"
               badgeColor="purple"
               title={candidate.product_name}
-              subtitle={candidate.omri_id ? `OMRI #${candidate.omri_id}` : undefined}
+              subtitle={omriSubtitle(candidate)}
               action={
                 onAttachOmri ? (
                   attachedOmriPk === candidate.pk ? (

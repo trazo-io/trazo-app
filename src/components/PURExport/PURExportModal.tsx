@@ -49,6 +49,16 @@ interface PURFlag {
   partners?: string;
   primary?: string;
   from?: string;
+  /** schoolsite_method_code_required: the logged application method, and the one DPR code it
+   *  can only be — `null` when the method spans several and the grower must pick. */
+  method?: string;
+  suggested?: string | null;
+  /** quantity_rate_mismatch: box 24 as logged, what the declared rate implies, and how many
+   *  times apart they are. Strings: the server formats them so both agree on rounding. */
+  logged?: string;
+  expected?: string;
+  unit?: string;
+  factor?: string;
 }
 
 /** A hired application: listed, never exported — the business files it (3 CCR 6626(b)). */
@@ -137,7 +147,14 @@ const FLAG_LABEL_IDS: Record<string, string> = {
   tank_mix_unexported: 'app.pur.flag.tank_mix_unexported',
   aggregate_event: 'app.pur.flag.aggregate_event',
   adjuvant_line: 'app.pur.flag.adjuvant_line',
-  area_converted_from_ha: 'app.pur.flag.area_converted_from_ha'
+  area_converted_from_ha: 'app.pur.flag.area_converted_from_ha',
+  // 3 CCR 6691 via 6434(6)(A) and 6626(c); DPR ENF 25-16, effective 2026-01-01.
+  // NEVER add a flag code server-side without its entry here AND in both locales:
+  // `labelForFlag` falls back to `flag.code`, so a missing key renders the raw identifier
+  // ("schoolsite_method_code_required") to the farmer in place of a sentence.
+  schoolsite_method_code_required: 'app.pur.flag.schoolsite_method_code_required',
+  schoolsite_proximity_unknown: 'app.pur.flag.schoolsite_proximity_unknown',
+  quantity_rate_mismatch: 'app.pur.flag.quantity_rate_mismatch'
 };
 
 /**
@@ -293,7 +310,18 @@ const PURExportModal: React.FC<PURExportModalProps> = ({
     FLAG_LABEL_IDS[flag.code]
       ? intl.formatMessage(
           { id: FLAG_LABEL_IDS[flag.code] },
-          { county: flag.county, partners: flag.partners, primary: flag.primary, from: flag.from }
+          {
+            county: flag.county,
+            partners: flag.partners,
+            primary: flag.primary,
+            from: flag.from,
+            method: flag.method,
+            suggested: flag.suggested ?? 'none',
+            logged: flag.logged,
+            expected: flag.expected,
+            unit: flag.unit,
+            factor: flag.factor
+          }
         )
       : flag.code;
 

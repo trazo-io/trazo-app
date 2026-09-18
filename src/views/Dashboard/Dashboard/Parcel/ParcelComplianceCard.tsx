@@ -24,7 +24,8 @@ import {
   StandardButton,
   StandardCard,
   StandardField,
-  StandardInput
+  StandardInput,
+  StandardSelect
 } from 'components/Design/StandardComponents';
 import { useFarmState } from 'hooks/useMeasurementSystem';
 import { useUpdateParcelComplianceMutation } from 'store/api/productApi';
@@ -44,6 +45,7 @@ interface ParcelLike {
   apn?: string;
   section_township_range?: string;
   ca_site_id?: string;
+  ca_near_schoolsite?: boolean | null;
   date_began_managing?: string;
   treated_lumber_present?: boolean;
   treated_lumber_description?: string;
@@ -87,8 +89,15 @@ const ParcelComplianceCard: React.FC<Props> = ({
   // so this card — not the Parcel Application wizard — is its one editor. California only.
   const isCalifornia = useFarmState(farmId) === 'CA';
   const [siteId, setSiteId] = useState('');
+  // Three states, not two. '' is "never asked", which is NOT the same fact as "no" and must not
+  // collapse into it: the PUR export reports an unanswered parcel as a gap in the filing rather
+  // than asserting the parcel is clear (3 CCR 6691; see Parcel.ca_near_schoolsite).
+  const [nearSchool, setNearSchool] = useState<'' | 'yes' | 'no'>('');
   useEffect(() => {
     setSiteId(parcel?.ca_site_id || '');
+    setNearSchool(
+      parcel?.ca_near_schoolsite == null ? '' : parcel.ca_near_schoolsite ? 'yes' : 'no'
+    );
   }, [parcel]);
 
   const handleSaveSiteId = async () => {
@@ -99,7 +108,12 @@ const ParcelComplianceCard: React.FC<Props> = ({
         companyId,
         farmId,
         parcelId,
-        compliance: { ca_site_id: siteId.trim() }
+        compliance: {
+          ca_site_id: siteId.trim(),
+          // null, not false: leaving the question unanswered has to stay writable, or a parcel
+          // touched once could never go back to "we don't know yet".
+          ca_near_schoolsite: nearSchool === '' ? null : nearSchool === 'yes'
+        }
       }).unwrap();
       toast({
         status: 'success',
@@ -303,10 +317,47 @@ const ParcelComplianceCard: React.FC<Props> = ({
                     })}
                   />
                 </StandardField>
+                <StandardField
+                  label={intl.formatMessage({
+                    id: 'parcel.dpr.nearSchoolsite',
+                    defaultMessage: 'Within 1/4 mile of a schoolsite?'
+                  })}
+                  helpText={intl.formatMessage({
+                    id: 'parcel.dpr.nearSchoolsiteHelp',
+                    defaultMessage:
+                      'Applications on ground within 1/4 mile of a schoolsite need a DPR method code on the Pesticide Use Report (3 CCR 6691, in force since 1 January 2026). Leave blank if you are not sure and we will flag it rather than assume.'
+                  })}>
+                  <StandardSelect
+                    value={nearSchool}
+                    isDisabled={!canWrite}
+                    onChange={(e) => setNearSchool(e.target.value as '' | 'yes' | 'no')}>
+                    <option value="">
+                      {intl.formatMessage({
+                        id: 'parcel.dpr.nearSchoolsite.unknown',
+                        defaultMessage: 'Not answered yet'
+                      })}
+                    </option>
+                    <option value="yes">
+                      {intl.formatMessage({
+                        id: 'parcel.dpr.nearSchoolsite.yes',
+                        defaultMessage: 'Yes'
+                      })}
+                    </option>
+                    <option value="no">
+                      {intl.formatMessage({
+                        id: 'parcel.dpr.nearSchoolsite.no',
+                        defaultMessage: 'No'
+                      })}
+                    </option>
+                  </StandardSelect>
+                </StandardField>
               </SimpleGrid>
               {canWrite && (
                 <StandardButton size="sm" mt={3} onClick={handleSaveSiteId} isLoading={isLoading}>
-                  {intl.formatMessage({ id: 'parcel.dpr.save', defaultMessage: 'Save Site ID' })}
+                  {intl.formatMessage({
+                    id: 'parcel.dpr.save',
+                    defaultMessage: 'Save PUR details'
+                  })}
                 </StandardButton>
               )}
             </Box>

@@ -6008,7 +6008,7 @@
   "parcel.disclosureSetting.saving": "Guardando",
   "parcel.disclosureSetting.title": "Ubicación en tu página pública",
   "parcel.dpr.help": "El ID de Sitio que el Comisionado Agrícola de tu condado emitió para esta parcela (casilla 8 del Reporte de Uso de Pesticidas, 1 a 8 caracteres tal como fue emitido). Se guarda una vez aquí; cada aplicación en esta parcela lo usa salvo que el registro traiga el suyo.",
-  "parcel.dpr.save": "Guardar ID de Sitio",
+  "parcel.dpr.save": "Guardar datos del PUR",
   "parcel.dpr.siteId": "ID de Sitio del DPR de California",
   "parcel.dpr.siteIdPlaceholder": "p. ej., 0001A",
   "parcel.dpr.title": "Identificadores del Reporte de Uso de Pesticidas de California",
@@ -7741,5 +7741,14 @@
   "osp.agent.fromRecordsLocked": "Tomada de los registros de tu finca.",
   "certifyingAgent.groupOwnForms": "El paquete usa sus propios formularios",
   "certifyingAgent.groupInState": "También comunes en tu estado",
-  "certifyingAgent.groupOthers": "Todas las demás certificadoras"
+  "certifyingAgent.groupOthers": "Todas las demás certificadoras",
+  "app.pur.flag.quantity_rate_mismatch": "La casilla 24 dice {logged} {unit}, pero la dosis que registraste da unos {expected} {unit} para el área tratada, una diferencia de aproximadamente {factor} veces. Conviene revisarlo antes de presentar.",
+  "app.pur.flag.schoolsite_method_code_required": "Está a menos de 1/4 de milla de una escuela, así que esta aplicación necesita un código de método del DPR en el PUR (3 CCR 6691). {suggested, select, none {Elige el código que corresponda a cómo se aplicó.} other {Para {method} ese código es {suggested}.}}",
+  "app.pur.flag.schoolsite_proximity_unknown": "Esta parcela no indica si está o no a menos de 1/4 de milla de una escuela. Si alguna parte lo está, esta aplicación necesita un código de método del DPR (3 CCR 6691).",
+  "inputVerify.omriEdition": "Lista del {date}",
+  "parcel.dpr.nearSchoolsite": "¿A menos de 1/4 de milla de una escuela?",
+  "parcel.dpr.nearSchoolsite.no": "No",
+  "parcel.dpr.nearSchoolsite.unknown": "Sin responder",
+  "parcel.dpr.nearSchoolsite.yes": "Sí",
+  "parcel.dpr.nearSchoolsiteHelp": "Las aplicaciones en terrenos a menos de 1/4 de milla de una escuela necesitan un código de método del DPR en el Informe de Uso de Plaguicidas (3 CCR 6691, vigente desde el 1 de enero de 2026). Déjalo en blanco si no estás seguro y lo marcaremos en lugar de suponerlo."
 }
