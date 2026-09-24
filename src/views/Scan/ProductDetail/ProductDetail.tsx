@@ -634,14 +634,19 @@ function ProductDetail() {
     return { score, isVerified, txHash: blockchainData?.tx_hash };
   };
 
-  // Helper function to get accurate carbon footprint
+  // Helper function to get the carbon figure shown to a SHOPPER.
+  //
+  // GROSS EMISSIONS ONLY. NEVER `net_impact`. This is the public QR page. Offsets are
+  // purchased, self-entered and self-marked verified (`create_secure_carbon_offset`), so
+  // subtracting them here manufactures an environmental benefit claim from the farm's own
+  // numbers: FTC 16 CFR 260.5 / 260.4, and EU ECGT 2024/825 (live 2026-09-27) bans
+  // self-created sustainability labels outright.
+  //
+  // Fixed 2026-09-23. This read `net_impact` first, so a farm with more recorded offsets
+  // than emissions handed CarbonImpactExplainer a NEGATIVE number, which it rendered as
+  // "Very Low Emissions" with a green "Carbon Stored" badge. `net_impact` stays on the
+  // payload for the farmer's own dashboard; it must not reach this page.
   const getAccurateCarbonFootprint = (): number => {
-    // Use transparency API carbon data (consolidated endpoint)
-    if (completeData?.carbon_impact?.net_impact !== undefined) {
-      return completeData.carbon_impact.net_impact;
-    }
-
-    // Fallback to total emissions
     if (completeData?.carbon_impact?.total_emissions !== undefined) {
       return completeData.carbon_impact.total_emissions;
     }
@@ -1779,6 +1784,9 @@ function ProductDetail() {
                             efficiency_score: completeData?.carbonScore || 0,
                             total_emissions: completeData?.totalEmissions || 0,
                             total_offsets: completeData?.totalOffsets || 0,
+                            // Carries GROSS emissions despite the legacy key name.
+                            // NEVER "correct" this to carbon_impact.net_impact: this is
+                            // a public surface and net smuggles in self-entered offsets.
                             net_footprint: getAccurateCarbonFootprint(),
                             verification_confidence: ((event as any).verification_confidence
                               ? 'high'

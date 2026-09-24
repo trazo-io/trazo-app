@@ -5,7 +5,6 @@ import {
   HStack,
   Text,
   Icon,
-  Badge,
   Button,
   Collapse,
   Divider,
@@ -19,7 +18,6 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaGlobeAmericas,
-  FaRecycle,
   FaMobileAlt
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
@@ -61,15 +59,13 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   const mutedColor = useColorModeValue('gray.600', 'gray.400');
   const accentColor = useColorModeValue('green.700', 'green.300');
   // Hoisted out of the JSX. These five used to be called inside the
-  // isNegativeEmissions / hasPerKgData branches and inside <Collapse>, i.e. conditionally
+  // negative-emissions / hasPerKgData branches and inside <Collapse>, i.e. conditionally
   // and in different counts per branch — a rules-of-hooks violation that only stayed quiet
   // because the branch never flipped after mount. The early return added below would have
   // made it flip.
   const cardBorderColor = useColorModeValue('gray.200', 'gray.600');
   const factCardBg = useColorModeValue('gray.50', 'gray.700');
   const factCardBorder = useColorModeValue('gray.200', 'gray.600');
-  const lowEmissionsBg = useColorModeValue('green.50', 'green.900');
-  const lowEmissionsBorder = useColorModeValue('green.200', 'green.700');
   const expandedBg = useColorModeValue('gray.50', 'gray.700');
   const disclaimerBg = useColorModeValue('gray.100', 'gray.600');
 
@@ -79,7 +75,6 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   // and an FTC 16 CFR 260.4 general-benefit risk. The score stays on the FARMER dashboard
   // as the engagement KPI; consumers see the factual evidence instead (hero practices count,
   // photos, third-party certs, timeline). This card now shows carbon facts only.
-  const isNegativeEmissions = totalCO2e < 0;
   const hasPerKgData = consumerContext?.has_per_kg_data && consumerContext.kg_per_kg > 0;
 
   // Per-kg is the preferred consumer framing, but it needs a recorded harvest amount to
@@ -95,7 +90,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   // measurable to report, so render nothing at all. An "Environmental Impact" heading over
   // an empty body reads as a broken page, and it invites the shopper to read the silence as
   // "zero emissions" — a claim these records do not make (FTC 16 CFR 260.6).
-  if (!isNegativeEmissions && !hasPerKgData && !hasSeasonTotal) {
+  if (!hasPerKgData && !hasSeasonTotal) {
     return null;
   }
 
@@ -166,28 +161,21 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       {/* PRIMARY: Consumer-friendly impact summary */}
       <Box p={4}>
         <VStack spacing={3} align="stretch">
-          {/* Carbon stored / negative emissions highlight */}
-          {isNegativeEmissions ? (
-            <Box
-              bg={lowEmissionsBg}
-              p={4}
-              borderRadius="lg"
-              border="1px solid"
-              borderColor={lowEmissionsBorder}>
-              <HStack mb={2}>
-                <Icon as={FaRecycle} color="green.500" boxSize={5} />
-                <Text fontSize="md" fontWeight="bold" color="green.700">
-                  {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsTitle' })}
-                </Text>
-                <Badge colorScheme="green" variant="subtle">
-                  {intl.formatMessage({ id: 'app.carbonExplainer.carbonStored' })}
-                </Badge>
-              </HStack>
-              <Text fontSize="sm" color="green.700">
-                {intl.formatMessage({ id: 'app.carbonExplainer.lowEmissionsDesc' })}
-              </Text>
-            </Box>
-          ) : hasPerKgData ? (
+          {/* ⛔ REMOVED 2026-09-23 — the "Very Low Emissions" + green "Carbon Stored" card.
+              It rendered whenever `totalCO2e < 0`, and totalCO2e was `net_impact`
+              (emissions minus offsets). Offsets are purchased, self-entered and
+              self-marked verified (`create_secure_carbon_offset`), so any farm that
+              recorded enough of them minted itself a green environmental badge on a
+              public page. That is the self-created sustainability label EU ECGT
+              2024/825 bans (live 2026-09-27) and an FTC 16 CFR 260.5 / 260.4 claim.
+              Same class as the transparency score retired in 2026-06, and it survived
+              that sweep because it is a COLOUR AND AN ICON rather than a number.
+              This surface now receives GROSS emissions, which cannot be negative, so
+              there is no honest branch left to render here. Guarded by
+              `__tests__/noSelfCreatedCarbonBadge.test.tsx`.
+              ⛔ Do not reintroduce a "carbon negative"/"carbon stored"/"climate
+              positive" state on a consumer surface without third-party verification. */}
+          {hasPerKgData ? (
             /* Per-kg impact card — the only relatable metric for consumers */
             <Box
               bg={factCardBg}
