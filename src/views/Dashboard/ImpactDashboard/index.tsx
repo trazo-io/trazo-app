@@ -104,14 +104,25 @@ export default function ImpactDashboard() {
                 icon={FaCheckCircle}
                 iconColor="blue.600"
                 iconBg="blue.100"
+                /* 🔴 2026-09-16 — was labelled "Verified Transparent Farms". The number behind
+                   it (`get_verified_farms_scanned`) counts farms holding a certification row of
+                   ANY status, self-reported included, so the word "Verified" asserted a
+                   third-party check that had not happened — FTC 16 CFR 260.6(d), and the same
+                   defect class as the certification badges. The sibling tile below already
+                   calls the identical number "Farms Discovered", so that is the honest label.
+                   ⚠️ BOTH tiles on this page render the SAME metric, so a claim fix applied to
+                   one of them is half a fix — the second tooltip kept an unqualified
+                   "documented farming practices and transparency records" line until 2026-09-24.
+                   NOTE: this label and its tooltip are hardcoded English on an i18n page; that
+                   is pre-existing and tracked separately. */
                 value={impactMetrics?.verified_farms_scanned || 0}
-                label="Verified Transparent Farms"
+                label="Farms Discovered"
                 subtitle="Documented farming practices"
                 size="lg"
                 tooltip={{
-                  label: 'Verified Transparent Farms',
+                  label: 'Farms Discovered',
                   explanation:
-                    "These are farms you've discovered that have comprehensive documentation of their farming practices. This includes detailed records of planting, growing, and harvesting activities, giving you complete visibility into how your food was produced."
+                    "These are farms you've discovered that document their farming practices in Trazo: records of planting, growing and harvesting activities. It is a count of farms you scanned, not a statement that anyone has verified them."
                 }}
               />
 
@@ -259,7 +270,7 @@ export default function ImpactDashboard() {
                   tooltip={{
                     label: 'Farms Discovered',
                     explanation:
-                      "The number of unique farms you've explored through product scans, each with documented farming practices and transparency records."
+                      "The number of unique farms you've explored through product scans. It counts farms that hold a certification record in Trazo, whether or not anyone has verified it — not a statement that they were checked."
                   }}
                 />
               </SimpleGrid>

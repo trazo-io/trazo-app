@@ -7736,5 +7736,10 @@
   "osp.agent.fromRecordsLocked": "Tomada de los registros de tu finca.",
   "certifyingAgent.groupOwnForms": "El paquete usa sus propios formularios",
   "certifyingAgent.groupInState": "También comunes en tu estado",
-  "certifyingAgent.groupOthers": "Todas las demás certificadoras"
+  "certifyingAgent.groupOthers": "Todas las demás certificadoras",
+  "consumer.claim.specimen": "Registro de demostración, no es una operación certificada",
+  "osp.claim.specimen": "Registro de demostración",
+  "consumer.farm.seasonClosed": "TEMPORADA CERRADA",
+  "parcel.card.appAnswersComplete": "Respuestas completas",
+  "parcel.card.evidenceOutstanding": "{count, plural, one {# documento pendiente} other {# documentos pendientes}}"
 }
