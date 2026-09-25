@@ -15,6 +15,30 @@ npm run format
 ⛔ `npm run build` passing proves NOTHING about types — ~815 TypeScript errors are masked
 by the build config. A change is verified by rendering the page, not by a green build.
 
+## ⛔ Git: shared working trees
+
+Several Claude sessions share this checkout. Two rules, both learned by breaking them on
+2026-09-25:
+
+- **Stage only paths you edited.** `git add <file>` takes the whole file, including another
+  session's hunks. Run `git status` first; use `git add -p` when a file is dirty from both.
+  ⚠️ `src/i18n/lang/en-US.json` and `es-419.json` are the usual trap — nearly every
+  session edits them. Append keys in place; never re-serialise or re-sort, which turns a 3-key
+  change into a 7,700-line diff.
+- **Branch from `origin/main`**, not the current HEAD:
+  `git fetch origin && git switch -c <name> origin/main`. Then check
+  `git log --oneline origin/main..HEAD` before opening the PR — anything unfamiliar there is
+  someone's unreviewed work about to merge under your name.
+
+⚠️ **A worktree must sit beside a matching `trazo-back` worktree.** 30 tests here reach
+into `trazo-back/` by relative path, and 7 backend tests reach back as
+`parents[3] / "trazo-app"`. A worktree elsewhere either fails outright or, worse, silently
+compares against whatever branch the main `trazo-back` tree happens to hold. Pair them:
+`~/dev/trazo-wt/<task>/{trazo-back,trazo-app}`, symlinking `node_modules`. Full recipe in the
+workspace CLAUDE.md.
+
+⛔ No AI attribution in commits or PR bodies.
+
 ## This repo is MIXED .jsx / .tsx
 The activity wizard is `NewEvent.jsx`. Never filter a search to `.tsx` only — it fabricates
 "orphaned code" findings.
