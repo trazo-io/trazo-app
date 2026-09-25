@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatDateFromTimestamp,
   formatDateOnly,
-  isTodayLocalDateTimeInput,
+  isOperatorChosenDate,
   nowLocalDateTimeInput,
   todayLocalISODate
 } from '../dateOnly';
@@ -106,38 +106,43 @@ describe('input seeds use the viewer clock, not the UTC clock', () => {
   });
 });
 
-describe('isTodayLocalDateTimeInput tells an inherited date from a chosen one', () => {
-  it('says yes to the value the wizard seeds itself with', () => {
-    expect(isTodayLocalDateTimeInput(nowLocalDateTimeInput())).toBe(true);
+describe('isOperatorChosenDate separates an operator decision from the form default', () => {
+  const WIZARD_DEFAULT = '2026-09-25T09:12';
+
+  it('says no to the exact value the form seeded', () => {
+    expect(isOperatorChosenDate(WIZARD_DEFAULT, WIZARD_DEFAULT)).toBe(false);
   });
 
-  it('says yes for any time of day today, not only the minute the form opened', () => {
-    // The reason this is not `value === nowLocalDateTimeInput()`. That test answers "no" as
-    // soon as the clock ticks past the minute the wizard rendered, which would let a date
-    // nobody touched pass as operator-chosen on a slow read.
-    const today = todayLocalISODate();
-    expect(isTodayLocalDateTimeInput(`${today}T00:00`)).toBe(true);
-    expect(isTodayLocalDateTimeInput(`${today}T23:59`)).toBe(true);
+  it('says yes when only the MINUTE differs, on the same day', () => {
+    // The reason this is not a same-day test. A grower who sets 06:30 for a dawn spray and then
+    // pastes the crew note at 11:43 chose that time; a date-part comparison calls it "today,
+    // therefore the wizard's guess" and takes it away. The field is a datetime-local and the
+    // application time feeds re-entry intervals.
+    expect(isOperatorChosenDate('2026-09-25T06:30', WIZARD_DEFAULT)).toBe(true);
   });
 
-  it('says no to a day the operator actually picked', () => {
-    expect(isTodayLocalDateTimeInput('2026-03-14T09:00')).toBe(false);
+  it('says yes for a different day', () => {
+    expect(isOperatorChosenDate('2026-09-22T06:30', WIZARD_DEFAULT)).toBe(true);
   });
 
-  it('says no to empty, null and undefined rather than throwing', () => {
-    // A cleared date field is the state this whole question exists to create, so it has to be
-    // answerable. "Not today" is right: there is no inherited value left to take back.
-    expect(isTodayLocalDateTimeInput('')).toBe(false);
-    expect(isTodayLocalDateTimeInput(null)).toBe(false);
-    expect(isTodayLocalDateTimeInput(undefined)).toBe(false);
+  it('says no for an empty, null or undefined value', () => {
+    // A cleared field is the state this question exists to create, so it has to be answerable,
+    // and "nobody has chosen a day" is the truthful answer.
+    expect(isOperatorChosenDate('', WIZARD_DEFAULT)).toBe(false);
+    expect(isOperatorChosenDate(null, WIZARD_DEFAULT)).toBe(false);
+    expect(isOperatorChosenDate(undefined, WIZARD_DEFAULT)).toBe(false);
   });
 
-  it('reads the LOCAL day, not the UTC one', () => {
-    // The environment is pinned west of UTC at the top of this file. Late local evening is
-    // already tomorrow in UTC, so a UTC-based implementation would call today's own seed
-    // "not today" and the wizard would keep a date it guessed.
-    const seeded = nowLocalDateTimeInput();
-    expect(seeded.slice(0, 10)).toBe(todayLocalISODate());
-    expect(isTodayLocalDateTimeInput(seeded)).toBe(true);
+  it('treats a value as chosen when the form supplied no default at all', () => {
+    // Nothing was handed to the operator, so whatever is on the record came from somewhere they
+    // controlled (a restored draft, an edited event) and must not be taken away.
+    expect(isOperatorChosenDate('2026-09-22T06:30', undefined)).toBe(true);
+  });
+
+  it('does not treat the value as chosen merely because it is not today', () => {
+    // Guards the inverse mistake: reading the question as "is this today" rather than "did the
+    // operator pick it". Yesterday's date IS the form default here, so it is not a choice.
+    const yesterdayAsDefault = '2026-09-24T09:12';
+    expect(isOperatorChosenDate(yesterdayAsDefault, yesterdayAsDefault)).toBe(false);
   });
 });

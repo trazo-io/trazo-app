@@ -1,27 +1,33 @@
 /**
- * A pasted note must not inherit the wizard's guess of today, and its held values must not
- * vanish (2026-09-25).
+ * A pasted note must not inherit the wizard's date, and its held values must stay reachable.
  *
- * WHAT THIS PROVES AND WHAT IT DOES NOT. NewEvent.jsx is ~4000 lines with no render test in the
- * tree, so this asserts on its SOURCE, the same way `voiceMounted.test.ts` guards that voice is
- * reachable at all. A source assertion cannot prove the behaviour runs; it proves the guard has
- * not been deleted, which is the regression that actually happens. The behaviour of the date
- * predicate itself is tested for real in `calendarDateRendering.test.ts`.
+ * WHAT THIS PROVES, STATED HONESTLY. NewEvent.jsx is ~4000 lines with no render harness in the
+ * tree, so this asserts on its SOURCE, the way `voiceMounted.test.ts` guards that voice is
+ * reachable at all. A source assertion cannot prove behaviour. Its one job is to fail when a
+ * guard is DELETED, so every assertion below is written against a specific deletion that a
+ * reviewer demonstrated would otherwise keep this file green:
  *
- * THE TWO DEFECTS BEHIND IT:
+ *   - removing the `return;` from the seeded re-offer, which drops execution into the spoken
+ *     merge and writes a third party's values onto a 205.201(a) record with no farmer tap;
+ *   - removing the `return;` from the dateless-save refusal, which leaves the toast and the step
+ *     jump in place while the request still goes out with no date;
+ *   - carrying `keptFields` forward on the re-offer instead of recomputing it, which leaves the
+ *     re-offered values with no Apply button.
  *
- * 1. The date. Step 0 seeds `date` with `nowLocalDateTimeInput()` before the paste box is ever
- *    reached, so three notes from Tuesday's spray, pasted on Friday, became three records dated
- *    Friday. Wrong pre-harvest interval, wrong CA PUR day (it files strictly on `event.date`),
- *    and a packet asserting an application on a day nobody sprayed. The spoken path never had
- *    this problem: a farmer speaks about what they just did.
+ * The date predicate itself is a pure function and is tested for real in
+ * `calendarDateRendering.test.ts`.
  *
- * 2. The hold. On soil, pest and business the subtype lives in a select INSIDE the tab, so at
- *    parse time there is no subtype to gate against. The spoken path holds those values and
- *    re-gates them when the subtype arrives. The seeded path dropped the hold while still
- *    zeroing `droppedCount`, so the values were discarded AND the "not filled in" notice was
- *    suppressed with them. Acreage is gated on 9 of the 10 soil subtypes.
+ * THE TWO DEFECTS BEHIND ALL OF IT:
+ *
+ * 1. The date. Step 0 seeds `date` with `nowLocalDateTimeInput()` before the paste box is
+ *    reachable, so three notes from Tuesday's spray, pasted on Friday, became three records dated
+ *    Friday: wrong pre-harvest interval, wrong CA PUR day (it files strictly on `event.date`), and
+ *    a packet asserting an application on a day nobody sprayed.
+ *
+ * 2. The hold. On soil, pest and business the subtype is a select INSIDE the tab, so at parse time
+ *    there is nothing to gate against. Acreage is gated on 9 of the 10 soil subtypes.
  */
+import { parse } from '@babel/parser';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -30,83 +36,159 @@ import { describe, expect, it } from 'vitest';
 const NEW_EVENT = join(__dirname, '../../views/Dashboard/Dashboard/components/forms/NewEvent.jsx');
 const src = readFileSync(NEW_EVENT, 'utf8');
 
-/** The seeded branch of `handleVoiceEventDetected`, from its guard to its early return. */
-const seededBranch = (() => {
-  const start = src.indexOf('if (eventData.seeded) {');
-  expect(start).toBeGreaterThan(-1);
-  return src.slice(start, src.indexOf('\n    }', start));
-})();
+/**
+ * The body of a `{ ... }` block, brace-balanced from a unique opening snippet.
+ *
+ * A fixed character window cannot express "inside this block": the reviewer's breaking edits all
+ * survived one, because the window either swallowed unrelated code or stopped short of the line
+ * that mattered. Balancing braces makes "the guard is inside its own block" assertable.
+ */
+function blockAfter(snippet: string): string {
+  const at = src.indexOf(snippet);
+  expect(at, `snippet not found: ${snippet}`).toBeGreaterThan(-1);
+  expect(src.split(snippet).length - 1, `snippet is not unique: ${snippet}`).toBe(1);
+  const open = src.indexOf('{', at + snippet.length - 1);
+  let depth = 0;
+  for (let i = open; i < src.length; i += 1) {
+    if (src[i] === '{') depth += 1;
+    else if (src[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return src.slice(open, i + 1);
+    }
+  }
+  throw new Error(`unbalanced block for: ${snippet}`);
+}
+
+describe('the file these guards read still compiles', () => {
+  it('parses as JSX', () => {
+    // MEASURED 2026-09-25: this suite went green over a NewEvent.jsx carrying a SyntaxError, and
+    // so did 1511 tests across 124 files. Every assertion here reads the file as a STRING, and no
+    // test in the tree imports this component, so nothing in vitest ever asked whether it
+    // compiles. The repo's typecheck gate is also known-dead. One parse is the cheapest possible
+    // floor under every other assertion in this file: a guard that is present in a file that
+    // cannot build is not a guard.
+    // @babel/parser rather than esbuild: esbuild refuses to start inside jsdom, and this suite
+    // cannot leave jsdom because the shared `src/test/setup.ts` stubs window.matchMedia.
+    expect(() =>
+      parse(src, { sourceType: 'module', plugins: ['jsx'], errorRecovery: false })
+    ).not.toThrow();
+  });
+});
 
 describe('a pasted note is not dated for the farmer', () => {
-  it('asks the date predicate whether the value is merely inherited', () => {
-    expect(src).toMatch(/import \{[^}]*isTodayLocalDateTimeInput[^}]*\} from 'utils\/dateOnly'/);
-    expect(seededBranch).toMatch(/isTodayLocalDateTimeInput\(inheritedDate\)/);
+  it('asks whether the operator chose the date, not whether it happens to be today', () => {
+    expect(src).toMatch(/import \{[^}]*isOperatorChosenDate[^}]*\} from 'utils\/dateOnly'/);
+    expect(src).not.toMatch(/isTodayLocalDateTimeInput/);
+    // Compared against the form's OWN default, so a time the operator set today survives.
+    expect(src).toMatch(/isOperatorChosenDate\(inheritedDate, wizardDefaultDate\)/);
+    expect(src).toMatch(/basicMethods\.formState\.defaultValues\?\.date/);
   });
 
   it('clears the inherited date instead of leaving it on the record', () => {
-    expect(seededBranch).toMatch(/delete next\.date/);
-    expect(seededBranch).toMatch(/basicMethods\.setValue\('date', ''\)/);
+    const seeded = blockAfter('if (eventData.seeded) {');
+    expect(seeded).toMatch(/delete next\.date/);
+    expect(seeded).toMatch(/basicMethods\.setValue\('date', ''\)/);
   });
 
-  it('offers today back as a suggestion rather than writing it', () => {
-    // Suggest-then-confirm: the value sits on the banner until a tap moves it to the form.
-    expect(seededBranch).toMatch(/dateSuggestion:/);
-    expect(src).toMatch(/const handleVoiceSeededUseToday = \(\) => \{/);
+  it('derives the date question from the form, so answering it anywhere ends it', () => {
+    // The defect this replaces: the question was banner state (`dateSuggestion`), so answering on
+    // step 0 left the flag set. The question came back with "It happened today" live over the day
+    // the operator had just chosen, and one tap overwrote it.
+    expect(src).toMatch(
+      /const seededDateUnanswered = Boolean\(voiceBanner\?\.seeded\) && !eventFormData\.date/
+    );
+    expect(src).toMatch(
+      /const seededDateAnswered = Boolean\(voiceBanner\?\.seeded\) && Boolean\(eventFormData\.date\)/
+    );
+    // Code shapes, not bare words: the comment above the fix names both removed fields on
+    // purpose, so a bare-word assertion would fail on its own explanation.
+    expect(src).not.toMatch(/dateSuggestion:/);
+    expect(src).not.toMatch(/voiceBanner\.dateSuggestion/);
+    expect(src).not.toMatch(/confirmedDate:/);
+    expect(src).not.toMatch(/voiceBanner\.confirmedDate/);
+  });
+
+  it('offers today rather than writing it, and states the time it wrote', () => {
     expect(src).toMatch(/events\.voice\.pastedNoteDateUseToday/);
+    const useToday = blockAfter('const handleVoiceSeededUseToday = () => {');
+    expect(useToday).toMatch(/nowLocalDateTimeInput\(\)/);
+    // Both the button and the confirmation show date AND time: the field is a datetime-local, so
+    // stating only the day hides half of what was written.
+    expect(src).toMatch(/localDateTimeLabel\(nowLocalDateTimeInput\(\)\)/);
+    expect(src).toMatch(/localDateTimeLabel\(eventFormData\.date\)/);
   });
 
   it('keeps step 0 as the only editor of the date', () => {
-    // A second date input inside the banner would be a second editor for a 205.103(b)(2)
-    // value, which is the shape that produced the buffer and OFPP clobbers.
-    const another = src.slice(src.indexOf('const handleVoiceSeededPickAnotherDay'));
-    expect(another.slice(0, 200)).toMatch(/setActiveStep\(0\)/);
-    expect(src).not.toMatch(/type="datetime-local"[^>]*voiceBanner/);
+    const another = blockAfter('const handleVoiceSeededPickAnotherDay = () => {');
+    expect(another).toMatch(/setActiveStep\(0\)/);
+    expect(another).not.toMatch(/setEventFormData|setValue/);
   });
 
-  it('refuses to save a record with no day at all', () => {
-    // The consequence of clearing: step 0's schema is the only thing that demands a date, and
-    // the paste box lives on step 1.
-    const submit = src.slice(src.indexOf('const onSubmitMedia = async () => {'));
-    expect(submit.slice(0, 1200)).toMatch(/if \(!eventFormData\.date\)/);
-    expect(submit.slice(0, 1200)).toMatch(/setActiveStep\(0\)/);
+  it('refuses a dateless save AND returns, rather than only warning', () => {
+    // The reviewer's breaking edit: delete this `return;`. The toast still fires and the wizard
+    // still jumps to step 0 while the payload goes out with no date, and a retry can double-post.
+    const submit = blockAfter('const onSubmitMedia = async () => {');
+    const guard = submit.slice(submit.indexOf('if (!eventFormData.date)'));
+    const guardBlock = guard.slice(0, guard.indexOf('\n    }') + 6);
+    expect(guardBlock).toMatch(/setActiveStep\(0\)/);
+    expect(guardBlock).toMatch(/\breturn;/);
   });
 });
 
 describe('a held pasted note is re-offered, never dropped and never merged', () => {
-  it('keeps the hold on the seeded path', () => {
-    expect(seededBranch).toMatch(/pendingVoiceRef\.current = holding/);
-    expect(seededBranch).toMatch(/seeded: true/);
-  });
+  const seeded = blockAfter('if (eventData.seeded) {');
 
-  it('carries the transcript so the re-offer can still quote the note', () => {
-    // Picking a verb tile nulls the banner, so the rebuilt offer has no words of its own.
-    expect(seededBranch).toMatch(/transcript: banner\.transcript/);
+  it('keeps the hold on the seeded path, tagged as seeded', () => {
+    expect(seeded).toMatch(/pendingVoiceRef\.current = holding/);
+    expect(seeded).toMatch(/seeded: true/);
+    expect(seeded).toMatch(/transcript: banner\.transcript/);
   });
 
   it('only zeroes droppedCount while something is actually holding the values', () => {
-    expect(seededBranch).toMatch(/droppedCount: holding \? 0 : banner\.droppedCount/);
+    expect(seeded).toMatch(/droppedCount: holding \? 0 : banner\.droppedCount/);
   });
 
-  it('re-OFFERS on subtype arrival instead of merging into the form', () => {
-    // Anchor on the `pending.detected` call, which is unique. The bare
-    // `const { kept, dropped } = gateVoiceOverridesToForm` line appears twice in this file and
-    // the first hit is a different function, which is how this test failed on its first run.
-    const anchor = 'gateVoiceOverridesToForm(pending.detected, activeEventType, subtype)';
-    expect(src.split(anchor).length - 1).toBe(1);
-    const body = src.slice(src.indexOf(anchor), src.indexOf(anchor) + 2600);
-    expect(body).toMatch(/if \(pending\.seeded\) \{/);
-    expect(body).toMatch(/seededPending: \{ kept, eventType: activeEventType, subtype \}/);
-    // The merge must stay behind the seeded early return, not run before it.
-    expect(body.indexOf('if (pending.seeded) {')).toBeLessThan(body.indexOf('setEventFormData'));
+  it('re-offers with a RECOMPUTED field list, or the values have no Apply button', () => {
+    // `voiceFilledLabels` reads `keptFields`, and Apply renders only when it is non-empty. At
+    // parse time with no subtype that list is often empty, so inheriting it left the re-offered
+    // values unreachable: the hold kept, then silently lost anyway.
+    const offer = blockAfter('if (pending.seeded) {');
+    expect(offer).toMatch(/keptFields: Object\.keys\(kept\)/);
+    expect(offer).toMatch(/seededPending: \{ kept, eventType: activeEventType, subtype \}/);
+  });
+
+  it('returns before the merge, so a re-offer can never write to the form', () => {
+    // The reviewer's breaking edit: delete this `return;`. Execution falls into the spoken merge
+    // and a third party's acreage, pH and product names land on the record with no farmer tap.
+    const offer = blockAfter('if (pending.seeded) {');
+    expect(offer).toMatch(/\breturn;/);
+    expect(offer).not.toMatch(/setEventFormData/);
+  });
+
+  it('drops the hold when the farmer refuses the note', () => {
+    // Keeping the ref so the hold could be re-offered opened this: Discard cleared only the
+    // banner, so picking the subtype afterwards rebuilt the refused values as a fresh offer.
+    const dismiss = blockAfter('const dismissVoiceBanner = () => {');
+    expect(dismiss).toMatch(/pendingVoiceRef\.current = null/);
+    expect(dismiss).toMatch(/setVoiceBanner\(null\)/);
+    expect(blockAfter('const handleVoiceSeededDiscard = () => {')).toMatch(
+      /dismissVoiceBanner\(\)/
+    );
+    // The header X must go through the same door, not its own inline setter.
+    expect(src).toMatch(/onClick=\{dismissVoiceBanner\}/);
+    expect(src).not.toMatch(/onClick=\{\(\) => setVoiceBanner\(null\)\}/);
   });
 });
 
-describe('the offer is announced and dismissable', () => {
-  it('is a live region, so a set of values waiting for a decision is not silent', () => {
-    expect(src).toMatch(/role="status"\n\s+aria-live="polite"/);
+describe('the offer is announced once, and dismissable by thumb', () => {
+  it('scopes the live region to the headline, not the whole banner', () => {
+    // role="status" is aria-atomic by default, so on the container every tap re-read the entire
+    // banner including the full quoted note, and focusing that same node announced it twice.
+    expect(src).toMatch(/role="group"\n\s+aria-label=\{voiceBannerHeadline\}/);
+    expect(src).toMatch(/role="status"\n\s+aria-live="polite"\n\s+fontSize="sm"/);
   });
 
-  it('takes focus when an offer appears, and only for a seeded one', () => {
+  it('takes focus only for a seeded offer, never on a spoken merge', () => {
     expect(src).toMatch(/voiceOfferRef\.current\?\.focus\(\{ preventScroll: true \}\)/);
     expect(src).toMatch(/const hasSeededOffer = Boolean\(/);
   });

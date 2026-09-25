@@ -127,7 +127,7 @@ import {
 } from 'utils/voiceDataMapper';
 import { voiceBlockSuggestion } from 'utils/spokenBlock';
 import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
-import { isTodayLocalDateTimeInput, nowLocalDateTimeInput } from 'utils/dateOnly';
+import { isOperatorChosenDate, nowLocalDateTimeInput } from 'utils/dateOnly';
 
 // Enhanced form schemas with better validation
 // Sprint 1 Epic 1.4: Added performed_by for USDA GAP traceability compliance
@@ -645,6 +645,19 @@ function NewEvent({ isEdit = false, eventId = null }) {
     return new Date(value).toLocaleDateString();
   };
 
+  // Date AND time. The record's field is a `datetime-local` and the application time feeds
+  // re-entry intervals, so a banner that states the day while writing a minute hides half of what
+  // it wrote.
+  const localDateTimeLabel = (value) => {
+    if (!value) return '';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return localDateLabel(value);
+    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    })}`;
+  };
+
   // Step management
   const [activeStep, setActiveStep] = useState(0);
 
@@ -759,6 +772,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
       date: nowLocalDateTimeInput()
     }
   });
+
+  // What step 0 seeded the date field with. Read off react-hook-form rather than recomputed, so
+  // it is byte-identical to the value the operator was shown and cannot drift by a minute.
+  const wizardDefaultDate = basicMethods.formState.defaultValues?.date;
 
   const mainInfoMethods = useForm({
     resolver: zodResolver(formSchemaMainInfo)
@@ -1678,9 +1695,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // provenance on screen, the same suggest-then-confirm shape as `blockSuggestion` and the
       // OSP "Use suggestion" button. A day the operator actually chose is left alone: this only
       // takes back the wizard's own guess.
+      // Compared against the form's OWN seeded default, not against "is it today". A grower who
+      // set 06:30 for a dawn spray and pastes the crew note at 11:43 chose that time, and a
+      // date-part test would call it a guess and take it away.
       const inheritedDate = eventFormData.date;
-      const dateIsAGuess = !inheritedDate || isTodayLocalDateTimeInput(inheritedDate);
-      if (dateIsAGuess && inheritedDate) {
+      if (inheritedDate && !isOperatorChosenDate(inheritedDate, wizardDefaultDate)) {
         setEventFormData((prev) => {
           const next = { ...prev };
           delete next.date;
@@ -1692,9 +1711,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
       setVoiceBanner({
         ...banner,
         droppedCount: holding ? 0 : banner.droppedCount,
-        // Provenance for the date question, so the banner can say WHICH day it will file under.
-        dateSuggestion: dateIsAGuess ? { kind: 'today', value: nowLocalDateTimeInput() } : null,
-        confirmedDate: dateIsAGuess ? null : inheritedDate,
+        // NOTE: the date question is DERIVED from `eventFormData.date`, never stored here. It was
+        // stored once (`dateSuggestion` / `confirmedDate`) and that is a second source of truth
+        // for one fact: answering it on step 0 left the flag set, so the question came back with
+        // its "It happened today" button live over the day the operator had just chosen, and one
+        // tap overwrote it. Exactly the wrong-CA-PUR-day outcome this was written to prevent.
+        // See `seededDateUnanswered` below.
         // The set the farmer is being offered, held OUTSIDE the form until they accept it.
         seededPending: { kept, eventType: activeEventType, subtype }
       });
@@ -1721,12 +1743,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // "confirmed today", because the banner then has one less state to get wrong: a date on the
   // form is the form's fact from that point on, and step 0 is its one editor.
   const handleVoiceSeededUseToday = () => {
-    const value = voiceBanner?.dateSuggestion?.value || nowLocalDateTimeInput();
+    // Now, to the minute, and the banner states it once written. A `datetime-local` record always
+    // carries a time and this wizard has always supplied one; what this path fixes is the DAY.
+    // The time is shown rather than hidden, and step 0 stays where it is changed.
+    const value = nowLocalDateTimeInput();
     setEventFormData((prev) => ({ ...prev, date: value }));
     basicMethods.setValue('date', value);
-    setVoiceBanner((prev) =>
-      prev ? { ...prev, dateSuggestion: null, confirmedDate: value } : prev
-    );
   };
 
   // The other answer: the work happened on some other day, so go to the field that owns the date.
@@ -1738,6 +1760,25 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const handleVoiceSeededPickAnotherDay = () => {
     setActiveStep(0);
   };
+
+  // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
+  // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
+  // reconcile against the value that will actually be filed.
+  const voiceBannerHeadline = voiceBanner
+    ? intl.formatMessage(
+        {
+          id: voiceBanner.seeded
+            ? voiceBanner.seededPending
+              ? 'events.voice.pastedNoteOffered'
+              : 'events.voice.pastedNoteApplied'
+            : 'events.voice.applied'
+        },
+        { count: voiceFilledLabels.length }
+      )
+    : '';
+
+  const seededDateUnanswered = Boolean(voiceBanner?.seeded) && !eventFormData.date;
+  const seededDateAnswered = Boolean(voiceBanner?.seeded) && Boolean(eventFormData.date);
 
   // Move focus to the offer when one appears, the same way a step change moves it to the new
   // heading. Keyed on the OFFER, not on the banner: a spoken parse merges into the form and the
@@ -1783,8 +1824,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // `seededPending`, so nulling only the offer left the farmer who explicitly REFUSED a third
   // party's values reading "Voice input applied" with a filled-field count over an empty form, in the
   // wizard that feeds certifier packets.
-  const handleVoiceSeededDiscard = () => {
+  // Refusing a note refuses the HELD half as well. `pendingVoiceRef` used to be nulled on the
+  // seeded path, and keeping it so the hold could be re-offered opened a worse door: Discard
+  // cleared only the banner, so picking the subtype afterwards rebuilt the refused third party's
+  // values as a brand new offer and pulled focus to it.
+  const dismissVoiceBanner = () => {
+    pendingVoiceRef.current = null;
     setVoiceBanner(null);
+  };
+
+  const handleVoiceSeededDiscard = () => {
+    dismissVoiceBanner();
   };
 
   // The subtype arrived (the farmer picked it in the tab). Re-gate what we held back and
@@ -1820,6 +1870,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
         ...(prev ? {} : { seeded: true, transcript: pending.transcript }),
         seeded: true,
         droppedCount: dropped.length,
+        // RECOMPUTED, not inherited. `keptFields` is what `voiceFilledLabels` reads, and Apply
+        // renders only when that list is non-empty. At parse time, with no subtype, the gated set
+        // is narrow and is often EMPTY (acreage is gated on 9 of the 10 soil subtypes), so
+        // carrying the old list forward under-reported the re-offered values and, when it was
+        // empty, left them with no button at all: the hold kept and then made unreachable, which
+        // is the same silent loss this branch exists to end.
+        keptFields: Object.keys(kept),
         seededPending: { kept, eventType: activeEventType, subtype }
       }));
       return;
@@ -3536,12 +3593,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           </HStack>
                         </Box>
                       )}
+                      {/* The live region is the HEADLINE, not the container below. `role="status"`
+                          is aria-atomic by default, so on the container every tap re-read the
+                          entire banner (including the full quoted note, which `noOfLines` clips
+                          visually but not for a screen reader) and focusing that same node
+                          announced it a second time. The container is a named group instead, so
+                          moving focus here says what it is and stops. */}
                       {voiceBanner && !showVoiceCapture && (
                         <Box
                           ref={voiceOfferRef}
                           tabIndex={-1}
-                          role="status"
-                          aria-live="polite"
+                          role="group"
+                          aria-label={voiceBannerHeadline}
                           mt={3}
                           p={3}
                           bg="green.50"
@@ -3550,22 +3613,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           borderRadius="md">
                           <HStack justify="space-between" align="start">
                             <VStack align="start" spacing={1} flex={1}>
-                              <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                                {intl.formatMessage(
-                                  {
-                                    // Three states, not two. Provenance comes from
-                                    // `seeded` (durable); whether anything is filled yet
-                                    // comes from `seededPending` (cleared on Apply).
-                                    // Keying both on seededPending relabelled a pasted
-                                    // note "Voice input applied" one tap later.
-                                    id: voiceBanner.seeded
-                                      ? voiceBanner.seededPending
-                                        ? 'events.voice.pastedNoteOffered'
-                                        : 'events.voice.pastedNoteApplied'
-                                      : 'events.voice.applied'
-                                  },
-                                  { count: voiceFilledLabels.length }
-                                )}
+                              {/* Three states, not two. Provenance comes from `seeded` (durable);
+                                  whether anything is filled yet comes from `seededPending`
+                                  (cleared on Apply). Keying both on seededPending relabelled a
+                                  pasted note "Voice input applied" one tap later. */}
+                              <Text
+                                role="status"
+                                aria-live="polite"
+                                fontSize="sm"
+                                fontWeight="semibold"
+                                color="green.700">
+                                {voiceBannerHeadline}
                               </Text>
                               {/* Name them. The count on its own is unverifiable: when the
                                   only field voice could keep is `observation`, the farmer
@@ -3593,7 +3651,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   the day on a § 205.103(b)(2) record is one the operator chose.
                                   Neutral ground and a plain border on purpose: this is a question,
                                   not an error, and status colour here would claim something. */}
-                              {voiceBanner.dateSuggestion && (
+                              {seededDateUnanswered && (
                                 <Box
                                   w="full"
                                   mt={1}
@@ -3621,7 +3679,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                       onClick={handleVoiceSeededUseToday}>
                                       {intl.formatMessage(
                                         { id: 'events.voice.pastedNoteDateUseToday' },
-                                        { date: localDateLabel(voiceBanner.dateSuggestion.value) }
+                                        { date: localDateTimeLabel(nowLocalDateTimeInput()) }
                                       )}
                                     </Button>
                                     <Button
@@ -3639,11 +3697,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               {/* Answered. Say which day it will file under, because the farmer
                                   chose it on another step and a date they cannot see is a date
                                   they cannot check. */}
-                              {!voiceBanner.dateSuggestion && voiceBanner.confirmedDate && (
+                              {seededDateAnswered && (
                                 <Text fontSize="xs" color="gray.700">
                                   {intl.formatMessage(
                                     { id: 'events.voice.pastedNoteDateSet' },
-                                    { date: localDateLabel(voiceBanner.confirmedDate) }
+                                    { date: localDateTimeLabel(eventFormData.date) }
                                   )}
                                 </Text>
                               )}
@@ -3773,7 +3831,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   ? 'events.voice.dismissPastedNote'
                                   : 'events.voice.dismissVoiceInput'
                               })}
-                              onClick={() => setVoiceBanner(null)}>
+                              onClick={dismissVoiceBanner}>
                               ✕
                             </Button>
                           </HStack>

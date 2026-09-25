@@ -73,20 +73,27 @@ export function formatDateFromTimestamp(
   return d.toLocaleDateString(locale, { ...options, timeZone: 'UTC' });
 }
 
-/** Is this `datetime-local` value still sitting on TODAY, i.e. untouched by the operator?
+/** Did the OPERATOR choose this date, or did the form hand it to them?
  *
- *  Compares the DATE part only. An exact `value === nowLocalDateTimeInput()` test drifts the
- *  moment the clock ticks past the minute the form was opened, so it answers "no" for a field
- *  nobody touched. NewEvent.jsx carries that exact-equality idiom in its step-restoration
- *  effect; this is the same question asked in a way that survives a slow reader.
+ *  `wizardDefault` is the value the form seeded itself with (react-hook-form keeps it on
+ *  `formState.defaultValues`). Exact inequality is the whole test, and it is deliberately not a
+ *  same-day heuristic: a grower who sets 06:30 for a dawn spray and then pastes a crew note at
+ *  11:43 has chosen their time, and a date-part comparison calls that "today, therefore a guess"
+ *  and takes it away. The minute matters here, because the field is a `datetime-local` on a
+ *  record whose application time feeds re-entry intervals.
  *
- *  Used to tell an operator-supplied day from the wizard's default. A record whose date the
- *  operator chose and a record that merely inherited today are different facts, and on a
- *  note-sourced create they must be treated differently: a pasted note describes work already
- *  done, so today is a guess (7 CFR 205.103(b)(2), and CA PUR files strictly on event.date). */
-export function isTodayLocalDateTimeInput(value?: string | null): boolean {
+ *  A missing value is not chosen either. The caller wants "is there an operator decision on this
+ *  record's day", and the answer for an empty field is no.
+ *
+ *  Why this exists: on a note-sourced create, today is a guess. A pasted note describes work
+ *  already done, so 7 CFR 205.103(b)(2) and CA PUR (which files strictly on `event.date`) need a
+ *  day the operator stated rather than the one the wizard was holding. */
+export function isOperatorChosenDate(
+  value?: string | null,
+  wizardDefault?: string | null
+): boolean {
   if (!value) return false;
-  return value.slice(0, 10) === todayLocalISODate();
+  return value !== wizardDefault;
 }
 
 /** Now as `YYYY-MM-DDTHH:mm` in the VIEWER's timezone, for seeding a `datetime-local` input.
