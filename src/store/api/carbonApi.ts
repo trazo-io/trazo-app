@@ -1293,7 +1293,6 @@ export const carbonApi = baseApi.injectEndpoints({
       {
         type: string;
         description: string;
-        date: string;
         detected_amounts: Array<{ value: number; unit: string; category: string } | string>;
         detected_products: string[];
         detected_systems?: string[];

@@ -8,6 +8,8 @@ import {
   useColorModeValue,
   VStack,
   HStack,
+  Stack,
+  Textarea,
   Badge,
   Progress,
   Alert,
@@ -32,7 +34,8 @@ import {
   FaFlask,
   FaClipboardList,
   FaCertificate,
-  FaLayerGroup
+  FaLayerGroup,
+  FaPaste
 } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
@@ -119,7 +122,8 @@ import {
   gateVoiceOverridesToForm,
   shouldOfferActivitySwitch,
   voiceTypeForActivity,
-  VOICE_UNIT_COMPANIONS
+  VOICE_UNIT_COMPANIONS,
+  mergeOfferedValues
 } from 'utils/voiceDataMapper';
 import { voiceBlockSuggestion } from 'utils/spokenBlock';
 import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
@@ -563,6 +567,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // merged eventFormData. onDataChange keeps eventFormData live, so nothing the
   // farmer already typed is lost by the remount.
   const [showVoiceCapture, setShowVoiceCapture] = useState(false);
+  // A note the farmer PASTED rather than spoke: today a crew WhatsApp message, by hand. It runs
+  // the same extraction as voice and then stops: `seeded` on the result makes the wizard hold the
+  // values instead of merging them (handleVoiceEventDetected). Kept out of `eventFormData` so a
+  // half-typed paste can never be submitted as part of a record.
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteDraft, setPasteDraft] = useState('');
+  const [voiceSeedText, setVoiceSeedText] = useState('');
   const [voiceBanner, setVoiceBanner] = useState(null);
   const [voiceSeq, setVoiceSeq] = useState(0);
   // WS-4 template accelerator: picking a template is an explicit practice choice —
@@ -1518,6 +1529,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // An unknown subtype (soil/pest/business before the in-tab select) also stays quiet —
         // there is nothing yet to disagree with.
         suggestion: heardADifferentActivity ? mapping : null,
+        // Provenance, and it must be its own flag: `seededPending` is nulled the moment the farmer
+        // accepts or refuses, so keying copy on it relabels a pasted note as "Voice input applied"
+        // one tap later. This survives both.
+        seeded: Boolean(eventData.seeded),
         raw: eventData
       }
     };
@@ -1615,10 +1630,76 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // re-apply itself onto whatever type the farmer switched to next.
     pendingVoiceRef.current = holding ? { detected, eventType: activeEventType } : null;
 
+    // A SEEDED parse merges NOTHING. The values are offered and the farmer's tap writes them,
+    // exactly like `blockSuggestion` above and the OSP "Use suggestion" button
+    // (OSPModuleWizard.tsx) that § 205.201(a) requires.
+    //
+    // Why seeded is different from spoken, when both run the same gates: every echo gate
+    // downstream asks "do these words appear in the transcript", and voiceDataMapper.ts:1199 says
+    // why in its own comment: if the words are absent the answer came from somewhere other than
+    // the FARMER. Those gates catch a MODEL inventing a value. They cannot catch a SENDER who is
+    // wrong, and on a pasted note the sender is not the person confirming. Auto-filling a form
+    // from a third party's words and letting a tired supervisor press save at 9pm is how a record
+    // nobody performed reaches a certifier packet. That is the backdated-template class, one
+    // channel over.
+    if (eventData.seeded) {
+      pendingVoiceRef.current = null;
+      setVoiceBanner({
+        ...banner,
+        droppedCount: holding ? 0 : banner.droppedCount,
+        // The set the farmer is being offered, held OUTSIDE the form until they accept it.
+        seededPending: { kept, eventType: activeEventType, subtype }
+      });
+      setShowVoiceCapture(false);
+      // The note has been consumed. Without this the panel re-mounts with the SAME seed, so
+      // "Fill by voice" never opens a mic again and every tap re-POSTs the old note to the
+      // extractor (a second billed parse, and a voice-budget unit on a web-speech deploy).
+      // Batched with setShowVoiceCapture, so there is no render in which the panel is open
+      // with the seed already gone.
+      setVoiceSeedText('');
+      // No `voiceSeq` bump: nothing was merged, so there is nothing for the tabs to re-read.
+      return;
+    }
+
     setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...kept }));
     setVoiceBanner(holding ? { ...banner, droppedCount: 0 } : banner);
     setShowVoiceCapture(false);
     setVoiceSeq((s) => s + 1);
+  };
+
+  // The tap that turns an offered set into form values.
+  //
+  // FILLS EMPTIES ONLY. `kept` is a snapshot frozen at parse time, and the farmer is invited to
+  // read the quoted note and type while the offer sits there: the buttons say "Would fill" and
+  // "Fill in N values", which promise filling, not replacing. Spreading the snapshot over `prev`
+  // silently replaced whatever they had typed in between, including `observation`, which is
+  // published verbatim on the buyer page. The parse-time guard that protects `observation`
+  // (see applyVoiceData) read the form BEFORE those keystrokes existed, so it could not fire.
+  //
+  // Skipped by VALUE PAIR, not by key. `VOICE_UNIT_COMPANIONS` pairs a unit with its amount,
+  // and a tab supplies unit defaults of its own (ChemicalTab defaults volume_unit and area_unit),
+  // so an empty-by-key test would write an amount while leaving a default unit that contradicts
+  // the note: 40 with "gal" when the note said pounds. A pair is written together or not at all.
+  const handleVoiceSeededApply = () => {
+    const pending = voiceBanner?.seededPending;
+    if (!pending) return;
+    const { kept } = pending;
+
+    setEventFormData((prev) =>
+      withListingAttachmentChecked(prev, { ...prev, ...mergeOfferedValues(prev, kept) })
+    );
+
+    setVoiceBanner((prev) => (prev ? { ...prev, seededPending: null } : prev));
+    // NOW the tabs must re-read initialValues, the same remount the spoken merge uses.
+    setVoiceSeq((s) => s + 1);
+  };
+
+  // Clears the WHOLE banner, not just the offer. The headline is the else-branch of
+  // `seededPending`, so nulling only the offer left the farmer who explicitly REFUSED a third
+  // party's values reading "Voice input applied" with a filled-field count over an empty form, in the
+  // wizard that feeds certifier packets.
+  const handleVoiceSeededDiscard = () => {
+    setVoiceBanner(null);
   };
 
   // The subtype arrived (the farmer picked it in the tab). Re-gate what we held back and
@@ -1701,6 +1782,36 @@ function NewEvent({ isEdit = false, eventId = null }) {
     setPickedVerbKey(pending.verbKey);
     pendingVoiceRef.current = null;
     const { kept, banner } = applyVoiceData(raw, pending.backendEventType, subtype);
+
+    // A PASTED note is re-OFFERED here, never merged (2026-09-24, fresh-eyes review).
+    //
+    // This was the hole that defeated the whole feature. "Switch to <activity>" is the button a
+    // farmer taps when the note describes work the form does not, the COMMON case, because the
+    // sender never saw the form, and it wrote the third party's product name, rate and method
+    // straight into `eventFormData` with no Apply step, then labelled it "Voice input applied".
+    // Worse, the activity it switches TO is the one the MODEL chose from the untrusted text, so
+    // this was also the only path on which a steered `event_type` reached a form unattended.
+    //
+    // `raw.seeded` is the gate, not `voiceBanner.seededPending`: the latter is null once the
+    // farmer has accepted or refused an earlier offer, and the note is still pasted after that.
+    // `applyVoiceData` above has already re-gated `kept` against the NEW type and subtype, so the
+    // offer the farmer sees belongs to the form they are now looking at.
+    //
+    // The subtype write STAYS on both paths: handleEventTypeChange has just reset the form, so
+    // without it the tab opens with no subtype and drops every subtype-gated field.
+    if (raw.seeded) {
+      setEventFormData((prev) =>
+        withListingAttachmentChecked(prev, { ...prev, ...(subtype ? { type: subtype } : {}) })
+      );
+      setVoiceBanner({
+        ...banner,
+        suggestion: null,
+        seededPending: { kept, eventType: pending.backendEventType, subtype }
+      });
+      setVoiceSeq((s) => s + 1);
+      return;
+    }
+
     setEventFormData((prev) =>
       withListingAttachmentChecked(prev, {
         ...prev,
@@ -1768,6 +1879,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const handleSubtypeSelect = (code) => {
     setSubtypeUnanswered(false);
     if (eventFormData.type === code) return;
+    // A held offer belongs to the activity it was gated against. The form is being reset to a
+    // different one here, so a still-visible "Fill in N values" would write a frozen field set
+    // onto a record it was never checked for: in-family that means real columns like
+    // `yield_quantity` landing on an irrigation event. The offer dies with the activity; the
+    // farmer pastes again if they still mean to. (handleVoiceSwitchType re-sets the banner
+    // immediately after calling this, so the deliberate switch path is unaffected.)
+    setVoiceBanner(null);
     setEventFormData((prev) => {
       const kept = {};
       ['date', 'performed_by'].forEach((f) => {
@@ -1825,6 +1943,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   const handleEventTypeChange = (eventTypeId) => {
     setActiveEventType(eventTypeId);
+
+    // A held offer belongs to the activity it was gated against. The form is being reset to a
+    // different one here, so a still-visible "Fill in N values" would write a frozen field set
+    // onto a record it was never checked for: in-family that means real columns like
+    // `yield_quantity` landing on an irrigation event. The offer dies with the activity; the
+    // farmer pastes again if they still mean to. (handleVoiceSwitchType re-sets the banner
+    // immediately after calling this, so the deliberate switch path is unaffected.)
+    setVoiceBanner(null);
 
     // CRITICAL FIX: Clear type-specific form data when switching event types
     // This prevents fields from one event type bleeding into another's preview
@@ -3152,11 +3278,22 @@ function NewEvent({ isEdit = false, eventId = null }) {
                              backend prompt extract FIELDS instead of guessing the activity. */
                           knownActivity={voiceActivitySlug}
                           fieldRequests={voiceFieldRequests}
+                          /* `autoStart` stays true for the spoken path; the panel itself
+                             refuses to open a mic when a seed is present. */
                           autoStart={true}
-                          onClose={() => setShowVoiceCapture(false)}
+                          seedTranscript={voiceSeedText || undefined}
+                          onClose={() => {
+                            setShowVoiceCapture(false);
+                            setVoiceSeedText('');
+                          }}
                         />
                       ) : (
-                        <HStack spacing={3}>
+                        // `flexWrap` because this row is now THREE buttons, and Chakra's Button
+                        // label is nowrap: at 375px the labels crossed their own borders in
+                        // English and overlapped illegibly in es-419, which runs ~1.55x longer.
+                        // Spacing is applied as `gap`, so wrapped rows keep their gutter. Two
+                        // other rows in this file already wrap for the same reason.
+                        <HStack spacing={3} flexWrap="wrap">
                           <Button
                             leftIcon={<Icon as={FaMicrophone} />}
                             variant="outline"
@@ -3165,6 +3302,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             minH="44px"
                             onClick={() => setShowVoiceCapture(true)}>
                             {intl.formatMessage({ id: 'events.voice.fillByVoice' })}
+                          </Button>
+                          <Button
+                            leftIcon={<Icon as={FaPaste} />}
+                            variant="outline"
+                            colorScheme="green"
+                            size="sm"
+                            minH="44px"
+                            onClick={() => setPasteOpen((open) => !open)}>
+                            {intl.formatMessage({ id: 'events.voice.pasteNote' })}
                           </Button>
                           {templatesForEventType(activeEventType).length > 0 && (
                             <Button
@@ -3178,6 +3324,49 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             </Button>
                           )}
                         </HStack>
+                      )}
+                      {/* The paste box. Its only job is to hand text to the SAME extraction the
+                          mic uses; it writes nothing itself. Closed as soon as the text is
+                          handed over, so there is never a stale note sitting under a form the
+                          farmer has since edited. */}
+                      {pasteOpen && !showVoiceCapture && (
+                        <VStack align="stretch" spacing={2} mt={3}>
+                          <Textarea
+                            value={pasteDraft}
+                            onChange={(e) => setPasteDraft(e.target.value)}
+                            placeholder={intl.formatMessage({
+                              id: 'events.voice.pasteNotePlaceholder'
+                            })}
+                            rows={3}
+                            fontSize="sm"
+                          />
+                          <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
+                            <Button
+                              variant="outline"
+                              colorScheme="green"
+                              size="sm"
+                              minH="44px"
+                              isDisabled={!pasteDraft.trim()}
+                              onClick={() => {
+                                setVoiceSeedText(pasteDraft.trim());
+                                setPasteOpen(false);
+                                setPasteDraft('');
+                                setShowVoiceCapture(true);
+                              }}>
+                              {intl.formatMessage({ id: 'events.voice.pasteNoteRead' })}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              minH="44px"
+                              onClick={() => {
+                                setPasteOpen(false);
+                                setPasteDraft('');
+                              }}>
+                              {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
+                            </Button>
+                          </Stack>
+                        </VStack>
                       )}
                       {/* Arrived from "Log this" on the season plan. The banner says out
                             loud that the values on screen are the CATALOGUE's, not the
@@ -3235,7 +3424,18 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             <VStack align="start" spacing={1} flex={1}>
                               <Text fontSize="sm" fontWeight="semibold" color="green.700">
                                 {intl.formatMessage(
-                                  { id: 'events.voice.applied' },
+                                  {
+                                    // Three states, not two. Provenance comes from
+                                    // `seeded` (durable); whether anything is filled yet
+                                    // comes from `seededPending` (cleared on Apply).
+                                    // Keying both on seededPending relabelled a pasted
+                                    // note "Voice input applied" one tap later.
+                                    id: voiceBanner.seeded
+                                      ? voiceBanner.seededPending
+                                        ? 'events.voice.pastedNoteOffered'
+                                        : 'events.voice.pastedNoteApplied'
+                                      : 'events.voice.applied'
+                                  },
                                   { count: voiceFilledLabels.length }
                                 )}
                               </Text>
@@ -3248,10 +3448,45 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               {voiceFilledLabels.length > 0 && (
                                 <Text fontSize="xs" color="gray.700">
                                   {intl.formatMessage(
-                                    { id: 'events.voice.filledFields' },
+                                    {
+                                      // "Would fill" only while the offer stands.
+                                      id: voiceBanner.seededPending
+                                        ? 'events.voice.pastedNoteWouldFill'
+                                        : 'events.voice.filledFields'
+                                    },
                                     { fields: voiceFilledLabels.join(', ') }
                                   )}
                                 </Text>
+                              )}
+                              {/* The tap that writes them. Nothing above this line has touched
+                                  the form: a pasted note is somebody else's words, so the person
+                                  who signs the record is the one who puts them on it. Same shape
+                                  as the block offer below and the OSP "Use suggestion" button. */}
+                              {voiceBanner.seededPending && voiceFilledLabels.length > 0 && (
+                                <Stack
+                                  direction={{ base: 'column', smd: 'row' }}
+                                  spacing={2}
+                                  pt={1}
+                                  w={{ base: 'full', smd: 'auto' }}>
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    colorScheme="green"
+                                    minH="44px"
+                                    onClick={handleVoiceSeededApply}>
+                                    {intl.formatMessage(
+                                      { id: 'events.voice.pastedNoteApply' },
+                                      { count: voiceFilledLabels.length }
+                                    )}
+                                  </Button>
+                                  <Button
+                                    size="xs"
+                                    variant="ghost"
+                                    minH="44px"
+                                    onClick={handleVoiceSeededDiscard}>
+                                    {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
+                                  </Button>
+                                </Stack>
                               )}
                               {voiceBanner.transcript ? (
                                 <Text fontSize="xs" color="gray.600" noOfLines={2}>

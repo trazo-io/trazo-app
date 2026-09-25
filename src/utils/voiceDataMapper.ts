@@ -34,7 +34,6 @@ export interface StructuredAmount {
 export interface ParsedVoiceData {
   type: string;
   description: string;
-  date: string;
   detected_amounts: Array<StructuredAmount | string>;
   detected_products: string[];
   detected_systems?: string[];
@@ -1620,4 +1619,54 @@ export function gateVoiceOverridesToForm(
   }
 
   return { kept, dropped };
+}
+
+/**
+ * Merge an OFFERED value set into live form state, filling empties only.
+ *
+ * Used by the pasted-note ("seeded") path, where the values are held outside the form and the
+ * farmer taps to write them. Between the parse and that tap they are invited to read the quoted
+ * note and type, so the offer must not overwrite what they entered. The buttons say "Would fill"
+ * and "Fill in N values"; this is the function that makes those words true.
+ *
+ * A UNIT AND ITS AMOUNT ARE ONE FACT. `VOICE_UNIT_COMPANIONS` maps a unit to the amount fields
+ * that own it (an ARRAY: `area_unit` has two owners), and a tab may supply a unit default of its
+ * own. Deciding per key would write an amount of 40 next to an existing default of "gal" when the
+ * note said pounds, i.e. invent an application rate. So the pair is written together or not at all:
+ * if EITHER half is already present, neither half is written.
+ */
+export function mergeOfferedValues(
+  current: Record<string, unknown>,
+  offered: Record<string, unknown>
+): Record<string, unknown> {
+  const isFilled = (name: string) => {
+    const value = current?.[name];
+    return value !== undefined && value !== null && String(value).trim() !== '';
+  };
+
+  const offeredKeys = Object.keys(offered);
+  // Every key that must be decided together with `key`, restricted to what is actually on offer.
+  const factGroup = (key: string): string[] => {
+    const group = new Set<string>([key]);
+    const ownedBy = VOICE_UNIT_COMPANIONS[key];
+    if (ownedBy) {
+      // `key` is a unit: its owners travel with it.
+      ownedBy.forEach((owner) => {
+        if (offeredKeys.includes(owner)) group.add(owner);
+      });
+    } else {
+      // `key` is an amount: the unit that lists it travels with it.
+      Object.entries(VOICE_UNIT_COMPANIONS).forEach(([unit, owners]) => {
+        if (owners.includes(key) && offeredKeys.includes(unit)) group.add(unit);
+      });
+    }
+    return [...group];
+  };
+
+  const result: Record<string, unknown> = {};
+  offeredKeys.forEach((key) => {
+    if (factGroup(key).some(isFilled)) return;
+    result[key] = offered[key];
+  });
+  return result;
 }
