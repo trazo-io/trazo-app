@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatDateFromTimestamp,
   formatDateOnly,
+  isTodayLocalDateTimeInput,
   nowLocalDateTimeInput,
   todayLocalISODate
 } from '../dateOnly';
@@ -102,5 +103,41 @@ describe('input seeds use the viewer clock, not the UTC clock', () => {
     expect(seeded.slice(0, 10)).toBe(todayLocalISODate());
     expect(Number(seeded.slice(11, 13))).toBe(now.getHours());
     expect(seeded).not.toBe(new Date().toISOString().slice(0, 16));
+  });
+});
+
+describe('isTodayLocalDateTimeInput tells an inherited date from a chosen one', () => {
+  it('says yes to the value the wizard seeds itself with', () => {
+    expect(isTodayLocalDateTimeInput(nowLocalDateTimeInput())).toBe(true);
+  });
+
+  it('says yes for any time of day today, not only the minute the form opened', () => {
+    // The reason this is not `value === nowLocalDateTimeInput()`. That test answers "no" as
+    // soon as the clock ticks past the minute the wizard rendered, which would let a date
+    // nobody touched pass as operator-chosen on a slow read.
+    const today = todayLocalISODate();
+    expect(isTodayLocalDateTimeInput(`${today}T00:00`)).toBe(true);
+    expect(isTodayLocalDateTimeInput(`${today}T23:59`)).toBe(true);
+  });
+
+  it('says no to a day the operator actually picked', () => {
+    expect(isTodayLocalDateTimeInput('2026-03-14T09:00')).toBe(false);
+  });
+
+  it('says no to empty, null and undefined rather than throwing', () => {
+    // A cleared date field is the state this whole question exists to create, so it has to be
+    // answerable. "Not today" is right: there is no inherited value left to take back.
+    expect(isTodayLocalDateTimeInput('')).toBe(false);
+    expect(isTodayLocalDateTimeInput(null)).toBe(false);
+    expect(isTodayLocalDateTimeInput(undefined)).toBe(false);
+  });
+
+  it('reads the LOCAL day, not the UTC one', () => {
+    // The environment is pinned west of UTC at the top of this file. Late local evening is
+    // already tomorrow in UTC, so a UTC-based implementation would call today's own seed
+    // "not today" and the wizard would keep a date it guessed.
+    const seeded = nowLocalDateTimeInput();
+    expect(seeded.slice(0, 10)).toBe(todayLocalISODate());
+    expect(isTodayLocalDateTimeInput(seeded)).toBe(true);
   });
 });

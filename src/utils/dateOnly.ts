@@ -73,6 +73,22 @@ export function formatDateFromTimestamp(
   return d.toLocaleDateString(locale, { ...options, timeZone: 'UTC' });
 }
 
+/** Is this `datetime-local` value still sitting on TODAY, i.e. untouched by the operator?
+ *
+ *  Compares the DATE part only. An exact `value === nowLocalDateTimeInput()` test drifts the
+ *  moment the clock ticks past the minute the form was opened, so it answers "no" for a field
+ *  nobody touched. NewEvent.jsx carries that exact-equality idiom in its step-restoration
+ *  effect; this is the same question asked in a way that survives a slow reader.
+ *
+ *  Used to tell an operator-supplied day from the wizard's default. A record whose date the
+ *  operator chose and a record that merely inherited today are different facts, and on a
+ *  note-sourced create they must be treated differently: a pasted note describes work already
+ *  done, so today is a guess (7 CFR 205.103(b)(2), and CA PUR files strictly on event.date). */
+export function isTodayLocalDateTimeInput(value?: string | null): boolean {
+  if (!value) return false;
+  return value.slice(0, 10) === todayLocalISODate();
+}
+
 /** Now as `YYYY-MM-DDTHH:mm` in the VIEWER's timezone, for seeding a `datetime-local` input.
  *
  *  `new Date().toISOString().slice(0, 16)` is the UTC wall clock, but a `datetime-local` input
