@@ -144,7 +144,18 @@ interface CompanyFarmInfoProps {
     soilType?: string;
     cropType?: string;
     plantingDate?: string;
+    /** LAST harvest record for the lot. ⛔ Never the season-close date — see `seasonClosedDate`. */
     harvestDate?: string;
+    /** FIRST harvest record, set only when the passes span more than one local day. */
+    harvestDateStart?: string;
+    /**
+     * The day the grower closed the season (`History.finish_date`).
+     *
+     * A different fact from the last pick and labelled as such. Passing it as `harvestDate` is
+     * what put Aug 12 under "HARVEST DATE" on a lot whose records ended Aug 7, three inches
+     * below the correct range.
+     */
+    seasonClosedDate?: string;
     elevation?: number;
     slope?: string;
     irrigationType?: string;
