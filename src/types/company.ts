@@ -74,6 +74,18 @@ export interface Parcel {
    * `parcel_application_status()`. Callers already read it; the type just never listed it.
    */
   application_status?: 'complete' | 'in_progress' | 'not_started';
+  /**
+   * Supporting-evidence axis, separate from `application_status` on purpose.
+   *
+   * `application_status` answers "are the QUESTIONS answered"; this answers "is the document
+   * that backs them on file". Until 2026-09-24 a recorded polygon satisfied the map check on
+   * the answers axis, so a parcel with no uploaded map reported `complete` — and the certifier
+   * packet printed that one page above its own "[REVIEW] No operator-supplied map is attached".
+   *
+   * ⛔ Never render one without the other.
+   */
+  evidence_status?: 'complete' | 'outstanding';
+  evidence_missing?: string[];
   // Add other properties as needed
 }
 
