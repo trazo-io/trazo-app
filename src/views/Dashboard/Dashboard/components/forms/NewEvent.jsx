@@ -91,6 +91,7 @@ import {
 } from 'store/api/historyApi';
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
 import { useGetParcelQuery } from 'store/api/productApi';
+import { useGetFieldNoteQuery } from 'store/api/fieldNoteApi';
 import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
@@ -366,6 +367,16 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // whole point of ProductionPlanItem (history/models.py). The id rides along on the POST so
   // the server can close the checklist item against the record it actually wrote.
   const planItemIdFromUrl = searchParams.get('plan_item');
+
+  // Field notes: "Log this" on a crew WhatsApp message arrives with ?field_note=<uuid>.
+  //
+  // A UUID, never a numeric id, so a hand-edited link cannot walk other operations' notes. And the
+  // note is FETCHED below rather than carried in the URL, for the same reason the plan item is:
+  // whatever seeds this form must come from the server, scoped to the caller. It matters more here.
+  // These words steer the model's `event_type` and are interpolated into its prompt, so a
+  // ?transcript= parameter would be a prompt-injection vector wearing a link, and it would also put
+  // a crew member's sentence into browser history and every access log on the way.
+  const fieldNoteIdFromUrl = searchParams.get('field_note');
   const planProductionIdFromUrl = searchParams.get('production');
 
   // A plan item answers "what did you do" as completely as a verb tile does, and it does so
@@ -508,10 +519,35 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // The plan item is fetched, not passed through the URL: the practice this record answers is
   // read from the operator's own plan, so a hand-edited link cannot invent one.
+  // Fetched, not trusted. The scoping is the server's (`company__in=user.companies`), so a link to
+  // another operation's note returns 404 and seeds nothing.
+  const { data: activeFieldNote } = useGetFieldNoteQuery(fieldNoteIdFromUrl, {
+    skip: !fieldNoteIdFromUrl || isEdit
+  });
+
   const { data: seasonPlanData } = useGetSeasonPlanQuery(
     { historyId: planProductionIdFromUrl },
     { skip: !planProductionIdFromUrl || !planItemIdFromUrl || isEdit }
   );
+  // Hand the note's words to the panel that already knows what to do with somebody else's sentence.
+  //
+  // Nothing new is built here: the seeded path renders the parse as a HELD OFFER with an explicit
+  // "Fill in N values" tap and asks which day the work happened, because on a pasted or forwarded
+  // note the person confirming is not the person who spoke. A WhatsApp note needs the date question
+  // MORE than a pasted one does: it can sit unread for days, so a Friday note about Tuesday's spray
+  // would otherwise file under Friday and take the pre-harvest interval and the CA PUR day with it.
+  //
+  // Only a WAITING note seeds. A confirmed or discarded one opening a fresh offer would invite a
+  // second record for work already logged.
+  useEffect(() => {
+    if (!activeFieldNote || activeFieldNote.status !== 'pending') return;
+    if (!activeFieldNote.words) return;
+    if (seededFromNoteRef.current === activeFieldNote.public_id) return;
+    seededFromNoteRef.current = activeFieldNote.public_id;
+    setVoiceSeedText(activeFieldNote.words);
+    setShowVoiceCapture(true);
+  }, [activeFieldNote]);
+
   const activePlanItem = useMemo(
     () =>
       (seasonPlanData?.items || []).find((item) => String(item.id) === String(planItemIdFromUrl)),
@@ -574,6 +610,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteDraft, setPasteDraft] = useState('');
   const [voiceSeedText, setVoiceSeedText] = useState('');
+  // One-shot, keyed on the note's id. The panel consumes the seed and clears it (so the mic works
+  // again and the same words are never re-billed to a second parse), so without this guard the
+  // effect would immediately re-seed from the still-present query and the offer could never be
+  // dismissed.
+  const seededFromNoteRef = useRef(null);
   const [voiceBanner, setVoiceBanner] = useState(null);
   const [voiceSeq, setVoiceSeq] = useState(0);
   // WS-4 template accelerator: picking a template is an explicit practice choice —
@@ -2745,7 +2786,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                 plan_item_id: activePlanItem.id,
                 ...(seasonPlanData?.history_id ? { history: seasonPlanData.history_id } : {})
               }
-            : {})
+            : {}),
+          // ONE key, and the server does the rest. It resolves the note by UUID scoped to the
+          // caller's companies and writes the link inside the same request that writes the record,
+          // the way `_fulfil_plan_item` does. Sending a status, or the words, or anything else about
+          // the note would be a second client-side writer of a fact the server owns.
+          ...(activeFieldNote ? { field_note: activeFieldNote.public_id } : {})
         }).unwrap();
 
         toast({
