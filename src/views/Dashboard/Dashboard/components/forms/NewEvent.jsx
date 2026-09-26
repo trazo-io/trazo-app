@@ -546,6 +546,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
     seededFromNoteRef.current = activeFieldNote.public_id;
     setVoiceSeedText(activeFieldNote.words);
     setShowVoiceCapture(true);
+    // Here, not only when the parse returns. MEASURED in a browser 2026-09-26: the panel that holds
+    // the seed mounts on step 2, so landing from the inbox showed step 1 with today's date already
+    // filled in and nothing about the note on screen. The supervisor answered a date before they
+    // had been told which message they were answering it for.
+    reclaimGuessedDate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFieldNote]);
 
   const activePlanItem = useMemo(
@@ -1736,18 +1742,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // provenance on screen, the same suggest-then-confirm shape as `blockSuggestion` and the
       // OSP "Use suggestion" button. A day the operator actually chose is left alone: this only
       // takes back the wizard's own guess.
-      // Compared against the form's OWN seeded default, not against "is it today". A grower who
-      // set 06:30 for a dawn spray and pastes the crew note at 11:43 chose that time, and a
-      // date-part test would call it a guess and take it away.
-      const inheritedDate = eventFormData.date;
-      if (inheritedDate && !isOperatorChosenDate(inheritedDate, wizardDefaultDate)) {
-        setEventFormData((prev) => {
-          const next = { ...prev };
-          delete next.date;
-          return next;
-        });
-        basicMethods.setValue('date', '');
-      }
+      reclaimGuessedDate();
 
       setVoiceBanner({
         ...banner,
@@ -1801,6 +1796,30 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const handleVoiceSeededPickAnotherDay = () => {
     setActiveStep(0);
   };
+
+  // Take back the wizard's own guess at the day, and only its own guess.
+  //
+  // ONE function, called from both the seeded parse and the moment a field note loads, because two
+  // spellings of one rule is how the may-send gate drifted from its own property earlier in this
+  // work. Compared against the form's OWN seeded default rather than against "is it today": a
+  // grower who set 06:30 for a dawn spray and opens the note at 11:43 chose that time.
+  const reclaimGuessedDate = useCallback(() => {
+    // Reads the FORM as well as the wizard's state, and that is the whole correctness of it.
+    // MEASURED in a browser 2026-09-26: on arrival from the inbox `eventFormData.date` is not set
+    // yet (it is written when step 0 is submitted) while the input on screen already shows the
+    // wizard's seeded default. Testing only `eventFormData.date` returned early and cleared
+    // nothing, so the operator was still looking at today.
+    const onScreen = basicMethods.getValues('date');
+    const inherited = eventFormData.date || onScreen;
+    if (!inherited || isOperatorChosenDate(inherited, wizardDefaultDate)) return;
+    setEventFormData((prev) => {
+      const next = { ...prev };
+      delete next.date;
+      return next;
+    });
+    basicMethods.setValue('date', '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventFormData.date, wizardDefaultDate]);
 
   // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
   // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
@@ -3199,6 +3218,39 @@ function NewEvent({ isEdit = false, eventId = null }) {
                   <FormProvider {...basicMethods}>
                     <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)} noValidate>
                       <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+                        {/* WHICH MESSAGE THIS RECORD ANSWERS, on the step the operator lands on.
+                            MEASURED in a browser 2026-09-26: arriving from the inbox showed this
+                            step with nothing about the note on it, because the panel that holds the
+                            seeded text only mounts on the NEXT step. The supervisor had clicked
+                            "Log this" on one specific message and was then asked for an activity and
+                            a date with no sign of which message, which is how somebody answers for
+                            the wrong one. The words are quoted, never an input: they are a record of
+                            what a person reported. */}
+                        {activeFieldNote && activeFieldNote.status === 'pending' && (
+                          <Box
+                            bg="green.50"
+                            borderWidth="1px"
+                            borderColor="green.200"
+                            borderRadius="md"
+                            p={3}>
+                            <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                              {intl.formatMessage(
+                                { id: 'events.fieldNote.loggingFrom' },
+                                {
+                                  who:
+                                    activeFieldNote.sender?.display_name ||
+                                    intl.formatMessage({ id: 'fieldNotes.unknownSender' })
+                                }
+                              )}
+                            </Text>
+                            <Text fontSize="sm" color="gray.800" whiteSpace="pre-wrap" pt={1}>
+                              {`\u201C${activeFieldNote.words}\u201D`}
+                            </Text>
+                            <Text fontSize="xs" color="gray.700" pt={2}>
+                              {intl.formatMessage({ id: 'events.fieldNote.theirWordsYourRecord' })}
+                            </Text>
+                          </Box>
+                        )}
                         {/* Event Type Selection Section — hidden when the verb
                               entry already answered it — a verb tile, or a season-plan
                               item, which names the practice more precisely than any tile. */}
