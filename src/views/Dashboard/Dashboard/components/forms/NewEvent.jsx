@@ -8,6 +8,7 @@ import {
   useColorModeValue,
   VStack,
   HStack,
+  Stack,
   Badge,
   Progress,
   Alert,
@@ -32,7 +33,8 @@ import {
   FaFlask,
   FaClipboardList,
   FaCertificate,
-  FaLayerGroup
+  FaLayerGroup,
+  FaPaste
 } from 'react-icons/fa';
 import { FormProvider, useForm } from 'react-hook-form';
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
@@ -52,7 +54,8 @@ import {
   SectionHeader, // D9 — both were built for this screen and had never been mounted anywhere.
   DraftRestorationAlert,
   AutoSaveStatus,
-  StandardAlert
+  StandardAlert,
+  StandardTextarea
 } from 'components/Design/StandardComponents';
 import { useEventDraft } from 'src/hooks/useEventDraft';
 import { TrazoImageUpload } from 'components/Upload';
@@ -119,11 +122,12 @@ import {
   gateVoiceOverridesToForm,
   shouldOfferActivitySwitch,
   voiceTypeForActivity,
-  VOICE_UNIT_COMPANIONS
+  VOICE_UNIT_COMPANIONS,
+  mergeOfferedValues
 } from 'utils/voiceDataMapper';
 import { voiceBlockSuggestion } from 'utils/spokenBlock';
 import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
-import { nowLocalDateTimeInput } from 'utils/dateOnly';
+import { isOperatorChosenDate, nowLocalDateTimeInput } from 'utils/dateOnly';
 
 // Enhanced form schemas with better validation
 // Sprint 1 Epic 1.4: Added performed_by for USDA GAP traceability compliance
@@ -563,6 +567,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // merged eventFormData. onDataChange keeps eventFormData live, so nothing the
   // farmer already typed is lost by the remount.
   const [showVoiceCapture, setShowVoiceCapture] = useState(false);
+  // A note the farmer PASTED rather than spoke: today a crew WhatsApp message, by hand. It runs
+  // the same extraction as voice and then stops: `seeded` on the result makes the wizard hold the
+  // values instead of merging them (handleVoiceEventDetected). Kept out of `eventFormData` so a
+  // half-typed paste can never be submitted as part of a record.
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteDraft, setPasteDraft] = useState('');
+  const [voiceSeedText, setVoiceSeedText] = useState('');
   const [voiceBanner, setVoiceBanner] = useState(null);
   const [voiceSeq, setVoiceSeq] = useState(0);
   // WS-4 template accelerator: picking a template is an explicit practice choice —
@@ -634,12 +645,30 @@ function NewEvent({ isEdit = false, eventId = null }) {
     return new Date(value).toLocaleDateString();
   };
 
+  // Date AND time. The record's field is a `datetime-local` and the application time feeds
+  // re-entry intervals, so a banner that states the day while writing a minute hides half of what
+  // it wrote.
+  const localDateTimeLabel = (value) => {
+    if (!value) return '';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return localDateLabel(value);
+    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    })}`;
+  };
+
   // Step management
   const [activeStep, setActiveStep] = useState(0);
 
   // The heading of whichever step card is mounted. One ref, three headings — only one
   // step renders at a time, so the ref always points at the visible one.
   const stepHeadingRef = useRef(null);
+
+  // The seeded offer announces itself. A pasted note is somebody else's words arriving in a
+  // form the farmer is already typing in, and the panel it replaces is gone by then, so nothing
+  // told a screen-reader user that a set of values is now waiting for a decision (WCAG 4.1.3).
+  const voiceOfferRef = useRef(null);
 
   /*
    * A step change is a page change to the farmer, so it lands like one: at the top, with
@@ -743,6 +772,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
       date: nowLocalDateTimeInput()
     }
   });
+
+  // What step 0 seeded the date field with. Read off react-hook-form rather than recomputed, so
+  // it is byte-identical to the value the operator was shown and cannot drift by a minute.
+  const wizardDefaultDate = basicMethods.formState.defaultValues?.date;
 
   const mainInfoMethods = useForm({
     resolver: zodResolver(formSchemaMainInfo)
@@ -1518,6 +1551,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // An unknown subtype (soil/pest/business before the in-tab select) also stays quiet —
         // there is nothing yet to disagree with.
         suggestion: heardADifferentActivity ? mapping : null,
+        // Provenance, and it must be its own flag: `seededPending` is nulled the moment the farmer
+        // accepts or refuses, so keying copy on it relabels a pasted note as "Voice input applied"
+        // one tap later. This survives both.
+        seeded: Boolean(eventData.seeded),
         raw: eventData
       }
     };
@@ -1615,10 +1652,201 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // re-apply itself onto whatever type the farmer switched to next.
     pendingVoiceRef.current = holding ? { detected, eventType: activeEventType } : null;
 
+    // A SEEDED parse merges NOTHING. The values are offered and the farmer's tap writes them,
+    // exactly like `blockSuggestion` above and the OSP "Use suggestion" button
+    // (OSPModuleWizard.tsx) that § 205.201(a) requires.
+    //
+    // Why seeded is different from spoken, when both run the same gates: every echo gate
+    // downstream asks "do these words appear in the transcript", and voiceDataMapper.ts:1199 says
+    // why in its own comment: if the words are absent the answer came from somewhere other than
+    // the FARMER. Those gates catch a MODEL inventing a value. They cannot catch a SENDER who is
+    // wrong, and on a pasted note the sender is not the person confirming. Auto-filling a form
+    // from a third party's words and letting a tired supervisor press save at 9pm is how a record
+    // nobody performed reaches a certifier packet. That is the backdated-template class, one
+    // channel over.
+    if (eventData.seeded) {
+      // THE HOLD SURVIVES ON THIS PATH TOO (2026-09-25).
+      //
+      // It used to be dropped here while `droppedCount` was still zeroed two lines below, so on
+      // soil, pest and business (the three that ask their subtype INSIDE the tab, not with a verb
+      // tile) every subtype-gated value was discarded AND the "not filled in" notice was
+      // suppressed with it. Acreage is gated on 9 of the 10 soil subtypes, so the most common
+      // soil note lost its area silently. Zeroing the count is right ONLY while something is
+      // actually holding the values; the effect below sets the true number once the subtype lands.
+      //
+      // `seeded` on the ref is what keeps the promise: the effect re-OFFERS the newly gated set
+      // rather than merging it, because on a pasted note the sender is still not the confirmer.
+      // `transcript` rides along because the banner it will rebuild may not exist by then:
+      // picking a verb tile nulls the banner, and a re-offer with no quoted words would ask the
+      // farmer to accept values from a note they can no longer read.
+      pendingVoiceRef.current = holding
+        ? { detected, eventType: activeEventType, seeded: true, transcript: banner.transcript }
+        : null;
+
+      // A PASTED NOTE DESCRIBES WORK ALREADY DONE, so today is a guess (plan rule 5.5.1).
+      //
+      // Step 0 seeds the date with `nowLocalDateTimeInput()` before the paste box is ever
+      // reached, so three notes from Tuesday's spray, pasted on Friday, become three records
+      // dated Friday: wrong pre-harvest interval, wrong CA PUR day (it files strictly on
+      // `event.date`), and a packet asserting an application on a day nobody sprayed. The spoken
+      // path never had this problem because a farmer speaks about what they just did.
+      //
+      // So the inherited default is CLEARED and offered back as one tappable suggestion with its
+      // provenance on screen, the same suggest-then-confirm shape as `blockSuggestion` and the
+      // OSP "Use suggestion" button. A day the operator actually chose is left alone: this only
+      // takes back the wizard's own guess.
+      // Compared against the form's OWN seeded default, not against "is it today". A grower who
+      // set 06:30 for a dawn spray and pastes the crew note at 11:43 chose that time, and a
+      // date-part test would call it a guess and take it away.
+      const inheritedDate = eventFormData.date;
+      if (inheritedDate && !isOperatorChosenDate(inheritedDate, wizardDefaultDate)) {
+        setEventFormData((prev) => {
+          const next = { ...prev };
+          delete next.date;
+          return next;
+        });
+        basicMethods.setValue('date', '');
+      }
+
+      setVoiceBanner({
+        ...banner,
+        droppedCount: holding ? 0 : banner.droppedCount,
+        // NOTE: the date question is DERIVED from `eventFormData.date`, never stored here. It was
+        // stored once (`dateSuggestion` / `confirmedDate`) and that is a second source of truth
+        // for one fact: answering it on step 0 left the flag set, so the question came back with
+        // its "It happened today" button live over the day the operator had just chosen, and one
+        // tap overwrote it. Exactly the wrong-CA-PUR-day outcome this was written to prevent.
+        // See `seededDateUnanswered` below.
+        // The set the farmer is being offered, held OUTSIDE the form until they accept it.
+        seededPending: { kept, eventType: activeEventType, subtype }
+      });
+      setShowVoiceCapture(false);
+      // The note has been consumed. Without this the panel re-mounts with the SAME seed, so
+      // "Fill by voice" never opens a mic again and every tap re-POSTs the old note to the
+      // extractor (a second billed parse, and a voice-budget unit on a web-speech deploy).
+      // Batched with setShowVoiceCapture, so there is no render in which the panel is open
+      // with the seed already gone.
+      setVoiceSeedText('');
+      // No `voiceSeq` bump: nothing was merged, so there is nothing for the tabs to re-read.
+      return;
+    }
+
     setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...kept }));
     setVoiceBanner(holding ? { ...banner, droppedCount: 0 } : banner);
     setShowVoiceCapture(false);
     setVoiceSeq((s) => s + 1);
+  };
+
+  // The tap that answers the date question with today.
+  //
+  // Writes the day ONLY when the farmer says so. `dateSuggestion` is cleared rather than kept as
+  // "confirmed today", because the banner then has one less state to get wrong: a date on the
+  // form is the form's fact from that point on, and step 0 is its one editor.
+  const handleVoiceSeededUseToday = () => {
+    // Now, to the minute, and the banner states it once written. A `datetime-local` record always
+    // carries a time and this wizard has always supplied one; what this path fixes is the DAY.
+    // The time is shown rather than hidden, and step 0 stays where it is changed.
+    const value = nowLocalDateTimeInput();
+    setEventFormData((prev) => ({ ...prev, date: value }));
+    basicMethods.setValue('date', value);
+  };
+
+  // The other answer: the work happened on some other day, so go to the field that owns the date.
+  //
+  // Step 0 is the ONE editor for this fact (see the mutation-payload rule). A second date input
+  // inside this banner would be a second editor for a § 205.103(b)(2) value, which is the shape
+  // that produced the buffer and OFPP clobbers. The offer survives the trip: it lives on
+  // `voiceBanner`, not on the step.
+  const handleVoiceSeededPickAnotherDay = () => {
+    setActiveStep(0);
+  };
+
+  // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
+  // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
+  // reconcile against the value that will actually be filed.
+  const voiceBannerHeadline = voiceBanner
+    ? intl.formatMessage(
+        {
+          id: voiceBanner.seeded
+            ? voiceBanner.seededPending
+              ? 'events.voice.pastedNoteOffered'
+              : 'events.voice.pastedNoteApplied'
+            : 'events.voice.applied'
+        },
+        { count: voiceFilledLabels.length }
+      )
+    : '';
+
+  const seededDateUnanswered = Boolean(voiceBanner?.seeded) && !eventFormData.date;
+  const seededDateAnswered = Boolean(voiceBanner?.seeded) && Boolean(eventFormData.date);
+
+  // Move focus to the offer when one appears, the same way a step change moves it to the new
+  // heading. Keyed on the OFFER, not on the banner: a spoken parse merges into the form and the
+  // farmer is already looking at it, so stealing focus there would interrupt someone mid-type.
+  const hasSeededOffer = Boolean(voiceBanner?.seeded && voiceBanner?.seededPending);
+  useEffect(() => {
+    if (!hasSeededOffer) return;
+    try {
+      voiceOfferRef.current?.focus({ preventScroll: true });
+    } catch {
+      /* nothing focusable mounted; the live region still announces */
+    }
+  }, [hasSeededOffer]);
+
+  // The tap that turns an offered set into form values.
+  //
+  // FILLS EMPTIES ONLY. `kept` is a snapshot frozen at parse time, and the farmer is invited to
+  // read the quoted note and type while the offer sits there: the buttons say "Would fill" and
+  // "Fill in N values", which promise filling, not replacing. Spreading the snapshot over `prev`
+  // silently replaced whatever they had typed in between, including `observation`, which is
+  // published verbatim on the buyer page. The parse-time guard that protects `observation`
+  // (see applyVoiceData) read the form BEFORE those keystrokes existed, so it could not fire.
+  //
+  // Skipped by VALUE PAIR, not by key. `VOICE_UNIT_COMPANIONS` pairs a unit with its amount,
+  // and a tab supplies unit defaults of its own (ChemicalTab defaults volume_unit and area_unit),
+  // so an empty-by-key test would write an amount while leaving a default unit that contradicts
+  // the note: 40 with "gal" when the note said pounds. A pair is written together or not at all.
+  const handleVoiceSeededApply = () => {
+    const pending = voiceBanner?.seededPending;
+    if (!pending) return;
+    const { kept } = pending;
+
+    // WHAT WAS ACTUALLY WRITTEN, not what was offered. `mergeOfferedValues` fills empties and
+    // never overwrites, which is the point: while the offer stands the farmer is invited to read
+    // the quoted note and type. So somebody who distrusts the sender's product name and enters
+    // their own keeps it, and the merge skips that key.
+    //
+    // `keptFields` is the SOLE source of the "N fields filled / Filled: ..." line, and it was left
+    // at the parse-time offer. The banner then credited the note with a value the farmer had typed
+    // themselves, which is a false statement about provenance in the wizard that feeds certifier
+    // packets. Recomputed from the merge result, the same way the late-subtype re-offer below
+    // builds its own `keptFields` from `fresh` rather than from what was proposed.
+    const written = mergeOfferedValues(eventFormData, kept);
+
+    setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...written }));
+
+    setVoiceBanner((prev) =>
+      prev ? { ...prev, seededPending: null, keptFields: Object.keys(written) } : prev
+    );
+    // NOW the tabs must re-read initialValues, the same remount the spoken merge uses.
+    setVoiceSeq((s) => s + 1);
+  };
+
+  // Clears the WHOLE banner, not just the offer. The headline is the else-branch of
+  // `seededPending`, so nulling only the offer left the farmer who explicitly REFUSED a third
+  // party's values reading "Voice input applied" with a filled-field count over an empty form, in the
+  // wizard that feeds certifier packets.
+  // Refusing a note refuses the HELD half as well. `pendingVoiceRef` used to be nulled on the
+  // seeded path, and keeping it so the hold could be re-offered opened a worse door: Discard
+  // cleared only the banner, so picking the subtype afterwards rebuilt the refused third party's
+  // values as a brand new offer and pulled focus to it.
+  const dismissVoiceBanner = () => {
+    pendingVoiceRef.current = null;
+    setVoiceBanner(null);
+  };
+
+  const handleVoiceSeededDiscard = () => {
+    dismissVoiceBanner();
   };
 
   // The subtype arrived (the farmer picked it in the tab). Re-gate what we held back and
@@ -1638,6 +1866,34 @@ function NewEvent({ isEdit = false, eventId = null }) {
     pendingVoiceRef.current = null;
 
     const { kept, dropped } = gateVoiceOverridesToForm(pending.detected, activeEventType, subtype);
+
+    // A HELD PASTED NOTE IS RE-OFFERED, NEVER MERGED.
+    //
+    // The subtype has arrived, so the values can finally be gated against a real form. What
+    // cannot change is who said them: on a pasted note the sender is not the person signing the
+    // record, so the tap that writes them still has to be the farmer's. Merging here would be the
+    // same defect `handleVoiceSwitchType` had, one step later in the flow.
+    //
+    // A fresh offer, not a patch of the old one: `handleSubtypeSelect` nulls the banner, so on
+    // the verb-tile activities there may be no `prev` left to spread.
+    if (pending.seeded) {
+      setVoiceBanner((prev) => ({
+        ...(prev || {}),
+        ...(prev ? {} : { seeded: true, transcript: pending.transcript }),
+        seeded: true,
+        droppedCount: dropped.length,
+        // RECOMPUTED, not inherited. `keptFields` is what `voiceFilledLabels` reads, and Apply
+        // renders only when that list is non-empty. At parse time, with no subtype, the gated set
+        // is narrow and is often EMPTY (acreage is gated on 9 of the 10 soil subtypes), so
+        // carrying the old list forward under-reported the re-offered values and, when it was
+        // empty, left them with no button at all: the hold kept and then made unreachable, which
+        // is the same silent loss this branch exists to end.
+        keptFields: Object.keys(kept),
+        seededPending: { kept, eventType: activeEventType, subtype }
+      }));
+      return;
+    }
+
     // Never overwrite something the farmer typed in the meantime.
     const fresh = {};
     Object.entries(kept).forEach(([key, value]) => {
@@ -1701,6 +1957,36 @@ function NewEvent({ isEdit = false, eventId = null }) {
     setPickedVerbKey(pending.verbKey);
     pendingVoiceRef.current = null;
     const { kept, banner } = applyVoiceData(raw, pending.backendEventType, subtype);
+
+    // A PASTED note is re-OFFERED here, never merged (2026-09-24, fresh-eyes review).
+    //
+    // This was the hole that defeated the whole feature. "Switch to <activity>" is the button a
+    // farmer taps when the note describes work the form does not, the COMMON case, because the
+    // sender never saw the form, and it wrote the third party's product name, rate and method
+    // straight into `eventFormData` with no Apply step, then labelled it "Voice input applied".
+    // Worse, the activity it switches TO is the one the MODEL chose from the untrusted text, so
+    // this was also the only path on which a steered `event_type` reached a form unattended.
+    //
+    // `raw.seeded` is the gate, not `voiceBanner.seededPending`: the latter is null once the
+    // farmer has accepted or refused an earlier offer, and the note is still pasted after that.
+    // `applyVoiceData` above has already re-gated `kept` against the NEW type and subtype, so the
+    // offer the farmer sees belongs to the form they are now looking at.
+    //
+    // The subtype write STAYS on both paths: handleEventTypeChange has just reset the form, so
+    // without it the tab opens with no subtype and drops every subtype-gated field.
+    if (raw.seeded) {
+      setEventFormData((prev) =>
+        withListingAttachmentChecked(prev, { ...prev, ...(subtype ? { type: subtype } : {}) })
+      );
+      setVoiceBanner({
+        ...banner,
+        suggestion: null,
+        seededPending: { kept, eventType: pending.backendEventType, subtype }
+      });
+      setVoiceSeq((s) => s + 1);
+      return;
+    }
+
     setEventFormData((prev) =>
       withListingAttachmentChecked(prev, {
         ...prev,
@@ -1768,6 +2054,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const handleSubtypeSelect = (code) => {
     setSubtypeUnanswered(false);
     if (eventFormData.type === code) return;
+    // A held offer belongs to the activity it was gated against. The form is being reset to a
+    // different one here, so a still-visible "Fill in N values" would write a frozen field set
+    // onto a record it was never checked for: in-family that means real columns like
+    // `yield_quantity` landing on an irrigation event. The offer dies with the activity; the
+    // farmer pastes again if they still mean to. (handleVoiceSwitchType re-sets the banner
+    // immediately after calling this, so the deliberate switch path is unaffected.)
+    setVoiceBanner(null);
     setEventFormData((prev) => {
       const kept = {};
       ['date', 'performed_by'].forEach((f) => {
@@ -1825,6 +2118,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   const handleEventTypeChange = (eventTypeId) => {
     setActiveEventType(eventTypeId);
+
+    // A held offer belongs to the activity it was gated against. The form is being reset to a
+    // different one here, so a still-visible "Fill in N values" would write a frozen field set
+    // onto a record it was never checked for: in-family that means real columns like
+    // `yield_quantity` landing on an irrigation event. The offer dies with the activity; the
+    // farmer pastes again if they still mean to. (handleVoiceSwitchType re-sets the banner
+    // immediately after calling this, so the deliberate switch path is unaffected.)
+    setVoiceBanner(null);
 
     // CRITICAL FIX: Clear type-specific form data when switching event types
     // This prevents fields from one event type bleeding into another's preview
@@ -1895,6 +2196,24 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // acceptedFiles state already declared at line 240
 
   const onSubmitMedia = async () => {
+    // A record cannot leave here without a day. The seeded path clears the wizard's guessed date
+    // (see handleVoiceEventDetected) and step 0's schema is the only thing that demands one, so a
+    // farmer who pasted a note on step 1 could reach the save with no date at all. The backend
+    // would refuse it (CommonEvent.date has no default, which is why the failure is loud rather
+    // than a server-side guess), but a 400 at the end of a wizard is a worse way to be told.
+    if (!eventFormData.date) {
+      toast({
+        title: intl.formatMessage({ id: 'events.voice.dateMissingTitle' }),
+        description: intl.formatMessage({ id: 'events.voice.dateMissingBody' }),
+        status: 'warning',
+        duration: 6000,
+        isClosable: true,
+        position: 'top'
+      });
+      setActiveStep(0);
+      return;
+    }
+
     try {
       // Use local eventTypeConfig to get the correct backend event type
       const selectedEventType = eventTypeConfig.find((config) => config.id === activeEventType);
@@ -3152,11 +3471,22 @@ function NewEvent({ isEdit = false, eventId = null }) {
                              backend prompt extract FIELDS instead of guessing the activity. */
                           knownActivity={voiceActivitySlug}
                           fieldRequests={voiceFieldRequests}
+                          /* `autoStart` stays true for the spoken path; the panel itself
+                             refuses to open a mic when a seed is present. */
                           autoStart={true}
-                          onClose={() => setShowVoiceCapture(false)}
+                          seedTranscript={voiceSeedText || undefined}
+                          onClose={() => {
+                            setShowVoiceCapture(false);
+                            setVoiceSeedText('');
+                          }}
                         />
                       ) : (
-                        <HStack spacing={3}>
+                        // `flexWrap` because this row is now THREE buttons, and Chakra's Button
+                        // label is nowrap: at 375px the labels crossed their own borders in
+                        // English and overlapped illegibly in es-419, which runs ~1.55x longer.
+                        // Spacing is applied as `gap`, so wrapped rows keep their gutter. Two
+                        // other rows in this file already wrap for the same reason.
+                        <HStack spacing={3} flexWrap="wrap">
                           <Button
                             leftIcon={<Icon as={FaMicrophone} />}
                             variant="outline"
@@ -3165,6 +3495,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             minH="44px"
                             onClick={() => setShowVoiceCapture(true)}>
                             {intl.formatMessage({ id: 'events.voice.fillByVoice' })}
+                          </Button>
+                          <Button
+                            leftIcon={<Icon as={FaPaste} />}
+                            variant="outline"
+                            colorScheme="green"
+                            size="sm"
+                            minH="44px"
+                            onClick={() => setPasteOpen((open) => !open)}>
+                            {intl.formatMessage({ id: 'events.voice.pasteNote' })}
                           </Button>
                           {templatesForEventType(activeEventType).length > 0 && (
                             <Button
@@ -3178,6 +3517,48 @@ function NewEvent({ isEdit = false, eventId = null }) {
                             </Button>
                           )}
                         </HStack>
+                      )}
+                      {/* The paste box. Its only job is to hand text to the SAME extraction the
+                          mic uses; it writes nothing itself. Closed as soon as the text is
+                          handed over, so there is never a stale note sitting under a form the
+                          farmer has since edited. */}
+                      {pasteOpen && !showVoiceCapture && (
+                        <VStack align="stretch" spacing={2} mt={3}>
+                          <StandardTextarea
+                            value={pasteDraft}
+                            onChange={(e) => setPasteDraft(e.target.value)}
+                            placeholder={intl.formatMessage({
+                              id: 'events.voice.pasteNotePlaceholder'
+                            })}
+                            rows={3}
+                          />
+                          <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
+                            <Button
+                              variant="outline"
+                              colorScheme="green"
+                              size="sm"
+                              minH="44px"
+                              isDisabled={!pasteDraft.trim()}
+                              onClick={() => {
+                                setVoiceSeedText(pasteDraft.trim());
+                                setPasteOpen(false);
+                                setPasteDraft('');
+                                setShowVoiceCapture(true);
+                              }}>
+                              {intl.formatMessage({ id: 'events.voice.pasteNoteRead' })}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              minH="44px"
+                              onClick={() => {
+                                setPasteOpen(false);
+                                setPasteDraft('');
+                              }}>
+                              {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
+                            </Button>
+                          </Stack>
+                        </VStack>
                       )}
                       {/* Arrived from "Log this" on the season plan. The banner says out
                             loud that the values on screen are the CATALOGUE's, not the
@@ -3223,21 +3604,49 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           </HStack>
                         </Box>
                       )}
+                      {/* The live region is the HEADLINE, not the container below. `role="status"`
+                          is aria-atomic by default, so on the container every tap re-read the
+                          entire banner (including the full quoted note, which `noOfLines` clips
+                          visually but not for a screen reader) and focusing that same node
+                          announced it a second time. The container is a named group instead, so
+                          moving focus here says what it is and stops. */}
                       {voiceBanner && !showVoiceCapture && (
                         <Box
+                          ref={voiceOfferRef}
+                          tabIndex={-1}
+                          role="group"
+                          aria-label={voiceBannerHeadline}
                           mt={3}
                           p={3}
-                          bg="green.50"
+                          /* GREEN ONLY ONCE IT IS DONE. Status colour carries meaning here, and an
+                             offer that still needs a tap is in progress, not a success: dressed in
+                             the same green as the applied state it read as more final than it was,
+                             on the one surface whose whole point is that a machine suggests and a
+                             person confirms.
+
+                             Neutral rather than a warning treatment, for two reasons. Nothing has
+                             gone wrong, so warning would claim something too; and MEASURED in this
+                             repo, the theme's amber cannot carry text (amber.900 on amber.50 is
+                             3.57:1, StandardComponents.tsx:1694), so an amber ground would trade a
+                             semantics bug for a contrast one. The date question a few lines below
+                             already answers this the same way: neutral ground, plain border. */
+                          bg={voiceBanner.seededPending ? 'white' : 'green.50'}
                           borderWidth="1px"
-                          borderColor="green.200"
+                          borderColor={voiceBanner.seededPending ? 'gray.300' : 'green.200'}
                           borderRadius="md">
                           <HStack justify="space-between" align="start">
                             <VStack align="start" spacing={1} flex={1}>
-                              <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                                {intl.formatMessage(
-                                  { id: 'events.voice.applied' },
-                                  { count: voiceFilledLabels.length }
-                                )}
+                              {/* Three states, not two. Provenance comes from `seeded` (durable);
+                                  whether anything is filled yet comes from `seededPending`
+                                  (cleared on Apply). Keying both on seededPending relabelled a
+                                  pasted note "Voice input applied" one tap later. */}
+                              <Text
+                                role="status"
+                                aria-live="polite"
+                                fontSize="sm"
+                                fontWeight="semibold"
+                                color={voiceBanner.seededPending ? 'gray.800' : 'green.700'}>
+                                {voiceBannerHeadline}
                               </Text>
                               {/* Name them. The count on its own is unverifiable: when the
                                   only field voice could keep is `observation`, the farmer
@@ -3248,10 +3657,106 @@ function NewEvent({ isEdit = false, eventId = null }) {
                               {voiceFilledLabels.length > 0 && (
                                 <Text fontSize="xs" color="gray.700">
                                   {intl.formatMessage(
-                                    { id: 'events.voice.filledFields' },
+                                    {
+                                      // "Would fill" only while the offer stands.
+                                      id: voiceBanner.seededPending
+                                        ? 'events.voice.pastedNoteWouldFill'
+                                        : 'events.voice.filledFields'
+                                    },
                                     { fields: voiceFilledLabels.join(', ') }
                                   )}
                                 </Text>
+                              )}
+                              {/* WHICH DAY. Asked before the values, because it is the one fact a
+                                  pasted note almost never carries and the wizard was happy to
+                                  guess: step 0 seeds today before the paste box is reached. Today
+                                  is offered back as a suggestion rather than left in the field, so
+                                  the day on a § 205.103(b)(2) record is one the operator chose.
+                                  Neutral ground and a plain border on purpose: this is a question,
+                                  not an error, and status colour here would claim something. */}
+                              {seededDateUnanswered && (
+                                <Box
+                                  w="full"
+                                  mt={1}
+                                  p={2}
+                                  bg="white"
+                                  borderWidth="1px"
+                                  borderColor="gray.300"
+                                  borderRadius="md">
+                                  <Text fontSize="xs" fontWeight="semibold" color="gray.800">
+                                    {intl.formatMessage({ id: 'events.voice.pastedNoteDateAsk' })}
+                                  </Text>
+                                  <Text fontSize="xs" color="gray.700">
+                                    {intl.formatMessage({ id: 'events.voice.pastedNoteDateWhy' })}
+                                  </Text>
+                                  <Stack
+                                    direction={{ base: 'column', smd: 'row' }}
+                                    spacing={2}
+                                    pt={2}
+                                    w={{ base: 'full', smd: 'auto' }}>
+                                    <Button
+                                      size="xs"
+                                      minH="44px"
+                                      variant="outline"
+                                      colorScheme="green"
+                                      onClick={handleVoiceSeededUseToday}>
+                                      {intl.formatMessage(
+                                        { id: 'events.voice.pastedNoteDateUseToday' },
+                                        { date: localDateTimeLabel(nowLocalDateTimeInput()) }
+                                      )}
+                                    </Button>
+                                    <Button
+                                      size="xs"
+                                      minH="44px"
+                                      variant="ghost"
+                                      onClick={handleVoiceSeededPickAnotherDay}>
+                                      {intl.formatMessage({
+                                        id: 'events.voice.pastedNoteDateAnother'
+                                      })}
+                                    </Button>
+                                  </Stack>
+                                </Box>
+                              )}
+                              {/* Answered. Say which day it will file under, because the farmer
+                                  chose it on another step and a date they cannot see is a date
+                                  they cannot check. */}
+                              {seededDateAnswered && (
+                                <Text fontSize="xs" color="gray.700">
+                                  {intl.formatMessage(
+                                    { id: 'events.voice.pastedNoteDateSet' },
+                                    { date: localDateTimeLabel(eventFormData.date) }
+                                  )}
+                                </Text>
+                              )}
+                              {/* The tap that writes them. Nothing above this line has touched
+                                  the form: a pasted note is somebody else's words, so the person
+                                  who signs the record is the one who puts them on it. Same shape
+                                  as the block offer below and the OSP "Use suggestion" button. */}
+                              {voiceBanner.seededPending && voiceFilledLabels.length > 0 && (
+                                <Stack
+                                  direction={{ base: 'column', smd: 'row' }}
+                                  spacing={2}
+                                  pt={1}
+                                  w={{ base: 'full', smd: 'auto' }}>
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    colorScheme="green"
+                                    minH="44px"
+                                    onClick={handleVoiceSeededApply}>
+                                    {intl.formatMessage(
+                                      { id: 'events.voice.pastedNoteApply' },
+                                      { count: voiceFilledLabels.length }
+                                    )}
+                                  </Button>
+                                  <Button
+                                    size="xs"
+                                    variant="ghost"
+                                    minH="44px"
+                                    onClick={handleVoiceSeededDiscard}>
+                                    {intl.formatMessage({ id: 'events.voice.pastedNoteDiscard' })}
+                                  </Button>
+                                </Stack>
                               )}
                               {voiceBanner.transcript ? (
                                 <Text fontSize="xs" color="gray.600" noOfLines={2}>
@@ -3336,7 +3841,20 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 </VStack>
                               )}
                             </VStack>
-                            <Button size="xs" variant="ghost" onClick={() => setVoiceBanner(null)}>
+                            {/* 24px and unlabelled until 2026-09-25: under the 44px touch floor
+                                and announced as "button" with no name, on the control that
+                                discards a third party's words. */}
+                            <Button
+                              size="xs"
+                              variant="ghost"
+                              minW="44px"
+                              minH="44px"
+                              aria-label={intl.formatMessage({
+                                id: voiceBanner.seeded
+                                  ? 'events.voice.dismissPastedNote'
+                                  : 'events.voice.dismissVoiceInput'
+                              })}
+                              onClick={dismissVoiceBanner}>
                               ✕
                             </Button>
                           </HStack>

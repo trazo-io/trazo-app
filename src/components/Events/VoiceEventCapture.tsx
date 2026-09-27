@@ -99,6 +99,20 @@ interface VoiceEventCaptureProps {
    */
   fieldRequests?: VoiceFieldRequest[];
   autoStart?: boolean;
+  /**
+   * Text the farmer did not speak into this panel: a note pasted from elsewhere (today a crew
+   * WhatsApp message, by hand). When set, the mic NEVER opens and this text is parsed once.
+   *
+   * The consequence is not cosmetic. Every echo gate downstream (`wasSpoken`,
+   * `VOICE_ENUMS_MUST_ECHO_WORDS`, `amountsActuallySpoken`) asks "do these words appear in the
+   * transcript", and voiceDataMapper.ts:1199 states the reason in its own comment: if the words
+   * are absent the answer came from somewhere other than the FARMER. Those gates were written
+   * against a MODEL inventing things the accountable speaker did not say. On a seeded parse the
+   * speaker and the confirmer are different people, so an echo proves only that the sender said
+   * it, not that it is true. The result therefore travels with `seeded: true` and the wizard
+   * holds it instead of merging it (see handleVoiceEventDetected in NewEvent.jsx).
+   */
+  seedTranscript?: string;
   onClose?: () => void;
 }
 
@@ -109,6 +123,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   knownActivity = null,
   fieldRequests = EMPTY_FIELD_REQUESTS,
   autoStart = false,
+  seedTranscript,
   onClose
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -144,6 +159,10 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     heard: string;
   } | null>(null);
   const hasAutoStarted = useRef(false);
+  // One parse per seeded text, not one per render. `parsedData` cannot serve as the guard: the
+  // farmer can clear it with "Try again", and re-parsing the same note on that tap would be a
+  // second billed call that answers the identical question.
+  const seededParsed = useRef<string | null>(null);
   const toast = useToast();
   const intl = useIntl();
 
@@ -256,7 +275,11 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // Everything heard so far, not just the segment in progress. `interim || transcript` showed
   // only the current segment, so "Oh," was replaced on screen by "We sprayed and…" — the farmer
   // never saw the text that would actually be sent.
-  const displayTranscript = useDeepgram
+  // A seeded parse has no recorder state, so without this the panel would quote an empty string
+  // while showing chips derived from text the farmer cannot see. Whatever is parsed is shown.
+  const displayTranscript = seedTranscript
+    ? seedTranscript
+    : useDeepgram
     ? [deepgramTranscript, deepgramInterim].filter(Boolean).join(' ')
     : webSpeechTranscript;
 
@@ -307,6 +330,8 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   useEffect(() => {
     if (
       autoStart &&
+      // A seeded parse has its text already. Opening the mic would record the room over it.
+      !seedTranscript &&
       isActive &&
       !isLoadingConfig &&
       !voiceUnavailable &&
@@ -321,7 +346,23 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [autoStart, isActive, isLoadingConfig]);
+  }, [autoStart, seedTranscript, isActive, isLoadingConfig]);
+
+  // A seeded parse: text the farmer pasted rather than spoke. Parses once, opens no mic.
+  //
+  // Deliberately NOT gated on `isLoadingConfig` or `voiceUnavailable`, which the autoStart effect
+  // above must wait for: both are about the RECORDER (which provider, is a mic usable), and this
+  // path has no recorder. The backend feature gate still applies, because
+  // POST /api/carbon/process-voice-event/ checks `has_feature("voice_recording")` itself and the
+  // daily budget is charged there, so a company without voice gets the same 403 either way,
+  // rather than a second, weaker copy of that rule here.
+  useEffect(() => {
+    const seed = (seedTranscript ?? '').trim();
+    if (!seed || !isActive) return;
+    if (seededParsed.current === seed) return;
+    seededParsed.current = seed;
+    processVoiceInput(seed, null);
+  }, [seedTranscript, isActive]);
 
   const startListening = async () => {
     setParsedData(null);
@@ -464,7 +505,10 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         requested_fields: fieldRequests,
         // The tick, carried with the result. The mapper writes `observation` on this and
         // nothing else — a transcript is never published because it exists.
-        note_opt_in: addTranscriptToNotes
+        note_opt_in: addTranscriptToNotes,
+        // Rides along the same way, and for a sharper reason: the wizard must not merge values
+        // extracted from words the confirmer did not say. See the `seedTranscript` prop note.
+        seeded: Boolean(seedTranscript)
       });
       if (useDeepgram) {
         deepgramReset();
@@ -477,6 +521,20 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   };
 
   const handleTryAgain = () => {
+    // A SEEDED panel has nothing to try again: the text is fixed, and re-parsing identical
+    // words spends a second billed call to answer the same question. Opening a mic here is worse:
+    // this panel is documented never to do that, and it would record the orchard while still
+    // quoting the pasted note under "Listening…", with the seeded result gone. So on a pasted
+    // note this button means "go back and paste a different one", which is the only coherent
+    // retry, and the label says exactly that. Closing clears the seed (see the parent's onClose),
+    // so the paste box comes back empty rather than re-parsing the old note.
+    if (seedTranscript) {
+      setParsedData(null);
+      setAddTranscriptToNotes(false);
+      onClose?.();
+      return;
+    }
+
     // Clear AND start listening again. This used to only clear, which was half an action: the
     // farmer pressed "Try again", the result vanished, and the thing that actually re-records
     // was a second button ("Start voice input") sitting above it. Two controls for one
@@ -575,7 +633,6 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     return {
       type: detectedType,
       description: text.charAt(0).toUpperCase() + text.slice(1),
-      date: new Date().toISOString().split('T')[0],
       detected_amounts,
       detected_products: [],
       detected_systems: [],
@@ -942,7 +999,16 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 in prose on a record that strips both as columns.
                 44px on the label row rather than a taller control: the touch target is the
                 whole line, which is what a thumb finds in an orchard. */}
-            {(parsedData.original_transcript || '').trim() && (
+            {/* NEVER OFFERED ON A SEEDED PARSE (2026-09-24, fresh-eyes review).
+                `observation` is the one box of farmer prose that reaches the ANONYMOUS buyer page,
+                rendered in quotation marks under "Farmer's Field Notes", and on save it is copied
+                into `description` too, a § 205.103(b)(2) record. On a pasted note those words
+                belong to a crew member who never agreed to be published, are unredacted (names and
+                phone numbers included), and are not the grower's own statement. The label even
+                says "what I said". The grower cannot consent on the sender's behalf, so the tick
+                is withheld rather than relabelled: there is no wording that makes publishing a
+                third party's message under the farmer's byline correct. */}
+            {!seedTranscript && (parsedData.original_transcript || '').trim() && (
               <Checkbox
                 isChecked={addTranscriptToNotes}
                 onChange={(e) => setAddTranscriptToNotes(e.target.checked)}
@@ -1090,7 +1156,9 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 leftIcon={<Icon as={FaRedo} />}
                 onClick={handleTryAgain}
                 w={{ base: 'full', smd: 'auto' }}>
-                {intl.formatMessage({ id: 'voice.tryAgain' })}
+                {intl.formatMessage({
+                  id: seedTranscript ? 'events.voice.pasteDifferentNote' : 'voice.tryAgain'
+                })}
               </StandardButton>
             </Stack>
           </VStack>
