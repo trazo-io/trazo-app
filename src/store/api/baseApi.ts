@@ -73,7 +73,8 @@ export const baseApi = createApi({
     'OSPReview',
     'OSPRecordTypes',
     'PostHarvestFacility',
-    'SeasonPlan'
+    'SeasonPlan',
+    'FieldNote'
   ]
 });
 
