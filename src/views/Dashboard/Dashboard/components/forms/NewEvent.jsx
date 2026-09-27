@@ -9,7 +9,6 @@ import {
   VStack,
   HStack,
   Stack,
-  Textarea,
   Badge,
   Progress,
   Alert,
@@ -55,7 +54,8 @@ import {
   SectionHeader, // D9 — both were built for this screen and had never been mounted anywhere.
   DraftRestorationAlert,
   AutoSaveStatus,
-  StandardAlert
+  StandardAlert,
+  StandardTextarea
 } from 'components/Design/StandardComponents';
 import { useEventDraft } from 'src/hooks/useEventDraft';
 import { TrazoImageUpload } from 'components/Upload';
@@ -1871,11 +1871,23 @@ function NewEvent({ isEdit = false, eventId = null }) {
     if (!pending) return;
     const { kept } = pending;
 
-    setEventFormData((prev) =>
-      withListingAttachmentChecked(prev, { ...prev, ...mergeOfferedValues(prev, kept) })
-    );
+    // WHAT WAS ACTUALLY WRITTEN, not what was offered. `mergeOfferedValues` fills empties and
+    // never overwrites, which is the point: while the offer stands the farmer is invited to read
+    // the quoted note and type. So somebody who distrusts the sender's product name and enters
+    // their own keeps it, and the merge skips that key.
+    //
+    // `keptFields` is the SOLE source of the "N fields filled / Filled: ..." line, and it was left
+    // at the parse-time offer. The banner then credited the note with a value the farmer had typed
+    // themselves, which is a false statement about provenance in the wizard that feeds certifier
+    // packets. Recomputed from the merge result, the same way the late-subtype re-offer below
+    // builds its own `keptFields` from `fresh` rather than from what was proposed.
+    const written = mergeOfferedValues(eventFormData, kept);
 
-    setVoiceBanner((prev) => (prev ? { ...prev, seededPending: null } : prev));
+    setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...written }));
+
+    setVoiceBanner((prev) =>
+      prev ? { ...prev, seededPending: null, keptFields: Object.keys(written) } : prev
+    );
     // NOW the tabs must re-read initialValues, the same remount the spoken merge uses.
     setVoiceSeq((s) => s + 1);
   };
@@ -3625,14 +3637,13 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           farmer has since edited. */}
                       {pasteOpen && !showVoiceCapture && (
                         <VStack align="stretch" spacing={2} mt={3}>
-                          <Textarea
+                          <StandardTextarea
                             value={pasteDraft}
                             onChange={(e) => setPasteDraft(e.target.value)}
                             placeholder={intl.formatMessage({
                               id: 'events.voice.pasteNotePlaceholder'
                             })}
                             rows={3}
-                            fontSize="sm"
                           />
                           <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
                             <Button
@@ -3720,9 +3731,21 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           aria-label={voiceBannerHeadline}
                           mt={3}
                           p={3}
-                          bg="green.50"
+                          /* GREEN ONLY ONCE IT IS DONE. Status colour carries meaning here, and an
+                             offer that still needs a tap is in progress, not a success: dressed in
+                             the same green as the applied state it read as more final than it was,
+                             on the one surface whose whole point is that a machine suggests and a
+                             person confirms.
+
+                             Neutral rather than a warning treatment, for two reasons. Nothing has
+                             gone wrong, so warning would claim something too; and MEASURED in this
+                             repo, the theme's amber cannot carry text (amber.900 on amber.50 is
+                             3.57:1, StandardComponents.tsx:1694), so an amber ground would trade a
+                             semantics bug for a contrast one. The date question a few lines below
+                             already answers this the same way: neutral ground, plain border. */
+                          bg={voiceBanner.seededPending ? 'white' : 'green.50'}
                           borderWidth="1px"
-                          borderColor="green.200"
+                          borderColor={voiceBanner.seededPending ? 'gray.300' : 'green.200'}
                           borderRadius="md">
                           <HStack justify="space-between" align="start">
                             <VStack align="start" spacing={1} flex={1}>
@@ -3735,7 +3758,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 aria-live="polite"
                                 fontSize="sm"
                                 fontWeight="semibold"
-                                color="green.700">
+                                color={voiceBanner.seededPending ? 'gray.800' : 'green.700'}>
                                 {voiceBannerHeadline}
                               </Text>
                               {/* Name them. The count on its own is unverifiable: when the

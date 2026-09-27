@@ -172,6 +172,42 @@ describe('a held pasted note is re-offered, never dropped and never merged', () 
     expect(offer).toMatch(/seededPending: \{ kept, eventType: activeEventType, subtype \}/);
   });
 
+  it('reports what Apply actually wrote, not what was offered', () => {
+    // `mergeOfferedValues` fills empties and never overwrites, because while the offer stands the
+    // farmer is invited to read the quoted note and type. So a farmer who distrusts the sender's
+    // product name and enters their own keeps it, and that key is skipped by the merge.
+    //
+    // `keptFields` is the sole source of the "N fields filled / Filled: ..." line. Left at the
+    // parse-time offer, the banner credited the pasted note with a value the farmer had typed
+    // themselves, which is a false claim about provenance in a wizard that feeds certifier
+    // packets. Same recompute the late-subtype re-offer does from `fresh`.
+    const apply = blockAfter('const handleVoiceSeededApply = () => {');
+    expect(apply).toMatch(/const written = mergeOfferedValues\(eventFormData, kept\)/);
+    expect(apply).toMatch(/keptFields: Object\.keys\(written\)/);
+    // and the form must be written from that same object, or the two can disagree
+    expect(apply).toMatch(/\.\.\.prev, \.\.\.written/);
+    expect(apply, 'the offer is still cleared on apply').toMatch(/seededPending: null/);
+  });
+
+  it('wears success green only once the values are actually written', () => {
+    // Status colour carries meaning: an offer awaiting a tap is in progress, not a success, and
+    // in the same green as the applied state it read as more final than it was. Neutral rather
+    // than a warning treatment, because nothing has gone wrong and because the theme's amber
+    // cannot carry text (amber.900 on amber.50 measures 3.57:1).
+    expect(src).toMatch(/bg=\{voiceBanner\.seededPending \? 'white' : 'green\.50'\}/);
+    expect(src).toMatch(
+      /borderColor=\{voiceBanner\.seededPending \? 'gray\.300' : 'green\.200'\}/
+    );
+    expect(src).toMatch(/color=\{voiceBanner\.seededPending \? 'gray\.800' : 'green\.700'\}/);
+  });
+
+  it('uses the design system textarea for the paste box', () => {
+    // StandardComponents first, per CLAUDE.md. This was the only raw Chakra Textarea in the file.
+    expect(src).toMatch(/<StandardTextarea/);
+    expect(src).not.toMatch(/<Textarea[\s>]/);
+    expect(src).not.toMatch(/^\s{2}Textarea,$/m);
+  });
+
   it('returns before the merge, so a re-offer can never write to the form', () => {
     // The reviewer's breaking edit: delete this `return;`. Execution falls into the spoken merge
     // and a third party's acreage, pH and product names land on the record with no farmer tap.
