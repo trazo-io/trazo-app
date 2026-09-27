@@ -73,6 +73,29 @@ export function formatDateFromTimestamp(
   return d.toLocaleDateString(locale, { ...options, timeZone: 'UTC' });
 }
 
+/** Did the OPERATOR choose this date, or did the form hand it to them?
+ *
+ *  `wizardDefault` is the value the form seeded itself with (react-hook-form keeps it on
+ *  `formState.defaultValues`). Exact inequality is the whole test, and it is deliberately not a
+ *  same-day heuristic: a grower who sets 06:30 for a dawn spray and then pastes a crew note at
+ *  11:43 has chosen their time, and a date-part comparison calls that "today, therefore a guess"
+ *  and takes it away. The minute matters here, because the field is a `datetime-local` on a
+ *  record whose application time feeds re-entry intervals.
+ *
+ *  A missing value is not chosen either. The caller wants "is there an operator decision on this
+ *  record's day", and the answer for an empty field is no.
+ *
+ *  Why this exists: on a note-sourced create, today is a guess. A pasted note describes work
+ *  already done, so 7 CFR 205.103(b)(2) and CA PUR (which files strictly on `event.date`) need a
+ *  day the operator stated rather than the one the wizard was holding. */
+export function isOperatorChosenDate(
+  value?: string | null,
+  wizardDefault?: string | null
+): boolean {
+  if (!value) return false;
+  return value !== wizardDefault;
+}
+
 /** Now as `YYYY-MM-DDTHH:mm` in the VIEWER's timezone, for seeding a `datetime-local` input.
  *
  *  `new Date().toISOString().slice(0, 16)` is the UTC wall clock, but a `datetime-local` input
