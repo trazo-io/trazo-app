@@ -142,19 +142,24 @@ jobs:
         continue-on-error: true
         run: npm run typecheck
 
-      # STILL NON-BLOCKING, ON PURPOSE FOR ONE MORE RUN.
+      # BLOCKING as of 2026-09-27, and this is the first day it has ever been able to mean anything.
       #
-      # The "33 known failures" this said since 2026-08-11 was never triaged, and when it finally
-      # was (2026-09-27) none of them were defects: every frontend PR showed ~17, including
-      # `docs/git-hygiene-shared-trees`, which changes documentation and cannot break a test. They
-      # split into the two environment holes fixed above - no sibling repo, and a timezone pin
-      # that did not apply. The suite runs clean locally at 2431 passed, 0 failed.
+      # It carried "non-blocking - 33 known failures" from 2026-08-11 and nobody triaged the 33.
+      # When they finally were, none were defects: every frontend PR showed about 17, including
+      # `docs/git-hygiene-shared-trees`, a documentation-only change that cannot break a test.
+      # Three environment holes, all fixed, each verified by reproducing it before and after:
       #
-      # Flip `continue-on-error` off once a run on this workflow reports 0 failed. Flipping it in
-      # the same commit that changes the environment would be guessing, and a gate that turns red
-      # on landing is one people learn to scroll past - which is how this one got here.
-      - name: Unit tests (non-blocking until a run reports 0 failed)
-        continue-on-error: true
+      #   no sibling trazo-back      -> the parity guards fail rather than skip, by design
+      #   TZ pin that never applied  -> vitest.config.ts `env: { TZ }` does not set the zone
+      #   VITE_APP_BASE_DOMAIN       -> lived only in .env.local, which is gitignored
+      #
+      # The run that earned this flip: 2431 passed, 8 skipped, 0 failed, matching a local run
+      # exactly. Turned on only after seeing that, because a gate that goes red the day it lands
+      # is one people learn to scroll past, which is how the old one got here.
+      #
+      # If this starts failing for an environment reason rather than a defect, fix the environment.
+      # Do not put `continue-on-error` back. That is what cost a year of signal.
+      - name: Unit tests
         run: npx vitest run --watch=false
 
   # Dependency currency. Non-blocking on arrival for the same reason the backend audit is:
