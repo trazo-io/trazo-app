@@ -1,7 +1,7 @@
 /**
  * Field notes: what the crew sent, waiting for somebody to turn it into a record.
  *
- * ⛔ THIS PAGE NEVER WRITES A RECORD. "Log this" navigates to the activity wizard, which is the only
+ * THIS PAGE NEVER WRITES A RECORD. "Log this" navigates to the activity wizard, which is the only
  * place a record is authored, and the confirming user is its author. § 205.201(a) makes the producer
  * the author, so a crew member who sends a message is the source of the words and not the author of
  * anything.
@@ -84,6 +84,21 @@ const FieldNotesInbox = () => {
 
   const farmIdFor = (note: FieldNote) => choice[note.public_id]?.farmId ?? defaultFarmFor(note);
 
+  /**
+   * NOT FILTERED BY WHETHER THE LOT HAS AN OPEN SEASON, and that is deliberate.
+   *
+   * A parcel with no season in progress is not a dead end: the wizard's own door offers two real
+   * ways forward (start the next production, or log post-harvest work against the season that
+   * finished). It also tells the operator their message is still waiting here.
+   *
+   * NEVER: do not "improve" this with `Parcel.has_current_production`. It is
+   * `current_history_id is not None` (product/serializers.py:123), and `current_history` is a
+   * SINGLE pointer to the most recently STARTED season. A perennial block routinely has two open
+   * at once, and closing the pointer's season clears the pointer while the other stays open
+   * (product/models.py:372-389). So a false value there does not mean "no open season", and
+   * greying a lot out on it would refuse a parcel that genuinely has one. The accurate answer
+   * lives in that parcel's histories, which is a query per lot from a list page.
+   */
   const parcelIdFor = (note: FieldNote) => {
     const explicit = choice[note.public_id]?.parcelId;
     if (explicit) return explicit;

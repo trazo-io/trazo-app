@@ -140,6 +140,19 @@ describe('the wizard answers the note it was opened from', () => {
     );
   });
 
+  it('says where the message went when the parcel has no open season', () => {
+    // The door's "Start a season" navigates to the production wizard, which does not carry
+    // ?field_note=. Nothing consumes the note, so it is still pending and still in the inbox,
+    // but without this the supervisor watches their message vanish from the flow.
+    expect(wizard).toMatch(/events\.noOpenSeason\.noteStaysWaiting/);
+    // Only while it is still waiting: saying it about a confirmed note would be false.
+    const at = wizard.indexOf('events.noOpenSeason.noteStaysWaiting');
+    const before = wizard.slice(Math.max(0, at - 400), at);
+    expect(before, 'the notice is not gated on a pending note').toMatch(
+      /activeFieldNote\.status === 'pending'/
+    );
+  });
+
   it('sends the link for the server to write, and sends only the id', () => {
     // `perform_create` writes the note link server-side in the same request, mirroring
     // `_fulfil_plan_item`. The client states which note it answered; it never states the outcome.

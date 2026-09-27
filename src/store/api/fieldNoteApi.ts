@@ -1,12 +1,12 @@
 /**
  * Field notes: WhatsApp messages from the block, waiting for a supervisor to turn into records.
  *
- * ⛔ A NOTE IS NOT A RECORD, and nothing here makes one. There is no `confirm` endpoint, on either
+ * A NOTE IS NOT A RECORD, and nothing here makes one. There is no `confirm` endpoint, on either
  * side: a note becomes an event through the activity wizard's normal save, and the backend writes the
  * link between the two inside that same request. § 205.201(a) makes the producer the author, and the
  * person who confirms is the author, never the crew member who sent the message.
  *
- * ⛔ No mutation here writes to `words`. The sender's sentence is evidence of what they reported; a
+ * No mutation here writes to `words`. The sender's sentence is evidence of what they reported; a
  * surface that could edit it would let somebody change what a person is recorded as having said.
  *
  * See `fieldnotes/models.py` for the whole design and `fieldnotes/views.py` for the inbox.

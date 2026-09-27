@@ -3026,6 +3026,21 @@ function NewEvent({ isEdit = false, eventId = null }) {
           }
           mb={4}
         />
+        {/* WHERE THE CREW MESSAGE WENT.
+            "Start a season" navigates to the production wizard, which does not carry
+            `?field_note=`, so a supervisor who clicked "Log this" on a message and landed here
+            watches it disappear from the flow with nothing on screen to say why. The note itself
+            is safe: nothing has consumed it, its status is still `pending`, and the inbox still
+            lists it. Say that, rather than thread the id through a second wizard: the note is
+            only spent when a record is authored, and a round trip through the inbox keeps that
+            true. */}
+        {activeFieldNote && activeFieldNote.status === 'pending' && (
+          <StandardAlert
+            status="info"
+            description={intl.formatMessage({ id: 'events.noOpenSeason.noteStaysWaiting' })}
+            mb={4}
+          />
+        )}
         <HStack spacing={3} flexWrap="wrap">
           <StandardButton
             size="sm"
