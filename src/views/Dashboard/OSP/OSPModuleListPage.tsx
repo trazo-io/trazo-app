@@ -293,7 +293,12 @@ const OSPModuleListPage = () => {
   // behind "Filler Block 10..15", so the preview showed only parcels nobody cares about. Array
   // sort is stable, so no comparator branch = source order preserved.
   const sortedParcels = useMemo(() => {
-    const done = (p: any) => (p.application_status === 'complete' ? 1 : 0);
+    // 🔴 2026-09-24 — BOTH axes. `application_status` now answers only "are the questions
+    // answered"; the map moved to the evidence axis. Sorting on answers alone would push a
+    // parcel with an outstanding map down the list as if it were finished, which is the same
+    // over-claim the badge made, expressed as ordering.
+    const done = (p: any) =>
+      p.application_status === 'complete' && p.evidence_status !== 'outstanding' ? 1 : 0;
     return [...farmParcels].sort((a: any, b: any) => done(a) - done(b));
   }, [farmParcels]);
   const visibleParcels = showAllParcels

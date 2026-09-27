@@ -90,8 +90,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Se registró una actividad agrícola para este cultivo',
   'Each cultivation pass is on record, which is how mechanical weed control is evidenced rather than asserted.':
     'Cada pasada de cultivo queda registrada, que es la forma de evidenciar el control mecánico de malezas en lugar de solo afirmarlo.',
-  'Thinning dates and volumes are on record, which is what lets a size grade be traced back to a decision in the orchard.':
-    'Las fechas y volúmenes de raleo quedan registrados, y eso permite rastrear un calibre hasta una decisión tomada en el huerto.',
+  'Thinning dates and volumes are on record, which is what lets a size grade be traced back to a decision in the field.':
+    'Las fechas y los volúmenes de raleo están registrados, que es lo que permite rastrear un calibre hasta una decisión en el campo.',
   'What was applied, where and when is on record for this crop.':
     'Qué se aplicó, dónde y cuándo queda registrado para este cultivo.',
   'Work on the soil was recorded for this block': 'Se registró trabajo sobre el suelo en este lote',
@@ -125,14 +125,14 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
 
   'A treatment was applied to control weeds': 'Se aplicó un tratamiento para controlar malezas',
 
-  'A heat wave crossed the block and the trees were checked afterwards':
-    'Una ola de calor cruzó el lote y después se revisaron los árboles',
-  'Extreme heat shows up later as smaller fruit or sunburn marks on the skin.':
-    'El calor extremo se ve después como fruta más pequeña o marcas de quemadura de sol en la cáscara.',
+  'A heat wave crossed the block and the crop was checked afterwards':
+    'Una ola de calor pasó por el bloque y después se revisó el cultivo',
+  'Extreme heat shows up later as reduced size or sunburn marks on the crop.':
+    'El calor extremo se nota después como menor tamaño o marcas de quemadura de sol en el cultivo.',
   'Frost was recorded on the block and its effect on the crop assessed':
     'Se registró una helada en el lote y se evaluó su efecto en el cultivo',
-  'Cold nights decide how much fruit sets, so this is the weather the crop actually grew in.':
-    'Las noches frías determinan cuánta fruta cuaja, así que este es el clima en el que realmente creció el cultivo.',
+  'Cold nights decide how much of the crop sets, so this is the weather the crop actually grew in.':
+    'Las noches frías deciden cuánto cuaja el cultivo, así que este es el clima en el que realmente creció.',
   'Dry conditions were tracked across the season':
     'Se hizo seguimiento de las condiciones de sequía durante la temporada',
   'Water is the scarcest input in California agriculture, so what a crop needed in a dry year is worth knowing.':
@@ -147,23 +147,23 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'El número de certificado se publica aquí, así que es una afirmación que un comprador puede verificar en lugar de aceptarla sin más.',
 
   'Beneficial insects were released into the block': 'Se liberaron insectos benéficos en el lote',
-  'Predator insects do the work a spray would otherwise do, and they stay in the orchard afterwards.':
-    'Los insectos depredadores hacen el trabajo que haría una fumigación, y además se quedan en el huerto.',
+  'Predator insects do the work a spray would otherwise do, and they stay on afterwards.':
+    'Los insectos depredadores hacen el trabajo que haría una aplicación, y después se quedan.',
 
-  'Branches were cut back to let light and air into the trees':
-    'Se podaron ramas para dejar entrar luz y aire a los árboles',
-  'The soil between the rows was cultivated to turn weeds under':
-    'Se cultivó el suelo entre las filas para enterrar las malezas',
+  'Growth was cut back to let light and air into the crop':
+    'Se recortó el crecimiento para dejar entrar luz y aire al cultivo',
+  'The soil was cultivated to turn weeds under':
+    'Se cultivó el suelo para enterrar las malezas',
   'Weeds pulled under by a machine are weeds not sprayed: the same job done with steel instead of chemistry.':
     'Las malezas enterradas por una máquina son malezas que no se fumigaron: el mismo trabajo hecho con hierro en lugar de química.',
-  'Some of the young fruit was taken off so the rest could size up':
-    'Se retiró parte de la fruta joven para que el resto pudiera crecer',
-  'Thinning is why the fruit is the size it is. Fewer per branch means more of everything for each one.':
-    'El raleo es la razón del tamaño de la fruta: menos por rama significa más de todo para cada una.',
+  'Some of the developing crop was taken off so the rest could size up':
+    'Se retiró parte del cultivo en desarrollo para que el resto pudiera crecer más',
+  'Thinning is why the crop is the size it is. Fewer per plant means more of everything for each one.':
+    'El raleo explica el tamaño del cultivo. Menos por planta significa más de todo para cada una.',
   'Wind machines, heaters or sprinklers ran through a cold night to hold frost off the crop':
     'Máquinas de viento, calefactores o aspersores funcionaron toda una noche fría para evitar la helada en el cultivo',
-  'Without that night of work there would be no fruit from this block at all.':
-    'Sin esa noche de trabajo no habría nada de fruta de este lote.',
+  'Without that night of work there would be no crop from this block at all.':
+    'Sin esa noche de trabajo no habría ningún cultivo de este bloque.',
   'Livestock were grazed through the block to eat down the cover crop':
     'Se pastoreó ganado en el lote para consumir el cultivo de cobertura',
   'The pest was identified before any decision about treating it':
@@ -175,22 +175,22 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Feeding the soil itself, rather than only the plant, is the slower and more durable way to keep ground productive.':
     'Alimentar al suelo mismo, y no solo a la planta, es la forma más lenta y más duradera de mantener la tierra productiva.',
 
-  'Nurseries and varieties are logged before anything is in the ground, so the record starts on day one rather than at harvest.':
-    'Los viveros y las variedades se registran antes de plantar, así el registro empieza el primer día y no en la cosecha.',
+  'Seed sources and varieties are logged before anything is in the ground, so the record starts on day one rather than at harvest.':
+    'Los orígenes de la semilla y las variedades se registran antes de que algo entre a la tierra, así que el registro empieza el primer día y no en la cosecha.',
 
   // Short/impact split (2026-08-01 editorial review): 9 subtypes said the same sentence
   // twice — title line and green 'why' box were paraphrases. Short = what happened,
   // impact = why it matters to the person holding the food.
   'Hail hit the block and the damage was assessed':
     'El granizo golpeó el lote y se evaluaron los daños',
-  'Hail leaves marks and smaller fruit rather than a safety problem, and the farm logged the storm instead of quietly dropping it.':
-    'El granizo deja marcas y fruta más pequeña, no un problema de inocuidad, y la finca registró la tormenta en lugar de omitirla en silencio.',
+  'Hail leaves marks and reduced size rather than a safety problem, and the farm logged the storm instead of quietly dropping it.':
+    'El granizo deja marcas y menor tamaño, no un problema de inocuidad, y la finca registró la tormenta en lugar de omitirla.',
   'High winds crossed the block and the crop was checked for damage afterwards':
     'Vientos fuertes cruzaron el lote y después se revisó el cultivo en busca de daños',
   'A rough weather day is in this record rather than left out of it, so you are seeing the season as it actually went.':
     'Un día de mal tiempo está en este registro en lugar de quedar fuera: estás viendo la temporada tal como ocurrió.',
-  'Ground cover between the rows was mown':
-    'Se cortó la cubierta vegetal entre las filas',
+  'Vegetation on this block was mown':
+    'Se segó la vegetación de este bloque',
   'Cutting ground cover is mechanical weed control rather than a herbicide application.':
     'Cortar la cubierta vegetal es control mecánico de malezas, no una aplicación de herbicida.',
   'Lime or sulfur was worked into the ground to correct the soil pH':
@@ -220,7 +220,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
 
   'A cover crop feeds the soil and crowds out weeds, which reduces the need to spray or cultivate for them.':
     'Un cultivo de cobertura alimenta el suelo y desplaza a las malezas, lo que reduce la necesidad de aplicar productos o laborear para controlarlas.',
-  'A cover crop was sown between the rows': 'Se sembró un cultivo de cobertura entre las hileras',
+  'A cover crop was recorded on this block':
+    'Se registró un cultivo de cobertura en este bloque',
   'A farm activity recorded as part of this crop’s history':
     'Una actividad agrícola registrada como parte del historial de este cultivo',
   'A lab measured what the soil actually needed, so nutrients were added on evidence rather than habit.':
@@ -238,8 +239,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Agricultural operation completed on the farm': 'Operación agrícola completada en la finca',
   'Agricultural practice completed as part of sustainable farming':
     'Práctica agrícola completada como parte de la agricultura sostenible',
-  'An open canopy dries faster after rain, so the fruit needs less spraying to stay healthy.':
-    'Una copa abierta se seca más rápido después de la lluvia, así que la fruta necesita menos aplicaciones para mantenerse sana.',
+  'An open canopy dries faster after rain, so the crop needs less spraying to stay healthy.':
+    'Un follaje abierto se seca más rápido después de la lluvia, así que el cultivo necesita menos aplicaciones para mantenerse sano.',
   'Applied integrated pest management strategy combining multiple sustainable control methods':
     'Se aplicó una estrategia de manejo integrado de plagas combinando múltiples métodos de control sostenibles',
   'Applied professional pest control to protect plants from harmful insects':
@@ -354,8 +355,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Frost Protection': 'Protección contra heladas',
   'Frost conditions monitored and documented to assess impact on crop health and implement protective measures':
     'Condiciones de heladas monitoreadas y documentadas para evaluar el impacto en la salud del cultivo e implementar medidas de protección',
-  'Fruit or plant thinning to improve size and quality':
-    'Raleo de frutos o plantas para mejorar el tamaño y la calidad',
+  'Thinning to improve size and quality':
+    'Raleo para mejorar el tamaño y la calidad',
   'Fruit or plant thinning to improve size, quality, and overall crop health':
     'Raleo de frutos o plantas para mejorar el tamaño, la calidad y la salud general del cultivo',
   'General Farm Activity': 'Actividad agrícola general',
@@ -401,7 +402,7 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Cultivo mecánico para el control de malezas y la aireación del suelo para optimizar el crecimiento del cultivo',
   'Monitored crops for pest populations and damage levels to inform management decisions':
     'Se monitorearon los cultivos para detectar poblaciones de plagas y niveles de daño para orientar las decisiones de manejo',
-  'Mowing / Orchard-Floor': 'Siega / manejo del suelo del huerto',
+  'Mowing / Ground Cover': 'Siega / manejo de la cobertura vegetal',
   'New plants went into the ground': 'Se plantaron nuevas plantas en el terreno',
   'Nutrients were applied to feed the crop': 'Se aplicaron nutrientes para alimentar el cultivo',
   'Orchard floor mowed or managed to support soil health and clean harvest conditions':
@@ -416,8 +417,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Planned and organized farming activities for optimal productivity':
     'Se planificaron y organizaron las actividades agrícolas para una productividad óptima',
   Planting: 'Siembra',
-  'Plants pruned to optimize growth and fruit quality':
-    'Plantas podadas para optimizar el crecimiento y la calidad de la fruta',
+  'Plants pruned to manage growth and crop quality':
+    'Plantas podadas para manejar el crecimiento y la calidad del cultivo',
   Pollination: 'Polinización',
   'Post-Harvest Processing': 'Procesamiento poscosecha',
   'Precision calibration activities to ensure accurate equipment operation and optimal performance':
@@ -497,15 +498,15 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Threshold Assessment': 'Evaluación de umbral de acción',
   'Tillage Implementation': 'Labranza del suelo',
   'Transplanting Operation': 'Operación de trasplante',
-  'Transplanting seedlings or plants to their permanent growing location':
-    'Trasplante de plántulas o plantas a su ubicación de cultivo definitiva',
+  'Plants were moved into their growing position in this block':
+    'Se trasladaron las plantas a su posición de cultivo en este bloque',
   'Transportation and logistics operations with documented fuel usage and efficiency tracking':
     'Operaciones de transporte y logística con uso de combustible documentado y seguimiento de la eficiencia',
   'Trap Monitoring': 'Monitoreo con trampas',
   'Treating a known disease early generally takes less product than treating an outbreak later.':
     'Tratar una enfermedad conocida a tiempo suele requerir menos producto que tratar un brote más adelante.',
-  'Vine or tree canopy shaped for optimal fruit development and quality':
-    'Copa de la vid o del árbol moldeada para un desarrollo y una calidad óptimos de la fruta',
+  'Canopy shaped to support crop development and quality':
+    'Se dio forma al follaje para favorecer el desarrollo y la calidad del cultivo',
   'Water applied to support healthy plant growth':
     'Se aplicó agua para favorecer un crecimiento saludable de las plantas',
   'Water applied to support healthy plant growth and optimal soil moisture':
@@ -658,8 +659,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'El análisis científico del suelo permite la agricultura de precisión y reduce los insumos innecesarios mediante decisiones basadas en datos.',
   'Species-specific pest management reduces unnecessary treatments and supports integrated approaches that preserve beneficial organisms.':
     'El manejo de plagas específico por especie reduce los tratamientos innecesarios y respalda enfoques integrados que preservan los organismos benéficos.',
-  'Storms bruise and drop fruit, so a season with one in it looks different by harvest.':
-    'Las tormentas golpean y tiran fruta, así que una temporada con una se nota distinta en la cosecha.',
+  'Storms damage and drop crop, so a season with one in it looks different by harvest.':
+    'Las tormentas dañan y tiran el cultivo, así que una temporada con una se ve distinta para la cosecha.',
   'Strategic farm planning optimizes resource allocation and ensures efficient crop management throughout the season.':
     'La planificación estratégica de la finca optimiza la asignación de recursos y asegura un manejo eficiente del cultivo durante toda la temporada.',
   'Targeted fertilizer application provides essential nutrients for healthy plant growth and optimal fruit quality.':
@@ -796,8 +797,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   // --- Gaps closed 2026-07 (found by an ES-coverage sweep over eventDescriptions.ts) ---
   // Soil PA sustainabilityBenefit — the only impact/benefit sentence in the whole file that
   // had no Spanish translation, so a Spanish shopper saw one English paragraph mid-page.
-  'You can see the week this fruit came off the block, and how much was picked that day.':
-    'Puedes ver la semana en que esta fruta salió del lote y cuánto se cosechó ese día.',
+  'You can see which week this lot left the block, and how much came off that day.':
+    'Puedes ver en qué semana este lote salió del bloque y cuánto se recogió ese día.',
   'The material, the quantity and the day it happened are all part of this entry.':
     'El material, la cantidad y el día en que ocurrió forman parte de esta entrada.',
   'The pest, the product aimed at it and the amount used are recorded here.':
@@ -806,8 +807,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'Tanto el objetivo como el material constan aquí, con la fecha.',
   'Weed control is logged with the product used and the area it covered.':
     'El control de malezas se registra con el producto usado y la superficie cubierta.',
-  'You can see where the irrigation water came from and how it reached the trees.':
-    'Puedes ver de dónde vino el agua de riego y cómo llegó a los árboles.',
+  'You can see where the irrigation water came from and how it reached the crop.':
+    'Puedes ver de dónde vino el agua de riego y cómo llegó al cultivo.',
   'pH Adjustment': 'Ajuste de pH',
   'pH optimization improves nutrient uptake efficiency, reducing fertilizer requirements and environmental impact.':
     'La optimización del pH mejora la eficiencia en la absorción de nutrientes, reduciendo la necesidad de fertilizantes y el impacto ambiental.',
@@ -817,8 +818,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Nesting / Shelter Structures': 'Estructuras de anidación / refugio',
   // §E-4 winter sanitation (CU) — title + description.
   'Winter Sanitation & Cultural Control': 'Sanidad invernal y control cultural',
-  'Overwintering pest sites were physically removed from the orchard, the preventive practice used here instead of spraying':
-    'Se retiraron físicamente del huerto los sitios donde las plagas pasan el invierno, la práctica preventiva usada aquí en lugar de aplicar un producto',
+  'Overwintering pest sites were physically removed from this block, the preventive practice used here instead of spraying':
+    'Se retiraron físicamente de este bloque los sitios donde las plagas pasan el invierno, la práctica preventiva que se usa aquí en lugar de aplicar productos',
   // §E-2 lab analysis (LA) — title + description.
   'Independent Laboratory Analysis': 'Análisis de laboratorio independiente',
   'A sample of leaf, soil, compost or irrigation water sent to an outside laboratory, so nutrient decisions rest on measurements rather than guesswork':
@@ -844,8 +845,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   'Crop input application': 'Aplicación de un insumo del cultivo',
 
   // --- Production sub-types that had no consumer copy: PO, PH, FP, CM — 2026-07 ---
-  'Honey bee hives were brought into the orchard during bloom so the crop could set fruit.':
-    'Se llevaron colmenas de abejas al huerto durante la floración para que el cultivo pudiera cuajar fruto.',
+  'Honey bee hives were brought into this block during bloom so the crop could set.':
+    'Se llevaron colmenas de abejas a este bloque durante la floración para que el cultivo pudiera cuajar.',
   'Hive placement is on record beside the spray log, so applications can be checked against the days bees were on the block.':
     'La colocación de colmenas queda registrada junto al registro de aplicaciones, así se puede verificar cada aplicación frente a los días en que las abejas estuvieron en el bloque.',
   'After picking, the crop was hulled, dried or cooled to keep it sound on the way to you.':
@@ -856,8 +857,8 @@ export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
     'El cultivo se protegió durante una noche fría para que la fruta de la temporada no se perdiera por la helada.',
   'The night, the method and the low temperature are on record, so frost protection is documented rather than assumed.':
     'La noche, el método y la temperatura mínima quedan registrados, así la protección contra heladas queda documentada y no supuesta.',
-  'The tree canopy was managed to let light and air reach the fruit, which improves ripening and reduces disease.':
-    'Se manejó la copa del árbol para que la luz y el aire lleguen a la fruta, lo que mejora la maduración y reduce las enfermedades.',
+  'The canopy was managed to let light and air reach the crop, which improves ripening and reduces disease.':
+    'Se manejó el follaje para que la luz y el aire llegaran al cultivo, lo que mejora la maduración y reduce las enfermedades.',
   'An open canopy dries faster after rain, lowering disease pressure and the need for fungicide applications.':
     'Una copa abierta se seca más rápido después de la lluvia, lo que reduce la presión de enfermedades y la necesidad de aplicar fungicidas.',
 

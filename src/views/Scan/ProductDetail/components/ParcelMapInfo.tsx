@@ -30,7 +30,7 @@ import {
   FaUsers,
   FaCertificate
 } from 'react-icons/fa';
-import { formatHarvestDate } from 'utils/consumerDisplay';
+import { formatDateRangeForConsumer, formatHarvestDate } from 'utils/consumerDisplay';
 import { useIntl } from 'react-intl';
 import { MdLocationOn, MdTerrain } from 'react-icons/md';
 import { ParcelModal } from './ParcelModal';
@@ -66,7 +66,18 @@ interface ParcelMapInfoProps {
     soilType?: string;
     cropType?: string;
     plantingDate?: string;
+    /** LAST harvest record for the lot. ⛔ Never the season-close date — see `seasonClosedDate`. */
     harvestDate?: string;
+    /** FIRST harvest record, set only when the passes span more than one local day. */
+    harvestDateStart?: string;
+    /**
+     * The day the grower closed the season (`History.finish_date`).
+     *
+     * A different fact from the last pick and labelled as such. Passing it as `harvestDate` is
+     * what put Aug 12 under "HARVEST DATE" on a lot whose records ended Aug 7, three inches
+     * below the correct range.
+     */
+    seasonClosedDate?: string;
     elevation?: number;
     slope?: string;
     irrigationType?: string;
@@ -450,8 +461,16 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
             </>
           )}
 
-          {/* Planting and Harvest Dates */}
-          {(parcelData?.plantingDate || parcelData?.harvestDate) && (
+          {/* Planting, harvest and season-close dates.
+              🔴 2026-09-16 — "HARVEST DATE" here used to render `finish_date`, the day the
+              grower CLOSED the season, while the hero and the HARVEST pillar above rendered the
+              actual harvest records. One page, one label, two different dates (Jul 20 - Aug 7
+              vs Aug 12 on the audited blueberry lot). Harvest now comes from the same resolver
+              as the hero, multi-pass picks print as the range they are, and season close gets
+              its own row when it says something the harvest date does not. */}
+          {(parcelData?.plantingDate ||
+            parcelData?.harvestDate ||
+            parcelData?.seasonClosedDate) && (
             <>
               <Divider />
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
@@ -478,8 +497,29 @@ export const ParcelMapInfo: React.FC<ParcelMapInfoProps> = ({
                       })}
                     </Text>
                     <Text fontSize="md" color={textColor}>
-                      {formatHarvestDate(parcelData.harvestDate, intl.locale) ||
+                      {(parcelData.harvestDateStart &&
+                        formatDateRangeForConsumer(
+                          parcelData.harvestDateStart,
+                          parcelData.harvestDate,
+                          intl.locale
+                        )) ||
+                        formatHarvestDate(parcelData.harvestDate, intl.locale) ||
                         new Date(parcelData.harvestDate).toLocaleDateString()}
+                    </Text>
+                  </Box>
+                )}
+
+                {parcelData?.seasonClosedDate && (
+                  <Box>
+                    <Text fontSize="xs" color={mutedColor} fontWeight="semibold" mb={1}>
+                      {intl.formatMessage({
+                        id: 'consumer.farm.seasonClosed',
+                        defaultMessage: 'SEASON CLOSED'
+                      })}
+                    </Text>
+                    <Text fontSize="md" color={textColor}>
+                      {formatHarvestDate(parcelData.seasonClosedDate, intl.locale) ||
+                        new Date(parcelData.seasonClosedDate).toLocaleDateString()}
                     </Text>
                   </Box>
                 )}

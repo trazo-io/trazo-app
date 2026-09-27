@@ -33,8 +33,19 @@ type CarouselCardProps = {
   presignedUrl?: string;
   /** Hectares from the API; rendered as acres (US-units rule). */
   areaHa?: number | string;
-  /** parcel_application_status state: not_started | in_progress | complete */
+  /** parcel_application_status ANSWERS axis: not_started | in_progress | complete */
   applicationStatus?: string;
+  /**
+   * Supporting-EVIDENCE axis: complete | outstanding.
+   *
+   * ⛔ Render this WITH `applicationStatus`, never instead of it. The two answer different
+   * questions — "are the questions answered" and "is the document that backs them on file" —
+   * and a ✓ from the first alone is the badge that printed above "[REVIEW] no operator map
+   * attached" in the certifier packet.
+   */
+  evidenceStatus?: string;
+  /** How many evidence items are outstanding, for the count beside the ✓. */
+  evidenceMissingCount?: number;
   hasCurrentProduction?: boolean;
 };
 
@@ -48,6 +59,8 @@ const CarouselCard = ({
   presignedUrl,
   areaHa,
   applicationStatus,
+  evidenceStatus,
+  evidenceMissingCount,
   hasCurrentProduction = false
 }: CarouselCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -206,9 +219,22 @@ const CarouselCard = ({
               </Badge>
             )}
             {applicationStatus === 'complete' && (
-              <Badge variant="brand" fontSize="11px">
-                {intl.formatMessage({ id: 'parcel.card.appComplete' })}
-              </Badge>
+              <HStack spacing={1.5} flexShrink={0} minW={0}>
+                <Badge variant="brand" fontSize="11px">
+                  {intl.formatMessage({ id: 'parcel.card.appAnswersComplete' })}
+                </Badge>
+                {/* The evidence half, always, when it is outstanding. `neutral`, not
+                    `warning`: an unattached map is work remaining, not an error, and the
+                    answers really are done. */}
+                {evidenceStatus === 'outstanding' && (
+                  <Badge variant="neutral" fontSize="11px">
+                    {intl.formatMessage(
+                      { id: 'parcel.card.evidenceOutstanding' },
+                      { count: evidenceMissingCount ?? 1 }
+                    )}
+                  </Badge>
+                )}
+              </HStack>
             )}
             {hasCurrentProduction && (
               <HStack spacing={1.5} flexShrink={0}>

@@ -84,7 +84,13 @@ describe('specific copy still renders', () => {
     // shortDescription says WHAT HAPPENED, consumerImpact says WHY IT MATTERS to the reader.
     // Asserting both is what stops a future edit collapsing them back into one voice.
     expect(screen.getByText(/picked, weighed and graded/i)).toBeTruthy();
-    expect(screen.getByText(/week this fruit came off the block/i)).toBeTruthy();
+    // 2026-09-16: "week this fruit came off" -> "which week this lot left the block". Two
+    // reasons, both recorded in consumerDescriptionEvidence.test.ts: "fruit" asserted a crop
+    // form the record does not establish (these lines render on carrot lots too), and the
+    // first neutral rewrite ("this crop came off … how much was picked") echoed the
+    // description's own words closely enough to trip the distinctness gate at 0.50 against a
+    // 0.4 threshold. The two-voice split this test protects is unchanged.
+    expect(screen.getByText(/which week this lot left the block/i)).toBeTruthy();
   });
 
   it('describes certification WITHOUT asserting an inspection took place', () => {

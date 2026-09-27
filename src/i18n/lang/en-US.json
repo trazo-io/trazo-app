@@ -7776,5 +7776,10 @@
   "osp.agent.fromRecordsLocked": "From your farm's records.",
   "certifyingAgent.groupOwnForms": "Your packet uses their own forms",
   "certifyingAgent.groupInState": "Also common in your state",
-  "certifyingAgent.groupOthers": "All other agencies"
+  "certifyingAgent.groupOthers": "All other agencies",
+  "consumer.claim.specimen": "Demonstration record, not a certified operation",
+  "osp.claim.specimen": "Demonstration record",
+  "consumer.farm.seasonClosed": "SEASON CLOSED",
+  "parcel.card.appAnswersComplete": "Answers complete",
+  "parcel.card.evidenceOutstanding": "{count, plural, one {# evidence item} other {# evidence items}}"
 }

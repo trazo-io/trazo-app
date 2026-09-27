@@ -686,17 +686,17 @@ export function getConsumerEventDescription(
       'production.pruning': {
         title: 'Pruning Operation',
         icon: '✂️',
-        description: 'Plants pruned to optimize growth and fruit quality'
+        description: 'Plants pruned to manage growth and crop quality'
       },
       'production.transplanting': {
         title: 'Transplanting Operation',
         icon: '🌱',
-        description: 'Transplanting seedlings or plants to their permanent growing location'
+        description: 'Plants were moved into their growing position in this block'
       },
       'production.TR': {
         title: 'Transplanting Operation',
         icon: '🌱',
-        description: 'Transplanting seedlings or plants to their permanent growing location'
+        description: 'Plants were moved into their growing position in this block'
       },
       'production.operation': {
         title: 'Farm Operation',
@@ -736,39 +736,39 @@ export function getConsumerEventDescription(
       'event.production.pruning': {
         title: 'Pruning Operation',
         icon: '✂️',
-        description: 'Plants pruned to optimize growth and fruit quality'
+        description: 'Plants pruned to manage growth and crop quality'
       },
       pruning: {
         title: 'Pruning Operation',
         icon: '✂️',
-        description: 'Plants pruned to optimize growth and fruit quality'
+        description: 'Plants pruned to manage growth and crop quality'
       },
       transplanting: {
         title: 'Transplanting Operation',
         icon: '🌱',
-        description: 'Transplanting seedlings or plants to their permanent growing location'
+        description: 'Plants were moved into their growing position in this block'
       },
       TR: {
         title: 'Transplanting Operation',
         icon: '🌱',
-        description: 'Transplanting seedlings or plants to their permanent growing location'
+        description: 'Plants were moved into their growing position in this block'
       },
       PR: {
         title: 'Pruning Operation',
         icon: '✂️',
-        description: 'Branches were cut back to let light and air into the trees'
+        description: 'Growth was cut back to let light and air into the crop'
       },
       // CRITICAL FIX (2025-12-11): Added CU (Cultivation) - Sprint 2 production subtype
       CU: {
         title: 'Cultivation',
         icon: '🚜',
-        description: 'The soil between the rows was cultivated to turn weeds under'
+        description: 'The soil was cultivated to turn weeds under'
       },
       // CRITICAL FIX (2025-12-11): Added TH (Thinning) - Sprint 2 production subtype
       TH: {
         title: 'Thinning',
         icon: '🌿',
-        description: 'Some of the young fruit was taken off so the rest could size up'
+        description: 'Some of the developing crop was taken off so the rest could size up'
       },
       // CRITICAL FIX (2025-01-21): Added EM (Equipment Maintenance) - correct Production subtype
       EM: {
@@ -808,17 +808,17 @@ export function getConsumerEventDescription(
       'production.TH': {
         title: 'Thinning',
         icon: '🌿',
-        description: 'Fruit or plant thinning to improve size and quality'
+        description: 'Thinning to improve size and quality'
       },
       'production.thinning': {
         title: 'Thinning',
         icon: '🌿',
-        description: 'Fruit or plant thinning to improve size and quality'
+        description: 'Thinning to improve size and quality'
       },
       'event.production.thinning': {
         title: 'Thinning',
         icon: '🌿',
-        description: 'Fruit or plant thinning to improve size and quality'
+        description: 'Thinning to improve size and quality'
       },
       // CRITICAL FIX (2025-01-21): Added EM (Equipment Maintenance) entries
       'production.EM': {
@@ -887,22 +887,22 @@ export function getConsumerEventDescription(
       CM: {
         title: 'Canopy Management',
         icon: '✂️',
-        description: 'Vine or tree canopy shaped for optimal fruit development and quality'
+        description: 'Canopy shaped to support crop development and quality'
       },
       'production.CM': {
         title: 'Canopy Management',
         icon: '✂️',
-        description: 'Vine or tree canopy shaped for optimal fruit development and quality'
+        description: 'Canopy shaped to support crop development and quality'
       },
       'event.production.canopy_management': {
         title: 'Canopy Management',
         icon: '✂️',
-        description: 'Vine or tree canopy shaped for optimal fruit development and quality'
+        description: 'Canopy shaped to support crop development and quality'
       },
       canopy_management: {
         title: 'Canopy Management',
         icon: '✂️',
-        description: 'Vine or tree canopy shaped for optimal fruit development and quality'
+        description: 'Canopy shaped to support crop development and quality'
       },
       // FP (Frost Protection) — Batch 3 (2026-06)
       FP: {
@@ -931,24 +931,24 @@ export function getConsumerEventDescription(
       },
       // MO (Mowing / Orchard-Floor) — Batch 3 (2026-06)
       MO: {
-        title: 'Orchard-Floor Management',
+        title: 'Ground-Cover Management',
         icon: '🌱',
-        description: 'Ground cover between the rows was mown'
+        description: 'Vegetation on this block was mown'
       },
       'production.MO': {
-        title: 'Orchard-Floor Management',
+        title: 'Ground-Cover Management',
         icon: '🌱',
-        description: 'Ground cover between the rows was mown'
+        description: 'Vegetation on this block was mown'
       },
       'event.production.mowing': {
-        title: 'Orchard-Floor Management',
+        title: 'Ground-Cover Management',
         icon: '🌱',
-        description: 'Ground cover between the rows was mown'
+        description: 'Vegetation on this block was mown'
       },
       mowing: {
-        title: 'Orchard-Floor Management',
+        title: 'Ground-Cover Management',
         icon: '🌱',
-        description: 'Ground cover between the rows was mown'
+        description: 'Vegetation on this block was mown'
       }
     };
 
@@ -1080,19 +1080,19 @@ export function getConsumerEventDescription(
       // Stage 2 (2026-06-14): static sentence so it localizes via the dict —
       // quantitative detail (seed rate, area) already renders in Key Details.
       consumerImpact =
-        'Nurseries and varieties are logged before anything is in the ground, so the record starts on day one rather than at harvest.';
+        'Seed sources and varieties are logged before anything is in the ground, so the record starts on day one rather than at harvest.';
       sustainabilityBenefit = `Organic certification traces a crop back to what was planted, so the planting record is the first link in that chain.`;
     } else if (eventType.includes('harvest') || eventType === 'HA') {
       consumerImpact =
-        'You can see the week this fruit came off the block, and how much was picked that day.';
+        'You can see which week this lot left the block, and how much came off that day.';
       sustainabilityBenefit = `Recording the date, volume and grade is what lets a batch be traced back to one block and one week.`;
     } else if (eventType.includes('irrigation') || eventType === 'IR') {
       consumerImpact =
-        'You can see where the irrigation water came from and how it reached the trees.';
+        'You can see where the irrigation water came from and how it reached the crop.';
       sustainabilityBenefit = `Recording the source and method makes water use checkable instead of assumed.`;
     } else if (eventType.includes('pruning') || eventType === 'PR') {
       consumerImpact =
-        'An open canopy dries faster after rain, so the fruit needs less spraying to stay healthy.';
+        'An open canopy dries faster after rain, so the crop needs less spraying to stay healthy.';
       // Was: "Prunings are chipped back onto the orchard floor, returning the material to the
       // soil instead of hauling it away." Nothing on a pruning record says what happened to
       // the brush — chipped, burned or hauled — so the page asserted a practice from an event
@@ -1104,14 +1104,14 @@ export function getConsumerEventDescription(
       sustainabilityBenefit = `Each cultivation pass is on record, which is how mechanical weed control is evidenced rather than asserted.`;
     } else if (eventType.includes('thinning') || eventType === 'TH') {
       consumerImpact =
-        'Thinning is why the fruit is the size it is. Fewer per branch means more of everything for each one.';
-      sustainabilityBenefit = `Thinning dates and volumes are on record, which is what lets a size grade be traced back to a decision in the orchard.`;
+        'Thinning is why the crop is the size it is. Fewer per plant means more of everything for each one.';
+      sustainabilityBenefit = `Thinning dates and volumes are on record, which is what lets a size grade be traced back to a decision in the field.`;
     } else if (eventType.includes('pollination') || eventType === 'PO') {
       // The bee story is the strongest consumer content in the product and had no copy at
       // all — PO fell through to the family default. UC Davis organic-almond practice: two
       // hives per acre, set in the orchard in February before bloom.
       consumerImpact =
-        'Honey bee hives were brought into the orchard during bloom so the crop could set fruit.';
+        'Honey bee hives were brought into this block during bloom so the crop could set.';
       sustainabilityBenefit =
         'Hive placement is on record beside the spray log, so applications can be checked against the days bees were on the block.';
     } else if (eventType.includes('post_harvest') || eventType === 'PH') {
@@ -1120,7 +1120,7 @@ export function getConsumerEventDescription(
       sustainabilityBenefit =
         'Documented post-harvest handling reduces spoilage and waste, and records the temperature and sanitation steps the crop passed through.';
     } else if (eventType.includes('frost') || eventType === 'FP') {
-      consumerImpact = 'Without that night of work there would be no fruit from this block at all.';
+      consumerImpact = 'Without that night of work there would be no crop from this block at all.';
       // Was: "avoids the far larger footprint of losing a harvest and regrowing it" — a
       // comparative environmental claim with no substantiation behind it, on a record whose own
       // fuel field commonly holds tens of gallons of propane. 16 CFR 260.6 governs exactly this.
@@ -1128,7 +1128,7 @@ export function getConsumerEventDescription(
         'The night, the method and the low temperature are on record, so frost protection is documented rather than assumed.';
     } else if (eventType.includes('canopy') || eventType === 'CM') {
       consumerImpact =
-        'The tree canopy was managed to let light and air reach the fruit, which improves ripening and reduces disease.';
+        'The canopy was managed to let light and air reach the crop, which improves ripening and reduces disease.';
       sustainabilityBenefit =
         'An open canopy dries faster after rain, lowering disease pressure and the need for fungicide applications.';
     } else if (eventType.includes('mowing') || eventType === 'MO') {
@@ -1261,7 +1261,7 @@ export function getConsumerEventDescription(
           FE: 'Fertilizer Operation',
           WE: 'Weather Monitoring',
           FP: 'Frost Protection',
-          MO: 'Mowing / Orchard-Floor'
+          MO: 'Mowing / Ground Cover'
         };
         if (codeToTitle[prodType]) {
           return codeToTitle[prodType];
@@ -1339,7 +1339,7 @@ export function getConsumerEventDescription(
       HT: {
         title: 'Heat Stress Monitoring',
         icon: '🌡️',
-        description: 'A heat wave crossed the block and the trees were checked afterwards',
+        description: 'A heat wave crossed the block and the crop was checked afterwards',
         impact: 'MEDIUM'
       },
       TS: {
@@ -1427,22 +1427,22 @@ export function getConsumerEventDescription(
 
     if (weatherTypeCode === 'FR') {
       consumerImpact =
-        'Cold nights decide how much fruit sets, so this is the weather the crop actually grew in.';
+        'Cold nights decide how much of the crop sets, so this is the weather the crop actually grew in.';
     } else if (weatherTypeCode === 'DR') {
       consumerImpact =
         'Water is the scarcest input in California agriculture, so what a crop needed in a dry year is worth knowing.';
     } else if (weatherTypeCode === 'HL') {
       consumerImpact =
-        'Hail leaves marks and smaller fruit rather than a safety problem, and the farm logged the storm instead of quietly dropping it.';
+        'Hail leaves marks and reduced size rather than a safety problem, and the farm logged the storm instead of quietly dropping it.';
     } else if (weatherTypeCode === 'HT') {
-      consumerImpact = 'Extreme heat shows up later as smaller fruit or sunburn marks on the skin.';
+      consumerImpact = 'Extreme heat shows up later as reduced size or sunburn marks on the crop.';
     } else if (weatherTypeCode === 'TS') {
       // Was "Storm damage assessment ensures only healthy, undamaged produce reaches consumers"
       // — a food-quality GUARANTEE derived from a weather observation. Nothing on this record
       // sorts fruit or assesses damage; the same 2026-08-31 sweep that emptied the benefit lines
       // below applies to the impact line above them.
       consumerImpact =
-        'Storms bruise and drop fruit, so a season with one in it looks different by harvest.';
+        'Storms damage and drop crop, so a season with one in it looks different by harvest.';
     } else if (weatherTypeCode === 'HW') {
       consumerImpact =
         'A rough weather day is in this record rather than left out of it, so you are seeing the season as it actually went.';
@@ -1755,7 +1755,7 @@ export function getConsumerEventDescription(
       CC: {
         title: 'Cover Crop Management',
         icon: '🌿',
-        description: 'A cover crop was sown between the rows',
+        description: 'A cover crop was recorded on this block',
         impact: 'HIGH'
       },
       TI: {
@@ -2023,7 +2023,7 @@ export function getConsumerEventDescription(
         title: 'Winter Sanitation & Cultural Control',
         icon: '🍂',
         description:
-          'Overwintering pest sites were physically removed from the orchard, the preventive practice used here instead of spraying',
+          'Overwintering pest sites were physically removed from this block, the preventive practice used here instead of spraying',
         impact: 'HIGH'
       },
       scouting: {
@@ -2141,7 +2141,7 @@ export function getConsumerEventDescription(
         'Trap monitoring reduces pesticide applications by providing precise timing for control measures only when needed.';
     } else if (eventPestType === 'BR' || eventPestType === 'beneficial_release') {
       consumerImpact =
-        'Predator insects do the work a spray would otherwise do, and they stay in the orchard afterwards.';
+        'Predator insects do the work a spray would otherwise do, and they stay on afterwards.';
       sustainabilityBenefit =
         'Releases are recorded by species and date, so the approach can be followed across the season.';
     } else if (eventPestType === 'PI' || eventPestType === 'pest_identification') {

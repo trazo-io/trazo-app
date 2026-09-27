@@ -275,7 +275,13 @@ const CertificationManager: React.FC<CertificationManagerProps> = ({
                     <Text fontWeight="medium" fontSize="sm" minW={0}>
                       {cert.certification_type_display}
                     </Text>
-                    <CertificationStatusBadge status={cert.verification_status} />
+                    {/* `consumer_display_status`, not `verification_status`: the raw column
+                        is what an admin edit, an import or a fixture sets, and it asserted a
+                        USDA registry match that had never been performed. `specimen` outranks
+                        it — a fabricated operation is not a producer who reported something. */}
+                    <CertificationStatusBadge
+                      status={cert.specimen ? 'specimen' : cert.consumer_display_status}
+                    />
                   </HStack>
                   {cert.certifier_name && (
                     <Text fontSize="xs" color="gray.500">
