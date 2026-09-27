@@ -74,7 +74,12 @@ const fieldNoteApi = baseApi.injectEndpoints({
 
     getFieldNote: build.query<FieldNote, string>({
       query: (publicId) => ({
-        url: `field-notes/${publicId}/`,
+        // Encoded because this value arrives from `?field_note=` in the address bar, so a person
+        // can put anything in it. Not a vulnerability today (same-origin GET with the caller's own
+        // cookies, and the backend scopes every lookup to the caller's own companies, so the only
+        // reachable data is already theirs), but an unencoded path segment lets a typed-in `../`
+        // reshape which endpoint the request names, and that is not worth leaving to luck.
+        url: `field-notes/${encodeURIComponent(publicId)}/`,
         method: 'GET',
         credentials: 'include'
       }),

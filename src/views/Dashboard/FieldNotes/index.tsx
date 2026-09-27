@@ -182,7 +182,10 @@ const FieldNotesInbox = () => {
                         { id: 'fieldNotes.sentBy' },
                         {
                           last4: note.sender.phone_last4,
-                          when: new Date(note.received_at).toLocaleString()
+                          // The APP's locale, not the browser's. A grower running Trazo in
+                          // Spanish on an English-locale machine got an English timestamp
+                          // inside a Spanish sentence.
+                          when: new Date(note.received_at).toLocaleString(intl.locale)
                         }
                       )}
                     </Text>
