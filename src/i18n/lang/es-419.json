@@ -1863,6 +1863,7 @@
   "auth.signup.mode.joinCompany": "Unirme a una empresa",
   "auth.signup.signInLink": "Iniciar sesión",
   "auth.signup.social.continueWith": "Continuar con {provider}",
+  "auth.signup.social.termsFirst": "Marca la casilla de los Términos arriba para continuar con Google o Facebook.",
   "auth.signup.subtitle.create": "Registra la temporada una vez. Trazo arma tu paquete para el certificador.",
   "auth.signup.subtitle.join": "Únete a tu equipo en Trazo",
   "auth.signup.terms.agree": "Acepto los {tos} y la {privacy}",

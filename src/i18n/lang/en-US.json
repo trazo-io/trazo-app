@@ -1863,6 +1863,7 @@
   "auth.signup.mode.joinCompany": "Join Existing Company",
   "auth.signup.signInLink": "Sign in",
   "auth.signup.social.continueWith": "Continue with {provider}",
+  "auth.signup.social.termsFirst": "Tick the Terms box above to continue with Google or Facebook.",
   "auth.signup.subtitle.create": "Log the season once. Trazo assembles your certifier packet from it.",
   "auth.signup.subtitle.join": "Join your team on Trazo",
   "auth.signup.terms.agree": "I agree to the {tos} and {privacy}",

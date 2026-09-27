@@ -116,6 +116,7 @@ const AppSignUp: React.FC = () => {
   const firstName = watch('first_name');
   const lastName = watch('last_name');
   const email = watch('email');
+  const acceptTerms = watch('acceptTerms');
 
   // Password strength validation (mirrors backend validators)
   const passwordValidation = React.useMemo(() => {
@@ -217,7 +218,8 @@ const AppSignUp: React.FC = () => {
         last_name: data.last_name,
         email: data.email,
         password: data.password,
-        user_type: 'PRODUCER'
+        user_type: 'PRODUCER',
+        accept_terms: data.acceptTerms === true
       };
 
       // Add company code if joining existing company
@@ -294,7 +296,10 @@ const AppSignUp: React.FC = () => {
         ? { ...authData, invitation_code: pendingInvitation }
         : authData;
 
-      const response = await socialAuth(authPayload).unwrap();
+      const response = await socialAuth({
+        ...authPayload,
+        accept_terms: acceptTerms === true
+      }).unwrap();
 
       // Clear pending invitation on successful auth
       if (pendingInvitation) {
@@ -1258,7 +1263,7 @@ const AppSignUp: React.FC = () => {
                         borderColor={useColorModeValue('gray.300', 'gray.600')}
                         borderRadius="lg"
                         onClick={() => handleSocialLogin(social.name)}
-                        isDisabled={isLoading || isSocialLoading}
+                        isDisabled={isLoading || isSocialLoading || !acceptTerms}
                         _hover={{
                           bg: useColorModeValue('gray.50', 'gray.600'),
                           borderColor: useColorModeValue('gray.400', 'gray.500')
@@ -1268,6 +1273,19 @@ const AppSignUp: React.FC = () => {
                       </Button>
                     ))}
                   </HStack>
+                  {!acceptTerms && (
+                    <Text
+                      fontSize="xs"
+                      color="gray.500"
+                      _dark={{ color: 'gray.400' }}
+                      textAlign="center">
+                      {intl.formatMessage({
+                        id: 'auth.signup.social.termsFirst',
+                        defaultMessage:
+                          'Tick the Terms box above to continue with Google or Facebook.'
+                      })}
+                    </Text>
+                  )}
                 </VStack>
               </Box>
 
