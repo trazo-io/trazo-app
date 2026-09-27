@@ -134,6 +134,7 @@ const UnifiedSubscriptionDashboard = lazyWithRetry(
 );
 import NoSubscriptionRedirect from './utils/protections/NoSubscriptionRedirect';
 import { usePointsStore } from './store/pointsStore';
+const FieldNotesInbox = lazyWithRetry(() => import('views/Dashboard/FieldNotes'));
 const ProducerEducationDashboard = lazyWithRetry(() => import('views/Dashboard/Education'));
 const EducationTopicDetail = lazyWithRetry(
   () => import('views/Dashboard/Education/EducationTopicDetail')
@@ -497,6 +498,7 @@ const App = () => {
                     }
                   />
                   <Route path="farm/:farmId/transparency" element={<RedirectToFarmHome />} />
+                  <Route path="field-notes" element={<FieldNotesInbox />} />
                   <Route path="education" element={<ProducerEducationDashboard />} />
                   <Route path="education/topic/:topicId" element={<EducationTopicDetail />} />
                   <Route path="education/faq" element={<EducationFAQ />} />

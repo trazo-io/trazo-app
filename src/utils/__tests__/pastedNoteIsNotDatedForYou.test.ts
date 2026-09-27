@@ -80,14 +80,29 @@ describe('a pasted note is not dated for the farmer', () => {
     expect(src).toMatch(/import \{[^}]*isOperatorChosenDate[^}]*\} from 'utils\/dateOnly'/);
     expect(src).not.toMatch(/isTodayLocalDateTimeInput/);
     // Compared against the form's OWN default, so a time the operator set today survives.
-    expect(src).toMatch(/isOperatorChosenDate\(inheritedDate, wizardDefaultDate\)/);
+    const reclaim = blockAfter('const reclaimGuessedDate = useCallback(() => {');
+    expect(reclaim).toMatch(/isOperatorChosenDate\(inherited, wizardDefaultDate\)/);
     expect(src).toMatch(/basicMethods\.formState\.defaultValues\?\.date/);
+    // It must read the FORM, not only the wizard's state. MEASURED in a browser 2026-09-26:
+    // arriving from the field-notes inbox, `eventFormData.date` is unset (it is written when step 0
+    // is submitted) while the input on screen already shows the wizard's seeded default, so a
+    // predicate fed only from `eventFormData` returned early and left today on screen.
+    expect(reclaim, 'reads only the wizard state, so it cannot see the seeded input').toMatch(
+      /basicMethods\.getValues\('date'\)/
+    );
   });
 
   it('clears the inherited date instead of leaving it on the record', () => {
-    const seeded = blockAfter('if (eventData.seeded) {');
-    expect(seeded).toMatch(/delete next\.date/);
-    expect(seeded).toMatch(/basicMethods\.setValue\('date', ''\)/);
+    // Since 2026-09-26 the clearing lives in ONE named function, because the field-notes inbox
+    // needs the same rule on arrival and two spellings of one rule is how the roster's may-send
+    // gate drifted from its own property earlier in the same work. So this asserts both halves:
+    // the function still clears, and each path still calls it. Either deletion is the defect.
+    const reclaim = blockAfter('const reclaimGuessedDate = useCallback(() => {');
+    expect(reclaim).toMatch(/delete next\.date/);
+    expect(reclaim).toMatch(/basicMethods\.setValue\('date', ''\)/);
+    expect(blockAfter('if (eventData.seeded) {')).toMatch(/reclaimGuessedDate\(\)/);
+    // One writer. A second inline copy is the drift this consolidation removed.
+    expect(src.match(/delete next\.date/g), 'more than one place clears the date').toHaveLength(1);
   });
 
   it('derives the date question from the form, so answering it anywhere ends it', () => {

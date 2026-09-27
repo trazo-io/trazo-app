@@ -91,6 +91,7 @@ import {
 } from 'store/api/historyApi';
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
 import { useGetParcelQuery } from 'store/api/productApi';
+import { useGetFieldNoteQuery } from 'store/api/fieldNoteApi';
 import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
@@ -366,6 +367,16 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // whole point of ProductionPlanItem (history/models.py). The id rides along on the POST so
   // the server can close the checklist item against the record it actually wrote.
   const planItemIdFromUrl = searchParams.get('plan_item');
+
+  // Field notes: "Log this" on a crew WhatsApp message arrives with ?field_note=<uuid>.
+  //
+  // A UUID, never a numeric id, so a hand-edited link cannot walk other operations' notes. And the
+  // note is FETCHED below rather than carried in the URL, for the same reason the plan item is:
+  // whatever seeds this form must come from the server, scoped to the caller. It matters more here.
+  // These words steer the model's `event_type` and are interpolated into its prompt, so a
+  // ?transcript= parameter would be a prompt-injection vector wearing a link, and it would also put
+  // a crew member's sentence into browser history and every access log on the way.
+  const fieldNoteIdFromUrl = searchParams.get('field_note');
   const planProductionIdFromUrl = searchParams.get('production');
 
   // A plan item answers "what did you do" as completely as a verb tile does, and it does so
@@ -508,10 +519,41 @@ function NewEvent({ isEdit = false, eventId = null }) {
 
   // The plan item is fetched, not passed through the URL: the practice this record answers is
   // read from the operator's own plan, so a hand-edited link cannot invent one.
+  // Fetched, not trusted. The scoping is the server's (`company__in=user.companies`), so a link to
+  // another operation's note returns 404 and seeds nothing.
+  const { data: activeFieldNote } = useGetFieldNoteQuery(fieldNoteIdFromUrl, {
+    skip: !fieldNoteIdFromUrl || isEdit
+  });
+
   const { data: seasonPlanData } = useGetSeasonPlanQuery(
     { historyId: planProductionIdFromUrl },
     { skip: !planProductionIdFromUrl || !planItemIdFromUrl || isEdit }
   );
+  // Hand the note's words to the panel that already knows what to do with somebody else's sentence.
+  //
+  // Nothing new is built here: the seeded path renders the parse as a HELD OFFER with an explicit
+  // "Fill in N values" tap and asks which day the work happened, because on a pasted or forwarded
+  // note the person confirming is not the person who spoke. A WhatsApp note needs the date question
+  // MORE than a pasted one does: it can sit unread for days, so a Friday note about Tuesday's spray
+  // would otherwise file under Friday and take the pre-harvest interval and the CA PUR day with it.
+  //
+  // Only a WAITING note seeds. A confirmed or discarded one opening a fresh offer would invite a
+  // second record for work already logged.
+  useEffect(() => {
+    if (!activeFieldNote || activeFieldNote.status !== 'pending') return;
+    if (!activeFieldNote.words) return;
+    if (seededFromNoteRef.current === activeFieldNote.public_id) return;
+    seededFromNoteRef.current = activeFieldNote.public_id;
+    setVoiceSeedText(activeFieldNote.words);
+    setShowVoiceCapture(true);
+    // Here, not only when the parse returns. MEASURED in a browser 2026-09-26: the panel that holds
+    // the seed mounts on step 2, so landing from the inbox showed step 1 with today's date already
+    // filled in and nothing about the note on screen. The supervisor answered a date before they
+    // had been told which message they were answering it for.
+    reclaimGuessedDate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFieldNote]);
+
   const activePlanItem = useMemo(
     () =>
       (seasonPlanData?.items || []).find((item) => String(item.id) === String(planItemIdFromUrl)),
@@ -574,6 +616,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteDraft, setPasteDraft] = useState('');
   const [voiceSeedText, setVoiceSeedText] = useState('');
+  // One-shot, keyed on the note's id. The panel consumes the seed and clears it (so the mic works
+  // again and the same words are never re-billed to a second parse), so without this guard the
+  // effect would immediately re-seed from the still-present query and the offer could never be
+  // dismissed.
+  const seededFromNoteRef = useRef(null);
   const [voiceBanner, setVoiceBanner] = useState(null);
   const [voiceSeq, setVoiceSeq] = useState(0);
   // WS-4 template accelerator: picking a template is an explicit practice choice —
@@ -1695,18 +1742,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // provenance on screen, the same suggest-then-confirm shape as `blockSuggestion` and the
       // OSP "Use suggestion" button. A day the operator actually chose is left alone: this only
       // takes back the wizard's own guess.
-      // Compared against the form's OWN seeded default, not against "is it today". A grower who
-      // set 06:30 for a dawn spray and pastes the crew note at 11:43 chose that time, and a
-      // date-part test would call it a guess and take it away.
-      const inheritedDate = eventFormData.date;
-      if (inheritedDate && !isOperatorChosenDate(inheritedDate, wizardDefaultDate)) {
-        setEventFormData((prev) => {
-          const next = { ...prev };
-          delete next.date;
-          return next;
-        });
-        basicMethods.setValue('date', '');
-      }
+      reclaimGuessedDate();
 
       setVoiceBanner({
         ...banner,
@@ -1760,6 +1796,30 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const handleVoiceSeededPickAnotherDay = () => {
     setActiveStep(0);
   };
+
+  // Take back the wizard's own guess at the day, and only its own guess.
+  //
+  // ONE function, called from both the seeded parse and the moment a field note loads, because two
+  // spellings of one rule is how the may-send gate drifted from its own property earlier in this
+  // work. Compared against the form's OWN seeded default rather than against "is it today": a
+  // grower who set 06:30 for a dawn spray and opens the note at 11:43 chose that time.
+  const reclaimGuessedDate = useCallback(() => {
+    // Reads the FORM as well as the wizard's state, and that is the whole correctness of it.
+    // MEASURED in a browser 2026-09-26: on arrival from the inbox `eventFormData.date` is not set
+    // yet (it is written when step 0 is submitted) while the input on screen already shows the
+    // wizard's seeded default. Testing only `eventFormData.date` returned early and cleared
+    // nothing, so the operator was still looking at today.
+    const onScreen = basicMethods.getValues('date');
+    const inherited = eventFormData.date || onScreen;
+    if (!inherited || isOperatorChosenDate(inherited, wizardDefaultDate)) return;
+    setEventFormData((prev) => {
+      const next = { ...prev };
+      delete next.date;
+      return next;
+    });
+    basicMethods.setValue('date', '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventFormData.date, wizardDefaultDate]);
 
   // ONE source of truth: the form's own date field. Answering on step 0 ends the question by
   // itself, `handleVoiceSwitchType` rebuilding the banner cannot lose it, and there is no flag to
@@ -2757,7 +2817,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                 plan_item_id: activePlanItem.id,
                 ...(seasonPlanData?.history_id ? { history: seasonPlanData.history_id } : {})
               }
-            : {})
+            : {}),
+          // ONE key, and the server does the rest. It resolves the note by UUID scoped to the
+          // caller's companies and writes the link inside the same request that writes the record,
+          // the way `_fulfil_plan_item` does. Sending a status, or the words, or anything else about
+          // the note would be a second client-side writer of a fact the server owns.
+          ...(activeFieldNote ? { field_note: activeFieldNote.public_id } : {})
         }).unwrap();
 
         toast({
@@ -2973,6 +3038,21 @@ function NewEvent({ isEdit = false, eventId = null }) {
           }
           mb={4}
         />
+        {/* WHERE THE CREW MESSAGE WENT.
+            "Start a season" navigates to the production wizard, which does not carry
+            `?field_note=`, so a supervisor who clicked "Log this" on a message and landed here
+            watches it disappear from the flow with nothing on screen to say why. The note itself
+            is safe: nothing has consumed it, its status is still `pending`, and the inbox still
+            lists it. Say that, rather than thread the id through a second wizard: the note is
+            only spent when a record is authored, and a round trip through the inbox keeps that
+            true. */}
+        {activeFieldNote && activeFieldNote.status === 'pending' && (
+          <StandardAlert
+            status="info"
+            description={intl.formatMessage({ id: 'events.noOpenSeason.noteStaysWaiting' })}
+            mb={4}
+          />
+        )}
         <HStack spacing={3} flexWrap="wrap">
           <StandardButton
             size="sm"
@@ -3165,6 +3245,39 @@ function NewEvent({ isEdit = false, eventId = null }) {
                   <FormProvider {...basicMethods}>
                     <form onSubmit={basicMethods.handleSubmit(onSubmitBasic)} noValidate>
                       <VStack spacing={{ base: 5, md: 6 }} align="stretch">
+                        {/* WHICH MESSAGE THIS RECORD ANSWERS, on the step the operator lands on.
+                            MEASURED in a browser 2026-09-26: arriving from the inbox showed this
+                            step with nothing about the note on it, because the panel that holds the
+                            seeded text only mounts on the NEXT step. The supervisor had clicked
+                            "Log this" on one specific message and was then asked for an activity and
+                            a date with no sign of which message, which is how somebody answers for
+                            the wrong one. The words are quoted, never an input: they are a record of
+                            what a person reported. */}
+                        {activeFieldNote && activeFieldNote.status === 'pending' && (
+                          <Box
+                            bg="green.50"
+                            borderWidth="1px"
+                            borderColor="green.200"
+                            borderRadius="md"
+                            p={3}>
+                            <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                              {intl.formatMessage(
+                                { id: 'events.fieldNote.loggingFrom' },
+                                {
+                                  who:
+                                    activeFieldNote.sender?.display_name ||
+                                    intl.formatMessage({ id: 'fieldNotes.unknownSender' })
+                                }
+                              )}
+                            </Text>
+                            <Text fontSize="sm" color="gray.800" whiteSpace="pre-wrap" pt={1}>
+                              {`\u201C${activeFieldNote.words}\u201D`}
+                            </Text>
+                            <Text fontSize="xs" color="gray.700" pt={2}>
+                              {intl.formatMessage({ id: 'events.fieldNote.theirWordsYourRecord' })}
+                            </Text>
+                          </Box>
+                        )}
                         {/* Event Type Selection Section — hidden when the verb
                               entry already answered it — a verb tile, or a season-plan
                               item, which names the practice more precisely than any tile. */}
