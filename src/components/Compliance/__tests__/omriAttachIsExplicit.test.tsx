@@ -298,7 +298,15 @@ describe('NewEvent — a voice merge never carries a listing onto a new product 
       return partials.length > 0;
     });
 
-    expect(risky.length, 'expected the three voice merges to be found').toBe(3);
+    // FOUR since the pasted-note path added `handleVoiceSeededApply`. Its merge spreads
+    // `mergeOfferedValues(prev, kept)` over `...prev`, so it CAN carry `commercial_name`, and it is
+    // wrapped, which is what the `unguarded` assertion below actually proves. This number exists so
+    // a new merge cannot appear unnoticed, so it is updated deliberately with the reason rather than
+    // loosened to `toBeGreaterThan`, which would retire the tripwire.
+    expect(
+      risky.length,
+      'a setEventFormData merge was added or removed; review it and update this'
+    ).toBe(4);
     const unguarded = risky.filter((c) => !c.includes('withListingAttachmentChecked'));
     expect(
       unguarded,
