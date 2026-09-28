@@ -215,16 +215,25 @@ const ResultCard: React.FC<{
     list_edition_date?: string | null;
   }) => {
     const id = candidate.omri_id ? `OMRI #${candidate.omri_id}` : null;
-    const edition = candidate.list_edition_date
+    // PARSED FIRST, AND THE RESULT IS THE CONDITION.
+    //
+    // `list_edition_date` is a backend DATE column. Passing the raw `YYYY-MM-DD` to
+    // `formatDate` parses it as UTC midnight, so every viewer west of UTC read OMRI's edition
+    // as the PREVIOUS day: the Sep 5 2026 list rendered "List of Sep 4, 2026" for a US grower.
+    // `parseDateOnly` builds a LOCAL midnight instead. See utils/dateOnly.ts.
+    //
+    // Testing the RAW string and formatting the parsed one was not enough. `parseDateOnly`
+    // returns null for a truthy-but-unparseable value, on purpose, and `null ?? undefined` is
+    // `undefined`, which `Intl.DateTimeFormat.format` renders as TODAY. So a malformed column
+    // value printed "List of <today>" as OMRI's edition date, on the surface whose whole job is
+    // saying which edition a listing came from, under a comment promising it never invents
+    // "current". MEASURED: format(undefined) returns the current date, it does not throw.
+    const parsedEdition = parseDateOnly(candidate.list_edition_date);
+    const edition = parsedEdition
       ? intl.formatMessage(
           { id: 'inputVerify.omriEdition', defaultMessage: 'List of {date}' },
           {
-            // `list_edition_date` is a backend DATE column. Passing the raw
-            // `YYYY-MM-DD` to `formatDate` parses it as UTC midnight, so every
-            // viewer west of UTC read OMRI's edition as the PREVIOUS day: the
-            // Sep 5 2026 list rendered "List of Sep 4, 2026" for a US grower.
-            // `parseDateOnly` builds a LOCAL midnight instead. See utils/dateOnly.ts.
-            date: intl.formatDate(parseDateOnly(candidate.list_edition_date) ?? undefined, {
+            date: intl.formatDate(parsedEdition, {
               day: 'numeric',
               month: 'short',
               year: 'numeric'

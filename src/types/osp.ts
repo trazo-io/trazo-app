@@ -205,6 +205,12 @@ export interface InputVerifyResult {
     omri_id: string | null;
     product_name: string;
     manufacturer?: string | null;
+    /**
+     * Which daily OMRI edition this row came from. Typed HERE, not only inside the component
+     * helper that reads it: a local inline type let a candidate without the field pass, so a
+     * backend rename would silently stop showing the edition with no error and no failing test.
+     */
+    list_edition_date?: string | null;
   }[];
   /**
    * How many rows matched in total. NOT `omri_candidates.length`, which is capped for display
