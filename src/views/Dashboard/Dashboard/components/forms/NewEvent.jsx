@@ -2822,7 +2822,16 @@ function NewEvent({ isEdit = false, eventId = null }) {
           // caller's companies and writes the link inside the same request that writes the record,
           // the way `_fulfil_plan_item` does. Sending a status, or the words, or anything else about
           // the note would be a second client-side writer of a fact the server owns.
-          ...(activeFieldNote ? { field_note: activeFieldNote.public_id } : {})
+          //
+          // Gated on `pending`, like every other read of this note (the seed at :543, the step-0
+          // card at :3049, the banner at :3256). This line was the only one that was not, and the
+          // gap was reachable: a stale cached queue could offer a note already logged, and sending
+          // its id again produced a second event that `_resolve_field_note` silently declined to
+          // link, because it filters status=PENDING. Sending nothing is the honest payload for a
+          // note that is already spent: the record still saves, it just claims no note.
+          ...(activeFieldNote?.status === 'pending'
+            ? { field_note: activeFieldNote.public_id }
+            : {})
         }).unwrap();
 
         toast({
