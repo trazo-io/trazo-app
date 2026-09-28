@@ -56,7 +56,10 @@ vi.mock('store/api/fieldNoteApi', () => ({
       isError: Boolean(state.isError)
     };
   },
-  useDiscardFieldNoteMutation: () => [mocks.discard, { isLoading: false }]
+  useDiscardFieldNoteMutation: () => [mocks.discard, { isLoading: false }],
+  // The real one interpolates config.API_BASE_URL. Kept simple here, but the SHAPE matters: the
+  // assertions check the path is a Trazo endpoint rather than the provider's own URL.
+  fieldNoteAudioUrl: (publicId: string) => `/api/field-notes/${publicId}/audio/`
 }));
 
 import FieldNotesInbox from '../index';
@@ -193,6 +196,112 @@ describe('the field notes inbox', () => {
  * reached the database and appeared on no surface in the product. The sender believes they filed
  * something; the farm sees nothing. `fieldnotes/models.py` already promises these rows stay visible.
  */
+/**
+ * A voice note is words a MACHINE wrote down, and the surface has to say so and let somebody check.
+ *
+ * ASR dropping a negation ("I applied nothing in block 4") is undetectable by anyone who was not the
+ * speaker, and on this channel the speaker is never the person who confirms. That asymmetry is the
+ * whole reason playback exists: in the in-app voice flow the farmer speaks and the farmer confirms,
+ * so they would catch it themselves.
+ */
+describe('a voice note', () => {
+  const VOICE = {
+    ...NOTE,
+    public_id: 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff',
+    kind: 'voice',
+    body_text: '',
+    words: 'regamos el bloque 4 esta manana, dos horas',
+    transcript: 'regamos el bloque 4 esta manana, dos horas',
+    transcript_language: 'es-419',
+    audio_deleted_at: null
+  };
+
+  beforeEach(() => {
+    mocks.state = {};
+  });
+
+  it('offers a player and says the words were written down automatically', () => {
+    mocks.notes = [VOICE];
+    const { container } = renderInbox(ONE_PARCEL);
+
+    // The qualifier sits next to the claim, not once per page.
+    expect(screen.getByText(/written down automatically/i)).toBeTruthy();
+    const player = container.querySelector('audio');
+    expect(player, 'a voice note rendered no way to listen').toBeTruthy();
+    // Proxied through Trazo, never the provider's own URL: the recording is not in Trazo storage and
+    // a provider link would carry no Trazo authorisation for whoever it reached.
+    expect(player?.getAttribute('src')).toContain(`/field-notes/${VOICE.public_id}/audio/`);
+    expect(player?.getAttribute('src')).not.toContain('twilio');
+  });
+
+  it('tells the reader to listen for a negation specifically', () => {
+    // The failure mode is not generic inaccuracy; it is a dropped "no", which reads as a perfectly
+    // coherent sentence describing work that never happened.
+    mocks.notes = [VOICE];
+    renderInbox(ONE_PARCEL);
+    expect(screen.getByText(/especially a/i).textContent).toMatch(/no/i);
+  });
+
+  it('says the recording is gone rather than showing a broken player', () => {
+    mocks.notes = [{ ...VOICE, audio_deleted_at: '2026-09-28T12:00:00Z' }];
+    const { container } = renderInbox(ONE_PARCEL);
+
+    expect(container.querySelector('audio')).toBeNull();
+    expect(screen.getByText(/recording was deleted/i)).toBeTruthy();
+    // The words survive the recording, which is the point of deleting it.
+    expect(screen.getByText(/regamos el bloque 4/)).toBeTruthy();
+  });
+
+  it('shows no player and no transcript notice for a note somebody typed', () => {
+    mocks.notes = [NOTE];
+    const { container } = renderInbox(ONE_PARCEL);
+
+    expect(container.querySelector('audio')).toBeNull();
+    expect(screen.queryByText(/written down automatically/i)).toBeNull();
+  });
+});
+
+/**
+ * A note still being read is neither waiting nor refused, and saying nothing about it is the one
+ * option that is clearly wrong: a supervisor who looks thirty seconds after a crew member sent a
+ * voice note and sees an empty queue concludes the message was lost.
+ */
+describe('a note still being read', () => {
+  const TRANSCRIBING = {
+    ...NOTE,
+    public_id: 'cccccccc-dddd-eeee-ffff-000000000000',
+    kind: 'voice',
+    body_text: '',
+    words: '',
+    status: 'transcribing'
+  };
+
+  beforeEach(() => {
+    mocks.state = {};
+  });
+
+  it('is announced, and offers nothing to log', () => {
+    mocks.notes = [TRANSCRIBING];
+    renderInbox(ONE_PARCEL);
+
+    expect(screen.getByText(/being read/i)).toBeTruthy();
+    // Nothing to log: there are no words yet.
+    expect(screen.queryByRole('button', { name: /Log this/i })).toBeNull();
+  });
+
+  it('does not let the page claim nothing is waiting', () => {
+    mocks.notes = [TRANSCRIBING];
+    renderInbox(ONE_PARCEL);
+    expect(screen.queryByText(/Nothing waiting/i)).toBeNull();
+  });
+
+  it('stays out of the queue it cannot be logged from', () => {
+    mocks.notes = [TRANSCRIBING, { ...NOTE, status: 'pending' }];
+    renderInbox(ONE_PARCEL);
+    expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(1);
+  });
+});
+
 describe('notes that could not be read', () => {
   const REFUSED_VOICE = {
     ...NOTE,
