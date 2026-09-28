@@ -81,7 +81,20 @@ const FieldNotesInbox = () => {
    * voice note landed in the database and appeared on no surface at all. They believe they filed
    * something. `fieldnotes/models.py` already promises these rows stay visible.
    */
-  const { data: refused = [] } = useGetFieldNotesQuery({ status: 'refused' });
+  /**
+   * Its loading AND error states are both read, because `refused` defaults to `[]` and an empty
+   * array is indistinguishable from "not answered yet" and from "the request failed". Two separate
+   * requests settle independently, so the pending one (dispatched first) normally answers first: on
+   * a cold load that showed "Nothing waiting" for as long as the refusals were in flight, and on a
+   * FAILED refusals request it showed it permanently, since `refused` never becomes anything else.
+   * Claiming nothing arrived while a refusal is sitting unread is the exact silent drop this section
+   * was added to end.
+   */
+  const {
+    data: refused = [],
+    isLoading: refusedLoading,
+    isError: refusedFailed
+  } = useGetFieldNotesQuery({ status: 'refused' });
   const [discardNote, { isLoading: isDiscarding }] = useDiscardFieldNoteMutation();
 
   // The same slice the sidebar reads, so this page needs no query of its own and cannot disagree
@@ -176,21 +189,44 @@ const FieldNotesInbox = () => {
       title={intl.formatMessage({ id: 'fieldNotes.title' })}
       description={intl.formatMessage({ id: 'fieldNotes.description' })}>
       <VStack align="stretch" spacing={4}>
-        {isLoading && <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>}
+        {(isLoading || refusedLoading) && (
+          <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>
+        )}
 
-        {/* Both lists, so "Nothing waiting" cannot sit above a refusal the operator needs to read. */}
-        {!isLoading && notes.length === 0 && refused.length === 0 && (
+        {/*
+          Said out loud rather than folded into the empty state. A refusals request that failed means
+          the page cannot account for what arrived, and "nothing waiting" would be a claim it has no
+          basis for. The queue above still renders: one list failing is no reason to withhold the
+          other.
+        */}
+        {refusedFailed && (
           <StandardCard>
-            <VStack align="start" spacing={1} p={2}>
-              <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                {intl.formatMessage({ id: 'fieldNotes.empty' })}
-              </Text>
-              <Text fontSize="xs" color="gray.700">
-                {intl.formatMessage({ id: 'fieldNotes.emptyHelp' })}
-              </Text>
-            </VStack>
+            <Text fontSize="sm" color="gray.800" p={2}>
+              {intl.formatMessage({ id: 'fieldNotes.refused.loadFailed' })}
+            </Text>
           </StandardCard>
         )}
+
+        {/*
+          Both lists, and both of the refused query's unsettled states, so "Nothing waiting" cannot
+          sit above a refusal the operator needs to read.
+        */}
+        {!isLoading &&
+          !refusedLoading &&
+          !refusedFailed &&
+          notes.length === 0 &&
+          refused.length === 0 && (
+            <StandardCard>
+              <VStack align="start" spacing={1} p={2}>
+                <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                  {intl.formatMessage({ id: 'fieldNotes.empty' })}
+                </Text>
+                <Text fontSize="xs" color="gray.700">
+                  {intl.formatMessage({ id: 'fieldNotes.emptyHelp' })}
+                </Text>
+              </VStack>
+            </StandardCard>
+          )}
 
         {notes.map((note) => {
           const farmId = farmIdFor(note);

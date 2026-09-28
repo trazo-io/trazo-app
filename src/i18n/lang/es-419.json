@@ -5241,6 +5241,7 @@
   "fieldNotes.refused.empty_message": "El mensaje llegó sin texto.",
   "fieldNotes.refused.heading": "No se pudieron leer",
   "fieldNotes.refused.help": "Llegaron a tu número, pero Trazo no pudo convertirlos en una sugerencia, así que no se registró nada. Se conservan aquí porque alguien sí reportó algo, y eso vale la pena saberlo. Pide que lo vuelvan a enviar como indica cada línea.",
+  "fieldNotes.refused.loadFailed": "Las notas que no se pudieron leer no están disponibles ahora, así que esta página no puede dar cuenta de todo lo que llegó. Vuelve a cargar para intentarlo de nuevo.",
   "fieldNotes.refused.unknown": "Trazo no pudo leer este mensaje.",
   "fieldNotes.refused.unsupported_media": "Una foto o un archivo sin mensaje. Pide que lo describan con palabras.",
   "fieldNotes.refused.voice_not_enabled": "Todavía no leemos notas de voz. Pide que escriban el mensaje.",

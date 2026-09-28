@@ -24,7 +24,9 @@ import enUS from '../../../../i18n/lang/en-US.json';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   discard: vi.fn(() => ({ unwrap: () => Promise.resolve({}) })),
-  notes: [] as any[]
+  notes: [] as any[],
+  /** Per-status query state, so the two requests can be made to settle independently. */
+  state: {} as Record<string, { isLoading?: boolean; isError?: boolean }>
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -38,12 +40,22 @@ vi.mock('react-router-dom', async () => {
  * returned every note to both calls, so one note rendered in both sections and the queue
  * assertions failed on "found multiple elements" rather than on anything real. A stub that answers
  * differently from the server it stands in for is a test that cannot be trusted either way.
+ *
+ * It also answers per status for loading and error, because the two requests settle INDEPENDENTLY
+ * and a mock that resolved them together could not express the case that matters: the queue
+ * answering empty while the refusals are still in flight, or failed.
  */
 vi.mock('store/api/fieldNoteApi', () => ({
-  useGetFieldNotesQuery: (args: any) => ({
-    data: mocks.notes.filter((note) => note.status === args?.status),
-    isLoading: false
-  }),
+  useGetFieldNotesQuery: (args: any) => {
+    const status = args?.status;
+    const state = mocks.state[status] ?? {};
+    return {
+      // An errored request yields no data, the way RTK Query leaves it.
+      data: state.isError ? undefined : mocks.notes.filter((note) => note.status === status),
+      isLoading: Boolean(state.isLoading),
+      isError: Boolean(state.isError)
+    };
+  },
   useDiscardFieldNoteMutation: () => [mocks.discard, { isLoading: false }]
 }));
 
@@ -97,6 +109,7 @@ describe('the field notes inbox', () => {
     mocks.navigate.mockClear();
     mocks.discard.mockClear();
     mocks.notes = [NOTE];
+    mocks.state = {};
   });
 
   it('shows the sender words verbatim, and not as an editable field', () => {
@@ -192,6 +205,7 @@ describe('notes that could not be read', () => {
 
   beforeEach(() => {
     mocks.navigate.mockClear();
+    mocks.state = {};
   });
 
   it('shows a refused voice note, with the reason, and offers no way to log it', () => {
@@ -221,6 +235,39 @@ describe('notes that could not be read', () => {
     mocks.notes = [REFUSED_VOICE];
     renderInbox(ONE_PARCEL);
     expect(screen.queryByText(/Nothing waiting/i)).toBeNull();
+  });
+
+  /**
+   * The two requests settle independently, and `[]` is the default for `refused`, so an empty array
+   * means three different things: none on file, not answered yet, or the request failed. Treating
+   * all three as "nothing waiting" is how the page came to claim it had accounted for everything
+   * when it had not.
+   */
+  it('does not claim "nothing waiting" while the refusals are still loading', () => {
+    // The cold-load order: the queue is dispatched first and answers empty first.
+    mocks.notes = [];
+    mocks.state = { refused: { isLoading: true } };
+    renderInbox(ONE_PARCEL);
+    expect(screen.queryByText(/Nothing waiting/i)).toBeNull();
+  });
+
+  it('says so when the refusals cannot be loaded, rather than reporting an empty inbox', () => {
+    // The permanent version of the same bug: on an error `refused` never becomes anything but [],
+    // so the empty state would have stood for the rest of the session.
+    mocks.notes = [];
+    mocks.state = { refused: { isError: true } };
+    renderInbox(ONE_PARCEL);
+
+    expect(screen.queryByText(/Nothing waiting/i)).toBeNull();
+    expect(screen.getByText(/cannot account for everything that arrived/i)).toBeTruthy();
+  });
+
+  it('still renders the queue when only the refusals fail', () => {
+    // One list failing is no reason to withhold the other.
+    mocks.notes = [NOTE];
+    mocks.state = { refused: { isError: true } };
+    renderInbox(ONE_PARCEL);
+    expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(1);
   });
 
   it('keeps a refused note out of the queue it cannot be logged from', () => {
