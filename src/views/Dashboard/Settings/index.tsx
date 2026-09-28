@@ -2,7 +2,6 @@
 import {
   Box,
   Badge,
-  Button,
   Flex,
   SimpleGrid,
   Table,
@@ -520,7 +519,12 @@ export default function SettingsView() {
                         </VStack>
 
                         {/* Code Display and Copy. The API sends the code to company admins only. */}
-                        {currentCompany?.invitation_code ? (
+                        {/* Three states: not loaded yet, admin (code sent), anyone else (null). */}
+                        {!currentCompany ? (
+                          <Text fontSize="xs" color="gray.500">
+                            {intl.formatMessage({ id: 'app.loading' })}
+                          </Text>
+                        ) : currentCompany.invitation_code ? (
                           <VStack spacing={3} align="center" minW={{ base: 'full', md: '200px' }}>
                             {/* Code Badge */}
                             <Badge
@@ -562,14 +566,12 @@ export default function SettingsView() {
                                 transition="all 0.2s ease"
                               />
                             </Tooltip>
-                            <Button
-                              size="xs"
+                            <StandardButton
                               variant="ghost"
-                              colorScheme="gray"
                               onClick={handleRotateCode}
                               isLoading={isRotatingCode}>
                               {intl.formatMessage({ id: 'app.generateNewCompanyCode' })}
-                            </Button>
+                            </StandardButton>
                           </VStack>
                         ) : (
                           <Text fontSize="xs" color="gray.500" maxW={{ base: 'full', md: '200px' }}>

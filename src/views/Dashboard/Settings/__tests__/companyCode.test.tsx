@@ -30,7 +30,7 @@ vi.mock('store/api/invitationApi', () => ({
 vi.mock('../memberRow', () => ({ default: () => null }));
 vi.mock('../CompanyInfoTab', () => ({ default: () => null }));
 
-const renderWithCompany = (company: Record<string, unknown>) => {
+const renderWithCompany = (company: Record<string, unknown> | null) => {
   const store = configureStore({ reducer: { company: companyReducer } });
   store.dispatch(setCompany(company as never));
   render(
@@ -50,7 +50,19 @@ describe('Settings company join code', () => {
 
   beforeEach(() => {
     rotate.mockReset();
-    vi.mocked(useRotateCompanyCodeMutation).mockReturnValue([rotate, { isLoading: false }] as never);
+    vi.mocked(useRotateCompanyCodeMutation).mockReturnValue([
+      rotate,
+      { isLoading: false }
+    ] as never);
+  });
+
+  it('shows a loading line, not the admin-only note, before the company has loaded', () => {
+    // An admin deep-linking into Settings must not be told they are not an admin.
+    renderWithCompany(null as never);
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Only company admins can see and share the join code.')
+    ).not.toBeInTheDocument();
   });
 
   it('tells a non-admin that only admins hold the code, and shows no code', () => {
