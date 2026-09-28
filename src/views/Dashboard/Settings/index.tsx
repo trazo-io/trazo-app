@@ -2,6 +2,7 @@
 import {
   Box,
   Badge,
+  Button,
   Flex,
   SimpleGrid,
   Table,
@@ -34,12 +35,13 @@ import {
 } from 'components/Design/StandardComponents';
 import MemberRow from './memberRow';
 import CompanyInfoTab from './CompanyInfoTab';
-import { useGetCompanyMembersQuery } from 'store/api/companyApi';
+import { useGetCompanyMembersQuery, useRotateCompanyCodeMutation } from 'store/api/companyApi';
 import { useGetUserRolesQuery } from 'store/api/userApi';
 import { useSendInvitationMutation } from 'store/api/invitationApi';
 import { ROLE_FARM_MANAGER } from 'config';
 import { useIntl } from 'react-intl';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCompany } from 'store/features/companySlice';
 
 // Types
 interface RoleOption {
@@ -71,6 +73,8 @@ export default function SettingsView() {
 
   const { data: userRoles } = useGetUserRolesQuery();
   const [sendInvitation, { isLoading: isSendingInvitation }] = useSendInvitationMutation();
+  const [rotateCompanyCode, { isLoading: isRotatingCode }] = useRotateCompanyCodeMutation();
+  const dispatch = useDispatch();
 
   // Filter members based on search term
   const filteredMembers =
@@ -144,6 +148,32 @@ export default function SettingsView() {
   const handleDiscardChanges = () => {
     setInviteEmail('');
     setSelectedRole(null);
+  };
+
+  // A new code stops a forwarded or leaked one from working. People who already joined keep
+  // their access until they are removed from the team.
+  const handleRotateCode = async () => {
+    if (!currentCompany?.id) return;
+    try {
+      const { invitation_code } = await rotateCompanyCode({
+        companyId: currentCompany.id
+      }).unwrap();
+      dispatch(setCompany({ ...currentCompany, invitation_code }));
+      setCodeCopied(false);
+      toast({
+        title: intl.formatMessage({ id: 'app.newCompanyCodeReady' }),
+        status: 'success',
+        duration: 4000,
+        isClosable: true
+      });
+    } catch {
+      toast({
+        title: intl.formatMessage({ id: 'app.couldNotRotateCode' }),
+        status: 'error',
+        duration: 4000,
+        isClosable: true
+      });
+    }
   };
 
   // Copy company code to clipboard
@@ -489,49 +519,63 @@ export default function SettingsView() {
                           </Text>
                         </VStack>
 
-                        {/* Code Display and Copy */}
-                        <VStack spacing={3} align="center" minW={{ base: 'full', md: '200px' }}>
-                          {/* Code Badge */}
-                          <Badge
-                            colorScheme="green"
-                            variant="solid"
-                            fontSize="lg"
-                            px={5}
-                            py={2}
-                            borderRadius="full"
-                            fontFamily="mono"
-                            letterSpacing="wide"
-                            minW="120px"
-                            textAlign="center">
-                            {currentCompany?.invitation_code || 'LOADING...'}
-                          </Badge>
-
-                          {/* Copy Button */}
-                          <Tooltip
-                            label={
-                              codeCopied
-                                ? intl.formatMessage({ id: 'app.copied' })
-                                : intl.formatMessage({ id: 'app.copyCode' })
-                            }
-                            placement="top"
-                            closeOnClick={false}
-                            fontSize="xs">
-                            <IconButton
-                              aria-label={intl.formatMessage({ id: 'app.copyCompanyCode' })}
-                              icon={codeCopied ? <CheckIcon /> : <CopyIcon />}
-                              colorScheme={codeCopied ? 'green' : 'green'}
-                              variant={codeCopied ? 'solid' : 'outline'}
-                              size="sm"
+                        {/* Code Display and Copy. The API sends the code to company admins only. */}
+                        {currentCompany?.invitation_code ? (
+                          <VStack spacing={3} align="center" minW={{ base: 'full', md: '200px' }}>
+                            {/* Code Badge */}
+                            <Badge
+                              colorScheme="green"
+                              variant="solid"
+                              fontSize="lg"
+                              px={5}
+                              py={2}
                               borderRadius="full"
-                              onClick={handleCopyCode}
-                              _hover={{
-                                transform: 'translateY(-1px)',
-                                boxShadow: 'sm'
-                              }}
-                              transition="all 0.2s ease"
-                            />
-                          </Tooltip>
-                        </VStack>
+                              fontFamily="mono"
+                              letterSpacing="wide"
+                              minW="120px"
+                              textAlign="center">
+                              {currentCompany.invitation_code}
+                            </Badge>
+
+                            {/* Copy Button */}
+                            <Tooltip
+                              label={
+                                codeCopied
+                                  ? intl.formatMessage({ id: 'app.copied' })
+                                  : intl.formatMessage({ id: 'app.copyCode' })
+                              }
+                              placement="top"
+                              closeOnClick={false}
+                              fontSize="xs">
+                              <IconButton
+                                aria-label={intl.formatMessage({ id: 'app.copyCompanyCode' })}
+                                icon={codeCopied ? <CheckIcon /> : <CopyIcon />}
+                                colorScheme={codeCopied ? 'green' : 'green'}
+                                variant={codeCopied ? 'solid' : 'outline'}
+                                size="sm"
+                                borderRadius="full"
+                                onClick={handleCopyCode}
+                                _hover={{
+                                  transform: 'translateY(-1px)',
+                                  boxShadow: 'sm'
+                                }}
+                                transition="all 0.2s ease"
+                              />
+                            </Tooltip>
+                            <Button
+                              size="xs"
+                              variant="ghost"
+                              colorScheme="gray"
+                              onClick={handleRotateCode}
+                              isLoading={isRotatingCode}>
+                              {intl.formatMessage({ id: 'app.generateNewCompanyCode' })}
+                            </Button>
+                          </VStack>
+                        ) : (
+                          <Text fontSize="xs" color="gray.500" maxW={{ base: 'full', md: '200px' }}>
+                            {intl.formatMessage({ id: 'app.companyCodeAdminOnly' })}
+                          </Text>
+                        )}
                       </Flex>
 
                       {/* Instructions */}
