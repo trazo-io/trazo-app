@@ -160,3 +160,47 @@ describe('the wizard answers the note it was opened from', () => {
     expect(wizard).not.toMatch(/field_note_status|note_confirmed/);
   });
 });
+
+/**
+ * The SAME class, one layer in: a roster nobody can reach is a channel nobody can turn on.
+ *
+ * Before the roster page existed the webhook was live and the only way to register a number was
+ * staff-only Django admin, while this page told a first-time user to wait for a message that could
+ * not arrive. A roster component that existed and was never mounted would put the product straight
+ * back in that state, and `crewRoster.test.tsx` would stay green throughout, because a render test
+ * mounts the component itself and never asks how a person gets to it.
+ */
+describe('the crew roster is reachable from the inbox', () => {
+  const inbox = () => readFileSync(join(__dirname, '../index.tsx'), 'utf8');
+
+  it('is mounted by the inbox page, not merely importable', () => {
+    const source = inbox();
+    expect(source).toMatch(/import CrewRoster from '\.\/CrewRoster'/);
+    // USAGE, not the import. An unused import is exactly how this class hides.
+    expect(source).toMatch(/<CrewRoster\b/);
+  });
+
+  it('is handed the company it files against', () => {
+    // A roster row belongs to exactly one company, and the component refuses to add without it, so
+    // a mount that forgot this prop would render a permanently disabled button.
+    expect(inbox()).toMatch(/<CrewRoster[^>]*companyId=\{companyId\}/s);
+  });
+
+  it('no longer tells a first-time user to wait for a message nobody can send', () => {
+    // Per locale, because the word is the point: a single English pattern would pass es-419
+    // vacuously or fail it for being translated, and neither says anything about the copy.
+    const namesTheSetupStep: Record<string, RegExp> = {
+      'en-US': /number/i,
+      'es-419': /n[uú]meros?/i
+    };
+    for (const [locale, pattern] of Object.entries(namesTheSetupStep)) {
+      const copy = JSON.parse(readFileSync(join(SRC, `i18n/lang/${locale}.json`), 'utf8'));
+      const help = copy['fieldNotes.emptyHelp'] as string;
+      expect(help, `fieldNotes.emptyHelp missing from ${locale}`).toBeTruthy();
+      // It must name the setup step. The old copy described a waiting room with no door into it.
+      expect(help, `fieldNotes.emptyHelp in ${locale} does not name the setup step`).toMatch(
+        pattern
+      );
+    }
+  });
+});
