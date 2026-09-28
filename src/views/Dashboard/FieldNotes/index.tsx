@@ -33,6 +33,8 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { StandardCard, StandardPage } from 'components/Design/StandardComponents';
+
+import CrewRoster from './CrewRoster';
 import type { RootState } from 'store/index';
 import {
   useDiscardFieldNoteMutation,
@@ -102,6 +104,9 @@ const FieldNotesInbox = () => {
   const establishments = useSelector(
     (state: RootState) => state.company.currentCompany?.establishments
   );
+  // The roster is company-scoped, and a row belongs to exactly one company, so the id is not
+  // optional the way the farm is. Taken from the same slice for the same reason.
+  const companyId = useSelector((state: RootState) => state.company.currentCompany?.id);
 
   const farms: FarmOption[] = useMemo(
     () =>
@@ -454,6 +459,13 @@ const FieldNotesInbox = () => {
             </VStack>
           </StandardCard>
         )}
+
+        {/*
+          LAST, because the queue is the job and this is the setup. It is also the reason the empty
+          state above no longer tells a first-time user to wait for a message: until this section
+          existed nobody outside Trazo could register a number, so waiting was all they could do.
+        */}
+        <CrewRoster companyId={companyId} farms={farms} />
       </VStack>
     </StandardPage>
   );
