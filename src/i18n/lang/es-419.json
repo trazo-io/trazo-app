@@ -7774,6 +7774,7 @@
   "osp.modules.startAgentHint": "Opcional. Puedes cambiarla hasta que envíes el plan.",
   "inputVerify.nonsynthetic": "No sintético",
   "inputVerify.nonsyntheticNote": "permitido sin una entrada en la Lista Nacional",
+  "inputVerify.omriEdition": "Lista del {date}",
   "osp.approvedInputs.kind.nonsynthetic": "No sintético",
   "osp.approvedInputs.section.nonsynthetic": "Sustancias no sintéticas (sin entrada en la Lista Nacional)",
   "osp.approvedInputs.nonsyntheticTooltip": "No sintética: permitida en la producción orgánica sin una entrada en la Lista Nacional",
