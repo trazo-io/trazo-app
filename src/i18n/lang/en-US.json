@@ -5246,6 +5246,7 @@
   "fieldNotes.refused.unsupported_media": "A photo or file with no message. Ask them to describe it in words.",
   "fieldNotes.refused.voice_not_enabled": "Voice notes are not read yet. Ask them to type the message instead.",
   "fieldNotes.roster.add": "Add a number",
+  "fieldNotes.roster.blocked": "This number cannot send right now.",
   "fieldNotes.roster.consent": "I told this person that messages they send to this number are read by Trazo, turned into a suggested record for someone at the farm to confirm, and that they can reply STOP at any time to end it. They agreed.",
   "fieldNotes.roster.deactivate": "Turn off",
   "fieldNotes.roster.farm": "Which farm their messages are about (optional)",

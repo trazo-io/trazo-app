@@ -66,12 +66,31 @@ export interface CrewSenderDraft {
 
 const crewSenderApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getCrewSenders: build.query<CrewSender[], { establishment?: number } | void>({
+    /**
+     * `company` is part of the QUERY ARG, not just a server filter, and that is the point.
+     *
+     * From review of #44. RTK Query keys a cache entry by its serialized args, so a call with a
+     * constant arg is one entry forever: `setCompany` is dispatched independently of navigation
+     * (login, invitation, subscription), so a session's `currentCompany` can change while this page
+     * is mounted, and the previous company's list was then served from cache with nothing
+     * invalidating `'CrewSender'`. Every other company-scoped query in this app puts the id in the
+     * arg for exactly this reason.
+     *
+     * The server intersects it with the caller's own scope rather than substituting for it, so this
+     * narrows what is shown and never widens what is reachable.
+     */
+    getCrewSenders: build.query<
+      CrewSender[],
+      { company?: number | string; establishment?: number } | void
+    >({
       query: (args) => ({
         url: 'crew-senders/',
         method: 'GET',
         credentials: 'include',
-        params: { ...(args && args.establishment ? { establishment: args.establishment } : {}) }
+        params: {
+          ...(args && args.company ? { company: args.company } : {}),
+          ...(args && args.establishment ? { establishment: args.establishment } : {})
+        }
       }),
       // Unpaginated today and could be paginated later; normalised here so no component has to know
       // which shape arrived. Same treatment as the notes list.
@@ -90,7 +109,15 @@ const crewSenderApi = baseApi.injectEndpoints({
       invalidatesTags: ['CrewSender']
     }),
 
-    updateCrewSender: build.mutation<CrewSender, { id: number } & Partial<CrewSenderDraft>>({
+    /**
+     * `is_active` is in the type because it is genuinely patchable: turning a number back on is a
+     * PATCH. It used to be missing, and the call site cast the difference away with `as any`, which
+     * is how a payload the server does not accept reaches it while the typecheck stays green.
+     */
+    updateCrewSender: build.mutation<
+      CrewSender,
+      { id: number; is_active?: boolean } & Partial<CrewSenderDraft>
+    >({
       query: ({ id, ...body }) => ({
         url: `crew-senders/${id}/`,
         method: 'PATCH',

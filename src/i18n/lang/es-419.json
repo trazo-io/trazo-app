@@ -5246,6 +5246,7 @@
   "fieldNotes.refused.unsupported_media": "Una foto o un archivo sin mensaje. Pide que lo describan con palabras.",
   "fieldNotes.refused.voice_not_enabled": "Todavía no leemos notas de voz. Pide que escriban el mensaje.",
   "fieldNotes.roster.add": "Agregar un número",
+  "fieldNotes.roster.blocked": "Este número no puede enviar ahora.",
   "fieldNotes.roster.consent": "Le dije a esta persona que los mensajes que envíe a este número los lee Trazo, se convierten en un registro sugerido para que alguien de la finca lo confirme, y que puede responder STOP en cualquier momento para terminar. Estuvo de acuerdo.",
   "fieldNotes.roster.deactivate": "Desactivar",
   "fieldNotes.roster.farm": "De qué finca son sus mensajes (opcional)",

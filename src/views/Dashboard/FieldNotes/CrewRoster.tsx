@@ -60,11 +60,27 @@ const CrewRoster = ({ companyId, farms }: Props) => {
   const intl = useIntl();
   const toast = useToast();
 
-  const { data: senders = [], isLoading } = useGetCrewSendersQuery(undefined, {
-    // Nothing to scope the roster to before the company is known, and asking anyway would return
-    // every company the caller belongs to under this company's heading.
-    skip: !companyId
-  });
+  const { data: senders = [], isLoading } = useGetCrewSendersQuery(
+    { company: companyId },
+    {
+      // Nothing to scope the roster to before the company is known, and asking anyway would return
+      // every company the caller belongs to under this company's heading.
+      skip: !companyId
+    }
+  );
+
+  /**
+   * Has the server actually been asked yet?
+   *
+   * `companyId` is undefined for the first few hundred milliseconds while the company slice hydrates
+   * (the same window ProfileParcel.tsx:202 documents), so the query above is SKIPPED, and a skipped
+   * RTK query reads as `isLoading: false` with `data` defaulting to `[]`. Rendering that as "no
+   * numbers yet, so nothing can reach this inbox" states the roster is empty before anything has been
+   * asked, which is a claim about the farm's setup made out of a loading state. `CLAUDE.md` names
+   * this trap in as many words: "a SKIPPED RTK query reads as isLoading: false with no data, do not
+   * render that as empty".
+   */
+  const answered = Boolean(companyId) && !isLoading;
   const [createSender, { isLoading: isCreating }] = useCreateCrewSenderMutation();
   const [updateSender] = useUpdateCrewSenderMutation();
   const [deactivateSender] = useDeactivateCrewSenderMutation();
@@ -88,7 +104,12 @@ const CrewRoster = ({ companyId, farms }: Props) => {
   };
 
   const save = async () => {
-    if (!companyId) return;
+    // GUARDED HERE, not only by the button's `isDisabled`. From review of #44: the check that
+    // matters, "did a person tick consent", lived entirely in JSX disabled-prop plumbing, so a second
+    // call site or a re-render that briefly re-enabled the button would have walked straight past it.
+    // The rule is about a claim made on somebody else's behalf; it belongs next to the call that
+    // sends it.
+    if (!companyId || !phone.trim() || !attested) return;
     setError(null);
     try {
       await createSender({
@@ -122,13 +143,26 @@ const CrewRoster = ({ companyId, farms }: Props) => {
     }
   };
 
-  /** Why this number cannot send, when it cannot. Three columns gate it, so name the right one. */
+  /**
+   * Why this number cannot send, when it cannot.
+   *
+   * WHETHER it is blocked comes from `may_send`, which is the SERVER's own computed answer. The three
+   * columns below only choose which sentence to show. That split is the whole point, and it is the
+   * mistake this component was already written to warn about one layer down: re-deriving the gate
+   * here would mean that the day the backend grows a fourth input, the page shows a number as able to
+   * send while every message it sends is refused, and nothing would catch the disagreement.
+   *
+   * The precedence is stopped, then off, then consent, and it is deliberate: STOP is the crew
+   * member's own decision and outranks anything the farm did. The fallback matters for the same
+   * reason the refusal copy has one: a blocked row with no matching column must still say something.
+   */
   const blockedReason = (sender: CrewSender) => {
+    if (sender.may_send) return null;
     if (sender.stopped_at) return intl.formatMessage({ id: 'fieldNotes.roster.stopped' });
     if (!sender.is_active) return intl.formatMessage({ id: 'fieldNotes.roster.inactive' });
     if (!sender.consent_attested_at)
       return intl.formatMessage({ id: 'fieldNotes.roster.noConsent' });
-    return null;
+    return intl.formatMessage({ id: 'fieldNotes.roster.blocked' });
   };
 
   return (
@@ -143,9 +177,9 @@ const CrewRoster = ({ companyId, farms }: Props) => {
           </Text>
         </VStack>
 
-        {isLoading && <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>}
+        {!answered && <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>}
 
-        {!isLoading && senders.length === 0 && (
+        {answered && senders.length === 0 && (
           <Text fontSize="sm" color="gray.700">
             {intl.formatMessage({ id: 'fieldNotes.roster.none' })}
           </Text>
@@ -198,7 +232,7 @@ const CrewRoster = ({ companyId, farms }: Props) => {
                     size="xs"
                     minH="44px"
                     variant="outline"
-                    onClick={() => updateSender({ id: sender.id, is_active: true } as any)}>
+                    onClick={() => updateSender({ id: sender.id, is_active: true })}>
                     {intl.formatMessage({ id: 'fieldNotes.roster.reactivate' })}
                   </Button>
                 )}

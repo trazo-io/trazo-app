@@ -97,16 +97,65 @@ describe('the crew roster', () => {
   });
 
   it('names why a number cannot send, and the three reasons are different answers', () => {
+    // `may_send: false` on every one of them, because the SERVER computes that and a real payload
+    // could never pair `may_send: true` with `stopped_at`. The first version of this fixture did
+    // exactly that, and it passed only while the component re-derived the gate instead of reading
+    // the server's answer, which is the defect review #44 flagged.
     mocks.senders = [
-      { ...SENDER, id: 1, stopped_at: '2026-09-25T09:00:00Z' },
-      { ...SENDER, id: 2, is_active: false, stopped_at: null },
-      { ...SENDER, id: 3, consent_attested_at: null, stopped_at: null }
+      { ...SENDER, id: 1, may_send: false, stopped_at: '2026-09-25T09:00:00Z' },
+      { ...SENDER, id: 2, may_send: false, is_active: false, stopped_at: null },
+      { ...SENDER, id: 3, may_send: false, consent_attested_at: null, stopped_at: null }
     ];
     renderRoster(5);
 
     expect(screen.getByText(/They replied STOP/i)).toBeTruthy();
     expect(screen.getByText(/Turned off/i)).toBeTruthy();
     expect(screen.getByText(/Waiting on consent/i)).toBeTruthy();
+  });
+
+  it('reads the server answer for WHETHER a number is blocked, not the raw columns', () => {
+    // The point of the split. If the backend ever gates on a fourth input, `may_send` goes false
+    // while all three columns still look fine, and the page must not claim the number works.
+    mocks.senders = [
+      {
+        ...SENDER,
+        may_send: false,
+        is_active: true,
+        stopped_at: null,
+        consent_attested_at: '2026-09-20T10:00:00Z'
+      }
+    ];
+    renderRoster(5);
+    expect(screen.getByText(/cannot send right now/i)).toBeTruthy();
+  });
+
+  it('puts the crew member own decision first when more than one reason applies', () => {
+    // Precedence: STOP outranks anything the farm did, because it is the sender's choice and the
+    // farm cannot undo it by switching the row back on.
+    mocks.senders = [
+      {
+        ...SENDER,
+        may_send: false,
+        is_active: false,
+        consent_attested_at: null,
+        stopped_at: '2026-09-25T09:00:00Z'
+      }
+    ];
+    renderRoster(5);
+
+    expect(screen.getByText(/They replied STOP/i)).toBeTruthy();
+    expect(screen.queryByText(/Turned off/i)).toBeNull();
+    expect(screen.queryByText(/Waiting on consent/i)).toBeNull();
+  });
+
+  it('does not claim the roster is empty before the company is known', () => {
+    // A SKIPPED RTK query reads as isLoading:false with data defaulting to [], and
+    // "No numbers yet, so nothing can reach this inbox" is a claim about the farm's setup. Making it
+    // out of a loading state is the trap trazo-app/CLAUDE.md:117 names in as many words, and
+    // `currentCompany?.id` is undefined for the first few hundred milliseconds of every load.
+    mocks.senders = [];
+    renderRoster();
+    expect(screen.queryByText(/nothing can reach this inbox/i)).toBeNull();
   });
 
   it('says nothing can reach the inbox when no number is registered', () => {
