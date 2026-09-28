@@ -249,3 +249,38 @@ describe('the crew roster', () => {
     );
   });
 });
+
+/**
+ * The attestation is a claim made ABOUT somebody who is not in the room, so its content is pinned.
+ *
+ * It is the only thing standing between "a crew member agreed to this" and nobody having asked. Once
+ * audio began leaving for transcription it had to name the processors, and a later edit tidying the
+ * sentence must not quietly drop them: a person cannot consent to a disclosure they were never told
+ * about. Four things have to survive, in both locales.
+ */
+describe('the consent attestation', () => {
+  const locales = ['en-US', 'es-419'];
+
+  it('names the processors the words are sent to, in both locales', () => {
+    for (const locale of locales) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const copy = require(`../../../../i18n/lang/${locale}.json`);
+      const consent = copy['fieldNotes.roster.consent'] as string;
+      expect(consent, `missing consent copy in ${locale}`).toBeTruthy();
+      expect(consent, `${locale} does not name the transcription processor`).toMatch(/Deepgram/);
+      expect(consent, `${locale} does not name the AI processor`).toMatch(/OpenAI/);
+    }
+  });
+
+  it('promises the opt-out and the deletion, in both locales', () => {
+    for (const locale of locales) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const copy = require(`../../../../i18n/lang/${locale}.json`);
+      const consent = copy['fieldNotes.roster.consent'] as string;
+      // STOP is honoured server-side across every company a number is on, so the promise is real.
+      expect(consent, `${locale} does not mention STOP`).toMatch(/STOP/);
+      // The recording is deleted at the provider on confirm or discard.
+      expect(consent.toLowerCase(), `${locale} does not promise deletion`).toMatch(/delet|elimin/);
+    }
+  });
+});

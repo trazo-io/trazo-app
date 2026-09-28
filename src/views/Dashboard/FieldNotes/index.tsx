@@ -39,6 +39,7 @@ import type { RootState } from 'store/index';
 import {
   useDiscardFieldNoteMutation,
   useGetFieldNotesQuery,
+  fieldNoteAudioUrl,
   type FieldNote
 } from 'store/api/fieldNoteApi';
 
@@ -50,7 +51,19 @@ import {
  * would otherwise render react-intl's fallback, which is the raw key, and `voice_not_enabled` is
  * not something to show a farmer.
  */
-const REFUSAL_KEYS = ['voice_not_enabled', 'unsupported_media', 'empty_message'];
+const REFUSAL_KEYS = [
+  'voice_not_enabled',
+  'unsupported_media',
+  'empty_message',
+  // Added with server-side transcription. Each one is a different thing to tell the crew, which is
+  // the whole reason they are separate values rather than one "could not read it".
+  'media_unavailable',
+  'nothing_heard',
+  'language_not_supported',
+  'transcription_failed',
+  'voice_daily_limit',
+  'media_auth_unconfigured'
+];
 
 /** A farm the caller can file against, with the lots it contains. */
 interface FarmOption {
@@ -92,6 +105,37 @@ const FieldNotesInbox = () => {
    * Claiming nothing arrived while a refusal is sitting unread is the exact silent drop this section
    * was added to end.
    */
+  /**
+   * Notes whose words do not exist yet.
+   *
+   * Its own query for the same reason the refusals have one: `status: 'all'` would return confirmed
+   * and discarded notes into a list whose cards carry a "Log this", and the pending arg has to stay
+   * byte-identical so anything that later wants a waiting-note count shares its cache entry.
+   *
+   * Shown because the alternative is worse than a spinner: a supervisor who sees an empty queue
+   * thirty seconds after a crew member sent a voice note concludes it was lost.
+   */
+  const {
+    data: transcribing = [],
+    isLoading: transcribingLoading,
+    isError: transcribingFailed
+  } = useGetFieldNotesQuery(
+    { status: 'transcribing' },
+    {
+      /**
+       * POLLED, because the copy promises the note appears here once the words are ready and nothing
+       * else would deliver that. The transition is server-side only: no mutation invalidates
+       * 'FieldNote' when a transcript lands, and the slice sets no refetchOnFocus. Without this a
+       * supervisor who waits on the page never sees the note leave, which is the opposite of what the
+       * strip is for. Same pattern as exportJobsApi, for the same reason.
+       *
+       * The interval is only live while this query has a subscriber, so it stops when the page is
+       * closed rather than polling forever.
+       */
+      pollingInterval: 15000
+    }
+  );
+
   const {
     data: refused = [],
     isLoading: refusedLoading,
@@ -194,7 +238,7 @@ const FieldNotesInbox = () => {
       title={intl.formatMessage({ id: 'fieldNotes.title' })}
       description={intl.formatMessage({ id: 'fieldNotes.description' })}>
       <VStack align="stretch" spacing={4}>
-        {(isLoading || refusedLoading) && (
+        {(isLoading || refusedLoading || transcribingLoading) && (
           <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>
         )}
 
@@ -204,7 +248,7 @@ const FieldNotesInbox = () => {
           basis for. The queue above still renders: one list failing is no reason to withhold the
           other.
         */}
-        {refusedFailed && (
+        {(refusedFailed || transcribingFailed) && (
           <StandardCard>
             <Text fontSize="sm" color="gray.800" p={2}>
               {intl.formatMessage({ id: 'fieldNotes.refused.loadFailed' })}
@@ -219,8 +263,11 @@ const FieldNotesInbox = () => {
         {!isLoading &&
           !refusedLoading &&
           !refusedFailed &&
+          !transcribingLoading &&
+          !transcribingFailed &&
           notes.length === 0 &&
-          refused.length === 0 && (
+          refused.length === 0 &&
+          transcribing.length === 0 && (
             <StandardCard>
               <VStack align="start" spacing={1} p={2}>
                 <Text fontSize="sm" fontWeight="semibold" color="green.700">
@@ -276,6 +323,42 @@ const FieldNotesInbox = () => {
                   <Text fontSize="sm" color="gray.800" whiteSpace="pre-wrap">
                     {`“${note.words}”`}
                   </Text>
+
+                  {/*
+                    A VOICE NOTE'S WORDS ARE A MACHINE'S GUESS, and the surface says so beside them.
+                    For typed text the sender wrote the words; here an ASR system did, and the
+                    difference decides what the reader should trust. The qualifier sits next to the
+                    claim rather than once per page, which is this project's rule for qualifiers.
+                  */}
+                  {note.kind === 'voice' && (
+                    <VStack align="stretch" spacing={2} mt={3}>
+                      <Text fontSize="xs" color="gray.600">
+                        {intl.formatMessage({ id: 'fieldNotes.machineTranscript' })}
+                      </Text>
+
+                      {/*
+                        LISTENING IS THE POINT, not a nicety. ASR dropping a negation ("I applied
+                        nothing in block 4") is undetectable by anyone who was not the speaker, and on
+                        this channel the speaker is never the person confirming. The source is an
+                        authenticated Trazo endpoint that proxies the bytes; the recording is never in
+                        Trazo's storage and is deleted at the provider once this note is logged or
+                        discarded, which is why the deleted case renders a line instead of a player.
+                      */}
+                      {note.audio_deleted_at ? (
+                        <Text fontSize="xs" color="gray.600">
+                          {intl.formatMessage({ id: 'fieldNotes.audioDeleted' })}
+                        </Text>
+                      ) : (
+                        <audio
+                          controls
+                          preload="none"
+                          src={fieldNoteAudioUrl(note.public_id)}
+                          style={{ width: '100%' }}>
+                          {intl.formatMessage({ id: 'fieldNotes.audioUnsupported' })}
+                        </audio>
+                      )}
+                    </VStack>
+                  )}
                 </Box>
 
                 <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
@@ -383,6 +466,27 @@ const FieldNotesInbox = () => {
             </StandardCard>
           );
         })}
+
+        {/*
+          BEING READ. A strip rather than cards, because there is nothing to do with these yet: no
+          farm select, no block select, no "Log this". It exists so a supervisor who looks thirty
+          seconds after a crew member sent a voice note does not conclude it was lost.
+        */}
+        {transcribing.length > 0 && (
+          <StandardCard>
+            <VStack align="start" spacing={1} p={2}>
+              <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                {intl.formatMessage(
+                  { id: 'fieldNotes.transcribing.heading' },
+                  { count: transcribing.length }
+                )}
+              </Text>
+              <Text fontSize="xs" color="gray.700">
+                {intl.formatMessage({ id: 'fieldNotes.transcribing.help' })}
+              </Text>
+            </VStack>
+          </StandardCard>
+        )}
 
         {/*
           REFUSED notes: what arrived and could not be read. No farm select, no block select and no

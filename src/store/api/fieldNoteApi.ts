@@ -11,9 +11,18 @@
  *
  * See `fieldnotes/models.py` for the whole design and `fieldnotes/views.py` for the inbox.
  */
+import { config } from 'config/environment';
+
 import baseApi from './baseApi';
 
-export type FieldNoteStatus = 'pending' | 'confirmed' | 'discarded' | 'refused';
+/**
+ * `transcribing` is a voice note whose words do not exist yet.
+ *
+ * It is a different fact from `pending`: the inbox must not offer "Log this" on a note nobody can
+ * read, and a supervisor looking at an empty queue deserves to know something is on its way rather
+ * than that nothing arrived.
+ */
+export type FieldNoteStatus = 'transcribing' | 'pending' | 'confirmed' | 'discarded' | 'refused';
 
 export interface FieldNoteSender {
   display_name: string;
@@ -36,6 +45,15 @@ export interface FieldNote {
   status: FieldNoteStatus;
   /** Why a note could not be accepted, e.g. `voice_not_enabled`. Empty when it is waiting. */
   refusal_reason: string;
+  /**
+   * Set for a voice note, and it is NOT the same kind of thing as the sender's typed words: it is a
+   * machine's guess at what somebody said. `words` already resolves to it, so the surface only needs
+   * this to say so out loud.
+   */
+  transcript?: string;
+  transcript_language?: string;
+  /** Stamped when the recording was deleted at the provider, so there is nothing left to play. */
+  audio_deleted_at?: string | null;
   received_at: string;
   establishment: number | null;
   confirmed_at: string | null;
@@ -104,6 +122,17 @@ const fieldNoteApi = baseApi.injectEndpoints({
     })
   })
 });
+
+/**
+ * Where to play a voice note from.
+ *
+ * An authenticated Trazo endpoint that proxies the bytes from the provider, NOT the provider's own
+ * URL. The recording never enters Trazo's storage (the default bucket is publicly readable), and a
+ * link straight to the provider would carry no Trazo authorisation for whoever it was forwarded to.
+ * `credentials: 'include'` is why an <audio src> works here: the cookie goes with it.
+ */
+export const fieldNoteAudioUrl = (publicId: string) =>
+  `${config.API_BASE_URL}/field-notes/${encodeURIComponent(publicId)}/audio/`;
 
 export const { useGetFieldNotesQuery, useGetFieldNoteQuery, useDiscardFieldNoteMutation } =
   fieldNoteApi;
