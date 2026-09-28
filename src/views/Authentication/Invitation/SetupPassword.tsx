@@ -29,6 +29,7 @@ import { FaGoogle, FaFacebook } from 'react-icons/fa';
 import { HiOfficeBuilding } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
+import { useIntl } from 'react-intl';
 import AuthFooter from 'components/Footer/AuthFooter';
 import {
   StandardField,
@@ -70,6 +71,7 @@ const SetupPassword: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const toast = useToast();
+  const intl = useIntl();
   const dispatch = useDispatch();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -105,6 +107,7 @@ const SetupPassword: React.FC = () => {
   const passwordConfirm = watch('password_confirm');
   const firstName = watch('first_name');
   const lastName = watch('last_name');
+  const acceptTerms = watch('acceptTerms');
 
   // Password strength validation (mirrors backend validators)
   const passwordValidation = React.useMemo(() => {
@@ -129,7 +132,8 @@ const SetupPassword: React.FC = () => {
     try {
       const response = await socialAuth({
         ...authData,
-        invitation_code: invitationCode
+        invitation_code: invitationCode,
+        accept_terms: acceptTerms === true
       }).unwrap();
 
       dispatch(loginAction(response));
@@ -224,7 +228,8 @@ const SetupPassword: React.FC = () => {
         first_name: data.first_name,
         last_name: data.last_name,
         password: data.password,
-        invitation_code: invitationCode
+        invitation_code: invitationCode,
+        accept_terms: data.acceptTerms === true
       }).unwrap();
 
       console.log('🔒 INVITATION: Signup result received:', result);
@@ -1022,7 +1027,9 @@ const SetupPassword: React.FC = () => {
                       borderColor={useColorModeValue('gray.200', 'gray.600')}
                       borderRadius="xl"
                       onClick={() => handleSocialLogin(social.name)}
-                      isDisabled={isSubmitting || isCreatingAccount || isSocialLoading}
+                      isDisabled={
+                        isSubmitting || isCreatingAccount || isSocialLoading || !acceptTerms
+                      }
                       _hover={{
                         bg: useColorModeValue('gray.100', 'gray.600'),
                         borderColor: useColorModeValue('gray.300', 'gray.500'),
@@ -1034,6 +1041,19 @@ const SetupPassword: React.FC = () => {
                     </Button>
                   ))}
                 </HStack>
+                {!acceptTerms && (
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    _dark={{ color: 'gray.400' }}
+                    textAlign="center">
+                    {intl.formatMessage({
+                      id: 'auth.signup.social.termsFirst',
+                      defaultMessage:
+                        'Tick the Terms box above to continue with Google or Facebook.'
+                    })}
+                  </Text>
+                )}
               </VStack>
             </Box>
           </MotionBox>

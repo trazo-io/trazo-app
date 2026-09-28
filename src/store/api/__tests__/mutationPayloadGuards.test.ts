@@ -335,3 +335,16 @@ describe('production form — F9: the payload carries no key the subtype does no
     ).toBe(false);
   });
 });
+
+describe('socialAuth mutation — the Terms acceptance reaches the server', () => {
+  // The builder rebuilds `body` field by field (no rest-spread), so a key the sign-up screens
+  // add to the call is silently dropped unless it is listed here. `accept_terms` was, and every
+  // Google/Facebook sign-up recorded no acceptance while the component tests (which mock the
+  // hook) stayed green.
+  it('lists accept_terms in the request body', () => {
+    const source = read('store/api/authApi.js');
+    const social = endpointSlice(source, 'socialAuth', 'userData');
+    const body = social.slice(social.indexOf('body:'));
+    expect(body.slice(0, body.indexOf('}')), 'socialAuth body').toMatch(/\baccept_terms\b/);
+  });
+});
