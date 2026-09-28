@@ -415,7 +415,24 @@ const ResultCard: React.FC<{
           badgeLabel="OMRI"
           badgeColor="purple"
           title={result.omri_product_name || ''}
-          subtitle={result.omri_product_id ? `OMRI #${result.omri_product_id}` : undefined}
+          // Through `omriSubtitle`, so the UNAMBIGUOUS match carries its edition date too.
+          // It used to build `OMRI #<id>` inline and print no edition, which had it exactly
+          // backwards: the edition appeared only in the multi-match list, and was missing from
+          // the single row a grower actually attaches to a record. Same daily-republication
+          // reason as above, on the path that ends in a stored listing.
+          //
+          // Reading the candidate rather than the top-level fields is safe and not a guess:
+          // `matched_omri` IS `omri_candidates[0]` on both server branches
+          // (certifications/views.py:206 and :217), so a match always has its row here. The
+          // `find` is still by pk, and it still falls back to the ID alone, so a response that
+          // ever stops holding the row degrades to the old subtitle instead of dropping the ID.
+          subtitle={
+            omriSubtitle(
+              omriCandidates.find((candidate) => candidate.pk === result.omri_product_pk) ?? {
+                omri_id: result.omri_product_id ?? null
+              }
+            ) || undefined
+          }
           action={
             onAttachOmri ? (
               omriAttached ? (

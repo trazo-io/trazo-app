@@ -76,15 +76,50 @@ const resultWith = (editionDate: string | null) => ({
   ]
 });
 
-const mount = (editionDate: string | null) => {
-  state.data = resultWith(editionDate);
-  return render(
+/**
+ * ONE candidate, which is the branch a grower actually attaches from.
+ *
+ * `ambiguousOmri` is `omri_candidates.length > 1`, so this renders the single `MatchRow` at
+ * InputVerifyHelper.tsx:413 rather than the pick-one list. That row used to build its own
+ * `OMRI #<id>` subtitle and print no edition at all, so the date appeared only where the answer
+ * was uncertain and was missing from the one row that gets stored. Reading the candidate is safe
+ * because `matched_omri` IS `omri_candidates[0]` on both server branches (certifications/views.py
+ * :206 and :217).
+ */
+const singleResultWith = (editionDate: string | null) => ({
+  query: 'seaweed',
+  omri_product_pk: 1,
+  omri_product_id: '1234-A',
+  omri_product_name: 'Soluble Seaweed Powder',
+  omri_candidate_count: 1,
+  omri_candidates: [
+    {
+      pk: 1,
+      omri_id: '1234-A',
+      product_name: 'Soluble Seaweed Powder',
+      manufacturer: 'Neptune',
+      list_edition_date: editionDate
+    }
+  ]
+});
+
+const renderHelper = () =>
+  render(
     <ChakraProvider>
       <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
         <InputVerifyHelper name="seaweed" />
       </IntlProvider>
     </ChakraProvider>
   );
+
+const mount = (editionDate: string | null) => {
+  state.data = resultWith(editionDate);
+  return renderHelper();
+};
+
+const mountSingle = (editionDate: string | null) => {
+  state.data = singleResultWith(editionDate);
+  return renderHelper();
 };
 
 /** What `Intl` would print for right now, in the pinned zone. The thing that must never appear. */
@@ -115,6 +150,31 @@ describe('the OMRI edition label', () => {
   it('omits the edition when there is none on file', () => {
     mount(null);
     expect(screen.queryByText(/List of/)).toBeNull();
+    expect(screen.getAllByText(/OMRI #1234-A/).length).toBeGreaterThan(0);
+  });
+
+  /**
+   * The unambiguous match matters MORE than the list above, not less: the pick-one list is a
+   * question, and this row is the answer a grower attaches to a record that a certifier reads.
+   */
+  it('renders the edition on a single unambiguous match, not only in the pick-one list', () => {
+    mountSingle('2026-09-05');
+    expect(screen.getAllByText(/OMRI #1234-A · List of Sep 5, 2026/).length).toBeGreaterThan(0);
+  });
+
+  it('still names the listing on a single match with no edition on file', () => {
+    mountSingle(null);
+    expect(screen.queryByText(/List of/)).toBeNull();
+    expect(screen.getAllByText(/OMRI #1234-A/).length).toBeGreaterThan(0);
+  });
+
+  it('omits a malformed edition on a single match instead of printing today', () => {
+    mountSingle('not-a-date');
+    expect(screen.queryByText(/List of/)).toBeNull();
+    expect(
+      screen.queryByText(new RegExp(today.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),
+      'a malformed edition date rendered as the current date on the single match'
+    ).toBeNull();
     expect(screen.getAllByText(/OMRI #1234-A/).length).toBeGreaterThan(0);
   });
 });
