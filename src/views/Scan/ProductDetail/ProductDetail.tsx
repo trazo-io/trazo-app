@@ -138,7 +138,7 @@ const CarbonExplainerLoader = () => (
 );
 // Navigation Components
 import { NavigationBottomBar } from '../../../components/Navigation/NavigationBottomBar';
-import { resolveHarvestDates } from '../../../utils/consumerDisplay';
+import { resolveProductionDisplayDates } from '../../../utils/consumerDisplay';
 
 // Educational modal content
 const EducationModal = ({
@@ -334,6 +334,50 @@ function ProductDetail() {
       refetchOnFocus: false
     }
   );
+
+  // The transparency payload exposes harvest completion as
+  // farm_context.production_period.end (transparency_response_formatter.py:198).
+  // Neither top-level finish_date nor product.end_date exist on this endpoint, which is
+  // why the hero never showed a harvest date.
+  //
+  // 🔴 2026-08-20 — but BOTH of those are the day the grower CLOSED the season, not the day
+  // the fruit came off. `resolveHarvestDates` reads the harvest records instead and only
+  // falls back to the close date when a lot has none. See the comment on that helper for
+  // why a three-day drift here is a real problem for a produce buyer rather than a
+  // cosmetic one.
+  const seasonClosedDate =
+    (completeData as any)?.farm_context?.production_period?.end ||
+    (completeData as any)?.finish_date;
+  // ONE derivation for every date this page prints, so the hero, the HARVEST pillar and the
+  // parcel card cannot disagree. See `resolveProductionDisplayDates`.
+  //
+  // 🔴 2026-09-18 — COMPONENT scope, deliberately. These consts lived inside the hero's
+  // IIFE, while the parcel card that reads `plantingDate` renders in a SECOND IIFE ~1200
+  // lines below: the identifier was out of scope there and every buyer page died on
+  // `ReferenceError: plantingDate is not defined` behind the error boundary ("We hit a
+  // snag loading this page"). A page-level crash, not a missing row.
+  const displayDates = resolveProductionDisplayDates(
+    (completeData as any)?.timeline,
+    seasonClosedDate
+  );
+  // ⛔ GATED HERE, not at each call site.
+  //
+  // 🔴 2026-09-24 — the first cut applied `harvestFromRecords` only where the parcel card is
+  // built and handed the hero and the HARVEST pillar the ungated value. Both label it
+  // "Harvested {date}" (`consumer.hero.harvestedLabel`, `consumer.trust.harvested`), and
+  // `resolveHarvestDates` falls back to the season-close date when a lot has no HA record — so
+  // such a lot read "Harvested Aug 12" at the top and "SEASON CLOSED Aug 12" with no harvest
+  // row below. The same date under two labels that contradict each other, which is the exact
+  // defect this change exists to remove, re-created by gating one consumer of three.
+  //
+  // There is one harvest date on this page, and it is undefined unless a harvest RECORD
+  // produced it. Season close is carried separately by `seasonClosedForDisplay`.
+  const harvestDate = displayDates.harvestFromRecords ? displayDates.harvestDate : undefined;
+  const harvestDateStart = displayDates.harvestFromRecords
+    ? displayDates.harvestDateStart
+    : undefined;
+  const seasonClosedForDisplay = displayDates.seasonClosedDate;
+  const plantingDate = displayDates.plantingDate;
 
   // Blockchain integrity check — runs whenever production is finalized (has finalization_hash)
   // OR has blockchain data (tx_hash). This closes the gap between finalization and
@@ -804,31 +848,6 @@ function ProductDetail() {
             (farmerData?.city && farmerData?.state
               ? `${farmerData.city}, ${farmerData.state}`
               : undefined);
-          // The transparency payload exposes harvest completion as
-          // farm_context.production_period.end (transparency_response_formatter.py:198).
-          // Neither top-level finish_date nor product.end_date exist on this
-          // endpoint — which is why the hero never showed a harvest date.
-          //
-          // 🔴 2026-08-20 — but BOTH of those are the day the grower CLOSED the season, not
-          // the day the fruit came off. `resolveHarvestDates` reads the harvest records
-          // instead and only falls back to the close date when a lot has none. See the
-          // comment on that helper for why a three-day drift here is a real problem for a
-          // produce buyer rather than a cosmetic one.
-          const seasonClosedDate =
-            (completeData as any)?.farm_context?.production_period?.end ||
-            (completeData as any)?.finish_date;
-          const harvestWindow = resolveHarvestDates(
-            (completeData as any)?.timeline,
-            seasonClosedDate
-          );
-          // `?? undefined`: both consumers declare `harvestDate?: string`, and
-          // `resolveHarvestDates` returns null when a lot has neither a harvest record
-          // nor a close date. Passing null where the prop says optional-string works by
-          // accident today and stops working the moment strictNullChecks is turned on.
-          const harvestDate = harvestWindow.last ?? undefined;
-          const harvestDateStart = harvestWindow.isRange
-            ? harvestWindow.first ?? undefined
-            : undefined;
           // First production photo (S3 URL) — hero background. `images` is a
           // string[]; images[0] is the explicit cover (cover_image_url) when set,
           // else the first auto-collected photo. Tolerate the legacy {image}
@@ -1105,10 +1124,19 @@ function ProductDetail() {
                 // When OrganicClaimBadge is active for certified organic, the USDA Organic
                 // certification is already represented there — filter it out of the list
                 // to avoid redundant display. Show its certifier as an attribution line instead.
+                // 🔴 2026-09-24 — 'specimen' added to the exclusion list.
+                //
+                // Without it a fabricated operation kept this block, and the attribution line
+                // below printed "Certifier: <real accredited agent>" off the invented
+                // certificate row. The green "Verified via USDA Organic Integrity Database"
+                // line was already gated, but naming a real certifier is the OTHER half of the
+                // harm the specimen work was written to stop — the validator's own docstring
+                // says so in those words.
                 const showingOrganicClaim =
                   organicClaim &&
                   organicClaim.status !== 'conventional' &&
-                  organicClaim.status !== 'self_reported';
+                  organicClaim.status !== 'self_reported' &&
+                  organicClaim.status !== 'specimen';
                 const usdaOrganicCert = showingOrganicClaim
                   ? allCertifications.find(
                       (c: any) =>
@@ -2016,8 +2044,27 @@ function ProductDetail() {
                   areaUnit: 'acres',
                   soilType: (completeData as any)?.parcel?.soilType,
                   cropType: (completeData as any)?.product?.name,
-                  plantingDate: (completeData as any)?.start_date,
-                  harvestDate: (completeData as any)?.finish_date,
+                  // 🔴 2026-09-16 — these two lines used to read the payload directly, and both
+                  // were wrong.
+                  //
+                  // `harvestDate: finish_date` is the day the grower CLOSED the season, not the
+                  // day anything was picked, and `ParcelMapInfo` prints it under the label
+                  // "HARVEST DATE". On the audited blueberry lot the top of the page showed the
+                  // real pick window (Jul 20 - Aug 7) from the harvest records while this card
+                  // showed Aug 12; on the carrot lot, Sep 8-19 against Sep 30. Two different
+                  // facts, one label, on one page.
+                  //
+                  // `plantingDate: start_date` read a key that does not exist on this endpoint
+                  // at all — `farm_context` (which carries `production_period.start`) is popped
+                  // server-side before the response is returned — so the row rendered only from
+                  // a stale cached payload shape.
+                  //
+                  // Both now come from the SAME resolver the hero and the HARVEST pillar use,
+                  // so the three cannot disagree.
+                  plantingDate: plantingDate,
+                  harvestDate,
+                  harvestDateStart: harvestDateStart,
+                  seasonClosedDate: seasonClosedForDisplay,
                   elevation: (completeData as any)?.parcel?.elevation,
                   slope: (completeData as any)?.parcel?.slope,
                   irrigationType: (completeData as any)?.parcel?.irrigationType,

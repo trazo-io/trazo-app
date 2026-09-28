@@ -52,7 +52,18 @@ export interface Certification {
   notes?: string;
   document_url?: string;
   is_active: boolean;
+  /**
+   * What a reader may be told about this certificate: 'verified_via_database' only when the
+   * certificate was actually matched against Trazo's copy of the USDA Organic Integrity
+   * Database, else 'self_reported' | 'inactive' | 'pending'.
+   *
+   * ⛔ Render badges from THIS, never from `verification_status`. That column is set by admin
+   * edits, imports and fixtures, and marking it "verified" is not evidence a registry check
+   * happened (see certifications/models.py `consumer_display_status`).
+   */
   consumer_display_status: string;
+  /** True when the OPERATION's records are fabricated (`Establishment.is_demo`). */
+  specimen?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -92,7 +103,17 @@ export type OrganicClaimStatus =
   | 'certified_organic'
   | 'transitioning'
   | 'self_reported'
-  | 'conventional';
+  | 'conventional'
+  /**
+   * The OPERATION's records are fabricated (`Establishment.is_demo`). Outranks every other
+   * branch server-side, so it arrives INSTEAD OF a claim, not alongside one.
+   *
+   * It exists as a status rather than the `specimen` boolean alone because a boolean only
+   * works while every reader remembers to read it, and three did not: the practices pillar
+   * and the organic narrative both compared against 'certified_organic' and asserted
+   * certification for a farm whose own disclaimer said the certificate was invented.
+   */
+  | 'specimen';
 
 export type OrganicClaimColor = 'green' | 'yellow' | 'gray';
 
@@ -160,6 +181,14 @@ export interface OrganicClaim {
    * that published promise in three places.
    */
   oid_matched?: boolean;
+  /**
+   * True when the OPERATION's records are fabricated (`Establishment.is_demo`).
+   *
+   * Kept alongside `status: 'specimen'`, not replaced by it: the per-certificate rows and
+   * `evidence.source` already read this flag, and dropping a signal three surfaces consult in
+   * order to add a fourth would repeat the mistake in reverse.
+   */
+  specimen?: boolean;
   status: OrganicClaimStatus;
   status_color: OrganicClaimColor;
   reason: string;

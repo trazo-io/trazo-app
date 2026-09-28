@@ -2505,9 +2505,6 @@ const EducationTopicDetail: React.FC = () => {
                   <ListItem>
                     {intl.formatMessage({ id: 'education.detail.renewalSeason.windowWsda' })}
                   </ListItem>
-                  <ListItem>
-                    {intl.formatMessage({ id: 'education.detail.renewalSeason.windowMosa' })}
-                  </ListItem>
                 </UnorderedList>
               </VStack>
             </Box>

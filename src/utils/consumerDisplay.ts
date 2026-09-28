@@ -273,7 +273,7 @@ export const formatDateRangeForConsumer = (
 export const resolveHarvestDates = (
   timeline?: Array<{ production_type?: string; type?: string; date?: string | null }> | null,
   fallbackDate?: string | null
-): { first: string | null; last: string | null; isRange: boolean } => {
+): { first: string | null; last: string | null; isRange: boolean; fromRecords: boolean } => {
   const harvestDates = (timeline || [])
     .filter((e) => e?.production_type === 'HA' || e?.type === 'HA')
     .map((e) => e?.date)
@@ -288,7 +288,11 @@ export const resolveHarvestDates = (
     .map((x) => x.raw);
 
   if (!harvestDates.length) {
-    return { first: fallbackDate ?? null, last: fallbackDate ?? null, isRange: false };
+    // `fromRecords: false` says the caller is looking at the SEASON CLOSE date, not a harvest.
+    // Added 2026-09-16: without it a caller cannot tell a fallback from a real single-pass
+    // harvest, and `ParcelMapInfo` printed the close date under a "HARVEST DATE" label — three
+    // weeks later than the pick on one audited lot, and on the same page as the true range.
+    return { first: fallbackDate ?? null, last: fallbackDate ?? null, isRange: false, fromRecords: false };
   }
 
   const first = harvestDates[0];
@@ -305,7 +309,91 @@ export const resolveHarvestDates = (
       ? iso.slice(0, 10)
       : `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
   };
-  return { first, last, isRange: localDay(first) !== localDay(last) };
+  return { first, last, isRange: localDay(first) !== localDay(last), fromRecords: true };
+};
+
+/**
+ * Every date the consumer page prints for a production, derived ONCE.
+ *
+ * 🔴 2026-09-16 — this exists because the derivation used to be spread across `ProductDetail`:
+ * the hero and the HARVEST pillar called `resolveHarvestDates`, and the parcel card was handed
+ * `completeData.finish_date` directly. `finish_date` is the day the grower CLOSED the season,
+ * the parcel card labels it "HARVEST DATE", and so one page carried two different answers under
+ * one label — Jul 20-Aug 7 at the top against Aug 12 below on the audited blueberry lot, Sep
+ * 8-19 against Sep 30 on the carrot lot.
+ *
+ * Agreement between surfaces is only guaranteeable if there is one derivation to agree with, so
+ * every caller takes its dates from here and nothing reaches past it to the raw payload.
+ */
+export const resolveProductionDisplayDates = (
+  timeline?: Array<{ production_type?: string; type?: string; date?: string | null }> | null,
+  seasonClosedDate?: string | null
+): {
+  harvestDate?: string;
+  harvestDateStart?: string;
+  seasonClosedDate?: string;
+  plantingDate?: string;
+  /** False when `harvestDate` fell back to the close date. Callers that print a HARVEST label must check it. */
+  harvestFromRecords: boolean;
+} => {
+  const window = resolveHarvestDates(timeline, seasonClosedDate);
+  // `?? undefined`: consumers declare these props as optional strings, and passing null works
+  // by accident today but stops the moment strictNullChecks is turned on.
+  const harvestDate = window.last ?? undefined;
+  const harvestDateStart = window.isRange ? window.first ?? undefined : undefined;
+
+  // Season close is a DIFFERENT fact from the last pick and worth showing: a buyer reads it as
+  // "the lot is finished". It is only worth showing SEPARATELY, though — printed when it adds
+  // something, omitted when it is the same instant as the last harvest record, and never
+  // borrowed as a harvest date. When a lot has no harvest record at all this is the only date
+  // there is, and it still goes under its own label rather than inventing a harvest.
+  // ⚠️ Compare the DAY, not the instant. `History.finish_date` and `CommonEvent.date` are both
+  // DateTimeFields, so a lot closed the same afternoon it was picked has two timestamps that
+  // differ by hours and a `!==` suppression that can never fire — the row would print on every
+  // lot. `resolveHarvestDates` already compares local calendar days thirty lines up, for the
+  // same reason: the comparison has to happen in the frame the reader sees.
+  const sameLocalDay = (a?: string | null, b?: string | null): boolean => {
+    if (!a || !b) return false;
+    const da = new Date(a);
+    const db = new Date(b);
+    if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return a === b;
+    return (
+      da.getFullYear() === db.getFullYear() &&
+      da.getMonth() === db.getMonth() &&
+      da.getDate() === db.getDate()
+    );
+  };
+  const closedForDisplay =
+    seasonClosedDate && !sameLocalDay(seasonClosedDate, window.last)
+      ? seasonClosedDate
+      : !window.fromRecords
+      ? seasonClosedDate ?? undefined
+      : undefined;
+
+  // First planting or transplant record, by the same rule as harvest: the records carry the
+  // truth. `PL` and `TR` both establish "this is when the crop went in".
+  const plantingDate = (timeline || [])
+    .filter((e) => {
+      // `||` not `??`: the API emits `production_type: ""` for an event whose `type` is unset
+      // (serializers.py `getattr(event, "type", "")`), and `??` only falls back on null or
+      // undefined — so the harvest filter below matched such a row and this one did not.
+      const subtype = e?.production_type || e?.type;
+      return subtype === 'PL' || subtype === 'TR';
+    })
+    .map((e) => e?.date)
+    .filter((d): d is string => Boolean(d))
+    .map((d) => ({ raw: d, at: new Date(d).getTime() }))
+    .filter((x) => !Number.isNaN(x.at))
+    .sort((a, b) => a.at - b.at)
+    .map((x) => x.raw)[0];
+
+  return {
+    harvestDate,
+    harvestDateStart,
+    seasonClosedDate: closedForDisplay ?? undefined,
+    plantingDate,
+    harvestFromRecords: window.fromRecords
+  };
 };
 
 export const formatHarvestDate = (

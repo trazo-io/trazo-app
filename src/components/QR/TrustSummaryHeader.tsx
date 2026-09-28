@@ -166,6 +166,15 @@ function buildPracticesPillar(props: TrustSummaryHeaderProps, intl: IntlShape): 
   const { organicClaim, certifications, documentedEventsCount } = props;
   if (!documentedEventsCount || documentedEventsCount === 0) return null;
 
+  // 🔴 2026-09-16 — a fabricated operation gets no practices pillar at all.
+  //
+  // The server returns status 'specimen' instead of a claim, so the certified branch below no
+  // longer matches. Falling through is not enough: the default branch says "Practices
+  // Documented", which is still an assertion about records that were invented. The page
+  // already carries a specimen banner and a hero chip; a pillar is not the place to repeat it,
+  // and it is certainly not the place to contradict it.
+  if (organicClaim?.status === 'specimen' || organicClaim?.specimen) return null;
+
   const tooltipExplainer = intl.formatMessage({
     id: 'consumer.trust.practicesTooltip',
     defaultMessage:
