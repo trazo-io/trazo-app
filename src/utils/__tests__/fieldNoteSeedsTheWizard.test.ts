@@ -104,6 +104,23 @@ describe('the save sends one key about the note and nothing else', () => {
     // fact the server owns.
     expect(src).not.toMatch(/field_note_status|note_status:|field_note_words/);
   });
+
+  /**
+   * MEASURED 2026-09-27: the payload was the ONE read of this note that was not gated on `pending`.
+   * The seed was (`:543`), the step-0 card was (`:3049`), the banner was (`:3256`), and the save
+   * sent the id for a note of any status. That mattered because the queue could be stale: until
+   * `createEvent` learned to invalidate 'FieldNote', the inbox went on offering a note whose record
+   * was already written, and re-sending its id produced a second event that
+   * `_resolve_field_note` silently declined to link, since it filters status=PENDING.
+   *
+   * The cache fix is the real one; this is the second line of defence, and it is the one that holds
+   * when the page starts showing refused and confirmed notes.
+   */
+  it('sends the key only for a note that is still waiting', () => {
+    expect(src).toMatch(/activeFieldNote\?\.status === 'pending'\s*\n?\s*\?\s*\{ field_note:/);
+    // The breaking edit: dropping the gate back to a bare truthiness check on the note.
+    expect(src).not.toMatch(/\.\.\.\(activeFieldNote \? \{ field_note:/);
+  });
 });
 
 describe('the file these guards read still compiles', () => {

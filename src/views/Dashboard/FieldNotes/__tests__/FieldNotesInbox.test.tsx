@@ -24,7 +24,9 @@ import enUS from '../../../../i18n/lang/en-US.json';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   discard: vi.fn(() => ({ unwrap: () => Promise.resolve({}) })),
-  notes: [] as any[]
+  notes: [] as any[],
+  /** Per-status query state, so the two requests can be made to settle independently. */
+  state: {} as Record<string, { isLoading?: boolean; isError?: boolean }>
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -32,8 +34,28 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mocks.navigate };
 });
 
+/**
+ * The mock FILTERS BY STATUS, because the endpoint does (`?status=` in fieldnotes/views.py) and the
+ * page now asks it twice: once for the queue, once for refusals. A mock that ignored its argument
+ * returned every note to both calls, so one note rendered in both sections and the queue
+ * assertions failed on "found multiple elements" rather than on anything real. A stub that answers
+ * differently from the server it stands in for is a test that cannot be trusted either way.
+ *
+ * It also answers per status for loading and error, because the two requests settle INDEPENDENTLY
+ * and a mock that resolved them together could not express the case that matters: the queue
+ * answering empty while the refusals are still in flight, or failed.
+ */
 vi.mock('store/api/fieldNoteApi', () => ({
-  useGetFieldNotesQuery: () => ({ data: mocks.notes, isLoading: false }),
+  useGetFieldNotesQuery: (args: any) => {
+    const status = args?.status;
+    const state = mocks.state[status] ?? {};
+    return {
+      // An errored request yields no data, the way RTK Query leaves it.
+      data: state.isError ? undefined : mocks.notes.filter((note) => note.status === status),
+      isLoading: Boolean(state.isLoading),
+      isError: Boolean(state.isError)
+    };
+  },
   useDiscardFieldNoteMutation: () => [mocks.discard, { isLoading: false }]
 }));
 
@@ -87,6 +109,7 @@ describe('the field notes inbox', () => {
     mocks.navigate.mockClear();
     mocks.discard.mockClear();
     mocks.notes = [NOTE];
+    mocks.state = {};
   });
 
   it('shows the sender words verbatim, and not as an editable field', () => {
@@ -158,5 +181,100 @@ describe('the field notes inbox', () => {
     mocks.notes = [];
     renderInbox(ONE_PARCEL);
     expect(screen.getByText(/Nothing waiting/i)).toBeTruthy();
+  });
+});
+
+/**
+ * A note that could not be read must still be visible, because today that is MOST of them.
+ *
+ * `providers/twilio.py` classifies any audio as `kind="voice"` and `fieldnotes/views.py` writes a
+ * non-text note as REFUSED with `voice_not_enabled`, since ASR is not wired. The page asked only for
+ * pending notes, nothing creates a notification, and no refusal copy existed, so a crew voice note
+ * reached the database and appeared on no surface in the product. The sender believes they filed
+ * something; the farm sees nothing. `fieldnotes/models.py` already promises these rows stay visible.
+ */
+describe('notes that could not be read', () => {
+  const REFUSED_VOICE = {
+    ...NOTE,
+    public_id: 'ffffffff-0000-4000-8000-000000000001',
+    words: '',
+    kind: 'voice',
+    status: 'refused',
+    refusal_reason: 'voice_not_enabled'
+  };
+
+  beforeEach(() => {
+    mocks.navigate.mockClear();
+    mocks.state = {};
+  });
+
+  it('shows a refused voice note, with the reason, and offers no way to log it', () => {
+    mocks.notes = [REFUSED_VOICE];
+    renderInbox(ONE_PARCEL);
+
+    expect(screen.getByText(/Could not be read/i)).toBeTruthy();
+    expect(screen.getByText(/Voice notes are not read yet/i)).toBeTruthy();
+    // Nothing to log, so no button, no farm select and no block select on this row.
+    expect(screen.queryByRole('button', { name: /Log this/i })).toBeNull();
+    expect(screen.queryByLabelText(/Choose the farm/i)).toBeNull();
+  });
+
+  it('renders copy for an unrecognised reason instead of leaking the raw key', () => {
+    // `refusal_reason` is a plain CharField with no choices, so the server can grow a fourth value
+    // before its copy ships. react-intl's fallback for a missing id is the id itself, and
+    // "voice_not_enabled" is not something to show a farmer.
+    mocks.notes = [{ ...REFUSED_VOICE, refusal_reason: 'some_new_reason_from_the_server' }];
+    renderInbox(ONE_PARCEL);
+
+    expect(screen.getByText(/Trazo could not read this message/i)).toBeTruthy();
+    expect(screen.queryByText(/some_new_reason_from_the_server/)).toBeNull();
+    expect(screen.queryByText(/fieldNotes\.refused/)).toBeNull();
+  });
+
+  it('does not say "nothing waiting" over a refusal the operator needs to read', () => {
+    mocks.notes = [REFUSED_VOICE];
+    renderInbox(ONE_PARCEL);
+    expect(screen.queryByText(/Nothing waiting/i)).toBeNull();
+  });
+
+  /**
+   * The two requests settle independently, and `[]` is the default for `refused`, so an empty array
+   * means three different things: none on file, not answered yet, or the request failed. Treating
+   * all three as "nothing waiting" is how the page came to claim it had accounted for everything
+   * when it had not.
+   */
+  it('does not claim "nothing waiting" while the refusals are still loading', () => {
+    // The cold-load order: the queue is dispatched first and answers empty first.
+    mocks.notes = [];
+    mocks.state = { refused: { isLoading: true } };
+    renderInbox(ONE_PARCEL);
+    expect(screen.queryByText(/Nothing waiting/i)).toBeNull();
+  });
+
+  it('says so when the refusals cannot be loaded, rather than reporting an empty inbox', () => {
+    // The permanent version of the same bug: on an error `refused` never becomes anything but [],
+    // so the empty state would have stood for the rest of the session.
+    mocks.notes = [];
+    mocks.state = { refused: { isError: true } };
+    renderInbox(ONE_PARCEL);
+
+    expect(screen.queryByText(/Nothing waiting/i)).toBeNull();
+    expect(screen.getByText(/cannot account for everything that arrived/i)).toBeTruthy();
+  });
+
+  it('still renders the queue when only the refusals fail', () => {
+    // One list failing is no reason to withhold the other.
+    mocks.notes = [NOTE];
+    mocks.state = { refused: { isError: true } };
+    renderInbox(ONE_PARCEL);
+    expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(1);
+  });
+
+  it('keeps a refused note out of the queue it cannot be logged from', () => {
+    // Belt and braces on the page's own filtering: the queue section is driven by the pending
+    // query, so a refused note must not appear among the cards that carry a "Log this".
+    mocks.notes = [REFUSED_VOICE, { ...NOTE, status: 'pending' }];
+    renderInbox(ONE_PARCEL);
+    expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(1);
   });
 });

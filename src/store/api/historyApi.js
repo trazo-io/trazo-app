@@ -144,7 +144,18 @@ export const historyApi = baseApi.injectEndpoints({
       // 'SeasonPlan' because a record logged against a planned practice closes that
       // checklist item server-side, so the plan's completeness is stale the moment this
       // succeeds. (See store/api/seasonPlanApi.ts.)
-      invalidatesTags: (result, error) => (error ? [] : ['Event', 'History', 'SeasonPlan'])
+      //
+      // 'FieldNote' for the same reason and for a sharper one. `_confirm_field_note` spends the
+      // note inside this very request (history/views.py), so the inbox queue is stale the moment
+      // this succeeds. Without the tag the ONLY invalidator of 'FieldNote' was discard, and the
+      // queue kept serving a note already logged for the default 60s keepUnusedDataFor. Tapping
+      // "Log this" on that row sent `field_note` again, `_resolve_field_note` filters
+      // status=PENDING and returned None, and `_confirm_field_note` returned early with only a
+      // log line: a SECOND event for one crew message, unlinked, with nothing on screen.
+      // § 205.103(b)(2) needs records an inspector can trace, so a silent duplicate is not
+      // cosmetic. Both slices inject into the same baseApi, so this tag does reach fieldNoteApi.
+      invalidatesTags: (result, error) =>
+        error ? [] : ['Event', 'History', 'SeasonPlan', 'FieldNote']
     }),
     updateEvent: build.mutation({
       query: ({ companyId, farmId, eventId, eventType, ...eventData }) => {
