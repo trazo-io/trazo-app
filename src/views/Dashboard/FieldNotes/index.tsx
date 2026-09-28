@@ -40,6 +40,16 @@ import {
   type FieldNote
 } from 'store/api/fieldNoteApi';
 
+/**
+ * The refusal reasons that have copy, mirroring the three literals `fieldnotes/views.py` writes.
+ *
+ * An allowlist rather than interpolating `refusal_reason` straight into a message id, because the
+ * column is a plain CharField with no choices: a value added on the server before its copy ships
+ * would otherwise render react-intl's fallback, which is the raw key, and `voice_not_enabled` is
+ * not something to show a farmer.
+ */
+const REFUSAL_KEYS = ['voice_not_enabled', 'unsupported_media', 'empty_message'];
+
 /** A farm the caller can file against, with the lots it contains. */
 interface FarmOption {
   id: number;
@@ -53,6 +63,25 @@ const FieldNotesInbox = () => {
   const toast = useToast();
 
   const { data: notes = [], isLoading } = useGetFieldNotesQuery({ status: 'pending' });
+  /**
+   * REFUSED notes, fetched separately rather than by widening the query above to `status: 'all'`.
+   *
+   * Two reasons, both measured. (1) `'all'` returns confirmed and discarded notes too, and the
+   * card below gates "Log this" on whether a block is picked, not on status, so an already-logged
+   * note would render a live button: a second record for one message, which is the bug the queue
+   * invalidation in historyApi was just fixed for. (2) The pending arg is a cache key. Anything
+   * else that ever wants a waiting-note count has to pass the byte-identical `{ status: 'pending' }`
+   * to share this entry, and two surfaces printing two different numbers for one subject is what
+   * got the standalone readiness panel deleted on 2026-08-04.
+   *
+   * Why they must be visible at all: EVERY voice note is refused today. `providers/twilio.py`
+   * classifies any audio as `kind="voice"` and `fieldnotes/views.py` writes a non-text note as
+   * REFUSED with `voice_not_enabled`, because ASR is not wired yet. The page showed pending notes
+   * only, nothing creates a notification, and no copy for a refusal existed, so a crew member's
+   * voice note landed in the database and appeared on no surface at all. They believe they filed
+   * something. `fieldnotes/models.py` already promises these rows stay visible.
+   */
+  const { data: refused = [] } = useGetFieldNotesQuery({ status: 'refused' });
   const [discardNote, { isLoading: isDiscarding }] = useDiscardFieldNoteMutation();
 
   // The same slice the sidebar reads, so this page needs no query of its own and cannot disagree
@@ -149,7 +178,8 @@ const FieldNotesInbox = () => {
       <VStack align="stretch" spacing={4}>
         {isLoading && <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>}
 
-        {!isLoading && notes.length === 0 && (
+        {/* Both lists, so "Nothing waiting" cannot sit above a refusal the operator needs to read. */}
+        {!isLoading && notes.length === 0 && refused.length === 0 && (
           <StandardCard>
             <VStack align="start" spacing={1} p={2}>
               <Text fontSize="sm" fontWeight="semibold" color="green.700">
@@ -166,7 +196,11 @@ const FieldNotesInbox = () => {
           const farmId = farmIdFor(note);
           const parcelId = parcelIdFor(note);
           const farm = farms.find((f) => String(f.id) === farmId);
-          const ready = Boolean(farmId && parcelId);
+          // The block choice AND the status. The query above asks for pending notes, so the status
+          // half is redundant today and is what holds if this list is ever widened: a "Log this"
+          // offered on a note already spent writes a second record for one message, and
+          // `_resolve_field_note` filters status=PENDING so the server declines the link silently.
+          const ready = Boolean(farmId && parcelId) && note.status === 'pending';
 
           return (
             <StandardCard key={note.public_id}>
@@ -308,6 +342,82 @@ const FieldNotesInbox = () => {
             </StandardCard>
           );
         })}
+
+        {/*
+          REFUSED notes: what arrived and could not be read. No farm select, no block select and no
+          "Log this", because there is nothing here to log. A refusal is not a queue item; it is the
+          answer to "why did Miguel's message never turn up", which was previously answerable
+          nowhere in the product.
+
+          No Discard button either, deliberately: `discard` returns 409 for a note that is not
+          pending (fieldnotes/views.py), and the page's only failure toast is the generic
+          `discardFailed`, so offering it would produce a button that always fails and never says
+          why. The row is already terminal.
+        */}
+        {refused.length > 0 && (
+          <StandardCard>
+            <VStack align="stretch" spacing={3} p={2}>
+              <VStack align="start" spacing={1}>
+                <Text fontSize="sm" fontWeight="semibold" color="gray.800">
+                  {intl.formatMessage({ id: 'fieldNotes.refused.heading' })}
+                </Text>
+                <Text fontSize="xs" color="gray.700">
+                  {intl.formatMessage({ id: 'fieldNotes.refused.help' })}
+                </Text>
+              </VStack>
+
+              {refused.map((note) => (
+                <Box
+                  key={note.public_id}
+                  borderWidth="1px"
+                  borderColor="gray.200"
+                  borderRadius="md"
+                  p={3}>
+                  <VStack align="stretch" spacing={2}>
+                    <HStack justify="space-between" align="start" flexWrap="wrap" spacing={2}>
+                      <Text fontSize="xs" color="gray.600">
+                        {intl.formatMessage(
+                          { id: 'fieldNotes.sentBy' },
+                          {
+                            last4: note.sender.phone_last4,
+                            when: new Date(note.received_at).toLocaleString(intl.locale)
+                          }
+                        )}
+                      </Text>
+                      <Badge variant="neutral">
+                        {intl.formatMessage({ id: `fieldNotes.kind.${note.kind}` })}
+                      </Badge>
+                    </HStack>
+
+                    {/*
+                      `refusal_reason` is a plain CharField with no choices on the model, written
+                      from three literals in the webhook. An unrecognised value therefore has to
+                      render as SOMETHING rather than as a raw key or an empty line, so a reason
+                      added server-side before its copy lands reads as "could not be read" instead
+                      of leaking `voice_not_enabled` at a farmer.
+                    */}
+                    <Text fontSize="sm" color="gray.800">
+                      {intl.formatMessage({
+                        id: REFUSAL_KEYS.includes(note.refusal_reason)
+                          ? `fieldNotes.refused.${note.refusal_reason}`
+                          : 'fieldNotes.refused.unknown'
+                      })}
+                    </Text>
+
+                    {/* Only when there is something to show: a voice note carries no text. */}
+                    {note.words ? (
+                      <Box bg="gray.50" borderRadius="md" p={2}>
+                        <Text fontSize="xs" color="gray.700" whiteSpace="pre-wrap">
+                          {`“${note.words}”`}
+                        </Text>
+                      </Box>
+                    ) : null}
+                  </VStack>
+                </Box>
+              ))}
+            </VStack>
+          </StandardCard>
+        )}
       </VStack>
     </StandardPage>
   );
