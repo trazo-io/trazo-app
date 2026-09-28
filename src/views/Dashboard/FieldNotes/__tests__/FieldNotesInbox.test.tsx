@@ -300,6 +300,58 @@ describe('a note still being read', () => {
     renderInbox(ONE_PARCEL);
     expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(1);
   });
+
+  /**
+   * The same two states the refused query was already fixed for, which this query then repeated.
+   * An empty array means three different things: none on file, not answered yet, and the request
+   * failed. Treating all three as "nothing waiting" is how the page came to claim it had accounted
+   * for everything, and the strip exists precisely to stop a supervisor concluding a note was lost.
+   */
+  it('does not claim nothing is waiting while the transcribing list is still loading', () => {
+    mocks.notes = [];
+    mocks.state = { transcribing: { isLoading: true } };
+    renderInbox(ONE_PARCEL);
+    expect(screen.queryByText(/Nothing waiting/i)).toBeNull();
+  });
+
+  it('says so when the transcribing list cannot be loaded', () => {
+    mocks.notes = [];
+    mocks.state = { transcribing: { isError: true } };
+    renderInbox(ONE_PARCEL);
+
+    expect(screen.queryByText(/Nothing waiting/i)).toBeNull();
+    expect(screen.getByText(/cannot account for everything that arrived/i)).toBeTruthy();
+  });
+});
+
+/**
+ * The player's source has to be reachable under the PRODUCTION CSP, and nothing else would catch it.
+ *
+ * `media-src` falls back to `default-src` when unset, NOT to `connect-src`. The app is served from
+ * app.trazo.io and the API from api.trazo.io, so with `default-src 'self'` and no `media-src` the
+ * browser blocks the audio and the player fails silently. It works in development because the API is
+ * a same-origin `/api` proxy there, which makes this the exact shape of defect that ships.
+ */
+describe('the production CSP allows the audio to load', () => {
+  const csp = () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { readFileSync } = require('fs');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { join } = require('path');
+    const toml = readFileSync(join(__dirname, '../../../../../netlify.toml'), 'utf8');
+    const line = toml.split('\n').find((l: string) => l.includes('Content-Security-Policy'));
+    expect(line, 'no Content-Security-Policy in netlify.toml').toBeTruthy();
+    return line as string;
+  };
+
+  it('declares media-src, rather than relying on connect-src', () => {
+    const directive = /media-src ([^;"]+)/.exec(csp());
+    expect(
+      directive,
+      'media-src is unset, so it falls back to default-src and blocks the player'
+    ).toBeTruthy();
+    expect(directive?.[1]).toContain('api.trazo.io');
+  });
 });
 
 describe('notes that could not be read', () => {

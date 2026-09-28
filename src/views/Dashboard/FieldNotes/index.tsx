@@ -115,7 +115,26 @@ const FieldNotesInbox = () => {
    * Shown because the alternative is worse than a spinner: a supervisor who sees an empty queue
    * thirty seconds after a crew member sent a voice note concludes it was lost.
    */
-  const { data: transcribing = [] } = useGetFieldNotesQuery({ status: 'transcribing' });
+  const {
+    data: transcribing = [],
+    isLoading: transcribingLoading,
+    isError: transcribingFailed
+  } = useGetFieldNotesQuery(
+    { status: 'transcribing' },
+    {
+      /**
+       * POLLED, because the copy promises the note appears here once the words are ready and nothing
+       * else would deliver that. The transition is server-side only: no mutation invalidates
+       * 'FieldNote' when a transcript lands, and the slice sets no refetchOnFocus. Without this a
+       * supervisor who waits on the page never sees the note leave, which is the opposite of what the
+       * strip is for. Same pattern as exportJobsApi, for the same reason.
+       *
+       * The interval is only live while this query has a subscriber, so it stops when the page is
+       * closed rather than polling forever.
+       */
+      pollingInterval: 15000
+    }
+  );
 
   const {
     data: refused = [],
@@ -219,7 +238,7 @@ const FieldNotesInbox = () => {
       title={intl.formatMessage({ id: 'fieldNotes.title' })}
       description={intl.formatMessage({ id: 'fieldNotes.description' })}>
       <VStack align="stretch" spacing={4}>
-        {(isLoading || refusedLoading) && (
+        {(isLoading || refusedLoading || transcribingLoading) && (
           <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>
         )}
 
@@ -229,7 +248,7 @@ const FieldNotesInbox = () => {
           basis for. The queue above still renders: one list failing is no reason to withhold the
           other.
         */}
-        {refusedFailed && (
+        {(refusedFailed || transcribingFailed) && (
           <StandardCard>
             <Text fontSize="sm" color="gray.800" p={2}>
               {intl.formatMessage({ id: 'fieldNotes.refused.loadFailed' })}
@@ -244,6 +263,8 @@ const FieldNotesInbox = () => {
         {!isLoading &&
           !refusedLoading &&
           !refusedFailed &&
+          !transcribingLoading &&
+          !transcribingFailed &&
           notes.length === 0 &&
           refused.length === 0 &&
           transcribing.length === 0 && (
