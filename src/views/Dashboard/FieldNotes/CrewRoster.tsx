@@ -33,7 +33,7 @@ import {
 } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
-import { StandardCard } from 'components/Design/StandardComponents';
+import { STATUS_URGENCY_TOKENS, StandardCard } from 'components/Design/StandardComponents';
 import {
   useCreateCrewSenderMutation,
   useDeactivateCrewSenderMutation,
@@ -201,7 +201,21 @@ const CrewRoster = ({ companyId, farms }: Props) => {
     // the notice is triggered by their first message and cannot be sent ahead of it.
     if (sender.last_note_at) {
       return {
-        tone: 'orange.600',
+        /*
+         * From review of #49, which flagged the literal `orange.600` as a foreign palette.
+         *
+         * It is one, and it is also the RIGHT hue: `STATUS_URGENCY_TOKENS` in the design system is
+         * Chakra's orange on purpose, because the theme's own amber cannot carry text. MEASURED
+         * there: amber.500 is 2.16:1 on white and even amber.900 reaches only 3.79, under the 4.5
+         * small text owes. Amber is a fill ramp. So the fix is not a different colour, it is
+         * taking the token the design system exports instead of writing the step out by hand,
+         * which is how a literal drifts from the scale it was copied from.
+         *
+         * WARN rather than CRIT, deliberately. Nothing is broken and no record is at risk: a
+         * notice did not send and somebody should chase it. `danger` is this app's error
+         * treatment, and spending it here leaves nothing louder for a state that is one.
+         */
+        tone: STATUS_URGENCY_TOKENS.warn.text,
         text: intl.formatMessage({ id: 'fieldNotes.roster.noticeFailed' })
       };
     }

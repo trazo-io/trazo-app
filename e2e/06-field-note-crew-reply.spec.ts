@@ -246,9 +246,20 @@ test.describe('a crew message reaches the inbox', () => {
      * here, which makes it the one status that cannot double as evidence that the request arrived.
      * A correctly signed delivery to the same URL, in the same test, is that evidence.
      */
+    /*
+     * FROM A DIFFERENT NUMBER, and the review of #49 is why. Sending this probe from `phone`
+     * ACCEPTS a delivery for the very row the assertions below call untouched: it stamps
+     * `last_note_at` while `first_contact_at` stays null, which is exactly the failed-notice
+     * branch, so the final `toHaveCount(0)` contradicted its own comment. It passed anyway, on
+     * timing rather than on being true, which is the worse kind of green.
+     *
+     * An unrostered number proves reachability just as well. The endpoint answers 200 and writes
+     * NOTHING for a number on no roster, which is the behaviour the webhook is built around, so
+     * this probe cannot dirty any row at all.
+     */
     const reachable = await deliver(request, {
       MessageSid: `SM-e2e-reachable-${Date.now()}`,
-      From: `whatsapp:${phone}`,
+      From: `whatsapp:${freshNumber()}`,
       Body: 'reachability probe',
       NumMedia: '0',
       ProfileName: 'E2E Crew'
