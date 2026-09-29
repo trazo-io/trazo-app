@@ -247,6 +247,15 @@ const CrewRoster = ({ companyId, farms }: Props) => {
         {adding && (
           <VStack align="stretch" spacing={2}>
             <StandardInput
+              /*
+                16px, because iOS Safari auto-zooms the page when a focused field is under it.
+                MEASURED: Chakra's fontSizes.sm is 0.875rem and `src/` overrides no typography
+                token, so CONTROL_FIELD_SX's `fontSize: 'sm'` computes to 14px. `{...props}` is
+                the last spread in StandardInput, so this wins. NOTE: this is an exception to the
+                app's 14px controls, kept because a crew roster is filled in on a phone. The
+                app-wide fix belongs in CONTROL_FIELD_SX, not at four call sites.
+              */
+              fontSize="md"
               value={phone}
               placeholder={intl.formatMessage({ id: 'fieldNotes.roster.phone' })}
               aria-label={intl.formatMessage({ id: 'fieldNotes.roster.phone' })}
@@ -257,6 +266,7 @@ const CrewRoster = ({ companyId, farms }: Props) => {
             </Text>
 
             <StandardInput
+              fontSize="md"
               value={name}
               placeholder={intl.formatMessage({ id: 'fieldNotes.roster.name' })}
               aria-label={intl.formatMessage({ id: 'fieldNotes.roster.name' })}
@@ -267,6 +277,7 @@ const CrewRoster = ({ companyId, farms }: Props) => {
             </Text>
 
             <StandardSelect
+              fontSize="md"
               value={farmId}
               placeholder={intl.formatMessage({ id: 'fieldNotes.roster.farm' })}
               aria-label={intl.formatMessage({ id: 'fieldNotes.roster.farm' })}
@@ -279,6 +290,7 @@ const CrewRoster = ({ companyId, farms }: Props) => {
             </StandardSelect>
 
             <StandardSelect
+              fontSize="md"
               value={language}
               aria-label={intl.formatMessage({ id: 'fieldNotes.roster.language' })}
               onChange={(event) => setLanguage(event.target.value as CrewSenderLanguage)}>

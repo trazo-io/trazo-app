@@ -445,7 +445,16 @@ describe('notes that could not be read', () => {
     expect(screen.getByText(/Voice notes are not read yet/i)).toBeTruthy();
     // Nothing to log, so no button, no farm select and no block select on this row.
     expect(screen.queryByRole('button', { name: /Log this/i })).toBeNull();
-    expect(screen.queryByLabelText(/Choose the farm/i)).toBeNull();
+    /*
+     * BY ROLE, not by label text. This asserted `queryByLabelText(/Choose the farm/i)` and went
+     * VACUOUS the moment the selects gained visible labels: "Choose the farm" became the empty
+     * OPTION's text and stopped naming the control, so the query matched nothing whether or not a
+     * select was rendered, and a farm select reappearing on a refused row would have passed.
+     * A role query cannot rot that way, and it covers both selects rather than one.
+     */
+    expect(screen.queryAllByRole('combobox')).toHaveLength(0);
+    expect(screen.queryByLabelText(/^Farm/)).toBeNull();
+    expect(screen.queryByLabelText(/^Block/)).toBeNull();
   });
 
   it('renders copy for an unrecognised reason instead of leaking the raw key', () => {
