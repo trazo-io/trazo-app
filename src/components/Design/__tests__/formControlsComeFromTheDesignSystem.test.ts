@@ -22,7 +22,8 @@
  * OSP panel, all of which are now converted, so this guard starts green and stays cheap.
  *
  * `Button`: NOT enforced, deliberately, and this is a real limit of this file rather than an
- * oversight. 79 files render a raw `<Button>`. A guard that fails on 79 pre-existing call sites
+ * oversight. Dozens of files render a raw `<Button>` (79 when this was written, 2026-09-29; the
+ * exact figure is a measurement with a date on it, not a fact to maintain). A guard that fails on 79 pre-existing call sites
  * gets skipped, allowlisted into meaninglessness, or deleted, and a guard nobody can keep green
  * is worse than none. StandardButton is still the right component for new code (see
  * frontend.md); this file simply cannot prove it. If those 79 are ever converted, add 'Button'
