@@ -99,14 +99,14 @@ button; a drill-down always does.
   `src/components/Design/__tests__/formControlsComeFromTheDesignSystem.test.ts` (Select,
   Textarea, Input, NumberInput; allowed only inside `components/Design/`).
   This rule had existed as "check StandardComponents FIRST" and was still missed twice, because
-  **a raw Chakra control WORKS** — nothing fails and the diff looks fine. MEASURED in the
+  **a raw Chakra control WORKS**: nothing fails and the diff looks fine. MEASURED in the
   installed theme: `Select.baseStyle` sets `--select-bg: colors.white` so a select does NOT
   inherit the filled treatment, `Input.variants.outline` carries
   `_focusVisible.borderColor: #3182ce`, and `theme.ts` registers no Input/Select config. One
   wrong import = white field on a gray.50 form + 6px corners against 12px + a BLUE focus ring.
   ⚠️ `Button` is exempt from the guard (dozens of pre-existing call sites; 79 when
   measured 2026-09-29) and NOT from the rule.
-  ⛔ Never pass `colorScheme` or `minH="44px"` to `StandardButton` — the variant map and the
+  ⛔ Never pass `colorScheme` or `minH="44px"` to `StandardButton`. The variant map and the
   44px floor are inside it, and a raw Chakra `variant="solid"` falls through the map unstyled.
   ⚠️ A checkbox has no wrapper but IS themed (`theme/components/checkbox.js`): use Chakra
   `Checkbox`, never a bare `<input type="checkbox">`.
