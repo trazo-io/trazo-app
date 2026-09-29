@@ -23,6 +23,7 @@ import { Badge, Box, Checkbox, HStack, Stack, Text, VStack, useToast } from '@ch
 import { useIntl } from 'react-intl';
 
 import {
+  STATUS_URGENCY_TOKENS,
   StandardButton,
   StandardCard,
   StandardInput,
@@ -150,6 +151,81 @@ const CrewRoster = ({ companyId, farms }: Props) => {
    * member's own decision and outranks anything the farm did. The fallback matters for the same
    * reason the refusal copy has one: a blocked row with no matching column must still say something.
    */
+  /**
+   * Whether the person has actually been told what Trazo does with their messages.
+   *
+   * WHY THIS IS ON THE PAGE AT ALL. Adding the roster requires ticking a box that says "I told this
+   * person". Trazo then sends them the notice itself, on the operator's behalf, the first time they
+   * message. Until this was rendered, `first_contact_at` was served to this component and read by
+   * nothing and `consented_at` was not serialized at all, so the one thing the operator could not
+   * find out was whether the promise made under their own name had been kept.
+   *
+   * THE FAILURE CASE IS THE POINT. A person who has sent a message and has no `first_contact_at`
+   * is somebody whose notice did NOT go out: the send failed, or this deployment has no sender
+   * configured. That is the row worth flagging, because the operator has attested to something
+   * that did not happen and only they can chase it.
+   *
+   * NOTE: `consented_at` is stated as WHAT HAPPENED, never as a verdict. It records that they carried
+   * on messaging after being told. The copy says that; it does not say "consented", because this
+   * channel cannot observe agreement, only continuation.
+   */
+  const noticeState = (sender: CrewSender) => {
+    if (sender.consented_at) {
+      return {
+        tone: 'gray.600',
+        text: intl.formatMessage(
+          { id: 'fieldNotes.roster.noticeAnswered' },
+          {
+            when: new Date(sender.first_contact_at ?? sender.consented_at).toLocaleDateString(
+              intl.locale
+            )
+          }
+        )
+      };
+    }
+    if (sender.first_contact_at) {
+      return {
+        tone: 'gray.600',
+        text: intl.formatMessage(
+          { id: 'fieldNotes.roster.noticeSent' },
+          { when: new Date(sender.first_contact_at).toLocaleDateString(intl.locale) }
+        )
+      };
+    }
+    // Only once they have actually sent something. Before that there is nothing to have failed:
+    // the notice is triggered by their first message and cannot be sent ahead of it.
+    if (sender.last_note_at) {
+      return {
+        /*
+         * From review of #49, which flagged the literal `orange.600` as a foreign palette.
+         *
+         * It is one, and it is also the RIGHT hue: `STATUS_URGENCY_TOKENS` in the design system is
+         * Chakra's orange on purpose, because the theme's own amber cannot carry text. MEASURED
+         * there: amber.500 is 2.16:1 on white and even amber.900 reaches only 3.79, under the 4.5
+         * small text owes. Amber is a fill ramp. So the fix is not a different colour, it is
+         * taking the token the design system exports instead of writing the step out by hand,
+         * which is how a literal drifts from the scale it was copied from.
+         *
+         * CRIT, changed from WARN on the second review of #49, which argued it better than the
+         * first version of this comment did.
+         *
+         * The rule in CLAUDE.md keys the status colour off MEANING, not off how bad the
+         * consequence is: error maps to `danger`. This row is not an in-progress condition. It
+         * says the operator attested something under their own name and it did not happen, which
+         * is a broken promise rather than a step still running. And on a long roster, amber
+         * sitting beside a routine gray "last note" line reads as routine; this is the one row
+         * that has to be chased, so it has to be the one that stands out.
+         *
+         * MEASURED in the token table: `crit.text` is red.700 at 4.98:1 on white, clearing the
+         * 4.5 small text owes. The step is taken from the design system rather than written out.
+         */
+        tone: STATUS_URGENCY_TOKENS.crit.text,
+        text: intl.formatMessage({ id: 'fieldNotes.roster.noticeFailed' })
+      };
+    }
+    return null;
+  };
+
   const blockedReason = (sender: CrewSender) => {
     if (sender.may_send) return null;
     if (sender.stopped_at) return intl.formatMessage({ id: 'fieldNotes.roster.stopped' });
@@ -183,7 +259,19 @@ const CrewRoster = ({ companyId, farms }: Props) => {
           const blocked = blockedReason(sender);
           const farm = farms.find((f) => f.id === sender.establishment);
           return (
-            <Box key={sender.id} borderWidth="1px" borderColor="gray.200" borderRadius="md" p={3}>
+            <Box
+              key={sender.id}
+              /*
+               * A stable hook for the end-to-end suite, which otherwise has to find this row by
+               * filtering `div` on its text. Every ANCESTOR div matches such a filter too, so a
+               * page with several rows resolved to eleven elements and the assertion could not say
+               * which row it was about. `data-testid` is already the convention here.
+               */
+              data-testid="crew-sender-row"
+              borderWidth="1px"
+              borderColor="gray.200"
+              borderRadius="md"
+              p={3}>
               <Stack
                 direction={{ base: 'column', smd: 'row' }}
                 justify="space-between"
@@ -211,6 +299,15 @@ const CrewRoster = ({ companyId, farms }: Props) => {
                         )
                       : intl.formatMessage({ id: 'fieldNotes.roster.neverSent' })}
                   </Text>
+                  {(() => {
+                    const notice = noticeState(sender);
+                    if (!notice) return null;
+                    return (
+                      <Text fontSize="xs" color={notice.tone}>
+                        {notice.text}
+                      </Text>
+                    );
+                  })()}
                 </VStack>
 
                 {sender.is_active ? (

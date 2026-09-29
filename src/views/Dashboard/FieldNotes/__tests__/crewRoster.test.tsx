@@ -59,6 +59,7 @@ const SENDER = {
   consent_attested_at: '2026-09-20T10:00:00Z',
   stopped_at: null,
   first_contact_at: null,
+  consented_at: null,
   last_note_at: null,
   created_at: '2026-09-20T10:00:00Z'
 };
@@ -123,6 +124,54 @@ describe('the crew roster', () => {
   it('says a registered number has not sent anything yet, rather than leaving it blank', () => {
     renderRoster(5);
     expect(screen.getByText(/Has not sent anything yet/i)).toBeTruthy();
+  });
+
+  /*
+   * THE NOTICE STATE, which had no surface at all until 2026-09-29.
+   *
+   * Adding a number requires ticking "I told this person what happens to their messages". Trazo
+   * then sends that notice itself, on the operator's behalf, the first time the person writes in.
+   * `first_contact_at` was served to this component and rendered by nothing, and `consented_at`
+   * was not serialized at all, so the one fact the operator could not find out was whether the
+   * promise made under their own name had been kept.
+   */
+  it('says when the notice went out', () => {
+    mocks.senders = [
+      { ...SENDER, last_note_at: '2026-09-28T10:00:00Z', first_contact_at: '2026-09-28T10:00:01Z' }
+    ];
+    renderRoster(5);
+    expect(screen.getByText(/told them what happens to their messages/i)).toBeTruthy();
+  });
+
+  it('says when they carried on messaging after it', () => {
+    // Stated as WHAT HAPPENED, never as a verdict. This channel cannot observe agreement, only
+    // that somebody kept writing after being told, so the copy says that and not "consented".
+    mocks.senders = [
+      {
+        ...SENDER,
+        last_note_at: '2026-09-28T11:00:00Z',
+        first_contact_at: '2026-09-28T10:00:01Z',
+        consented_at: '2026-09-28T11:00:00Z'
+      }
+    ];
+    renderRoster(5);
+    expect(screen.getByText(/have messaged since/i)).toBeTruthy();
+  });
+
+  it('flags a person who has written in and was never told', () => {
+    // THE CASE THIS EXISTS FOR. The send failed, or this deployment has no sender configured, so
+    // the operator has attested to something that did not happen and only they can chase it.
+    mocks.senders = [{ ...SENDER, last_note_at: '2026-09-28T10:00:00Z', first_contact_at: null }];
+    renderRoster(5);
+    expect(screen.getByText(/could not tell them what happens to their messages/i)).toBeTruthy();
+  });
+
+  it('says nothing about a notice for somebody who has never written in', () => {
+    // The notice is triggered by their first message and cannot be sent ahead of it, so there is
+    // nothing to have failed yet. Flagging it here would cry wolf on every freshly added number.
+    renderRoster(5);
+    expect(screen.queryByText(/could not tell them/i)).toBeNull();
+    expect(screen.queryByText(/told them what happens/i)).toBeNull();
   });
 
   it('names why a number cannot send, and the three reasons are different answers', () => {
