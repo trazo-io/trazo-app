@@ -143,6 +143,53 @@ describe('the field notes inbox', () => {
     expect(screen.getByText(/the block is what a certifier follows/i)).toBeTruthy();
   });
 
+  /*
+   * WHY THE BUTTON IS DEAD, BEFORE THE BUTTON. The reason used to render UNDER both buttons, so a
+   * reader met a greyed "Log this" first and had to hunt below it. Order is the whole fix, and
+   * nothing else in the file would notice it moving back: the sentence is present either way.
+   */
+  it('gives the reason before the disabled button, not after it', () => {
+    renderInbox(TWO_PARCELS);
+    const why = screen.getByText(/the block is what a certifier follows/i);
+    const logThis = screen.getByRole('button', { name: /Log this/i });
+
+    // DOCUMENT_POSITION_FOLLOWING: `logThis` comes after `why` in document order.
+    expect(why.compareDocumentPosition(logThis) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('names the reason from the disabled button, which announces none of its own', () => {
+    renderInbox(TWO_PARCELS);
+    const logThis = screen.getByRole('button', { name: /Log this/i });
+    const describedBy = logThis.getAttribute('aria-describedby');
+    expect(describedBy, 'a disabled button states no reason without this').toBeTruthy();
+    const target = document.getElementById(describedBy as string);
+    expect(target?.textContent).toMatch(/the block is what a certifier follows/i);
+  });
+
+  it('drops the aria-describedby once there is nothing left to explain', () => {
+    // A description that survives the condition it describes is read out on a button that works.
+    renderInbox(ONE_PARCEL);
+    const logThis = screen.getByRole('button', { name: /Log this/i });
+    expect(logThis.hasAttribute('disabled')).toBe(false);
+    expect(logThis.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('labels both selects, so which one is outstanding does not have to be inferred', () => {
+    // The question used to live only in the empty option, so choosing a farm left two unlabelled
+    // dropdowns: "Home Ranch" and "Choose the block".
+    renderInbox(TWO_PARCELS);
+    expect(screen.getByLabelText(/^Farm/)).toBeTruthy();
+    expect(screen.getByLabelText(/^Block/)).toBeTruthy();
+  });
+
+  it('stamps the arrival to the minute, not the second', () => {
+    renderInbox(ONE_PARCEL);
+    const line = screen.getByText(/From/);
+    // Seconds are noise on a message queue and make a one-line header read as a log entry.
+    expect(line.textContent).not.toMatch(/\d{1,2}:\d{2}:\d{2}/);
+    expect(line.textContent, 'the number must still be masked to its last four').toMatch(/1234/);
+  });
+
   it('navigates with the note id and no transcript in the URL', async () => {
     renderInbox(ONE_PARCEL);
     fireEvent.click(screen.getByRole('button', { name: /Log this/i }));

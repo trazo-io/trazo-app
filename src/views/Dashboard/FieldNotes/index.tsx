@@ -16,23 +16,19 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  Badge,
-  Box,
-  Button,
-  HStack,
-  Select,
-  Stack,
-  Text,
-  Textarea,
-  VStack,
-  useToast
-} from '@chakra-ui/react';
+import { Badge, Box, HStack, Stack, Text, VStack, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { StandardCard, StandardPage } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardField,
+  StandardPage,
+  StandardSelect,
+  StandardTextarea
+} from 'components/Design/StandardComponents';
 
 import CrewRoster from './CrewRoster';
 import type { RootState } from 'store/index';
@@ -42,6 +38,17 @@ import {
   fieldNoteAudioUrl,
   type FieldNote
 } from 'store/api/fieldNoteApi';
+
+/**
+ * When a message arrived, to the minute.
+ *
+ * `toLocaleString` was here and carries SECONDS in most locales ("9/28/2026, 11:11:17 PM"). On a
+ * queue of messages the second is noise: nothing on this page is ordered or decided by it, and it
+ * makes a one-line header read as a log entry. The app's locale, not the browser's, for the reason
+ * given at the call site.
+ */
+const receivedAtLabel = (iso: string, locale: string) =>
+  new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso));
 
 /**
  * The refusal reasons that have copy, mirroring the three literals `fieldnotes/views.py` writes.
@@ -343,7 +350,7 @@ const FieldNotesInbox = () => {
                           // The APP's locale, not the browser's. A grower running Trazo in
                           // Spanish on an English-locale machine got an English timestamp
                           // inside a Spanish sentence.
-                          when: new Date(note.received_at).toLocaleString(intl.locale)
+                          when: receivedAtLabel(note.received_at, intl.locale)
                         }
                       )}
                     </Text>
@@ -356,7 +363,18 @@ const FieldNotesInbox = () => {
 
                 {/* Verbatim, quoted, and never an input. These are somebody else's words. */}
                 <Box bg="gray.50" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={3}>
-                  <Text fontSize="sm" color="gray.800" whiteSpace="pre-wrap">
+                  {/*
+                    THE WORDS OUTRANK EVERYTHING BESIDE THEM. At `sm`/gray.800 they sat at the same
+                    weight as the machine-transcript qualifier under them, which is a full sentence
+                    and runs the whole width, so the disclaimer read as the louder of the two. The
+                    qualifier still sits next to its claim; it is now visibly secondary to it.
+                  */}
+                  <Text
+                    fontSize="md"
+                    fontWeight="medium"
+                    color="gray.900"
+                    whiteSpace="pre-wrap"
+                    lineHeight="tall">
                     {`“${note.words}”`}
                   </Text>
 
@@ -413,104 +431,120 @@ const FieldNotesInbox = () => {
                   )}
                 </Box>
 
-                <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
-                  <Select
-                    size="sm"
-                    minH="44px"
-                    aria-label={intl.formatMessage({ id: 'fieldNotes.chooseFarm' })}
-                    placeholder={intl.formatMessage({ id: 'fieldNotes.chooseFarm' })}
-                    value={farmId ?? ''}
-                    onChange={(event) =>
-                      setChoice((prev) => ({
-                        ...prev,
-                        // The parcel is cleared with the farm: a lot from the previous farm would be
-                        // a record filed against a block on a different property.
-                        [note.public_id]: { farmId: event.target.value, parcelId: undefined }
-                      }))
-                    }>
-                    {farms.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name}
-                      </option>
-                    ))}
-                  </Select>
+                {/*
+                  LABELLED, not placeholder-labelled. Both selects carried their question only as
+                  the empty option, so the moment a farm was chosen the row became two unlabelled
+                  dropdowns reading "Calapooia Bend Farm" and "Choose the block" — and which of the
+                  two was still outstanding had to be inferred. `required` is honest here: the
+                  server refuses the link without a parcel.
+                */}
+                <Stack direction={{ base: 'column', smd: 'row' }} spacing={3}>
+                  <StandardField
+                    label={intl.formatMessage({ id: 'fieldNotes.farmLabel' })}
+                    required
+                    flex="1"
+                    minW={0}>
+                    <StandardSelect
+                      placeholder={intl.formatMessage({ id: 'fieldNotes.chooseFarm' })}
+                      value={farmId ?? ''}
+                      onChange={(event) =>
+                        setChoice((prev) => ({
+                          ...prev,
+                          // The parcel is cleared with the farm: a lot from the previous farm would
+                          // be a record filed against a block on a different property.
+                          [note.public_id]: { farmId: event.target.value, parcelId: undefined }
+                        }))
+                      }>
+                      {farms.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.name}
+                        </option>
+                      ))}
+                    </StandardSelect>
+                  </StandardField>
 
-                  <Select
-                    size="sm"
-                    minH="44px"
-                    aria-label={intl.formatMessage({ id: 'fieldNotes.chooseParcel' })}
-                    placeholder={intl.formatMessage({ id: 'fieldNotes.chooseParcel' })}
-                    value={parcelId ?? ''}
-                    isDisabled={!farm}
-                    onChange={(event) =>
-                      setChoice((prev) => ({
-                        ...prev,
-                        [note.public_id]: { farmId, parcelId: event.target.value }
-                      }))
-                    }>
-                    {(farm?.parcels ?? []).map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </Select>
+                  <StandardField
+                    label={intl.formatMessage({ id: 'fieldNotes.parcelLabel' })}
+                    required
+                    flex="1"
+                    minW={0}>
+                    <StandardSelect
+                      placeholder={intl.formatMessage({ id: 'fieldNotes.chooseParcel' })}
+                      value={parcelId ?? ''}
+                      isDisabled={!farm}
+                      onChange={(event) =>
+                        setChoice((prev) => ({
+                          ...prev,
+                          [note.public_id]: { farmId, parcelId: event.target.value }
+                        }))
+                      }>
+                      {(farm?.parcels ?? []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </StandardSelect>
+                  </StandardField>
                 </Stack>
 
+                {/*
+                  WHY THE BUTTON IS DEAD, BEFORE THE BUTTON. This line used to sit UNDER the two
+                  buttons, so the reading order was: a greyed "Log this", then hunt below it for the
+                  reason. It is the same sentence; it is now read before the control it explains and
+                  is named by `aria-describedby`, which is the only way a screen-reader user gets it
+                  at all (a disabled button announces no reason of its own).
+                */}
+                {!ready && (
+                  <Text id={`why-${note.public_id}`} fontSize="xs" color="gray.700">
+                    {intl.formatMessage({ id: 'fieldNotes.pickTheBlockFirst' })}
+                  </Text>
+                )}
+
                 <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
-                  <Button
+                  <StandardButton
                     size="sm"
-                    minH="44px"
-                    colorScheme="green"
                     isDisabled={!ready}
+                    aria-describedby={ready ? undefined : `why-${note.public_id}`}
                     onClick={() => openWizard(note)}>
                     {intl.formatMessage({ id: 'fieldNotes.logThis' })}
-                  </Button>
-                  <Button
+                  </StandardButton>
+                  <StandardButton
                     size="sm"
-                    minH="44px"
                     variant="ghost"
                     onClick={() => {
                       setDiscardFor(discardFor === note.public_id ? null : note.public_id);
                       setDiscardReason('');
                     }}>
                     {intl.formatMessage({ id: 'fieldNotes.discard' })}
-                  </Button>
+                  </StandardButton>
                 </Stack>
-
-                {!ready && (
-                  <Text fontSize="xs" color="gray.700">
-                    {intl.formatMessage({ id: 'fieldNotes.pickTheBlockFirst' })}
-                  </Text>
-                )}
 
                 {discardFor === note.public_id && (
                   <VStack align="stretch" spacing={2}>
                     <Text fontSize="xs" color="gray.700">
                       {intl.formatMessage({ id: 'fieldNotes.discardKeepsIt' })}
                     </Text>
-                    <Textarea
-                      size="sm"
+                    <StandardTextarea
                       rows={2}
+                      // StandardTextarea defaults to 120px, which is a lot of box for one optional
+                      // line of reason inside an already-open panel.
+                      minH="80px"
                       value={discardReason}
                       placeholder={intl.formatMessage({ id: 'fieldNotes.discardReason' })}
+                      aria-label={intl.formatMessage({ id: 'fieldNotes.discardReason' })}
                       onChange={(event) => setDiscardReason(event.target.value)}
                     />
                     <HStack spacing={2} flexWrap="wrap">
-                      <Button
+                      <StandardButton
                         size="xs"
-                        minH="44px"
                         variant="outline"
                         isLoading={isDiscarding}
                         onClick={() => confirmDiscard(note)}>
                         {intl.formatMessage({ id: 'fieldNotes.discardConfirm' })}
-                      </Button>
-                      <Button
-                        size="xs"
-                        minH="44px"
-                        variant="ghost"
-                        onClick={() => setDiscardFor(null)}>
+                      </StandardButton>
+                      <StandardButton size="xs" variant="ghost" onClick={() => setDiscardFor(null)}>
                         {intl.formatMessage({ id: 'app.cancel' })}
-                      </Button>
+                      </StandardButton>
                     </HStack>
                   </VStack>
                 )}
@@ -577,7 +611,7 @@ const FieldNotesInbox = () => {
                           { id: 'fieldNotes.sentBy' },
                           {
                             last4: note.sender.phone_last4,
-                            when: new Date(note.received_at).toLocaleString(intl.locale)
+                            when: receivedAtLabel(note.received_at, intl.locale)
                           }
                         )}
                       </Text>
