@@ -206,11 +206,20 @@ const CrewRoster = ({ companyId, farms }: Props) => {
          * taking the token the design system exports instead of writing the step out by hand,
          * which is how a literal drifts from the scale it was copied from.
          *
-         * WARN rather than CRIT, deliberately. Nothing is broken and no record is at risk: a
-         * notice did not send and somebody should chase it. `danger` is this app's error
-         * treatment, and spending it here leaves nothing louder for a state that is one.
+         * CRIT, changed from WARN on the second review of #49, which argued it better than the
+         * first version of this comment did.
+         *
+         * The rule in CLAUDE.md keys the status colour off MEANING, not off how bad the
+         * consequence is: error maps to `danger`. This row is not an in-progress condition. It
+         * says the operator attested something under their own name and it did not happen, which
+         * is a broken promise rather than a step still running. And on a long roster, amber
+         * sitting beside a routine gray "last note" line reads as routine; this is the one row
+         * that has to be chased, so it has to be the one that stands out.
+         *
+         * MEASURED in the token table: `crit.text` is red.700 at 4.98:1 on white, clearing the
+         * 4.5 small text owes. The step is taken from the design system rather than written out.
          */
-        tone: STATUS_URGENCY_TOKENS.warn.text,
+        tone: STATUS_URGENCY_TOKENS.crit.text,
         text: intl.formatMessage({ id: 'fieldNotes.roster.noticeFailed' })
       };
     }
