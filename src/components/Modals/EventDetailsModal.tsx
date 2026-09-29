@@ -1119,6 +1119,18 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     // therefore a PLACEHOLDER, not prose. The `: name` suffix catches the older
                     // "<Type activity>: <name>" shape still stored on every row written before the
                     // generator stopped prefixing the internal type.
+                    //
+                    // ⚠️ KNOWN LIMITATION, accepted deliberately. A LEGACY row with no `observation`
+                    // whose note happens to be exactly the event name (a farmer who typed just
+                    // "Irrigation" back when description was the only notes field) is
+                    // indistinguishable from a placeholder and is suppressed with them. Nothing in
+                    // the row separates the two.
+                    //
+                    // The trade runs this way on purpose: today every event confirmed from a crew
+                    // voice note has an empty observation by design, so NOT suppressing means a
+                    // machine string presented as the farmer's words on every one of them, on a
+                    // record a certifier reads. A one-word legacy note is rarer and far less costly,
+                    // and it is still on the record, just not shown in this box.
                     const name = String(row.name ?? '').trim();
                     if (name && (description === name || description.endsWith(`: ${name}`))) {
                       return intl.formatMessage({ id: 'events.noFieldNotes' });

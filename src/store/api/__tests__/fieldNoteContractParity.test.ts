@@ -77,6 +77,19 @@ describe('the field-note API contract matches the serializer', () => {
     );
     expect(served).toContain('public_id');
     expect(served).toContain('status');
+
+    // THE DECLARED SIDE NEEDS THE SAME GUARD, from review of #47. Only the served side had one, so a
+    // reformat of the FieldNote interface that broke this regex (a different indent width, a
+    // single-lined declaration) would make `declaredFields()` return [], and `[].filter(...)` is []
+    // and passes. That is precisely the vacuous pass this file exists to prevent, moved to the other
+    // side of the comparison.
+    const declared = declaredFields();
+    expect(
+      declared.length,
+      'parsed too few interface fields, the parser is broken'
+    ).toBeGreaterThan(5);
+    expect(declared).toContain('public_id');
+    expect(declared).toContain('status');
   });
 
   it('serves every field this slice declares', () => {

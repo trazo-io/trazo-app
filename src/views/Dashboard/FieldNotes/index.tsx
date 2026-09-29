@@ -14,7 +14,7 @@
  * The words are shown VERBATIM and are never editable. They are evidence of what somebody reported;
  * a surface that could edit them would let one person change what another is recorded as saying.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   Badge,
@@ -117,10 +117,13 @@ const FieldNotesInbox = () => {
    * disables polling in RTK Query. The ARG is untouched: `pollingInterval` is an option, so the cache
    * key stays byte-identical and anything that later wants a waiting-note count still shares it.
    */
-  const { data: notes = [], isLoading } = useGetFieldNotesQuery(
-    { status: 'pending' },
-    { pollingInterval: transcribing.length > 0 ? 15000 : 0 }
-  );
+  const {
+    data: notes = [],
+    isLoading,
+    refetch: refetchQueue
+  } = useGetFieldNotesQuery({
+    status: 'pending'
+  });
 
   /**
    * REFUSED notes, fetched separately for the same two reasons as above.
@@ -138,8 +141,33 @@ const FieldNotesInbox = () => {
   const {
     data: refused = [],
     isLoading: refusedLoading,
-    isError: refusedFailed
+    isError: refusedFailed,
+    refetch: refetchRefused
   } = useGetFieldNotesQuery({ status: 'refused' });
+
+  /**
+   * When a note LEAVES the transcribing list, refetch the lists it could have landed in.
+   *
+   * From review of #47. The first version made the pending query poll while `transcribing.length > 0`,
+   * which depended on two independent poll timers lining up: if the transcribing poll observed the
+   * list emptying in the same tick that flipped pending's interval back to 0, it could cancel a
+   * pending poll that had not fired yet, and nothing else would refetch. Narrower than the original
+   * bug, and the same symptom, which is the worst kind of fix.
+   *
+   * Watching ids DROP OUT is deterministic: it does not care about timer phase, and it refetches BOTH
+   * destinations because a finished note becomes `pending` OR `refused` (an unreadable language,
+   * silence) and only one of those is the happy path.
+   */
+  const stillReading = useRef<string[]>([]);
+  useEffect(() => {
+    const current = transcribing.map((note) => note.public_id);
+    const finished = stillReading.current.filter((id) => !current.includes(id));
+    stillReading.current = current;
+    if (finished.length > 0) {
+      refetchQueue();
+      refetchRefused();
+    }
+  }, [transcribing, refetchQueue, refetchRefused]);
   const [discardNote, { isLoading: isDiscarding }] = useDiscardFieldNoteMutation();
 
   // The same slice the sidebar reads, so this page needs no query of its own and cannot disagree
@@ -163,8 +191,15 @@ const FieldNotesInbox = () => {
 
   // Per-note, because two notes in the queue can belong to different blocks.
   const [choice, setChoice] = useState<Record<string, { farmId?: string; parcelId?: string }>>({});
-  /** Which note's player failed, so the page can say so instead of sitting there. */
-  const [playbackFailed, setPlaybackFailed] = useState<string | null>(null);
+  /**
+   * WHICH notes' players failed, as a set rather than one slot.
+   *
+   * From review of #47, and it is the same asymmetry #55 caught: a single `string | null` was
+   * rendered per note, so a second failure silently erased the first note's indicator while that
+   * recording was still just as broken. The reader then had no way to tell the first problem had not
+   * been fixed, which is the silent-drop class this whole surface exists to end.
+   */
+  const [playbackFailed, setPlaybackFailed] = useState<Set<string>>(new Set());
   const [discardFor, setDiscardFor] = useState<string | null>(null);
   const [discardReason, setDiscardReason] = useState('');
 
@@ -345,7 +380,7 @@ const FieldNotesInbox = () => {
                         Trazo's storage and is deleted at the provider once this note is logged or
                         discarded, which is why the deleted case renders a line instead of a player.
                       */}
-                      {playbackFailed === note.public_id && (
+                      {playbackFailed.has(note.public_id) && (
                         <Text fontSize="xs" color="red.600">
                           {intl.formatMessage({ id: 'fieldNotes.audioFailed' })}
                         </Text>
@@ -368,7 +403,9 @@ const FieldNotesInbox = () => {
                             cookie did not travel. The element's fallback content only covers a
                             browser with no audio support, which is the one case that will not happen.
                           */
-                          onError={() => setPlaybackFailed(note.public_id)}>
+                          onError={() =>
+                            setPlaybackFailed((prev) => new Set(prev).add(note.public_id))
+                          }>
                           {intl.formatMessage({ id: 'fieldNotes.audioUnsupported' })}
                         </audio>
                       )}
