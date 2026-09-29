@@ -19,21 +19,15 @@
  */
 import { useState } from 'react';
 
-import {
-  Badge,
-  Box,
-  Button,
-  HStack,
-  Input,
-  Select,
-  Stack,
-  Text,
-  VStack,
-  useToast
-} from '@chakra-ui/react';
+import { Badge, Box, Checkbox, HStack, Stack, Text, VStack, useToast } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
 
-import { StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardButton,
+  StandardCard,
+  StandardInput,
+  StandardSelect
+} from 'components/Design/StandardComponents';
 import {
   useCreateCrewSenderMutation,
   useDeactivateCrewSenderMutation,
@@ -220,21 +214,19 @@ const CrewRoster = ({ companyId, farms }: Props) => {
                 </VStack>
 
                 {sender.is_active ? (
-                  <Button
+                  <StandardButton
                     size="xs"
-                    minH="44px"
                     variant="outline"
                     onClick={() => deactivateSender(sender.id)}>
                     {intl.formatMessage({ id: 'fieldNotes.roster.deactivate' })}
-                  </Button>
+                  </StandardButton>
                 ) : (
-                  <Button
+                  <StandardButton
                     size="xs"
-                    minH="44px"
                     variant="outline"
                     onClick={() => updateSender({ id: sender.id, is_active: true })}>
                     {intl.formatMessage({ id: 'fieldNotes.roster.reactivate' })}
-                  </Button>
+                  </StandardButton>
                 )}
               </Stack>
             </Box>
@@ -242,23 +234,27 @@ const CrewRoster = ({ companyId, farms }: Props) => {
         })}
 
         {!adding && (
-          <Button
+          <StandardButton
             size="sm"
-            minH="44px"
             variant="outline"
             alignSelf="start"
             isDisabled={!companyId}
             onClick={() => setAdding(true)}>
             {intl.formatMessage({ id: 'fieldNotes.roster.add' })}
-          </Button>
+          </StandardButton>
         )}
 
         {adding && (
           <VStack align="stretch" spacing={2}>
-            <Input
-              size="sm"
-              minH="44px"
-              /* 16px, because Chakra's sm is 14px and iOS Safari zooms the page on focus below 16. */
+            <StandardInput
+              /*
+                16px, because iOS Safari auto-zooms the page when a focused field is under it.
+                MEASURED: Chakra's fontSizes.sm is 0.875rem and `src/` overrides no typography
+                token, so CONTROL_FIELD_SX's `fontSize: 'sm'` computes to 14px. `{...props}` is
+                the last spread in StandardInput, so this wins. NOTE: this is an exception to the
+                app's 14px controls, kept because a crew roster is filled in on a phone. The
+                app-wide fix belongs in CONTROL_FIELD_SX, not at four call sites.
+              */
               fontSize="md"
               value={phone}
               placeholder={intl.formatMessage({ id: 'fieldNotes.roster.phone' })}
@@ -269,9 +265,7 @@ const CrewRoster = ({ companyId, farms }: Props) => {
               {intl.formatMessage({ id: 'fieldNotes.roster.phoneHelp' })}
             </Text>
 
-            <Input
-              size="sm"
-              minH="44px"
+            <StandardInput
               fontSize="md"
               value={name}
               placeholder={intl.formatMessage({ id: 'fieldNotes.roster.name' })}
@@ -282,9 +276,7 @@ const CrewRoster = ({ companyId, farms }: Props) => {
               {intl.formatMessage({ id: 'fieldNotes.roster.nameHelp' })}
             </Text>
 
-            <Select
-              size="sm"
-              minH="44px"
+            <StandardSelect
               fontSize="md"
               value={farmId}
               placeholder={intl.formatMessage({ id: 'fieldNotes.roster.farm' })}
@@ -295,11 +287,9 @@ const CrewRoster = ({ companyId, farms }: Props) => {
                   {farm.name}
                 </option>
               ))}
-            </Select>
+            </StandardSelect>
 
-            <Select
-              size="sm"
-              minH="44px"
+            <StandardSelect
               fontSize="md"
               value={language}
               aria-label={intl.formatMessage({ id: 'fieldNotes.roster.language' })}
@@ -309,25 +299,25 @@ const CrewRoster = ({ companyId, farms }: Props) => {
                   {intl.formatMessage({ id: `fieldNotes.roster.language.${code}` })}
                 </option>
               ))}
-            </Select>
+            </StandardSelect>
 
             {/*
               A plain checkbox with the attestation written out, not a tick-to-continue. The person
               reading it is asserting something about somebody else, and the number cannot send until
               they do.
             */}
-            <HStack align="start" spacing={2}>
-              <input
-                type="checkbox"
-                id="crew-consent"
-                checked={attested}
-                style={{ marginTop: '4px', minWidth: '16px', minHeight: '16px' }}
-                onChange={(event) => setAttested(event.target.checked)}
-              />
-              <Text as="label" htmlFor="crew-consent" fontSize="xs" color="gray.800">
+            <Checkbox
+              id="crew-consent"
+              isChecked={attested}
+              alignItems="flex-start"
+              colorScheme="green"
+              onChange={(event) => setAttested(event.target.checked)}
+              /* The control keeps its own line height while the sentence wraps beside it. */
+              sx={{ '.chakra-checkbox__control': { marginTop: '2px' } }}>
+              <Text fontSize="xs" color="gray.800">
                 {intl.formatMessage({ id: 'fieldNotes.roster.consent' })}
               </Text>
-            </HStack>
+            </Checkbox>
 
             {error && (
               <Text fontSize="xs" color="red.600">
@@ -336,25 +326,22 @@ const CrewRoster = ({ companyId, farms }: Props) => {
             )}
 
             <HStack spacing={2} flexWrap="wrap">
-              <Button
+              <StandardButton
                 size="sm"
-                minH="44px"
-                colorScheme="green"
                 isLoading={isCreating}
                 isDisabled={!phone.trim() || !attested}
                 onClick={save}>
                 {intl.formatMessage({ id: 'fieldNotes.roster.save' })}
-              </Button>
-              <Button
+              </StandardButton>
+              <StandardButton
                 size="sm"
-                minH="44px"
                 variant="ghost"
                 onClick={() => {
                   setAdding(false);
                   reset();
                 }}>
                 {intl.formatMessage({ id: 'app.cancel' })}
-              </Button>
+              </StandardButton>
             </HStack>
           </VStack>
         )}

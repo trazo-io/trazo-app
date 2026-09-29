@@ -43,7 +43,6 @@ import {
   Flex,
   HStack,
   Icon,
-  Input,
   Skeleton,
   Stack,
   Text,
@@ -55,7 +54,12 @@ import { FaDownload, FaFileAlt, FaInfoCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 
-import { StandardAlert, StandardButton, StandardCard } from 'components/Design/StandardComponents';
+import {
+  StandardAlert,
+  StandardButton,
+  StandardCard,
+  StandardInput
+} from 'components/Design/StandardComponents';
 import config from 'config/environment';
 import { OSP_ATTACHMENTS_URL } from 'config';
 import {
@@ -333,7 +337,7 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
             {row.cfr_cite}
           </Text>
           {isEditable ? (
-            <Input
+            <StandardInput
               size="sm"
               value={draft}
               maxLength={FREE_TEXT_MAX_LENGTH}
