@@ -44,6 +44,8 @@ export interface CrewSender {
   consent_attested_at: string | null;
   stopped_at: string | null;
   first_contact_at: string | null;
+  /** They messaged again AFTER the notice: the only consent signal this channel can observe. */
+  consented_at: string | null;
   last_note_at: string | null;
   created_at: string;
 }

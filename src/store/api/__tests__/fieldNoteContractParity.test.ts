@@ -27,6 +27,7 @@ import { describe, expect, it } from 'vitest';
 const REPO_ROOT = join(__dirname, '../../../../..');
 const SERIALIZERS = join(REPO_ROOT, 'trazo-back/fieldnotes/serializers.py');
 const API_SLICE = join(__dirname, '../fieldNoteApi.ts');
+const CREW_SLICE = join(__dirname, '../crewSenderApi.ts');
 
 /**
  * Fields the client declares that the server is not expected to send, each with its reason.
@@ -39,10 +40,10 @@ const CLIENT_ONLY = new Set([
   'transcript_language'
 ]);
 
-/** Property names on this slice's own `FieldNote` interface. */
-function declaredFields(): string[] {
-  const source = readFileSync(API_SLICE, 'utf8');
-  const start = source.indexOf('export interface FieldNote {');
+/** Property names on a slice's own interface. */
+function declaredFields(slice = API_SLICE, name = 'FieldNote'): string[] {
+  const source = readFileSync(slice, 'utf8');
+  const start = source.indexOf(`export interface ${name} {`);
   const body = source.slice(start, source.indexOf('\n}', start));
   return body
     .split('\n')
@@ -51,14 +52,20 @@ function declaredFields(): string[] {
     .filter((name): name is string => Boolean(name));
 }
 
-/** The `fields = (...)` tuple on FieldNoteSerializer.Meta. */
-function servedFields(): string[] {
+/** The `fields = (...)` tuple on a serializer's Meta. */
+function servedFields(serializer = 'FieldNoteSerializer'): string[] {
   const source = readFileSync(SERIALIZERS, 'utf8');
-  const cls = source.indexOf('class FieldNoteSerializer');
-  expect(cls, 'FieldNoteSerializer not found; was it renamed?').toBeGreaterThan(-1);
+  const cls = source.indexOf(`class ${serializer}`);
+  expect(cls, `${serializer} not found; was it renamed?`).toBeGreaterThan(-1);
   const fieldsAt = source.indexOf('fields = (', cls);
   const body = source.slice(fieldsAt, source.indexOf(')', fieldsAt));
-  return Array.from(body.matchAll(/"([a-z_]+)"/g)).map((m) => m[1]);
+  // `[a-z0-9_]`, NOT `[a-z_]`. The original pattern had no digit class, so it silently skipped
+  // every field whose name carries one. Found the moment this file was pointed at
+  // CrewSenderSerializer: `phone_e164` vanished from the served set and the guard reported the
+  // roster's most important field as missing. Nothing on FieldNote has a digit, which is exactly
+  // why it went unnoticed there, and why a guard being extended to a second subject is worth more
+  // than the second subject alone.
+  return Array.from(body.matchAll(/"([a-z0-9_]+)"/g)).map((m) => m[1]);
 }
 
 describe('the field-note API contract matches the serializer', () => {
@@ -112,6 +119,63 @@ describe('the field-note API contract matches the serializer', () => {
       expect(
         served,
         `the inbox branches on \`${field}\` and the serializer does not send it`
+      ).toContain(field);
+    }
+  });
+});
+
+/**
+ * The same parity, for the crew roster.
+ *
+ * WHY IT IS HERE NOW. The FieldNote half of this file was written after `audio_deleted_at` was
+ * added to the model, to the client interface and to the component, and NOT to the serializer. The
+ * crew roster then repeated the shape twice over in one slice: `first_contact_at` was served and
+ * read by no surface, and `consented_at` was written on every consenting message and serialized
+ * nowhere. So the operator ticked "I told this person", Trazo sent the notice on their behalf, and
+ * the one thing the page could not show was whether it had gone out.
+ *
+ * One direction is checked, deliberately. A field the CLIENT declares and the server does not send
+ * is `undefined` at runtime with no error anywhere, which is the failure this file exists for. The
+ * reverse (served and not declared) is dead weight, not a defect.
+ */
+describe('the crew sender API contract matches the serializer', () => {
+  it('can see both sides, so the assertion below is not vacuous', () => {
+    expect(existsSync(SERIALIZERS), `not found at ${SERIALIZERS}`).toBe(true);
+
+    const served = servedFields('CrewSenderSerializer');
+    expect(served.length, 'parsed too few serializer fields; the parser is broken').toBeGreaterThan(
+      5
+    );
+    expect(served).toContain('phone_e164');
+
+    const declared = declaredFields(CREW_SLICE, 'CrewSender');
+    expect(
+      declared.length,
+      'parsed too few interface fields; the parser is broken'
+    ).toBeGreaterThan(5);
+    expect(declared).toContain('phone_e164');
+  });
+
+  it('serves every field the roster slice declares', () => {
+    const served = servedFields('CrewSenderSerializer');
+    const missing = declaredFields(CREW_SLICE, 'CrewSender').filter((f) => !served.includes(f));
+
+    expect(
+      missing,
+      `these are read by the roster and not sent by the serializer, so they are undefined at ` +
+        `runtime and no component test would notice: ${missing.join(', ')}`
+    ).toEqual([]);
+  });
+
+  it('serves the two fields the notice state is computed from', () => {
+    // Named because these decide whether the roster can say the notice went out. Until this slice
+    // they were the exact pair that could not be seen: one served and rendered by nothing, one not
+    // served at all.
+    const served = servedFields('CrewSenderSerializer');
+    for (const field of ['first_contact_at', 'consented_at']) {
+      expect(
+        served,
+        `the roster branches on \`${field}\` and the serializer does not send it`
       ).toContain(field);
     }
   });

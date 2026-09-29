@@ -167,7 +167,19 @@ export default defineConfig({
     // This avoids cross-origin cookie issues with .localhost in Chromium
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        /*
+         * Overridable so a second backend can be run beside the default one. This repo routinely
+         * has several worktrees checked out at once, and until this was a variable the only way to
+         * point the app at a branch's own backend was to edit this shared file, which is how an
+         * unrelated session ends up committing somebody else's proxy target. The default is
+         * unchanged, so nothing about the ordinary `npm run start` moves.
+         *
+         * NOTE: a non-default PORT for Vite itself is a different matter. `CSRF_TRUSTED_ORIGINS`
+         * in `backend/settings/dev.py` enumerates 3000, 3001 and 4173, so serving on any other
+         * port makes every POST fail with "Origin checking failed" while GETs keep working, which
+         * reads like a broken login rather than a config gap.
+         */
+        target: process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8000',
         changeOrigin: true
       }
     }
