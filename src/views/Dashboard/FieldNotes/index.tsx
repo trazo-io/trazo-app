@@ -14,7 +14,7 @@
  * The words are shown VERBATIM and are never editable. They are evidence of what somebody reported;
  * a surface that could edit them would let one person change what another is recorded as saying.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   Badge,
@@ -77,39 +77,12 @@ const FieldNotesInbox = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const { data: notes = [], isLoading } = useGetFieldNotesQuery({ status: 'pending' });
   /**
-   * REFUSED notes, fetched separately rather than by widening the query above to `status: 'all'`.
+   * Notes whose words do not exist yet. DECLARED FIRST because the pending query below polls only
+   * while this one has something in it.
    *
-   * Two reasons, both measured. (1) `'all'` returns confirmed and discarded notes too, and the
-   * card below gates "Log this" on whether a block is picked, not on status, so an already-logged
-   * note would render a live button: a second record for one message, which is the bug the queue
-   * invalidation in historyApi was just fixed for. (2) The pending arg is a cache key. Anything
-   * else that ever wants a waiting-note count has to pass the byte-identical `{ status: 'pending' }`
-   * to share this entry, and two surfaces printing two different numbers for one subject is what
-   * got the standalone readiness panel deleted on 2026-08-04.
-   *
-   * Why they must be visible at all: EVERY voice note is refused today. `providers/twilio.py`
-   * classifies any audio as `kind="voice"` and `fieldnotes/views.py` writes a non-text note as
-   * REFUSED with `voice_not_enabled`, because ASR is not wired yet. The page showed pending notes
-   * only, nothing creates a notification, and no copy for a refusal existed, so a crew member's
-   * voice note landed in the database and appeared on no surface at all. They believe they filed
-   * something. `fieldnotes/models.py` already promises these rows stay visible.
-   */
-  /**
-   * Its loading AND error states are both read, because `refused` defaults to `[]` and an empty
-   * array is indistinguishable from "not answered yet" and from "the request failed". Two separate
-   * requests settle independently, so the pending one (dispatched first) normally answers first: on
-   * a cold load that showed "Nothing waiting" for as long as the refusals were in flight, and on a
-   * FAILED refusals request it showed it permanently, since `refused` never becomes anything else.
-   * Claiming nothing arrived while a refusal is sitting unread is the exact silent drop this section
-   * was added to end.
-   */
-  /**
-   * Notes whose words do not exist yet.
-   *
-   * Its own query for the same reason the refusals have one: `status: 'all'` would return confirmed
-   * and discarded notes into a list whose cards carry a "Log this", and the pending arg has to stay
+   * Its own query rather than widening one to `status: 'all'`, which would return confirmed and
+   * discarded notes into a list whose cards carry a "Log this", and the pending arg has to stay
    * byte-identical so anything that later wants a waiting-note count shares its cache entry.
    *
    * Shown because the alternative is worse than a spinner: a supervisor who sees an empty queue
@@ -123,24 +96,78 @@ const FieldNotesInbox = () => {
     { status: 'transcribing' },
     {
       /**
-       * POLLED, because the copy promises the note appears here once the words are ready and nothing
-       * else would deliver that. The transition is server-side only: no mutation invalidates
-       * 'FieldNote' when a transcript lands, and the slice sets no refetchOnFocus. Without this a
-       * supervisor who waits on the page never sees the note leave, which is the opposite of what the
-       * strip is for. Same pattern as exportJobsApi, for the same reason.
-       *
-       * The interval is only live while this query has a subscriber, so it stops when the page is
-       * closed rather than polling forever.
+       * POLLED, because the copy promises the note appears once the words are ready and nothing else
+       * would deliver that: the transition is server-side only, so no mutation invalidates
+       * 'FieldNote' when a transcript lands, and the slice sets no refetchOnFocus. Same pattern as
+       * exportJobsApi. Live only while this query has a subscriber, so it stops when the page closes.
        */
       pollingInterval: 15000
     }
   );
 
+  /**
+   * The queue, polled ONLY while something is being read.
+   *
+   * Polling this too is not belt and braces, it is the other half of the same fix and leaving it out
+   * was worse than not polling at all. With only the transcribing query polling, a finished note
+   * dropped out of the "being read" strip and the queue never learned to refetch it, so it vanished
+   * from the page entirely until a manual reload. The note was more lost than before.
+   *
+   * Conditional so a page with nothing in flight makes no requests it has no reason to make, and 0
+   * disables polling in RTK Query. The ARG is untouched: `pollingInterval` is an option, so the cache
+   * key stays byte-identical and anything that later wants a waiting-note count still shares it.
+   */
+  const {
+    data: notes = [],
+    isLoading,
+    refetch: refetchQueue
+  } = useGetFieldNotesQuery({
+    status: 'pending'
+  });
+
+  /**
+   * REFUSED notes, fetched separately for the same two reasons as above.
+   *
+   * Why they must be visible: a refusal is the one outcome the sender cannot discover for themselves.
+   * A voice note Trazo could not read, a message in a language the parser does not serve, a photo with
+   * no caption: each lands here with a reason, and `fieldnotes/models.py` promises these rows stay
+   * visible rather than vanishing.
+   *
+   * Its loading AND error states are both read, because an empty array is indistinguishable from "not
+   * answered yet" and from "the request failed". The requests settle independently, so on a cold load
+   * an empty queue used to render "Nothing waiting" while the refusals were still arriving, and on a
+   * FAILED refusals request it said so permanently.
+   */
   const {
     data: refused = [],
     isLoading: refusedLoading,
-    isError: refusedFailed
+    isError: refusedFailed,
+    refetch: refetchRefused
   } = useGetFieldNotesQuery({ status: 'refused' });
+
+  /**
+   * When a note LEAVES the transcribing list, refetch the lists it could have landed in.
+   *
+   * From review of #47. The first version made the pending query poll while `transcribing.length > 0`,
+   * which depended on two independent poll timers lining up: if the transcribing poll observed the
+   * list emptying in the same tick that flipped pending's interval back to 0, it could cancel a
+   * pending poll that had not fired yet, and nothing else would refetch. Narrower than the original
+   * bug, and the same symptom, which is the worst kind of fix.
+   *
+   * Watching ids DROP OUT is deterministic: it does not care about timer phase, and it refetches BOTH
+   * destinations because a finished note becomes `pending` OR `refused` (an unreadable language,
+   * silence) and only one of those is the happy path.
+   */
+  const stillReading = useRef<string[]>([]);
+  useEffect(() => {
+    const current = transcribing.map((note) => note.public_id);
+    const finished = stillReading.current.filter((id) => !current.includes(id));
+    stillReading.current = current;
+    if (finished.length > 0) {
+      refetchQueue();
+      refetchRefused();
+    }
+  }, [transcribing, refetchQueue, refetchRefused]);
   const [discardNote, { isLoading: isDiscarding }] = useDiscardFieldNoteMutation();
 
   // The same slice the sidebar reads, so this page needs no query of its own and cannot disagree
@@ -164,6 +191,15 @@ const FieldNotesInbox = () => {
 
   // Per-note, because two notes in the queue can belong to different blocks.
   const [choice, setChoice] = useState<Record<string, { farmId?: string; parcelId?: string }>>({});
+  /**
+   * WHICH notes' players failed, as a set rather than one slot.
+   *
+   * From review of #47, and it is the same asymmetry #55 caught: a single `string | null` was
+   * rendered per note, so a second failure silently erased the first note's indicator while that
+   * recording was still just as broken. The reader then had no way to tell the first problem had not
+   * been fixed, which is the silent-drop class this whole surface exists to end.
+   */
+  const [playbackFailed, setPlaybackFailed] = useState<Set<string>>(new Set());
   const [discardFor, setDiscardFor] = useState<string | null>(null);
   const [discardReason, setDiscardReason] = useState('');
 
@@ -344,6 +380,12 @@ const FieldNotesInbox = () => {
                         Trazo's storage and is deleted at the provider once this note is logged or
                         discarded, which is why the deleted case renders a line instead of a player.
                       */}
+                      {playbackFailed.has(note.public_id) && (
+                        <Text fontSize="xs" color="red.600">
+                          {intl.formatMessage({ id: 'fieldNotes.audioFailed' })}
+                        </Text>
+                      )}
+
                       {note.audio_deleted_at ? (
                         <Text fontSize="xs" color="gray.600">
                           {intl.formatMessage({ id: 'fieldNotes.audioDeleted' })}
@@ -353,7 +395,17 @@ const FieldNotesInbox = () => {
                           controls
                           preload="none"
                           src={fieldNoteAudioUrl(note.public_id)}
-                          style={{ width: '100%' }}>
+                          style={{ width: '100%' }}
+                          /*
+                            A failed load is SAID, not left as a player that does nothing when
+                            pressed. Everything that can go wrong here goes wrong invisibly: the
+                            recording was deleted at the provider, the CSP blocks the origin, the
+                            cookie did not travel. The element's fallback content only covers a
+                            browser with no audio support, which is the one case that will not happen.
+                          */
+                          onError={() =>
+                            setPlaybackFailed((prev) => new Set(prev).add(note.public_id))
+                          }>
                           {intl.formatMessage({ id: 'fieldNotes.audioUnsupported' })}
                         </audio>
                       )}

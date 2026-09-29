@@ -252,6 +252,27 @@ describe('a voice note', () => {
     expect(screen.getByText(/regamos el bloque 4/)).toBeTruthy();
   });
 
+  it('keeps every failed player visible, not just the last one', () => {
+    // From review of #47, confirmed as a real bug: the failure state was one slot shared by every
+    // note, so a second failing player silently erased the first note's indicator while that
+    // recording was still just as broken. The reader then had no way to tell the first problem was
+    // never fixed, which is the silent-drop class this whole surface exists to end.
+    mocks.notes = [
+      { ...VOICE, public_id: 'aaaa-1111' },
+      { ...VOICE, public_id: 'bbbb-2222' }
+    ];
+    const { container } = renderInbox(ONE_PARCEL);
+
+    const players = container.querySelectorAll('audio');
+    expect(players).toHaveLength(2);
+
+    fireEvent.error(players[0]);
+    fireEvent.error(players[1]);
+
+    // BOTH, not one. With a single shared slot this reads 1.
+    expect(screen.getAllByText(/would not play/i)).toHaveLength(2);
+  });
+
   it('shows no player and no transcript notice for a note somebody typed', () => {
     mocks.notes = [NOTE];
     const { container } = renderInbox(ONE_PARCEL);

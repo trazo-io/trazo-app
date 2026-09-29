@@ -129,7 +129,16 @@ const fieldNoteApi = baseApi.injectEndpoints({
  * An authenticated Trazo endpoint that proxies the bytes from the provider, NOT the provider's own
  * URL. The recording never enters Trazo's storage (the default bucket is publicly readable), and a
  * link straight to the provider would carry no Trazo authorisation for whoever it was forwarded to.
- * `credentials: 'include'` is why an <audio src> works here: the cookie goes with it.
+ *
+ * WHY AN <audio src> IS AUTHENTICATED AT ALL, corrected: it is NOT `credentials: 'include'`, which
+ * applies to this slice's fetches and has nothing to do with a media element. A media element issues a
+ * no-cors request and attaches cookies by SameSite rules, and this one qualifies because the auth
+ * cookie is set on domain `.trazo.io` with `SameSite=Lax`, which makes app.trazo.io to api.trazo.io
+ * cross-ORIGIN but same-SITE.
+ *
+ * ⚠️ That is a real dependency, not a coincidence: if `AUTH_COOKIE_SAMESITE` becomes `Strict`, or the
+ * cookie stops being shared across subdomains, or the API moves off `*.trazo.io`, the player starts
+ * answering 401 and nothing in the test suite would notice, because jsdom sends no cookies either way.
  */
 export const fieldNoteAudioUrl = (publicId: string) =>
   `${config.API_BASE_URL}/field-notes/${encodeURIComponent(publicId)}/audio/`;
