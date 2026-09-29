@@ -332,3 +332,67 @@ describe('EventDetailsModal — every string goes through intl', () => {
     expect(within(dialog).getByText(enMessages['activities.type.3'])).toBeInTheDocument();
   });
 });
+
+/**
+ * A GENERATED PLACEHOLDER IS NOT THE FARMER'S FIELD NOTES.
+ *
+ * `CommonEvent.description` is non-blank, so `ensure_event_description` fills it with the event's
+ * own name when the notes box is left empty. The modal falls back to `description` for legacy rows
+ * whose note genuinely lives there, and that fallback used to print the placeholder under a heading
+ * that says Field Notes.
+ *
+ * It became reachable in normal use the day crew voice notes shipped: an event confirmed from a
+ * field note has an intentionally EMPTY observation, because the sender's words must not be
+ * republished as the grower's own. So every one of those records showed a machine string as
+ * somebody's words, on a record a certifier reads. Screenshot 2026-09-28: "Production activity:
+ * Irrigation" under Field Notes.
+ */
+describe('field notes never show a generated placeholder', () => {
+  const withNote = (over: Record<string, unknown>) => ({ ...EVENT, ...over });
+
+  it('shows the farmer own observation when there is one', () => {
+    renderModal({
+      event: withNote({ name: 'Irrigation', observation: 'Ran drip on rows 1-12, two hours.' })
+    });
+    expect(screen.getByText(/Ran drip on rows 1-12/)).toBeTruthy();
+  });
+
+  it('says nothing was written when the description is just the event name', () => {
+    renderModal({
+      event: withNote({ name: 'Irrigation', description: 'Irrigation', observation: '' })
+    });
+
+    // Scoped to the notes box. A bare `queryByText(/^Irrigation$/)` would fail on the modal TITLE,
+    // which is supposed to say Irrigation: the name is right as a heading and wrong as prose
+    // somebody wrote.
+    const notes = screen.getByText(/No field notes were written/i);
+    expect(notes).toBeTruthy();
+    expect(notes.textContent?.trim()).not.toBe('Irrigation');
+  });
+
+  it('says nothing was written for the older type-prefixed placeholder', () => {
+    // Every row created before the generator stopped prefixing the internal type still has this.
+    renderModal({
+      event: withNote({
+        name: 'Irrigation',
+        description: 'Production activity: Irrigation',
+        observation: ''
+      })
+    });
+
+    expect(screen.getByText(/No field notes were written/i)).toBeTruthy();
+    expect(screen.queryByText(/Production activity/)).toBeNull();
+  });
+
+  it('still shows a legacy note that genuinely lives in description', () => {
+    // The reason the fallback exists at all, and it must survive the fix.
+    renderModal({
+      event: withNote({
+        name: 'Harvest',
+        description: 'Shake and pickup, north rows first. Scale ticket 4471.',
+        observation: ''
+      })
+    });
+    expect(screen.getByText(/Scale ticket 4471/)).toBeTruthy();
+  });
+});

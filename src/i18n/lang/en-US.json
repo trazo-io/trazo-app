@@ -4493,6 +4493,7 @@
   "events.noOpenSeason.bodyNoFinished": "This parcel has no production yet. Start one first — every record belongs to a season.",
   "events.noOpenSeason.bodyWithFinished": "This parcel has no season in progress. Start the next production, or log post-harvest work — a storage shipment, cover crop, winter field work — against “{name}”, which finished on {date}. Post-harvest records need a date after the finish date.",
   "events.noOpenSeason.description": "Pick where this record belongs before the form.",
+  "events.noFieldNotes": "No field notes were written for this record.",
   "events.noOpenSeason.noteStaysWaiting": "The message you are logging is still waiting in Field notes. Start the season, then open it again from there.",
   "events.noOpenSeason.postHarvestCta": "Log post-harvest work for “{name}”",
   "events.noOpenSeason.startCta": "Start a new production",

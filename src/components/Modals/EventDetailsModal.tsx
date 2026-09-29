@@ -1050,6 +1050,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 />
               );
             }
+
             return (
               <Text fontSize="xs" color="gray.500">
                 {intl.formatMessage({ id: 'producer.event.buyerPageFieldsHint' })}
@@ -1090,11 +1091,40 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             <VStack spacing={4} align="stretch">
               <Box p={4} bg={cardBg} borderRadius="lg">
                 <Text fontWeight="medium" whiteSpace="pre-wrap">
-                  {/* The farmer's own note. `description` is the system-generated
-                      summary ("Annual soil test") and rendered here it masqueraded
-                      as field notes; fall back to it only when no observation
-                      exists (legacy events wrote their note there). */}
-                  {(event as Record<string, unknown>).observation || event.description}
+                  {/*
+                    The farmer's own note. `description` is system-generated and rendered here it
+                    masqueraded as field notes, so it is a fallback for LEGACY rows only, whose note
+                    genuinely lives there.
+                    
+                    THE FALLBACK NOW SKIPS A GENERATED PLACEHOLDER, and the reason is new: an event
+                    confirmed from a crew field note has an intentionally EMPTY observation, because
+                    the sender's words must not be republished as the grower's own. Every one of
+                    those hit this fallback and printed the placeholder the backend stores to satisfy
+                    a non-blank column, so the modal showed "Production activity: Irrigation" under a
+                    heading that says Field Notes. The old comment's premise, that reaching the
+                    fallback means a legacy note, stopped being true the day that flow shipped.
+                  */}
+                  {(() => {
+                    // Through `unknown`: the compiler asks for it, and the two direct casts already
+                    // in this file are two of its standing errors. Copying them would make a third.
+                    const row = event as unknown as Record<string, unknown>;
+                    const observation = String(row.observation ?? '').trim();
+                    if (observation) return observation;
+
+                    const description = String(event.description ?? '').trim();
+                    if (!description) return intl.formatMessage({ id: 'events.noFieldNotes' });
+
+                    // `ensure_event_description` stores the event's own name when the notes box is
+                    // left empty, because the column is non-blank. A description equal to the name is
+                    // therefore a PLACEHOLDER, not prose. The `: name` suffix catches the older
+                    // "<Type activity>: <name>" shape still stored on every row written before the
+                    // generator stopped prefixing the internal type.
+                    const name = String(row.name ?? '').trim();
+                    if (name && (description === name || description.endsWith(`: ${name}`))) {
+                      return intl.formatMessage({ id: 'events.noFieldNotes' });
+                    }
+                    return description;
+                  })()}
                 </Text>
               </Box>
 

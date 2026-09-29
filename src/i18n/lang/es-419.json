@@ -4493,6 +4493,7 @@
   "events.noOpenSeason.bodyNoFinished": "Esta parcela aún no tiene producciones. Inicia una primero — cada registro pertenece a una temporada.",
   "events.noOpenSeason.bodyWithFinished": "Esta parcela no tiene una temporada en curso. Inicia la siguiente producción, o registra trabajo de poscosecha — un despacho desde el almacén, cultivo de cobertura, labores de invierno — en “{name}”, que terminó el {date}. Los registros de poscosecha necesitan una fecha posterior al cierre.",
   "events.noOpenSeason.description": "Elige a dónde pertenece este registro antes del formulario.",
+  "events.noFieldNotes": "No se escribieron notas de campo para este registro.",
   "events.noOpenSeason.noteStaysWaiting": "El mensaje que estás registrando sigue esperando en Notas del campo. Inicia la temporada y ábrelo de nuevo desde ahí.",
   "events.noOpenSeason.postHarvestCta": "Registrar poscosecha en “{name}”",
   "events.noOpenSeason.startCta": "Iniciar una nueva producción",
