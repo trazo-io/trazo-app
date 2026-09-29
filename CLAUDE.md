@@ -92,6 +92,24 @@ button; a drill-down always does.
 ## Components & sizing
 1. Check `src/components/Design/StandardComponents.tsx` FIRST. 2. Chakra with theme props.
 3. Custom components need approval.
+- **⛔ A form control comes from the design system, never from `@chakra-ui/react`.**
+  `StandardSelect` / `StandardTextarea` / `StandardInput` (also `StandardSearchInput`,
+  `StandardDecimalInput`) / `StandardNumberInput`; `StandardField` for the label + required +
+  helpText shell; `StandardButton` for new code. Guard:
+  `src/components/Design/__tests__/formControlsComeFromTheDesignSystem.test.ts` (Select,
+  Textarea, Input, NumberInput; allowed only inside `components/Design/`).
+  This rule had existed as "check StandardComponents FIRST" and was still missed twice, because
+  **a raw Chakra control WORKS**: nothing fails and the diff looks fine. MEASURED in the
+  installed theme: `Select.baseStyle` sets `--select-bg: colors.white` so a select does NOT
+  inherit the filled treatment, `Input.variants.outline` carries
+  `_focusVisible.borderColor: #3182ce`, and `theme.ts` registers no Input/Select config. One
+  wrong import = white field on a gray.50 form + 6px corners against 12px + a BLUE focus ring.
+  ⚠️ `Button` is exempt from the guard (dozens of pre-existing call sites; 79 when
+  measured 2026-09-29) and NOT from the rule.
+  ⛔ Never pass `colorScheme` or `minH="44px"` to `StandardButton`. The variant map and the
+  44px floor are inside it, and a raw Chakra `variant="solid"` falls through the map unstyled.
+  ⚠️ A checkbox has no wrapper but IS themed (`theme/components/checkbox.js`): use Chakra
+  `Checkbox`, never a bare `<input type="checkbox">`.
 - `StandardSegmentedControl` = one of a few views of the SAME content. `StandardSectionTabs` =
   different sections of one record. Neither uses `role="radiogroup"`. Selection is never signalled
   by colour alone.

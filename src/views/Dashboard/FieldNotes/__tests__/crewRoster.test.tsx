@@ -19,6 +19,9 @@
  *     farm or the consent tick was the problem.
  *   * Turning a number off DEACTIVATES. A roster row is the provenance of every note it accepted.
  */
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
 import React from 'react';
 
 import { ChakraProvider } from '@chakra-ui/react';
@@ -83,6 +86,32 @@ describe('the crew roster', () => {
     mocks.update.mockClear();
     mocks.deactivate.mockClear();
     mocks.senders = [SENDER];
+  });
+
+  /*
+   * A CONTROL ON THIS FORM STAYS AT 16px. iOS Safari auto-zooms the page when a focused field's
+   * font is under 16, and this roster is filled in on a phone in a yard.
+   *
+   * MEASURED: Chakra's `fontSizes.sm` is 0.875rem and `src/` overrides no typography token, so
+   * `CONTROL_FIELD_SX` (`fontSize: 'sm'`) computes to 14px. Converting these four controls to
+   * StandardInput/StandardSelect silently deleted the `fontSize="md"` override AND the comment
+   * that explained it, which is exactly the kind of deliberate exception a mechanical conversion
+   * eats. This reads the source because the computed size is not observable in jsdom: emotion
+   * emits the class, not the resolved token.
+   */
+  it('keeps its controls at 16px, so iOS does not zoom on focus', () => {
+    const src = readFileSync(join(__dirname, '../CrewRoster.tsx'), 'utf8');
+
+    // Non-vacuity: the file must still render the controls this is about.
+    const controls = src.match(/<Standard(Input|Select)\b/g) ?? [];
+    expect(controls.length, 'CrewRoster no longer renders the controls this guard covers').toBe(4);
+
+    const sized = src.match(/fontSize="md"/g) ?? [];
+    expect(
+      sized.length,
+      'every StandardInput/StandardSelect on this form needs fontSize="md". Chakra sm is 14px ' +
+        'and iOS Safari zooms the page on focus below 16px, which is why the override exists.'
+    ).toBe(controls.length);
   });
 
   it('shows the full number, because this is the screen that can fix a typo in it', () => {
