@@ -5232,6 +5232,7 @@
   "fieldNotes.chooseParcel": "Choose the block",
   "fieldNotes.description": "Messages your crew sent from the block. Nothing here is a record until you log it.",
   "fieldNotes.audioDeleted": "The recording was deleted when this note was reviewed. The words above are what was kept.",
+  "fieldNotes.audioFailed": "The recording would not play. Reload the page, and if it keeps failing the recording may no longer be available.",
   "fieldNotes.audioUnsupported": "Your browser cannot play this recording.",
   "fieldNotes.machineTranscript": "Read aloud by your crew and written down automatically. Play it back to check the words before you log anything, especially a “no” or a “not”.",
   "fieldNotes.refused.language_not_supported": "The message was not in English, Spanish or Portuguese, so it could not be read. Ask them to send it in one of those.",

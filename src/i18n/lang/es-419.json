@@ -5232,6 +5232,7 @@
   "fieldNotes.chooseParcel": "Elige el bloque",
   "fieldNotes.description": "Mensajes que tu cuadrilla envió desde el bloque. Nada de esto es un registro hasta que lo registres.",
   "fieldNotes.audioDeleted": "La grabación se eliminó cuando se revisó esta nota. Lo que quedó son las palabras de arriba.",
+  "fieldNotes.audioFailed": "La grabación no se pudo reproducir. Vuelve a cargar la página; si sigue fallando, puede que la grabación ya no esté disponible.",
   "fieldNotes.audioUnsupported": "Tu navegador no puede reproducir esta grabación.",
   "fieldNotes.machineTranscript": "Lo dijo tu cuadrilla en voz alta y se escribió automáticamente. Escucha la grabación para revisar las palabras antes de registrar algo, sobre todo un “no”.",
   "fieldNotes.refused.language_not_supported": "El mensaje no estaba en inglés, español ni portugués, así que no se pudo leer. Pide que lo envíen en uno de esos idiomas.",
