@@ -10,7 +10,7 @@
  * exists for a reason written into its own body: Chakra's select theme hardcodes its field
  * background (`$bg -> colors.white`), so unlike an input a select does NOT inherit the filled
  * treatment. A raw `<Select>` therefore renders WHITE beside gray.50 neighbours, at Chakra's
- * stock 6px radius against the app's 12px, with Chakra's stock BLUE focus ring — the theme
+ * stock 6px radius against the app's 12px, with Chakra's stock BLUE focus ring. The theme
  * registers no Input/Select config at all (`theme.ts` composes button/badge/alert/link/drawer/
  * progress/checkbox only), so its `_focusVisible: { borderColor: blue.500 }` is live. That is
  * three visible regressions from one import, and every one of them is invisible in a diff.
@@ -19,7 +19,7 @@
  *
  * Select / Textarea / NumberInput / Input: enforced. At the time of writing the ONLY files
  * outside `components/Design/` rendering any of them were the two Field Notes pages and one
- * OSP panel, all of which are now converted — so this guard starts green and stays cheap.
+ * OSP panel, all of which are now converted, so this guard starts green and stays cheap.
  *
  * `Button`: NOT enforced, deliberately, and this is a real limit of this file rather than an
  * oversight. 79 files render a raw `<Button>`. A guard that fails on 79 pre-existing call sites
@@ -28,7 +28,7 @@
  * frontend.md); this file simply cannot prove it. If those 79 are ever converted, add 'Button'
  * to CONTROLS and delete this paragraph.
  *
- * ⚠️ This checks the IMPORT SOURCE, not the tag name. `import { Select } from '@chakra-ui/react'`
+ * NOTE: this checks the IMPORT SOURCE, not the tag name. `import { Select } from '@chakra-ui/react'`
  * plus `<Select>` is the offence. A local component that happens to be called `<Select>` is not,
  * which is why the import block is parsed rather than the JSX alone.
  */
@@ -65,7 +65,7 @@ const walk = (dir: string, out: string[] = []): string[] => {
   return out;
 };
 
-/** Blank comments, keeping newlines — the notes above name the very tags this bans. */
+/** Blank comments, keeping newlines: the notes above name the very tags this bans. */
 const codeOf = (abs: string) =>
   readFileSync(abs, 'utf8')
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
@@ -155,7 +155,7 @@ describe('form controls come from the design system', () => {
       'These render a Chakra form control directly. MEASURED consequence for a select: white ' +
         'field on a gray.50 form, 6px corners against the app\u2019s 12px, and Chakra\u2019s ' +
         'stock BLUE focus ring, because the theme registers no Input/Select config. Import the ' +
-        'design-system component instead \u2014 it is the same props plus the one shared ' +
+        'design-system component instead: it is the same props plus the one shared ' +
         `treatment:\n${JSON.stringify(offenders, null, 2)}`
     ).toEqual([]);
   });

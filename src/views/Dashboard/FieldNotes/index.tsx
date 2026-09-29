@@ -434,7 +434,7 @@ const FieldNotesInbox = () => {
                 {/*
                   LABELLED, not placeholder-labelled. Both selects carried their question only as
                   the empty option, so the moment a farm was chosen the row became two unlabelled
-                  dropdowns reading "Calapooia Bend Farm" and "Choose the block" — and which of the
+                  dropdowns reading "Calapooia Bend Farm" and "Choose the block", and which of the
                   two was still outstanding had to be inferred. `required` is honest here: the
                   server refuses the link without a parcel.
                 */}
