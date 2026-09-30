@@ -136,11 +136,11 @@ const productionTypeOptions = [
 
 // Production method options for blockchain verification
 const productionMethodOptions = [
-  { value: 'conventional', label: 'Conventional', carbonScore: 'Standard' },
-  { value: 'organic', label: 'Organic Certified', carbonScore: 'Enhanced' },
-  { value: 'biodynamic', label: 'Biodynamic', carbonScore: 'Premium' },
-  { value: 'regenerative', label: 'Regenerative', carbonScore: 'Premium' },
-  { value: 'permaculture', label: 'Permaculture', carbonScore: 'Enhanced' }
+  { value: 'conventional', label: 'Conventional' },
+  { value: 'organic', label: 'Organic Certified' },
+  { value: 'biodynamic', label: 'Biodynamic' },
+  { value: 'regenerative', label: 'Regenerative' },
+  { value: 'permaculture', label: 'Permaculture' }
 ];
 
 // Growing environment options
@@ -963,7 +963,7 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                 <StandardField
                   label="Production Method"
                   required
-                  helpText="Choose your agricultural approach for accurate carbon scoring">
+                  helpText="Choose your agricultural approach">
                   <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={3}>
                     {productionMethodOptions.map((method) => (
                       <Box
@@ -987,16 +987,6 @@ export const StandardProductionForm: React.FC<StandardProductionFormProps> = ({
                             }>
                             {method.label}
                           </Text>
-                          <Badge
-                            colorScheme={
-                              method.carbonScore === 'Premium'
-                                ? 'purple'
-                                : method.carbonScore === 'Enhanced'
-                                ? 'green'
-                                : 'gray'
-                            }>
-                            {method.carbonScore} Carbon Score
-                          </Badge>
                         </VStack>
                       </Box>
                     ))}

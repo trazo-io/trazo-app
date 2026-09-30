@@ -6,7 +6,6 @@ import {
   useColorModeValue,
   Stack,
   Badge,
-  Progress,
   Icon,
   Image
 } from '@chakra-ui/react';
@@ -122,21 +121,6 @@ export default function ScannedProductsView() {
                             {production.company}
                           </Text>
                         </Flex>
-                      </Box>
-                      <Box minW="200px">
-                        <Text fontSize="md" color={textColor} fontWeight="bold" mb={3}>
-                          Transparency Score
-                        </Text>
-                        <Progress
-                          value={production.certificate_percentage}
-                          size="lg"
-                          colorScheme={production.certificate_percentage >= 80 ? 'green' : 'yellow'}
-                          borderRadius="full"
-                          mb={2}
-                        />
-                        <Text fontSize="sm" color="gray.500" textAlign="right">
-                          {production.certificate_percentage}%
-                        </Text>
                       </Box>
                     </Flex>
                   </Box>
