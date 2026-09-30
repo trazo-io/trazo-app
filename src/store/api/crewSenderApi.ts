@@ -50,6 +50,40 @@ export interface CrewSender {
   created_at: string;
 }
 
+/**
+ * Where the crew sends it. A property of the DEPLOYMENT, not of a company.
+ *
+ * One Trazo deployment has one inbound WhatsApp number and every operation's crew messages it; the
+ * roster is what decides whose farm a given message belongs to. So there is nothing to scope this to
+ * and no company id in the request.
+ *
+ * NOT COVERED BY `fieldNoteContractParity.test.ts`, deliberately: that guard compares an interface
+ * against a ModelSerializer's `fields` tuple, and this endpoint has no serializer and no model
+ * behind it. The three keys are pinned from the other side instead, by
+ * `test_it_serves_exactly_the_three_keys_the_client_declares` in
+ * `fieldnotes/tests/test_channel_details.py`.
+ */
+export interface CrewChannel {
+  /**
+   * Whether a crew member's message would reach this deployment at all.
+   *
+   * REQUIRES THE SENDER NUMBER, not only the provider credentials, and that asymmetry is the whole
+   * reason the flag exists rather than the page inferring it from `number` being non-empty: the
+   * backend also answers false when the credentials are missing but a number is set, which no
+   * client-side check would notice.
+   */
+  configured: boolean;
+  /** Bare E.164, with no `whatsapp:` prefix. Empty when the channel is not configured. */
+  number: string;
+  /**
+   * The Twilio sandbox join phrase, e.g. `join pale-tiger`. EMPTY on a registered sender.
+   *
+   * Its presence is what tells this client the deployment is on the sandbox, which is what justifies
+   * warning about the three-day session expiry. Nothing branches on the number itself.
+   */
+  join_phrase: string;
+}
+
 export interface CrewSenderDraft {
   /**
    * `number | string` because the company slice types `id` as a string and the whole app passes it
@@ -68,6 +102,26 @@ export interface CrewSenderDraft {
 
 const crewSenderApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
+    /**
+     * The number to hand the crew, and the sandbox join step when there is one.
+     *
+     * FIRST, because it is the question that comes before the roster. Registering a number is
+     * useless until somebody knows where to send to, and until this endpoint existed the product
+     * never said: the inbox's own empty state told a first-time user that messages sent to "your
+     * Trazo number" would appear, and that number lived only in the deployment's environment.
+     *
+     * NO TAG. It is deployment configuration: nothing a client can do invalidates it, and giving it
+     * a tag would invite a mutation somewhere to clear it for no reason. It refetches on mount,
+     * which is often enough for a value that changes when Trazo changes providers.
+     */
+    getCrewChannel: build.query<CrewChannel, void>({
+      query: () => ({
+        url: 'field-notes/channel/',
+        method: 'GET',
+        credentials: 'include'
+      })
+    }),
+
     /**
      * `company` is part of the QUERY ARG, not just a server filter, and that is the point.
      *
@@ -148,6 +202,7 @@ const crewSenderApi = baseApi.injectEndpoints({
 });
 
 export const {
+  useGetCrewChannelQuery,
   useGetCrewSendersQuery,
   useCreateCrewSenderMutation,
   useUpdateCrewSenderMutation,
