@@ -62,6 +62,28 @@ vi.mock('store/api/fieldNoteApi', () => ({
   fieldNoteAudioUrl: (publicId: string) => `/api/field-notes/${publicId}/audio/`
 }));
 
+/**
+ * The page renders the two setup cards as well as the queue, so this module has to be stood in for
+ * or their RTK Query hooks run against a store with no api reducer.
+ *
+ * The CHANNEL answers configured with a number, which is the state these queue assertions care about
+ * least and the state a reader of this file would assume: a page where the channel works and the
+ * queue is the only thing under test. `crewChannel.test.tsx` covers the states that matter there.
+ * The ROSTER answers empty, which is what it does in this test anyway: `companyId` is absent from
+ * the store below, so the real component skips its query.
+ */
+vi.mock('store/api/crewSenderApi', () => ({
+  useGetCrewChannelQuery: () => ({
+    data: { configured: true, number: '+14155238886', join_phrase: '' },
+    isLoading: false,
+    isError: false
+  }),
+  useGetCrewSendersQuery: () => ({ data: [], isLoading: false }),
+  useCreateCrewSenderMutation: () => [vi.fn(), { isLoading: false }],
+  useUpdateCrewSenderMutation: () => [vi.fn(), { isLoading: false }],
+  useDeactivateCrewSenderMutation: () => [vi.fn(), { isLoading: false }]
+}));
+
 import FieldNotesInbox from '../index';
 
 const NOTE = {
@@ -124,10 +146,23 @@ describe('the field notes inbox', () => {
     expect(inputs).toHaveLength(0);
   });
 
-  it('shows only the last four digits of the number', () => {
+  it('shows only the last four digits of the sender number', () => {
     renderInbox(ONE_PARCEL);
     expect(screen.getByText(/1234/)).toBeTruthy();
-    expect(screen.queryByText(/\+1415/)).toBeNull();
+    /*
+     * NARROWED FROM `/\+1415/` when the channel card landed, and the narrowing is the point rather
+     * than a concession. This assertion is about a CREW MEMBER's number: a note is read by anyone
+     * who opens the inbox, the number adds nothing they need, and printing it would put arbitrary
+     * personal phone numbers into screenshots and every access log that records a response. The
+     * page now also shows TRAZO's own inbound number in full, on purpose, because that is the one
+     * fact a supervisor has to relay to their crew. A pattern loose enough to match both stopped
+     * being able to tell them apart, and both happen to be +1415 numbers.
+     *
+     * So this names the sender's number exactly. The companion assertion below pins the other half:
+     * the number that IS shown in full is the channel's, and it comes from the channel card.
+     */
+    expect(screen.queryByText(/\+14155551234/)).toBeNull();
+    expect(screen.getByTestId('crew-channel-number').textContent).toBe('+14155238886');
   });
 
   it('prefills the block ONLY when the farm has exactly one', async () => {

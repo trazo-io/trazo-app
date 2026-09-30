@@ -30,6 +30,7 @@ import {
   StandardTextarea
 } from 'components/Design/StandardComponents';
 
+import CrewChannel from './CrewChannel';
 import CrewRoster from './CrewRoster';
 import type { RootState } from 'store/index';
 import {
@@ -651,10 +652,18 @@ const FieldNotesInbox = () => {
         )}
 
         {/*
-          LAST, because the queue is the job and this is the setup. It is also the reason the empty
-          state above no longer tells a first-time user to wait for a message: until this section
-          existed nobody outside Trazo could register a number, so waiting was all they could do.
+          LAST, because the queue is the job and these two are the setup. It is also the reason the
+          empty state above no longer tells a first-time user to wait for a message: until these
+          sections existed nobody outside Trazo could register a number or find out where their crew
+          should send, so waiting was all they could do.
+
+          THE CHANNEL COMES FIRST OF THE TWO. Registering a number is useless until somebody knows
+          the address, and on the Twilio sandbox a crew member who messages before sending the join
+          phrase is not delivered at all, which produces no note, no refusal row and nothing on any
+          screen. It is also the one card that renders without waiting for the company slice, since
+          one deployment has one inbound number and it belongs to no company.
         */}
+        <CrewChannel />
         <CrewRoster companyId={companyId} farms={farms} />
       </VStack>
     </StandardPage>
