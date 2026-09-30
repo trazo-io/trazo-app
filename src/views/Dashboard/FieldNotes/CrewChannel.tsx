@@ -141,7 +141,19 @@ const CrewChannel = () => {
             <Text
               fontSize="md"
               fontWeight="semibold"
-              color="green.800"
+              /*
+               * green.700, not green.800, from review of #51. CLAUDE.md: "If it renders glyphs, it
+               * is green.700"; green.800 and green.900 are the HOVER and ACTIVE steps, so using one
+               * for static text spends a state token on something that has no states.
+               *
+               * MEASURED, because the ground is tinted and the table's 5.13 is for WHITE:
+               * green.700 #2E7D32 on green.50 #E8F5E9 is 4.56:1, over the 4.5 text floor by 0.06.
+               * It passes and the margin is thin, so NEVER step this down to green.600 (4.12 on
+               * white, less on this tint). That is the boundary colour, and reading as "the safe
+               * dark green" is exactly how it reached 75 text call sites before the audit. If this
+               * needs more room, take the tint off rather than darkening past green.700.
+               */
+              color="green.700"
               /*
                * Selectable on purpose, and the reason the copy button is not the only way out. A
                * phone with no clipboard permission, or a browser on an insecure origin, still has to
@@ -152,7 +164,14 @@ const CrewChannel = () => {
               {channel.number}
             </Text>
           </Box>
-          <StandardButton size="sm" variant="outline" minH="44px" onClick={copy}>
+          {/*
+            NO minH, from review of #51. CLAUDE.md forbids passing it to StandardButton: the 44px
+            floor lives inside the component and it spreads `...rest` AFTER its own props, so a
+            caller-supplied value silently overrides the floor the design system exists to
+            guarantee. Harmless while both are 44, and the point is that the guarantee stops being
+            one.
+          */}
+          <StandardButton size="sm" variant="outline" onClick={copy}>
             {intl.formatMessage({ id: 'fieldNotes.channel.copy' })}
           </StandardButton>
         </HStack>
