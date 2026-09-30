@@ -35,7 +35,6 @@ interface SearchResult {
   location?: string;
   imageUrl?: string;
   metadata: {
-    carbonScore?: number;
     area?: string;
     status?: string;
   };
@@ -461,12 +460,6 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({
 
           <HStack spacing={3} fontSize="xs" color="gray.500">
             {result.location && <Text>{result.location}</Text>}
-            {result.metadata.carbonScore && (
-              <HStack spacing={1}>
-                <Icon as={FaLeaf} color="green.500" />
-                <Text>{result.metadata.carbonScore} kg CO₂</Text>
-              </HStack>
-            )}
             {result.metadata.area && <Text>{result.metadata.area}</Text>}
           </HStack>
         </VStack>
