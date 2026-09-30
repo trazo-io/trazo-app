@@ -25,7 +25,10 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   discard: vi.fn(() => ({ unwrap: () => Promise.resolve({}) })),
   acknowledge: vi.fn(() => ({ unwrap: () => Promise.resolve({}) })),
-  roster: { data: [] as any[], isLoading: false },
+  // `data` is optional because a FAILED RTK query returns none, and the error case is exactly
+  // what one of these tests is about. Typed `any[] | undefined` rather than `any[]`, or the
+  // failure fixture does not typecheck.
+  roster: { data: [] as any[] | undefined, isLoading: false, isError: false },
   notes: [] as any[],
   /** Per-status query state, so the two requests can be made to settle independently. */
   state: {} as Record<string, { isLoading?: boolean; isError?: boolean }>
@@ -144,7 +147,7 @@ describe('the field notes inbox', () => {
     mocks.navigate.mockClear();
     mocks.discard.mockClear();
     mocks.notes = [NOTE];
-    mocks.roster = { data: [], isLoading: false };
+    mocks.roster = { data: [], isLoading: false, isError: false };
     mocks.state = {};
   });
 
@@ -174,11 +177,13 @@ describe('the field notes inbox', () => {
      */
     expect(screen.queryByText(/\+14155551234/)).toBeNull();
     /*
-     * The positive half — that the number shown IN FULL is Trazo's own and not a crew member's —
-     * lives in `crewChannel.test.tsx`, where that card is the subject. It cannot live here: the
-     * store above holds no company id, so the setup block does not render, which is exactly the
-     * state most of these queue tests want.
+     * RESTORED after review of #52, which caught that this branch had DELETED it rather than fixed
+     * it. `CrewChannel` takes no company-scoped argument and never skips its query, so it renders
+     * here with no company id in the store, and that is the state of every page load for the first
+     * few hundred milliseconds. Putting it behind the roster gate meant the page showed no number
+     * at all in that window, while the empty-state copy pointed at the top of the page for it.
      */
+    expect(screen.getByTestId('crew-channel-number').textContent).toBe('+14155238886');
   });
 
   it('prefills the block ONLY when the farm has exactly one', async () => {
@@ -599,7 +604,7 @@ describe('the page at scale', () => {
   beforeEach(() => {
     mocks.navigate.mockClear();
     mocks.acknowledge.mockClear();
-    mocks.roster = { data: [], isLoading: false };
+    mocks.roster = { data: [], isLoading: false, isError: false };
   });
 
   it('renders one page of the queue, not the whole thing', () => {
@@ -660,69 +665,132 @@ describe('the page at scale', () => {
 });
 
 describe('setup is reachable without scrolling the queue', () => {
+  const canSend = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ id: i + 1, may_send: true }));
+
   beforeEach(() => {
     mocks.notes = [NOTE];
     mocks.acknowledge.mockClear();
+    mocks.roster = { data: [], isLoading: false, isError: false };
   });
 
-  it('renders setup open and first when no number is registered yet', () => {
-    // Setup IS the job at this point, and the queue is empty anyway, so there is nothing to bury.
-    mocks.roster = { data: [], isLoading: false };
-    const { container } = renderInbox(ONE_PARCEL, 5);
+  it('shows the number even before the company slice has hydrated', () => {
+    // FROM REVIEW OF #52. `currentCompany.id` is falsy for the first few hundred milliseconds of
+    // every page load, and for the whole session if the company restore failed. Gating this card on
+    // the roster meant no number on screen in that window.
+    renderInbox(ONE_PARCEL);
     expect(screen.getByTestId('crew-channel-number')).toBeTruthy();
-    // No collapsed header to click past.
-    expect(screen.queryByText(/numbers can send to this farm/i)).toBeNull();
-    // ABOVE the queue: the channel card appears earlier in the document than the first note.
+  });
+
+  it('opens the roster and puts setup above the queue when nothing is registered', () => {
+    mocks.roster = { data: [], isLoading: false, isError: false };
+    const { container } = renderInbox(ONE_PARCEL, 5);
+    // Open, because setup IS the job at this point.
+    const header = screen.getByRole('button', { name: /Crew numbers, and where they send/i });
+    expect(header.getAttribute('aria-expanded')).toBe('true');
     const html = container.innerHTML;
     expect(html.indexOf('crew-channel-number')).toBeLessThan(html.indexOf('regamos el bloque 4'));
   });
 
-  it('collapses setup to a header row once a number exists, and says how many', () => {
-    mocks.roster = { data: [{ id: 1 }, { id: 2 }, { id: 3 }], isLoading: false };
+  it('collapses once a number exists, and counts only the ones that can send', () => {
+    // FROM REVIEW OF #52. `senders.length` counts deactivated rows, rows awaiting consent and rows
+    // that sent STOP. `may_send` is the server's own answer to "can this number file anything", and
+    // a number on screen is a claim.
+    mocks.roster = {
+      data: [...canSend(2), { id: 9, may_send: false }],
+      isLoading: false,
+      isError: false
+    };
     renderInbox(ONE_PARCEL, 5);
-    // getAllByText: `CollapsibleSection` renders `description` twice, once in the collapsed
-    // header and once inside the `Collapse` body, so a single-match query fails on a correct
-    // render. Asserting it is PRESENT is the claim; how many copies the component keeps is not.
-    expect(screen.getAllByText(/3 numbers can send to this farm/i).length).toBeGreaterThan(0);
-    /*
-     * COLLAPSED, asserted as the section's own state rather than as the absence of its children.
-     *
-     * Chakra's `Collapse` animates height to 0 and keeps the children MOUNTED, so the setup cards
-     * are in the DOM and take no vertical space. The first version of this test asserted
-     * `queryByTestId('crew-channel-number')` was null, which is a claim about mounting that is
-     * simply false, and making it true meant passing `unmountOnExit` to the shared component. That
-     * broke sixteen tests in `formRenderConformance`, because `CollapsibleSection` has three other
-     * callers and all three are `.jsx` activity form tabs that keep registered fields inside
-     * collapsed sections. Unmounting them would drop a farmer's entered values on save.
-     *
-     * So the claim this test can honestly make is the one the page needs: the section is shut, so
-     * the queue is not pushed down the screen.
-     */
+    expect(screen.getAllByText(/2 numbers can send to this farm/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/3 numbers can send to this farm/i)).toBeNull();
     const header = screen.getByRole('button', { name: /Crew numbers, and where they send/i });
     expect(header.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('opens on a click, without leaving the page', () => {
-    mocks.roster = { data: [{ id: 1 }], isLoading: false };
+  it('says none can send rather than claiming a count, when all are turned off', () => {
+    mocks.roster = {
+      data: [
+        { id: 1, may_send: false },
+        { id: 2, may_send: false }
+      ],
+      isLoading: false,
+      isError: false
+    };
     renderInbox(ONE_PARCEL, 5);
-    fireEvent.click(screen.getByText(/Crew numbers, and where they send/i));
-    expect(screen.getByTestId('crew-channel-number')).toBeTruthy();
+    expect(screen.getAllByText(/No number can send to this farm/i).length).toBeGreaterThan(0);
+    // Still COLLAPSED: this farm did its setup and undid it deliberately, so re-showing first-time
+    // setup would talk past what they did.
+    const header = screen.getByRole('button', { name: /Crew numbers, and where they send/i });
+    expect(header.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('does not snap shut when the first number is registered', () => {
+    /*
+     * FROM REVIEW OF #52. The first version used two mutually exclusive subtrees, so
+     * `senders.length` going 0 to 1 unmounted the open one and mounted a FRESH
+     * `CollapsibleSection`, which reads `defaultIsOpen` only on mount and defaults it to false. The
+     * setup block snapped shut at the moment the farmer wanted to confirm what they had added, and
+     * the roster's form state went with it.
+     */
+    mocks.roster = { data: [], isLoading: false, isError: false };
+    const { rerender } = renderInbox(ONE_PARCEL, 5);
+    expect(
+      screen
+        .getByRole('button', { name: /Crew numbers, and where they send/i })
+        .getAttribute('aria-expanded')
+    ).toBe('true');
+
+    // The number lands. Same subtree, so the section must stay as the farmer left it.
+    mocks.roster = { data: canSend(1), isLoading: false, isError: false };
+    rerender(
+      <Provider
+        store={configureStore({
+          reducer: { company: () => ({ currentCompany: { id: 5, establishments: ONE_PARCEL } }) }
+        })}>
+        <IntlProvider locale="en-US" messages={enUS as any}>
+          <ChakraProvider>
+            <MemoryRouter>
+              <FieldNotesInbox />
+            </MemoryRouter>
+          </ChakraProvider>
+        </IntlProvider>
+      </Provider>
+    );
+    expect(
+      screen
+        .getByRole('button', { name: /Crew numbers, and where they send/i })
+        .getAttribute('aria-expanded'),
+      'the section remounted and lost its open state'
+    ).toBe('true');
   });
 
   it('claims nothing about the roster before the request has answered', () => {
-    // A SKIPPED or in-flight query reads as `data: []`, and rendering the empty branch on that
-    // states the farm has no crew numbers on the evidence of a loading state.
-    mocks.roster = { data: [], isLoading: true };
+    mocks.roster = { data: [], isLoading: true, isError: false };
     renderInbox(ONE_PARCEL, 5);
-    expect(screen.queryByTestId('crew-channel-number')).toBeNull();
-    expect(screen.queryByText(/numbers can send to this farm/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /Crew numbers, and where they send/i })).toBeNull();
+  });
+
+  it('does not claim the roster is empty when the request FAILED', () => {
+    /*
+     * FROM REVIEW OF #52, and the half the original gate missed. RTK Query returns no data on an
+     * error, which this component defaults to `[]`, so a 500 read exactly like an empty roster and
+     * the page rendered first-time setup: it stated this farm has no crew numbers on the evidence of
+     * a request that failed.
+     */
+    mocks.roster = { data: undefined, isLoading: false, isError: true };
+    renderInbox(ONE_PARCEL, 5);
+    expect(screen.queryByRole('button', { name: /Crew numbers, and where they send/i })).toBeNull();
+    expect(screen.getByText(/numbers could not be loaded/i)).toBeTruthy();
+    // The channel is unaffected: it is a different request and the number is still correct.
+    expect(screen.getByTestId('crew-channel-number')).toBeTruthy();
   });
 });
 
 describe('a refusal can be cleared', () => {
   beforeEach(() => {
     mocks.acknowledge.mockClear();
-    mocks.roster = { data: [], isLoading: false };
+    mocks.roster = { data: [], isLoading: false, isError: false };
   });
 
   it('offers the only action that clears one, and sends just the id', async () => {

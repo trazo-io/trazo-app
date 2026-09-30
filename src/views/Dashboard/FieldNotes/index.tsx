@@ -228,15 +228,35 @@ const FieldNotesInbox = () => {
    * and first) or a thing you occasionally return to (collapsed, so it costs one header row instead
    * of the whole page's scroll).
    */
-  const { data: senders = [], isLoading: rosterLoading } = useGetCrewSendersQuery(
-    { company: companyId },
-    { skip: !companyId }
-  );
-  // A SKIPPED query reads as `isLoading: false` with `data` defaulting to `[]`, so "is it empty"
-  // cannot be asked until the company slice has hydrated and the request has actually answered.
-  // Rendering the empty branch before then states this farm has no crew numbers on the evidence of
-  // a loading state, which is the trap `CrewRoster` documents at its own `answered` flag.
-  const rosterAnswered = Boolean(companyId) && !rosterLoading;
+  const {
+    data: senders = [],
+    isLoading: rosterLoading,
+    isError: rosterFailed
+  } = useGetCrewSendersQuery({ company: companyId }, { skip: !companyId });
+
+  /**
+   * Has the server actually ANSWERED with a roster?
+   *
+   * Three things have to be true, and the third was missing until review of #52. A skipped query
+   * reads as `isLoading: false` with `data` defaulting to `[]`; so does a FAILED one, because RTK
+   * Query returns no data on an error. So a 500 on this request left `rosterAnswered` true and
+   * `senders.length === 0`, and the page rendered first-time setup: it stated this farm has no crew
+   * numbers on the evidence of a request that failed. That is the same trap the comment here
+   * already described for the skipped case, guarded for one half of it.
+   */
+  const rosterAnswered = Boolean(companyId) && !rosterLoading && !rosterFailed;
+
+  /**
+   * How many numbers can ACTUALLY send, which is not how many rows there are.
+   *
+   * From review of #52. The header says "N numbers can send to this farm", and `senders.length`
+   * counts every row including ones that are deactivated, awaiting consent, or have sent STOP.
+   * Deactivation is deliberately non-destructive, so a farm that turned all of its numbers off
+   * still had a header claiming three could send, directly above three rows each badged as
+   * blocked. `may_send` is the server's own computed answer to that question and the only one worth
+   * printing: a number on screen is a claim.
+   */
+  const canSendCount = senders.filter((sender) => sender.may_send).length;
 
   /**
    * One page each, and they page INDEPENDENTLY.
@@ -391,24 +411,41 @@ const FieldNotesInbox = () => {
           registered fields inside collapsed sections, and unmounting those drops a farmer's
           entered values on save.
 
-          The two branches are
-          honest rather than one component with a computed default: `useDisclosure` reads
-          `defaultIsOpen` only on mount, and `companyId` hydrates a few hundred milliseconds late, so
-          a computed default would open for everybody and then be wrong for the established farm.
-
-          THE CHANNEL COMES FIRST OF THE TWO. Registering a number is useless until somebody knows
-          the address, and on the Twilio sandbox a crew member who messages before sending the join
-          phrase is not delivered at all, which produces no note, no refusal row and nothing on any
-          screen.
+          THE CHANNEL COMES FIRST. Registering a number is useless until somebody knows the address,
+          and on the Twilio sandbox a crew member who messages before sending the join phrase is not
+          delivered at all, which produces no note, no refusal row and nothing on any screen.
         */}
-        {rosterAnswered && senders.length === 0 && (
-          <>
-            <CrewChannel />
-            <CrewRoster companyId={companyId} farms={farms} />
-          </>
+        {/*
+          UNCONDITIONAL, from review of #52. This card takes no company-scoped argument and never
+          skips its query, because one deployment has one inbound number and it belongs to no
+          company. Putting it behind `rosterAnswered` was a regression: `currentCompany.id` is falsy
+          for the first few hundred milliseconds of every page load, and for the whole session if
+          the company restore failed, and in that window the page showed no number at all while
+          `fieldNotes.emptyHelp` told the reader to look at the top of this page for it.
+        */}
+        <CrewChannel />
+
+        {rosterFailed && (
+          <StandardCard>
+            <Text fontSize="sm" color="gray.800" p={2}>
+              {intl.formatMessage({ id: 'fieldNotes.setup.loadFailed' })}
+            </Text>
+          </StandardCard>
         )}
 
-        {rosterAnswered && senders.length > 0 && (
+        {/*
+          ONE SECTION WITH A COMPUTED DEFAULT, not two branches, also from review of #52.
+          Two mutually exclusive subtrees meant that registering a first number took
+          `senders.length` from 0 to 1, which unmounted the open branch and mounted a FRESH
+          `CollapsibleSection`. `useDisclosure` reads `defaultIsOpen` only on mount and it defaults
+          to false, so the setup block a farmer was looking at snapped shut at the moment they
+          wanted to confirm what they had just added, and the roster's form state went with it.
+
+          A computed default is safe HERE, unlike in the earlier version, precisely because this
+          only mounts once `rosterAnswered` is true: the hazard a computed default had was reading
+          `senders` before the query answered, and that cannot happen behind this gate.
+        */}
+        {rosterAnswered && (
           <CollapsibleSection
             title={intl.formatMessage({ id: 'fieldNotes.setup.title' })}
             /*
@@ -423,9 +460,15 @@ const FieldNotesInbox = () => {
             */
             description={intl.formatMessage(
               { id: 'fieldNotes.setup.description' },
-              { count: senders.length }
-            )}>
-            <CrewChannel />
+              { count: canSendCount }
+            )}
+            /*
+              Open when there is nothing on the roster, because setup IS the job then. Keyed on the
+              ROW COUNT and not on `canSendCount`: a farm whose numbers are all deactivated has done
+              its setup and undone it deliberately, so re-showing first-time setup would talk past
+              what they did. The header still reports zero can send, which is the accurate half.
+            */
+            defaultIsOpen={senders.length === 0}>
             <CrewRoster companyId={companyId} farms={farms} />
           </CollapsibleSection>
         )}
