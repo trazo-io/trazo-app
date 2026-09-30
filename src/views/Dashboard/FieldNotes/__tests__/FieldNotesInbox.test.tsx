@@ -583,12 +583,17 @@ describe('notes that could not be read', () => {
  * account. The scroll was the symptom.
  */
 describe('the page at scale', () => {
+  /**
+   * `words` carries the STATUS as well as the index, because both lists are on one page and a
+   * shared "mensaje numero 3" makes every text assertion ambiguous about which list it found.
+   */
   const manyNotes = (count: number, status = 'pending') =>
     Array.from({ length: count }, (_, i) => ({
       ...NOTE,
       public_id: `note-${status}-${i}`,
       status,
-      words: `mensaje numero ${i}`
+      refusal_reason: status === 'refused' ? 'language_not_supported' : '',
+      words: `${status} numero ${i}`
     }));
 
   beforeEach(() => {
@@ -602,8 +607,8 @@ describe('the page at scale', () => {
     renderInbox(ONE_PARCEL);
     // PAGE_SIZE is 10: ten cards, so ten "Log this" buttons, not twenty-three.
     expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(10);
-    expect(screen.getByText(/mensaje numero 0/)).toBeTruthy();
-    expect(screen.queryByText(/mensaje numero 10/)).toBeNull();
+    expect(screen.getByText(/pending numero 0/)).toBeTruthy();
+    expect(screen.queryByText(/pending numero 10/)).toBeNull();
   });
 
   it('offers a pager that says how much is there', () => {
@@ -618,8 +623,8 @@ describe('the page at scale', () => {
     mocks.notes = manyNotes(23);
     renderInbox(ONE_PARCEL);
     fireEvent.click(screen.getByRole('button', { name: /next/i }));
-    expect(screen.getByText(/mensaje numero 10/)).toBeTruthy();
-    expect(screen.queryByText(/mensaje numero 0$/)).toBeNull();
+    expect(screen.getByText(/pending numero 10/)).toBeTruthy();
+    expect(screen.queryByText(/pending numero 0$/)).toBeNull();
   });
 
   it('shows no pager at all when everything fits', () => {
@@ -631,13 +636,26 @@ describe('the page at scale', () => {
   });
 
   it('pages the refused list independently of the queue', () => {
-    // A single shared page number would move both lists at once: paging the queue to find a note
-    // would silently scroll refusals somebody was reading.
+    /*
+     * PROVEN BY MOVING ONE AND CHECKING THE OTHER DID NOT. The first version of this test asserted
+     * that two "next" buttons exist, which is true under a single shared page number as well, so it
+     * proved only that two pagers render. A shared number is the actual defect to catch: paging the
+     * queue to find a note would silently scroll refusals somebody was part-way through reading.
+     */
     mocks.notes = [...manyNotes(23), ...manyNotes(15, 'refused')];
-    mocks.state = { ...mocks.state };
     renderInbox(ONE_PARCEL);
+
     const nexts = screen.getAllByRole('button', { name: /next/i });
-    expect(nexts).toHaveLength(2);
+    expect(nexts, 'both lists overflow one page, so both should offer a pager').toHaveLength(2);
+
+    // The queue's pager is the first in document order, because the queue renders above refusals.
+    fireEvent.click(nexts[0]);
+
+    // The queue moved...
+    expect(screen.getByText(/pending numero 10/)).toBeTruthy();
+    // ...and the refused list did not.
+    expect(screen.getByText(/refused numero 0/)).toBeTruthy();
+    expect(screen.queryByText(/refused numero 10/)).toBeNull();
   });
 });
 
