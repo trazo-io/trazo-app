@@ -22,7 +22,14 @@ import baseApi from './baseApi';
  * read, and a supervisor looking at an empty queue deserves to know something is on its way rather
  * than that nothing arrived.
  */
-export type FieldNoteStatus = 'transcribing' | 'pending' | 'confirmed' | 'discarded' | 'refused';
+export type FieldNoteStatus =
+  | 'transcribing'
+  | 'pending'
+  | 'confirmed'
+  | 'discarded'
+  | 'refused'
+  /** A refusal somebody has read. The only way one ever leaves the page: see `acknowledge`. */
+  | 'acknowledged';
 
 export interface FieldNoteSender {
   display_name: string;
@@ -57,6 +64,13 @@ export interface FieldNote {
   received_at: string;
   establishment: number | null;
   confirmed_at: string | null;
+  /*
+   * NOT DECLARED: `acknowledged_at`. The serializer sends it and no surface here reads it, because
+   * an acknowledged note simply leaves the refused list. Declaring it would put this slice ahead of
+   * the backend that serves it, and `fieldNoteContractParity.test.ts` reads trazo-back at `main`, so
+   * the guard would fail on this branch until the backend change merged. A field is declared when
+   * something reads it.
+   */
   fulfilled_by_event_type: number | null;
   fulfilled_by_id: number | null;
 }
@@ -111,6 +125,30 @@ const fieldNoteApi = baseApi.injectEndpoints({
      * event; deleting the row would make "we never received it" and "we looked and said no"
      * indistinguishable to anyone reading the trail later.
      */
+    /**
+     * Clear a refusal a person has now read.
+     *
+     * A DIFFERENT ACT FROM DISCARDING, and a different status, which is the whole reason this is a
+     * second endpoint rather than a flag on the first. Discarding records that the OPERATION decided
+     * a message was not an event. A refusal is Trazo failing to read one. Anyone reading the trail
+     * later has to be able to tell "we looked and said no" from "we never got to look".
+     *
+     * It is also the only way a refused note ever leaves this page. `discard` answers 409 for
+     * anything that is not waiting, so before this existed the refused list grew for the life of the
+     * account and the setup cards sat below all of it.
+     *
+     * No reason is sent. `refusal_reason` is already on the row, written by the machine that failed,
+     * and the operator is recording that they read it rather than explaining it.
+     */
+    acknowledgeFieldNote: build.mutation<FieldNote, string>({
+      query: (publicId) => ({
+        url: `field-notes/${encodeURIComponent(publicId)}/acknowledge/`,
+        method: 'POST',
+        credentials: 'include'
+      }),
+      invalidatesTags: ['FieldNote']
+    }),
+
     discardFieldNote: build.mutation<FieldNote, { publicId: string; reason?: string }>({
       query: ({ publicId, reason }) => ({
         url: `field-notes/${publicId}/discard/`,
@@ -143,6 +181,10 @@ const fieldNoteApi = baseApi.injectEndpoints({
 export const fieldNoteAudioUrl = (publicId: string) =>
   `${config.API_BASE_URL}/field-notes/${encodeURIComponent(publicId)}/audio/`;
 
-export const { useGetFieldNotesQuery, useGetFieldNoteQuery, useDiscardFieldNoteMutation } =
-  fieldNoteApi;
+export const {
+  useGetFieldNotesQuery,
+  useGetFieldNoteQuery,
+  useDiscardFieldNoteMutation,
+  useAcknowledgeFieldNoteMutation
+} = fieldNoteApi;
 export default fieldNoteApi;

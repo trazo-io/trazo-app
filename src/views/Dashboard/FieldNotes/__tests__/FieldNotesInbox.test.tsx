@@ -24,6 +24,11 @@ import enUS from '../../../../i18n/lang/en-US.json';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   discard: vi.fn(() => ({ unwrap: () => Promise.resolve({}) })),
+  acknowledge: vi.fn(() => ({ unwrap: () => Promise.resolve({}) })),
+  // `data` is optional because a FAILED RTK query returns none, and the error case is exactly
+  // what one of these tests is about. Typed `any[] | undefined` rather than `any[]`, or the
+  // failure fixture does not typecheck.
+  roster: { data: [] as any[] | undefined, isLoading: false, isError: false },
   notes: [] as any[],
   /** Per-status query state, so the two requests can be made to settle independently. */
   state: {} as Record<string, { isLoading?: boolean; isError?: boolean }>
@@ -57,6 +62,7 @@ vi.mock('store/api/fieldNoteApi', () => ({
     };
   },
   useDiscardFieldNoteMutation: () => [mocks.discard, { isLoading: false }],
+  useAcknowledgeFieldNoteMutation: () => [mocks.acknowledge, { isLoading: false }],
   // The real one interpolates config.API_BASE_URL. Kept simple here, but the SHAPE matters: the
   // assertions check the path is a Trazo endpoint rather than the provider's own URL.
   fieldNoteAudioUrl: (publicId: string) => `/api/field-notes/${publicId}/audio/`
@@ -78,7 +84,9 @@ vi.mock('store/api/crewSenderApi', () => ({
     isLoading: false,
     isError: false
   }),
-  useGetCrewSendersQuery: () => ({ data: [], isLoading: false }),
+  // Steerable, because the setup block's placement depends on it: an empty roster means setup IS
+  // the job and renders open, a populated one means it collapses to a header row.
+  useGetCrewSendersQuery: () => mocks.roster,
   useCreateCrewSenderMutation: () => [vi.fn(), { isLoading: false }],
   useUpdateCrewSenderMutation: () => [vi.fn(), { isLoading: false }],
   useDeactivateCrewSenderMutation: () => [vi.fn(), { isLoading: false }]
@@ -100,9 +108,14 @@ const NOTE = {
   fulfilled_by_id: null
 };
 
-function renderInbox(establishments: any[]) {
+/**
+ * `companyId` defaults to undefined, which is what the original store held and what most of these
+ * tests want: with no company the setup block does not render at all, so the queue assertions are
+ * about the queue. The tests that are ABOUT setup pass one in.
+ */
+function renderInbox(establishments: any[], companyId?: number) {
   const store = configureStore({
-    reducer: { company: () => ({ currentCompany: { establishments } }) }
+    reducer: { company: () => ({ currentCompany: { id: companyId, establishments } }) }
   });
   return render(
     <Provider store={store}>
@@ -134,6 +147,7 @@ describe('the field notes inbox', () => {
     mocks.navigate.mockClear();
     mocks.discard.mockClear();
     mocks.notes = [NOTE];
+    mocks.roster = { data: [], isLoading: false, isError: false };
     mocks.state = {};
   });
 
@@ -162,6 +176,13 @@ describe('the field notes inbox', () => {
      * the number that IS shown in full is the channel's, and it comes from the channel card.
      */
     expect(screen.queryByText(/\+14155551234/)).toBeNull();
+    /*
+     * RESTORED after review of #52, which caught that this branch had DELETED it rather than fixed
+     * it. `CrewChannel` takes no company-scoped argument and never skips its query, so it renders
+     * here with no company id in the store, and that is the state of every page load for the first
+     * few hundred milliseconds. Putting it behind the roster gate meant the page showed no number
+     * at all in that window, while the empty-state copy pointed at the top of the page for it.
+     */
     expect(screen.getByTestId('crew-channel-number').textContent).toBe('+14155238886');
   });
 
@@ -549,5 +570,245 @@ describe('notes that could not be read', () => {
     mocks.notes = [REFUSED_VOICE, { ...NOTE, status: 'pending' }];
     renderInbox(ONE_PARCEL);
     expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(1);
+  });
+});
+
+/**
+ * The page has to stay usable once a farm has been running for a season.
+ *
+ * WHAT WAS WRONG, found by the product owner asking whether a farmer with a lot of field notes has
+ * to scroll to add a crew number. They did. The setup block rendered LAST, under every waiting note
+ * and every refusal, and no list was paged: DRF has no pagination configured, so the endpoint
+ * returns every matching note and the page rendered all of them. A note is a card carrying a
+ * header, the words, an optional audio player and two 44px selects and two 44px buttons, so twenty
+ * of them is a dozen screens before the roster.
+ *
+ * And the refused list never drained: `discard` answers 409 for anything that is not waiting, so
+ * until `acknowledge` shipped every unreadable message stayed on the page for the life of the
+ * account. The scroll was the symptom.
+ */
+describe('the page at scale', () => {
+  /**
+   * `words` carries the STATUS as well as the index, because both lists are on one page and a
+   * shared "mensaje numero 3" makes every text assertion ambiguous about which list it found.
+   */
+  const manyNotes = (count: number, status = 'pending') =>
+    Array.from({ length: count }, (_, i) => ({
+      ...NOTE,
+      public_id: `note-${status}-${i}`,
+      status,
+      refusal_reason: status === 'refused' ? 'language_not_supported' : '',
+      words: `${status} numero ${i}`
+    }));
+
+  beforeEach(() => {
+    mocks.navigate.mockClear();
+    mocks.acknowledge.mockClear();
+    mocks.roster = { data: [], isLoading: false, isError: false };
+  });
+
+  it('renders one page of the queue, not the whole thing', () => {
+    mocks.notes = manyNotes(23);
+    renderInbox(ONE_PARCEL);
+    // PAGE_SIZE is 10: ten cards, so ten "Log this" buttons, not twenty-three.
+    expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(10);
+    expect(screen.getByText(/pending numero 0/)).toBeTruthy();
+    expect(screen.queryByText(/pending numero 10/)).toBeNull();
+  });
+
+  it('offers a pager that says how much is there', () => {
+    mocks.notes = manyNotes(23);
+    renderInbox(ONE_PARCEL);
+    // The TOTAL is the point: ten cards with no total reads as ten notes existing. Matched as
+    // "of 23" rather than bare /23/, which also hits the timestamps on the cards.
+    expect(screen.getByText(/of 23/)).toBeTruthy();
+  });
+
+  it('reaches the rest of the queue', () => {
+    mocks.notes = manyNotes(23);
+    renderInbox(ONE_PARCEL);
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+    expect(screen.getByText(/pending numero 10/)).toBeTruthy();
+    expect(screen.queryByText(/pending numero 0$/)).toBeNull();
+  });
+
+  it('shows no pager at all when everything fits', () => {
+    mocks.notes = manyNotes(3);
+    renderInbox(ONE_PARCEL);
+    // StandardPagination returns null on `total <= pageSize`, which is why this costs a first-time
+    // user nothing.
+    expect(screen.queryByRole('button', { name: /next/i })).toBeNull();
+  });
+
+  it('pages the refused list independently of the queue', () => {
+    /*
+     * PROVEN BY MOVING ONE AND CHECKING THE OTHER DID NOT. The first version of this test asserted
+     * that two "next" buttons exist, which is true under a single shared page number as well, so it
+     * proved only that two pagers render. A shared number is the actual defect to catch: paging the
+     * queue to find a note would silently scroll refusals somebody was part-way through reading.
+     */
+    mocks.notes = [...manyNotes(23), ...manyNotes(15, 'refused')];
+    renderInbox(ONE_PARCEL);
+
+    const nexts = screen.getAllByRole('button', { name: /next/i });
+    expect(nexts, 'both lists overflow one page, so both should offer a pager').toHaveLength(2);
+
+    // The queue's pager is the first in document order, because the queue renders above refusals.
+    fireEvent.click(nexts[0]);
+
+    // The queue moved...
+    expect(screen.getByText(/pending numero 10/)).toBeTruthy();
+    // ...and the refused list did not.
+    expect(screen.getByText(/refused numero 0/)).toBeTruthy();
+    expect(screen.queryByText(/refused numero 10/)).toBeNull();
+  });
+});
+
+describe('setup is reachable without scrolling the queue', () => {
+  const canSend = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ id: i + 1, may_send: true }));
+
+  beforeEach(() => {
+    mocks.notes = [NOTE];
+    mocks.acknowledge.mockClear();
+    mocks.roster = { data: [], isLoading: false, isError: false };
+  });
+
+  it('shows the number even before the company slice has hydrated', () => {
+    // FROM REVIEW OF #52. `currentCompany.id` is falsy for the first few hundred milliseconds of
+    // every page load, and for the whole session if the company restore failed. Gating this card on
+    // the roster meant no number on screen in that window.
+    renderInbox(ONE_PARCEL);
+    expect(screen.getByTestId('crew-channel-number')).toBeTruthy();
+  });
+
+  it('opens the roster and puts setup above the queue when nothing is registered', () => {
+    mocks.roster = { data: [], isLoading: false, isError: false };
+    const { container } = renderInbox(ONE_PARCEL, 5);
+    // Open, because setup IS the job at this point.
+    const header = screen.getByRole('button', { name: /Crew numbers, and where they send/i });
+    expect(header.getAttribute('aria-expanded')).toBe('true');
+    const html = container.innerHTML;
+    expect(html.indexOf('crew-channel-number')).toBeLessThan(html.indexOf('regamos el bloque 4'));
+  });
+
+  it('collapses once a number exists, and counts only the ones that can send', () => {
+    // FROM REVIEW OF #52. `senders.length` counts deactivated rows, rows awaiting consent and rows
+    // that sent STOP. `may_send` is the server's own answer to "can this number file anything", and
+    // a number on screen is a claim.
+    mocks.roster = {
+      data: [...canSend(2), { id: 9, may_send: false }],
+      isLoading: false,
+      isError: false
+    };
+    renderInbox(ONE_PARCEL, 5);
+    expect(screen.getAllByText(/2 numbers can send to this farm/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/3 numbers can send to this farm/i)).toBeNull();
+    const header = screen.getByRole('button', { name: /Crew numbers, and where they send/i });
+    expect(header.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('says none can send rather than claiming a count, when all are turned off', () => {
+    mocks.roster = {
+      data: [
+        { id: 1, may_send: false },
+        { id: 2, may_send: false }
+      ],
+      isLoading: false,
+      isError: false
+    };
+    renderInbox(ONE_PARCEL, 5);
+    expect(screen.getAllByText(/No number can send to this farm/i).length).toBeGreaterThan(0);
+    // Still COLLAPSED: this farm did its setup and undid it deliberately, so re-showing first-time
+    // setup would talk past what they did.
+    const header = screen.getByRole('button', { name: /Crew numbers, and where they send/i });
+    expect(header.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('does not snap shut when the first number is registered', () => {
+    /*
+     * FROM REVIEW OF #52. The first version used two mutually exclusive subtrees, so
+     * `senders.length` going 0 to 1 unmounted the open one and mounted a FRESH
+     * `CollapsibleSection`, which reads `defaultIsOpen` only on mount and defaults it to false. The
+     * setup block snapped shut at the moment the farmer wanted to confirm what they had added, and
+     * the roster's form state went with it.
+     */
+    mocks.roster = { data: [], isLoading: false, isError: false };
+    const { rerender } = renderInbox(ONE_PARCEL, 5);
+    expect(
+      screen
+        .getByRole('button', { name: /Crew numbers, and where they send/i })
+        .getAttribute('aria-expanded')
+    ).toBe('true');
+
+    // The number lands. Same subtree, so the section must stay as the farmer left it.
+    mocks.roster = { data: canSend(1), isLoading: false, isError: false };
+    rerender(
+      <Provider
+        store={configureStore({
+          reducer: { company: () => ({ currentCompany: { id: 5, establishments: ONE_PARCEL } }) }
+        })}>
+        <IntlProvider locale="en-US" messages={enUS as any}>
+          <ChakraProvider>
+            <MemoryRouter>
+              <FieldNotesInbox />
+            </MemoryRouter>
+          </ChakraProvider>
+        </IntlProvider>
+      </Provider>
+    );
+    expect(
+      screen
+        .getByRole('button', { name: /Crew numbers, and where they send/i })
+        .getAttribute('aria-expanded'),
+      'the section remounted and lost its open state'
+    ).toBe('true');
+  });
+
+  it('claims nothing about the roster before the request has answered', () => {
+    mocks.roster = { data: [], isLoading: true, isError: false };
+    renderInbox(ONE_PARCEL, 5);
+    expect(screen.queryByRole('button', { name: /Crew numbers, and where they send/i })).toBeNull();
+  });
+
+  it('does not claim the roster is empty when the request FAILED', () => {
+    /*
+     * FROM REVIEW OF #52, and the half the original gate missed. RTK Query returns no data on an
+     * error, which this component defaults to `[]`, so a 500 read exactly like an empty roster and
+     * the page rendered first-time setup: it stated this farm has no crew numbers on the evidence of
+     * a request that failed.
+     */
+    mocks.roster = { data: undefined, isLoading: false, isError: true };
+    renderInbox(ONE_PARCEL, 5);
+    expect(screen.queryByRole('button', { name: /Crew numbers, and where they send/i })).toBeNull();
+    expect(screen.getByText(/numbers could not be loaded/i)).toBeTruthy();
+    // The channel is unaffected: it is a different request and the number is still correct.
+    expect(screen.getByTestId('crew-channel-number')).toBeTruthy();
+  });
+});
+
+describe('a refusal can be cleared', () => {
+  beforeEach(() => {
+    mocks.acknowledge.mockClear();
+    mocks.roster = { data: [], isLoading: false, isError: false };
+  });
+
+  it('offers the only action that clears one, and sends just the id', async () => {
+    // THE ONLY WAY A REFUSAL EVER LEAVES THIS PAGE. `discard` answers 409 for anything that is not
+    // waiting, so without this the refused list grows for the life of the account.
+    mocks.notes = [
+      { ...NOTE, public_id: 'ref-1', status: 'refused', refusal_reason: 'language_not_supported' }
+    ];
+    renderInbox(ONE_PARCEL);
+    fireEvent.click(screen.getByRole('button', { name: /Mark as seen/i }));
+    await waitFor(() => expect(mocks.acknowledge).toHaveBeenCalledWith('ref-1'));
+  });
+
+  it('does not offer it on a waiting note', () => {
+    // Acknowledging a waiting note would make a crew member's message disappear without logging it
+    // or recording a decision about it.
+    mocks.notes = [NOTE];
+    renderInbox(ONE_PARCEL);
+    expect(screen.queryByRole('button', { name: /Mark as seen/i })).toBeNull();
   });
 });

@@ -22,10 +22,12 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import {
+  CollapsibleSection,
   StandardButton,
   StandardCard,
   StandardField,
   StandardPage,
+  StandardPagination,
   StandardSelect,
   StandardTextarea
 } from 'components/Design/StandardComponents';
@@ -34,11 +36,30 @@ import CrewChannel from './CrewChannel';
 import CrewRoster from './CrewRoster';
 import type { RootState } from 'store/index';
 import {
+  useAcknowledgeFieldNoteMutation,
   useDiscardFieldNoteMutation,
   useGetFieldNotesQuery,
   fieldNoteAudioUrl,
   type FieldNote
 } from 'store/api/fieldNoteApi';
+import { useGetCrewSendersQuery } from 'store/api/crewSenderApi';
+
+/**
+ * How many notes render at once, per list.
+ *
+ * TEN, NOT THE 25 the tables use. `Activities` and `Documents` page at 25 because a row there is one
+ * line of a table; a note here is a CARD carrying a header, the words, an optional audio player and
+ * notice, two 44px selects and two 44px buttons, which stacks to something like 400px on a phone.
+ * Twenty-five of those is a dozen screens. `Buyer` already pages card-shaped content at 8 and 10,
+ * which is the precedent this follows.
+ *
+ * CLIENT-SIDE, like all three of those pages: the endpoint returns every matching note (DRF has no
+ * pagination configured, so `paginate_queryset` answers None) and the slicing happens here.
+ * `guards/fieldNotesPaginationEnvelope.test.ts` is what notices if that ever changes, because the
+ * API slice unwraps a `{results}` envelope and sends no page param, so switching DRF pagination on
+ * would silently show page one of each list with no way to reach the rest.
+ */
+const PAGE_SIZE = 10;
 
 /**
  * When a message arrived, to the minute.
@@ -197,6 +218,76 @@ const FieldNotesInbox = () => {
     [establishments]
   );
 
+  const [acknowledgeNote, { isLoading: isAcknowledging }] = useAcknowledgeFieldNoteMutation();
+
+  /**
+   * The roster, for one question only: is this farm set up yet?
+   *
+   * The SAME query `CrewRoster` runs, so RTK Query serves both from one cache entry and one request.
+   * Asked here because the answer decides whether setup is the job (roster empty, so show it open
+   * and first) or a thing you occasionally return to (collapsed, so it costs one header row instead
+   * of the whole page's scroll).
+   */
+  const {
+    data: senders = [],
+    isLoading: rosterLoading,
+    isError: rosterFailed
+  } = useGetCrewSendersQuery({ company: companyId }, { skip: !companyId });
+
+  /**
+   * Has the server actually ANSWERED with a roster?
+   *
+   * Three things have to be true, and the third was missing until review of #52. A skipped query
+   * reads as `isLoading: false` with `data` defaulting to `[]`; so does a FAILED one, because RTK
+   * Query returns no data on an error. So a 500 on this request left `rosterAnswered` true and
+   * `senders.length === 0`, and the page rendered first-time setup: it stated this farm has no crew
+   * numbers on the evidence of a request that failed. That is the same trap the comment here
+   * already described for the skipped case, guarded for one half of it.
+   */
+  const rosterAnswered = Boolean(companyId) && !rosterLoading && !rosterFailed;
+
+  /**
+   * How many numbers can ACTUALLY send, which is not how many rows there are.
+   *
+   * From review of #52. The header says "N numbers can send to this farm", and `senders.length`
+   * counts every row including ones that are deactivated, awaiting consent, or have sent STOP.
+   * Deactivation is deliberately non-destructive, so a farm that turned all of its numbers off
+   * still had a header claiming three could send, directly above three rows each badged as
+   * blocked. `may_send` is the server's own computed answer to that question and the only one worth
+   * printing: a number on screen is a claim.
+   */
+  const canSendCount = senders.filter((sender) => sender.may_send).length;
+
+  /**
+   * One page each, and they page INDEPENDENTLY.
+   *
+   * A single shared page number would move both lists at once: paging the queue to find a note
+   * would silently scroll the refusals somebody was reading, and a refusals list shorter than the
+   * queue would render empty at page 3 while refusals still existed.
+   */
+  const [queuePage, setQueuePage] = useState(1);
+  const [refusedPage, setRefusedPage] = useState(1);
+
+  /*
+   * CLAMPED, not trusted. A list shrinks under the pager whenever a note is logged, discarded or
+   * acknowledged, and the last item on the last page leaves the page number pointing past the end,
+   * which renders an empty list with no indication that anything is there. `Activities` and
+   * `Documents` clamp for the same reason.
+   */
+  const queuePageCount = Math.max(1, Math.ceil(notes.length / PAGE_SIZE));
+  const safeQueuePage = Math.min(queuePage, queuePageCount);
+  const visibleNotes = useMemo(
+    () => notes.slice((safeQueuePage - 1) * PAGE_SIZE, safeQueuePage * PAGE_SIZE),
+    [notes, safeQueuePage]
+  );
+
+  const refusedPageCount = Math.max(1, Math.ceil(refused.length / PAGE_SIZE));
+  const safeRefusedPage = Math.min(refusedPage, refusedPageCount);
+  const visibleRefused = useMemo(
+    () => refused.slice((safeRefusedPage - 1) * PAGE_SIZE, safeRefusedPage * PAGE_SIZE),
+    [refused, safeRefusedPage]
+  );
+
   // Per-note, because two notes in the queue can belong to different blocks.
   const [choice, setChoice] = useState<Record<string, { farmId?: string; parcelId?: string }>>({});
   /**
@@ -254,6 +345,27 @@ const FieldNotesInbox = () => {
     );
   };
 
+  const acknowledge = async (note: FieldNote) => {
+    try {
+      await acknowledgeNote(note.public_id).unwrap();
+      toast({
+        title: intl.formatMessage({ id: 'fieldNotes.refused.acknowledged' }),
+        status: 'success',
+        duration: 4000,
+        isClosable: true,
+        position: 'top'
+      });
+    } catch {
+      toast({
+        title: intl.formatMessage({ id: 'fieldNotes.refused.acknowledgeFailed' }),
+        status: 'error',
+        duration: 6000,
+        isClosable: true,
+        position: 'top'
+      });
+    }
+  };
+
   const confirmDiscard = async (note: FieldNote) => {
     try {
       await discardNote({ publicId: note.public_id, reason: discardReason.trim() }).unwrap();
@@ -282,6 +394,85 @@ const FieldNotesInbox = () => {
       title={intl.formatMessage({ id: 'fieldNotes.title' })}
       description={intl.formatMessage({ id: 'fieldNotes.description' })}>
       <VStack align="stretch" spacing={4}>
+        {/*
+          SETUP FIRST, AND COLLAPSED ONCE IT IS DONE. It used to sit at the very bottom, under every
+          waiting note and every refusal, on the reasoning that the queue is the job. That reasoning
+          holds and the placement did not: you need the roster most in two moments, first-time setup
+          and adding a new hire mid-season, and the second is the common one on a farm with seasonal
+          crew. A layout where the control you reach for is furthest from you exactly when the page
+          is busiest is backwards, and the refused list never used to drain, so the scroll grew
+          without bound.
+
+          Collapsed it takes no vertical space, so the queue loses nothing on screen. Its children
+          stay MOUNTED, because Chakra's `Collapse` animates height rather than unmounting, so the
+          two queries inside still run: the roster one is the same cache entry this component
+          already reads, and the channel is one small GET. Do NOT "fix" that with `unmountOnExit` on
+          the shared component: its three other callers are `.jsx` activity form tabs that keep
+          registered fields inside collapsed sections, and unmounting those drops a farmer's
+          entered values on save.
+
+          THE CHANNEL COMES FIRST. Registering a number is useless until somebody knows the address,
+          and on the Twilio sandbox a crew member who messages before sending the join phrase is not
+          delivered at all, which produces no note, no refusal row and nothing on any screen.
+        */}
+        {/*
+          UNCONDITIONAL, from review of #52. This card takes no company-scoped argument and never
+          skips its query, because one deployment has one inbound number and it belongs to no
+          company. Putting it behind `rosterAnswered` was a regression: `currentCompany.id` is falsy
+          for the first few hundred milliseconds of every page load, and for the whole session if
+          the company restore failed, and in that window the page showed no number at all while
+          `fieldNotes.emptyHelp` told the reader to look at the top of this page for it.
+        */}
+        <CrewChannel />
+
+        {rosterFailed && (
+          <StandardCard>
+            <Text fontSize="sm" color="gray.800" p={2}>
+              {intl.formatMessage({ id: 'fieldNotes.setup.loadFailed' })}
+            </Text>
+          </StandardCard>
+        )}
+
+        {/*
+          ONE SECTION WITH A COMPUTED DEFAULT, not two branches, also from review of #52.
+          Two mutually exclusive subtrees meant that registering a first number took
+          `senders.length` from 0 to 1, which unmounted the open branch and mounted a FRESH
+          `CollapsibleSection`. `useDisclosure` reads `defaultIsOpen` only on mount and it defaults
+          to false, so the setup block a farmer was looking at snapped shut at the moment they
+          wanted to confirm what they had just added, and the roster's form state went with it.
+
+          A computed default is safe HERE, unlike in the earlier version, precisely because this
+          only mounts once `rosterAnswered` is true: the hazard a computed default had was reading
+          `senders` before the query answered, and that cannot happen behind this gate.
+        */}
+        {rosterAnswered && (
+          <CollapsibleSection
+            title={intl.formatMessage({ id: 'fieldNotes.setup.title' })}
+            /*
+              The count goes in `description`, which renders in the collapsed header and again in
+              the open body, so it is visible at a glance without opening the section.
+
+              NO `badge`. `SectionBadgeTone` is `'certifier' | 'optional'`, two semantic labels for
+              OSP sections, and it DEFAULTS to `certifier`. Neither means "three numbers", so
+              passing one, or omitting the tone and taking the default, would put a certifier label
+              on a crew roster. Borrowing a vocabulary that already means something else is the
+              inert-prop class this codebase keeps running into.
+            */
+            description={intl.formatMessage(
+              { id: 'fieldNotes.setup.description' },
+              { count: canSendCount }
+            )}
+            /*
+              Open when there is nothing on the roster, because setup IS the job then. Keyed on the
+              ROW COUNT and not on `canSendCount`: a farm whose numbers are all deactivated has done
+              its setup and undone it deliberately, so re-showing first-time setup would talk past
+              what they did. The header still reports zero can send, which is the accurate half.
+            */
+            defaultIsOpen={senders.length === 0}>
+            <CrewRoster companyId={companyId} farms={farms} />
+          </CollapsibleSection>
+        )}
+
         {(isLoading || refusedLoading || transcribingLoading) && (
           <Text fontSize="sm">{intl.formatMessage({ id: 'app.loading' })}</Text>
         )}
@@ -324,7 +515,7 @@ const FieldNotesInbox = () => {
             </StandardCard>
           )}
 
-        {notes.map((note) => {
+        {visibleNotes.map((note) => {
           const farmId = farmIdFor(note);
           const parcelId = parcelIdFor(note);
           const farm = farms.find((f) => String(f.id) === farmId);
@@ -555,6 +746,19 @@ const FieldNotesInbox = () => {
         })}
 
         {/*
+          OUTSIDE the cards, so it is not repeated per note, and it hides itself when the queue fits
+          one page (`StandardPagination` returns null on `total <= pageSize`), which is the normal
+          case and the reason this costs a first-time user nothing.
+        */}
+        <StandardPagination
+          page={safeQueuePage}
+          total={notes.length}
+          pageSize={PAGE_SIZE}
+          onChange={setQueuePage}
+          itemLabel={intl.formatMessage({ id: 'fieldNotes.item' })}
+        />
+
+        {/*
           BEING READ. A strip rather than cards, because there is nothing to do with these yet: no
           farm select, no block select, no "Log this". It exists so a supervisor who looks thirty
           seconds after a crew member sent a voice note does not conclude it was lost.
@@ -598,7 +802,7 @@ const FieldNotesInbox = () => {
                 </Text>
               </VStack>
 
-              {refused.map((note) => (
+              {visibleRefused.map((note) => (
                 <Box
                   key={note.public_id}
                   borderWidth="1px"
@@ -644,27 +848,46 @@ const FieldNotesInbox = () => {
                         </Text>
                       </Box>
                     ) : null}
+                    {/*
+                      THE ONLY WAY A REFUSAL EVER LEAVES THIS PAGE. `discard` answers 409 for
+                      anything that is not waiting, so until `acknowledge` shipped this list grew
+                      for the life of the account and the setup block sat below all of it.
+
+                      "Mark as seen" rather than "Discard", because nothing here was read and so
+                      there is nothing to decide about: the operator is recording that they looked,
+                      which is exactly what `acknowledged_by` and `acknowledged_at` store. The row
+                      is kept. What to do next is in this section's help line, which already says to
+                      ask the sender to resend it the way each reason describes.
+
+                      NOTE: the first Spanish wording was "Ya les pedí que lo reenvíen", and
+                      `spanishRegister.test.ts` flagged `pedí`. It is the first-person preterite
+                      there, not the Rioplatense imperative, but the two forms are spelled
+                      identically, so the copy was changed rather than added to that guard's
+                      allowlist.
+                    */}
+                    <HStack>
+                      <StandardButton
+                        size="xs"
+                        variant="outline"
+                        isDisabled={isAcknowledging}
+                        onClick={() => acknowledge(note)}>
+                        {intl.formatMessage({ id: 'fieldNotes.refused.acknowledge' })}
+                      </StandardButton>
+                    </HStack>
                   </VStack>
                 </Box>
               ))}
+
+              <StandardPagination
+                page={safeRefusedPage}
+                total={refused.length}
+                pageSize={PAGE_SIZE}
+                onChange={setRefusedPage}
+                itemLabel={intl.formatMessage({ id: 'fieldNotes.item' })}
+              />
             </VStack>
           </StandardCard>
         )}
-
-        {/*
-          LAST, because the queue is the job and these two are the setup. It is also the reason the
-          empty state above no longer tells a first-time user to wait for a message: until these
-          sections existed nobody outside Trazo could register a number or find out where their crew
-          should send, so waiting was all they could do.
-
-          THE CHANNEL COMES FIRST OF THE TWO. Registering a number is useless until somebody knows
-          the address, and on the Twilio sandbox a crew member who messages before sending the join
-          phrase is not delivered at all, which produces no note, no refusal row and nothing on any
-          screen. It is also the one card that renders without waiting for the company slice, since
-          one deployment has one inbound number and it belongs to no company.
-        */}
-        <CrewChannel />
-        <CrewRoster companyId={companyId} farms={farms} />
       </VStack>
     </StandardPage>
   );
