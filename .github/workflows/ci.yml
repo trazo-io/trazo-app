@@ -146,7 +146,15 @@ jobs:
       #
       # The label now carries the measurement and its date. Whoever next takes the clean-up
       # should re-measure and move it, or flip the step to blocking once it reaches zero.
-      - name: Typecheck gate (non-blocking: 54 over baseline in 24 files, measured 2026-09-29)
+      # QUOTED, AND THAT IS LOAD-BEARING. A plain YAML scalar may not contain ": " (colon
+      # space): the scanner reads it as the start of a nested mapping, which is a FATAL error
+      # for the whole document, so GitHub refuses to load this file and NO job in it runs,
+      # including the blocking unit-test gate below. Parentheses escape nothing in YAML.
+      #
+      # This broke exactly that way on the first attempt, because the previous label used an
+      # em dash and stripping it for the repo's prose rule introduced a colon. The prose rule
+      # is about PROSE; a step name is a scalar with syntax. Quote it.
+      - name: "Typecheck gate (non-blocking: 54 over baseline in 24 files, measured 2026-09-29)"
         continue-on-error: true
         run: npm run typecheck
 
