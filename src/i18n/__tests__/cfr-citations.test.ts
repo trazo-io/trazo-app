@@ -70,3 +70,33 @@ describe.each(Object.entries(LOCALES))('§ 205.400(f) citations — %s', (_local
     expect(entries.filter(([, v]) => v.includes('205.400(f)(2)')).length).toBeGreaterThan(2);
   });
 });
+
+/**
+ * § 205.103(b)(4) is the five-year retention period; (b)(3) is audit-trail documentation and the
+ * labeling category (current eCFR, read 2026-09-30). Four strings in each locale cited (b)(3) for
+ * retention (OSP alignment audit 2026-10, T30).
+ */
+const RETENTION = /(5|five|cinco)[\s-]*(years?|años)|retention|retención|retain|conserv/i;
+
+describe.each(Object.entries(LOCALES))(
+  '§ 205.103 retention citations — %s',
+  (_locale, messages) => {
+    const entries = Object.entries(messages).filter(([, v]) => typeof v === 'string');
+
+    it('never cites (b)(3) for the five-year retention period', () => {
+      const wrong = entries
+        .filter(([, v]) => v.includes('205.103(b)(3)'))
+        .filter(([, v]) =>
+          v
+            .split(/(?<=[.;])\s/)
+            .some((sentence) => sentence.includes('205.103(b)(3)') && RETENTION.test(sentence))
+        )
+        .map(([k]) => k);
+      expect(wrong).toEqual([]);
+    });
+
+    it('cites (b)(4) where it states the retention period', () => {
+      expect(messages['finishProduction.confirm.retention']).toContain('205.103(b)(4)');
+    });
+  }
+);
