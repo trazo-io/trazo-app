@@ -10,7 +10,6 @@ interface SearchResult {
   location?: string;
   imageUrl?: string;
   metadata: {
-    carbonScore?: number;
     area?: string;
     status?: string;
   };
@@ -116,7 +115,6 @@ export const useGlobalSearch = (query: string): UseGlobalSearchReturn => {
         location: item.location,
         imageUrl: item.image_url,
         metadata: {
-          carbonScore: item.carbon_score,
           area: item.area,
           status: item.status
         },
