@@ -136,9 +136,17 @@ jobs:
 
       # Per-FILE baseline, so "fixed 5 in A, added 5 in B" still fails. Never run
       # `npm run typecheck:update` to make this pass — that freezes the new errors in.
-      # Non-blocking until the last 5 land; the step still prints the full diff, so a
-      # regression from 4 to 40 is visible in the log even while it cannot fail the build.
-      - name: Typecheck gate (non-blocking — 5 new over baseline)
+      # Non-blocking, and the step still prints the full diff, so a regression is visible in
+      # the log even while it cannot fail the build.
+      #
+      # THE COUNT IN THIS LABEL WAS WRONG FOR MONTHS. It read "5 new over baseline", which was
+      # true when it was written and was never updated as the number grew. MEASURED 2026-09-29:
+      # 24 files, 54 errors over baseline. A non-blocking step nobody reads, carrying a stale
+      # number in its own name, is how 5 becomes 54 without anyone deciding that.
+      #
+      # The label now carries the measurement and its date. Whoever next takes the clean-up
+      # should re-measure and move it, or flip the step to blocking once it reaches zero.
+      - name: Typecheck gate (non-blocking: 54 over baseline in 24 files, measured 2026-09-29)
         continue-on-error: true
         run: npm run typecheck
 
