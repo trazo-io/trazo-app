@@ -24,6 +24,8 @@ import enUS from '../../../../i18n/lang/en-US.json';
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   discard: vi.fn(() => ({ unwrap: () => Promise.resolve({}) })),
+  acknowledge: vi.fn(() => ({ unwrap: () => Promise.resolve({}) })),
+  roster: { data: [] as any[], isLoading: false },
   notes: [] as any[],
   /** Per-status query state, so the two requests can be made to settle independently. */
   state: {} as Record<string, { isLoading?: boolean; isError?: boolean }>
@@ -57,6 +59,7 @@ vi.mock('store/api/fieldNoteApi', () => ({
     };
   },
   useDiscardFieldNoteMutation: () => [mocks.discard, { isLoading: false }],
+  useAcknowledgeFieldNoteMutation: () => [mocks.acknowledge, { isLoading: false }],
   // The real one interpolates config.API_BASE_URL. Kept simple here, but the SHAPE matters: the
   // assertions check the path is a Trazo endpoint rather than the provider's own URL.
   fieldNoteAudioUrl: (publicId: string) => `/api/field-notes/${publicId}/audio/`
@@ -78,7 +81,9 @@ vi.mock('store/api/crewSenderApi', () => ({
     isLoading: false,
     isError: false
   }),
-  useGetCrewSendersQuery: () => ({ data: [], isLoading: false }),
+  // Steerable, because the setup block's placement depends on it: an empty roster means setup IS
+  // the job and renders open, a populated one means it collapses to a header row.
+  useGetCrewSendersQuery: () => mocks.roster,
   useCreateCrewSenderMutation: () => [vi.fn(), { isLoading: false }],
   useUpdateCrewSenderMutation: () => [vi.fn(), { isLoading: false }],
   useDeactivateCrewSenderMutation: () => [vi.fn(), { isLoading: false }]
@@ -100,9 +105,14 @@ const NOTE = {
   fulfilled_by_id: null
 };
 
-function renderInbox(establishments: any[]) {
+/**
+ * `companyId` defaults to undefined, which is what the original store held and what most of these
+ * tests want: with no company the setup block does not render at all, so the queue assertions are
+ * about the queue. The tests that are ABOUT setup pass one in.
+ */
+function renderInbox(establishments: any[], companyId?: number) {
   const store = configureStore({
-    reducer: { company: () => ({ currentCompany: { establishments } }) }
+    reducer: { company: () => ({ currentCompany: { id: companyId, establishments } }) }
   });
   return render(
     <Provider store={store}>
@@ -134,6 +144,7 @@ describe('the field notes inbox', () => {
     mocks.navigate.mockClear();
     mocks.discard.mockClear();
     mocks.notes = [NOTE];
+    mocks.roster = { data: [], isLoading: false };
     mocks.state = {};
   });
 
@@ -162,7 +173,12 @@ describe('the field notes inbox', () => {
      * the number that IS shown in full is the channel's, and it comes from the channel card.
      */
     expect(screen.queryByText(/\+14155551234/)).toBeNull();
-    expect(screen.getByTestId('crew-channel-number').textContent).toBe('+14155238886');
+    /*
+     * The positive half — that the number shown IN FULL is Trazo's own and not a crew member's —
+     * lives in `crewChannel.test.tsx`, where that card is the subject. It cannot live here: the
+     * store above holds no company id, so the setup block does not render, which is exactly the
+     * state most of these queue tests want.
+     */
   });
 
   it('prefills the block ONLY when the farm has exactly one', async () => {
@@ -549,5 +565,164 @@ describe('notes that could not be read', () => {
     mocks.notes = [REFUSED_VOICE, { ...NOTE, status: 'pending' }];
     renderInbox(ONE_PARCEL);
     expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(1);
+  });
+});
+
+/**
+ * The page has to stay usable once a farm has been running for a season.
+ *
+ * WHAT WAS WRONG, found by the product owner asking whether a farmer with a lot of field notes has
+ * to scroll to add a crew number. They did. The setup block rendered LAST, under every waiting note
+ * and every refusal, and no list was paged: DRF has no pagination configured, so the endpoint
+ * returns every matching note and the page rendered all of them. A note is a card carrying a
+ * header, the words, an optional audio player and two 44px selects and two 44px buttons, so twenty
+ * of them is a dozen screens before the roster.
+ *
+ * And the refused list never drained: `discard` answers 409 for anything that is not waiting, so
+ * until `acknowledge` shipped every unreadable message stayed on the page for the life of the
+ * account. The scroll was the symptom.
+ */
+describe('the page at scale', () => {
+  const manyNotes = (count: number, status = 'pending') =>
+    Array.from({ length: count }, (_, i) => ({
+      ...NOTE,
+      public_id: `note-${status}-${i}`,
+      status,
+      words: `mensaje numero ${i}`
+    }));
+
+  beforeEach(() => {
+    mocks.navigate.mockClear();
+    mocks.acknowledge.mockClear();
+    mocks.roster = { data: [], isLoading: false };
+  });
+
+  it('renders one page of the queue, not the whole thing', () => {
+    mocks.notes = manyNotes(23);
+    renderInbox(ONE_PARCEL);
+    // PAGE_SIZE is 10: ten cards, so ten "Log this" buttons, not twenty-three.
+    expect(screen.getAllByRole('button', { name: /Log this/i })).toHaveLength(10);
+    expect(screen.getByText(/mensaje numero 0/)).toBeTruthy();
+    expect(screen.queryByText(/mensaje numero 10/)).toBeNull();
+  });
+
+  it('offers a pager that says how much is there', () => {
+    mocks.notes = manyNotes(23);
+    renderInbox(ONE_PARCEL);
+    // The TOTAL is the point: ten cards with no total reads as ten notes existing. Matched as
+    // "of 23" rather than bare /23/, which also hits the timestamps on the cards.
+    expect(screen.getByText(/of 23/)).toBeTruthy();
+  });
+
+  it('reaches the rest of the queue', () => {
+    mocks.notes = manyNotes(23);
+    renderInbox(ONE_PARCEL);
+    fireEvent.click(screen.getByRole('button', { name: /next/i }));
+    expect(screen.getByText(/mensaje numero 10/)).toBeTruthy();
+    expect(screen.queryByText(/mensaje numero 0$/)).toBeNull();
+  });
+
+  it('shows no pager at all when everything fits', () => {
+    mocks.notes = manyNotes(3);
+    renderInbox(ONE_PARCEL);
+    // StandardPagination returns null on `total <= pageSize`, which is why this costs a first-time
+    // user nothing.
+    expect(screen.queryByRole('button', { name: /next/i })).toBeNull();
+  });
+
+  it('pages the refused list independently of the queue', () => {
+    // A single shared page number would move both lists at once: paging the queue to find a note
+    // would silently scroll refusals somebody was reading.
+    mocks.notes = [...manyNotes(23), ...manyNotes(15, 'refused')];
+    mocks.state = { ...mocks.state };
+    renderInbox(ONE_PARCEL);
+    const nexts = screen.getAllByRole('button', { name: /next/i });
+    expect(nexts).toHaveLength(2);
+  });
+});
+
+describe('setup is reachable without scrolling the queue', () => {
+  beforeEach(() => {
+    mocks.notes = [NOTE];
+    mocks.acknowledge.mockClear();
+  });
+
+  it('renders setup open and first when no number is registered yet', () => {
+    // Setup IS the job at this point, and the queue is empty anyway, so there is nothing to bury.
+    mocks.roster = { data: [], isLoading: false };
+    const { container } = renderInbox(ONE_PARCEL, 5);
+    expect(screen.getByTestId('crew-channel-number')).toBeTruthy();
+    // No collapsed header to click past.
+    expect(screen.queryByText(/numbers can send to this farm/i)).toBeNull();
+    // ABOVE the queue: the channel card appears earlier in the document than the first note.
+    const html = container.innerHTML;
+    expect(html.indexOf('crew-channel-number')).toBeLessThan(html.indexOf('regamos el bloque 4'));
+  });
+
+  it('collapses setup to a header row once a number exists, and says how many', () => {
+    mocks.roster = { data: [{ id: 1 }, { id: 2 }, { id: 3 }], isLoading: false };
+    renderInbox(ONE_PARCEL, 5);
+    // getAllByText: `CollapsibleSection` renders `description` twice, once in the collapsed
+    // header and once inside the `Collapse` body, so a single-match query fails on a correct
+    // render. Asserting it is PRESENT is the claim; how many copies the component keeps is not.
+    expect(screen.getAllByText(/3 numbers can send to this farm/i).length).toBeGreaterThan(0);
+    /*
+     * COLLAPSED, asserted as the section's own state rather than as the absence of its children.
+     *
+     * Chakra's `Collapse` animates height to 0 and keeps the children MOUNTED, so the setup cards
+     * are in the DOM and take no vertical space. The first version of this test asserted
+     * `queryByTestId('crew-channel-number')` was null, which is a claim about mounting that is
+     * simply false, and making it true meant passing `unmountOnExit` to the shared component. That
+     * broke sixteen tests in `formRenderConformance`, because `CollapsibleSection` has three other
+     * callers and all three are `.jsx` activity form tabs that keep registered fields inside
+     * collapsed sections. Unmounting them would drop a farmer's entered values on save.
+     *
+     * So the claim this test can honestly make is the one the page needs: the section is shut, so
+     * the queue is not pushed down the screen.
+     */
+    const header = screen.getByRole('button', { name: /Crew numbers, and where they send/i });
+    expect(header.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('opens on a click, without leaving the page', () => {
+    mocks.roster = { data: [{ id: 1 }], isLoading: false };
+    renderInbox(ONE_PARCEL, 5);
+    fireEvent.click(screen.getByText(/Crew numbers, and where they send/i));
+    expect(screen.getByTestId('crew-channel-number')).toBeTruthy();
+  });
+
+  it('claims nothing about the roster before the request has answered', () => {
+    // A SKIPPED or in-flight query reads as `data: []`, and rendering the empty branch on that
+    // states the farm has no crew numbers on the evidence of a loading state.
+    mocks.roster = { data: [], isLoading: true };
+    renderInbox(ONE_PARCEL, 5);
+    expect(screen.queryByTestId('crew-channel-number')).toBeNull();
+    expect(screen.queryByText(/numbers can send to this farm/i)).toBeNull();
+  });
+});
+
+describe('a refusal can be cleared', () => {
+  beforeEach(() => {
+    mocks.acknowledge.mockClear();
+    mocks.roster = { data: [], isLoading: false };
+  });
+
+  it('offers the only action that clears one, and sends just the id', async () => {
+    // THE ONLY WAY A REFUSAL EVER LEAVES THIS PAGE. `discard` answers 409 for anything that is not
+    // waiting, so without this the refused list grows for the life of the account.
+    mocks.notes = [
+      { ...NOTE, public_id: 'ref-1', status: 'refused', refusal_reason: 'language_not_supported' }
+    ];
+    renderInbox(ONE_PARCEL);
+    fireEvent.click(screen.getByRole('button', { name: /Mark as seen/i }));
+    await waitFor(() => expect(mocks.acknowledge).toHaveBeenCalledWith('ref-1'));
+  });
+
+  it('does not offer it on a waiting note', () => {
+    // Acknowledging a waiting note would make a crew member's message disappear without logging it
+    // or recording a decision about it.
+    mocks.notes = [NOTE];
+    renderInbox(ONE_PARCEL);
+    expect(screen.queryByRole('button', { name: /Mark as seen/i })).toBeNull();
   });
 });

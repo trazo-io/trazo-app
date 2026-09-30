@@ -58,7 +58,18 @@ function servedFields(serializer = 'FieldNoteSerializer'): string[] {
   const cls = source.indexOf(`class ${serializer}`);
   expect(cls, `${serializer} not found; was it renamed?`).toBeGreaterThan(-1);
   const fieldsAt = source.indexOf('fields = (', cls);
-  const body = source.slice(fieldsAt, source.indexOf(')', fieldsAt));
+  // COMMENTS STRIPPED BEFORE THE CLOSING PAREN IS LOCATED. `indexOf(')')` found the first one in
+  // the file, and a `#` comment between two fields routinely contains a parenthesis, so the tuple
+  // was cut short there and every field BELOW the comment was reported as not served. It fires as a
+  // false failure rather than a false pass, so nothing slipped through, and it cost a real
+  // debugging detour on 2026-09-30 when a comment reading "(the `?status=` filter does that)"
+  // landed mid-tuple and the guard blamed three fields that were present all along.
+  const withoutComments = source
+    .slice(fieldsAt)
+    .split('\n')
+    .map((line) => line.replace(/#.*$/, ''))
+    .join('\n');
+  const body = withoutComments.slice(0, withoutComments.indexOf(')'));
   // `[a-z0-9_]`, NOT `[a-z_]`. The original pattern had no digit class, so it silently skipped
   // every field whose name carries one. Found the moment this file was pointed at
   // CrewSenderSerializer: `phone_e164` vanished from the served set and the guard reported the
