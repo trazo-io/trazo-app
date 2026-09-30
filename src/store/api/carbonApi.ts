@@ -6,7 +6,8 @@ export interface CarbonSummary {
   total_emissions: number;
   total_offsets: number;
   net_carbon: number;
-  carbon_score: number;
+  // No carbon_score: the backend stops serving it (trazo-back, retire carbon score on live
+  // endpoints) and nothing here read it.
   entries_count?: {
     emissions: number;
     offsets: number;

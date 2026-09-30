@@ -128,6 +128,10 @@ const TransitionCard = ({
   const completeDate = (data as any).transition_complete_date as string | null | undefined;
   const daysRemaining = (data as any).days_remaining as number | null | undefined;
   const note = (data as any).note as string | undefined;
+  // 🔴 2026-09-30 (OSP alignment audit, T21): `is_eligible` is true by ABSENCE of a prohibited
+  // record, so the badge said "Eligible" in green over a parcel with no history and no
+  // declaration. It now states the record, in a neutral colour; eligibility under § 205.202(b)
+  // is the certifying agent's determination, never a Trazo badge.
   const badgeId = eligible
     ? 'parcelApp.transition.status.eligible'
     : inTransition
@@ -136,15 +140,15 @@ const TransitionCard = ({
   return (
     <Box
       p={4}
-      bg={eligible ? 'green.50' : 'amber.50'}
+      bg={eligible ? 'gray.50' : 'amber.50'}
       borderWidth="1px"
-      borderColor={eligible ? 'green.200' : 'amber.200'}
+      borderColor={eligible ? 'gray.200' : 'amber.200'}
       borderRadius="md">
       <HStack justify="space-between" mb={2}>
         <Text fontWeight="semibold" fontSize="sm">
           {intl.formatMessage({ id: 'parcelApp.transition.computed' })}
         </Text>
-        <Badge variant={eligible ? 'brand' : 'warning'} fontSize="11px">
+        <Badge variant={eligible ? 'neutral' : 'warning'} fontSize="11px">
           {intl.formatMessage({ id: badgeId })}
         </Badge>
       </HStack>
