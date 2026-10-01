@@ -13,7 +13,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateOnly } from 'utils/dateOnly';
-import { transitionState, type TransitionPayload } from './transitionState';
+import { transitionState } from './transitionState';
 import {
   Badge,
   Box,
@@ -124,12 +124,11 @@ const TransitionCard = ({
   // twenty years opened its Parcel Application and saw its § 205.202(b) status rendered as a
   // bare "—". Wrong in both directions: an eligible parcel looked unassessed, and a parcel
   // genuinely in transition would have shown the same dash with no date. Read what is sent.
-  const state = transitionState(data as TransitionPayload);
+  const state = transitionState(data);
   const eligible = state === 'eligible';
-  const inTransition = state === 'inTransition';
-  const completeDate = (data as any).transition_complete_date as string | null | undefined;
-  const daysRemaining = (data as any).days_remaining as number | null | undefined;
-  const note = (data as any).note as string | undefined;
+  const completeDate = data.transition_complete_date;
+  const daysRemaining = data.days_remaining;
+  const note = data.note;
   // 🔴 2026-09-30 (OSP alignment audit, T21): `is_eligible` is true by ABSENCE of a prohibited
   // record, so the badge said "Eligible" in green over a parcel with no history and no
   // declaration. It now states the record, in a neutral colour; eligibility under § 205.202(b)
@@ -151,7 +150,9 @@ const TransitionCard = ({
           {intl.formatMessage({ id: badgeId })}
         </Badge>
       </HStack>
-      {inTransition && completeDate ? (
+      {/* The recorded completion date shows whenever the server has one, whatever the badge
+          says: a date on record is a fact, and hiding it behind "Not established" lost it. */}
+      {completeDate ? (
         <Text fontSize="sm" color="gray.700">
           {intl.formatMessage(
             { id: 'parcelApp.transition.earliest' },

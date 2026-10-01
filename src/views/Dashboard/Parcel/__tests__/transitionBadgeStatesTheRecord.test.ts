@@ -74,4 +74,27 @@ describe('transition card badge', () => {
       ).toBeTruthy();
     }
   });
+
+  it('reads the clock from the date when no day count is sent', () => {
+    // Review of app #60: a completion date ahead with `days_remaining` null fell through to
+    // "unknown", while the server had marked the parcel as still in transition.
+    const ahead = new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
+    const past = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+    expect(
+      transitionState({ is_eligible: false, transition_complete_date: ahead, days_remaining: null })
+    ).toBe('inTransition');
+    expect(
+      transitionState({ is_eligible: false, transition_complete_date: past, days_remaining: null })
+    ).toBe('unknown');
+  });
+
+  it('shows a recorded completion date whatever the badge says', () => {
+    // A date on record is a fact; it was hidden unless the badge said "In transition".
+    const card = source.slice(
+      source.indexOf('const TransitionCard'),
+      source.indexOf('const BufferEditor')
+    );
+    expect(card).toContain('{completeDate ? (');
+    expect(card).not.toContain('inTransition && completeDate');
+  });
 });
