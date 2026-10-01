@@ -386,7 +386,12 @@ const ORGANIC_PRODUCTION_METHODS = ['organic', 'regenerative', 'biodynamic'];
  */
 export function isProhibitedSuggestion(event: any, productionMethod?: string): boolean {
   const method = String(productionMethod || '').toLowerCase();
-  if (!ORGANIC_PRODUCTION_METHODS.includes(method)) return false;
+  // An unchosen method FAILS CLOSED (2026-10-01). Empty used to mean "conventional", because the
+  // form preselected it; now it means "not chosen yet", and the farm may well be organic. Treating
+  // it as conventional let "Select all" enable a template's prohibited inputs, unbadged, on a
+  // farm with no inherited method (trazo-app#59 review). The server never sees an empty method:
+  // the form requires one before it saves.
+  if (method && !ORGANIC_PRODUCTION_METHODS.includes(method)) return false;
 
   // backend_event_fields is where the template carries the input's real attributes; the event
   // may also carry them flattened, so check both and let either mark it prohibited.
@@ -916,14 +921,31 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
    * permanently false on an organic farm — the master switch would read unchecked forever and
    * could never be used to clear the list again.
    */
+  // Reads the WATCHED method, not getValues: getValues is a stable reference, so a memo keyed on
+  // it never recomputes when the method changes (see templateSortReactsToMethod.test.ts).
   const allSelectableSuggestionsEnabled = useMemo(() => {
-    const method = getValues('production_method') || farmDefaultMethod || '';
+    const method = watchedProductionMethod || farmDefaultMethod || '';
     const selectable = planSuggestions.filter((event) => !isProhibitedSuggestion(event, method));
     return selectable.length > 0 && selectable.every((event) => event.enabled);
-  }, [planSuggestions, getValues, farmDefaultMethod]);
+  }, [planSuggestions, watchedProductionMethod, farmDefaultMethod]);
+
+  // A row enabled under one method must not stay enabled after a change makes it prohibited:
+  // the row would render disabled while still being submitted.
+  useEffect(() => {
+    const method = watchedProductionMethod || farmDefaultMethod || '';
+    setPlanSuggestions((events) =>
+      events.some((event) => event.enabled && isProhibitedSuggestion(event, method))
+        ? events.map((event) =>
+            event.enabled && isProhibitedSuggestion(event, method)
+              ? { ...event, enabled: false }
+              : event
+          )
+        : events
+    );
+  }, [watchedProductionMethod, farmDefaultMethod]);
 
   const handleToggleAll = () => {
-    const method = getValues('production_method') || farmDefaultMethod || '';
+    const method = watchedProductionMethod || farmDefaultMethod || '';
     setPlanSuggestions((events) =>
       events.map((event) => ({
         ...event,
