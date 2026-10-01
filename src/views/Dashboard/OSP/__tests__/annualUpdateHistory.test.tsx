@@ -38,7 +38,8 @@ const updates = [
     new_osp: 61,
     new_osp_version: 3,
     submitted_at: '2026-08-21T11:37:30Z',
-    certifier_acknowledged_at: null
+    certifier_acknowledged_at: null,
+    is_locked: true
   },
   {
     id: 2,
@@ -51,14 +52,20 @@ const updates = [
     new_osp: null,
     new_osp_version: null,
     submitted_at: '2025-01-10T00:00:00Z',
-    certifier_acknowledged_at: '2025-02-03T00:00:00Z'
+    certifier_acknowledged_at: '2025-02-03T00:00:00Z',
+    is_locked: true
   }
 ];
 
 vi.mock('store/api/ospAnnualUpdateApi', () => ({
   useGetOSPAnnualUpdatesQuery: () => ({ data: updates }),
   useCreateOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
-  useUpdateOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }]
+  useUpdateOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  useSignOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  useFileOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  useCorrectOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  useWithdrawOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  FILING_METHODS: ['agent_web_form', 'agent_portal', 'email', 'mail', 'in_person']
 }));
 
 import OSPAnnualUpdateCard from '../OSPAnnualUpdateCard';
@@ -115,21 +122,19 @@ describe('annual update history', () => {
     expect(screen.getByText('Certifier acknowledged Feb 3, 2025')).toBeInTheDocument();
   });
 
-  it('offers Edit on a filing the certifier has not acknowledged', () => {
-    // The 2026 filing is unacknowledged, so it stays correctable — a certifier asking for a
-    // fix must not hit a wall.
+  it('offers no Edit on a filed update, acknowledged or not', () => {
+    // Until 2026-10-01 the unacknowledged 2026 filing offered Edit, so a filing that had
+    // already reached the agent could be rewritten and the packet would print the rewrite.
+    // A filed update is now kept as filed; the server refuses the edit (409).
     renderCard();
-    expect(screen.getAllByRole('button', { name: 'Edit' })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
   });
 
-  it('withdraws Edit once the certifier has acknowledged, and says why', () => {
-    // The 2025 filing IS acknowledged and the server answers 423. Offering Edit would let a
-    // farmer reopen it, retype a summary and only be refused on save — losing the work and
-    // reading as a bug rather than a rule.
+  it('offers a correction on each filed update instead', () => {
+    // A certifier asking for a fix does not hit a wall: the correction is the next revision,
+    // signed and filed on its own, and the filed one stays as it was.
     renderCard();
-    expect(screen.getByText('Acknowledged — as filed')).toBeInTheDocument();
-    // Two filings, one Edit button: the acknowledged one has none.
-    expect(screen.getAllByRole('button', { name: 'Edit' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Create correction' })).toHaveLength(2);
   });
 
   it('never renders a pending-acknowledgment state', () => {
