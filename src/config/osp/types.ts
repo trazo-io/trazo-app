@@ -40,6 +40,12 @@ export interface ModuleOption {
   value: string;
   label: TextMap;
   exclusive: boolean;
+  /**
+   * Replaced by another option. Kept so an answer given with it still reads as given, never offered
+   * for a new answer, and an answer made only of retired options counts as unanswered (the
+   * replacement asks something the old option never did). Present only when true.
+   */
+  retired?: boolean;
 }
 
 export interface ModuleQuestion {

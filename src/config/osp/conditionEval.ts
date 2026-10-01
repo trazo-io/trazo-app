@@ -97,7 +97,19 @@ export const visibleQuestions = (
 // (uploads become validatable when WS-3 storage lands).
 const UNVALIDATED_KINDS = new Set(['info', 'upload']);
 
-const isAnswered = (question: ModuleQuestion, value: AnswerValue): boolean => {
+/**
+ * The stored value with retired options removed: the operator's CURRENT answer. Mirrors
+ * effective_value() in conditions.py. A value made only of retired options is no answer.
+ */
+export const effectiveValue = (question: ModuleQuestion, value: AnswerValue): AnswerValue => {
+  const retired = new Set(question.options.filter((o) => o.retired).map((o) => o.value));
+  if (!retired.size || value === null || value === undefined) return value;
+  if (Array.isArray(value)) return (value as string[]).filter((v) => !retired.has(v));
+  return typeof value === 'string' && retired.has(value) ? null : value;
+};
+
+const isAnswered = (question: ModuleQuestion, raw: AnswerValue): boolean => {
+  const value = effectiveValue(question, raw);
   if (value === null || value === undefined) return false;
   if (typeof value === 'string') return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;

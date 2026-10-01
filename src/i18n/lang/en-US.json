@@ -5908,6 +5908,7 @@
   "osp.wizard.next": "Save & continue",
   "osp.wizard.no": "No",
   "osp.wizard.required": "Required",
+  "osp.wizard.retiredOption": "Earlier answer. This question now asks more: choose one of the options above to confirm your answer.",
   "osp.wizard.reviewStep": "Review your answers",
   "osp.wizard.reviewTitle": "Review before completing",
   "osp.wizard.saveFailed": "Could not save your answers",
