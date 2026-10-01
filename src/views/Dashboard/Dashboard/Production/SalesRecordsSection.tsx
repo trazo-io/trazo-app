@@ -38,6 +38,7 @@ import {
   useVoidSalesRecordMutation
 } from 'store/api/historyApi';
 import { useDefaultUnits } from 'hooks/useMeasurementSystem';
+import SaleSourceDocuments from './SaleSourceDocuments';
 
 interface SalesRecord {
   id: number;
@@ -97,6 +98,10 @@ interface SalesRecordsSectionProps {
    * only decides which control the operator is shown.
    */
   isFinished?: boolean;
+  /** Company id, for the per-sale source documents (the DMS is scoped by company and farm). */
+  companyId?: string | number | null;
+  /** The production's numeric id, so a sale's source document is also filed with its lot. */
+  historyId?: number | null;
 }
 
 // MUST stay identical to the harvest form's UNIT_OPTIONS (StandardFinishProductionForm) and to
@@ -236,7 +241,9 @@ export function SalesRecordsSection({
   canWrite,
   establishmentId,
   harvestUnit,
-  isFinished = false
+  isFinished = false,
+  companyId,
+  historyId
 }: SalesRecordsSectionProps) {
   const intl = useIntl();
   const toast = useToast();
@@ -608,6 +615,15 @@ export function SalesRecordsSection({
                           .join(' · ')}
                       </Text>
                     </HStack>
+                  )}
+                  {companyId && establishmentId && !record.is_voided && (
+                    <SaleSourceDocuments
+                      companyId={String(companyId)}
+                      farmId={String(establishmentId)}
+                      saleId={record.id}
+                      historyId={historyId}
+                      canWrite={canWrite}
+                    />
                   )}
                 </Box>
                 {canWrite && !record.is_voided && (

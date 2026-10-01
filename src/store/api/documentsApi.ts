@@ -20,13 +20,21 @@ export interface FarmDocument {
   content_type: string;
   size_bytes: number;
   linked_section: string;
+  /** The one attachment requirement this file answers (`module.question`), or "". */
+  requirement?: string;
   parcel: number | null;
   history: number | null;
+  /** The sale this is a source document of (invoice, bill of lading, pack-out). */
+  sales_record?: number | null;
+  source_kind?: SaleSourceKind | '';
   tags: string[];
   is_deletable: boolean;
   created_by_name: string | null;
   created_at: string;
 }
+
+export const SALE_SOURCE_KINDS = ['invoice', 'bill_of_lading', 'packout', 'other'] as const;
+export type SaleSourceKind = (typeof SALE_SOURCE_KINDS)[number];
 
 interface DocScope {
   companyId: string;
@@ -38,16 +46,21 @@ interface DocFilters extends DocScope {
   search?: string;
   /** OSP module key — how a module's own attachments are found (documents/views.py filters it). */
   linkedSection?: string;
+  /** `module.question` — the files that answer one attachment question. */
+  requirement?: string;
+  salesRecord?: number;
 }
 
 const documentsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getFarmDocuments: build.query<FarmDocument[], DocFilters>({
-      query: ({ companyId, farmId, folder, search, linkedSection }) => {
+      query: ({ companyId, farmId, folder, search, linkedSection, requirement, salesRecord }) => {
         const params = new URLSearchParams();
         if (folder) params.set('folder', folder);
         if (search) params.set('search', search);
         if (linkedSection) params.set('linked_section', linkedSection);
+        if (requirement) params.set('requirement', requirement);
+        if (salesRecord) params.set('sales_record', String(salesRecord));
         const qs = params.toString();
         return {
           url: DOCUMENTS_URL(companyId, farmId) + (qs ? `?${qs}` : ''),
@@ -75,9 +88,30 @@ const documentsApi = baseApi.injectEndpoints({
         parcel?: number | null;
         /** OSP module key this attachment answers (e.g. `g3_1_seedlings`). */
         linkedSection?: string;
+        /**
+         * The attachment question this file answers (`module.question`). A file uploaded to a
+         * section without one is never counted as a named attachment in the certifier packet.
+         */
+        requirement?: string;
+        /** The sale this file documents, and what kind of document it is. */
+        salesRecord?: number | null;
+        sourceKind?: SaleSourceKind;
       }
     >({
-      query: ({ companyId, farmId, file, title, folder, tags, history, parcel, linkedSection }) => {
+      query: ({
+        companyId,
+        farmId,
+        file,
+        title,
+        folder,
+        tags,
+        history,
+        parcel,
+        linkedSection,
+        requirement,
+        salesRecord,
+        sourceKind
+      }) => {
         const body = new FormData();
         body.append('file', file);
         if (title) body.append('title', title);
@@ -85,6 +119,9 @@ const documentsApi = baseApi.injectEndpoints({
         if (history) body.append('history', String(history));
         if (parcel) body.append('parcel', String(parcel));
         if (linkedSection) body.append('linked_section', linkedSection);
+        if (requirement) body.append('requirement', requirement);
+        if (salesRecord) body.append('sales_record', String(salesRecord));
+        if (sourceKind) body.append('source_kind', sourceKind);
         (tags ?? []).forEach((t) => body.append('tags', t));
         return {
           url: DOCUMENTS_URL(companyId, farmId),

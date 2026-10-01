@@ -106,26 +106,39 @@ import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/o
  * Files land in the `organic_system_plan` folder tagged with this module's key, which is what
  * makes them findable from the module and from the packet's document index.
  */
-const ModuleUploadField = ({
+export const ModuleUploadField = ({
   companyId,
   farmId,
   moduleKey,
+  questionKey,
   isReadOnly
 }: {
   companyId: string;
   farmId: string;
   moduleKey: string;
+  questionKey: string;
   isReadOnly: boolean;
 }) => {
   const intl = useIntl();
   const toast = useToast();
   const fileInput = useRef<HTMLInputElement>(null);
   const canQuery = Boolean(companyId && farmId && moduleKey);
+  // The one attachment this question asks for (OSP alignment audit T19). Until 2026-10-01 a file
+  // was linked to the module only, so the certifier packet could never tell a label sample from
+  // a soil test uploaded to the same section, and the label question could never close.
+  const requirement = `${moduleKey}.${questionKey}`;
 
   const { data: attached = [] } = useGetFarmDocumentsQuery(
+    { companyId, farmId, requirement },
+    { skip: !canQuery }
+  );
+  const { data: sectionDocs = [] } = useGetFarmDocumentsQuery(
     { companyId, farmId, linkedSection: moduleKey },
     { skip: !canQuery }
   );
+  // Files uploaded to this section before uploads named their question. Shown so they are not
+  // lost, and said plainly: the packet does not count them as this attachment.
+  const unlinked = sectionDocs.filter((doc) => !doc.requirement);
   const [uploadDocument, { isLoading: uploading }] = useUploadFarmDocumentMutation();
 
   const onPick = async (file: File | undefined) => {
@@ -137,7 +150,8 @@ const ModuleUploadField = ({
         file,
         title: file.name.replace(/\.[^.]+$/, ''),
         folder: 'organic_system_plan',
-        linkedSection: moduleKey
+        linkedSection: moduleKey,
+        requirement
       }).unwrap();
       toast({
         title: intl.formatMessage({ id: 'osp.wizard.uploadDone' }),
@@ -164,6 +178,25 @@ const ModuleUploadField = ({
             <HStack key={doc.id} spacing={2}>
               <Box as={FaPaperclip} color="green.700" />
               <Text fontSize="sm">{doc.title}</Text>
+            </HStack>
+          ))}
+        </VStack>
+      )}
+      {unlinked.length > 0 && (
+        <VStack align="stretch" spacing={1}>
+          <Text fontSize="xs" color="gray.600">
+            {intl.formatMessage({
+              id: 'osp.wizard.uploadUnlinked',
+              defaultMessage:
+                'Uploaded to this section, not to this question. The certifier packet does not count these as this attachment; upload the file here to link it.'
+            })}
+          </Text>
+          {unlinked.map((doc) => (
+            <HStack key={doc.id} spacing={2}>
+              <Box as={FaPaperclip} color="gray.500" />
+              <Text fontSize="sm" color="gray.600">
+                {doc.title}
+              </Text>
             </HStack>
           ))}
         </VStack>
@@ -270,6 +303,7 @@ const QuestionField = ({
           companyId={companyId}
           farmId={farmId}
           moduleKey={moduleKey}
+          questionKey={question.key}
           isReadOnly={isReadOnly}
         />
       );
