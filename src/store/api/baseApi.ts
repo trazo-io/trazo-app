@@ -54,7 +54,6 @@ export const baseApi = createApi({
     'Media',
     'PresignedUrl',
     'DashboardComprehensive',
-    'CarbonScopeBreakdown',
     'CarbonAnalytics',
     'VoiceConfig',
     'Certification',

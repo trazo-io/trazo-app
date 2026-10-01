@@ -1627,56 +1627,17 @@ export const carbonApi = baseApi.injectEndpoints({
       ]
     }),
 
-    getCarbonScopeBreakdown: builder.query<
-      {
-        establishment_id: string;
-        scope_breakdown: {
-          scope_1: {
-            total: number;
-            categories: Record<string, number>;
-            percentage: number;
-          };
-          scope_2: {
-            total: number;
-            categories: Record<string, number>;
-            percentage: number;
-          };
-          scope_3: {
-            total: number;
-            categories: Record<string, number>;
-            percentage: number;
-          };
-        };
-        carbon_intensity_metrics: {
-          per_hectare: number;
-          per_kg_product: number;
-          industry_comparison: {
-            percentile: number;
-            benchmark: number;
-          };
-        };
-        improvement_opportunities: Array<{
-          scope: 'scope_1' | 'scope_2' | 'scope_3';
-          category: string;
-          potential_reduction: number;
-          implementation_cost: 'low' | 'medium' | 'high';
-          roi_estimate: string;
-        }>;
-        generated_at: string;
-      },
-      { companyId: string; farmId: string }
-    >({
-      query: ({ companyId, farmId }) => ({
-        url: `companies/${companyId}/establishments/${farmId}/carbon_scope_breakdown/`,
-        method: 'GET',
-        credentials: 'include'
-      }),
-      keepUnusedDataFor: 300, // Cache for 5 minutes
-      providesTags: (result, error, { farmId }) => [
-        { type: 'CarbonScopeBreakdown', id: farmId },
-        'CarbonSummary'
-      ]
-    })
+    // getCarbonScopeBreakdown removed 2026-09-30. It had zero call sites, and the endpoint
+    // it named returns HTTP 500 for any farm with carbon data: every method
+    // EstablishmentViewSet.carbon_scope_breakdown calls on EnhancedCarbonCalculator was
+    // renamed to a private one and no longer exists.
+    //
+    // NEVER restore this response type from the shape below. It was written against an
+    // endpoint that never produced it, and it declared claims the backend has no source for:
+    // carbon_intensity_metrics.industry_comparison.percentile (a benchmark Trazo would be
+    // computing about itself) and improvement_opportunities[].roi_estimate (a return-on-
+    // investment figure, which compliance.md puts in the UNSAFE column with every other
+    // pricing-outcome claim).
   })
 });
 
@@ -1731,13 +1692,16 @@ export const {
   // Gas Optimization hooks
   // Phase 6: Advanced Analytics hook
   // Phase 3: Enhanced Dashboard hooks
-  useGetDashboardComprehensiveQuery,
-  useGetCarbonScopeBreakdownQuery
+  useGetDashboardComprehensiveQuery
 } = carbonApi;
 
 // Backward-compat aliases for renamed hooks
-/** @deprecated Use useGetFarmCarbonSummaryQuery instead */
-export const useGetEstablishmentCarbonSummaryQuery = useGetFarmCarbonSummaryQuery;
+//
+// useGetEstablishmentCarbonSummaryQuery removed 2026-09-30. It had zero call sites and was
+// an alias onto useGetFarmCarbonSummaryQuery, which hits establishments/<id>/summary/ and
+// NOT establishments/<id>/carbon-summary/. The name made the second route look wired while
+// nothing called it, which is how a carbon-credit revenue estimate survived two claim
+// sweeps server-side. See carbon/tests/test_retired_claim_routes_stay_retired.py.
 /** @deprecated Use useGetFarmCarbonEntriesPaginatedQuery instead */
 export const useGetEstablishmentCarbonEntriesPaginatedQuery = useGetFarmCarbonEntriesPaginatedQuery;
 
