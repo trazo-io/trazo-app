@@ -97,12 +97,29 @@ interface ParcelArgs {
   parcelId: string;
 }
 
+/** One record behind the § 205.202(b) status: a dated prohibited input, or (in `unclassified`)
+ *  an input whose organic status was never recorded. Mirrors `TransitionStatus.to_dict` in
+ *  trazo-back product/services/transition_status_service.py. */
+export interface TransitionRecord {
+  source: string;
+  date: string;
+  description: string;
+  record_id: number | null;
+}
+
+/** `/transition-status/`, field for field as `TransitionStatus.to_dict` sends it. Declared rather
+ *  than read through an index signature, so a renamed field is a type error and not a silently
+ *  dead branch (review of app #60). */
 export interface TransitionStatus {
-  status?: string;
-  earliest_organic_harvest_date?: string | null;
+  parcel_id?: number;
+  parcel_name?: string;
+  is_eligible?: boolean;
+  transition_complete_date?: string | null;
   days_remaining?: number | null;
-  findings?: Array<{ year?: number; substance?: string; date?: string }>;
-  [key: string]: unknown;
+  last_prohibited_date?: string | null;
+  findings?: TransitionRecord[];
+  unclassified?: TransitionRecord[];
+  note?: string;
 }
 
 const parcelApplicationApi = baseApi.injectEndpoints({

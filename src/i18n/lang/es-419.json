@@ -6375,6 +6375,7 @@
   "parcelApp.transition.liveNote": "Se actualiza solo cuando cambian los registros de historial — nada que reingresar aquí.",
   "parcelApp.transition.status.eligible": "Sin insumos prohibidos registrados",
   "parcelApp.transition.status.inTransition": "En transición",
+  "parcelApp.transition.status.notEstablished": "Sin establecer: estado de insumos no registrado",
   "parcelApp.transition.status.unknown": "Aún sin evaluar",
   "parcelForm.error.loadDescription": "No se pudieron cargar los datos de la parcela. Intenta de nuevo.",
   "parcelForm.error.loadTitle": "Error al cargar la parcela",
