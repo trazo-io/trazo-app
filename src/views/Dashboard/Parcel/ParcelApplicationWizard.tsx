@@ -14,6 +14,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateOnly } from 'utils/dateOnly';
 import { transitionState } from './transitionState';
+import CertifiedBranchCard from './CertifiedBranchCard';
 import {
   Badge,
   Box,
@@ -932,6 +933,16 @@ const ParcelApplicationWizard = () => {
           </Box>
         );
       }
+      case 'certified_branch':
+        return (
+          <CertifiedBranchCard
+            branch={data?.land_history?.certified_branch}
+            companyId={companyId}
+            farmId={farmId || ''}
+            parcelId={parcelId || ''}
+            canWrite={canWrite}
+          />
+        );
       case 'certificate_of_record': {
         // Printed on the certifier packet from the operation's certificate on file; the card shows
         // that exact line (or that there is none) so the operator sees what the certifier will read.
