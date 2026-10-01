@@ -719,14 +719,19 @@ const OSPRecordTypesPanel: React.FC<OSPRecordTypesPanelProps> = ({
                         isLoading={isMarkingNotKept}
                         isDisabled={!notKeptReason.trim()}
                         onClick={async () => {
-                          await markNotKept({
-                            companyId,
-                            farmId,
-                            ospId: osp.id,
-                            key: notKeptFor,
-                            reason: notKeptReason.trim()
-                          }).unwrap();
-                          setNotKeptFor(null);
+                          try {
+                            await markNotKept({
+                              companyId,
+                              farmId,
+                              ospId: osp.id,
+                              key: notKeptFor,
+                              reason: notKeptReason.trim()
+                            }).unwrap();
+                            setNotKeptFor(null);
+                          } catch {
+                            // Same as every other save on this panel: say it failed, keep the typed reason.
+                            showSaveError();
+                          }
                         }}>
                         {intl.formatMessage({
                           id: 'osp.recordTypes.notKeptSave',

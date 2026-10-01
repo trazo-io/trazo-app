@@ -145,4 +145,21 @@ describe('required record types', () => {
       reason: 'inputs logged by the custom applicator'
     });
   });
+
+  it('keeps the form open and the reason typed when the save fails', async () => {
+    // Review of app #61: the save had no catch, so a refused request was an unhandled
+    // rejection and the operator could not tell whether the statement was recorded.
+    markNotKept.mockClear();
+    markNotKept.mockReturnValueOnce({ unwrap: () => Promise.reject(new Error('refused')) });
+    renderPanel();
+    fireEvent.click(screen.getByRole('button', { name: "We don't keep this" }));
+    fireEvent.change(screen.getByLabelText('Why this record is not kept'), {
+      target: { value: 'kept by the applicator' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Record as not kept' }));
+    await waitFor(() => expect(markNotKept).toHaveBeenCalled());
+    expect(
+      (screen.getByLabelText('Why this record is not kept') as HTMLTextAreaElement).value
+    ).toBe('kept by the applicator');
+  });
 });
