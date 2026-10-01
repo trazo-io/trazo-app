@@ -71,7 +71,62 @@ export interface LandHistoryManager {
   contradiction: boolean;
 }
 
+/** OSP alignment audit T21-F1. Mirrors `certified_parcel_branch.to_json` in trazo-back; the PDF
+ * prints the same assessment, so the card and the page cannot disagree. */
+export type CertifiedRoute =
+  | 'ccof_g'
+  | 'wsda_existing_site'
+  | 'wsda_transfer'
+  | 'otco_existing_site'
+  | 'otco_transfer'
+  | 'agent_form';
+
+export type CertifiedItemKey =
+  | 'certification'
+  | 'certificate'
+  | 'continuity'
+  | 'no_lapse_statement'
+  | 'declaration'
+  | 'prior_manager';
+
+export type CertifiedItemState =
+  | 'reported'
+  | 'attached'
+  | 'not_in_packet'
+  | 'referenced'
+  | 'missing'
+  | 'not_asked'
+  | 'stated_yes'
+  | 'stated_no'
+  | 'unanswered';
+
+export type CertifiedReviewKind =
+  | 'prohibited_input'
+  | 'unknown_input'
+  | 'conventional_year'
+  | 'no_lapse_answered_no'
+  | 'operation_name_not_on_file';
+
+export interface CertifiedBranch {
+  agent: string | null;
+  branch: 'existing_site' | 'from_other_operation';
+  route: CertifiedRoute;
+  land_history_asked: boolean;
+  /** The plan whose certifier this was assessed for (the newest plan not withdrawn). */
+  plan_version: number | null;
+  items: Array<{
+    key: CertifiedItemKey;
+    state: CertifiedItemState;
+    asked: boolean;
+    path: string;
+    reference: string;
+  }>;
+  review: Array<{ kind: CertifiedReviewKind; detail: string }>;
+  missing: CertifiedItemKey[];
+}
+
 export interface LandHistorySummary {
+  certified_branch: CertifiedBranch | null;
   certificate: {
     number: string;
     agent: string;
@@ -88,6 +143,8 @@ export interface LandHistorySummary {
     gaps: Array<[string, string]>;
     unplaced: number;
     text: string;
+    /** True on a certified route whose form does not ask for the 36-month accounting (T21-F1). */
+    not_asked?: boolean;
   };
 }
 
