@@ -6375,6 +6375,7 @@
   "parcelApp.transition.liveNote": "Updates itself as crop-history records change — nothing to re-enter here.",
   "parcelApp.transition.status.eligible": "No prohibited input on record",
   "parcelApp.transition.status.inTransition": "In transition",
+  "parcelApp.transition.status.notEstablished": "Not established: input status not recorded",
   "parcelApp.transition.status.unknown": "Not yet assessed",
   "parcelForm.error.loadDescription": "Failed to load parcel data. Please try again.",
   "parcelForm.error.loadTitle": "Error Loading Parcel",

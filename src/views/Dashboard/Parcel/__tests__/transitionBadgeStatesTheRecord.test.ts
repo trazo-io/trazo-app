@@ -11,6 +11,8 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { describe, expect, it } from 'vitest';
 
+import { transitionState } from '../transitionState';
+
 import enUS from '../../../../i18n/lang/en-US.json';
 import es419 from '../../../../i18n/lang/es-419.json';
 
@@ -36,5 +38,40 @@ describe('transition card badge', () => {
     );
     expect(card).toContain("variant={eligible ? 'neutral' : 'warning'}");
     expect(card).not.toMatch(/eligible \? 'green\.|eligible \? 'brand'/);
+  });
+
+  it('says In transition only while a clock is running', () => {
+    // An input with no organic status blocks the record but starts no clock (audit T21). The
+    // card used to say "In transition" for it, from `is_eligible === false` alone.
+    expect(
+      transitionState({
+        is_eligible: false,
+        transition_complete_date: null,
+        days_remaining: 0,
+        unclassified: [{}]
+      })
+    ).toBe('notEstablished');
+    expect(
+      transitionState({
+        is_eligible: false,
+        transition_complete_date: '2027-05-01',
+        days_remaining: 210
+      })
+    ).toBe('inTransition');
+    expect(
+      transitionState({
+        is_eligible: false,
+        transition_complete_date: '2025-01-01',
+        days_remaining: 0,
+        unclassified: [{}]
+      })
+    ).toBe('notEstablished');
+    expect(transitionState({ is_eligible: true })).toBe('eligible');
+    for (const state of ['eligible', 'inTransition', 'notEstablished', 'unknown']) {
+      expect((enUS as Record<string, string>)[`parcelApp.transition.status.${state}`]).toBeTruthy();
+      expect(
+        (es419 as Record<string, string>)[`parcelApp.transition.status.${state}`]
+      ).toBeTruthy();
+    }
   });
 });
