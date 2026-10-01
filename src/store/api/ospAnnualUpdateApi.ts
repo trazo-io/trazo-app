@@ -21,11 +21,43 @@ export interface OSPAnnualUpdate {
   additions?: unknown[];
   deletions?: unknown[];
   sections_unchanged_attestation?: Record<string, boolean>;
+  /** § 205.406(a)(3): the changes themselves. "No change" is the attestation above. */
+  application_info_changes?: string;
+  /** § 205.406(a)(4). `agent_requested_info_none` is true only when the operator says the
+   *  agent asked for nothing further; null is unanswered. */
+  agent_requested_info?: string;
+  agent_requested_info_none?: boolean | null;
+  /** Revision chain. A filed update is never edited; a correction is the next revision. */
+  revision_number?: number;
+  corrects?: number | null;
+  /** Set by the server at sign time from the signed-in user, never sent by the client. */
+  signer_name?: string;
+  signer_title?: string;
+  signed_at?: string | null;
+  signed_content_sha256?: string;
+  /** Set once by the file action. Never sent in an edit: the server refuses it. */
   submitted_at?: string | null;
+  filing_method?: FilingMethod | '';
+  snapshot_state?: 'frozen_at_filing' | 'legacy_none' | '';
+  filed_sha256?: string;
+  superseded_at?: string | null;
+  withdrawn_at?: string | null;
+  withdrawal_reason?: string;
   certifier_acknowledged_at?: string | null;
+  /** Signed or filed: content changes only by correction. */
+  is_locked?: boolean;
   created_at?: string;
   updated_at?: string;
 }
+
+export const FILING_METHODS = [
+  'agent_web_form',
+  'agent_portal',
+  'email',
+  'mail',
+  'in_person'
+] as const;
+export type FilingMethod = (typeof FILING_METHODS)[number];
 
 interface Scope {
   companyId: string;
@@ -36,10 +68,37 @@ interface CreateArgs extends Scope {
   data: Partial<OSPAnnualUpdate>;
 }
 
+/** Content an edit may carry. Filing, signature and revision state are actions of their own. */
+export type OSPAnnualUpdateContent = Pick<
+  OSPAnnualUpdate,
+  | 'reporting_year'
+  | 'changes_summary'
+  | 'additions'
+  | 'deletions'
+  | 'sections_unchanged_attestation'
+  | 'application_info_changes'
+  | 'agent_requested_info'
+  | 'agent_requested_info_none'
+>;
+
 interface UpdateArgs extends Scope {
   updateId: string | number;
-  data: Partial<OSPAnnualUpdate>;
+  data: Partial<OSPAnnualUpdateContent>;
 }
+
+interface ActionArgs extends Scope {
+  updateId: string | number;
+  data?: Record<string, unknown>;
+}
+
+const action =
+  (name: string) =>
+  ({ companyId, farmId, updateId, data }: ActionArgs) => ({
+    url: `${OSP_ANNUAL_UPDATE_URL(companyId, farmId, updateId)}${name}/`,
+    method: 'POST',
+    body: data ?? {},
+    credentials: 'include' as const
+  });
 
 const ospAnnualUpdateApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -70,6 +129,22 @@ const ospAnnualUpdateApi = baseApi.injectEndpoints({
         credentials: 'include'
       }),
       invalidatesTags: [{ type: 'OSPAnnualUpdate', id: 'LIST' }]
+    }),
+    signOSPAnnualUpdate: build.mutation<OSPAnnualUpdate, ActionArgs>({
+      query: action('sign'),
+      invalidatesTags: [{ type: 'OSPAnnualUpdate', id: 'LIST' }]
+    }),
+    fileOSPAnnualUpdate: build.mutation<OSPAnnualUpdate, ActionArgs>({
+      query: action('file'),
+      invalidatesTags: [{ type: 'OSPAnnualUpdate', id: 'LIST' }]
+    }),
+    correctOSPAnnualUpdate: build.mutation<OSPAnnualUpdate, ActionArgs>({
+      query: action('correct'),
+      invalidatesTags: [{ type: 'OSPAnnualUpdate', id: 'LIST' }]
+    }),
+    withdrawOSPAnnualUpdate: build.mutation<OSPAnnualUpdate, ActionArgs>({
+      query: action('withdraw'),
+      invalidatesTags: [{ type: 'OSPAnnualUpdate', id: 'LIST' }]
     })
   })
 });
@@ -77,7 +152,11 @@ const ospAnnualUpdateApi = baseApi.injectEndpoints({
 export const {
   useGetOSPAnnualUpdatesQuery,
   useCreateOSPAnnualUpdateMutation,
-  useUpdateOSPAnnualUpdateMutation
+  useUpdateOSPAnnualUpdateMutation,
+  useSignOSPAnnualUpdateMutation,
+  useFileOSPAnnualUpdateMutation,
+  useCorrectOSPAnnualUpdateMutation,
+  useWithdrawOSPAnnualUpdateMutation
 } = ospAnnualUpdateApi;
 
 export default ospAnnualUpdateApi;

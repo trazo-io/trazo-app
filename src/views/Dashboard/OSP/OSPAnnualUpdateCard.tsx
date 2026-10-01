@@ -28,13 +28,21 @@ import {
   StandardCard,
   StandardField,
   StandardInput,
+  StandardSelect,
   StandardTextarea
 } from 'components/Design/StandardComponents';
 import {
+  FILING_METHODS,
+  FilingMethod,
   OSPAnnualUpdate,
+  OSPAnnualUpdateContent,
+  useCorrectOSPAnnualUpdateMutation,
   useCreateOSPAnnualUpdateMutation,
+  useFileOSPAnnualUpdateMutation,
   useGetOSPAnnualUpdatesQuery,
-  useUpdateOSPAnnualUpdateMutation
+  useSignOSPAnnualUpdateMutation,
+  useUpdateOSPAnnualUpdateMutation,
+  useWithdrawOSPAnnualUpdateMutation
 } from 'store/api/ospAnnualUpdateApi';
 import type { OSPSummary } from 'types/osp';
 
@@ -120,7 +128,14 @@ const emptyAttestation = (): Record<string, boolean> =>
  * outside this list has no input to attach to, so it goes to the toast body instead of
  * being dropped.
  */
-const FIELD_KEYS = ['reporting_year', 'changes_summary', 'additions', 'deletions'] as const;
+const FIELD_KEYS = [
+  'reporting_year',
+  'changes_summary',
+  'additions',
+  'deletions',
+  'application_info_changes',
+  'agent_requested_info'
+] as const;
 type FieldKey = (typeof FIELD_KEYS)[number];
 type FieldErrors = Partial<Record<FieldKey, string>>;
 
@@ -196,6 +211,86 @@ const parseApiErrors = (err: unknown): { fields: FieldErrors; general: string | 
   return { fields, general: general.length ? general.join(' ') : null };
 };
 
+const FILING_METHOD_LABELS: Record<FilingMethod, { id: string; defaultMessage: string }> = {
+  agent_web_form: { id: 'osp.annual.method.agentWebForm', defaultMessage: "Agent's web form" },
+  agent_portal: { id: 'osp.annual.method.agentPortal', defaultMessage: "Agent's client portal" },
+  email: { id: 'osp.annual.method.email', defaultMessage: 'Email' },
+  mail: { id: 'osp.annual.method.mail', defaultMessage: 'Mail' },
+  in_person: { id: 'osp.annual.method.inPerson', defaultMessage: 'In person' }
+};
+
+/**
+ * What a filing row is, in the order that decides it. A filed update is never edited again
+ * (2026-10-01): it was signed, it reached the agent, and the packet prints it byte for byte.
+ */
+type RowState = 'withdrawn' | 'corrected' | 'filed' | 'signed' | 'draft';
+const rowState = (u: OSPAnnualUpdate): RowState => {
+  if (u.withdrawn_at) return 'withdrawn';
+  if (u.superseded_at) return 'corrected';
+  if (u.submitted_at) return 'filed';
+  if (u.signed_at) return 'signed';
+  return 'draft';
+};
+
+type PendingKind = 'sign' | 'file' | 'withdraw' | 'correct';
+type PendingAction = { id: number; kind: PendingKind } | null;
+
+const STATE_LABELS: Record<RowState, { id: string; defaultMessage: string }> = {
+  draft: { id: 'osp.annual.state.draft', defaultMessage: 'Draft' },
+  signed: { id: 'osp.annual.state.signed', defaultMessage: 'Signed, not filed' },
+  filed: { id: 'osp.annual.state.filed', defaultMessage: 'Filed' },
+  corrected: { id: 'osp.annual.state.corrected', defaultMessage: 'Corrected' },
+  withdrawn: { id: 'osp.annual.state.withdrawn', defaultMessage: 'Withdrawn' }
+};
+
+/** Status colour = meaning: done is green, in progress amber, a withdrawal red, a fact grey. */
+export const STATE_BADGE: Record<RowState, string> = {
+  draft: 'warning',
+  signed: 'warning',
+  filed: 'subtle',
+  corrected: 'neutral',
+  withdrawn: 'danger'
+};
+
+const CONFIRM_LABELS: Record<PendingKind, { id: string; defaultMessage: string }> = {
+  sign: { id: 'osp.annual.confirm.sign', defaultMessage: 'Sign this update' },
+  file: { id: 'osp.annual.confirm.file', defaultMessage: 'Record as filed' },
+  withdraw: { id: 'osp.annual.confirm.withdraw', defaultMessage: 'Withdraw filing' },
+  correct: { id: 'osp.annual.confirm.correct', defaultMessage: 'Open a correction' }
+};
+
+const DONE_LABELS: Record<
+  'sign' | 'file' | 'withdraw' | 'correct',
+  { id: string; defaultMessage: string }
+> = {
+  sign: { id: 'osp.annual.toast.signDone', defaultMessage: 'Update signed' },
+  file: {
+    id: 'osp.annual.toast.fileDone',
+    defaultMessage: 'Filing recorded. The packet now carries it exactly as filed.'
+  },
+  withdraw: {
+    id: 'osp.annual.toast.withdrawDone',
+    defaultMessage: 'Filing withdrawn. It stays on record with your reason.'
+  },
+  correct: {
+    id: 'osp.annual.toast.correctDone',
+    defaultMessage: 'Correction opened as the next revision. The filed one is unchanged.'
+  }
+};
+
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+const emptyForm = (year: number) => ({
+  reporting_year: String(year),
+  changes_summary: '',
+  additions: '',
+  deletions: '',
+  application_info_changes: '',
+  agent_requested_info: '',
+  agent_requested_info_none: false,
+  sections_unchanged: emptyAttestation()
+});
+
 const OSPAnnualUpdateCard: React.FC<Props> = ({
   companyId,
   farmId,
@@ -212,16 +307,18 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   );
   const [createUpdate, { isLoading: creating }] = useCreateOSPAnnualUpdateMutation();
   const [updateUpdate, { isLoading: updating }] = useUpdateOSPAnnualUpdateMutation();
+  const [signUpdate, { isLoading: signing }] = useSignOSPAnnualUpdateMutation();
+  const [fileUpdate, { isLoading: filing }] = useFileOSPAnnualUpdateMutation();
+  const [correctUpdate, { isLoading: correcting }] = useCorrectOSPAnnualUpdateMutation();
+  const [withdrawUpdate, { isLoading: withdrawing }] = useWithdrawOSPAnnualUpdateMutation();
 
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({
-    reporting_year: String(currentYear),
-    changes_summary: '',
-    additions: '',
-    deletions: '',
-    submitted: false,
-    sections_unchanged: emptyAttestation()
-  });
+  const [form, setForm] = useState(emptyForm(currentYear));
+  const [pending, setPending] = useState<PendingAction>(null);
+  const [signerTitle, setSignerTitle] = useState('');
+  const [filingMethod, setFilingMethod] = useState<FilingMethod | ''>('');
+  const [filingDate, setFilingDate] = useState(todayIso());
+  const [withdrawReason, setWithdrawReason] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const fieldRefs = useRef<Partial<Record<FieldKey, HTMLDivElement | null>>>({});
 
@@ -322,11 +419,15 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
    * a raw IntegrityError in a toast.
    */
   const duplicateForYear = useMemo(() => {
+    // Only a NEW update can collide. An edit keeps its year (the server refuses a change), and a
+    // correction shares its year with the revision it corrects by design: checking edits here
+    // blocked every correction from being saved (review of app #57). A withdrawn revision does
+    // not hold its year; the server files the year again as the next revision.
+    if (editingId != null) return null;
     const year = parseInt(form.reporting_year, 10);
     if (!year) return null;
-    // Excludes the record being edited: re-saving 2026 on the 2026 filing is not a
-    // collision, but re-pointing the 2025 filing at 2026 is.
-    return updates.find((u) => u.reporting_year === year && u.id !== editingId) ?? null;
+    const live = updates.filter((u) => u.reporting_year === year && !u.withdrawn_at);
+    return live.find((u) => !u.is_locked) ?? live[0] ?? null;
   }, [updates, form.reporting_year, editingId]);
 
   const startEdit = (u: OSPAnnualUpdate) => {
@@ -337,7 +438,9 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       changes_summary: u.changes_summary || '',
       additions: Array.isArray(u.additions) ? u.additions.map(String).join('\n') : '',
       deletions: Array.isArray(u.deletions) ? u.deletions.map(String).join('\n') : '',
-      submitted: Boolean(u.submitted_at),
+      application_info_changes: u.application_info_changes || '',
+      agent_requested_info: u.agent_requested_info || '',
+      agent_requested_info_none: u.agent_requested_info_none === true,
       sections_unchanged: { ...emptyAttestation(), ...(u.sections_unchanged_attestation || {}) }
     });
   };
@@ -345,14 +448,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   const resetForm = () => {
     setEditingId(null);
     setFieldErrors({});
-    setForm({
-      reporting_year: String(currentYear),
-      changes_summary: '',
-      additions: '',
-      deletions: '',
-      submitted: false,
-      sections_unchanged: emptyAttestation()
-    });
+    setForm(emptyForm(currentYear));
   };
 
   const handleSave = async () => {
@@ -376,12 +472,11 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       });
       return;
     }
-    // Filing the same year twice violates unique(prior_osp, reporting_year). Resolve it
-    // here rather than letting the DB reject the write.
+    // A year has one chain of revisions. Resolve a second create here rather than letting the
+    // server refuse it: a draft for that year is opened for editing; a signed or filed one is
+    // changed by a correction from its own row.
     if (duplicateForYear) {
-      if (editingId == null) {
-        // Creating a year that already exists: load the existing filing so the farmer
-        // continues on the right record.
+      if (!duplicateForYear.is_locked) {
         startEdit(duplicateForYear);
         toast({
           status: 'info',
@@ -395,25 +490,26 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
           })
         });
       } else {
-        // Editing an existing filing and re-pointing it at a year another filing owns.
-        // Do NOT swap records here — that would discard the edits already typed.
         toast({
           status: 'warning',
           title: intl.formatMessage({
-            id: 'osp.annual.toast.yearTaken',
-            defaultMessage: 'Another filing already covers that year'
+            id: 'osp.annual.toast.alreadyFiled',
+            defaultMessage: 'An update already exists for that year'
           }),
           description: intl.formatMessage({
-            id: 'osp.annual.toast.yearTakenDesc',
-            defaultMessage: 'Pick a different reporting year, or edit that filing directly.'
+            id: 'osp.annual.toast.alreadyLockedDesc',
+            defaultMessage:
+              'It is signed or filed, so it is not edited. Use Create correction on its row.'
           })
         });
       }
       return;
     }
 
-    const data: Partial<OSPAnnualUpdate> = {
-      prior_osp: ospId,
+    // Content only. The plan a filing continues is fixed when it is created and never re-sent
+    // on an edit: re-sending it re-pointed an older year's filing at today's plan on file.
+    // Filing state is never sent at all; it is the sign and file actions below.
+    const content: OSPAnnualUpdateContent = {
       reporting_year: year,
       changes_summary: form.changes_summary,
       additions: linesToList(form.additions),
@@ -424,14 +520,16 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       sections_unchanged_attestation: Object.fromEntries(
         Object.entries(form.sections_unchanged).filter(([, isUnchanged]) => isUnchanged)
       ),
-      // Setting submitted_at is the farmer's attestation that this was filed with the certifier.
-      submitted_at: form.submitted ? new Date().toISOString() : null
+      application_info_changes: form.application_info_changes.trim(),
+      agent_requested_info: form.agent_requested_info.trim(),
+      // Unticked is "not answered", never "the agent asked for something".
+      agent_requested_info_none: form.agent_requested_info_none ? true : null
     };
     try {
       if (editingId != null) {
-        await updateUpdate({ companyId, farmId, updateId: editingId, data }).unwrap();
+        await updateUpdate({ companyId, farmId, updateId: editingId, data: content }).unwrap();
       } else {
-        await createUpdate({ companyId, farmId, data }).unwrap();
+        await createUpdate({ companyId, farmId, data: { ...content, prior_osp: ospId } }).unwrap();
       }
       toast({
         status: 'success',
@@ -475,6 +573,69 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
     }
   };
 
+  /**
+   * One action panel at a time, always starting empty. The four inputs are shared across rows,
+   * so leaving them filled on Cancel carried one filing's withdrawal reason onto the next row's
+   * panel, one click away from being recorded there (review of app #57).
+   */
+  const openPending = (id: number | null, kind?: PendingKind) => {
+    setSignerTitle('');
+    setFilingMethod('');
+    setFilingDate(todayIso());
+    setWithdrawReason('');
+    setPending(id == null || !kind ? null : { id, kind });
+  };
+
+  const runAction = async (u: OSPAnnualUpdate, kind: PendingKind) => {
+    if (!companyId || !farmId) return;
+    const scope = { companyId, farmId, updateId: u.id };
+    try {
+      if (kind === 'sign') {
+        await signUpdate({ ...scope, data: { signer_title: signerTitle.trim() } }).unwrap();
+      } else if (kind === 'file') {
+        await fileUpdate({
+          ...scope,
+          data: { filing_method: filingMethod, submitted_at: filingDate }
+        }).unwrap();
+      } else if (kind === 'withdraw') {
+        await withdrawUpdate({ ...scope, data: { reason: withdrawReason.trim() } }).unwrap();
+      } else {
+        await correctUpdate(scope).unwrap();
+      }
+      openPending(null);
+      toast({
+        status: 'success',
+        title: intl.formatMessage(DONE_LABELS[kind])
+      });
+    } catch (err: unknown) {
+      const { general } = parseApiErrors(err);
+      toast({
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+        position: 'top',
+        title: intl.formatMessage({
+          id: 'osp.annual.toast.actionError',
+          defaultMessage: 'That did not go through'
+        }),
+        description:
+          general ??
+          intl.formatMessage({
+            id: 'osp.annual.toast.errorGeneric',
+            defaultMessage: 'Please try again. If it keeps failing, check your connection.'
+          })
+      });
+    }
+  };
+
+  // Only the newest revision of a year can be corrected; older ones already have a correction.
+  const correctedIds = useMemo(
+    () => new Set(updates.map((u) => u.corrects).filter((id): id is number => id != null)),
+    [updates]
+  );
+
+  const busy = signing || filing || correcting || withdrawing;
+
   return (
     <StandardCard
       mb={4}
@@ -507,7 +668,15 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
             <HStack justify="space-between">
               <Box>
                 <Text fontWeight="semibold" fontSize="sm">
-                  {u.reporting_year}
+                  {(u.revision_number ?? 1) > 1
+                    ? intl.formatMessage(
+                        {
+                          id: 'osp.annual.yearRevision',
+                          defaultMessage: '{year} · revision {revision}'
+                        },
+                        { year: u.reporting_year, revision: u.revision_number }
+                      )
+                    : u.reporting_year}
                 </Text>
                 <Text fontSize="xs" color="gray.500" noOfLines={2}>
                   {u.changes_summary ||
@@ -582,39 +751,172 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                   </Text>
                 )}
               </Box>
-              <HStack spacing={2}>
-                {u.submitted_at ? (
-                  <Badge colorScheme="green">
-                    {intl.formatMessage({
-                      id: 'osp.annual.submitted',
-                      defaultMessage: 'Submitted'
-                    })}
-                  </Badge>
-                ) : (
-                  <Badge variant="warning">
-                    {intl.formatMessage({ id: 'osp.annual.draft', defaultMessage: 'Draft' })}
-                  </Badge>
-                )}
+              <HStack spacing={2} flexWrap="wrap" justify="flex-end">
+                <Badge variant={STATE_BADGE[rowState(u)]}>
+                  {intl.formatMessage(STATE_LABELS[rowState(u)])}
+                </Badge>
                 {/*
-                  An acknowledged filing is frozen server-side (423). Offering Edit anyway would
-                  let a farmer reopen it, retype a summary, press save and only THEN be told —
-                  losing the work and reading as a bug rather than a rule. The badge carries the
-                  reason so the missing button is explained rather than merely absent.
+                  Edit exists only while the revision is an unsigned draft. Once signed or filed
+                  the server refuses edits (409) and the packet prints the filed document byte for
+                  byte; a mistake is fixed by a correction, the next revision, which leaves this
+                  one as it was.
                 */}
-                {u.certifier_acknowledged_at ? (
-                  <Badge variant="neutral">
-                    {intl.formatMessage({
-                      id: 'osp.annual.lockedBadge',
-                      defaultMessage: 'Acknowledged — as filed'
-                    })}
-                  </Badge>
-                ) : (
+                {!u.is_locked && (
                   <StandardButton size="xs" variant="ghost" onClick={() => startEdit(u)}>
                     {intl.formatMessage({ id: 'osp.annual.edit', defaultMessage: 'Edit' })}
                   </StandardButton>
                 )}
+                {rowState(u) === 'draft' && (
+                  <StandardButton
+                    size="xs"
+                    variant="outline"
+                    onClick={() => openPending(u.id, 'sign')}>
+                    {intl.formatMessage({ id: 'osp.annual.sign', defaultMessage: 'Sign' })}
+                  </StandardButton>
+                )}
+                {rowState(u) === 'signed' && !correctedIds.has(u.id) && (
+                  <StandardButton
+                    size="xs"
+                    variant="outline"
+                    onClick={() => openPending(u.id, 'file')}>
+                    {intl.formatMessage({
+                      id: 'osp.annual.recordFiling',
+                      defaultMessage: 'Record filing'
+                    })}
+                  </StandardButton>
+                )}
+                {/*
+                  Offered on a signed revision too: once signed its content is fixed, so a mistake
+                  found before filing is also a correction. Filing the correction replaces this
+                  revision, filed or not.
+                */}
+                {(rowState(u) === 'signed' || rowState(u) === 'filed') &&
+                  !correctedIds.has(u.id) && (
+                    <StandardButton
+                      size="xs"
+                      variant="ghost"
+                      onClick={() => openPending(u.id, 'correct')}>
+                      {intl.formatMessage({
+                        id: 'osp.annual.createCorrection',
+                        defaultMessage: 'Create correction'
+                      })}
+                    </StandardButton>
+                  )}
+                {rowState(u) === 'filed' && (
+                  <StandardButton
+                    size="xs"
+                    variant="ghost"
+                    onClick={() => openPending(u.id, 'withdraw')}>
+                    {intl.formatMessage({ id: 'osp.annual.withdraw', defaultMessage: 'Withdraw' })}
+                  </StandardButton>
+                )}
               </HStack>
             </HStack>
+            {pending?.id === u.id && (
+              <Box mt={3} pt={3} borderTopWidth="1px" borderColor="gray.100">
+                {pending.kind === 'sign' && (
+                  <VStack align="stretch" spacing={2}>
+                    <Text fontSize="xs" color="gray.600">
+                      {intl.formatMessage({
+                        id: 'osp.annual.signHelp',
+                        defaultMessage:
+                          'Signing records your name and the date against exactly what this update says. After signing it cannot be edited; a change is made as a correction.'
+                      })}
+                    </Text>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'osp.annual.signerTitle',
+                        defaultMessage: 'Your title (optional)'
+                      })}>
+                      <StandardInput
+                        value={signerTitle}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSignerTitle(e.target.value)
+                        }
+                      />
+                    </StandardField>
+                  </VStack>
+                )}
+                {pending.kind === 'file' && (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'osp.annual.filedDate',
+                        defaultMessage: 'Date filed with your certifier'
+                      })}>
+                      <StandardInput
+                        type="date"
+                        max={todayIso()}
+                        value={filingDate}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setFilingDate(e.target.value)
+                        }
+                      />
+                    </StandardField>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'osp.annual.filingMethod',
+                        defaultMessage: 'How it was filed'
+                      })}>
+                      <StandardSelect
+                        value={filingMethod}
+                        placeholder={intl.formatMessage({
+                          id: 'osp.annual.filingMethodUnset',
+                          defaultMessage: 'Not recorded'
+                        })}
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                          setFilingMethod(e.target.value as FilingMethod | '')
+                        }>
+                        {FILING_METHODS.map((m) => (
+                          <option key={m} value={m}>
+                            {intl.formatMessage(FILING_METHOD_LABELS[m])}
+                          </option>
+                        ))}
+                      </StandardSelect>
+                    </StandardField>
+                  </SimpleGrid>
+                )}
+                {pending.kind === 'correct' && (
+                  <Text fontSize="xs" color="gray.600">
+                    {intl.formatMessage({
+                      id: 'osp.annual.correctHelp',
+                      defaultMessage:
+                        'This opens the next revision as an unsigned copy for you to change, sign and file. This revision stays exactly as it is, and is replaced only when the correction is filed.'
+                    })}
+                  </Text>
+                )}
+                {pending.kind === 'withdraw' && (
+                  <StandardField
+                    label={intl.formatMessage({
+                      id: 'osp.annual.withdrawReason',
+                      defaultMessage: 'Why is this filing withdrawn?'
+                    })}>
+                    <StandardTextarea
+                      rows={2}
+                      value={withdrawReason}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setWithdrawReason(e.target.value)
+                      }
+                    />
+                  </StandardField>
+                )}
+                <HStack justify="flex-end" spacing={2} mt={2}>
+                  <StandardButton size="xs" variant="ghost" onClick={() => openPending(null)}>
+                    {intl.formatMessage({ id: 'osp.annual.cancel', defaultMessage: 'Cancel' })}
+                  </StandardButton>
+                  <StandardButton
+                    size="xs"
+                    isLoading={busy}
+                    isDisabled={
+                      (pending.kind === 'withdraw' && !withdrawReason.trim()) ||
+                      (pending.kind === 'file' && (!filingDate || filingDate > todayIso()))
+                    }
+                    onClick={() => runAction(u, pending.kind)}>
+                    {intl.formatMessage(CONFIRM_LABELS[pending.kind])}
+                  </StandardButton>
+                </HStack>
+              </Box>
+            )}
           </Box>
         ))}
 
@@ -674,6 +976,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                     min={2000}
                     max={2100}
                     value={form.reporting_year}
+                    // The year of a saved update is fixed; the server refuses a change.
+                    isDisabled={editingId != null}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       set('reporting_year', e.target.value)
                     }
@@ -833,41 +1137,99 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                       'Leave it unticked if any of them changed, and tell your certifying agent what changed. The filing prints your answer either way.'
                   })}
                 </Text>
+                <Box
+                  mt={3}
+                  ref={(el: HTMLDivElement | null) => {
+                    fieldRefs.current.application_info_changes = el;
+                  }}>
+                  <StandardField
+                    label={intl.formatMessage({
+                      id: 'osp.annual.applicationInfoChanges',
+                      defaultMessage:
+                        'What changed in the application information (§ 205.406(a)(3))'
+                    })}
+                    error={fieldErrors.application_info_changes}>
+                    <StandardTextarea
+                      rows={2}
+                      value={form.application_info_changes}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        set('application_info_changes', e.target.value)
+                      }
+                    />
+                  </StandardField>
+                </Box>
+              </Box>
+
+              <Box
+                ref={(el: HTMLDivElement | null) => {
+                  fieldRefs.current.agent_requested_info = el;
+                }}>
+                <StandardField
+                  label={intl.formatMessage({
+                    id: 'osp.annual.agentRequestedInfo',
+                    defaultMessage:
+                      'Other information your certifying agent asked for (§ 205.406(a)(4))'
+                  })}
+                  error={fieldErrors.agent_requested_info}>
+                  <StandardTextarea
+                    rows={2}
+                    value={form.agent_requested_info}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      set('agent_requested_info', e.target.value)
+                    }
+                  />
+                </StandardField>
+                <Checkbox
+                  mt={2}
+                  size="sm"
+                  colorScheme="green"
+                  isChecked={form.agent_requested_info_none}
+                  onChange={(e) => set('agent_requested_info_none', e.target.checked)}>
+                  <Text fontSize="sm">
+                    {intl.formatMessage({
+                      id: 'osp.annual.agentRequestedNone',
+                      defaultMessage: 'My certifying agent asked for nothing further this year'
+                    })}
+                  </Text>
+                </Checkbox>
               </Box>
 
               <Divider />
 
               {duplicateForYear && (
                 <Text fontSize="sm" color="gray.700">
-                  {editingId == null
+                  {duplicateForYear.is_locked
                     ? intl.formatMessage(
+                        {
+                          id: 'osp.annual.duplicateYearLockedWarning',
+                          defaultMessage:
+                            'The {year} update is signed or filed. Change it with Create correction on its row.'
+                        },
+                        { year: form.reporting_year }
+                      )
+                    : intl.formatMessage(
                         {
                           id: 'osp.annual.duplicateYearWarning',
                           defaultMessage:
                             'You already filed an update for {year}. Saving will open it for editing.'
                         },
                         { year: form.reporting_year }
-                      )
-                    : intl.formatMessage(
-                        {
-                          id: 'osp.annual.yearTakenWarning',
-                          defaultMessage:
-                            'Another filing already covers {year}. Pick a different year.'
-                        },
-                        { year: form.reporting_year }
                       )}
                 </Text>
               )}
 
-              <Checkbox
-                isChecked={form.submitted}
-                colorScheme="green"
-                onChange={(e) => set('submitted', e.target.checked)}>
+              {/*
+                There used to be a "Filed with my certifier" box here that stamped today's date
+                on save. Filing is now its own step on the saved row: sign it, then record the
+                date and how it reached the agent. Once filed it is kept exactly as filed.
+              */}
+              <Text fontSize="xs" color="gray.500">
                 {intl.formatMessage({
-                  id: 'osp.annual.markSubmitted',
-                  defaultMessage: 'Filed with my certifier'
+                  id: 'osp.annual.signThenFileHelp',
+                  defaultMessage:
+                    'Save the update, then sign it and record when it was filed from its row above. A filed update is kept exactly as filed.'
                 })}
-              </Checkbox>
+              </Text>
               <HStack justify="flex-end" spacing={2}>
                 {editingId != null && (
                   <StandardButton size="sm" variant="ghost" onClick={resetForm}>

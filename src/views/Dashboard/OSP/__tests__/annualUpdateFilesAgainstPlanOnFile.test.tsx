@@ -27,7 +27,12 @@ const createUpdate = vi.fn((_args: { data: Record<string, unknown> }) => ({
 vi.mock('store/api/ospAnnualUpdateApi', () => ({
   useGetOSPAnnualUpdatesQuery: () => ({ data: [] }),
   useCreateOSPAnnualUpdateMutation: () => [createUpdate, { isLoading: false }],
-  useUpdateOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }]
+  useUpdateOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  useSignOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  useFileOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  useCorrectOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  useWithdrawOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
+  FILING_METHODS: ['agent_web_form', 'agent_portal', 'email', 'mail', 'in_person']
 }));
 
 import OSPAnnualUpdateCard from '../OSPAnnualUpdateCard';
