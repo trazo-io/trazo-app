@@ -47,6 +47,7 @@ import {
 } from 'components/Design/StandardComponents';
 import {
   answerValue,
+  effectiveValue,
   missingRequired,
   visiblePages,
   visibleQuestions
@@ -75,20 +76,7 @@ import OSPMaterialsListPanel from './OSPMaterialsListPanel';
 import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
-
-/** Apply exclusive-option semantics client-side (server refuses conflicts anyway). */
-const toggleCheckbox = (
-  question: ModuleQuestion,
-  current: string[],
-  optionValue: string
-): string[] => {
-  const option = question.options.find((o) => o.value === optionValue);
-  const has = current.includes(optionValue);
-  if (has) return current.filter((v) => v !== optionValue);
-  if (option?.exclusive) return [optionValue];
-  const exclusives = new Set(question.options.filter((o) => o.exclusive).map((o) => o.value));
-  return [...current.filter((v) => !exclusives.has(v)), optionValue];
-};
+import { holdsRetiredOption, offeredOptions, toggleCheckbox } from 'config/osp/optionChoices';
 
 /**
  * `isReadOnly` is the plan-is-locked state, and it should now never be true: a locked plan
@@ -310,8 +298,13 @@ const QuestionField = ({
           onChange={(v) => onChange(v)}
           isDisabled={isReadOnly}>
           <Stack spacing={2}>
-            {question.options.map((option) => (
-              <Radio key={option.value} value={option.value} minH="44px" alignItems="flex-start">
+            {offeredOptions(question, value).map((option) => (
+              <Radio
+                key={option.value}
+                value={option.value}
+                isDisabled={option.retired}
+                minH="44px"
+                alignItems="flex-start">
                 <Text fontSize="sm">{pickText(option.label, locale)}</Text>
               </Radio>
             ))}
@@ -323,12 +316,12 @@ const QuestionField = ({
       const current = Array.isArray(value) ? (value as string[]) : [];
       control = (
         <Stack spacing={2}>
-          {question.options.map((option) => (
+          {offeredOptions(question, current).map((option) => (
             <Checkbox
               key={option.value}
               isChecked={current.includes(option.value)}
               onChange={() => onChange(toggleCheckbox(question, current, option.value))}
-              isDisabled={isReadOnly}
+              isDisabled={isReadOnly || option.retired}
               minH="44px"
               alignItems="flex-start">
               <Text fontSize="sm">{pickText(option.label, locale)}</Text>
@@ -345,8 +338,8 @@ const QuestionField = ({
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChange(e.target.value || null)}
           isDisabled={isReadOnly}
           placeholder={intl.formatMessage({ id: 'osp.wizard.selectPlaceholder' })}>
-          {question.options.map((option) => (
-            <option key={option.value} value={option.value}>
+          {offeredOptions(question, value).map((option) => (
+            <option key={option.value} value={option.value} disabled={option.retired}>
               {pickText(option.label, locale)}
             </option>
           ))}
@@ -409,6 +402,11 @@ const QuestionField = ({
         </Text>
       ) : null}
       {control}
+      {holdsRetiredOption(question, value) ? (
+        <Text fontSize="xs" color="gray.700" mt={1}>
+          {intl.formatMessage({ id: 'osp.wizard.retiredOption' })}
+        </Text>
+      ) : null}
       {missing ? (
         <Text fontSize="xs" color="red.700" mt={1}>
           {intl.formatMessage({ id: 'osp.wizard.required' })}
@@ -1031,7 +1029,11 @@ const OSPModuleWizard = () => {
                           const showSuggestion =
                             ospIsDraft &&
                             Boolean(suggestion) &&
-                            isUnanswered(answerValue(answers, question.key));
+                            // A retired option alone is not an answer, the same test
+                            // missingRequired applies, so the suggestion stays on offer.
+                            isUnanswered(
+                              effectiveValue(question, answerValue(answers, question.key))
+                            );
                           return (
                             <Box key={question.key}>
                               <QuestionField

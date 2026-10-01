@@ -1,7 +1,7 @@
 {
-  "content_version": "2026.09.12",
+  "content_version": "2026.09.30",
   "registry": {
-    "content_version": "2026.09.12",
+    "content_version": "2026.09.30",
     "modules": [
       {
         "key": "g2_0_fraud_prevention",
@@ -8866,26 +8866,45 @@
                 "key": "import_export_activity",
                 "kind": "checkbox_group",
                 "label": {
-                  "en": "Does your operation import or export organic products?",
-                  "es": "¿Su operación importa o exporta productos orgánicos?"
+                  "en": "Does your operation import or export organic products, directly or indirectly, now or in plans?",
+                  "es": "¿Su operación importa o exporta productos orgánicos, directa o indirectamente, ahora o en sus planes?"
                 },
-                "coaching": null,
+                "coaching": {
+                  "en": "Indirect export counts: product a buyer, broker or trader ships abroad, or that leaves the country as an ingredient. Certifiers ask about it because the destination country's rules can reach your crop.",
+                  "es": "La exportación indirecta cuenta: el producto que un comprador, corredor o comerciante envía al exterior, o que sale del país como ingrediente. Los certificadores preguntan por ella porque las reglas del país de destino pueden alcanzar su cultivo."
+                },
                 "options": [
                   {
                     "value": "export",
                     "label": {
-                      "en": "We export organic product to other countries",
-                      "es": "Exportamos producto orgánico a otros países"
+                      "en": "We export, or plan to export, organic product to other countries",
+                      "es": "Exportamos, o planeamos exportar, producto orgánico a otros países"
+                    },
+                    "exclusive": false
+                  },
+                  {
+                    "value": "indirect_export",
+                    "label": {
+                      "en": "Our product is exported, or will be, by a buyer, broker or trader, or as an ingredient",
+                      "es": "Un comprador, corredor o comerciante exporta, o exportará, nuestro producto, o sale del país como ingrediente"
                     },
                     "exclusive": false
                   },
                   {
                     "value": "import",
                     "label": {
-                      "en": "We import organic product or ingredients into the United States",
-                      "es": "Importamos producto o ingredientes orgánicos a Estados Unidos"
+                      "en": "We import, or plan to import, organic product or ingredients into the United States",
+                      "es": "Importamos, o planeamos importar, producto o ingredientes orgánicos a Estados Unidos"
                     },
                     "exclusive": false
+                  },
+                  {
+                    "value": "none_no_known_export",
+                    "label": {
+                      "en": "Neither: all product is sold within the United States, and no buyer we know of exports it or plans to",
+                      "es": "Ninguna: todo el producto se vende dentro de Estados Unidos, y ningún comprador que conozcamos lo exporta ni planea hacerlo"
+                    },
+                    "exclusive": true
                   },
                   {
                     "value": "none",
@@ -8893,7 +8912,8 @@
                       "en": "Neither — all product is sold within the United States",
                       "es": "Ninguna — todo el producto se vende dentro de Estados Unidos"
                     },
-                    "exclusive": true
+                    "exclusive": true,
+                    "retired": true
                   }
                 ],
                 "required": true,
@@ -8910,17 +8930,23 @@
                 "key": "export_destinations",
                 "kind": "text",
                 "label": {
-                  "en": "Which countries do you export to?",
-                  "es": "¿A qué países exporta?"
+                  "en": "Which countries do you export to or plan to export to, directly or indirectly?",
+                  "es": "¿A qué países exporta o planea exportar, directa o indirectamente?"
                 },
-                "coaching": null,
+                "coaching": {
+                  "en": "For indirect export, name the countries your buyer, broker or trader ships to, as far as you know them.",
+                  "es": "Para la exportación indirecta, indique los países a los que envía su comprador, corredor o comerciante, en la medida en que los conozca."
+                },
                 "options": [],
                 "required": true,
                 "visible_when": [
                   {
                     "question": "import_export_activity",
-                    "op": "includes",
-                    "value": "export"
+                    "op": "includes_any",
+                    "value": [
+                      "export",
+                      "indirect_export"
+                    ]
                   }
                 ],
                 "nop_cite": null,
@@ -10967,6 +10993,110 @@
         "primary_contact_records_access",
         "records_maintained_as",
         "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "retired_none_only",
+      "answers": {
+        "import_export_activity": [
+          "none"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "import_export_activity"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "indirect_export",
+      "answers": {
+        "import_export_activity": [
+          "indirect_export"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "audit_trail_exhibit",
+        "import_export_activity",
+        "export_destinations"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "export_destinations"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "export_destinations"
+      ]
+    },
+    {
+      "module": "g8_0_record_keeping",
+      "label": "no_known_export",
+      "answers": {
+        "import_export_activity": [
+          "none_no_known_export"
+        ]
+      },
+      "visible_questions": [
+        "s11_records",
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering",
+        "audit_trail_exhibit",
+        "import_export_activity"
+      ],
+      "missing_required": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
+      ],
+      "missing_required_na": [
+        "records_retention_attestation",
+        "records_location",
+        "primary_contact_records_access",
+        "records_maintained_as",
+        "lot_numbering"
       ]
     }
   ]

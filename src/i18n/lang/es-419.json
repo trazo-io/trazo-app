@@ -5908,6 +5908,7 @@
   "osp.wizard.next": "Guardar y continuar",
   "osp.wizard.no": "No",
   "osp.wizard.required": "Requerido",
+  "osp.wizard.retiredOption": "Respuesta anterior. Esta pregunta ahora pide más: elige una de las opciones de arriba para confirmar tu respuesta.",
   "osp.wizard.reviewStep": "Revise sus respuestas",
   "osp.wizard.reviewTitle": "Revisar antes de completar",
   "osp.wizard.saveFailed": "No se pudieron guardar sus respuestas",
