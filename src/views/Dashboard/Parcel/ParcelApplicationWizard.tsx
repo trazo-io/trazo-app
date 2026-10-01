@@ -858,6 +858,8 @@ const ParcelApplicationWizard = () => {
         const cov = lh?.coverage;
         const coverageText = !cov
           ? null
+          : cov.not_asked
+          ? intl.formatMessage({ id: 'parcelApp.managers.coverage.notAsked' })
           : cov.complete === null
           ? intl.formatMessage({ id: 'parcelApp.managers.coverage.unknown' })
           : cov.complete && lh?.prior_managers.length === 0

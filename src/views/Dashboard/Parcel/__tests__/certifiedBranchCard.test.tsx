@@ -7,7 +7,7 @@ import React from 'react';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { ChakraProvider } from '@chakra-ui/react';
 
@@ -15,9 +15,13 @@ import enUS from '../../../../i18n/lang/en-US.json';
 import es419 from '../../../../i18n/lang/es-419.json';
 import type { CertifiedBranch } from 'store/api/parcelApplicationApi';
 
+const dispatch = vi.fn();
+const upload = vi.fn(() => ({ unwrap: () => Promise.resolve({ id: 9 }) }));
+
+vi.mock('react-redux', () => ({ useDispatch: () => dispatch }));
 vi.mock('store/api/documentsApi', () => ({
   useGetFarmDocumentsQuery: () => ({ data: [] }),
-  useUploadFarmDocumentMutation: () => [vi.fn(), { isLoading: false }]
+  useUploadFarmDocumentMutation: () => [upload, { isLoading: false }]
 }));
 
 import CertifiedBranchCard from '../CertifiedBranchCard';
@@ -38,6 +42,7 @@ const ccofMissingContinuity: CertifiedBranch = {
   branch: 'existing_site',
   route: 'ccof_g',
   land_history_asked: false,
+  plan_version: 3,
   items: [
     { key: 'certification', state: 'reported', asked: true, path: '', reference: 'CCOF' },
     {
@@ -94,6 +99,30 @@ describe('certified-parcel card', () => {
       missing: []
     });
     expect(screen.queryByText(/Not asked on this route; shown for reference/)).toBeInTheDocument();
+  });
+
+  it('offers no upload for an item the route does not ask, and names the plan it was assessed for', () => {
+    renderCard({
+      ...ccofMissingContinuity,
+      route: 'wsda_existing_site',
+      items: [{ key: 'certificate', state: 'missing', asked: false, path: '', reference: '' }],
+      review: [],
+      missing: []
+    });
+    expect(screen.queryByRole('button', { name: /Upload the certificate copy/ })).toBeNull();
+    expect(screen.queryByText(/plan v3/)).toBeInTheDocument();
+  });
+
+  it('refreshes the assessment after an upload so the item does not stay missing', async () => {
+    dispatch.mockClear();
+    const { container } = renderCard(ccofMissingContinuity);
+    const inputs = container.querySelectorAll('input[type="file"]');
+    expect(inputs.length).toBe(2);
+    fireEvent.change(inputs[1], { target: { files: [new File(['x'], 'letter.pdf')] } });
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(JSON.stringify(dispatch.mock.calls)).toContain('"type":"ParcelApplication","id":"7"')
+    );
   });
 
   it('renders nothing for a parcel that is not stated currently certified', () => {

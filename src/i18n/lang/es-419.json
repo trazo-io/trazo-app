@@ -7945,5 +7945,8 @@
   "parcelApp.certifiedBranch.upload.continuity": "Subir la verificación de continuidad",
   "parcelApp.certifiedBranch.upload.onFile": "Consta: {name}",
   "parcelApp.certifiedBranch.upload.done": "Documento subido",
-  "parcelApp.certifiedBranch.upload.failed": "No se pudo subir el documento"
+  "parcelApp.certifiedBranch.upload.failed": "No se pudo subir el documento",
+  "parcelApp.certifiedBranch.review.operation_name_not_on_file": "Para revisar: {detail} no es uno de los nombres de esta operación que constan, así que la parcela se lee como proveniente de otra operación. Si es tu propio certificado, deja esa respuesta en blanco.",
+  "parcelApp.certifiedBranch.forPlan": "Se muestra para el certificador del plan v{version}, el plan en el que estás trabajando.",
+  "parcelApp.managers.coverage.notAsked": "En esta ruta el formulario de tu certificador no pide la cuenta de 36 meses; lo que pide aparece con las respuestas de certificación."
 }

@@ -104,13 +104,16 @@ export type CertifiedReviewKind =
   | 'prohibited_input'
   | 'unknown_input'
   | 'conventional_year'
-  | 'no_lapse_answered_no';
+  | 'no_lapse_answered_no'
+  | 'operation_name_not_on_file';
 
 export interface CertifiedBranch {
   agent: string | null;
   branch: 'existing_site' | 'from_other_operation';
   route: CertifiedRoute;
   land_history_asked: boolean;
+  /** The plan whose certifier this was assessed for (the newest plan not withdrawn). */
+  plan_version: number | null;
   items: Array<{
     key: CertifiedItemKey;
     state: CertifiedItemState;
@@ -140,6 +143,8 @@ export interface LandHistorySummary {
     gaps: Array<[string, string]>;
     unplaced: number;
     text: string;
+    /** True on a certified route whose form does not ask for the 36-month accounting (T21-F1). */
+    not_asked?: boolean;
   };
 }
 

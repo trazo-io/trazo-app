@@ -7945,5 +7945,8 @@
   "parcelApp.certifiedBranch.upload.continuity": "Upload the verification of no lapse",
   "parcelApp.certifiedBranch.upload.onFile": "On file: {name}",
   "parcelApp.certifiedBranch.upload.done": "Document uploaded",
-  "parcelApp.certifiedBranch.upload.failed": "The document could not be uploaded"
+  "parcelApp.certifiedBranch.upload.failed": "The document could not be uploaded",
+  "parcelApp.certifiedBranch.review.operation_name_not_on_file": "To review: {detail} is not one of this operation's names on file, so the parcel is read as coming from another operation. If it is your own certificate, leave that answer blank.",
+  "parcelApp.certifiedBranch.forPlan": "Shown for the certifier on plan v{version}, the plan you are working on.",
+  "parcelApp.managers.coverage.notAsked": "On this route your certifier's form does not ask for the 36-month accounting; what it asks for is listed with the certification answers."
 }

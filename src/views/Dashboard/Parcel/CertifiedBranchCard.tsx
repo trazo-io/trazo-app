@@ -13,9 +13,11 @@
 import React, { useRef } from 'react';
 import { Box, Stack, Text, useToast, VStack } from '@chakra-ui/react';
 import { useIntl } from 'react-intl';
+import { useDispatch } from 'react-redux';
 
 import { StandardButton } from 'components/Design/StandardComponents';
 import type { CertifiedBranch } from 'store/api/parcelApplicationApi';
+import baseApi from 'store/api/baseApi';
 import { useGetFarmDocumentsQuery, useUploadFarmDocumentMutation } from 'store/api/documentsApi';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 
@@ -48,6 +50,7 @@ const ParcelDocumentUpload = ({
     { skip: !scoped }
   );
   const [uploadDocument, { isLoading }] = useUploadFarmDocumentMutation();
+  const dispatch = useDispatch();
   const forThisParcel = attached.filter((doc) => String(doc.parcel ?? '') === String(parcelId));
 
   const onPick = async (file: File | undefined) => {
@@ -62,6 +65,10 @@ const ParcelDocumentUpload = ({
         parcel: Number(parcelId),
         linkedSection: section
       }).unwrap();
+      // The upload changes this card's own assessment, which comes from the parcel application, not
+      // the documents list. Refetch it so the item does not read missing beside "On file" (review of
+      // app #62).
+      dispatch(baseApi.util.invalidateTags([{ type: 'ParcelApplication', id: parcelId }]));
       toast({
         title: intl.formatMessage({ id: 'parcelApp.certifiedBranch.upload.done' }),
         status: 'success',
@@ -123,7 +130,10 @@ const CertifiedBranchCard = ({
 }) => {
   const intl = useIntl();
   if (!branch) return null;
+  // Only for items the route asks for: an item shown for reference gets no upload button (review of
+  // app #62).
   const uploads: Array<'certificate' | 'continuity'> = branch.items
+    .filter((i) => i.asked)
     .map((i) => i.key)
     .filter((k): k is 'certificate' | 'continuity' => k === 'certificate' || k === 'continuity');
 
@@ -138,6 +148,14 @@ const CertifiedBranchCard = ({
         <Text fontSize="sm" color="gray.700">
           {intl.formatMessage({ id: `parcelApp.certifiedBranch.route.${branch.route}` })}
         </Text>
+        {branch.plan_version != null ? (
+          <Text fontSize="xs" color="gray.600">
+            {intl.formatMessage(
+              { id: 'parcelApp.certifiedBranch.forPlan' },
+              { version: branch.plan_version }
+            )}
+          </Text>
+        ) : null}
         {branch.items.map((item) => (
           <Text key={item.key} fontSize="sm" data-state={item.state}>
             {!item.asked &&
