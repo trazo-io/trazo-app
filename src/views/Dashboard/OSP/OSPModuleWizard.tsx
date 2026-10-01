@@ -47,6 +47,7 @@ import {
 } from 'components/Design/StandardComponents';
 import {
   answerValue,
+  effectiveValue,
   missingRequired,
   visiblePages,
   visibleQuestions
@@ -1028,7 +1029,11 @@ const OSPModuleWizard = () => {
                           const showSuggestion =
                             ospIsDraft &&
                             Boolean(suggestion) &&
-                            isUnanswered(answerValue(answers, question.key));
+                            // A retired option alone is not an answer, the same test
+                            // missingRequired applies, so the suggestion stays on offer.
+                            isUnanswered(
+                              effectiveValue(question, answerValue(answers, question.key))
+                            );
                           return (
                             <Box key={question.key}>
                               <QuestionField
