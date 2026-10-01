@@ -389,6 +389,14 @@ export interface OSPRecordType {
   /** Set when this answer came across from an earlier plan version and nobody has re-stated it
    *  on this one. The row is still confirmed — it is the FRESHNESS that is open. */
   carried_from_version: number | null;
+  /** The operator states the operation does NOT keep this record, with a reason. Never a way
+   *  out of a required record: it prints as missing (OSP alignment audit T17-F1). */
+  not_kept?: boolean;
+  not_kept_reason?: string;
+  /** This plan's own answers require this record type, and why. */
+  required?: boolean;
+  required_state?: 'confirmed' | 'not_confirmed' | 'not_kept' | 'unresolved' | '';
+  required_because?: string;
 }
 
 export interface OSPRecordTypesSummary {

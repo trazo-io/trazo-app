@@ -7868,5 +7868,12 @@
   "sales.sources.uploadFailed": "No se pudo adjuntar el documento",
   "sales.sources.none": "Ningún documento de origen adjunto. El paquete para el certificador dirá que los números solo están registrados como texto.",
   "sales.sources.kindLabel": "Tipo de documento",
-  "sales.sources.attach": "Adjuntar documento"
+  "sales.sources.attach": "Adjuntar documento",
+  "osp.recordTypes.requiredBecause": "Requerido por tu plan: {because}",
+  "osp.recordTypes.notKeptStated": "Indicas que este registro no se lleva: {reason}. Tu paquete lo muestra como faltante.",
+  "osp.recordTypes.notKeptAction": "No llevamos este registro",
+  "osp.recordTypes.notKeptHelp": "Explica por qué la operación no lleva este registro. Tu plan lo sigue requiriendo, así que la declaración de registros de abajo no puede responderse Sí y el paquete lo muestra como faltante.",
+  "osp.recordTypes.notKeptReason": "Por qué no se lleva este registro",
+  "osp.recordTypes.cancel": "Cancelar",
+  "osp.recordTypes.notKeptSave": "Registrar como no llevado"
 }

@@ -407,6 +407,24 @@ const ospApi = baseApi.injectEndpoints({
       ]
     }),
 
+    // The operator's statement that the operation does NOT keep one record type, with a reason
+    // (OSP alignment audit T17-F1). Never satisfies the records attestation for a required record.
+    markOSPRecordTypeNotKept: build.mutation<
+      OSPRecordTypesResponse,
+      OSPOne & { key: string; reason: string }
+    >({
+      query: ({ companyId, farmId, ospId, key, reason }) => ({
+        url: OSP_RECORD_TYPES_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body: { keys: [key], not_kept: true, reason },
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSPRecordTypes', id: Number(ospId) },
+        { type: 'OSP', id: Number(ospId) }
+      ]
+    }),
+
     // Common OSP required attachments — per-workbook row + blank-cell counts. The files
     // themselves download straight from OSP_ATTACHMENTS_URL with ?workbook=, not through RTK
     // Query, because the response is an .xlsx attachment rather than JSON.
@@ -509,6 +527,7 @@ export const {
   useGetOSPAttachmentsQuery,
   useGetOSPReviewQuery,
   useConfirmOSPRecordTypesMutation,
+  useMarkOSPRecordTypeNotKeptMutation,
   useLazyVerifyInputQuery
 } = ospApi;
 
