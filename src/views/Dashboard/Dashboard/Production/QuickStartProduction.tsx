@@ -65,7 +65,11 @@ const productionSchema = object({
   start_date: string().min(1, 'Start date is required'),
   expected_harvest: string().optional(),
   description: string().optional(),
-  production_method: string().optional(),
+  // Required, with no default (2026-10-01). A preselected "conventional" was a claim nobody
+  // made: the onboarding rehearsal started four seasons on a WSDA-certified farm and every one
+  // came up Conventional. The farm's own farming_method still seeds it below; with nothing to
+  // inherit, the grower chooses. The message is a key, rendered through intl at the field.
+  production_method: string().min(1, 'quickStart.field.productionMethod.required'),
   type: string().min(1, 'Production type is required'),
   crop_type_id: string().min(1, 'Crop type is required')
 }).superRefine((data, ctx) => {
@@ -550,7 +554,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       name: `Production ${new Date().getFullYear()}`,
       start_date: new Date().toISOString().split('T')[0],
       type: 'OR',
-      production_method: 'conventional',
+      production_method: '',
       crop_type_id: ''
     }
   });
@@ -586,7 +590,7 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
   useEffect(() => {
     if (isEdit || !farmDefaultMethod) return;
     const current = getValues('production_method');
-    if (!current || current === 'conventional') {
+    if (!current) {
       setValue('production_method', farmDefaultMethod);
     }
   }, [farmDefaultMethod, isEdit, getValues, setValue]);
@@ -633,7 +637,9 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         );
       }
 
-      const productionMethod = productionData.production_method || 'conventional';
+      // A season saved without a method stays blank and asks, rather than being re-saved as
+      // conventional the next time someone edits its name.
+      const productionMethod = productionData.production_method || '';
 
       // Format dates properly
       const formatDate = (dateStr: string | undefined) => {
@@ -797,30 +803,18 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
         setValue('description', templateDetail.description || '');
       }
 
-      // Auto-set production method from the template's farming approach — but ONLY when
-      // nothing more authoritative has spoken.
+      // The production method is NOT taken from the template.
       //
-      // This line used to run unconditionally, and it is the third route into the
+      // History: a line here once set it from the template unconditionally, the third route into the
       // "organic farm, conventional production" bug: a generic crop template ("Comprehensive
       // production template for walnuts") carries a system_type that mapped to
       // `conventional`, overwriting both the farm's inherited farming_method and an explicit
       // choice by the farmer. The consumer QR page reads this value, so an organic grower's
       // lot was published as conventional. The farm is the authority on its own organic
-      // status; a crop template is not.
-      const currentMethod = getValues('production_method');
-      const farmerOrFarmChose =
-        Boolean(farmDefaultMethod) || (currentMethod && currentMethod !== 'conventional');
-      if (templateDetail.system_type && !farmerOrFarmChose) {
-        const methodMap: Record<string, string> = {
-          organic: 'organic',
-          conventional: 'conventional',
-          regenerative: 'regenerative',
-          integrated: 'integrated',
-          no_till: 'no_till',
-          precision: 'conventional'
-        };
-        setValue('production_method', methodMap[templateDetail.system_type] || 'conventional');
-      }
+      // status; a crop template is not. It was then narrowed to "only when nothing was chosen".
+      // 2026-10-01: a template no longer fills the method at all. With the field now required
+      // and empty by default, the template was the last thing still choosing for the grower,
+      // and by the reasoning above it is the one source with no standing to.
 
       // Set custom events from template — ALL UNSELECTED.
       //
@@ -1502,12 +1496,23 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
                   <GridItem>
                     <StandardField
-                      label={intl.formatMessage({ id: 'quickStart.field.productionMethod' })}>
+                      label={intl.formatMessage({ id: 'quickStart.field.productionMethod' })}
+                      required
+                      error={
+                        errors.production_method
+                          ? intl.formatMessage({ id: 'quickStart.field.productionMethod.required' })
+                          : undefined
+                      }>
                       <Controller
                         name="production_method"
                         control={control}
                         render={({ field }) => (
                           <StandardSelect {...field}>
+                            <option value="" disabled>
+                              {intl.formatMessage({
+                                id: 'quickStart.field.productionMethod.placeholder'
+                              })}
+                            </option>
                             {PRODUCTION_METHOD_CHOICES.map(({ value, label }) => (
                               <option key={value} value={value}>
                                 {label}
