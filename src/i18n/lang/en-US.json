@@ -7858,5 +7858,14 @@
   "osp.claim.specimen": "Demonstration record",
   "consumer.farm.seasonClosed": "SEASON CLOSED",
   "parcel.card.appAnswersComplete": "Answers complete",
-  "parcel.card.evidenceOutstanding": "{count, plural, one {# evidence item} other {# evidence items}}"
+  "parcel.card.evidenceOutstanding": "{count, plural, one {# evidence item} other {# evidence items}}",
+  "osp.wizard.uploadUnlinked": "Uploaded to this section, not to this question. The certifier packet does not count these as this attachment; upload the file here to link it.",
+  "sales.sources.kind.invoice": "Invoice",
+  "sales.sources.kind.billOfLading": "Bill of lading",
+  "sales.sources.kind.packout": "Pack-out summary",
+  "sales.sources.kind.other": "Other",
+  "sales.sources.uploadFailed": "The document could not be attached",
+  "sales.sources.none": "No source document attached. The certifier packet will say the numbers are recorded as text only.",
+  "sales.sources.kindLabel": "Document type",
+  "sales.sources.attach": "Attach document"
 }

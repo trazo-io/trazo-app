@@ -7858,5 +7858,14 @@
   "osp.claim.specimen": "Registro de demostración",
   "consumer.farm.seasonClosed": "TEMPORADA CERRADA",
   "parcel.card.appAnswersComplete": "Respuestas completas",
-  "parcel.card.evidenceOutstanding": "{count, plural, one {# documento pendiente} other {# documentos pendientes}}"
+  "parcel.card.evidenceOutstanding": "{count, plural, one {# documento pendiente} other {# documentos pendientes}}",
+  "osp.wizard.uploadUnlinked": "Subidos a esta sección, no a esta pregunta. El paquete para el certificador no los cuenta como este adjunto; sube el archivo aquí para vincularlo.",
+  "sales.sources.kind.invoice": "Factura",
+  "sales.sources.kind.billOfLading": "Conocimiento de embarque",
+  "sales.sources.kind.packout": "Resumen de empaque",
+  "sales.sources.kind.other": "Otro",
+  "sales.sources.uploadFailed": "No se pudo adjuntar el documento",
+  "sales.sources.none": "Ningún documento de origen adjunto. El paquete para el certificador dirá que los números solo están registrados como texto.",
+  "sales.sources.kindLabel": "Tipo de documento",
+  "sales.sources.attach": "Adjuntar documento"
 }
