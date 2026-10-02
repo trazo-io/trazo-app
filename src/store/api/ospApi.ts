@@ -16,6 +16,7 @@ import {
   OSP_ATTACHMENTS_URL,
   OSP_MATERIALS_LIST_ANSWER_URL,
   OSP_MATERIALS_LIST_URL,
+  OSP_MATERIAL_IDENTITIES_URL,
   OSP_REVIEW_URL,
   OSP_MODULE_DEFINITIONS_URL,
   OSP_MODULE_URL,
@@ -39,6 +40,9 @@ import {
   OSPSummary,
   OSPMaterialAnswer,
   OSPMaterialsListResponse,
+  MaterialIdentitiesResponse,
+  MaterialIdentityDecision,
+  MaterialIdentityInput,
   PlanMaterialEntry,
   PlanMaterialInput,
   UpdateOSPData
@@ -251,6 +255,33 @@ const ospApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { ospId }) => [
         { type: 'OSP', id: Number(ospId) },
         { type: 'OSP', id: 'LIST' },
+        { type: 'OSPRecordTypes', id: Number(ospId) }
+      ]
+    }),
+
+    // OSP alignment T18 (Phase 5): the operator decides what a logged product name IS. A decision
+    // writes nothing on the record or the plan; it can change the materials list and drift findings.
+    getMaterialIdentities: build.query<MaterialIdentitiesResponse, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_MATERIAL_IDENTITIES_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSP', id: Number(ospId) }]
+    }),
+
+    decideMaterialIdentity: build.mutation<
+      MaterialIdentityDecision,
+      OSPOne & { body: MaterialIdentityInput }
+    >({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_MATERIAL_IDENTITIES_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
         { type: 'OSPRecordTypes', id: Number(ospId) }
       ]
     }),
@@ -514,6 +545,8 @@ export const {
   useAddPlanMaterialMutation,
   useDeletePlanMaterialMutation,
   useGetOSPMaterialsListQuery,
+  useGetMaterialIdentitiesQuery,
+  useDecideMaterialIdentityMutation,
   useGetPlanMaterialsQuery,
   useRemoveApprovedInputMutation,
   useGetOSPChangeNotificationsQuery,

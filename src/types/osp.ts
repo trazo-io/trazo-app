@@ -519,3 +519,61 @@ export interface OSPReview {
 export interface OSPAttachmentsResponse {
   workbooks: OSPAttachmentSummary[];
 }
+
+/** OSP alignment T18 (Phase 5 slice 2). Mirrors `certifications/services/material_identity.py`. */
+export type MaterialIdentitySource = 'chemical' | 'amendment' | 'sanitizer';
+export type MaterialIdentityEventState = 'covered' | 'unreviewed' | 'stale' | 'excepted';
+export type MaterialIdentityTargetKind = 'plan_entry' | 'omri' | 'wsda';
+
+export interface MaterialIdentityDecision {
+  id: number;
+  decision: 'same_as' | 'different_product';
+  target_kind: MaterialIdentityTargetKind | '';
+  target_id: number | null;
+  target_name: string;
+  reviewed_event_ids: number[];
+  exceptions: Array<{ event_id: number; reason: string }>;
+  formulation_difference_acknowledged: boolean;
+  formulation_note: string;
+  note: string;
+  decided_by_name: string;
+  decided_at: string | null;
+  plan_version: number | null;
+  supersedes: number | null;
+  superseded_at: string | null;
+  basis: string;
+}
+
+export interface MaterialIdentity {
+  source: MaterialIdentitySource;
+  logged_name: string;
+  name_key: string;
+  events: Array<{ id: number; date: string | null; state: MaterialIdentityEventState }>;
+  current: MaterialIdentityDecision | null;
+  history: MaterialIdentityDecision[];
+}
+
+export interface MaterialIdentityTarget {
+  kind: MaterialIdentityTargetKind;
+  id: number;
+  name: string;
+}
+
+export interface MaterialIdentitiesResponse {
+  identities: MaterialIdentity[];
+  targets: MaterialIdentityTarget[];
+}
+
+export interface MaterialIdentityInput {
+  source: MaterialIdentitySource;
+  logged_name: string;
+  decision: 'same_as' | 'different_product';
+  target_kind?: MaterialIdentityTargetKind;
+  target_id?: number;
+  event_ids: number[];
+  exceptions?: Array<{ event_id: number; reason: string }>;
+  formulation_difference_acknowledged?: boolean;
+  formulation_note?: string;
+  note?: string;
+  supersedes?: number;
+}

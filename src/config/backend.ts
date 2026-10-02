@@ -282,6 +282,14 @@ export const OSP_PLAN_MATERIAL_DETAIL_URL = (
 export const OSP_MATERIALS_LIST_URL = (companyId: string, farmId: string, ospId: string | number) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/materials-list/`;
 
+// OSP alignment T18 (Phase 5): what each logged product name IS, decided by the operator.
+export const OSP_MATERIAL_IDENTITIES_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/material-identities/`;
+
 export const OSP_MATERIALS_LIST_ANSWER_URL = (
   companyId: string,
   farmId: string,
