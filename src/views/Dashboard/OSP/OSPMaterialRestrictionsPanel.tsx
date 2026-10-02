@@ -170,7 +170,7 @@ const MaterialRow: React.FC<{
         {material.statements.map((statement) => (
           <Box key={statement.id} data-testid="restriction-statement">
             {statement.state === 'needs_review' ? (
-              <Badge colorScheme="amber" mb={1}>
+              <Badge variant="warning" mb={1}>
                 {intl.formatMessage({
                   id: 'osp.restriction.needsReview',
                   defaultMessage: 'Changed since stated: review'

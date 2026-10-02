@@ -170,3 +170,15 @@ describe('material restrictions panel', () => {
     expect(screen.queryByLabelText('Where the restriction comes from')).toBeNull();
   });
 });
+
+describe('badge contrast (review of app #69)', () => {
+  it('needs-attention badges use the warning variant, never an amber tint', async () => {
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    for (const file of ['OSPMaterialRestrictionsPanel.tsx', 'OSPMaterialIdentityPanel.tsx']) {
+      const src = readFileSync(join(__dirname, '..', file), 'utf8');
+      expect(src, file).not.toMatch(/colorScheme="amber"|:\s*'amber'/);
+      expect(src, file).toMatch(/variant[=:]\s*["']warning["']/);
+    }
+  });
+});
