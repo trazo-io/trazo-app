@@ -1343,6 +1343,12 @@ export const carbonApi = baseApi.injectEndpoints({
           options?: string[];
         }>;
         language?: string;
+        /**
+         * The crew note being parsed, by its public id. The server keeps its own reading of the
+         * note so a confirmation can be compared with what the machine offered rather than with
+         * the app's account of it (OSP alignment audit T29, review of back #88).
+         */
+        field_note?: string;
         timestamp?: string;
       }
     >({
@@ -1625,7 +1631,7 @@ export const carbonApi = baseApi.injectEndpoints({
         { type: 'DashboardComprehensive', id: farmId },
         'CarbonSummary'
       ]
-    }),
+    })
 
     // getCarbonScopeBreakdown removed 2026-09-30. It had zero call sites, and the endpoint
     // it named returns HTTP 500 for any farm with carbon data: every method

@@ -47,6 +47,7 @@ import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 import { ResponsiveModal } from 'components/Design/ResponsiveModal';
 import { CorrectRecordModal } from 'components/Modals/CorrectRecordModal';
 import { StandardAlert, StandardButton } from 'components/Design/StandardComponents';
+import CrewNoteProvenance from './CrewNoteProvenance';
 import { eventTypeAppearance } from 'config/events/eventTypeAppearance';
 import { eventTitle, subtypeOf as sharedSubtypeOf } from 'config/events/narrative';
 import { buyerPageWithheldReasonId } from 'utils/consumerDisplay';
@@ -1081,6 +1082,9 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               blocks above "Detailed Information", which is where every registry field
               actually renders: one section called Details containing none, another
               containing all of them. One heading, named for what is under it. */}
+          {/* Where the record came from, when a crew message is its source (audit T29). */}
+          <CrewNoteProvenance eventId={event.id} eventType={event.event_type} />
+
           <Box>
             <Text fontSize="lg" fontWeight="bold" mb={4} color={textColor}>
               {intl.formatMessage({ id: 'app.fieldNotes' })}

@@ -334,14 +334,17 @@ const FieldNotesInbox = () => {
     return farm && farm.parcels.length === 1 ? String(farm.parcels[0].id) : undefined;
   };
 
-  const openWizard = (note: FieldNote) => {
+  const openWizard = (note: FieldNote, asApplication = false) => {
     const farmId = farmIdFor(note);
     const parcelId = parcelIdFor(note);
     if (!farmId || !parcelId) return;
     // The note travels as its UUID and nothing else. The wizard re-fetches it, so a hand-edited
     // link cannot invent words, and the transcript never touches browser history or an access log.
+    // An application opens the application form (audit T29): the note stays waiting until that
+    // form saves, and the product, rate and area are typed from the confirmer's own records.
+    const preset = asApplication ? '&verb=input_application&event_type=2' : '';
     navigate(
-      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?field_note=${note.public_id}`
+      `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/event/add?field_note=${note.public_id}${preset}`
     );
   };
 
@@ -693,8 +696,18 @@ const FieldNotesInbox = () => {
                 )}
 
                 <Stack direction={{ base: 'column', smd: 'row' }} spacing={2}>
+                  {note.suggested_route === 'application' && (
+                    <StandardButton
+                      size="sm"
+                      isDisabled={!ready}
+                      aria-describedby={ready ? undefined : `why-${note.public_id}`}
+                      onClick={() => openWizard(note, true)}>
+                      {intl.formatMessage({ id: 'fieldNotes.logAsApplication' })}
+                    </StandardButton>
+                  )}
                   <StandardButton
                     size="sm"
+                    variant={note.suggested_route === 'application' ? 'outline' : undefined}
                     isDisabled={!ready}
                     aria-describedby={ready ? undefined : `why-${note.public_id}`}
                     onClick={() => openWizard(note)}>

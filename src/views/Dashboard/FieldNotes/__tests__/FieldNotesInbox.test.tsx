@@ -192,6 +192,28 @@ describe('the field notes inbox', () => {
     await waitFor(() => expect(logThis.hasAttribute('disabled')).toBe(false));
   });
 
+  it('routes an application note to the application form, preselected, and keeps "Log this"', async () => {
+    // OSP alignment audit T29: an application is logged through its own form; the note stays
+    // waiting until that form saves. The hint only picks the button.
+    mocks.notes = [
+      { ...NOTE, words: 'apliqué cobre en el bloque 4', suggested_route: 'application' }
+    ];
+    renderInbox(ONE_PARCEL);
+    const asApplication = screen.getByRole('button', { name: /Log in the application form/i });
+    await waitFor(() => expect(asApplication.hasAttribute('disabled')).toBe(false));
+    fireEvent.click(asApplication);
+    const url = String(mocks.navigate.mock.calls[0]?.[0] ?? '');
+    expect(url).toContain(`field_note=${NOTE.public_id}`);
+    expect(url).toContain('verb=input_application');
+    expect(url).toContain('event_type=2');
+    expect(screen.queryByRole('button', { name: /Log this/i })).not.toBeNull();
+  });
+
+  it('offers no application shortcut for a note that does not mention one', () => {
+    renderInbox(ONE_PARCEL);
+    expect(screen.queryByRole('button', { name: /Log in the application form/i })).toBeNull();
+  });
+
   it('refuses to guess the block when the farm has more than one', () => {
     renderInbox(TWO_PARCELS);
     const logThis = screen.getByRole('button', { name: /Log this/i });
