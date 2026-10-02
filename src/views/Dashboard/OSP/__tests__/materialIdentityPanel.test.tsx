@@ -119,3 +119,49 @@ describe('material identity panel', () => {
     expect(decide.mock.calls[0]?.[0].body).toMatchObject({ supersedes: 41, event_ids: [11] });
   });
 });
+
+describe('review of app #68', () => {
+  it('a second decision never reuses the first acknowledgment', async () => {
+    decide.mockClear();
+    renderPanel();
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'same_as' } });
+    fireEvent.change(screen.getByLabelText('Product on the plan'), { target: { value: 'omri:7' } });
+    fireEvent.click(screen.getAllByRole('checkbox')[0]);
+    fireEvent.click(screen.getByText('I understand the difference and these are the same product'));
+    fireEvent.change(screen.getByPlaceholderText('Why they are the same product'), {
+      target: { value: 'Label analysis updated' }
+    });
+    fireEvent.click(record());
+    await waitFor(() => expect(decide).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByLabelText('Decision')).toHaveValue(''));
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'same_as' } });
+    fireEvent.change(screen.getByLabelText('Product on the plan'), { target: { value: 'omri:7' } });
+    fireEvent.click(screen.getAllByRole('checkbox')[0]);
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'I understand the difference and these are the same product'
+      })
+    ).not.toBeChecked();
+    expect(screen.getByPlaceholderText('Why they are the same product')).toHaveValue('');
+    expect(record()).toBeDisabled();
+  });
+
+  it('a plain-text error body reads as text', async () => {
+    decide.mockImplementationOnce(() => ({
+      unwrap: () => Promise.reject({ status: 500, data: 'Server Error' })
+    }));
+    renderPanel();
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'different_product' } });
+    fireEvent.click(screen.getAllByRole('checkbox')[0]);
+    fireEvent.click(record());
+    await waitFor(() => expect(screen.queryByText('Server Error')).toBeInTheDocument());
+    expect(screen.queryByText('S e r v e r   E r r o r')).toBeNull();
+  });
+
+  it('uses the theme amber, never Chakra orange', async () => {
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const src = readFileSync(join(__dirname, '../OSPMaterialIdentityPanel.tsx'), 'utf8');
+    expect(src).not.toMatch(/orange/);
+  });
+});

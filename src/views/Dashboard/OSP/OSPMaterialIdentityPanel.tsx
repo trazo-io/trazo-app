@@ -37,6 +37,7 @@ import {
 } from 'components/Design/StandardComponents';
 import { useDecideMaterialIdentityMutation, useGetMaterialIdentitiesQuery } from 'store/api/ospApi';
 import type { MaterialIdentity, MaterialIdentityTarget } from 'types/osp';
+import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface Props {
   companyId: string;
@@ -54,7 +55,7 @@ export const formulationDiffers = (a: string, b: string): boolean =>
 const STATE_SCHEME: Record<string, string> = {
   covered: 'green',
   unreviewed: 'gray',
-  stale: 'orange',
+  stale: 'amber',
   excepted: 'purple'
 };
 
@@ -105,9 +106,15 @@ const IdentityRow: React.FC<{
           ...(identity.current ? { supersedes: identity.current.id } : {})
         }
       }).unwrap();
+      // Every piece of per-decision state, so a second decision can never reuse an earlier
+      // acknowledgment or note (review of app #68).
       setDecision('');
+      setTargetKey('');
       setReviewed({});
       setExcluded({});
+      setAck(false);
+      setFormulationNote('');
+      setNote('');
       toast({
         status: 'success',
         title: intl.formatMessage({
@@ -117,8 +124,7 @@ const IdentityRow: React.FC<{
         duration: 3000
       });
     } catch (err: any) {
-      const data = err?.data || {};
-      const message = Object.values(data).flat().join(' ') || String(err?.message || err);
+      const message = apiErrorMessage(err) ?? String(err?.message || err);
       toast({
         status: 'error',
         title: intl.formatMessage({
@@ -234,7 +240,7 @@ const IdentityRow: React.FC<{
           ) : null}
           {needsAck ? (
             <Box data-testid="formulation-ack">
-              <Text fontSize="sm" color="orange.800">
+              <Text fontSize="sm" color="amber.800">
                 {intl.formatMessage(
                   {
                     id: 'osp.identity.numbersDiffer',
