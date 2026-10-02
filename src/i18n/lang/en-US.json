@@ -7984,5 +7984,6 @@
   "parcelApp.certifiedBranch.declaration.not_asked_route_asks": "Trazo does not ask the date-of-last-prohibited-material declaration of a parcel stated currently certified. On this route your certifier's form asks for the land history, so the accounting shows what covers each period.",
   "parcelApp.certifiedBranch.declaration.not_asked_undetermined": "Trazo does not ask the date-of-last-prohibited-material declaration of a parcel stated currently certified. Whether your certifier asks it of this parcel is not decided.",
   "osp.annual.correctionNote": "What this revision corrects in the one before it",
-  "osp.annual.correctionNoteHelp": "Printed on the filed document, in your words, and signed with it. Say what was wrong and what you changed."
+  "osp.annual.correctionNoteHelp": "Printed on the filed document, in your words, and signed with it. Say what was wrong and what you changed.",
+  "parcelApp.certifiedBranch.forReferenceUndetermined": "(Whether this is asked is not decided on this route; shown for reference.)"
 }
