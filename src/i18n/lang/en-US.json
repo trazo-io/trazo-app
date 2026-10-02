@@ -8039,5 +8039,7 @@
   "osp.restriction.history": "History ({count})",
   "osp.restriction.superseded": "(replaced)",
   "osp.restriction.title": "Restrictions on plan materials",
-  "osp.restriction.intro": "For each restriction, say how you meet it. Your answer prints as your statement, not as a compliance finding, and approves nothing."
+  "osp.restriction.intro": "For each restriction, say how you meet it. Your answer prints as your statement, not as a compliance finding, and approves nothing.",
+  "osp.restriction.earlierVersion": "Stated on plan version {version}: state it again for this one",
+  "osp.restriction.restate": "Start from this restriction"
 }

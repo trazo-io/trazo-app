@@ -80,6 +80,21 @@ const MaterialRow: React.FC<{
     setReplacing(null);
   };
 
+  // Restating an earlier version's statement copies its restriction, never its answer, and
+  // supersedes nothing: that statement belongs to its own plan version.
+  const startRestate = (statement: RestrictionStatement) => {
+    setReplacing(null);
+    setSource(statement.restriction_source);
+    setText(
+      statement.restriction_source === 'operator_transcribed' ? statement.restriction_text : ''
+    );
+    setDocType(statement.source_type || '');
+    setIdentifier(statement.source_identifier);
+    setLocator(statement.source_locator);
+    setReference(statement.source_reference);
+    setHowMet('');
+  };
+
   const startReplace = (statement: RestrictionStatement) => {
     setReplacing(statement);
     setSource(statement.restriction_source);
@@ -190,6 +205,36 @@ const MaterialRow: React.FC<{
           </Box>
         ))}
       </Stack>
+      {material.statements.length === 0 && (material.earlier_versions || []).length ? (
+        <Stack spacing={1} mt={2}>
+          {material.earlier_versions.map((statement) => (
+            <Box key={statement.id} data-testid="restriction-earlier">
+              <Badge variant="warning" mb={1}>
+                {intl.formatMessage(
+                  {
+                    id: 'osp.restriction.earlierVersion',
+                    defaultMessage: 'Stated on plan version {version}: state it again for this one'
+                  },
+                  { version: statement.plan_version ?? '?' }
+                )}
+              </Badge>
+              {statement.printed.map((line) => (
+                <Text key={line} fontSize="sm" color={muted}>
+                  {line}
+                </Text>
+              ))}
+              {editable ? (
+                <StandardButton size="xs" variant="ghost" onClick={() => startRestate(statement)}>
+                  {intl.formatMessage({
+                    id: 'osp.restriction.restate',
+                    defaultMessage: 'Start from this restriction'
+                  })}
+                </StandardButton>
+              ) : null}
+            </Box>
+          ))}
+        </Stack>
+      ) : null}
       {editable ? (
         <Stack spacing={2} mt={3}>
           <StandardSelect

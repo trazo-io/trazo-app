@@ -182,3 +182,30 @@ describe('badge contrast (review of app #69)', () => {
     }
   });
 });
+
+describe('earlier plan versions (review of back #99)', () => {
+  it('lists another version apart and restating copies the restriction, not the answer', async () => {
+    recordStatement.mockClear();
+    renderPanel([
+      material({
+        earlier_versions: [statement({ plan_version: 1, plan_id: 9, state: 'needs_review' })]
+      })
+    ]);
+    expect(screen.queryByTestId('restriction-earlier')).not.toBeNull();
+    expect(
+      screen.queryByText('Stated on plan version 1: state it again for this one')
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Replace' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Start from this restriction' }));
+    expect(screen.getByPlaceholderText('The restriction, word for word')).toHaveValue(
+      'Max 3 applications per crop.'
+    );
+    expect(screen.getByPlaceholderText('How you meet this restriction')).toHaveValue('');
+    fireEvent.change(screen.getByPlaceholderText('How you meet this restriction'), {
+      target: { value: 'Restated.' }
+    });
+    fireEvent.click(recordButton());
+    await waitFor(() => expect(recordStatement).toHaveBeenCalledTimes(1));
+    expect(recordStatement.mock.calls[0][0].body).not.toHaveProperty('supersedes');
+  });
+});

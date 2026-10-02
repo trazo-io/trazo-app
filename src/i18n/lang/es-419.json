@@ -8039,5 +8039,7 @@
   "osp.restriction.history": "Historial ({count})",
   "osp.restriction.superseded": "(reemplazada)",
   "osp.restriction.title": "Restricciones de los materiales del plan",
-  "osp.restriction.intro": "Para cada restricción, di cómo la cumples. Tu respuesta se imprime como tu declaración, no como un resultado de cumplimiento, y no aprueba nada."
+  "osp.restriction.intro": "Para cada restricción, di cómo la cumples. Tu respuesta se imprime como tu declaración, no como un resultado de cumplimiento, y no aprueba nada.",
+  "osp.restriction.earlierVersion": "Declarada en la versión {version} del plan: vuelve a declararla para esta",
+  "osp.restriction.restate": "Partir de esta restricción"
 }

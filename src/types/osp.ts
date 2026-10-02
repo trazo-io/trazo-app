@@ -605,6 +605,7 @@ export interface RestrictionStatement {
   stated_by_name: string;
   stated_at: string | null;
   plan_version: number | null;
+  plan_id: number;
   supersedes: number | null;
   superseded_at: string | null;
   state: 'current' | 'needs_review' | 'superseded';
@@ -618,6 +619,8 @@ export interface RestrictionMaterial {
   regulation_restriction: { key: string; text: string; citation: string } | null;
   statements: RestrictionStatement[];
   history: RestrictionStatement[];
+  /** Current statements on OTHER plan versions: context to restate, never this version's answer. */
+  earlier_versions: RestrictionStatement[];
   printed: string;
 }
 
