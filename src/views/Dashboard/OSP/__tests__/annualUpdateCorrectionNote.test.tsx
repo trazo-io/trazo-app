@@ -109,3 +109,18 @@ describe('a correction says what it corrects', () => {
     expect(updateUpdate.mock.calls[0]?.[0].data).not.toHaveProperty('correction_note');
   });
 });
+
+describe('the note takes its place in the error-focus order', () => {
+  it('sits before the change summary in FIELD_KEYS, as it does on screen (review of #66)', async () => {
+    const { readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const src = readFileSync(join(__dirname, '../OSPAnnualUpdateCard.tsx'), 'utf8');
+    const start = src.indexOf('const FIELD_KEYS = [');
+    const keys = src.slice(start, src.indexOf('] as const;', start));
+    expect(keys).toContain("'changes_summary'");
+    expect(keys.indexOf("'correction_note'")).toBeGreaterThan(keys.indexOf("'reporting_year'"));
+    expect(keys.indexOf("'correction_note'")).toBeLessThan(keys.indexOf("'changes_summary'"));
+    const rendered = src.indexOf('annual-update-correction-note');
+    expect(rendered).toBeLessThan(src.indexOf('fieldRefs.current.changes_summary = el'));
+  });
+});

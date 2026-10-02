@@ -130,12 +130,13 @@ const emptyAttestation = (): Record<string, boolean> =>
  */
 const FIELD_KEYS = [
   'reporting_year',
+  // Render order: on a correction the note sits above the change summary (review of app #66).
+  'correction_note',
   'changes_summary',
   'additions',
   'deletions',
   'application_info_changes',
-  'agent_requested_info',
-  'correction_note'
+  'agent_requested_info'
 ] as const;
 type FieldKey = (typeof FIELD_KEYS)[number];
 type FieldErrors = Partial<Record<FieldKey, string>>;
