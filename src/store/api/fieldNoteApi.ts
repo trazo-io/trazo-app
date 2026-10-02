@@ -59,6 +59,12 @@ export interface FieldNote {
    */
   transcript?: string;
   transcript_language?: string;
+  /**
+   * A ROUTING HINT, never a classification: `application` when the words mention applying a
+   * material, so the inbox offers the application form first. The server's rule that keeps the
+   * message's values off an application follows the record type the confirmer picks, not this.
+   */
+  suggested_route?: 'application' | '';
   /** Stamped when the recording was deleted at the provider, so there is nothing left to play. */
   audio_deleted_at?: string | null;
   received_at: string;

@@ -92,6 +92,7 @@ import {
 import { useCalculateEventCarbonImpactMutation } from 'store/api/carbonApi';
 import { useGetParcelQuery } from 'store/api/productApi';
 import { useGetFieldNoteQuery } from 'store/api/fieldNoteApi';
+import { isApplicationRecord, withoutInputValues } from 'config/events/crewNoteApplication';
 import { useGetSeasonPlanQuery } from 'store/api/seasonPlanApi';
 import { EventPreviewModal } from 'components/Events/EventPreviewModal';
 import { PhotoRecommendationsBox } from 'components/Events/PhotoRecommendationsBox';
@@ -716,6 +717,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // form the farmer is already typing in, and the panel it replaces is gone by then, so nothing
   // told a screen-reader user that a set of values is now waiting for a decision (WCAG 4.1.3).
   const voiceOfferRef = useRef(null);
+
+  // What the machine offered from a crew message and which of those values the confirmer applied.
+  // Sent with the save as `field_note_proposal`: the server keeps it on the confirmation history and
+  // refuses an application whose input details came from the message (OSP alignment audit T29).
+  const fieldNoteProposalRef = useRef({
+    offered: {},
+    applied: [],
+    model: '',
+    language: '',
+    negation: ''
+  });
 
   /*
    * A step change is a page change to the farmer, so it lands like one: at the top, with
@@ -1712,6 +1724,35 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // nobody performed reaches a certifier packet. That is the backdated-template class, one
     // channel over.
     if (eventData.seeded) {
+      fieldNoteProposalRef.current = {
+        ...fieldNoteProposalRef.current,
+        offered: { ...(kept || {}) },
+        model: String(eventData.model_used || eventData.source || ''),
+        language: String(activeFieldNote?.transcript_language || ''),
+        negation: String(eventData.negation || '')
+      };
+      // MANUAL REVIEW (audit T29). The message denies all or part of what it describes, or could not
+      // be read: nothing is offered and nothing is guessed, including "nothing happened". The
+      // confirmer reads the message and types what they decide.
+      if (eventData.manual_review) {
+        pendingVoiceRef.current = null;
+        reclaimGuessedDate();
+        setVoiceBanner({
+          ...banner,
+          droppedCount: 0,
+          keptFields: [],
+          seededPending: null,
+          manualReview:
+            eventData.negation === 'mixed'
+              ? 'mixed'
+              : eventData.negation === 'all'
+              ? 'all'
+              : 'unreadable'
+        });
+        setShowVoiceCapture(false);
+        setVoiceSeedText('');
+        return;
+      }
       // THE HOLD SURVIVES ON THIS PATH TOO (2026-09-25).
       //
       // It used to be dropped here while `droppedCount` was still zeroed two lines below, so on
@@ -1869,7 +1910,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const handleVoiceSeededApply = () => {
     const pending = voiceBanner?.seededPending;
     if (!pending) return;
-    const { kept } = pending;
+    // On an application the message never fills a product, rate, quantity, area or unit: those come
+    // from the confirmer's own records (audit T29). Decided by the record's type now, not by a hint.
+    const applicationRecord = isApplicationRecord(activeEventType, eventFormData);
+    const kept = applicationRecord ? withoutInputValues(pending.kept).allowed : pending.kept;
 
     // WHAT WAS ACTUALLY WRITTEN, not what was offered. `mergeOfferedValues` fills empties and
     // never overwrites, which is the point: while the offer stands the farmer is invited to read
@@ -1882,6 +1926,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
     // packets. Recomputed from the merge result, the same way the late-subtype re-offer below
     // builds its own `keptFields` from `fresh` rather than from what was proposed.
     const written = mergeOfferedValues(eventFormData, kept);
+    fieldNoteProposalRef.current = {
+      ...fieldNoteProposalRef.current,
+      applied: Array.from(
+        new Set([...(fieldNoteProposalRef.current.applied || []), ...Object.keys(written)])
+      )
+    };
 
     setEventFormData((prev) => withListingAttachmentChecked(prev, { ...prev, ...written }));
 
@@ -2830,7 +2880,10 @@ function NewEvent({ isEdit = false, eventId = null }) {
           // link, because it filters status=PENDING. Sending nothing is the honest payload for a
           // note that is already spent: the record still saves, it just claims no note.
           ...(activeFieldNote?.status === 'pending'
-            ? { field_note: activeFieldNote.public_id }
+            ? {
+                field_note: activeFieldNote.public_id,
+                field_note_proposal: fieldNoteProposalRef.current
+              }
             : {})
         }).unwrap();
 
@@ -3597,6 +3650,8 @@ function NewEvent({ isEdit = false, eventId = null }) {
                              refuses to open a mic when a seed is present. */
                           autoStart={true}
                           seedTranscript={voiceSeedText || undefined}
+                          /* Parse the note in its own language, not the app's (audit T29). */
+                          seedLanguage={activeFieldNote?.transcript_language || undefined}
                           onClose={() => {
                             setShowVoiceCapture(false);
                             setVoiceSeedText('');
@@ -3839,6 +3894,28 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                   </Stack>
                                 </Box>
                               )}
+                              {voiceBanner.manualReview && (
+                                <Text
+                                  fontSize="xs"
+                                  color="gray.800"
+                                  data-testid="crew-note-manual-review">
+                                  {intl.formatMessage({
+                                    id: `events.voice.crewNoteManualReview.${voiceBanner.manualReview}`
+                                  })}
+                                </Text>
+                              )}
+                              {voiceBanner.seeded &&
+                                activeFieldNote &&
+                                isApplicationRecord(activeEventType, eventFormData) && (
+                                  <Text
+                                    fontSize="xs"
+                                    color="gray.800"
+                                    data-testid="crew-note-application-mode">
+                                    {intl.formatMessage({
+                                      id: 'events.voice.crewNoteApplicationMode'
+                                    })}
+                                  </Text>
+                                )}
                               {/* Answered. Say which day it will file under, because the farmer
                                   chose it on another step and a date they cannot see is a date
                                   they cannot check. */}

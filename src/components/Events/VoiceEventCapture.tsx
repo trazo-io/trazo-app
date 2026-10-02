@@ -113,6 +113,9 @@ interface VoiceEventCaptureProps {
    * holds it instead of merging it (see handleVoiceEventDetected in NewEvent.jsx).
    */
   seedTranscript?: string;
+  /** The seed's own language (a crew note's `transcript_language`), so it is parsed with its own
+   * prompt rather than the app's. Ignored for speech. */
+  seedLanguage?: string;
   onClose?: () => void;
 }
 
@@ -124,6 +127,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   fieldRequests = EMPTY_FIELD_REQUESTS,
   autoStart = false,
   seedTranscript,
+  seedLanguage,
   onClose
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -361,7 +365,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     if (!seed || !isActive) return;
     if (seededParsed.current === seed) return;
     seededParsed.current = seed;
-    processVoiceInput(seed, null);
+    processVoiceInput(seed, null, seedLanguage || null);
   }, [seedTranscript, isActive]);
 
   const startListening = async () => {
@@ -423,7 +427,11 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
     startListening();
   }, [listenLanguage]);
 
-  const processVoiceInput = async (text: string, spokenLanguage: SpokenLanguage | null = null) => {
+  const processVoiceInput = async (
+    text: string,
+    spokenLanguage: SpokenLanguage | null = null,
+    localeOverride: string | null = null
+  ) => {
     const startTime = Date.now();
     setIsProcessing(true);
     setProcessingStage(intl.formatMessage({ id: 'voice.stage.processing' }));
@@ -445,7 +453,8 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         // prompt, spoken-number table and fallback keywords by it (prompt_key_for, by language
         // FAMILY), and a Spanish sentence read with the English prompt loses mappings like
         // "nebulizadora" → air_blast. Otherwise the app locale, as before.
-        language: spokenLanguage ? LOCALE_FOR_SPOKEN[spokenLanguage] : intl.locale,
+        language:
+          localeOverride || (spokenLanguage ? LOCALE_FOR_SPOKEN[spokenLanguage] : intl.locale),
         timestamp: new Date().toISOString()
       }).unwrap();
 
@@ -467,6 +476,21 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         setDailyLimitReached(true);
         setIsProcessing(false);
         setProcessingStage('');
+        return;
+      }
+
+      // A crew message is never read by the local keyword parser: it has no negation guard, and the
+      // words are somebody else's. Nothing is offered; the confirmer reads the message (audit T29).
+      if (seedTranscript) {
+        setParsedData({
+          type: knownActivity || 'general',
+          detected_amounts: [],
+          detected_products: [],
+          activity_fields: {},
+          manual_review: true,
+          negation: '',
+          original_transcript: text
+        } as any);
         return;
       }
 
@@ -1008,6 +1032,11 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
                 says "what I said". The grower cannot consent on the sender's behalf, so the tick
                 is withheld rather than relabelled: there is no wording that makes publishing a
                 third party's message under the farmer's byline correct. */}
+            {(parsedData as any).manual_review && (
+              <Text fontSize="sm" color="gray.800" data-testid="voice-manual-review">
+                {intl.formatMessage({ id: 'voice.manualReview' })}
+              </Text>
+            )}
             {!seedTranscript && (parsedData.original_transcript || '').trim() && (
               <Checkbox
                 isChecked={addTranscriptToNotes}
