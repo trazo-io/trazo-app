@@ -577,3 +577,59 @@ export interface MaterialIdentityInput {
   note?: string;
   supersedes?: number;
 }
+
+/** OSP alignment T18 (Phase 5 slice 2b). Mirrors `certifications/services/material_restrictions.py`. */
+export type RestrictionMaterialKind = 'plan_entry' | 'omri' | 'wsda' | 'national_list';
+export type RestrictionSource = 'regulation' | 'operator_transcribed';
+export type RestrictionDocType =
+  | 'product_label'
+  | 'omri_listing'
+  | 'wsda_listing'
+  | 'certifier_letter'
+  | 'other';
+
+export interface RestrictionStatement {
+  id: number;
+  material_kind: RestrictionMaterialKind;
+  material_id: number;
+  material_name: string;
+  restriction_source: RestrictionSource;
+  restriction_text: string;
+  citation: string;
+  source_type: RestrictionDocType | '';
+  source_identifier: string;
+  source_locator: string;
+  source_reference: string;
+  attachment: number | null;
+  how_met: string;
+  stated_by_name: string;
+  stated_at: string | null;
+  plan_version: number | null;
+  supersedes: number | null;
+  superseded_at: string | null;
+  state: 'current' | 'needs_review' | 'superseded';
+  printed: string[];
+}
+
+export interface RestrictionMaterial {
+  material_kind: RestrictionMaterialKind;
+  material_id: number;
+  material_name: string;
+  regulation_restriction: { key: string; text: string; citation: string } | null;
+  statements: RestrictionStatement[];
+  history: RestrictionStatement[];
+  printed: string;
+}
+
+export interface RestrictionStatementInput {
+  material_kind: RestrictionMaterialKind;
+  material_id: number;
+  restriction_source: RestrictionSource;
+  restriction_text?: string;
+  source_type?: RestrictionDocType;
+  source_identifier?: string;
+  source_locator?: string;
+  source_reference?: string;
+  how_met: string;
+  supersedes?: number;
+}

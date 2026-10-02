@@ -74,6 +74,7 @@ import { OSPLockedNotice, StartNewVersionButton } from './OSPLockedNotice';
 import OSPApprovedInputsPanel from './OSPApprovedInputsPanel';
 import OSPMaterialsListPanel from './OSPMaterialsListPanel';
 import OSPMaterialIdentityPanel from './OSPMaterialIdentityPanel';
+import OSPMaterialRestrictionsPanel from './OSPMaterialRestrictionsPanel';
 import OSPHandlerFacilitiesPanel from './OSPHandlerFacilitiesPanel';
 import OSPRecordTypesPanel from './OSPRecordTypesPanel';
 import { selectWorkingOsp } from './selectWorkingOsp';
@@ -285,6 +286,7 @@ const QuestionField = ({
                 <OSPApprovedInputsPanel companyId={companyId} farmId={farmId} osp={osp} />
                 <OSPMaterialsListPanel companyId={companyId} farmId={farmId} osp={osp} />
                 <OSPMaterialIdentityPanel companyId={companyId} farmId={farmId} osp={osp} />
+                <OSPMaterialRestrictionsPanel companyId={companyId} farmId={farmId} osp={osp} />
               </Stack>
             ) : question.embed === 's11_record_types' ? (
               <OSPRecordTypesPanel
