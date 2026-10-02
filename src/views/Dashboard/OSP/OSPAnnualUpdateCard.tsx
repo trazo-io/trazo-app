@@ -130,6 +130,8 @@ const emptyAttestation = (): Record<string, boolean> =>
  */
 const FIELD_KEYS = [
   'reporting_year',
+  // Render order: on a correction the note sits above the change summary (review of app #66).
+  'correction_note',
   'changes_summary',
   'additions',
   'deletions',
@@ -288,6 +290,7 @@ const emptyForm = (year: number) => ({
   application_info_changes: '',
   agent_requested_info: '',
   agent_requested_info_none: false,
+  correction_note: '',
   sections_unchanged: emptyAttestation()
 });
 
@@ -313,6 +316,9 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   const [withdrawUpdate, { isLoading: withdrawing }] = useWithdrawOSPAnnualUpdateMutation();
 
   const [editingId, setEditingId] = useState<number | null>(null);
+  // A correction is any revision after the first; only a correction says what it corrects.
+  const editingIsCorrection =
+    editingId != null && (updates.find((u) => u.id === editingId)?.revision_number ?? 1) > 1;
   const [form, setForm] = useState(emptyForm(currentYear));
   const [pending, setPending] = useState<PendingAction>(null);
   const [signerTitle, setSignerTitle] = useState('');
@@ -441,6 +447,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       application_info_changes: u.application_info_changes || '',
       agent_requested_info: u.agent_requested_info || '',
       agent_requested_info_none: u.agent_requested_info_none === true,
+      correction_note: u.correction_note || '',
       sections_unchanged: { ...emptyAttestation(), ...(u.sections_unchanged_attestation || {}) }
     });
   };
@@ -523,7 +530,9 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       application_info_changes: form.application_info_changes.trim(),
       agent_requested_info: form.agent_requested_info.trim(),
       // Unticked is "not answered", never "the agent asked for something".
-      agent_requested_info_none: form.agent_requested_info_none ? true : null
+      agent_requested_info_none: form.agent_requested_info_none ? true : null,
+      // Only a correction says what it corrects (run 3, 2026-10-02).
+      ...(editingIsCorrection ? { correction_note: form.correction_note.trim() } : {})
     };
     try {
       if (editingId != null) {
@@ -984,6 +993,33 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                   />
                 </StandardField>
               </Box>
+              {editingIsCorrection && (
+                <Box
+                  ref={(el: HTMLDivElement | null) => {
+                    fieldRefs.current.correction_note = el;
+                  }}>
+                  <StandardField
+                    label={intl.formatMessage({
+                      id: 'osp.annual.correctionNote',
+                      defaultMessage: 'What this revision corrects in the one before it'
+                    })}
+                    helpText={intl.formatMessage({
+                      id: 'osp.annual.correctionNoteHelp',
+                      defaultMessage:
+                        'Printed on the filed document, in your words, and signed with it. Say what was wrong and what you changed.'
+                    })}
+                    error={fieldErrors.correction_note}>
+                    <StandardTextarea
+                      rows={3}
+                      data-testid="annual-update-correction-note"
+                      value={form.correction_note}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        set('correction_note', e.target.value)
+                      }
+                    />
+                  </StandardField>
+                </Box>
+              )}
               <Box
                 ref={(el: HTMLDivElement | null) => {
                   fieldRefs.current.changes_summary = el;

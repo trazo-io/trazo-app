@@ -7982,5 +7982,7 @@
   "parcelApp.certifiedBranch.review.certifier_not_recognised": "{named, select, yes {Para revisar: el certificador indicado para esta parcela, {detail}, no es uno que Trazo reconozca, así que no se decide si ya está en tu certificación con el certificador de este plan.} other {Para revisar: no se indica ningún certificador para esta parcela, así que no se decide si ya está en tu certificación con el certificador de este plan.}}",
   "parcelApp.certifiedBranch.alternative": "(El formulario lo acepta en lugar de la tabla de historial; se muestra, no cuenta como faltante.)",
   "parcelApp.certifiedBranch.declaration.not_asked_route_asks": "Trazo no pide la declaración de la fecha del último material prohibido para una parcela indicada como certificada actualmente. En esta ruta el formulario de tu certificador pide el historial de la tierra, así que el historial muestra qué cubre cada período.",
-  "parcelApp.certifiedBranch.declaration.not_asked_undetermined": "Trazo no pide la declaración de la fecha del último material prohibido para una parcela indicada como certificada actualmente. No se decide si tu certificador la pide para esta parcela."
+  "parcelApp.certifiedBranch.declaration.not_asked_undetermined": "Trazo no pide la declaración de la fecha del último material prohibido para una parcela indicada como certificada actualmente. No se decide si tu certificador la pide para esta parcela.",
+  "osp.annual.correctionNote": "Qué corrige esta revisión de la anterior",
+  "osp.annual.correctionNoteHelp": "Se imprime en el documento presentado, con tus palabras, y se firma con él. Indica qué estaba mal y qué cambiaste."
 }

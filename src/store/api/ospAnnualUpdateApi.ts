@@ -29,6 +29,9 @@ export interface OSPAnnualUpdate {
   agent_requested_info_none?: boolean | null;
   /** Revision chain. A filed update is never edited; a correction is the next revision. */
   revision_number?: number;
+  /** On a correction: what it corrects in the revision before it, in the operator's words. Printed
+   *  on the revision's own filed document and signed with it. */
+  correction_note?: string;
   corrects?: number | null;
   /** Set by the server at sign time from the signed-in user, never sent by the client. */
   signer_name?: string;
@@ -79,6 +82,7 @@ export type OSPAnnualUpdateContent = Pick<
   | 'application_info_changes'
   | 'agent_requested_info'
   | 'agent_requested_info_none'
+  | 'correction_note'
 >;
 
 interface UpdateArgs extends Scope {
