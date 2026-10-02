@@ -7969,5 +7969,8 @@
   "crewNote.notReviewed": "No review recorded.",
   "crewNote.machineApplied": "Values filled from the message by the confirmer: {fields}.",
   "crewNote.machineNone": "No values were filled from the message.",
-  "crewNote.notRecorded": "not recorded"
+  "crewNote.notRecorded": "not recorded",
+  "crewNote.serverMatched": "Values in this record that match the machine reading of the message (checked by Trazo): {fields}.",
+  "crewNote.serverNoMatch": "No value in this record matches the machine reading of the message (checked by Trazo).",
+  "crewNote.serverNoReading": "Trazo kept no machine reading of this message."
 }

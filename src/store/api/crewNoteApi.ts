@@ -17,6 +17,10 @@ export interface CrewNoteProvenance {
   machine_values_applied: string[];
   machine_values_offered: number;
   negation: string;
+  /** The server's own finding: did it keep a reading of the message, and which input values of
+   * the record match it. Separate from what the confirming app reported. */
+  server_reading_recorded: boolean;
+  server_matched: string[];
   earlier_confirmations: Array<{
     confirmed_at: string;
     confirmed_by: string;

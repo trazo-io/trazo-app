@@ -244,10 +244,12 @@ describe('a pasted note is parsed, never recorded over', () => {
 
 describe('a crew note is parsed in its own language and never by the local fallback (audit T29)', () => {
   it('sends the note language, not the app language', async () => {
-    renderPanel({ seedTranscript: NOTE, seedLanguage: 'es-419' });
+    renderPanel({ seedTranscript: NOTE, seedLanguage: 'es-419', seedNoteId: 'note-uuid' });
     await waitFor(() => expect(mocks.process).toHaveBeenCalled());
     const body = (mocks.process.mock.calls[0] as any[])[0];
     expect(body.language).toBe('es-419');
+    // The server keeps its own reading of the note (review of back #88).
+    expect(body.field_note).toBe('note-uuid');
   });
 
   it('offers nothing when the parse fails, rather than reading the note with local keywords', async () => {

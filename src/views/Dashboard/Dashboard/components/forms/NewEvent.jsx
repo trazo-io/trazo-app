@@ -3652,6 +3652,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
                           seedTranscript={voiceSeedText || undefined}
                           /* Parse the note in its own language, not the app's (audit T29). */
                           seedLanguage={activeFieldNote?.transcript_language || undefined}
+                          seedNoteId={activeFieldNote?.public_id || undefined}
                           onClose={() => {
                             setShowVoiceCapture(false);
                             setVoiceSeedText('');

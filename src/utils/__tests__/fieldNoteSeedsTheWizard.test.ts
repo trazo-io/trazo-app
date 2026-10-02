@@ -117,9 +117,9 @@ describe('the save sends one key about the note and nothing else', () => {
    * when the page starts showing refused and confirmed notes.
    */
   it('sends the key only for a note that is still waiting', () => {
-    expect(src).toMatch(/activeFieldNote\?\.status === 'pending'\s*\n?\s*\?\s*\{ field_note:/);
+    expect(src).toMatch(/activeFieldNote\?\.status === 'pending'\s*\n?\s*\?\s*\{\s*field_note:/);
     // The breaking edit: dropping the gate back to a bare truthiness check on the note.
-    expect(src).not.toMatch(/\.\.\.\(activeFieldNote \? \{ field_note:/);
+    expect(src).not.toMatch(/\.\.\.\(activeFieldNote \? \{\s*field_note:/);
   });
 });
 

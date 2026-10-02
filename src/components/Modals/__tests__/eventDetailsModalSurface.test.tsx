@@ -52,6 +52,9 @@ vi.mock('store/api/amendmentsApi', () => ({
 
 // canWrite gates the whole action cluster; this suite is about how those actions LOOK.
 vi.mock('hooks/useUserRole', () => ({ useUserRole: () => ({ canWrite: true }) }));
+// The crew-message provenance block (audit T29) reads its own endpoint; this suite is about the
+// modal's surface, so it answers "not from a crew message".
+vi.mock('store/api/crewNoteApi', () => ({ useGetCrewNoteQuery: () => ({ data: { crew_note: null } }) }));
 
 // The component reads exactly one slice — `state.company.currentCompany`, for the delete
 // call. Feeding the selector directly beats standing up a store (and beats adding

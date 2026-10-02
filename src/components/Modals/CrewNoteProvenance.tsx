@@ -92,6 +92,16 @@ const CrewNoteProvenance = ({ eventId, eventType }: { eventId?: number; eventTyp
             : intl.formatMessage({ id: 'crewNote.notReviewed' })}
         </Text>
         <Text fontSize="xs" color="gray.600">
+          {note.server_reading_recorded
+            ? note.server_matched.length
+              ? intl.formatMessage(
+                  { id: 'crewNote.serverMatched' },
+                  { fields: note.server_matched.join(', ') }
+                )
+              : intl.formatMessage({ id: 'crewNote.serverNoMatch' })
+            : intl.formatMessage({ id: 'crewNote.serverNoReading' })}
+        </Text>
+        <Text fontSize="xs" color="gray.600">
           {note.machine_values_applied.length
             ? intl.formatMessage(
                 { id: 'crewNote.machineApplied' },

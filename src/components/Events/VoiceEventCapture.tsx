@@ -116,6 +116,8 @@ interface VoiceEventCaptureProps {
   /** The seed's own language (a crew note's `transcript_language`), so it is parsed with its own
    * prompt rather than the app's. Ignored for speech. */
   seedLanguage?: string;
+  /** The crew note the seed came from, so the server keeps its reading of it (audit T29). */
+  seedNoteId?: string;
   onClose?: () => void;
 }
 
@@ -128,6 +130,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   autoStart = false,
   seedTranscript,
   seedLanguage,
+  seedNoteId,
   onClose
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -448,6 +451,7 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
         transcript: processedText,
         crop_type: cropType,
         known_activity: knownActivity || undefined,
+        field_note: seedTranscript && seedNoteId ? seedNoteId : undefined,
         requested_fields: fieldRequests.length ? fieldRequests : undefined,
         // The language the words were SPOKEN in, when Deepgram could tell — the backend picks its
         // prompt, spoken-number table and fallback keywords by it (prompt_key_for, by language

@@ -27,6 +27,8 @@ const NOTE = {
   machine_values_applied: [],
   machine_values_offered: 2,
   negation: '',
+  server_reading_recorded: true,
+  server_matched: ['amendment_product_name'],
   earlier_confirmations: [],
   occurred_at: '2026-09-27T08:00:00Z',
   performer: '',
@@ -61,6 +63,7 @@ describe('crew-note provenance block', () => {
     expect(text).toContain('Stated occurrence:');
     expect(text).toContain('No review recorded.');
     expect(text).not.toMatch(/Performer: Miguel/);
+    expect(text).toContain('(checked by Trazo): amendment_product_name');
   });
 
   it('renders nothing for a record that did not come from a message', () => {

@@ -7969,5 +7969,8 @@
   "crewNote.notReviewed": "No hay revisión registrada.",
   "crewNote.machineApplied": "Valores completados desde el mensaje por quien confirmó: {fields}.",
   "crewNote.machineNone": "No se completó ningún valor desde el mensaje.",
-  "crewNote.notRecorded": "no registrado"
+  "crewNote.notRecorded": "no registrado",
+  "crewNote.serverMatched": "Valores de este registro que coinciden con la lectura automática del mensaje (verificado por Trazo): {fields}.",
+  "crewNote.serverNoMatch": "Ningún valor de este registro coincide con la lectura automática del mensaje (verificado por Trazo).",
+  "crewNote.serverNoReading": "Trazo no guardó una lectura automática de este mensaje."
 }
