@@ -168,8 +168,12 @@ describe('a held pasted note is re-offered, never dropped and never merged', () 
     // parse time with no subtype that list is often empty, so inheriting it left the re-offered
     // values unreachable: the hold kept, then silently lost anyway.
     const offer = blockAfter('if (pending.seeded) {');
-    expect(offer).toMatch(/keptFields: Object\.keys\(kept\)/);
-    expect(offer).toMatch(/seededPending: \{ kept, eventType: activeEventType, subtype \}/);
+    // Recomputed from the offer the application rule allows (review of app #63), which is `kept`
+    // itself on any record that is not an application.
+    expect(offer).toMatch(/keptFields: Object\.keys\(offer\.allowed\)/);
+    expect(offer).toMatch(
+      /seededPending: \{ kept: offer\.allowed, eventType: activeEventType, subtype \}/
+    );
   });
 
   it('reports what Apply actually wrote, not what was offered', () => {
@@ -194,11 +198,21 @@ describe('a held pasted note is re-offered, never dropped and never merged', () 
     // in the same green as the applied state it read as more final than it was. Neutral rather
     // than a warning treatment, because nothing has gone wrong and because the theme's amber
     // cannot carry text (amber.900 on amber.50 measures 3.57:1).
-    expect(src).toMatch(/bg=\{voiceBanner\.seededPending \? 'white' : 'green\.50'\}/);
+    // A crew note in manual review is not a success either (review of app #63).
+    const pending = String.raw`voiceBanner\.seededPending \|\| voiceBanner\.manualReview\s*\?\s*`;
     expect(src).toMatch(
-      /borderColor=\{voiceBanner\.seededPending \? 'gray\.300' : 'green\.200'\}/
+      new RegExp(String.raw`bg=\{\s*` + pending + String.raw`'white'\s*:\s*'green\.50'\s*\}`)
     );
-    expect(src).toMatch(/color=\{voiceBanner\.seededPending \? 'gray\.800' : 'green\.700'\}/);
+    expect(src).toMatch(
+      new RegExp(
+        String.raw`borderColor=\{\s*` + pending + String.raw`'gray\.300'\s*:\s*'green\.200'\s*\}`
+      )
+    );
+    expect(src).toMatch(
+      new RegExp(
+        String.raw`color=\{\s*` + pending + String.raw`'gray\.800'\s*:\s*'green\.700'\s*\}`
+      )
+    );
   });
 
   it('uses the design system textarea for the paste box', () => {

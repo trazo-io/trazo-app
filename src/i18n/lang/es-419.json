@@ -7972,5 +7972,7 @@
   "crewNote.notRecorded": "no registrado",
   "crewNote.serverMatched": "Valores de este registro que coinciden con la lectura automática del mensaje (verificado por Trazo): {fields}.",
   "crewNote.serverNoMatch": "Ningún valor de este registro coincide con la lectura automática del mensaje (verificado por Trazo).",
-  "crewNote.serverNoReading": "Trazo no guardó una lectura automática de este mensaje."
+  "crewNote.serverNoReading": "Trazo no guardó una lectura automática de este mensaje.",
+  "events.voice.crewNoteManualReviewHeadline": "De un mensaje de la cuadrilla: necesita que una persona lo lea",
+  "events.voice.crewNoteWithheld": "{count, plural, one {Se retuvo # valor del mensaje para que lo ingreses tú.} other {Se retuvieron # valores del mensaje para que los ingreses tú.}}"
 }
