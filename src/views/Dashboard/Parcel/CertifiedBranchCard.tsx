@@ -175,6 +175,8 @@ const CertifiedBranchCard = ({
               ? `${intl.formatMessage({
                   id: item.alternative
                     ? 'parcelApp.certifiedBranch.alternative'
+                    : branch.land_history_asked === null
+                    ? 'parcelApp.certifiedBranch.forReferenceUndetermined'
                     : 'parcelApp.certifiedBranch.forReference'
                 })} `
               : ''}

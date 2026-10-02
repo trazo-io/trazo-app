@@ -234,6 +234,24 @@ describe('run 3: routes that are not decided claim nothing (R3-06)', () => {
       base({
         route: 'unresolved',
         land_history_asked: null,
+        items: [
+          {
+            key: 'certificate',
+            state: 'missing',
+            asked: false,
+            alternative: false,
+            path: '',
+            reference: ''
+          },
+          {
+            key: 'declaration',
+            state: 'not_asked',
+            asked: false,
+            alternative: false,
+            path: '',
+            reference: ''
+          }
+        ],
         review: [{ kind: 'certifier_not_recognised', detail: 'Cascadia Organic Certifiers' }]
       })
     );
@@ -247,6 +265,11 @@ describe('run 3: routes that are not decided claim nothing (R3-06)', () => {
       screen.queryByText(/Whether your certifier asks it of this parcel is not decided/)
     ).toBeInTheDocument();
     expect(screen.queryByText(/not asked on this route\./)).toBeNull();
+    // Run 4, R4-01: an item shown for reference on an undetermined route is never "not asked".
+    expect(screen.queryByText(/Not asked on this route; shown for reference/)).toBeNull();
+    expect(
+      screen.queryByText(/not decided on this route; shown for reference/)
+    ).toBeInTheDocument();
   });
 
   it('a certifier not named reads as not named, not as an empty name', () => {
