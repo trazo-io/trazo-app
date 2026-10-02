@@ -34,3 +34,12 @@ describe('crew-note offer in the wizard', () => {
     );
   });
 });
+
+describe('build and apply use one rule (review of app #64)', () => {
+  it('filters by record type alone, never only when a crew note is attached', () => {
+    expect(src).not.toMatch(/activeFieldNote\s*&&\s*isApplicationRecord/);
+    expect(src).toMatch(
+      /const crewNoteOffer = \(kept, eventType, form\) =>[\s\S]{0,400}?isApplicationRecord\(eventType, form\)/
+    );
+  });
+});

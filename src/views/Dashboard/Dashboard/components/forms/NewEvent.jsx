@@ -733,7 +733,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
   // rate, quantity, area or unit. Applied wherever the offer is BUILT, so the banner never promises
   // values the tap will not write, and it names what was held back (review of app #63).
   const crewNoteOffer = (kept, eventType, form) =>
-    activeFieldNote && isApplicationRecord(eventType, form)
+    // Decided by the record type alone, exactly like the apply step, so a pasted note (somebody
+    // else's words with no crew note attached) is held to the same rule (review of app #64).
+    isApplicationRecord(eventType, form)
       ? withoutInputValues(kept || {})
       : { allowed: kept || {}, withheld: [] };
 
@@ -3954,7 +3956,6 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 </Text>
                               )}
                               {voiceBanner.seeded &&
-                                activeFieldNote &&
                                 isApplicationRecord(activeEventType, eventFormData) && (
                                   <Text
                                     fontSize="xs"
