@@ -115,6 +115,18 @@ const ParcelDocumentUpload = ({
   );
 };
 
+/** The declaration is never asked of a certified parcel, but why depends on the route: not asked on
+ * it, asked as land history instead, or not decided (run 3, R3-06). Every other item keeps its state. */
+const declarationState = (
+  item: CertifiedBranch['items'][number],
+  branch: CertifiedBranch
+): string => {
+  if (item.key !== 'declaration') return item.state;
+  if (branch.land_history_asked === true) return 'not_asked_route_asks';
+  if (branch.land_history_asked === null) return 'not_asked_undetermined';
+  return item.state;
+};
+
 const CertifiedBranchCard = ({
   branch,
   companyId,
@@ -130,10 +142,10 @@ const CertifiedBranchCard = ({
 }) => {
   const intl = useIntl();
   if (!branch) return null;
-  // Only for items the route asks for: an item shown for reference gets no upload button (review of
-  // app #62).
+  // Only for items the route asks for, or accepts in place of another answer: an item shown for
+  // reference gets no upload button (review of app #62).
   const uploads: Array<'certificate' | 'continuity'> = branch.items
-    .filter((i) => i.asked)
+    .filter((i) => i.asked || i.alternative)
     .map((i) => i.key)
     .filter((k): k is 'certificate' | 'continuity' => k === 'certificate' || k === 'continuity');
 
@@ -160,10 +172,14 @@ const CertifiedBranchCard = ({
           <Text key={item.key} fontSize="sm" data-state={item.state}>
             {!item.asked &&
             ['attached', 'not_in_packet', 'referenced', 'missing'].includes(item.state)
-              ? `${intl.formatMessage({ id: 'parcelApp.certifiedBranch.forReference' })} `
+              ? `${intl.formatMessage({
+                  id: item.alternative
+                    ? 'parcelApp.certifiedBranch.alternative'
+                    : 'parcelApp.certifiedBranch.forReference'
+                })} `
               : ''}
             {intl.formatMessage(
-              { id: `parcelApp.certifiedBranch.${item.key}.${item.state}` },
+              { id: `parcelApp.certifiedBranch.${item.key}.${declarationState(item, branch)}` },
               {
                 path: item.path,
                 reference:
@@ -190,7 +206,7 @@ const CertifiedBranchCard = ({
           <Text key={`${r.kind}-${i}`} fontSize="sm" color="red.800">
             {intl.formatMessage(
               { id: `parcelApp.certifiedBranch.review.${r.kind}` },
-              { detail: r.detail }
+              { detail: r.detail, named: r.detail ? 'yes' : 'no' }
             )}
           </Text>
         ))}

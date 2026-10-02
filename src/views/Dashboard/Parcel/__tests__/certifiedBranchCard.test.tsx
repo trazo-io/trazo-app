@@ -44,17 +44,46 @@ const ccofMissingContinuity: CertifiedBranch = {
   land_history_asked: false,
   plan_version: 3,
   items: [
-    { key: 'certification', state: 'reported', asked: true, path: '', reference: 'CCOF' },
+    {
+      key: 'certification',
+      state: 'reported',
+      asked: true,
+      alternative: false,
+      path: '',
+      reference: 'CCOF'
+    },
     {
       key: 'certificate',
       state: 'attached',
       asked: true,
+      alternative: false,
       path: 'parcels/certificates/7-cert.pdf',
       reference: ''
     },
-    { key: 'continuity', state: 'missing', asked: true, path: '', reference: '' },
-    { key: 'no_lapse_statement', state: 'stated_yes', asked: false, path: '', reference: '' },
-    { key: 'declaration', state: 'not_asked', asked: false, path: '', reference: '' }
+    {
+      key: 'continuity',
+      state: 'missing',
+      asked: true,
+      alternative: false,
+      path: '',
+      reference: ''
+    },
+    {
+      key: 'no_lapse_statement',
+      state: 'stated_yes',
+      asked: false,
+      alternative: false,
+      path: '',
+      reference: ''
+    },
+    {
+      key: 'declaration',
+      state: 'not_asked',
+      asked: false,
+      alternative: false,
+      path: '',
+      reference: ''
+    }
   ],
   review: [{ kind: 'prohibited_input', detail: '2026-05-01 · Synthetic X · chemical application' }],
   missing: ['continuity']
@@ -94,7 +123,16 @@ describe('certified-parcel card', () => {
     renderCard({
       ...ccofMissingContinuity,
       route: 'wsda_existing_site',
-      items: [{ key: 'certificate', state: 'missing', asked: false, path: '', reference: '' }],
+      items: [
+        {
+          key: 'certificate',
+          state: 'missing',
+          asked: false,
+          alternative: false,
+          path: '',
+          reference: ''
+        }
+      ],
       review: [],
       missing: []
     });
@@ -105,7 +143,16 @@ describe('certified-parcel card', () => {
     renderCard({
       ...ccofMissingContinuity,
       route: 'wsda_existing_site',
-      items: [{ key: 'certificate', state: 'missing', asked: false, path: '', reference: '' }],
+      items: [
+        {
+          key: 'certificate',
+          state: 'missing',
+          asked: false,
+          alternative: false,
+          path: '',
+          reference: ''
+        }
+      ],
       review: [],
       missing: []
     });
@@ -156,6 +203,12 @@ describe('every backend state has words in both locales', () => {
       no_lapse_statement: ['stated_yes', 'stated_no', 'unanswered'],
       declaration: ['not_asked']
     };
+    // The card words the declaration by route (run 3, R3-06), so those ids must exist too.
+    const routeWorded = [
+      'parcelApp.certifiedBranch.declaration.not_asked_route_asks',
+      'parcelApp.certifiedBranch.declaration.not_asked_undetermined',
+      'parcelApp.certifiedBranch.alternative'
+    ];
     expect(Object.keys(emitted).sort()).toEqual([...items].sort());
     const ids = [
       ...routes.map((r) => `parcelApp.certifiedBranch.route.${r}`),
@@ -164,6 +217,86 @@ describe('every backend state has words in both locales', () => {
         states.map((s) => `parcelApp.certifiedBranch.${key}.${s}`)
       )
     ];
-    expect(ids.filter((id) => !m[id])).toEqual([]);
+    expect([...ids, ...routeWorded].filter((id) => !m[id])).toEqual([]);
+  });
+});
+
+describe('run 3: routes that are not decided claim nothing (R3-06)', () => {
+  const base = (over: Partial<CertifiedBranch>): CertifiedBranch => ({
+    ...ccofMissingContinuity,
+    review: [],
+    missing: [],
+    ...over
+  });
+
+  it('an unresolved route says so, names the unrecognised certifier and decides no declaration', () => {
+    renderCard(
+      base({
+        route: 'unresolved',
+        land_history_asked: null,
+        review: [{ kind: 'certifier_not_recognised', detail: 'Cascadia Organic Certifiers' }]
+      })
+    );
+    expect(
+      screen.queryByText(/cannot tell which of your certifier's routes applies/)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Cascadia Organic Certifiers, is not one Trazo recognizes/)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Whether your certifier asks it of this parcel is not decided/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/not asked on this route\./)).toBeNull();
+  });
+
+  it('a certifier not named reads as not named, not as an empty name', () => {
+    renderCard(
+      base({
+        route: 'unresolved',
+        land_history_asked: null,
+        review: [{ kind: 'certifier_not_recognised', detail: '' }]
+      })
+    );
+    expect(screen.queryByText(/no certifier is named for this parcel/)).toBeInTheDocument();
+  });
+
+  it('a fallback certifier gets no exemption', () => {
+    renderCard(base({ agent: 'oci', route: 'agent_form', land_history_asked: null }));
+    expect(screen.queryByText(/no exemption is decided for this parcel/)).toBeInTheDocument();
+  });
+
+  it('an alternative the form accepts is shown as one, with its upload, never as missing', () => {
+    renderCard(
+      base({
+        agent: 'otco',
+        route: 'otco_new_acreage',
+        land_history_asked: true,
+        items: [
+          {
+            key: 'certificate',
+            state: 'missing',
+            asked: false,
+            alternative: true,
+            path: '',
+            reference: ''
+          },
+          {
+            key: 'declaration',
+            state: 'not_asked',
+            asked: false,
+            alternative: false,
+            path: '',
+            reference: ''
+          }
+        ]
+      })
+    );
+    expect(
+      screen.queryByText(/Accepted by the form in place of the land-history table/)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/so the accounting shows what covers each period/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Upload the certificate copy')).toBeInTheDocument();
   });
 });
