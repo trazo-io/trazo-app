@@ -75,10 +75,14 @@ export interface LandHistoryManager {
  * prints the same assessment, so the card and the page cannot disagree. */
 export type CertifiedRoute =
   | 'ccof_g'
+  | 'ccof_crop_update'
   | 'wsda_existing_site'
   | 'wsda_transfer'
+  | 'wsda_new_site'
   | 'otco_existing_site'
   | 'otco_transfer'
+  | 'otco_new_acreage'
+  | 'unresolved'
   | 'agent_form';
 
 export type CertifiedItemKey =
@@ -105,19 +109,24 @@ export type CertifiedReviewKind =
   | 'unknown_input'
   | 'conventional_year'
   | 'no_lapse_answered_no'
-  | 'operation_name_not_on_file';
+  | 'operation_name_not_on_file'
+  | 'certifier_not_recognised';
 
 export interface CertifiedBranch {
   agent: string | null;
   branch: 'existing_site' | 'from_other_operation';
   route: CertifiedRoute;
-  land_history_asked: boolean;
+  /** True: this route asks for the 36-month accounting. False: not asked on this route. null: not
+   * determined (an unresolved route, or a certifier Trazo does not assess). */
+  land_history_asked: boolean | null;
   /** The plan whose certifier this was assessed for (the newest plan not withdrawn). */
   plan_version: number | null;
   items: Array<{
     key: CertifiedItemKey;
     state: CertifiedItemState;
     asked: boolean;
+    /** The route's form accepts this item in place of another answer (OTCO C2 2.4). */
+    alternative: boolean;
     path: string;
     reference: string;
   }>;
