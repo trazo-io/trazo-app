@@ -9,6 +9,8 @@
  * fields, never the inbox's keyword hint.
  */
 
+import { VOICE_UNIT_COMPANIONS } from 'utils/voiceDataMapper';
+
 /** A value key naming an input detail. Same pattern as the server's `INPUT_FIELD`. */
 export const INPUT_FIELD =
   /(product|commercial_name|manufacturer|active_ingredient|epa|lot_number|rate|quantity|amount|volume|area|dose|dosage|concentration|npk|species|_numeric|_unit|method)/i;
@@ -34,15 +36,24 @@ export const isApplicationRecord = (
   return false;
 };
 
-/** Split offered values into those the message may fill and the input details it may not. */
+/**
+ * Split offered values into those the message may fill and the input details it may not.
+ *
+ * A unit and its amount are ONE fact (`VOICE_UNIT_COMPANIONS`): withholding either withholds both.
+ * Filtering key by key kept `fuel_consumed` while withholding `fuel_unit`, so a message in litres
+ * could be written against the form's default "gal" (review of app #63).
+ */
 export const withoutInputValues = (
   values: Record<string, unknown>
 ): { allowed: Record<string, unknown>; withheld: string[] } => {
-  const allowed: Record<string, unknown> = {};
-  const withheld: string[] = [];
-  Object.entries(values).forEach(([key, value]) => {
-    if (INPUT_FIELD.test(key)) withheld.push(key);
-    else allowed[key] = value;
+  const out = new Set(Object.keys(values).filter((key) => INPUT_FIELD.test(key)));
+  Object.entries(VOICE_UNIT_COMPANIONS).forEach(([unit, owners]) => {
+    const pair = [unit, ...owners].filter((key) => key in values);
+    if (pair.some((key) => out.has(key))) pair.forEach((key) => out.add(key));
   });
-  return { allowed, withheld };
+  const allowed: Record<string, unknown> = {};
+  Object.entries(values).forEach(([key, value]) => {
+    if (!out.has(key)) allowed[key] = value;
+  });
+  return { allowed, withheld: Array.from(out) };
 };

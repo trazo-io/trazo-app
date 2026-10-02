@@ -7972,5 +7972,7 @@
   "crewNote.notRecorded": "not recorded",
   "crewNote.serverMatched": "Values in this record that match the machine reading of the message (checked by Trazo): {fields}.",
   "crewNote.serverNoMatch": "No value in this record matches the machine reading of the message (checked by Trazo).",
-  "crewNote.serverNoReading": "Trazo kept no machine reading of this message."
+  "crewNote.serverNoReading": "Trazo kept no machine reading of this message.",
+  "events.voice.crewNoteManualReviewHeadline": "From a crew message: needs a person to read it",
+  "events.voice.crewNoteWithheld": "{count, plural, one {# value from the message was held back for you to enter.} other {# values from the message were held back for you to enter.}}"
 }

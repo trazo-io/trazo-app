@@ -73,3 +73,20 @@ describe('crew-note application rule', () => {
     expect(allowed).toEqual({ weather_conditions: 'dry', duration: '2 h' });
   });
 });
+
+describe('a unit and its amount are held back together (review of app #63)', () => {
+  it('withholds fuel_consumed with fuel_unit, though only the unit matches the pattern', () => {
+    const { allowed, withheld } = withoutInputValues({
+      fuel_consumed: 12,
+      fuel_unit: 'L',
+      weather_conditions: 'dry'
+    });
+    expect(withheld.sort()).toEqual(['fuel_consumed', 'fuel_unit']);
+    expect(allowed).toEqual({ weather_conditions: 'dry' });
+  });
+
+  it('withholds a unit whose amount was withheld', () => {
+    const { withheld } = withoutInputValues({ area_treated: 2, area_unit: 'ac' });
+    expect(withheld.sort()).toEqual(['area_treated', 'area_unit']);
+  });
+});

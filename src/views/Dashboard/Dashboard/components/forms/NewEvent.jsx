@@ -729,6 +729,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
     negation: ''
   });
 
+  // What a crew-note offer may hold for a given record type: on an application, never a product,
+  // rate, quantity, area or unit. Applied wherever the offer is BUILT, so the banner never promises
+  // values the tap will not write, and it names what was held back (review of app #63).
+  const crewNoteOffer = (kept, eventType, form) =>
+    activeFieldNote && isApplicationRecord(eventType, form)
+      ? withoutInputValues(kept || {})
+      : { allowed: kept || {}, withheld: [] };
+
   /*
    * A step change is a page change to the farmer, so it lands like one: at the top, with
    * focus on the new step's heading.
@@ -1795,7 +1803,15 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // tap overwrote it. Exactly the wrong-CA-PUR-day outcome this was written to prevent.
         // See `seededDateUnanswered` below.
         // The set the farmer is being offered, held OUTSIDE the form until they accept it.
-        seededPending: { kept, eventType: activeEventType, subtype }
+        ...(() => {
+          const offer = crewNoteOffer(kept, activeEventType, eventFormData);
+          return {
+            // Only when something was held back; otherwise the parse's own list stands.
+            ...(offer.withheld.length ? { keptFields: Object.keys(offer.allowed) } : {}),
+            withheldFields: offer.withheld,
+            seededPending: { kept: offer.allowed, eventType: activeEventType, subtype }
+          };
+        })()
       });
       setShowVoiceCapture(false);
       // The note has been consumed. Without this the panel re-mounts with the SAME seed, so
@@ -1868,7 +1884,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
   const voiceBannerHeadline = voiceBanner
     ? intl.formatMessage(
         {
-          id: voiceBanner.seeded
+          // Manual review first: nothing was filled, so neither "offered" nor "filled" is true, and
+          // "0 fields filled" in success green read as done (review of app #63).
+          id: voiceBanner.manualReview
+            ? 'events.voice.crewNoteManualReviewHeadline'
+            : voiceBanner.seeded
             ? voiceBanner.seededPending
               ? 'events.voice.pastedNoteOffered'
               : 'events.voice.pastedNoteApplied'
@@ -1998,8 +2018,14 @@ function NewEvent({ isEdit = false, eventId = null }) {
         // carrying the old list forward under-reported the re-offered values and, when it was
         // empty, left them with no button at all: the hold kept and then made unreachable, which
         // is the same silent loss this branch exists to end.
-        keptFields: Object.keys(kept),
-        seededPending: { kept, eventType: activeEventType, subtype }
+        ...(() => {
+          const offer = crewNoteOffer(kept, activeEventType, { ...eventFormData, type: subtype });
+          return {
+            keptFields: Object.keys(offer.allowed),
+            withheldFields: offer.withheld,
+            seededPending: { kept: offer.allowed, eventType: activeEventType, subtype }
+          };
+        })()
       }));
       return;
     }
@@ -2091,7 +2117,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
       setVoiceBanner({
         ...banner,
         suggestion: null,
-        seededPending: { kept, eventType: pending.backendEventType, subtype }
+        ...(() => {
+          const offer = crewNoteOffer(kept, pending.backendEventType, {
+            ...eventFormData,
+            type: subtype
+          });
+          return {
+            ...(offer.withheld.length ? { keptFields: Object.keys(offer.allowed) } : {}),
+            withheldFields: offer.withheld,
+            seededPending: { kept: offer.allowed, eventType: pending.backendEventType, subtype }
+          };
+        })()
       });
       setVoiceSeq((s) => s + 1);
       return;
@@ -3808,9 +3844,17 @@ function NewEvent({ isEdit = false, eventId = null }) {
                              3.57:1, StandardComponents.tsx:1694), so an amber ground would trade a
                              semantics bug for a contrast one. The date question a few lines below
                              already answers this the same way: neutral ground, plain border. */
-                          bg={voiceBanner.seededPending ? 'white' : 'green.50'}
+                          bg={
+                            voiceBanner.seededPending || voiceBanner.manualReview
+                              ? 'white'
+                              : 'green.50'
+                          }
                           borderWidth="1px"
-                          borderColor={voiceBanner.seededPending ? 'gray.300' : 'green.200'}
+                          borderColor={
+                            voiceBanner.seededPending || voiceBanner.manualReview
+                              ? 'gray.300'
+                              : 'green.200'
+                          }
                           borderRadius="md">
                           <HStack justify="space-between" align="start">
                             <VStack align="start" spacing={1} flex={1}>
@@ -3823,7 +3867,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                 aria-live="polite"
                                 fontSize="sm"
                                 fontWeight="semibold"
-                                color={voiceBanner.seededPending ? 'gray.800' : 'green.700'}>
+                                color={
+                                  voiceBanner.seededPending || voiceBanner.manualReview
+                                    ? 'gray.800'
+                                    : 'green.700'
+                                }>
                                 {voiceBannerHeadline}
                               </Text>
                               {/* Name them. The count on its own is unverifiable: when the
@@ -3915,6 +3963,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
                                     {intl.formatMessage({
                                       id: 'events.voice.crewNoteApplicationMode'
                                     })}
+                                    {voiceBanner.withheldFields?.length
+                                      ? ` ${intl.formatMessage(
+                                          { id: 'events.voice.crewNoteWithheld' },
+                                          { count: voiceBanner.withheldFields.length }
+                                        )}`
+                                      : ''}
                                   </Text>
                                 )}
                               {/* Answered. Say which day it will file under, because the farmer
