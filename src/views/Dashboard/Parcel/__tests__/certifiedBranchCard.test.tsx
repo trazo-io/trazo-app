@@ -123,7 +123,16 @@ describe('certified-parcel card', () => {
     renderCard({
       ...ccofMissingContinuity,
       route: 'wsda_existing_site',
-      items: [{ key: 'certificate', state: 'missing', asked: false, path: '', reference: '' }],
+      items: [
+        {
+          key: 'certificate',
+          state: 'missing',
+          asked: false,
+          alternative: false,
+          path: '',
+          reference: ''
+        }
+      ],
       review: [],
       missing: []
     });
@@ -134,7 +143,16 @@ describe('certified-parcel card', () => {
     renderCard({
       ...ccofMissingContinuity,
       route: 'wsda_existing_site',
-      items: [{ key: 'certificate', state: 'missing', asked: false, path: '', reference: '' }],
+      items: [
+        {
+          key: 'certificate',
+          state: 'missing',
+          asked: false,
+          alternative: false,
+          path: '',
+          reference: ''
+        }
+      ],
       review: [],
       missing: []
     });
