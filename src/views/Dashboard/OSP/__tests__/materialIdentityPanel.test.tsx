@@ -232,3 +232,28 @@ describe('review suggestions (Phase 5 slice 3)', () => {
     expect(screen.queryByTestId('identity-suggestions')).toBeNull();
   });
 });
+
+describe('a match after a leading brand word (run 6, R6-02)', () => {
+  it('never says the plan name "starts like" the logged one', () => {
+    renderPanel({
+      suggestions: [
+        {
+          kind: 'shared_brand',
+          target: {
+            kind: 'omri',
+            id: 9,
+            name: 'Bayer Serenade Opti A Wettable Powder Biofungicide'
+          },
+          numbers_differ: false,
+          after_prefix: true
+        }
+      ]
+    });
+    expect(
+      screen.queryByText(
+        'Shares its product name with "Bayer Serenade Opti A Wettable Powder Biofungicide" on the plan (after that name\'s leading brand word).'
+      )
+    ).not.toBeNull();
+    expect(screen.queryByText(/Starts like "Bayer Serenade/)).toBeNull();
+  });
+});
