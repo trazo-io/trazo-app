@@ -36,7 +36,11 @@ import {
   StandardTextarea
 } from 'components/Design/StandardComponents';
 import { useDecideMaterialIdentityMutation, useGetMaterialIdentitiesQuery } from 'store/api/ospApi';
-import type { MaterialIdentity, MaterialIdentityTarget } from 'types/osp';
+import type {
+  MaterialIdentity,
+  MaterialIdentitySuggestion,
+  MaterialIdentityTarget
+} from 'types/osp';
 import { apiErrorMessage } from 'utils/apiErrorMessage';
 
 interface Props {
@@ -58,6 +62,67 @@ const STATE_SCHEME: Record<string, string> = {
   covered: 'green',
   unreviewed: 'gray',
   excepted: 'purple'
+};
+
+/** Slice 3: what is worth a look, said as a prompt. No control here fills in a decision. */
+const Suggestions: React.FC<{ items: MaterialIdentitySuggestion[] }> = ({ items }) => {
+  const intl = useIntl();
+  const muted = useColorModeValue('gray.600', 'gray.400');
+  if (!items.length) return null;
+  const line = (s: MaterialIdentitySuggestion) => {
+    if (s.kind === 'shared_brand') {
+      return intl.formatMessage(
+        {
+          id: s.numbers_differ ? 'osp.identity.suggest.brandNumbers' : 'osp.identity.suggest.brand',
+          defaultMessage: s.numbers_differ
+            ? 'Starts like "{name}" on the plan, with different numbers.'
+            : 'Starts like "{name}" on the plan.'
+        },
+        { name: s.target.name }
+      );
+    }
+    if (s.kind === 'plan_answer_names') {
+      return intl.formatMessage(
+        {
+          id: s.approved_substance
+            ? 'osp.identity.suggest.answerSubstance'
+            : 'osp.identity.suggest.answer',
+          defaultMessage: s.approved_substance
+            ? 'Your plan answer ({question}) names "{product}", which {catalog} lists under {substance}, a substance this plan approves.'
+            : 'Your plan answer ({question}) names "{product}".'
+        },
+        {
+          question: `${s.module} / ${s.question}`,
+          product: s.product_name,
+          catalog: s.catalog.toUpperCase(),
+          substance: s.approved_substance
+        }
+      );
+    }
+    return intl.formatMessage(
+      {
+        id: 'osp.identity.suggest.substance',
+        defaultMessage:
+          'Part of the name matches {substance}, which this plan approves. This is not a classification.'
+      },
+      { substance: s.substance_name }
+    );
+  };
+  return (
+    <Box mt={2} data-testid="identity-suggestions">
+      <Text fontSize="xs" color={muted}>
+        {intl.formatMessage({
+          id: 'osp.identity.suggest.title',
+          defaultMessage: 'Worth a look. Suggestions decide nothing and clear nothing.'
+        })}
+      </Text>
+      {items.map((s, i) => (
+        <Text key={i} fontSize="sm" data-testid="identity-suggestion">
+          {line(s)}
+        </Text>
+      ))}
+    </Box>
+  );
 };
 
 const IdentityRow: React.FC<{
@@ -157,6 +222,7 @@ const IdentityRow: React.FC<{
               defaultMessage: 'Not on the plan, and not identified yet.'
             })}
       </Text>
+      {!identity.current ? <Suggestions items={identity.suggestions ?? []} /> : null}
       <Stack spacing={1} mt={2}>
         {identity.events.map((event) => (
           <Flex key={event.id} gap={3} align="center" wrap="wrap">
