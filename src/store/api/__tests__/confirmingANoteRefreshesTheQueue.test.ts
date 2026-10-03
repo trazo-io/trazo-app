@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Writing a record must refresh the field-notes queue, not leave it offering the note just logged.
  *

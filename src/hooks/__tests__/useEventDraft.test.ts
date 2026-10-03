@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * D9 — the draft must be scoped, honest and disposable.
  *

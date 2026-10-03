@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * A voice SESSION, end to end, against a scripted Deepgram.
  *

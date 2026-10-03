@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Tests for the Offline Photo Queue Service (IndexedDB-based).
  *
