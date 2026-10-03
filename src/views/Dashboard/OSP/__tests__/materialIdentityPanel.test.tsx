@@ -165,3 +165,70 @@ describe('review of app #68', () => {
     expect(src).not.toMatch(/orange/);
   });
 });
+
+describe('review suggestions (Phase 5 slice 3)', () => {
+  const suggestions = [
+    { kind: 'shared_brand', target: { kind: 'omri', id: 7, name: PLANNED }, numbers_differ: true },
+    {
+      kind: 'plan_answer_names',
+      module: 'g6_4_handling',
+      question: 'water_source_sanitizer',
+      product_name: 'Tsunami 100',
+      catalog: 'wsda',
+      catalog_id: 3,
+      subtype: 'Peracetic Acid',
+      approved_substance: 'Peracetic acid'
+    },
+    { kind: 'suggested_substance_on_plan', substance_id: 4, substance_name: 'Lime sulfur' }
+  ];
+
+  it('lists each suggestion as a prompt and fills in nothing', () => {
+    renderPanel({ suggestions });
+    expect(screen.queryByTestId('identity-suggestions')).not.toBeNull();
+    expect(
+      screen.queryByText('Worth a look. Suggestions decide nothing and clear nothing.')
+    ).not.toBeNull();
+    expect(
+      screen.queryByText(`Starts like "${PLANNED}" on the plan, with different numbers.`)
+    ).not.toBeNull();
+    expect(
+      screen.queryByText(
+        'Your plan answer (g6_4_handling / water_source_sanitizer) names "Tsunami 100", which WSDA lists under Peracetic acid, a substance this plan approves.'
+      )
+    ).not.toBeNull();
+    expect(
+      screen.queryByText(
+        'Part of the name matches Lime sulfur, which this plan approves. This is not a classification.'
+      )
+    ).not.toBeNull();
+    expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('');
+    expect(screen.queryByLabelText('Product on the plan')).toBeNull();
+    for (const box of screen.getAllByRole('checkbox')) expect(box).not.toBeChecked();
+    expect(screen.getByRole('button', { name: 'Record this decision' })).toBeDisabled();
+  });
+
+  it('a decided name shows its decision, not suggestions', () => {
+    renderPanel({
+      suggestions,
+      current: {
+        id: 5,
+        decision: 'different_product',
+        target_kind: '',
+        target_id: null,
+        target_name: '',
+        reviewed_event_ids: [11],
+        exceptions: [],
+        formulation_difference_acknowledged: false,
+        formulation_note: '',
+        note: '',
+        decided_by_name: 'Laurel',
+        decided_at: '2026-10-02T00:00:00Z',
+        plan_version: 1,
+        supersedes: null,
+        superseded_at: null,
+        basis: 'identified by the operator as a different product on 2026-10-02'
+      }
+    });
+    expect(screen.queryByTestId('identity-suggestions')).toBeNull();
+  });
+});

@@ -8041,5 +8041,11 @@
   "osp.restriction.title": "Restricciones de los materiales del plan",
   "osp.restriction.intro": "Para cada restricción, di cómo la cumples. Tu respuesta se imprime como tu declaración, no como un resultado de cumplimiento, y no aprueba nada.",
   "osp.restriction.earlierVersion": "Declarada en la versión {version} del plan: vuelve a declararla para esta",
-  "osp.restriction.restate": "Partir de esta restricción"
+  "osp.restriction.restate": "Partir de esta restricción",
+  "osp.identity.suggest.title": "Vale la pena revisar. Las sugerencias no deciden ni resuelven nada.",
+  "osp.identity.suggest.brand": "Empieza como \"{name}\" del plan.",
+  "osp.identity.suggest.brandNumbers": "Empieza como \"{name}\" del plan, con números distintos.",
+  "osp.identity.suggest.answer": "Tu respuesta del plan ({question}) nombra \"{product}\".",
+  "osp.identity.suggest.answerSubstance": "Tu respuesta del plan ({question}) nombra \"{product}\", que {catalog} clasifica como {substance}, una sustancia que este plan aprueba.",
+  "osp.identity.suggest.substance": "Parte del nombre coincide con {substance}, que este plan aprueba. No es una clasificación."
 }

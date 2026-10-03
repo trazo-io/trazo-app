@@ -544,6 +544,21 @@ export interface MaterialIdentityDecision {
   basis: string;
 }
 
+/** Slice 3: computed on read, never stored. A suggestion decides, clears and changes nothing. */
+export type MaterialIdentitySuggestion =
+  | { kind: 'shared_brand'; target: MaterialIdentityTarget; numbers_differ: boolean }
+  | {
+      kind: 'plan_answer_names';
+      module: string;
+      question: string;
+      product_name: string;
+      catalog: 'omri' | 'wsda';
+      catalog_id: number;
+      subtype: string;
+      approved_substance: string;
+    }
+  | { kind: 'suggested_substance_on_plan'; substance_id: number; substance_name: string };
+
 export interface MaterialIdentity {
   source: MaterialIdentitySource;
   logged_name: string;
@@ -551,6 +566,7 @@ export interface MaterialIdentity {
   events: Array<{ id: number; date: string | null; state: MaterialIdentityEventState }>;
   current: MaterialIdentityDecision | null;
   history: MaterialIdentityDecision[];
+  suggestions?: MaterialIdentitySuggestion[];
 }
 
 export interface MaterialIdentityTarget {
