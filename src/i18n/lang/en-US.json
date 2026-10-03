@@ -8047,5 +8047,7 @@
   "osp.identity.suggest.brandNumbers": "Starts like \"{name}\" on the plan, with different numbers.",
   "osp.identity.suggest.answer": "Your plan answer ({question}) names \"{product}\".",
   "osp.identity.suggest.answerSubstance": "Your plan answer ({question}) names \"{product}\", which {catalog} lists under {substance}, a substance this plan approves.",
-  "osp.identity.suggest.substance": "Part of the name matches {substance}, which this plan approves. This is not a classification."
+  "osp.identity.suggest.substance": "Part of the name matches {substance}, which this plan approves. This is not a classification.",
+  "osp.identity.suggest.afterPrefix": "Shares its product name with \"{name}\" on the plan (after that name's leading brand word).",
+  "osp.identity.suggest.afterPrefixNumbers": "Shares its product name with \"{name}\" on the plan (after that name's leading brand word), with different numbers."
 }

@@ -546,7 +546,13 @@ export interface MaterialIdentityDecision {
 
 /** Slice 3: computed on read, never stored. A suggestion decides, clears and changes nothing. */
 export type MaterialIdentitySuggestion =
-  | { kind: 'shared_brand'; target: MaterialIdentityTarget; numbers_differ: boolean }
+  | {
+      kind: 'shared_brand';
+      target: MaterialIdentityTarget;
+      numbers_differ: boolean;
+      /** Matched on the product name after a leading maker or brand word ("Bayer Serenade Opti"). */
+      after_prefix?: boolean;
+    }
   | {
       kind: 'plan_answer_names';
       module: string;

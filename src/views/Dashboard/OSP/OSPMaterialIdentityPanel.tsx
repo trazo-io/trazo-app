@@ -71,6 +71,21 @@ const Suggestions: React.FC<{ items: MaterialIdentitySuggestion[] }> = ({ items 
   if (!items.length) return null;
   const line = (s: MaterialIdentitySuggestion) => {
     if (s.kind === 'shared_brand') {
+      // "Starts like" is true only when the plan name starts with the same word; a match after a
+      // leading maker or brand word ("Bayer Serenade Opti") says so (run 6, R6-02).
+      if (s.after_prefix) {
+        return intl.formatMessage(
+          {
+            id: s.numbers_differ
+              ? 'osp.identity.suggest.afterPrefixNumbers'
+              : 'osp.identity.suggest.afterPrefix',
+            defaultMessage: s.numbers_differ
+              ? 'Shares its product name with "{name}" on the plan (after that name\'s leading brand word), with different numbers.'
+              : 'Shares its product name with "{name}" on the plan (after that name\'s leading brand word).'
+          },
+          { name: s.target.name }
+        );
+      }
       return intl.formatMessage(
         {
           id: s.numbers_differ ? 'osp.identity.suggest.brandNumbers' : 'osp.identity.suggest.brand',
