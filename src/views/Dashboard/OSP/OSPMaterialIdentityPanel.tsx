@@ -757,7 +757,14 @@ const IdentityItem: React.FC<{
                         defaultMessage: 'Undo this decision'
                       })}
                     </StandardButton>
-                    <StandardButton size="sm" variant="ghost" onClick={() => setUndoing(false)}>
+                    <StandardButton
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        // A reason belongs to one undo; Cancel drops it (review of app #74).
+                        setUndoing(false);
+                        setUndoReason('');
+                      }}>
                       {intl.formatMessage({
                         id: 'osp.restriction.cancel',
                         defaultMessage: 'Cancel'

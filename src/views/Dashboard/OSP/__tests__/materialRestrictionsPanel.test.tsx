@@ -277,3 +277,19 @@ describe('badge contrast (review of app #69)', () => {
     }
   });
 });
+
+describe('review of app #74', () => {
+  it('cancelling a withdrawal drops the reason typed for it', () => {
+    renderPanel([material({ statements: [statement()], history: [statement()] })]);
+    openRow();
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }));
+    fireEvent.change(screen.getByPlaceholderText('Why you are withdrawing it'), {
+      target: { value: 'Abandoned' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Withdraw' }));
+    expect(
+      (screen.getByPlaceholderText('Why you are withdrawing it') as HTMLInputElement).value
+    ).toBe('');
+  });
+});

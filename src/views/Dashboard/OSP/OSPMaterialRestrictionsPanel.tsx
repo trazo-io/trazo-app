@@ -183,7 +183,14 @@ const StatementCard: React.FC<{
                 defaultMessage: 'Withdraw this statement'
               })}
             </StandardButton>
-            <StandardButton size="sm" variant="ghost" onClick={() => setWithdrawing(false)}>
+            <StandardButton
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                // A reason belongs to one withdrawal; Cancel drops it (review of app #74).
+                setWithdrawing(false);
+                setReason('');
+              }}>
               {intl.formatMessage({ id: 'osp.restriction.cancel', defaultMessage: 'Cancel' })}
             </StandardButton>
           </Flex>

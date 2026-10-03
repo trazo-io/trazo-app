@@ -375,3 +375,19 @@ describe('reads as a to-do list', () => {
     expect(changed.querySelector('[data-state="stale"]')).not.toBeNull();
   });
 });
+
+describe('review of app #74', () => {
+  it('cancelling undo drops the reason typed for it', () => {
+    renderPanel([identity({ current: decided(), events: uses(2, 'covered') })]);
+    openRow();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo decision' }));
+    fireEvent.change(screen.getByPlaceholderText('Why you are undoing it'), {
+      target: { value: 'Abandoned' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Undo decision' }));
+    expect((screen.getByPlaceholderText('Why you are undoing it') as HTMLInputElement).value).toBe(
+      ''
+    );
+  });
+});
