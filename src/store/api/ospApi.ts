@@ -316,6 +316,40 @@ const ospApi = baseApi.injectEndpoints({
       ]
     }),
 
+    // Browser test follow-up (2026-10-03): undo a decision or withdraw a statement made by mistake.
+    // Same routes as recording; the body names the row and the reason. Both stay in the history.
+    withdrawMaterialIdentity: build.mutation<
+      MaterialIdentityDecision,
+      OSPOne & { body: { withdraw: number; reason: string } }
+    >({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_MATERIAL_IDENTITIES_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSPRecordTypes', id: Number(ospId) }
+      ]
+    }),
+
+    withdrawRestrictionStatement: build.mutation<
+      RestrictionStatement,
+      OSPOne & { body: { withdraw: number; reason: string } }
+    >({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_MATERIAL_RESTRICTIONS_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSPRecordTypes', id: Number(ospId) }
+      ]
+    }),
+
     addApprovedInput: build.mutation<OSP, OSPApprovedInputArgs>({
       query: ({ companyId, farmId, ospId, kind, id, change_notification_reference, notes }) => ({
         url: OSP_ADD_APPROVED_INPUT_URL(companyId, farmId, ospId),
@@ -578,6 +612,8 @@ export const {
   useGetMaterialIdentitiesQuery,
   useGetMaterialRestrictionsQuery,
   useRecordRestrictionStatementMutation,
+  useWithdrawMaterialIdentityMutation,
+  useWithdrawRestrictionStatementMutation,
   useDecideMaterialIdentityMutation,
   useGetPlanMaterialsQuery,
   useRemoveApprovedInputMutation,
