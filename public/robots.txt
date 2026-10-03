@@ -1,0 +1,10 @@
+# app.trazo.io and consumer.trazo.io are kept OUT of search results by the
+# `X-Robots-Tag: noindex` header in public/_headers, not by this file.
+#
+# Crawling stays allowed on purpose: a URL blocked here is never fetched, so Google
+# never sees its noindex header and can still list it from an outside link (shown as
+# "Indexed, though blocked by robots.txt"). Do not add `Disallow: /`.
+#
+# The marketing site is www.trazo.io and has its own robots.txt and sitemap.
+User-agent: *
+Allow: /
