@@ -541,6 +541,10 @@ export interface MaterialIdentityDecision {
   plan_version: number | null;
   supersedes: number | null;
   superseded_at: string | null;
+  /** Undone by the operator (a decision made by mistake), with a reason; kept in the history. */
+  withdrawn_at?: string | null;
+  withdrawal_reason?: string;
+  withdrawn_by_name?: string;
   basis: string;
 }
 
@@ -562,6 +566,9 @@ export type MaterialIdentitySuggestion =
       catalog_id: number;
       subtype: string;
       approved_substance: string;
+      /** The section and question as the wizard shows them ("G6.4 On-Farm Handling"). */
+      module_label?: string;
+      question_label?: string;
     }
   | { kind: 'suggested_substance_on_plan'; substance_id: number; substance_name: string };
 
@@ -569,7 +576,15 @@ export interface MaterialIdentity {
   source: MaterialIdentitySource;
   logged_name: string;
   name_key: string;
-  events: Array<{ id: number; date: string | null; state: MaterialIdentityEventState }>;
+  events: Array<{
+    id: number;
+    date: string | null;
+    state: MaterialIdentityEventState;
+    /** Where, how much and what was logged, so a use can be judged without opening it. */
+    parcel?: string;
+    amount?: string;
+    as_logged?: string;
+  }>;
   current: MaterialIdentityDecision | null;
   history: MaterialIdentityDecision[];
   suggestions?: MaterialIdentitySuggestion[];
@@ -630,7 +645,10 @@ export interface RestrictionStatement {
   plan_id: number;
   supersedes: number | null;
   superseded_at: string | null;
-  state: 'current' | 'needs_review' | 'superseded';
+  withdrawn_at?: string | null;
+  withdrawal_reason?: string;
+  withdrawn_by_name?: string;
+  state: 'current' | 'needs_review' | 'superseded' | 'withdrawn';
   printed: string[];
 }
 

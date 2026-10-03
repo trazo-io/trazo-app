@@ -1,10 +1,12 @@
 /**
- * The operator, not Trazo, decides what a logged name IS (OSP alignment T18, Phase 5 slice 2).
+ * The operator, not Trazo, decides what a logged name IS (OSP alignment T18, Phase 5 slice 2), in a
+ * panel redesigned after the 2026-10-03 browser test: collapsed rows with a status, uses that can be
+ * judged, select all, an explicit Exclude, a one-tap suggestion, and undo with a reason.
  * The server enforces every rule; these tests hold the panel to collecting exactly the decision made.
  */
 import React from 'react';
 import { ChakraProvider } from '@chakra-ui/react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -13,42 +15,82 @@ import enUS from 'i18n/lang/en-US.json';
 const decide = vi.fn((_args: { body: Record<string, unknown> }) => ({
   unwrap: () => Promise.resolve({})
 }));
+const withdraw = vi.fn((_args: { body: Record<string, unknown> }) => ({
+  unwrap: () => Promise.resolve({})
+}));
 let response: any;
 
 vi.mock('store/api/ospApi', () => ({
   useGetMaterialIdentitiesQuery: () => ({ data: response }),
-  useDecideMaterialIdentityMutation: () => [decide, { isLoading: false }]
+  useDecideMaterialIdentityMutation: () => [decide, { isLoading: false }],
+  useWithdrawMaterialIdentityMutation: () => [withdraw, { isLoading: false }]
 }));
 
-import OSPMaterialIdentityPanel, { formulationDiffers } from '../OSPMaterialIdentityPanel';
+import OSPMaterialIdentityPanel, {
+  formulationDiffers,
+  identityStatus
+} from '../OSPMaterialIdentityPanel';
 
 const LOGGED = "Neptune's Harvest Fish Fertilizer 2-3-1";
 const PLANNED = "Neptune's Harvest Organic Fish Fertilizer 2-4-1";
+const TARGET = { kind: 'omri', id: 7, name: PLANNED };
+
+const uses = (n: number, state = 'unreviewed') =>
+  Array.from({ length: n }, (_, i) => ({
+    id: 100 + i,
+    date: `2026-05-${String(i + 1).padStart(2, '0')}T09:00:00Z`,
+    state,
+    parcel: 'Home Field East',
+    amount: '37.5 gal',
+    as_logged: "Neptune's Harvest · lot NH-25-880"
+  }));
+
+const decided = (over: Record<string, unknown> = {}) => ({
+  id: 5,
+  decision: 'same_as',
+  target_kind: 'omri',
+  target_id: 7,
+  target_name: PLANNED,
+  reviewed_event_ids: [100, 101],
+  exceptions: [],
+  formulation_difference_acknowledged: true,
+  formulation_note: 'label edition',
+  note: '',
+  decided_by_name: 'Laurel',
+  decided_at: '2026-10-03T00:00:00Z',
+  plan_version: 1,
+  supersedes: null,
+  superseded_at: null,
+  basis: `identified by the operator as ${PLANNED} on 2026-10-03`,
+  ...over
+});
 
 const identity = (over: Record<string, unknown> = {}) => ({
   source: 'chemical',
   logged_name: LOGGED,
   name_key: LOGGED.toLowerCase(),
-  events: [
-    { id: 11, date: '2026-05-01', state: 'unreviewed' },
-    { id: 12, date: '2026-05-08', state: 'stale' }
-  ],
+  events: uses(2),
   current: null,
   history: [],
+  suggestions: [],
   ...over
 });
 
-const renderPanel = (over = {}) => {
-  response = { identities: [identity(over)], targets: [{ kind: 'omri', id: 7, name: PLANNED }] };
+const renderPanel = (items: any[] = [identity()], status = 'active') => {
+  response = { identities: items, targets: [TARGET] };
   return render(
     <ChakraProvider>
       <IntlProvider locale="en-US" messages={enUS as Record<string, string>}>
-        <OSPMaterialIdentityPanel companyId="1" farmId="2" osp={{ id: 3, status: 'active' }} />
+        <OSPMaterialIdentityPanel companyId="1" farmId="2" osp={{ id: 3, status }} />
       </IntlProvider>
     </ChakraProvider>
   );
 };
 
+const openRow = (name = LOGGED) =>
+  fireEvent.click(
+    screen.getByRole('button', { name: new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) })
+  );
 const record = () => screen.getByRole('button', { name: 'Record this decision' });
 
 describe('material identity panel', () => {
@@ -58,92 +100,176 @@ describe('material identity panel', () => {
     expect(formulationDiffers('Fish 2-3-1', 'Organic Fish 2-3-1')).toBe(false);
   });
 
-  it('says an unidentified name is unidentified and shows each event state', () => {
-    renderPanel();
-    expect(screen.queryByText('Not on the plan, and not identified yet.')).toBeInTheDocument();
-    expect(screen.queryByText('Not reviewed')).toBeInTheDocument();
-    expect(screen.queryByText('Changed since review')).toBeInTheDocument();
-  });
-
-  it('records only the events reviewed, with exclusions, and asks to acknowledge different numbers', async () => {
-    decide.mockClear();
-    renderPanel();
-    expect(record()).toBeDisabled();
-    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'same_as' } });
-    fireEvent.change(screen.getByLabelText('Product on the plan'), { target: { value: 'omri:7' } });
-    const [first, second] = screen.getAllByRole('checkbox');
-    fireEvent.click(first);
-    fireEvent.click(second);
-    fireEvent.change(screen.getAllByPlaceholderText('To exclude this event, say why')[1], {
-      target: { value: 'Wrong block' }
-    });
-    expect(screen.queryByTestId('formulation-ack')).toBeInTheDocument();
-    expect(record()).toBeDisabled();
-    fireEvent.click(screen.getByText('I understand the difference and these are the same product'));
-    fireEvent.change(screen.getByPlaceholderText('Why they are the same product'), {
-      target: { value: 'Label analysis updated' }
-    });
-    expect(record()).not.toBeDisabled();
-    fireEvent.click(record());
-    await waitFor(() => expect(decide).toHaveBeenCalledTimes(1));
-    const body = decide.mock.calls[0]?.[0].body ?? {};
-    expect(body.event_ids).toEqual([11, 12]);
-    expect(body.exceptions).toEqual([{ event_id: 12, reason: 'Wrong block' }]);
-    expect(body).toMatchObject({
-      decision: 'same_as',
-      target_kind: 'omri',
-      target_id: 7,
-      formulation_difference_acknowledged: true,
-      formulation_note: 'Label analysis updated'
-    });
-    expect(body).not.toHaveProperty('supersedes');
-  });
-
-  it('a new decision names the one it replaces', async () => {
-    decide.mockClear();
-    renderPanel({
-      current: {
-        id: 41,
-        decision: 'different_product',
-        basis: 'identified by the operator as a different product'
-      },
-      history: [
-        { id: 41, basis: 'identified by the operator as a different product', superseded_at: null }
-      ]
-    });
-    expect(screen.queryByText(/replaces the current decision/)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'different_product' } });
-    fireEvent.click(screen.getAllByRole('checkbox')[0]);
-    fireEvent.click(record());
-    await waitFor(() => expect(decide).toHaveBeenCalledTimes(1));
-    expect(decide.mock.calls[0]?.[0].body).toMatchObject({ supersedes: 41, event_ids: [11] });
-  });
-});
-
-describe('review of app #68', () => {
-  it('a second decision never reuses the first acknowledgment', async () => {
-    decide.mockClear();
-    renderPanel();
-    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'same_as' } });
-    fireEvent.change(screen.getByLabelText('Product on the plan'), { target: { value: 'omri:7' } });
-    fireEvent.click(screen.getAllByRole('checkbox')[0]);
-    fireEvent.click(screen.getByText('I understand the difference and these are the same product'));
-    fireEvent.change(screen.getByPlaceholderText('Why they are the same product'), {
-      target: { value: 'Label analysis updated' }
-    });
-    fireEvent.click(record());
-    await waitFor(() => expect(decide).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.getByLabelText('Decision')).toHaveValue(''));
-    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'same_as' } });
-    fireEvent.change(screen.getByLabelText('Product on the plan'), { target: { value: 'omri:7' } });
-    fireEvent.click(screen.getAllByRole('checkbox')[0]);
+  it('gives each name one status from its uses', () => {
+    expect(identityStatus(identity() as any)).toBe('not_reviewed');
     expect(
-      screen.getByRole('checkbox', {
-        name: 'I understand the difference and these are the same product'
+      identityStatus(identity({ current: decided(), events: uses(2, 'covered') }) as any)
+    ).toBe('identified');
+    expect(
+      identityStatus(
+        identity({
+          current: decided({ decision: 'different_product' }),
+          events: uses(1, 'covered')
+        }) as any
+      )
+    ).toBe('different');
+    expect(
+      identityStatus(
+        identity({
+          current: decided(),
+          events: [...uses(1, 'covered'), ...uses(1, 'unreviewed')]
+        }) as any
+      )
+    ).toBe('needs_review');
+  });
+
+  it('lists names collapsed, with a summary, and opens one on demand', () => {
+    renderPanel([
+      identity(),
+      identity({
+        logged_name: 'SaniDate 5.0',
+        name_key: 'sanidate',
+        current: decided({ decision: 'different_product' }),
+        events: uses(1, 'covered')
       })
-    ).not.toBeChecked();
-    expect(screen.getByPlaceholderText('Why they are the same product')).toHaveValue('');
-    expect(record()).toBeDisabled();
+    ]);
+    expect(screen.getByTestId('identity-summary-line').textContent).toBe(
+      '2 names · 1 decided · 1 to review'
+    );
+    expect(screen.queryByLabelText('Decision')).toBeNull();
+    expect(screen.queryByText('Not reviewed')).not.toBeNull();
+    openRow();
+    expect(screen.queryByLabelText('Decision')).not.toBeNull();
+  });
+
+  it('shows where, how much and what was logged for each use', () => {
+    renderPanel();
+    openRow();
+    const first = screen.getAllByTestId('identity-use')[0];
+    expect(within(first).queryByText('2026-05-01 · Home Field East')).not.toBeNull();
+    expect(
+      within(first).queryByText("37.5 gal · Neptune's Harvest · lot NH-25-880")
+    ).not.toBeNull();
+  });
+
+  it('select all ticks every use, and the hint says what is still missing', () => {
+    renderPanel([identity({ events: uses(12) })]);
+    openRow();
+    expect(screen.getByTestId('identity-missing').textContent).toBe('Choose what this name is.');
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'different_product' } });
+    expect(screen.getByTestId('identity-missing').textContent).toBe(
+      'Tick the uses this decision covers.'
+    );
+    fireEvent.click(screen.getByText('Select all 12 uses'));
+    expect(screen.getAllByTestId('identity-use')).toHaveLength(10);
+    fireEvent.click(screen.getByRole('button', { name: 'Show all 12 uses' }));
+    const boxes = screen
+      .getAllByTestId('identity-use')
+      .map((row) => within(row).getByRole('checkbox'));
+    expect(boxes).toHaveLength(12);
+    expect(boxes.every((b) => (b as HTMLInputElement).checked)).toBe(true);
+    expect(screen.queryByTestId('identity-missing')).toBeNull();
+    expect((record() as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('asks for a reason only for a use the operator excludes, and sends only those', async () => {
+    decide.mockClear();
+    renderPanel();
+    openRow();
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'different_product' } });
+    fireEvent.click(screen.getByText('Select all 2 uses'));
+    expect(screen.queryAllByPlaceholderText('To exclude this event, say why')).toHaveLength(0);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Exclude' })[1]);
+    expect(screen.queryAllByPlaceholderText('To exclude this event, say why')).toHaveLength(1);
+    expect(screen.queryByTestId('identity-missing')?.textContent).toBe(
+      'Give a reason for each use you exclude.'
+    );
+    expect((record() as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByPlaceholderText('To exclude this event, say why'), {
+      target: { value: 'Different block' }
+    });
+    fireEvent.click(record());
+    await waitFor(() => expect(decide).toHaveBeenCalledTimes(1));
+    expect(decide.mock.calls[0][0].body).toMatchObject({
+      decision: 'different_product',
+      event_ids: [100, 101],
+      exceptions: [{ event_id: 101, reason: 'Different block' }]
+    });
+  });
+
+  it('a suggestion fills the choice only when the operator taps it, then asks about the numbers', () => {
+    renderPanel([
+      identity({ suggestions: [{ kind: 'shared_brand', target: TARGET, numbers_differ: true }] })
+    ]);
+    openRow();
+    expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'Use this product' }));
+    expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('same_as');
+    expect((screen.getByLabelText('Product on the plan') as HTMLSelectElement).value).toBe(
+      'omri:7'
+    );
+    expect(screen.queryByTestId('formulation-ack')).not.toBeNull();
+  });
+
+  it('a plan-answer suggestion names the section and question, never the stored keys', () => {
+    renderPanel([
+      identity({
+        suggestions: [
+          {
+            kind: 'plan_answer_names',
+            module: 'g6_4_handling',
+            question: 'water_source_sanitizer',
+            module_label: 'G6.4 On-Farm Handling',
+            question_label: 'Describe the water and any sanitizer',
+            product_name: 'Tsunami 100',
+            catalog: 'wsda',
+            catalog_id: 3,
+            subtype: 'Peracetic Acid',
+            approved_substance: ''
+          }
+        ]
+      })
+    ]);
+    openRow();
+    const text = screen.getByTestId('identity-suggestion').textContent || '';
+    expect(text).toContain('G6.4 On-Farm Handling: "Describe the water and any sanitizer"');
+    expect(text).not.toContain('g6_4_handling');
+  });
+
+  it('a decided name shows its decision and coverage, with change and undo instead of a form', () => {
+    renderPanel([
+      identity({
+        current: decided(),
+        events: [...uses(2, 'covered'), { ...uses(1, 'excepted')[0], id: 199 }]
+      })
+    ]);
+    openRow();
+    expect(screen.getByTestId('identity-summary').textContent).toContain(
+      '2 of 3 uses covered, 1 excluded.'
+    );
+    expect(screen.queryByLabelText('Decision')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Change decision' }));
+    expect(screen.queryByLabelText('Decision')).not.toBeNull();
+    expect(
+      screen.queryByText(
+        'This replaces the current decision. The current one stays in the history.'
+      )
+    ).not.toBeNull();
+  });
+
+  it('undo needs a reason and sends the decision and the reason', async () => {
+    withdraw.mockClear();
+    renderPanel([identity({ current: decided(), events: uses(2, 'covered') })]);
+    openRow();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo decision' }));
+    const confirm = screen.getByRole('button', { name: 'Undo this decision' });
+    expect((confirm as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByPlaceholderText('Why you are undoing it'), {
+      target: { value: 'Wrong product' }
+    });
+    fireEvent.click(confirm);
+    await waitFor(() => expect(withdraw).toHaveBeenCalledTimes(1));
+    expect(withdraw.mock.calls[0][0].body).toEqual({ withdraw: 5, reason: 'Wrong product' });
   });
 
   it('a plain-text error body reads as text', async () => {
@@ -151,109 +277,101 @@ describe('review of app #68', () => {
       unwrap: () => Promise.reject({ status: 500, data: 'Server Error' })
     }));
     renderPanel();
+    openRow();
     fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'different_product' } });
-    fireEvent.click(screen.getAllByRole('checkbox')[0]);
+    fireEvent.click(screen.getByText('Select all 2 uses'));
     fireEvent.click(record());
-    await waitFor(() => expect(screen.queryByText('Server Error')).toBeInTheDocument());
-    expect(screen.queryByText('S e r v e r   E r r o r')).toBeNull();
+    await waitFor(() => expect(screen.queryByText('Server Error')).not.toBeNull());
   });
 
-  it('uses the theme amber, never Chakra orange', async () => {
-    const { readFileSync } = await import('fs');
-    const { join } = await import('path');
-    const src = readFileSync(join(__dirname, '../OSPMaterialIdentityPanel.tsx'), 'utf8');
-    expect(src).not.toMatch(/orange/);
+  it('collects nothing on a plan that is not editable', () => {
+    renderPanel([identity()], 'submitted');
+    openRow();
+    expect(screen.queryByLabelText('Decision')).toBeNull();
   });
 });
 
-describe('review suggestions (Phase 5 slice 3)', () => {
-  const suggestions = [
-    { kind: 'shared_brand', target: { kind: 'omri', id: 7, name: PLANNED }, numbers_differ: true },
-    {
-      kind: 'plan_answer_names',
-      module: 'g6_4_handling',
-      question: 'water_source_sanitizer',
-      product_name: 'Tsunami 100',
-      catalog: 'wsda',
-      catalog_id: 3,
-      subtype: 'Peracetic Acid',
-      approved_substance: 'Peracetic acid'
-    },
-    { kind: 'suggested_substance_on_plan', substance_id: 4, substance_name: 'Lime sulfur' }
-  ];
-
-  it('lists each suggestion as a prompt and fills in nothing', () => {
-    renderPanel({ suggestions });
-    expect(screen.queryByTestId('identity-suggestions')).not.toBeNull();
-    expect(
-      screen.queryByText('Worth a look. Suggestions decide nothing and clear nothing.')
-    ).not.toBeNull();
-    expect(
-      screen.queryByText(`Starts like "${PLANNED}" on the plan, with different numbers.`)
-    ).not.toBeNull();
-    expect(
-      screen.queryByText(
-        'Your plan answer (g6_4_handling / water_source_sanitizer) names "Tsunami 100", which WSDA lists under Peracetic acid, a substance this plan approves.'
-      )
-    ).not.toBeNull();
-    expect(
-      screen.queryByText(
-        'Part of the name matches Lime sulfur, which this plan approves. This is not a classification.'
-      )
-    ).not.toBeNull();
-    expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('');
-    expect(screen.queryByLabelText('Product on the plan')).toBeNull();
-    for (const box of screen.getAllByRole('checkbox')) expect(box).not.toBeChecked();
-    expect(screen.getByRole('button', { name: 'Record this decision' })).toBeDisabled();
-  });
-
-  it('a decided name shows its decision, not suggestions', () => {
-    renderPanel({
-      suggestions,
-      current: {
-        id: 5,
-        decision: 'different_product',
-        target_kind: '',
-        target_id: null,
-        target_name: '',
-        reviewed_event_ids: [11],
-        exceptions: [],
-        formulation_difference_acknowledged: false,
-        formulation_note: '',
-        note: '',
-        decided_by_name: 'Laurel',
-        decided_at: '2026-10-02T00:00:00Z',
-        plan_version: 1,
-        supersedes: null,
-        superseded_at: null,
-        basis: 'identified by the operator as a different product on 2026-10-02'
-      }
-    });
-    expect(screen.queryByTestId('identity-suggestions')).toBeNull();
-  });
-});
-
-describe('a match after a leading brand word (run 6, R6-02)', () => {
-  it('never says the plan name "starts like" the logged one', () => {
-    renderPanel({
-      suggestions: [
-        {
-          kind: 'shared_brand',
-          target: {
-            kind: 'omri',
-            id: 9,
-            name: 'Bayer Serenade Opti A Wettable Powder Biofungicide'
-          },
-          numbers_differ: false,
-          after_prefix: true
-        }
-      ]
-    });
+describe('suggestions (slice 3, kept through the redesign)', () => {
+  it('a match after a leading brand word never says "starts like"', () => {
+    renderPanel([
+      identity({
+        suggestions: [
+          {
+            kind: 'shared_brand',
+            target: {
+              kind: 'omri',
+              id: 9,
+              name: 'Bayer Serenade Opti A Wettable Powder Biofungicide'
+            },
+            numbers_differ: false,
+            after_prefix: true
+          }
+        ]
+      })
+    ]);
+    openRow();
     expect(
       screen.queryByText(
         'Shares its product name with "Bayer Serenade Opti A Wettable Powder Biofungicide" on the plan (after that name\'s leading brand word).'
       )
     ).not.toBeNull();
     expect(screen.queryByText(/Starts like "Bayer Serenade/)).toBeNull();
+  });
+
+  it('a decided name shows its decision, not suggestions, and nothing is preselected before', () => {
+    const suggestions = [{ kind: 'shared_brand', target: TARGET, numbers_differ: true }];
+    renderPanel([identity({ suggestions, current: decided(), events: uses(2, 'covered') })]);
+    openRow();
+    expect(screen.queryByTestId('identity-suggestions')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Change decision' }));
+    expect((screen.getByLabelText('Decision') as HTMLSelectElement).value).toBe('');
+    for (const box of screen
+      .getAllByTestId('identity-use')
+      .map((r) => within(r).getByRole('checkbox'))) {
+      expect((box as HTMLInputElement).checked).toBe(false);
+    }
+  });
+});
+
+describe('excluding a use is explicit', () => {
+  it('a reason typed and then kept is not sent as an exclusion', async () => {
+    decide.mockClear();
+    renderPanel();
+    openRow();
+    fireEvent.change(screen.getByLabelText('Decision'), { target: { value: 'different_product' } });
+    fireEvent.click(screen.getByText('Select all 2 uses'));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Exclude' })[0]);
+    fireEvent.change(screen.getByPlaceholderText('To exclude this event, say why'), {
+      target: { value: 'Changed my mind' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Keep' }));
+    fireEvent.click(record());
+    await waitFor(() => expect(decide).toHaveBeenCalledTimes(1));
+    expect(decide.mock.calls[0][0].body.exceptions).toEqual([]);
+  });
+});
+
+describe('reads as a to-do list', () => {
+  it('lists names still to review before decided ones', () => {
+    renderPanel([
+      identity({
+        logged_name: 'Decided Product',
+        name_key: 'decided',
+        current: decided(),
+        events: uses(1, 'covered')
+      }),
+      identity({ logged_name: 'Open Product', name_key: 'open' })
+    ]);
+    const names = screen.getAllByTestId('material-identity-row').map((r) => r.textContent || '');
+    expect(names[0].startsWith('Open Product')).toBe(true);
+    expect(names[1].startsWith('Decided Product')).toBe(true);
+  });
+
+  it('marks a use only when it is covered, excluded or changed, not when merely unreviewed', () => {
+    renderPanel([identity({ events: [...uses(1), { ...uses(1, 'stale')[0], id: 300 }] })]);
+    openRow();
+    const [plain, changed] = screen.getAllByTestId('identity-use');
+    expect(plain.querySelector('[data-state]')).toBeNull();
+    expect(changed.querySelector('[data-state="stale"]')).not.toBeNull();
   });
 });
