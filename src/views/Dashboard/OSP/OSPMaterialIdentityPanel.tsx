@@ -52,10 +52,11 @@ export const formulationNumbers = (name: string): string[] =>
 export const formulationDiffers = (a: string, b: string): boolean =>
   formulationNumbers(a).join('|') !== formulationNumbers(b).join('|');
 
+// `stale` needs attention: the theme's `warning` variant, never an amber colour scheme (an amber
+// tint pill is 2.63:1; review of app #69).
 const STATE_SCHEME: Record<string, string> = {
   covered: 'green',
   unreviewed: 'gray',
-  stale: 'amber',
   excepted: 'purple'
 };
 
@@ -165,7 +166,11 @@ const IdentityRow: React.FC<{
               onChange={(e) => setReviewed((r) => ({ ...r, [event.id]: e.target.checked }))}>
               <Text fontSize="sm">{event.date ? event.date.slice(0, 10) : `#${event.id}`}</Text>
             </Checkbox>
-            <Badge colorScheme={STATE_SCHEME[event.state] || 'gray'} data-state={event.state}>
+            <Badge
+              {...(event.state === 'stale'
+                ? { variant: 'warning' }
+                : { colorScheme: STATE_SCHEME[event.state] || 'gray' })}
+              data-state={event.state}>
               {intl.formatMessage({ id: `osp.identity.state.${event.state}` })}
             </Badge>
             {reviewed[event.id] ? (

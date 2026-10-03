@@ -17,6 +17,7 @@ import {
   OSP_MATERIALS_LIST_ANSWER_URL,
   OSP_MATERIALS_LIST_URL,
   OSP_MATERIAL_IDENTITIES_URL,
+  OSP_MATERIAL_RESTRICTIONS_URL,
   OSP_REVIEW_URL,
   OSP_MODULE_DEFINITIONS_URL,
   OSP_MODULE_URL,
@@ -43,6 +44,9 @@ import {
   MaterialIdentitiesResponse,
   MaterialIdentityDecision,
   MaterialIdentityInput,
+  RestrictionMaterial,
+  RestrictionStatement,
+  RestrictionStatementInput,
   PlanMaterialEntry,
   PlanMaterialInput,
   UpdateOSPData
@@ -276,6 +280,32 @@ const ospApi = baseApi.injectEndpoints({
     >({
       query: ({ companyId, farmId, ospId, body }) => ({
         url: OSP_MATERIAL_IDENTITIES_URL(companyId, farmId, ospId),
+        method: 'POST',
+        body,
+        credentials: 'include'
+      }),
+      invalidatesTags: (_r, _e, { ospId }) => [
+        { type: 'OSP', id: Number(ospId) },
+        { type: 'OSPRecordTypes', id: Number(ospId) }
+      ]
+    }),
+
+    // T18 slice 2b: restriction statements. A statement approves nothing and clears no finding.
+    getMaterialRestrictions: build.query<{ materials: RestrictionMaterial[] }, OSPOne>({
+      query: ({ companyId, farmId, ospId }) => ({
+        url: OSP_MATERIAL_RESTRICTIONS_URL(companyId, farmId, ospId),
+        method: 'GET',
+        credentials: 'include'
+      }),
+      providesTags: (_r, _e, { ospId }) => [{ type: 'OSP', id: Number(ospId) }]
+    }),
+
+    recordRestrictionStatement: build.mutation<
+      RestrictionStatement,
+      OSPOne & { body: RestrictionStatementInput }
+    >({
+      query: ({ companyId, farmId, ospId, body }) => ({
+        url: OSP_MATERIAL_RESTRICTIONS_URL(companyId, farmId, ospId),
         method: 'POST',
         body,
         credentials: 'include'
@@ -546,6 +576,8 @@ export const {
   useDeletePlanMaterialMutation,
   useGetOSPMaterialsListQuery,
   useGetMaterialIdentitiesQuery,
+  useGetMaterialRestrictionsQuery,
+  useRecordRestrictionStatementMutation,
   useDecideMaterialIdentityMutation,
   useGetPlanMaterialsQuery,
   useRemoveApprovedInputMutation,

@@ -290,6 +290,15 @@ export const OSP_MATERIAL_IDENTITIES_URL = (
 ) =>
   `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/material-identities/`;
 
+// OSP alignment T18 (Phase 5 slice 2b): how each restriction on a plan material is met, as the
+// operator states it.
+export const OSP_MATERIAL_RESTRICTIONS_URL = (
+  companyId: string,
+  farmId: string,
+  ospId: string | number
+) =>
+  `${ROOT_URL}companies/${companyId}/establishments/${farmId}/osps/${ospId}/material-restrictions/`;
+
 export const OSP_MATERIALS_LIST_ANSWER_URL = (
   companyId: string,
   farmId: string,
