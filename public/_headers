@@ -1,0 +1,11 @@
+# Netlify merges this file with the [[headers]] blocks in netlify.toml.
+# Kept separate so netlify.toml (one of the four protected CSS-build files) stays untouched.
+#
+# Nothing on app.trazo.io / consumer.trazo.io belongs in search results:
+# - sign-in, sign-up and the dashboard are app screens, not landing pages;
+# - consumer QR pages are reached by scanning a lot's label. Indexed, they would
+#   compete with www.trazo.io for "Trazo" and surface one farm's lot to a search
+#   for that farm (decided 2026-10-03).
+# See public/robots.txt for why crawling stays allowed.
+/*
+  X-Robots-Tag: noindex
