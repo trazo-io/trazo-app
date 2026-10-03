@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * The spoken-language choice is remembered per user on this device — and a storage failure is
  * never an error, only "no preference" (the app locale decides).
