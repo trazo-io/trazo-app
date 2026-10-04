@@ -1738,10 +1738,10 @@ const ProductionTab = forwardRef(
         <Text fontWeight="semibold" fontSize="sm" mb={1}>
           Post-Harvest Sanitation (7 CFR 205.272 + § 205.605)
         </Text>
+        {/* Run 7 (R7-05): this stated one rinse rule for every sanitizer and cited § 205.272 for
+            it. § 205.605(b) sets conditions per material. */}
         <Text fontSize="xs" color="gray.700" mb={3}>
-          Required when a chemical sanitizer (chlorine, peracetic acid, hydrogen peroxide, etc.)
-          contacts crops or food-contact surfaces. Must be listed in 7 CFR § 205.605, used at
-          allowed concentration, and followed by a potable-water rinse step per § 205.272(b).
+          {intl.formatMessage({ id: 'events.production.sanitation.intro' })}
         </Text>
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
           <StandardField

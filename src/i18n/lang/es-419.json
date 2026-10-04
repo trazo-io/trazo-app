@@ -8097,5 +8097,6 @@
   "osp.restriction.ux.status.held": "Texto reglamentario, sin responder",
   "osp.restriction.ux.status.recorded": "{count, plural, one {# restricción registrada} other {# restricciones registradas}}",
   "osp.restriction.ux.status.needs_review": "Por revisar",
-  "osp.restriction.ux.status.earlier_version": "Declarada en una versión anterior"
+  "osp.restriction.ux.status.earlier_version": "Declarada en una versión anterior",
+  "events.production.sanitation.intro": "Registra el sanitizante cuando entra en contacto con los cultivos o con superficies en contacto con alimentos: su nombre, su concentración y el listado que lo cubre (7 CFR § 205.605 para el agua de lavado y enjuague poscosecha). Las condiciones, incluido si hace falta un enjuague, varían según el material; revisa la etiqueta del producto y las indicaciones de tu certificadora."
 }
