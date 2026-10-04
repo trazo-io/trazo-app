@@ -1806,10 +1806,10 @@ const ProductionTab = forwardRef(
         <HStack mt={3} justify="space-between">
           <VStack align="start" spacing={0}>
             <Text fontWeight="semibold" fontSize="sm">
-              Potable-Water Rinse Step Documented
+              {intl.formatMessage({ id: 'events.production.sanitation.rinseLabel' })}
             </Text>
             <Text fontSize="xs" color="gray.600">
-              Required after sanitizer contact per § 205.272(b)
+              {intl.formatMessage({ id: 'events.production.sanitation.rinseHint' })}
             </Text>
           </VStack>
           <Controller
