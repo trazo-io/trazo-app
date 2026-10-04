@@ -8097,5 +8097,8 @@
   "osp.restriction.ux.status.held": "Regulation wording, not answered",
   "osp.restriction.ux.status.recorded": "{count, plural, one {# restriction recorded} other {# restrictions recorded}}",
   "osp.restriction.ux.status.needs_review": "Needs review",
-  "osp.restriction.ux.status.earlier_version": "Stated on an earlier version"
+  "osp.restriction.ux.status.earlier_version": "Stated on an earlier version",
+  "events.production.sanitation.intro": "Record the sanitizer used when it contacts crops or food-contact surfaces: its name, concentration and the listing that covers it (7 CFR § 205.605 for post-harvest wash and rinse water). Conditions, including whether a rinse is needed, differ by material, so check the product label and your certifier's guidance.",
+  "events.production.sanitation.rinseLabel": "Potable-water rinse step recorded",
+  "events.production.sanitation.rinseHint": "Turn on if a potable-water rinse followed the sanitizer. Whether one is required depends on the material (7 CFR § 205.605(b))."
 }
