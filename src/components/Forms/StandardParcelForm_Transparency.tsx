@@ -14,6 +14,7 @@ import { object, string, number, array } from 'zod';
 import { useIntl } from 'react-intl';
 import type { IntlShape } from 'react-intl';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
+import { toLatLngPath } from 'utils/parcelPolygon';
 import { GoogleMap, Polygon, Marker, useLoadScript } from '@react-google-maps/api';
 import { TrazoImageUpload } from '../Upload';
 import {
@@ -198,7 +199,7 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
 
   const [currentStep, setCurrentStep] = useState(0);
   const [polygon, setPolygon] = useState<Array<{ lat: number; lng: number }>>(
-    initialData?.polygon || []
+    toLatLngPath(initialData?.polygon)
   );
   // Escape hatch: farmer chose to save without drawing a boundary (can draw it later)
   const [boundarySkipped, setBoundarySkipped] = useState(false);
@@ -216,8 +217,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       return initialData.map_metadata.center;
     }
     // Priority 3: Calculate from existing polygon (edit mode fallback)
-    if (initialData?.polygon && initialData.polygon.length > 0) {
-      return calculatePolygonCenter(initialData.polygon);
+    if (polygon.length > 0) {
+      return calculatePolygonCenter(polygon);
     }
     // Fallback: Default to Fresno, CA (Central Valley agricultural region)
     return { lat: 36.7378, lng: -119.7871 };
@@ -227,8 +228,8 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
     if (initialData?.map_metadata?.zoom) {
       return initialData.map_metadata.zoom;
     }
-    if (initialData?.polygon && initialData.polygon.length > 0) {
-      return calculatePolygonZoom(initialData.polygon);
+    if (polygon.length > 0) {
+      return calculatePolygonZoom(polygon);
     }
     return 13;
   });
@@ -407,7 +408,11 @@ export const StandardParcelFormTransparency: React.FC<StandardParcelFormTranspar
       reset(initialData);
 
       if (initialData.polygon) {
-        setPolygon(initialData.polygon);
+        // A seeded parcel stores GeoJSON; `[...polygon, newPoint]` on a map click threw
+        // `polygon is not iterable`. See toLatLngPath.
+        const path = toLatLngPath(initialData.polygon);
+        setPolygon(path);
+        setValue('polygon', path);
       }
 
       if (initialData.map_metadata?.center) {
