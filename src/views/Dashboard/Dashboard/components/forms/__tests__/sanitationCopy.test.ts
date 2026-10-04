@@ -22,6 +22,19 @@ const KEYS = [
   'events.production.sanitation.rinseLabel',
   'events.production.sanitation.rinseHint'
 ];
+// Browser pass on run 7: the rest of the block, localized so the Spanish UI shows no English.
+const BLOCK_KEYS = [
+  'events.production.sanitation.heading',
+  'events.production.sanitation.nameHelp',
+  'events.production.sanitation.namePlaceholder',
+  'events.production.sanitation.concentrationHelp',
+  'events.production.sanitation.residualLabel',
+  'events.production.sanitation.residualHelp',
+  'events.production.sanitation.referenceHelp',
+  'events.production.sanitation.referencePlaceholder',
+  'events.production.sanitation.concentrationPlaceholder',
+  'events.production.sanitation.residualPlaceholder'
+];
 // A rinse stated as always required, in either language, or § 205.272 cited at all.
 const BLANKET_EN =
   /205\.272|required after|must be followed|followed by a potable|requires? a (potable )?rinse/i;
@@ -61,5 +74,26 @@ describe('post-harvest sanitation copy', () => {
     expect('Obligatorio después del contacto con el sanitizante (§ 205.272(b))').toMatch(
       BLANKET_ES
     );
+  });
+
+  it('renders every string of the block from locale keys, none hardcoded', () => {
+    const rendered = block.replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/\/\/.*$/gm, '');
+    expect(rendered).not.toMatch(/helpText="/);
+    expect(rendered).not.toMatch(/placeholder="e\.g\./);
+    expect(rendered).not.toMatch(/Post-Harvest Sanitation \(/);
+    for (const key of BLOCK_KEYS) {
+      expect(rendered).toContain(`id: '${key}'`);
+      expect((enUS as Record<string, string>)[key], key).toBeTruthy();
+      expect((es419 as Record<string, string>)[key], key).toBeTruthy();
+    }
+  });
+
+  it('the residual field applies the drinking-water limit to chlorine materials only', () => {
+    const en = (enUS as Record<string, string>)['events.production.sanitation.residualHelp'];
+    expect(
+      (enUS as Record<string, string>)['events.production.sanitation.residualLabel']
+    ).not.toMatch(/chlorine/i);
+    expect(en).toMatch(/^For chlorine materials/);
+    expect(en).toContain('Trazo does not assess a limit');
   });
 });

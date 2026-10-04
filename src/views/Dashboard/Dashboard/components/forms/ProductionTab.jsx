@@ -1736,7 +1736,7 @@ const ProductionTab = forwardRef(
     const sanitizerRecordBlock = (
       <Box p={3} borderWidth="1px" borderColor="orange.200" borderRadius="md" bg="orange.50">
         <Text fontWeight="semibold" fontSize="sm" mb={1}>
-          Post-Harvest Sanitation (7 CFR 205.272 + § 205.605)
+          {intl.formatMessage({ id: 'events.production.sanitation.heading' })}
         </Text>
         {/* Run 7 (R7-05): this stated one rinse rule for every sanitizer and cited § 205.272 for
             it. § 205.605(b) sets conditions per material. */}
@@ -1746,18 +1746,23 @@ const ProductionTab = forwardRef(
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
           <StandardField
             label={intl.formatMessage({ id: 'events.production.fields.sanitizerName' })}
-            helpText="e.g., 'Chlorine (sodium hypochlorite)', 'Peracetic acid'">
+            helpText={intl.formatMessage({ id: 'events.production.sanitation.nameHelp' })}>
             <Controller
               name="sanitizer_name"
               control={methods.control}
               render={({ field }) => (
-                <StandardInput {...field} placeholder="e.g., Sodium hypochlorite" />
+                <StandardInput
+                  {...field}
+                  placeholder={intl.formatMessage({
+                    id: 'events.production.sanitation.namePlaceholder'
+                  })}
+                />
               )}
             />
           </StandardField>
           <StandardField
             label={intl.formatMessage({ id: 'events.production.fields.sanitizerPpm' })}
-            helpText="Wash/dose concentration at point of use">
+            helpText={intl.formatMessage({ id: 'events.production.sanitation.concentrationHelp' })}>
             <Controller
               name="sanitizer_ppm"
               control={methods.control}
@@ -1768,14 +1773,16 @@ const ProductionTab = forwardRef(
                   min="0"
                   max="10000"
                   step="0.1"
-                  placeholder="e.g., 150"
+                  placeholder={intl.formatMessage({
+                    id: 'events.production.sanitation.concentrationPlaceholder'
+                  })}
                 />
               )}
             />
           </StandardField>
           <StandardField
-            label={intl.formatMessage({ id: 'events.production.fields.sanitizerResidualPpm' })}
-            helpText="NOP 5026 / § 205.605(b): residual at last crop contact must not exceed the SDWA MRDL (4 mg/L free chlorine, 0.8 mg/L chlorine dioxide)">
+            label={intl.formatMessage({ id: 'events.production.sanitation.residualLabel' })}
+            helpText={intl.formatMessage({ id: 'events.production.sanitation.residualHelp' })}>
             <Controller
               name="sanitizer_residual_ppm_at_discharge"
               control={methods.control}
@@ -1786,7 +1793,9 @@ const ProductionTab = forwardRef(
                   min="0"
                   max="10000"
                   step="0.1"
-                  placeholder="e.g., 3.5"
+                  placeholder={intl.formatMessage({
+                    id: 'events.production.sanitation.residualPlaceholder'
+                  })}
                 />
               )}
             />
@@ -1794,12 +1803,17 @@ const ProductionTab = forwardRef(
         </SimpleGrid>
         <StandardField
           label={intl.formatMessage({ id: 'events.production.fields.sanitizerNopReference' })}
-          helpText="e.g., '§ 205.605(b) - Sodium hypochlorite' or an OMRI certificate #">
+          helpText={intl.formatMessage({ id: 'events.production.sanitation.referenceHelp' })}>
           <Controller
             name="sanitizer_nop_reference"
             control={methods.control}
             render={({ field }) => (
-              <StandardInput {...field} placeholder="e.g., § 205.605(b) - Sodium hypochlorite" />
+              <StandardInput
+                {...field}
+                placeholder={intl.formatMessage({
+                  id: 'events.production.sanitation.referencePlaceholder'
+                })}
+              />
             )}
           />
         </StandardField>
@@ -2269,16 +2283,18 @@ const ProductionTab = forwardRef(
                       <VStack align="start" spacing={0}>
                         <HStack>
                           <Text fontWeight="semibold" fontSize="sm">
-                            Shared with Conventional Operations
+                            {intl.formatMessage({ id: 'events.production.equipment.sharedLabel' })}
                           </Text>
                           {isSharedWithConventional && (
                             <Badge colorScheme="red" size="sm">
-                              Requires Cleaning
+                              {intl.formatMessage({
+                                id: 'events.production.equipment.requiresCleaning'
+                              })}
                             </Badge>
                           )}
                         </HStack>
                         <Text fontSize="xs" color="gray.600">
-                          Is this equipment shared between organic and conventional operations?
+                          {intl.formatMessage({ id: 'events.production.equipment.sharedHelp' })}
                         </Text>
                       </VStack>
                       <Controller
@@ -5284,7 +5300,9 @@ const ProductionTab = forwardRef(
                     render={({ field }) => (
                       <StandardTextarea
                         {...field}
-                        placeholder={intl.formatMessage({ id: 'events.common.placeholders.privateNote' })}
+                        placeholder={intl.formatMessage({
+                          id: 'events.common.placeholders.privateNote'
+                        })}
                         rows={3}
                       />
                     )}

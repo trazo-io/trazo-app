@@ -8100,5 +8100,18 @@
   "osp.restriction.ux.status.earlier_version": "Stated on an earlier version",
   "events.production.sanitation.intro": "Record the sanitizer used when it contacts crops or food-contact surfaces: its name, concentration and the listing that covers it (7 CFR § 205.605 for post-harvest wash and rinse water). Conditions, including whether a rinse is needed, differ by material, so check the product label and your certifier's guidance.",
   "events.production.sanitation.rinseLabel": "Potable-water rinse step recorded",
-  "events.production.sanitation.rinseHint": "Turn on if a potable-water rinse followed the sanitizer. Whether one is required depends on the material (7 CFR § 205.605(b))."
+  "events.production.sanitation.rinseHint": "Turn on if a potable-water rinse followed the sanitizer. Whether one is required depends on the material (7 CFR § 205.605(b)).",
+  "events.production.sanitation.heading": "Post-harvest sanitation (7 CFR 205.272 and § 205.605)",
+  "events.production.sanitation.nameHelp": "For example: chlorine (sodium hypochlorite), peracetic acid",
+  "events.production.sanitation.namePlaceholder": "e.g., Sodium hypochlorite",
+  "events.production.sanitation.concentrationHelp": "Concentration at the point of use",
+  "events.production.sanitation.residualLabel": "Residual at discharge (ppm)",
+  "events.production.sanitation.residualHelp": "For chlorine materials, § 205.605(b) limits the residual to the drinking-water limit (4 mg/L free chlorine, 0.8 mg/L chlorine dioxide). For other sanitizers, record the reading; Trazo does not assess a limit for them.",
+  "events.production.sanitation.referenceHelp": "The listing as you read it, e.g., '§ 205.605(b) - Sodium hypochlorite', or an OMRI certificate number",
+  "events.production.sanitation.referencePlaceholder": "e.g., § 205.605(b) - Sodium hypochlorite",
+  "events.production.equipment.sharedLabel": "Shared with conventional operations",
+  "events.production.equipment.sharedHelp": "Is this equipment shared between organic and conventional operations?",
+  "events.production.equipment.requiresCleaning": "Requires cleaning",
+  "events.production.sanitation.concentrationPlaceholder": "e.g., 150",
+  "events.production.sanitation.residualPlaceholder": "e.g., 3.5"
 }

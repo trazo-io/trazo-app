@@ -8100,5 +8100,18 @@
   "osp.restriction.ux.status.earlier_version": "Declarada en una versión anterior",
   "events.production.sanitation.intro": "Registra el sanitizante cuando entra en contacto con los cultivos o con superficies en contacto con alimentos: su nombre, su concentración y el listado que lo cubre (7 CFR § 205.605 para el agua de lavado y enjuague poscosecha). Las condiciones, incluido si hace falta un enjuague, varían según el material; revisa la etiqueta del producto y las indicaciones de tu certificadora.",
   "events.production.sanitation.rinseLabel": "Enjuague con agua potable registrado",
-  "events.production.sanitation.rinseHint": "Actívalo si después del sanitizante hubo un enjuague con agua potable. Si hace falta uno depende del material (7 CFR § 205.605(b))."
+  "events.production.sanitation.rinseHint": "Actívalo si después del sanitizante hubo un enjuague con agua potable. Si hace falta uno depende del material (7 CFR § 205.605(b)).",
+  "events.production.sanitation.heading": "Sanitización poscosecha (7 CFR 205.272 y § 205.605)",
+  "events.production.sanitation.nameHelp": "Por ejemplo: cloro (hipoclorito de sodio), ácido peracético",
+  "events.production.sanitation.namePlaceholder": "p. ej., hipoclorito de sodio",
+  "events.production.sanitation.concentrationHelp": "Concentración en el punto de uso",
+  "events.production.sanitation.residualLabel": "Residual en la descarga (ppm)",
+  "events.production.sanitation.residualHelp": "Para materiales de cloro, el § 205.605(b) limita el residual al límite del agua potable (4 mg/L de cloro libre, 0,8 mg/L de dióxido de cloro). Para otros sanitizantes, registra la lectura; Trazo no evalúa un límite para ellos.",
+  "events.production.sanitation.referenceHelp": "El listado tal como lo lees, p. ej., '§ 205.605(b) - Hipoclorito de sodio', o un número de certificado OMRI",
+  "events.production.sanitation.referencePlaceholder": "p. ej., § 205.605(b) - Hipoclorito de sodio",
+  "events.production.equipment.sharedLabel": "Compartido con operaciones convencionales",
+  "events.production.equipment.sharedHelp": "¿Este equipo se comparte entre operaciones orgánicas y convencionales?",
+  "events.production.equipment.requiresCleaning": "Requiere limpieza",
+  "events.production.sanitation.concentrationPlaceholder": "p. ej., 150",
+  "events.production.sanitation.residualPlaceholder": "p. ej., 3,5"
 }
