@@ -10,6 +10,7 @@ import CardBody from 'components/Card/CardBody.tsx';
 import Shimmer from 'components/Shimmer/Shimmer';
 import { useIntl } from 'react-intl';
 import { googleMapsLoaderOptions } from 'components/Map/mapsLoaderOptions';
+import { toLatLngPath } from 'utils/parcelPolygon';
 
 // Utility function to calculate polygon center
 const calculatePolygonCenter = (points) => {
@@ -80,8 +81,11 @@ const calculatePolygonZoom = (points) => {
 // Export utilities for reuse in forms and other components
 export { calculatePolygonCenter, calculatePolygonZoom };
 
-const CardWithMap = ({ polygon, zoom, center }) => {
+const CardWithMap = ({ polygon: rawPolygon, zoom, center }) => {
   const intl = useIntl();
+  // Seeded parcels store GeoJSON; see toLatLngPath. Memoised so the effect below does not
+  // re-run on every render.
+  const polygon = React.useMemo(() => toLatLngPath(rawPolygon), [rawPolygon]);
   // See the note beside the early return below.
   const [authFailed, setAuthFailed] = useState(false);
   useEffect(() => {

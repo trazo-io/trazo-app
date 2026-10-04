@@ -46,6 +46,12 @@ try {
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/',
+  // Worktrees symlink node_modules to the main checkout, so the default
+  // node_modules/.vite cache is shared between dev servers. Two servers then
+  // overwrite each other's pre-bundled chunks and the page loads two copies of
+  // React ("Cannot read properties of null (reading 'useRef')"). Keep the cache
+  // per checkout.
+  cacheDir: '.vite',
   plugins: [
     react({
       // Ensure proper emotion configuration for Chakra UI
