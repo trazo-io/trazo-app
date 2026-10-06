@@ -14,11 +14,9 @@ import {
 import { Link as RouterLink } from 'react-router-dom';
 import {
   FaLeaf,
-  FaCar,
   FaChevronDown,
   FaChevronUp,
-  FaGlobeAmericas,
-  FaMobileAlt
+  FaGlobeAmericas
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import USDACredibilityBadge from '../Carbon/USDACredibilityBadge';
@@ -51,6 +49,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
   consumerContext
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  // Run 8 (R8-14): carbon is secondary on the buyer page. The whole card starts closed and
+  // opens from its header; the lot's story and the farm come first.
+  const [isOpen, setIsOpen] = useState(false);
   const intl = useIntl();
 
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -140,7 +141,15 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
       overflow="hidden">
       {/* Header — carbon-impact card title. No self-graded documentation score:
           consumers see facts (counts/photos/certs), not a self-assigned grade. */}
-      <Box p={4} bg={cardBg}>
+      <Box
+        as="button"
+        type="button"
+        w="100%"
+        textAlign="left"
+        p={4}
+        bg={cardBg}
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen(!isOpen)}>
         <VStack align="start" spacing={2}>
           <HStack>
             <Icon as={FaGlobeAmericas} color={accentColor} boxSize={5} />
@@ -151,6 +160,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
               color={textColor}>
               {intl.formatMessage({ id: 'app.carbonExplainer.title' })}
             </Text>
+            <Icon as={isOpen ? FaChevronUp : FaChevronDown} color={mutedColor} boxSize={3} />
           </HStack>
           <Text fontSize="sm" color={mutedColor}>
             {intl.formatMessage({ id: 'app.carbonExplainer.subtitle' }, { productName })}
@@ -158,6 +168,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
         </VStack>
       </Box>
 
+      <Collapse in={isOpen} animateOpacity>
       {/* PRIMARY: Consumer-friendly impact summary */}
       <Box p={4}>
         <VStack spacing={3} align="stretch">
@@ -198,31 +209,9 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                 </Text>
               </HStack>
 
-              {/* Relatable comparisons */}
-              <VStack spacing={1} align="stretch">
-                {consumerContext!.per_kg_miles > 0 && (
-                  <HStack spacing={2}>
-                    <Icon as={FaCar} color="gray.500" boxSize={4} />
-                    <Text fontSize="sm" color={mutedColor}>
-                      {intl.formatMessage(
-                        { id: 'app.carbonExplainer.perKgMiles' },
-                        { miles: consumerContext!.per_kg_miles }
-                      )}
-                    </Text>
-                  </HStack>
-                )}
-                {consumerContext!.per_kg_phone_charges > 0 && (
-                  <HStack spacing={2}>
-                    <Icon as={FaMobileAlt} color="gray.500" boxSize={4} />
-                    <Text fontSize="sm" color={mutedColor}>
-                      {intl.formatMessage(
-                        { id: 'app.carbonExplainer.perKgPhoneCharges' },
-                        { count: consumerContext!.per_kg_phone_charges }
-                      )}
-                    </Text>
-                  </HStack>
-                )}
-              </VStack>
+              {/* Run 8 (R8-14): driving and phone-charge equivalents removed. They turned an
+                  estimate with a stated boundary into a vivid comparison the boundary does
+                  not travel with. */}
 
               <Text fontSize="xs" color={mutedColor} mt={3}>
                 {boundaryLine}
@@ -255,17 +244,6 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
                 </Text>
               </HStack>
 
-              {seasonMiles > 0 && (
-                <HStack spacing={2}>
-                  <Icon as={FaCar} color="gray.500" boxSize={4} />
-                  <Text fontSize="sm" color={mutedColor}>
-                    {intl.formatMessage(
-                      { id: 'app.carbonExplainer.totalMiles' },
-                      { miles: seasonMiles }
-                    )}
-                  </Text>
-                </HStack>
-              )}
 
               <Text fontSize="xs" color={mutedColor} mt={3}>
                 {boundaryLine}
@@ -346,6 +324,7 @@ export const CarbonImpactExplainer: React.FC<CarbonImpactExplainerProps> = ({
             </Link>
           </VStack>
         </Box>
+      </Collapse>
       </Collapse>
     </Box>
   );

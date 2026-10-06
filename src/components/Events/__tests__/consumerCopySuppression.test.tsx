@@ -83,7 +83,8 @@ describe('specific copy still renders', () => {
     // "…to ensure maximum nutritional value and freshness"). They now do different jobs:
     // shortDescription says WHAT HAPPENED, consumerImpact says WHY IT MATTERS to the reader.
     // Asserting both is what stops a future edit collapsing them back into one voice.
-    expect(screen.getByText(/picked, weighed and graded/i)).toBeTruthy();
+    // Run 8 (R8-09): "picked, weighed and graded" claimed work an estimated, ungraded harvest never had.
+    expect(screen.getByText(/^Harvest recorded$/i)).toBeTruthy();
     // 2026-09-16: "week this fruit came off" -> "which week this lot left the block". Two
     // reasons, both recorded in consumerDescriptionEvidence.test.ts: "fruit" asserted a crop
     // form the record does not establish (these lines render on carrot lots too), and the
