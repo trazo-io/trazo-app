@@ -2601,36 +2601,28 @@ export function getConsumerEventDescription(
       'Documented equipment operations demonstrate transparent farming practices and operational efficiency.';
 
     // FIXED: Specific messages for each operation type code matching EquipmentTab.jsx
+    // Review of app #79: the run-8 rewrite left the title, the impact line and the benefit line
+    // saying the same thing ("Equipment calibration recorded" three times). The title says what
+    // happened; the impact line says what the record holds; the benefit line is shared.
+    const EQUIPMENT_BENEFIT = 'Machine work sits on the same record as the crop it served.';
     if (operationType === 'FC' || operationType.includes('Fuel Consumption')) {
-      consumerImpact =
-        'Field equipment operation with complete fuel consumption documentation for transparency.';
-      sustainabilityBenefit =
-        'Fuel use recorded for this equipment.';
+      consumerImpact = 'The fuel this machine used is on record.';
+      sustainabilityBenefit = EQUIPMENT_BENEFIT;
     } else if (operationType === 'MN' || operationType.includes('Maintenance')) {
-      consumerImpact =
-        'Equipment maintenance recorded.';
-      sustainabilityBenefit =
-        'Preventive maintenance recorded.';
+      consumerImpact = 'Which machine was serviced, and on what day, is on record.';
+      sustainabilityBenefit = EQUIPMENT_BENEFIT;
     } else if (operationType === 'RE' || operationType.includes('Repair')) {
-      consumerImpact =
-        'Equipment repair restores functionality and maintains operational efficiency for sustainable farming.';
-      sustainabilityBenefit =
-        'Equipment repair recorded.';
+      consumerImpact = 'The repair, the machine and the date are on record.';
+      sustainabilityBenefit = EQUIPMENT_BENEFIT;
     } else if (operationType === 'CA' || operationType.includes('Calibration')) {
-      consumerImpact =
-        'Equipment calibration recorded.';
-      sustainabilityBenefit =
-        'Calibration recorded.';
+      consumerImpact = 'The calibration, the machine and the date are on record.';
+      sustainabilityBenefit = EQUIPMENT_BENEFIT;
     } else if (operationType === 'BD' || operationType.includes('Breakdown')) {
-      consumerImpact =
-        'Equipment breakdown response recorded.';
-      sustainabilityBenefit =
-        'Breakdown repair recorded.';
+      consumerImpact = 'The breakdown and what was done about it are on record.';
+      sustainabilityBenefit = EQUIPMENT_BENEFIT;
     } else if (operationType === 'EI' || operationType.includes('Inspection')) {
-      consumerImpact =
-        'Equipment inspection recorded.';
-      sustainabilityBenefit =
-        'Inspection recorded.';
+      consumerImpact = 'The inspection, the machine and the date are on record.';
+      sustainabilityBenefit = EQUIPMENT_BENEFIT;
     }
 
     // Enhanced title resolution for equipment events

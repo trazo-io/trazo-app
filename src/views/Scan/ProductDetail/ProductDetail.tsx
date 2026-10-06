@@ -733,9 +733,10 @@ function ProductDetail() {
       if (isUserScrolling) return;
 
       const sections = [
+        // Page order (the loop below walks it backwards). Run 8: emissions sit after the farm.
         { id: 'transparency', element: document.getElementById('transparency-section') },
-        { id: 'carbon', element: document.getElementById('carbon-section') },
-        { id: 'farm', element: document.getElementById('farm-section') }
+        { id: 'farm', element: document.getElementById('farm-section') },
+        { id: 'carbon', element: document.getElementById('emissions-section') }
       ];
 
       const scrollPosition = window.scrollY + 200; // Offset for header

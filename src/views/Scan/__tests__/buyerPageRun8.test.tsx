@@ -100,3 +100,31 @@ describe('R8-16: no completeness promise', () => {
     }
   });
 });
+
+describe('review of app #79', () => {
+  it('every bottom-nav tab targets a section the page renders, Impact the emissions card', () => {
+    const nav = src('components/Navigation/NavigationBottomBar.tsx');
+    const page = src('views/Scan/ProductDetail/ProductDetail.tsx');
+    const targets = [...nav.matchAll(/targetSection: '([\w-]+)'/g)].map((m) => m[1]);
+    expect(targets.length).toBeGreaterThan(1);
+    for (const id of targets) expect(page, id).toContain(`id="${id}"`);
+    expect(nav).toMatch(/id: 'carbon',[\s\S]*?targetSection: 'emissions-section'/);
+    expect(page).toMatch(/getElementById\('emissions-section'\)/);
+  });
+
+  it.each(['FC', 'MN', 'RE', 'CA', 'BD', 'EI'])(
+    'equipment %s: title, impact and benefit say different things',
+    async (code) => {
+      const { getConsumerEventDescription } = await import('utils/eventDescriptions');
+      const d = getConsumerEventDescription('', {
+        event_type: 4,
+        type: 'equipment',
+        operation_type: code,
+        date: '2026-05-01'
+      } as any) as any;
+      const norm = (t?: string) => (t || '').toLowerCase().replace(/[.\s]+$/, '');
+      const lines = [d.shortDescription || d.description, d.consumerImpact, d.sustainabilityBenefit].map(norm);
+      expect(new Set(lines).size, lines.join(' | ')).toBe(3);
+    }
+  );
+});

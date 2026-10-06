@@ -18,6 +18,20 @@
 
 export const CONSUMER_DESCRIPTION_ES: Record<string, string> = {
   // Run 8 (R8-09): what the record shows, never what it caused.
+  'The fuel this machine used is on record.':
+    'El combustible que usó esta máquina queda registrado.',
+  'Which machine was serviced, and on what day, is on record.':
+    'Qué máquina recibió mantenimiento, y en qué día, queda registrado.',
+  'The repair, the machine and the date are on record.':
+    'La reparación, la máquina y la fecha quedan registradas.',
+  'The calibration, the machine and the date are on record.':
+    'La calibración, la máquina y la fecha quedan registradas.',
+  'The breakdown and what was done about it are on record.':
+    'La avería y lo que se hizo al respecto quedan registrados.',
+  'The inspection, the machine and the date are on record.':
+    'La inspección, la máquina y la fecha quedan registradas.',
+  'Machine work sits on the same record as the crop it served.':
+    'El trabajo de la máquina queda en el mismo registro que el cultivo al que sirvió.',
   'After picking, the farm recorded how the crop was hulled, dried or cooled.':
     'Después de la cosecha, la finca registró cómo se descascaró, secó o enfrió el cultivo.',
   'Agricultural practice recorded by the farm':
