@@ -1,6 +1,6 @@
 /**
- * A template accelerator may suggest HOW MUCH and HOW. It may never answer a compliance
- * question on the operator's behalf.
+ * A template accelerator may suggest HOW. It may never answer a compliance question, or
+ * supply a measurement, on the operator's behalf.
  *
  * Until 2026-08-19 the prefill merged every quickEventFields default except `*_unit`, and the
  * chemical templates carry defaults that are regulatory assertions, not operational ones. The
@@ -50,7 +50,8 @@ describe('template accelerators never prefill an attestation', () => {
     const fungicide = TEMPLATE_ACCELERATORS.find((t) => t.id === 'fungicide')!;
     const prefill = templatePrefillValues(fungicide);
     expect(prefill.type).toBe('FU');
-    expect(prefill.volume_applied).toBeDefined();
+    // Run 8 (R8-03): the method is suggested; the volume is the grower's to state.
+    expect(prefill.volume_applied).toBeUndefined();
     expect(prefill.application_method).toBeDefined();
   });
 
@@ -60,18 +61,6 @@ describe('template accelerators never prefill an attestation', () => {
     // `type` plus allow-listed fields only — nothing else may appear.
     const allowed = new Set([
       'type',
-      'area_covered',
-      'area_treated',
-      'volume_applied',
-      'yield_quantity',
-      'amendment_amount_numeric',
-      'irrigation_depth',
-      'transportation_distance',
-      'fuel_type',
-      'fuel_consumed',
-      'equipment_hours',
-      'application_fuel_type',
-      'application_fuel_consumed',
       'application_method',
       'irrigation_method',
       'water_source',
@@ -83,5 +72,38 @@ describe('template accelerators never prefill an attestation', () => {
       'operation_efficiency'
     ]);
     for (const key of keys) expect(allowed.has(key)).toBe(true);
+  });
+});
+
+/**
+ * Run 8 (R8-03, Astra 2026-10-05): picking the Harvest template filled 1 acre, 100 lb and 5 km
+ * before the grower supplied any of them. A measurement on a record is an observation, so no
+ * template may supply one. Every template is driven, not a sample.
+ */
+describe('no template supplies a measurement', () => {
+  const MEASUREMENTS = [
+    'area_covered',
+    'area_treated',
+    'volume_applied',
+    'yield_quantity',
+    'amendment_amount_numeric',
+    'irrigation_depth',
+    'transportation_distance',
+    'fuel_consumed',
+    'equipment_hours',
+    'application_fuel_consumed',
+    'fuel_type',
+    'application_fuel_type'
+  ];
+
+  it.each(TEMPLATE_ACCELERATORS.map((t) => [t.id, t] as const))('%s', (_id, tpl) => {
+    const prefill = templatePrefillValues(tpl);
+    for (const key of MEASUREMENTS) {
+      expect(prefill[key], `${tpl.id} prefilled ${key}`).toBeUndefined();
+    }
+  });
+
+  it('drives at least the harvest template (anti-vacuity)', () => {
+    expect(TEMPLATE_ACCELERATORS.some((t) => t.id === 'harvest')).toBe(true);
   });
 });

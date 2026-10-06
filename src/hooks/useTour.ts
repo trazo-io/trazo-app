@@ -47,9 +47,16 @@ export function useTour(tourId: string, options: UseTourOptions = {}) {
     }
   }, [isDone, isBusy, tour, tourId, startTour]);
 
-  // Auto-start on mount
+  // Start on request only.
+  //
+  // Run 8 (R8-25, Astra 2026-10-05): tours used to start by themselves 5 s after a page loaded.
+  // By then the grower was already typing, so the overlay arrived mid-task and, on the production
+  // page, dismissing it threw away the crop search in progress. A tour now runs only after the
+  // grower asks for one ("Take the tour" in the settings drawer sets `restartRequested`); the
+  // page that asked then starts its tour.
   useEffect(() => {
     if (!autoStart || !enabled || isDone || isBusy || !tour) return;
+    if (!restartRequested) return;
 
     // Short delay if restart was just requested (page already loaded)
     // Full 5s delay for initial page loads (wait for API data + layout)

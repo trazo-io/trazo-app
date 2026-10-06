@@ -293,6 +293,16 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   // Graceful degradation: neither Deepgram configured nor Web Speech API supported
   // (e.g. Safari/iOS without Deepgram config) — show an info Alert instead of the recorder.
   const voiceUnavailable = !isLoadingConfig && !useDeepgram && !browserSupportsSpeechRecognition;
+  // Run 8 (R8-24): which of the start button's disabled causes applies, in the order the farmer
+  // can do something about it.
+  const disabledReasonId = isLoadingConfig
+    ? 'voice.disabled.loading'
+    : isProcessing || isProcessingVoice
+    ? 'voice.disabled.processing'
+    : !isActive
+    ? 'voice.disabled.inactive'
+    : null;
+  const isHarvest = /harvest|^HA$|cosecha/i.test(knownActivity || '');
   // Microphone permission blocked: Web Speech exposes isMicrophoneAvailable;
   // Deepgram surfaces a getUserMedia denial through its error string.
   // Was `deepgramError.toLowerCase().includes('microphone')` — a substring sniff over an
@@ -892,6 +902,14 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
           </Flex>
         )}
 
+        {/* Run 8 (R8-24): a disabled start button said nothing about why. Each cause gets a
+            line; a blocked microphone already has its own alert above. */}
+        {!parsedData && !listening && !micBlocked && disabledReasonId && (
+          <Text fontSize="sm" color="gray.600" textAlign="center" role="status">
+            {intl.formatMessage({ id: disabledReasonId })}
+          </Text>
+        )}
+
         {/* Why the last recording was not read — said, never swallowed. Directly under the
             button that fixes it. "Nothing" names the language it listened for and points at the
             switch, because the likeliest cause is speaking the other one (Spanish into the
@@ -1205,11 +1223,10 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
             <Text fontSize="sm" fontWeight="semibold" color="gray.700">
               {intl.formatMessage({ id: 'voice.trySaying' })}
             </Text>
-            {[
-              'voice.example.fertilizer',
-              'voice.example.irrigation',
-              'voice.example.equipment'
-            ].map((id) => (
+            {(isHarvest
+              ? ['voice.example.harvest', 'voice.example.harvestMethod']
+              : ['voice.example.fertilizer', 'voice.example.irrigation', 'voice.example.equipment']
+            ).map((id) => (
               <Text key={id} fontSize="sm" color="gray.600" fontStyle="italic">
                 {intl.formatMessage({ id })}
               </Text>
