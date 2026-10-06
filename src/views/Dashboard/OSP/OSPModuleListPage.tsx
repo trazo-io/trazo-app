@@ -11,17 +11,7 @@
  */
 
 import React, { useMemo } from 'react';
-import {
-  Badge,
-  Box,
-  Flex,
-  HStack,
-  Progress,
-  SimpleGrid,
-  Text,
-  useToast,
-  VStack
-} from '@chakra-ui/react';
+import { Badge, Box, Flex, HStack, SimpleGrid, Text, useToast, VStack } from '@chakra-ui/react';
 import { FaCheckCircle, FaFileAlt, FaMapMarkedAlt, FaRegCircle } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
@@ -99,13 +89,6 @@ const STATUS_ICON_COLOR: Record<ModuleStatus, string> = {
   not_applicable: 'gray.500'
 };
 
-const STATUS_BAR_SCHEME: Record<ModuleStatus, string> = {
-  not_started: 'gray',
-  in_progress: 'amber',
-  completed: 'green',
-  not_applicable: 'gray'
-};
-
 const ModuleCard = ({
   definition,
   row,
@@ -128,12 +111,6 @@ const ModuleCard = ({
   const intl = useIntl();
   const status: ModuleStatus = row?.status ?? 'not_started';
   const progress = row?.progress ?? { answered: 0, required: 0, missing: [] };
-  const pct =
-    status === 'completed' || status === 'not_applicable'
-      ? 100
-      : progress.required > 0
-      ? Math.round((progress.answered / progress.required) * 100)
-      : 0;
 
   return (
     <StandardCard data-testid={`osp-module-${definition.key}`}>
@@ -178,13 +155,8 @@ const ModuleCard = ({
 
         {status !== 'not_applicable' && progress.required > 0 ? (
           <Box>
-            <Progress
-              value={pct}
-              size="sm"
-              borderRadius="md"
-              colorScheme={STATUS_BAR_SCHEME[status]}
-            />
-            <Text fontSize="xs" color="gray.500" mt={1}>
+            {/* Run 8 (R8-10): a count, not a progress bar. Answers given is descriptive only. */}
+            <Text fontSize="xs" color="gray.500">
               {intl.formatMessage(
                 { id: 'osp.modules.progressCount' },
                 { answered: progress.answered, required: progress.required }
@@ -449,6 +421,9 @@ const OSPModuleListPage = () => {
                   { id: 'osp.modules.farmWideProgress' },
                   { completed: completedCount, total: farmWide.length }
                 )}
+              </Text>
+              <Text fontSize="xs" color="gray.500">
+                {intl.formatMessage({ id: 'osp.completion.notAReview' })}
               </Text>
             </HStack>
             {/* The page's controls live here, next to the state they act on. On a locked

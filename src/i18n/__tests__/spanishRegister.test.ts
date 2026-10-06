@@ -218,3 +218,26 @@ describe('es-419 register', () => {
     expect('Estás en Starter y vas a poder seguir registrando').not.toMatch(present());
   });
 });
+
+/**
+ * Run 8 (R8-06, Astra 2026-10-05): the core logging flow mixed tuteo with USTED imperatives
+ * ("Seleccione", "Documente", "Suba") on one screen. Scoped to the keys a grower meets while
+ * logging, and to imperatives only: "su" is left alone because it is also the third person.
+ */
+describe('core logging flow is tuteo, not usted', () => {
+  const USTED_IMPERATIVE =
+    /(?<![A-Za-zÁÉÍÓÚáéíóúñÑ])(Ingrese|Seleccione|Registre|Indique|Agregue|Documente|Escriba|Elija|Describa|Suba|Mantenga|Deje|deje|describa|registre)(?![A-Za-zÁÉÍÓÚáéíóúñÑ])|\busted\b/;
+  const CORE = ['events.', 'quickAdd.', 'voice.', 'newEvent.'];
+
+  it('no usted imperative in a core logging string', () => {
+    const offenders = Object.entries(MESSAGES).filter(
+      ([k, v]) => CORE.some((p) => k.startsWith(p)) && USTED_IMPERATIVE.test(v)
+    );
+    expect(offenders.map(([k, v]) => `${k}: ${v.slice(0, 60)}`)).toEqual([]);
+  });
+
+  it('the pattern catches the register it guards against', () => {
+    expect(USTED_IMPERATIVE.test('Seleccione la fecha')).toBe(true);
+    expect(USTED_IMPERATIVE.test('Selecciona la fecha')).toBe(false);
+  });
+});

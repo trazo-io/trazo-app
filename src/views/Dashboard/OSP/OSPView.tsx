@@ -25,7 +25,6 @@ import {
   HStack,
   Icon,
   Link as ChakraLink,
-  Progress,
   SimpleGrid,
   Spinner,
   Stack,
@@ -81,7 +80,7 @@ import OSPPlanReviewPanel from './OSPPlanReviewPanel';
 import StateOrganicRegistrationCard, {
   STATE_ORGANIC_PROGRAMS
 } from './StateOrganicRegistrationCard';
-import OSPAnnualUpdateCard from './OSPAnnualUpdateCard';
+import OSPAnnualUpdateCard, { OSPRenewalSummary } from './OSPAnnualUpdateCard';
 import { selectPlanOnFile } from './selectPlanOnFile';
 import { selectWorkingOsp } from './selectWorkingOsp';
 import { useFarm, useFarmState } from 'hooks/useMeasurementSystem';
@@ -738,7 +737,6 @@ const OSPView: React.FC = () => {
     }
     return acc + (isMaterialComplete ? 1 : 0);
   }, 0);
-  const completionPct = Math.round((completeSectionCount / OSP_SECTION_KEYS.length) * 100);
   // Mirrors `OrganicSystemPlanViewSet.perform_update` — only a draft accepts edits.
   const isEditable = editableOsp.status === 'draft';
   const statusBadgeProps = STATUS_BADGE[editableOsp.status] ?? { colorScheme: 'gray' };
@@ -852,11 +850,7 @@ const OSPView: React.FC = () => {
                 <Text fontSize="xs" color={subtextColor}>
                   {intl.formatMessage(
                     { id: 'osp.completion.sectionsOfTotal' },
-                    {
-                      complete: completeSectionCount,
-                      total: OSP_SECTION_KEYS.length,
-                      pct: completionPct
-                    }
+                    { complete: completeSectionCount, total: OSP_SECTION_KEYS.length }
                   )}
                 </Text>
                 {registrySyncHasWarning && (
@@ -885,7 +879,11 @@ const OSPView: React.FC = () => {
                 </Text>
               )}
             </HStack>
-            <Progress value={completionPct} colorScheme="green" size="xs" borderRadius="full" />
+            {/* Run 8 (R8-10): no percentage and no green bar. The count says which sections
+                have text; it is not a review, an approval or readiness for renewal. */}
+            <Text fontSize="xs" color={subtextColor}>
+              {intl.formatMessage({ id: 'osp.completion.notAReview' })}
+            </Text>
           </Box>
 
           {/* P0-4 — Farmer-facing download for the snapshot PDF generated at
@@ -971,6 +969,13 @@ const OSPView: React.FC = () => {
               {intl.formatMessage({ id: 'osp.parcelReferenceHelp' })}
             </Text>
           </Box>
+        )}
+        {companyId && farmId && (
+          <OSPRenewalSummary
+            companyId={companyId}
+            farmId={farmId}
+            currentYear={new Date().getFullYear()}
+          />
         )}
         <Accordion allowMultiple defaultIndex={[0]}>
           {OSP_SECTION_KEYS.map((key) => {
@@ -1184,7 +1189,7 @@ const OSPView: React.FC = () => {
         <StandardCard
           mt={4}
           titleIcon={<Icon as={FaHistory} color="green.700" />}
-          title={`${intl.formatMessage({ id: 'osp.version' })}s`}>
+          title={intl.formatMessage({ id: 'osp.versionHistory' })}>
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
             {ospSummaries.map((s) => {
               const isSelected = s.id === editableOsp.id;

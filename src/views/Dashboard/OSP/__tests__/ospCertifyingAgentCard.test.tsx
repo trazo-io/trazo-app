@@ -96,9 +96,7 @@ describe('OSPCertifyingAgentCard', () => {
         }
       })
     );
-    expect(
-      screen.getByText(/doesn't carry Organic Certifiers, Inc\.'s form numbers yet/)
-    ).toBeTruthy();
+    expect(screen.queryByText(/holds no form register for Organic Certifiers, Inc\./)).toBeTruthy();
   });
 
   it('saves the picked agent and sends nothing else', async () => {

@@ -34,6 +34,18 @@ export const PHOTO_GUIDANCE_ES: Record<string, string> = {
   'Pruning/Trimming': 'Poda',
   Transplanting: 'Trasplante',
   'Equipment Maintenance': 'Mantenimiento de equipos',
+  'Document the maintenance or the cleanout. For a cleanout, show the cleaned equipment, bins or storage and the cleaning product label; for maintenance, the work and the hour meter.':
+    'Documenta el mantenimiento o la limpieza. Para una limpieza, muestra el equipo, los bins o el almacén ya limpios y la etiqueta del producto de limpieza; para un mantenimiento, el trabajo y el horómetro.',
+  'Bins, harvest equipment or storage after cleaning, with no residue or plant material':
+    'Bins, equipo de cosecha o almacén después de la limpieza, sin residuos ni restos vegetales',
+  'The label of the cleaning or sanitizing product used':
+    'La etiqueta del producto de limpieza o desinfección usado',
+  'Maintenance or repair work, with the hour meter reading visible':
+    'El mantenimiento o la reparación, con la lectura del horómetro visible',
+  'Photograph the cleaned surface before the next organic load goes in':
+    'Fotografía la superficie limpia antes de que entre la siguiente carga orgánica',
+  'A clear label photo records which cleaning product was used':
+    'Una foto clara de la etiqueta registra qué producto de limpieza se usó',
   'Equipment Operations (Legacy)': 'Operaciones de equipos (heredado)',
 
   // ---- Subtype guidance paragraphs ----

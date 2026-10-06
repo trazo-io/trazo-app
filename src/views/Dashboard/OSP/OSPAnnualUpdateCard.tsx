@@ -254,6 +254,90 @@ export const STATE_BADGE: Record<RowState, string> = {
   withdrawn: 'danger'
 };
 
+const NEXT_FILED = {
+  id: 'osp.annual.next.filed',
+  defaultMessage: 'Nothing pending. A change goes through Create correction on its row.'
+};
+
+/** Run 8 (R8-11): what the grower does next with this year's update, in one line. */
+const NEXT_STEP_LABELS: Record<RowState, { id: string; defaultMessage: string }> = {
+  draft: {
+    id: 'osp.annual.next.draft',
+    defaultMessage: 'Next: sign it, then record when it was filed.'
+  },
+  signed: { id: 'osp.annual.next.signed', defaultMessage: 'Next: record when it was filed.' },
+  filed: NEXT_FILED,
+  corrected: NEXT_FILED,
+  withdrawn: { id: 'osp.annual.next.withdrawn', defaultMessage: 'Next: file the year again.' }
+};
+
+/** The revision a year stands on: not withdrawn, not superseded by a correction. */
+const isCurrentRevision = (u: OSPAnnualUpdate) => !u.withdrawn_at && !u.superseded_at;
+
+/**
+ * The revision that speaks for its year: the current one, or, when every revision of the year
+ * was withdrawn, the newest of those. Review of app #84: filtering to current revisions first
+ * made a withdrawn-only year read as "no annual update recorded".
+ */
+const headOfYear = (updates: OSPAnnualUpdate[], year: number): OSPAnnualUpdate | undefined => {
+  const ofYear = updates
+    .filter((u) => u.reporting_year === year)
+    .sort((a, b) => (b.revision_number ?? 1) - (a.revision_number ?? 1));
+  return ofYear.find(isCurrentRevision) ?? ofYear[0];
+};
+
+/** Shown without unfolding: the current revisions, plus the head of a withdrawn-only year. */
+const isShownByDefault = (u: OSPAnnualUpdate, updates: OSPAnnualUpdate[]) =>
+  isCurrentRevision(u) || headOfYear(updates, u.reporting_year)?.id === u.id;
+
+/**
+ * Run 8 (R8-11): the renewal state above the narratives. The full card stays below the plan
+ * (it is ~2,200px on a phone); this is the one line a grower opening the page needs first.
+ */
+export const OSPRenewalSummary: React.FC<{
+  companyId?: string;
+  farmId?: string;
+  currentYear: number;
+}> = ({ companyId, farmId, currentYear }) => {
+  const intl = useIntl();
+  const { data: updates = [] } = useGetOSPAnnualUpdatesQuery(
+    { companyId: companyId || '', farmId: farmId || '' },
+    { skip: !companyId || !farmId }
+  );
+  const newestYear = updates.reduce<number | null>(
+    (max, u) => (max == null || u.reporting_year > max ? u.reporting_year : max),
+    null
+  );
+  const latest = newestYear == null ? undefined : headOfYear(updates, newestYear);
+  return (
+    <Box
+      mb={4}
+      p={3}
+      borderWidth="1px"
+      borderColor="gray.200"
+      borderRadius="md"
+      data-testid="osp-renewal-summary">
+      <Text fontSize="sm" color="gray.700">
+        {latest
+          ? `${intl.formatMessage(
+              { id: 'osp.annual.summary.line', defaultMessage: 'Annual update {year}: {state}.' },
+              {
+                year: latest.reporting_year,
+                state: intl.formatMessage(STATE_LABELS[rowState(latest)])
+              }
+            )} ${intl.formatMessage(NEXT_STEP_LABELS[rowState(latest)])}`
+          : intl.formatMessage(
+              {
+                id: 'osp.annual.summary.none',
+                defaultMessage: 'No annual update recorded for {year}. It is below the plan.'
+              },
+              { year: currentYear }
+            )}
+      </Text>
+    </Box>
+  );
+};
+
 const CONFIRM_LABELS: Record<PendingKind, { id: string; defaultMessage: string }> = {
   sign: { id: 'osp.annual.confirm.sign', defaultMessage: 'Sign this update' },
   file: { id: 'osp.annual.confirm.file', defaultMessage: 'Record as filed' },
@@ -325,6 +409,9 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   const [filingMethod, setFilingMethod] = useState<FilingMethod | ''>('');
   const [filingDate, setFilingDate] = useState(todayIso());
   const [withdrawReason, setWithdrawReason] = useState('');
+  // Run 8 (R8-11): superseded and withdrawn revisions stay on record but fold away.
+  const [showOlder, setShowOlder] = useState(false);
+  const olderCount = updates.filter((u) => !isShownByDefault(u, updates)).length;
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const fieldRefs = useRef<Partial<Record<FieldKey, HTMLDivElement | null>>>({});
 
@@ -435,6 +522,11 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
     const live = updates.filter((u) => u.reporting_year === year && !u.withdrawn_at);
     return live.find((u) => !u.is_locked) ?? live[0] ?? null;
   }, [updates, form.reporting_year, editingId]);
+
+  // Run 8 (R8-11): a year already signed or filed is changed by a correction from its own row,
+  // never by a second new entry. The form used to render in full for such a year and warn only
+  // at the bottom, after the grower had filled it in.
+  const selectedYearIsFiled = editingId == null && Boolean(duplicateForYear?.is_locked);
 
   const startEdit = (u: OSPAnnualUpdate) => {
     setEditingId(u.id);
@@ -672,29 +764,51 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
           </Text>
         )}
 
-        {updates.map((u) => (
-          <Box key={u.id} p={3} borderWidth="1px" borderColor="gray.200" borderRadius="md">
-            <HStack justify="space-between">
-              <Box>
-                <Text fontWeight="semibold" fontSize="sm">
-                  {(u.revision_number ?? 1) > 1
-                    ? intl.formatMessage(
-                        {
-                          id: 'osp.annual.yearRevision',
-                          defaultMessage: '{year} · revision {revision}'
-                        },
-                        { year: u.reporting_year, revision: u.revision_number }
-                      )
-                    : u.reporting_year}
-                </Text>
-                <Text fontSize="xs" color="gray.500" noOfLines={2}>
-                  {u.changes_summary ||
-                    intl.formatMessage({
-                      id: 'osp.annual.noChanges',
-                      defaultMessage: 'No changes — OSP reaffirmed'
-                    })}
-                </Text>
-                {/*
+        {olderCount > 0 && (
+          <StandardButton
+            size="sm"
+            variant="ghost"
+            alignSelf="flex-start"
+            aria-expanded={showOlder}
+            data-testid="annual-older-toggle"
+            onClick={() => setShowOlder((v) => !v)}>
+            {intl.formatMessage(
+              {
+                id: showOlder ? 'osp.annual.hideOlder' : 'osp.annual.showOlder',
+                defaultMessage: showOlder
+                  ? 'Hide earlier revisions'
+                  : 'Show {count, plural, one {# earlier revision} other {# earlier revisions}}'
+              },
+              { count: olderCount }
+            )}
+          </StandardButton>
+        )}
+
+        {updates
+          .filter((u) => showOlder || isShownByDefault(u, updates))
+          .map((u) => (
+            <Box key={u.id} p={3} borderWidth="1px" borderColor="gray.200" borderRadius="md">
+              <HStack justify="space-between">
+                <Box>
+                  <Text fontWeight="semibold" fontSize="sm">
+                    {(u.revision_number ?? 1) > 1
+                      ? intl.formatMessage(
+                          {
+                            id: 'osp.annual.yearRevision',
+                            defaultMessage: '{year} · revision {revision}'
+                          },
+                          { year: u.reporting_year, revision: u.revision_number }
+                        )
+                      : u.reporting_year}
+                  </Text>
+                  <Text fontSize="xs" color="gray.500" noOfLines={2}>
+                    {u.changes_summary ||
+                      intl.formatMessage({
+                        id: 'osp.annual.noChanges',
+                        defaultMessage: 'No changes — OSP reaffirmed'
+                      })}
+                  </Text>
+                  {/*
                   `formatDateFromTimestamp`, NOT `formatDateOnly`. Both live in the same file and
                   the neighbouring change-notifications panel uses the latter — correctly, because
                   ITS columns are DateFields. `OSPAnnualUpdate.submitted_at` and
@@ -711,36 +825,36 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                   us to. The row used to answer neither: a "Submitted" pill carried no date,
                   and `prior_osp` was a database id nobody can read as a plan version.
                 */}
-                <HStack spacing={2} mt={1} flexWrap="wrap">
-                  {formatDateFromTimestamp(u.submitted_at, intl.locale) && (
-                    <Text fontSize="xs" color="gray.600">
-                      {intl.formatMessage(
-                        { id: 'osp.annual.filedOn', defaultMessage: 'Filed {date}' },
-                        { date: formatDateFromTimestamp(u.submitted_at, intl.locale) }
-                      )}
-                    </Text>
-                  )}
-                  {u.prior_osp_version != null && (
-                    <Text fontSize="xs" color="gray.600">
-                      {u.new_osp_version != null
-                        ? intl.formatMessage(
-                            {
-                              id: 'osp.annual.planMoved',
-                              defaultMessage: 'Plan v{from} → v{to}'
-                            },
-                            { from: u.prior_osp_version, to: u.new_osp_version }
-                          )
-                        : intl.formatMessage(
-                            {
-                              id: 'osp.annual.planReaffirmed',
-                              defaultMessage: 'Plan v{from} reaffirmed'
-                            },
-                            { from: u.prior_osp_version }
-                          )}
-                    </Text>
-                  )}
-                </HStack>
-                {/*
+                  <HStack spacing={2} mt={1} flexWrap="wrap">
+                    {formatDateFromTimestamp(u.submitted_at, intl.locale) && (
+                      <Text fontSize="xs" color="gray.600">
+                        {intl.formatMessage(
+                          { id: 'osp.annual.filedOn', defaultMessage: 'Filed {date}' },
+                          { date: formatDateFromTimestamp(u.submitted_at, intl.locale) }
+                        )}
+                      </Text>
+                    )}
+                    {u.prior_osp_version != null && (
+                      <Text fontSize="xs" color="gray.600">
+                        {u.new_osp_version != null
+                          ? intl.formatMessage(
+                              {
+                                id: 'osp.annual.planMoved',
+                                defaultMessage: 'Plan v{from} → v{to}'
+                              },
+                              { from: u.prior_osp_version, to: u.new_osp_version }
+                            )
+                          : intl.formatMessage(
+                              {
+                                id: 'osp.annual.planReaffirmed',
+                                defaultMessage: 'Plan v{from} reaffirmed'
+                              },
+                              { from: u.prior_osp_version }
+                            )}
+                      </Text>
+                    )}
+                  </HStack>
+                  {/*
                   Acknowledgment is shown ONLY when it is on record, and never as a pending
                   state. Nothing in the product writes `certifier_acknowledged_at` — it is
                   read-only on the serializer and set by staff — so for a farmer it is always
@@ -748,186 +862,189 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                   every filing forever and imply Trazo tracks certifier replies, which it does
                   not. An absent acknowledgment is not evidence the certifier withheld one.
                 */}
-                {formatDateFromTimestamp(u.certifier_acknowledged_at, intl.locale) && (
-                  <Text fontSize="xs" color="green.700" fontWeight="medium" mt={1}>
-                    {intl.formatMessage(
-                      {
-                        id: 'osp.annual.acknowledgedOn',
-                        defaultMessage: 'Certifier acknowledged {date}'
-                      },
-                      { date: formatDateFromTimestamp(u.certifier_acknowledged_at, intl.locale) }
-                    )}
-                  </Text>
-                )}
-              </Box>
-              <HStack spacing={2} flexWrap="wrap" justify="flex-end">
-                <Badge variant={STATE_BADGE[rowState(u)]}>
-                  {intl.formatMessage(STATE_LABELS[rowState(u)])}
-                </Badge>
-                {/*
+                  {formatDateFromTimestamp(u.certifier_acknowledged_at, intl.locale) && (
+                    <Text fontSize="xs" color="green.700" fontWeight="medium" mt={1}>
+                      {intl.formatMessage(
+                        {
+                          id: 'osp.annual.acknowledgedOn',
+                          defaultMessage: 'Certifier acknowledged {date}'
+                        },
+                        { date: formatDateFromTimestamp(u.certifier_acknowledged_at, intl.locale) }
+                      )}
+                    </Text>
+                  )}
+                </Box>
+                <HStack spacing={2} flexWrap="wrap" justify="flex-end">
+                  <Badge variant={STATE_BADGE[rowState(u)]}>
+                    {intl.formatMessage(STATE_LABELS[rowState(u)])}
+                  </Badge>
+                  {/*
                   Edit exists only while the revision is an unsigned draft. Once signed or filed
                   the server refuses edits (409) and the packet prints the filed document byte for
                   byte; a mistake is fixed by a correction, the next revision, which leaves this
                   one as it was.
                 */}
-                {!u.is_locked && (
-                  <StandardButton size="xs" variant="ghost" onClick={() => startEdit(u)}>
-                    {intl.formatMessage({ id: 'osp.annual.edit', defaultMessage: 'Edit' })}
-                  </StandardButton>
-                )}
-                {rowState(u) === 'draft' && (
-                  <StandardButton
-                    size="xs"
-                    variant="outline"
-                    onClick={() => openPending(u.id, 'sign')}>
-                    {intl.formatMessage({ id: 'osp.annual.sign', defaultMessage: 'Sign' })}
-                  </StandardButton>
-                )}
-                {rowState(u) === 'signed' && !correctedIds.has(u.id) && (
-                  <StandardButton
-                    size="xs"
-                    variant="outline"
-                    onClick={() => openPending(u.id, 'file')}>
-                    {intl.formatMessage({
-                      id: 'osp.annual.recordFiling',
-                      defaultMessage: 'Record filing'
-                    })}
-                  </StandardButton>
-                )}
-                {/*
+                  {!u.is_locked && (
+                    <StandardButton size="xs" variant="ghost" onClick={() => startEdit(u)}>
+                      {intl.formatMessage({ id: 'osp.annual.edit', defaultMessage: 'Edit' })}
+                    </StandardButton>
+                  )}
+                  {rowState(u) === 'draft' && (
+                    <StandardButton
+                      size="xs"
+                      variant="outline"
+                      onClick={() => openPending(u.id, 'sign')}>
+                      {intl.formatMessage({ id: 'osp.annual.sign', defaultMessage: 'Sign' })}
+                    </StandardButton>
+                  )}
+                  {rowState(u) === 'signed' && !correctedIds.has(u.id) && (
+                    <StandardButton
+                      size="xs"
+                      variant="outline"
+                      onClick={() => openPending(u.id, 'file')}>
+                      {intl.formatMessage({
+                        id: 'osp.annual.recordFiling',
+                        defaultMessage: 'Record filing'
+                      })}
+                    </StandardButton>
+                  )}
+                  {/*
                   Offered on a signed revision too: once signed its content is fixed, so a mistake
                   found before filing is also a correction. Filing the correction replaces this
                   revision, filed or not.
                 */}
-                {(rowState(u) === 'signed' || rowState(u) === 'filed') &&
-                  !correctedIds.has(u.id) && (
+                  {(rowState(u) === 'signed' || rowState(u) === 'filed') &&
+                    !correctedIds.has(u.id) && (
+                      <StandardButton
+                        size="xs"
+                        variant="ghost"
+                        onClick={() => openPending(u.id, 'correct')}>
+                        {intl.formatMessage({
+                          id: 'osp.annual.createCorrection',
+                          defaultMessage: 'Create correction'
+                        })}
+                      </StandardButton>
+                    )}
+                  {rowState(u) === 'filed' && (
                     <StandardButton
                       size="xs"
                       variant="ghost"
-                      onClick={() => openPending(u.id, 'correct')}>
+                      onClick={() => openPending(u.id, 'withdraw')}>
                       {intl.formatMessage({
-                        id: 'osp.annual.createCorrection',
-                        defaultMessage: 'Create correction'
+                        id: 'osp.annual.withdraw',
+                        defaultMessage: 'Withdraw'
                       })}
                     </StandardButton>
                   )}
-                {rowState(u) === 'filed' && (
-                  <StandardButton
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => openPending(u.id, 'withdraw')}>
-                    {intl.formatMessage({ id: 'osp.annual.withdraw', defaultMessage: 'Withdraw' })}
-                  </StandardButton>
-                )}
+                </HStack>
               </HStack>
-            </HStack>
-            {pending?.id === u.id && (
-              <Box mt={3} pt={3} borderTopWidth="1px" borderColor="gray.100">
-                {pending.kind === 'sign' && (
-                  <VStack align="stretch" spacing={2}>
+              {pending?.id === u.id && (
+                <Box mt={3} pt={3} borderTopWidth="1px" borderColor="gray.100">
+                  {pending.kind === 'sign' && (
+                    <VStack align="stretch" spacing={2}>
+                      <Text fontSize="xs" color="gray.600">
+                        {intl.formatMessage({
+                          id: 'osp.annual.signHelp',
+                          defaultMessage:
+                            'Signing records your name and the date against exactly what this update says. After signing it cannot be edited; a change is made as a correction.'
+                        })}
+                      </Text>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'osp.annual.signerTitle',
+                          defaultMessage: 'Your title (optional)'
+                        })}>
+                        <StandardInput
+                          value={signerTitle}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setSignerTitle(e.target.value)
+                          }
+                        />
+                      </StandardField>
+                    </VStack>
+                  )}
+                  {pending.kind === 'file' && (
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'osp.annual.filedDate',
+                          defaultMessage: 'Date filed with your certifier'
+                        })}>
+                        <StandardInput
+                          type="date"
+                          max={todayIso()}
+                          value={filingDate}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setFilingDate(e.target.value)
+                          }
+                        />
+                      </StandardField>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'osp.annual.filingMethod',
+                          defaultMessage: 'How it was filed'
+                        })}>
+                        <StandardSelect
+                          value={filingMethod}
+                          placeholder={intl.formatMessage({
+                            id: 'osp.annual.filingMethodUnset',
+                            defaultMessage: 'Not recorded'
+                          })}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                            setFilingMethod(e.target.value as FilingMethod | '')
+                          }>
+                          {FILING_METHODS.map((m) => (
+                            <option key={m} value={m}>
+                              {intl.formatMessage(FILING_METHOD_LABELS[m])}
+                            </option>
+                          ))}
+                        </StandardSelect>
+                      </StandardField>
+                    </SimpleGrid>
+                  )}
+                  {pending.kind === 'correct' && (
                     <Text fontSize="xs" color="gray.600">
                       {intl.formatMessage({
-                        id: 'osp.annual.signHelp',
+                        id: 'osp.annual.correctHelp',
                         defaultMessage:
-                          'Signing records your name and the date against exactly what this update says. After signing it cannot be edited; a change is made as a correction.'
+                          'This opens the next revision as an unsigned copy for you to change, sign and file. This revision stays exactly as it is, and is replaced only when the correction is filed.'
                       })}
                     </Text>
+                  )}
+                  {pending.kind === 'withdraw' && (
                     <StandardField
                       label={intl.formatMessage({
-                        id: 'osp.annual.signerTitle',
-                        defaultMessage: 'Your title (optional)'
+                        id: 'osp.annual.withdrawReason',
+                        defaultMessage: 'Why is this filing withdrawn?'
                       })}>
-                      <StandardInput
-                        value={signerTitle}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setSignerTitle(e.target.value)
+                      <StandardTextarea
+                        rows={2}
+                        value={withdrawReason}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          setWithdrawReason(e.target.value)
                         }
                       />
                     </StandardField>
-                  </VStack>
-                )}
-                {pending.kind === 'file' && (
-                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
-                    <StandardField
-                      label={intl.formatMessage({
-                        id: 'osp.annual.filedDate',
-                        defaultMessage: 'Date filed with your certifier'
-                      })}>
-                      <StandardInput
-                        type="date"
-                        max={todayIso()}
-                        value={filingDate}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setFilingDate(e.target.value)
-                        }
-                      />
-                    </StandardField>
-                    <StandardField
-                      label={intl.formatMessage({
-                        id: 'osp.annual.filingMethod',
-                        defaultMessage: 'How it was filed'
-                      })}>
-                      <StandardSelect
-                        value={filingMethod}
-                        placeholder={intl.formatMessage({
-                          id: 'osp.annual.filingMethodUnset',
-                          defaultMessage: 'Not recorded'
-                        })}
-                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                          setFilingMethod(e.target.value as FilingMethod | '')
-                        }>
-                        {FILING_METHODS.map((m) => (
-                          <option key={m} value={m}>
-                            {intl.formatMessage(FILING_METHOD_LABELS[m])}
-                          </option>
-                        ))}
-                      </StandardSelect>
-                    </StandardField>
-                  </SimpleGrid>
-                )}
-                {pending.kind === 'correct' && (
-                  <Text fontSize="xs" color="gray.600">
-                    {intl.formatMessage({
-                      id: 'osp.annual.correctHelp',
-                      defaultMessage:
-                        'This opens the next revision as an unsigned copy for you to change, sign and file. This revision stays exactly as it is, and is replaced only when the correction is filed.'
-                    })}
-                  </Text>
-                )}
-                {pending.kind === 'withdraw' && (
-                  <StandardField
-                    label={intl.formatMessage({
-                      id: 'osp.annual.withdrawReason',
-                      defaultMessage: 'Why is this filing withdrawn?'
-                    })}>
-                    <StandardTextarea
-                      rows={2}
-                      value={withdrawReason}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        setWithdrawReason(e.target.value)
+                  )}
+                  <HStack justify="flex-end" spacing={2} mt={2}>
+                    <StandardButton size="xs" variant="ghost" onClick={() => openPending(null)}>
+                      {intl.formatMessage({ id: 'osp.annual.cancel', defaultMessage: 'Cancel' })}
+                    </StandardButton>
+                    <StandardButton
+                      size="xs"
+                      isLoading={busy}
+                      isDisabled={
+                        (pending.kind === 'withdraw' && !withdrawReason.trim()) ||
+                        (pending.kind === 'file' && (!filingDate || filingDate > todayIso()))
                       }
-                    />
-                  </StandardField>
-                )}
-                <HStack justify="flex-end" spacing={2} mt={2}>
-                  <StandardButton size="xs" variant="ghost" onClick={() => openPending(null)}>
-                    {intl.formatMessage({ id: 'osp.annual.cancel', defaultMessage: 'Cancel' })}
-                  </StandardButton>
-                  <StandardButton
-                    size="xs"
-                    isLoading={busy}
-                    isDisabled={
-                      (pending.kind === 'withdraw' && !withdrawReason.trim()) ||
-                      (pending.kind === 'file' && (!filingDate || filingDate > todayIso()))
-                    }
-                    onClick={() => runAction(u, pending.kind)}>
-                    {intl.formatMessage(CONFIRM_LABELS[pending.kind])}
-                  </StandardButton>
-                </HStack>
-              </Box>
-            )}
-          </Box>
-        ))}
+                      onClick={() => runAction(u, pending.kind)}>
+                      {intl.formatMessage(CONFIRM_LABELS[pending.kind])}
+                    </StandardButton>
+                  </HStack>
+                </Box>
+              )}
+            </Box>
+          ))}
 
         {ospId != null && (
           <Box p={3} borderWidth="1px" borderColor="green.200" borderRadius="md">
@@ -993,297 +1110,312 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                   />
                 </StandardField>
               </Box>
-              {editingIsCorrection && (
-                <Box
-                  ref={(el: HTMLDivElement | null) => {
-                    fieldRefs.current.correction_note = el;
-                  }}>
-                  <StandardField
-                    label={intl.formatMessage({
-                      id: 'osp.annual.correctionNote',
-                      defaultMessage: 'What this revision corrects in the one before it'
-                    })}
-                    helpText={intl.formatMessage({
-                      id: 'osp.annual.correctionNoteHelp',
+              {selectedYearIsFiled ? (
+                <Text fontSize="sm" color="gray.700" data-testid="annual-year-filed">
+                  {intl.formatMessage(
+                    {
+                      id: 'osp.annual.duplicateYearLockedWarning',
                       defaultMessage:
-                        'Printed on the filed document, in your words, and signed with it. Say what was wrong and what you changed.'
-                    })}
-                    error={fieldErrors.correction_note}>
-                    <StandardTextarea
-                      rows={3}
-                      data-testid="annual-update-correction-note"
-                      value={form.correction_note}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        set('correction_note', e.target.value)
-                      }
-                    />
-                  </StandardField>
-                </Box>
-              )}
-              <Box
-                ref={(el: HTMLDivElement | null) => {
-                  fieldRefs.current.changes_summary = el;
-                }}>
-                <StandardField
-                  label={intl.formatMessage({
-                    id: 'osp.annual.changesSummary',
-                    defaultMessage: 'Summary of Changes (§ 205.406(a)(1))'
-                  })}
-                  error={fieldErrors.changes_summary}>
-                  <StandardTextarea
-                    rows={3}
-                    value={form.changes_summary}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      set('changes_summary', e.target.value)
-                    }
-                    placeholder={intl.formatMessage({
-                      id: 'osp.annual.changesSummaryPlaceholder',
-                      defaultMessage:
-                        'Describe any changes since last year, or state that there are none.'
-                    })}
-                  />
-                </StandardField>
-              </Box>
-              <Box
-                ref={(el: HTMLDivElement | null) => {
-                  fieldRefs.current.additions = el;
-                }}>
-                <StandardField
-                  label={intl.formatMessage({
-                    id: 'osp.annual.additions',
-                    defaultMessage: 'Additions planned (one per line)'
-                  })}
-                  error={fieldErrors.additions}>
-                  <StandardTextarea
-                    rows={2}
-                    value={form.additions}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      set('additions', e.target.value)
-                    }
-                    placeholder={intl.formatMessage({
-                      id: 'osp.annual.additionsPlaceholder',
-                      defaultMessage: 'e.g., New 2-acre block; new OMRI compost supplier'
-                    })}
-                  />
-                </StandardField>
-              </Box>
-              <Box
-                ref={(el: HTMLDivElement | null) => {
-                  fieldRefs.current.deletions = el;
-                }}>
-                <StandardField
-                  label={intl.formatMessage({
-                    id: 'osp.annual.deletions',
-                    defaultMessage: 'Deletions planned (one per line)'
-                  })}
-                  error={fieldErrors.deletions}>
-                  <StandardTextarea
-                    rows={2}
-                    value={form.deletions}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      set('deletions', e.target.value)
-                    }
-                    placeholder={intl.formatMessage({
-                      id: 'osp.annual.deletionsPlaceholder',
-                      defaultMessage: 'e.g., Discontinued a pest material'
-                    })}
-                  />
-                </StandardField>
-                {/*
+                        'The {year} update is signed or filed. Change it with Create correction on its row.'
+                    },
+                    { year: form.reporting_year }
+                  )}
+                </Text>
+              ) : (
+                <>
+                  {editingIsCorrection && (
+                    <Box
+                      ref={(el: HTMLDivElement | null) => {
+                        fieldRefs.current.correction_note = el;
+                      }}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'osp.annual.correctionNote',
+                          defaultMessage: 'What this revision corrects in the one before it'
+                        })}
+                        helpText={intl.formatMessage({
+                          id: 'osp.annual.correctionNoteHelp',
+                          defaultMessage:
+                            'Printed on the filed document, in your words, and signed with it. Say what was wrong and what you changed.'
+                        })}
+                        error={fieldErrors.correction_note}>
+                        <StandardTextarea
+                          rows={3}
+                          data-testid="annual-update-correction-note"
+                          value={form.correction_note}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                            set('correction_note', e.target.value)
+                          }
+                        />
+                      </StandardField>
+                    </Box>
+                  )}
+                  <Box
+                    ref={(el: HTMLDivElement | null) => {
+                      fieldRefs.current.changes_summary = el;
+                    }}>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'osp.annual.changesSummary',
+                        defaultMessage: 'Summary of Changes (§ 205.406(a)(1))'
+                      })}
+                      error={fieldErrors.changes_summary}>
+                      <StandardTextarea
+                        rows={3}
+                        value={form.changes_summary}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          set('changes_summary', e.target.value)
+                        }
+                        placeholder={intl.formatMessage({
+                          id: 'osp.annual.changesSummaryPlaceholder',
+                          defaultMessage:
+                            'Describe any changes since last year, or state that there are none.'
+                        })}
+                      />
+                    </StandardField>
+                  </Box>
+                  <Box
+                    ref={(el: HTMLDivElement | null) => {
+                      fieldRefs.current.additions = el;
+                    }}>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'osp.annual.additions',
+                        defaultMessage: 'Additions planned (one per line)'
+                      })}
+                      error={fieldErrors.additions}>
+                      <StandardTextarea
+                        rows={2}
+                        value={form.additions}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          set('additions', e.target.value)
+                        }
+                        placeholder={intl.formatMessage({
+                          id: 'osp.annual.additionsPlaceholder',
+                          defaultMessage: 'e.g., New 2-acre block; new OMRI compost supplier'
+                        })}
+                      />
+                    </StandardField>
+                  </Box>
+                  <Box
+                    ref={(el: HTMLDivElement | null) => {
+                      fieldRefs.current.deletions = el;
+                    }}>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'osp.annual.deletions',
+                        defaultMessage: 'Deletions planned (one per line)'
+                      })}
+                      error={fieldErrors.deletions}>
+                      <StandardTextarea
+                        rows={2}
+                        value={form.deletions}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          set('deletions', e.target.value)
+                        }
+                        placeholder={intl.formatMessage({
+                          id: 'osp.annual.deletionsPlaceholder',
+                          defaultMessage: 'e.g., Discontinued a pest material'
+                        })}
+                      />
+                    </StandardField>
+                    {/*
                   "Reporting Year" read as the year being reported ON, and the packet prints this
                   number as the year the operation continues ("Continuation for 2026"). One
                   meaning, said once (2026-09-11).
                 */}
-                <Text fontSize="xs" color="gray.500" mt={1}>
-                  {intl.formatMessage({
-                    id: 'osp.annual.reportingYearHelp',
-                    defaultMessage:
-                      'The certification year this filing continues. A renewal due 1 March 2026 continues 2026 and reports on the 2025 season.'
-                  })}
-                </Text>
-              </Box>
-              <Divider />
+                    <Text fontSize="xs" color="gray.500" mt={1}>
+                      {intl.formatMessage({
+                        id: 'osp.annual.reportingYearHelp',
+                        defaultMessage:
+                          'The certification year this filing continues. A renewal due 1 March 2026 continues 2026 and reports on the 2025 season.'
+                      })}
+                    </Text>
+                  </Box>
+                  <Divider />
 
-              {/*
+                  {/*
                 § 205.406(a)(1) asks for a summary of changes since the prior OSP. For a
                 mature operation the honest answer is usually "nothing changed" — but a
                 free-text box makes that unverifiable per section. These per-section
                 attestations give the certifier a section-by-section answer.
               */}
-              <Box>
-                <HStack justify="space-between" align="center" mb={2}>
-                  <FormLabel fontSize="sm" mb={0}>
-                    {intl.formatMessage({
-                      id: 'osp.annual.sectionsUnchanged',
-                      defaultMessage: 'Sections unchanged since the prior OSP'
-                    })}
-                  </FormLabel>
-                  <StandardButton
-                    size="xs"
-                    variant="ghost"
-                    onClick={() =>
-                      set(
-                        'sections_unchanged',
-                        OSP_SECTION_KEYS.reduce((acc, key) => ({ ...acc, [key]: true }), {})
-                      )
-                    }>
-                    {intl.formatMessage({
-                      id: 'osp.annual.markAllUnchanged',
-                      defaultMessage: 'Mark all unchanged'
-                    })}
-                  </StandardButton>
-                </HStack>
-                <Text fontSize="xs" color="gray.500" mb={2}>
-                  {intl.formatMessage({
-                    id: 'osp.annual.sectionsUnchangedHelp',
-                    defaultMessage:
-                      'Tick each section of your Organic System Plan that has not changed. Leave a section unticked if you describe its change above.'
-                  })}
-                </Text>
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
-                  {OSP_SECTION_KEYS.map((key) => (
+                  <Box>
+                    <HStack justify="space-between" align="center" mb={2}>
+                      <FormLabel fontSize="sm" mb={0}>
+                        {intl.formatMessage({
+                          id: 'osp.annual.sectionsUnchanged',
+                          defaultMessage: 'Sections unchanged since the prior OSP'
+                        })}
+                      </FormLabel>
+                      <StandardButton
+                        size="xs"
+                        variant="ghost"
+                        onClick={() =>
+                          set(
+                            'sections_unchanged',
+                            OSP_SECTION_KEYS.reduce((acc, key) => ({ ...acc, [key]: true }), {})
+                          )
+                        }>
+                        {intl.formatMessage({
+                          id: 'osp.annual.markAllUnchanged',
+                          defaultMessage: 'Mark all unchanged'
+                        })}
+                      </StandardButton>
+                    </HStack>
+                    <Text fontSize="xs" color="gray.500" mb={2}>
+                      {intl.formatMessage({
+                        id: 'osp.annual.sectionsUnchangedHelp',
+                        defaultMessage:
+                          'Tick each section of your Organic System Plan that has not changed. Leave a section unticked if you describe its change above.'
+                      })}
+                    </Text>
+                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={2}>
+                      {OSP_SECTION_KEYS.map((key) => (
+                        <Checkbox
+                          key={key}
+                          size="sm"
+                          colorScheme="green"
+                          isChecked={Boolean(form.sections_unchanged[key])}
+                          onChange={(e) => setSection(key, e.target.checked)}>
+                          <Text fontSize="sm">{intl.formatMessage(SECTION_LABELS[key])}</Text>
+                        </Checkbox>
+                      ))}
+                    </SimpleGrid>
                     <Checkbox
-                      key={key}
+                      mt={3}
                       size="sm"
                       colorScheme="green"
-                      isChecked={Boolean(form.sections_unchanged[key])}
-                      onChange={(e) => setSection(key, e.target.checked)}>
-                      <Text fontSize="sm">{intl.formatMessage(SECTION_LABELS[key])}</Text>
+                      isChecked={Boolean(form.sections_unchanged[APPLICATION_INFO_KEY])}
+                      onChange={(e) => setSection(APPLICATION_INFO_KEY, e.target.checked)}>
+                      <Text fontSize="sm">
+                        {intl.formatMessage({
+                          id: 'osp.annual.applicationInfoUnchanged',
+                          defaultMessage:
+                            'Business name, address, telephone and the person responsible for the operation are unchanged (7 CFR 205.406(a)(3))'
+                        })}
+                      </Text>
                     </Checkbox>
-                  ))}
-                </SimpleGrid>
-                <Checkbox
-                  mt={3}
-                  size="sm"
-                  colorScheme="green"
-                  isChecked={Boolean(form.sections_unchanged[APPLICATION_INFO_KEY])}
-                  onChange={(e) => setSection(APPLICATION_INFO_KEY, e.target.checked)}>
-                  <Text fontSize="sm">
-                    {intl.formatMessage({
-                      id: 'osp.annual.applicationInfoUnchanged',
-                      defaultMessage:
-                        'Business name, address, telephone and the person responsible for the operation are unchanged (7 CFR 205.406(a)(3))'
-                    })}
-                  </Text>
-                </Checkbox>
-                <Text fontSize="xs" color="gray.500" mt={1}>
-                  {intl.formatMessage({
-                    id: 'osp.annual.applicationInfoUnchangedHelp',
-                    defaultMessage:
-                      'Leave it unticked if any of them changed, and tell your certifying agent what changed. The filing prints your answer either way.'
-                  })}
-                </Text>
-                <Box
-                  mt={3}
-                  ref={(el: HTMLDivElement | null) => {
-                    fieldRefs.current.application_info_changes = el;
-                  }}>
-                  <StandardField
-                    label={intl.formatMessage({
-                      id: 'osp.annual.applicationInfoChanges',
-                      defaultMessage:
-                        'What changed in the application information (§ 205.406(a)(3))'
-                    })}
-                    error={fieldErrors.application_info_changes}>
-                    <StandardTextarea
-                      rows={2}
-                      value={form.application_info_changes}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        set('application_info_changes', e.target.value)
-                      }
-                    />
-                  </StandardField>
-                </Box>
-              </Box>
-
-              <Box
-                ref={(el: HTMLDivElement | null) => {
-                  fieldRefs.current.agent_requested_info = el;
-                }}>
-                <StandardField
-                  label={intl.formatMessage({
-                    id: 'osp.annual.agentRequestedInfo',
-                    defaultMessage:
-                      'Other information your certifying agent asked for (§ 205.406(a)(4))'
-                  })}
-                  error={fieldErrors.agent_requested_info}>
-                  <StandardTextarea
-                    rows={2}
-                    value={form.agent_requested_info}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      set('agent_requested_info', e.target.value)
-                    }
-                  />
-                </StandardField>
-                <Checkbox
-                  mt={2}
-                  size="sm"
-                  colorScheme="green"
-                  isChecked={form.agent_requested_info_none}
-                  onChange={(e) => set('agent_requested_info_none', e.target.checked)}>
-                  <Text fontSize="sm">
-                    {intl.formatMessage({
-                      id: 'osp.annual.agentRequestedNone',
-                      defaultMessage: 'My certifying agent asked for nothing further this year'
-                    })}
-                  </Text>
-                </Checkbox>
-              </Box>
-
-              <Divider />
-
-              {duplicateForYear && (
-                <Text fontSize="sm" color="gray.700">
-                  {duplicateForYear.is_locked
-                    ? intl.formatMessage(
-                        {
-                          id: 'osp.annual.duplicateYearLockedWarning',
+                    <Text fontSize="xs" color="gray.500" mt={1}>
+                      {intl.formatMessage({
+                        id: 'osp.annual.applicationInfoUnchangedHelp',
+                        defaultMessage:
+                          'Leave it unticked if any of them changed, and tell your certifying agent what changed. The filing prints your answer either way.'
+                      })}
+                    </Text>
+                    <Box
+                      mt={3}
+                      ref={(el: HTMLDivElement | null) => {
+                        fieldRefs.current.application_info_changes = el;
+                      }}>
+                      <StandardField
+                        label={intl.formatMessage({
+                          id: 'osp.annual.applicationInfoChanges',
                           defaultMessage:
-                            'The {year} update is signed or filed. Change it with Create correction on its row.'
-                        },
-                        { year: form.reporting_year }
-                      )
-                    : intl.formatMessage(
-                        {
-                          id: 'osp.annual.duplicateYearWarning',
-                          defaultMessage:
-                            'You already filed an update for {year}. Saving will open it for editing.'
-                        },
-                        { year: form.reporting_year }
-                      )}
-                </Text>
-              )}
+                            'What changed in the application information (§ 205.406(a)(3))'
+                        })}
+                        error={fieldErrors.application_info_changes}>
+                        <StandardTextarea
+                          rows={2}
+                          value={form.application_info_changes}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                            set('application_info_changes', e.target.value)
+                          }
+                        />
+                      </StandardField>
+                    </Box>
+                  </Box>
 
-              {/*
+                  <Box
+                    ref={(el: HTMLDivElement | null) => {
+                      fieldRefs.current.agent_requested_info = el;
+                    }}>
+                    <StandardField
+                      label={intl.formatMessage({
+                        id: 'osp.annual.agentRequestedInfo',
+                        defaultMessage:
+                          'Other information your certifying agent asked for (§ 205.406(a)(4))'
+                      })}
+                      error={fieldErrors.agent_requested_info}>
+                      <StandardTextarea
+                        rows={2}
+                        value={form.agent_requested_info}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                          set('agent_requested_info', e.target.value)
+                        }
+                      />
+                    </StandardField>
+                    <Checkbox
+                      mt={2}
+                      size="sm"
+                      colorScheme="green"
+                      isChecked={form.agent_requested_info_none}
+                      onChange={(e) => set('agent_requested_info_none', e.target.checked)}>
+                      <Text fontSize="sm">
+                        {intl.formatMessage({
+                          id: 'osp.annual.agentRequestedNone',
+                          defaultMessage: 'My certifying agent asked for nothing further this year'
+                        })}
+                      </Text>
+                    </Checkbox>
+                  </Box>
+
+                  <Divider />
+
+                  {duplicateForYear && (
+                    <Text fontSize="sm" color="gray.700">
+                      {duplicateForYear.is_locked
+                        ? intl.formatMessage(
+                            {
+                              id: 'osp.annual.duplicateYearLockedWarning',
+                              defaultMessage:
+                                'The {year} update is signed or filed. Change it with Create correction on its row.'
+                            },
+                            { year: form.reporting_year }
+                          )
+                        : intl.formatMessage(
+                            {
+                              id: 'osp.annual.duplicateYearWarning',
+                              defaultMessage:
+                                'You already filed an update for {year}. Saving will open it for editing.'
+                            },
+                            { year: form.reporting_year }
+                          )}
+                    </Text>
+                  )}
+
+                  {/*
                 There used to be a "Filed with my certifier" box here that stamped today's date
                 on save. Filing is now its own step on the saved row: sign it, then record the
                 date and how it reached the agent. Once filed it is kept exactly as filed.
               */}
-              <Text fontSize="xs" color="gray.500">
-                {intl.formatMessage({
-                  id: 'osp.annual.signThenFileHelp',
-                  defaultMessage:
-                    'Save the update, then sign it and record when it was filed from its row above. A filed update is kept exactly as filed.'
-                })}
-              </Text>
-              <HStack justify="flex-end" spacing={2}>
-                {editingId != null && (
-                  <StandardButton size="sm" variant="ghost" onClick={resetForm}>
-                    {intl.formatMessage({ id: 'osp.annual.cancel', defaultMessage: 'Cancel' })}
-                  </StandardButton>
-                )}
-                <StandardButton size="sm" onClick={handleSave} isLoading={creating || updating}>
-                  {editingId != null
-                    ? intl.formatMessage({
-                        id: 'osp.annual.update',
-                        defaultMessage: 'Update Filing'
-                      })
-                    : intl.formatMessage({
-                        id: 'osp.annual.save',
-                        defaultMessage: 'Save Annual Update'
-                      })}
-                </StandardButton>
-              </HStack>
+                  <Text fontSize="xs" color="gray.500">
+                    {intl.formatMessage({
+                      id: 'osp.annual.signThenFileHelp',
+                      defaultMessage:
+                        'Save the update, then sign it and record when it was filed from its row above. A filed update is kept exactly as filed.'
+                    })}
+                  </Text>
+                  <HStack justify="flex-end" spacing={2}>
+                    {editingId != null && (
+                      <StandardButton size="sm" variant="ghost" onClick={resetForm}>
+                        {intl.formatMessage({ id: 'osp.annual.cancel', defaultMessage: 'Cancel' })}
+                      </StandardButton>
+                    )}
+                    <StandardButton size="sm" onClick={handleSave} isLoading={creating || updating}>
+                      {editingId != null
+                        ? intl.formatMessage({
+                            id: 'osp.annual.update',
+                            defaultMessage: 'Update Filing'
+                          })
+                        : intl.formatMessage({
+                            id: 'osp.annual.save',
+                            defaultMessage: 'Save Annual Update'
+                          })}
+                    </StandardButton>
+                  </HStack>
+                </>
+              )}
             </VStack>
           </Box>
         )}
