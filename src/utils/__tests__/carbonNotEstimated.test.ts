@@ -101,5 +101,12 @@ describe('review of app #83', () => {
     const open = row.lastIndexOf('<Text', at);
     expect(at).toBeGreaterThan(-1);
     expect(row.slice(open, at)).not.toMatch(/nowrap/);
+    // Manual 375px pass (2026-10-06): removing nowrap was not enough. Its row kept
+    // flexShrink={0}, so the sentence stayed on one line 120px past the card edge.
+    const stack = row.lastIndexOf('<HStack', at);
+    expect(stack).toBeGreaterThan(-1);
+    const stackOpen = row.slice(stack, row.indexOf('>', stack));
+    expect(stackOpen).not.toMatch(/flexShrink=\{0\}/);
+    expect(stackOpen).toMatch(/minW=\{0\}/);
   });
 });
