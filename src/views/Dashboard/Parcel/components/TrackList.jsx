@@ -58,6 +58,7 @@ import {
   StandardEmptyState,
   StandardMenuItem
 } from 'components/Design/StandardComponents';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 
 const TrackList = ({ amount }) => {
   const textColor = useColorModeValue('gray.700', 'white');
@@ -259,7 +260,7 @@ const TrackList = ({ amount }) => {
             <HStack justify="space-between" pt={4}>
               <Text fontSize="xs" color="gray.500" fontWeight="medium">
                 {intl.formatMessage({ id: 'parcel.started' })}{' '}
-                {new Date(currentHistory?.start_date).toLocaleDateString()}
+                {formatDateFromTimestamp(currentHistory?.start_date, intl.locale)}
               </Text>
               <Text fontSize="xs" color="gray.500" fontWeight="medium">
                 {intl.formatMessage({ id: 'parcel.activeProduction' })}

@@ -82,6 +82,7 @@ import {
 import { MdEco } from 'react-icons/md';
 import type { VerificationLevel } from '../../utils/verificationTierHelpers';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
+import { formatDateFromTimestamp, formatWallClockTime } from 'utils/dateOnly';
 
 // Real interfaces matching API data
 interface Member {
@@ -1473,12 +1474,12 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                   {event.extra_data?.date_start && event.extra_data?.date_end ? (
                     <>
                       <Text fontSize="xs" fontWeight="600" color="gray.700">
-                        {new Date(event.extra_data.date_start).toLocaleDateString('en-US', {
+                        {formatDateFromTimestamp(event.extra_data.date_start, intl.locale, {
                           month: 'short',
                           day: 'numeric'
                         })}
                         {' - '}
-                        {new Date(event.extra_data.date_end).toLocaleDateString('en-US', {
+                        {formatDateFromTimestamp(event.extra_data.date_end, intl.locale, {
                           month: 'short',
                           day: 'numeric'
                         })}
@@ -1490,16 +1491,13 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                   ) : (
                     <>
                       <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="600" color="gray.700">
-                        {new Date(event.date).toLocaleDateString('en-US', {
+                        {formatDateFromTimestamp(event.date, intl.locale, {
                           month: 'short',
                           day: 'numeric'
                         })}
                       </Text>
                       <Text fontSize="xs" color="gray.500">
-                        {new Date(event.date).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {formatWallClockTime(event.date, intl.locale)}
                       </Text>
                     </>
                   )}

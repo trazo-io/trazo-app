@@ -129,7 +129,11 @@ import {
 } from 'utils/voiceDataMapper';
 import { voiceBlockSuggestion } from 'utils/spokenBlock';
 import { templatePrefillValues, templatesForEventType } from 'config/events/templateAccelerators';
-import { isOperatorChosenDate, nowLocalDateTimeInput } from 'utils/dateOnly';
+import {
+  formatDateFromTimestamp,
+  isOperatorChosenDate,
+  nowLocalDateTimeInput
+} from 'utils/dateOnly';
 
 // Enhanced form schemas with better validation
 // Sprint 1 Epic 1.4: Added performed_by for USDA GAP traceability compliance
@@ -3239,7 +3243,7 @@ function NewEvent({ isEdit = false, eventId = null }) {
           description={intl.formatMessage(
             { id: 'events.repeat.bannerBody' },
             {
-              date: existingEvent.date ? new Date(existingEvent.date).toLocaleDateString() : ''
+              date: existingEvent.date ? formatDateFromTimestamp(existingEvent.date, intl.locale) : ''
             }
           )}
           mb={4}

@@ -65,6 +65,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useUserRole } from 'hooks/useUserRole';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 
 // Types
 interface Member {
@@ -994,10 +995,11 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             <Icon as={FaCalendarAlt} boxSize={4} />
             <Text>
               {event.extra_data?.date_start && event.extra_data?.date_end
-                ? `${new Date(event.extra_data.date_start).toLocaleDateString()} - ${new Date(
-                    event.extra_data.date_end
-                  ).toLocaleDateString()}`
-                : new Date(event.date).toLocaleDateString()}
+                ? `${formatDateFromTimestamp(event.extra_data.date_start, intl.locale)} - ${formatDateFromTimestamp(
+                    event.extra_data.date_end,
+                    intl.locale
+                  )}`
+                : formatDateFromTimestamp(event.date, intl.locale)}
             </Text>
           </HStack>
         </WrapItem>
