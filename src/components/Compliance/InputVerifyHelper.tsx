@@ -117,9 +117,17 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({
   onAttachWsda
 }) => {
   const intl = useIntl();
-  const [verify, { data, isFetching, isUninitialized, error }] = useLazyVerifyInputQuery();
+  const [verify, { data, isFetching, isUninitialized, error, originalArgs }] =
+    useLazyVerifyInputQuery();
 
   const trimmed = (name || '').trim();
+  // Run 8 (R8-08): a result belongs to the name it was looked up for. Editing the name used to
+  // leave the previous verdict on screen (a prohibited card under a different product, or a
+  // clean one under a prohibited name) until the grower looked up again.
+  // RTK always records the args of the last lookup; when they are absent nothing is known to
+  // be stale.
+  const isStale =
+    Boolean(data) && originalArgs !== undefined && (originalArgs.name || '').trim() !== trimmed;
   const disabled = trimmed.length < 2 || isFetching;
 
   const handleClick = () => {
@@ -161,9 +169,17 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({
               defaultMessage: 'Look up in OMRI / WSDA / National List'
             })}
         </Button>
-        {!isUninitialized && data && (
+        {!isUninitialized && data && !isStale && (
           <Text fontSize="xs" color="gray.500">
             {intl.formatMessage({ id: 'inputVerify.checked', defaultMessage: 'Checked just now' })}
+          </Text>
+        )}
+        {!isUninitialized && data && isStale && (
+          <Text fontSize="xs" color="gray.600">
+            {intl.formatMessage({
+              id: 'inputVerify.stale',
+              defaultMessage: 'The name changed. Look it up again.'
+            })}
           </Text>
         )}
       </Flex>
@@ -181,7 +197,7 @@ const InputVerifyHelper: React.FC<InputVerifyHelperProps> = ({
         </Alert>
       )}
 
-      {!isUninitialized && data && (
+      {!isUninitialized && data && !isStale && (
         <ResultCard
           result={data}
           query={trimmed}

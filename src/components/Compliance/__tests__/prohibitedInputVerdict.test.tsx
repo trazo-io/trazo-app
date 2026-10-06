@@ -26,7 +26,14 @@ const verifyResult: Record<string, unknown> = {};
 vi.mock('store/api/ospApi', () => ({
   useLazyVerifyInputQuery: () => [
     () => undefined,
-    { data: verifyResult, isFetching: false, isUninitialized: false, error: undefined }
+    {
+      data: verifyResult,
+      isFetching: false,
+      isUninitialized: false,
+      error: undefined,
+      // The result belongs to the name it was looked up for (run 8, R8-08).
+      originalArgs: { name: 'ash from manure burning' }
+    }
   ]
 }));
 
