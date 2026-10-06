@@ -67,7 +67,9 @@ interface ReviewMetadata {
 
 interface ReadinessFinding {
   label: string;
-  status: 'FAIL' | 'REVIEW';
+  /** Stable per row; names the row in the reader's language (run 8, R8-27). */
+  row_key?: string;
+  status: string;
   detail: string;
   section_hint: string | null;
 }
@@ -91,10 +93,26 @@ interface ReadinessResponse {
 // correct day, so the two disagreed in front of the certifier.
 const formatDate = (value?: string | null) => formatDateOnly(value) ?? null;
 
+/**
+ * Run 8 (R8-27, Astra 2026-10-05): this page showed red "FAIL" badges under an organic dossier
+ * title, with the not-a-compliance-decision disclaimer at the very bottom. A readiness row
+ * checks whether a record is present, so it says that: "Missing" or "For review", in neutral
+ * colours. Nothing here reads as a certifier's verdict.
+ */
 function findingStyle(status: ReadinessFinding['status']) {
-  return status === 'FAIL'
-    ? { colorScheme: 'red', icon: FaExclamationCircle, iconColor: 'red.500' }
-    : { colorScheme: 'orange', icon: FaInfoCircle, iconColor: 'orange.400' };
+  if (status === 'FAIL') {
+    return { tone: 'gray.500', icon: FaExclamationCircle, labelId: 'certifierReview.status.missing' };
+  }
+  if (status === 'REVIEW') {
+    return { tone: 'gray.400', icon: FaInfoCircle, labelId: 'certifierReview.status.forReview' };
+  }
+  return { tone: 'gray.300', icon: FaInfoCircle, labelId: 'certifierReview.status.notAssessed' };
+}
+
+/** The row's name in the reader's language, or the server's English label if it has none. */
+function findingLabel(intl: ReturnType<typeof useIntl>, finding: ReadinessFinding): string {
+  const id = finding.row_key ? `certifierReview.row.${finding.row_key}` : '';
+  return id && intl.messages[id] ? intl.formatMessage({ id }) : finding.label;
 }
 
 const CertifierReview: React.FC = () => {
@@ -266,6 +284,15 @@ const CertifierReview: React.FC = () => {
                   defaultMessage: 'Record readiness'
                 })}
               </Text>
+              {/* Run 8 (R8-27): the scope comes first, before any finding is read. Trazo
+                  documents; the certifying agent decides. Not optional. */}
+              <Text fontSize="xs" color={mutedColor}>
+                {intl.formatMessage({
+                  id: 'certifierReview.readinessDisclaimer',
+                  defaultMessage:
+                    'These are documentation checks on the records in Trazo, not a compliance decision.'
+                })}
+              </Text>
 
               {productionsWithFindings.length === 0 ? (
                 <Box
@@ -304,13 +331,13 @@ const CertifierReview: React.FC = () => {
                             border="1px solid"
                             borderColor={rowBorder}
                             borderLeft="4px solid"
-                            borderLeftColor={`${style.colorScheme}.400`}
+                            borderLeftColor={style.tone}
                             borderRadius="md"
                             p={3}>
                             <HStack spacing={2} align="start">
                               <Icon
                                 as={style.icon}
-                                color={style.iconColor}
+                                color={style.tone}
                                 boxSize={4}
                                 mt={0.5}
                                 flexShrink={0}
@@ -318,14 +345,10 @@ const CertifierReview: React.FC = () => {
                               <VStack align="start" spacing={1} flex={1} minW={0}>
                                 <HStack spacing={2} flexWrap="wrap">
                                   <Text fontSize="sm" fontWeight="semibold" color={textColor}>
-                                    {finding.label}
+                                    {findingLabel(intl, finding)}
                                   </Text>
-                                  <Badge
-                                    colorScheme={style.colorScheme}
-                                    variant="subtle"
-                                    fontSize="xs"
-                                    borderRadius="full">
-                                    {finding.status}
+                                  <Badge variant="neutral" fontSize="xs" borderRadius="full">
+                                    {intl.formatMessage({ id: style.labelId })}
                                   </Badge>
                                 </HStack>
                                 <Text fontSize="xs" color={mutedColor} lineHeight="1.5">
@@ -364,15 +387,6 @@ const CertifierReview: React.FC = () => {
                 ))
               )}
 
-              {/* Same posture as the farmer-facing readiness card: Trazo documents, the
-                  certifying agent decides. Not optional. */}
-              <Text fontSize="xs" color={mutedColor}>
-                {intl.formatMessage({
-                  id: 'certifierReview.readinessDisclaimer',
-                  defaultMessage:
-                    'These are documentation checks on the records in Trazo, not a compliance decision.'
-                })}
-              </Text>
             </VStack>
             <Divider />
           </>
