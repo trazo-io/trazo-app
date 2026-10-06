@@ -1906,6 +1906,11 @@ const ChemicalTab = forwardRef(
                                 id: 'events.organicApproved.certifierApproved'
                               })}
                             </option>
+                            {/* Run 8 (R8-08): an honest answer when the listing is unknown.
+                                Never reads as allowed; the record lists the basis as missing. */}
+                            <option value="unverified">
+                              {intl.formatMessage({ id: 'events.organicApproved.unverified' })}
+                            </option>
                             <option value="not_organic">
                               {intl.formatMessage({
                                 id: 'events.organicApproved.notOrganicOption',
