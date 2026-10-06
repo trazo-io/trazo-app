@@ -60,9 +60,9 @@ describe('CarbonImpactExplainer — no empty card', () => {
     // NOT "Your Impact": this is the farm's whole season, and reusing the per-kg card's
     // heading would tell a shopper that 412 kg is their share of it.
     expect(screen.queryByText('Your Impact')).not.toBeInTheDocument();
-    // Run 8 (R8-14): the unit names CO2e, and no driving or phone comparison is drawn from an
+    // Run 8 (R8-14): the unit says CO2 equivalent, and no driving or phone comparison is drawn from an
     // estimate whose boundary does not travel with it.
-    expect(screen.getByText('kg CO2e from recorded farm work and purchased inputs')).toBeInTheDocument();
+    expect(screen.getByText('kg of greenhouse gases (as CO2 equivalent) from recorded farm work and purchased inputs')).toBeInTheDocument();
     expect(screen.queryByText(/Like driving/)).not.toBeInTheDocument();
 
     // FTC 16 CFR 260.4(c): the boundary travels with the number, in the same block, never

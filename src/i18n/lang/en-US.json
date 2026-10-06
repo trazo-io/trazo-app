@@ -307,7 +307,7 @@
   "app.carbonExplainer.daysElectricity": "{days} days electricity",
   "app.carbonExplainer.directEmissionsDesc": "Trazo counts the emissions this operation causes directly — fuel, electricity, irrigation, equipment — plus the manufacturing of the fertilizer and crop-protection products it buys. It is not a full life-cycle assessment: transport to the farm, packaging, equipment manufacturing, distribution and end-of-life are all excluded.",
   "app.carbonExplainer.directEmissionsTitle": "What We Measure",
-  "app.carbonExplainer.directEmissionsUnit": "kg CO2e from recorded farm work and purchased inputs",
+  "app.carbonExplainer.directEmissionsUnit": "kg of greenhouse gases (as CO2 equivalent) from recorded farm work and purchased inputs",
   "app.carbonExplainer.disclaimer": "Carbon calculations cover this operation's own fuel, electricity, irrigation and equipment use, plus the manufacturing of the fertilizer and crop-protection products it buys. They exclude transport to the farm, packaging, distribution, retail and end-of-life. Factor sources differ by input: fuel and electricity are EPA-published, nitrogen combines EPA and IPCC guideline values, crop-protection manufacturing comes from peer-reviewed LCA literature, and the phosphorus and potassium figures are Trazo's own conservative estimates where published values are sparse. Trazo is not affiliated with, endorsed by, or certified by the EPA or USDA.",
   "app.carbonExplainer.drivingDistance": "Driving Distance",
   "app.carbonExplainer.epaDesc": "Fuel combustion emissions use published EPA factors: diesel releases 10.21 kg CO2e per gallon, gasoline releases 8.78 kg CO2e per gallon. Grid electricity emissions are based on EPA eGRID 2023 regional averages.",

@@ -58,9 +58,12 @@ describe('R8-14: carbon is secondary', () => {
     expect(carbon).toBeGreaterThan(journey);
   });
 
-  it('names the unit CO2e and calls nothing "Your Impact", in both locales', () => {
+  it('names the unit as CO2 equivalent and calls nothing "Your Impact", in both locales', () => {
     for (const cat of [enUS, es419] as Record<string, string>[]) {
-      expect(cat['app.carbonExplainer.directEmissionsUnit']).toMatch(/CO2e/);
+      // The unit is explicit without the bare jargon "CO2e", which this repo keeps off consumer
+      // copy (CLAUDE.md consumer language).
+      expect(cat['app.carbonExplainer.directEmissionsUnit']).toMatch(/CO2 equivalen/);
+      expect(cat['app.carbonExplainer.directEmissionsUnit']).not.toMatch(/CO2e/);
       expect(cat['app.carbonExplainer.yourImpact']).not.toMatch(/impact|impacto/i);
     }
   });
