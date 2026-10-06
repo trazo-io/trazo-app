@@ -66,6 +66,7 @@ import { useUserRole } from 'hooks/useUserRole';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { formatDateFromTimestamp } from 'utils/dateOnly';
+import { isNotEstimated, showsInputsBadge } from 'utils/carbonStatus';
 
 // Types
 interface Member {
@@ -1070,6 +1071,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               the notice above already carries the certifier-reads-the-season story. */}
           {carbonData &&
             !carbonData.error &&
+            !isNotEstimated(carbonData) &&
             carbonData.co2e === 0 &&
             !buyerPageWithheldReasonId(event as Record<string, unknown>) && (
               <Text fontSize="sm" color="gray.600">
@@ -1285,7 +1287,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     {intl.formatMessage({ id: 'eventDetails.carbonImpact' })}
                   </Text>
                 </HStack>
-                {(carbonData.usda_factors_based || carbonData.usda_factors_used) && (
+                {showsInputsBadge(carbonData) && (
                   <Tooltip label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}>
                     {/* A sourcing note is a FACT, not a status — `neutral`, per
                             `.claude/rules/frontend.md`. It was `colorScheme="blue"`, and blue
@@ -1331,6 +1333,12 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   ⚠️ Still live in `components/Events/CarbonImpactPreview.tsx` and
                   `components/Events/EnhancedEventDetailModal.tsx`, both as hardcoded English,
                   both therefore invisible to the guard. */}
+              {isNotEstimated(carbonData) ? (
+                // Run 8 (R8-04): no figure, and why, instead of a 0.
+                <Text fontSize="md" color="gray.700">
+                  {intl.formatMessage({ id: 'carbon.notEstimated' })}
+                </Text>
+              ) : (
               <HStack justify="space-between" align="center">
                 <VStack spacing={0} align="start">
                   <HStack spacing={2}>
@@ -1357,6 +1365,7 @@ export const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   </Text>
                 </VStack>
               </HStack>
+              )}
             </Box>
           )}
         </VStack>

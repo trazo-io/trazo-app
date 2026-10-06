@@ -83,6 +83,7 @@ import { MdEco } from 'react-icons/md';
 import type { VerificationLevel } from '../../utils/verificationTierHelpers';
 import { formatCO2e, getImpactLevel } from '../../utils/carbonDisplayUtils';
 import { formatDateFromTimestamp, formatWallClockTime } from 'utils/dateOnly';
+import { isNotEstimated, showsInputsBadge } from 'utils/carbonStatus';
 
 // Real interfaces matching API data
 interface Member {
@@ -1439,7 +1440,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                           have sourced. It was rendering on pest-trap installs and worker-training
                           records, where it reads as a government endorsement of the activity —
                           the "USDA Verified" implication `compliance.md` forbids. */}
-                      {carbonData?.usda_factors_based && (carbonData?.co2e ?? 0) > 0 && (
+                      {showsInputsBadge(carbonData) && (
                         <Tooltip
                           label={intl.formatMessage({ id: 'carbon.badge.epaUsdaTooltip' })}
                           hasArrow
@@ -1541,7 +1542,17 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
 
               <Flex wrap="wrap" justify="space-between" align="center" gap={2}>
                 {/* Carbon Impact */}
-                {carbonData && !carbonData.error ? (
+                {carbonData && !carbonData.error && isNotEstimated(carbonData) ? (
+                  // Run 8 (R8-04): nothing recorded to count from. Said, never shown as 0.
+                  <HStack spacing={2} flexShrink={0}>
+                    <Circle size="24px" bg="gray.100">
+                      <Icon as={MdEco} color="gray.400" boxSize={3} />
+                    </Circle>
+                    <Text fontSize="sm" color="gray.600">
+                      {intl.formatMessage({ id: 'carbon.notEstimated' })}
+                    </Text>
+                  </HStack>
+                ) : carbonData && !carbonData.error ? (
                   <Tooltip
                     label={`Environmental Impact: ${formatCO2e(carbonData.co2e)} kg CO₂e ${
                       carbonData.co2e === 0
