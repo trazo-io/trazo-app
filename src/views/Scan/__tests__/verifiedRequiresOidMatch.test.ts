@@ -174,3 +174,74 @@ describe('"Verified" requires a real Organic Integrity Database match', () => {
     );
   });
 });
+
+/**
+ * Run 8 (2026-10-05): every user-facing string that says "verified" is named here with the
+ * reason it may. "Verified" belongs to a confirmed USDA Organic Integrity Database entry and,
+ * negated, to statements that something was NOT independently checked. A fuzzy name match, an
+ * OMRI, WSDA or National List hit, a grower-selected basis and a farmer-picked status are never
+ * verifications. A new string that says "verified" fails here until someone decides it may.
+ */
+describe('every "verified" string is accounted for', () => {
+  const VERIFIED = /\bverified\b|\bverificad[oa]s?\b/i;
+  const ALLOWED: Record<string, string> = {
+    'certification.badge.verified': 'rendered only for consumer_display_status verified_via_database',
+    'certification.badge.verifiedShort': 'rendered only when a certification is verified_via_database',
+    'consumer.organic.story.verifiedBadge': 'organic claim gated on the OID-sourced certificate',
+    'consumer.certification.verifiedContinuousProof': 'organic claim gated on the OID-sourced certificate',
+    'osp.claim.certifiedOrganic': 'organic claim status certified_organic, OID-gated server side',
+    'consumer.education.topic2.section3.body': 'explains the rule itself',
+    'consumer.trust.practicesTooltip': 'explains the rule itself',
+    'consumer.trust.ftcDisclaimer': 'explains the rule itself',
+    'consumer.claim.disclaimer.selfReported': 'negated: not independently verified',
+    'consumer.trust.notIndependentlyVerified': 'negated',
+    'osp.restriction.transcribedNote': 'negated',
+    'enums.nitrogen_sources.unknown': 'negated: unknown / not verified',
+    'events.chemical.nitrogenSource.unknown': 'negated: unknown / not verified',
+    'certification.type.nonGmoProject': 'the certification programme is named "Non-GMO Project Verified"',
+    'transparency.certNonGmo': 'the certification programme is named "Non-GMO Project Verified"',
+    'events.production.fields.seedNonGmoStatus': 'who confirmed excluded methods: the operator names them',
+    'events.amountDetermination.scaleVerified': 'a weigh ticket backs the number; the ticket is the evidence',
+    'production.amountDeterminationHelp': 'a weigh ticket backs the number; the ticket is the evidence',
+    'app.inspectedByHelp': 'the person who checked the cleaning, named by the operator',
+    'transparency.breakdownPhotoCoverage': 'placeholder name only; the text reads "have photos"',
+    'transparency.photoGapCategoryCoverage': 'placeholder name only; the text reads "have photos"',
+    'auth.error.emailExists.unverified': 'email address verification, not a claim about farming',
+    'consumer.error.qrVerification.message': 'QR code integrity, not a claim about farming',
+    'dashboard.welcomeVerifiedJoined': 'email address verification',
+    'subscription.verificationFailed': 'payment subscription check',
+    'commercial.verified': 'purchase reviews (Commercial dashboard), not a certification or input claim',
+    'commercial.verifiedPurchase': 'purchase reviews (Commercial dashboard), not a certification or input claim',
+    'app.verified': 'not rendered anywhere (no reference in src)',
+    'carbon.verification.community_verified': 'not rendered anywhere (no reference in src)',
+    'parcel.verifiedLabel': 'not rendered anywhere (no reference in src)'
+  };
+
+  for (const locale of ['en-US', 'es-419']) {
+    it(`${locale}: no unlisted string says "verified"`, () => {
+      const strings = JSON.parse(read(`i18n/lang/${locale}.json`)) as Record<string, string>;
+      const saying = Object.keys(strings).filter((k) => VERIFIED.test(strings[k]));
+      // Anti-vacuity: the gated badges are in the bundle and the pattern finds them.
+      expect(saying).toContain('certification.badge.verified');
+      expect(saying.filter((k) => !(k in ALLOWED))).toEqual([]);
+    });
+  }
+
+  it('the strings a grower picks never call their own choice verified', () => {
+    const en = JSON.parse(read('i18n/lang/en-US.json')) as Record<string, string>;
+    for (const key of [
+      'events.chemical.form.organicBasis',
+      'events.chemical.form.organicBasisPlaceholder',
+      'events.chemical.organicBasis.required',
+      'events.business.options.verified'
+    ]) {
+      expect(en[key], key).not.toMatch(/\bverif/i);
+    }
+  });
+
+  it('a farm-reported verification event never reads as verified on the buyer page', () => {
+    const code = codeOf(read('utils/eventDescriptions.ts'));
+    expect(code).not.toMatch(/'Verified'/);
+    expect(code).toMatch(/as reported by the farm/);
+  });
+});

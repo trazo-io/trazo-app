@@ -2959,13 +2959,15 @@ export function getConsumerEventDescription(
         event.verification_status &&
         event.verification_status !== 'pending'
       ) {
+        // Run 8: the farm picks this status itself. "Verified" on the buyer page turned a
+        // farmer's own entry into a third-party claim; it is stated as the farm's report.
         const statusText =
           event.verification_status === 'verified'
-            ? 'Verified'
+            ? 'passed'
             : event.verification_status === 'failed'
-            ? 'Failed'
+            ? 'failed'
             : event.verification_status;
-        return `Third-Party Verification - ${statusText}`;
+        return `Third-party verification, as reported by the farm: ${statusText}`;
       }
 
       // Compliance events with sustainability practice
