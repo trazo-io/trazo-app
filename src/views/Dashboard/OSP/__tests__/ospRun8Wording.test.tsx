@@ -16,7 +16,7 @@ import { resolve } from 'node:path';
 import { ChakraProvider } from '@chakra-ui/react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import enUS from 'i18n/lang/en-US.json';
 import es419 from 'i18n/lang/es-419.json';
@@ -36,6 +36,15 @@ const filed = {
   filing_method: 'agent_web_form',
   is_locked: true
 };
+const withdrawnOnly = {
+  ...filed,
+  id: 9,
+  reporting_year: 2027,
+  revision_number: 1,
+  changes_summary: 'Filed, then withdrawn.',
+  withdrawn_at: '2027-02-01T10:00:00Z'
+};
+let mockUpdates: Record<string, unknown>[] = [];
 const superseded = {
   ...filed,
   id: 4,
@@ -45,7 +54,7 @@ const superseded = {
 };
 
 vi.mock('store/api/ospAnnualUpdateApi', () => ({
-  useGetOSPAnnualUpdatesQuery: () => ({ data: [filed, superseded] }),
+  useGetOSPAnnualUpdatesQuery: () => ({ data: mockUpdates }),
   useCreateOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
   useUpdateOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
   useSignOSPAnnualUpdateMutation: () => [vi.fn(), { isLoading: false }],
@@ -56,6 +65,10 @@ vi.mock('store/api/ospAnnualUpdateApi', () => ({
 }));
 
 import OSPAnnualUpdateCard, { OSPRenewalSummary } from '../OSPAnnualUpdateCard';
+
+beforeEach(() => {
+  mockUpdates = [filed, superseded];
+});
 
 const wrap = (node: React.ReactNode) =>
   render(
@@ -150,6 +163,23 @@ describe('R8-11: the renewal card', () => {
     expect(view.indexOf('<OSPRenewalSummary')).toBeLessThan(
       view.indexOf('<Accordion allowMultiple')
     );
+  });
+});
+
+describe('review of app #84: a withdrawn-only year', () => {
+  it('the summary says withdrawn and what to do, never "no annual update recorded"', () => {
+    mockUpdates = [filed, superseded, withdrawnOnly];
+    wrap(<OSPRenewalSummary companyId="1" farmId="2" currentYear={2027} />);
+    const line = screen.queryByTestId('osp-renewal-summary');
+    expect(line).toHaveTextContent('Annual update 2027: Withdrawn. Next: file the year again.');
+    expect(line).not.toHaveTextContent(/No annual update recorded/);
+  });
+
+  it('the withdrawn row stays visible without unfolding', () => {
+    mockUpdates = [filed, superseded, withdrawnOnly];
+    card(2028);
+    expect(screen.queryByText('Filed, then withdrawn.')).not.toBeNull();
+    expect(screen.queryByText('First filing, later corrected.')).toBeNull();
   });
 });
 

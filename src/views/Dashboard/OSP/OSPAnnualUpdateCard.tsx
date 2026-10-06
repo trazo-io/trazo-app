@@ -275,6 +275,22 @@ const NEXT_STEP_LABELS: Record<RowState, { id: string; defaultMessage: string }>
 const isCurrentRevision = (u: OSPAnnualUpdate) => !u.withdrawn_at && !u.superseded_at;
 
 /**
+ * The revision that speaks for its year: the current one, or, when every revision of the year
+ * was withdrawn, the newest of those. Review of app #84: filtering to current revisions first
+ * made a withdrawn-only year read as "no annual update recorded".
+ */
+const headOfYear = (updates: OSPAnnualUpdate[], year: number): OSPAnnualUpdate | undefined => {
+  const ofYear = updates
+    .filter((u) => u.reporting_year === year)
+    .sort((a, b) => (b.revision_number ?? 1) - (a.revision_number ?? 1));
+  return ofYear.find(isCurrentRevision) ?? ofYear[0];
+};
+
+/** Shown without unfolding: the current revisions, plus the head of a withdrawn-only year. */
+const isShownByDefault = (u: OSPAnnualUpdate, updates: OSPAnnualUpdate[]) =>
+  isCurrentRevision(u) || headOfYear(updates, u.reporting_year)?.id === u.id;
+
+/**
  * Run 8 (R8-11): the renewal state above the narratives. The full card stays below the plan
  * (it is ~2,200px on a phone); this is the one line a grower opening the page needs first.
  */
@@ -288,9 +304,11 @@ export const OSPRenewalSummary: React.FC<{
     { companyId: companyId || '', farmId: farmId || '' },
     { skip: !companyId || !farmId }
   );
-  const latest = [...updates]
-    .filter(isCurrentRevision)
-    .sort((a, b) => b.reporting_year - a.reporting_year)[0];
+  const newestYear = updates.reduce<number | null>(
+    (max, u) => (max == null || u.reporting_year > max ? u.reporting_year : max),
+    null
+  );
+  const latest = newestYear == null ? undefined : headOfYear(updates, newestYear);
   return (
     <Box
       mb={4}
@@ -393,7 +411,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   const [withdrawReason, setWithdrawReason] = useState('');
   // Run 8 (R8-11): superseded and withdrawn revisions stay on record but fold away.
   const [showOlder, setShowOlder] = useState(false);
-  const olderCount = updates.filter((u) => !isCurrentRevision(u)).length;
+  const olderCount = updates.filter((u) => !isShownByDefault(u, updates)).length;
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const fieldRefs = useRef<Partial<Record<FieldKey, HTMLDivElement | null>>>({});
 
@@ -767,7 +785,7 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
         )}
 
         {updates
-          .filter((u) => showOlder || isCurrentRevision(u))
+          .filter((u) => showOlder || isShownByDefault(u, updates))
           .map((u) => (
             <Box key={u.id} p={3} borderWidth="1px" borderColor="gray.200" borderRadius="md">
               <HStack justify="space-between">
