@@ -3017,7 +3017,12 @@ function NewEvent({ isEdit = false, eventId = null }) {
         ? error.message
         : apiErrorMessage ||
           fieldErrors ||
-          (isEdit
+          // Manual 375px pass (2026-10-06): with no signal the farmer read "Failed to create
+          // event", which does not say the connection is the cause or that nothing was lost.
+          (error?.status === 'FETCH_ERROR' ||
+          (typeof navigator !== 'undefined' && navigator.onLine === false)
+            ? intl.formatMessage({ id: 'app.errorSavingOffline' })
+            : isEdit
             ? intl.formatMessage({ id: 'app.errorUpdatingEvent' }) ||
               'Failed to update event. Please try again.'
             : intl.formatMessage({ id: 'app.errorCreatingEvent' }) ||

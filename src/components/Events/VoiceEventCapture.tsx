@@ -204,6 +204,22 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const [processVoiceEventWithAI, { isLoading: isProcessingVoice }] =
     useProcessVoiceEventWithAIMutation();
   const [getDeepgramToken] = useGetDeepgramTokenMutation();
+  // Manual 375px pass (2026-10-06): with no signal the start button looked ready and pressing it
+  // did nothing; the token request failed and nothing was said. Voice needs a connection, so
+  // with none the button is disabled and the reason is shown.
+  const [isOffline, setIsOffline] = useState(
+    typeof navigator !== 'undefined' && navigator.onLine === false
+  );
+  useEffect(() => {
+    const on = () => setIsOffline(false);
+    const off = () => setIsOffline(true);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
+  }, []);
 
   // ── Web Speech API (fallback) ──
   const {
@@ -295,7 +311,9 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   const voiceUnavailable = !isLoadingConfig && !useDeepgram && !browserSupportsSpeechRecognition;
   // Run 8 (R8-24): which of the start button's disabled causes applies, in the order the farmer
   // can do something about it.
-  const disabledReasonId = isLoadingConfig
+  const disabledReasonId = isOffline
+    ? 'voice.disabled.offline'
+    : isLoadingConfig
     ? 'voice.disabled.loading'
     : isProcessing || isProcessingVoice
     ? 'voice.disabled.processing'
@@ -891,7 +909,12 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
               leftIcon={<Icon as={listening ? FaMicrophoneSlash : FaMicrophone} />}
               onClick={listening ? stopListening : startListening}
               isDisabled={
-                !isActive || isProcessing || isProcessingVoice || isLoadingConfig || micBlocked
+                !isActive ||
+                isProcessing ||
+                isProcessingVoice ||
+                isLoadingConfig ||
+                micBlocked ||
+                (isOffline && !listening)
               }
               size="lg"
               w={{ base: 'full', smd: 'auto' }}
