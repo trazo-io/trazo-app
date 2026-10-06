@@ -1987,6 +1987,7 @@
   "carbon.badge.epaUsda": "EPA/USDA",
   "carbon.badge.epaUsdaEmissionFactors": "Factores de emisión EPA/USDA",
   "carbon.badge.epaUsdaSourced": "De insumos registrados",
+  "consumer.loader.growerRecords": "Registros llevados por el productor",
   "carbon.notEstimated": "Sin estimar: no se registró combustible, energía ni superficie",
   "carbon.notEstimatedHint": "Agrega el combustible o la energía usados (o la superficie trabajada, en labores de campo) y Trazo lo estimará.",
   "carbon.badge.epaUsdaTooltip": "Calculado a partir del combustible, la energía o los insumos registrados en esta actividad. El origen de cada factor figura en la metodología de carbono.",

@@ -1548,7 +1548,7 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                     <Circle size="24px" bg="gray.100">
                       <Icon as={MdEco} color="gray.400" boxSize={3} />
                     </Circle>
-                    <Text fontSize="sm" color="gray.600" whiteSpace="nowrap">
+                    <Text fontSize="sm" color="gray.600">
                       {intl.formatMessage({ id: 'carbon.notEstimated' })}
                     </Text>
                   </HStack>

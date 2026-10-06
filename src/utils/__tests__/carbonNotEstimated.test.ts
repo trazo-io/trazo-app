@@ -17,17 +17,33 @@ const src = (rel: string) => readFileSync(resolve(process.cwd(), 'src', rel), 'u
 describe('reading a served carbon figure', () => {
   it('treats the saved status and the preview flag as not estimated', () => {
     expect(isNotEstimated({ co2e: null, calculation_method: 'not_estimated' })).toBe(true);
-    expect(isNotEstimated({ co2e: null, not_estimated: true, calculation_method: 'optimized_v2_not_estimated' })).toBe(true);
-    expect(isNotEstimated({ co2e: 0, calculation_method: 'zero_emission_biological_service' })).toBe(false);
+    expect(
+      isNotEstimated({
+        co2e: null,
+        not_estimated: true,
+        calculation_method: 'optimized_v2_not_estimated'
+      })
+    ).toBe(true);
+    expect(
+      isNotEstimated({ co2e: 0, calculation_method: 'zero_emission_biological_service' })
+    ).toBe(false);
     expect(isNotEstimated({ co2e: 12.3, calculation_method: 'verified_usda_factors' })).toBe(false);
   });
 
   it('badges only a positive figure from recorded inputs', () => {
     expect(showsInputsBadge({ co2e: 12.3, usda_factors_based: true })).toBe(true);
-    expect(showsInputsBadge({ co2e: 129, usda_factors_based: true, verification_status: 'area_estimate' })).toBe(false);
+    expect(
+      showsInputsBadge({
+        co2e: 129,
+        usda_factors_based: true,
+        verification_status: 'area_estimate'
+      })
+    ).toBe(false);
     expect(showsInputsBadge({ co2e: 0, usda_factors_based: true })).toBe(false);
     expect(showsInputsBadge({ co2e: null, usda_factors_based: true })).toBe(false);
-    expect(showsInputsBadge({ co2e: null, calculation_method: 'not_estimated', usda_factors_used: true })).toBe(false);
+    expect(
+      showsInputsBadge({ co2e: null, calculation_method: 'not_estimated', usda_factors_used: true })
+    ).toBe(false);
   });
 });
 
@@ -68,5 +84,22 @@ describe('the badge names no agency for the whole figure', () => {
     }
     expect(c['carbon.notEstimated']).toBeTruthy();
     expect(c['carbon.notEstimatedHint']).toBeTruthy();
+  });
+});
+
+describe('review of app #83', () => {
+  it('the QR loader carries no standalone source or "Sustainable" claim', () => {
+    const loader = src('views/Scan/ProductDetail/components/ModernTrazoLoader.tsx');
+    expect(loader).not.toMatch(/carbon\.badge\.epaUsdaSourced|usdaBadge\.epaUsdaSourced/);
+    expect(loader).not.toMatch(/>\s*Sustainable\s*</);
+    expect(loader).toMatch(/consumer\.loader\.growerRecords/);
+  });
+
+  it('the not-estimated sentence wraps on a phone instead of spilling past the card', () => {
+    const row = src('components/Tables/EnhancedTimelineRow.tsx');
+    const at = row.indexOf("'carbon.notEstimated'");
+    const open = row.lastIndexOf('<Text', at);
+    expect(at).toBeGreaterThan(-1);
+    expect(row.slice(open, at)).not.toMatch(/nowrap/);
   });
 });

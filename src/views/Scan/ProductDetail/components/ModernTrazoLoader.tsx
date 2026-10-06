@@ -24,7 +24,6 @@ import {
   FaCheckCircle,
   FaShieldAlt,
   FaChartLine,
-  FaCertificate,
   FaTractor
 } from 'react-icons/fa';
 import { ModernSkeletonCard } from './ModernSkeletonCard';
@@ -283,19 +282,13 @@ export const ModernTrazoLoader: React.FC<ModernTrazoLoaderProps> = ({
 
         {/* Trazo Branding */}
         <VStack spacing={2}>
-          <HStack spacing={4} fontSize="xs" color={mutedColor} opacity={0.8}>
-            <HStack spacing={1}>
-              <Icon as={FaShieldAlt} />
-              <Text>Documented Data</Text>
-            </HStack>
-            <HStack spacing={1}>
-              <Icon as={FaCertificate} />
-              <Text>{intl.formatMessage({ id: 'carbon.badge.epaUsdaSourced' })}</Text>
-            </HStack>
-            <HStack spacing={1}>
-              <Icon as={FaLeaf} />
-              <Text>Sustainable</Text>
-            </HStack>
+          {/* Review of app #83: this row read "Documented Data · EPA/USDA-Sourced · Sustainable"
+              under a certificate icon, with no figure near it: a blanket source claim and an
+              unqualified "Sustainable" (16 CFR 260.4) on the first screen a shopper sees. It
+              now states only what the page is. */}
+          <HStack spacing={1} fontSize="xs" color={mutedColor} opacity={0.8}>
+            <Icon as={FaShieldAlt} />
+            <Text>{intl.formatMessage({ id: 'consumer.loader.growerRecords' })}</Text>
           </HStack>
           <Divider maxW="xs" />
           <Text fontSize="xs" color={mutedColor} opacity={0.6}>
