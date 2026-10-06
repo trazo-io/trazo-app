@@ -453,6 +453,7 @@
   "app.completenessGap.area": "Area treated",
   "app.completenessGap.commercialName": "Product name",
   "app.completenessGap.quantityPurchased": "Quantity purchased",
+  "app.completenessGap.organicBasis": "What shows the input is allowed (organic basis)",
   "app.completenessGap.seedCertificationStatus": "Seed organic status",
   "app.completenessGap.seedNonavailabilityReason": "Reason organic seed was unavailable",
   "app.completenessGap.seedSearchAttempts": "Three documented supplier searches",

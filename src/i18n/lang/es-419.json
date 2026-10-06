@@ -453,6 +453,7 @@
   "app.completenessGap.area": "Área tratada",
   "app.completenessGap.commercialName": "Nombre del producto",
   "app.completenessGap.quantityPurchased": "Cantidad comprada",
+  "app.completenessGap.organicBasis": "Qué muestra que el insumo está permitido (base orgánica)",
   "app.completenessGap.seedCertificationStatus": "Estado orgánico de la semilla",
   "app.completenessGap.seedNonavailabilityReason": "Motivo por el que no hubo semilla orgánica disponible",
   "app.completenessGap.seedSearchAttempts": "Tres búsquedas de proveedores documentadas",

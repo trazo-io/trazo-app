@@ -625,6 +625,8 @@ const CONSUMER_ORGANIC_STATUS: Record<string, string> = {
   not_organic: 'No, conventional input',
   no: 'No, conventional input',
   unknown: 'The grower did not record an approval status',
+  // Run 8 (R8-08): the soil amendment form offers it too; never a "Yes".
+  unverified: 'Not confirmed by the farm',
   // Not an answer to the question; render nothing rather than "Not Applicable".
   not_applicable: ''
 };

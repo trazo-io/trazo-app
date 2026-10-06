@@ -31,12 +31,29 @@ describe('"Not yet confirmed" organic basis', () => {
 
   it('never answers "Yes" to a shopper and never earns the organic chip', () => {
     const chem = src('config/events/chemicalEvent.ts');
-    const consumer = chem.slice(chem.indexOf('CONSUMER_ORGANIC_APPROVED_LABELS'), chem.indexOf('formatConsumerOrganicApproved'));
+    const consumer = chem.slice(
+      chem.indexOf('CONSUMER_ORGANIC_APPROVED_LABELS'),
+      chem.indexOf('formatConsumerOrganicApproved')
+    );
     const line = consumer.split('\n').find((l) => /^\s+unverified:/.test(l)) || '';
     expect(line).not.toBe('');
     expect(line).not.toMatch(/'Yes/);
+    // Review of app #85: the chip's gate is an EXCLUSION list, so the value must be on it.
     const card = src('components/Events/ConsumerEventCard.tsx');
-    const keys = card.slice(card.indexOf('const ORGANIC_STATUS_KEYS'), card.indexOf('};', card.indexOf('const ORGANIC_STATUS_KEYS')));
-    expect(keys).not.toMatch(/unverified/);
+    const at = card.indexOf("organicStatus !== 'not_applicable'");
+    expect(at).toBeGreaterThan(-1);
+    const gate = card.slice(card.lastIndexOf('organicStatus &&', at), card.indexOf(';', at));
+    expect(gate).toMatch(/organicStatus !== 'unverified'/);
+  });
+
+  it('the soil record answers a shopper too, in both languages', () => {
+    const fmt = src('config/events/formatters.ts');
+    const map = fmt.slice(
+      fmt.indexOf('const CONSUMER_ORGANIC_STATUS'),
+      fmt.indexOf('};', fmt.indexOf('const CONSUMER_ORGANIC_STATUS'))
+    );
+    const line = map.split('\n').find((l) => /^\s+unverified:/.test(l)) || '';
+    expect(line).toMatch(/Not confirmed by the farm/);
+    expect(src('utils/fieldValues.es.ts')).toMatch(/'Not confirmed by the farm': '[^']+'/);
   });
 });
