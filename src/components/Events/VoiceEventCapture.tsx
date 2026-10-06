@@ -400,6 +400,12 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
   }, [seedTranscript, isActive]);
 
   const startListening = async () => {
+    // Every start goes through here (the button, autoStart, a language switch), so this is the
+    // one place that keeps an offline device from showing "Listening..." to nobody.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setIsOffline(true);
+      return;
+    }
     setParsedData(null);
     setVoiceNotice(null);
 

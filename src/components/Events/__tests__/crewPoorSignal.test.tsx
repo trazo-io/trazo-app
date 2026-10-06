@@ -21,6 +21,9 @@ describe('crew flows under poor signal', () => {
     expect(voice).toMatch(/isOffline\s*\n?\s*\?\s*'voice\.disabled\.offline'/);
     expect(voice).toMatch(/\(isOffline && !listening\)/);
     expect(voice).toMatch(/addEventListener\('offline'/);
+    // autoStart opened the panel already listening while offline (re-check after the fix).
+    const start = voice.slice(voice.indexOf('const startListening = async'), voice.indexOf('const stopListening'));
+    expect(start).toMatch(/navigator\.onLine === false[\s\S]{0,80}return;/);
     for (const c of cats) expect(c['voice.disabled.offline']).toBeTruthy();
   });
 
