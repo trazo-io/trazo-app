@@ -15,10 +15,10 @@ import CardHeader from 'components/Card/CardHeader';
 import CardBody from 'components/Card/CardBody';
 import { useGetUserProductionScansQuery } from 'store/api/historyApi';
 import { StandardSpinner, StandardQueryError } from 'components/Design';
-import { format } from 'date-fns';
 import { NavLink } from 'react-router-dom';
 import { BsStar, BsStarFill, BsStarHalf } from 'react-icons/bs';
 import { HSeparator } from 'components/Separator/Separator';
+import { formatDateFromTimestamp } from 'utils/dateOnly';
 
 export default function ScannedProductsView() {
   const textColor = useColorModeValue('gray.700', 'white');
@@ -103,7 +103,11 @@ export default function ScannedProductsView() {
                           {renderStars(production.reputation)}
                         </Flex>
                         <Text fontSize="sm" color="gray.500" mb={4}>
-                          {format(new Date(production.start_date), 'MMMM dd, yyyy')}
+                          {formatDateFromTimestamp(production.start_date, 'en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: '2-digit'
+                          })}
                         </Text>
                         <Flex align="center" mb={3}>
                           <Text fontSize="md" color={textColor} fontWeight="bold" me="10px">
