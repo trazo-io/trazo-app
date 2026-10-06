@@ -461,19 +461,21 @@ const PRODUCTION_SUBTYPE_RECOMMENDATIONS: Record<string, SubtypePhotoRecommendat
   },
   // CRITICAL FIX (2025-01-21): Changed EQ → EM to match backend Production event model
   // Keeping both EQ and EM for backward compatibility
+  // Run 8 (R8-26): a cleanout is logged here too, and the guidance spoke only of hour meters
+  // and fluids. It now covers both jobs, and says what a photo documents, not what it proves.
   EM: {
     subtypeCode: 'EM',
     subtypeName: 'Equipment Maintenance',
     guidanceText:
-      'Document equipment maintenance, repair work, or operation verification. Show maintenance activity with visible equipment components or hour meter readings.',
+      'Document the maintenance or the cleanout. For a cleanout, show the cleaned equipment, bins or storage and the cleaning product label; for maintenance, the work and the hour meter.',
     examples: [
-      'Maintenance or repair work being performed on equipment',
-      'Equipment hour meter or odometer reading clearly visible',
-      'Equipment in operation showing active use'
+      'Bins, harvest equipment or storage after cleaning, with no residue or plant material',
+      'The label of the cleaning or sanitizing product used',
+      'Maintenance or repair work, with the hour meter reading visible'
     ],
     tips: [
-      'Hour meter readings provide strong verification',
-      'Show maintenance parts or fluids being replaced'
+      'Photograph the cleaned surface before the next organic load goes in',
+      'A clear label photo records which cleaning product was used'
     ]
   },
   // Backward compatibility: Keep EQ for old data (points to same config as EM)
