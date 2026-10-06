@@ -103,6 +103,7 @@ const ORGANIC_APPROVED_LABELS: Record<string, string> = {
   wsda_listed: 'WSDA Listed',
   nop_seal_on_label: 'NOP seal on label',
   certifier_approved: 'Certifier-approved',
+  unverified: 'Not yet confirmed',
   usda_nop_approved: 'USDA NOP Approved',
   organic_equivalent: 'Organic Equivalent',
   not_organic: 'Not Organic',

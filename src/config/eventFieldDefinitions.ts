@@ -237,6 +237,8 @@ export const APPLICATION_TIMING_OPTIONS: FieldOption[] = [
 // Updated to show detailed NOP-aligned options first, with legacy values kept for backward compatibility
 export const ORGANIC_APPROVED_OPTIONS: FieldOption[] = [
   { value: 'omri_listed', labelKey: 'quickAdd.fields.organicApproved.omriListed' },
+  // Run 8 (R8-08): when the listing is unknown. Never reads as allowed.
+  { value: 'unverified', labelKey: 'quickAdd.fields.organicApproved.unverified' },
   { value: 'usda_nop_approved', labelKey: 'quickAdd.fields.organicApproved.usdaNopApproved' },
   { value: 'organic_equivalent', labelKey: 'quickAdd.fields.organicApproved.organicEquivalent' },
   { value: 'not_organic', labelKey: 'quickAdd.fields.organicApproved.notOrganic' },

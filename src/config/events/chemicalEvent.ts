@@ -52,6 +52,7 @@ const ORGANIC_APPROVED_LABELS: Record<string, string> = {
   wsda_listed: 'WSDA Listed',
   nop_seal_on_label: 'NOP seal on label',
   certifier_approved: 'Certifier-approved',
+  unverified: 'Not yet confirmed',
   usda_nop_approved: 'USDA NOP Approved',
   organic_equivalent: 'Organic Equivalent',
   not_organic: 'Not Organic',
@@ -78,6 +79,8 @@ const CONSUMER_ORGANIC_APPROVED_LABELS: Record<string, string> = {
   organic_equivalent: 'Yes, organic-equivalent',
   transitional: 'Transitional, farm is converting to organic',
   not_organic: 'No, conventional input',
+  // Run 8: the farm has not confirmed what shows it is allowed. Said plainly, never "Yes".
+  unverified: 'Not confirmed by the farm',
   // "not_applicable" is not an answer to this question; render nothing.
   not_applicable: ''
 };

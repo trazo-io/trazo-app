@@ -1233,7 +1233,10 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   : organicStatus &&
                     organicStatus !== 'not_organic' &&
                     organicStatus !== 'no' &&
-                    organicStatus !== 'not_applicable';
+                    organicStatus !== 'not_applicable' &&
+                    // Run 8 (review of app #85): "Not yet confirmed" is no basis at all, and the
+                    // gate is an exclusion list, so an unlisted value earned the "Organic" chip.
+                    organicStatus !== 'unverified';
                 // The server-resolved STATUS wins when present (claim_authority owns which
                 // tier of evidence exists); the wording is then localized here. Rendering
                 // `serverInput.label` directly — as this did until 2026-08-09 — printed the

@@ -299,6 +299,15 @@ const COMPLETENESS_GAP_LABELS = {
     id: 'app.completenessGap.quantityPurchased',
     defaultMessage: 'Quantity purchased'
   },
+  // Run 8 (R8-08): a basis recorded as "Not yet confirmed", on a chemical or a soil record.
+  organic_approved: {
+    id: 'app.completenessGap.organicBasis',
+    defaultMessage: 'What shows the input is allowed (organic basis)'
+  },
+  amendment_organic_approved: {
+    id: 'app.completenessGap.organicBasis',
+    defaultMessage: 'What shows the input is allowed (organic basis)'
+  },
   // PLANTING_EVENT_REQUIRED_FIELDS (§ 205.204 — PL / TR / SS)
   seed_certification_status: {
     id: 'app.completenessGap.seedCertificationStatus',
@@ -3243,7 +3252,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
           description={intl.formatMessage(
             { id: 'events.repeat.bannerBody' },
             {
-              date: existingEvent.date ? formatDateFromTimestamp(existingEvent.date, intl.locale) : ''
+              date: existingEvent.date
+                ? formatDateFromTimestamp(existingEvent.date, intl.locale)
+                : ''
             }
           )}
           mb={4}

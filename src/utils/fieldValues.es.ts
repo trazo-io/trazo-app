@@ -50,6 +50,7 @@ export const FIELD_VALUE_ES: Record<string, string> = {
   'Transitional, farm is converting to organic':
     'En transición, la finca se está convirtiendo a orgánico',
   'No, conventional input': 'No, insumo convencional',
+  'Not confirmed by the farm': 'No confirmado por la finca',
 
   'Active growth period': 'Período de crecimiento activo',
   'Aerial Spray': 'Aplicación aérea',

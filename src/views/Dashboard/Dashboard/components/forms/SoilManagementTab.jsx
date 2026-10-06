@@ -1562,6 +1562,10 @@ const SoilManagementTab = forwardRef(
                           <option value="certifier_approved">
                             Reviewed and approved by my certifier
                           </option>
+                          {/* Run 8 (R8-08): honest when the listing is unknown; never allowed. */}
+                          <option value="unverified">
+                            {intl.formatMessage({ id: 'events.organicApproved.unverified' })}
+                          </option>
                           <option value="not_organic">Not approved - conventional use only</option>
                           <option value="transitional">
                             Transitional - in certification process
