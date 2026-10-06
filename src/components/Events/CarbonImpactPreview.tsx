@@ -230,7 +230,9 @@ export const CarbonImpactPreview: React.FC<CarbonImpactPreviewProps> = memo(
 
     // Memoized calculations to prevent recalculation unless calculation changes
     const { impactLevel, formattedCO2e } = useMemo(() => {
-      if (!calculation) return { impactLevel: null, formattedCO2e: null };
+      // A not-estimated preview carries no figure (run 8): nothing to grade or format.
+      if (!calculation || calculation.co2e == null)
+        return { impactLevel: null, formattedCO2e: null };
 
       return {
         impactLevel: getImpactLevel(calculation.co2e),
