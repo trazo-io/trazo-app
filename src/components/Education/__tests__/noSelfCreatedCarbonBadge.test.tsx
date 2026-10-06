@@ -91,7 +91,7 @@ describe('consumer carbon card — no self-created environmental badge', () => {
       backendComparisons: { driving_miles: 1160.1, trees_per_year: 19, kwh_electricity: 1057 }
     });
 
-    expect(screen.getByText('Environmental Impact')).toBeInTheDocument();
+    expect(screen.getByText('Estimated emissions from recorded work and inputs')).toBeInTheDocument();
     expect(screen.getByText('412.4')).toBeInTheDocument();
   });
 

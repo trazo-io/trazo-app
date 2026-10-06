@@ -30,18 +30,20 @@ const navigationItems: NavigationItem[] = [
     targetSection: 'transparency-section'
   },
   {
-    id: 'carbon',
-    labelId: 'consumer.nav.impact',
-    defaultLabel: 'Impact',
-    icon: FaLeaf,
-    targetSection: 'carbon-section'
-  },
-  {
     id: 'farm',
     labelId: 'consumer.nav.farm',
     defaultLabel: 'Farm',
     icon: FaHome,
     targetSection: 'farm-section'
+  },
+  // Run 8 (R8-14, review of app #79): the emissions card moved below the farm section, so the
+  // tab points at it there and comes after "Farm", in page order.
+  {
+    id: 'carbon',
+    labelId: 'consumer.nav.impact',
+    defaultLabel: 'Impact',
+    icon: FaLeaf,
+    targetSection: 'emissions-section'
   }
   // The "Reviews" tab was removed on 2026-08-06 with the consumer review section it pointed
   // at (`reviews-section`). Star ratings were sign-in-gated for anti-gaming reasons, and the

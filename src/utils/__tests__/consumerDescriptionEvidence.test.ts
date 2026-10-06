@@ -242,3 +242,42 @@ describe('planting copy does not become transplant copy', () => {
     expect(text).not.toMatch(/moved into their growing position|transplant/i);
   });
 });
+
+/**
+ * Run 8 (R8-09, 2026-10-05): the buyer page said an estimated, ungraded harvest was "picked,
+ * weighed and graded", that a frost night was the reason there was any crop, that training
+ * "ensures" best practices and that an assessment "ensures" treatments are economically
+ * necessary. A description chosen by event type knows the TYPE, not what the work achieved, so
+ * no generated sentence may claim an outcome. Read from the source rather than sampled, so a
+ * branch no test drives is covered too.
+ */
+describe('generated descriptions claim no outcome', () => {
+  const OUTCOME =
+    /\bensur\w*|\bguarante\w*|\bbest practices?\b|\boptimal\w*|\boptimiz\w*|economically necessary|weighed and graded|there would be no crop|\bminimiz\w*|\bmaximiz\w*|\bprotect(s|ing)? crops?\b|\bhigh standards\b|\bhigh-quality\b|reduces? (spoilage|waste|runoff|disease)|keep it sound|garantiz\w*|asegura\w*|\bóptim\w*|mejores prácticas/i;
+
+  const literals = (file: string) => {
+    const src = readFileSync(resolve(process.cwd(), file), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '')
+      .replace(/\s\/\/\s.*$/gm, '');
+    return [...src.matchAll(/(["'`])((?:\\.|(?!\1)[^\\\n])*)\1/g)].map((m) => m[2]);
+  };
+
+  it.each(['src/utils/eventDescriptions.ts', 'src/utils/eventDescriptions.es.ts'])(
+    '%s has no outcome claim in any string',
+    (file) => {
+      const all = literals(file);
+      expect(all.length).toBeGreaterThan(100); // anti-vacuity: the file was read
+      expect(all.filter((l) => OUTCOME.test(l))).toEqual([]);
+    }
+  );
+
+  it('a harvest reads "graded" nowhere, whatever was recorded', () => {
+    for (const key of ['HA', 'harvesting', 'event.production.harvesting']) {
+      const text = allText(
+        getConsumerEventDescription(key, { event_type: 1, production_type: key, date: '2025-09-12T15:00:00Z' })
+      );
+      expect(text, key).not.toMatch(/graded|weighed/i);
+    }
+  });
+});

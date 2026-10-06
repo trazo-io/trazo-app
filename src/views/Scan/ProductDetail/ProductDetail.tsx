@@ -733,9 +733,10 @@ function ProductDetail() {
       if (isUserScrolling) return;
 
       const sections = [
+        // Page order (the loop below walks it backwards). Run 8: emissions sit after the farm.
         { id: 'transparency', element: document.getElementById('transparency-section') },
-        { id: 'carbon', element: document.getElementById('carbon-section') },
-        { id: 'farm', element: document.getElementById('farm-section') }
+        { id: 'farm', element: document.getElementById('farm-section') },
+        { id: 'carbon', element: document.getElementById('emissions-section') }
       ];
 
       const scrollPosition = window.scrollY + 200; // Offset for header
@@ -1635,20 +1636,9 @@ function ProductDetail() {
 
               <Divider borderColor="gray.200" />
 
-              {/* Environmental Impact + Production Journey */}
+              {/* Production Journey. Run 8 (R8-14): the carbon card moved below the farm section. */}
               <Box id="carbon-section">
                 <VStack spacing={4} align="stretch">
-                  {/* Consumer-Friendly Carbon Impact Explainer - Progressive Loading */}
-                  <Suspense fallback={<CarbonExplainerLoader />}>
-                    <CarbonImpactExplainer
-                      totalCO2e={getAccurateCarbonFootprint()}
-                      productName={completeData?.product?.name || completeData?.farmer?.name}
-                      relatableFootprint={completeData?.relatableFootprint}
-                      backendComparisons={completeData?.carbon_impact?.comparisons}
-                      consumerContext={completeData?.carbon_impact?.consumer_context}
-                    />
-                  </Suspense>
-
                   {(() => {
                     // PRIORITY 1: Use complete API timeline (includes transparency fields) if it has events
                     // Get timeline events from consolidated transparency API response
@@ -2111,6 +2101,20 @@ function ProductDetail() {
                 }}
               />
             </VStack>
+          </Box>
+
+          {/* Run 8 (R8-14): estimated emissions, after the lot's story and the farm, closed
+              until the shopper opens it. The scope statement travels inside the card. */}
+          <Box id="emissions-section" w="100%">
+            <Suspense fallback={<CarbonExplainerLoader />}>
+              <CarbonImpactExplainer
+                totalCO2e={getAccurateCarbonFootprint()}
+                productName={completeData?.product?.name || completeData?.farmer?.name}
+                relatableFootprint={completeData?.relatableFootprint}
+                backendComparisons={completeData?.carbon_impact?.comparisons}
+                consumerContext={completeData?.carbon_impact?.consumer_context}
+              />
+            </Suspense>
           </Box>
 
           <Divider borderColor="gray.200" />

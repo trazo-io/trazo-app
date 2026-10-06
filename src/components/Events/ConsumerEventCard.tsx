@@ -185,11 +185,11 @@ const SUMMARY_NOUN_DEFAULTS: Record<string, string> = {
 const GENERIC_FALLBACK_COPY: readonly string[] = [
   // ---- en-US (eventDescriptions.ts) ----
   // production
-  'This agricultural practice follows sustainable farming methods to ensure high-quality food production.',
+  'This practice is recorded by the farm.',
   'Part of responsible farming practices that support environmental stewardship and long-term agricultural sustainability.',
   // weather
   'Weather is the one thing a farm cannot control, and it is logged here beside everything it can.',
-  'Weather monitoring enables precise agricultural decisions that optimize resource use and minimize environmental impact.',
+  'Conditions on the day are logged beside the work done that day.',
   // chemical
   'What was applied, where and when is on record for this crop.',
   'Part of integrated farming approach that balances productivity with environmental responsibility.',
@@ -201,7 +201,7 @@ const GENERIC_FALLBACK_COPY: readonly string[] = [
   'Part of integrated pest management approach that reduces reliance on synthetic pesticides and promotes ecological balance.',
   // general
   'This farm management activity supports efficient operations and sustainable farming practices.',
-  'Part of comprehensive farm management that ensures operational efficiency and environmental responsibility.',
+  'Farm management activity recorded.',
   // equipment
   'This equipment operation supports efficient and sustainable farming practices.',
   'Documented equipment operations demonstrate transparent farming practices and operational efficiency.',
@@ -210,11 +210,11 @@ const GENERIC_FALLBACK_COPY: readonly string[] = [
   'The document, the issuer and the date are on record for this crop.',
   // ---- es-419 (eventDescriptions.es.ts) ----
   // production
-  'Esta práctica agrícola sigue métodos de agricultura sostenible para asegurar una producción de alimentos de alta calidad.',
+  'Esta práctica figura en el registro de la finca.',
   'Parte de prácticas agrícolas responsables que apoyan el cuidado ambiental y la sostenibilidad agrícola a largo plazo.',
   // weather
   'El clima es lo único que una finca no puede controlar, y queda registrado aquí junto a todo lo que sí puede.',
-  'El monitoreo del clima permite tomar decisiones agrícolas precisas que optimizan el uso de recursos y minimizan el impacto ambiental.',
+  'Las condiciones del día quedan registradas junto al trabajo de ese día.',
   // chemical
   'Qué se aplicó, dónde y cuándo queda registrado para este cultivo.',
   'Parte de un enfoque agrícola integrado que equilibra la productividad con la responsabilidad ambiental.',
@@ -226,7 +226,7 @@ const GENERIC_FALLBACK_COPY: readonly string[] = [
   'Parte de un enfoque de manejo integrado de plagas que reduce la dependencia de pesticidas sintéticos y promueve el equilibrio ecológico.',
   // general
   'Esta actividad de gestión agrícola respalda operaciones eficientes y prácticas agrícolas sostenibles.',
-  'Parte de un manejo integral de la finca que asegura la eficiencia operativa y la responsabilidad ambiental.',
+  'Actividad de gestión de la finca registrada.',
   // equipment
   'Esta operación de equipo respalda prácticas agrícolas eficientes y sostenibles.',
   'Las operaciones de equipo documentadas demuestran prácticas agrícolas transparentes y eficiencia operativa.',
@@ -1591,7 +1591,9 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                   color={secondaryText}
                   fontStyle="italic"
                   lineHeight="1.5"
-                  noOfLines={slim && !isExpanded ? 2 : undefined}>
+                  // Run 8 (R8-17): long notes (regulation numbers, rates, ticket ids) took over
+                  // the lot story. Collapsed cards clamp them; "show more" opens the full note.
+                  noOfLines={!isExpanded ? (slim ? 2 : 3) : undefined}>
                   "{event.observation}"
                 </Text>
               </Box>
