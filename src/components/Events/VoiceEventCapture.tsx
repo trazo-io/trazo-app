@@ -904,7 +904,8 @@ export const VoiceEventCapture: React.FC<VoiceEventCaptureProps> = ({
 
         {/* Run 8 (R8-24): a disabled start button said nothing about why. Each cause gets a
             line; a blocked microphone already has its own alert above. */}
-        {!parsedData && !listening && !micBlocked && disabledReasonId && (
+        {/* Not while reading: the processing panel below already says so (review of app #80). */}
+        {!parsedData && !listening && !micBlocked && !isProcessing && !isProcessingVoice && disabledReasonId && (
           <Text fontSize="sm" color="gray.600" textAlign="center" role="status">
             {intl.formatMessage({ id: disabledReasonId })}
           </Text>

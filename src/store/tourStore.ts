@@ -63,6 +63,7 @@ export const useTourStore = create<TourStoreState>()(
       celebratedMilestones: {},
       visitedPages: {},
       restartRequested: false,
+      restartRequestedAt: 0,
 
       // Actions
       startTour: (tourId: string) =>
@@ -136,12 +137,20 @@ export const useTourStore = create<TourStoreState>()(
           checklistCompleted: false,
           celebratedMilestones: {},
           visitedPages: {},
-          restartRequested: true
+          restartRequested: true,
+          restartRequestedAt: Date.now()
         })
     }),
     {
       name: 'trazo_tour_state',
-      version: 1
+      version: 1,
+      // Review of app #80: a tour request is a moment, not a setting. Persisting it let a
+      // request made on a page with no tour re-arm an auto-start on the next page that has one,
+      // even after a reload. Requests live in memory only.
+      partialize: (state) => {
+        const { restartRequested: _r, restartRequestedAt: _t, ...rest } = state;
+        return rest as typeof state;
+      }
     }
   )
 );

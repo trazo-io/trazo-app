@@ -12,6 +12,9 @@ import { getTour } from '../tours/registry';
  * Or for manual control:
  *   const { start, isActive } = useTour('production-tour', { autoStart: false });
  */
+/** How long a "Take the tour" request stays valid (review of app #80). */
+export const TOUR_REQUEST_WINDOW_MS = 15_000;
+
 interface UseTourOptions {
   /** Whether to auto-start the tour (default: true) */
   autoStart?: boolean;
@@ -57,11 +60,15 @@ export function useTour(tourId: string, options: UseTourOptions = {}) {
   useEffect(() => {
     if (!autoStart || !enabled || isDone || isBusy || !tour) return;
     if (!restartRequested) return;
+    // Review of app #80: only a request made just now. "Take the tour" on a page with no tour
+    // must not start one minutes later on whichever page the grower opens next.
+    if (Date.now() - (useTourStore.getState().restartRequestedAt || 0) > TOUR_REQUEST_WINDOW_MS) {
+      useTourStore.getState().clearRestartFlag();
+      return;
+    }
 
-    // Short delay if restart was just requested (page already loaded)
-    // Full 5s delay for initial page loads (wait for API data + layout)
-    const defaultDelay = restartRequested ? 500 : 5000;
-    const actualDelay = delay ?? defaultDelay;
+    // The page is already loaded when the grower asks; a short beat lets the layout settle.
+    const actualDelay = delay ?? 500;
 
     const timer = setTimeout(() => {
       // Re-check conditions after delay (component may have unmounted or state changed)
