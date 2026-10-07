@@ -1127,50 +1127,63 @@ const AppSignUp: React.FC = () => {
                           })
                         })}>
                         <Text fontSize="sm" color={useColorModeValue('gray.700', 'gray.300')}>
-                          {intl.formatMessage(
-                            {
-                              id: 'auth.signup.terms.agree',
-                              defaultMessage: 'I agree to the {tos} and {privacy}'
-                            },
-                            {
-                              tos: (
-                                <a
-                                  href="https://trazo.io/terms-of-service"
-                                  target="_blank"
-                                  rel="noopener noreferrer">
-                                  <Text
-                                    as="span"
-                                    color="green.700"
-                                    fontWeight="medium"
-                                    _hover={{ textDecoration: 'underline' }}>
-                                    {intl.formatMessage({
-                                      id: 'auth.signup.terms.tos',
-                                      defaultMessage: 'Terms of Service'
-                                    })}
-                                  </Text>
-                                </a>
-                              ),
-                              privacy: (
-                                <a
-                                  href="https://trazo.io/privacy-policy"
-                                  target="_blank"
-                                  rel="noopener noreferrer">
-                                  <Text
-                                    as="span"
-                                    color="green.700"
-                                    fontWeight="medium"
-                                    _hover={{ textDecoration: 'underline' }}>
-                                    {intl.formatMessage({
-                                      id: 'auth.signup.terms.privacy',
-                                      defaultMessage: 'Privacy Policy'
-                                    })}
-                                  </Text>
-                                </a>
-                              )
-                            }
-                          )}
+                          {intl.formatMessage({
+                            id: 'auth.signup.terms.agreeShort',
+                            defaultMessage: 'I agree to the Terms of Service and the Privacy Policy'
+                          })}
                         </Text>
                       </Checkbox>
+                      {/* The links live OUTSIDE the checkbox label (recordkeeping review F-20):
+                          a click on a link inside a <label> follows the link and never toggles
+                          the box, so the Terms text opened the site and left the box unticked. */}
+                      <Text
+                        fontSize="xs"
+                        color={useColorModeValue('gray.600', 'gray.400')}
+                        mt={1}
+                        ml={8}>
+                        {intl.formatMessage(
+                          {
+                            id: 'auth.signup.terms.readLinks',
+                            defaultMessage: 'Read the {tos} and the {privacy}'
+                          },
+                          {
+                            tos: (
+                              <a
+                                href="https://trazo.io/terms-of-service"
+                                target="_blank"
+                                rel="noopener noreferrer">
+                                <Text
+                                  as="span"
+                                  color="green.700"
+                                  fontWeight="medium"
+                                  _hover={{ textDecoration: 'underline' }}>
+                                  {intl.formatMessage({
+                                    id: 'auth.signup.terms.tos',
+                                    defaultMessage: 'Terms of Service'
+                                  })}
+                                </Text>
+                              </a>
+                            ),
+                            privacy: (
+                              <a
+                                href="https://trazo.io/privacy-policy"
+                                target="_blank"
+                                rel="noopener noreferrer">
+                                <Text
+                                  as="span"
+                                  color="green.700"
+                                  fontWeight="medium"
+                                  _hover={{ textDecoration: 'underline' }}>
+                                  {intl.formatMessage({
+                                    id: 'auth.signup.terms.privacy',
+                                    defaultMessage: 'Privacy Policy'
+                                  })}
+                                </Text>
+                              </a>
+                            )
+                          }
+                        )}
+                      </Text>
                       {errors.acceptTerms && (
                         <Text fontSize="sm" color="red.700" mt={1}>
                           {errors.acceptTerms.message}

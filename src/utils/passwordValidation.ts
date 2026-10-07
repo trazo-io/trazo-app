@@ -244,22 +244,25 @@ export class PasswordValidator {
   /**
    * Get password strength color for UI
    */
-  public getStrengthColor(score: number): string {
+  public getStrengthColor(score: number, warnings: string[] = []): string {
     if (score < 20) return 'red.500';
     if (score < 40) return 'orange.500';
     if (score < 60) return 'yellow.500';
-    if (score < 80) return 'blue.500';
+    // Colour follows the verdict (review of app #98): an open warning caps both at "Good".
+    if (score < 80 || warnings.length > 0) return 'blue.500';
     return 'green.500';
   }
 
   /**
    * Get password strength label for UI
    */
-  public getStrengthLabel(score: number): string {
+  public getStrengthLabel(score: number, warnings: string[] = []): string {
     if (score < 20) return 'Very Weak';
     if (score < 40) return 'Weak';
     if (score < 60) return 'Fair';
-    if (score < 80) return 'Good';
+    // One verdict (recordkeeping review F-20): a password with an open warning ("contains
+    // common words") is never called Strong on the same screen.
+    if (score < 80 || warnings.length > 0) return 'Good';
     return 'Strong';
   }
 }
