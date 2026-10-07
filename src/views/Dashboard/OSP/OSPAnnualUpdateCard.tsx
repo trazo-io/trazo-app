@@ -66,6 +66,8 @@ interface Props {
   /** The draft this filing will be recorded as producing, when one is open. */
   producesDraft?: OSPSummary | null;
   currentYear: number;
+  /** Who signs (the farm profile's responsible person) and which account records it. */
+  signer?: { responsiblePerson?: string; account?: string };
 }
 
 const linesToList = (text: string): string[] =>
@@ -383,7 +385,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   farmId,
   planOnFile,
   producesDraft,
-  currentYear
+  currentYear,
+  signer
 }) => {
   const ospId = planOnFile?.id ?? null;
   const intl = useIntl();
@@ -403,9 +406,17 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   // A correction is any revision after the first; only a correction says what it corrects.
   const editingIsCorrection =
     editingId != null && (updates.find((u) => u.id === editingId)?.revision_number ?? 1) > 1;
-  const [form, setForm] = useState(emptyForm(currentYear));
+  // The year starts EMPTY and is filled by the effect below with the next unfiled year once the
+  // filings are known; `emptyForm(currentYear)` would offer a year the form then refuses.
+  const [form, setForm] = useState({ ...emptyForm(currentYear), reporting_year: '' });
   const [pending, setPending] = useState<PendingAction>(null);
   const [signerTitle, setSignerTitle] = useState('');
+  // The signer is the operation's responsible person (farm profile contact), not the account
+  // (recordkeeping review F-23): the account is recorded apart as the recorder.
+  // Both arrive as props from the page, which owns the farm query and the session.
+  const responsiblePerson = (signer?.responsiblePerson || '').trim();
+  const accountName = (signer?.account || '').trim();
+  const signerName = responsiblePerson || accountName;
   const [filingMethod, setFilingMethod] = useState<FilingMethod | ''>('');
   const [filingDate, setFilingDate] = useState(todayIso());
   const [withdrawReason, setWithdrawReason] = useState('');
@@ -415,11 +426,24 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const fieldRefs = useRef<Partial<Record<FieldKey, HTMLDivElement | null>>>({});
 
+  // The continuation-year form defaults to the NEXT UNFILED year, never to a year the form
+  // will refuse (recordkeeping review F-22, 2026-10-07: it offered 2026 under a filed 2026 row).
+  const nextUnfiledYear = updates
+    .filter((u) => !u.withdrawn_at)
+    .reduce<number>(
+      (max, u) => (u.reporting_year >= max ? u.reporting_year + 1 : max),
+      currentYear
+    );
+  // Follows the filings as they load (the query answers after the first render), until the
+  // farmer types a year of their own.
+  const [yearTouched, setYearTouched] = useState(false);
   useEffect(() => {
-    setForm((f) => ({ ...f, reporting_year: f.reporting_year || String(currentYear) }));
-  }, [currentYear]);
+    if (yearTouched) return;
+    setForm((f) => ({ ...f, reporting_year: String(nextUnfiledYear) }));
+  }, [nextUnfiledYear, yearTouched]);
 
   const set = (key: string, value: unknown) => {
+    if (key === 'reporting_year') setYearTouched(true);
     setForm((prev) => ({ ...prev, [key]: value }));
     // Clear the field's error as soon as it is touched. Leaving a red border under a box
     // the farmer has already rewritten reads as "still wrong".
@@ -547,7 +571,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   const resetForm = () => {
     setEditingId(null);
     setFieldErrors({});
-    setForm(emptyForm(currentYear));
+    setForm(emptyForm(nextUnfiledYear));
+    setYearTouched(false);
   };
 
   const handleSave = async () => {
@@ -802,11 +827,19 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                       : u.reporting_year}
                   </Text>
                   <Text fontSize="xs" color="gray.500" noOfLines={2}>
+                    {/* An EMPTY summary is not "no changes". Until the recordkeeping review (F-14,
+                        2026-10-07) an unfilled draft read "No changes — OSP reaffirmed": an
+                        affirmative attestation rendered from a blank. The row says what it holds. */}
                     {u.changes_summary ||
-                      intl.formatMessage({
-                        id: 'osp.annual.noChanges',
-                        defaultMessage: 'No changes — OSP reaffirmed'
-                      })}
+                      (rowState(u) === 'draft'
+                        ? intl.formatMessage({
+                            id: 'osp.annual.summaryNotWritten',
+                            defaultMessage: 'Summary not written'
+                          })
+                        : intl.formatMessage({
+                            id: 'osp.annual.filedWithoutSummary',
+                            defaultMessage: 'No summary of changes on this filing'
+                          }))}
                   </Text>
                   {/*
                   `formatDateFromTimestamp`, NOT `formatDateOnly`. Both live in the same file and
@@ -951,8 +984,25 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
                       </Text>
                       <StandardField
                         label={intl.formatMessage({
+                          id: 'osp.annual.signerName',
+                          defaultMessage: 'Signed by (the responsible person)'
+                        })}>
+                        <StandardInput value={signerName} isReadOnly />
+                      </StandardField>
+                      <Text fontSize="xs" color="gray.600">
+                        {intl.formatMessage(
+                          {
+                            id: 'osp.annual.signerHint',
+                            defaultMessage:
+                              'The signer is the responsible person on the farm profile; change it there. Recorded in Trazo by {account}.'
+                          },
+                          { account: accountName || '—' }
+                        )}
+                      </Text>
+                      <StandardField
+                        label={intl.formatMessage({
                           id: 'osp.annual.signerTitle',
-                          defaultMessage: 'Your title (optional)'
+                          defaultMessage: 'Title (optional)'
                         })}>
                         <StandardInput
                           value={signerTitle}

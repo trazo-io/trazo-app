@@ -45,8 +45,10 @@ import {
   FaRegCircle
 } from 'react-icons/fa';
 import { useIntl } from 'react-intl';
+import { ospStatusLabel } from './ospStatusLabel';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useGetFarmQuery } from 'store/api/companyApi';
 
 import { config } from 'config/environment';
 import {
@@ -266,6 +268,27 @@ const OSPView: React.FC = () => {
   const backToModules = () => navigate(`/admin/dashboard/farm/${farmId}/osp`);
   const currentCompany = useSelector((s: RootState) => s.company.currentCompany);
   const companyId = currentCompany?.id;
+  // The annual update's signer is the farm profile's responsible person; the account only
+  // records the signature (recordkeeping review F-23, 2026-10-07).
+  const sessionUser = useSelector(
+    (s: RootState) =>
+      (
+        s as unknown as {
+          userState?: { user?: { first_name?: string; last_name?: string; email?: string } };
+        }
+      ).userState?.user
+  );
+  const accountName =
+    `${sessionUser?.first_name || ''} ${sessionUser?.last_name || ''}`.trim() ||
+    sessionUser?.email ||
+    '';
+  const { data: farmProfile } = useGetFarmQuery(
+    { companyId: companyId || '', farmId: farmId || '' },
+    { skip: !companyId || !farmId }
+  );
+  const farmContactPerson = (
+    (farmProfile as { contact_person?: string } | undefined)?.contact_person || ''
+  ).trim();
   const farmState = useFarmState(farmId);
   const farm = useFarm(farmId);
 
@@ -777,11 +800,7 @@ const OSPView: React.FC = () => {
         // component's header slots — pulling the title out left the badge stranded on a line of
         // its own inside the body, reading as content rather than as the plan's state. Same slot
         // the CDFA and Annual cards use for theirs.
-        headerAction={
-          <Badge {...statusBadgeProps}>
-            {intl.formatMessage({ id: `osp.status.${editableOsp.status}` })}
-          </Badge>
-        }>
+        headerAction={<Badge {...statusBadgeProps}>{ospStatusLabel(intl, editableOsp)}</Badge>}>
         <VStack align="stretch" spacing={3}>
           <HStack justify="flex-end" flexWrap="wrap" gap={2}>
             <HStack spacing={2} flexWrap="wrap">
@@ -1173,6 +1192,7 @@ const OSPView: React.FC = () => {
           planOnFile={annualUpdateTarget}
           producesDraft={annualUpdateProducesDraft}
           currentYear={new Date().getFullYear()}
+          signer={{ responsiblePerson: farmContactPerson, account: accountName }}
         />
       )}
 
