@@ -104,6 +104,8 @@ export interface CertifierReadiness {
     name: string | null;
     finish_date: string | null;
     is_finished: boolean;
+    // The season's parcel, so a row can link to the production page holding the record.
+    parcel_id?: number | null;
   } | null;
   findings: CertifierReadinessFinding[];
   outstanding_count: number;
