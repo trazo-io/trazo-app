@@ -156,8 +156,7 @@ export const ROW_ROUTES: Record<string, (ctx: RowRouteContext) => string | null>
   yield_to_sales_reconciliation: productionPage,
   organic_system_plan: ({ farmId }) => `/admin/dashboard/farm/${farmId}/osp/narratives`,
   land_requirements: ({ farmId, parcelId }) =>
-    parcelId ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application` : null,
-  ofpp: ({ farmId }) => `/admin/dashboard/farm/${farmId}/profile`
+    parcelId ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application` : null
 };
 
 const FINDING_ROUTES: Record<string, (farmId: string | number) => string> = {
