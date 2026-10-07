@@ -1544,7 +1544,9 @@ function EnhancedTimelineRow(props: EnhancedTimelineRowProps) {
                 {/* Carbon Impact */}
                 {carbonData && !carbonData.error && isNotEstimated(carbonData) ? (
                   // Run 8 (R8-04): nothing recorded to count from. Said, never shown as 0.
-                  <HStack spacing={2} flexShrink={0}>
+                  // A sentence, not a figure: it must shrink and wrap inside the card. With
+                  // flexShrink={0} it ran 120px past a 375px screen (manual pass, 2026-10-06).
+                  <HStack spacing={2} flex="1 1 auto" minW={0}>
                     <Circle size="24px" bg="gray.100">
                       <Icon as={MdEco} color="gray.400" boxSize={3} />
                     </Circle>
