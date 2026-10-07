@@ -2137,6 +2137,8 @@
   "certifierReview.status.missing": "Missing",
   "certifierReview.status.forReview": "For review",
   "certifierReview.status.notAssessed": "Not assessed",
+  "certifierReview.notAssessed.hide": "Hide the {count, plural, one {# row} other {# rows}} not assessed",
+  "certifierReview.notAssessed.show": "Show the {count, plural, one {# row} other {# rows}} not assessed",
   "certifierReview.row.organic_system_plan": "Organic System Plan (§ 205.201)",
   "certifierReview.row.osp_completeness": "OSP completeness (§ 205.201(a)(2))",
   "certifierReview.row.inputs_not_confirmed_against_the_plan_s_inputs_list": "Inputs not confirmed against the plan's inputs list; a genuine addition is a change to notify (§ 205.400(f)(2))",

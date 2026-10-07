@@ -2137,6 +2137,8 @@
   "certifierReview.status.missing": "Falta",
   "certifierReview.status.forReview": "Para revisar",
   "certifierReview.status.notAssessed": "Sin evaluar",
+  "certifierReview.notAssessed.hide": "Ocultar {count, plural, one {la # fila} other {las # filas}} sin evaluar",
+  "certifierReview.notAssessed.show": "Mostrar {count, plural, one {la # fila} other {las # filas}} sin evaluar",
   "certifierReview.row.organic_system_plan": "Plan del Sistema Orgánico (§ 205.201)",
   "certifierReview.row.osp_completeness": "Respuestas del plan (§ 205.201(a)(2))",
   "certifierReview.row.inputs_not_confirmed_against_the_plan_s_inputs_list": "Insumos sin confirmar contra la lista de insumos del plan; una adición real es un cambio que se notifica (§ 205.400(f)(2))",
