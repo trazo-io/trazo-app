@@ -1952,11 +1952,10 @@ function ProductDetail() {
                   total_establishments: (completeData as any)?.farmer?.company
                     ?.total_establishments,
                   total_parcels: (completeData as any)?.farmer?.company?.total_parcels,
-                  // Sustainability data from company onboarding (transparency-first)
-                  // Maps from farm_context.company_sustainability in the transparency API response
-                  sustainability_goals:
-                    (completeData as any)?.farm_context?.company_sustainability?.goals ||
-                    (completeData as any)?.farmer?.company?.sustainability_goals,
+                  // Sustainability data from company onboarding (transparency-first).
+                  // Maps from farm_context.company_sustainability in the transparency API
+                  // response. The ticked sign-up goals are not mapped (recordkeeping review
+                  // F-11): the payload no longer serves them and the page no longer prints them.
                   crop_focus:
                     (completeData as any)?.farm_context?.company_sustainability?.crop_focus ||
                     (completeData as any)?.farmer?.company?.crop_focus,
