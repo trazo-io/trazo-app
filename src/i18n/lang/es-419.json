@@ -4435,6 +4435,8 @@
   "events.equipment.subtypes.repair": "Reparación",
   "events.equipmentTypes.generator": "Generador",
   "events.units.acreFeet": "Acres-pie",
+  "events.units.kilowattHours": "Kilovatios-hora",
+  "events.units.cubicMeters": "Metros cúbicos",
   "events.units.meters": "Metros",
   "events.units.miles": "Millas",
   "events.units.kilometers": "Kilómetros",

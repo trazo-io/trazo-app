@@ -3035,8 +3035,9 @@ function NewEvent({ isEdit = false, eventId = null }) {
       // Offline is not an error of the farmer's making: the title says what happened to the
       // record (recordkeeping review S8, F-24: the toast was titled "Error").
       const wentOffline =
-        error?.status === 'FETCH_ERROR' ||
-        (typeof navigator !== 'undefined' && navigator.onLine === false);
+        !isValidationError &&
+        (error?.status === 'FETCH_ERROR' ||
+          (typeof navigator !== 'undefined' && navigator.onLine === false));
       toast({
         title: intl.formatMessage({ id: wentOffline ? 'app.notSavedYet' : 'app.error' }),
         description: errorDescription,

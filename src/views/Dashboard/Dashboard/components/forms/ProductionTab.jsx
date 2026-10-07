@@ -4414,7 +4414,11 @@ const ProductionTab = forwardRef(
                                       <StandardSelect {...field}>
                                         {/* ELECTRIC EQUIPMENT FIX (2025-12-14): Show only relevant units based on fuel type */}
                                         {watch('fuel_type') === 'electric' ? (
-                                          <option value="kWh">Kilowatt-hours</option>
+                                          <option value="kWh">
+                                            {intl.formatMessage({
+                                              id: 'events.units.kilowattHours'
+                                            })}
+                                          </option>
                                         ) : (
                                           <>
                                             <option value="L">
@@ -5140,7 +5144,9 @@ const ProductionTab = forwardRef(
                                       <option value="acre_feet">
                                         {intl.formatMessage({ id: 'events.units.acreFeet' })}
                                       </option>
-                                      <option value="cubic_meters">Cubic Meters</option>
+                                      <option value="cubic_meters">
+                                        {intl.formatMessage({ id: 'events.units.cubicMeters' })}
+                                      </option>
                                     </StandardSelect>
                                   )}
                                 />
