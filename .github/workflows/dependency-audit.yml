@@ -1,0 +1,57 @@
+# Dependency audit, WEEKLY (2026-10-07). This job lived in ci.yml and ran on every push of
+# every PR: 274 runs in 30 days reading the same advisory list. An advisory count changes when
+# the lockfile changes or when a new advisory is published, neither of which is a function of
+# how often someone pushes. Monday 09:00 UTC, plus on demand.
+#
+# GitHub pauses scheduled workflows after 60 days without a commit on the default branch; if
+# this stops appearing in the Actions tab, that is why, and a `workflow_dispatch` re-arms it.
+name: Dependency audit
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  # Dependency currency. Non-blocking on arrival for the same reason the backend audit is:
+  # a job that is red the day it lands is a job people learn to scroll past. The count is
+  # printed either way, which is the point — drift becomes visible before it becomes a
+  # failure. Flip `continue-on-error` off once the backlog is triaged to zero HIGH/CRITICAL.
+  audit:
+    name: Dependency audit (non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/node-deps
+      # Production dependencies only. A dev-only advisory in a build tool is real but is not
+      # the same risk as one in code that ships to a farmer's browser, and mixing them is how
+      # the number becomes noise nobody reads.
+      - name: npm audit (production deps)
+        run: |
+          npm audit --omit=dev --audit-level=high 2>&1 | tee audit.txt || true
+          echo "=== full count, all severities, including dev ==="
+          npm audit --json > audit-full.json 2>/dev/null || true
+          # Distinguish "audit ran and found N" from "audit could not run". An audit that
+          # errored out (registry 4xx, offline runner) otherwise prints a benign-looking
+          # message and the step goes green — the same shape as a clean result, which is how
+          # a dependency check quietly stops checking anything.
+          node -e "
+            let j;
+            try { j = require('./audit-full.json'); }
+            catch (e) { console.log('::warning title=npm audit unreadable::' + e.message); process.exit(0); }
+            if (j && j.metadata && j.metadata.vulnerabilities) {
+              console.log('vulnerabilities:', JSON.stringify(j.metadata.vulnerabilities));
+            } else {
+              console.log('::warning title=npm audit did not run::' + (j && j.message ? j.message : 'unexpected JSON shape - no metadata.vulnerabilities'));
+            }
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-report
+          path: |
+            audit.txt
+            audit-full.json
+          if-no-files-found: ignore
