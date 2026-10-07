@@ -131,6 +131,10 @@ describe('R8-10: the module count is descriptive only', () => {
 describe('R8-11: the renewal card', () => {
   it('a filed year offers Create correction, not a second form', () => {
     card(2026);
+    // The form no longer DEFAULTS to a filed year (recordkeeping review F-22, 2026-10-07): it
+    // opens on the next unfiled one. Typing the filed year in is what gets the correction note.
+    expect(screen.queryByTestId('annual-year-filed')).toBeNull();
+    fireEvent.change(screen.getByLabelText(/Continuation year/i), { target: { value: '2026' } });
     const filedNote = screen.queryByTestId('annual-year-filed');
     expect(filedNote).not.toBeNull();
     expect(filedNote).toHaveTextContent(/Create correction/);

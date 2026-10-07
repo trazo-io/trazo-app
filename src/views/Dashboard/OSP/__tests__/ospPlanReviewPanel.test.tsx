@@ -82,7 +82,9 @@ describe('OSPPlanReviewPanel', () => {
       'G4.0 Rotation & Soil Management'
     );
     // headline badge: 2 findings + 1 stale + 1 unnamed parcel
-    expect(screen.getByText('4 to confirm')).toBeTruthy();
+    // Items, not groups (recordkeeping review F-22): 1 + 4 records across the two findings,
+    // plus the unnamed parcel and the stale module.
+    expect(screen.getByText('7 to confirm')).toBeTruthy();
   });
 
   it('never phrases the list as a verdict — the word "wrong" appears only in the disclaimer', () => {

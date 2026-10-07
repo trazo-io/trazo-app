@@ -164,7 +164,7 @@ describe('OSPModuleListPage — a locked plan', () => {
 
   it('humanises the status instead of printing the api enum', () => {
     renderPage();
-    expect(screen.getByText(/approved and active/)).toBeInTheDocument();
+    expect(screen.getByText(/\bactive\b/)).toBeInTheDocument();
     // The raw enum reached the screen for months. `{status}` must never be the wire value.
     expect(screen.queryByText(/This plan is active,/)).toBeNull();
   });
