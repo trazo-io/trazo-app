@@ -185,6 +185,8 @@ export interface TransitionStatus {
   last_prohibited_date?: string | null;
   findings?: TransitionRecord[];
   unclassified?: TransitionRecord[];
+  // Inputs whose basis the grower recorded as "not yet confirmed": named, never a block.
+  unconfirmed?: TransitionRecord[];
   note?: string;
 }
 
