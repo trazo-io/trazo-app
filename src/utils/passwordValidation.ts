@@ -255,11 +255,13 @@ export class PasswordValidator {
   /**
    * Get password strength label for UI
    */
-  public getStrengthLabel(score: number): string {
+  public getStrengthLabel(score: number, warnings: string[] = []): string {
     if (score < 20) return 'Very Weak';
     if (score < 40) return 'Weak';
     if (score < 60) return 'Fair';
-    if (score < 80) return 'Good';
+    // One verdict (recordkeeping review F-20): a password with an open warning ("contains
+    // common words") is never called Strong on the same screen.
+    if (score < 80 || warnings.length > 0) return 'Good';
     return 'Strong';
   }
 }

@@ -893,13 +893,12 @@ const HistoryCard = ({ amount }) => {
                                           const membersArray = Array.from(uniqueMembers.values());
 
                                           if (membersArray.length === 0) {
+                                            // No team is no avatar: the initials of "No Team"
+                                            // read as a chip "NT" (recordkeeping review F-21).
                                             return (
-                                              <Avatar
-                                                size="sm"
-                                                name={intl.formatMessage({ id: 'parcel.noTeam' })}
-                                                bg="gray.300"
-                                                color="gray.600"
-                                              />
+                                              <Text fontSize="xs" color="gray.500">
+                                                {intl.formatMessage({ id: 'parcel.noTeam' })}
+                                              </Text>
                                             );
                                           }
 

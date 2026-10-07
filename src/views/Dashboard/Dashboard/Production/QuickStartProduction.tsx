@@ -1028,10 +1028,15 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
 
         await startProduction(productionPayload).unwrap();
 
+        // A season with no plan item is a season with no checklist: say so instead of "Season
+        // plan saved" (recordkeeping review F-21).
+        const planned = productionPayload.plan_item_ids.length;
         toast({
           title: intl.formatMessage({ id: 'production.createdSuccessfully' }),
-          description: intl.formatMessage({ id: 'production.planSaved' }),
-          status: 'success',
+          description: intl.formatMessage({
+            id: planned > 0 ? 'production.planSaved' : 'production.planEmpty'
+          }),
+          status: planned > 0 ? 'success' : 'info',
           duration: 6000,
           isClosable: true
         });
@@ -1636,6 +1641,16 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
                     </Text>
                   </Box>
 
+                  {planSuggestions.length > 0 &&
+                    !planSuggestions.some((event) => event.enabled) && (
+                      <Text
+                        fontSize="sm"
+                        color="amber.800"
+                        mb={2}
+                        data-testid="quickstart-plan-nothing-ticked">
+                        {intl.formatMessage({ id: 'quickStart.plan.nothingTicked' })}
+                      </Text>
+                    )}
                   {/* Master Switch Controls */}
                   <HStack justify="space-between" mb={4} p={3} bg="gray.50" borderRadius="md">
                     <Text fontSize="sm" color="gray.600">

@@ -312,9 +312,19 @@ describe('AppSignUp Component', () => {
       expect(screen.getByText(/Password strength: (Very Weak|Weak)/)).toBeInTheDocument();
     });
 
-    // Test strong password
+    // A password with an open warning ("contains common words": "pass") is never also called
+    // Strong on the same screen (recordkeeping review F-20): one verdict.
     await user.clear(passwordInput);
     await user.type(passwordInput, 'StrongPass123!');
+
+    await waitFor(() => {
+      expect(screen.getByText('Password strength: Good')).toBeInTheDocument();
+      expect(screen.getByText(/common words/)).toBeInTheDocument();
+    });
+
+    // Test strong password, no warning
+    await user.clear(passwordInput);
+    await user.type(passwordInput, 'Xq7#mLv2!tRz');
 
     await waitFor(() => {
       expect(screen.getByText('Password strength: Strong')).toBeInTheDocument();

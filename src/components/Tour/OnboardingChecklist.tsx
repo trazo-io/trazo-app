@@ -32,10 +32,20 @@ import { ChecklistVariant } from '../../tours/types';
  */
 const FORM_ROUTE_SUFFIXES = ['/add', '/edit', '/finish'];
 
+/**
+ * Pages whose content the fixed panel covered (recordkeeping review F-19, 2026-10-07): on the
+ * parcel page it sat over the production card, so a new farm could not open the season it
+ * had just created. The panel is a guide to the next step, never a lid on the current one.
+ */
+const RECORD_ROUTE_PATTERNS = [/\/parcel\/\d+$/, /\/parcel\/\d+\/production\/\d+$/];
+
 /** Trailing slashes appear on some routes (e.g. after finalize redirects), so normalise. */
-const isFormRoute = (pathname: string): boolean => {
+export const isRecordOrFormRoute = (pathname: string): boolean => {
   const normalized = pathname.replace(/\/+$/, '');
-  return FORM_ROUTE_SUFFIXES.some((suffix) => normalized.endsWith(suffix));
+  return (
+    FORM_ROUTE_SUFFIXES.some((suffix) => normalized.endsWith(suffix)) ||
+    RECORD_ROUTE_PATTERNS.some((pattern) => pattern.test(normalized))
+  );
 };
 
 /**
@@ -63,7 +73,7 @@ const OnboardingChecklist: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const trackPageVisit = useTourStore((s) => s.trackPageVisit);
-  const isOnFormRoute = isFormRoute(location.pathname);
+  const isOnFormRoute = isRecordOrFormRoute(location.pathname);
 
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');

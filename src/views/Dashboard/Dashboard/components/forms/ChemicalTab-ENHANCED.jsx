@@ -4101,31 +4101,6 @@ const ChemicalTab = forwardRef(
                       </StandardField>
                     )}
                   </SimpleGrid>
-
-                  <Box
-                    bg="teal.50"
-                    p={3}
-                    borderRadius="md"
-                    borderLeft="4px"
-                    borderLeftColor="teal.400"
-                    mt={2}>
-                    <HStack spacing={2} mb={1}>
-                      <Icon as={FaLeaf} color="teal.500" fontSize="sm" />
-                      <Text fontSize="sm" fontWeight="semibold" color="teal.700">
-                        {intl.formatMessage({
-                          id: 'events.chemical.consumerTrust.heading',
-                          defaultMessage: 'Consumer Trust Information'
-                        })}
-                      </Text>
-                    </HStack>
-                    <Text fontSize="xs" color="teal.600">
-                      {intl.formatMessage({
-                        id: 'events.chemical.consumerTrust.body',
-                        defaultMessage:
-                          'Consumers value knowing if products used on their food are organic-approved and what safety measures protect nearby waterways and ecosystems. This transparency builds trust in your farming practices.'
-                      })}
-                    </Text>
-                  </Box>
                 </VStack>
               </SectionBox>
 
@@ -4140,7 +4115,7 @@ const ChemicalTab = forwardRef(
                     description={intl.formatMessage({
                       id: 'events.section.desc.chemicalSupplier',
                       defaultMessage:
-                        'Document input suppliers and purchase records for organic mass-balance audits. The #1 non-conformance finding nationally is inadequate mass-balance documentation.'
+                        'Document input suppliers and purchase records for organic mass-balance audits.'
                     })}
                   />
 
