@@ -541,6 +541,10 @@ const AnswerRow = ({ label, value }: { label: string; value: string }) => {
  * certifier reads them. The wizard's own review step already proved this shape works —
  * this is that shape, grouped by section and given the whole page.
  */
+/** Whether any question of the module carries the named embed. */
+const moduleHasEmbed = (definition: ModuleDefinition, embed: string): boolean =>
+  definition.pages.some((page) => page.questions.some((q) => q.embed === embed));
+
 const LockedModuleDocument = ({
   definition,
   answers,
@@ -978,6 +982,19 @@ const OSPModuleWizard = () => {
               answers={answers}
               notApplicable={notApplicable}
             />
+            {/* The identity panel is not part of the locked document (it is an embed on an
+                info question, and the document lists answers), but identity decisions are
+                made against the ACTIVE plan: that is the plan the drift findings were measured
+                against, and the one the banner's "Confirm names on the plan" link opens
+                (review of app #90). So it renders here too, read-write, under the read-only
+                answers. */}
+            {workingOsp && !notApplicable && moduleHasEmbed(definition, 'approved_inputs') ? (
+              <OSPMaterialIdentityPanel
+                companyId={companyId}
+                farmId={farmId || ''}
+                osp={workingOsp}
+              />
+            ) : null}
             {/* Where "Complete module" used to sit greyed out. A farmer who read the whole
                 module to the bottom arrived at a disabled button and nothing else, while the
                 one action actually available to them was described — not offered — in a

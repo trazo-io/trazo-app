@@ -83,8 +83,11 @@ export interface CarbonSummary {
 
 export interface CertifierReadinessFinding {
   label: string;
-  // Stable key of the row (slug of the audit-export label), for wording and links.
+  // Stable key of the row (run 8, R8-27), so the card can name it in the reader's language.
   row_key?: string | null;
+  // The data behind `detail` when the row carries any (a count), so the card can write the
+  // sentence itself (recordkeeping review F-01).
+  params?: Record<string, unknown> | null;
   // REVIEW = the record exists but needs attention. FAIL = a required record appears missing.
   // Both describe the RECORD in Trazo — the certifying agent makes the compliance decision.
   status: 'REVIEW' | 'FAIL';
