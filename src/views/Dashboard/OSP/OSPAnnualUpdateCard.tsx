@@ -434,11 +434,16 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
       (max, u) => (u.reporting_year >= max ? u.reporting_year + 1 : max),
       currentYear
     );
+  // Follows the filings as they load (the query answers after the first render), until the
+  // farmer types a year of their own.
+  const [yearTouched, setYearTouched] = useState(false);
   useEffect(() => {
-    setForm((f) => ({ ...f, reporting_year: f.reporting_year || String(nextUnfiledYear) }));
-  }, [nextUnfiledYear]);
+    if (yearTouched) return;
+    setForm((f) => ({ ...f, reporting_year: String(nextUnfiledYear) }));
+  }, [nextUnfiledYear, yearTouched]);
 
   const set = (key: string, value: unknown) => {
+    if (key === 'reporting_year') setYearTouched(true);
     setForm((prev) => ({ ...prev, [key]: value }));
     // Clear the field's error as soon as it is touched. Leaving a red border under a box
     // the farmer has already rewritten reads as "still wrong".
@@ -566,7 +571,8 @@ const OSPAnnualUpdateCard: React.FC<Props> = ({
   const resetForm = () => {
     setEditingId(null);
     setFieldErrors({});
-    setForm(emptyForm(currentYear));
+    setForm(emptyForm(nextUnfiledYear));
+    setYearTouched(false);
   };
 
   const handleSave = async () => {
