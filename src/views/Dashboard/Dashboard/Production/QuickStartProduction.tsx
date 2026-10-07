@@ -799,14 +799,12 @@ const QuickStartProduction: React.FC<QuickStartProductionProps> = ({
       if (!getValues('name')?.trim()) {
         setValue('name', generateProductionName(templateDetail.name, currentYear));
       }
-      if (!getValues('description')?.trim()) {
-        // Was: "<blurb> This production includes N pre-configured events for optimal carbon
-        // tracking." Both halves became false when templates stopped writing events: nothing
-        // is pre-configured and no carbon is calculated until the farmer logs real records.
-        // It was also hardcoded English in a file that otherwise routes everything through
-        // intl. The template's own blurb is the part that was ever true.
-        setValue('description', templateDetail.description || '');
-      }
+      // The description is NOT taken from the template (recordkeeping review F-12,
+      // 2026-10-07). The blurb ("Organic production template for Blueberries using organic
+      // production practices. All 7 event types with organic-specific defaults.") is Trazo's
+      // catalogue text, and `description` is the season's PUBLIC description on the buyer
+      // page: it printed there as the farm's own words unless the operator noticed and
+      // deleted it. The farmer writes the description or leaves it empty.
 
       // The production method is NOT taken from the template.
       //

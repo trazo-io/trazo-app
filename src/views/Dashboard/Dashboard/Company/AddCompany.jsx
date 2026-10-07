@@ -18,16 +18,10 @@ import {
   FaCheckCircle,
   FaBuilding,
   FaMapMarkerAlt,
-  FaLeaf,
   FaPhone,
   FaEnvelope,
   FaChevronRight,
   FaChevronLeft,
-  FaSeedling, // Used for sustainability goals
-  FaWater, // Used for sustainability goals
-  FaRecycle, // Used for sustainability goals
-  FaBolt, // Used for sustainability goals
-  FaBug, // Used for sustainability goals
   FaStore
 } from 'react-icons/fa';
 import {
@@ -42,7 +36,7 @@ import {
 } from '../../../../components/Design';
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { object, string, array, literal } from 'zod';
+import { object, string, literal } from 'zod';
 // @ts-ignore: JS module in TS file
 import { useCreateCompanyMutation } from 'store/api/companyApi';
 import { setCompany } from 'store/features/companySlice';
@@ -175,9 +169,7 @@ const buildCompanySchema = (intl) =>
     zipCode: string()
       .regex(US_ZIP_PATTERN, intl.formatMessage({ id: 'company.validation.zip.pattern' }))
       .optional()
-      .or(literal('')),
-    // Sustainability (Step 2)
-    sustainabilityGoals: array(string()).optional()
+      .or(literal(''))
   });
 
 // Which schema fields belong to which wizard step. `nextStep` validates only the
@@ -185,77 +177,21 @@ const buildCompanySchema = (intl) =>
 // they can actually see and fix it — see FIELDS_BY_STEP usage below.
 const FIELDS_BY_STEP = [
   ['name', 'tradename', 'email', 'phone', 'legalStructure'],
-  ['address', 'city', 'state', 'zipCode'],
-  ['sustainabilityGoals']
+  ['address', 'city', 'state', 'zipCode']
 ];
 
 // CompanyFormData interface (for reference):
 // Essential: name, tradename, email, phone, legalStructure
 // Location: address, state (2-letter US code), city, zipCode
-// Sustainability: sustainabilityGoals
 // NOTE: country defaults to 'US' (US-only focus), fiscalId moved to Settings
 // website, industry, employeeCount, description, facebook, instagram, certifications, isActive
 // removed from onboarding - exist at Establishment level or not essential for transparency
 
-/**
- * Transparency goals — what a farmer states they are aiming at.
- *
- * `titleId` / `descriptionId`, not literals: this array is module-scope, so it cannot call
- * `intl` itself. The card resolves the ids at render, which is what stopped six goal names
- * and six descriptions rendering in English on a Spanish screen.
- *
- * ⛔ `id` is a WIRE VALUE. It is posted as `sustainability_metadata.sustainability_goals` and
- * read back by `history/services/transparency_response_formatter.py`, which maps it to a
- * consumer-facing label. Renaming one here silently changes what a shopper sees; that
- * formatter's map must move with it.
- *
- * ⛔ No per-goal `color`. Each entry used to carry one — green / blue / orange / purple /
- * teal / yellow — and three of those are not Trazo palettes at all (`.claude/rules/frontend.md`:
- * the theme defines `amber`, NOT orange; an `orange.*` token silently resolved to CHAKRA's).
- * MEASURED, the amber ramp cannot carry this tile at any step: it tops out at #E65100, so
- * amber.800 on amber.50 is 2.90:1 where text owes 4.5, and even white on amber.700 is 2.70:1
- * against a 3.0 non-text floor. More basic than the contrast: this is a MULTI-SELECT, and the
- * hue carried no meaning — "Status colour = meaning, never decoration". One brand green for
- * all six, with selection signalled by fill + weight + `aria-pressed`, not by hue.
- */
-const SUSTAINABILITY_GOALS = [
-  {
-    id: 'full_transparency',
-    titleId: 'company.form.goal.fullTransparency.title',
-    descriptionId: 'company.form.goal.fullTransparency.description',
-    icon: FaLeaf
-  },
-  {
-    id: 'water_conservation',
-    titleId: 'company.form.goal.waterConservation.title',
-    descriptionId: 'company.form.goal.waterConservation.description',
-    icon: FaWater
-  },
-  {
-    id: 'soil_health',
-    titleId: 'company.form.goal.soilHealth.title',
-    descriptionId: 'company.form.goal.soilHealth.description',
-    icon: FaSeedling
-  },
-  {
-    id: 'biodiversity',
-    titleId: 'company.form.goal.biodiversity.title',
-    descriptionId: 'company.form.goal.biodiversity.description',
-    icon: FaBug
-  },
-  {
-    id: 'waste_reduction',
-    titleId: 'company.form.goal.wasteReduction.title',
-    descriptionId: 'company.form.goal.wasteReduction.description',
-    icon: FaRecycle
-  },
-  {
-    id: 'renewable_energy',
-    titleId: 'company.form.goal.renewableEnergy.title',
-    descriptionId: 'company.form.goal.renewableEnergy.description',
-    icon: FaBolt
-  }
-];
+// The "Sustainability Goals" step was removed by the recordkeeping review (F-11, 2026-10-07):
+// a checkbox ticked at sign-up became a public list of environmental-benefit claims with no
+// record behind any of them. The stored `sustainability_metadata.sustainability_goals` field is
+// kept as it is (no migration, nothing deleted); the wizard simply stopped asking for it, and the
+// buyer page stopped printing it.
 
 function AddCompany({ isEdit = false }) {
   const intl = useIntl();
@@ -295,12 +231,6 @@ function AddCompany({ isEdit = false }) {
       title: intl.formatMessage({ id: 'company.form.step.location.title' }),
       description: intl.formatMessage({ id: 'company.form.step.location.description' }),
       icon: FaMapMarkerAlt
-    },
-    {
-      title: intl.formatMessage({ id: 'company.form.step.sustainability.title' }),
-      shortTitle: intl.formatMessage({ id: 'company.form.step.sustainability.short' }),
-      description: intl.formatMessage({ id: 'company.form.step.sustainability.description' }),
-      icon: FaLeaf
     }
   ];
 
@@ -313,7 +243,6 @@ function AddCompany({ isEdit = false }) {
     mode: 'onTouched',
     reValidateMode: 'onChange',
     defaultValues: {
-      sustainabilityGoals: [],
       state: '',
       legalStructure: '' // Business entity type
     }
@@ -323,12 +252,9 @@ function AddCompany({ isEdit = false }) {
     handleSubmit,
     watch,
     reset,
-    setValue,
     trigger,
     formState: { errors, isValid }
   } = methods;
-
-  const sustainabilityGoals = watch('sustainabilityGoals') || [];
 
   // Submit was rejected by the resolver. Jump to the step holding the first bad
   // field and say so, rather than leaving the farmer on a button that appears to
@@ -378,11 +304,7 @@ function AddCompany({ isEdit = false }) {
       country: 'US', // US-only focus for now
       zip_code: data.zipCode || '',
       // Status
-      is_active: true,
-      // Sustainability data (plain object — DRF JSONField handles serialization)
-      sustainability_metadata: {
-        sustainability_goals: data.sustainabilityGoals || []
-      }
+      is_active: true
     };
 
     console.log('🏢 AddCompany: Submitting company data:', submitData);
@@ -509,89 +431,6 @@ function AddCompany({ isEdit = false }) {
   };
 
   // handleCropSelect removed - crop selection now happens at Establishment/Parcel level
-
-  const handleSustainabilityToggle = (goalId) => {
-    const currentGoals = sustainabilityGoals || [];
-    const newGoals = currentGoals.includes(goalId)
-      ? currentGoals.filter((id) => id !== goalId)
-      : [...currentGoals, goalId];
-    setValue('sustainabilityGoals', newGoals);
-  };
-
-  /**
-   * Sustainability goal tile.
-   *
-   * ⛔ Every colour here is a `.700` where it paints GLYPHS and a `.500`/`.600` only where it
-   * paints a boundary. It used to put white on `${color}.500` (2.78:1 on the green ramp —
-   * below even the 3.0 non-text floor) and use `${color}.600` as a text colour (4.12:1 where
-   * 14px owes 4.5). Both are named in `.claude/rules/frontend.md` as the exact mistakes that
-   * keep coming back, and both were here, on the onboarding screen every new farmer sees.
-   *
-   * `aria-pressed` because this is a toggle, not a link: the tile's selected state was
-   * signalled by colour and a tick glyph alone, so a screen reader announced six identical
-   * buttons with no way to tell which were on.
-   */
-  const SustainabilityGoalCard = ({ goal, isSelected, onToggle }) => (
-    <Box
-      as="button"
-      type="button"
-      aria-pressed={isSelected}
-      onClick={() => onToggle(goal.id)}
-      p={4}
-      borderRadius="lg"
-      border="2px solid"
-      borderColor={isSelected ? 'green.600' : 'gray.200'}
-      bg={isSelected ? 'green.50' : 'white'}
-      _hover={{
-        borderColor: isSelected ? 'green.700' : 'green.500',
-        bg: isSelected ? 'green.100' : 'green.50',
-        transform: 'translateY(-2px)',
-        shadow: 'md'
-      }}
-      transition="all 0.2s"
-      cursor="pointer"
-      position="relative"
-      w="full">
-      {isSelected && (
-        <Box
-          position="absolute"
-          top={2}
-          right={2}
-          bg="green.700"
-          color="white"
-          borderRadius="full"
-          p={1}>
-          <Icon as={FaCheckCircle} boxSize={3} />
-        </Box>
-      )}
-
-      <VStack spacing={3} align="center">
-        <Box
-          bg={isSelected ? 'green.700' : 'green.100'}
-          color={isSelected ? 'white' : 'green.700'}
-          p={3}
-          borderRadius="full">
-          <Icon as={goal.icon} boxSize={6} />
-        </Box>
-
-        <VStack spacing={1} align="center">
-          <Text
-            fontWeight="bold"
-            fontSize="sm"
-            color={isSelected ? 'green.800' : 'gray.700'}
-            textAlign="center">
-            {intl.formatMessage({ id: goal.titleId })}
-          </Text>
-          <Text
-            fontSize="xs"
-            color={isSelected ? 'green.800' : 'gray.600'}
-            textAlign="center">
-            {intl.formatMessage({ id: goal.descriptionId })}
-          </Text>
-        </VStack>
-      </VStack>
-    </Box>
-  );
 
   return (
     <StandardPage
@@ -806,74 +645,6 @@ function AddCompany({ isEdit = false }) {
                         {intl.formatMessage({ id: 'app.cancel' })}
                       </StandardButton>
                     )}
-                    <StandardButton onClick={nextStep} rightIcon={<FaChevronRight />}>
-                      {intl.formatMessage({
-                        id: isMobile
-                          ? 'company.form.btn.continue'
-                          : 'company.form.btn.continueToSustainability'
-                      })}
-                    </StandardButton>
-                  </HStack>
-                </HStack>
-              </VStack>
-            </StandardCard>
-          )}
-
-          {/* Step 2: Sustainability Goals (was Step 3) */}
-          {currentStep === 2 && (
-            <StandardCard
-              title={intl.formatMessage({ id: 'company.form.card.sustainability' })}
-              subtitle={intl.formatMessage({ id: 'company.form.card.sustainability.sub' })}>
-              <VStack spacing={6} align="stretch">
-                {/* Sustainability Goals Grid */}
-                <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
-                  {SUSTAINABILITY_GOALS.map((goal) => (
-                    <SustainabilityGoalCard
-                      key={goal.id}
-                      goal={goal}
-                      isSelected={sustainabilityGoals.includes(goal.id)}
-                      onToggle={handleSustainabilityToggle}
-                    />
-                  ))}
-                </SimpleGrid>
-
-                {sustainabilityGoals.length > 0 && (
-                  <StandardAlert
-                    status="success"
-                    // Pluralised through ICU rather than an "N Goals Selected" template —
-                    // "1 Goals Selected" was reachable, and Spanish needs the agreement.
-                    title={intl.formatMessage(
-                      { id: 'company.form.alert.goalsSelected.title' },
-                      { count: sustainabilityGoals.length }
-                    )}
-                    // ⚠️ Reworded from "showing buyers your sustainability commitment". These
-                    // are goals a farmer TICKS during onboarding — nothing verifies them — so
-                    // describing them to the farmer as a commitment shoppers will read
-                    // overstates what the consumer page can honestly carry. See
-                    // `.claude/rules/compliance.md` and the open question in the report.
-                    description={intl.formatMessage({
-                      id: 'company.form.alert.goalsSelected.body'
-                    })}
-                  />
-                )}
-
-                {/* Navigation */}
-                <HStack spacing={3} justify="space-between" pt={4}>
-                  <StandardButton
-                    variant="outline"
-                    leftIcon={<FaChevronLeft />}
-                    onClick={previousStep}>
-                    {intl.formatMessage({
-                      id: isMobile ? 'company.form.btn.back' : 'company.form.btn.backToLocation'
-                    })}
-                  </StandardButton>
-
-                  <HStack spacing={3}>
-                    {!isMobile && (
-                      <StandardButton variant="outline" onClick={handleCancel}>
-                        {intl.formatMessage({ id: 'app.cancel' })}
-                      </StandardButton>
-                    )}
                     <StandardButton
                       type="submit"
                       isLoading={isLoading}
@@ -884,9 +655,7 @@ function AddCompany({ isEdit = false }) {
                       })}
                       leftIcon={<FaRocket />}>
                       {intl.formatMessage({
-                        id: isMobile
-                          ? 'company.form.btn.create'
-                          : 'company.form.btn.createCompany'
+                        id: isMobile ? 'company.form.btn.create' : 'company.form.btn.createCompany'
                       })}
                     </StandardButton>
                   </HStack>

@@ -1211,7 +1211,19 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 // the chip vocabulary has one source of truth. The client
                 // derivation below stays as fallback for older payloads.
                 const serverInput = (event as any).input_status as
-                  | { status?: string; label?: string }
+                  | {
+                      status?: string;
+                      label?: string;
+                      // Served only with `organic_approved`: a National List substance linked
+                      // to the record on an UNCONFIRMED basis. Not evidence for the chip, but
+                      // the tooltip that said Trazo found nothing was false for such a record
+                      // (recordkeeping review F-09).
+                      national_list_link?: {
+                        substance?: string;
+                        cfr_section?: string;
+                        basis?: string;
+                      };
+                    }
                   | undefined;
                 const organicStatus =
                   event.organic_approved ?? (event as any).extra_data?.organic_approved;
@@ -1276,6 +1288,19 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 const organicTooltipKey =
                   (serverInput?.status && ORGANIC_TOOLTIP_KEYS[serverInput.status]) ??
                   'consumer.eventCard.organic.tooltipGrowerReported';
+                const nationalListLink =
+                  serverInput?.status === 'organic_approved'
+                    ? serverInput.national_list_link
+                    : undefined;
+                const organicTooltip = nationalListLink
+                  ? intl.formatMessage(
+                      { id: 'consumer.eventCard.organic.tooltipGrowerReportedNationalListLink' },
+                      {
+                        substance: nationalListLink.substance || '',
+                        cfr: nationalListLink.cfr_section || ''
+                      }
+                    )
+                  : intl.formatMessage({ id: organicTooltipKey });
                 // Server distinguishes "explicitly conventional" from
                 // "farmer didn't classify" — only the former may carry the
                 // conventional label (claim-safety: absence of classification
@@ -1287,9 +1312,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                 return (
                   <HStack spacing={2} flexWrap="wrap">
                     {hasOrganicStatus && (
-                      <Tooltip
-                        label={intl.formatMessage({ id: organicTooltipKey })}
-                        placement="top">
+                      <Tooltip label={organicTooltip} placement="top">
                         {/* Solid green = a third-party catalog match (OMRI). A National List
                             citation or the grower's own record gets the same pill SHAPE — so
                             the statuses stay comparable rather than looking like different
@@ -1319,9 +1342,7 @@ export const ConsumerEventCard: React.FC<ConsumerEventCardProps> = ({
                           // the surface it matters most. Every other claim on this page has a
                           // visible "What this means" affordance; this one now has its own.
                           tabIndex={0}
-                          aria-label={`${organicChipText} — ${intl.formatMessage({
-                            id: organicTooltipKey
-                          })}`}>
+                          aria-label={`${organicChipText} — ${organicTooltip}`}>
                           <HStack spacing={1}>
                             {isVerifiedListing && (
                               <Icon as={FaLeaf} aria-hidden="true" boxSize={3} />
