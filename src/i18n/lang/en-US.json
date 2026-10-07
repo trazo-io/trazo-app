@@ -4678,7 +4678,7 @@
   "events.production.help.harvestMethod": "How the crop was harvested",
   "events.production.help.harvestSummary": "Log several harvest picks as one summary record.",
   "events.production.help.cleaningMaterials": "Cleaning agents used (must be allowed for organic operations)",
-  "events.production.help.cleanedBy": "Person who performed or verified the cleaning",
+  "events.production.help.cleanedBy": "Person who did or checked the cleaning",
   "events.production.help.cleaningSection": "Equipment cleaning per NOP 7 CFR 205.272. Required when equipment is shared between organic and conventional operations.",
   "events.production.help.equipmentType": "Select the type of equipment used",
   "events.production.help.equipmentSection": "What the equipment did and which equipment, for the record and the carbon estimate.",

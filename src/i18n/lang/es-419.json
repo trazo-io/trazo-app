@@ -4678,7 +4678,7 @@
   "events.production.help.harvestMethod": "Cómo se cosechó el cultivo",
   "events.production.help.harvestSummary": "Registra varias pasadas de cosecha como un solo registro resumen.",
   "events.production.help.cleaningMaterials": "Agentes de limpieza usados (deben estar permitidos para producción orgánica)",
-  "events.production.help.cleanedBy": "Persona que realizó o verificó la limpieza",
+  "events.production.help.cleanedBy": "Persona que hizo o revisó la limpieza",
   "events.production.help.cleaningSection": "Limpieza de equipo según NOP 7 CFR 205.272. Obligatoria cuando el equipo se comparte entre producción orgánica y convencional.",
   "events.production.help.equipmentType": "Elige el tipo de equipo usado",
   "events.production.help.equipmentSection": "Qué hizo el equipo y cuál se usó, para el registro y la estimación de carbono.",
