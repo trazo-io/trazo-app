@@ -83,6 +83,8 @@ export interface CarbonSummary {
 
 export interface CertifierReadinessFinding {
   label: string;
+  // Stable key of the row (slug of the audit-export label), for wording and links.
+  row_key?: string | null;
   // REVIEW = the record exists but needs attention. FAIL = a required record appears missing.
   // Both describe the RECORD in Trazo — the certifying agent makes the compliance decision.
   status: 'REVIEW' | 'FAIL';
@@ -99,6 +101,8 @@ export interface CertifierReadiness {
     name: string | null;
     finish_date: string | null;
     is_finished: boolean;
+    // The season's parcel, so a row can link to the production page holding the record.
+    parcel_id?: number | null;
   } | null;
   findings: CertifierReadinessFinding[];
   outstanding_count: number;

@@ -98,6 +98,41 @@ function statusStyle(status: CertifierReadinessFinding['status']) {
 }
 
 /** Editor that clears each operation-readiness finding, by finding key. */
+/**
+ * Where a SEASON row's record lives, by the server's `row_key` (Oscar, 2026-10-07: "a way to
+ * add direct links here to be easier to go completing the warnings and the missings"). The
+ * route is the page that holds the record to add or fix, never a verdict; a key with no entry
+ * keeps the "full detail in … your audit export" hint alone.
+ */
+type RowRouteContext = {
+  farmId: string | number;
+  parcelId?: number | null;
+  productionId?: number | null;
+};
+const productionPage = ({ farmId, parcelId, productionId }: RowRouteContext) =>
+  parcelId && productionId
+    ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/production/${productionId}`
+    : null;
+export const ROW_ROUTES: Record<string, (ctx: RowRouteContext) => string | null> = {
+  // The plan's identity panel is where a logged name is confirmed against the materials list.
+  inputs_not_confirmed_against_the_plan_s_inputs_list: ({ farmId }) =>
+    `/admin/dashboard/farm/${farmId}/osp/module/materials_application#logged-names`,
+  input_traceability: productionPage,
+  record_completeness_chemical: productionPage,
+  compost: productionPage,
+  raw_manure_interval: productionPage,
+  seed_sourcing: productionPage,
+  ipm_strategy: productionPage,
+  lot_traceability: productionPage,
+  sales_documentation: productionPage,
+  sales_records_on_file: productionPage,
+  yield_to_sales_reconciliation: productionPage,
+  organic_system_plan: ({ farmId }) => `/admin/dashboard/farm/${farmId}/osp/narratives`,
+  land_requirements: ({ farmId, parcelId }) =>
+    parcelId ? `/admin/dashboard/farm/${farmId}/parcel/${parcelId}/application` : null,
+  ofpp: ({ farmId }) => `/admin/dashboard/farm/${farmId}/profile`
+};
+
 const FINDING_ROUTES: Record<string, (farmId: string | number) => string> = {
   ofpp: (farmId) => `/admin/dashboard/farm/${farmId}/profile`,
   osp: (farmId) => `/admin/dashboard/farm/${farmId}/osp`,
@@ -527,6 +562,13 @@ export default function CertifierReadinessCard({
             <VStack align="stretch" spacing={2} divider={<Divider borderColor={rowBorder} />}>
               {visible.map((finding) => {
                 const style = statusStyle(finding.status);
+                const rowHref = finding.row_key
+                  ? ROW_ROUTES[finding.row_key]?.({
+                      farmId,
+                      parcelId: data.production?.parcel_id,
+                      productionId: data.production?.id
+                    }) ?? null
+                  : null;
                 return (
                   <Box
                     key={finding.label}
@@ -569,6 +611,17 @@ export default function CertifierReadinessCard({
                               { section: finding.section_hint }
                             )}
                           </Text>
+                        )}
+                        {rowHref && (
+                          <Link
+                            as={RouterLink}
+                            to={rowHref}
+                            fontSize="xs"
+                            fontWeight="semibold"
+                            color="green.700"
+                            data-testid={`readiness-row-link-${finding.row_key}`}>
+                            {intl.formatMessage({ id: 'certifierReadiness.openRecord' })} →
+                          </Link>
                         )}
                       </VStack>
                     </HStack>

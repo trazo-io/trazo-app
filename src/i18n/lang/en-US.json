@@ -2105,6 +2105,7 @@
   "certifierReadiness.goToOsp": "Organic System Plan →",
   "certifierReadiness.moreItems": "{count, plural, one {# more item} other {# more items}}",
   "certifierReadiness.noProduction": "Start a production to see what your certifier will ask for",
+  "certifierReadiness.openRecord": "Open the record",
   "certifierReadiness.openCountLabel": "{count, plural, one {open item} other {open items}}",
   "certifierReadiness.operationScope": "Whole operation",
   "certifierReadiness.seasonClear": "All {checked} record checks are satisfied for this season.",
