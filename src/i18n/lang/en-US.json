@@ -697,6 +697,7 @@
   "app.errorCreatingCheckout": "Failed to create checkout session. Please try again.",
   "app.errorCreatingEvent": "Failed to create event. Please try again.",
   "app.errorSavingOffline": "No connection, so this was not saved yet. Your entries are still here and kept as a draft on this device; save again when you have signal.",
+  "app.errorSavingOfflineNoDraft": "No connection, so this was not saved yet. Keep this screen open and save again when you have signal: changes to an existing record are not kept as a draft.",
   "app.errorFetchingBillingData": "There was an error loading your billing information",
   "app.errorFetchingPlans": "Error loading subscription plans. Please try again.",
   "app.errorReactivatingSubscription": "There was an error reactivating your subscription",

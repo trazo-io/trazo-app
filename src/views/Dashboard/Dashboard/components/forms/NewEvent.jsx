@@ -3021,7 +3021,11 @@ function NewEvent({ isEdit = false, eventId = null }) {
           // event", which does not say the connection is the cause or that nothing was lost.
           (error?.status === 'FETCH_ERROR' ||
           (typeof navigator !== 'undefined' && navigator.onLine === false)
-            ? intl.formatMessage({ id: 'app.errorSavingOffline' })
+            ? // The draft hook is off in edit and repeat flows (enabled: !isEdit && !isRepeat),
+              // so only a new record can promise one (review of app #88).
+              intl.formatMessage({
+                id: isEdit || isRepeat ? 'app.errorSavingOfflineNoDraft' : 'app.errorSavingOffline'
+              })
             : isEdit
             ? intl.formatMessage({ id: 'app.errorUpdatingEvent' }) ||
               'Failed to update event. Please try again.'

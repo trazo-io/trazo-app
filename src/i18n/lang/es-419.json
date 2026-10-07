@@ -697,6 +697,7 @@
   "app.errorCreatingCheckout": "Error al crear la sesión de pago. Por favor intenta de nuevo.",
   "app.errorCreatingEvent": "No se pudo crear el evento. Por favor, inténtalo de nuevo.",
   "app.errorSavingOffline": "Sin conexión, así que todavía no se guardó. Lo que escribiste sigue aquí y queda como borrador en este dispositivo; vuelve a guardar cuando tengas señal.",
+  "app.errorSavingOfflineNoDraft": "Sin conexión, así que todavía no se guardó. Deja esta pantalla abierta y vuelve a guardar cuando tengas señal: los cambios a un registro existente no se guardan como borrador.",
   "app.errorFetchingBillingData": "Hubo un error al cargar tu información de facturación",
   "app.errorFetchingPlans": "Error al cargar los planes de suscripción. Por favor, intenta de nuevo.",
   "app.errorReactivatingSubscription": "Hubo un error al reactivar tu suscripción",
